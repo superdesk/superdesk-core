@@ -1,0 +1,9 @@
+Superdesk Core Changelog
+==========================
+
+Version 0.1
+-----------
+
+Not released yet
+
+- First public preview release
