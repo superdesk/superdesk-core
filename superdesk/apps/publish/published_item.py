@@ -16,17 +16,17 @@ from eve.utils import ParsedRequest, config
 from bson.objectid import ObjectId
 from flask import current_app as app
 
-from apps.legal_archive import LEGAL_ARCHIVE_NAME, LEGAL_ARCHIVE_VERSIONS_NAME, LEGAL_PUBLISH_QUEUE_NAME
-from apps.packages.package_service import PackageService
+from superdesk.apps.legal_archive import LEGAL_ARCHIVE_NAME, LEGAL_ARCHIVE_VERSIONS_NAME, LEGAL_PUBLISH_QUEUE_NAME
+from superdesk.apps.packages.package_service import PackageService
 import superdesk
-from apps.packages import TakesPackageService
-from apps.users.services import get_display_name
+from superdesk.apps.packages import TakesPackageService
+from superdesk.apps.users.services import get_display_name
 from superdesk.notification import push_notification
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.metadata.item import not_analyzed, ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTENT_TYPE
-from apps.archive.common import aggregations, handle_existing_data, item_schema
-from apps.archive.archive import SOURCE as ARCHIVE
+from superdesk.apps.archive.common import aggregations, handle_existing_data, item_schema
+from superdesk.apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.utc import utcnow, get_expiry_date
 from superdesk import get_resource_service
 

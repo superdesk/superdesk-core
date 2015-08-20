@@ -9,8 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk.tests import TestCase
-from apps.publish.formatters.ninjs_formatter import NINJSFormatter
-from apps.publish import init_app
+from superdesk.apps.publish.formatters.ninjs_formatter import NINJSFormatter
+from superdesk.apps.publish import init_app
 import json
 
 

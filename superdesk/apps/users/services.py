@@ -21,7 +21,7 @@ from superdesk.emails import send_user_status_changed_email, send_activate_accou
 from superdesk.utc import utcnow
 from superdesk.privilege import get_privilege_list
 from superdesk.errors import SuperdeskApiError
-from apps.auth.errors import UserInactiveError
+from superdesk.apps.auth.errors import UserInactiveError
 from superdesk.notification import push_notification
 import superdesk
 

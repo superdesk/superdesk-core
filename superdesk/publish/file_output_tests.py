@@ -10,7 +10,7 @@
 
 
 import os
-from apps.publish.subscribers import SUBSCRIBER_TYPES
+from superdesk.apps.publish.subscribers import SUBSCRIBER_TYPES
 
 from superdesk.tests import TestCase
 from superdesk.publish.file_output import FilePublishService

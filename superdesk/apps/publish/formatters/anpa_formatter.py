@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from apps.publish.formatters import Formatter
+from superdesk.apps.publish.formatters import Formatter
 import superdesk
 from superdesk.errors import FormatterError
 from bs4 import BeautifulSoup

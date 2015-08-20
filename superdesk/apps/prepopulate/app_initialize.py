@@ -60,7 +60,7 @@ class AppInitializeWithDataCommand(superdesk.Command):
     def import_file(self, entity_name, file_name, index_params, do_patch=False):
 
         if file_name:
-            file = os.path.join(superdesk.app.config.get('APP_ABSPATH'), 'apps', 'prepopulate', 'data_initialization',
+            file = os.path.join(superdesk.app.config.get('APP_ABSPATH'), 'superdesk', 'apps', 'prepopulate', 'data_initialization',
                                 file_name)
             with open(file, 'rt') as app_prepopulation:
                 json_data = json.loads(app_prepopulation.read())

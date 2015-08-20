@@ -16,7 +16,7 @@ from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
 from superdesk.utc import utcnow
 from pytz import timezone
 from superdesk.media.media_operations import process_file_from_stream
-from apps.archive.archive_media import generate_guid, GUID_TAG
+from superdesk.apps.archive.archive_media import generate_guid, GUID_TAG
 import io
 from flask import current_app as app
 import email

@@ -47,11 +47,8 @@ def get_formatter(format_type, article):
             return formatter
 
 
-import apps.publish.formatters.nitf_formatter  # NOQA
-import apps.publish.formatters.aap_ipnews_formatter  # NOQA
-import apps.publish.formatters.anpa_formatter  # NOQA
-import apps.publish.formatters.ninjs_formatter  # NOQA
-import apps.publish.formatters.newsml_1_2_formatter  # NOQA
-import apps.publish.formatters.newsml_g2_formatter  # NOQA
-import apps.publish.formatters.aap_bulletinbuilder_formatter  # NOQA
-import apps.publish.formatters.aap_sms_formatter  # NOQA
+import superdesk.apps.publish.formatters.nitf_formatter  # NOQA
+import superdesk.apps.publish.formatters.anpa_formatter  # NOQA
+import superdesk.apps.publish.formatters.ninjs_formatter  # NOQA
+import superdesk.apps.publish.formatters.newsml_1_2_formatter  # NOQA
+import superdesk.apps.publish.formatters.newsml_g2_formatter  # NOQA

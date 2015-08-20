@@ -9,9 +9,9 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from ..models.item_autosave import ItemAutosaveModel
-from apps.common.components.base_component import BaseComponent
-from apps.common.models.utils import get_model
-from apps.item_lock.models.item import ItemModel
+from superdesk.apps.common.components.base_component import BaseComponent
+from superdesk.apps.common.models.utils import get_model
+from superdesk.apps.item_lock.models.item import ItemModel
 from superdesk.errors import SuperdeskApiError
 
 

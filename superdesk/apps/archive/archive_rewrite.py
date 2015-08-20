@@ -15,11 +15,11 @@ from flask import request
 from superdesk import get_resource_service, Service
 from superdesk.metadata.item import ITEM_STATE
 from superdesk.resource import Resource, build_custom_hateoas
-from apps.archive.common import item_url, CUSTOM_HATEOAS
+from superdesk.apps.archive.common import item_url, CUSTOM_HATEOAS
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
-from apps.packages.takes_package_service import TakesPackageService
-from apps.tasks import send_to
+from superdesk.apps.packages.takes_package_service import TakesPackageService
+from superdesk.apps.tasks import send_to
 
 logger = logging.getLogger(__name__)
 

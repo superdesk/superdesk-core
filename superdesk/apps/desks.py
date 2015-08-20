@@ -13,7 +13,7 @@ from superdesk.resource import Resource
 from bson.objectid import ObjectId
 from superdesk.services import BaseService
 import superdesk
-from apps.tasks import default_status
+from superdesk.apps.tasks import default_status
 from superdesk.notification import push_notification
 from superdesk.activity import add_activity, ACTIVITY_UPDATE
 

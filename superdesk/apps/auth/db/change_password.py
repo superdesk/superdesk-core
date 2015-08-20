@@ -12,7 +12,7 @@ import logging
 import superdesk
 from superdesk.resource import Resource
 from superdesk.services import BaseService
-from apps.auth.errors import CredentialsAuthError
+from superdesk.apps.auth.errors import CredentialsAuthError
 from superdesk import get_resource_service
 
 

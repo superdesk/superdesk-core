@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk.tests import TestCase
-from apps.preferences import PreferencesService
+from superdesk.apps.preferences import PreferencesService
 
 
 class Preference_Tests(TestCase):

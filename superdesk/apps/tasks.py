@@ -14,21 +14,21 @@ from copy import copy
 from eve.utils import ParsedRequest
 from eve.versioning import resolve_document_version
 
-from apps.archive.common import insert_into_versions, is_assigned_to_a_desk, get_expiry,\
+from superdesk.apps.archive.common import insert_into_versions, is_assigned_to_a_desk, get_expiry,\
     item_operations, ITEM_OPERATION, update_version
 
 from superdesk.resource import Resource
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from superdesk.notification import push_notification
 from superdesk.utc import utcnow
-from apps.archive.common import on_create_item, item_url
+from superdesk.apps.archive.common import on_create_item, item_url
 from superdesk.services import BaseService
 from superdesk.metadata.item import metadata_schema, ITEM_STATE, CONTENT_STATE, ITEM_TYPE
 import superdesk
 from superdesk.activity import add_activity, ACTIVITY_CREATE, ACTIVITY_UPDATE
-from apps.archive.archive import get_subject
+from superdesk.apps.archive.archive import get_subject
 from superdesk.workflow import is_workflow_state_transition_valid
-from apps.archive.archive import SOURCE as ARCHIVE
+from superdesk.apps.archive.archive import SOURCE as ARCHIVE
 from superdesk import get_resource_service
 
 task_statuses = ['todo', 'in_progress', 'done']

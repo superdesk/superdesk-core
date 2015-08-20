@@ -9,12 +9,12 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk.tests import TestCase
-from apps.publish.formatters.newsml_1_2_formatter import NewsML12Formatter
+from superdesk.apps.publish.formatters.newsml_1_2_formatter import NewsML12Formatter
 import xml.etree.ElementTree as etree
 import datetime
 from nose.tools import assert_raises
 from superdesk.errors import FormatterError
-from apps.publish import init_app
+from superdesk.apps.publish import init_app
 
 
 class Newsml12FormatterTest(TestCase):

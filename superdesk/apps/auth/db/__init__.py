@@ -8,13 +8,13 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from apps.auth import AuthResource
+from superdesk.apps.auth import AuthResource
 from .reset_password import ResetPasswordService, ResetPasswordResource, ActiveTokensResource
 import superdesk
 from .db import DbAuthService
 from .commands import CreateUserCommand, HashUserPasswordsCommand  # noqa
 from superdesk.services import BaseService
-from apps.auth.db.change_password import ChangePasswordService,\
+from superdesk.apps.auth.db.change_password import ChangePasswordService,\
     ChangePasswordResource
 
 

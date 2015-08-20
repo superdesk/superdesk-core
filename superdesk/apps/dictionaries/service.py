@@ -14,7 +14,7 @@ import collections
 from flask import json
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
-from apps.dictionaries.resource import DICTIONARY_FILE
+from superdesk.apps.dictionaries.resource import DICTIONARY_FILE
 
 
 logger = logging.getLogger(__name__)

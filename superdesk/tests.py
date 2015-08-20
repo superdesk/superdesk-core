@@ -20,9 +20,7 @@ from base64 import b64encode
 from flask import json
 from superdesk.notification_mock import setup_notification_mock, teardown_notification_mock
 from superdesk import get_resource_service
-from settings import LDAP_SERVER, ELASTICSEARCH_URL
-from unittest.mock import patch
-from apps.auth.ldap.ldap import ADAuth
+from settings import ELASTICSEARCH_URL
 from eve_elastic import get_es, get_indices
 
 test_user = {
@@ -117,10 +115,7 @@ def setup(context=None, config=None):
 
 
 def setup_auth_user(context, user=None):
-    if LDAP_SERVER:
-        setup_ad_user(context, user)
-    else:
-        setup_db_user(context, user)
+    setup_db_user(context, user)
 
 
 def add_to_context(context, token, user):
@@ -167,53 +162,6 @@ def setup_db_user(context, user):
 
         token = json.loads(auth_response.get_data()).get('token').encode('ascii')
         add_to_context(context, token, user)
-
-
-def setup_ad_user(context, user):
-    """
-    Setup the AD user for the LDAP authentication.
-    The method patches the authenticate_and_fetch_profile method of the ADAuth class
-    :param context: test context
-    :param dict user: user
-    """
-    ad_user = user or test_user
-
-    '''
-    This is necessary as test_user is in Global scope and del doc['password'] removes the key from test_user and
-    for the next scenario, auth_data = json.dumps({'username': ad_user['username'], 'password': ad_user['password']})
-    will fail as password key is removed by del doc['password']
-    '''
-    ad_user = ad_user.copy()
-    ad_user['email'] = 'mock@mail.com.au'
-
-    ad_user.setdefault('user_type', 'administrator')
-
-    # ad profile to be return from the patch object
-    ad_profile = {
-        'email': ad_user['email'],
-        'username': ad_user['username'],
-        # so that test run under the administrator context.
-        'user_type': ad_user.get('user_type'),
-        'sign_off': ad_user.get('sign_off', 'abc'),
-        'preferences': {
-            'email:notification': {
-                'label': 'Send notifications via email',
-                'type': 'bool',
-                'default': True,
-                'category': 'notifications',
-                'enabled': True}
-        }
-    }
-
-    with patch.object(ADAuth, 'authenticate_and_fetch_profile', return_value=ad_profile):
-        auth_data = json.dumps({'username': ad_user['username'], 'password': ad_user['password']})
-        auth_response = context.client.post(get_prefixed_url(context.app, '/auth'),
-                                            data=auth_data, headers=context.headers)
-        auth_response_as_json = json.loads(auth_response.get_data())
-        token = auth_response_as_json.get('token').encode('ascii')
-        ad_user['_id'] = auth_response_as_json['user']
-
-        add_to_context(context, token, ad_user)
 
 
 def setup_notification(context):

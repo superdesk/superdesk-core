@@ -10,7 +10,7 @@
 
 from superdesk.notification import push_notification
 from superdesk.resource import Resource
-from apps.archive.common import on_create_item
+from superdesk.apps.archive.common import on_create_item
 from superdesk.services import BaseService
 import superdesk
 

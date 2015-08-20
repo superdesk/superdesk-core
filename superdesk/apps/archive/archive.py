@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from apps.users.services import current_user_has_privilege
+from superdesk.apps.users.services import current_user_has_privilege
 from settings import DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES, VERSION
 
 SOURCE = 'archive'
@@ -26,23 +26,23 @@ from eve.versioning import resolve_document_version, versioned_id_field
 from superdesk.activity import add_activity, ACTIVITY_CREATE, ACTIVITY_UPDATE, ACTIVITY_DELETE
 from eve.utils import parse_request, config
 from superdesk.services import BaseService
-from apps.users.services import is_admin
+from superdesk.apps.users.services import is_admin
 from superdesk.metadata.item import metadata_schema, ITEM_STATE, CONTENT_STATE, CONTENT_TYPE, ITEM_TYPE
-from apps.common.components.utils import get_component
-from apps.item_autosave.components.item_autosave import ItemAutosave
-from apps.common.models.base_model import InvalidEtag
+from superdesk.apps.common.components.utils import get_component
+from superdesk.apps.item_autosave.components.item_autosave import ItemAutosave
+from superdesk.apps.common.models.base_model import InvalidEtag
 from superdesk.etree import get_word_count
 from superdesk.notification import push_notification
 from copy import copy, deepcopy
 import superdesk
 import logging
-from apps.common.models.utils import get_model
-from apps.item_lock.models.item import ItemModel
-from apps.packages import PackageService, TakesPackageService
+from superdesk.apps.common.models.utils import get_model
+from superdesk.apps.item_lock.models.item import ItemModel
+from superdesk.apps.packages import PackageService, TakesPackageService
 from .archive_media import ArchiveMediaService
 from superdesk.utc import utcnow
 import datetime
-from apps.archive.common import ITEM_DUPLICATE, ITEM_OPERATION, ITEM_RESTORE,\
+from superdesk.apps.archive.common import ITEM_DUPLICATE, ITEM_OPERATION, ITEM_RESTORE,\
     ITEM_UPDATE, ITEM_DESCHEDULE, SEQUENCE
 
 

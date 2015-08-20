@@ -12,7 +12,7 @@
 import re
 from superdesk.errors import ParserError
 from superdesk.io import Parser
-from apps.archive.archive_media import generate_guid, GUID_TAG
+from superdesk.apps.archive.archive_media import generate_guid, GUID_TAG
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
 from superdesk.utc import utcnow
 

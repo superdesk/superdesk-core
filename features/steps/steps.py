@@ -37,7 +37,7 @@ from superdesk.tests import test_user, get_prefixed_url, set_placeholder
 from re import findall
 from eve.utils import ParsedRequest
 import shutil
-from apps.dictionaries.resource import DICTIONARY_FILE
+from superdesk.apps.dictionaries.resource import DICTIONARY_FILE
 
 external_url = 'http://thumbs.dreamstime.com/z/digital-nature-10485007.jpg'
 

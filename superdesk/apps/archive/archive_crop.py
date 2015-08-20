@@ -18,7 +18,7 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.media.media_operations import crop_image, process_file_from_stream
 from superdesk.upload import UploadService, url_for_media
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE
-from apps.archive.archive import SOURCE as ARCHIVE
+from superdesk.apps.archive.archive import SOURCE as ARCHIVE
 
 
 class ArchiveCropResource(Resource):

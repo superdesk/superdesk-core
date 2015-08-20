@@ -8,8 +8,8 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from apps.common.models.base_model import BaseModel
-from apps.item_lock.models.item import ItemValidator
+from superdesk.apps.common.models.base_model import BaseModel
+from superdesk.apps.item_lock.models.item import ItemValidator
 
 
 class ItemAutosaveModel(BaseModel):

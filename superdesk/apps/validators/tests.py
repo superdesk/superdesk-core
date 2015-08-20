@@ -12,7 +12,7 @@ import os
 import json
 from superdesk.tests import TestCase
 from superdesk import get_resource_service
-from apps.validators.command import ValidatorsPopulateCommand
+from superdesk.apps.validators.command import ValidatorsPopulateCommand
 from settings import URL_PREFIX
 
 

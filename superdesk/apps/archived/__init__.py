@@ -10,7 +10,7 @@
 
 import superdesk
 
-from apps.archived.archived import ArchivedResource, ArchivedService
+from superdesk.apps.archived.archived import ArchivedResource, ArchivedService
 
 
 def init_app(app):

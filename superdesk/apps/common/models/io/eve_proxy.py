@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from apps.common.models.io.base_proxy import BaseProxy
+from superdesk.apps.common.models.io.base_proxy import BaseProxy
 
 
 class EveProxy(BaseProxy):

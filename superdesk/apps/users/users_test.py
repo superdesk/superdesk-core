@@ -12,7 +12,7 @@
 import flask
 import superdesk
 from superdesk.tests import TestCase
-from apps.users.services import UsersService, compare_preferences
+from superdesk.apps.users.services import UsersService, compare_preferences
 
 
 class PrivilegesTestCase(TestCase):

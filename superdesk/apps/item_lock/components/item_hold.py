@@ -9,9 +9,9 @@
 # at https://www.sourcefabric.org/superdesk/license
 from ..models.item import ItemModel
 from superdesk.notification import push_notification
-from apps.common.components.base_component import BaseComponent
-from apps.common.models.utils import get_model
-from apps.common.components.utils import get_component
+from superdesk.apps.common.components.base_component import BaseComponent
+from superdesk.apps.common.models.utils import get_model
+from superdesk.apps.common.components.utils import get_component
 from .item_lock import ItemLock
 from superdesk import app
 from superdesk.errors import SuperdeskApiError

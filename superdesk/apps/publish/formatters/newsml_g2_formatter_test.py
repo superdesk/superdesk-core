@@ -9,10 +9,10 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk.tests import TestCase
-from apps.publish.formatters.newsml_g2_formatter import NewsMLG2Formatter
+from superdesk.apps.publish.formatters.newsml_g2_formatter import NewsMLG2Formatter
 import xml.etree.ElementTree as etree
 import datetime
-from apps.publish import init_app
+from superdesk.apps.publish import init_app
 
 
 class NewsMLG2FormatterTest(TestCase):

@@ -16,22 +16,22 @@ import json
 from eve.utils import config, ParsedRequest
 from eve.versioning import versioned_id_field
 
-from apps.archive.common import insert_into_versions
-from apps.packages.takes_package_service import TakesPackageService
-from apps.publish.archive_publish import ArchivePublishService, DIGITAL, WIRE
-from apps.publish.subscribers import SUBSCRIBER_TYPES
-from apps.validators import ValidatorsPopulateCommand
+from superdesk.apps.archive.common import insert_into_versions
+from superdesk.apps.packages.takes_package_service import TakesPackageService
+from superdesk.apps.publish.archive_publish import ArchivePublishService, DIGITAL, WIRE
+from superdesk.apps.publish.subscribers import SUBSCRIBER_TYPES
+from superdesk.apps.validators import ValidatorsPopulateCommand
 from superdesk.metadata.packages import ITEM_REF
 from superdesk.tests import TestCase
-from apps.publish import init_app, publish_queue, RemoveExpiredPublishContent
-from apps.legal_archive import LEGAL_ARCHIVE_NAME, LEGAL_ARCHIVE_VERSIONS_NAME, LEGAL_PUBLISH_QUEUE_NAME
+from superdesk.apps.publish import init_app, publish_queue, RemoveExpiredPublishContent
+from superdesk.apps.legal_archive import LEGAL_ARCHIVE_NAME, LEGAL_ARCHIVE_VERSIONS_NAME, LEGAL_PUBLISH_QUEUE_NAME
 from superdesk.utc import utcnow
 from superdesk import get_resource_service
 import superdesk
-from apps.archive.archive import SOURCE as ARCHIVE
+from superdesk.apps.archive.archive import SOURCE as ARCHIVE
 from settings import URL_PREFIX
 from superdesk.metadata.item import TAKES_PACKAGE, PACKAGE_TYPE, ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTENT_TYPE
-from apps.publish.published_item import LAST_PUBLISHED_VERSION
+from superdesk.apps.publish.published_item import LAST_PUBLISHED_VERSION
 
 
 ARCHIVE_PUBLISH = 'archive_publish'

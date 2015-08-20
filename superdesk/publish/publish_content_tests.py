@@ -14,7 +14,7 @@ from datetime import timedelta
 from nose.tools import assert_raises
 from superdesk.errors import PublishQueueError
 from superdesk.publish.publish_content import is_on_time, update_content_state, get_queue_items
-from apps.publish import init_app
+from superdesk.apps.publish import init_app
 from superdesk import config
 
 

@@ -11,15 +11,15 @@ from eve.versioning import resolve_document_version
 from flask import request
 
 import superdesk
-from apps.tasks import send_to
+from superdesk.apps.tasks import send_to
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
 from superdesk.resource import Resource
 from superdesk.services import BaseService
-from apps.archive.common import item_url, insert_into_versions, item_operations,\
+from superdesk.apps.archive.common import item_url, insert_into_versions, item_operations,\
     ITEM_OPERATION
-from apps.archive.archive import SOURCE as ARCHIVE
+from superdesk.apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.workflow import is_workflow_state_transition_valid
 
 ITEM_MOVE = 'move'

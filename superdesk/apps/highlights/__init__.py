@@ -2,8 +2,8 @@
 import superdesk
 
 from superdesk import get_backend
-from apps.highlights.resource import HighlightsResource, MarkedForHighlightsResource
-from apps.highlights.service import HighlightsService, MarkedForHighlightsService
+from superdesk.apps.highlights.resource import HighlightsResource, MarkedForHighlightsResource
+from superdesk.apps.highlights.service import HighlightsService, MarkedForHighlightsService
 from .generate import GenerateHighlightsService, GenerateHighlightsResource
 
 

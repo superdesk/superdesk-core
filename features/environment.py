@@ -14,7 +14,7 @@ from superdesk.io.tests import setup_providers, teardown_providers
 from settings import LDAP_SERVER
 from features.steps.steps import get_macro_path
 from flask import json
-from apps.vocabularies.command import VocabulariesPopulateCommand
+from superdesk.apps.vocabularies.command import VocabulariesPopulateCommand
 
 
 readonly_fields = ['display_name', 'password', 'phone', 'first_name', 'last_name']

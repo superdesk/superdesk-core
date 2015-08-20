@@ -19,7 +19,7 @@ from eve.validation import ValidationError
 from superdesk.metadata.item import PUB_STATUS, CONTENT_TYPE, ITEM_TYPE, GUID_FIELD, ITEM_STATE, CONTENT_STATE, \
     PUBLISH_STATES
 from superdesk.metadata.packages import SEQUENCE, PACKAGE_TYPE, TAKES_PACKAGE
-from apps.publish.subscribers import SUBSCRIBER_TYPES
+from superdesk.apps.publish.subscribers import SUBSCRIBER_TYPES
 from settings import DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES
 import superdesk
 from superdesk.emails import send_article_killed_email
@@ -27,18 +27,18 @@ from superdesk.errors import InvalidStateTransitionError, SuperdeskApiError, Pub
 from superdesk.notification import push_notification
 from superdesk.services import BaseService
 from superdesk import get_resource_service
-from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
-from apps.archive.common import validate_schedule, is_item_in_package
+from superdesk.apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
+from superdesk.apps.archive.common import validate_schedule, is_item_in_package
 from superdesk.utc import utcnow
 from superdesk.workflow import is_workflow_state_transition_valid
-from apps.publish.formatters import get_formatter
-from apps.common.components.utils import get_component
-from apps.item_autosave.components.item_autosave import ItemAutosave
-from apps.archive.common import item_url, get_user, insert_into_versions, \
+from superdesk.apps.publish.formatters import get_formatter
+from superdesk.apps.common.components.utils import get_component
+from superdesk.apps.item_autosave.components.item_autosave import ItemAutosave
+from superdesk.apps.archive.common import item_url, get_user, insert_into_versions, \
     set_sign_off, item_operations, ITEM_OPERATION
-from apps.packages import TakesPackageService
-from apps.packages.package_service import PackageService
-from apps.publish.published_item import LAST_PUBLISHED_VERSION
+from superdesk.apps.packages import TakesPackageService
+from superdesk.apps.packages.package_service import PackageService
+from superdesk.apps.publish.published_item import LAST_PUBLISHED_VERSION
 
 logger = logging.getLogger(__name__)
 

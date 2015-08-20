@@ -12,9 +12,9 @@ from flask import request
 
 from superdesk import get_resource_service, Service
 from superdesk.resource import Resource, build_custom_hateoas
-from apps.packages import TakesPackageService
-from apps.archive.common import item_url, CUSTOM_HATEOAS
-from apps.archive.archive import SOURCE as ARCHIVE
+from superdesk.apps.packages import TakesPackageService
+from superdesk.apps.archive.common import item_url, CUSTOM_HATEOAS
+from superdesk.apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.errors import SuperdeskApiError
 import logging
 

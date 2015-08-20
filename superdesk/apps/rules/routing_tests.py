@@ -10,7 +10,7 @@
 
 
 from superdesk.tests import TestCase
-from apps.rules.routing_rule_validator import RoutingRuleValidator
+from superdesk.apps.rules.routing_rule_validator import RoutingRuleValidator
 
 
 class RoutingRuleValidatorTestCase(TestCase):

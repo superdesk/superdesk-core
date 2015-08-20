@@ -12,10 +12,10 @@
 import logging
 import superdesk
 from superdesk import get_backend
-from apps.publish.publish_filters.filter_condition import FilterConditionService, FilterConditionResource, \
+from superdesk.apps.publish.publish_filters.filter_condition import FilterConditionService, FilterConditionResource, \
     FilterConditionParametersResource, FilterConditionParametersService
-from apps.publish.publish_filters.publish_filter import PublishFilterService, PublishFilterResource
-from apps.publish.publish_filters.publish_filter import PublishFilterTestResource, PublishFilterTestService
+from superdesk.apps.publish.publish_filters.publish_filter import PublishFilterService, PublishFilterResource
+from superdesk.apps.publish.publish_filters.publish_filter import PublishFilterTestResource, PublishFilterTestService
 
 logger = logging.getLogger(__name__)
 

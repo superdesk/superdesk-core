@@ -9,14 +9,14 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk.tests import TestCase
-from apps.publish.publish_filters.publish_filter import PublishFilterService
-from apps.publish import SubscribersService
+from superdesk.apps.publish.publish_filters.publish_filter import PublishFilterService
+from superdesk.apps.publish import SubscribersService
 from eve.utils import ParsedRequest
 import json
 import os
 import superdesk
 from settings import URL_PREFIX
-from apps.vocabularies.command import VocabulariesPopulateCommand
+from superdesk.apps.vocabularies.command import VocabulariesPopulateCommand
 
 
 class PublishFilterTests(TestCase):
@@ -385,7 +385,7 @@ class PublishFilterTests(TestCase):
         with self.app.app_context():
             cmd = VocabulariesPopulateCommand()
             filename = os.path.join(os.path.abspath(
-                os.path.dirname("apps/prepopulate/data_initialization/vocabularies.json")), "vocabularies.json")
+                os.path.dirname("superdesk.apps.prepopulate/data_initialization/vocabularies.json")), "vocabularies.json")
             cmd.run(filename)
             self.assertTrue(len(self.s._get_subscribers_by_filter_condition(filter_condition1)) == 1)
             self.assertTrue(len(self.s._get_subscribers_by_filter_condition(filter_condition2)) == 0)

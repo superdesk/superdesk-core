@@ -17,10 +17,10 @@ from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
 from superdesk import get_resource_service
 from eve.utils import ParsedRequest
-from apps.tasks import task_statuses
+from superdesk.apps.tasks import task_statuses
 from superdesk.utc import get_expiry_date
-from apps.common.models.utils import get_model
-from apps.item_lock.models.item import ItemModel
+from superdesk.apps.common.models.utils import get_model
+from superdesk.apps.item_lock.models.item import ItemModel
 
 logger = logging.getLogger(__name__)
 

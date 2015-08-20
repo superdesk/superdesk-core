@@ -9,10 +9,10 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk.tests import TestCase
-from apps.archive.common import get_item_expiry
+from superdesk.apps.archive.common import get_item_expiry
 from app import get_app
 from superdesk.utc import get_expiry_date
-from apps.tasks import apply_stage_rule, compare_dictionaries
+from superdesk.apps.tasks import apply_stage_rule, compare_dictionaries
 from nose.tools import assert_raises
 from superdesk.errors import SuperdeskApiError
 

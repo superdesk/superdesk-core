@@ -14,11 +14,11 @@ from eve.utils import config, ParsedRequest
 from eve.versioning import resolve_document_version
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from superdesk import get_resource_service
-from apps.archive.archive import SOURCE as ARCHIVE
+from superdesk.apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE_TYPE, TAKES_PACKAGE, PACKAGE, \
     LAST_TAKE, ASSOCIATIONS, MAIN_GROUP, SEQUENCE, ITEM_REF
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, PUBLISH_STATES, ITEM_STATE, CONTENT_STATE
-from apps.archive.common import insert_into_versions
+from superdesk.apps.archive.common import insert_into_versions
 from .package_service import get_item_ref, create_root_group
 
 logger = logging.getLogger(__name__)

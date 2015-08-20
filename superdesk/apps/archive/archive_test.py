@@ -12,11 +12,11 @@
 from superdesk.tests import TestCase
 from eve.utils import date_to_str
 from superdesk.utc import get_expiry_date, utcnow
-from apps.archive.commands import RemoveExpiredSpikeContent
-from apps.archive.archive import SOURCE as ARCHIVE
+from superdesk.apps.archive.commands import RemoveExpiredSpikeContent
+from superdesk.apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.errors import SuperdeskApiError
 from datetime import timedelta
-from apps.archive.common import validate_schedule
+from superdesk.apps.archive.common import validate_schedule
 
 
 class RemoveSpikedContentTestCase(TestCase):

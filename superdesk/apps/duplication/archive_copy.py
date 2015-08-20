@@ -15,8 +15,8 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification
 from superdesk.resource import Resource
 from superdesk.services import BaseService
-from apps.archive.common import item_url
-from apps.archive.archive import SOURCE as ARCHIVE
+from superdesk.apps.archive.common import item_url
+from superdesk.apps.archive.archive import SOURCE as ARCHIVE
 
 
 class CopyResource(Resource):

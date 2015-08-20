@@ -23,12 +23,12 @@ from .archive_lock import ArchiveLockResource, ArchiveUnlockResource, ArchiveLoc
 from .archive_crop import ArchiveCropService, ArchiveCropResource
 from .archive_spike import ArchiveUnspikeResource, ArchiveSpikeService, ArchiveSpikeResource, ArchiveUnspikeService
 import superdesk
-from apps.common.components.utils import register_component
-from apps.item_lock.components.item_lock import ItemLock
-from apps.item_lock.components.item_hold import ItemHold
-from apps.common.models.utils import register_model
-from apps.item_lock.models.item import ItemModel
-from apps.common.models.io.eve_proxy import EveProxy
+from superdesk.apps.common.components.utils import register_component
+from superdesk.apps.item_lock.components.item_lock import ItemLock
+from superdesk.apps.item_lock.components.item_hold import ItemHold
+from superdesk.apps.common.models.utils import register_model
+from superdesk.apps.item_lock.models.item import ItemModel
+from superdesk.apps.common.models.io.eve_proxy import EveProxy
 from superdesk.celery_app import celery
 from .saved_searches import SavedSearchesService, SavedSearchesResource, \
     SavedSearchItemsResource, SavedSearchItemsService
@@ -105,8 +105,8 @@ def init_app(app):
     service = ArchiveSaveService(endpoint_name, backend=superdesk.get_backend())
     AutoSaveResource(endpoint_name, app=app, service=service)
 
-    from apps.item_autosave.components.item_autosave import ItemAutosave
-    from apps.item_autosave.models.item_autosave import ItemAutosaveModel
+    from superdesk.apps.item_autosave.components.item_autosave import ItemAutosave
+    from superdesk.apps.item_autosave.models.item_autosave import ItemAutosaveModel
     register_component(ItemLock(app))
     register_component(ItemHold(app))
     register_model(ItemModel(EveProxy(superdesk.get_backend())))

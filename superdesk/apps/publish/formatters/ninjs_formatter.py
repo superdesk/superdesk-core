@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import json
-from apps.publish.formatters import Formatter
+from superdesk.apps.publish.formatters import Formatter
 import superdesk
 from superdesk.errors import FormatterError
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE

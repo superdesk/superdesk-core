@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from flask import request
-from apps.tasks import send_to
+from superdesk.apps.tasks import send_to
 
 from superdesk import get_resource_service
 import superdesk
@@ -17,8 +17,8 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification
 from superdesk.resource import Resource
 from superdesk.services import BaseService
-from apps.archive.common import item_url
-from apps.archive.archive import SOURCE as ARCHIVE
+from superdesk.apps.archive.common import item_url
+from superdesk.apps.archive.archive import SOURCE as ARCHIVE
 
 
 class DuplicateResource(Resource):

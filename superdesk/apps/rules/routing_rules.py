@@ -10,7 +10,7 @@
 
 import logging
 from datetime import datetime
-from apps.rules.routing_rule_validator import RoutingRuleValidator
+from superdesk.apps.rules.routing_rule_validator import RoutingRuleValidator
 from superdesk import get_resource_service
 from superdesk.resource import Resource
 from superdesk.services import BaseService

@@ -125,7 +125,6 @@ import superdesk.io.newsml_1_2
 import superdesk.io.wenn_parser
 import superdesk.io.teletype
 import superdesk.io.email
-import superdesk.io.dpa
 register_provider('search', None, [])
 
 superdesk.privilege(name='ingest_providers', label='Ingest Channels', description='User can maintain Ingest Channels.')

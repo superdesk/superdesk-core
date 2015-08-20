@@ -51,7 +51,7 @@ def prepopulate_data(file_name, default_user=get_default_user()):
     placeholders = {'NOW()': date_to_str(utcnow())}
     users = {default_user['username']: default_user['password']}
     default_username = default_user['username']
-    file = os.path.join(superdesk.app.config.get('APP_ABSPATH'), 'apps', 'prepopulate', file_name)
+    file = os.path.join(superdesk.app.config.get('APP_ABSPATH'), 'superdesk', 'apps', 'prepopulate', file_name)
     with open(file, 'rt', encoding='utf8') as app_prepopulation:
         json_data = json.load(app_prepopulation)
         for item in json_data:

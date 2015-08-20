@@ -8,11 +8,11 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from apps.publish.subscribers import SUBSCRIBER_TYPES
+from superdesk.apps.publish.subscribers import SUBSCRIBER_TYPES
 
 from superdesk.tests import TestCase
 import superdesk
-from apps.publish import init_app
+from superdesk.apps.publish import init_app
 from superdesk.publish.odbc import ODBCPublishService
 
 

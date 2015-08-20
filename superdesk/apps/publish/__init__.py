@@ -12,12 +12,12 @@
 import logging
 
 import superdesk
-from apps.publish.archive_publish import ArchivePublishResource, ArchivePublishService, \
+from superdesk.apps.publish.archive_publish import ArchivePublishResource, ArchivePublishService, \
     KillPublishResource, KillPublishService, CorrectPublishResource, CorrectPublishService
-from apps.publish.subscribers import SubscribersResource, SubscribersService
-from apps.publish.publish_queue import PublishQueueResource, PublishQueueService
-from apps.publish.published_item import PublishedItemResource, PublishedItemService
-from apps.publish.commands import RemoveExpiredPublishContent  # noqa
+from superdesk.apps.publish.subscribers import SubscribersResource, SubscribersService
+from superdesk.apps.publish.publish_queue import PublishQueueResource, PublishQueueService
+from superdesk.apps.publish.published_item import PublishedItemResource, PublishedItemService
+from superdesk.apps.publish.commands import RemoveExpiredPublishContent  # noqa
 from superdesk.celery_app import celery
 from superdesk import get_backend
 

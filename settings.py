@@ -96,11 +96,11 @@ CELERYBEAT_SCHEDULE = {
         'schedule': timedelta(minutes=5),
     },
     'session:gc': {
-        'task': 'apps.auth.session_purge',
+        'task': 'superdesk.apps.auth.session_purge',
         'schedule': crontab(minute=20)
     },
     'spike:gc': {
-        'task': 'apps.archive.content_purge',
+        'task': 'superdesk.apps.archive.content_purge',
         'schedule': crontab(minute=30)
     },
     'publish:transmit': {
@@ -108,7 +108,7 @@ CELERYBEAT_SCHEDULE = {
         'schedule': timedelta(seconds=10)
     },
     'publish:remove_expired': {
-        'task': 'apps.publish.content_purge',
+        'task': 'superdesk.apps.publish.content_purge',
         'schedule': crontab(minute=30)
     },
 }
@@ -117,8 +117,9 @@ SENTRY_DSN = env('SENTRY_DSN')
 SENTRY_INCLUDE_PATHS = ['superdesk']
 
 INSTALLED_APPS = [
-    'apps.auth',
-    'apps.users',
+    'superdesk.apps.auth',
+    'superdesk.apps.auth.db',
+    'superdesk.apps.users',
     'superdesk.upload',
     'superdesk.notification',
     'superdesk.activity',
@@ -126,42 +127,35 @@ INSTALLED_APPS = [
 
     'superdesk.io',
     'superdesk.io.subjectcodes',
-    'superdesk.io.reuters',
-    'superdesk.io.aap',
-    'superdesk.io.afp',
     'superdesk.io.ftp',
     'superdesk.io.rss',
     'superdesk.publish',
     'superdesk.commands',
     'superdesk.locators.locators',
 
-    'apps.archive',
-    'apps.stages',
-    'apps.desks',
-    'apps.planning',
-    'apps.coverages',
-    'apps.tasks',
-    'apps.preferences',
-    'apps.spikes',
-    'apps.groups',
-    'apps.prepopulate',
-    'apps.vocabularies',
-    'apps.legal_archive',
-    'apps.search',
-    'apps.privilege',
-    'apps.rules',
-    'apps.highlights',
-    'apps.publish',
-    'apps.publish.publish_filters',
-    'apps.dictionaries',
-    'apps.duplication',
-    'apps.spellcheck',
-    'apps.templates',
-    'apps.archived',
-    'apps.validators',
-    'apps.validate',
-    'apps.workspace',
-    'apps.auth.db'
+    'superdesk.apps.archive',
+    'superdesk.apps.stages',
+    'superdesk.apps.desks',
+    'superdesk.apps.tasks',
+    'superdesk.apps.preferences',
+    'superdesk.apps.spikes',
+    'superdesk.apps.groups',
+    'superdesk.apps.prepopulate',
+    'superdesk.apps.vocabularies',
+    'superdesk.apps.search',
+    'superdesk.apps.privilege',
+    'superdesk.apps.rules',
+    'superdesk.apps.highlights',
+    'superdesk.apps.publish',
+    'superdesk.apps.publish.publish_filters',
+    'superdesk.apps.dictionaries',
+    'superdesk.apps.duplication',
+    'superdesk.apps.spellcheck',
+    'superdesk.apps.templates',
+    'superdesk.apps.archived',
+    'superdesk.apps.validators',
+    'superdesk.apps.validate',
+    'superdesk.apps.workspace',
 ]
 
 RESOURCE_METHODS = ['GET', 'POST']

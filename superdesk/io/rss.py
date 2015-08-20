@@ -12,8 +12,8 @@
 import feedparser
 import requests
 
-from apps.archive.common import GUID_TAG
-from apps.archive.common import generate_guid
+from superdesk.apps.archive.common import GUID_TAG
+from superdesk.apps.archive.common import generate_guid
 
 from calendar import timegm
 from collections import namedtuple

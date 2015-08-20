@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk.tests import TestCase
-from apps.archive.archive_crop import ArchiveCropService
+from superdesk.apps.archive.archive_crop import ArchiveCropService
 from nose.tools import assert_raises
 from superdesk.errors import SuperdeskApiError
 

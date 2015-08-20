@@ -9,8 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import superdesk
-from apps.dictionaries.resource import DictionariesResource
-from apps.dictionaries.service import DictionaryService
+from superdesk.apps.dictionaries.resource import DictionariesResource
+from superdesk.apps.dictionaries.service import DictionaryService
 
 
 def init_app(app):
