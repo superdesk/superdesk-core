@@ -14,7 +14,6 @@ from eve.io.mongo import Mongo, MongoJSONEncoder
 from eve.utils import config, ParsedRequest
 from eve_elastic import Elastic, ElasticJSONSerializer, InvalidSearchString  # noqa @UnusedImport
 from flask import current_app as app
-from superdesk.aap_mm_datalayer import AAPMMDatalayer
 
 
 class SuperdeskJSONEncoder(MongoJSONEncoder, ElasticJSONSerializer):
@@ -33,7 +32,6 @@ class SuperdeskDataLayer(DataLayer):
         self.mongo = Mongo(app)
         self.driver = self.mongo.driver
         self.storage = self.driver
-        self.aapmm = AAPMMDatalayer(app)
         self.elastic = Elastic(app, serializer=SuperdeskJSONEncoder())
 
     def find(self, resource, req, lookup):
