@@ -63,6 +63,9 @@ X_HEADERS = ['Content-Type', 'Authorization', 'If-Match']
 MONGO_DBNAME = env('MONGO_DBNAME', 'superdesk')
 MONGO_URI = env('MONGO_URI', 'mongodb://localhost/%s' % MONGO_DBNAME)
 
+LEGAL_ARCHIVE_DBNAME = env('LEGAL_ARCHIVE_DBNAME', 'legal_archive')
+LEGAL_ARCHIVE_URI = env('LEGAL_ARCHIVE_URI', 'mongodb://localhost/%s' % LEGAL_ARCHIVE_DBNAME)
+
 ELASTICSEARCH_URL = env('ELASTICSEARCH_URL', 'http://localhost:9200')
 ELASTICSEARCH_INDEX = env('ELASTICSEARCH_INDEX', 'superdesk')
 if env('ELASTIC_PORT'):
@@ -134,6 +137,7 @@ INSTALLED_APPS = [
     'superdesk.locators.locators',
 
     'superdesk.apps.archive',
+    'superdesk.apps.legal_archive',
     'superdesk.apps.stages',
     'superdesk.apps.desks',
     'superdesk.apps.tasks',
@@ -231,6 +235,14 @@ MAX_VALUE_OF_PUBLISH_SEQUENCE = 9999
 
 # Defines default value for Source to be set for manually created articles
 DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES = env('DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES', 'SPP')
+
+# Determines if the ODBC publishing mechanism will be used, If enabled then pyodbc must be installed along with it's
+# dependencies
+ODBC_PUBLISH = env('ODBC_PUBLISH', None)
+# ODBC test server connection string
+ODBC_TEST_CONNECTION_STRING = env('ODBC_TEST_CONNECTION_STRING',
+                                  'DRIVER=FreeTDS;DSN=NEWSDB;UID=???;PWD=???;DATABASE=News')
+
 # This value gets injected into NewsML 1.2 and G2 output documents.
 NEWSML_PROVIDER_ID = env('NEWSML_PROVIDER_ID', 'sourcefabric.org')
 

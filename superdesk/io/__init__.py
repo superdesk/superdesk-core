@@ -124,6 +124,7 @@ import superdesk.io.newsml_2_0
 import superdesk.io.newsml_1_2
 import superdesk.io.wenn_parser
 import superdesk.io.teletype
+import superdesk.io.reuters
 import superdesk.io.email
 register_provider('search', None, [])
 

@@ -3,9 +3,4 @@ Things to fix:
 - macros
 - public api
 - AAP media archive data layer
-- apps/aap
-- apps/aap_mm
-- apps/auth/ldap
-- legal archive
-- apps/publish/formatter/field_mappers
-- superdesk/io/aap*/afp/reuters/dpa/zczx
+- superdesk/io/aap*/afp/reuters/dpa/
