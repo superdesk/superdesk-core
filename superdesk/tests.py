@@ -15,12 +15,12 @@ import unittest
 import elasticsearch
 import logging
 
-from app import get_app
+from superdesk.app import get_app
 from base64 import b64encode
 from flask import json
 from superdesk.notification_mock import setup_notification_mock, teardown_notification_mock
 from superdesk import get_resource_service
-from settings import ELASTICSEARCH_URL
+from unittest.mock import patch
 from eve_elastic import get_es, get_indices
 
 test_user = {
@@ -55,11 +55,8 @@ def get_mongo_uri(key, dbname):
 
 def get_test_settings():
     test_settings = {}
-    test_settings['ELASTICSEARCH_URL'] = ELASTICSEARCH_URL
     test_settings['ELASTICSEARCH_INDEX'] = 'sptest'
     test_settings['MONGO_URI'] = get_mongo_uri('MONGO_URI', 'sptests')
-    test_settings['PUBLICAPI_MONGO_URI'] = get_mongo_uri('PUBLICAPI_MONGO_URI', 'sptests')
-    test_settings['LEGAL_ARCHIVE_URI'] = get_mongo_uri('LEGAL_ARCHIVE_URI', 'sptests_legal')
     test_settings['DEBUG'] = True
     test_settings['TESTING'] = True
     test_settings['SUPERDESK_TESTING'] = True

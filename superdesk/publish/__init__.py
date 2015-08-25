@@ -9,6 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+from collections import namedtuple
+
 from superdesk.celery_app import celery
 from superdesk.publish.publish_content import PublishContent
 
@@ -16,6 +18,9 @@ logger = logging.getLogger(__name__)
 
 transmitters = {}
 transmitter_errors = {}
+
+subscriber_types = ['broadcast', 'digital', 'wire']
+SUBSCRIBER_TYPES = namedtuple('SUBSCRIBER_TYPES', ['BROADCAST', 'DIGITAL', 'WIRE'])(*subscriber_types)
 
 
 def register_transmitter(transmitter_type, transmitter, errors):

@@ -12,8 +12,8 @@
 import re
 from superdesk.errors import ParserError
 from superdesk.io import Parser
-from superdesk.apps.archive.archive_media import generate_guid, GUID_TAG
-from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
+from superdesk.metadata.utils import generate_guid
+from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, GUID_TAG
 from superdesk.utc import utcnow
 
 

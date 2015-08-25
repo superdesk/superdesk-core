@@ -121,10 +121,3 @@ def get_app(config=None, media_storage=None):
         providers[key] = provider() if isinstance(provider, type) else provider
 
     return app
-
-if __name__ == '__main__':
-    debug = True
-    host = '0.0.0.0'
-    port = int(os.environ.get('PORT', '5000'))
-    app = get_app()
-    app.run(host=host, port=port, debug=debug, use_reloader=debug)

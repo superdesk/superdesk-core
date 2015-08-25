@@ -1,6 +1,0 @@
-Things to fix:
-- amazon data layer
-- macros
-- public api
-- AAP media archive data layer
-- superdesk/io/aap*/afp/reuters/dpa/

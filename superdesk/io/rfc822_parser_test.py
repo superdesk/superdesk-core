@@ -14,7 +14,7 @@ import os
 import superdesk
 from superdesk.io.rfc822 import rfc822Parser
 from superdesk.tests import TestCase, setup
-from superdesk.apps.users.services import UsersService
+from superdesk.users.services import UsersService
 
 
 class rfc822TestCase(TestCase):

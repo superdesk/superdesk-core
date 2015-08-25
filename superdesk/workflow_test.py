@@ -37,11 +37,6 @@ class WorkflowTestCase(tests.TestCase):
         self.assertIn('include', actions[0]['include_states'])
         self.assertIn('test-privilege', actions[0]['privileges'])
 
-        self.assertIn('spike', names(superdesk.get_workflow_actions(state='draft')))
-        self.assertNotIn('spike', names(superdesk.get_workflow_actions(state='spiked')))
-        self.assertIn('unspike', names(superdesk.get_workflow_actions(state='spiked')))
-        self.assertNotIn('unspike', names(superdesk.get_workflow_actions(state='draft')))
-
     def test_is_workflow_action_valid(self):
         superdesk.workflow_action(
             name='test_spike',

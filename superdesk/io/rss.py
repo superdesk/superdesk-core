@@ -12,17 +12,15 @@
 import feedparser
 import requests
 
-from superdesk.apps.archive.common import GUID_TAG
-from superdesk.apps.archive.common import generate_guid
-
 from calendar import timegm
 from collections import namedtuple
 from datetime import datetime
 
 from superdesk.errors import IngestApiError, ParserError
 from superdesk.io.ingest_service import IngestService
-from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
+from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, GUID_TAG
 from superdesk.utils import merge_dicts
+from superdesk.metadata.utils import generate_guid
 
 from urllib.parse import quote as urlquote, urlsplit, urlunsplit
 

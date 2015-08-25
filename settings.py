@@ -63,9 +63,6 @@ X_HEADERS = ['Content-Type', 'Authorization', 'If-Match']
 MONGO_DBNAME = env('MONGO_DBNAME', 'superdesk')
 MONGO_URI = env('MONGO_URI', 'mongodb://localhost/%s' % MONGO_DBNAME)
 
-LEGAL_ARCHIVE_DBNAME = env('LEGAL_ARCHIVE_DBNAME', 'legal_archive')
-LEGAL_ARCHIVE_URI = env('LEGAL_ARCHIVE_URI', 'mongodb://localhost/%s' % LEGAL_ARCHIVE_DBNAME)
-
 ELASTICSEARCH_URL = env('ELASTICSEARCH_URL', 'http://localhost:9200')
 ELASTICSEARCH_INDEX = env('ELASTICSEARCH_INDEX', 'superdesk')
 if env('ELASTIC_PORT'):
@@ -98,21 +95,9 @@ CELERYBEAT_SCHEDULE = {
         'task': 'superdesk.io.gc_ingest',
         'schedule': timedelta(minutes=5),
     },
-    'session:gc': {
-        'task': 'superdesk.apps.auth.session_purge',
-        'schedule': crontab(minute=20)
-    },
-    'spike:gc': {
-        'task': 'superdesk.apps.archive.content_purge',
-        'schedule': crontab(minute=30)
-    },
     'publish:transmit': {
         'task': 'superdesk.publish.transmit',
         'schedule': timedelta(seconds=10)
-    },
-    'publish:remove_expired': {
-        'task': 'superdesk.apps.publish.content_purge',
-        'schedule': crontab(minute=30)
     },
 }
 
@@ -120,13 +105,10 @@ SENTRY_DSN = env('SENTRY_DSN')
 SENTRY_INCLUDE_PATHS = ['superdesk']
 
 INSTALLED_APPS = [
-    'superdesk.apps.auth',
-    'superdesk.apps.auth.db',
-    'superdesk.apps.users',
     'superdesk.upload',
     'superdesk.notification',
     'superdesk.activity',
-    'superdesk.comments',
+    'superdesk.users',
 
     'superdesk.io',
     'superdesk.io.subjectcodes',
@@ -135,31 +117,6 @@ INSTALLED_APPS = [
     'superdesk.publish',
     'superdesk.commands',
     'superdesk.locators.locators',
-
-    'superdesk.apps.archive',
-    'superdesk.apps.legal_archive',
-    'superdesk.apps.stages',
-    'superdesk.apps.desks',
-    'superdesk.apps.tasks',
-    'superdesk.apps.preferences',
-    'superdesk.apps.spikes',
-    'superdesk.apps.groups',
-    'superdesk.apps.prepopulate',
-    'superdesk.apps.vocabularies',
-    'superdesk.apps.search',
-    'superdesk.apps.privilege',
-    'superdesk.apps.rules',
-    'superdesk.apps.highlights',
-    'superdesk.apps.publish',
-    'superdesk.apps.publish.publish_filters',
-    'superdesk.apps.dictionaries',
-    'superdesk.apps.duplication',
-    'superdesk.apps.spellcheck',
-    'superdesk.apps.templates',
-    'superdesk.apps.archived',
-    'superdesk.apps.validators',
-    'superdesk.apps.validate',
-    'superdesk.apps.workspace',
 ]
 
 RESOURCE_METHODS = ['GET', 'POST']

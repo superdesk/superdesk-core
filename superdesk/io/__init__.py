@@ -40,6 +40,11 @@ def init_app(app):
     service = IOErrorsService(endpoint_name, backend=superdesk.get_backend())
     IOErrorsResource(endpoint_name, app=app, service=service)
 
+    from .ingest import IngestResource, IngestService
+    endpoint_name = 'ingest'
+    service = IngestService(endpoint_name, backend=superdesk.get_backend())
+    IngestResource(endpoint_name, app=app, service=service)
+
 
 def register_provider(type, provider, errors):
     providers[type] = provider
@@ -124,7 +129,6 @@ import superdesk.io.newsml_2_0
 import superdesk.io.newsml_1_2
 import superdesk.io.wenn_parser
 import superdesk.io.teletype
-import superdesk.io.reuters
 import superdesk.io.email
 register_provider('search', None, [])
 

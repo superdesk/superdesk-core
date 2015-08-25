@@ -22,9 +22,6 @@ class RebuildIndexTestCase(TestCase):
         super().setUp()
         with self.app.app_context():
             data = [{'headline': 'test {}'.format(i), 'slugline': 'rebuild {}'.format(i),
-                     'type': 'text' if (i % 2 == 0) else 'picture'} for i in range(1, 11)]
-            get_resource_service('archive').post(data)
-            data = [{'headline': 'test {}'.format(i), 'slugline': 'rebuild {}'.format(i),
                      'type': 'text' if (i % 2 == 0) else 'picture'} for i in range(11, 21)]
             get_resource_service('ingest').post(data)
             RebuildElasticIndex().run()
@@ -35,9 +32,5 @@ class RebuildIndexTestCase(TestCase):
             req = ParsedRequest()
             req.args = {}
             req.max_results = 25
-
-            items = get_resource_service('archive').get(req, {})
-            self.assertEquals(10, items.count())
-
             items = get_resource_service('ingest').get(req, {})
             self.assertEquals(10, items.count())
