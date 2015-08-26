@@ -14,7 +14,6 @@ import os
 import json
 
 from datetime import timedelta
-from celery.schedules import crontab
 
 try:
     from urllib.parse import urlparse

@@ -20,9 +20,9 @@ REQUIREMENTS = [str(ir.req) for ir in parse_requirements('requirements.txt', ses
                 if not (getattr(ir, 'link', False) or getattr(ir, 'url', False))]
 
 setup(
-    name='Superdesk-Cire',
-    version='0.1-dev',
-    description='Superdesk Core REST API server',
+    name='Superdesk-Core',
+    version='0.0.1-dev',
+    description='Superdesk Core library',
     long_description=LONG_DESCRIPTION,
     author='petr jasek',
     author_email='petr.jasek@sourcefabric.org',
@@ -34,10 +34,6 @@ setup(
     install_requires=REQUIREMENTS,
     scripts=[
         'settings.py',
-        'app.py',
-        'wsgi.py',
-        'ws.py',
-        'manage.py'
     ],
     classifiers=[
         'Development Status :: 4 - Beta',
