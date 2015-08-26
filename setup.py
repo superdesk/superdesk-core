@@ -14,7 +14,7 @@ from setuptools import setup, find_packages
 from pip.req import parse_requirements
 from pip.download import PipSession
 
-SOURCE_FOLDER = 'superdesk'
+
 LONG_DESCRIPTION = open('README.md').read()
 REQUIREMENTS = [str(ir.req) for ir in parse_requirements('requirements.txt', session=PipSession())
                 if not (getattr(ir, 'link', False) or getattr(ir, 'url', False))]
@@ -29,8 +29,7 @@ setup(
     url='https://github.com/superdesk/superdesk-core',
     license='GPLv3',
     platforms=['any'],
-    package_dir={'': SOURCE_FOLDER},
-    packages=find_packages(SOURCE_FOLDER),
+    packages=find_packages(),
     install_requires=REQUIREMENTS,
     scripts=[
         'settings.py',
