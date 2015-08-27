@@ -1,0 +1,3 @@
+recursive-include superdesk *.json
+recursive-include superdesk *.txt
+recursive-include superdesk *.html
