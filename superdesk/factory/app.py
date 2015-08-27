@@ -26,6 +26,7 @@ from superdesk.validator import SuperdeskValidator
 from raven.contrib.flask import Sentry
 from superdesk.errors import SuperdeskError, SuperdeskApiError
 from superdesk.io import providers
+from superdesk.datalayer import SuperdeskDataLayer  # noqa
 from logging.handlers import SysLogHandler
 sentry = Sentry(register_signal=False, wrap_wsgi=False)
 
@@ -57,7 +58,7 @@ def get_app(config=None, media_storage=None):
     configure_logging(config)
 
     app = eve.Eve(
-        data=superdesk.SuperdeskDataLayer,
+        data=SuperdeskDataLayer,
         auth=TokenAuth,
         media=media_storage,
         settings=config,
