@@ -15,11 +15,11 @@ import unittest
 import elasticsearch
 import logging
 
-from superdesk.app import get_app
 from base64 import b64encode
 from flask import json
 from superdesk.notification_mock import setup_notification_mock, teardown_notification_mock
 from superdesk import get_resource_service
+from superdesk.factory import get_app
 from eve_elastic import get_es, get_indices
 
 test_user = {

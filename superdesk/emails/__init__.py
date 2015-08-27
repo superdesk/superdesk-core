@@ -10,7 +10,6 @@
 from eve.utils import config
 
 from flask.ext.mail import Message
-from settings import OrganizationNameAbbreviation, OrganizationName
 from superdesk.celery_app import celery
 from flask import current_app as app, render_template, render_template_string
 
@@ -92,11 +91,15 @@ def send_article_killed_email(article, recipients, trasmitted_at):
     headline = article.get('headline', '')
     trasmitted_at = article[config.LAST_UPDATED] if trasmitted_at is None else trasmitted_at
 
-    text_body = render_template("article_killed.txt", OrganizationNameAbbreviation=OrganizationNameAbbreviation,
-                                OrganizationName=OrganizationName, headline=headline, slugline=article.get('slugline'),
+    text_body = render_template("article_killed.txt",
+                                OrganizationNameAbbreviation=app.config['OrganizationNameAbbreviation'],
+                                OrganizationName=app.config['OrganizationName'], headline=headline,
+                                slugline=article.get('slugline'),
                                 trasmitted_at=trasmitted_at, app_name=app_name)
-    html_body = render_template("article_killed.html", OrganizationNameAbbreviation=OrganizationNameAbbreviation,
-                                OrganizationName=OrganizationName, headline=headline, slugline=article.get('slugline'),
+    html_body = render_template("article_killed.html",
+                                OrganizationNameAbbreviation=app.config['OrganizationNameAbbreviation'],
+                                OrganizationName=app.config['OrganizationName'], headline=headline,
+                                slugline=article.get('slugline'),
                                 trasmitted_at=trasmitted_at, app_name=app_name)
 
     send_email.delay(subject='Transmission from circuit: E_KILL_', sender=admins[0], recipients=recipients,

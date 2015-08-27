@@ -9,7 +9,6 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import superdesk
-from superdesk.io.ingest_provider_model import INGEST_EXPIRY_MINUTES
 from superdesk.errors import ProviderError
 
 
@@ -27,7 +26,7 @@ class AddProvider(superdesk.Command):
                     data = superdesk.json.loads(provider)
                     data.setdefault('name', data['type'])
                     data.setdefault('source', data['type'])
-                    data.setdefault('content_expiry', INGEST_EXPIRY_MINUTES)
+                    data.setdefault('content_expiry', superdesk.app.config['INGEST_EXPIRY_MINUTES'])
                     db = superdesk.get_db()
                     db['ingest_providers'].save(data)
                     return data

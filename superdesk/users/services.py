@@ -12,7 +12,6 @@ import flask
 import logging
 from flask import current_app as app
 from eve.utils import config
-from settings import OrganizationNameAbbreviation
 from superdesk.activity import add_activity, ACTIVITY_CREATE, ACTIVITY_UPDATE
 from superdesk.metadata.item import SIGN_OFF
 from superdesk.services import BaseService
@@ -311,7 +310,7 @@ class UsersService(BaseService):
         doc.setdefault('display_name', get_display_name(doc))
         doc.setdefault('is_enabled', doc.get('is_active'))
         doc.setdefault(SIGN_OFF, set_sign_off(doc))
-        doc['dateline_source'] = OrganizationNameAbbreviation
+        doc['dateline_source'] = app.config['OrganizationNameAbbreviation']
 
     def user_is_waiting_activation(self, doc):
         return doc.get('needs_activation', False)

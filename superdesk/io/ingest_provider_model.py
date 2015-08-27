@@ -16,7 +16,6 @@ from superdesk.services import BaseService
 from superdesk.io import allowed_providers
 from superdesk.activity import ACTIVITY_CREATE, ACTIVITY_EVENT, ACTIVITY_UPDATE, notify_and_add_activity
 from superdesk import get_resource_service
-from settings import INGEST_EXPIRY_MINUTES
 from superdesk.utc import utcnow
 from superdesk.notification import push_notification
 
@@ -25,94 +24,96 @@ logger = logging.getLogger(__name__)
 
 
 class IngestProviderResource(Resource):
-    schema = {
-        'name': {
-            'type': 'string',
-            'required': True
-        },
-        'type': {
-            'type': 'string',
-            'required': True,
-            'allowed': allowed_providers
-        },
-        'content_expiry': {
-            'type': 'integer',
-            'default': INGEST_EXPIRY_MINUTES
-        },
-        'config': {
-            'type': 'dict'
-        },
-        'ingested_count': {
-            'type': 'integer'
-        },
-        'accepted_count': {
-            'type': 'integer'
-        },
-        'token': {
-            'type': 'dict'
-        },
-        'source': {
-            'type': 'string',
-            'required': True,
-        },
-        'is_closed': {
-            'type': 'boolean',
-            'default': False
-        },
-        'update_schedule': {
-            'type': 'dict',
-            'schema': {
-                'hours': {'type': 'integer'},
-                'minutes': {'type': 'integer', 'default': 5},
-                'seconds': {'type': 'integer'},
-            }
-        },
-        'idle_time': {
-            'type': 'dict',
-            'schema': {
-                'hours': {'type': 'integer'},
-                'minutes': {'type': 'integer'},
-            }
-        },
-        'last_updated': {'type': 'datetime'},
-        'last_item_update': {'type': 'datetime'},
-        'rule_set': Resource.rel('rule_sets', nullable=True),
-        'notifications': {
-            'type': 'dict',
-            'schema': {
-                'on_update': {'type': 'boolean', 'default': True},
-                'on_close': {'type': 'boolean', 'default': True},
-                'on_open': {'type': 'boolean', 'default': True},
-                'on_error': {'type': 'boolean', 'default': True}
-            }
-        },
-        'routing_scheme': Resource.rel('routing_schemes', nullable=True),
-        'last_closed': {
-            'type': 'dict',
-            'schema': {
-                'closed_at': {'type': 'datetime'},
-                'closed_by': Resource.rel('users', nullable=True),
-                'message': {'type': 'string'}
-            }
-        },
-        'last_opened': {
-            'type': 'dict',
-            'schema': {
-                'opened_at': {'type': 'datetime'},
-                'opened_by': Resource.rel('users', nullable=True)
-            }
-        },
-        'critical_errors': {
-            'type': 'dict',
-            'keyschema': {
-                'type': 'boolean'
+
+    def __init__(self, endpoint_name, app, service, endpoint_schema=None):
+        self.schema = {
+            'name': {
+                'type': 'string',
+                'required': True
+            },
+            'type': {
+                'type': 'string',
+                'required': True,
+                'allowed': allowed_providers
+            },
+            'content_expiry': {
+                'type': 'integer',
+                'default': app.config['INGEST_EXPIRY_MINUTES']
+            },
+            'config': {
+                'type': 'dict'
+            },
+            'ingested_count': {
+                'type': 'integer'
+            },
+            'accepted_count': {
+                'type': 'integer'
+            },
+            'token': {
+                'type': 'dict'
+            },
+            'source': {
+                'type': 'string',
+                'required': True,
+            },
+            'is_closed': {
+                'type': 'boolean',
+                'default': False
+            },
+            'update_schedule': {
+                'type': 'dict',
+                'schema': {
+                    'hours': {'type': 'integer'},
+                    'minutes': {'type': 'integer', 'default': 5},
+                    'seconds': {'type': 'integer'},
+                }
+            },
+            'idle_time': {
+                'type': 'dict',
+                'schema': {
+                    'hours': {'type': 'integer'},
+                    'minutes': {'type': 'integer'},
+                }
+            },
+            'last_updated': {'type': 'datetime'},
+            'last_item_update': {'type': 'datetime'},
+            'rule_set': Resource.rel('rule_sets', nullable=True),
+            'notifications': {
+                'type': 'dict',
+                'schema': {
+                    'on_update': {'type': 'boolean', 'default': True},
+                    'on_close': {'type': 'boolean', 'default': True},
+                    'on_open': {'type': 'boolean', 'default': True},
+                    'on_error': {'type': 'boolean', 'default': True}
+                }
+            },
+            'routing_scheme': Resource.rel('routing_schemes', nullable=True),
+            'last_closed': {
+                'type': 'dict',
+                'schema': {
+                    'closed_at': {'type': 'datetime'},
+                    'closed_by': Resource.rel('users', nullable=True),
+                    'message': {'type': 'string'}
+                }
+            },
+            'last_opened': {
+                'type': 'dict',
+                'schema': {
+                    'opened_at': {'type': 'datetime'},
+                    'opened_by': Resource.rel('users', nullable=True)
+                }
+            },
+            'critical_errors': {
+                'type': 'dict',
+                'keyschema': {
+                    'type': 'boolean'
+                }
             }
         }
-    }
-
-    item_methods = ['GET', 'PATCH', 'DELETE']
-    privileges = {'POST': 'ingest_providers', 'PATCH': 'ingest_providers', 'DELETE': 'ingest_providers'}
-    etag_ignore_fields = ['last_updated', 'last_item_update', 'last_closed', 'last_opened']
+        self.item_methods = ['GET', 'PATCH', 'DELETE']
+        self.privileges = {'POST': 'ingest_providers', 'PATCH': 'ingest_providers', 'DELETE': 'ingest_providers'}
+        self.etag_ignore_fields = ['last_updated', 'last_item_update', 'last_closed', 'last_opened']
+        super().__init__(endpoint_name, app, service, endpoint_schema=endpoint_schema)
 
 
 class IngestProviderService(BaseService):
@@ -138,7 +139,7 @@ class IngestProviderService(BaseService):
     def on_create(self, docs):
         for doc in docs:
             if doc.get('content_expiry', 0) == 0:
-                doc['content_expiry'] = INGEST_EXPIRY_MINUTES
+                doc['content_expiry'] = app.config['INGEST_EXPIRY_MINUTES']
                 self._set_provider_status(doc, doc.get('last_closed', {}).get('message', ''))
 
     def on_created(self, docs):
@@ -152,7 +153,7 @@ class IngestProviderService(BaseService):
 
     def on_update(self, updates, original):
         if updates.get('content_expiry') == 0:
-            updates['content_expiry'] = INGEST_EXPIRY_MINUTES
+            updates['content_expiry'] = app.config['INGEST_EXPIRY_MINUTES']
         if 'is_closed' in updates and original.get('is_closed', False) != updates.get('is_closed'):
             self._set_provider_status(updates, updates.get('last_closed', {}).get('message', ''))
 

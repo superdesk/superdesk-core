@@ -10,7 +10,7 @@
 
 
 import os
-import unittest
+from superdesk.tests import TestCase
 
 from superdesk.io.iptc7901 import Iptc7901FileParser
 
@@ -20,7 +20,7 @@ def fixture(filename):
     return os.path.join(dirname, 'fixtures', filename)
 
 
-class IptcTestCase(unittest.TestCase):
+class IptcTestCase(TestCase):
 
     parser = Iptc7901FileParser()
 
@@ -28,13 +28,14 @@ class IptcTestCase(unittest.TestCase):
         return self.parser.parse_file(fixture(filename))
 
     def test_open_iptc7901_file(self):
-        item = self.open('IPTC7901.txt')
-        self.assertEqual('preformatted', item['type'])
-        self.assertEqual('062', item['ingest_provider_sequence'])
-        self.assertEqual('i', item['anpa_category'][0]['qcode'])
-        self.assertEqual(211, item['word_count'])
-        self.assertEqual('Germany Social Democrats: Coalition talks with Merkel could fail =', item['headline'])
-        self.assertRegex(item['body_html'], '^\n   Berlin')
-        self.assertEqual('Germany-politics', item['slugline'])
-        self.assertEquals('R', item['priority'])
-        self.assertEquals([{'qcode': 'i'}], item['anpa_category'])
+        with self.app.app_context():
+            item = self.open('IPTC7901.txt')
+            self.assertEqual('preformatted', item['type'])
+            self.assertEqual('062', item['ingest_provider_sequence'])
+            self.assertEqual('i', item['anpa_category'][0]['qcode'])
+            self.assertEqual(211, item['word_count'])
+            self.assertEqual('Germany Social Democrats: Coalition talks with Merkel could fail =', item['headline'])
+            self.assertRegex(item['body_html'], '^\n   Berlin')
+            self.assertEqual('Germany-politics', item['slugline'])
+            self.assertEquals('R', item['priority'])
+            self.assertEquals([{'qcode': 'i'}], item['anpa_category'])

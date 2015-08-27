@@ -10,7 +10,7 @@
 
 from datetime import datetime
 from uuid import uuid4
-from settings import SERVER_DOMAIN
+from flask import current_app as app
 from .item import GUID_TAG, GUID_NEWSML, GUID_FIELD
 
 
@@ -46,7 +46,7 @@ def generate_guid(**hints):
     t = datetime.today()
 
     if hints['type'].lower() == GUID_TAG:
-        return tag_guid_format % {'domain': SERVER_DOMAIN, 'year': t.year, 'identifier': hints['id']}
+        return tag_guid_format % {'domain': app.config['SERVER_DOMAIN'], 'year': t.year, 'identifier': hints['id']}
     elif hints['type'].lower() == GUID_NEWSML:
-        return newsml_guid_format % {'domain': SERVER_DOMAIN, 'timestamp': t.isoformat(), 'identifier': hints['id']}
+        return newsml_guid_format % {'domain': app.config['SERVER_DOMAIN'], 'timestamp': t.isoformat(), 'identifier': hints['id']}
     return None

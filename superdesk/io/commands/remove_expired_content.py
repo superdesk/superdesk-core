@@ -13,7 +13,6 @@ import superdesk
 from datetime import timedelta
 from superdesk.utc import utcnow
 from superdesk.notification import push_notification
-from superdesk.io.ingest_provider_model import INGEST_EXPIRY_MINUTES
 from superdesk.errors import ProviderError
 from superdesk.stats import stats
 
@@ -50,7 +49,7 @@ superdesk.command('ingest:clean_expired', RemoveExpiredContent())
 def remove_expired_data(provider):
     """Remove expired data for provider"""
     print('Removing expired content for provider: %s' % provider.get('_id', 'Detached items'))
-    minutes_to_keep_content = provider.get('content_expiry', INGEST_EXPIRY_MINUTES)
+    minutes_to_keep_content = provider.get('content_expiry', superdesk.app.config['INGEST_EXPIRY_MINUTES'])
     expiration_date = utcnow() - timedelta(minutes=minutes_to_keep_content)
     ingest_service = superdesk.get_resource_service('ingest')
 

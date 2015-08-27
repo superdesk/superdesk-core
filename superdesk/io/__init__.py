@@ -26,7 +26,6 @@ logger = logging.getLogger(__name__)
 
 from .commands.remove_expired_content import RemoveExpiredContent
 from .commands.update_ingest import UpdateIngest
-from .commands.add_provider import AddProvider  # NOQA
 
 
 def init_app(app):
@@ -44,6 +43,7 @@ def init_app(app):
     endpoint_name = 'ingest'
     service = IngestService(endpoint_name, backend=superdesk.get_backend())
     IngestResource(endpoint_name, app=app, service=service)
+    from .commands.add_provider import AddProvider  # NOQA
 
 
 def register_provider(type, provider, errors):

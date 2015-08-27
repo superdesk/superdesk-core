@@ -13,7 +13,6 @@ import logging
 import superdesk
 
 from flask import current_app as app
-from settings import INGEST_EXPIRY_MINUTES
 from datetime import timedelta, timezone, datetime
 from werkzeug.exceptions import HTTPException
 
@@ -93,7 +92,7 @@ def filter_expired_items(provider, items):
         return False
 
     try:
-        delta = timedelta(minutes=provider.get('content_expiry', INGEST_EXPIRY_MINUTES))
+        delta = timedelta(minutes=provider.get('content_expiry', app.config['INGEST_EXPIRY_MINUTES']))
         return [item for item in items if is_not_expired(item)]
     except Exception as ex:
         raise ProviderError.providerFilterExpiredContentError(ex, provider)
@@ -333,7 +332,7 @@ def ingest_item(item, provider, rule_set=None, routing_scheme=None):
         item['ingest_provider'] = str(provider[superdesk.config.ID_FIELD])
         item.setdefault('source', provider.get('source', ''))
         set_default_state(item, STATE_INGESTED)
-        item['expiry'] = get_expiry_date(provider.get('content_expiry', INGEST_EXPIRY_MINUTES),
+        item['expiry'] = get_expiry_date(provider.get('content_expiry', app.config['INGEST_EXPIRY_MINUTES']),
                                          item.get('versioncreated'))
 
         if 'anpa_category' in item:

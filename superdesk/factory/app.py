@@ -11,11 +11,10 @@
 
 
 import os
-import logging
 import importlib
 import jinja2
 import eve
-import settings
+import superdesk.factory.settings
 import superdesk
 from flask.ext.mail import Mail
 from eve.io.mongo import MongoJSONEncoder
@@ -33,10 +32,7 @@ sentry = Sentry(register_signal=False, wrap_wsgi=False)
 
 def configure_logging(config):
     sys_handler = SysLogHandler(address=(config['LOG_SERVER_ADDRESS'], config['LOG_SERVER_PORT']))
-    logging.basicConfig(handlers=[logging.StreamHandler(), sys_handler])
-    logger = logging.getLogger('superdesk')
-    logger.setLevel(logging.INFO)
-    return logger
+    superdesk.logger.addHandler(sys_handler)
 
 
 def get_app(config=None, media_storage=None):
@@ -50,15 +46,15 @@ def get_app(config=None, media_storage=None):
 
     config['APP_ABSPATH'] = os.path.abspath(os.path.dirname(__file__))
 
-    for key in dir(settings):
+    for key in dir(superdesk.factory.settings):
         if key.isupper():
-            config.setdefault(key, getattr(settings, key))
+            config.setdefault(key, getattr(superdesk.factory.settings, key))
 
     if media_storage is None:
         media_storage = SuperdeskGridFSMediaStorage
 
     config['DOMAIN'] = {}
-    logger = configure_logging(config)
+    configure_logging(config)
 
     app = eve.Eve(
         data=superdesk.SuperdeskDataLayer,
@@ -90,7 +86,7 @@ def get_app(config=None, media_storage=None):
     def server_error_handler(error):
         """Log server errors."""
         app.sentry.captureException()
-        logger.exception(error)
+        superdesk.logger.exception(error)
         return_error = SuperdeskApiError.internalError()
         return client_error_handler(return_error)
 
