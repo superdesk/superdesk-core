@@ -87,12 +87,12 @@ def drop_mongo(app):
             pass
 
 
-def setup(context=None, config=None):
+def setup(context=None, config=None, app_factory=get_app):
     app_config = get_test_settings()
     if config:
         app_config.update(config)
 
-    app = get_app(app_config)
+    app = app_factory(app_config)
     logger = logging.getLogger('superdesk')
     logger.setLevel(logging.ERROR)
     logger = logging.getLogger('elasticsearch')
@@ -170,7 +170,7 @@ def teardown_notification(context):
 
 class TestCase(unittest.TestCase):
     def setUp(self):
-        setup(self)
+        setup(self, app_factory=get_app)
 
     def get_fixture_path(self, filename):
         rootpath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
