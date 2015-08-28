@@ -48,5 +48,7 @@ def generate_guid(**hints):
     if hints['type'].lower() == GUID_TAG:
         return tag_guid_format % {'domain': app.config['SERVER_DOMAIN'], 'year': t.year, 'identifier': hints['id']}
     elif hints['type'].lower() == GUID_NEWSML:
-        return newsml_guid_format % {'domain': app.config['SERVER_DOMAIN'], 'timestamp': t.isoformat(), 'identifier': hints['id']}
+        return newsml_guid_format % {'domain': app.config['SERVER_DOMAIN'],
+                                     'timestamp': t.isoformat(),
+                                     'identifier': hints['id']}
     return None

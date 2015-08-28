@@ -45,7 +45,8 @@ def get_app(config=None, media_storage=None):
     if config is None:
         config = {}
 
-    config.setdefault('APP_ABSPATH', os.path.abspath(os.path.dirname(__file__)))
+    abs_path = os.path.abspath(os.path.dirname(__file__))
+    config.setdefault('APP_ABSPATH', abs_path)
 
     for key in dir(superdesk.factory.settings):
         if key.isupper():
@@ -69,7 +70,7 @@ def get_app(config=None, media_storage=None):
 
     custom_loader = jinja2.ChoiceLoader([
         app.jinja_loader,
-        jinja2.FileSystemLoader(['superdesk/templates'])
+        jinja2.FileSystemLoader([abs_path + '/../templates'])
     ])
     app.jinja_loader = custom_loader
 
