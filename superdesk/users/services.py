@@ -310,7 +310,7 @@ class UsersService(BaseService):
         doc.setdefault('display_name', get_display_name(doc))
         doc.setdefault('is_enabled', doc.get('is_active'))
         doc.setdefault(SIGN_OFF, set_sign_off(doc))
-        doc['dateline_source'] = app.config['OrganizationNameAbbreviation']
+        doc['dateline_source'] = app.config['ORGANIZATION_NAME_ABBREVIATION']
 
     def user_is_waiting_activation(self, doc):
         return doc.get('needs_activation', False)

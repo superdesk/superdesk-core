@@ -92,13 +92,13 @@ def send_article_killed_email(article, recipients, trasmitted_at):
     trasmitted_at = article[config.LAST_UPDATED] if trasmitted_at is None else trasmitted_at
 
     text_body = render_template("article_killed.txt",
-                                OrganizationNameAbbreviation=app.config['OrganizationNameAbbreviation'],
-                                OrganizationName=app.config['OrganizationName'], headline=headline,
+                                OrganizationNameAbbreviation=app.config['ORGANIZATION_NAME_ABBREVIATION'],
+                                OrganizationName=app.config['ORGANIZATION_NAME'], headline=headline,
                                 slugline=article.get('slugline'),
                                 trasmitted_at=trasmitted_at, app_name=app_name)
     html_body = render_template("article_killed.html",
-                                OrganizationNameAbbreviation=app.config['OrganizationNameAbbreviation'],
-                                OrganizationName=app.config['OrganizationName'], headline=headline,
+                                OrganizationNameAbbreviation=app.config['ORGANIZATION_NAME_ABBREVIATION'],
+                                OrganizationName=app.config['ORGANIZATION_NAME'], headline=headline,
                                 slugline=article.get('slugline'),
                                 trasmitted_at=trasmitted_at, app_name=app_name)
 

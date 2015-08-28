@@ -203,5 +203,5 @@ ODBC_TEST_CONNECTION_STRING = env('ODBC_TEST_CONNECTION_STRING',
 NEWSML_PROVIDER_ID = env('NEWSML_PROVIDER_ID', 'sourcefabric.org')
 
 # TODO(Adrian): find a better default
-OrganizationName = "Superdesk Powered Press"
-OrganizationNameAbbreviation = "SPP"
+ORGANIZATION_NAME = "Superdesk Powered Press"
+ORGANIZATION_NAME_ABBREVIATION = "SPP"
