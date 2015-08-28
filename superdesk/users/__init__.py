@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from .users import RolesResource, UsersResource
-from .services import DBUsersService, RolesService, is_admin  # noqa
+from .services import UsersService, DBUsersService, RolesService, is_admin  # noqa
 import superdesk
 
 
