@@ -45,7 +45,7 @@ def get_app(config=None, media_storage=None):
     if config is None:
         config = {}
 
-    config['APP_ABSPATH'] = os.path.abspath(os.path.dirname(__file__))
+    config.setdefault('APP_ABSPATH', os.path.abspath(os.path.dirname(__file__)))
 
     for key in dir(superdesk.factory.settings):
         if key.isupper():
@@ -54,7 +54,7 @@ def get_app(config=None, media_storage=None):
     if media_storage is None:
         media_storage = SuperdeskGridFSMediaStorage
 
-    config['DOMAIN'] = {}
+    config.setdefault('DOMAIN', {})
     configure_logging(config)
 
     app = eve.Eve(
