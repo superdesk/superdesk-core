@@ -220,6 +220,8 @@ def process_anpa_category(item, provider):
                     if anpa_category['is_active'] is True \
                             and item_category['qcode'].lower() == anpa_category['qcode'].lower():
                         item_category['name'] = anpa_category['name']
+                        # make the case of the qcode match what we hold in our dictionary
+                        item_category['qcode'] = anpa_category['qcode']
                         break
     except Exception as ex:
         raise ProviderError.anpaError(ex, provider)
