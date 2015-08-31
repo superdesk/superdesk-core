@@ -119,3 +119,13 @@ def json_serialize_datetime_objectId(obj):
 
     if isinstance(obj, ObjectId):
         return str(obj)
+
+
+def compare_preferences(original, updates):
+    original_keys = set(original.keys())
+    updates_keys = set(updates.keys())
+    intersect_keys = original_keys.intersection(updates_keys)
+    added = updates_keys - original_keys
+    removed = original_keys - updates_keys
+    modified = {o: (original[o], updates[o]) for o in intersect_keys if original[o] != updates[o]}
+    return added, removed, modified

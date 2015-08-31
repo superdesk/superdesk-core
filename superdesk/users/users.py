@@ -14,29 +14,6 @@ from superdesk.metadata.item import BYLINE, SIGN_OFF
 from superdesk.resource import Resource
 
 
-class RolesResource(Resource):
-    schema = {
-        'name': {
-            'type': 'string',
-            'iunique': True,
-            'required': True,
-        },
-        'description': {
-            'type': 'string'
-        },
-        'privileges': {
-            'type': 'dict'
-        },
-        'is_default': {
-            'type': 'boolean'
-        },
-    }
-    datasource = {
-        'default_sort': [('_created', -1)]
-    }
-    privileges = {'POST': 'roles', 'DELETE': 'roles', 'PATCH': 'roles'}
-
-
 class UsersResource(Resource):
 
     def __init__(self, endpoint_name, app, service, endpoint_schema=None):

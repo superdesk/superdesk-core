@@ -15,7 +15,7 @@ from eve.utils import config
 from superdesk.activity import add_activity, ACTIVITY_CREATE, ACTIVITY_UPDATE
 from superdesk.metadata.item import SIGN_OFF
 from superdesk.services import BaseService
-from superdesk.utils import is_hashed, get_hash
+from superdesk.utils import is_hashed, get_hash, compare_preferences
 from superdesk import get_resource_service
 from superdesk.emails import send_user_status_changed_email, send_activate_account_email
 from superdesk.utc import utcnow
@@ -23,7 +23,6 @@ from superdesk.privilege import get_privilege_list
 from superdesk.errors import SuperdeskApiError
 from superdesk.users.errors import UserInactiveError
 from superdesk.notification import push_notification
-import superdesk
 
 logger = logging.getLogger(__name__)
 
@@ -90,16 +89,6 @@ def get_invisible_stages(user):
     user_desks = get_resource_service('user_desks').get(req=None, lookup={'user_id': user['_id']})
     user_desk_ids = [d['_id'] for d in user_desks]
     return get_resource_service('stages').get_stages_by_visibility(False, user_desk_ids)
-
-
-def compare_preferences(original, updates):
-    original_keys = set(original.keys())
-    updates_keys = set(updates.keys())
-    intersect_keys = original_keys.intersection(updates_keys)
-    added = updates_keys - original_keys
-    removed = original_keys - updates_keys
-    modified = {o: (original[o], updates[o]) for o in intersect_keys if original[o] != updates[o]}
-    return added, removed, modified
 
 
 def set_sign_off(user):
@@ -407,61 +396,3 @@ class DBUsersService(UsersService):
 
         super().on_deleted(doc)
         get_resource_service('reset_user_password').remove_all_tokens_for_email(doc.get('email'))
-
-
-class RolesService(BaseService):
-
-    def on_update(self, updates, original):
-        if updates.get('is_default'):
-            # if we are updating the role that is already default that is OK
-            if original.get('is_default'):
-                return
-            self.remove_old_default()
-
-    def on_create(self, docs):
-        for doc in docs:
-            # if this new one is default need to remove the old default
-            if doc.get('is_default'):
-                self.remove_old_default()
-
-    def on_delete(self, docs):
-        if docs.get('is_default'):
-            raise SuperdeskApiError.forbiddenError('Cannot delete the default role')
-        # check if there are any users in the role
-        user = get_resource_service('users').find_one(req=None, role=docs.get('_id'))
-        if user:
-            raise SuperdeskApiError.forbiddenError('Cannot delete the role, it still has users in it!')
-
-    def remove_old_default(self):
-        # see if there is already a default role and set it to no longer default
-        role_id = self.get_default_role_id()
-        # make it no longer default
-        if role_id:
-            role = self.find_one(req=None, is_default=True)
-            get_resource_service('roles').update(role_id, {"is_default": False}, role)
-
-    def get_default_role_id(self):
-        role = self.find_one(req=None, is_default=True)
-        return role.get('_id') if role is not None else None
-
-    def on_updated(self, updates, role):
-        self.__send_notification(updates, role)
-
-    def __send_notification(self, updates, role):
-        role_id = role['_id']
-
-        role_users = superdesk.get_resource_service('users').get_users_by_role(role_id)
-        notified_users = [user['_id'] for user in role_users]
-
-        if 'privileges' in updates:
-            added, removed, modified = compare_preferences(role.get('privileges', {}), updates['privileges'])
-            if len(removed) > 0 or (1, 0) in modified.values():
-                push_notification('role_privileges_revoked', updated=1, role_id=str(role_id))
-            if len(added) > 0:
-                add_activity(ACTIVITY_UPDATE,
-                             'role {{role}} is granted new privileges: Please re-login.',
-                             self.datasource,
-                             notify=notified_users,
-                             role=role.get('name'))
-        else:
-            push_notification('role', updated=1, user_id=str(role_id))

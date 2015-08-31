@@ -107,6 +107,7 @@ INSTALLED_APPS = [
     'superdesk.upload',
     'superdesk.notification',
     'superdesk.activity',
+    'superdesk.roles',
     'superdesk.users',
 
     'superdesk.io',

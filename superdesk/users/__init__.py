@@ -8,8 +8,8 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from .users import RolesResource, UsersResource
-from .services import UsersService, DBUsersService, RolesService, is_admin  # noqa
+from .users import UsersResource
+from .services import UsersService, DBUsersService, is_admin  # noqa
 import superdesk
 
 
@@ -18,12 +18,7 @@ def init_app(app):
     service = DBUsersService(endpoint_name, backend=superdesk.get_backend())
     UsersResource(endpoint_name, app=app, service=service)
 
-    endpoint_name = 'roles'
-    service = RolesService(endpoint_name, backend=superdesk.get_backend())
-    RolesResource(endpoint_name, app=app, service=service)
-
     superdesk.privilege(name='users', label='User Management', description='User can manage users.')
-    superdesk.privilege(name='roles', label='Roles Management', description='User can manage roles.')
 
     # Registering with intrinsic privileges because: A user should be allowed to update their own profile.
     superdesk.intrinsic_privilege(resource_name='users', method=['PATCH'])
