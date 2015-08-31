@@ -79,7 +79,8 @@ def drop_mongo(app):
     with app.app_context():
         try:
             app.data.mongo.pymongo(prefix='MONGO').cx.drop_database(app.config['MONGO_DBNAME'])
-            app.data.mongo.pymongo(prefix='LEGAL_ARCHIVE').cx.drop_database(app.config['LEGAL_ARCHIVE_DBNAME'])
+            if app.config.get('LEGAL_ARCHIVE_DBNAME'):
+                app.data.mongo.pymongo(prefix='LEGAL_ARCHIVE').cx.drop_database(app.config['LEGAL_ARCHIVE_DBNAME'])
         except pymongo.errors.ConnectionFailure:
             raise ValueError('Invalid mongo config or server is down (uri=%s db=%s)' %
                              (app.config['MONGO_URI'], app.config['MONGO_DBNAME']))
