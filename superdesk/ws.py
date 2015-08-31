@@ -121,7 +121,7 @@ def create_server(config):
     loop.add_signal_handler(signal.SIGTERM, stop)
 
     try:
-        log('initializing heartbeat...')
+        log(logger, 'initializing heartbeat...')
         asyncio.async(send_heartbeat(factory, loop))
 
         log(logger, 'listening on {0}:{1}'.format(config['WS_HOST'], config['WS_PORT']))
@@ -130,3 +130,13 @@ def create_server(config):
         pass
     finally:
         stop()
+
+
+if __name__ == '__main__':
+    config = {
+        'WS_HOST': '0.0.0.0',
+        'WS_PORT': '5100',
+        'LOG_SERVER_ADDRESS': 'localhost',
+        'LOG_SERVER_PORT': '5555'
+    }
+    create_server(config)
