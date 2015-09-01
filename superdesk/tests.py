@@ -77,15 +77,19 @@ def drop_elastic(app):
 
 def drop_mongo(app):
     with app.app_context():
-        try:
-            app.data.mongo.pymongo(prefix='MONGO').cx.drop_database(app.config['MONGO_DBNAME'])
-            if app.config.get('LEGAL_ARCHIVE_DBNAME'):
-                app.data.mongo.pymongo(prefix='LEGAL_ARCHIVE').cx.drop_database(app.config['LEGAL_ARCHIVE_DBNAME'])
-        except pymongo.errors.ConnectionFailure:
-            raise ValueError('Invalid mongo config or server is down (uri=%s db=%s)' %
-                             (app.config['MONGO_URI'], app.config['MONGO_DBNAME']))
-        except AttributeError:
-            pass
+        drop_mongo_db(app, 'MONGO', 'MONGO_DBNAME')
+        drop_mongo_db(app, 'LEGAL_ARCHIVE', 'LEGAL_ARCHIVE_DBNAME')
+
+
+def drop_mongo_db(app, db_prefix, dbname):
+    try:
+        if app.config.get(dbname):
+            app.data.mongo.pymongo(prefix=db_prefix).cx.drop_database(app.config[dbname])
+    except pymongo.errors.ConnectionFailure:
+        raise ValueError('Invalid mongo config or server is down (uri=%s db=%s)' %
+                         (app.config[db_prefix], app.config[dbname]))
+    except AttributeError:
+        pass
 
 
 def setup(context=None, config=None, app_factory=get_app):
