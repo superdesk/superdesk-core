@@ -29,7 +29,7 @@ setup(
     url='https://github.com/superdesk/superdesk-core',
     license='GPLv3',
     platforms=['any'],
-    packages=find_packages(),
+    packages=find_packages(exclude=['tests']),
     install_requires=REQUIREMENTS,
     classifiers=[
         'Development Status :: 4 - Beta',
