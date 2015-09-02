@@ -350,14 +350,14 @@ def ingest_item(item, provider, rule_set=None, routing_scheme=None):
         if item.get('ingest_provider_sequence') is None:
             ingest_service.set_ingest_provider_sequence(item, provider)
 
+        old_item = ingest_service.find_one(guid=item[GUID_FIELD], req=None)
+
         rend = item.get('renditions', {})
         if rend:
             baseImageRend = rend.get('baseImage') or next(iter(rend.values()))
             if baseImageRend:
                 href = providers[provider.get('type')].prepare_href(baseImageRend['href'])
-                update_renditions(item, href)
-
-        old_item = ingest_service.find_one(guid=item[GUID_FIELD], req=None)
+                update_renditions(item, href, old_item)
 
         if old_item:
             # In case we already have the item, preserve the _id
@@ -382,11 +382,32 @@ def ingest_item(item, provider, rule_set=None, routing_scheme=None):
     return True
 
 
-def update_renditions(item, href):
+def update_renditions(item, href, old_item):
+    """
+    If the old_item has renditions uploaded in to media then the old rendition details are
+    assigned to the item, this avoids repeatedly downloading the same image and leaving the media entries orphaned.
+    If there is no old_item the original is downloaded and renditions are
+    generated.
+    :param item: parsed item from source
+    :param href: reference to original
+    :param old_item: the item that we have already injested, if it exists
+    :return: item with renditions
+    """
     inserted = []
     try:
+        # If there is an existing set of renditions we keep those
+        if old_item:
+            media = old_item.get('renditions', {}).get('original', {}).get('media', {})
+            if media:
+                item['renditions'] = old_item['renditions']
+                item['mimetype'] = old_item.get('mimetype')
+                item['filemeta'] = old_item.get('filemeta')
+                logger.info("Reuters image not updated for GUID:{}".format(item[GUID_FIELD]))
+                return
+
         content, filename, content_type = download_file_from_url(href)
         file_type, ext = content_type.split('/')
+
         metadata = process_file(content, file_type)
         file_guid = app.media.put(content, filename, content_type, metadata)
         inserted.append(file_guid)
