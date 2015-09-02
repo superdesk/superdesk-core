@@ -20,17 +20,15 @@ class RebuildIndexTestCase(TestCase):
 
     def setUp(self):
         super().setUp()
-        with self.app.app_context():
-            data = [{'headline': 'test {}'.format(i), 'slugline': 'rebuild {}'.format(i),
-                     'type': 'text' if (i % 2 == 0) else 'picture'} for i in range(11, 21)]
-            get_resource_service('ingest').post(data)
-            RebuildElasticIndex().run()
-            sleep(1)  # sleep so Elastic has time to refresh the indexes
+        data = [{'headline': 'test {}'.format(i), 'slugline': 'rebuild {}'.format(i),
+                 'type': 'text' if (i % 2 == 0) else 'picture'} for i in range(11, 21)]
+        get_resource_service('ingest').post(data)
+        RebuildElasticIndex().run()
+        sleep(1)  # sleep so Elastic has time to refresh the indexes
 
     def test_retrieve_items_after_index_rebuilt(self):
-        with self.app.app_context():
-            req = ParsedRequest()
-            req.args = {}
-            req.max_results = 25
-            items = get_resource_service('ingest').get(req, {})
-            self.assertEquals(10, items.count())
+        req = ParsedRequest()
+        req.args = {}
+        req.max_results = 25
+        items = get_resource_service('ingest').get(req, {})
+        self.assertEquals(10, items.count())

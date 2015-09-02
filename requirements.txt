@@ -1,4 +1,4 @@
-Cerberus==0.8.1
+Cerberus==0.9.1
 Events==0.2.1
 Eve-Elastic==0.2.18
 Flask==0.10.1
@@ -36,5 +36,6 @@ simplejson==3.6.5
 six==1.9.0
 statsd==3.1
 httmock==1.2.3
+boto3==1.0.0
 
-git+git://github.com/superdesk/eve@sync-develop-24-june#egg=Eve==0.6.0-dev
+git+git://github.com/superdesk/eve@986ed99#egg=Eve==0.6.0-dev
