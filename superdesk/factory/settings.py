@@ -125,6 +125,13 @@ EXTENDED_MEDIA_INFO = ['content_type', 'name', 'length']
 RETURN_MEDIA_AS_BASE64_STRING = False
 VERSION = '_current_version'
 
+AMAZON_CONTAINER_NAME = env('AMAZON_CONTAINER_NAME', '')
+AMAZON_ACCESS_KEY_ID = env('AMAZON_ACCESS_KEY_ID', '')
+AMAZON_SECRET_ACCESS_KEY = env('AMAZON_SECRET_ACCESS_KEY', '')
+AMAZON_REGION = env('AMAZON_REGION', 'us-east-1')
+AMAZON_SERVE_DIRECT_LINKS = env('AMAZON_SERVE_DIRECT_LINKS', False)
+AMAZON_S3_USE_HTTPS = env('AMAZON_S3_USE_HTTPS', False)
+
 RENDITIONS = {
     'picture': {
         'thumbnail': {'width': 220, 'height': 120},

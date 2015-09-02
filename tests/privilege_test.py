@@ -10,7 +10,7 @@
 
 
 from nose.tools import raises
-from .tests import TestCase
+from superdesk.tests import TestCase
 from superdesk.privilege import privilege, get_privilege_list, _privileges
 
 

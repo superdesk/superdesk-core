@@ -174,8 +174,15 @@ def teardown_notification(context):
 
 
 class TestCase(unittest.TestCase):
+
     def setUp(self):
         setup(self, app_factory=get_app)
+        self.ctx = self.app.app_context()
+        self.ctx.push()
+
+    def tearDown(self):
+        if hasattr(self, 'ctx'):
+            self.ctx.pop()
 
     def get_fixture_path(self, filename):
         rootpath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))

@@ -16,7 +16,7 @@ import tempfile
 import unittest
 
 from superdesk.utc import utcnow
-from .ftp import FTPService
+from superdesk.io.ftp import FTPService
 
 
 PREFIX = 'test_superdesk_'
