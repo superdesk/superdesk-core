@@ -83,6 +83,8 @@ class NewsMLTwoParser(Parser):
             if elem is not None:
                 if dest == 'dateline':
                     self.set_dateline(item, city=elem.text)
+                elif dest == 'urgency':
+                    item[dest] = int(elem.text)
                 else:
                     item[dest] = elem.text
 

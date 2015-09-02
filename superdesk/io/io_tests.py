@@ -75,7 +75,7 @@ class TextParserTest(ItemTest):
         self.assertEquals("Editorial Note", self.item.get('ednote'))
 
     def test_parse_content_meta(self):
-        self.assertEquals('3', self.item.get('urgency'))
+        self.assertEquals(3, self.item.get('urgency'))
         self.assertEquals("SOCCER-ENGLAND/CHELSEA-BENITEZ", self.item["slugline"])
         self.assertEquals("Soccer-Smiling Benitez pleads for support "
                           "after midweek outburst against opponent", self.item["headline"])
