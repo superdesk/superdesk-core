@@ -11,8 +11,8 @@
 
 import superdesk
 from bson import ObjectId
-from .tests import TestCase
-from .datalayer import SuperdeskJSONEncoder
+from superdesk.tests import TestCase
+from superdesk.datalayer import SuperdeskJSONEncoder
 
 
 class DatalayerTestCase(TestCase):

@@ -11,7 +11,7 @@
 
 import os
 from superdesk.tests import TestCase
-from .image import get_meta
+from superdesk.media.image import get_meta
 
 
 class ExifMetaExtractionTestCase(TestCase):

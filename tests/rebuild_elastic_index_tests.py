@@ -12,7 +12,7 @@
 from superdesk.tests import TestCase
 from eve.utils import ParsedRequest
 from superdesk import get_resource_service
-from .rebuild_elastic_index import RebuildElasticIndex
+from superdesk.commands.rebuild_elastic_index import RebuildElasticIndex
 from time import sleep
 
 

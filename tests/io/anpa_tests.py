@@ -12,7 +12,7 @@
 import os
 import unittest
 
-from .anpa import ANPAFileParser
+from superdesk.io.anpa import ANPAFileParser
 
 
 def fixture(filename):

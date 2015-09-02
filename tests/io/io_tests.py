@@ -14,9 +14,9 @@ import unittest
 from superdesk.etree import etree, get_word_count
 from superdesk.io import get_xml_parser
 
-from .newsml_1_2 import NewsMLOneParser
-from .newsml_2_0 import NewsMLTwoParser
-from .nitf import NITFParser
+from superdesk.io.newsml_1_2 import NewsMLOneParser
+from superdesk.io.newsml_2_0 import NewsMLTwoParser
+from superdesk.io.nitf import NITFParser
 
 
 def get_etree(filename):

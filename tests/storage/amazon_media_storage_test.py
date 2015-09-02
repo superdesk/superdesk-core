@@ -1,5 +1,5 @@
 from superdesk.tests import TestCase
-from .amazon_media_storage import AmazonMediaStorage
+from superdesk.storage.amazon.amazon_media_storage import AmazonMediaStorage
 
 
 class AmazonMediaStorageTestCase(TestCase):
