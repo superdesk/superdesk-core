@@ -81,18 +81,13 @@ def get_expired_items(provider_id, expiration_date):
 
 
 def get_query_for_expired_items(provider, expiration_date):
-    """Find all ingest items with given provider id and
-    (expiry is past or
-    (no expiry assigned and versioncreated is less then calculated expiry date))"""
-    query = {
-        '$or': [
-            {'expiry': {'$lte': utcnow()}},
-            {
-                'versioncreated': {'$lte': expiration_date},
-                'expiry': {'$exists': False}
-            }
-        ]
-    }
+    """
+    Find all ingest items with given provider id and expiry is past
+    :param dict provider: ingest provider
+    :param datetime expiration_date: content expiration date for the provider
+    :return str: mongo query
+    """
+    query = {'expiry': {'$lte': utcnow()}}
 
     if provider.get('_id'):
         query['ingest_provider'] = str(provider.get('_id'))
