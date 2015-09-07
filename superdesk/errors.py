@@ -540,11 +540,11 @@ class PublishFileError(SuperdeskPublishError):
         return PublishFileError(13000, exception, destinations)
 
 
-class PublishPublicAPIError(SuperdeskPublishError):
+class PublishHTTPPushError(SuperdeskPublishError):
     _codes = {
-        14000: "Public API publish error",
+        14000: "HTTP push publish error",
     }
 
     @classmethod
-    def publicAPIError(cls, exception=None, destination=None):
-        return PublishPublicAPIError(14000, exception, destination)
+    def httpPushError(cls, exception=None, destination=None):
+        return PublishHTTPPushError(14000, exception, destination)
