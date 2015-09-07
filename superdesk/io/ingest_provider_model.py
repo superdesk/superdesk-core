@@ -10,6 +10,7 @@
 
 import logging
 from flask import g
+from eve.utils import config
 from superdesk.errors import SuperdeskApiError
 from superdesk.resource import Resource
 from superdesk.services import BaseService
@@ -139,7 +140,7 @@ class IngestProviderService(BaseService):
     def on_create(self, docs):
         for doc in docs:
             if doc.get('content_expiry', 0) == 0:
-                doc['content_expiry'] = self.app.config['INGEST_EXPIRY_MINUTES']
+                doc['content_expiry'] = config.INGEST_EXPIRY_MINUTES
                 self._set_provider_status(doc, doc.get('last_closed', {}).get('message', ''))
 
     def on_created(self, docs):
@@ -153,7 +154,7 @@ class IngestProviderService(BaseService):
 
     def on_update(self, updates, original):
         if updates.get('content_expiry') == 0:
-            updates['content_expiry'] = self.app.config['INGEST_EXPIRY_MINUTES']
+            updates['content_expiry'] = config.INGEST_EXPIRY_MINUTES
         if 'is_closed' in updates and original.get('is_closed', False) != updates.get('is_closed'):
             self._set_provider_status(updates, updates.get('last_closed', {}).get('message', ''))
 
