@@ -18,8 +18,20 @@ from .media_operations import process_file_from_stream
 logger = logging.getLogger(__name__)
 
 
-def generate_renditions(original, media_id, inserted, file_type, content_type, rendition_config, url_for_media):
-    """Generate system renditions for given media file id."""
+def generate_renditions(original, media_id, inserted, file_type, content_type,
+                        rendition_config, url_for_media, insert_metadata=True):
+    """
+    Generate system renditions for given media file id.
+    :param BytesIO original: original image byte stream
+    :param str media_id: media id
+    :param list inserted: list of media ids inserted
+    :param str file_type: file_type
+    :param str content_type: content type
+    :param dict rendition_config: rendition config
+    :param url_for_media: function to generate url
+    :param bool insert_metadata: boolean to inserted metadata or not. For AWS storage it is false.
+    :return: dict of renditions
+    """
     rend = {'href': url_for_media(media_id), 'media': media_id, 'mimetype': content_type}
     renditions = {'original': rend}
 
@@ -43,9 +55,11 @@ def generate_renditions(original, media_id, inserted, file_type, content_type, r
         rend_content_type = 'image/%s' % ext
         file_name, rend_content_type, metadata = process_file_from_stream(resized, content_type=rend_content_type)
         resized.seek(0)
-        id = app.media.put(resized, filename=file_name, content_type=rend_content_type, metadata=metadata)
-        inserted.append(id)
-        renditions[rendition] = {'href': url_for_media(id), 'media': id,
+        _id = app.media.put(resized, filename=file_name,
+                            content_type=rend_content_type,
+                            metadata=metadata if insert_metadata else None)
+        inserted.append(_id)
+        renditions[rendition] = {'href': url_for_media(_id), 'media': _id,
                                  'mimetype': 'image/%s' % ext, 'width': width, 'height': height}
     return renditions
 
