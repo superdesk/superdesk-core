@@ -76,20 +76,6 @@ class Iptc7901FileParser(Parser):
         except Exception as ex:
             raise ParserError.IPTC7901ParserError(filename, ex)
 
-    def map_priority(self, source_priority):
-        if source_priority == '1':
-            return 'B'
-        elif source_priority == '2':
-            return 'B'
-        elif source_priority == '3':
-            return 'U'
-        elif source_priority == '4':
-            return 'R'
-        elif source_priority == '5':
-            return 'D'
-        else:
-            return 'R'
-
     def map_category(self, source_category):
         if source_category == 'x' or source_category == 'X':
             return 'i'

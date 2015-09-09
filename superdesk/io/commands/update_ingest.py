@@ -333,6 +333,7 @@ def ingest_item(item, provider, rule_set=None, routing_scheme=None):
 
         item['ingest_provider'] = str(provider[superdesk.config.ID_FIELD])
         item.setdefault('source', provider.get('source', ''))
+        item.setdefault('priority', 5)
         set_default_state(item, STATE_INGESTED)
         item['expiry'] = get_expiry_date(provider.get('content_expiry', app.config['INGEST_EXPIRY_MINUTES']),
                                          item.get('versioncreated'))

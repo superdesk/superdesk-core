@@ -31,7 +31,7 @@ class ANPATestCase(unittest.TestCase):
         item = self.open('anpa-1.tst')
         self.assertEqual('text', item['type'])
         self.assertEqual('2870', item['provider_sequence'])
-        self.assertEqual('r', item['priority'])
+        self.assertEqual(1, item['priority'])
         self.assertEqual('l', item['anpa_category'][0]['qcode'])
         self.assertEqual('text', item['type'])
         self.assertEqual(1049, item['word_count'])
@@ -49,3 +49,12 @@ class ANPATestCase(unittest.TestCase):
     def test_tab_content(self):
         item = self.open('anpa-3.tst')
         self.assertEqual('preformatted', item['type'])
+
+    def test_map_priority(self):
+        self.assertEqual(1, self.parser.map_priority('F'))
+        self.assertEqual(2, self.parser.map_priority('U'))
+        self.assertEqual(1, self.parser.map_priority('f'))
+        self.assertEqual(3, self.parser.map_priority('b'))
+        self.assertEqual(5, self.parser.map_priority('z'))
+        self.assertEqual(5, self.parser.map_priority(None))
+        self.assertEqual(5, self.parser.map_priority('dd'))

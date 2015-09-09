@@ -33,9 +33,11 @@ class NewsMLTwoParser(Parser):
         items = []
         try:
             self.root = tree
+            header = self.parse_header(tree)
             for item_set in tree.findall(self.qname('itemSet')):
                 for item_tree in item_set:
                     item = self.parse_item(item_tree)
+                    item['priority'] = header['priority']
                     items.append(item)
             return items
         except Exception as ex:
@@ -58,6 +60,19 @@ class NewsMLTwoParser(Parser):
             self.parse_content_set(tree, item)
 
         return item
+
+    def parse_header(self, tree):
+        """
+        Parse header element
+        :param tree:
+        :return: dict
+        """
+        header = tree.find(self.qname('header'))
+        priority = 5
+        if header:
+            priority = self.map_priority(header.find(self.qname('priority')).text)
+
+        return {'priority': priority}
 
     def parse_item_meta(self, tree, item):
         """Parse itemMeta tag"""
