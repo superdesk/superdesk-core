@@ -266,7 +266,7 @@ class rfc822Parser(Parser):
             raise e
 
         # remove the doctype declaration if present
-        if isinstance(soup.contents[0], Doctype):
+        if len(soup.contents) > 0 and isinstance(soup.contents[0], Doctype):
             soup.contents[0].extract()
 
         # now strip HTML we don't like.
