@@ -39,7 +39,7 @@ class NewsMLOneParser(Parser):
                 item['ingest_provider_sequence'] = parsed_el.text
 
             parsed_el = tree.find('NewsEnvelope/Priority')
-            item['Priority'] = self.map_priority(parsed_el.text if parsed_el else None)
+            item['priority'] = self.map_priority(parsed_el.text if parsed_el else None)
 
             self.parse_news_identifier(item, tree)
             self.parse_newslines(item, tree)
