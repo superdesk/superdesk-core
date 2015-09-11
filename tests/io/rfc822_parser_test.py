@@ -44,7 +44,7 @@ class rfc822TestCase(TestCase):
         self.assertEqual(self.items[0]['headline'], 'Test message 1234')
 
     def test_body(self):
-        self.assertEquals(self.items[0]['body_html'].strip(), '<div>body text<br/><div>\n</div></div>')
+        self.assertEqual(self.items[0]['body_html'].strip(), '<div>body text<br/><div>\n</div></div>')
 
     def test_from(self):
         self.assertEqual(self.items[0]['original_source'],

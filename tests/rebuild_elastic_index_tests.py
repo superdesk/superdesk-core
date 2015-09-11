@@ -31,4 +31,4 @@ class RebuildIndexTestCase(TestCase):
         req.args = {}
         req.max_results = 25
         items = get_resource_service('ingest').get(req, {})
-        self.assertEquals(10, items.count())
+        self.assertEqual(10, items.count())

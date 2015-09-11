@@ -20,7 +20,7 @@ class DatalayerTestCase(TestCase):
     def test_find_all(self):
         data = {'resource': 'test', 'action': 'get'}
         superdesk.get_resource_service('activity').post([data])
-        self.assertEquals(1, superdesk.get_resource_service('activity').get(req=None, lookup={}).count())
+        self.assertEqual(1, superdesk.get_resource_service('activity').get(req=None, lookup={}).count())
 
     def test_json_encoder(self):
         _id = ObjectId()

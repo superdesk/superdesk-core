@@ -83,10 +83,6 @@ class TextParserTest(ItemTest):
         self.assertEqual("Bangalore", self.item.get("dateline", {}).get('located', {}).get('city'))
         self.assertEqual("SOCCER-ENGLAND/CHELSEA-BENITEZ:Soccer-Smiling Benitez pleads for support after midweek outburst", self.item.get('description'))  # noqa
 
-    # def test_parse_rights_info(self):
-    #     self.assertEquals("Thomson Reuters", self.item.get('copyrightholder'))
-    #     self.assertEquals("(c) Copyright Thomson Reuters 2013. Click For Restrictions - http://about.reuters.com/fulllegal.asp", self.item.get('copyrightnotice'))  # noqa
-
     def test_content_set(self):
         self.assertEqual("<p>By Toby Davis</p>", self.item.get('body_html'))
         self.assertEqual(569, self.item.get('word_count'))

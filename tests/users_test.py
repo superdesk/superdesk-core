@@ -62,8 +62,8 @@ class PrivilegesTestCase(TestCase):
         }
 
         added, removed, modified = compare_preferences(original_preferences, updated_preferences)
-        self.assertEquals(1, len(added))
-        self.assertEquals(1, len(removed))
-        self.assertEquals(2, len(modified))
+        self.assertEqual(1, len(added))
+        self.assertEqual(1, len(removed))
+        self.assertEqual(2, len(modified))
         self.assertTrue((1, 0) in modified.values())
         self.assertTrue((0, 1) in modified.values())
