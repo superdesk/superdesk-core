@@ -23,6 +23,13 @@ class PublishService():
     """Base publish service class."""
 
     def _transmit(self, queue_item, subscriber):
+        """Performs the publishing of the queued item. Implement in subclass
+
+        @param queue_item: the queued item document
+        @type queue_item: dict
+        @param subscriber: the subscriber document
+        @type subscriber: dict
+        """
         raise NotImplementedError()
 
     def transmit(self, queue_item):
