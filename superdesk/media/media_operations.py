@@ -9,7 +9,6 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-import os
 import arrow
 import magic
 import hashlib
@@ -96,21 +95,37 @@ def decode_val(string_val):
 
 
 def process_file(content, type):
+    """
+    Retrieves the media file metadata
+    :param BytesIO content: content stream
+    :param str type: type of media file
+    :return: dict metadata related to media file.
+    """
     if type == 'image':
-        return process_image(content, type)
+        return process_image(content)
     if type in ('audio', 'video'):
-        return process_video(content, type)
+        return process_video(content)
     return {}
 
 
-def process_video(content, type):
+def process_video(content):
+    """
+    Retrieves the video/audio metadata
+    :param BytesIO content: content stream
+    :return: dict video/audio metadata
+    """
     content.seek(0)
     meta = video_meta(content)
     content.seek(0)
     return meta
 
 
-def process_image(content, type):
+def process_image(content):
+    """
+    Retrieves the image metadata
+    :param BytesIO content: content stream
+    :return: dict image metadata
+    """
     content.seek(0)
     meta = get_meta(content)
     content.seek(0)
@@ -119,20 +134,17 @@ def process_image(content, type):
 
 def crop_image(content, file_name, cropping_data):
     if cropping_data:
-        file_ext = os.path.splitext(file_name)[1][1:]
-        if not file_ext or file_ext in ('JPG', 'jpg'):
-            file_ext = 'jpeg'
-        logger.debug('Opened image from stream, going to crop it s')
+        logger.debug('Opened image {} from stream, going to crop it'.format(file_name))
         content.seek(0)
         img = Image.open(content)
         cropped = img.crop(cropping_data)
-        logger.debug('Cropped image from stream, going to save it')
+        logger.debug('Cropped image {} from stream, going to save it'.format(file_name))
         try:
             out = BytesIO()
-            cropped.save(out, file_ext)
+            cropped.save(out, img.format)
             out.seek(0)
             return True, out
         except Exception as io:
-            logger.exception(io)
+            logger.exception('Failed to generate crop for filename: {}. Crop: {}'.format(file_name, cropping_data))
             return False, io
     return False, content
