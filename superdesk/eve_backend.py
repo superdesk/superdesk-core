@@ -11,6 +11,7 @@
 
 from flask import current_app as app
 from eve.utils import document_etag, config, ParsedRequest
+from eve.io.mongo import MongoJSONEncoder
 from superdesk.utc import utcnow
 from superdesk.logging import logger, item_msg
 from eve.methods.common import resolve_document_etag
@@ -35,6 +36,20 @@ class EveBackend():
                 except RequestError as e:
                     logger.error(item_msg('failed to add item into elastic error={}'.format(str(e)), item))
         return item
+
+    def find(self, endpoint_name, where, max_results=0):
+        """Find items for given endpoint using mongo query in python dict object.
+
+        It handles request creation here so no need to do this in service.
+
+        :param string endpoint_name
+        :param dict where
+        :param int max_results
+        """
+        req = ParsedRequest()
+        req.where = MongoJSONEncoder().encode(where)
+        req.max_results = max_results
+        return self.get_from_mongo(endpoint_name, req, None)
 
     def get(self, endpoint_name, req, lookup):
         backend = self._lookup_backend(endpoint_name, fallback=True)
