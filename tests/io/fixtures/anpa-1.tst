@@ -1,5 +1,5 @@
 W2870asian
-r l BC-LT--Argentina-CancerB     11-13 1049
+f l BC-LT--Argentina-CancerB     11-13 1049
 ^BC-LT--Argentina-Cancer Beauty,466<
 ^For Argentine chemo patients, mirrors can hurt <
 ^AP Photo XNP101, XNP102, XNP103, XNP104, XNP105, XNP106<

@@ -42,7 +42,7 @@ class ANPAFileParser(Parser):
                 b'([0-9]{1,2})-([0-9]{1,2}) ([0-9]{4})',
                 lines[1], flags=re.I)
             if m:
-                item['priority'] = m.group(1).decode()
+                item['priority'] = self.map_priority(m.group(1).decode())
                 item['anpa_category'] = [{'qcode': m.group(2).decode()}]
                 item['word_count'] = int(m.group(10).decode())
                 if m.group(4) == b'\x12':
@@ -84,3 +84,22 @@ class ANPAFileParser(Parser):
             return item
         except Exception as ex:
             raise ParserError.anpaParseFileError(filename, ex)
+
+    def map_priority(self, source_priority):
+        """
+        Maps the source priority to superdesk priority
+        :param str source_priority:
+        :return int: priority of the item
+        """
+        mapping = {
+            'f': 1,
+            'u': 2,
+            'b': 3,
+            'z': 5
+        }
+
+        source_priority = source_priority.lower().strip() if isinstance(source_priority, str) else ''
+        if source_priority in mapping:
+            return mapping[source_priority]
+        else:
+            return 5

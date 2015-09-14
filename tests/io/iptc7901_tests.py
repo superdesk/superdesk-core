@@ -37,5 +37,13 @@ class IptcTestCase(TestCase):
             self.assertEqual('Germany Social Democrats: Coalition talks with Merkel could fail =', item['headline'])
             self.assertRegex(item['body_html'], '^\n   Berlin')
             self.assertEqual('Germany-politics', item['slugline'])
-            self.assertEquals('R', item['priority'])
-            self.assertEquals([{'qcode': 'i'}], item['anpa_category'])
+            self.assertEqual(5, item['priority'])
+            self.assertEqual([{'qcode': 'i'}], item['anpa_category'])
+
+    def test_map_priority(self):
+        self.assertEqual(1, self.parser.map_priority("1"))
+        self.assertEqual(2, self.parser.map_priority("2"))
+        self.assertEqual(3, self.parser.map_priority("3"))
+        self.assertEqual(5, self.parser.map_priority("5"))
+        self.assertEqual(5, self.parser.map_priority("eee"))
+        self.assertEqual(5, self.parser.map_priority(None))

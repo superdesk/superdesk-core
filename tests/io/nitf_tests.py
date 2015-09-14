@@ -94,7 +94,7 @@ class IPTCExampleTestCase(NITFTestCase):
         self.assertEqual('canceled', self.item.get('pubstatus'))
 
     def test_guid(self):
-        self.assertEquals('iptc.321656141.b', self.item.get('guid'))
+        self.assertEqual('iptc.321656141.b', self.item.get('guid'))
 
     def test_subjects(self):
         self.assertEqual(3, len(self.item.get('subject')))

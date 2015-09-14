@@ -38,6 +38,9 @@ class NewsMLOneParser(Parser):
             if parsed_el is not None:
                 item['ingest_provider_sequence'] = parsed_el.text
 
+            parsed_el = tree.find('NewsEnvelope/Priority')
+            item['priority'] = self.map_priority(parsed_el.text if parsed_el else None)
+
             self.parse_news_identifier(item, tree)
             self.parse_newslines(item, tree)
             self.parse_news_management(item, tree)

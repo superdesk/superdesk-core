@@ -37,6 +37,7 @@ CONTENT_STATE = namedtuple('CONTENT_STATE', ['DRAFT', 'INGESTED', 'ROUTED', 'FET
                                              'SCHEDULED', 'HOLD'])(*content_state)
 PUBLISH_STATES = {CONTENT_STATE.PUBLISHED, CONTENT_STATE.SCHEDULED, CONTENT_STATE.CORRECTED, CONTENT_STATE.KILLED}
 
+
 BYLINE = 'byline'
 SIGN_OFF = 'sign_off'
 EMBARGO = 'embargo'
@@ -180,13 +181,12 @@ metadata_schema = {
         'type': 'integer'
     },
     'priority': {
-        'type': 'string',
-        'mapping': not_analyzed,
-        'nullable': True,
+        'type': 'integer',
+        'nullable': True
     },
     'urgency': {
         'type': 'integer',
-        'nullable': True,
+        'nullable': True
     },
 
     # Related to state of an article

@@ -112,6 +112,18 @@ class Parser(metaclass=ParserRegistry):
         if text:
             item['dateline']['text'] = text
 
+    def map_priority(self, source_priority):
+        """
+        Maps the source priority to superdesk priority
+        :param str source_priority:
+        :return int: priority of the item
+        """
+        if source_priority and source_priority.isdigit():
+            if int(source_priority) in [1, 2, 3]:
+                return int(source_priority)
+
+        return 5
+
 
 def get_xml_parser(etree):
     """Get parser for given xml.
