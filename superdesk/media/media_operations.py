@@ -15,6 +15,7 @@ import magic
 import hashlib
 import logging
 import requests
+from bson import ObjectId
 from io import BytesIO
 from PIL import Image
 from flask import json
@@ -45,7 +46,7 @@ def download_file_from_url(url):
 
     mime = magic.from_buffer(rv.content, mime=True).decode('UTF-8')
     ext = mime.split('/')[1]
-    name = 'stub.' + ext
+    name = str(ObjectId()) + ext
     return BytesIO(rv.content), name, mime
 
 
@@ -53,7 +54,7 @@ def download_file_from_encoded_str(encoded_str):
     content = encoded_str.split(';base64,')
     mime = content[0].split(':')[1]
     ext = content[0].split('/')[1]
-    name = 'web_capture.' + ext
+    name = str(ObjectId()) + ext
     content = base64.b64decode(content[1])
     return BytesIO(content), name, mime
 
