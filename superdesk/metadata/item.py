@@ -11,7 +11,6 @@
 from collections import namedtuple
 from superdesk.resource import Resource
 from .packages import PACKAGE_TYPE, TAKES_PACKAGE, LINKED_IN_PACKAGES, PACKAGE
-from eve.utils import config
 
 not_analyzed = {'type': 'string', 'index': 'not_analyzed'}
 GUID_TAG = 'tag'
@@ -43,10 +42,6 @@ SIGN_OFF = 'sign_off'
 EMBARGO = 'embargo'
 
 metadata_schema = {
-    config.ID_FIELD: {
-        'type': 'string',
-        'unique': True
-    },
     # Identifiers
     'guid': {
         'type': 'string',
