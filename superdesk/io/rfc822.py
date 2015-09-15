@@ -12,13 +12,13 @@
 import superdesk
 from superdesk.io import Parser
 import datetime
-from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, GUID_TAG
+from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, GUID_TAG, SIGN_OFF
 from superdesk.metadata.utils import generate_guid
 from superdesk.utc import utcnow
 from pytz import timezone
 from superdesk.media.media_operations import process_file_from_stream
 import io
-from flask import current_app as app
+from flask import current_app as app, json
 import email
 from email.header import decode_header
 import logging
@@ -26,7 +26,7 @@ from superdesk.errors import IngestEmailError
 from bs4 import BeautifulSoup, Comment, Doctype
 import re
 from eve.utils import ParsedRequest
-
+from .iptc import subject_codes
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +53,10 @@ class rfc822Parser(Parser):
         self.parser_app = app
 
     def parse_email(self, data, provider):
+        config = provider.get('config', {})
+        # If the channel is configured to process structured email generated from a google form
+        if config.get('formatted', False):
+            return self._parse_formatted_email(data, provider)
         try:
             new_items = []
             # create an item for the body text of the email
@@ -266,7 +270,7 @@ class rfc822Parser(Parser):
             raise e
 
         # remove the doctype declaration if present
-        if len(soup.contents) > 0 and isinstance(soup.contents[0], Doctype):
+        if isinstance(soup.contents[0], Doctype):
             soup.contents[0].extract()
 
         # now strip HTML we don't like.
@@ -304,3 +308,96 @@ class rfc822Parser(Parser):
         if attr == "style":
             return re.sub("(width|height):[^;]+;", "", css)
         return css
+
+    def _expand_category(self, item, mail_item):
+        """
+        Given a list of category names in the incomming email try to look them up to match category codes.
+        If there is a subject associated with the category it will insert that into the item as well
+        :param item:
+        :param mail_item:
+        :return: An item populated with category codes
+        """
+        anpa_categories = superdesk.get_resource_service('vocabularies').find_one(req=None,
+                                                                                  _id='categories')
+        if anpa_categories:
+            for mail_category in mail_item.get('Category').split(','):
+                for anpa_category in anpa_categories['items']:
+                    if anpa_category['is_active'] is True \
+                            and mail_category.strip().lower() == anpa_category['name'].lower():
+                        if 'anpa_category' not in item:
+                            item['anpa_category'] = list()
+                        item['anpa_category'].append({'qcode': anpa_category['qcode']})
+                        if anpa_category.get('subject'):
+                            if 'subject' not in item:
+                                item['subject'] = list()
+                            item['subject'].append({'qcode': anpa_category.get('subject'),
+                                                    'name': subject_codes[
+                                                        anpa_category.get('subject')]})
+                        break
+
+    def _parse_formatted_email(self, data, provider):
+        """
+        Passed an email that was constructed as a notificaton from a google form submission it constructs an item.
+        The google form submits to a google sheet, this sheet creates the email as a notification
+        :param data:
+        :param provider:
+        :return: A list of 1 item
+        """
+        try:
+            item = dict()
+            item[ITEM_TYPE] = CONTENT_TYPE.TEXT
+            item['versioncreated'] = utcnow()
+            for response_part in data:
+                if isinstance(response_part, tuple):
+                    msg = email.message_from_bytes(response_part[1])
+                    item['guid'] = msg['Message-ID']
+                    date_tuple = email.utils.parsedate_tz(msg['Date'])
+                    if date_tuple:
+                        dt = datetime.datetime.utcfromtimestamp(
+                            email.utils.mktime_tz(date_tuple))
+                        dt = dt.replace(tzinfo=timezone('utc'))
+                        item['firstcreated'] = dt
+
+                    for part in msg.walk():
+                        if part.get_content_type() == "text/plain":
+                            body = part.get_payload(decode=True)
+                            # if we don't know the charset just have a go!
+                            if part.get_content_charset() is None:
+                                json_str = body.decode().replace('\r\n', '').replace('  ', ' ')
+                            else:
+                                charset = part.get_content_charset()
+                                json_str = body.decode(charset).replace('\r\n', '').replace('  ', ' ')
+
+                            mail_item = dict((k, v[0]) for k, v in json.loads(json_str).items())
+
+                            self._expand_category(item, mail_item)
+
+                            item['original_source'] = mail_item.get('Username')
+                            item['headline'] = mail_item.get('Headline')
+                            item['abstract'] = mail_item.get('Abstract')
+                            item['slugline'] = mail_item.get('Slugline')
+                            item['body_html'] = mail_item.get('Body')
+                            item[SIGN_OFF] = mail_item.get('Sign off')
+
+                            if mail_item.get('Priority') != '':
+                                item['priority'] = int(mail_item.get('Priority'))
+                            if mail_item.get('Urgency') != '':
+                                item['urgency'] = int(mail_item.get('Urgency'))
+
+                            # We expect the username passed coresponds to a superdesk user
+                            lookup = superdesk.get_resource_service('users').find_one(
+                                req=ParsedRequest(), email=item['original_source'])
+                            if not lookup:
+                                raise UserNotRegisteredException()
+                            item['original_creator'] = lookup.get('_id')
+                            item['byline'] = lookup.get('display_name')
+
+                            # attempt to match the given desk name against the defined desks
+                            desk = superdesk.get_resource_service('desks').find_one(
+                                req=None, name=mail_item.get('Desk'))
+                            if desk:
+                                item['task'] = {'desk': desk.get('_id'), 'stage': desk.get('incoming_stage')}
+                            break
+            return [item]
+        except Exception as ex:
+            raise IngestEmailError.emailParseError(ex, provider)
