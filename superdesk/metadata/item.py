@@ -313,6 +313,9 @@ metadata_schema = {
         'type': 'string'
     },
 
+    # Desk and Stage Details
+    'task': {'type': 'dict'},
+
     # Task and Lock Details
     'task_id': {
         'type': 'string',
