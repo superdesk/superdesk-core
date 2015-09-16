@@ -12,7 +12,7 @@
 import superdesk
 from superdesk.io import Parser
 import datetime
-from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, GUID_TAG, SIGN_OFF
+from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, GUID_TAG, SIGN_OFF, BYLINE
 from superdesk.metadata.utils import generate_guid
 from superdesk.utc import utcnow
 from pytz import timezone
@@ -350,6 +350,10 @@ class rfc822Parser(Parser):
             for response_part in data:
                 if isinstance(response_part, tuple):
                     msg = email.message_from_bytes(response_part[1])
+                    # Check that the subject line macthes what we expect, ignore it if not
+                    if self.parse_header(msg['subject']) != 'Formatted Editorial Story':
+                        return []
+
                     item['guid'] = msg['Message-ID']
                     date_tuple = email.utils.parsedate_tz(msg['Date'])
                     if date_tuple:
@@ -377,7 +381,6 @@ class rfc822Parser(Parser):
                             item['abstract'] = mail_item.get('Abstract')
                             item['slugline'] = mail_item.get('Slugline')
                             item['body_html'] = mail_item.get('Body')
-                            item[SIGN_OFF] = mail_item.get('Sign off')
 
                             if mail_item.get('Priority') != '':
                                 item['priority'] = int(mail_item.get('Priority'))
@@ -385,12 +388,14 @@ class rfc822Parser(Parser):
                                 item['urgency'] = int(mail_item.get('Urgency'))
 
                             # We expect the username passed coresponds to a superdesk user
-                            lookup = superdesk.get_resource_service('users').find_one(
-                                req=ParsedRequest(), email=item['original_source'])
-                            if not lookup:
+                            user = superdesk.get_resource_service('users').find_one(
+                                req=ParsedRequest(), email=mail_item.get('Username'))
+                            if not user:
+                                logger.error('Failed to find user for email {}'.format(mail_item.get('Username')))
                                 raise UserNotRegisteredException()
-                            item['original_creator'] = lookup.get('_id')
-                            item['byline'] = lookup.get('display_name')
+                            item['original_creator'] = user.get('_id')
+                            item['byline'] = user.get(BYLINE, user.get('display_name'))
+                            item[SIGN_OFF] = user.get(SIGN_OFF)
 
                             # attempt to match the given desk name against the defined desks
                             desk = superdesk.get_resource_service('desks').find_one(
