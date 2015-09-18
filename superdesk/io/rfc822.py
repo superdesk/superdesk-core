@@ -380,7 +380,7 @@ class rfc822Parser(Parser):
                             item['headline'] = mail_item.get('Headline')
                             item['abstract'] = mail_item.get('Abstract')
                             item['slugline'] = mail_item.get('Slugline')
-                            item['body_html'] = mail_item.get('Body')
+                            item['body_html'] = mail_item.get('Body').replace('\n','<br />')
 
                             if mail_item.get('Priority') != '':
                                 item['priority'] = int(mail_item.get('Priority'))
@@ -388,8 +388,8 @@ class rfc822Parser(Parser):
                                 item['urgency'] = int(mail_item.get('Urgency'))
 
                             # We expect the username passed coresponds to a superdesk user
-                            user = superdesk.get_resource_service('users').find_one(
-                                req=ParsedRequest(), email=mail_item.get('Username'))
+                            query = {'email': re.compile('^{}$'.format(mail_item.get('Username')), re.IGNORECASE)}
+                            user = superdesk.get_resource_service('users').find_one(req=None, **query)
                             if not user:
                                 logger.error('Failed to find user for email {}'.format(mail_item.get('Username')))
                                 raise UserNotRegisteredException()
