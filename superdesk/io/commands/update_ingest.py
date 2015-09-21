@@ -104,8 +104,40 @@ def get_provider_rule_set(provider):
 
 
 def get_provider_routing_scheme(provider):
-    if provider.get('routing_scheme'):
-        return superdesk.get_resource_service('routing_schemes').find_one(_id=provider['routing_scheme'], req=None)
+    """Returns the ingests provider's routing scheme configuration.
+
+    If provider has a routing scheme defined (i.e. scheme ID is not None), the
+    scheme is fetched from the database. If not, nothing is returned.
+
+    For all scheme rules that have a reference to a content filter defined,
+    that filter's configuration is fetched from the database as well and
+    embedded into the corresponding scheme rule.
+
+    :param dict provider: ingest provider configuration
+
+    :return: fetched provider's routing scheme configuration (if any)
+    :rtype: dict or None
+    """
+
+    if not provider.get('routing_scheme'):
+        return None
+
+    schemes_service = superdesk.get_resource_service('routing_schemes')
+    filters_service = superdesk.get_resource_service('content_filters')
+
+    scheme = schemes_service.find_one(_id=provider['routing_scheme'], req=None)
+
+    # for those routing rules that have a content filter defined,
+    # get that filter from DB and embed it into the rule...
+    rules_filters = (
+        (rule, str(rule['filter']))
+        for rule in scheme['rules'] if rule.get('filter'))
+
+    for rule, filter_id in rules_filters:
+        content_filter = filters_service.find_one(_id=filter_id, req=None)
+        rule['filter'] = content_filter
+
+    return scheme
 
 
 def get_task_ttl(provider):
