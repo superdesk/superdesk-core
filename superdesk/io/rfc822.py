@@ -380,7 +380,7 @@ class rfc822Parser(Parser):
                             item['headline'] = mail_item.get('Headline')
                             item['abstract'] = mail_item.get('Abstract')
                             item['slugline'] = mail_item.get('Slugline')
-                            item['body_html'] = mail_item.get('Body').replace('\n','<br />')
+                            item['body_html'] = mail_item.get('Body').replace('\n', '<br />')
 
                             if mail_item.get('Priority') != '':
                                 item['priority'] = int(mail_item.get('Priority'))
