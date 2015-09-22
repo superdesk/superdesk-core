@@ -276,11 +276,7 @@ metadata_schema = {
         'type': 'list',
         'nullable': True,
         'schema': {
-            'type': 'dict',
-            'schema': {
-                'qcode': {'type': 'string'},
-                'name': {'type': 'string'}
-            }
+            'type': 'dict'
         }
     },
 

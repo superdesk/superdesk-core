@@ -74,13 +74,13 @@ class UploadResource(Resource):
         'CropTop': {'type': 'integer'},
         'CropBottom': {'type': 'integer'},
         'URL': {'type': 'string'},
-        'mime_type': {'type': 'string'},
+        'mimetype': {'type': 'string'},
         'filemeta': {'type': 'dict'}
     }
     extra_response_fields = ['renditions']
     datasource = {
         'projection': {
-            'mime_type': 1,
+            'mimetype': 1,
             'filemeta': 1,
             '_created': 1,
             '_updated': 1,
@@ -130,7 +130,7 @@ class UploadService(BaseService):
             file_id = app.media.put(out, filename=file_name, content_type=content_type,
                                     resource=self.datasource, metadata=metadata)
             doc['media'] = file_id
-            doc['mime_type'] = content_type
+            doc['mimetype'] = content_type
             doc['filemeta'] = decode_metadata(metadata)
             inserted = [doc['media']]
             file_type = content_type.split('/')[0]
