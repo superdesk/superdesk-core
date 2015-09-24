@@ -16,6 +16,7 @@ from io import BytesIO
 import boto3
 
 logger = logging.getLogger(__name__)
+MAX_KEYS = 10000000
 
 
 class AmazonObjectWrapper(BytesIO):
@@ -79,6 +80,15 @@ class AmazonMediaStorage(MediaStorage):
             return None
         return None
 
+    def get_all_keys(self):
+        """ Returns the list of all keys from the bucket """
+        try:
+            objects = self.client.list_objects(Bucket=self.container_name, MaxKeys=MAX_KEYS)
+            return [obj['Key'] for obj in objects.get('Contents', [])]
+        except Exception as ex:
+            logger.exception(ex)
+            return []
+
     def extract_metadata_from_headers(self, request_headers):
         headers = {}
         for key, value in request_headers.items():
@@ -126,6 +136,20 @@ class AmazonMediaStorage(MediaStorage):
         id_or_filename = str(id_or_filename)
         del_res = self.client.delete_object(Key=id_or_filename, Bucket=self.container_name)
         logger.debug('Amazon S3 file deleted %s with status' % id_or_filename, del_res)
+
+    def delete_objects(self, ids):
+        """ Deletes the objects with given list of ids"""
+        try:
+            delete_parameters = {'Objects': [{'Key': id} for id in ids], 'Quiet': True}
+            response = self.client.delete_objects(Bucket=self.container_name, Delete=delete_parameters)
+            if len(response.get('Errors', [])):
+                errors = ','.join(['{}:{}'.format(error['Key'], error['Message']) for error in response['Errors']])
+                logger.error('Files couldn\'t be deleted: {}'.format(errors))
+                return False, errors
+            return True, None
+        except Exception as ex:
+            logger.exception(ex)
+            raise
 
     def exists(self, id_or_filename, resource=None):
         """ Returns True if a file referenced by the given name or unique id
