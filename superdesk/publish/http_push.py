@@ -41,7 +41,7 @@ class HTTPPushService(PublishService):
             raise PublishHTTPPushError.httpPushError(e, queue_item.get('destination', {}))
 
         resource_url = queue_item.get('destination', {}).get('config', {}).get('resource_url')
-        response = requests.post(resource_url, json=item)
+        response = requests.post(resource_url, data=json.dumps(item), headers=self.headers)
         if response.status_code != requests.codes.created:  # @UndefinedVariable
             raise PublishHTTPPushError.httpPushError(Exception('Error pushing item %s' % response.text),
                                                      queue_item.get('destination', {}))
