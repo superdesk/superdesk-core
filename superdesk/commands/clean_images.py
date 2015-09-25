@@ -14,9 +14,9 @@ import superdesk
 
 class CleanImages(superdesk.Command):
     """
-    This command is to be executed if the size of Mongo DB grows because of images not being
-    properly removed.
     This command will remove all the images from the system which are not referenced by content.
+    It checks the media type and calls the correspoinding function as s3 and mongo
+    requires different approaches for handling multiple files.
     Probably running db.repairDatabase() is needed in Mongo to shring the DB size.
     """
 
@@ -24,24 +24,29 @@ class CleanImages(superdesk.Command):
         try:
             print('Starting image cleaning.')
             used_images = set()
+            types = ['picture', 'video', 'audio']
 
-            archive_items = superdesk.get_resource_service('archive').get_from_mongo(None, {'type': 'picture'})
+            archive_items = superdesk.get_resource_service('archive').get_from_mongo(None, {'type': {'$in': types}})
             self.__add_existing_files(used_images, archive_items)
 
-            ingest_items = superdesk.get_resource_service('ingest').get_from_mongo(None, {'type': 'picture'})
+            ingest_items = superdesk.get_resource_service('ingest').get_from_mongo(None, {'type': {'$in': types}})
             self.__add_existing_files(used_images, ingest_items)
 
             upload_items = superdesk.get_resource_service('upload').get_from_mongo(req=None, lookup={})
             self.__add_existing_files(used_images, upload_items)
 
+            legal_archive_items = superdesk.get_resource_service('legal_archive').\
+                get_from_mongo(None, {'type': {'$in': types}})
+            self.__add_existing_files(used_images, legal_archive_items)
+
+            legal_archive_version_items = superdesk.get_resource_service('legal_archive_versions').\
+                get_from_mongo(None, {'type': {'$in': types}})
+            self.__add_existing_files(used_images, legal_archive_version_items)
+
             print('Number of used files: ', len(used_images))
-            current_files = superdesk.app.media.fs('upload').find({'_id': {'$nin': list(used_images)}})
 
-            for file_id in (file._id for file in current_files if str(file._id) not in used_images):
-                print('Removing unused file: ', file_id)
-                superdesk.app.media.delete(file_id)
+            superdesk.app.media.remove_unreferenced_files(used_images)
 
-            return 'Image cleaning completed successfully.'
         except Exception as ex:
             print(ex)
 

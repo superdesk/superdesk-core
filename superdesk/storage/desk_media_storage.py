@@ -46,3 +46,11 @@ class SuperdeskGridFSMediaStorage(GridFSMediaStorage):
         if px not in self._fs:
             self._fs[px] = GridFS(driver.pymongo(prefix=px).db)
         return self._fs[px]
+
+    def remove_unreferenced_files(self, existing_files):
+        """ Gets the files from Grid FS and compars agains existing files and deletes the orphans """
+        current_files = self.fs('upload').find({'_id': {'$nin': list(existing_files)}})
+        for file_id in (file._id for file in current_files if str(file._id) not in existing_files):
+            print('Removing unused file: ', file_id)
+            self.delete(file_id)
+        print('Image cleaning completed successfully.')
