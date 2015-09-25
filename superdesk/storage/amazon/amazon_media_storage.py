@@ -16,7 +16,7 @@ from io import BytesIO
 import boto3
 
 logger = logging.getLogger(__name__)
-MAX_KEYS = 10000000
+MAX_KEYS = 1000
 
 
 class AmazonObjectWrapper(BytesIO):
@@ -82,12 +82,27 @@ class AmazonMediaStorage(MediaStorage):
 
     def get_all_keys(self):
         """ Returns the list of all keys from the bucket """
+        all_keys = []
         try:
-            objects = self.client.list_objects(Bucket=self.container_name, MaxKeys=MAX_KEYS)
-            return [obj['Key'] for obj in objects.get('Contents', [])]
+            for objects in self._get_all_keys_in_batches():
+                all_keys.extend(objects)
         except Exception as ex:
             logger.exception(ex)
-            return []
+        finally:
+            return all_keys
+
+    def _get_all_keys_in_batches(self):
+        """ Returns the list of all keys from the bucket in batches """
+        NextMarker = ''
+        while True:
+            objects = self.client.list_objects(Bucket=self.container_name, Marker=NextMarker, MaxKeys=MAX_KEYS)
+
+            if not objects or len(objects.get('Contents', [])) == 0:
+                return
+
+            keys = [obj['Key'] for obj in objects.get('Contents', [])]
+            NextMarker = keys[-1]
+            yield keys
 
     def extract_metadata_from_headers(self, request_headers):
         headers = {}
@@ -167,3 +182,19 @@ class AmazonMediaStorage(MediaStorage):
         except Exception:
             # File not found
             return False
+
+    def remove_unreferenced_files(self, existing_files):
+        """ Gets the files from S3 and compares against existing and deletes the orphans """
+        bucket_files = self.get_all_keys()
+        orphan_files = list(set(bucket_files) - existing_files)
+        print('There are {} orphan files...'.format(len(orphan_files)))
+
+        if len(orphan_files) > 0:
+            print('Cleaning the orphan files...')
+            deleted, errors = self.delete_objects(orphan_files)
+            if deleted:
+                print('Image cleaning completed successfully.')
+            else:
+                print('Failed to clean orphans: {}'.format(errors))
+        else:
+            print('There\'s nothing to clean.')
