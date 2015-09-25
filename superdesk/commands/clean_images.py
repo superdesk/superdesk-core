@@ -24,15 +24,24 @@ class CleanImages(superdesk.Command):
         try:
             print('Starting image cleaning.')
             used_images = set()
+            types = ['picture', 'video', 'audio']
 
-            archive_items = superdesk.get_resource_service('archive').get_from_mongo(None, {'type': 'picture'})
+            archive_items = superdesk.get_resource_service('archive').get_from_mongo(None, {'type': {'$in': types}})
             self.__add_existing_files(used_images, archive_items)
 
-            ingest_items = superdesk.get_resource_service('ingest').get_from_mongo(None, {'type': 'picture'})
+            ingest_items = superdesk.get_resource_service('ingest').get_from_mongo(None, {'type': {'$in': types}})
             self.__add_existing_files(used_images, ingest_items)
 
             upload_items = superdesk.get_resource_service('upload').get_from_mongo(req=None, lookup={})
             self.__add_existing_files(used_images, upload_items)
+
+            legal_archive_items = superdesk.get_resource_service('legal_archive').\
+                get_from_mongo(None, {'type': {'$in': types}})
+            self.__add_existing_files(used_images, legal_archive_items)
+
+            legal_archive_version_items = superdesk.get_resource_service('legal_archive_versions').\
+                get_from_mongo(None, {'type': {'$in': types}})
+            self.__add_existing_files(used_images, legal_archive_version_items)
 
             print('Number of used files: ', len(used_images))
 
