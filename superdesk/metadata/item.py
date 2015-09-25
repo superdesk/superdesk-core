@@ -241,9 +241,9 @@ metadata_schema = {
         'nullable': True,
         'schema': {
             'located': {'type': 'dict', 'nullable': True},
-            'date': {'type': 'datetime'},
+            'date': {'type': 'datetime', 'nullable': True},
             'source': {'type': 'string'},
-            'text': {'type': 'string'}
+            'text': {'type': 'string', 'nullable': True}
         },
     },
     'expiry': {
