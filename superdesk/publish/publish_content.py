@@ -51,7 +51,7 @@ def publish():
 
 
 def get_queue_items():
-    lookup = {'state': 'pending', 'destination.delivery_type': {'$ne': 'pull'}}
+    lookup = {'state': {'$in': ['pending', 'in-progress']}, 'destination.delivery_type': {'$ne': 'pull'}}
     return get_resource_service('publish_queue').get(req=None, lookup=lookup)
 
 
@@ -72,11 +72,12 @@ def transmit_items(queue_items):
             transmitter = superdesk.publish.transmitters[destination.get('delivery_type')]
             transmitter.transmit(queue_item)
             update_content_state(queue_item)
-        except:
-            failed_items.append(queue_item)
+        except Exception as ex:
+            logger.exception(ex)
+            failed_items.append(str(queue_item.get('_id')))
 
     if len(failed_items) > 0:
-        logger.error('Failed to publish the following items: %s', str(failed_items))
+        logger.error('Failed to publish the following items: {}'.format(failed_items))
 
 
 def is_on_time(queue_item):
