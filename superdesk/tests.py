@@ -56,6 +56,8 @@ def get_test_settings():
     test_settings = {}
     test_settings['ELASTICSEARCH_INDEX'] = 'sptest'
     test_settings['MONGO_URI'] = get_mongo_uri('MONGO_URI', 'sptests')
+    test_settings['LEGAL_ARCHIVE_DBNAME'] = 'sptests_legal_archive'
+    test_settings['LEGAL_ARCHIVE_URI'] = get_mongo_uri('LEGAL_ARCHIVE_URI', 'sptests_legal_archive')
     test_settings['DEBUG'] = True
     test_settings['TESTING'] = True
     test_settings['SUPERDESK_TESTING'] = True
