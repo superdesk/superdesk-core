@@ -22,6 +22,8 @@ from superdesk import get_resource_service
 logger = logging.getLogger(__name__)
 
 UPDATE_SCHEDULE_DEFAULT = {'seconds': 10}
+PUBLISH_QUEUE = 'publish_queue'
+STATE_PENDING = 'pending'
 
 
 class PublishContent(superdesk.Command):
@@ -51,8 +53,8 @@ def publish():
 
 
 def get_queue_items():
-    lookup = {'state': 'pending', 'destination.delivery_type': {'$ne': 'pull'}}
-    return get_resource_service('publish_queue').get(req=None, lookup=lookup)
+    lookup = {'state': STATE_PENDING, 'destination.delivery_type': {'$ne': 'pull'}}
+    return get_resource_service(PUBLISH_QUEUE).get(req=None, lookup=lookup)
 
 
 def transmit_items(queue_items):
@@ -65,18 +67,21 @@ def transmit_items(queue_items):
 
             # update the status of the item to in-progress
             queue_update = {'state': 'in-progress', 'transmit_started_at': utcnow()}
-            get_resource_service('publish_queue').patch(queue_item.get('_id'), queue_update)
+            get_resource_service(PUBLISH_QUEUE).patch(queue_item.get('_id'), queue_update)
 
             destination = queue_item['destination']
 
             transmitter = superdesk.publish.transmitters[destination.get('delivery_type')]
             transmitter.transmit(queue_item)
             update_content_state(queue_item)
-        except:
-            failed_items.append(queue_item)
+        except Exception as ex:
+            logger.exception(ex)
+            failed_items.append(str(queue_item.get('_id')))
 
     if len(failed_items) > 0:
-        logger.error('Failed to publish the following items: %s', str(failed_items))
+        for item_id in failed_items:
+            get_resource_service(PUBLISH_QUEUE).system_update(item_id, {'state': STATE_PENDING})
+        logger.error('Failed to publish the following items: {}'.format(failed_items))
 
 
 def is_on_time(queue_item):
