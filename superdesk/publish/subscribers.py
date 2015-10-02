@@ -10,7 +10,6 @@
 
 import json
 import logging
-from settings import MAX_VALUE_OF_PUBLISH_SEQUENCE
 from superdesk.celery_app import update_key, set_key
 from superdesk import get_resource_service
 from eve.utils import ParsedRequest
@@ -19,6 +18,7 @@ from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
 from superdesk.publish import subscriber_types, SUBSCRIBER_TYPES  # NOQA
+from flask import current_app as app
 
 logger = logging.getLogger(__name__)
 
@@ -173,7 +173,7 @@ class SubscribersService(BaseService):
 
         if subscriber.get('sequence_num_settings'):
             min = subscriber.get('sequence_num_settings').get('min', 1)
-            max = subscriber.get('sequence_num_settings').get('max', MAX_VALUE_OF_PUBLISH_SEQUENCE)
+            max = subscriber.get('sequence_num_settings').get('max', app.config['MAX_VALUE_OF_PUBLISH_SEQUENCE'])
 
             if min <= 0:
                 raise SuperdeskApiError.badRequestError(payload={"sequence_num_settings.min": 1},
@@ -200,7 +200,7 @@ class SubscribersService(BaseService):
         sequence_key_name = "{subscriber_name}_subscriber_seq".format(subscriber_name=subscriber.get('name')).lower()
         sequence_number = update_key(sequence_key_name, flag=True)
 
-        max_seq_number = MAX_VALUE_OF_PUBLISH_SEQUENCE
+        max_seq_number = app.config['MAX_VALUE_OF_PUBLISH_SEQUENCE']
 
         if subscriber.get('sequence_num_settings'):
             if sequence_number == 0 or sequence_number == 1:

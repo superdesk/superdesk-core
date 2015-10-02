@@ -13,6 +13,8 @@ from collections import namedtuple
 
 from superdesk.celery_app import celery
 from superdesk.publish.publish_content import PublishContent
+from superdesk import get_backend
+
 
 logger = logging.getLogger(__name__)
 
@@ -35,3 +37,16 @@ def transmit():
 
 # must be imported for registration
 import superdesk.publish.transmitters  # NOQA
+import superdesk.publish.formatters  # NOQA
+from superdesk.publish.subscribers import SubscribersResource, SubscribersService
+from superdesk.publish.publish_queue import PublishQueueResource, PublishQueueService
+
+
+def init_app(app):
+    endpoint_name = 'subscribers'
+    service = SubscribersService(endpoint_name, backend=get_backend())
+    SubscribersResource(endpoint_name, app=app, service=service)
+
+    endpoint_name = 'publish_queue'
+    service = PublishQueueService(endpoint_name, backend=get_backend())
+    PublishQueueResource(endpoint_name, app=app, service=service)
