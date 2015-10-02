@@ -15,7 +15,7 @@ import unittest
 import requests
 
 from superdesk.publish import SUBSCRIBER_TYPES
-from superdesk.publish.http_push import HTTPPushService
+from superdesk.publish.transmitters.http_push import HTTPPushService
 
 
 class ItemNotFound(Exception):

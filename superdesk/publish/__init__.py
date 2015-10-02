@@ -19,8 +19,8 @@ logger = logging.getLogger(__name__)
 transmitters = {}
 transmitter_errors = {}
 
-subscriber_types = ['broadcast', 'digital', 'wire']
-SUBSCRIBER_TYPES = namedtuple('SUBSCRIBER_TYPES', ['BROADCAST', 'DIGITAL', 'WIRE'])(*subscriber_types)
+subscriber_types = ['broadcast', 'digital', 'wire', 'all']
+SUBSCRIBER_TYPES = namedtuple('SUBSCRIBER_TYPES', ['BROADCAST', 'DIGITAL', 'WIRE', 'ALL'])(*subscriber_types)
 
 
 def register_transmitter(transmitter_type, transmitter, errors):
@@ -34,8 +34,4 @@ def transmit():
 
 
 # must be imported for registration
-import superdesk.publish.ftp  # NOQA
-import superdesk.publish.email  # NOQA
-import superdesk.publish.odbc  # NOQA
-import superdesk.publish.file_output  # NOQA
-import superdesk.publish.http_push  # NOQA
+import superdesk.publish.transmitters  # NOQA

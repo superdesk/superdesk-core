@@ -13,7 +13,7 @@ import os
 from superdesk.publish import SUBSCRIBER_TYPES
 
 from superdesk.tests import TestCase
-from superdesk.publish.file_output import FilePublishService
+from superdesk.publish.transmitters.file_output import FilePublishService
 from superdesk.errors import PublishFileError
 
 
