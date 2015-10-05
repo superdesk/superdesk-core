@@ -16,7 +16,7 @@ from superdesk.publish import init_app
 import json
 
 
-class ninjsFormatterTest(TestCase):
+class NinjsFormatterTest(TestCase):
     def setUp(self):
         super().setUp()
         self.formatter = NINJSFormatter()

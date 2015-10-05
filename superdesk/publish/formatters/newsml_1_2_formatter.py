@@ -30,7 +30,7 @@ class NewsML12Formatter(Formatter):
     """
     NewsML 1.2 Formatter
     """
-    XML_ROOT = '<?xml version="1.0"?><!DOCTYPE NewsML SYSTEM "http://www.aap.com.au/xml-res/NewsML_1.2.dtd">'
+    XML_ROOT = '<?xml version="1.0"?><!DOCTYPE NewsML SYSTEM "http://www.provider.com/dtd/NewsML_1.2.dtd">'
     now = utcnow()
     string_now = now.strftime('%Y%m%dT%H%M%S+0000')
     newml_content_type = {
