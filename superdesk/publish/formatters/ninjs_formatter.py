@@ -13,6 +13,7 @@ from superdesk.publish.formatters import Formatter
 import superdesk
 from superdesk.errors import FormatterError
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO
+from superdesk.metadata.packages import RESIDREF, GROUP_ID, GROUPS, ROOT_GROUP, REFS
 from superdesk.utils import json_serialize_datetime_objectId
 
 
@@ -79,16 +80,16 @@ class NINJSFormatter(Formatter):
 
     def _get_associations(self, article):
         associations = dict()
-        for group in article['groups']:
-            if group['id'] == 'root':
+        for group in article[GROUPS]:
+            if group[GROUP_ID] == ROOT_GROUP:
                 continue
 
-            for ref in group['refs']:
-                if 'residRef' in ref:
-                    items = associations.get(group['id'], [])
+            for ref in group[REFS]:
+                if RESIDREF in ref:
+                    items = associations.get(group[GROUP_ID], [])
                     item = {}
-                    item['_id'] = ref['residRef']
-                    item['type'] = ref['type']
+                    item['_id'] = ref[RESIDREF]
+                    item[ITEM_TYPE] = ref[ITEM_TYPE]
                     items.append(item)
-                    associations[group['id']] = items
+                    associations[group[GROUP_ID]] = items
         return associations
