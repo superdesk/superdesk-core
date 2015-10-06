@@ -13,7 +13,7 @@ import os
 import unittest
 import ftplib
 
-from superdesk.publish.ftp import FTPPublishService
+from superdesk.publish.transmitters.ftp import FTPPublishService
 
 
 class FTPPublishTestCase(unittest.TestCase):

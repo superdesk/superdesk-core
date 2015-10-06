@@ -13,14 +13,16 @@ from collections import namedtuple
 
 from superdesk.celery_app import celery
 from superdesk.publish.publish_content import PublishContent
+from superdesk import get_backend
+
 
 logger = logging.getLogger(__name__)
 
 transmitters = {}
 transmitter_errors = {}
 
-subscriber_types = ['broadcast', 'digital', 'wire']
-SUBSCRIBER_TYPES = namedtuple('SUBSCRIBER_TYPES', ['BROADCAST', 'DIGITAL', 'WIRE'])(*subscriber_types)
+subscriber_types = ['broadcast', 'digital', 'wire', 'all']
+SUBSCRIBER_TYPES = namedtuple('SUBSCRIBER_TYPES', ['BROADCAST', 'DIGITAL', 'WIRE', 'ALL'])(*subscriber_types)
 
 
 def register_transmitter(transmitter_type, transmitter, errors):
@@ -34,8 +36,17 @@ def transmit():
 
 
 # must be imported for registration
-import superdesk.publish.ftp  # NOQA
-import superdesk.publish.email  # NOQA
-import superdesk.publish.odbc  # NOQA
-import superdesk.publish.file_output  # NOQA
-import superdesk.publish.http_push  # NOQA
+import superdesk.publish.transmitters  # NOQA
+import superdesk.publish.formatters  # NOQA
+from superdesk.publish.subscribers import SubscribersResource, SubscribersService
+from superdesk.publish.publish_queue import PublishQueueResource, PublishQueueService
+
+
+def init_app(app):
+    endpoint_name = 'subscribers'
+    service = SubscribersService(endpoint_name, backend=get_backend())
+    SubscribersResource(endpoint_name, app=app, service=service)
+
+    endpoint_name = 'publish_queue'
+    service = PublishQueueService(endpoint_name, backend=get_backend())
+    PublishQueueResource(endpoint_name, app=app, service=service)

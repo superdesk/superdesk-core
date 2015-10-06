@@ -117,6 +117,7 @@ INSTALLED_APPS = [
     'superdesk.publish',
     'superdesk.commands',
     'superdesk.locators.locators',
+    'superdesk.vocabularies',
 ]
 
 RESOURCE_METHODS = ['GET', 'POST']
