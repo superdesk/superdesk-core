@@ -53,7 +53,7 @@ def publish():
 
 
 def get_queue_items():
-    lookup = {'state': STATE_PENDING, 'destination.delivery_type': {'$ne': 'pull'}}
+    lookup = {'$and': [{'state': STATE_PENDING}, {'destination.delivery_type': {'$ne': 'pull'}}]}
     return get_resource_service(PUBLISH_QUEUE).get(req=None, lookup=lookup)
 
 
