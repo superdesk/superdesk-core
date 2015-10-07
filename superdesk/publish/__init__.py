@@ -18,7 +18,7 @@ from superdesk import get_backend
 
 logger = logging.getLogger(__name__)
 
-transmitters = {}
+registered_transmitters = {}
 transmitter_errors = {}
 
 subscriber_types = ['broadcast', 'digital', 'wire', 'all']
@@ -26,7 +26,7 @@ SUBSCRIBER_TYPES = namedtuple('SUBSCRIBER_TYPES', ['BROADCAST', 'DIGITAL', 'WIRE
 
 
 def register_transmitter(transmitter_type, transmitter, errors):
-    transmitters[transmitter_type] = transmitter
+    registered_transmitters[transmitter_type] = transmitter
     transmitter_errors[transmitter_type] = dict(errors)
 
 
