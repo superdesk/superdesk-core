@@ -13,20 +13,20 @@ from superdesk.utils import SuperdeskBaseEnum
 
 
 class EnumToTest(SuperdeskBaseEnum):
-    red = 'red'
-    blue = 'blue'
-    green = 'green'
+    red = 1
+    blue = 2
+    green = 3
 
 
 class EnumTestCase(TestCase):
 
     def test_enum_from_value(self):
-        self.assertEqual(EnumToTest.from_value('red'), EnumToTest.red)
-        self.assertIsNone(EnumToTest.from_value('test'))
+        self.assertEqual(EnumToTest.from_value(1), EnumToTest.red)
+        self.assertIsNone(EnumToTest.from_value(4))
 
     def test_enum_values(self):
         values = EnumToTest.values()
-        self.assertIn('red', values)
-        self.assertIn('blue', values)
-        self.assertIn('green', values)
-        self.assertNotIn('test', values)
+        self.assertIn(1, values)
+        self.assertIn(2, values)
+        self.assertIn(3, values)
+        self.assertNotIn(4, values)

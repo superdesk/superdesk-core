@@ -58,7 +58,7 @@ class SuperdeskBaseEnum(Enum):
         Returns list of values for an enum
         :return: list of values for an enum
         """
-        return [enum_member.value for enum_member in cls.__members__.values()]
+        return [enum_member.value for enum_member in cls]
 
 
 def get_random_string(length=12):
