@@ -13,7 +13,7 @@ import bcrypt
 from uuid import uuid4
 from datetime import datetime
 from bson import ObjectId
-from enum import Enum
+from enum import Enum, unique
 from importlib import import_module
 from eve.utils import config
 
@@ -33,6 +33,32 @@ class SortOrder(Enum):
     """
     asc = 1
     desc = 2
+
+
+@unique
+class SuperdeskBaseEnum(Enum):
+    """
+    Base enum
+    """
+    @classmethod
+    def from_value(cls, value):
+        """
+        Returns the valid enum if value found else none
+        :param value: enum value
+        :return: return valid
+        """
+        try:
+            return cls(value)
+        except ValueError:
+            return None
+
+    @classmethod
+    def values(cls):
+        """
+        Returns list of values for an enum
+        :return: list of values for an enum
+        """
+        return [enum_member.value for enum_member in cls.__members__.values()]
 
 
 def get_random_string(length=12):
