@@ -10,8 +10,9 @@
 
 
 import logging
+import json
 
-from flask import current_app as app
+from flask import request, current_app as app
 from eve.utils import config
 
 from superdesk import privilege
@@ -33,6 +34,15 @@ class VocabulariesResource(Resource):
             'required': True,
             'unique': True
         },
+        'display_name': {
+            'type': 'string',
+            'required': True
+        },
+        'type': {
+            'type': 'string',
+            'required': True,
+            'allowed': ['manageable', 'unmanageable']
+        },
         'items': {
             'type': 'list',
             'required': True
@@ -53,8 +63,14 @@ class VocabulariesService(BaseService):
 
     def on_fetched(self, doc):
         """
-        Overriding to filter out inactive vocabularies and pops out 'is_active' property from the response.
+        Overriding to filter out inactive vocabularies and pops out 'is_active' property from the response if the
+        request wasn't for manageable vocabularies.
         """
+
+        if request and hasattr(request, 'args') and request.args.get('where'):
+            where_clause = json.loads(request.args.get('where'))
+            if where_clause.get('type') == 'manageable':
+                return doc
 
         for item in doc[config.ITEMS]:
             self._filter_inactive_vocabularies(item)
