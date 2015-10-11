@@ -13,7 +13,7 @@ import bcrypt
 from uuid import uuid4
 from datetime import datetime
 from bson import ObjectId
-from enum import Enum, unique
+from enum import Enum
 from importlib import import_module
 from eve.utils import config
 
@@ -35,7 +35,6 @@ class SortOrder(Enum):
     desc = 2
 
 
-@unique
 class SuperdeskBaseEnum(Enum):
     """
     Base enum
