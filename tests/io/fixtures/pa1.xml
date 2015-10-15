@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<nitf version="-//IPTC//DTD NITF 3.1//EN">
+	<head>
+<meta name="service" content="Comprehensive"/>
+		<title>1 SPORT Trivia (Oct 14)</title>
+		<meta name="category" content="SSS"/>
+		<meta name="optInfo" content="PA Sport"/>
+<tobject>
+  <tobject.subject tobject.subject.refnum="04011002"/>
+  <tobject.subject tobject.subject.refnum="10000000"/>
+  <tobject.subject tobject.subject.refnum="15000000"/>
+  <tobject.subject tobject.subject.refnum="15054000"/>
+</tobject>
+		<docdata management-status="usable">
+			<du-key key="PA-SSS-SPORT-Trivia(Oct14)"/>
+			<doc-id id-string="af1f7ad5-5619-49de-84cc-2e608538c77fSSS-3-1"/>
+			<urgency ed-urg="4"/>
+        <doc-scope scope="SPORT"/>
+			<series series.part="1"/>
+			<key-list>
+				<keyword key="Trivia (Oct 14)"/>
+			</key-list>
+			<del-list>
+				<from-src src-name="PA" level-number="1"/>
+			</del-list>
+        	<date.issue norm="20151014T043001+0100"/>
+			<ed-msg info=""/>
+			<doc.copyright holder="PA Sport" year="2015"/>
+		</docdata>
+	</head>
+	<body>
+		<body.head>
+			<hedline><hl1>PA SPORT TRIVIA (OCTOBER 14)</hl1></hedline>
+			<abstract>
+				<p>ON THIS DAY IN SPORT</p>
+			</abstract>
+		</body.head>
+		<body.content>
+<p>ON THIS DAY IN SPORT</p>
+          <p>1878: Two local teams took part in the first football match under floodlights at Bramall Lane, Sheffield.</p>
+          <p>1996: <person>Mark Bosnich</person>, then of Aston Villa, was charged with misconduct by the <org value="SL/fa" idsrc="xmltag.org" >Football Association</org> after his Basil Fawlty impersonation at Tottenham, which had angered Spurs' Jewish following. The Australian claimed he had not realised his Nazi-style salute had been offensive.</p>
+          <p>2000: <person>Jim McLean</person> resigned as chairman and managing director of Dundee United following the fall-out from a violent altercation with a television reporter during a live interview.</p>
+          <p>2004: <location>Australia</location> spinner <person>Shane Warne</person> equalled the record for most wickets in Test cricket by claiming his 532nd scalp in the second Test against <location>India</location>. He ended his Test career with 708 wickets.</p>
+          <p>2005: Manchester United and <location>Republic of Ireland</location> midfielder <person>Roy Keane</person> announced he was to quit international football.</p>
+          <p>2007: South Africa beat <location>Argentina</location> 37-13 to set up a rematch with England in the rugby union World Cup final. The Springboks went on to beat <person>Brian Ashton's</person> side to claim the global crown.</p>
+          <p>2009: Former Great Britain and Wigan coach <person>Brian Noble</person> was unveiled as the new head coach of the Crusaders.</p>
+          <p>2013: Surrey appointed <location>Sri Lanka</location> coach <person>Graham Ford</person> as their new head coach.</p>
+          <p>2014: Northern Ireland beat <location>Greece</location> 2-0 in <location>Athens</location> with goals from <person>Jamie Ward</person> and <person>Kyle Lafferty</person> to boost their hopes of qualifying for <money>Euro 2016</money>. <person>Michael O'Neill's</person> side sealed their place at the finals in <chron>October 2015</chron>.</p>
+          <p>BIRTHDAYS</p>
+          <p><person>Brendan Powell</person> (racing) - Won Grand National on Rhyme 'n' Reason in 1988, born 1959.</p>
+          <p><person>Steve Cram</person> (athletics) - Former world 1,500 metres champion, now a commentator, born 1960.</p>
+          <p><person>Jason Plato</person> (motor racing) - Two-time British Touring Car champion, born 1967.</p>
+          <p><person>Matt Le Tissier</person> (soccer) - Former Southampton and England forward, now a television pundit, born 1968.</p>
+          <p><person>Michael Duberry</person> (soccer) - Former Chelsea and Leeds defender, born 1975.</p>
+          <p>Tillakaratne Dilshan (cricket) - Former Sri Lanka opener and captain, born 1976.</p>
+          <p><person>Clarke Carlisle</person> (soccer) - Former Burnley and QPR defender, and ex-chairman of the <org>Professional Footballers' Association</org>, born 1979.</p>
+          <p><person>Alex Scott</person> (soccer) - England women right-back, born 1984.</p>
+          <p><person>Gautam Gambhir</person> (cricket) - <location>India</location> batsman, born 1981.</p>
+          <p><person>Kevin Thomson</person> (soccer) - Dundee's former <org value="SL/mlb.texa.rang" idsrc="xmltag.org" >Rangers</org> midfielder, born 1984.</p>
+          <p><person>Glenn Maxwell</person> (cricket) - <location>Australia</location> all-rounder, born 1988.</p>
+          <p>PA SPORT TV LISTINGS</p>
+          <p>Today (<chron>Wednesday, October 14</chron>)</p>
+          <p>CRICKET: First Test, Pakistan v England - Sky Sports 2 0630; First Test, Sri Lanka v West Indies - British Eurosport 2 0515; Second one-day international, India v South Africa - Sky Sports 1 0845.</p>
+          <p>TENNIS: Shanghai Masters - Sky Sports 3 0630; Generali Ladies Linz - British Eurosport 1130.</p>
+          <p>CYCLING: European Track Championships, Grenchen - British Eurosport 2 1800.</p>
+          <p>Tomorrow (<chron>Thursday, October 15</chron>)</p>
+          <p>CRICKET: First Test, Pakistan v England - Sky Sports 2 0630; First Test, Sri Lanka v West Indies - British Eurosport 2 0515.</p>
+          <p>GOLF: Portugal Masters - Sky Sports 4 1130-1330 &amp; 1500-1800; Frys.com Open - Sky Sports 4 1000-0100 &amp; 0200-0500 (Fri).</p>
+          <p>TENNIS: Shanghai Masters - Sky Sports 3 0630, Generali Ladies Linz - British Eurosport 1130.</p>
+          <p>CYCLING: European Track Championships, Grenchen - British Eurosport 2 1800.</p>
+          <p>MOTORCYCLING: MotoGP, Australian Grand Prix - BT Sport 2 0000-0245 &amp; 0400-0700.</p>
+          <p>AMERICAN FOOTBALL: <org value="SL/nfl" idsrc="xmltag.org" >NFL</org>, <org value="SL/nfl.newo.sain" idsrc="xmltag.org" >New Orleans Saints</org> v <org value="SL/nfl.atla.falc" idsrc="xmltag.org" >Atlanta Falcons</org> - Sky Sports 1 0125.</p>
+          <p>BASEBALL: <org value="SL/mlb" idsrc="xmltag.org" >MLB</org>, play-off matches - BT Sport 1 2200-0500 (Fri).</p>
+          <p>PA SPORT QUIZ</p>
+          <p>1. Name the dictator's son who made a Serie A appearance for Italian side Perugia in 2004, and hired disgraced sprinter <person>Ben Johnson</person> as his personal trainer.</p>
+          <p>2. <location>Australia</location> won the last of its 28 Davis Cup tennis titles in what year?</p>
+          <p>3. What was the score when South Africa played Wales in a rugby union international at Loftus Versfeld in <chron>June 1998</chron>?</p>
+          <p>4. The 'Dream Mile' is an athletics race contested annually at a meeting in which European city?</p>
+          <p>5. Who sang The Star-Spangled Banner at the 1984 Super Bowl?</p>
+          <p>Answers: 1. Al-Saadi Gaddafi; 2. 2003; 3. South Africa 96 Wales 13; 4. Oslo; 5. <person>Barry Manilow</person>.</p>
+          <p>ends</p></body.content>
+	</body>
+</nitf>
+

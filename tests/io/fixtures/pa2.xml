@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nitf version="-//IPTC//DTD NITF 3.3//EN">
+  <head>
+  <title>1 SOCCER INT-Teams</title>
+    <meta name="service" content="Comprehensive"/>
+    <meta name="category" content="FSP"/>
+    <meta name="optInfo" content="PA SPORT DATA"/>
+    <docdata management-status="usable">
+      <du-key key="580001T"/>
+      <doc-id id-string="T201510140143580001T"/>
+      <urgency ed-urg="3"/>
+      <doc-scope scope="SOCCER"/>
+      <series series.part="1"/>
+      <key-list>
+        <keyword key="INT-Teams"/>
+      </key-list>
+      <del-list>
+        <from-src src-name="PA" level-number="1"/>
+      </del-list>
+      <date.issue norm="20151014T024358+0100"/>
+    </docdata>
+  </head>
+  
+  <body>
+    <body.content>
+
+<pre>International Match
+Mexico v Panama
+Mexico: Talavera, M. Herrera, I. Jimenez, Torres Nilo, Rivas,
+Jonathan, Guemez, Esquivel, Aquino, R. Jimenez, Vela.
+Replacements: Munoz, Reyes, Layun, Corona, Moreno, H. Herrera,
+Peralta, Aguilar, E. Hernandez.
+Panama: Penedo, Machado, Godoy, Gomez, Parris, Quintero,
+Pimentel, Henriquez, Cooper, Baloy, Nurse.
+Replacements: Mejia, Miller, Macea, Addles, G. Torres, Tejada,
+Davis, Blackburn, Pinzon, Buitrago, Calderon.
+
+</pre>
+    </body.content>
+  </body>
+</nitf>
