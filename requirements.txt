@@ -10,7 +10,7 @@ Jinja2==2.7.3
 MarkupSafe==0.23
 Werkzeug==0.10.4
 Pillow==2.8.1
-autobahn[asyncio]==0.10.4
+autobahn[asyncio]==0.10.9
 arrow==0.4.4
 asyncio==3.4.3
 bcrypt==1.1.1

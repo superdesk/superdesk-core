@@ -21,13 +21,11 @@ from autobahn.asyncio.websocket import WebSocketServerFactory
 from logging.handlers import SysLogHandler
 from logging import Formatter
 
-
 beat_delay = 30
 
 
 def configure_logging(config):
     debug_log_format = ('%(levelname)s:%(module)s:%(message)s\n')
-
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
     handler = SysLogHandler(address=(config['LOG_SERVER_ADDRESS'], config['LOG_SERVER_PORT']))
@@ -54,8 +52,13 @@ class BroadcastProtocol(WebSocketServerProtocol):
         self.factory.broadcast(payload, self.peer)
 
     def connectionLost(self, reason):
-        """Unregister on connection drop"""
+        """Unregister client on lost connection."""
         WebSocketServerProtocol.connectionLost(self, reason)
+        self.factory.unregister(self)
+
+    def onClose(self, wasClean, code, reason):
+        """Unregister client on closed connection."""
+        WebSocketServerProtocol.onClose(self, wasClean, code, reason)
         self.factory.unregister(self)
 
 
@@ -66,19 +69,41 @@ class BroadcastServerFactory(WebSocketServerFactory):
         WebSocketServerFactory.__init__(self, *args)
         self.clients = []
         self.logger = logger
+        self.pings = 0
+        self.ping()
+
+    def json(self, data):
+        """Convert given data to json for websocket transport."""
+        return json.dumps(data).encode('utf8')
+
+    def ping(self):
+        """Send ping to all connected clients."""
+        self.pings += 1
+        self.broadcast(self.json({
+            'ping': self.pings,
+            'data': 'ping',
+            'from': os.environ.get('SUPERDESK_URL')
+        }), None)
+        self.loop.call_later(beat_delay, self.ping)
 
     def register(self, client):
         """Register a client"""
         if client not in self.clients:
             log(self.logger, 'registered client {}'.format(client.peer))
             self.clients.append(client)
-            client.sendMessage(json.dumps({'event': 'connected'}).encode('utf8'))
+            client.sendMessage(self.json({'event': 'connected'}))
 
     def unregister(self, client):
         """Unregister a client"""
         if client in self.clients:
             log(self.logger, 'unregister client {}'.format(client.peer))
             self.clients.remove(client)
+            client.transport.close()
+
+    def unregister_all(self):
+        """Unregister all clients"""
+        for client in self.clients:
+            self.unregister(client)
 
     def broadcast(self, msg, author):
         """Broadcast msg to all clients but author."""
@@ -91,17 +116,8 @@ class BroadcastServerFactory(WebSocketServerFactory):
         for c in self.clients:
             if c.peer is not author:
                 c.sendMessage(msg)
+
         log(self.logger, 'msg sent to {0} client(s)'.format(len(self.clients)))
-
-
-def send_heartbeat(server, loop):
-    yield from asyncio.sleep(beat_delay)
-    while loop.is_running():
-        server.broadcast(json.dumps({
-            'data': 'ping',
-            'from': os.environ.get('SUPERDESK_URL')
-        }).encode('utf8'), None)
-        yield from asyncio.sleep(beat_delay)
 
 
 def create_server(config):
@@ -115,16 +131,13 @@ def create_server(config):
 
     def stop():
         log(logger, 'closing...')
+        factory.unregister_all()
         server.close()
-        loop.call_soon_threadsafe(loop.stop)
-
-    loop.add_signal_handler(signal.SIGTERM, stop)
+        loop.close()
 
     try:
-        log(logger, 'initializing heartbeat...')
-        asyncio.async(send_heartbeat(factory, loop))
-
         log(logger, 'listening on {0}:{1}'.format(config['WS_HOST'], config['WS_PORT']))
+        loop.add_signal_handler(signal.SIGTERM, stop)
         loop.run_forever()
     except KeyboardInterrupt:
         pass
