@@ -44,7 +44,7 @@ class NINJSFormatter(Formatter):
                 ninjs['located'] = located.get('city', '')
 
             for copy_property in self.direct_copy_properties:
-                if copy_property in article:
+                if copy_property in article and article[copy_property] != None:
                     ninjs[copy_property] = article[copy_property]
 
             if 'description' in article:
@@ -56,7 +56,10 @@ class NINJSFormatter(Formatter):
             if article.get(EMBARGO):
                 ninjs['embargoed'] = article.get(EMBARGO).isoformat()
 
-            ninjs['priority'] = article.get('priority', 5)
+            if article.get('priority'):
+                ninjs['priority'] = article['priority']
+            else:
+                ninjs['priority'] = 5
 
             return [(pub_seq_num, json.dumps(ninjs, default=json_serialize_datetime_objectId))]
         except Exception as ex:
