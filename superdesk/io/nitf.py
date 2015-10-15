@@ -17,6 +17,7 @@ from superdesk.errors import ParserError
 from superdesk.utc import utc
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE
 from superdesk.etree import get_word_count
+from superdesk.io.iptc import subject_codes
 
 SUBJECT_TYPE = 'tobject.subject.type'
 SUBJECT_MATTER = 'tobject.subject.matter'
@@ -58,6 +59,8 @@ def get_subjects(tree):
                     'name': elem.get(field),
                     'qcode': field_qcode
                 })
+        if not any(c['qcode'] == qcode for c in subjects):
+            subjects.append({'name': subject_codes[qcode], 'qcode': qcode})
     return subjects
 
 
@@ -133,7 +136,8 @@ class NITFParser(Parser):
             item['pubstatus'] = (docdata.attrib.get('management-status', 'usable')).lower()
             item['firstcreated'] = get_norm_datetime(docdata.find('date.issue'))
             item['versioncreated'] = get_norm_datetime(docdata.find('date.issue'))
-            item['expiry'] = get_norm_datetime(docdata.find('date.expire'))
+            if docdata.find('date.expire') is not None:
+                item['expiry'] = get_norm_datetime(docdata.find('date.expire'))
             item['subject'] = get_subjects(tree)
             item['body_html'] = get_content(tree)
             item['place'] = get_places(docdata)
@@ -142,7 +146,11 @@ class NITFParser(Parser):
             if docdata.find('ed-msg') is not None:
                 item['ednote'] = docdata.find('ed-msg').attrib.get('info')
 
-            item['headline'] = tree.find('body/body.head/hedline/hl1').text
+            if tree.find('body/body.head/hedline/hl1') is not None:
+                item['headline'] = tree.find('body/body.head/hedline/hl1').text
+            else:
+                if tree.find('head/title') is not None:
+                    item['headline'] = tree.find('head/title').text
 
             elem = tree.find('body/body.head/abstract')
             item['abstract'] = elem.text if elem is not None else ''

@@ -119,3 +119,49 @@ class IPTCExampleTestCase(NITFTestCase):
 
     def test_word_count(self):
         self.assertEqual(220, self.item.get('word_count'))
+
+
+class PATestCase(NITFTestCase):
+
+    filename = 'pa1.xml'
+
+    def test_headline(self):
+        self.assertEqual(self.item.get('headline'), 'PA SPORT TRIVIA (OCTOBER 14)')
+
+    def test_pubstatus(self):
+        self.assertEqual('usable', self.item.get('pubstatus'))
+
+    def test_guid(self):
+        self.assertEqual('af1f7ad5-5619-49de-84cc-2e608538c77fSSS-3-1', self.item.get('guid'))
+
+    def test_subjects(self):
+        self.assertEqual(4, len(self.item.get('subject')))
+
+    def test_keywords(self):
+        self.assertIn('Trivia (Oct 14)', self.item.get('keywords'))
+
+    def test_word_count(self):
+        self.assertEqual(665, self.item.get('word_count'))
+
+
+class PATestCase2(NITFTestCase):
+
+    filename = 'pa2.xml'
+
+    def test_headline(self):
+        self.assertEqual(self.item.get('headline'), '1 SOCCER INT-Teams')
+
+    def test_pubstatus(self):
+        self.assertEqual('usable', self.item.get('pubstatus'))
+
+    def test_guid(self):
+        self.assertEqual('T201510140143580001T', self.item.get('guid'))
+
+    def test_subjects(self):
+        self.assertEqual(0, len(self.item.get('subject')))
+
+    def test_keywords(self):
+        self.assertIn('INT-Teams', self.item.get('keywords'))
+
+    def test_word_count(self):
+        self.assertEqual(58, self.item.get('word_count'))
