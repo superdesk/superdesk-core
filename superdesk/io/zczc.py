@@ -13,6 +13,7 @@ from superdesk.errors import ParserError
 from .iptc import subject_codes
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
 from superdesk.utc import utcnow
+from datetime import datetime
 import uuid
 
 
@@ -43,8 +44,14 @@ class ZCZCParser(Parser):
     TEXT = 'X'
     TABULAR = 'T'
 
-    header_map = {KEYWORD: 'slugline', TAKEKEY: 'anpa_take_key',
-                  HEADLINE: 'headline', SERVICELEVEL: None}
+    ITEM_SLUGLINE = 'slugline'
+    ITEM_HEADLINE = 'headline'
+    ITEM_ANPA_CATEGORY = 'anpa_category'
+    ITEM_SUBJECT = 'subject'
+    ITEM_TAKE_KEY = 'anpa_take_key'
+
+    header_map = {KEYWORD: ITEM_SLUGLINE, TAKEKEY: ITEM_TAKE_KEY,
+                  HEADLINE: ITEM_HEADLINE, SERVICELEVEL: None}
 
     def can_parse(self, filestr):
         return self.START_OF_MESSAGE in filestr
@@ -52,11 +59,12 @@ class ZCZCParser(Parser):
     def parse_file(self, filename, provider):
         try:
             item = {}
-            self.set_item_defaults(item)
+            self.set_item_defaults(item, provider)
 
             with open(filename, 'r', encoding='ascii') as f:
                 lines = f.readlines()
                 header = False
+                body = False
                 for line in lines:
                     if self.START_OF_MESSAGE in line and not header:
                         item['guid'] = filename + str(uuid.uuid4())
@@ -68,7 +76,7 @@ class ZCZCParser(Parser):
                                 item[self.header_map[line[0]]] = line[1:-1]
                             continue
                         if line[0] == self.CATEGORY:
-                            item['anpa_category'] = [{'qcode': line[1]}]
+                            item[self.ITEM_ANPA_CATEGORY] = [{'qcode': line[1]}]
                             continue
                         if line[0] == self.FORMAT:
                             if line[1] == self.TEXT:
@@ -80,21 +88,89 @@ class ZCZCParser(Parser):
                             continue
                         if line[0] == self.IPTC:
                             iptc_code = line[1:-1]
-                            item['subject'] = [{'qcode': iptc_code, 'name': subject_codes[iptc_code]}]
+                            item[self.ITEM_SUBJECT] = [{'qcode': iptc_code, 'name': subject_codes[iptc_code]}]
                             continue
                         header = False
+                        body = True
                         item['body_html'] = line
                     else:
                         if self.END_OF_MESSAGE in line:
                             break
-                        item['body_html'] = item['body_html'] + line
-            return item
+                        if body:
+                            item['body_html'] = item.get('body_html', '') + line
+            return self.post_process_item(item, provider)
 
         except Exception as ex:
-            raise ParserError.ZCZCParserError(ex, provider)
+            raise ParserError.ZCZCParserError(exception=ex, provider=provider)
 
-    def set_item_defaults(self, item):
-        item[ITEM_TYPE] = CONTENT_TYPE.TEXT
+    def set_item_defaults(self, item, provider):
         item['urgency'] = 5
         item['pubstatus'] = 'usable'
         item['versioncreated'] = utcnow()
+        # Pagemasters
+        if provider.provider.get('source') == 'PMF':
+            item[ITEM_TYPE] = CONTENT_TYPE.PREFORMATTED
+            item['original_source'] = 'Pagemasters'
+            self.KEYWORD = '#'
+            self.TAKEKEY = '@'
+            self.HEADLINE = ':'
+            self.header_map = {self.KEYWORD: self.ITEM_SLUGLINE, self.TAKEKEY: self.ITEM_TAKE_KEY,
+                               self.HEADLINE: self.ITEM_HEADLINE}
+        elif provider.provider.get('source') == 'MNET':
+            # Medianet
+            item[ITEM_TYPE] = CONTENT_TYPE.PREFORMATTED
+            item['original_source'] = 'Medianet'
+            item['urgency'] = 8
+            self.HEADLINE = ':'
+            self.header_map = {'%': None, self.HEADLINE: self.ITEM_HEADLINE}
+        elif provider.provider.get('source') == 'BRA':
+            # Racing system
+            item[ITEM_TYPE] = CONTENT_TYPE.PREFORMATTED
+        else:
+            item[ITEM_TYPE] = CONTENT_TYPE.TEXT
+
+    def post_process_item(self, item, provider):
+        """
+        Applies the transormations required based on the provider of the content and the item it's self
+        :param item:
+        :param provider:
+        :return: item
+        """
+        # Pagemasters sourced content is Geryhound or Trot related, maybe AFL otherwise financial
+        if provider.provider.get('source') == 'PMF':
+            # is it a horse or dog racing item
+            if item.get(self.ITEM_SLUGLINE, '').find('Grey') != -1 or item.get(self.ITEM_SLUGLINE, '').find(
+                    'Trot') != -1:
+                raceday = datetime.strptime(item.get(self.ITEM_HEADLINE, ''), '%d/%m/%Y')
+                item[self.ITEM_TAKE_KEY] = 'Fields ' + raceday.strftime('%A')
+                if item.get(self.ITEM_SLUGLINE, '').find('Grey') != -1:
+                    item[self.ITEM_HEADLINE] = item.get(self.ITEM_SLUGLINE) + 'hound ' + item.get(self.ITEM_TAKE_KEY,
+                                                                                                  '')
+                    item[self.ITEM_SUBJECT] = [{'qcode': '15082002', 'name': subject_codes['15082002']}]
+                if item.get(self.ITEM_SLUGLINE, '').find('Trot') != -1:
+                    item[self.ITEM_HEADLINE] = item.get(self.ITEM_SLUGLINE) + ' ' + item.get(self.ITEM_TAKE_KEY, '')
+                    item[self.ITEM_SUBJECT] = [{'qcode': '15030000', 'name': subject_codes['15030000']}]
+                item[self.ITEM_ANPA_CATEGORY] = [{'qcode': 'r'}]
+            elif item.get(self.ITEM_SLUGLINE, '').find('AFL') != -1:
+                item[self.ITEM_ANPA_CATEGORY] = [{'qcode': 't'}]
+                item[self.ITEM_SUBJECT] = [{'qcode': '15084000', 'name': subject_codes['15084000']}]
+            else:
+                item[self.ITEM_ANPA_CATEGORY] = [{'qcode': 'f'}]
+                item[self.ITEM_SUBJECT] = [{'qcode': '04000000', 'name': subject_codes['04000000']}]
+        elif provider.provider.get('source') == 'BRA':
+            # It is from the Racing system
+            item[self.ITEM_ANPA_CATEGORY] = [{'qcode': 'r'}]
+            item[self.ITEM_SUBJECT] = [{'qcode': '15030001', 'name': subject_codes['15030001']}]
+            lines = item['body_html'].split('\n')
+            if lines[2] and lines[2].find(':SPORT -') != -1:
+                item[self.ITEM_HEADLINE] = lines[2][9:]
+            elif lines[1] and lines[1].find('RACING : ') != -1:
+                item[self.ITEM_HEADLINE] = lines[1][8:]
+            elif lines[0] and lines[0].find('YY FORM') != -1:
+                item[self.ITEM_HEADLINE] = lines[1]
+            elif lines[1] and lines[1].find(':POTTED :') != -1:
+                item[self.ITEM_HEADLINE] = lines[1][9:]
+            else:
+                item[self.ITEM_HEADLINE] = lines[2]
+
+        return item

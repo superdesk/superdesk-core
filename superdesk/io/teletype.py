@@ -53,15 +53,9 @@ class TeletypeIngestService(FileIngestService):
                         yield [item]
                     else:
                         self.move_file(self.path, filename, provider=provider, success=True)
-            except ParserError.ZCZCParserError as ex:
-                logger.exception("Ingest Type: Teletype - File: {0} could not be processed".format(filename))
-                self.move_file(self.path, filename, provider=provider, success=False)
-                raise ParserError.ZCZCParserError(ex, provider)
-            except ParserError as ex:
-                self.move_file(self.path, filename, provider=provider, success=False)
             except Exception as ex:
                 self.move_file(self.path, filename, provider=provider, success=False)
-                raise ProviderError.ingestError(ex, provider)
+                raise ParserError.parseFileError('Teletype', filename, ex, provider)
 
     def parse_file(self, filename, provider):
         try:

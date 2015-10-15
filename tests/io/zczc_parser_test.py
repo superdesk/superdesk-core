@@ -15,21 +15,44 @@ from superdesk.io.zczc import ZCZCParser
 
 
 class ZCZCTestCase(unittest.TestCase):
-    filename = 'Standings__2014_14_635535729050675896.tst'
+    provider = {'name': 'test provder', 'provider': {}}
 
-    def setUp(self):
+    def test_default_format(self):
+        filename = 'Standings__2014_14_635535729050675896.tst'
         dirname = os.path.dirname(os.path.realpath(__file__))
-        fixture = os.path.join(dirname, 'fixtures', self.filename)
+        fixture = os.path.join(dirname, 'fixtures', filename)
+        self.provider['source'] = 'SOMETHING'
         self.items = ZCZCParser().parse_file(fixture, self)
-
-    def test_headline(self):
         self.assertEqual(self.items.get('headline'), 'MOTOR:  Collated results/standings after Sydney NRMA 500')
-
-    def test_anpa_category(self):
         self.assertEqual(self.items.get('anpa_category')[0]['qcode'], 'T')
-
-    def test_subject(self):
         self.assertEqual(self.items.get('subject')[0]['qcode'], '15039001')
-
-    def test_version_created(self):
         self.assertIn('versioncreated', self.items)
+
+    def test_medianet_format(self):
+        filename = 'ED_841066_2_1.tst'
+        dirname = os.path.dirname(os.path.realpath(__file__))
+        fixture = os.path.join(dirname, 'fixtures', filename)
+        self.provider['source'] = 'MNET'
+        self.items = ZCZCParser().parse_file(fixture, self)
+        self.assertEqual(self.items.get('headline'), 'Australian Financial Security Authority')
+
+    def test_pagemasters_format(self):
+        filename = 'Darwin GR - Greys - Sun 11 Oct, 2015.tst'
+        dirname = os.path.dirname(os.path.realpath(__file__))
+        fixture = os.path.join(dirname, 'fixtures', filename)
+        self.provider['source'] = 'PMF'
+        self.items = ZCZCParser().parse_file(fixture, self)
+        self.assertEqual(self.items.get('headline'), 'Darwin Greyhound Fields Sunday')
+        self.assertEqual(self.items.get('slugline'), 'Darwin Grey')
+        self.assertEqual(self.items.get('anpa_category')[0]['qcode'], 'r')
+        self.assertEqual(self.items.get('subject')[0]['qcode'], '15082002')
+
+    def test_racing_format(self):
+        filename = 'viflda004_7257.tst'
+        dirname = os.path.dirname(os.path.realpath(__file__))
+        fixture = os.path.join(dirname, 'fixtures', filename)
+        self.provider['source'] = 'BRA'
+        self.items = ZCZCParser().parse_file(fixture, self)
+        self.assertEqual(self.items.get('headline'), ' Racing.Com Park FIELDS Thursday')
+        self.assertEqual(self.items.get('anpa_category')[0]['qcode'], 'r')
+        self.assertEqual(self.items.get('subject')[0]['qcode'], '15030001')
