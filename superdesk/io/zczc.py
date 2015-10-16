@@ -108,7 +108,7 @@ class ZCZCParser(Parser):
         item['pubstatus'] = 'usable'
         item['versioncreated'] = utcnow()
         # Pagemasters
-        if provider.provider.get('source') == 'PMF':
+        if provider.get('source') == 'PMF':
             item[ITEM_TYPE] = CONTENT_TYPE.PREFORMATTED
             item['original_source'] = 'Pagemasters'
             self.KEYWORD = '#'
@@ -116,14 +116,14 @@ class ZCZCParser(Parser):
             self.HEADLINE = ':'
             self.header_map = {self.KEYWORD: self.ITEM_SLUGLINE, self.TAKEKEY: self.ITEM_TAKE_KEY,
                                self.HEADLINE: self.ITEM_HEADLINE}
-        elif provider.provider.get('source') == 'MNET':
+        elif provider.get('source') == 'MNET':
             # Medianet
             item[ITEM_TYPE] = CONTENT_TYPE.PREFORMATTED
             item['original_source'] = 'Medianet'
             item['urgency'] = 8
             self.HEADLINE = ':'
             self.header_map = {'%': None, self.HEADLINE: self.ITEM_HEADLINE}
-        elif provider.provider.get('source') == 'BRA':
+        elif provider.get('source') == 'BRA':
             # Racing system
             item[ITEM_TYPE] = CONTENT_TYPE.PREFORMATTED
         else:
@@ -137,7 +137,7 @@ class ZCZCParser(Parser):
         :return: item
         """
         # Pagemasters sourced content is Geryhound or Trot related, maybe AFL otherwise financial
-        if provider.provider.get('source') == 'PMF':
+        if provider.get('source') == 'PMF':
             # is it a horse or dog racing item
             if item.get(self.ITEM_SLUGLINE, '').find('Grey') != -1 or item.get(self.ITEM_SLUGLINE, '').find(
                     'Trot') != -1:
@@ -157,7 +157,7 @@ class ZCZCParser(Parser):
             else:
                 item[self.ITEM_ANPA_CATEGORY] = [{'qcode': 'f'}]
                 item[self.ITEM_SUBJECT] = [{'qcode': '04000000', 'name': subject_codes['04000000']}]
-        elif provider.provider.get('source') == 'BRA':
+        elif provider.get('source') == 'BRA':
             # It is from the Racing system
             item[self.ITEM_ANPA_CATEGORY] = [{'qcode': 'r'}]
             item[self.ITEM_SUBJECT] = [{'qcode': '15030001', 'name': subject_codes['15030001']}]
