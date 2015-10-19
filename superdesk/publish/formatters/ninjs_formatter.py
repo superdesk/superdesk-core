@@ -44,7 +44,7 @@ class NINJSFormatter(Formatter):
                 ninjs['located'] = located.get('city', '')
 
             for copy_property in self.direct_copy_properties:
-                if copy_property in article and article[copy_property] != None:
+                if copy_property in article and article[copy_property] is not None:
                     ninjs[copy_property] = article[copy_property]
 
             if 'description' in article:
