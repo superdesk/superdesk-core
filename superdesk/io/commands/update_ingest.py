@@ -259,6 +259,28 @@ def process_anpa_category(item, provider):
         raise ProviderError.anpaError(ex, provider)
 
 
+def derive_category(item, provider):
+    """
+    Assuming that the item has at least one itpc subject use the vocabulary map to derive an anpa category
+    :param item:
+    :return: An item with a category if possible
+    """
+    try:
+        categories = []
+        subject_map = superdesk.get_resource_service('vocabularies').find_one(req=None, _id='iptc_category_map')
+        if subject_map:
+            for entry in (map_entry for map_entry in subject_map['items'] if map_entry['is_active']):
+                for subject in item.get('subject', []):
+                    if subject['qcode'] == entry['subject']:
+                            if not any(c['qcode'] == entry['category'] for c in categories):
+                                categories.append({'qcode': entry['category']})
+            if len(categories):
+                item['anpa_category'] = categories
+                process_anpa_category(item, provider)
+    except Exception as ex:
+        logger.exception(ex)
+
+
 def process_iptc_codes(item, provider):
     """
     Ensures that the higher level IPTC codes are present by inserting them if missing, for example
@@ -285,6 +307,26 @@ def process_iptc_codes(item, provider):
                     item['subject'].append({'qcode': mid_qcode, 'name': subject_codes[mid_qcode]})
     except Exception as ex:
         raise ProviderError.iptcError(ex, provider)
+
+
+def derive_subject(item):
+    """
+    Assuming that the item has an anpa category try to derive a subject using the anpa category vocabulary
+    :param item:
+    :return:
+    """
+    try:
+        category_map = superdesk.get_resource_service('vocabularies').find_one(req=None, _id='categories')
+        if category_map:
+            for cat in item['anpa_category']:
+                map_entry = next(
+                    (code for code in category_map['items'] if code['qcode'] == cat['qcode'] and code['is_active']),
+                    None)
+                if map_entry and 'subject' in map_entry:
+                    item['subject'] = [
+                        {'qcode': map_entry.get('subject'), 'name': subject_codes[map_entry.get('subject')]}]
+    except Exception as ex:
+        logger.exception(ex)
 
 
 def apply_rule_set(item, provider, rule_set=None):
@@ -375,6 +417,10 @@ def ingest_item(item, provider, rule_set=None, routing_scheme=None):
 
         if 'subject' in item:
             process_iptc_codes(item, provider)
+            if 'anpa_category' not in item:
+                derive_category(item, provider)
+        elif 'anpa_category' in item:
+            derive_subject(item)
 
         apply_rule_set(item, provider, rule_set)
 
