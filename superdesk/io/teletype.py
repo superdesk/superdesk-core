@@ -47,7 +47,7 @@ class TeletypeIngestService(FileIngestService):
                     stat = os.lstat(filepath)
                     last_updated = datetime.fromtimestamp(stat.st_mtime, tz=utc)
                     if self.is_latest_content(last_updated, provider.get('last_updated')):
-                        item = self.parser.parse_file(filepath, self)
+                        item = self.parser.parse_file(filepath, provider)
 
                         self.move_file(self.path, filename, provider=provider, success=True)
                         yield [item]
@@ -64,22 +64,9 @@ class TeletypeIngestService(FileIngestService):
             if not path:
                 return []
 
-            item = self.parser.parse_file(os.path.join(path, filename))
-
-            return [item]
-        except Exception as ex:
-            self.move_file(self.path, filename, provider=provider, success=False)
-            raise ParserError.parseFileError('Teletype', filename, ex, provider)
-
-    def parse_file(self, filename, provider):
-        try:
-            path = provider.get('config', {}).get('path', None)
-
-            if not path:
-                return []
-
             item = self.parser.parse_file(os.path.join(path, filename), provider)
 
             return [item]
         except Exception as ex:
+            self.move_file(self.path, filename, provider=provider, success=False)
             raise ParserError.parseFileError('Teletype', filename, ex, provider)
