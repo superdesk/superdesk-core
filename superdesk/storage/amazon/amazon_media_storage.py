@@ -35,6 +35,7 @@ class AmazonObjectWrapper(BytesIO):
         self.content_type = s3_object['ContentType']
         self.length = int(s3_object['ContentLength'])
         self.name = name
+        self.filename = name
         self.metadata = metadata
         self.upload_date = s3_object['LastModified']
         self.md5 = s3_object['ETag'][1:-1]
