@@ -12,7 +12,7 @@
 import os
 import unittest
 from superdesk.etree import etree
-from superdesk.io.nitf import NITFParser
+from superdesk.io.nitf import NITFParser, get_subjects
 
 
 class NITFTestCase(unittest.TestCase):
@@ -165,3 +165,29 @@ class PATestCase2(NITFTestCase):
 
     def test_word_count(self):
         self.assertEqual(58, self.item.get('word_count'))
+
+
+class ParseSubjects(unittest.TestCase):
+    def test_get_subjects(self):
+        xml = ('<?xml version="1.0" encoding="UTF-8"?>'
+               '<nitf><head>'
+               '<tobject tobject.type="News">'
+               '<tobject.property tobject.property.type="Current" />'
+               '<tobject.subject tobject.subject.refnum="02003000" '
+               'tobject.subject.type="Justice" tobject.subject.matter="Police" />'
+               '</tobject></head></nitf>')
+        subjects = get_subjects(etree.fromstring(xml))
+        self.assertEqual(len(subjects), 2)
+        self.assertIn({'qcode': '02000000', 'name': 'Justice'}, subjects)
+        self.assertIn({'qcode': '02003000', 'name': 'Police'}, subjects)
+
+    def test_get_subjects_with_invalid_qcode(self):
+        xml = ('<?xml version="1.0" encoding="UTF-8"?>'
+               '<nitf><head>'
+               '<tobject tobject.type="News">'
+               '<tobject.property tobject.property.type="Current" />'
+               '<tobject.subject tobject.subject.refnum="00000000" '
+               'tobject.subject.type="Justice" tobject.subject.matter="Police" />'
+               '</tobject></head></nitf>')
+        subjects = get_subjects(etree.fromstring(xml))
+        self.assertEqual(len(subjects), 0)
