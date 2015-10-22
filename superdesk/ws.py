@@ -10,139 +10,133 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-import os
 import json
-import logging
-import asyncio
 import signal
+import asyncio
+import logging
+import websockets
+import logging.handlers
 
-from autobahn.asyncio.websocket import WebSocketServerProtocol
-from autobahn.asyncio.websocket import WebSocketServerFactory
-from logging.handlers import SysLogHandler
-from logging import Formatter
+beat_delay = 5
+clients = set()
 
-beat_delay = 30
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 
-def configure_logging(config):
+def configure_syslog(config):
+    """Configure syslog logging handler.
+
+    :param config: config dictionary
+    """
     debug_log_format = ('%(levelname)s:%(module)s:%(message)s\n')
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
-    handler = SysLogHandler(address=(config['LOG_SERVER_ADDRESS'], config['LOG_SERVER_PORT']))
-    handler.setFormatter(Formatter(debug_log_format))
+    handler = logging.handlers.SysLogHandler(address=(config['LOG_SERVER_ADDRESS'], config['LOG_SERVER_PORT']))
+    handler.setFormatter(logging.Formatter(debug_log_format))
     logger.addHandler(handler)
-    logger.addHandler(logging.StreamHandler())
-    return logger
 
 
-def log(logger, log_msg):
-    logger.info(log_msg)
-    print(log_msg)
+@asyncio.coroutine
+def client_loop(websocket):
+    """Client loop - send it ping every `beat_delay` seconds to keep it alive.
+
+    Nginx would close the connection after 2 minutes of inactivity, that's why.
+
+    Also it does the health check - if socket was closed by client it will
+    break the loop and let server deregister the client.
+
+    :param websocket: websocket protocol instance
+    """
+    pings = 0
+    while True:
+        yield from asyncio.sleep(beat_delay)
+        if not websocket.open:
+            break
+        pings += 1
+        yield from websocket.send(json.dumps({'ping': pings, 'clients': len(websocket.ws_server.websockets)}))
 
 
-class BroadcastProtocol(WebSocketServerProtocol):
-    """Client protocol - there is an instance per client connection."""
+@asyncio.coroutine
+def broadcast(message):
+    """Broadcast message to all clients.
 
-    def onOpen(self):
-        """Register"""
-        self.factory.register(self)
-
-    def onMessage(self, payload, isBinary):
-        """Broadcast msg from a client"""
-        self.factory.broadcast(payload, self.peer)
-
-    def connectionLost(self, reason):
-        """Unregister client on lost connection."""
-        WebSocketServerProtocol.connectionLost(self, reason)
-        self.factory.unregister(self)
-
-    def onClose(self, wasClean, code, reason):
-        """Unregister client on closed connection."""
-        WebSocketServerProtocol.onClose(self, wasClean, code, reason)
-        self.factory.unregister(self)
+    :param message: message as it was received - no encoding/decoding.
+    """
+    logger.debug('broadcast %s' % message)
+    for websocket in clients:
+        if websocket.open:
+            yield from websocket.send(message)
 
 
-class BroadcastServerFactory(WebSocketServerFactory):
-    """Server handling client registrations and broadcasting"""
+@asyncio.coroutine
+def server_loop(websocket):
+    """Server loop - wait for message and broadcast it.
 
-    def __init__(self, logger, *args):
-        WebSocketServerFactory.__init__(self, *args)
-        self.clients = []
-        self.logger = logger
-        self.pings = 0
-        self.ping()
+    When message is none it means the socket is closed
+    and there will be no messages so we break the loop.
 
-    def json(self, data):
-        """Convert given data to json for websocket transport."""
-        return json.dumps(data).encode('utf8')
+    :param websocket: websocket protocol instance
+    """
+    while True:
+        message = yield from websocket.recv()
+        if message is None:
+            break
+        yield from broadcast(message)
 
-    def ping(self):
-        """Send ping to all connected clients."""
-        self.pings += 1
-        self.broadcast(self.json({
-            'ping': self.pings,
-            'data': 'ping',
-            'from': os.environ.get('SUPERDESK_URL')
-        }), None)
-        self.loop.call_later(beat_delay, self.ping)
 
-    def register(self, client):
-        """Register a client"""
-        if client not in self.clients:
-            log(self.logger, 'registered client {}'.format(client.peer))
-            self.clients.append(client)
-            client.sendMessage(self.json({'event': 'connected'}))
+def log(message, websocket):
+    """Log message with some websocket data like address.
 
-    def unregister(self, client):
-        """Unregister a client"""
-        if client in self.clients:
-            log(self.logger, 'unregister client {}'.format(client.peer))
-            self.clients.remove(client)
-            client.transport.close()
+    :param message: message string
+    :param websocket: websocket protocol instance
+    """
+    host, port = websocket.remote_address
+    logger.info('%s address=%s:%s' % (message, host, port))
 
-    def unregister_all(self):
-        """Unregister all clients"""
-        for client in self.clients:
-            self.unregister(client)
 
-    def broadcast(self, msg, author):
-        """Broadcast msg to all clients but author."""
-        log(self.logger, 'broadcasting "{0}"'.format(msg.decode('utf8')))
+@asyncio.coroutine
+def connection_handler(websocket, path):
+    """Handle incomming connections.
 
-        for c in self.clients:
-            if c.state == c.STATE_CLOSED:
-                self.unregister(c)
+    When this function returns the session is over and it closes the socket,
+    so there must be some loops..
 
-        for c in self.clients:
-            if c.peer is not author:
-                c.sendMessage(msg)
-
-        log(self.logger, 'msg sent to {0} client(s)'.format(len(self.clients)))
+    :param websocket: websocket protocol instance
+    :param path: url path used by client - used to identify client/server connections
+    """
+    if 'server' in path:
+        log('server open', websocket)
+        yield from server_loop(websocket)
+        log('server done', websocket)
+    else:
+        log('client open', websocket)
+        clients.add(websocket)
+        yield from client_loop(websocket)
+        clients.remove(websocket)
+        log('client done', websocket)
 
 
 def create_server(config):
-    logger = configure_logging(config)
-    factory = BroadcastServerFactory(logger)
-    factory.protocol = BroadcastProtocol
+    """Create websocket server and run it until it gets Ctrl+C or SIGTERM.
 
-    loop = asyncio.get_event_loop()
-    coro = loop.create_server(factory, config['WS_HOST'], config['WS_PORT'])
-    server = loop.run_until_complete(coro)
-
-    def stop():
-        log(logger, 'closing...')
-        factory.unregister_all()
-        server.close()
-        loop.close()
-
+    :param config: config dictionary
+    """
     try:
-        log(logger, 'listening on {0}:{1}'.format(config['WS_HOST'], config['WS_PORT']))
-        loop.add_signal_handler(signal.SIGTERM, stop)
+        host = config['WS_HOST']
+        port = config['WS_PORT']
+        loop = asyncio.get_event_loop()
+        server = loop.run_until_complete(websockets.serve(connection_handler, host, port))
+        loop.add_signal_handler(signal.SIGTERM, loop.stop)
+        logger.info('listening on %s:%s' % (host, port))
         loop.run_forever()
     except KeyboardInterrupt:
         pass
     finally:
-        stop()
+        logger.info('closing server')
+        server.close()
+        loop.run_until_complete(server.wait_closed())
+        loop.stop()
+        loop.run_forever()
+        loop.close()
 
 
 if __name__ == '__main__':
@@ -152,4 +146,5 @@ if __name__ == '__main__':
         'LOG_SERVER_ADDRESS': 'localhost',
         'LOG_SERVER_PORT': '5555'
     }
+    configure_syslog(config)
     create_server(config)
