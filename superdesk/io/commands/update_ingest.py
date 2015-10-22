@@ -20,6 +20,7 @@ from superdesk.notification import push_notification
 from superdesk.activity import ACTIVITY_EVENT, notify_and_add_activity
 from superdesk.io import providers
 from superdesk.celery_app import celery
+from superdesk.celery_task_utils import get_lock_id, get_host_id
 from superdesk.utc import utcnow, get_expiry_date
 from superdesk.workflow import set_default_state
 from superdesk.errors import ProviderError
@@ -30,7 +31,7 @@ from superdesk.media.renditions import generate_renditions
 from superdesk.io.iptc import subject_codes
 from superdesk.metadata.item import GUID_NEWSML, GUID_FIELD, FAMILY_ID, ITEM_TYPE, CONTENT_TYPE
 from superdesk.metadata.utils import generate_guid
-from superdesk.celery_task_utils import mark_task_as_not_running, is_task_running
+from superdesk.lock import lock, unlock
 
 
 UPDATE_SCHEDULE_DEFAULT = {'minutes': 5}
@@ -197,21 +198,22 @@ class UpdateIngest(superdesk.Command):
                     kwargs=kwargs)
 
 
-@celery.task(soft_time_limit=1800)
-def update_provider(provider, rule_set=None, routing_scheme=None):
+@celery.task(soft_time_limit=1800, bind=True)
+def update_provider(self, provider, rule_set=None, routing_scheme=None):
     """
     Fetches items from ingest provider as per the configuration, ingests them into Superdesk and
     updates the provider.
     """
-    if is_task_running(provider['name'],
-                       provider[superdesk.config.ID_FIELD],
-                       provider.get('update_schedule', UPDATE_SCHEDULE_DEFAULT)):
-        return
-
     if provider.get('type') == 'search':
         return
 
     if not is_updatable(provider):
+        return
+
+    lock_name = get_lock_id('ingest', provider['name'], provider[superdesk.config.ID_FIELD])
+    host_name = get_host_id(self)
+
+    if not lock(lock_name, host_name, expire=1800):
         return
 
     try:
@@ -239,8 +241,7 @@ def update_provider(provider, rule_set=None, routing_scheme=None):
         logger.info('Provider {0} updated'.format(provider[superdesk.config.ID_FIELD]))
         push_notification('ingest:update', provider_id=str(provider[superdesk.config.ID_FIELD]))
     finally:
-        mark_task_as_not_running(provider['name'],
-                                 provider[superdesk.config.ID_FIELD])
+        unlock(lock_name, host_name)
 
 
 def process_anpa_category(item, provider):
