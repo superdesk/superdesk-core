@@ -28,7 +28,9 @@ class SubscribersResource(Resource):
         'name': {
             'type': 'string',
             'iunique': True,
-            'required': True
+            'required': True,
+            'nullable': False,
+            'empty': False
         },
         'media_type': {
             'type': 'string'
@@ -106,8 +108,6 @@ class SubscribersResource(Resource):
             }
         }
     }
-
-    datasource = {'default_sort': [('_created', -1)]}
 
     item_methods = ['GET', 'PATCH', 'PUT']
 
