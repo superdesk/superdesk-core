@@ -43,9 +43,8 @@ def init_app(app):
     try:
         app.ws_client = loop.run_until_complete(websockets.connect('ws://%s:%s/server' % (host, port)))
         logger.info('websocket connected on=%s:%s' % app.ws_client.local_address)
-    except OSError as err:
+    except OSError:
         # not working now, but we can try later when actually sending something
-        logger.exception(err)
         app.ws_client = ClosedSocket()
 
 
