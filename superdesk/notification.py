@@ -41,11 +41,11 @@ def init_app(app):
     port = app.config['WS_PORT']
     loop = asyncio.get_event_loop()
     try:
-        app.ws_client = loop.run_until_complete(websockets.connect('ws://%s:%s/server' % (host, port)))
-        logger.info('websocket connected on=%s:%s' % app.ws_client.local_address)
+        app.notification_client = loop.run_until_complete(websockets.connect('ws://%s:%s/server' % (host, port)))
+        logger.info('websocket connected on=%s:%s' % app.notification_client.local_address)
     except OSError:
         # not working now, but we can try later when actually sending something
-        app.ws_client = ClosedSocket()
+        app.notification_client = ClosedSocket()
 
 
 def _notify(**kwargs):
@@ -56,7 +56,7 @@ def _notify(**kwargs):
 
     @asyncio.coroutine
     def send_message():
-        yield from app.ws_client.send(message)
+        yield from app.notification_client.send(message)
 
     loop = asyncio.get_event_loop()
     loop.run_until_complete(send_message())
@@ -71,11 +71,11 @@ def push_notification(name, **kwargs):
     """
     logger.info('pushing event {0} ({1})'.format(name, json.dumps(kwargs)))
 
-    if not app.ws_client.open:
-        app.ws_client.close()
+    if not app.notification_client.open:
+        app.notification_client.close()
         init_app(app)
 
-    if not app.ws_client.open:
+    if not app.notification_client.open:
         logger.error('No connection to websocket server. Dropping event %s' % name)
         return
 
