@@ -264,7 +264,7 @@ class rfc822Parser(Parser):
         try:
             # BeautifulSoup is catching out-of-order and unclosed tags, so markup
             # can't leak out of comments and break the rest of the page.
-            soup = BeautifulSoup(html)
+            soup = BeautifulSoup(html, "html.parser")
         except Exception as e:
             # special handling?
             raise e
