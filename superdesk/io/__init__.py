@@ -16,6 +16,7 @@ import superdesk
 from superdesk.etree import etree
 from superdesk.celery_app import celery
 from superdesk.locators.locators import find_cities
+from superdesk.metadata.item import Priority
 
 parsers = []
 providers = {}
@@ -119,10 +120,10 @@ class Parser(metaclass=ParserRegistry):
         :return int: priority of the item
         """
         if source_priority and source_priority.isdigit():
-            if int(source_priority) in [1, 2, 3]:
+            if int(source_priority) in Priority.values():
                 return int(source_priority)
 
-        return 5
+        return Priority.Ordinary.value
 
 
 def get_xml_parser(etree):

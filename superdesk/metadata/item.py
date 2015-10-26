@@ -12,6 +12,7 @@ from collections import namedtuple
 from superdesk.resource import Resource
 from .packages import PACKAGE_TYPE, TAKES_PACKAGE, LINKED_IN_PACKAGES, PACKAGE
 from eve.utils import config
+from superdesk.utils import SuperdeskBaseEnum
 
 not_analyzed = {'type': 'string', 'index': 'not_analyzed'}
 GUID_TAG = 'tag'
@@ -336,3 +337,12 @@ crop_schema = {
     'CropTop': {'type': 'integer'},
     'CropBottom': {'type': 'integer'}
 }
+
+
+class Priority(SuperdeskBaseEnum):
+    Flash = 1
+    Urgent = 2
+    Three_Paragraph = 3
+    Screen_Finance = 4
+    Continuous_News = 5
+    Ordinary = 6

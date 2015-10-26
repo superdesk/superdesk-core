@@ -38,7 +38,7 @@ class IptcTestCase(TestCase):
             self.assertEqual('Germany Social Democrats: Coalition talks with Merkel could fail =', item['headline'])
             self.assertRegex(item['body_html'], '^\n   Berlin')
             self.assertEqual('Germany-politics', item['slugline'])
-            self.assertEqual(5, item['priority'])
+            self.assertEqual(4, item['priority'])
             self.assertEqual([{'qcode': 'i'}], item['anpa_category'])
             self.assertTrue(item['ednote'].find('## Editorial contacts'))
 
@@ -53,5 +53,5 @@ class IptcTestCase(TestCase):
         self.assertEqual(2, self.parser.map_priority("2"))
         self.assertEqual(3, self.parser.map_priority("3"))
         self.assertEqual(5, self.parser.map_priority("5"))
-        self.assertEqual(5, self.parser.map_priority("eee"))
-        self.assertEqual(5, self.parser.map_priority(None))
+        self.assertEqual(6, self.parser.map_priority("eee"))
+        self.assertEqual(6, self.parser.map_priority(None))
