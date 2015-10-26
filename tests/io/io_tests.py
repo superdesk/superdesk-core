@@ -108,7 +108,7 @@ class PictureParserTest(ItemTest):
 
     def test_content_set(self):
         self.assertEqual(3, len(self.item.get('renditions')))
-        self.assertEqual(5, self.item.get('priority'))
+        self.assertEqual(4, self.item.get('priority'))
         remote = self.item.get('renditions').get('baseImage')
         self.assertTrue(remote)
         self.assertEqual("tag:reuters.com,0000:binary_GM1E9341HD701-BASEIMAGE", remote.get('residRef'))
@@ -130,7 +130,7 @@ class SNEPParserTest(ItemTest):
         self.setUpFixture('snep.xml')
 
     def test_content_set(self):
-        self.assertEqual(5, self.item.get('priority'))
+        self.assertEqual(4, self.item.get('priority'))
         self.assertEqual(2, len(self.item.get('groups')))
 
         group = self.item.get('groups')[0]
