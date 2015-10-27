@@ -189,6 +189,9 @@ metadata_schema = {
         'type': 'integer',
         'nullable': True
     },
+    'profile': {
+        'type': 'string',
+    },
 
     # Related to state of an article
     ITEM_STATE: {
