@@ -23,7 +23,7 @@ class NINJSFormatter(Formatter):
     """
     direct_copy_properties = ['versioncreated', 'usageterms', 'subject', 'language', 'headline',
                               'urgency', 'pubstatus', 'mimetype', 'renditions', 'place',
-                              'body_text', 'body_html']
+                              'body_text', 'body_html', 'profile', 'slugline']
 
     def format(self, article, subscriber):
         try:
@@ -44,7 +44,7 @@ class NINJSFormatter(Formatter):
                 ninjs['located'] = located.get('city', '')
 
             for copy_property in self.direct_copy_properties:
-                if copy_property in article and article[copy_property] is not None:
+                if article.get(copy_property) is not None:
                     ninjs[copy_property] = article[copy_property]
 
             if 'description' in article:
