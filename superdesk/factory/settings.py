@@ -112,6 +112,7 @@ INSTALLED_APPS = [
 
     'superdesk.io',
     'superdesk.io.subjectcodes',
+    'superdesk.io.iptc',
     'superdesk.io.ftp',
     'superdesk.io.rss',
     'superdesk.publish',
