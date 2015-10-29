@@ -12,6 +12,7 @@
 
 import os
 from superdesk import json
+from datetime import datetime
 
 
 def load_codes(filename):
@@ -23,3 +24,8 @@ def load_codes(filename):
 dirname = os.path.dirname(os.path.realpath(__file__))
 data_subject_codes = os.path.join(dirname, 'data', 'subject_codes.json')
 subject_codes = load_codes(data_subject_codes)
+
+
+def init_app(app):
+    last_modified = datetime(2012, 7, 10)
+    app.subjects.register(subject_codes, last_modified)
