@@ -20,10 +20,10 @@ extra_response_fields = [GUID_FIELD, 'headline', 'firstcreated', 'versioncreated
 
 aggregations = {
     'type': {'terms': {'field': 'type'}},
-    'desk': {'terms': {'field': 'task.desk'}},
-    'stage': {'terms': {'field': 'task.stage'}},
-    'category': {'terms': {'field': 'anpa_category.name'}},
-    'source': {'terms': {'field': 'source'}},
+    'desk': {'terms': {'field': 'task.desk', 'size': 0}},
+    'stage': {'terms': {'field': 'task.stage', 'size': 0}},
+    'category': {'terms': {'field': 'anpa_category.name', 'size': 0}},
+    'source': {'terms': {'field': 'source', 'size': 0}},
     'state': {'terms': {'field': 'state'}},
     'urgency': {'terms': {'field': 'urgency'}},
     'priority': {'terms': {'field': 'priority'}},
