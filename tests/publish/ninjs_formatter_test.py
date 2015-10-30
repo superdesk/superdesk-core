@@ -267,3 +267,30 @@ class NinjsFormatterTest(TestCase):
             "slugline": "Boat",
         }
         self.assertEqual(expected, json.loads(doc))
+
+    def test_item_with_usable_associations(self):
+        article = {
+            '_id': 'urn:bar',
+            '_current_version': 1,
+            'type': 'text',
+            'associations': {
+                'image': {
+                    '_id': 'foo',
+                    'guid': 'urn:foo',
+                    'pubstatus': 'usable',
+                    'headline': 'Foo',
+                    'type': 'picture',
+                    'task': {},
+                }
+            }
+        }
+
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        formatted = json.loads(doc)
+        self.assertIn('associations', formatted)
+        self.assertIn('image', formatted['associations'])
+        image = formatted['associations']['image']
+        self.assertEqual('foo', image['_id'])
+        self.assertEqual('Foo', image['headline'])
+        self.assertEqual('usable', image['pubstatus'])
+        self.assertNotIn('task', image)

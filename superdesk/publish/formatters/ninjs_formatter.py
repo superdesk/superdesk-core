@@ -9,8 +9,9 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import json
-from superdesk.publish.formatters import Formatter
 import superdesk
+from eve.utils import config
+from superdesk.publish.formatters import Formatter
 from superdesk.errors import FormatterError
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO
 from superdesk.metadata.packages import RESIDREF, GROUP_ID, GROUPS, ROOT_GROUP, REFS
@@ -31,9 +32,10 @@ class NINJSFormatter(Formatter):
 
             ninjs = {
                 '_id': article['_id'],
-                'version': str(article['_current_version']),
+                'version': str(article.get(config.VERSION, 1)),
                 'type': self._get_type(article)
             }
+
             try:
                 ninjs['byline'] = self._get_byline(article)
             except:
@@ -52,6 +54,8 @@ class NINJSFormatter(Formatter):
 
             if article[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
                 ninjs['associations'] = self._get_associations(article)
+            elif article.get('associations', {}):
+                ninjs['associations'] = self._format_related(article, subscriber)
 
             if article.get(EMBARGO):
                 ninjs['embargoed'] = article.get(EMBARGO).isoformat()
@@ -82,6 +86,7 @@ class NINJSFormatter(Formatter):
         return article[ITEM_TYPE]
 
     def _get_associations(self, article):
+        """Create associations dict for package groups."""
         associations = dict()
         for group in article[GROUPS]:
             if group[GROUP_ID] == ROOT_GROUP:
@@ -95,4 +100,12 @@ class NINJSFormatter(Formatter):
                     item[ITEM_TYPE] = ref[ITEM_TYPE]
                     items.append(item)
                     associations[group[GROUP_ID]] = items
+        return associations
+
+    def _format_related(self, article, subscriber):
+        """Format all associated items for simple items (not packages)."""
+        associations = {}
+        for key, item in article.get('associations', {}).items():
+            seq, formatted = self.format(item, subscriber)[0]
+            associations[key] = json.loads(formatted)
         return associations
