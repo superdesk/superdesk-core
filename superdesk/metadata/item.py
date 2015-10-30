@@ -137,7 +137,8 @@ metadata_schema = {
         'type': 'list',
         'mapping': {
             'properties': {
-                'name': not_analyzed
+                'name': not_analyzed,
+                'value': not_analyzed
             }
         }
     },
