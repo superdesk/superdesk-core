@@ -9,6 +9,9 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
+import asyncio
+
+
 class ClientMock:
 
     def __init__(self):
@@ -16,8 +19,10 @@ class ClientMock:
         self.client = None
         self.open = True
 
+    @asyncio.coroutine
     def send(self, message):
         self.messages.append(message)
+        yield from asyncio.sleep(0)
 
     def reset(self):
         self.messages = []
