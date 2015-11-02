@@ -217,7 +217,7 @@ def notify_and_add_activity(activity_name, msg, resource=None, item=None, user_l
     if user_list:
         recipients = [user.get('email') for user in user_list if
                       superdesk.get_resource_service('preferences').
-                      email_notification_is_enabled(preferences=user.get('preferences', {}))]
+                      email_notification_is_enabled(preferences=user.get('user_preferences', {}))]
 
         if activity_name != ACTIVITY_ERROR:
             current_user = getattr(g, 'user', None)
