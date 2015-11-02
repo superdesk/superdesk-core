@@ -76,7 +76,7 @@ def push_notification(name, **kwargs):
         init_app(app)
 
     if not app.notification_client.open:
-        logger.error('No connection to websocket server. Dropping event %s' % name)
+        logger.info('No connection to websocket server. Dropping event %s' % name)
         return
 
     try:
