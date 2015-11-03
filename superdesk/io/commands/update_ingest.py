@@ -438,17 +438,21 @@ def ingest_item(item, provider, rule_set=None, routing_scheme=None):
                 href = providers[provider.get('type')].prepare_href(baseImageRend['href'])
                 update_renditions(item, href, old_item)
 
+        new_version = True
         if old_item:
             # In case we already have the item, preserve the _id
             item[superdesk.config.ID_FIELD] = old_item[superdesk.config.ID_FIELD]
             ingest_service.put_in_mongo(item[superdesk.config.ID_FIELD], item)
+            # if the feed is versioned and this is not a new version
+            if 'version' in item and 'version' in old_item and item.get('version') == old_item.get('version'):
+                new_version = False
         else:
             try:
                 ingest_service.post_in_mongo([item])
             except HTTPException as e:
                 logger.error("Exception while persisting item in ingest collection", e)
 
-        if routing_scheme:
+        if routing_scheme and new_version:
             routed = ingest_service.find_one(_id=item[superdesk.config.ID_FIELD], req=None)
             superdesk.get_resource_service('routing_schemes').apply_routing_scheme(routed, provider, routing_scheme)
     except Exception as ex:
@@ -481,7 +485,6 @@ def update_renditions(item, href, old_item):
                 item['renditions'] = old_item['renditions']
                 item['mimetype'] = old_item.get('mimetype')
                 item['filemeta'] = old_item.get('filemeta')
-                logger.info("Reuters image not updated for GUID:{}".format(item[GUID_FIELD]))
                 return
 
         content, filename, content_type = download_file_from_url(href)
