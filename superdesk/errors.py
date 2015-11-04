@@ -385,13 +385,13 @@ class SuperdeskPublishError(SuperdeskError):
         if exception:
             exception_msg = str(exception)[-200:]
             update_notifiers('error',
-                             'Error [%s] on ingest provider {{name}}: %s' % (code, exception_msg),
-                             resource='ingest_providers' if destination else None,
+                             'Error [%s] on a Subscriber''s destination {{name}}: %s' % (code, exception_msg),
+                             resource='subscribers' if destination else None,
                              name=self.destination_name,
                              provider_id=destination.get('_id', ''))
 
             if destination:
-                logger.error("{}: {} on channel {}".format(self, exception, self.destination_name))
+                logger.error("{}: {} on destination {}".format(self, exception, self.destination_name))
             else:
                 logger.error("{}: {}".format(self, exception))
 
