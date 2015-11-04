@@ -136,6 +136,7 @@ metadata_schema = {
     'genre': {
         'type': 'list',
         'mapping': {
+            'type': 'object',
             'properties': {
                 'name': not_analyzed,
                 'value': not_analyzed
