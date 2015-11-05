@@ -239,7 +239,9 @@ def update_provider(self, provider, rule_set=None, routing_scheme=None):
                 last=provider[LAST_ITEM_UPDATE].replace(tzinfo=timezone.utc).astimezone(tz=None).strftime("%c"))
 
         logger.info('Provider {0} updated'.format(provider[superdesk.config.ID_FIELD]))
-        push_notification('ingest:update', provider_id=str(provider[superdesk.config.ID_FIELD]))
+        # Only push a notification if there has been an update
+        if LAST_ITEM_UPDATE in update:
+            push_notification('ingest:update', provider_id=str(provider[superdesk.config.ID_FIELD]))
     finally:
         unlock(lock_name, host_name)
 
