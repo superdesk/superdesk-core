@@ -18,11 +18,24 @@ from superdesk.metadata.packages import RESIDREF, GROUP_ID, GROUPS, ROOT_GROUP, 
 from superdesk.utils import json_serialize_datetime_objectId
 
 
+def filter_empty_vals(data):
+    """Filter out `None` values from a given dict."""
+    return dict(filter(lambda x: x[1], data.items()))
+
+
+def format_cv_item(item):
+    """Format item from controlled vocabulary for output."""
+    return filter_empty_vals({
+        'code': item.get('qcode'),
+        'name': item.get('name'),
+    })
+
+
 class NINJSFormatter(Formatter):
     """
     NINJS Formatter
     """
-    direct_copy_properties = ['versioncreated', 'usageterms', 'subject', 'language', 'headline',
+    direct_copy_properties = ['versioncreated', 'usageterms', 'language', 'headline',
                               'urgency', 'pubstatus', 'mimetype', 'renditions', 'place',
                               'body_text', 'body_html', 'profile', 'slugline']
 
@@ -64,6 +77,12 @@ class NINJSFormatter(Formatter):
                 ninjs['priority'] = article['priority']
             else:
                 ninjs['priority'] = 5
+
+            if article.get('subject'):
+                ninjs['subject'] = self._get_subject(article)
+
+            if article.get('anpa_category'):
+                ninjs['service'] = self._get_service(article)
 
             return [(pub_seq_num, json.dumps(ninjs, default=json_serialize_datetime_objectId))]
         except Exception as ex:
@@ -109,3 +128,14 @@ class NINJSFormatter(Formatter):
             seq, formatted = self.format(item, subscriber)[0]
             associations[key] = json.loads(formatted)
         return associations
+
+    def _get_subject(self, article):
+        """Get subject list for article."""
+        return [format_cv_item(item) for item in article.get('subject', [])]
+
+    def _get_service(self, article):
+        """Get service list for article.
+
+        It's using `anpa_category` to populate service field for now.
+        """
+        return [format_cv_item(item) for item in article.get('anpa_category', [])]
