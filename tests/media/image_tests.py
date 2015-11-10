@@ -10,13 +10,16 @@
 
 
 import os
-from superdesk.tests import TestCase
+from unittest import TestCase
 from superdesk.media.image import get_meta
+from superdesk.media.media_operations import crop_image
+
+
+fixtures = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'fixtures')
 
 
 class ExifMetaExtractionTestCase(TestCase):
 
-    fixtures = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'fixtures')
     img = os.path.join(fixtures, 'canon_exif.JPG')
 
     def test_extract_meta_json_serialization(self):
@@ -32,7 +35,6 @@ class ExifMetaExtractionTestCase(TestCase):
 
 class ExifMetaWithGPSInfoExtractionTestCase(TestCase):
 
-    fixtures = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'fixtures')
     img = os.path.join(fixtures, 'iphone_gpsinfo_exif.JPG')
 
     def test_extract_meta_json_serialization(self):
@@ -60,7 +62,6 @@ class ExifMetaWithGPSInfoExtractionTestCase(TestCase):
 
 class ExifMetaExtractionUserCommentRemovedTestCase(TestCase):
 
-    fixtures = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'fixtures')
     # this image has UserComment exif data value as 'test'
     img = os.path.join(fixtures, 'iphone_gpsinfo_exif.JPG')
 
@@ -70,3 +71,15 @@ class ExifMetaExtractionUserCommentRemovedTestCase(TestCase):
             meta = get_meta(f)
 
         self.assertIsNone(meta.get('UserComment', None))
+
+
+class MediaOperationsTestCase(TestCase):
+
+    img = os.path.join(fixtures, 'canon_exif.JPG')
+
+    def test_crop_image(self):
+        with open(self.img, mode='rb') as f:
+            status, output = crop_image(f, 'test', (1, 1, 5, 4))
+            self.assertEqual(True, status)
+            self.assertEqual(4, output.width)
+            self.assertEqual(3, output.height)

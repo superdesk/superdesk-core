@@ -143,6 +143,8 @@ def crop_image(content, file_name, cropping_data):
             out = BytesIO()
             cropped.save(out, img.format)
             out.seek(0)
+            setattr(out, 'width', cropped.size[0])
+            setattr(out, 'height', cropped.size[1])
             return True, out
         except Exception as io:
             logger.exception('Failed to generate crop for filename: {}. Crop: {}'.format(file_name, cropping_data))
