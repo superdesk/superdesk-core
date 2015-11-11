@@ -9,12 +9,13 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 ''' Amazon media storage module'''
-from eve.io.media import MediaStorage
-import logging
-import json
-from io import BytesIO
 import boto3
+import json
 import time
+import logging
+from io import BytesIO
+from eve.io.media import MediaStorage
+from superdesk.media.media_operations import download_file_from_url
 
 logger = logging.getLogger(__name__)
 MAX_KEYS = 1000
@@ -65,6 +66,10 @@ class AmazonMediaStorage(MediaStorage):
             return media_id
 
         return '%s/%s' % (time.strftime('%Y%m%d'), media_id)
+
+    def fetch_rendition(self, rendition):
+        stream, name, mime = download_file_from_url(rendition.get('href'))
+        return stream
 
     def read_from_config(self):
         self.region = self.app.config.get('AMAZON_REGION', 'us-east-1') or 'us-east-1'
