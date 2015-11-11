@@ -59,7 +59,7 @@ class AmazonMediaStorage(MediaStorage):
             return None
         protocol = 'https' if self.app.config.get('AMAZON_S3_USE_HTTPS', False) else 'http'
         endpoint = 's3-%s.amazonaws.com' % self.region
-        return '%s://%s.%s/%s' % (protocol, self.container_name, endpoint, media_id)
+        return '%s://%s.%s/%s' % (protocol, self.container_name, endpoint, self.name_for_media(media_id))
 
     def name_for_media(self, media_id):
         if not self.app.config.get('AMAZON_SERVE_DIRECT_LINKS', False):
