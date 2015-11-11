@@ -14,6 +14,7 @@ import logging
 import json
 from io import BytesIO
 import boto3
+import time
 
 logger = logging.getLogger(__name__)
 MAX_KEYS = 1000
@@ -59,11 +60,20 @@ class AmazonMediaStorage(MediaStorage):
         endpoint = 's3-%s.amazonaws.com' % self.region
         return '%s://%s.%s/%s' % (protocol, self.container_name, endpoint, media_id)
 
+    def name_for_media(self, media_id):
+        if not self.app.config.get('AMAZON_SERVE_DIRECT_LINKS', False):
+            return media_id
+
+        return '%s/%s' % (time.strftime('%Y%m%d'), media_id)
+
     def read_from_config(self):
         self.region = self.app.config.get('AMAZON_REGION', 'us-east-1') or 'us-east-1'
         username = self.app.config['AMAZON_ACCESS_KEY_ID']
         api_key = self.app.config['AMAZON_SECRET_ACCESS_KEY']
         self.container_name = self.app.config['AMAZON_CONTAINER_NAME']
+        self.kwargs = {}
+        if self.app.config.get('AMAZON_SERVE_DIRECT_LINKS', False):
+            self.kwargs['ACL'] = 'public-read'
         return username, api_key
 
     def get(self, id_or_filename, resource=None):
@@ -134,6 +144,7 @@ class AmazonMediaStorage(MediaStorage):
         of the stored file will be returned. The content type argument is used
         to appropriately identify the file when it is retrieved.
         """
+        filename = self.name_for_media(filename)
         logger.debug('Going to save media file with %s ' % filename)
         found = self._check_exists(filename)
         if found:
@@ -142,7 +153,7 @@ class AmazonMediaStorage(MediaStorage):
         try:
             file_metadata = self.transform_metadata_to_amazon_format(metadata)
             self.client.put_object(Key=filename, Body=content, Bucket=self.container_name,
-                                   ContentType=content_type, Metadata=file_metadata)
+                                   ContentType=content_type, Metadata=file_metadata, **self.kwargs)
             return filename
         except Exception as ex:
             logger.exception(ex)
