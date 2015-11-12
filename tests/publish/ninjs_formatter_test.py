@@ -283,6 +283,16 @@ class NinjsFormatterTest(TestCase):
                     'headline': 'Foo',
                     'type': 'picture',
                     'task': {},
+                    'copyrightholder': 'Foo ltd.',
+                    'renditions': {
+                        'thumbnail': {
+                            'href': 'http://example.com',
+                            'width': 100,
+                            'height': 80,
+                            'mimetype': 'image/jpeg',
+                            'CropLeft': 0,
+                        }
+                    }
                 }
             }
         }
@@ -296,3 +306,9 @@ class NinjsFormatterTest(TestCase):
         self.assertEqual('Foo', image['headline'])
         self.assertEqual('usable', image['pubstatus'])
         self.assertNotIn('task', image)
+        self.assertEqual('Foo ltd.', image['copyrightholder'])
+        rendition = image['renditions']['thumbnail']
+        self.assertEqual(100, rendition['width'])
+        self.assertEqual(80, rendition['height'])
+        self.assertEqual('image/jpeg', rendition['mimetype'])
+        self.assertNotIn('CropLeft', rendition)
