@@ -52,8 +52,8 @@ class CropService():
 
         # Check if the crop name is valid
         crop = self.get_crop_by_name(crop_name)
-        if not crop:
-            raise SuperdeskApiError.badRequestError(message='Unknown crop name!')
+        if not crop and 'CropLeft' in doc:
+            raise SuperdeskApiError.badRequestError(message='Unknown crop name! (name=%s)' % crop_name)
 
         self._validate_aspect_ratio(crop, doc)
 
@@ -64,6 +64,9 @@ class CropService():
         :param doc: Posted parameters
         :raises SuperdeskApiError.badRequestError:
         """
+        if 'CropLeft' not in doc:
+            return
+
         width = doc['CropRight'] - doc['CropLeft']
         height = doc['CropBottom'] - doc['CropTop']
 

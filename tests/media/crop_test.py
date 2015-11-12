@@ -102,7 +102,7 @@ class CropTestCase(TestCase):
             self.service.validate_crop(original, "d", doc)
 
         ex = context.exception
-        self.assertEqual(ex.message, 'Unknown crop name!')
+        self.assertEqual(ex.message, 'Unknown crop name! (name=d)')
         self.assertEqual(ex.status_code, 400)
 
     def test_add_crop_raises_error_if_original_missing(self):

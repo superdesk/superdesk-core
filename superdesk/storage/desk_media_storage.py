@@ -8,11 +8,12 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from eve.io.mongo.media import GridFSMediaStorage
 import logging
 import json
-from bson import ObjectId
-from gridfs import GridFS
+import bson
+import gridfs
+from eve.io.mongo.media import GridFSMediaStorage
+from superdesk.upload import upload_url
 
 
 logger = logging.getLogger(__name__)
@@ -22,8 +23,10 @@ class SuperdeskGridFSMediaStorage(GridFSMediaStorage):
 
     def get(self, _id, resource):
         logger.debug('Getting media file with id= %s' % _id)
-        if isinstance(_id, str):
-            _id = ObjectId(_id)
+        try:
+            _id = bson.ObjectId(_id)
+        except bson.errors.InvalidId:
+            pass
         media_file = super().get(_id, resource)
         if media_file and media_file.metadata:
             for k, v in media_file.metadata.items():
@@ -32,19 +35,26 @@ class SuperdeskGridFSMediaStorage(GridFSMediaStorage):
                         media_file.metadata[k] = json.loads(v)
                 except ValueError:
                     logger.exception('Failed to load metadata for file: %s with key: %s and value: %s', _id, k, v)
-
         return media_file
 
-    def put(self, content, filename=None, content_type=None, metadata=None, resource=None, **kwargs):
-        _id = self.fs(resource).put(content, content_type=content_type, filename=filename, metadata=metadata, **kwargs)
-        return _id
+    def url_for_media(self, media_id):
+        return upload_url(str(media_id)[:24])
+
+    def put(self, content, filename, content_type=None, metadata=None, resource=None, **kwargs):
+        kwargs.setdefault('_id', bson.ObjectId(str(filename)[:24]))
+        try:
+            print('id', kwargs['_id'])
+            return self.fs(resource).put(content, content_type=content_type,
+                                         filename=filename, metadata=metadata, **kwargs)
+        except gridfs.errors.FileExists:
+            return kwargs['_id']
 
     def fs(self, resource):
         resource = resource or 'upload'
         driver = self.app.data.mongo
         px = driver.current_mongo_prefix(resource)
         if px not in self._fs:
-            self._fs[px] = GridFS(driver.pymongo(prefix=px).db)
+            self._fs[px] = gridfs.GridFS(driver.pymongo(prefix=px).db)
         return self._fs[px]
 
     def remove_unreferenced_files(self, existing_files):

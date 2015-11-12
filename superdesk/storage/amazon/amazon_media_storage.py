@@ -16,6 +16,7 @@ import logging
 from io import BytesIO
 from eve.io.media import MediaStorage
 from superdesk.media.media_operations import download_file_from_url
+from superdesk.upload import upload_url
 
 logger = logging.getLogger(__name__)
 MAX_KEYS = 1000
@@ -56,7 +57,7 @@ class AmazonMediaStorage(MediaStorage):
 
     def url_for_media(self, media_id):
         if not self.app.config.get('AMAZON_SERVE_DIRECT_LINKS', False):
-            return None
+            return upload_url(media_id)
         protocol = 'https' if self.app.config.get('AMAZON_S3_USE_HTTPS', False) else 'http'
         endpoint = 's3-%s.amazonaws.com' % self.region
         return '%s://%s.%s/%s' % (protocol, self.container_name, endpoint, self.name_for_media(media_id))
@@ -64,7 +65,6 @@ class AmazonMediaStorage(MediaStorage):
     def name_for_media(self, media_id):
         if not self.app.config.get('AMAZON_SERVE_DIRECT_LINKS', False):
             return media_id
-
         return '%s/%s' % (time.strftime('%Y%m%d'), media_id)
 
     def fetch_rendition(self, rendition):
@@ -141,7 +141,7 @@ class AmazonMediaStorage(MediaStorage):
             file_metadata[new_key] = value
         return file_metadata
 
-    def put(self, content, filename=None, content_type=None, resource=None, metadata=None):
+    def put(self, content, filename, content_type=None, resource=None, metadata=None):
         """ Saves a new file using the storage system, preferably with the name
         specified. If there already exists a file with this name name, the
         storage system may modify the filename as necessary to get a unique
