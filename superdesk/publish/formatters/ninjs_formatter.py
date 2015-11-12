@@ -63,10 +63,10 @@ class NINJSFormatter(Formatter):
                     ninjs[copy_property] = article[copy_property]
 
             if article.get('body_html'):
-                ninjs['body_html'] = self.append_public_service_announcements(article)
+                ninjs['body_html'] = self.append_body_footer(article)
 
             if article.get('description'):
-                ninjs['description_text'] = self.append_public_service_announcements(article)
+                ninjs['description_text'] = self.append_body_footer(article)
 
             if article[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
                 ninjs['associations'] = self._get_associations(article)

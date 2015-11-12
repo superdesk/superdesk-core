@@ -37,7 +37,7 @@ class Formatter(metaclass=FormatterRegistry):
         """Test if formatter can format for given article."""
         raise NotImplementedError()
 
-    def append_public_service_announcements(self, article):
+    def append_body_footer(self, article):
         """
         Checks if the article has any Public Service Announcements and if available appends each of them to the body.
 
@@ -50,8 +50,8 @@ class Formatter(metaclass=FormatterRegistry):
         elif article[ITEM_TYPE] in [CONTENT_TYPE.AUDIO, CONTENT_TYPE.PICTURE, CONTENT_TYPE.VIDEO]:
             body = article.get('description', '')
 
-        if body and article.get('psa_footer'):
-            body = '{}<br>{}'.format(body, article.get('psa_footer'))
+        if body and article.get('body_footer'):
+            body = '{}<br>{}'.format(body, article.get('body_footer'))
 
         return body
 

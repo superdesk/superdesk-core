@@ -58,7 +58,7 @@ class Newsml12FormatterTest(TestCase):
              'country': 'Australia', 'world_region': 'Oceania'}
         ],
         'ednote': 'this is test',
-        'psa_footer': 'call helpline 999 if you are planning to quit smoking'
+        'body_footer': 'call helpline 999 if you are planning to quit smoking'
     }
 
     preformatted = {

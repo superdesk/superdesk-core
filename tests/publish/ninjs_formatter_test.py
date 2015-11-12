@@ -51,7 +51,7 @@ class NinjsFormatterTest(TestCase):
             'abstract': 'sample abstract',
             'place': 'Australia',
             'embargo': embargo_ts,
-            'psa_footer': 'call helpline 999 if you are planning to quit smoking'
+            'body_footer': 'call helpline 999 if you are planning to quit smoking'
         }
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
         expected = {
@@ -101,7 +101,7 @@ class NinjsFormatterTest(TestCase):
             'source': 'AAP',
             'description': 'The most amazing picture you will ever see',
             'guid': '20150723001158606583',
-            'psa_footer': 'call helpline 999 if you are planning to quit smoking'
+            'body_footer': 'call helpline 999 if you are planning to quit smoking'
         }
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
         expected = {
