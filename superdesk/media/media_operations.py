@@ -142,12 +142,13 @@ def _get_cropping_data(doc):
         return (doc['CropLeft'], doc['CropTop'], doc['CropRight'], doc['CropBottom'])
 
 
-def crop_image(content, file_name, cropping_data):
+def crop_image(content, file_name, cropping_data, exact_size=None):
     """Crop image stream to given crop.
 
     :param content: image file stream
     :param file_name
     :param cropping_data: superdesk crop dict ({'CropLeft': 0, 'CropTop': 0, ...})
+    :param exact_size: dict with `width` and `height` values
     """
     if not isinstance(cropping_data, tuple):
         cropping_data = _get_cropping_data(cropping_data)
@@ -156,6 +157,8 @@ def crop_image(content, file_name, cropping_data):
         content.seek(0)
         img = Image.open(content)
         cropped = img.crop(cropping_data)
+        if exact_size:
+            cropped = cropped.resize((exact_size['width'], exact_size['height']), Image.ANTIALIAS)
         logger.debug('Cropped image {} from stream, going to save it'.format(file_name))
         try:
             out = BytesIO()

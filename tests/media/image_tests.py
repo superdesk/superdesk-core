@@ -80,13 +80,20 @@ class MediaOperationsTestCase(TestCase):
     crop_data = {
         'CropLeft': 1,
         'CropTop': 1,
-        'CropRight': 5,
-        'CropBottom': 4,
+        'CropRight': 9,
+        'CropBottom': 7,
     }
 
     def test_crop_image(self):
         with open(self.img, mode='rb') as f:
             status, output = crop_image(f, 'test', self.crop_data)
+            self.assertEqual(True, status)
+            self.assertEqual(8, output.width)
+            self.assertEqual(6, output.height)
+
+    def test_crop_image_resize(self):
+        with open(self.img, mode='rb') as f:
+            status, output = crop_image(f, 'test', self.crop_data, {'width': 4, 'height': 3})
             self.assertEqual(True, status)
             self.assertEqual(4, output.width)
             self.assertEqual(3, output.height)
