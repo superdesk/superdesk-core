@@ -27,7 +27,6 @@ class Newsml12FormatterTest(TestCase):
         'subject': [{'qcode': '02011001'}, {'qcode': '02011002'}],
         'anpa_take_key': 'take_key',
         'unique_id': '1',
-        'type': 'preformatted',
         'body_html': 'The story body',
         'type': 'text',
         'word_count': '1',
@@ -58,7 +57,8 @@ class Newsml12FormatterTest(TestCase):
             {'qcode': 'NSW', 'name': 'NSW', 'state': 'New South Wales',
              'country': 'Australia', 'world_region': 'Oceania'}
         ],
-        'ednote': 'this is test'
+        'ednote': 'this is test',
+        'psa_footers': [{'name': 'no smoking', 'value': 'call helpline 999 if you are planning to quit smoking'}]
     }
 
     preformatted = {
@@ -72,7 +72,6 @@ class Newsml12FormatterTest(TestCase):
         'unique_id': '1',
         'type': 'preformatted',
         'body_html': 'The story body',
-        'type': 'preformatted',
         'word_count': '1',
         '_id': 'urn:localhost.123',
         '_current_version': 5,
@@ -740,7 +739,7 @@ class Newsml12FormatterTest(TestCase):
             text, 'sample abstract')
         self.assertEqual(
             self.newsml.findall('NewsComponent/NewsComponent/NewsComponent/ContentItem/DataContent')[1].
-            text, 'The story body')
+            text, 'The story body<br>call helpline 999 if you are planning to quit smoking')
         self.assertEqual(self.newsml.find('.//NewsLines/NewsLine/NewsLineText').text, 'this is test')
 
     def test_format_news_management_for_embargo(self):
