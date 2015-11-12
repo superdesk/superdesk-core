@@ -39,11 +39,11 @@ def init_app(app):
     """Create websocket connection and put it on app object."""
     host = app.config['WS_HOST']
     port = app.config['WS_PORT']
-    loop = asyncio.get_event_loop()
     try:
+        loop = asyncio.get_event_loop()
         app.notification_client = loop.run_until_complete(websockets.connect('ws://%s:%s/server' % (host, port)))
         logger.info('websocket connected on=%s:%s' % app.notification_client.local_address)
-    except OSError:
+    except (RuntimeError, OSError):
         # not working now, but we can try later when actually sending something
         app.notification_client = ClosedSocket()
 
