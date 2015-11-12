@@ -11,6 +11,7 @@
 import logging
 
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
+from superdesk.metadata.utils import is_takes_package
 
 formatters = []
 logger = logging.getLogger(__name__)
@@ -45,7 +46,7 @@ class Formatter(metaclass=FormatterRegistry):
         """
 
         body = ''
-        if article[ITEM_TYPE] in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
+        if article[ITEM_TYPE] in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED] or is_takes_package(article):
             body = article.get('body_html', '')
         elif article[ITEM_TYPE] in [CONTENT_TYPE.AUDIO, CONTENT_TYPE.PICTURE, CONTENT_TYPE.VIDEO]:
             body = article.get('description', '')
