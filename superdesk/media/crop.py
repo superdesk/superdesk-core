@@ -109,17 +109,17 @@ class CropService():
 
         if any(crop_data.get(name) != original_crop.get(name) for name in fields):
             original_image = renditions.get('original', {})
-            original_file = superdesk.app.media.get(original_image.get('media'), 'upload')
+            original_file = superdesk.app.media.fetch_rendition(original_image)
             if not original_file:
                 raise SuperdeskApiError.badRequestError('Original file couldn\'t be found')
 
             try:
-                cropped, out = crop_image(original_file, original_file.name, crop_data)
+                cropped, out = crop_image(original_file, crop_name, crop_data)
 
                 if not cropped:
                     raise SuperdeskApiError.badRequestError('Saving crop failed.')
 
-                renditions[crop_name] = self._save_cropped_image(out, original_file, crop_data)
+                renditions[crop_name] = self._save_cropped_image(out, original_image, crop_data)
                 crop_created = True
             except SuperdeskApiError:
                 raise
@@ -128,18 +128,19 @@ class CropService():
 
         return renditions, crop_created
 
-    def _save_cropped_image(self, file_stream, file, doc):
+    def _save_cropped_image(self, file_stream, original, doc):
         """
         Saves the cropped image and returns the crop dictionary
         :param file_stream: cropped image stream
-        :param file: original image file
+        :param original: original rendition
         :param doc: crop data
         :return dict: Crop values
         :raises SuperdeskApiError.internalError
         """
         crop = {}
         try:
-            file_name, content_type, metadata = process_file_from_stream(file_stream, content_type=file.content_type)
+            file_name, content_type, metadata = process_file_from_stream(file_stream,
+                                                                         content_type=original.get('mimetype'))
             file_stream.seek(0)
             file_id = superdesk.app.media.put(file_stream, filename=file_name,
                                               content_type=content_type,

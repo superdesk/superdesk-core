@@ -134,7 +134,7 @@ class UploadService(BaseService):
             inserted = [doc['media']]
             file_type = content_type.split('/')[0]
             rendition_spec = config.RENDITIONS['avatar']
-            renditions = generate_renditions(out, doc['media'], inserted, file_type,
+            renditions = generate_renditions(out, file_id, inserted, file_type,
                                              content_type, rendition_spec, url_for_media)
             doc['renditions'] = renditions
         except Exception as io:

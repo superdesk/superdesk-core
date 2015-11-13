@@ -59,7 +59,7 @@ def generate_renditions(original, media_id, inserted, file_type, content_type,
                             content_type=rend_content_type,
                             metadata=metadata if insert_metadata else None)
         inserted.append(_id)
-        renditions[rendition] = {'href': url_for_media(file_name), 'media': _id,
+        renditions[rendition] = {'href': url_for_media(_id), 'media': _id,
                                  'mimetype': 'image/%s' % ext, 'width': width, 'height': height}
     return renditions
 
