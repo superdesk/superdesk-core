@@ -10,7 +10,9 @@
 
 from .users import UsersResource
 from .services import UsersService, DBUsersService, is_admin  # noqa
+from superdesk.errors import SuperdeskApiError
 import superdesk
+import flask
 
 
 def init_app(app):
@@ -22,3 +24,16 @@ def init_app(app):
 
     # Registering with intrinsic privileges because: A user should be allowed to update their own profile.
     superdesk.intrinsic_privilege(resource_name='users', method=['PATCH'])
+
+
+def get_user_from_request(required=False):
+    """
+    Get user authenticated for current request.
+
+    :param boolean required: if True and there is no user it will raise an error
+    """
+
+    user = flask.g.get('user', {})
+    if '_id' not in user and required:
+        raise SuperdeskApiError.notFoundError('Invalid user.')
+    return user
