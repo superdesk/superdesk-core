@@ -10,6 +10,7 @@
 
 import os
 import bcrypt
+import hashlib
 from uuid import uuid4
 from datetime import datetime
 from bson import ObjectId
@@ -154,3 +155,13 @@ def compare_preferences(original, updates):
     removed = original_keys - updates_keys
     modified = {o: (original[o], updates[o]) for o in intersect_keys if original[o] != updates[o]}
     return added, removed, modified
+
+
+def sha(text):
+    """Get sha hext digest for given text.
+
+    Using sha256 hashing function, returning 64 hex characters.
+
+    :param text: text str
+    """
+    return hashlib.sha256(text.encode()).hexdigest()

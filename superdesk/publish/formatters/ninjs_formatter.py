@@ -35,9 +35,11 @@ class NINJSFormatter(Formatter):
     """
     NINJS Formatter
     """
-    direct_copy_properties = ['versioncreated', 'usageterms', 'language', 'headline',
-                              'urgency', 'pubstatus', 'mimetype', 'renditions', 'place',
-                              'body_text', 'profile', 'slugline']
+    direct_copy_properties = ('versioncreated', 'usageterms', 'language', 'headline',
+                              'urgency', 'pubstatus', 'mimetype', 'place', 'copyrightholder',
+                              'body_text', 'body_html', 'profile', 'slugline')
+
+    rendition_properties = ('href', 'width', 'height', 'mimetype')
 
     def format(self, article, subscriber):
         try:
@@ -86,6 +88,9 @@ class NINJSFormatter(Formatter):
 
             if article.get('anpa_category'):
                 ninjs['service'] = self._get_service(article)
+
+            if article.get('renditions'):
+                ninjs['renditions'] = self._get_renditions(article)
 
             return [(pub_seq_num, json.dumps(ninjs, default=json_serialize_datetime_objectId))]
         except Exception as ex:
@@ -142,3 +147,14 @@ class NINJSFormatter(Formatter):
         It's using `anpa_category` to populate service field for now.
         """
         return [format_cv_item(item) for item in article.get('anpa_category', [])]
+
+    def _get_renditions(self, article):
+        """Get renditions for article."""
+        renditions = {}
+        for name, rendition in article.get('renditions', {}).items():
+            renditions[name] = self._format_rendition(rendition)
+        return renditions
+
+    def _format_rendition(self, rendition):
+        """Format single rendition using fields whitelist."""
+        return {field: rendition[field] for field in self.rendition_properties if field in rendition}
