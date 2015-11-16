@@ -158,8 +158,10 @@ def compare_preferences(original, updates):
 
 
 def sha(text):
-    """Get sha1 hext digest for given text.
+    """Get sha hext digest for given text.
+
+    Using sha256 hashing function, returning 64 hex characters.
 
     :param text: text str
     """
-    return hashlib.sha1(text.encode()).hexdigest()
+    return hashlib.sha256(text.encode()).hexdigest()
