@@ -123,7 +123,7 @@ class NinjsFormatterTest(TestCase):
             "version": "1",
             "versioncreated": "2015-07-23T00:15:00.000Z",
             "_id": "20150723001158606583",
-            "description_text":
+            "description_html":
                 "The most amazing picture you will ever see<br>call helpline 999 if you are planning to quit smoking",
             "type": "picture",
             "priority": 5,

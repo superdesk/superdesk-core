@@ -66,7 +66,7 @@ class NINJSFormatter(Formatter):
                 ninjs['body_html'] = self.append_body_footer(article)
 
             if article.get('description'):
-                ninjs['description_text'] = self.append_body_footer(article)
+                ninjs['description_html'] = self.append_body_footer(article)
 
             if article[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
                 ninjs['associations'] = self._get_associations(article)
