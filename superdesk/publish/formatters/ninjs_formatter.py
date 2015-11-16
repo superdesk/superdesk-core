@@ -37,7 +37,7 @@ class NINJSFormatter(Formatter):
     """
     direct_copy_properties = ['versioncreated', 'usageterms', 'language', 'headline',
                               'urgency', 'pubstatus', 'mimetype', 'renditions', 'place',
-                              'body_text', 'body_html', 'profile', 'slugline']
+                              'body_text', 'profile', 'slugline']
 
     def format(self, article, subscriber):
         try:
@@ -62,8 +62,11 @@ class NINJSFormatter(Formatter):
                 if article.get(copy_property) is not None:
                     ninjs[copy_property] = article[copy_property]
 
-            if 'description' in article:
-                ninjs['description_text'] = article['description']
+            if article.get('body_html'):
+                ninjs['body_html'] = self.append_body_footer(article)
+
+            if article.get('description'):
+                ninjs['description_html'] = self.append_body_footer(article)
 
             if article[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
                 ninjs['associations'] = self._get_associations(article)

@@ -11,7 +11,8 @@
 from datetime import datetime
 from uuid import uuid4
 from flask import current_app as app
-from .item import GUID_TAG, GUID_NEWSML, GUID_FIELD
+from .item import GUID_TAG, GUID_NEWSML, GUID_FIELD, ITEM_TYPE, CONTENT_TYPE
+from .packages import PACKAGE_TYPE, TAKES_PACKAGE
 
 
 item_url = 'regex("[\w,.:_-]+")'
@@ -54,3 +55,23 @@ def generate_guid(**hints):
                                      'timestamp': t.isoformat(),
                                      'identifier': hints['id']}
     return None
+
+
+def is_normal_package(doc):
+    """
+    Returns True if the passed doc is a package and not a takes package. Otherwise, returns False.
+
+    :return: True if it's a Package and not a Takes Package, False otherwise.
+    """
+
+    return doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and doc.get(PACKAGE_TYPE, '') != TAKES_PACKAGE
+
+
+def is_takes_package(doc):
+    """
+    Returns True if the passed doc is a takes package. Otherwise, returns False.
+
+    :return: True if it's a Takes Package, False otherwise.
+    """
+
+    return doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and doc.get(PACKAGE_TYPE, '') == TAKES_PACKAGE

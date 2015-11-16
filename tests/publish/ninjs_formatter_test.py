@@ -23,7 +23,7 @@ class NinjsFormatterTest(TestCase):
         init_app(self.app)
         self.maxDiff = None
 
-    def testTextFomatter(self):
+    def test_text_formatter(self):
         embargo_ts = (utcnow() + timedelta(days=2))
         article = {
             'guid': 'tag:aap.com.au:20150613:12345',
@@ -37,7 +37,6 @@ class NinjsFormatterTest(TestCase):
                         {'qcode': '02011002', 'name': 'extradition'}],
             'anpa_take_key': 'take_key',
             'unique_id': '1',
-            'type': 'preformatted',
             'body_html': 'The story body',
             'type': 'text',
             'word_count': '1',
@@ -51,14 +50,15 @@ class NinjsFormatterTest(TestCase):
             'keywords': ['traffic'],
             'abstract': 'sample abstract',
             'place': 'Australia',
-            'embargo': embargo_ts
+            'embargo': embargo_ts,
+            'body_footer': 'call helpline 999 if you are planning to quit smoking'
         }
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
         expected = {
             "version": "1",
             "place": "Australia",
             "pubstatus": "usable",
-            "body_html": "The story body",
+            "body_html": "The story body<br>call helpline 999 if you are planning to quit smoking",
             "type": "text",
             "subject": [{"code": "02011001", "name": "international court or tribunal"},
                         {"code": "02011002", "name": "extradition"}],
@@ -74,7 +74,7 @@ class NinjsFormatterTest(TestCase):
         }
         self.assertEqual(json.loads(doc), expected)
 
-    def testPictureFomatter(self):
+    def test_picture_formatter(self):
         article = {
             '_id': '20150723001158606583',
             '_current_version': 1,
@@ -100,7 +100,8 @@ class NinjsFormatterTest(TestCase):
             'pubstatus': 'usable',
             'source': 'AAP',
             'description': 'The most amazing picture you will ever see',
-            'guid': '20150723001158606583'
+            'guid': '20150723001158606583',
+            'body_footer': 'call helpline 999 if you are planning to quit smoking'
         }
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
         expected = {
@@ -122,14 +123,15 @@ class NinjsFormatterTest(TestCase):
             "version": "1",
             "versioncreated": "2015-07-23T00:15:00.000Z",
             "_id": "20150723001158606583",
-            "description_text": "The most amazing picture you will ever see",
+            "description_html":
+                "The most amazing picture you will ever see<br>call helpline 999 if you are planning to quit smoking",
             "type": "picture",
             "priority": 5,
             "slugline": "AMAZING PICTURE",
         }
         self.assertEqual(expected, json.loads(doc))
 
-    def testCompositeFomatter(self):
+    def test_composite_formatter(self):
         article = {
             '_id': 'urn:newsml:localhost:2015-07-24T15:05:00.116047:435c93c2-492c-4668-ab47-ae6e2b9b1c2c',
             'groups': [
@@ -259,7 +261,6 @@ class NinjsFormatterTest(TestCase):
                     }
                 ]
             },
-            "description_text": "",
             "versioncreated": "2015-07-24T05:05:14.000Z",
             "type": "composite",
             "pubstatus": "usable",

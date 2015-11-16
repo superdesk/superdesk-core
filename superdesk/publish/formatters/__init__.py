@@ -10,6 +10,8 @@
 
 import logging
 
+from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
+from superdesk.metadata.utils import is_takes_package
 
 formatters = []
 logger = logging.getLogger(__name__)
@@ -35,6 +37,24 @@ class Formatter(metaclass=FormatterRegistry):
     def can_format(self, format_type, article):
         """Test if formatter can format for given article."""
         raise NotImplementedError()
+
+    def append_body_footer(self, article):
+        """
+        Checks if the article has any Public Service Announcements and if available appends each of them to the body.
+
+        :return: body with public service announcements.
+        """
+
+        body = ''
+        if article[ITEM_TYPE] in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED] or is_takes_package(article):
+            body = article.get('body_html', '')
+        elif article[ITEM_TYPE] in [CONTENT_TYPE.AUDIO, CONTENT_TYPE.PICTURE, CONTENT_TYPE.VIDEO]:
+            body = article.get('description', '')
+
+        if body and article.get('body_footer'):
+            body = '{}<br>{}'.format(body, article.get('body_footer'))
+
+        return body
 
 
 def get_formatter(format_type, article):
