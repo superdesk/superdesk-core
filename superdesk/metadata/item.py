@@ -169,7 +169,17 @@ metadata_schema = {
         'type': 'string'
     },
     'slugline': {
-        'type': 'string'
+        'type': 'string',
+        'mapping': {
+            'type': 'string',
+            'fields': {
+                'phrase': {
+                    'type': 'string',
+                    'index_analyzer': 'phrase_prefix_analyzer',
+                    'search_analyzer': 'phrase_prefix_analyzer'
+                }
+            }
+        }
     },
     'anpa_take_key': {
         'type': 'string',

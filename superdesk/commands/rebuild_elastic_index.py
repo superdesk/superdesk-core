@@ -28,7 +28,7 @@ class RebuildElasticIndex(superdesk.Command):
             es = get_es(superdesk.app.config['ELASTICSEARCH_URL'])
             clone_name = index_name + '-' + get_random_string()
             print('Creating index: ', clone_name)
-            get_indices(es).create(clone_name)
+            superdesk.app.data.elastic.create_index(clone_name, superdesk.app.config['ELASTICSEARCH_SETTINGS'])
             print('Putting mapping for index: ', clone_name)
             superdesk.app.data.elastic.put_mapping(superdesk.app, clone_name)
             print('Starting index rebuilding.')
