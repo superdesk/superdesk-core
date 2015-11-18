@@ -9,21 +9,37 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import json
-from superdesk.publish.formatters import Formatter
 import superdesk
+from eve.utils import config
+from superdesk.publish.formatters import Formatter
 from superdesk.errors import FormatterError
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO
 from superdesk.metadata.packages import RESIDREF, GROUP_ID, GROUPS, ROOT_GROUP, REFS
 from superdesk.utils import json_serialize_datetime_objectId
 
 
+def filter_empty_vals(data):
+    """Filter out `None` values from a given dict."""
+    return dict(filter(lambda x: x[1], data.items()))
+
+
+def format_cv_item(item):
+    """Format item from controlled vocabulary for output."""
+    return filter_empty_vals({
+        'code': item.get('qcode'),
+        'name': item.get('name'),
+    })
+
+
 class NINJSFormatter(Formatter):
     """
     NINJS Formatter
     """
-    direct_copy_properties = ['versioncreated', 'usageterms', 'subject', 'language', 'headline',
-                              'urgency', 'pubstatus', 'mimetype', 'renditions', 'place',
-                              'body_text', 'body_html', 'profile', 'slugline']
+    direct_copy_properties = ('versioncreated', 'usageterms', 'language', 'headline',
+                              'urgency', 'pubstatus', 'mimetype', 'place', 'copyrightholder',
+                              'body_text', 'body_html', 'profile', 'slugline')
+
+    rendition_properties = ('href', 'width', 'height', 'mimetype')
 
     def format(self, article, subscriber):
         try:
@@ -31,9 +47,10 @@ class NINJSFormatter(Formatter):
 
             ninjs = {
                 '_id': article['_id'],
-                'version': str(article['_current_version']),
+                'version': str(article.get(config.VERSION, 1)),
                 'type': self._get_type(article)
             }
+
             try:
                 ninjs['byline'] = self._get_byline(article)
             except:
@@ -47,11 +64,16 @@ class NINJSFormatter(Formatter):
                 if article.get(copy_property) is not None:
                     ninjs[copy_property] = article[copy_property]
 
-            if 'description' in article:
-                ninjs['description_text'] = article['description']
+            if article.get('body_html'):
+                ninjs['body_html'] = self.append_body_footer(article)
+
+            if article.get('description'):
+                ninjs['description_html'] = self.append_body_footer(article)
 
             if article[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
                 ninjs['associations'] = self._get_associations(article)
+            elif article.get('associations', {}):
+                ninjs['associations'] = self._format_related(article, subscriber)
 
             if article.get(EMBARGO):
                 ninjs['embargoed'] = article.get(EMBARGO).isoformat()
@@ -60,6 +82,15 @@ class NINJSFormatter(Formatter):
                 ninjs['priority'] = article['priority']
             else:
                 ninjs['priority'] = 5
+
+            if article.get('subject'):
+                ninjs['subject'] = self._get_subject(article)
+
+            if article.get('anpa_category'):
+                ninjs['service'] = self._get_service(article)
+
+            if article.get('renditions'):
+                ninjs['renditions'] = self._get_renditions(article)
 
             return [(pub_seq_num, json.dumps(ninjs, default=json_serialize_datetime_objectId))]
         except Exception as ex:
@@ -82,6 +113,7 @@ class NINJSFormatter(Formatter):
         return article[ITEM_TYPE]
 
     def _get_associations(self, article):
+        """Create associations dict for package groups."""
         associations = dict()
         for group in article[GROUPS]:
             if group[GROUP_ID] == ROOT_GROUP:
@@ -96,3 +128,33 @@ class NINJSFormatter(Formatter):
                     items.append(item)
                     associations[group[GROUP_ID]] = items
         return associations
+
+    def _format_related(self, article, subscriber):
+        """Format all associated items for simple items (not packages)."""
+        associations = {}
+        for key, item in article.get('associations', {}).items():
+            seq, formatted = self.format(item, subscriber)[0]
+            associations[key] = json.loads(formatted)
+        return associations
+
+    def _get_subject(self, article):
+        """Get subject list for article."""
+        return [format_cv_item(item) for item in article.get('subject', [])]
+
+    def _get_service(self, article):
+        """Get service list for article.
+
+        It's using `anpa_category` to populate service field for now.
+        """
+        return [format_cv_item(item) for item in article.get('anpa_category', [])]
+
+    def _get_renditions(self, article):
+        """Get renditions for article."""
+        renditions = {}
+        for name, rendition in article.get('renditions', {}).items():
+            renditions[name] = self._format_rendition(rendition)
+        return renditions
+
+    def _format_rendition(self, rendition):
+        """Format single rendition using fields whitelist."""
+        return {field: rendition[field] for field in self.rendition_properties if field in rendition}

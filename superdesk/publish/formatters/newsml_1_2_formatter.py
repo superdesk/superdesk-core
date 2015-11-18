@@ -302,7 +302,7 @@ class NewsML12Formatter(Formatter):
         content_item = SubElement(body_news_component, "ContentItem")
         SubElement(content_item, 'MediaType', {'FormalName': 'Text'})
         SubElement(content_item, 'Format', {'FormalName': 'Text'})
-        SubElement(content_item, 'DataContent').text = article.get('body_html', '')
+        SubElement(content_item, 'DataContent').text = self.append_body_footer(article)
 
     def _format_description(self, article, main_news_component):
         """
@@ -315,7 +315,7 @@ class NewsML12Formatter(Formatter):
         content_item = SubElement(desc_news_component, "ContentItem")
         SubElement(content_item, 'MediaType', {'FormalName': 'Text'})
         SubElement(content_item, 'Format', {'FormalName': 'Text'})
-        SubElement(content_item, 'DataContent').text = article.get('description', '')
+        SubElement(content_item, 'DataContent').text = self.append_body_footer(article)
 
     def _format_media(self, article, main_news_component, media_type):
         """

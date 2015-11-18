@@ -14,11 +14,12 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.io import allowed_providers
-from superdesk.activity import ACTIVITY_CREATE, ACTIVITY_EVENT, ACTIVITY_UPDATE, notify_and_add_activity
+from superdesk.activity import ACTIVITY_CREATE, ACTIVITY_EVENT, ACTIVITY_UPDATE, notify_and_add_activity, \
+    ACTIVITY_DELETE
 from superdesk import get_resource_service
 from superdesk.utc import utcnow
 from superdesk.notification import push_notification
-
+from eve.utils import config
 
 logger = logging.getLogger(__name__)
 
@@ -144,7 +145,7 @@ class IngestProviderService(BaseService):
 
     def on_created(self, docs):
         for doc in docs:
-            notify_and_add_activity(ACTIVITY_CREATE, 'created Ingest Channel {{name}}',
+            notify_and_add_activity(ACTIVITY_CREATE, 'Created Ingest Channel {{name}}',
                                     self.datasource, item=None,
                                     user_list=self._get_administrators(),
                                     name=doc.get('name'), provider_id=doc.get('_id'))
@@ -197,3 +198,14 @@ class IngestProviderService(BaseService):
 
         if doc.get('last_item_update'):
             raise SuperdeskApiError.forbiddenError("Deleting an Ingest Source after receiving items is prohibited.")
+
+    def on_deleted(self, doc):
+        """
+        Overriding to send notification and record activity about channel deletion.
+        """
+        notify_and_add_activity(ACTIVITY_DELETE, 'Deleted Ingest Channel {{name}}',
+                                self.datasource, item=None,
+                                user_list=self._get_administrators(),
+                                name=doc.get('name'), provider_id=doc.get(config.ID_FIELD))
+        push_notification('ingest_provider:delete', provider_id=str(doc.get(config.ID_FIELD)))
+        logger.info("Deleted Ingest Channel. Data:{}".format(doc))

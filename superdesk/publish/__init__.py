@@ -21,8 +21,8 @@ logger = logging.getLogger(__name__)
 registered_transmitters = {}
 transmitter_errors = {}
 
-subscriber_types = ['broadcast', 'digital', 'wire', 'all']
-SUBSCRIBER_TYPES = namedtuple('SUBSCRIBER_TYPES', ['BROADCAST', 'DIGITAL', 'WIRE', 'ALL'])(*subscriber_types)
+subscriber_types = ['digital', 'wire', 'all']
+SUBSCRIBER_TYPES = namedtuple('SUBSCRIBER_TYPES', ['DIGITAL', 'WIRE', 'ALL'])(*subscriber_types)
 
 
 def register_transmitter(transmitter_type, transmitter, errors):
