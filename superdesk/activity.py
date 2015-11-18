@@ -113,7 +113,16 @@ class ActivityResource(Resource):
         'name': {'type': 'string'},
         'message': {'type': 'string'},
         'data': {'type': 'dict'},
-        'read': {'type': 'dict'},
+        'recipients': {
+            'type': 'list',
+            'schema': {
+                'type': 'dict',
+                'schema': {
+                    'user_id': {'type': 'string'},
+                    'read': {'type': 'boolean', 'default': False}
+                }
+            }
+        },
         'item': Resource.rel('archive', type='string'),
         'user': Resource.rel('users'),
         'desk': Resource.rel('desks'),
@@ -147,22 +156,34 @@ class ActivityService(BaseService):
         user_id = str(user.get('_id'))
 
         # make sure that the user making the read notification is in the notification list
-        if user_id not in updates.get('read').keys():
+        if not self.is_recipient(updates, user_id):
             raise SuperdeskApiError.forbiddenError('User is not in the notification list')
 
         # make sure the transition is from not read to read
-        if not (updates.get('read')[user_id] == 1 and original.get('read')[user_id] == 0):
+        if not self.is_read(updates, user_id) and self.is_read(original, user_id):
             raise SuperdeskApiError.forbiddenError('Can not set notification as read')
 
         # make sure that no other users are being marked as read
-        for read_entry in updates.get('read'):
-            if read_entry != user_id:
-                if updates.get('read')[read_entry] != original.get('read')[read_entry]:
+        for recipient in updates.get('recipients', []):
+            if recipient['user_id'] != user_id:
+                if self.is_read(updates, recipient['user_id']) != self.is_read(original, recipient['user_id']):
                     raise SuperdeskApiError.forbiddenError('Can not set other users notification as read')
 
         # make sure that no other fields are being up dated just read and _updated
         if len(updates) != 2:
             raise SuperdeskApiError.forbiddenError('Can not update')
+
+    def is_recipient(self, activity, user_id):
+        """
+        Checks if the given user is in the list of recipients
+        """
+        return any(r for r in activity.get('recipients', []) if r['user_id'] == user_id)
+
+    def is_read(self, activity, user_id):
+        """
+        Returns the read value for the given user
+        """
+        return next((r['read'] for r in activity.get('recipients', []) if r['user_id'] == user_id), False)
 
 
 ACTIVITY_CREATE = 'create'
@@ -191,9 +212,9 @@ def add_activity(activity_name, msg, resource=None, item=None, notify=None, **da
         activity['user'] = user.get('_id')
 
     if notify:
-        activity['read'] = {str(_id): 0 for _id in notify}
+        activity['recipients'] = [{'user_id': str(_id), 'read': False} for _id in notify]
     else:
-        activity['read'] = {}
+        activity['recipients'] = []
 
     if item:
         activity['item'] = str(item.get('guid', item.get('_id')))
@@ -201,7 +222,7 @@ def add_activity(activity_name, msg, resource=None, item=None, notify=None, **da
             activity['desk'] = ObjectId(item['task']['desk'])
 
     superdesk.get_resource_service(ActivityResource.endpoint_name).post([activity])
-    push_notification(ActivityResource.endpoint_name, _dest=activity['read'])
+    push_notification(ActivityResource.endpoint_name, _dest=activity['recipients'])
 
 
 def notify_and_add_activity(activity_name, msg, resource=None, item=None, user_list=None, **data):
