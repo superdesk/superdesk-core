@@ -569,7 +569,23 @@ class CreateItemMethodTestCase(RssIngestServiceTest):
             item.get('versioncreated'), datetime(2015, 2, 25, 17, 52, 11))
         self.assertEqual(item.get('headline'), 'Breaking News!')
         self.assertEqual(item.get('body_html'), 'This is body text.')
-        self.assertIsNone(item.get('abstract'))
+        self.assertIsNone(item.get('abstract'))  # because summary is aliased
+
+    def test_aliases_fields_are_skipped_unless_themselves_aliased(self):
+        data = dict(
+            guid='http://news.com/rss/1234abcd',
+            published_parsed=struct_time([2015, 2, 25, 16, 45, 23, 2, 56, 0]),
+            updated_parsed=struct_time([2015, 2, 25, 17, 52, 11, 2, 56, 0]),
+            title='Breaking News!',
+            summary='This is body text.',
+            link='http://news.com/1234abcd',
+        )
+
+        field_aliases = [{'body_text': 'summary'}, {'summary': 'link'}]
+
+        item = self.instance._create_item(data, field_aliases)
+
+        self.assertEqual(item.get('abstract'), 'http://news.com/1234abcd')
 
 
 class CreateImageItemsMethodTestCase(RssIngestServiceTest):
