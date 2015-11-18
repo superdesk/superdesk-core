@@ -55,11 +55,13 @@ def get_subjects(tree):
                     field_qcode = qcode[:5] + '000'
                 else:
                     field_qcode = qcode
-                subjects.append({
-                    'name': elem.get(field),
-                    'qcode': field_qcode
-                })
-        if not any(c['qcode'] == qcode for c in subjects):
+
+                if subject_codes.get(field_qcode):
+                    subjects.append({
+                        'name': elem.get(field),
+                        'qcode': field_qcode
+                    })
+        if not any(c['qcode'] == qcode for c in subjects) and subject_codes.get(qcode):
             subjects.append({'name': subject_codes[qcode], 'qcode': qcode})
     return subjects
 

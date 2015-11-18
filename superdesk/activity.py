@@ -206,7 +206,7 @@ def add_activity(activity_name, msg, resource=None, item=None, notify=None, **da
 
 def notify_and_add_activity(activity_name, msg, resource=None, item=None, user_list=None, **data):
     """
-    this function will add the activity and notify via email.
+    Adds the activity and notify enabled and active users via email.
     """
 
     if not user_list and activity_name == ACTIVITY_ERROR:
@@ -215,9 +215,10 @@ def notify_and_add_activity(activity_name, msg, resource=None, item=None, user_l
     add_activity(activity_name, msg=msg, resource=resource, item=item,
                  notify=[user.get("_id") for user in user_list] if user_list else None, **data)
     if user_list:
-        recipients = [user.get('email') for user in user_list if
-                      superdesk.get_resource_service('preferences').
-                      email_notification_is_enabled(preferences=user.get('preferences', {}))]
+        recipients = [user.get('email') for user in user_list
+                      if user.get('is_enabled', False) and user.get('is_active', False) and
+                      superdesk.get_resource_service('preferences').email_notification_is_enabled(
+                          preferences=user.get('user_preferences', {}))]
 
         if activity_name != ACTIVITY_ERROR:
             current_user = getattr(g, 'user', None)

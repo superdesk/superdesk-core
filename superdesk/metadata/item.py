@@ -12,6 +12,7 @@ from collections import namedtuple
 from superdesk.resource import Resource
 from .packages import PACKAGE_TYPE, TAKES_PACKAGE, LINKED_IN_PACKAGES, PACKAGE
 from eve.utils import config
+from superdesk.utils import SuperdeskBaseEnum
 
 not_analyzed = {'type': 'string', 'index': 'not_analyzed'}
 GUID_TAG = 'tag'
@@ -135,8 +136,10 @@ metadata_schema = {
     'genre': {
         'type': 'list',
         'mapping': {
+            'type': 'object',
             'properties': {
-                'name': not_analyzed
+                'name': not_analyzed,
+                'value': not_analyzed
             }
         }
     },
@@ -167,7 +170,16 @@ metadata_schema = {
     },
     'slugline': {
         'type': 'string',
-        'mapping': not_analyzed
+        'mapping': {
+            'type': 'string',
+            'fields': {
+                'phrase': {
+                    'type': 'string',
+                    'index_analyzer': 'phrase_prefix_analyzer',
+                    'search_analyzer': 'phrase_prefix_analyzer'
+                }
+            }
+        }
     },
     'anpa_take_key': {
         'type': 'string',
@@ -187,6 +199,9 @@ metadata_schema = {
     'urgency': {
         'type': 'integer',
         'nullable': True
+    },
+    'profile': {
+        'type': 'string',
     },
 
     # Related to state of an article
@@ -270,6 +285,9 @@ metadata_schema = {
     'contents': {
         'type': 'list'
     },
+    'associations': {
+        'type': 'dict',
+    },
 
     # aka Locator as per NewML Specification
     'place': {
@@ -336,3 +354,12 @@ crop_schema = {
     'CropTop': {'type': 'integer'},
     'CropBottom': {'type': 'integer'}
 }
+
+
+class Priority(SuperdeskBaseEnum):
+    Flash = 1
+    Urgent = 2
+    Three_Paragraph = 3
+    Screen_Finance = 4
+    Continuous_News = 5
+    Ordinary = 6

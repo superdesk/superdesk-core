@@ -9,11 +9,15 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 ''' Amazon media storage module'''
-from eve.io.media import MediaStorage
-import logging
-import json
-from io import BytesIO
 import boto3
+import json
+import bson
+import time
+import logging
+from io import BytesIO
+from eve.io.media import MediaStorage
+from superdesk.media.media_operations import download_file_from_url
+from superdesk.upload import upload_url
 
 logger = logging.getLogger(__name__)
 MAX_KEYS = 1000
@@ -35,6 +39,7 @@ class AmazonObjectWrapper(BytesIO):
         self.content_type = s3_object['ContentType']
         self.length = int(s3_object['ContentLength'])
         self.name = name
+        self.filename = name
         self.metadata = metadata
         self.upload_date = s3_object['LastModified']
         self.md5 = s3_object['ETag'][1:-1]
@@ -53,16 +58,28 @@ class AmazonMediaStorage(MediaStorage):
 
     def url_for_media(self, media_id):
         if not self.app.config.get('AMAZON_SERVE_DIRECT_LINKS', False):
-            return None
+            return upload_url(str(media_id))
         protocol = 'https' if self.app.config.get('AMAZON_S3_USE_HTTPS', False) else 'http'
-        endpoint = 's3-%s.amazonaws.com' % self.region
+        endpoint = 's3-%s.amazonaws.com' % self.app.config.get('AMAZON_REGION')
         return '%s://%s.%s/%s' % (protocol, self.container_name, endpoint, media_id)
+
+    def media_id(self, filename):
+        if not self.app.config.get('AMAZON_SERVE_DIRECT_LINKS', False):
+            return bson.ObjectId()
+        return '%s/%s' % (time.strftime('%Y%m%d'), filename)
+
+    def fetch_rendition(self, rendition):
+        stream, name, mime = download_file_from_url(rendition.get('href'))
+        return stream
 
     def read_from_config(self):
         self.region = self.app.config.get('AMAZON_REGION', 'us-east-1') or 'us-east-1'
         username = self.app.config['AMAZON_ACCESS_KEY_ID']
         api_key = self.app.config['AMAZON_SECRET_ACCESS_KEY']
         self.container_name = self.app.config['AMAZON_CONTAINER_NAME']
+        self.kwargs = {}
+        if self.app.config.get('AMAZON_SERVE_DIRECT_LINKS', False):
+            self.kwargs['ACL'] = 'public-read'
         return username, api_key
 
     def get(self, id_or_filename, resource=None):
@@ -125,7 +142,7 @@ class AmazonMediaStorage(MediaStorage):
             file_metadata[new_key] = value
         return file_metadata
 
-    def put(self, content, filename=None, content_type=None, resource=None, metadata=None):
+    def put(self, content, filename=None, content_type=None, resource=None, metadata=None, _id=None):
         """ Saves a new file using the storage system, preferably with the name
         specified. If there already exists a file with this name name, the
         storage system may modify the filename as necessary to get a unique
@@ -133,16 +150,17 @@ class AmazonMediaStorage(MediaStorage):
         of the stored file will be returned. The content type argument is used
         to appropriately identify the file when it is retrieved.
         """
-        logger.debug('Going to save media file with %s ' % filename)
-        found = self._check_exists(filename)
+        logger.debug('Going to save file file=%s media=%s ' % (filename, _id))
+        _id = _id or self.media_id(filename)
+        found = self._check_exists(_id)
         if found:
-            return filename
+            return _id
 
         try:
             file_metadata = self.transform_metadata_to_amazon_format(metadata)
-            self.client.put_object(Key=filename, Body=content, Bucket=self.container_name,
-                                   ContentType=content_type, Metadata=file_metadata)
-            return filename
+            self.client.put_object(Key=_id, Body=content, Bucket=self.container_name,
+                                   ContentType=content_type, Metadata=file_metadata, **self.kwargs)
+            return _id
         except Exception as ex:
             logger.exception(ex)
             raise

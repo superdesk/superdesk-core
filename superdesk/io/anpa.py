@@ -11,7 +11,7 @@
 
 import re
 from datetime import datetime
-from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
+from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, Priority
 from superdesk.utc import utc
 from superdesk.errors import ParserError
 from superdesk.io import Parser
@@ -92,14 +92,11 @@ class ANPAFileParser(Parser):
         :return int: priority of the item
         """
         mapping = {
-            'f': 1,
-            'u': 2,
-            'b': 3,
-            'z': 5
+            'f': Priority.Flash.value,
+            'u': Priority.Urgent.value,
+            'b': Priority.Three_Paragraph.value,
+            'z': Priority.Ordinary.value
         }
 
         source_priority = source_priority.lower().strip() if isinstance(source_priority, str) else ''
-        if source_priority in mapping:
-            return mapping[source_priority]
-        else:
-            return 5
+        return mapping.get(source_priority, Priority.Ordinary.value)

@@ -58,6 +58,7 @@ def get_queue_items():
 
 
 def transmit_items(queue_items):
+    publish_queue_service = get_resource_service(PUBLISH_QUEUE)
     failed_items = {}
 
     for queue_item in queue_items:
@@ -67,7 +68,7 @@ def transmit_items(queue_items):
 
             # update the status of the item to in-progress
             queue_update = {'state': 'in-progress', 'transmit_started_at': utcnow()}
-            get_resource_service(PUBLISH_QUEUE).patch(queue_item.get('_id'), queue_update)
+            publish_queue_service.patch(queue_item.get('_id'), queue_update)
 
             destination = queue_item['destination']
 
@@ -78,9 +79,18 @@ def transmit_items(queue_items):
             logger.exception(ex)
             failed_items[str(queue_item.get('_id'))] = queue_item
 
+    # mark failed items as pending so that Celery tasks will try again
     if len(failed_items) > 0:
         for item_id in failed_items.keys():
-            get_resource_service(PUBLISH_QUEUE).system_update(item_id, {'state': STATE_PENDING}, failed_items[item_id])
+            try:
+                orig_item = publish_queue_service.find_one(item_id)
+                publish_queue_service.system_update(
+                    item_id, {'state': STATE_PENDING}, orig_item)
+            except:
+                logger.error(
+                    'Failed to set the publish queue item back to "pending" '
+                    'state: {}'.format(item_id))
+
         logger.error('Failed to publish the following items: {}'.format(failed_items.keys()))
 
 

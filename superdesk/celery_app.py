@@ -25,6 +25,7 @@ from kombu.serialization import register
 from eve.io.mongo import MongoJSONEncoder
 from eve.utils import str_to_date
 from flask import json, current_app as app
+from superdesk.errors import SuperdeskError
 
 
 logger = logging.getLogger(__name__)
@@ -92,24 +93,30 @@ def dumps(o):
 register('eve/json', dumps, loads, content_type='application/json')
 
 
+def handle_exception(exc):
+    """Log exception to logger and sentry."""
+    logger.exception(exc)
+    superdesk.app.sentry.captureException(exc)
+
+
 class AppContextTask(TaskBase):
     abstract = True
     serializer = 'eve/json'
+    app_errors = (
+        SuperdeskError,
+        werkzeug.exceptions.InternalServerError,  # mongo layer err
+    )
 
     def __call__(self, *args, **kwargs):
         with superdesk.app.app_context():
             try:
                 return super().__call__(*args, **kwargs)
-            except werkzeug.exceptions.InternalServerError as e:
-                superdesk.app.sentry.captureException()
-                logger.exception(e)
+            except self.app_errors as e:
+                handle_exception(e)
 
     def on_failure(self, exc, task_id, args, kwargs, einfo):
-        try:
-            superdesk.app.sentry.captureException()
-        except:
-            pass
-
+        with superdesk.app.app_context():
+            handle_exception(exc)
 
 celery.Task = AppContextTask
 

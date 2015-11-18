@@ -20,6 +20,7 @@ from superdesk.notification import push_notification
 from superdesk.activity import ACTIVITY_EVENT, notify_and_add_activity
 from superdesk.io import providers
 from superdesk.celery_app import celery
+from superdesk.celery_task_utils import get_lock_id, get_host_id
 from superdesk.utc import utcnow, get_expiry_date
 from superdesk.workflow import set_default_state
 from superdesk.errors import ProviderError
@@ -30,7 +31,7 @@ from superdesk.media.renditions import generate_renditions
 from superdesk.io.iptc import subject_codes
 from superdesk.metadata.item import GUID_NEWSML, GUID_FIELD, FAMILY_ID, ITEM_TYPE, CONTENT_TYPE
 from superdesk.metadata.utils import generate_guid
-from superdesk.celery_task_utils import mark_task_as_not_running, is_task_running
+from superdesk.lock import lock, unlock
 
 
 UPDATE_SCHEDULE_DEFAULT = {'minutes': 5}
@@ -197,21 +198,22 @@ class UpdateIngest(superdesk.Command):
                     kwargs=kwargs)
 
 
-@celery.task(soft_time_limit=1800)
-def update_provider(provider, rule_set=None, routing_scheme=None):
+@celery.task(soft_time_limit=1800, bind=True)
+def update_provider(self, provider, rule_set=None, routing_scheme=None):
     """
     Fetches items from ingest provider as per the configuration, ingests them into Superdesk and
     updates the provider.
     """
-    if is_task_running(provider['name'],
-                       provider[superdesk.config.ID_FIELD],
-                       provider.get('update_schedule', UPDATE_SCHEDULE_DEFAULT)):
-        return
-
     if provider.get('type') == 'search':
         return
 
     if not is_updatable(provider):
+        return
+
+    lock_name = get_lock_id('ingest', provider['name'], provider[superdesk.config.ID_FIELD])
+    host_name = get_host_id(self)
+
+    if not lock(lock_name, host_name, expire=1800):
         return
 
     try:
@@ -237,10 +239,11 @@ def update_provider(provider, rule_set=None, routing_scheme=None):
                 last=provider[LAST_ITEM_UPDATE].replace(tzinfo=timezone.utc).astimezone(tz=None).strftime("%c"))
 
         logger.info('Provider {0} updated'.format(provider[superdesk.config.ID_FIELD]))
-        push_notification('ingest:update', provider_id=str(provider[superdesk.config.ID_FIELD]))
+        # Only push a notification if there has been an update
+        if LAST_ITEM_UPDATE in update:
+            push_notification('ingest:update', provider_id=str(provider[superdesk.config.ID_FIELD]))
     finally:
-        mark_task_as_not_running(provider['name'],
-                                 provider[superdesk.config.ID_FIELD])
+        unlock(lock_name, host_name)
 
 
 def process_anpa_category(item, provider):
@@ -257,6 +260,28 @@ def process_anpa_category(item, provider):
                         break
     except Exception as ex:
         raise ProviderError.anpaError(ex, provider)
+
+
+def derive_category(item, provider):
+    """
+    Assuming that the item has at least one itpc subject use the vocabulary map to derive an anpa category
+    :param item:
+    :return: An item with a category if possible
+    """
+    try:
+        categories = []
+        subject_map = superdesk.get_resource_service('vocabularies').find_one(req=None, _id='iptc_category_map')
+        if subject_map:
+            for entry in (map_entry for map_entry in subject_map['items'] if map_entry['is_active']):
+                for subject in item.get('subject', []):
+                    if subject['qcode'] == entry['subject']:
+                            if not any(c['qcode'] == entry['category'] for c in categories):
+                                categories.append({'qcode': entry['category']})
+            if len(categories):
+                item['anpa_category'] = categories
+                process_anpa_category(item, provider)
+    except Exception as ex:
+        logger.exception(ex)
 
 
 def process_iptc_codes(item, provider):
@@ -285,6 +310,26 @@ def process_iptc_codes(item, provider):
                     item['subject'].append({'qcode': mid_qcode, 'name': subject_codes[mid_qcode]})
     except Exception as ex:
         raise ProviderError.iptcError(ex, provider)
+
+
+def derive_subject(item):
+    """
+    Assuming that the item has an anpa category try to derive a subject using the anpa category vocabulary
+    :param item:
+    :return:
+    """
+    try:
+        category_map = superdesk.get_resource_service('vocabularies').find_one(req=None, _id='categories')
+        if category_map:
+            for cat in item['anpa_category']:
+                map_entry = next(
+                    (code for code in category_map['items'] if code['qcode'] == cat['qcode'] and code['is_active']),
+                    None)
+                if map_entry and 'subject' in map_entry:
+                    item['subject'] = [
+                        {'qcode': map_entry.get('subject'), 'name': subject_codes[map_entry.get('subject')]}]
+    except Exception as ex:
+        logger.exception(ex)
 
 
 def apply_rule_set(item, provider, rule_set=None):
@@ -365,7 +410,6 @@ def ingest_item(item, provider, rule_set=None, routing_scheme=None):
 
         item['ingest_provider'] = str(provider[superdesk.config.ID_FIELD])
         item.setdefault('source', provider.get('source', ''))
-        item.setdefault('priority', 5)
         set_default_state(item, STATE_INGESTED)
         item['expiry'] = get_expiry_date(provider.get('content_expiry', app.config['INGEST_EXPIRY_MINUTES']),
                                          item.get('versioncreated'))
@@ -375,6 +419,10 @@ def ingest_item(item, provider, rule_set=None, routing_scheme=None):
 
         if 'subject' in item:
             process_iptc_codes(item, provider)
+            if 'anpa_category' not in item:
+                derive_category(item, provider)
+        elif 'anpa_category' in item:
+            derive_subject(item)
 
         apply_rule_set(item, provider, rule_set)
 
@@ -392,17 +440,21 @@ def ingest_item(item, provider, rule_set=None, routing_scheme=None):
                 href = providers[provider.get('type')].prepare_href(baseImageRend['href'])
                 update_renditions(item, href, old_item)
 
+        new_version = True
         if old_item:
             # In case we already have the item, preserve the _id
             item[superdesk.config.ID_FIELD] = old_item[superdesk.config.ID_FIELD]
             ingest_service.put_in_mongo(item[superdesk.config.ID_FIELD], item)
+            # if the feed is versioned and this is not a new version
+            if 'version' in item and 'version' in old_item and item.get('version') == old_item.get('version'):
+                new_version = False
         else:
             try:
                 ingest_service.post_in_mongo([item])
             except HTTPException as e:
                 logger.error("Exception while persisting item in ingest collection", e)
 
-        if routing_scheme:
+        if routing_scheme and new_version:
             routed = ingest_service.find_one(_id=item[superdesk.config.ID_FIELD], req=None)
             superdesk.get_resource_service('routing_schemes').apply_routing_scheme(routed, provider, routing_scheme)
     except Exception as ex:
@@ -435,7 +487,6 @@ def update_renditions(item, href, old_item):
                 item['renditions'] = old_item['renditions']
                 item['mimetype'] = old_item.get('mimetype')
                 item['filemeta'] = old_item.get('filemeta')
-                logger.info("Reuters image not updated for GUID:{}".format(item[GUID_FIELD]))
                 return
 
         content, filename, content_type = download_file_from_url(href)

@@ -8,8 +8,8 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from flask import json
-from datetime import datetime
+
+import asyncio
 
 
 class ClientMock:
@@ -17,10 +17,12 @@ class ClientMock:
     def __init__(self):
         self.messages = []
         self.client = None
+        self.open = True
 
-    def notify(self, **kwargs):
-        kwargs.setdefault('_created', datetime.utcnow().isoformat())
-        self.messages.append(json.dumps(kwargs).encode('utf8'))
+    @asyncio.coroutine
+    def send(self, message):
+        self.messages.append(message)
+        yield from asyncio.sleep(0)
 
     def reset(self):
         self.messages = []

@@ -26,8 +26,10 @@ class RolesResource(Resource):
     schema = {
         'name': {
             'type': 'string',
-            'iunique': True,
             'required': True,
+            'nullable': False,
+            'empty': False,
+            'iunique': True
         },
         'description': {
             'type': 'string'
@@ -39,9 +41,7 @@ class RolesResource(Resource):
             'type': 'boolean'
         },
     }
-    datasource = {
-        'default_sort': [('_created', -1)]
-    }
+
     privileges = {'POST': 'roles', 'DELETE': 'roles', 'PATCH': 'roles'}
 
 

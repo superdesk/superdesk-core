@@ -132,17 +132,40 @@ def process_image(content):
     return meta
 
 
-def crop_image(content, file_name, cropping_data):
+def _get_cropping_data(doc):
+    """Get PIL Image crop data from doc with superdesk crops specs.
+
+    :param doc: crop dict
+    """
+    if all([doc.get('CropTop', None) is not None, doc.get('CropLeft', None) is not None,
+            doc.get('CropRight', None) is not None, doc.get('CropBottom', None) is not None]):
+        return (doc['CropLeft'], doc['CropTop'], doc['CropRight'], doc['CropBottom'])
+
+
+def crop_image(content, file_name, cropping_data, exact_size=None):
+    """Crop image stream to given crop.
+
+    :param content: image file stream
+    :param file_name
+    :param cropping_data: superdesk crop dict ({'CropLeft': 0, 'CropTop': 0, ...})
+    :param exact_size: dict with `width` and `height` values
+    """
+    if not isinstance(cropping_data, tuple):
+        cropping_data = _get_cropping_data(cropping_data)
     if cropping_data:
         logger.debug('Opened image {} from stream, going to crop it'.format(file_name))
         content.seek(0)
         img = Image.open(content)
         cropped = img.crop(cropping_data)
+        if exact_size:
+            cropped = cropped.resize((exact_size['width'], exact_size['height']), Image.ANTIALIAS)
         logger.debug('Cropped image {} from stream, going to save it'.format(file_name))
         try:
             out = BytesIO()
             cropped.save(out, img.format)
             out.seek(0)
+            setattr(out, 'width', cropped.size[0])
+            setattr(out, 'height', cropped.size[1])
             return True, out
         except Exception as io:
             logger.exception('Failed to generate crop for filename: {}. Crop: {}'.format(file_name, cropping_data))

@@ -8,6 +8,7 @@
 *#
 .#*
 *TAGS
+*.egg-info
 .ropeproject
 /data
 static/*
