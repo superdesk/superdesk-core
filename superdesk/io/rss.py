@@ -238,7 +238,7 @@ class RssIngestService(IngestService):
         :param dict data: parsed data of a single feed entry
         :param field_aliases: (optional) field name aliases. Used for content
              fields that are named differently in retrieved data.
-        :type field_aliases: dict or None
+        :type field_aliases: list of {field_name: alias} dictionaries or None
 
         :return: created content item
         :rtype: dict
@@ -251,7 +251,20 @@ class RssIngestService(IngestService):
 
         item = dict(type=CONTENT_TYPE.TEXT)
 
-        for field in (f for f in self.item_fields if f.name_in_data not in aliased_fields):
+        # Only consider fields that are not used as an alias (i.e. used to
+        # populate another field) - unless those fields have their own
+        # aliases, too.
+        # The idea is that if e.g. the main text field is aliased to use the
+        # parsed data's summary field, that summary should not be used to
+        # populate the field it was originally meant for.
+        fields_to_consider = (
+            f for f in self.item_fields
+            if (f.name_in_data not in aliased_fields) or
+               (f.name_in_data in aliased_fields and
+                f.name_in_data in field_aliases)
+        )
+
+        for field in fields_to_consider:
             data_field_name = field_aliases.get(
                 field.name_in_data, field.name_in_data
             )
@@ -261,6 +274,20 @@ class RssIngestService(IngestService):
                 field_value = utcfromtimestamp(timegm(field_value))
 
             item[field.name] = field_value
+
+            # Some feeds use <content:encoded> tag for storing the main content,
+            # and that tag is parsed differently. If the body_html has not been
+            # found in its default data field and is not aliased, try to
+            # populate it using the aforementioned content field as a fallback.
+            if (
+                field.name == 'body_html' and
+                not field_value and
+                field.name_in_data not in field_aliases
+            ):
+                try:
+                    item['body_html'] = data.content[0].value
+                except:
+                    pass  # content either non-existent or parsed differently
 
         return item
 
