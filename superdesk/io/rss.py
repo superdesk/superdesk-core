@@ -275,6 +275,20 @@ class RssIngestService(IngestService):
 
             item[field.name] = field_value
 
+            # Some feeds use <content:encoded> tag for storing the main content,
+            # and that tag is parsed differently. If the body_html has not been
+            # found in its default data field and is not aliased, try to
+            # populate it using the aforementioned content field as a fallback.
+            if (
+                field.name == 'body_html' and
+                not field_value and
+                field.name_in_data not in field_aliases
+            ):
+                try:
+                    item['body_html'] = data.content[0].value
+                except:
+                    pass  # content either non-existent or parsed differently
+
         return item
 
     def _create_image_items(self, image_links, text_item):

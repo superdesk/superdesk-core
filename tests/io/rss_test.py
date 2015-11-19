@@ -520,6 +520,55 @@ class CreateItemMethodTestCase(RssIngestServiceTest):
         self.assertEqual(item.get('abstract'), 'Something happened...')
         self.assertEqual(item.get('body_html'), 'This is body text.')
 
+    def test_populates_body_text_from_content_field_as_fallback(self):
+        class CustomDict(dict):
+            """Customized dict class, allows adding custom attributes to it."""
+
+        data = CustomDict(
+            guid='http://news.com/rss/1234abcd',
+            published_parsed=struct_time([2015, 2, 25, 16, 45, 23, 2, 56, 0]),
+            updated_parsed=struct_time([2015, 2, 25, 17, 52, 11, 2, 56, 0]),
+            title='Breaking News!',
+            summary='Something happened...',
+            # NOTE: no body_text field
+        )
+
+        content_field = [
+            CustomDict(type='text/html', value='<p>This is body</p>')
+        ]
+        content_field[0].value = '<p>This is body</p>'
+        data.content = content_field
+
+        item = self.instance._create_item(data)
+
+        self.assertEqual(item.get('body_html'), '<p>This is body</p>')
+
+    def test_does_not_use_body_text_populate_fallback_if_aliased(self):
+        class CustomDict(dict):
+            """Customized dict class, allows adding custom attributes to it."""
+
+        data = CustomDict(
+            guid='http://news.com/rss/1234abcd',
+            published_parsed=struct_time([2015, 2, 25, 16, 45, 23, 2, 56, 0]),
+            updated_parsed=struct_time([2015, 2, 25, 17, 52, 11, 2, 56, 0]),
+            title='Breaking News!',
+            summary='Something happened...',
+            # NOTE: no body_text field
+        )
+
+        content_field = [
+            CustomDict(type='text/html', value='<p>This is body</p>')
+        ]
+        content_field[0].value = '<p>This is body</p>'
+        data.content = content_field
+
+        field_aliases = [{'body_text': 'body_text_field_alias'}]
+        data.body_text_field_alias = None  # simulate non-existing alias field
+
+        item = self.instance._create_item(data, field_aliases)
+
+        self.assertIsNone(item.get('body_html'))
+
     def test_creates_item_taking_field_name_aliases_into_account(self):
         data = dict(
             guid='http://news.com/rss/1234abcd',
