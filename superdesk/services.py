@@ -98,6 +98,10 @@ class BaseService():
             req = ParsedRequest()
         return self.backend.get_from_mongo(self.datasource, req=req, lookup=lookup)
 
+    def find_and_modify(self, **kwargs):
+        res = self.backend.find_and_modify(self.datasource, **kwargs)
+        return res
+
     def post(self, docs, **kwargs):
         for doc in docs:
             resolve_default_values(doc, app.config['DOMAIN'][self.datasource]['defaults'])
