@@ -66,6 +66,10 @@ class EveBackend():
         backend = self._backend(endpoint_name)
         return backend.find(endpoint_name, req, lookup)
 
+    def find_and_modify(self, endpoint_name, **kwargs):
+        backend = self._backend(endpoint_name)
+        return backend.driver.db[endpoint_name].find_and_modify(**kwargs)
+
     def create(self, endpoint_name, docs, **kwargs):
         """Insert documents into given collection.
 
