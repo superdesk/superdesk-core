@@ -9,48 +9,53 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license*.
 
-import superdesk
-from superdesk.io import Parser
 import datetime
+import email
+import io
+import logging
+import re
+from email.header import decode_header
+
+import eve
+from bs4 import BeautifulSoup, Comment, Doctype
+from flask import current_app as app, json
+from pytz import timezone
+
+import superdesk
+from superdesk import get_resource_service
+from superdesk.errors import IngestEmailError
+from superdesk.io import register_feed_parser
+from superdesk.io.feed_parsers import EmailFeedParser
+from superdesk.io.iptc import subject_codes
+from superdesk.media.media_operations import process_file_from_stream
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, GUID_TAG, SIGN_OFF, BYLINE
 from superdesk.metadata.utils import generate_guid
+from superdesk.users.errors import UserNotRegisteredException
 from superdesk.utc import utcnow
-from pytz import timezone
-from superdesk.media.media_operations import process_file_from_stream
-import io
-from flask import current_app as app, json
-import email
-from email.header import decode_header
-import logging
-from superdesk.errors import IngestEmailError
-from bs4 import BeautifulSoup, Comment, Doctype
-import re
-from eve.utils import ParsedRequest
-from .iptc import subject_codes
 
 logger = logging.getLogger(__name__)
-
-
-class UserNotRegisteredException(Exception):
-    pass
 
 
 email_regex = re.compile('^.*<(.*)>$')
 
 
-def get_user_by_email(field_from):
-    email_address = email_regex.findall(field_from)[0]
-    lookup = superdesk.get_resource_service('users').find_one(
-        req=ParsedRequest(), email=email_address)
-    if not lookup:
-        raise UserNotRegisteredException()
-    return lookup['_id']
+class EMailRFC822FeedParser(EmailFeedParser):
+    """
+    Feed Parser which can parse if the feed is in RFC 822 format.
+    """
 
-
-class rfc822Parser(Parser):
+    NAME = 'email_rfc822'
 
     def __init__(self):
         self.parser_app = app
+
+    def can_parse(self, email_message):
+        for response_part in email_message:
+            if isinstance(response_part, tuple):
+                msg = email.message_from_bytes(response_part[1])
+                return self.parse_header(msg['from']) != ''
+
+        return False
 
     def parse_email(self, data, provider):
         config = provider.get('config', {})
@@ -80,8 +85,9 @@ class rfc822Parser(Parser):
                     field_from = self.parse_header(msg['from'])
                     item['original_source'] = field_from
                     try:
-                        item['original_creator'] = get_user_by_email(
-                            field_from)
+                        email_address = email_regex.findall(field_from)[0]
+                        user = get_resource_service('users').get_user_by_email(email_address)
+                        item['original_creator'] = user[eve.utils.config.ID_FIELD]
                     except UserNotRegisteredException:
                         pass
                     item['guid'] = msg['Message-ID']
@@ -163,13 +169,9 @@ class rfc822Parser(Parser):
                                     comp_item['original_creator'] = item['original_creator']
 
                                 # create a reference to the item that stores the body of the email
-                                item_ref = {}
-                                item_ref['guid'] = item['guid']
-                                item_ref['residRef'] = item['guid']
-                                item_ref['headline'] = item['headline']
-                                item_ref['location'] = 'ingest'
-                                item_ref['itemClass'] = 'icls:text'
-                                item_ref['original_source'] = item['original_source']
+                                item_ref = {'guid': item['guid'], 'residRef': item['guid'],
+                                            'headline': item['headline'], 'location': 'ingest',
+                                            'itemClass': 'icls:text', 'original_source': item['original_source']}
                                 if 'original_creator' in item:
                                     item_ref['original_creator'] = item['original_creator']
                                 refs.append(item_ref)
@@ -191,13 +193,9 @@ class rfc822Parser(Parser):
                             new_items.append(media_item)
 
                             # add a reference to this item in the composite item
-                            media_ref = {}
-                            media_ref['guid'] = media_item['guid']
-                            media_ref['residRef'] = media_item['guid']
-                            media_ref['headline'] = fileName
-                            media_ref['location'] = 'ingest'
-                            media_ref['itemClass'] = 'icls:picture'
-                            media_ref['original_source'] = item['original_source']
+                            media_ref = {'guid': media_item['guid'], 'residRef': media_item['guid'],
+                                         'headline': fileName, 'location': 'ingest', 'itemClass': 'icls:picture',
+                                         'original_source': item['original_source']}
                             if 'original_creator' in item:
                                 media_ref['original_creator'] = item['original_creator']
                             refs.append(media_ref)
@@ -210,16 +208,10 @@ class rfc822Parser(Parser):
 
             # if there is composite item then add the main group and references
             if comp_item:
-                grefs = {}
-                grefs['refs'] = [{'idRef': 'main'}]
-                grefs['id'] = 'root'
-                grefs['role'] = 'grpRole:NEP'
+                grefs = {'refs': [{'idRef': 'main'}], 'id': 'root', 'role': 'grpRole:NEP'}
                 comp_item['groups'].append(grefs)
 
-                grefs = {}
-                grefs['refs'] = refs
-                grefs['id'] = 'main'
-                grefs['role'] = 'grpRole:Main'
+                grefs = {'refs': refs, 'id': 'main', 'role': 'grpRole:Main'}
                 comp_item['groups'].append(grefs)
 
                 new_items.append(comp_item)
@@ -253,13 +245,8 @@ class rfc822Parser(Parser):
         # remove these tags, complete with contents.
         blacklist = ["script", "style", "head"]
 
-        whitelist = [
-            "div", "span", "p", "br", "pre",
-            "table", "tbody", "thead", "tr", "td", "a",
-            "blockquote",
-            "ul", "li", "ol",
-            "b", "em", "i", "strong", "u", "font"
-        ]
+        whitelist = ["div", "span", "p", "br", "pre", "table", "tbody", "thead", "tr", "td", "a", "blockquote",
+                     "ul", "li", "ol", "b", "em", "i", "strong", "u", "font"]
 
         try:
             # BeautifulSoup is catching out-of-order and unclosed tags, so markup
@@ -337,7 +324,7 @@ class rfc822Parser(Parser):
 
     def _parse_formatted_email(self, data, provider):
         """
-        Passed an email that was constructed as a notificaton from a google form submission it constructs an item.
+        Passed an email that was constructed as a notification from a google form submission it constructs an item.
         The google form submits to a google sheet, this sheet creates the email as a notification
         :param data:
         :param provider:
@@ -350,7 +337,7 @@ class rfc822Parser(Parser):
             for response_part in data:
                 if isinstance(response_part, tuple):
                     msg = email.message_from_bytes(response_part[1])
-                    # Check that the subject line macthes what we expect, ignore it if not
+                    # Check that the subject line matches what we expect, ignore it if not
                     if self.parse_header(msg['subject']) != 'Formatted Editorial Story':
                         return []
 
@@ -387,7 +374,7 @@ class rfc822Parser(Parser):
                             if mail_item.get('Urgency') != '':
                                 item['urgency'] = int(mail_item.get('Urgency'))
 
-                            # We expect the username passed coresponds to a superdesk user
+                            # We expect the username passed corresponds to a superdesk user
                             query = {'email': re.compile('^{}$'.format(mail_item.get('Username')), re.IGNORECASE)}
                             user = superdesk.get_resource_service('users').find_one(req=None, **query)
                             if not user:
@@ -406,3 +393,6 @@ class rfc822Parser(Parser):
             return [item]
         except Exception as ex:
             raise IngestEmailError.emailParseError(ex, provider)
+
+
+register_feed_parser(EMailRFC822FeedParser.NAME, EMailRFC822FeedParser())

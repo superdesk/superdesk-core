@@ -11,26 +11,34 @@
 
 import re
 from superdesk.errors import ParserError
-from superdesk.io import Parser
+from superdesk.io import register_feed_parser
+from superdesk.io.feed_parsers import FileFeedParser
 from superdesk.metadata.utils import generate_guid
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, GUID_TAG
 from superdesk.utc import utcnow
 
 
-class Iptc7901FileParser(Parser):
-    """IPTC 7901 file parser"""
+class IPTC7901FeedParser(FileFeedParser):
+    """
+    Feed Parser which can parse if the feed is in IPTC 7901 format.
+    """
 
-    def parse_file(self, filename, provider):
-        """Parse 7901 file by given filename.
+    NAME = 'iptc7901'
 
-        :param filename
-        """
+    def can_parse(self, file_path):
         try:
-            item = {ITEM_TYPE: CONTENT_TYPE.PREFORMATTED}
-            item['guid'] = generate_guid(type=GUID_TAG)
-            item['versioncreated'] = utcnow()
+            with open(file_path, 'rb') as f:
+                lines = [line for line in f]
+                return re.match(b'\x01([a-zA-Z]*)([0-9]*) (.) (.) ([0-9]*) ([a-zA-Z0-9 ]*)', lines[0], flags=re.I)
+        finally:
+            return False
 
-            with open(filename, 'rb') as f:
+    def parse_file(self, file_path, provider=None):
+        try:
+            item = {ITEM_TYPE: CONTENT_TYPE.PREFORMATTED, 'guid': generate_guid(type=GUID_TAG),
+                    'versioncreated': utcnow()}
+
+            with open(file_path, 'rb') as f:
                 lines = [line for line in f]
             # parse first header line
             m = re.match(b'\x01([a-zA-Z]*)([0-9]*) (.) (.) ([0-9]*) ([a-zA-Z0-9 ]*)', lines[0], flags=re.I)
@@ -57,7 +65,8 @@ class Iptc7901FileParser(Parser):
                 if line[0:1] == b'\x03':
                     break
                 if inText:
-                    if line.decode('latin-1', 'replace').find('The following information is not for publication') != -1 \
+                    if line.decode('latin-1', 'replace')\
+                            .find('The following information is not for publication') != -1 \
                             or line.decode('latin-1', 'replace').find(
                                 'The following information is not intended for publication') != -1:
                         inNote = True
@@ -83,3 +92,6 @@ class Iptc7901FileParser(Parser):
             return 'i'
         else:
             return source_category
+
+
+register_feed_parser(IPTC7901FeedParser.NAME, IPTC7901FeedParser())

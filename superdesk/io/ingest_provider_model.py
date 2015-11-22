@@ -9,17 +9,22 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+
+from eve.utils import config
 from flask import g, current_app as app
-from superdesk.errors import SuperdeskApiError
-from superdesk.resource import Resource
-from superdesk.services import BaseService
-from superdesk.io import allowed_providers
+
+import superdesk
+from superdesk import get_resource_service
 from superdesk.activity import ACTIVITY_CREATE, ACTIVITY_EVENT, ACTIVITY_UPDATE, notify_and_add_activity, \
     ACTIVITY_DELETE
-from superdesk import get_resource_service
-from superdesk.utc import utcnow
+from superdesk.errors import SuperdeskApiError
+from superdesk.io import allowed_feeding_services, allowed_feed_parsers
+from superdesk.metadata.item import CONTENT_STATE, content_type
 from superdesk.notification import push_notification
-from eve.utils import config
+from superdesk.resource import Resource
+from superdesk.services import BaseService
+from superdesk.utc import utcnow
+from superdesk.utils import required_string
 
 logger = logging.getLogger(__name__)
 
@@ -30,12 +35,26 @@ class IngestProviderResource(Resource):
         self.schema = {
             'name': {
                 'type': 'string',
-                'required': True
+                'required': True,
+                'nullable': False,
+                'empty': False,
+                'iunique': True
             },
-            'type': {
+            'source': required_string,
+            'feeding_service': {
                 'type': 'string',
                 'required': True,
-                'allowed': allowed_providers
+                'allowed': allowed_feeding_services
+            },
+            'feed_parser': {
+                'type': 'string',
+                'required': True,
+                'allowed': allowed_feed_parsers
+            },
+            'content_types': {
+                'type': 'list',
+                'default': content_type,
+                'allowed': content_type
             },
             'content_expiry': {
                 'type': 'integer',
@@ -52,10 +71,6 @@ class IngestProviderResource(Resource):
             },
             'token': {
                 'type': 'dict'
-            },
-            'source': {
-                'type': 'string',
-                'required': True,
             },
             'is_closed': {
                 'type': 'boolean',
@@ -111,9 +126,11 @@ class IngestProviderResource(Resource):
                 }
             }
         }
+
         self.item_methods = ['GET', 'PATCH', 'DELETE']
         self.privileges = {'POST': 'ingest_providers', 'PATCH': 'ingest_providers', 'DELETE': 'ingest_providers'}
         self.etag_ignore_fields = ['last_updated', 'last_item_update', 'last_closed', 'last_opened']
+
         super().__init__(endpoint_name, app, service, endpoint_schema=endpoint_schema)
 
 
@@ -121,9 +138,6 @@ class IngestProviderService(BaseService):
     def __init__(self, datasource=None, backend=None):
         super().__init__(datasource=datasource, backend=backend)
         self.user_service = get_resource_service('users')
-
-    def _get_administrators(self):
-        return self.user_service.get_users_by_user_type('administrator')
 
     def _set_provider_status(self, doc, message=''):
         user = getattr(g, 'user', None)
@@ -147,7 +161,7 @@ class IngestProviderService(BaseService):
         for doc in docs:
             notify_and_add_activity(ACTIVITY_CREATE, 'Created Ingest Channel {{name}}',
                                     self.datasource, item=None,
-                                    user_list=self._get_administrators(),
+                                    user_list=self.user_service.get_users_by_user_type('administrator'),
                                     name=doc.get('name'), provider_id=doc.get('_id'))
             push_notification('ingest_provider:create', provider_id=str(doc.get('_id')))
         logger.info("Created Ingest Channel. Data:{}".format(docs))
@@ -163,7 +177,7 @@ class IngestProviderService(BaseService):
             .get('on_update', original.get('notifications', {}).get('on_update', True))
         notify_and_add_activity(ACTIVITY_UPDATE, 'updated Ingest Channel {{name}}',
                                 self.datasource, item=None,
-                                user_list=self._get_administrators()
+                                user_list=self.user_service.get_users_by_user_type('administrator')
                                 if do_notification else None,
                                 name=updates.get('name', original.get('name')),
                                 provider_id=original.get('_id'))
@@ -183,7 +197,7 @@ class IngestProviderService(BaseService):
 
             notify_and_add_activity(ACTIVITY_EVENT, '{{status}} Ingest Channel {{name}}',
                                     self.datasource, item=None,
-                                    user_list=self._get_administrators()
+                                    user_list=self.user_service.get_users_by_user_type('administrator')
                                     if do_notification else None,
                                     name=updates.get('name', original.get('name')),
                                     status=status, provider_id=original.get('_id'))
@@ -205,7 +219,11 @@ class IngestProviderService(BaseService):
         """
         notify_and_add_activity(ACTIVITY_DELETE, 'Deleted Ingest Channel {{name}}',
                                 self.datasource, item=None,
-                                user_list=self._get_administrators(),
+                                user_list=self.user_service.get_users_by_user_type('administrator'),
                                 name=doc.get('name'), provider_id=doc.get(config.ID_FIELD))
         push_notification('ingest_provider:delete', provider_id=str(doc.get(config.ID_FIELD)))
         logger.info("Deleted Ingest Channel. Data:{}".format(doc))
+
+
+superdesk.workflow_state(CONTENT_STATE.INGESTED)
+superdesk.workflow_action(name='ingest')

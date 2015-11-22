@@ -132,10 +132,10 @@ INSTALLED_APPS = [
     'superdesk.users',
 
     'superdesk.io',
+    'superdesk.io.feeding_services',
+    'superdesk.io.feed_parsers',
     'superdesk.io.subjectcodes',
     'superdesk.io.iptc',
-    'superdesk.io.ftp',
-    'superdesk.io.rss',
     'superdesk.publish',
     'superdesk.commands',
     'superdesk.locators.locators',

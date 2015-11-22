@@ -25,9 +25,10 @@ from superdesk.storage.desk_media_storage import SuperdeskGridFSMediaStorage
 from superdesk.validator import SuperdeskValidator
 from raven.contrib.flask import Sentry
 from superdesk.errors import SuperdeskError, SuperdeskApiError
-from superdesk.io import providers
+from superdesk.io import registered_feeding_services
 from superdesk.datalayer import SuperdeskDataLayer  # noqa
 from logging.handlers import SysLogHandler
+
 sentry = Sentry(register_signal=False, wrap_wsgi=False)
 
 
@@ -118,7 +119,7 @@ def get_app(config=None, media_storage=None):
     sentry.init_app(app)
 
     # instantiate registered provider classes (leave non-classes intact)
-    for key, provider in providers.items():
-        providers[key] = provider() if isinstance(provider, type) else provider
+    for key, provider in registered_feeding_services.items():
+        registered_feeding_services[key] = provider() if isinstance(provider, type) else provider
 
     return app
