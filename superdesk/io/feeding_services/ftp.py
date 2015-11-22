@@ -15,8 +15,7 @@ import tempfile
 from datetime import datetime
 from superdesk.utc import utc
 from superdesk.etree import etree
-from superdesk.io import get_xml_parser
-from .ingest_service import IngestService
+from superdesk.io.feeding_services import FeedingService
 from superdesk.errors import IngestFtpError
 
 try:
@@ -25,19 +24,21 @@ except ImportError:
     from urlparse import urlparse
 
 
-class FTPService(IngestService):
-    """FTP Ingest Service."""
+class FTPFeedingService(FeedingService):
+    """
+    Feeding Service class which can read feed using FTP.
+    """
 
-    DATE_FORMAT = '%Y%m%d%H%M%S'
-    FILE_SUFFIX = '.xml'
-
-    PROVIDER = 'ftp'
-
+    NAME = 'ftp'
     ERRORS = [IngestFtpError.ftpUnknownParserError().get_error_description(),
               IngestFtpError.ftpError().get_error_description()]
 
+    FILE_SUFFIX = '.xml'
+    DATE_FORMAT = '%Y%m%d%H%M%S'
+
     def config_from_url(self, url):
-        """Parse given url into ftp config.
+        """
+        Parse given url into ftp config.
 
         :param url: url in form `ftp://username:password@host:port/dir`
         """
@@ -56,7 +57,6 @@ class FTPService(IngestService):
         if 'dest_path' not in config:
             config['dest_path'] = tempfile.mkdtemp(prefix='superdesk_ingest_')
 
-        items = []
         try:
             with ftplib.FTP(config.get('host')) as ftp:
                 ftp.login(config.get('username'), config.get('password'))
@@ -85,11 +85,8 @@ class FTPService(IngestService):
                         continue
 
                     xml = etree.parse(dest).getroot()
-                    parser = get_xml_parser(xml)
-                    if not parser:
-                        raise IngestFtpError.ftpUnknownParserError(Exception('Parser not found'),
-                                                                   provider, filename)
-                    parsed = parser.parse_message(xml, provider)
+                    parser = self.get_feed_parser(provider, xml)
+                    parsed = parser.parse_xml(xml, provider)
                     if isinstance(parsed, dict):
                         parsed = [parsed]
 

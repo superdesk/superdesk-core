@@ -19,6 +19,9 @@ from importlib import import_module
 from eve.utils import config
 
 
+required_string = {'type': 'string', 'required': True, 'nullable': False, 'empty': False}
+
+
 class FileSortAttributes(Enum):
     """
     Enum defining the File Story Attributes.

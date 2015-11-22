@@ -11,19 +11,20 @@
 
 import os
 import unittest
+
 from superdesk.etree import etree
-from superdesk.io.nitf import NITFParser, get_subjects
+from superdesk.io.feed_parsers.nitf import NITFFeedParser, get_subjects
 
 
 class NITFTestCase(unittest.TestCase):
 
     def setUp(self):
         dirname = os.path.dirname(os.path.realpath(__file__))
-        fixture = os.path.join(dirname, 'fixtures', self.filename)
+        fixture = os.path.normpath(os.path.join(dirname, '../fixtures', self.filename))
         provider = {'name': 'Test'}
         with open(fixture) as f:
             self.nitf = f.read()
-            self.item = NITFParser().parse_message(etree.fromstring(self.nitf), provider)
+            self.item = NITFFeedParser().parse_xml(etree.fromstring(self.nitf), provider)
 
 
 class AAPTestCase(NITFTestCase):

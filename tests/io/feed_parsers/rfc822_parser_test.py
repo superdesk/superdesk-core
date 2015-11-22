@@ -11,13 +11,14 @@
 
 
 import os
+
 import superdesk
-from superdesk.io.rfc822 import rfc822Parser
+from superdesk.io.feed_parsers.rfc822 import EMailRFC822FeedParser
 from superdesk.tests import TestCase, setup
 from superdesk.users.services import UsersService
 
 
-class rfc822TestCase(TestCase):
+class RFC822TestCase(TestCase):
     filename = 'simple_email.txt'
 
     def setUp(self):
@@ -34,10 +35,10 @@ class rfc822TestCase(TestCase):
 
             provider = {'name': 'Test'}
             dirname = os.path.dirname(os.path.realpath(__file__))
-            fixture = os.path.join(dirname, 'fixtures', self.filename)
+            fixture = os.path.normpath(os.path.join(dirname, '../fixtures', self.filename))
             with open(fixture, mode='rb') as f:
                 bytes = f.read()
-            parser = rfc822Parser()
+            parser = EMailRFC822FeedParser()
             self.items = parser.parse_email([(1, bytes)], provider)
 
     def test_headline(self):
@@ -52,7 +53,7 @@ class rfc822TestCase(TestCase):
         self.assertEqual(self.items[0]['original_creator'], self.user_id)
 
 
-class rfc822ComplexTestCase(TestCase):
+class RFC822ComplexTestCase(TestCase):
     filename = 'composite_email.txt'
 
     def setUp(self):
@@ -60,10 +61,10 @@ class rfc822ComplexTestCase(TestCase):
         with self.app.app_context():
             provider = {'name': 'Test'}
             dirname = os.path.dirname(os.path.realpath(__file__))
-            fixture = os.path.join(dirname, 'fixtures', self.filename)
+            fixture = os.path.normpath(os.path.join(dirname, '../fixtures', self.filename))
             with open(fixture, mode='rb') as f:
                 bytes = f.read()
-            parser = rfc822Parser()
+            parser = EMailRFC822FeedParser()
             self.items = parser.parse_email([(1, bytes)], provider)
 
     def test_composite(self):
@@ -77,7 +78,7 @@ class rfc822ComplexTestCase(TestCase):
         self.assertNotIn('original_creator', self.items[0])
 
 
-class rfc822OddCharSet(TestCase):
+class RFC822OddCharSet(TestCase):
     filename = 'odd_charset_email.txt'
 
     def setUp(self):
@@ -85,10 +86,10 @@ class rfc822OddCharSet(TestCase):
         with self.app.app_context():
             provider = {'name': 'Test'}
             dirname = os.path.dirname(os.path.realpath(__file__))
-            fixture = os.path.join(dirname, 'fixtures', self.filename)
+            fixture = os.path.normpath(os.path.join(dirname, '../fixtures', self.filename))
             with open(fixture, mode='rb') as f:
                 bytes = f.read()
-            parser = rfc822Parser()
+            parser = EMailRFC822FeedParser()
             self.items = parser.parse_email([(1, bytes)], provider)
 
     def test_headline(self):
@@ -99,7 +100,7 @@ class rfc822OddCharSet(TestCase):
         self.assertRegex(self.items[0]['body_html'], '<span>')
 
 
-class rfc822CharSetInSubject(TestCase):
+class RFC822CharSetInSubject(TestCase):
     filename = 'charset_in_subject_email.txt'
 
     def setUp(self):
@@ -107,10 +108,10 @@ class rfc822CharSetInSubject(TestCase):
         with self.app.app_context():
             provider = {'name': 'Test'}
             dirname = os.path.dirname(os.path.realpath(__file__))
-            fixture = os.path.join(dirname, 'fixtures', self.filename)
+            fixture = os.path.normpath(os.path.join(dirname, '../fixtures', self.filename))
             with open(fixture, mode='rb') as f:
                 bytes = f.read()
-            parser = rfc822Parser()
+            parser = EMailRFC822FeedParser()
             self.items = parser.parse_email([(1, bytes)], provider)
 
     def test_headline(self):

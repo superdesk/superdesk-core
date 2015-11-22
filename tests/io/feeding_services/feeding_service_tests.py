@@ -13,7 +13,7 @@ from superdesk.tests import TestCase
 from unittest import mock
 
 
-class AutoRegisteredMetaTest(TestCase):
+class RegisterFeedingServiceTest(TestCase):
     """Base class for AutoRegisteredMeta metaclass tests."""
 
     def _get_target_metacls(self):
@@ -22,17 +22,15 @@ class AutoRegisteredMetaTest(TestCase):
         Make the test fail immediately if the metaclass cannot be imported.
         """
         try:
-            from superdesk.io.ingest_service import AutoRegisteredMeta
+            from superdesk.io.feeding_services import RegisterFeedingService
         except ImportError:
-            self.fail(
-                "Could not import metaclass under test "
-                "(AutoRegisteredMeta).")
+            self.fail("Could not import metaclass under test (RegisterFeedingService).")
         else:
-            return AutoRegisteredMeta
+            return RegisterFeedingService
 
 
-@mock.patch('superdesk.io.ingest_service.register_provider')
-class CreatingNewClassTestCase(AutoRegisteredMetaTest):
+@mock.patch('superdesk.io.feeding_services.register_feeding_service')
+class CreatingNewClassTestCase(RegisterFeedingServiceTest):
     """Tests for the new class creation process."""
 
     def test_creates_new_class_on_invocation(self, fake_register):
@@ -49,68 +47,53 @@ class CreatingNewClassTestCase(AutoRegisteredMetaTest):
         self.assertTrue(hasattr(new_class, 'baz'))
         self.assertEqual(new_class.baz, 42)
 
-    @mock.patch('superdesk.io.ingest_service.providers', {})
-    def test_registers_new_provider_classes(self, fake_register):
+    @mock.patch('superdesk.io.feeding_services.registered_feeding_services', {})
+    def test_registers_new_feeding_service_classes(self, fake_register):
         metacls = self._get_target_metacls()
 
         new_class_errors = [(1234, 'Error 1234')]
-
-        new_class = metacls(
-            'NewClass',
-            (),
-            dict(ERRORS=new_class_errors, PROVIDER='provider_name')
-        )
+        new_class = metacls('NewFeedingService', (), dict(ERRORS=new_class_errors, NAME='feeding_service_name'))
 
         self.assertTrue(fake_register.called)
         args, _ = fake_register.call_args
         self.assertEqual(len(args), 3)
 
-        self.assertEqual(args[0], 'provider_name')
+        self.assertEqual(args[0], 'feeding_service_name')
         self.assertIs(args[1], new_class)
         self.assertEqual(args[2], new_class_errors)
 
-    def test_does_not_register_non_provider_classes(self, fake_register):
+    def test_does_not_register_non_feeding_service_classes(self, fake_register):
         metacls = self._get_target_metacls()
-        metacls('NewClass', (), {})  # NOTE: no PROVIDER attribute
+        metacls('NewClass', (), {})  # NOTE: no NAME attribute
         self.assertFalse(fake_register.called)
 
-    @mock.patch(
-        'superdesk.io.ingest_service.providers',
-        {'provider_x': 'ClassX'}
-    )
-    def test_raises_error_on_duplicate_provider_name(self, fake_register):
+    @mock.patch('superdesk.io.feeding_services.registered_feeding_services', {'feeding_service_x': 'ClassX'})
+    def test_raises_error_on_duplicate_feeding_service_name(self, fake_register):
         metacls = self._get_target_metacls()
 
         try:
             with self.assertRaises(TypeError) as exc_context:
-                metacls('NewClass', (), dict(ERRORS=[], PROVIDER='provider_x'))
+                metacls('NewFeedingService', (), dict(ERRORS=[], NAME='feeding_service_x'))
         except:
             self.fail('Expected exception type was not raised.')
 
         ex = exc_context.exception
-        self.assertEqual(
-            str(ex),
-            "PROVIDER provider_x already exists (ClassX).")
+        self.assertEqual(str(ex), "Feeding Service feeding_service_x already exists (ClassX).")
 
-    def test_raises_error_if_provider_class_lacks_errors_attribute(
-        self, fake_register
-    ):
+    def test_raises_error_if_feeding_service_class_lacks_errors_attribute(self, fake_register):
         metacls = self._get_target_metacls()
         try:
             with self.assertRaises(AttributeError) as exc_context:
-                # NOTE: no ERRORS attribute
-                metacls('NewClass', (), {'PROVIDER': 'foo'})
+                metacls('NewFeedingService', (), {'NAME': 'foo'})  # NOTE: no ERRORS attribute
         except:
             self.fail("Expected exception type was not raised.")
 
         ex = exc_context.exception
-        self.assertEqual(
-            str(ex),
-            "Provider class NewClass must define the ERRORS list attribute.")
+        self.assertEqual(str(ex), "Feeding Service Class NewFeedingService must define the ERRORS list attribute.")
 
 
-class IngestServiceTest(TestCase):
-    """Tests for the base IngestService class."""
+class FeedingServiceTest(TestCase):
+    """Tests for the base FeedingService class."""
 
     def _get_target_class(self):
         """Return the class under test.
@@ -118,13 +101,13 @@ class IngestServiceTest(TestCase):
         Make the test fail immediately if the class cannot be imported.
         """
         try:
-            from superdesk.io.ingest_service import IngestService
+            from superdesk.io.feeding_services import FeedingService
         except ImportError:
-            self.fail("Could not import class under test (IngestService).")
+            self.fail("Could not import class under test (FeedingService).")
         else:
-            return IngestService
+            return FeedingService
 
     def test_has_correct_metaclass(self):
-        from superdesk.io.ingest_service import AutoRegisteredMeta
+        from superdesk.io.feeding_services import RegisterFeedingService
         klass = self._get_target_class()
-        self.assertIsInstance(klass, AutoRegisteredMeta)
+        self.assertIsInstance(klass, RegisterFeedingService)
