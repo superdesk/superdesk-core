@@ -9,15 +9,14 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-import os
 import glob
+import os
 import shutil
 import tempfile
 import unittest
 
+from superdesk.io.feeding_services.ftp import FTPFeedingService
 from superdesk.utc import utcnow
-from superdesk.io.ftp import FTPService
-
 
 PREFIX = 'test_superdesk_'
 
@@ -25,7 +24,7 @@ PREFIX = 'test_superdesk_'
 class FTPTestCase(unittest.TestCase):
 
     def test_it_can_connect(self):
-        service = FTPService()
+        service = FTPFeedingService()
 
         if 'FTP_URL' not in os.environ:
             return

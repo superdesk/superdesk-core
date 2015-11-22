@@ -12,11 +12,11 @@ import os
 import unittest
 
 from superdesk.etree import etree, get_word_count
-from superdesk.io import get_xml_parser
-
-from superdesk.io.newsml_1_2 import NewsMLOneParser
-from superdesk.io.newsml_2_0 import NewsMLTwoParser
-from superdesk.io.nitf import NITFParser
+from superdesk.io import registered_feed_parsers
+from superdesk.io.feed_parsers.newsml_1_2 import NewsMLOneFeedParser
+from superdesk.io.feed_parsers.newsml_2_0 import NewsMLTwoFeedParser
+from superdesk.io.feed_parsers.nitf import NITFFeedParser
+from superdesk.io.feeding_services.file_service import FileFeedingService
 
 
 def get_etree(filename):
@@ -37,15 +37,18 @@ class UtilsTest(unittest.TestCase):
 
     def test_get_xml_parser_newsmlg2(self):
         etree = get_etree('snep.xml')
-        self.assertIsInstance(get_xml_parser(etree), NewsMLTwoParser)
+        self.assertIsInstance(FileFeedingService().get_feed_parser({'feed_parser': 'newsml2'}, etree),
+                              NewsMLTwoFeedParser)
 
     def test_get_xml_parser_nitf(self):
         etree = get_etree('nitf-fishing.xml')
-        self.assertIsInstance(get_xml_parser(etree), NITFParser)
+        self.assertIsInstance(FileFeedingService().get_feed_parser({'feed_parser': 'nitf'}, etree),
+                              NITFFeedParser)
 
     def test_get_xml_parser_newsml12(self):
         etree = get_etree('afp.xml')
-        self.assertIsInstance(get_xml_parser(etree), NewsMLOneParser)
+        self.assertIsInstance(FileFeedingService().get_feed_parser({'feed_parser': 'newsml12'}, etree),
+                              NewsMLOneFeedParser)
 
 
 class ItemTest(unittest.TestCase):
@@ -53,7 +56,10 @@ class ItemTest(unittest.TestCase):
     def setUpFixture(self, filename):
         self.tree = get_etree(filename)
         provider = {'name': 'Test'}
-        self.item = get_xml_parser(self.tree).parse_message(self.tree, provider)[0]
+
+        for parser in registered_feed_parsers.values():
+            if parser.can_parse(self.tree):
+                self.item = parser.parse_xml(self.tree, provider)[0]
 
 
 class TextParserTest(ItemTest):

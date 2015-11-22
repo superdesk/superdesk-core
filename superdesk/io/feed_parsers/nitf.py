@@ -8,10 +8,10 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-"""Simple NITF parser"""
-
 from datetime import datetime
-from superdesk.io import Parser
+
+from superdesk.io import register_feed_parser
+from superdesk.io.feed_parsers import XMLFeedParser
 import xml.etree.ElementTree as etree
 from superdesk.errors import ParserError
 from superdesk.utc import utc
@@ -119,18 +119,20 @@ def parse_meta(tree, item):
             item[ITEM_TYPE] = CONTENT_TYPE.TEXT if anpa_format == 'x' else CONTENT_TYPE.PREFORMATTED
 
 
-class NITFParser(Parser):
+class NITFFeedParser(XMLFeedParser):
     """
-    NITF Parser
+    Feed Parser which can parse if the feed is in NITF format.
     """
+
+    NAME = 'nitf'
 
     def can_parse(self, xml):
         return xml.tag == 'nitf'
 
-    def parse_message(self, tree, provider):
+    def parse_xml(self, xml, provider):
         item = {}
         try:
-            docdata = tree.find('head/docdata')
+            docdata = xml.find('head/docdata')
             # set the default type.
             item[ITEM_TYPE] = CONTENT_TYPE.TEXT
             item['guid'] = item['uri'] = docdata.find('doc-id').get('id-string')
@@ -140,31 +142,34 @@ class NITFParser(Parser):
             item['versioncreated'] = get_norm_datetime(docdata.find('date.issue'))
             if docdata.find('date.expire') is not None:
                 item['expiry'] = get_norm_datetime(docdata.find('date.expire'))
-            item['subject'] = get_subjects(tree)
-            item['body_html'] = get_content(tree)
+            item['subject'] = get_subjects(xml)
+            item['body_html'] = get_content(xml)
             item['place'] = get_places(docdata)
             item['keywords'] = get_keywords(docdata)
 
             if docdata.find('ed-msg') is not None:
                 item['ednote'] = docdata.find('ed-msg').attrib.get('info')
 
-            if tree.find('body/body.head/hedline/hl1') is not None:
-                item['headline'] = tree.find('body/body.head/hedline/hl1').text
+            if xml.find('body/body.head/hedline/hl1') is not None:
+                item['headline'] = xml.find('body/body.head/hedline/hl1').text
             else:
-                if tree.find('head/title') is not None:
-                    item['headline'] = tree.find('head/title').text
+                if xml.find('head/title') is not None:
+                    item['headline'] = xml.find('head/title').text
 
-            elem = tree.find('body/body.head/abstract')
+            elem = xml.find('body/body.head/abstract')
             item['abstract'] = elem.text if elem is not None else ''
 
-            elem = tree.find('body/body.head/dateline/location/city')
+            elem = xml.find('body/body.head/dateline/location/city')
             if elem is not None:
                 self.set_dateline(item, city=elem.text)
 
-            item['byline'] = get_byline(tree)
+            item['byline'] = get_byline(xml)
 
-            parse_meta(tree, item)
+            parse_meta(xml, item)
             item.setdefault('word_count', get_word_count(item['body_html']))
             return item
         except Exception as ex:
             raise ParserError.nitfParserError(ex, provider)
+
+
+register_feed_parser(NITFFeedParser.NAME, NITFFeedParser())

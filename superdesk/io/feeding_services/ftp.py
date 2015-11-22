@@ -13,10 +13,12 @@ import os
 import ftplib
 import tempfile
 from datetime import datetime
+
+from superdesk.io import register_feeding_service
+from superdesk.io.feed_parsers import XMLFeedParser
 from superdesk.utc import utc
 from superdesk.etree import etree
-from superdesk.io import get_xml_parser
-from .ingest_service import IngestService
+from superdesk.io.feeding_services import FeedingService
 from superdesk.errors import IngestFtpError
 
 try:
@@ -25,19 +27,21 @@ except ImportError:
     from urlparse import urlparse
 
 
-class FTPService(IngestService):
-    """FTP Ingest Service."""
+class FTPFeedingService(FeedingService):
+    """
+    Feeding Service class which can read article(s) which exist in a file system and accessible using FTP.
+    """
 
-    DATE_FORMAT = '%Y%m%d%H%M%S'
-    FILE_SUFFIX = '.xml'
-
-    PROVIDER = 'ftp'
-
+    NAME = 'ftp'
     ERRORS = [IngestFtpError.ftpUnknownParserError().get_error_description(),
               IngestFtpError.ftpError().get_error_description()]
 
+    FILE_SUFFIX = '.xml'
+    DATE_FORMAT = '%Y%m%d%H%M%S'
+
     def config_from_url(self, url):
-        """Parse given url into ftp config.
+        """
+        Parse given url into ftp config.
 
         :param url: url in form `ftp://username:password@host:port/dir`
         """
@@ -56,7 +60,6 @@ class FTPService(IngestService):
         if 'dest_path' not in config:
             config['dest_path'] = tempfile.mkdtemp(prefix='superdesk_ingest_')
 
-        items = []
         try:
             with ftplib.FTP(config.get('host')) as ftp:
                 ftp.login(config.get('username'), config.get('password'))
@@ -76,20 +79,22 @@ class FTPService(IngestService):
                         if item_last_updated < last_updated:
                             continue
 
-                    dest = os.path.join(config['dest_path'], filename)
-
+                    local_file_path = os.path.join(config['dest_path'], filename)
                     try:
-                        with open(dest, 'xb') as f:
+                        with open(local_file_path, 'xb') as f:
                             ftp.retrbinary('RETR %s' % filename, f.write)
                     except FileExistsError:
                         continue
 
-                    xml = etree.parse(dest).getroot()
-                    parser = get_xml_parser(xml)
-                    if not parser:
-                        raise IngestFtpError.ftpUnknownParserError(Exception('Parser not found'),
-                                                                   provider, filename)
-                    parsed = parser.parse_message(xml, provider)
+                    registered_parser = self.get_feed_parser(provider)
+                    if isinstance(registered_parser, XMLFeedParser):
+                        xml = etree.parse(local_file_path).getroot()
+                        parser = self.get_feed_parser(provider, xml)
+                        parsed = parser.parse_xml(xml, provider)
+                    else:
+                        parser = self.get_feed_parser(provider, local_file_path)
+                        parsed = parser.parse_file(local_file_path, provider)
+
                     if isinstance(parsed, dict):
                         parsed = [parsed]
 
@@ -99,3 +104,6 @@ class FTPService(IngestService):
             raise
         except Exception as ex:
             raise IngestFtpError.ftpError(ex, provider)
+
+
+register_feeding_service(FTPFeedingService.NAME, FTPFeedingService(), FTPFeedingService.ERRORS)

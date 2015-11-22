@@ -10,16 +10,21 @@
 
 
 import datetime
-from superdesk.io import Parser
+
+from superdesk.io import register_feed_parser
+from superdesk.io.feed_parsers import XMLFeedParser
 from superdesk.errors import ParserError
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
 from superdesk.utc import utc
 
 
-class WENNParser(Parser):
+class WENNFeedParser(XMLFeedParser):
     """
-    WENN Feed Parser and will return list of items.
+    Feed Parser for parsing the XML supplied by WENN
     """
+
+    NAME = 'wenn'
+
     ATOM_NS = 'http://www.w3.org/2005/Atom'
     WENN_MM_NS = 'http://feed.wenn.com/xmlns/2010/03/wenn_mm'
     WENN_NM_NS = 'http://feed.wenn.com/xmlns/2010/03/wenn_nm'
@@ -27,13 +32,13 @@ class WENNParser(Parser):
     GEORSS_NS = 'http://www.georss.org/georss'
 
     def can_parse(self, xml):
-        return xml.tag == self.qname('feed', self.ATOM_NS) and \
-            len(xml.findall(self.qname('NewsManagement', self.WENN_NM_NS))) > 0
+        return xml.tag == self.qname('feed', self.ATOM_NS) and len(xml.findall(
+            self.qname('NewsManagement', self.WENN_NM_NS))) > 0
 
-    def parse_message(self, tree, provider):
+    def parse_xml(self, xml, provider):
         itemList = []
         try:
-            for entry in tree.findall(self.qname('entry', self.ATOM_NS)):
+            for entry in xml.findall(self.qname('entry', self.ATOM_NS)):
                 item = {}
                 self.set_item_defaults(item)
                 self.parse_content_management(item, entry)
@@ -78,3 +83,6 @@ class WENNParser(Parser):
 
     def datetime(self, string):
         return datetime.datetime.strptime(string, '%Y-%m-%dT%H:%M:%S+00:00').replace(tzinfo=utc)
+
+
+register_feed_parser(WENNFeedParser.NAME, WENNFeedParser())

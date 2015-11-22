@@ -9,8 +9,9 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import datetime
-from ..etree import etree
-from superdesk.io import Parser
+from superdesk.etree import etree
+from superdesk.io import register_feed_parser
+from superdesk.io.feed_parsers import XMLFeedParser
 from superdesk.io.iptc import subject_codes
 from superdesk.errors import ParserError
 from superdesk.metadata.item import ITEM_TYPE
@@ -18,44 +19,46 @@ from superdesk.metadata.item import CONTENT_TYPE
 from superdesk.utc import utc
 
 
-class NewsMLOneParser(Parser):
-    """NewsMl xml 1.2 parser"""
+class NewsMLOneFeedParser(XMLFeedParser):
+    """
+    Feed Parser which can parse if the feed is in NewsML 1.2 format.
+    """
+
+    NAME = 'newsml12'
 
     def can_parse(self, xml):
         return xml.tag == 'NewsML' and xml.get('Version', '') == '1.2'
 
-    def parse_message(self, tree, provider):
-        """Parse NewsMessage."""
+    def parse_xml(self, xml, provider):
         item = {}
         try:
-            self.root = tree
-
-            parsed_el = tree.find('NewsItem/NewsComponent/AdministrativeMetadata/Source')
+            self.root = xml
+            parsed_el = xml.find('NewsItem/NewsComponent/AdministrativeMetadata/Source')
             if parsed_el is not None:
                 item['original_source'] = parsed_el.find('Party').get('FormalName', '')
 
-            parsed_el = tree.find('NewsEnvelope/TransmissionId')
+            parsed_el = xml.find('NewsEnvelope/TransmissionId')
             if parsed_el is not None:
                 item['ingest_provider_sequence'] = parsed_el.text
 
-            parsed_el = tree.find('NewsEnvelope/Priority')
+            parsed_el = xml.find('NewsEnvelope/Priority')
             item['priority'] = self.map_priority(parsed_el.text if parsed_el else None)
 
-            self.parse_news_identifier(item, tree)
-            self.parse_newslines(item, tree)
-            self.parse_news_management(item, tree)
+            self.parse_news_identifier(item, xml)
+            self.parse_newslines(item, xml)
+            self.parse_news_management(item, xml)
 
-            parsed_el = tree.findall('NewsItem/NewsComponent/DescriptiveMetadata/Language')
+            parsed_el = xml.findall('NewsItem/NewsComponent/DescriptiveMetadata/Language')
             if parsed_el is not None:
                 language = self.parse_attributes_as_dictionary(parsed_el)
                 item['language'] = language[0]['FormalName'] if len(language) else ''
 
-            keywords = tree.findall('NewsItem/NewsComponent/DescriptiveMetadata/Property')
+            keywords = xml.findall('NewsItem/NewsComponent/DescriptiveMetadata/Property')
             item['keywords'] = self.parse_attribute_values(keywords, 'Keyword')
 
-            subjects = tree.findall('NewsItem/NewsComponent/DescriptiveMetadata/SubjectCode/SubjectDetail')
-            subjects += tree.findall('NewsItem/NewsComponent/DescriptiveMetadata/SubjectCode/SubjectMatter')
-            subjects += tree.findall('NewsItem/NewsComponent/DescriptiveMetadata/SubjectCode/Subject')
+            subjects = xml.findall('NewsItem/NewsComponent/DescriptiveMetadata/SubjectCode/SubjectDetail')
+            subjects += xml.findall('NewsItem/NewsComponent/DescriptiveMetadata/SubjectCode/SubjectMatter')
+            subjects += xml.findall('NewsItem/NewsComponent/DescriptiveMetadata/SubjectCode/Subject')
 
             item['subject'] = self.format_subjects(subjects)
 
@@ -65,18 +68,18 @@ class NewsMLOneParser(Parser):
             # tree.find('NewsItem/NewsComponent/ContentItem/DataContent/nitf/body/body.content'))
 
             item['body_html'] = etree.tostring(
-                tree.find('NewsItem/NewsComponent/ContentItem/DataContent/nitf/body/body.content'),
+                xml.find('NewsItem/NewsComponent/ContentItem/DataContent/nitf/body/body.content'),
                 encoding='unicode').replace('<body.content>', '').replace('</body.content>', '')
 
-            parsed_el = tree.findall('NewsItem/NewsComponent/ContentItem/Characteristics/Property')
+            parsed_el = xml.findall('NewsItem/NewsComponent/ContentItem/Characteristics/Property')
             characteristics = self.parse_attribute_values(parsed_el, 'Words')
             item['word_count'] = characteristics[0] if len(characteristics) else None
 
-            parsed_el = tree.find('NewsItem/NewsComponent/RightsMetadata/UsageRights/UsageType')
+            parsed_el = xml.find('NewsItem/NewsComponent/RightsMetadata/UsageRights/UsageType')
             if parsed_el is not None:
                 item.setdefault('usageterms', parsed_el.text)
 
-            parsed_el = tree.findall('NewsItem/NewsComponent/DescriptiveMetadata/Genre')
+            parsed_el = xml.findall('NewsItem/NewsComponent/DescriptiveMetadata/Genre')
             if parsed_el is not None:
                 item['genre'] = []
                 for el in parsed_el:
@@ -157,7 +160,10 @@ class NewsMLOneParser(Parser):
     def format_subjects(self, subjects):
         """
         Maps the ingested Subject Codes to their corresponding names as per IPTC Specification.
+        :param subjects: list of dicts where each dict gives the category the article is mapped to.
+        :type subjects: list
         :returns [{"qcode": "01001000", "name": "archaeology"}, {"qcode": "01002000", "name": "architecture"}]
+        :rtype list
         """
 
         formatted_subjects = []
@@ -175,3 +181,6 @@ class NewsMLOneParser(Parser):
                 formatted_subjects.append({'qcode': formal_name, 'name': subject_codes.get(formal_name, '')})
 
         return formatted_subjects
+
+
+register_feed_parser(NewsMLOneFeedParser.NAME, NewsMLOneFeedParser())
