@@ -32,6 +32,7 @@ VERSION = (0, 0, 1)
 DOMAIN = {}
 COMMANDS = {}
 BLUEPRINTS = []
+JINJA_FILTERS = dict()
 app_components = dict()
 app_models = dict()
 resources = dict()
@@ -131,3 +132,12 @@ def register_resource(name, resource, service=None, backend=None, privilege=None
         intrinsic_privilege(name, privilege)
     service_instance = service(name, backend=backend)
     resource(name, app=app, service=service_instance)
+
+
+def register_jinja_filter(name, jinja_filter):
+    """
+    Register jinja filter
+    :param str name: name of the filter
+    :param jinja_filter: jinja filter function
+    """
+    JINJA_FILTERS[name] = jinja_filter
