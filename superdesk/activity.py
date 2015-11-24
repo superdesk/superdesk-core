@@ -118,8 +118,13 @@ class ActivityResource(Resource):
             'schema': {
                 'type': 'dict',
                 'schema': {
-                    'user_id': {'type': 'string'},
-                    'read': {'type': 'boolean', 'default': False}
+                    'user_id': {'type': 'string',
+                                'required': False,
+                                'nullable': True},
+                    'read': {'type': 'boolean', 'default': False},
+                    'desk_id': {'type': 'string',
+                                'required': False,
+                                'nullable': True}
                 }
             }
         },
@@ -193,7 +198,8 @@ ACTIVITY_EVENT = 'event'
 ACTIVITY_ERROR = 'error'
 
 
-def add_activity(activity_name, msg, resource=None, item=None, notify=None, **data):
+def add_activity(activity_name, msg, resource=None, item=None, notify=None,
+                 notify_desks=None, **data):
     """Add an activity into activity log.
 
     This will became part of current user activity log.
@@ -211,10 +217,13 @@ def add_activity(activity_name, msg, resource=None, item=None, notify=None, **da
     if user:
         activity['user'] = user.get('_id')
 
+    activity['recipients'] = []
+
     if notify:
         activity['recipients'] = [{'user_id': str(_id), 'read': False} for _id in notify]
-    else:
-        activity['recipients'] = []
+
+    if notify_desks:
+        activity['recipients'].extend([{'desk_id': str(_id), 'read': False} for _id in notify_desks])
 
     if item:
         activity['item'] = str(item.get('guid', item.get('_id')))
