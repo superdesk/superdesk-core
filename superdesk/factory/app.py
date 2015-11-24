@@ -108,6 +108,9 @@ def get_app(config=None, media_storage=None):
         prefix = app.api_prefix or None
         app.register_blueprint(blueprint, url_prefix=prefix)
 
+    for name, jinja_filter in superdesk.JINJA_FILTERS.items():
+        app.jinja_env.filters[name] = jinja_filter
+
     # we can only put mapping when all resources are registered
     app.data.elastic.put_mapping(app)
 
