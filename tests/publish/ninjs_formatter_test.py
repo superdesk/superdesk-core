@@ -71,6 +71,7 @@ class NinjsFormatterTest(TestCase):
             "embargoed": embargo_ts.isoformat(),
             "profile": "snap",
             "slugline": "slugline",
+            "description_text": "sample abstract",
         }
         self.assertEqual(json.loads(doc), expected)
 
@@ -284,6 +285,7 @@ class NinjsFormatterTest(TestCase):
                     'type': 'picture',
                     'task': {},
                     'copyrightholder': 'Foo ltd.',
+                    'description_text': 'Foo picture',
                     'renditions': {
                         'thumbnail': {
                             'href': 'http://example.com',
@@ -307,6 +309,7 @@ class NinjsFormatterTest(TestCase):
         self.assertEqual('usable', image['pubstatus'])
         self.assertNotIn('task', image)
         self.assertEqual('Foo ltd.', image['copyrightholder'])
+        self.assertEqual('Foo picture', image['description_text'])
         rendition = image['renditions']['thumbnail']
         self.assertEqual(100, rendition['width'])
         self.assertEqual(80, rendition['height'])

@@ -92,6 +92,11 @@ class NINJSFormatter(Formatter):
             if article.get('renditions'):
                 ninjs['renditions'] = self._get_renditions(article)
 
+            if article.get('abstract'):
+                ninjs['description_text'] = article.get('abstract')
+            elif article.get('description_text'):
+                ninjs['description_text'] = article.get('description_text')
+
             return [(pub_seq_num, json.dumps(ninjs, default=json_serialize_datetime_objectId))]
         except Exception as ex:
             raise FormatterError.ninjsFormatterError(ex, subscriber)
