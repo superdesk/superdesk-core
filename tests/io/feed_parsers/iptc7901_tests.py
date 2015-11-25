@@ -10,19 +10,19 @@
 
 
 import os
-from superdesk.tests import TestCase
 
-from superdesk.io.iptc7901 import Iptc7901FileParser
+from superdesk.io.feed_parsers.iptc7901 import IPTC7901FeedParser
+from superdesk.tests import TestCase
 
 
 def fixture(filename):
     dirname = os.path.dirname(os.path.realpath(__file__))
-    return os.path.join(dirname, 'fixtures', filename)
+    return os.path.normpath(os.path.join(dirname, '../fixtures', filename))
 
 
 class IptcTestCase(TestCase):
 
-    parser = Iptc7901FileParser()
+    parser = IPTC7901FeedParser()
 
     def open(self, filename):
         provider = {'name': 'Test'}

@@ -10,7 +10,7 @@
 
 import logging
 import superdesk
-from superdesk.io import provider_errors
+from superdesk.io import feeding_service_errors
 from superdesk.publish import transmitter_errors
 from superdesk.utils import ListCursor
 
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class IOErrorsService(superdesk.Service):
     def get(self, req, lookup):
         """Return all ingest errors."""
-        errors = provider_errors
+        errors = feeding_service_errors
         io_type = getattr(req, 'args', {}).get('io_type', 'ingest')
         if io_type == 'publish':
             errors = transmitter_errors

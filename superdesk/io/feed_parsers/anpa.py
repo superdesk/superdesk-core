@@ -11,24 +11,33 @@
 
 import re
 from datetime import datetime
+
+from superdesk.errors import ParserError
+from superdesk.io.feed_parsers import FileFeedParser
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, Priority
 from superdesk.utc import utc
-from superdesk.errors import ParserError
-from superdesk.io import Parser
 
 
-class ANPAFileParser(Parser):
-    """ANPA 1312 file parser"""
+class ANPAFeedParser(FileFeedParser):
+    """
+    Feed Parser which can parse if the feed is in ANPA 1312 format.
+    """
 
-    def parse_file(self, filename):
-        """Parse anpa file by given filename.
+    NAME = 'anpa1312'
 
-        :param filename
-        """
+    def can_parse(self, file_path):
+        try:
+            with open(file_path, 'rb') as f:
+                lines = [line for line in f]
+                return re.match(b'\x16\x16\x01([a-z])([0-9]{4})\x1f([a-z-]+)', lines[0], flags=re.I)
+        finally:
+            return False
+
+    def parse_file(self, file_path, provider=None):
         try:
             item = {ITEM_TYPE: CONTENT_TYPE.TEXT}
 
-            with open(filename, 'rb') as f:
+            with open(file_path, 'rb') as f:
                 lines = [line for line in f]
 
             # parse first header line
@@ -83,14 +92,9 @@ class ANPAFileParser(Parser):
 
             return item
         except Exception as ex:
-            raise ParserError.anpaParseFileError(filename, ex)
+            raise ParserError.anpaParseFileError(file_path, ex)
 
     def map_priority(self, source_priority):
-        """
-        Maps the source priority to superdesk priority
-        :param str source_priority:
-        :return int: priority of the item
-        """
         mapping = {
             'f': Priority.Flash.value,
             'u': Priority.Urgent.value,

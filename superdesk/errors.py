@@ -157,6 +157,10 @@ class InvalidStateTransitionError(SuperdeskApiError):
 
 
 class SuperdeskIngestError(SuperdeskError):
+    _codes = {
+        2000: 'Feed Parser configured with the Ingest Provider either not found or not registered with the application'
+    }
+
     def __init__(self, code, exception, provider=None):
         super().__init__(code)
         self.system_exception = exception
@@ -176,6 +180,10 @@ class SuperdeskIngestError(SuperdeskError):
                 logger.error("{}: {} on channel {}".format(self, exception, self.provider_name))
             else:
                 logger.error("{}: {}".format(self, exception))
+
+    @classmethod
+    def parserNotFoundError(cls, exception=None, provider=None):
+        return SuperdeskIngestError(2000, exception, provider)
 
 
 class ProviderError(SuperdeskIngestError):
@@ -351,7 +359,7 @@ class IngestFtpError(SuperdeskIngestError):
     def ftpUnknownParserError(cls, exception=None, provider=None, filename=None):
         if provider:
             logger.exception("Provider: {} - File: {} unknown file format. "
-                             "Parser couldn't be found.".format(provider.get('name', 'Unknown provider'), filename))
+                             "FeedParser couldn't be found.".format(provider.get('name', 'Unknown provider'), filename))
         return IngestFtpError(5001, exception, provider)
 
 

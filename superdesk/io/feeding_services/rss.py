@@ -17,7 +17,7 @@ from collections import namedtuple
 from datetime import datetime
 
 from superdesk.errors import IngestApiError, ParserError
-from superdesk.io.ingest_service import IngestService
+from superdesk.io.feeding_services import FeedingService
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, GUID_TAG
 from superdesk.utils import merge_dicts
 from superdesk.metadata.utils import generate_guid
@@ -28,14 +28,15 @@ from urllib.parse import quote as urlquote, urlsplit, urlunsplit
 utcfromtimestamp = datetime.utcfromtimestamp
 
 
-class RssIngestService(IngestService):
-    """Ingest service for providing feeds received in RSS 2.0 format.
+class RSSFeedingService(FeedingService):
+    """
+    Ingest service for providing feeds received in RSS 2.0 format.
 
     (NOTE: it should also work with other syndicated feeds formats, too, since
     the underlying parser supports them, but for our needs RSS 2.0 is assumed)
     """
 
-    PROVIDER = 'rss'
+    NAME = 'rss'
 
     ERRORS = [IngestApiError.apiAuthError().get_error_description(),
               IngestApiError.apiNotFoundError().get_error_description(),
@@ -85,7 +86,8 @@ class RssIngestService(IngestService):
         self.auth_info = None
 
     def prepare_href(self, url):
-        """Prepare a link to an external resource (e.g. an image file) so
+        """
+        Prepare a link to an external resource (e.g. an image file) so
         that it can be directly used by the ingest machinery for fetching it.
 
         If provider requires authentication, basic HTTP authentication info is
@@ -108,7 +110,8 @@ class RssIngestService(IngestService):
         return url
 
     def _update(self, provider):
-        """Check data provider for data updates and returns new items (if any).
+        """
+        Check data provider for data updates and returns new items (if any).
 
         :param provider: data provider instance
         :return: a list containing a list of new content items

@@ -24,21 +24,21 @@ class RemoveExpiredContent(superdesk.Command):
     """Remove stale data from ingest based on the provider settings."""
 
     option_list = (
-        superdesk.Option('--provider', '-p', dest='provider_type'),
+        superdesk.Option('--provider', '-p', dest='provider_name'),
     )
 
-    def run(self, provider_type=None):
-        providers = [p for p in superdesk.get_resource_service('ingest_providers').get(req=None, lookup={})]
+    def run(self, provider_name=None):
+        providers = list(superdesk.get_resource_service('ingest_providers').get(req=None, lookup={}))
         self.remove_expired({'exclude': [str(p.get('_id')) for p in providers]})
         for provider in providers:
-            if not provider_type or provider_type == provider.get('type'):
+            if not provider_name or provider_name == provider.get('name'):
                 self.remove_expired(provider)
 
     def remove_expired(self, provider):
         try:
             remove_expired_data(provider)
             push_notification('ingest:cleaned')
-        except (Exception) as err:
+        except Exception as err:
             logger.exception(err)
             raise ProviderError.expiredContentError(err, provider)
 

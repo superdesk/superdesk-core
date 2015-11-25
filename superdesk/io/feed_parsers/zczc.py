@@ -8,17 +8,19 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license*.
 
-from superdesk.io import Parser
+from superdesk.io.feed_parsers import FileFeedParser
 from superdesk.errors import ParserError
-from .iptc import subject_codes
+from superdesk.io.iptc import subject_codes
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
 from superdesk.utc import utcnow
 from datetime import datetime
 import uuid
 
 
-class ZCZCParser(Parser):
+class ZCZCFeedParser(FileFeedParser):
     """
+    Feed Parser which can parse if the feed is in ZCZC format.
+
     It is expected that the stories contained in the files will be framed by the strings
     ZCZC
 
@@ -26,6 +28,9 @@ class ZCZCParser(Parser):
 
     * the NNNN is optional
     """
+
+    NAME = 'zczc'
+
     START_OF_MESSAGE = 'ZCZC'
     END_OF_MESSAGE = 'NNNN'
 
@@ -33,14 +38,11 @@ class ZCZCParser(Parser):
     KEYWORD = ':'
     TAKEKEY = '='
     HEADLINE = '^'
-    # *format "X" text "T" tabular
-    FORMAT = '*'
-    # &service level - Default A but for results should match category
-    SERVICELEVEL = '&'
-    # +IPTC Subject Reference Number as defined in the SubjectReference.ini file
-    IPTC = '+'
+    FORMAT = '*'  # *format "X" text "T" tabular
+    SERVICELEVEL = '&'  # &service level - Default A but for results should match category
+    IPTC = '+'  # +IPTC Subject Reference Number as defined in the SubjectReference.ini file
 
-    # Posible values for formsat
+    # Possible values for format
     TEXT = 'X'
     TABULAR = 'T'
 
@@ -53,8 +55,12 @@ class ZCZCParser(Parser):
     header_map = {KEYWORD: ITEM_SLUGLINE, TAKEKEY: ITEM_TAKE_KEY,
                   HEADLINE: ITEM_HEADLINE, SERVICELEVEL: None}
 
-    def can_parse(self, filestr):
-        return self.START_OF_MESSAGE in filestr
+    def can_parse(self, file_path):
+        try:
+            with open(file_path, 'r', encoding='ascii') as f:
+                return self.START_OF_MESSAGE in f.readlines()[0]
+        finally:
+            return False
 
     def parse_file(self, filename, provider):
         try:
@@ -136,7 +142,7 @@ class ZCZCParser(Parser):
         :param provider:
         :return: item
         """
-        # Pagemasters sourced content is Geryhound or Trot related, maybe AFL otherwise financial
+        # Pagemasters sourced content is Greyhound or Trot related, maybe AFL otherwise financial
         if provider.get('source') == 'PMF':
             # is it a horse or dog racing item
             if item.get(self.ITEM_SLUGLINE, '').find('Grey') != -1 or item.get(self.ITEM_SLUGLINE, '').find(
