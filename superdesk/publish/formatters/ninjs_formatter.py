@@ -37,7 +37,7 @@ class NINJSFormatter(Formatter):
     """
     direct_copy_properties = ('versioncreated', 'usageterms', 'language', 'headline',
                               'urgency', 'pubstatus', 'mimetype', 'place', 'copyrightholder',
-                              'body_text', 'body_html', 'profile', 'slugline')
+                              'body_text', 'body_html', 'profile', 'slugline', 'keywords')
 
     rendition_properties = ('href', 'width', 'height', 'mimetype')
 

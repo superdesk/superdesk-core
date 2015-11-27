@@ -72,6 +72,7 @@ class NinjsFormatterTest(TestCase):
             "profile": "snap",
             "slugline": "slugline",
             "description_text": "sample abstract",
+            'keywords': ['traffic'],
         }
         self.assertEqual(json.loads(doc), expected)
 
