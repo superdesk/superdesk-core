@@ -17,6 +17,8 @@ from superdesk.errors import SuperdeskApiError, add_notifier
 import superdesk
 from bson.objectid import ObjectId
 from superdesk.emails import send_activity_emails
+import datetime
+from superdesk.utc import utcnow
 
 log = logging.getLogger(__name__)
 
@@ -118,13 +120,9 @@ class ActivityResource(Resource):
             'schema': {
                 'type': 'dict',
                 'schema': {
-                    'user_id': {'type': 'string',
-                                'required': False,
-                                'nullable': True},
+                    'user_id': Resource.rel('users'),
                     'read': {'type': 'boolean', 'default': False},
-                    'desk_id': {'type': 'string',
-                                'required': False,
-                                'nullable': True}
+                    'desk_id': Resource.rel('desks')
                 }
             }
         },
@@ -135,7 +133,8 @@ class ActivityResource(Resource):
     }
     exclude = {endpoint_name, 'notification'}
     datasource = {
-        'default_sort': [('_created', -1)]
+        'default_sort': [('_created', -1)],
+        'filter': {'_created': {'$gte': utcnow() - datetime.timedelta(days=1)}}
     }
     superdesk.register_default_user_preference('email:notification', {
         'type': 'bool',
@@ -158,7 +157,7 @@ class ActivityService(BaseService):
         user = getattr(g, 'user', None)
         if not user:
             raise SuperdeskApiError.notFoundError('Can not determine user')
-        user_id = str(user.get('_id'))
+        user_id = user.get('_id')
 
         # make sure that the user making the read notification is in the notification list
         if not self.is_recipient(updates, user_id):
@@ -222,11 +221,11 @@ def add_activity(activity_name, msg, resource=None, item=None, notify=None,
     activity['recipients'] = []
 
     if notify:
-        activity['recipients'] = [{'user_id': str(_id), 'read': False} for _id in notify]
+        activity['recipients'] = [{'user_id': ObjectId(_id), 'read': False} for _id in notify]
         name = activity_name
 
     if notify_desks:
-        activity['recipients'].extend([{'desk_id': str(_id), 'read': False} for _id in notify_desks])
+        activity['recipients'].extend([{'desk_id': ObjectId(_id), 'read': False} for _id in notify_desks])
         name = activity_name
 
     if item:
@@ -247,7 +246,7 @@ def notify_and_add_activity(activity_name, msg, resource=None, item=None, user_l
         user_list = superdesk.get_resource_service('users').get_users_by_user_type('administrator')
 
     add_activity(activity_name, msg=msg, resource=resource, item=item,
-                 notify=[user.get("_id") for user in user_list] if user_list else None, **data)
+                 notify=[str(user.get("_id")) for user in user_list] if user_list else None, **data)
     if user_list:
         recipients = [user.get('email') for user in user_list
                       if user.get('is_enabled', False) and user.get('is_active', False) and

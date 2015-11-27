@@ -15,9 +15,9 @@ import logging
 import asyncio
 import websockets
 
-from flask import json
-from flask import current_app as app
+from flask import current_app as app, json
 from datetime import datetime
+from superdesk.utils import json_serialize_datetime_objectId
 
 
 logging.basicConfig()
@@ -52,7 +52,7 @@ def _notify(**kwargs):
     """Send out all kwargs as json string."""
     kwargs.setdefault('_created', datetime.utcnow().isoformat())
     kwargs.setdefault('_process', os.getpid())
-    message = json.dumps(kwargs)
+    message = json.dumps(kwargs, default=json_serialize_datetime_objectId)
 
     @asyncio.coroutine
     def send_message():
@@ -69,7 +69,7 @@ def push_notification(name, **kwargs):
 
     :param name: event name
     """
-    logger.info('pushing event {0} ({1})'.format(name, json.dumps(kwargs)))
+    logger.info('pushing event {0} ({1})'.format(name, json.dumps(kwargs, default=json_serialize_datetime_objectId)))
 
     if not app.notification_client.open:
         app.notification_client.close()
