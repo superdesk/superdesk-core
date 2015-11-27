@@ -62,7 +62,7 @@ class ZCZCFeedParser(FileFeedParser):
         finally:
             return False
 
-    def parse_file(self, filename, provider):
+    def parse(self, filename, provider=None):
         try:
             item = {}
             self.set_item_defaults(item, provider)

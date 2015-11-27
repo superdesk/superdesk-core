@@ -48,7 +48,7 @@ class EmailFeedingService(FeedingService):
                         rv, data = imap.fetch(num, '(RFC822)')
                         if rv == 'OK':
                             try:
-                                new_items.append(parser.parse_feed(data, provider))
+                                new_items.append(parser.parse(data, provider))
                             except IngestEmailError:
                                 continue
                 imap.close()

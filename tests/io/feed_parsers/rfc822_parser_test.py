@@ -39,7 +39,7 @@ class RFC822TestCase(TestCase):
             with open(fixture, mode='rb') as f:
                 bytes = f.read()
             parser = EMailRFC822FeedParser()
-            self.items = parser.parse_email([(1, bytes)], provider)
+            self.items = parser.parse([(1, bytes)], provider)
 
     def test_headline(self):
         self.assertEqual(self.items[0]['headline'], 'Test message 1234')
@@ -65,7 +65,7 @@ class RFC822ComplexTestCase(TestCase):
             with open(fixture, mode='rb') as f:
                 bytes = f.read()
             parser = EMailRFC822FeedParser()
-            self.items = parser.parse_email([(1, bytes)], provider)
+            self.items = parser.parse([(1, bytes)], provider)
 
     def test_composite(self):
         self.assertEqual(len(self.items), 3)
@@ -90,7 +90,7 @@ class RFC822OddCharSet(TestCase):
             with open(fixture, mode='rb') as f:
                 bytes = f.read()
             parser = EMailRFC822FeedParser()
-            self.items = parser.parse_email([(1, bytes)], provider)
+            self.items = parser.parse([(1, bytes)], provider)
 
     def test_headline(self):
         # This tests a subject that fails to decode but we just try a string conversion
@@ -112,7 +112,7 @@ class RFC822CharSetInSubject(TestCase):
             with open(fixture, mode='rb') as f:
                 bytes = f.read()
             parser = EMailRFC822FeedParser()
-            self.items = parser.parse_email([(1, bytes)], provider)
+            self.items = parser.parse([(1, bytes)], provider)
 
     def test_headline(self):
         # This test a subject that has a charset that decodes correctly

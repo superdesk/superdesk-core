@@ -20,10 +20,10 @@ from .commands.add_provider import AddProvider  # NOQA
 from .ingest import IngestResource, IngestService
 
 registered_feed_parsers = {}
-allowed_feed_parsers = []
+allowed_feed_parsers = registered_feed_parsers.keys()
 
 registered_feeding_services = {}
-allowed_feeding_services = []
+allowed_feeding_services = registered_feeding_services.keys()
 feeding_service_errors = {}
 publish_errors = []
 
@@ -66,7 +66,6 @@ def register_feeding_service(service_name, service_class, errors):
                                  .format(service_name, type(registered_feeding_services[service_name])))
 
     registered_feeding_services[service_name] = service_class
-    allowed_feeding_services.append(service_name)
 
     errors.append(SuperdeskIngestError.parserNotFoundError().get_error_description())
     feeding_service_errors[service_name] = dict(errors)
@@ -87,7 +86,6 @@ def register_feed_parser(parser_name, parser_class):
                                  .format(parser_name, type(registered_feed_parsers[parser_name])))
 
     registered_feed_parsers[parser_name] = parser_class
-    allowed_feed_parsers.append(parser_name)
 
 
 @celery.task(soft_time_limit=15)

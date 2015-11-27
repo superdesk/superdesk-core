@@ -23,7 +23,7 @@ class ZCZCTestCase(unittest.TestCase):
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.normpath(os.path.join(dirname, '../fixtures', filename))
         self.provider['source'] = 'SOMETHING'
-        self.items = ZCZCFeedParser().parse_file(fixture, self.provider)
+        self.items = ZCZCFeedParser().parse(fixture, self.provider)
         self.assertEqual(self.items.get('headline'), 'MOTOR:  Collated results/standings after Sydney NRMA 500')
         self.assertEqual(self.items.get('anpa_category')[0]['qcode'], 'T')
         self.assertEqual(self.items.get('subject')[0]['qcode'], '15039001')
@@ -34,7 +34,7 @@ class ZCZCTestCase(unittest.TestCase):
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.normpath(os.path.join(dirname, '../fixtures', filename))
         self.provider['source'] = 'MNET'
-        self.items = ZCZCFeedParser().parse_file(fixture, self.provider)
+        self.items = ZCZCFeedParser().parse(fixture, self.provider)
         self.assertEqual(self.items.get('headline'), 'Australian Financial Security Authority')
 
     def test_pagemasters_format(self):
@@ -42,7 +42,7 @@ class ZCZCTestCase(unittest.TestCase):
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.normpath(os.path.join(dirname, '../fixtures', filename))
         self.provider['source'] = 'PMF'
-        self.items = ZCZCFeedParser().parse_file(fixture, self.provider)
+        self.items = ZCZCFeedParser().parse(fixture, self.provider)
         self.assertEqual(self.items.get('headline'), 'Darwin Greyhound Fields Sunday')
         self.assertEqual(self.items.get('slugline'), 'Darwin Grey')
         self.assertEqual(self.items.get('anpa_category')[0]['qcode'], 'r')
@@ -53,7 +53,7 @@ class ZCZCTestCase(unittest.TestCase):
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.normpath(os.path.join(dirname, '../fixtures', filename))
         self.provider['source'] = 'BRA'
-        self.items = ZCZCFeedParser().parse_file(fixture, self.provider)
+        self.items = ZCZCFeedParser().parse(fixture, self.provider)
         self.assertEqual(self.items.get('headline'), ' Racing.Com Park FIELDS Thursday')
         self.assertEqual(self.items.get('anpa_category')[0]['qcode'], 'r')
         self.assertEqual(self.items.get('subject')[0]['qcode'], '15030001')
