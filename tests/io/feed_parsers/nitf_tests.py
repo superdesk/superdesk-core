@@ -24,7 +24,7 @@ class NITFTestCase(unittest.TestCase):
         provider = {'name': 'Test'}
         with open(fixture) as f:
             self.nitf = f.read()
-            self.item = NITFFeedParser().parse_xml(etree.fromstring(self.nitf), provider)
+            self.item = NITFFeedParser().parse(etree.fromstring(self.nitf), provider)
 
 
 class AAPTestCase(NITFTestCase):

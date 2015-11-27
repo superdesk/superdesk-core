@@ -29,7 +29,7 @@ class NewsMLOneFeedParser(XMLFeedParser):
     def can_parse(self, xml):
         return xml.tag == 'NewsML' and xml.get('Version', '') == '1.2'
 
-    def parse_xml(self, xml, provider):
+    def parse(self, xml, provider=None):
         item = {}
         try:
             self.root = xml

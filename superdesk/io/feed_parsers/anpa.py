@@ -34,7 +34,7 @@ class ANPAFeedParser(FileFeedParser):
         finally:
             return False
 
-    def parse_file(self, file_path, provider=None):
+    def parse(self, file_path, provider=None):
         try:
             item = {ITEM_TYPE: CONTENT_TYPE.TEXT}
 

@@ -28,7 +28,7 @@ class WENNTestCase(unittest.TestCase):
         with open(fixture) as f:
             self.file = f.read()
             etree.fromstring(self.file)
-            self.items = WENNFeedParser().parse_xml(etree.fromstring(self.file), provider)
+            self.items = WENNFeedParser().parse(etree.fromstring(self.file), provider)
 
     def test_items_counts(self):
         self.assertEqual(len(self.items), 2)

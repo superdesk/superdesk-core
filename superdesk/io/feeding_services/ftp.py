@@ -90,10 +90,10 @@ class FTPFeedingService(FeedingService):
                     if isinstance(registered_parser, XMLFeedParser):
                         xml = etree.parse(local_file_path).getroot()
                         parser = self.get_feed_parser(provider, xml)
-                        parsed = parser.parse_xml(xml, provider)
+                        parsed = parser.parse(xml, provider)
                     else:
                         parser = self.get_feed_parser(provider, local_file_path)
-                        parsed = parser.parse_file(local_file_path, provider)
+                        parsed = parser.parse(local_file_path, provider)
 
                     if isinstance(parsed, dict):
                         parsed = [parsed]

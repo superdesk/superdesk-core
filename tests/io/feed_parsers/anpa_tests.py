@@ -25,7 +25,7 @@ class ANPATestCase(unittest.TestCase):
     parser = ANPAFeedParser()
 
     def open(self, filename):
-        return self.parser.parse_file(fixture(filename))
+        return self.parser.parse(fixture(filename))
 
     def test_open_anpa_file(self):
         item = self.open('anpa-1.tst')

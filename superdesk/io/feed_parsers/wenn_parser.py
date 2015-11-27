@@ -35,7 +35,7 @@ class WENNFeedParser(XMLFeedParser):
         return xml.tag == self.qname('feed', self.ATOM_NS) and len(xml.findall(
             self.qname('NewsManagement', self.WENN_NM_NS))) > 0
 
-    def parse_xml(self, xml, provider):
+    def parse(self, xml, provider=None):
         itemList = []
         try:
             for entry in xml.findall(self.qname('entry', self.ATOM_NS)):

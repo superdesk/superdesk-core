@@ -26,7 +26,7 @@ class IptcTestCase(TestCase):
 
     def open(self, filename):
         provider = {'name': 'Test'}
-        return self.parser.parse_file(fixture(filename), provider)
+        return self.parser.parse(fixture(filename), provider)
 
     def test_open_iptc7901_file(self):
         with self.app.app_context():

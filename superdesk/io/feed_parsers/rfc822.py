@@ -57,7 +57,7 @@ class EMailRFC822FeedParser(EmailFeedParser):
 
         return False
 
-    def parse_email(self, data, provider):
+    def parse(self, data, provider=None):
         config = provider.get('config', {})
         # If the channel is configured to process structured email generated from a google form
         if config.get('formatted', False):
@@ -298,7 +298,7 @@ class EMailRFC822FeedParser(EmailFeedParser):
 
     def _expand_category(self, item, mail_item):
         """
-        Given a list of category names in the incomming email try to look them up to match category codes.
+        Given a list of category names in the incoming email try to look them up to match category codes.
         If there is a subject associated with the category it will insert that into the item as well
         :param item:
         :param mail_item:

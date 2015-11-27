@@ -34,6 +34,21 @@ class FeedParser(metaclass=ABCMeta):
         """
         raise NotImplementedError()
 
+    @abstractmethod
+    def parse(self, article, provider=None):
+        """
+        Parse the given article and extracts the relevant elements/attributes values from the given article.
+
+        :param article: XML String to parse
+        :type article: str
+        :param provider: Ingest Provider Details, defaults to None
+        :type provider: dict having properties defined in
+                        :py:class: `superdesk.io.ingest_provider_model.IngestProviderResource`
+        :return: parsed data as dict.
+        :rtype: dict having properties defined in :py:mod: `superdesk.metadata.item`
+        """
+        raise NotImplementedError()
+
     def set_dateline(self, item, city=None, text=None):
         """
         Sets the 'dateline' to the article identified by item. If city is passed then the system checks if city is
@@ -84,21 +99,6 @@ class XMLFeedParser(FeedParser, metaclass=ABCMeta):
     def __init__(self):
         self.root = None
 
-    @abstractmethod
-    def parse_xml(self, xml, provider):
-        """
-        Parse the ingest XML and extracts the relevant elements/attributes values from the XML.
-
-        :param xml: XML String to parse
-        :type xml: str
-        :param provider: Ingest Provider Details
-        :type provider: dict having properties defined in
-                        :py:class: `superdesk.io.ingest_provider_model.IngestProviderResource`
-        :return: parsed data as dict.
-        :rtype: dict having properties defined in :py:mod: `superdesk.metadata.item`
-        """
-        raise NotImplementedError()
-
     def qname(self, tag, ns=None):
         """
         Return the Qualified Name of given XML tag.
@@ -123,51 +123,22 @@ class FileFeedParser(FeedParser, metaclass=ABCMeta):
     """
     Base class for Feed Parsers which can parse the content in a file.
     """
-
-    @abstractmethod
-    def parse_file(self, file_path, provider=None):
-        """
-        Parse the ingest XML and extracts the relevant elements/attributes values from the XML.
-
-        :param file_path: absolute path of the file
-        :type file_path: str
-        :param provider: Ingest Provider Details, defaults to None.
-        :type provider: dict having properties defined in
-                        :py:class: `superdesk.io.ingest_provider_model.IngestProviderResource`
-        :return: parsed data as dict.
-        :rtype: dict having properties defined in :py:mod: `superdesk.metadata.item`
-        """
-        raise NotImplementedError()
+    pass
 
 
 class EmailFeedParser(FeedParser, metaclass=ABCMeta):
     """
     Base class for Feed Parsers which can parse email message.
     """
-
-    @abstractmethod
-    def parse_email(self, data, provider):
-        """
-        Feed Parsers which can ingest articles from an email must override this method and extracts the relevant
-        elements/attributes values from the email message.
-
-        :param data:
-        :type data: dict
-        :param provider: Ingest Provider Details
-        :type provider: dict having properties defined in
-                        :py:class: `superdesk.io.ingest_provider_model.IngestProviderResource`
-        :return: parsed data as dict.
-        :rtype: dict having properties defined in :py:mod: `superdesk.metadata.item`
-        """
-        raise NotImplementedError()
+    pass
 
 
 # must be imported for registration
-import superdesk.io.feed_parsers.anpa
-import superdesk.io.feed_parsers.iptc7901
-import superdesk.io.feed_parsers.newsml_1_2
-import superdesk.io.feed_parsers.newsml_2_0
-import superdesk.io.feed_parsers.nitf
-import superdesk.io.feed_parsers.rfc822
-import superdesk.io.feed_parsers.wenn_parser
-import superdesk.io.feed_parsers.zczc
+import superdesk.io.feed_parsers.anpa  # NOQA
+import superdesk.io.feed_parsers.iptc7901  # NOQA
+import superdesk.io.feed_parsers.newsml_1_2  # NOQA
+import superdesk.io.feed_parsers.newsml_2_0  # NOQA
+import superdesk.io.feed_parsers.nitf  # NOQA
+import superdesk.io.feed_parsers.rfc822  # NOQA
+import superdesk.io.feed_parsers.wenn_parser  # NOQA
+import superdesk.io.feed_parsers.zczc  # NOQA

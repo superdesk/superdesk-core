@@ -129,7 +129,7 @@ class NITFFeedParser(XMLFeedParser):
     def can_parse(self, xml):
         return xml.tag == 'nitf'
 
-    def parse_xml(self, xml, provider):
+    def parse(self, xml, provider=None):
         item = {}
         try:
             docdata = xml.find('head/docdata')

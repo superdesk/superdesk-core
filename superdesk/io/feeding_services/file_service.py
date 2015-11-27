@@ -61,10 +61,10 @@ class FileFeedingService(FeedingService):
                             with open(file_path, 'r') as f:
                                 xml_string = etree.fromstring(f.read())
                                 parser = self.get_feed_parser(provider, xml_string)
-                                item = parser.parse_xml(xml_string, provider)
+                                item = parser.parse(xml_string, provider)
                         else:
                             parser = self.get_feed_parser(provider, file_path)
-                            item = parser.parse_file(file_path, provider)
+                            item = parser.parse(file_path, provider)
 
                         self.after_extracting(item, provider)
                         self.move_file(self.path, filename, provider=provider, success=True)

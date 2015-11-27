@@ -59,7 +59,7 @@ class ItemTest(unittest.TestCase):
 
         for parser in registered_feed_parsers.values():
             if parser.can_parse(self.tree):
-                self.item = parser.parse_xml(self.tree, provider)[0]
+                self.item = parser.parse(self.tree, provider)[0]
 
 
 class TextParserTest(ItemTest):
