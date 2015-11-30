@@ -10,11 +10,11 @@
 
 
 from datetime import datetime
-from superdesk.tests import TestCase
 from time import struct_time
 from unittest import mock
 from unittest.mock import call, MagicMock
 
+from superdesk.tests import TestCase
 
 feed_parse = MagicMock()
 requests_get = MagicMock()
@@ -48,16 +48,16 @@ class FakeParseError(Exception):
 
 
 class RssIngestServiceTest(TestCase):
-    """Base class for RssIngestService tests."""
+    """Base class for RSSFeedingService tests."""
 
     def setUp(self):
         try:
-            from superdesk.io.rss import RssIngestService
+            from superdesk.io.feeding_services.rss import RSSFeedingService
         except ImportError:
             # a missing class should result in a test failure, not in an error
-            self.fail("Could not import class under test (RssIngestService).")
+            self.fail("Could not import class under test (RSSFeedingService).")
         else:
-            self.instance = RssIngestService()
+            self.instance = RSSFeedingService()
 
 
 class InstanceInitTestCase(RssIngestServiceTest):
@@ -94,9 +94,9 @@ class PrepareHrefMethodTestCase(RssIngestServiceTest):
             returned, 'http://john%20doe:abc%2B007@domain.com/images/foo.jpg')
 
 
-@mock.patch('superdesk.io.rss.feedparser.parse', feed_parse)
-@mock.patch('superdesk.io.rss.IngestApiError', FakeIngestApiError)
-@mock.patch('superdesk.io.rss.ParserError.parseMessageError', FakeParseError)
+@mock.patch('superdesk.io.feeding_services.rss.feedparser.parse', feed_parse)
+@mock.patch('superdesk.io.feeding_services.rss.IngestApiError', FakeIngestApiError)
+@mock.patch('superdesk.io.feeding_services.rss.ParserError.parseMessageError', FakeParseError)
 class UpdateMethodTestCase(RssIngestServiceTest):
     """Tests for the _update() method."""
 
@@ -257,8 +257,8 @@ class UpdateMethodTestCase(RssIngestServiceTest):
         self.assertCountEqual(items, expected_items)
 
 
-@mock.patch('superdesk.io.rss.requests.get', requests_get)
-@mock.patch('superdesk.io.rss.IngestApiError', FakeIngestApiError)
+@mock.patch('superdesk.io.feeding_services.rss.requests.get', requests_get)
+@mock.patch('superdesk.io.feeding_services.rss.IngestApiError', FakeIngestApiError)
 class FetchDataMethodTestCase(RssIngestServiceTest):
     """Tests for the _fetch_data() method."""
 
@@ -640,8 +640,8 @@ class CreateItemMethodTestCase(RssIngestServiceTest):
 class CreateImageItemsMethodTestCase(RssIngestServiceTest):
     """Tests for the _create_image_items() method."""
 
-    @mock.patch('superdesk.io.rss.generate_guid')
-    @mock.patch('superdesk.io.rss.GUID_TAG', 'guid_type_tag')
+    @mock.patch('superdesk.io.feeding_services.rss.generate_guid')
+    @mock.patch('superdesk.io.feeding_services.rss.GUID_TAG', 'guid_type_tag')
     def test_creates_image_items_from_given_urls(self, fake_generate_guid):
         links = [
             'http://foo.bar/image_1.jpg',
@@ -689,8 +689,8 @@ class CreateImageItemsMethodTestCase(RssIngestServiceTest):
 class CreatePackageMethodTestCase(RssIngestServiceTest):
     """Tests for the _create_package() method."""
 
-    @mock.patch('superdesk.io.rss.generate_guid')
-    @mock.patch('superdesk.io.rss.GUID_TAG', 'guid_type_tag')
+    @mock.patch('superdesk.io.feeding_services.rss.generate_guid')
+    @mock.patch('superdesk.io.feeding_services.rss.GUID_TAG', 'guid_type_tag')
     def test_creates_package_from_given_text_and_image_items(
         self, fake_generate_guid
     ):

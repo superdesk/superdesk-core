@@ -9,22 +9,21 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import imaplib
-from .ingest_service import IngestService
-from superdesk.upload import url_for_media
+
 from superdesk.errors import IngestEmailError
+from superdesk.io import register_feeding_service
+from superdesk.io.feeding_services import FeedingService
+from superdesk.upload import url_for_media
 
-from superdesk.io.rfc822 import rfc822Parser
 
+class EmailFeedingService(FeedingService):
+    """
+    Feeding Service class which can read the article(s) from a configured mail box.
+    """
 
-class EmailReaderService(IngestService):
-
-    PROVIDER = 'email'
-
+    NAME = 'email'
     ERRORS = [IngestEmailError.emailError().get_error_description(),
               IngestEmailError.emailLoginError().get_error_description()]
-
-    def __init__(self):
-        self.parser = rfc822Parser()
 
     def _update(self, provider):
         config = provider.get('config', {})
@@ -39,6 +38,8 @@ class EmailReaderService(IngestService):
                 raise IngestEmailError.emailLoginError(imaplib.IMAP4.error, provider)
 
             rv, data = imap.select(config.get('mailbox', None), readonly=False)
+            parser = self.get_feed_parser(provider, data)
+
             if rv == 'OK':
                 rv, data = imap.search(None, config.get('filter', None))
                 if rv == 'OK':
@@ -47,7 +48,7 @@ class EmailReaderService(IngestService):
                         rv, data = imap.fetch(num, '(RFC822)')
                         if rv == 'OK':
                             try:
-                                new_items.append(self.parser.parse_email(data, provider))
+                                new_items.append(parser.parse(data, provider))
                             except IngestEmailError:
                                 continue
                 imap.close()
@@ -60,3 +61,6 @@ class EmailReaderService(IngestService):
 
     def prepare_href(self, href):
         return url_for_media(href)
+
+
+register_feeding_service(EmailFeedingService.NAME, EmailFeedingService(), EmailFeedingService.ERRORS)

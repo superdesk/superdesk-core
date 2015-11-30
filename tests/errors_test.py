@@ -513,4 +513,4 @@ class ErrorsTestCase(TestCase):
                          "Testing ftpUnknownParserError on channel TestProvider")
         self.assertEqual(self.mock_logger_handler.messages['error'][0],
                          "Provider: TestProvider - File: test.xml unknown file format. "
-                         "Parser couldn't be found.")
+                         "FeedParser couldn't be found.")
