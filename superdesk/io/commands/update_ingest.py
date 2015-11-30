@@ -231,7 +231,10 @@ def update_provider(self, provider, rule_set=None, routing_scheme=None):
             if items:
                 update[LAST_ITEM_UPDATE] = utcnow()
 
+        # Some Feeding Services update the collection and by this time the _etag might have been changed.
+        # So it's necessary to fetch it once again. Otherwise, OriginalChangedError is raised.
         ingest_provider_service = superdesk.get_resource_service('ingest_providers')
+        provider = ingest_provider_service.find_one(req=None, _id=provider[superdesk.config.ID_FIELD])
         ingest_provider_service.system_update(provider[superdesk.config.ID_FIELD], update, provider)
 
         if LAST_ITEM_UPDATE not in update and get_is_idle(provider):
