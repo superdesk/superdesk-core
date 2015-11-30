@@ -49,7 +49,8 @@ class HTTPFeedingService(FeedingService, metaclass=ABCMeta):
         :rtype: str
         """
         token = {'token': self._generate_auth_token(provider), 'created': utcnow()}
-        get_resource_service('ingest_providers').patch(provider[config.ID_FIELD], {'token': token})
+        get_resource_service('ingest_providers').system_update(provider[config.ID_FIELD], updates={'token': token},
+                                                               original=provider)
 
         return token['token']
 

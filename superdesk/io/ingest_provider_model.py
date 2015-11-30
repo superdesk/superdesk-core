@@ -44,12 +44,12 @@ class IngestProviderResource(Resource):
             'feeding_service': {
                 'type': 'string',
                 'required': True,
-                'allowed': allowed_feeding_services
+                'allowed': list(allowed_feeding_services)
             },
             'feed_parser': {
                 'type': 'string',
                 'required': True,
-                'allowed': allowed_feed_parsers
+                'allowed': list(allowed_feed_parsers)
             },
             'content_types': {
                 'type': 'list',
@@ -182,7 +182,7 @@ class IngestProviderService(BaseService):
                                 name=updates.get('name', original.get('name')),
                                 provider_id=original.get('_id'))
 
-        if updates.get('is_closed') != original.get('is_closed', False):
+        if updates.get('is_closed', False) != original.get('is_closed', False):
             status = ''
             do_notification = False
 
