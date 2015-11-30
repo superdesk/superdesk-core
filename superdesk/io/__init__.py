@@ -12,21 +12,22 @@
 """Superdesk IO"""
 
 import logging
+
 import superdesk
-from superdesk.etree import etree
 from superdesk.celery_app import celery
-from superdesk.locators.locators import find_cities
-from superdesk.metadata.item import Priority
+from superdesk.errors import SuperdeskIngestError, AlreadyExistsError
+from .commands.add_provider import AddProvider  # NOQA
+from .ingest import IngestResource, IngestService
 
-parsers = []
-providers = {}
-allowed_providers = []
-provider_errors = {}
+registered_feed_parsers = {}
+allowed_feed_parsers = registered_feed_parsers.keys()
+
+registered_feeding_services = {}
+allowed_feeding_services = registered_feeding_services.keys()
+feeding_service_errors = {}
 publish_errors = []
-logger = logging.getLogger(__name__)
 
-from .commands.remove_expired_content import RemoveExpiredContent
-from .commands.update_ingest import UpdateIngest
+logger = logging.getLogger(__name__)
 
 
 def init_app(app):
@@ -40,109 +41,60 @@ def init_app(app):
     service = IOErrorsService(endpoint_name, backend=superdesk.get_backend())
     IOErrorsResource(endpoint_name, app=app, service=service)
 
-    from .ingest import IngestResource, IngestService
     endpoint_name = 'ingest'
     service = IngestService(endpoint_name, backend=superdesk.get_backend())
     IngestResource(endpoint_name, app=app, service=service)
-    from .commands.add_provider import AddProvider  # NOQA
 
 
-def register_provider(type, provider, errors):
-    providers[type] = provider
-    allowed_providers.append(type)
-    provider_errors[type] = dict(errors)
+superdesk.privilege(name='ingest_providers', label='Ingest Channels', description='User can maintain Ingest Channels.')
+
+
+def register_feeding_service(service_name, service_class, errors):
+    """
+    Registers the Feeding Service with the application.
+    :class: `superdesk.io.feeding_services.RegisterFeedingService` uses this function to register the feeding service.
+
+    :param service_name: unique name to identify the Feeding Service class
+    :param service_class: Feeding Service class
+    :param errors: list of tuples, where each tuple represents an error that can be raised by a Feeding Service class.
+                   Tuple syntax: (error_code, error_message)
+    :raises: AlreadyExistsError if a feeding service with same name already been registered
+    """
+
+    if service_name in registered_feed_parsers:
+        raise AlreadyExistsError('Feeding Service: {} already registered by {}'
+                                 .format(service_name, type(registered_feeding_services[service_name])))
+
+    registered_feeding_services[service_name] = service_class
+
+    errors.append(SuperdeskIngestError.parserNotFoundError().get_error_description())
+    feeding_service_errors[service_name] = dict(errors)
+
+
+def register_feed_parser(parser_name, parser_class):
+    """
+    Registers the Feed Parser with the application.
+    :class: `superdesk.io.feed_parsers.RegisterFeedParser` uses this function to register the feed parser.
+
+    :param parser_name: unique name to identify the Feed Parser class
+    :param parser_class: Feed Parser class
+    :raises: AlreadyExistsError if a feed parser with same name already been registered
+    """
+
+    if parser_name in registered_feed_parsers:
+        raise AlreadyExistsError('Feed Parser: {} already registered by {}'
+                                 .format(parser_name, type(registered_feed_parsers[parser_name])))
+
+    registered_feed_parsers[parser_name] = parser_class
 
 
 @celery.task(soft_time_limit=15)
 def update_ingest():
+    from .commands.update_ingest import UpdateIngest
     UpdateIngest().run()
 
 
 @celery.task
 def gc_ingest():
+    from .commands.remove_expired_content import RemoveExpiredContent
     RemoveExpiredContent().run()
-
-
-class ParserRegistry(type):
-    """Registry metaclass for parsers."""
-
-    def __init__(cls, name, bases, attrs):
-        """Register sub-classes of Parser class when defined."""
-        super(ParserRegistry, cls).__init__(name, bases, attrs)
-        if name != 'Parser':
-            parsers.append(cls())
-
-
-class Parser(metaclass=ParserRegistry):
-    """Base Parser class for all types of Parsers like News ML 1.2, News ML G2, NITF, etc."""
-
-    def parse_message(self, xml, provider):
-        """Parse the ingest XML and extracts the relevant elements/attributes values from the XML."""
-        raise NotImplementedError()
-
-    def can_parse(self, xml):
-        """Test if parser can parse given xml."""
-        raise NotImplementedError()
-
-    def qname(self, tag, ns=None):
-        if ns is None:
-            ns = self.root.tag.rsplit('}')[0].lstrip('{')
-        elif ns is not None and ns == 'xml':
-            ns = 'http://www.w3.org/XML/1998/namespace'
-
-        return str(etree.QName(ns, tag))
-
-    def set_dateline(self, item, city=None, text=None):
-        """
-        Sets the 'dateline' to the article identified by item. If city is passed then the system checks if city is
-        available in Cities collection. If city is not found in Cities collection then dateline's located is set with
-        default values.
-
-        :param item: article.
-        :param city: Name of the city, if passed the system will search in Cities collection.
-        :param text: dateline in full. For example, "STOCKHOLM, Aug 29, 2014"
-        """
-
-        item['dateline'] = {}
-
-        if city:
-            cities = find_cities()
-            located = [c for c in cities if c['city'] == city]
-            item['dateline']['located'] = located[0] if len(located) > 0 else {'city_code': city, 'city': city,
-                                                                               'tz': 'UTC', 'dateline': 'city'}
-        if text:
-            item['dateline']['text'] = text
-
-    def map_priority(self, source_priority):
-        """
-        Maps the source priority to superdesk priority
-        :param str source_priority:
-        :return int: priority of the item
-        """
-        if source_priority and source_priority.isdigit():
-            if int(source_priority) in Priority.values():
-                return int(source_priority)
-
-        return Priority.Ordinary.value
-
-
-def get_xml_parser(etree):
-    """Get parser for given xml.
-
-    :param etree: parsed xml
-    """
-    for parser in parsers:
-        if parser.can_parse(etree):
-            return parser
-
-
-# must be imported for registration
-import superdesk.io.nitf
-import superdesk.io.newsml_2_0
-import superdesk.io.newsml_1_2
-import superdesk.io.wenn_parser
-import superdesk.io.teletype
-import superdesk.io.email
-register_provider('search', None, [])
-
-superdesk.privilege(name='ingest_providers', label='Ingest Channels', description='User can maintain Ingest Channels.')

@@ -10,31 +10,37 @@
 
 
 import datetime
-from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
-from .iptc import subject_codes
-from superdesk.io import Parser
 import logging
+
 from superdesk.errors import ParserError
+from superdesk.io import register_feed_parser
+from superdesk.io.feed_parsers import XMLFeedParser
+from superdesk.io.iptc import subject_codes
+from superdesk.metadata.item import ITEM_TYPE
+from superdesk.metadata.utils import is_normal_package
 
 XMLNS = 'http://iptc.org/std/nar/2006-10-01/'
 XHTML = 'http://www.w3.org/1999/xhtml'
 
-logger = logging.getLogger("NewsMLTwoParser")
+logger = logging.getLogger("NewsMLTwoFeedParser")
 
 
-class NewsMLTwoParser(Parser):
-    """NewsMl xml 2.0 parser"""
+class NewsMLTwoFeedParser(XMLFeedParser):
+    """
+    Feed Parser which can parse if the feed is in NewsML 2 format.
+    """
+
+    NAME = 'newsml2'
 
     def can_parse(self, xml):
         return xml.tag.endswith('newsMessage')
 
-    def parse_message(self, tree, provider):
-        """Parse NewsMessage."""
+    def parse(self, xml, provider=None):
+        self.root = xml
         items = []
         try:
-            self.root = tree
-            header = self.parse_header(tree)
-            for item_set in tree.findall(self.qname('itemSet')):
+            header = self.parse_header(xml)
+            for item_set in xml.findall(self.qname('itemSet')):
                 for item_tree in item_set:
                     item = self.parse_item(item_tree)
                     item['priority'] = header['priority']
@@ -44,8 +50,6 @@ class NewsMLTwoParser(Parser):
             raise ParserError.newsmlTwoParserError(ex, provider)
 
     def parse_item(self, tree):
-        """Parse given xml"""
-
         item = dict()
         item['guid'] = item['uri'] = tree.attrib['guid']
         item['version'] = tree.attrib['version']
@@ -54,7 +58,7 @@ class NewsMLTwoParser(Parser):
         self.parse_content_meta(tree, item)
         self.parse_rights_info(tree, item)
 
-        if self.is_package(item):
+        if is_normal_package(item):
             self.parse_group_set(tree, item)
         else:
             self.parse_content_set(tree, item)
@@ -237,5 +241,5 @@ class NewsMLTwoParser(Parser):
         name = item.find(self.qname('name'))
         return name.text if name is not None else item.attrib.get('literal')
 
-    def is_package(self, item):
-        return item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE
+
+register_feed_parser(NewsMLTwoFeedParser.NAME, NewsMLTwoFeedParser())

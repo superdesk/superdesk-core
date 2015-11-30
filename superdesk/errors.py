@@ -157,6 +157,10 @@ class InvalidStateTransitionError(SuperdeskApiError):
 
 
 class SuperdeskIngestError(SuperdeskError):
+    _codes = {
+        2000: 'Configured Feed Parser either not found or not registered with the application'
+    }
+
     def __init__(self, code, exception, provider=None):
         super().__init__(code)
         self.system_exception = exception
@@ -176,6 +180,10 @@ class SuperdeskIngestError(SuperdeskError):
                 logger.error("{}: {} on channel {}".format(self, exception, self.provider_name))
             else:
                 logger.error("{}: {}".format(self, exception))
+
+    @classmethod
+    def parserNotFoundError(cls, exception=None, provider=None):
+        return SuperdeskIngestError(2000, exception, provider)
 
 
 class ProviderError(SuperdeskIngestError):
@@ -302,6 +310,7 @@ class IngestApiError(SuperdeskIngestError):
         4005: 'API ingest xml parse error',
         4006: 'API service not found(404) error',
         4007: 'API authorization error',
+        4008: 'Authentication URL is missing from Ingest Provider configuraion'
     }
 
     @classmethod
@@ -351,7 +360,7 @@ class IngestFtpError(SuperdeskIngestError):
     def ftpUnknownParserError(cls, exception=None, provider=None, filename=None):
         if provider:
             logger.exception("Provider: {} - File: {} unknown file format. "
-                             "Parser couldn't be found.".format(provider.get('name', 'Unknown provider'), filename))
+                             "FeedParser couldn't be found.".format(provider.get('name', 'Unknown provider'), filename))
         return IngestFtpError(5001, exception, provider)
 
 
@@ -547,3 +556,7 @@ class PublishHTTPPushError(SuperdeskPublishError):
     @classmethod
     def httpPushError(cls, exception=None, destination=None):
         return PublishHTTPPushError(14000, exception, destination)
+
+
+class AlreadyExistsError(Exception):
+    pass

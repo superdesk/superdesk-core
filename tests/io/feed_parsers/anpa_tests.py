@@ -12,20 +12,20 @@
 import os
 import unittest
 
-from superdesk.io.anpa import ANPAFileParser
+from superdesk.io.feed_parsers.anpa import ANPAFeedParser
 
 
 def fixture(filename):
     dirname = os.path.dirname(os.path.realpath(__file__))
-    return os.path.join(dirname, 'fixtures', filename)
+    return os.path.normpath(os.path.join(dirname, '../fixtures', filename))
 
 
 class ANPATestCase(unittest.TestCase):
 
-    parser = ANPAFileParser()
+    parser = ANPAFeedParser()
 
     def open(self, filename):
-        return self.parser.parse_file(fixture(filename))
+        return self.parser.parse(fixture(filename))
 
     def test_open_anpa_file(self):
         item = self.open('anpa-1.tst')

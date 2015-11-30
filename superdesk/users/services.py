@@ -21,7 +21,7 @@ from superdesk.emails import send_user_status_changed_email, send_activate_accou
 from superdesk.utc import utcnow
 from superdesk.privilege import get_privilege_list
 from superdesk.errors import SuperdeskApiError
-from superdesk.users.errors import UserInactiveError
+from superdesk.users.errors import UserInactiveError, UserNotRegisteredException
 from superdesk.notification import push_notification
 
 logger = logging.getLogger(__name__)
@@ -329,6 +329,21 @@ class UsersService(BaseService):
 
     def get_invisible_stages_ids(self, user_id):
         return [str(stage['_id']) for stage in self.get_invisible_stages(user_id)]
+
+    def get_user_by_email(self, email_address):
+        """
+        Finds a user by the given email_address. Does a exact match.
+        :param email_address:
+        :type email_address: str with valid email format
+        :return: user object if found.
+        :rtype: dict having user details :py:class: `superdesk.users.users.UsersResource`
+        :raises: UserNotRegisteredException if no user found with the given email address.
+        """
+        user = self.find_one(req=None, email=email_address)
+        if not user:
+            raise UserNotRegisteredException('No user registered with email %s' % email_address)
+
+        return user
 
 
 class DBUsersService(UsersService):
