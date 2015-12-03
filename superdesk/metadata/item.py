@@ -342,7 +342,10 @@ metadata_schema = {
         'type': 'datetime',
         'versioned': False
     },
-    'lock_session': Resource.rel('auth')
+    'lock_session': Resource.rel('auth'),
+
+    # template used to create an item
+    'template': Resource.rel('content_templates'),
 }
 
 metadata_schema['lock_user']['versioned'] = False
