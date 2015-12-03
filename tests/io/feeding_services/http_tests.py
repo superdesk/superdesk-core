@@ -13,6 +13,7 @@ import os
 from datetime import timedelta
 
 import superdesk
+from superdesk.io import register_feeding_service
 from superdesk.io.feeding_services.http_service import HTTPFeedingService
 from superdesk.tests import TestCase
 from superdesk.utc import utcnow
@@ -22,6 +23,8 @@ def setup_provider(token, hours):
     return {
         'name': 'test http',
         'source': 'test http',
+        'feeding_service': 'test',
+        'feed_parser': 'newsml2',
         'content_expiry': 2880,
         'token': {
             'token': token,
@@ -30,9 +33,15 @@ def setup_provider(token, hours):
     }
 
 
-class TestProvider(HTTPFeedingService):
+class TestFeedingService(HTTPFeedingService):
+    NAME = 'test'
+    ERRORS = []
+
     def _update(self, provider):
         pass
+
+
+register_feeding_service(TestFeedingService.NAME, TestFeedingService(), TestFeedingService.ERRORS)
 
 
 class GetTokenTestCase(TestCase):
@@ -42,16 +51,16 @@ class GetTokenTestCase(TestCase):
 
     def test_get_null_token(self):
         provider = {}
-        self.assertEquals('', TestProvider()._get_auth_token(provider))
+        self.assertEquals('', TestFeedingService()._get_auth_token(provider))
 
     def test_get_existing_token(self):
         provider = setup_provider('abc', 10)
-        self.assertEquals('abc', TestProvider()._get_auth_token(provider))
+        self.assertEquals('abc', TestFeedingService()._get_auth_token(provider))
 
     def test_get_expired_token(self):
         """Expired is better than none.."""
         provider = setup_provider('abc', 24)
-        self.assertEquals('', TestProvider()._get_auth_token(provider))
+        self.assertEquals('', TestFeedingService()._get_auth_token(provider))
 
     def test_fetch_token(self):
         provider = setup_provider('abc', 24)
@@ -61,7 +70,7 @@ class GetTokenTestCase(TestCase):
         provider['config']['username'] = os.environ.get('REUTERS_USERNAME', '')
         provider['config']['password'] = os.environ.get('REUTERS_PASSWORD', '')
         if provider['config']['username']:
-            token = TestProvider()._generate_auth_token(provider, update=True)
+            token = TestFeedingService()._generate_auth_token(provider, update=True)
             self.assertNotEquals('', token)
             self.assertEquals(token, provider['token']['token'])
 
