@@ -20,10 +20,8 @@ from .commands.add_provider import AddProvider  # NOQA
 from .ingest import IngestResource, IngestService
 
 registered_feed_parsers = {}
-allowed_feed_parsers = registered_feed_parsers.keys()
 
 registered_feeding_services = {}
-allowed_feeding_services = registered_feeding_services.keys()
 feeding_service_errors = {}
 publish_errors = []
 
