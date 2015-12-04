@@ -18,7 +18,7 @@ from superdesk import get_resource_service
 from superdesk.activity import ACTIVITY_CREATE, ACTIVITY_EVENT, ACTIVITY_UPDATE, notify_and_add_activity, \
     ACTIVITY_DELETE
 from superdesk.errors import SuperdeskApiError
-from superdesk.io import registered_feeding_services, registered_feed_parsers
+from superdesk.io import allowed_feeding_services, allowed_feed_parsers
 from superdesk.metadata.item import CONTENT_STATE, content_type
 from superdesk.notification import push_notification
 from superdesk.resource import Resource
@@ -43,11 +43,12 @@ class IngestProviderResource(Resource):
             'source': required_string,
             'feeding_service': {
                 'type': 'string',
-                'required': True
+                'required': True,
+                'allowed': allowed_feeding_services
             },
             'feed_parser': {
                 'type': 'string',
-                'required': True
+                'allowed': allowed_feed_parsers
             },
             'content_types': {
                 'type': 'list',
@@ -150,28 +151,7 @@ class IngestProviderService(BaseService):
             doc['last_opened']['opened_by'] = user['_id'] if user else None
 
     def on_create(self, docs):
-        """
-        Overriding to do the below:
-            1. Validate the ingest provider for the below:
-                a. Is feeding service registered with the application?
-                b. Is Feed Parser registered with the application?
-            2. If content expiry is not in the request then the content expiry is set to global expiry
-            3. Sets the status properties
-        :param docs: list of Ingest Provider Details.
-                .. seealso:: :class: `superdesk.io.ingest_provider_model.IngestProviderResource`
-        :type doc: list
-        :raises: SuperdeskApiError.badRequestError() if the validation fails.
-        """
-
         for doc in docs:
-            if 'feeding_service' not in doc or doc['feeding_service'] not in registered_feeding_services:
-                raise SuperdeskApiError.badRequestError(
-                    'Feeding Service {} not registered with the application'.format(doc.get('feeding_service')))
-
-            if 'feed_parser' not in doc or doc['feed_parser'] not in registered_feed_parsers:
-                raise SuperdeskApiError.badRequestError(
-                    'Feed Parser {} not registered with the application'.format(doc.get('feed_parser')))
-
             if doc.get('content_expiry', 0) == 0:
                 doc['content_expiry'] = app.config['INGEST_EXPIRY_MINUTES']
                 self._set_provider_status(doc, doc.get('last_closed', {}).get('message', ''))
@@ -186,32 +166,8 @@ class IngestProviderService(BaseService):
         logger.info("Created Ingest Channel. Data:{}".format(docs))
 
     def on_update(self, updates, original):
-        """
-        Overriding to do the below:
-            1. Validate the ingest provider for the below:
-                a. Is feeding service registered with the application?
-                b. Is Feed Parser registered with the application?
-            2. If content expiry is not in the request then the content expiry is set to global expiry
-            3. Sets the status properties
-        :param updates: Ingest Provider Details.
-                .. seealso:: :class: `superdesk.io.ingest_provider_model.IngestProviderResource`
-        :type updates: dict
-        :param original: Ingest Provider Details.
-                .. seealso:: :class: `superdesk.io.ingest_provider_model.IngestProviderResource`
-        :type original: dict
-        :raises: SuperdeskApiError.badRequestError() if the validation fails.
-        """
-        if 'feeding_service' in updates and updates['feeding_service'] not in registered_feeding_services:
-            raise SuperdeskApiError.badRequestError(
-                'Feeding Service {} not registered with the application'.format(updates.get('feeding_service')))
-
-        if 'feed_parser' in updates or updates['feed_parser'] not in registered_feed_parsers:
-            raise SuperdeskApiError.badRequestError(
-                'Feed Parser {} not registered with the application'.format(updates.get('feed_parser')))
-
         if updates.get('content_expiry') == 0:
             updates['content_expiry'] = app.config['INGEST_EXPIRY_MINUTES']
-
         if 'is_closed' in updates and original.get('is_closed', False) != updates.get('is_closed'):
             self._set_provider_status(updates, updates.get('last_closed', {}).get('message', ''))
 
