@@ -186,8 +186,7 @@ class UpdateIngest(superdesk.Command):
     def run(self, provider_name=None):
         lookup = {} if not provider_name else {'name': provider_name}
         for provider in superdesk.get_resource_service('ingest_providers').get(req=None, lookup=lookup):
-            if provider['name'] == provider_name and not is_closed(provider) \
-                    and is_service_and_parser_registered(provider) and is_scheduled(provider):
+            if not is_closed(provider) and is_service_and_parser_registered(provider) and is_scheduled(provider):
                 kwargs = {
                     'provider': provider,
                     'rule_set': get_provider_rule_set(provider),
