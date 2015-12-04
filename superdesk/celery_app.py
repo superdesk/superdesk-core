@@ -183,18 +183,3 @@ def _update_subtask_progress(task_id, current=None, total=None, done=None):
         redis_db.delete(done_key)
 
     return task_id, crt_current, crt_total
-
-
-def set_key(key, value=0, db=None):
-    """
-    @TODO: deprecate this?
-    Sets the value of a key in Redis
-    :param key: Name of the Key
-    :param value: Value to be set
-    :param db: if None the Redis db object is constructed again
-    """
-
-    if db is None:
-        db = app.redis
-
-    db.set(key, value)

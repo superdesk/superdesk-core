@@ -18,6 +18,7 @@ from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
 from superdesk.publish import subscriber_types, SUBSCRIBER_TYPES  # NOQA
 from superdesk.metadata.item import not_analyzed
+from superdesk.sequences import get_next_sequence_number
 from flask import current_app as app
 
 logger = logging.getLogger(__name__)
@@ -202,33 +203,15 @@ class SubscribersService(BaseService):
         """
 
         assert (subscriber is not None), "Subscriber can't be null"
-
+        min_seq_number = 0
         max_seq_number = app.config['MAX_VALUE_OF_PUBLISH_SEQUENCE']
-        subscribers_resource = get_resource_service('subscribers')
-        subscriber_id = subscriber[config.ID_FIELD]
-        subscriber = subscribers_resource.find_and_modify(
-            query={'_id': subscriber_id},
-            update={'$inc': {'sequence_number': 1}},
-            upsert=False
-        )
-        sequence_number = subscriber.get("sequence_number")
-
         if subscriber.get('sequence_num_settings'):
-            if sequence_number == 0 or sequence_number == 1:
-                sequence_number = subscriber['sequence_num_settings']['min']
-                subscribers_resource.find_and_modify(
-                    query={'_id': subscriber_id},
-                    update={'sequence_number': sequence_number},
-                    upsert=False
-                )
-
+            min_seq_number = subscriber['sequence_num_settings']['min']
             max_seq_number = subscriber['sequence_num_settings']['max']
 
-        if sequence_number == max_seq_number:
-            subscribers_resource.find_and_modify(
-                query={'_id': subscriber_id},
-                update={'sequence_number': 0},
-                upsert=False
-            )
-
-        return sequence_number
+        return get_next_sequence_number(
+            resource_name='subscribers',
+            item_id=subscriber[config.ID_FIELD],
+            max_seq_number=max_seq_number,
+            min_seq_number=min_seq_number
+        )
