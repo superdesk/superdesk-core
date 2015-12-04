@@ -187,6 +187,7 @@ def _update_subtask_progress(task_id, current=None, total=None, done=None):
 
 def set_key(key, value=0, db=None):
     """
+    @TODO: deprecate this?
     Sets the value of a key in Redis
     :param key: Name of the Key
     :param value: Value to be set

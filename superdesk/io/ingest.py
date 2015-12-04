@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from superdesk.celery_app import update_key, set_key
+from superdesk import get_resource_service
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.metadata.item import metadata_schema
@@ -62,9 +62,18 @@ class IngestService(BaseService):
         :param item: object to which ingest_provider_sequence to be set
         :param provider: ingest_provider object, used to build the key name of sequence
         """
-        sequence_key_name = "ingest_seq_{provider_id}".format(provider_id=str(provider[config.ID_FIELD]))
-        sequence_number = update_key(sequence_key_name, flag=True)
+        providers_resource = get_resource_service('ingest_providers')
+        provider_id = provider[config.ID_FIELD]
+        provider = providers_resource.find_and_modify(
+            query={'_id': provider_id},
+            update={'$inc': {'sequence_number': 1}},
+            upsert=False
+        )
+        sequence_number = provider.get("sequence_number")
         item['ingest_provider_sequence'] = str(sequence_number)
-
         if sequence_number == app.config['MAX_VALUE_OF_INGEST_SEQUENCE']:
-            set_key(sequence_key_name)
+            providers_resource.find_and_modify(
+                query={'_id': provider_id},
+                update={'sequence_number': 0},
+                upsert=False
+            )
