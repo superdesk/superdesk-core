@@ -7,15 +7,17 @@
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
+from unittest import mock
 from datetime import timedelta
-from superdesk.utc import utcnow
+import json
 
+from superdesk.utc import utcnow
 from superdesk.tests import TestCase
 from superdesk.publish.formatters.ninjs_formatter import NINJSFormatter
 from superdesk.publish import init_app
-import json
 
 
+@mock.patch('superdesk.publish.subscribers.SubscribersService.generate_sequence_number', lambda self, subscriber: 1)
 class NinjsFormatterTest(TestCase):
     def setUp(self):
         super().setUp()

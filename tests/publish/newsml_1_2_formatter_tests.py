@@ -7,6 +7,7 @@
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
+from unittest import mock
 
 from superdesk.utc import utcnow
 
@@ -17,6 +18,7 @@ import datetime
 from superdesk.publish import init_app
 
 
+@mock.patch('superdesk.publish.subscribers.SubscribersService.generate_sequence_number', lambda self, subscriber: 1)
 class Newsml12FormatterTest(TestCase):
     article = {
         'source': 'AAP',
