@@ -85,9 +85,10 @@ class EMailRFC822FeedParser(EmailFeedParser):
                     field_from = self.parse_header(msg['from'])
                     item['original_source'] = field_from
                     try:
-                        email_address = email_regex.findall(field_from)[0]
-                        user = get_resource_service('users').get_user_by_email(email_address)
-                        item['original_creator'] = user[eve.utils.config.ID_FIELD]
+                        if email_regex.findall(field_from):
+                            email_address = email_regex.findall(field_from)[0]
+                            user = get_resource_service('users').get_user_by_email(email_address)
+                            item['original_creator'] = user[eve.utils.config.ID_FIELD]
                     except UserNotRegisteredException:
                         pass
                     item['guid'] = msg['Message-ID']
@@ -112,10 +113,8 @@ class EMailRFC822FeedParser(EmailFeedParser):
                                 continue
                             except Exception as ex:
                                 logger.exception(
-                                    "Exception parsing text body for {0} "
-                                    "from {1}: {2}".format(
-                                        item['headline'], field_from),
-                                    ex)
+                                    "Exception parsing text body for {0} from {1}: {2}".format(item['headline'],
+                                                                                               field_from, ex))
                                 continue
                         if part.get_content_type() == "text/html":
                             body = part.get_payload(decode=True)
@@ -129,10 +128,8 @@ class EMailRFC822FeedParser(EmailFeedParser):
                                 continue
                             except Exception as ex:
                                 logger.exception(
-                                    "Exception parsing text html for {0} "
-                                    "from {1}: {2}".format(
-                                        item['headline'], field_from),
-                                    ex)
+                                    "Exception parsing html body for {0} from {1}: {2}".format(item['headline'],
+                                                                                               field_from, ex))
                                 continue
                         if part.get_content_maintype() == 'multipart':
                             continue
