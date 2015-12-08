@@ -10,14 +10,15 @@
 
 import json
 import logging
-from superdesk.celery_app import update_key, set_key
 from superdesk import get_resource_service
-from eve.utils import ParsedRequest
+from eve.utils import ParsedRequest, config
 from superdesk.utils import ListCursor
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
 from superdesk.publish import subscriber_types, SUBSCRIBER_TYPES  # NOQA
+from superdesk.metadata.item import not_analyzed
+from superdesk.sequences import get_next_sequence_number
 from flask import current_app as app
 
 logger = logging.getLogger(__name__)
@@ -106,11 +107,17 @@ class SubscribersResource(Resource):
             'keyschema': {
                 'type': 'boolean'
             }
-        }
+        },
+        'sequence_number': {
+            'type': 'number',
+            'default': 0,
+            'mapping': not_analyzed
+        },
     }
 
     item_methods = ['GET', 'PATCH', 'PUT']
 
+    etag_ignore_fields = ['sequence_number']
     privileges = {'POST': 'subscribers', 'PATCH': 'subscribers'}
 
 
@@ -196,20 +203,15 @@ class SubscribersService(BaseService):
         """
 
         assert (subscriber is not None), "Subscriber can't be null"
-
-        sequence_key_name = "{subscriber_name}_subscriber_seq".format(subscriber_name=subscriber.get('name')).lower()
-        sequence_number = update_key(sequence_key_name, flag=True)
-
+        min_seq_number = 0
         max_seq_number = app.config['MAX_VALUE_OF_PUBLISH_SEQUENCE']
-
         if subscriber.get('sequence_num_settings'):
-            if sequence_number == 0 or sequence_number == 1:
-                sequence_number = subscriber['sequence_num_settings']['min']
-                set_key(sequence_key_name, value=sequence_number)
-
+            min_seq_number = subscriber['sequence_num_settings']['min']
             max_seq_number = subscriber['sequence_num_settings']['max']
 
-        if sequence_number == max_seq_number:
-            set_key(sequence_key_name)
-
-        return sequence_number
+        return get_next_sequence_number(
+            resource_name='subscribers',
+            item_id=subscriber[config.ID_FIELD],
+            max_seq_number=max_seq_number,
+            min_seq_number=min_seq_number
+        )

@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from superdesk.celery_app import update_key, set_key
+from superdesk import get_resource_service
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.metadata.item import metadata_schema
@@ -16,6 +16,7 @@ from superdesk.metadata.utils import extra_response_fields, item_url, aggregatio
 from eve.defaults import resolve_default_values
 from eve.methods.common import resolve_document_etag
 from eve.utils import config
+from superdesk.sequences import get_next_sequence_number
 from flask import current_app as app
 
 SOURCE = 'ingest'
@@ -62,9 +63,9 @@ class IngestService(BaseService):
         :param item: object to which ingest_provider_sequence to be set
         :param provider: ingest_provider object, used to build the key name of sequence
         """
-        sequence_key_name = "ingest_seq_{provider_id}".format(provider_id=str(provider[config.ID_FIELD]))
-        sequence_number = update_key(sequence_key_name, flag=True)
+        sequence_number = get_next_sequence_number(
+            resource_name='ingest_providers',
+            item_id=provider[config.ID_FIELD],
+            max_seq_number=app.config['MAX_VALUE_OF_INGEST_SEQUENCE']
+        )
         item['ingest_provider_sequence'] = str(sequence_number)
-
-        if sequence_number == app.config['MAX_VALUE_OF_INGEST_SEQUENCE']:
-            set_key(sequence_key_name)
