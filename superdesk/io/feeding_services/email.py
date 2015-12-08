@@ -38,8 +38,6 @@ class EmailFeedingService(FeedingService):
                 raise IngestEmailError.emailLoginError(imaplib.IMAP4.error, provider)
 
             rv, data = imap.select(config.get('mailbox', None), readonly=False)
-            parser = self.get_feed_parser(provider, data)
-
             if rv == 'OK':
                 rv, data = imap.search(None, config.get('filter', None))
                 if rv == 'OK':
@@ -48,6 +46,7 @@ class EmailFeedingService(FeedingService):
                         rv, data = imap.fetch(num, '(RFC822)')
                         if rv == 'OK':
                             try:
+                                parser = self.get_feed_parser(provider, data)
                                 new_items.append(parser.parse(data, provider))
                             except IngestEmailError:
                                 continue
