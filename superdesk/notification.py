@@ -58,7 +58,7 @@ def _notify(**kwargs):
     def send_message():
         yield from app.notification_client.send(message)
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.new_event_loop()
     loop.run_until_complete(send_message())
 
 
