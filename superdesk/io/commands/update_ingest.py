@@ -53,7 +53,7 @@ def is_service_and_parser_registered(provider):
     """
 
     return provider.get('feeding_service') in registered_feeding_services and \
-        provider.get('feed_parser') in registered_feed_parsers
+        provider.get('feed_parser') is None or provider.get('feed_parser') in registered_feed_parsers
 
 
 def is_scheduled(provider):
