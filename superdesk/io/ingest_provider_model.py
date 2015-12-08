@@ -19,7 +19,7 @@ from superdesk.activity import ACTIVITY_CREATE, ACTIVITY_EVENT, ACTIVITY_UPDATE,
     ACTIVITY_DELETE
 from superdesk.errors import SuperdeskApiError
 from superdesk.io import allowed_feeding_services, allowed_feed_parsers
-from superdesk.metadata.item import CONTENT_STATE, content_type
+from superdesk.metadata.item import CONTENT_STATE, content_type, not_analyzed
 from superdesk.notification import push_notification
 from superdesk.resource import Resource
 from superdesk.services import BaseService
@@ -123,12 +123,17 @@ class IngestProviderResource(Resource):
                 'keyschema': {
                     'type': 'boolean'
                 }
-            }
+            },
+            'sequence_number': {
+                'type': 'number',
+                'default': 0,
+                'mapping': not_analyzed
+            },
         }
 
         self.item_methods = ['GET', 'PATCH', 'DELETE']
         self.privileges = {'POST': 'ingest_providers', 'PATCH': 'ingest_providers', 'DELETE': 'ingest_providers'}
-        self.etag_ignore_fields = ['last_updated', 'last_item_update', 'last_closed', 'last_opened']
+        self.etag_ignore_fields = ['last_updated', 'last_item_update', 'last_closed', 'last_opened', 'sequence_number']
 
         super().__init__(endpoint_name, app, service, endpoint_schema=endpoint_schema)
 
