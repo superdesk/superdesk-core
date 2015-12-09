@@ -18,7 +18,6 @@ from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
 from superdesk.publish import subscriber_types, SUBSCRIBER_TYPES  # NOQA
 from superdesk.metadata.item import not_analyzed
-from superdesk.sequences import get_next_sequence_number
 from flask import current_app as app
 
 logger = logging.getLogger(__name__)
@@ -209,9 +208,9 @@ class SubscribersService(BaseService):
             min_seq_number = subscriber['sequence_num_settings']['min']
             max_seq_number = subscriber['sequence_num_settings']['max']
 
-        return get_next_sequence_number(
+        return get_resource_service('sequences').get_next_sequence_number_for_item(
             resource_name='subscribers',
-            item_id=subscriber[config.ID_FIELD],
+            query_value=subscriber[config.ID_FIELD],
             max_seq_number=max_seq_number,
             min_seq_number=min_seq_number
         )
