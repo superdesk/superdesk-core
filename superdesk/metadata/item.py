@@ -175,7 +175,7 @@ metadata_schema = {
             'fields': {
                 'phrase': {
                     'type': 'string',
-                    'index_analyzer': 'phrase_prefix_analyzer',
+                    'analyzer': 'phrase_prefix_analyzer',
                     'search_analyzer': 'phrase_prefix_analyzer'
                 }
             }
