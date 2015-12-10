@@ -57,7 +57,7 @@ class SequencesService(BaseService):
 
         if not (min_seq_number <= sequence_number + 1 <= max_seq_number):
             target_resource.find_and_modify(
-                query={'key': key_name},
+                query={'key': key_name, 'sequence_number': sequence_number},
                 update={'sequence_number': min_seq_number},
                 upsert=True
             )
