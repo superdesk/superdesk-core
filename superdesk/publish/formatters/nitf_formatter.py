@@ -108,3 +108,4 @@ class NITFFormatter(Formatter):
         """
 
         SubElement(head, 'meta', {'name': 'anpa-sequence', 'content': str(pub_seq_num)})
+        SubElement(head, 'meta', {'name': 'anpa-keyword', 'content': self.append_legal(article)})

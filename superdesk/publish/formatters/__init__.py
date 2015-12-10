@@ -56,6 +56,22 @@ class Formatter(metaclass=FormatterRegistry):
 
         return body
 
+    def append_legal(self, article, truncate=False):
+        """
+        Checks if the article has the legal flag on and adds 'Legal:' to the slugline
+        :param article: article having the slugline
+        :param truncate: truncates the slugline to 24 characters
+        :return: updated slugline
+        """
+        slugline = article.get('slugline', '')
+
+        if article.get('flags', {}).get('marked_for_legal', False):
+            slugline = '{}: {}'.format('Legal', slugline)
+            if truncate:
+                slugline = slugline[:24]
+
+        return slugline
+
 
 def get_formatter(format_type, article):
     """Get parser for given xml.
