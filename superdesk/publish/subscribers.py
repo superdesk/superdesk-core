@@ -136,6 +136,11 @@ class SubscribersService(BaseService):
     def on_update(self, updates, original):
         self._validate_seq_num_settings(updates)
 
+    def on_deleted(self, doc):
+        get_resource_service('sequences').delete(lookup={
+            'key': 'ingest_providers_{_id}'.format(_id=doc[config.ID_FIELD])
+        })
+
     def _get_subscribers_by_filter_condition(self, filter_condition):
         """
         Searches all subscribers that has a content filter with the given filter condition
@@ -208,9 +213,8 @@ class SubscribersService(BaseService):
             min_seq_number = subscriber['sequence_num_settings']['min']
             max_seq_number = subscriber['sequence_num_settings']['max']
 
-        return get_resource_service('sequences').get_next_sequence_number_for_item(
-            resource_name='subscribers',
-            query_value=subscriber[config.ID_FIELD],
+        return get_resource_service('sequences').get_next_sequence_number(
+            key='subscribers_{_id})'.format(_id=subscriber[config.ID_FIELD]),
             max_seq_number=max_seq_number,
             min_seq_number=min_seq_number
         )

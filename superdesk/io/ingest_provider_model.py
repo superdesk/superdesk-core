@@ -226,6 +226,9 @@ class IngestProviderService(BaseService):
                                 user_list=self.user_service.get_users_by_user_type('administrator'),
                                 name=doc.get('name'), provider_id=doc.get(config.ID_FIELD))
         push_notification('ingest_provider:delete', provider_id=str(doc.get(config.ID_FIELD)))
+        get_resource_service('sequences').delete(lookup={
+            'key': 'ingest_providers_{_id}'.format(_id=doc[config.ID_FIELD])
+        })
         logger.info("Deleted Ingest Channel. Data:{}".format(doc))
 
 
