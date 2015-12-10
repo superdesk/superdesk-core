@@ -53,7 +53,8 @@ class NinjsFormatterTest(TestCase):
             'abstract': 'sample abstract',
             'place': 'Australia',
             'embargo': embargo_ts,
-            'body_footer': 'call helpline 999 if you are planning to quit smoking'
+            'body_footer': 'call helpline 999 if you are planning to quit smoking',
+            'company_codes': [{'name': 'YANCOAL AUSTRALIA LIMITED', 'qcode': 'YAL', 'security_exchange': 'ASX'}]
         }
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
         expected = {
@@ -75,6 +76,8 @@ class NinjsFormatterTest(TestCase):
             "slugline": "slugline",
             "description_text": "sample abstract",
             'keywords': ['traffic'],
+            'organisation': [{'name': 'YANCOAL AUSTRALIA LIMITED', 'rel': 'Securities Identifier',
+                              'symbols': [{'ticker': 'YAL', 'exchange': 'ASX'}]}]
         }
         self.assertEqual(json.loads(doc), expected)
 
