@@ -93,6 +93,11 @@ class NITFFormatter(Formatter):
             dateline = SubElement(body_head, 'dateline')
             dateline.text = article['dateline']['text']
 
+        for company in article.get('company_codes', []):
+            org = SubElement(body_head, 'org', attrib={'idsrc': company.get('security_exchange', ''),
+                                                       'value': company.get('qcode', '')})
+            org.text = company.get('name', '')
+
     def __format_body_end(self, article, body_end):
         if article.get('ednote'):
             tagline = SubElement(body_end, 'tagline')

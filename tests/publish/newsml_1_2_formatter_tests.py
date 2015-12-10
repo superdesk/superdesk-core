@@ -60,7 +60,8 @@ class Newsml12FormatterTest(TestCase):
              'country': 'Australia', 'world_region': 'Oceania'}
         ],
         'ednote': 'this is test',
-        'body_footer': 'call helpline 999 if you are planning to quit smoking'
+        'body_footer': 'call helpline 999 if you are planning to quit smoking',
+        'company_codes': [{'name': 'YANCOAL AUSTRALIA LIMITED', 'qcode': 'YAL', 'security_exchange': 'ASX'}]
     }
 
     preformatted = {
@@ -743,6 +744,12 @@ class Newsml12FormatterTest(TestCase):
             self.newsml.findall('NewsComponent/NewsComponent/NewsComponent/ContentItem/DataContent')[1].
             text, 'The story body<br>call helpline 999 if you are planning to quit smoking')
         self.assertEqual(self.newsml.find('.//NewsLines/NewsLine/NewsLineText').text, 'this is test')
+
+        company_info = self.newsml.find('NewsComponent/NewsComponent/Metadata/Property[@FormalName="Ticker Symbol"]')
+        self.assertEqual(company_info.attrib['Value'], 'YAL')
+
+        company_info = self.newsml.find('NewsComponent/NewsComponent/Metadata/Property[@FormalName="Exchange"]')
+        self.assertEqual(company_info.attrib['Value'], 'ASX')
 
     def test_format_news_management_for_embargo(self):
         embargo_ts = (utcnow() + datetime.timedelta(days=2))

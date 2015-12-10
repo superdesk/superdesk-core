@@ -161,6 +161,15 @@ class NewsML12Formatter(Formatter):
         self._format_news_lines(article, main_news_component)
         self._format_rights_metadata(article, main_news_component)
         self._format_descriptive_metadata(article, main_news_component)
+
+        for company in article.get('company_codes', []):
+            metadata = SubElement(main_news_component, 'Metadata')
+            SubElement(metadata, 'MetadataType', attrib={'FormalName': 'Securities Identifier'})
+            SubElement(metadata, 'Property', attrib={'FormalName': 'Name', 'Value': company.get('name', '')})
+            SubElement(metadata, 'Property', attrib={'FormalName': 'Ticker Symbol', 'Value': company.get('qcode', '')})
+            SubElement(metadata, 'Property', attrib={'FormalName': 'Exchange',
+                                                     'Value': company.get('security_exchange', '')})
+
         if article.get(ITEM_TYPE) == CONTENT_TYPE.COMPOSITE and article.get(PACKAGE_TYPE, '') == '':
             self._format_package(article, main_news_component)
         elif article.get(ITEM_TYPE) in {CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED, CONTENT_TYPE.COMPOSITE}:

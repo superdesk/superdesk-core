@@ -97,6 +97,12 @@ class NINJSFormatter(Formatter):
             elif article.get('description_text'):
                 ninjs['description_text'] = article.get('description_text')
 
+            if article.get('company_codes'):
+                ninjs['organisation'] = [{'name': c.get('name', ''), 'rel': 'Securities Identifier',
+                                          'symbols': [{'ticker': c.get('qcode', ''),
+                                                       'exchange': c.get('security_exchange', '')}]}
+                                         for c in article['company_codes']]
+
             return [(pub_seq_num, json.dumps(ninjs, default=json_serialize_datetime_objectId))]
         except Exception as ex:
             raise FormatterError.ninjsFormatterError(ex, subscriber)
