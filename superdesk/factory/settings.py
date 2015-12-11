@@ -125,6 +125,7 @@ SENTRY_DSN = env('SENTRY_DSN')
 SENTRY_INCLUDE_PATHS = ['superdesk']
 
 INSTALLED_APPS = [
+    'superdesk.sequences',
     'superdesk.upload',
     'superdesk.notification',
     'superdesk.activity',
