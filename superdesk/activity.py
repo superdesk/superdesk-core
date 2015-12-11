@@ -8,16 +8,19 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import datetime
 import logging
+
+from bson.objectid import ObjectId
 from flask import g
+
+import superdesk
+from superdesk import get_resource_service
+from superdesk.emails import send_activity_emails
+from superdesk.errors import SuperdeskApiError, add_notifier
 from superdesk.notification import push_notification
 from superdesk.resource import Resource
 from superdesk.services import BaseService
-from superdesk.errors import SuperdeskApiError, add_notifier
-import superdesk
-from bson.objectid import ObjectId
-from superdesk.emails import send_activity_emails
-import datetime
 from superdesk.utc import utcnow
 
 log = logging.getLogger(__name__)
@@ -233,7 +236,7 @@ def add_activity(activity_name, msg, resource=None, item=None, notify=None,
         if item.get('task') and item['task'].get('desk'):
             activity['desk'] = ObjectId(item['task']['desk'])
 
-    superdesk.get_resource_service(ActivityResource.endpoint_name).post([activity])
+    get_resource_service(ActivityResource.endpoint_name).post([activity])
     push_notification(name, _dest=activity['recipients'])
 
 
@@ -242,16 +245,11 @@ def notify_and_add_activity(activity_name, msg, resource=None, item=None, user_l
     Adds the activity and notify enabled and active users via email.
     """
 
-    if not user_list and activity_name == ACTIVITY_ERROR:
-        user_list = superdesk.get_resource_service('users').get_users_by_user_type('administrator')
-
     add_activity(activity_name, msg=msg, resource=resource, item=item,
                  notify=[str(user.get("_id")) for user in user_list] if user_list else None, **data)
-    if user_list:
-        recipients = [user.get('email') for user in user_list
-                      if user.get('is_enabled', False) and user.get('is_active', False) and
-                      superdesk.get_resource_service('preferences').email_notification_is_enabled(
-                          preferences=user.get('user_preferences', {}))]
+
+    if activity_name == ACTIVITY_ERROR or user_list:
+        recipients = get_recipients(user_list, activity_name)
 
         if activity_name != ACTIVITY_ERROR:
             current_user = getattr(g, 'user', None)
@@ -271,5 +269,17 @@ def notify_and_add_activity(activity_name, msg, resource=None, item=None, user_l
 
         if recipients:
             send_activity_emails(activity=activity, recipients=recipients)
+
+
+def get_recipients(user_list, activity_name):
+    if not user_list and activity_name == ACTIVITY_ERROR:
+        user_list = get_resource_service('users').get_users_by_user_type('administrator')
+
+    recipients = [user.get('email') for user in user_list if not user.get('needs_activation', True) and
+                  user.get('is_enabled', False) and user.get('is_active', False) and
+                  get_resource_service('preferences')
+                      .email_notification_is_enabled(preferences=user.get('user_preferences', {}))]
+
+    return recipients
 
 add_notifier(notify_and_add_activity)
