@@ -207,14 +207,14 @@ class SubscribersService(BaseService):
         """
 
         assert (subscriber is not None), "Subscriber can't be null"
-        min_seq_number = 0
+        min_seq_number = 1
         max_seq_number = app.config['MAX_VALUE_OF_PUBLISH_SEQUENCE']
         if subscriber.get('sequence_num_settings'):
             min_seq_number = subscriber['sequence_num_settings']['min']
             max_seq_number = subscriber['sequence_num_settings']['max']
 
         return get_resource_service('sequences').get_next_sequence_number(
-            key='subscribers_{_id})'.format(_id=subscriber[config.ID_FIELD]),
+            key_name='subscribers_{_id})'.format(_id=subscriber[config.ID_FIELD]),
             max_seq_number=max_seq_number,
             min_seq_number=min_seq_number
         )
