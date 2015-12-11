@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<nitf version="-//IPTC//DTD NITF 3.4//EN" change.date="October 18, 2006" change.time="19:30">
+  <head>
+    <docdata>
+      <doc-id regsrc="AP" />
+      <date.issue norm="20151210T191044Z" />
+      <ed-msg info="For global distribution" />
+      <doc.copyright holder="AP" year="2015" />
+    </docdata>
+  </head>
+  <body>
+    <body.head>
+      <hedline>
+        <hl1 id="headline">Can trading pollution like stocks help fight climate change?</hl1>
+        <hl2 id="originalHeadline">Can trading pollution like stocks help fight climate change?</hl2>
+      </hedline>
+      <byline>By BERNARD CONDON<byttl>AP Business Writer</byttl></byline>
+      <distributor>The Associated Press</distributor>
+      <dateline>
+        <location>NEW YORK</location>
+      </dateline>
+    </body.head>
+    <body.content>
+      <block id="Main">
+              <p>NEW YORK (AP) — The gas produced by hog manure at farms across the U.S. punches holes in the ozone layer, overheats the planet, and angers neighbors with its peculiar odor, a mix of rotten egg and ammonia.</p>
+              <p>All that's needed to clear the air is to cover the manure with a system of tarps that captures the gas, but many farms don't do it because it's too expensive.</p>
+              <p>"If you don't give people incentives to come up with solutions, they're not going to do it," says Rudi Roeslein, a wealthy entrepreneur who thinks he's found a fix.</p>
+              <p>His plan: Raise money to help pay for the tarp systems through a greenhouse gas trading market in California, where companies can pay others who are helping the environment so that they can continue to pollute.</p>
+              <p>Widely derided by politicians on the left and the right, once thought dead even by its supporters, the idea of allowing companies to buy and sell pollution "rights" like stocks is now at the fore again as 151 heads of state and government at the Paris climate conference grope for ways to avert environmental havoc.</p>
+              <p>Under such "cap-and-trade" systems, polluters are required to keep emissions below a certain level or hand over money to polluters that have managed to fall below theirs and have surplus pollution permits to sell. To cut greenhouse gases, the levels, or "caps," are gradually lowered, forcing companies to figure out new ways of running their businesses to cut emissions.</p>
+              <p>If all goes well, Roeslein, an Austrian immigrant who made a fortune building metal can factories around the world, hopes to eventually capture gases from five hog farms in Missouri that, left to rise in the atmosphere, would have done the same damage as releasing 850,000 tons of carbon dioxide every year. His project will be like taking 180,000 cars off the road.</p>
+              <p>Roeslein is so convinced the idea will work, maybe enough to turn a profit, he's putting $25 million of his own money behind the venture.</p>
+              <p>California Gov. Jerry Brown, who's created a bit of stir at the Paris talks scheduled to conclude Friday, has been touting his state's emissions trading market as a model to help solve the global climate crisis. One study, from the non-profit Environmental Defense Fund, says emissions from companies in the market fell 11 percent below the "cap" allowed in 2013, according to the latest data available, while economic growth doesn't appear to have been harmed.</p>
+              <p>"It has got nothing to do with do-gooders. It's about the almighty dollar," says Lenny Hochschild, managing director of emissions broker Evolution Markets. "It's about incentivizing people."</p>
+              <p>There are deep concerns about whether these pollution trading systems can cut emissions as much as scientists say is needed, or even if they can work at all.</p>
+              <p>First proposed by economists in the 1960s, a pollution permit market remained mostly an academic idea until President George H. W. Bush championed it as a way of getting power plants to cut emissions of sulfur dioxide, which leads to acid rain. Annual emissions plunged, at much less cost than expected, and the program is widely considered a success.</p>
+              <p>The European Union followed with a carbon dioxide trading program in 2005. In addition to buying surplus permits from cleaner polluters, power plants and factories emitting more than their limit could buy permits from "offsets" around the world, projects capturing methane fumes from hogs, for instance, or chlorofluorocarbons used in refrigeration, another ozone killer.</p>
+              <p>But critics complained some projects got money that didn't appear to help the environment much. In China, companies ramped up chlorofluorocarbon emissions after permits began to trade, leading to accusation of fraud.</p>
+              <p>"They were pumping out more just for the sake of destroying them," says Jeff Cohen, founder of EOS Climate, which helps offset projects involving refrigerants in the U.S. "It was bizarre, upside down."</p>
+              <p>What's more, the European trading system allowed too many permits at the outset, which had the effect of pushing the price to pollute down sharply. Then the global recession hit in 2008 and polluters didn't need as many permits because they were producing less. With supply and demand out of whack, prices to pollute plunged to near zero.</p>
+              <p>One result:  Utilities kept running their coal-fired power plants instead of switching to cleaner burning gas-fired ones.</p>
+              <p>But two newer carbon trading schemes in the U.S., the one in California and another in the Northeast that launched in 2009, learned from some of Europe's mistakes and seem to be working so well they may soon be expanded.</p>
+              <p>The Northeast program, covering nine states, sold permits at an auction rather than give them away. That, plus a few other improvements, appears to have helped. Emissions have fallen 40 percent over 2005 levels.</p>
+              <p>For its trading system launched three years ago, California made even more tweaks, setting a floor and ceiling for buying permits, for instance.</p>
+              <p>Many expect that as U.S. states are forced to comply with a new Environmental Protection Agency regulation aimed at reducing emissions from power plants they will join these programs, leading the U.S. closer to a nationwide carbon trading system.</p>
+              <p>Still, some economists have doubts. They note that heavy regulations and other factors, like plunging gas prices, may explain the drop in emissions in California and elsewhere more than the pollution trading.</p>
+              <p>"Most of the emission cuts from the power sector has come from switching from coal to natural gas because gas prices are incredibly low," says David G. Victor, an economist at the School of International Relations and Pacific Studies at the University of California, San Diego. He says the pollution markets aren't providing much of a push to change how companies behave.</p>
+              <p>For Roeslein, it's clearly helped, though.</p>
+              <p>Roeslein, whose company will start trading permits next month, figures he can generate as much as $7 million a year from selling in the California market. Add in money from sales of methane pulled the gas produced by the manure, and maybe he makes enough of a profit to convince others to try their hand at similar ventures.</p>
+              <p>"It has to be profitable to be repeatable, for other people to follow this model," he says.</p>
+              <p>___</p>
+              <p>Bernard Condon can be reached at http://twitter.com/BernardFCondon . His work can be found at http://www.bigstory.ap.org/content/bernard-condon .</p>
+            </block>
+    </body.content>
+    <body.end />
+  </body>
+</nitf>

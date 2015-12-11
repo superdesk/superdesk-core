@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from datetime import datetime
-
+import dateutil.parser
 from superdesk.io import register_feed_parser
 from superdesk.io.feed_parsers import XMLFeedParser
 import xml.etree.ElementTree as etree
@@ -84,7 +84,10 @@ def get_norm_datetime(tree):
     try:
         value = datetime.strptime(tree.attrib['norm'], '%Y%m%dT%H%M%S')
     except ValueError:
-        value = datetime.strptime(tree.attrib['norm'], '%Y%m%dT%H%M%S%z')
+        try:
+            value = datetime.strptime(tree.attrib['norm'], '%Y%m%dT%H%M%S%z')
+        except ValueError:
+            value = dateutil.parser.parse(tree.attrib['norm'])
 
     return utc.normalize(value) if value.tzinfo else value
 
@@ -136,10 +139,12 @@ class NITFFeedParser(XMLFeedParser):
             # set the default type.
             item[ITEM_TYPE] = CONTENT_TYPE.TEXT
             item['guid'] = item['uri'] = docdata.find('doc-id').get('id-string')
-            item['urgency'] = int(docdata.find('urgency').get('ed-urg', '5'))
+            if docdata.find('urgency') is not None:
+                item['urgency'] = int(docdata.find('urgency').get('ed-urg', '5'))
             item['pubstatus'] = (docdata.attrib.get('management-status', 'usable')).lower()
             item['firstcreated'] = get_norm_datetime(docdata.find('date.issue'))
             item['versioncreated'] = get_norm_datetime(docdata.find('date.issue'))
+
             if docdata.find('date.expire') is not None:
                 item['expiry'] = get_norm_datetime(docdata.find('date.expire'))
             item['subject'] = get_subjects(xml)

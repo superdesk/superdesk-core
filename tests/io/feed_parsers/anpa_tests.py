@@ -10,7 +10,7 @@
 
 
 import os
-import unittest
+from superdesk.tests import TestCase
 
 from superdesk.io.feed_parsers.anpa import ANPAFeedParser
 
@@ -20,12 +20,13 @@ def fixture(filename):
     return os.path.normpath(os.path.join(dirname, '../fixtures', filename))
 
 
-class ANPATestCase(unittest.TestCase):
+class ANPATestCase(TestCase):
 
     parser = ANPAFeedParser()
 
     def open(self, filename):
-        return self.parser.parse(fixture(filename))
+        provider = {'name': 'Test'}
+        return self.parser.parse(fixture(filename), provider)
 
     def test_open_anpa_file(self):
         item = self.open('anpa-1.tst')
@@ -37,7 +38,7 @@ class ANPATestCase(unittest.TestCase):
         self.assertEqual(1049, item['word_count'])
         self.assertEqual('For Argentine chemo patients, mirrors can hurt', item['headline'])
         self.assertEqual('By PAUL BYRNE and ALMUDENA CALATRAVA', item['byline'])
-        self.assertRegex(item['body_text'], '^BUENOS')
+        self.assertRegex(item['body_html'], '^<p>BUENOS')
         self.assertEqual('Argentina-Cancer', item['slugline'])
         self.assertEqual('2013-11-13T15:09:00+00:00', item['firstcreated'].isoformat())
 
