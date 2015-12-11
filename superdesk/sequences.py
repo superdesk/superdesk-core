@@ -22,7 +22,7 @@ class SequencesResource(Resource):
         },
         'sequence_number': {
             'type': 'number',
-            'default': 0,
+            'default': 1,
         },
     }
     etag_ignore_fields = ['sequence_number', 'name']
@@ -35,13 +35,13 @@ class SequencesService(BaseService):
         self,
         key_name,
         max_seq_number=None,
-        min_seq_number=0
+        min_seq_number=1
     ):
         """
         Generates Sequence Number
         :param key: key to identify the sequence
         :param max_seq_num: default $MAX_VALUE_OF_PUBLISH_SEQUENCE, maximal possible value
-        :param min_seq_num: default 0, init value, sequence will start from the NEXT one
+        :param min_seq_num: default 1, init value, sequence will start from the NEXT one
         :returns: sequence number
         """
         if not max_seq_number:
