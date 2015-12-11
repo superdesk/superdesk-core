@@ -41,15 +41,16 @@ class DPAIPTC7901FeedParser(IPTC7901FeedParser):
             for line_num in range(0, min(len(lines), 5)):
                 city, source, the_rest = lines[line_num].partition(' (dpa) - ')
                 # test if we found a candidate and ensure that the city starts the line and is not crazy long
-                if source and lines[line_num].find(city) == 0 and len(city) < 20:
+                if source and lines[line_num].find(city) == 0 and len(city.strip()) < 20:
                     cities = find_cities()
-                    located = [c for c in cities if c['city'].lower() == city.lower()]
+                    located = [c for c in cities if c['city'].lower() == city.strip().lower()]
                     if 'dateline' not in item:
                         item['dateline'] = {}
-                    item['dateline']['located'] = located[0] if len(located) > 0 else {'city_code': city, 'city': city,
+                    item['dateline']['located'] = located[0] if len(located) > 0 else {'city_code': city.strip(),
+                                                                                       'city': city.strip(),
                                                                                        'tz': 'UTC', 'dateline': 'city'}
                     item['dateline']['source'] = 'dpa'
-                    item['dateline']['text'] = city
+                    item['dateline']['text'] = city.strip()
                     item['body_html'] = item['body_html'].replace(city + source, '', 1)
                     break
         return item
