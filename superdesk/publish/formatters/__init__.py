@@ -63,7 +63,7 @@ class Formatter(metaclass=FormatterRegistry):
         :param truncate: truncates the slugline to 24 characters
         :return: updated slugline
         """
-        slugline = article.get('slugline', '')
+        slugline = article.get('slugline', '') or ''
 
         if article.get('flags', {}).get('marked_for_legal', False):
             slugline = '{}: {}'.format('Legal', slugline)
