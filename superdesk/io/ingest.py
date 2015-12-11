@@ -14,6 +14,7 @@ from superdesk.metadata.item import metadata_schema
 from superdesk.metadata.utils import extra_response_fields, item_url, aggregations
 from eve.defaults import resolve_default_values
 from eve.methods.common import resolve_document_etag
+from superdesk import get_resource_service
 from eve.utils import config
 from flask import current_app as app
 
@@ -62,7 +63,7 @@ class IngestService(BaseService):
         :param provider: ingest_provider object, used to build the key name of sequence
         """
         sequence_number = get_resource_service('sequences').get_next_sequence_number(
-            key='ingest_providers_{_id}'.format(_id=provider[config.ID_FIELD]),
+            key_name='ingest_providers_{_id}'.format(_id=provider[config.ID_FIELD]),
             max_seq_number=app.config['MAX_VALUE_OF_INGEST_SEQUENCE']
         )
         item['ingest_provider_sequence'] = str(sequence_number)
