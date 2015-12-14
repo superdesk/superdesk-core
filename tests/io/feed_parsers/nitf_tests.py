@@ -84,6 +84,23 @@ class AAPTestCase(NITFTestCase):
         self.assertEqual(349, self.item.get('word_count'))
 
 
+class APExampleTestCase(NITFTestCase):
+
+    filename = 'ap-nitf.xml'
+
+    def test_headline(self):
+        self.assertEqual(self.item.get('headline'), 'Can trading pollution like stocks help fight climate change?')
+
+    def test_byline(self):
+        self.assertEqual(self.item.get('byline'), 'By BERNARD CONDON')
+
+    def test_ednote(self):
+        self.assertEqual(self.item.get('ednote'), 'For global distribution')
+
+    def test_word_count(self):
+        self.assertEqual(1047, self.item.get('word_count'))
+
+
 class IPTCExampleTestCase(NITFTestCase):
 
     filename = 'nitf-fishing.xml'

@@ -142,3 +142,5 @@ import superdesk.io.feed_parsers.nitf  # NOQA
 import superdesk.io.feed_parsers.rfc822  # NOQA
 import superdesk.io.feed_parsers.wenn_parser  # NOQA
 import superdesk.io.feed_parsers.zczc  # NOQA
+import superdesk.io.feed_parsers.dpa_iptc7901  # NOQA
+import superdesk.io.feed_parsers.afp_newsml_1_2  # NOQA

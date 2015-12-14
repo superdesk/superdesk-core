@@ -48,6 +48,7 @@ class IngestProviderResource(Resource):
             },
             'feed_parser': {
                 'type': 'string',
+                'nullable': True,
                 'allowed': allowed_feed_parsers
             },
             'content_types': {
