@@ -192,7 +192,7 @@ SUPERDESK_TESTING = (env('SUPERDESK_TESTING', 'false').lower() == 'true')
 SESSION_EXPIRY_MINUTES = 240
 
 # The number of minutes before content items purged
-# akin.tolga 06/01/2014: using a large value (30 days) for the time being
+# 2880 = 3 days in minutes
 CONTENT_EXPIRY_MINUTES = 4320
 
 # The number of minutes before ingest items purged
