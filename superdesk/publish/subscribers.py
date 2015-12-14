@@ -17,7 +17,6 @@ from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
 from superdesk.publish import subscriber_types, SUBSCRIBER_TYPES  # NOQA
-from superdesk.metadata.item import not_analyzed
 from flask import current_app as app
 
 logger = logging.getLogger(__name__)
@@ -107,16 +106,10 @@ class SubscribersResource(Resource):
                 'type': 'boolean'
             }
         },
-        'sequence_number': {
-            'type': 'number',
-            'default': 0,
-            'mapping': not_analyzed
-        },
     }
 
     item_methods = ['GET', 'PATCH', 'PUT']
 
-    etag_ignore_fields = ['sequence_number']
     privileges = {'POST': 'subscribers', 'PATCH': 'subscribers'}
 
 
