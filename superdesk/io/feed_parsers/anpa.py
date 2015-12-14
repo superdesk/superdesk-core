@@ -15,8 +15,9 @@ from datetime import datetime
 from superdesk.errors import ParserError
 from superdesk.io import register_feed_parser
 from superdesk.io.feed_parsers import FileFeedParser
-from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, Priority
+from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, Priority, GUID_FIELD, GUID_TAG
 from superdesk.utc import utc
+from superdesk.metadata.utils import generate_guid
 
 
 class ANPAFeedParser(FileFeedParser):
@@ -30,13 +31,13 @@ class ANPAFeedParser(FileFeedParser):
         try:
             with open(file_path, 'rb') as f:
                 lines = [line for line in f]
-                return re.match(b'\x16\x16\x01([a-z])([0-9]{4})\x1f([a-z-]+)', lines[0], flags=re.I)
-        finally:
+                return re.match(b'\x16\x16\x01([a-z])([0-9]{4})\x1f([a-z0-9-]+)', lines[0], flags=re.I)
+        except:
             return False
 
     def parse(self, file_path, provider=None):
         try:
-            item = {ITEM_TYPE: CONTENT_TYPE.TEXT}
+            item = {ITEM_TYPE: CONTENT_TYPE.TEXT, GUID_FIELD: generate_guid(type=GUID_TAG)}
 
             with open(file_path, 'rb') as f:
                 lines = [line for line in f]
@@ -62,16 +63,20 @@ class ANPAFeedParser(FileFeedParser):
             m = re.search(b'\x03([a-z]+)-([a-z]+)-([0-9]+-[0-9]+-[0-9]+ [0-9]{2}[0-9]{2})GMT', lines[-4], flags=re.I)
             if m:
                 item['firstcreated'] = datetime.strptime(m.group(3).decode(), '%m-%d-%y %H%M').replace(tzinfo=utc)
+                item['versioncreated'] = item['firstcreated']
 
             # parse anpa content
             body = b''.join(lines[2:])
             m = re.match(b'\x02(.*)\x03', body, flags=re.M + re.S)
             if m:
-                text = m.group(1).decode().split('\n')
+                text = m.group(1).decode('latin-1', 'replace').split('\n')
 
                 # text
                 body_lines = [l.strip() for l in text if l.startswith('\t')]
-                item['body_text'] = '\n'.join(body_lines)
+                if item[ITEM_TYPE] == CONTENT_TYPE.PREFORMATTED:
+                    item['body_text'] = '\n'.join(body_lines)
+                else:
+                    item['body_html'] = '<p>' + '</p><p>'.join(body_lines) + '</p>'
 
                 # content metadata
                 header_lines = [l.strip('^<= ') for l in text if l.startswith('^')]
