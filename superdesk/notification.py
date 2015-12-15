@@ -41,6 +41,11 @@ def init_app(app):
     port = app.config['WS_PORT']
     loop = asyncio.get_event_loop()
     try:
+        try:
+            loop = asyncio.get_event_loop()
+        except:
+            loop = asyncio.new_event_loop()
+
         app.notification_client = loop.run_until_complete(websockets.connect('ws://%s:%s/server' % (host, port)))
         logger.info('websocket connected on=%s:%s' % app.notification_client.local_address)
     except OSError:
@@ -58,7 +63,10 @@ def _notify(**kwargs):
     def send_message():
         yield from app.notification_client.send(message)
 
-    loop = asyncio.new_event_loop()
+    try:
+        loop = asyncio.get_event_loop()
+    except:
+        loop = asyncio.new_event_loop()
     loop.run_until_complete(send_message())
 
 
