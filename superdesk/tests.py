@@ -92,7 +92,7 @@ def drop_mongo_db(app, db_prefix, dbname):
             app.data.mongo.pymongo(prefix=db_prefix).cx.drop_database(app.config[dbname])
     except pymongo.errors.ConnectionFailure:
         raise ValueError('Invalid mongo config or server is down (uri=%s db=%s)' %
-                         (app.config[db_prefix], app.config[dbname]))
+                         (db_prefix, app.config[dbname]))
     except AttributeError:
         pass
 
