@@ -1,6 +1,6 @@
 Hi there,
 
-Someone created for you a {{app_name}} user account with username {{username}}. 
+Someone created for you a {{app_name}} user account with username {{user.username}}. 
 Please go to {{url}} and complete your profile.
 
 This link expires after {{expires}} hour(s).
