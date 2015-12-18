@@ -12,6 +12,7 @@ from eve.utils import config
 from flask.ext.mail import Message
 from superdesk.celery_app import celery
 from flask import current_app as app, render_template, render_template_string
+from superdesk import get_resource_service
 
 
 @celery.task(bind=True, max_retries=3, soft_time_limit=10)
@@ -23,6 +24,7 @@ def send_email(self, subject, sender, recipients, text_body, html_body):
 
 
 def send_activate_account_email(doc):
+    user = get_resource_service('users').find_one(req=None, _id=doc['user'])
     activate_ttl = app.config['ACTIVATE_ACCOUNT_TOKEN_TIME_TO_LIVE']
     app_name = app.config['APPLICATION_NAME']
     admins = app.config['ADMINS']
@@ -30,10 +32,10 @@ def send_activate_account_email(doc):
     url = '{}/#/reset-password?token={}'.format(client_url, doc['token'])
     hours = activate_ttl * 24
     subject = render_template("account_created_subject.txt", app_name=app_name)
-    text_body = render_template("account_created.txt", app_name=app_name,
-                                username=doc['username'], expires=hours, url=url)
-    html_body = render_template("account_created.html", app_name=app_name,
-                                username=doc['username'], expires=hours, url=url)
+    text_body = render_template("account_created.txt", app_name=app_name, user=user,
+                                instance_url=client_url, expires=hours, url=url)
+    html_body = render_template("account_created.html", app_name=app_name, user=user,
+                                instance_url=client_url, expires=hours, url=url)
     send_email.delay(subject=subject, sender=admins[0], recipients=[doc['email']],
                      text_body=text_body, html_body=html_body)
 
