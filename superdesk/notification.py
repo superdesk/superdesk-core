@@ -44,7 +44,7 @@ def init_app(app):
             loop = asyncio.get_event_loop()
         except:
             loop = asyncio.new_event_loop()
-      
+
         app.notification_client = loop.run_until_complete(websockets.connect('ws://%s:%s/server' % (host, port)))
         logger.info('websocket connected on=%s:%s' % app.notification_client.local_address)
     except (RuntimeError, OSError):
