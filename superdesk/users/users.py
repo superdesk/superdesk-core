@@ -69,7 +69,7 @@ class UsersResource(Resource):
             'picture_url': {
                 'type': 'string',
             },
-            'avatar': Resource.rel('upload', True),
+            'avatar': Resource.rel('upload', embeddable=True, nullable=True),
             'role': Resource.rel('roles', True),
             'privileges': {'type': 'dict'},
             'workspace': {
