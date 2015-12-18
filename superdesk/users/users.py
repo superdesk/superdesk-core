@@ -58,6 +58,11 @@ class UsersResource(Resource):
                 'readonly': self.readonly,
                 'nullable': True
             },
+            'language': {
+                'type': 'string',
+                'readonly': self.readonly,
+                'nullable': True
+            },
             'user_info': {
                 'type': 'dict'
             },
