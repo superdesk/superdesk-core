@@ -69,7 +69,10 @@ class FileFeedingService(FeedingService):
                         self.after_extracting(item, provider)
                         self.move_file(self.path, filename, provider=provider, success=True)
 
-                        yield [item]
+                        if isinstance(item, list):
+                            yield item
+                        else:
+                            yield [item]
                     else:
                         self.move_file(self.path, filename, provider=provider, success=True)
             except Exception as ex:
