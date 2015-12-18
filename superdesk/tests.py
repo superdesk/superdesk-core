@@ -83,7 +83,7 @@ def drop_mongo(app):
     with app.app_context():
         drop_mongo_db(app, 'MONGO', 'MONGO_DBNAME')
         drop_mongo_db(app, 'LEGAL_ARCHIVE', 'LEGAL_ARCHIVE_DBNAME')
-        drop_mongo_db(app, 'MONGO', 'ARCHIVED_DBNAME')
+        drop_mongo_db(app, 'ARCHIVED', 'ARCHIVED_DBNAME')
 
 
 def drop_mongo_db(app, db_prefix, dbname):
