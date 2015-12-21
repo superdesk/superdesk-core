@@ -62,7 +62,7 @@ class SubscribersResource(Resource):
         },
         'critical_errors': {
             'type': 'dict',
-            'keyschema': {
+            'valueschema': {
                 'type': 'boolean'
             }
         },
@@ -102,7 +102,7 @@ class SubscribersResource(Resource):
         },
         'global_filters': {
             'type': 'dict',
-            'keyschema': {
+            'valueschema': {
                 'type': 'boolean'
             }
         },
