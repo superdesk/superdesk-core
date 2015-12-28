@@ -121,7 +121,7 @@ class IngestProviderResource(Resource):
             },
             'critical_errors': {
                 'type': 'dict',
-                'keyschema': {
+                'valueschema': {
                     'type': 'boolean'
                 }
             },
