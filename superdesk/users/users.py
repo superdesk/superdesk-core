@@ -63,6 +63,7 @@ class UsersResource(Resource):
             },
             'picture_url': {
                 'type': 'string',
+                'nullable': True
             },
             'avatar': Resource.rel('upload', True),
             'role': Resource.rel('roles', True),
