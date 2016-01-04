@@ -351,13 +351,13 @@ def apply_rule_set(item, provider, rule_set=None):
         if rule_set is None and provider.get('rule_set') is not None:
             rule_set = superdesk.get_resource_service('rule_sets').find_one(_id=provider['rule_set'], req=None)
 
-            if rule_set and 'body_html' in item:
-                body = item['body_html']
+        if rule_set and 'body_html' in item:
+            body = item['body_html']
 
-                for rule in rule_set['rules']:
-                    body = body.replace(rule['old'], rule['new'])
+            for rule in rule_set['rules']:
+                body = body.replace(rule['old'], rule['new'])
 
-                item['body_html'] = body
+            item['body_html'] = body
 
         return item
     except Exception as ex:
