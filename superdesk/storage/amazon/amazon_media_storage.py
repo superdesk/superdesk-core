@@ -65,7 +65,7 @@ class AmazonMediaStorage(MediaStorage):
 
     def media_id(self, filename):
         if not self.app.config.get('AMAZON_SERVE_DIRECT_LINKS', False):
-            return bson.ObjectId()
+            return str(bson.ObjectId())
         return '%s/%s' % (time.strftime('%Y%m%d'), filename)
 
     def fetch_rendition(self, rendition):
