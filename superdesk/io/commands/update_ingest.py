@@ -225,7 +225,7 @@ def update_provider(self, provider, rule_set=None, routing_scheme=None):
         update = {LAST_UPDATED: utcnow()}
 
         for items in feeding_service.update(provider):
-            ingest_items(items, provider, rule_set, routing_scheme)
+            ingest_items(items, provider, feeding_service, rule_set, routing_scheme)
             stats.incr('ingest.ingested_items', len(items))
             if items:
                 update[LAST_ITEM_UPDATE] = utcnow()
@@ -364,7 +364,7 @@ def apply_rule_set(item, provider, rule_set=None):
         raise ProviderError.ruleError(ex, provider)
 
 
-def ingest_items(items, provider, rule_set=None, routing_scheme=None):
+def ingest_items(items, provider, feeding_service, rule_set=None, routing_scheme=None):
     all_items = filter_expired_items(provider, items)
     items_dict = {doc[GUID_FIELD]: doc for doc in all_items}
     items_in_package = []
@@ -375,7 +375,7 @@ def ingest_items(items, provider, rule_set=None, routing_scheme=None):
                             for ref in group.get('refs', []) if 'residRef' in ref]
 
     for item in [doc for doc in all_items if doc.get(ITEM_TYPE) != CONTENT_TYPE.COMPOSITE]:
-        ingested = ingest_item(item, provider, rule_set,
+        ingested = ingest_item(item, provider, feeding_service, rule_set,
                                routing_scheme=routing_scheme if not item[GUID_FIELD] in items_in_package else None)
         if not ingested:
             failed_items.add(item[GUID_FIELD])
@@ -397,7 +397,7 @@ def ingest_items(items, provider, rule_set=None, routing_scheme=None):
         if item[GUID_FIELD] in failed_items:
             continue
 
-        ingested = ingest_item(item, provider, rule_set, routing_scheme)
+        ingested = ingest_item(item, provider, feeding_service, rule_set, routing_scheme)
         if not ingested:
             failed_items.add(item[GUID_FIELD])
 
@@ -408,7 +408,7 @@ def ingest_items(items, provider, rule_set=None, routing_scheme=None):
     return failed_items
 
 
-def ingest_item(item, provider, rule_set=None, routing_scheme=None):
+def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=None):
     try:
         item.setdefault(superdesk.config.ID_FIELD, generate_guid(type=GUID_NEWSML))
         item[FAMILY_ID] = item[superdesk.config.ID_FIELD]
@@ -442,7 +442,7 @@ def ingest_item(item, provider, rule_set=None, routing_scheme=None):
         if rend:
             baseImageRend = rend.get('baseImage') or next(iter(rend.values()))
             if baseImageRend:
-                href = registered_feeding_services[provider.get('feeding_service')].prepare_href(baseImageRend['href'])
+                href = feeding_service.prepare_href(baseImageRend['href'])
                 update_renditions(item, href, old_item)
 
         new_version = True
