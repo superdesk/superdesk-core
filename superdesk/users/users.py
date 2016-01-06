@@ -12,6 +12,7 @@
 
 from superdesk.metadata.item import BYLINE, SIGN_OFF
 from superdesk.resource import Resource
+from superdesk.metadata.utils import item_url
 
 
 class UsersResource(Resource):
@@ -128,3 +129,12 @@ class UsersResource(Resource):
 
         self.privileges = {'POST': 'users', 'DELETE': 'users', 'PATCH': 'users'}
         super().__init__(endpoint_name, app=app, service=service, endpoint_schema=endpoint_schema)
+
+
+class UserSessionClearResource(Resource):
+    endpoint_name = 'clear_sessions'
+    url = 'users/<{0}:user_id>/sessions'.format(item_url)
+    datasource = {'source': 'users'}
+    resource_methods = ['DELETE']
+    resource_title = endpoint_name
+    privileges = {'DELETE': 'users'}

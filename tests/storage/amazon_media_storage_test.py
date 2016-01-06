@@ -3,6 +3,7 @@ import time
 from superdesk.tests import TestCase
 from superdesk.storage.amazon.amazon_media_storage import AmazonMediaStorage
 
+
 class AmazonMediaStorageTestCase(TestCase):
 
     def setUp(self):
@@ -45,7 +46,7 @@ class AmazonMediaStoragePutAndDeleteTest(TestCase):
         """
         if self.app.config['AMAZON_SECRET_ACCESS_KEY']:
             id = self.amazon.put('test', content_type='text/plain')
-            self.assertIsNot(id,None)
+            self.assertIsNot(id, None)
             self.assertTrue(self.amazon.exists(id))
             fromS3 = self.amazon.get(id)
             self.assertEqual(fromS3.read().decode('utf-8'), 'test')

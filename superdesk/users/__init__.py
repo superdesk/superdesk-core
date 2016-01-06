@@ -8,8 +8,8 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from .users import UsersResource
-from .services import UsersService, DBUsersService, is_admin  # noqa
+from .users import UsersResource, UserSessionClearResource
+from .services import UsersService, DBUsersService, is_admin, UserSessionClearService  # noqa
 from superdesk.errors import SuperdeskApiError
 import superdesk
 import flask
@@ -24,6 +24,10 @@ def init_app(app):
 
     # Registering with intrinsic privileges because: A user should be allowed to update their own profile.
     superdesk.intrinsic_privilege(resource_name='users', method=['PATCH'])
+
+    endpoint_name = 'clear_sessions'
+    service = UserSessionClearService(endpoint_name, backend=superdesk.get_backend())
+    UserSessionClearResource(endpoint_name, app=app, service=service)
 
 
 def get_user_from_request(required=False):
