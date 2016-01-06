@@ -225,7 +225,6 @@ def add_activity(activity_name, msg, resource=None, item=None, notify=None,
 
     if notify:
         activity['recipients'] = [{'user_id': ObjectId(_id), 'read': False} for _id in notify]
-        name = activity_name
 
     if notify_desks:
         activity['recipients'].extend([{'desk_id': ObjectId(_id), 'read': False} for _id in notify_desks])
