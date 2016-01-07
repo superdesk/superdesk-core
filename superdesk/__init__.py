@@ -11,7 +11,7 @@
 """Superdesk"""
 
 import blinker
-
+import logging as logging_lib
 from flask import abort, json, Blueprint, current_app as app  # noqa
 from flask.ext.script import Command as BaseCommand, Option  # noqa @UnresolvedImport
 from werkzeug.exceptions import HTTPException
@@ -24,7 +24,6 @@ from .services import BaseService as Service  # noqa
 from .resource import Resource  # noqa
 from .privilege import privilege, intrinsic_privilege, get_intrinsic_privileges  # noqa
 from .workflow import *  # noqa
-from .logging import logger as superdesk_logger
 
 
 API_NAME = 'Superdesk API'
@@ -40,7 +39,8 @@ eve_backend = EveBackend()
 default_user_preferences = dict()
 default_session_preferences = dict()
 signals = blinker.Namespace()
-logger = superdesk_logger
+
+logger = logging_lib.getLogger(__name__)
 
 
 class Command(BaseCommand):
@@ -49,17 +49,16 @@ class Command(BaseCommand):
     Reason being the flask-script's run the commands using test_request_context() which is invalid.
     That's the reason we are inheriting the Flask-Script's Command to overcome this issue.
     """
-    logger = superdesk_logger
 
     def __call__(self, _app=None, *args, **kwargs):
         try:
             with app.app_context():
                 res = self.run(*args, **kwargs)
-                self.logger.info('Command finished with: {}'.format(res))
+                logger.info('Command finished with: {}'.format(res))
                 return 0
         except Exception as ex:
-            self.logger.info('Uhoh, an exception occured while running the command...')
-            self.logger.exception(ex)
+            logger.info('Uhoh, an exception occured while running the command...')
+            logger.exception(ex)
             return 1
 
 

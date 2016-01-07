@@ -20,19 +20,7 @@ import logging.handlers
 beat_delay = 5
 clients = set()
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-
-
-def configure_syslog(config):
-    """Configure syslog logging handler.
-
-    :param config: config dictionary
-    """
-    debug_log_format = ('%(levelname)s:%(module)s:%(message)s\n')
-    handler = logging.handlers.SysLogHandler(address=(config['LOG_SERVER_ADDRESS'], config['LOG_SERVER_PORT']))
-    handler.setFormatter(logging.Formatter(debug_log_format))
-    logger.addHandler(handler)
 
 
 @asyncio.coroutine
@@ -143,8 +131,5 @@ if __name__ == '__main__':
     config = {
         'WS_HOST': '0.0.0.0',
         'WS_PORT': '5100',
-        'LOG_SERVER_ADDRESS': 'localhost',
-        'LOG_SERVER_PORT': '5555'
     }
-    configure_syslog(config)
     create_server(config)

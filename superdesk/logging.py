@@ -9,10 +9,10 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+import logging.config
+import yaml
 
-logging.basicConfig(handlers=[logging.StreamHandler()])
-logger = logging.getLogger('superdesk')
-logger.setLevel(logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 def item_msg(msg, item):
@@ -22,3 +22,16 @@ def item_msg(msg, item):
     :param item: Item object
     """
     return '{} item={}'.format(msg, str(item.get('_id', item.get('guid'))))
+
+
+def configure_logging(file_path):
+    """
+    configure logging.
+    :param str file_path:
+    """
+    try:
+        logging_conf = open(file_path, 'r')
+        logging_dict = yaml.load(logging_conf)
+        logging.config.dictConfig(logging_dict)
+    except:
+        logger.error('Cannot load logging config. File: {}'.format(file_path))

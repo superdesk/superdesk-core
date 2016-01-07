@@ -27,14 +27,9 @@ from raven.contrib.flask import Sentry
 from superdesk.errors import SuperdeskError, SuperdeskApiError
 from superdesk.io import registered_feeding_services
 from superdesk.datalayer import SuperdeskDataLayer  # noqa
-from logging.handlers import SysLogHandler
+
 
 sentry = Sentry(register_signal=False, wrap_wsgi=False)
-
-
-def configure_logging(config):
-    sys_handler = SysLogHandler(address=(config['LOG_SERVER_ADDRESS'], config['LOG_SERVER_PORT']))
-    superdesk.logger.addHandler(sys_handler)
 
 
 def get_app(config=None, media_storage=None):
@@ -57,7 +52,6 @@ def get_app(config=None, media_storage=None):
         media_storage = SuperdeskGridFSMediaStorage
 
     config.setdefault('DOMAIN', {})
-    configure_logging(config)
 
     app = eve.Eve(
         data=SuperdeskDataLayer,
