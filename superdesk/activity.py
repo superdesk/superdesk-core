@@ -200,14 +200,33 @@ ACTIVITY_EVENT = 'event'
 ACTIVITY_ERROR = 'error'
 
 
-def add_activity(activity_name, msg, resource=None, item=None, notify=None,
-                 notify_desks=None, **data):
-    """Add an activity into activity log.
-
-    This will became part of current user activity log.
-
-    If there is someone set to be notified it will make it into his notifications box.
+def add_activity(activity_name, msg, resource=None, item=None, notify=None, notify_desks=None,
+                 can_push_notification=True, **data):
     """
+    Adds an activity into activity log.
+    This will became part of current user activity log.
+    If there is someone set to be notified it will make it into his notifications box.
+
+    :param activity_name: Name of the activity
+    :type activity_name: str
+    :param msg: Message to be recorded in the activity log
+    :type msg: str
+    :param resource: resource name generating this activity
+    :type resource: str
+    :param item: article instance, if the activity is being recorded against an article, default None
+    :type item: dict
+    :param notify: user identifiers against whom the activity should be recorded, default None
+    :type notify: list
+    :param notify_desks: desk identifiers if someone mentions Desk Name in comments widget, default None
+    :type notify_desks: list
+    :param can_push_notification: flag indicating if a notification should be pushed via WebSocket, default True
+    :type can_push_notification: bool
+    :param data: kwargs
+    :type data: dict
+    :return: activity object
+    :rtype: dict
+    """
+
     activity = {
         'name': activity_name,
         'message': msg,
@@ -225,6 +244,7 @@ def add_activity(activity_name, msg, resource=None, item=None, notify=None,
 
     if notify:
         activity['recipients'] = [{'user_id': ObjectId(_id), 'read': False} for _id in notify]
+        name = activity_name
 
     if notify_desks:
         activity['recipients'].extend([{'desk_id': ObjectId(_id), 'read': False} for _id in notify_desks])
@@ -236,7 +256,11 @@ def add_activity(activity_name, msg, resource=None, item=None, notify=None,
             activity['desk'] = ObjectId(item['task']['desk'])
 
     get_resource_service(ActivityResource.endpoint_name).post([activity])
-    push_notification(name, _dest=activity['recipients'])
+
+    if can_push_notification:
+        push_notification(name, _dest=activity['recipients'])
+
+    return activity
 
 
 def notify_and_add_activity(activity_name, msg, resource=None, item=None, user_list=None, **data):
