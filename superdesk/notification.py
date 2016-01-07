@@ -19,8 +19,6 @@ from flask import current_app as app, json
 from datetime import datetime
 from superdesk.utils import json_serialize_datetime_objectId
 
-
-logging.basicConfig()
 logger = logging.getLogger(__name__)
 
 
