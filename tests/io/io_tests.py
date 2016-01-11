@@ -70,9 +70,8 @@ class TextParserTest(ItemTest):
         self.assertTrue(self.item)
 
     def test_parse_id(self):
-        self.assertEqual("tag:reuters.com,0000:newsml_L4N0BT5PJ", self.item.get('guid'))
+        self.assertEqual("tag:reuters.com,0000:newsml_L4N0BT5PJ:263518268", self.item.get('guid'))
         self.assertEqual('263518268', self.item.get('version'))
-        self.assertEqual(self.item.get('guid'), self.item.get('uri'))
         self.assertEqual(3, self.item.get('priority'))
 
     def test_parse_item_meta(self):
@@ -152,7 +151,7 @@ class SNEPParserTest(ItemTest):
 
         ref = group.get('refs')[0]
         self.assertTrue(ref)
-        self.assertEqual("tag:reuters.com,0000:newsml_BRE9220HA", ref.get('residRef'))
+        self.assertEqual("tag:reuters.com,0000:newsml_BRE9220HA:15", ref.get('residRef'))
         self.assertEqual("application/vnd.iptc.g2.packageitem+xml", ref.get('contentType'))
         self.assertEqual("icls:composite", ref.get('itemClass'))
         self.assertEqual("At least 15 killed on Kenya coast on election day", ref.get('headline'))

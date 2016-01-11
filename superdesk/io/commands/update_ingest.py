@@ -25,7 +25,8 @@ from superdesk.io.iptc import subject_codes
 from superdesk.lock import lock, unlock
 from superdesk.media.media_operations import download_file_from_url, process_file
 from superdesk.media.renditions import generate_renditions
-from superdesk.metadata.item import GUID_NEWSML, GUID_FIELD, FAMILY_ID, ITEM_TYPE, CONTENT_TYPE, CONTENT_STATE
+from superdesk.metadata.item import GUID_NEWSML, GUID_FIELD, FAMILY_ID, ITEM_TYPE, CONTENT_TYPE, CONTENT_STATE, \
+    ITEM_STATE
 from superdesk.metadata.utils import generate_guid
 from superdesk.notification import push_notification
 from superdesk.stats import stats
@@ -364,6 +365,22 @@ def apply_rule_set(item, provider, rule_set=None):
         raise ProviderError.ruleError(ex, provider)
 
 
+def ingest_cancel(item):
+    """
+    Given an item that has a pubstatus of canceled finds all versions of this item and mark them as canceled as well.
+    Uses the URI to identify those items in ingest that are related to this cancellation.
+
+    :param item:
+    :return:
+    """
+    ingest_service = superdesk.get_resource_service('ingest')
+    lookup = {'uri': item.get('uri')}
+    family_members = ingest_service.get_from_mongo(req=None, lookup=lookup)
+    for relative in family_members:
+        update = {'pubstatus': 'canceled', ITEM_STATE: CONTENT_STATE.KILLED}
+        ingest_service.patch(relative['_id'], update)
+
+
 def ingest_items(items, provider, feeding_service, rule_set=None, routing_scheme=None):
     all_items = filter_expired_items(provider, items)
     items_dict = {doc[GUID_FIELD]: doc for doc in all_items}
@@ -437,6 +454,10 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
             ingest_service.set_ingest_provider_sequence(item, provider)
 
         old_item = ingest_service.find_one(guid=item[GUID_FIELD], req=None)
+
+        if item.get('pubstatus', '') == 'canceled':
+            item[ITEM_STATE] = CONTENT_STATE.KILLED
+            ingest_cancel(item)
 
         rend = item.get('renditions', {})
         if rend:
