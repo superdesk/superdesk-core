@@ -51,7 +51,8 @@ class NewsMLTwoFeedParser(XMLFeedParser):
 
     def parse_item(self, tree):
         item = dict()
-        item['guid'] = item['uri'] = tree.attrib['guid']
+        item['guid'] = tree.attrib['guid'] + ':' + tree.attrib['version']
+        item['uri'] = tree.attrib['guid']
         item['version'] = tree.attrib['version']
 
         self.parse_item_meta(tree, item)
@@ -186,7 +187,10 @@ class NewsMLTwoFeedParser(XMLFeedParser):
                 refs.append({'idRef': tree.attrib['idref']})
             else:
                 ref = {}
-                ref['residRef'] = tree.attrib['residref']
+                if 'version' in tree.attrib:
+                    ref['residRef'] = tree.attrib['residref'] + ':' + tree.attrib['version']
+                else:
+                    ref['residRef'] = tree.attrib['residref']
                 ref['contentType'] = tree.attrib['contenttype']
                 ref['itemClass'] = tree.find(self.qname('itemClass')).attrib['qcode']
 
