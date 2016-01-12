@@ -98,6 +98,7 @@ class RolesService(BaseService):
                                         'role {{role}} is granted new privileges: Please re-login.',
                                         self.datasource,
                                         notify=notified_users,
+                                        can_push_notification=False,
                                         role=role.get('name'))
                 push_notification('activity', _dest=activity['recipients'])
         else:
