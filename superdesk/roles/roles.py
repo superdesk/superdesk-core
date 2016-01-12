@@ -93,11 +93,13 @@ class RolesService(BaseService):
             added, removed, modified = compare_preferences(role.get('privileges', {}), updates['privileges'])
             if len(removed) > 0 or (1, 0) in modified.values():
                 push_notification('role_privileges_revoked', updated=1, role_id=str(role_id))
-            if len(added) > 0:
-                add_activity(ACTIVITY_UPDATE,
-                             'role {{role}} is granted new privileges: Please re-login.',
-                             self.datasource,
-                             notify=notified_users,
-                             role=role.get('name'))
+            if len(added) > 0 or (0, 1) in modified.values():
+                activity = add_activity(ACTIVITY_UPDATE,
+                                        'role {{role}} is granted new privileges: Please re-login.',
+                                        self.datasource,
+                                        notify=notified_users,
+                                        can_push_notification=False,
+                                        role=role.get('name'))
+                push_notification('activity', _dest=activity['recipients'])
         else:
             push_notification('role', updated=1, user_id=str(role_id))
