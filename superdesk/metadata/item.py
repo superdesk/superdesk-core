@@ -135,6 +135,7 @@ metadata_schema = {
     },
     'genre': {
         'type': 'list',
+        'nullable': True,
         'mapping': {
             'type': 'object',
             'properties': {
