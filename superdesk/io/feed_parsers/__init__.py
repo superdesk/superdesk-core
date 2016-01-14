@@ -144,3 +144,4 @@ import superdesk.io.feed_parsers.wenn_parser  # NOQA
 import superdesk.io.feed_parsers.zczc  # NOQA
 import superdesk.io.feed_parsers.dpa_iptc7901  # NOQA
 import superdesk.io.feed_parsers.afp_newsml_1_2  # NOQA
+import superdesk.io.feed_parsers.scoop_newsml_2_0  # NOQA

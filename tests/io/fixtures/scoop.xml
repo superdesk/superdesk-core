@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--BusinessDesk NewsML-->
+<newsMessage xsi:schemaLocation="http://www.iptc.org/std/NAR/1.9/specification/NewsML-G2_2.8-spec-NewsItem-Power.xsd" standard="NewsML-G2" standardversion="2.8" conformance="power" lang="en-US" xmlns:xsi="http://iptc.org/std/nar/2006-10-01/" xmlns="http://iptc.org/std/nar/2006-10-01/">
+  <Header>
+    <Sent>2016-01-12 12:35:40</Sent>
+    <sender>BusinessDesk</sender>
+    <origin>BusinessDesk</origin>
+    <transmitId>20160112123540</transmitId>
+    <priority>5</priority>
+    <destination>All</destination>
+  </Header>
+  <itemSet>
+    <packageItem>
+      <itemRef residref="20160112123540" />
+    </packageItem>
+    <newsItem guid="BD-20160112123540" version="3" standard="NewsML-G2" standardversion="2.7">
+      <catalogRef href="http://www.iptc.org/std/catalog/catalog.IPTC-G2-Standards_13.xml" />
+      <rightsInfo>
+        <copyrightHolder literal="" />
+        <copyrightNotice />
+      </rightsInfo>
+      <itemMeta>
+        <itemClass qcode="ninat:text" />
+        <provider literal="CL" />
+        <versionCreated>2016-01-12 12:35:40</versionCreated>
+        <embargoed></embargoed>
+        <ednote></ednote>
+        <pubStatus qcode="stat:usable" />
+      </itemMeta>
+      <contentMeta>
+        <urgency>5</urgency>
+        <keyword role="krole:index"></keyword>
+        <subject type="Topic">
+          <name></name>
+        </subject>
+      </contentMeta>
+      <contentSet>
+        <inlineXML contenttype="application/nitf+xml">
+          <nitf xsi:schemaLocation="http://www.iptc.org/std/NITF/3.5/specification/nitf-3-5.xsd" xmlns:xsi="http://iptc.org/std/NITF/2006-10-18/">
+            <head>
+              <title>Dick Smith receivers install Don Grover as acting CEO as Abboud quits; retailer put up for sale</title>
+            </head>
+            <body>
+              <body.head>
+                <byline>By<person>Staff Reporter</person><byttl>BusinessDesk</byttl></byline>
+                <abstract> </abstract>
+              </body.head>
+              <body.content>
+                <p>By Jonathan Underhill</p>
+                <p>Jan. 12 (BusinessDesk) - The receivers of Dick Smith Holdings have appointed retailing veteran Don Grover as interim chief executive after the departure of Nick Abboud and have begun  an advertising campaign to sell the indebted consumer electronics chain.</p>
+                <p>James Stewart, Jim Sarantinos and Ryan Eagle of Ferrier Hodgson said in a statement that Abboud, installed as CEO by former owner Anchorage Capital Partners, resigned last night. Grover, a former chief at Retail Fusion Brands and Dymocks Group as well as holding various operational roles at Australian retailer David Jones, will assist the receivers and managers to run the business "as they work through the realisation and restructuring opportunities for the group and seek to sell it as a going concern," they said.</p>
+                <p>Dick Smith's shares were suspended from trading on the ASX last week after its banking syndicate withdrew support and put the company in receivership. Secured creditors are owed about A$140 million and unsecured creditors about A$250 million.</p>
+                <p>The receivers today began advertising Dick Smith for sale, having already received about 40 initial expressions of interest from various parties. They are seeking further expressions of interest by Jan. 27 and will then draw up a short-list who could undertake due diligence and submit formal offers, a process expected to take until "well into" February, they said.</p>
+                <p>Dick Smith Holdings operates 393 stores across Australia and New Zealand under four brands, Dick Smith, Electronics powered by Dick Smith, Move, and Move by Dick Smith.</p>
+                <p>The stock last traded at 35.5 Australian cents on the ASX, having tumbled 84 percent from the A$2.20-a-share Anchorage Capital Partners set for its initial public offering in 2013.</p>
+                <p>It bought Dick Smith from Woolworths in 2012, in a deal reportedly valued at about A$115 million, before selling down in 2013 in an IPO that valued the company at A$520.3 million. Anchorage sold its remaining 20 percent in September 2014 for about A$2.22 a share.</p>
+                <p>(BusinessDesk)</p>
+              </body.content>
+            </body>
+          </nitf>
+        </inlineXML>
+      </contentSet>
+    </newsItem>
+  </itemSet>
+</newsMessage>
