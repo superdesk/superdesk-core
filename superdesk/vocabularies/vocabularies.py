@@ -48,13 +48,15 @@ class VocabulariesResource(Resource):
         'items': {
             'type': 'list',
             'required': True
-        }
+        },
+        'service': {'type': 'dict'},
+        'priority': {'type': 'integer'},
     }
 
     item_url = 'regex("[\w]+")'
     item_methods = ['GET', 'PATCH']
     resource_methods = ['GET']
-    privileges = {'PATCH': 'vocabularies', }
+    privileges = {'PATCH': 'vocabularies'}
 
 
 class VocabulariesService(BaseService):
