@@ -293,10 +293,7 @@ metadata_schema = {
     # aka Locator as per NewML Specification
     'place': {
         'type': 'list',
-        'nullable': True,
-        'schema': {
-            'type': 'dict'
-        }
+        'nullable': True
     },
 
     # Not Categorized
