@@ -61,7 +61,7 @@ class FileFeedingService(FeedingService):
                             with open(file_path, 'rt') as f:
                                 xml = ElementTree.parse(f)
                                 parser = self.get_feed_parser(provider, xml.getroot())
-                                item = parser.parse(xml, provider)
+                                item = parser.parse(xml.getroot(), provider)
                         else:
                             parser = self.get_feed_parser(provider, file_path)
                             item = parser.parse(file_path, provider)

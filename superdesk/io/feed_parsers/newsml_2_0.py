@@ -123,7 +123,10 @@ class NewsMLTwoFeedParser(XMLFeedParser):
         except AttributeError:
             pass
 
-        item['language'] = meta.find(self.qname('language')).get('tag')
+        try:
+            item['language'] = meta.find(self.qname('language')).get('tag')
+        except AttributeError:
+            pass
 
         self.parse_content_subject(meta, item)
         self.parse_content_place(meta, item)
