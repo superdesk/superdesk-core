@@ -44,6 +44,8 @@ class WENNFeedParser(XMLFeedParser):
                 self.parse_content_management(item, entry)
                 self.parse_news_management(item, entry)
                 item['body_html'] = self.get_elem_content(entry.find(self.qname('content', self.ATOM_NS)))
+                item['body_html'] = item['body_html'].replace('\n\n  ', '</p><p>').replace('\n', '<br>')
+                item['body_html'] = '<p>' + item['body_html'] + '</p>'
                 itemList.append(item)
             return itemList
 
