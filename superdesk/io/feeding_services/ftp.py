@@ -12,6 +12,7 @@
 import os
 import ftplib
 import tempfile
+import logging
 from datetime import datetime
 
 from superdesk.io import register_feeding_service
@@ -25,6 +26,8 @@ try:
     from urllib.parse import urlparse
 except ImportError:
     from urlparse import urlparse
+
+logger = logging.getLogger("FTPFeedingService")
 
 
 class FTPFeedingService(FeedingService):
@@ -82,7 +85,12 @@ class FTPFeedingService(FeedingService):
                     local_file_path = os.path.join(config['dest_path'], filename)
                     try:
                         with open(local_file_path, 'xb') as f:
-                            ftp.retrbinary('RETR %s' % filename, f.write)
+                            try:
+                                ftp.retrbinary('RETR %s' % filename, f.write)
+                            except ftplib.all_errors as ex:
+                                os.remove(local_file_path)
+                                logger.exception('Exception retrieving from FTP server')
+                                continue
                     except FileExistsError:
                         continue
 

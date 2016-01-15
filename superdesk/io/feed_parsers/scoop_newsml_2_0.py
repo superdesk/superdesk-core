@@ -18,6 +18,7 @@ from superdesk.metadata.item import ITEM_TYPE
 from superdesk.io.iptc import subject_codes
 from superdesk.etree import get_word_count
 
+
 class ScoopNewsMLTwoFeedParser(NewsMLTwoFeedParser):
 
     NAME = 'scoop_newsml2'

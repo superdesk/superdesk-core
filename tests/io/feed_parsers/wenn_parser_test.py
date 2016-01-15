@@ -62,8 +62,8 @@ class WENNTestCase(unittest.TestCase):
                                                                                 minute=40, second=56, tzinfo=utc))
 
     def test_body(self):
-        self.assertEqual(self.items[0].get('body_html'), 'This is body content1.')
-        self.assertEqual(self.items[1].get('body_html'), 'This is body content2.')
+        self.assertEqual(self.items[0].get('body_html'), '<p>This is body content1.</p>')
+        self.assertEqual(self.items[1].get('body_html'), '<p>This is body content2.</p>')
 
     def test_item_defaults(self):
         self.assertEqual(self.items[0].get('pubstatus'), 'usable')
