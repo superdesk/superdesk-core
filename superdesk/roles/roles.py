@@ -9,6 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+
+from flask import current_app as app
 from superdesk.activity import add_activity, ACTIVITY_UPDATE
 from superdesk.services import BaseService
 from superdesk import get_resource_service
@@ -92,6 +94,7 @@ class RolesService(BaseService):
         if 'privileges' in updates:
             added, removed, modified = compare_preferences(role.get('privileges', {}), updates['privileges'])
             if len(removed) > 0 or (1, 0) in modified.values():
+                app.on_role_privileges_revoked(role, role_users)
                 push_notification('role_privileges_revoked', updated=1, role_id=str(role_id))
             if len(added) > 0 or (0, 1) in modified.values():
                 activity = add_activity(ACTIVITY_UPDATE,
