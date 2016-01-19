@@ -145,6 +145,7 @@ class SubscribersService(BaseService):
         req = ParsedRequest()
         all_subscribers = list(super().get(req=req, lookup=None))
         selected_subscribers = {}
+        selected_content_filters = {}
 
         filter_condition_service = get_resource_service('filter_conditions')
         content_filter_service = get_resource_service('content_filters')
@@ -152,6 +153,8 @@ class SubscribersService(BaseService):
         for fc in existing_filter_conditions:
             existing_content_filters = content_filter_service.get_content_filters_by_filter_condition(fc['_id'])
             for pf in existing_content_filters:
+                selected_content_filters[pf['_id']] = pf
+
                 if pf.get('is_global', False):
                     for s in all_subscribers:
                         gfs = s.get('global_filters', {})
@@ -164,7 +167,10 @@ class SubscribersService(BaseService):
                             s['content_filter']['filter_id'] == pf['_id']:
                         selected_subscribers[s['_id']] = s
 
-        return list(selected_subscribers.values())
+        res = {'filter_conditions': existing_filter_conditions,
+               'content_filters': list(selected_content_filters.values()),
+               'selected_subscribers': list(selected_subscribers.values())}
+        return [res]
 
     def _validate_seq_num_settings(self, subscriber):
         """
