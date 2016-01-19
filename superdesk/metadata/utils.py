@@ -29,7 +29,7 @@ aggregations = {
     'urgency': {'terms': {'field': 'urgency'}},
     'priority': {'terms': {'field': 'priority'}},
     'legal': {'terms': {'field': 'flags.marked_for_legal'}},
-    'keywords': {'terms': {'field': 'keywords'}},
+    'keywords': {'terms': {'field': 'keywords', 'size': 0}},
     'genre': {'terms': {'field': 'genre.name', 'size': 0}},
     'day': {'date_range': {'field': 'firstcreated', 'format': 'dd-MM-yyy HH:mm:ss', 'ranges': [{'from': 'now-24H'}]}},
     'week': {'date_range': {'field': 'firstcreated', 'format': 'dd-MM-yyy HH:mm:ss', 'ranges': [{'from': 'now-1w'}]}},
