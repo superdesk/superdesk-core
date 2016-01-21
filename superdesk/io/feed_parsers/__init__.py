@@ -63,16 +63,14 @@ class FeedParser(metaclass=ABCMeta):
         :type text: str
         """
 
-        if 'dateline' not in item:
-            item['dateline'] = {}
+        item.setdefault('dateline', {})
 
         if city:
             cities = find_cities()
             located = [c for c in cities if c['city'] == city]
             item['dateline']['located'] = located[0] if len(located) > 0 else {'city_code': city, 'city': city,
                                                                                'tz': 'UTC', 'dateline': 'city'}
-            if 'text' not in item['dateline']:
-                item['dateline']['text'] = city
+            item['dateline'].setdefault('text', city)
 
         if text:
             item['dateline']['text'] = text
