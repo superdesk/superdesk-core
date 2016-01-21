@@ -2,9 +2,6 @@ language: python
 
 sudo: false
 
-env:
-    - TARGET=unit
-
 python:
     - "3.4"
 
@@ -18,15 +15,12 @@ cache:
     - $HOME/.cache/pip
 
 install:
-    - if [ "${TARGET}" = "unit" ] ; then
-        pip install -r requirements.txt && pip install coveralls==1.0a2;
-      fi
+    - pip install .
+    - pip install -r requirements.txt
+    - pip install coveralls==1.0a2;
 
 script:
-    - if [ "${TARGET}" = "unit" ]; then
-        flake8;
-        nosetests --with-coverage --cover-package=superdesk ;
-      fi
+    - flake8
+    - nosetests --with-coverage --cover-package=superdesk
+    - behave --format progress2 --logging-level ERROR
 
-after_script:
-    - killall -9 python

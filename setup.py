@@ -9,15 +9,36 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-
 from setuptools import setup, find_packages
-from pip.req import parse_requirements
-from pip.download import PipSession
-
 
 LONG_DESCRIPTION = open('README.md').read()
-REQUIREMENTS = [str(ir.req) for ir in parse_requirements('requirements.txt', session=PipSession())
-                if not (getattr(ir, 'link', False) or getattr(ir, 'url', False))]
+
+install_requires = [
+    'eve>=0.6',
+    'eve-elastic>=0.2',
+    'flask>=0.10',
+    'flask-mail>=0.9',
+    'flask-script>=2.0.5',
+    'pillow>=2.9,<3.0',
+    'arrow>=0.4',
+    'asyncio>=3.4',
+    'bcrypt>=1.1,<1.2',
+    'beautifulsoup4>=4.4',
+    'blinker>=1.3',
+    'celery[redis]>=3.1.18',
+    'feedparser>=5.2',
+    'hachoir3-superdesk>=3.0a1',
+    'python3-ldap>=0.9.8',
+    'pytz>=2015.4',
+    'raven[flask]>=5.3.1',
+    'requests>=2.7.0',
+    'statsd>=3.1',
+    'httmock>=1.2.3',
+    'boto3>=1.1.4',
+    'websockets>=2.6',
+    'mongolock>=1.3.4',
+    'PyYAML>=3.11',
+]
 
 setup(
     name='Superdesk-Core',
@@ -30,7 +51,7 @@ setup(
     license='GPLv3',
     platforms=['any'],
     packages=find_packages(exclude=['tests']),
-    install_requires=REQUIREMENTS,
+    install_requires=install_requires,
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Web Environment',
