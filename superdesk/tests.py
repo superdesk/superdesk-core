@@ -16,7 +16,7 @@ import elasticsearch
 import logging
 
 from base64 import b64encode
-from flask import json
+from flask import json, Config
 from superdesk.notification_mock import setup_notification_mock, teardown_notification_mock
 from superdesk import get_resource_service
 from superdesk.factory import get_app
@@ -98,7 +98,13 @@ def drop_mongo_db(app, db_prefix, dbname):
 
 
 def setup(context=None, config=None, app_factory=get_app):
-    app_config = get_test_settings()
+
+    app_abspath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+    app_config = Config(app_abspath)
+    app_config.from_object('test_settings')
+    app_config['APP_ABSPATH'] = app_abspath
+
+    app_config.update(get_test_settings())
     if config:
         app_config.update(config)
 

@@ -14,7 +14,7 @@ from superdesk import get_resource_service
 
 class RolesTestCase(TestCase):
 
-    roles = [{'name': 'test', 'privileges': {'ingest':  1, 'archive': 1, 'fetch': 1}}]
+    roles = [{'name': 'test', 'privileges': {'ingest': 1, 'archive': 1, 'fetch': 1}}]
 
     users = [{'username': 'foobar', 'first_name': 'foo', 'last_name': 'bar',
               'user_type': 'user', 'display_name': 'Foo Bar', 'is_enabled': True}]
@@ -34,4 +34,4 @@ class RolesTestCase(TestCase):
 
         self.app.on_role_privileges_revoked -= on_revoke_roles
         self.app.on_role_privileges_revoked += on_revoke_roles
-        get_resource_service('roles').patch(self.roles[0]['_id'], {'privileges': {'ingest':  0}})
+        get_resource_service('roles').patch(self.roles[0]['_id'], {'privileges': {'ingest': 0}})

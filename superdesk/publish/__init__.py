@@ -38,8 +38,8 @@ def transmit():
 # must be imported for registration
 import superdesk.publish.transmitters  # NOQA
 import superdesk.publish.formatters  # NOQA
-from superdesk.publish.subscribers import SubscribersResource, SubscribersService
-from superdesk.publish.publish_queue import PublishQueueResource, PublishQueueService
+from superdesk.publish.subscribers import SubscribersResource, SubscribersService  # NOQA
+from superdesk.publish.publish_queue import PublishQueueResource, PublishQueueService  # NOQA
 
 
 def init_app(app):
