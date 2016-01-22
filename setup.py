@@ -11,7 +11,7 @@
 
 from setuptools import setup, find_packages
 
-LONG_DESCRIPTION = open('README.md').read()
+LONG_DESCRIPTION = "Superdesk Server Core"
 
 install_requires = [
     'eve>=0.6',
@@ -41,9 +41,23 @@ install_requires = [
     'PyYAML>=3.11',
 ]
 
+package_data = {
+    'superdesk': [
+        'templates/*.txt',
+        'templates/*.html',
+        'locators/data/*.json',
+        'io/data/*.json',
+    ],
+    'apps': [
+        'prepopulate/*.json',
+        'prepopulate/data_initialization/*.json',
+        'io/data/*.json',
+    ]
+}
+
 setup(
     name='Superdesk-Core',
-    version='0.0.1-dev',
+    version='0.0.3',
     description='Superdesk Core library',
     long_description=LONG_DESCRIPTION,
     author='petr jasek',
@@ -52,6 +66,8 @@ setup(
     license='GPLv3',
     platforms=['any'],
     packages=find_packages(exclude=['tests']),
+    package_data=package_data,
+    include_package_data=True,
     install_requires=install_requires,
     classifiers=[
         'Development Status :: 4 - Beta',
