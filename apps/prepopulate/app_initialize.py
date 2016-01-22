@@ -85,6 +85,15 @@ __entities__ = {
 }
 
 
+def get_filepath(filename):
+    basedir = app.config.get(
+        'INIT_DATA_PATH',
+        os.path.join(os.path.abspath(os.path.dirname(__file__)), 'data_initialization')
+    )
+
+    return os.path.join(basedir, filename)
+
+
 class AppInitializeWithDataCommand(superdesk.Command):
     """
     Initialize application with predefined data for various entities.
@@ -134,8 +143,7 @@ class AppInitializeWithDataCommand(superdesk.Command):
         """
         print('Config: ', app.config['APP_ABSPATH'])
         if file_name:
-            file_path = os.path.join(app.config.get('APP_ABSPATH'), 'apps', 'prepopulate', 'data_initialization',
-                                     file_name)
+            file_path = get_filepath(file_name)
             print('Got file path: ', file_path)
             with open(file_path, 'rt') as app_prepopulation:
                 service = get_resource_service(entity_name)

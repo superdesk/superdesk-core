@@ -28,6 +28,7 @@ install_requires = [
     'celery[redis]>=3.1.18',
     'feedparser>=5.2',
     'hachoir3-superdesk>=3.0a1',
+    'python-magic>=0.4',
     'python3-ldap>=0.9.8',
     'pytz>=2015.4',
     'raven[flask]>=5.3.1',

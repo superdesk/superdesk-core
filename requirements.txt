@@ -2,6 +2,5 @@ flake8
 nose
 pep8
 pyflakes
-python-magic
 httmock
 wooper
