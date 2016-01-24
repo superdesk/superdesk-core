@@ -13,8 +13,6 @@
 import os
 import json
 
-from datetime import timedelta
-from celery.schedules import crontab
 from kombu import Queue, Exchange
 
 try:
@@ -102,7 +100,7 @@ if env('REDIS_PORT'):
     REDIS_URL = env('REDIS_PORT').replace('tcp:', 'redis:')
 BROKER_URL = env('CELERY_BROKER_URL', REDIS_URL)
 CELERY_RESULT_BACKEND = BROKER_URL
-CELERY_ALWAYS_EAGER = (env('CELERY_ALWAYS_EAGER', False) == 'True')
+CELERY_ALWAYS_EAGER = True
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_ACCEPT_CONTENT = ['pickle', 'json']  # it's using pickle when in eager mode
 CELERY_IGNORE_RESULT = True
@@ -111,7 +109,7 @@ CELERYD_TASK_SOFT_TIME_LIMIT = 300
 CELERYD_LOG_FORMAT = '%(message)s level=%(levelname)s process=%(processName)s'
 CELERYD_TASK_LOG_FORMAT = ' '.join([CELERYD_LOG_FORMAT, 'task=%(task_name)s task_id=%(task_id)s'])
 
-CELERYBEAT_SCHEDULE_FILENAME = env('CELERYBEAT_SCHEDULE_FILENAME', './celerybeatschedule.db')
+CELERYBEAT_SCHEDULE_FILENAME = './testschedule.db'
 CELERY_DEFAULT_QUEUE = 'default'
 CELERY_DEFAULT_EXCHANGE = 'default'
 CELERY_DEFAULT_ROUTING_KEY = 'default'
@@ -158,44 +156,7 @@ CELERY_ROUTES = {
     }
 }
 
-
-CELERYBEAT_SCHEDULE = {
-    'ingest:update': {
-        'task': 'superdesk.io.update_ingest',
-        # there is internal schedule for updates per provider,
-        # so this is minimal interval when an update can occur
-        'schedule': timedelta(seconds=30),
-        'options': {'expires': 29}
-    },
-    'ingest:gc': {
-        'task': 'superdesk.io.gc_ingest',
-        'schedule': timedelta(minutes=5),
-    },
-    'session:gc': {
-        'task': 'apps.auth.session_purge',
-        'schedule': timedelta(minutes=20)
-    },
-    'content:gc': {
-        'task': 'apps.archive.content_expiry',
-        'schedule': crontab(minute='*/30')
-    },
-    'publish:transmit': {
-        'task': 'superdesk.publish.transmit',
-        'schedule': timedelta(seconds=10)
-    },
-    'publish:remove_overdue_scheduled': {
-        'task': 'apps.archive.remove_scheduled',
-        'schedule': crontab(minute=10)
-    },
-    'content:schedule': {
-        'task': 'apps.templates.content_templates.create_scheduled_content',
-        'schedule': crontab(minute='*/5'),
-    },
-    'legal:import_publish_queue': {
-        'task': 'apps.legal_archive.import_legal_publish_queue',
-        'schedule': timedelta(minutes=5)
-    }
-}
+CELERYBEAT_SCHEDULE = {}  # disable beat when testing
 
 SENTRY_DSN = env('SENTRY_DSN')
 SENTRY_INCLUDE_PATHS = ['superdesk']
@@ -319,14 +280,14 @@ RESET_PASSWORD_TOKEN_TIME_TO_LIVE = int(env('RESET_PASS_TTL', 1))  # The number 
 ACTIVATE_ACCOUNT_TOKEN_TIME_TO_LIVE = int(env('ACTIVATE_TTL', 7))
 
 # email server
-MAIL_SERVER = env('MAIL_SERVER', 'smtp.googlemail.com')
-MAIL_PORT = int(env('MAIL_PORT', 465))
-MAIL_USE_TLS = json.loads(env('MAIL_USE_TLS', 'False').lower())
-MAIL_USE_SSL = json.loads(env('MAIL_USE_SSL', 'False').lower())
-MAIL_USERNAME = env('MAIL_USERNAME', 'admin@sourcefabric.org')
-MAIL_PASSWORD = env('MAIL_PASSWORD', '')
+MAIL_SERVER = 'localhost'
+MAIL_PORT = 25
+MAIL_USE_TLS = False
+MAIL_USE_SSL = False
+MAIL_USERNAME = ''
+MAIL_PASSWORD = ''
 ADMINS = [MAIL_USERNAME]
-SUPERDESK_TESTING = (env('SUPERDESK_TESTING', 'false').lower() == 'true')
+SUPERDESK_TESTING = True
 
 # Default TimeZone
 DEFAULT_TIMEZONE = env('DEFAULT_TIMEZONE', 'Europe/Prague')

@@ -318,12 +318,13 @@ RESET_PASSWORD_TOKEN_TIME_TO_LIVE = int(env('RESET_PASS_TTL', 1))  # The number 
 ACTIVATE_ACCOUNT_TOKEN_TIME_TO_LIVE = int(env('ACTIVATE_TTL', 7))
 
 # email server
-MAIL_SERVER = env('MAIL_SERVER', 'smtp.googlemail.com')
-MAIL_PORT = int(env('MAIL_PORT', 465))
+MAIL_SERVER = env('MAIL_SERVER', 'localhost')
+MAIL_PORT = int(env('MAIL_PORT', 25))
 MAIL_USE_TLS = json.loads(env('MAIL_USE_TLS', 'False').lower())
 MAIL_USE_SSL = json.loads(env('MAIL_USE_SSL', 'False').lower())
-MAIL_USERNAME = env('MAIL_USERNAME', 'admin@sourcefabric.org')
+MAIL_USERNAME = env('MAIL_USERNAME', '')
 MAIL_PASSWORD = env('MAIL_PASSWORD', '')
+MAIL_DEFAULT_SENDER = MAIL_USERNAME or 'superdesk@localhost'
 ADMINS = [MAIL_USERNAME]
 SUPERDESK_TESTING = (env('SUPERDESK_TESTING', 'false').lower() == 'true')
 

@@ -105,8 +105,7 @@ def setup(context=None, config=None, app_factory=get_app):
     app_config['APP_ABSPATH'] = app_abspath
 
     app_config.update(get_test_settings())
-    if config:
-        app_config.update(config)
+    app_config.update(config or {})
 
     app = app_factory(app_config)
     logger = logging.getLogger('superdesk')
