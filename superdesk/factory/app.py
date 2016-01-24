@@ -42,9 +42,13 @@ def get_app(config=None, media_storage=None):
     abs_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     app_config = flask.Config(abs_path)
     app_config.from_object('superdesk.factory.default_settings')
-    app_config.from_object(config or {})
     app_config.setdefault('APP_ABSPATH', abs_path)
     app_config.setdefault('DOMAIN', {})
+
+    try:
+        app_config.update(config or {})
+    except TypeError:
+        app_config.from_object(config)
 
     if media_storage is None:
         media_storage = SuperdeskGridFSMediaStorage
@@ -86,7 +90,7 @@ def get_app(config=None, media_storage=None):
 
     init_celery(app)
 
-    for module_name in app.config['INSTALLED_APPS']:
+    for module_name in app.config.get('INSTALLED_APPS', []):
         app_module = importlib.import_module(module_name)
         try:
             app_module.init_app(app)
