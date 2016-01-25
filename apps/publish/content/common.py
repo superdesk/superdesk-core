@@ -51,6 +51,10 @@ ITEM_KILL = 'kill'
 item_operations.extend([ITEM_PUBLISH, ITEM_CORRECT, ITEM_KILL])
 
 
+def is_published(item):
+    return item[ITEM_STATE] in [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]
+
+
 class BasePublishResource(ArchiveResource):
     """
     Base resource class for "publish" endpoint.
@@ -163,6 +167,8 @@ class BasePublishService(BaseService):
 
             if original[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
                 self._publish_package_items(original, updates)
+            else:
+                self._resolve_associations(updates)
 
             queued_digital = False
             package = None
@@ -895,6 +901,21 @@ class BasePublishService(BaseService):
                     # check the locks on the items
                     if doc.get('lock_session', None) and package['lock_session'] != doc['lock_session']:
                         validation_errors.extend(['{}: packaged item cannot be locked'.format(doc['headline'])])
+
+    def _resolve_associations(self, item):
+        errors = []
+        search = get_resource_service('search')
+        for rel, ref in item.get('associations', {}).items():
+            lookup = {config.ID_FIELD: ref['uri']}
+            doc = search.find_one(req=None, **lookup)
+            if doc and is_published(doc):
+                ref.update(doc)
+            elif doc:
+                errors.append('related item is not published rel=%s item=%s' % (rel, ref['uri']))
+            else:
+                errors.append('related item not found rel=%s item=%s' % (rel, ref['uri']))
+        if errors:
+            raise ValidationError(errors)
 
 
 superdesk.workflow_state('published')
