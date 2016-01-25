@@ -57,7 +57,7 @@ package_data = {
 
 setup(
     name='Superdesk-Core',
-    version='0.0.5',
+    version='0.0.6',
     description='Superdesk Core library',
     long_description=LONG_DESCRIPTION,
     author='petr jasek',
