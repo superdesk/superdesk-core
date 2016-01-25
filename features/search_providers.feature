@@ -11,26 +11,18 @@ Feature: Search Provider Feature
         Given empty "search_providers"
         When we post to "search_providers"
 	    """
-        [{"search_provider": "aapmm", "source": "aapmm", "config": {"password":"", "username":""}}]
+        [{"search_provider": "testsearch", "source": "testsearch", "config": {"password":"", "username":""}}]
 	    """
-        And we get "/search_providers"
+        Then we get new resource
+        When we get "/search_providers"
         Then we get list with 1 items
 	    """
-        {"_items": [{"search_provider": "aapmm", "source": "aapmm", "is_closed": false, "config": {"password":"", "username":""}}]}
+        {"_items": [{"search_provider": "testsearch", "source": "testsearch", "is_closed": false, "config": {"password":"", "username":""}}]}
 	    """
 
     @auth
     Scenario: Creating a Search Provider fails if the search provider type hasn't been registered with the application
         Given empty "search_providers"
-        When we post to "search_providers"
-	    """
-        [{"search_provider": "aapmm", "source": "aapmm", "config": {"password":"", "username":""}}]
-	    """
-        And we get "/search_providers"
-        Then we get list with 1 items
-	    """
-        {"_items": [{"search_provider": "aapmm", "source": "aapmm", "is_closed": false, "config": {"password":"", "username":""}}]}
-	    """
         When we post to "search_providers"
 	    """
         [{"search_provider": "Multimedia", "source": "aapmm", "config": {"password":"", "username":""}}]
@@ -45,16 +37,12 @@ Feature: Search Provider Feature
         Given empty "search_providers"
         When we post to "search_providers"
 	    """
-        [{"search_provider": "aapmm", "source": "aapmm", "config": {"password":"", "username":""}}]
+        [{"search_provider": "testsearch", "source": "testsearch", "config": {"password":"", "username":""}}]
 	    """
-        And we get "/search_providers"
-        Then we get list with 1 items
-	    """
-        {"_items": [{"search_provider": "aapmm", "source": "aapmm", "is_closed": false, "config": {"password":"", "username":""}}]}
-	    """
+        Then we get new resource
         When we post to "search_providers"
 	    """
-        [{"search_provider": "aapmm", "source": "aapmm", "config": {"password":"", "username":""}}]
+        [{"search_provider": "testsearch", "source": "testsearch", "config": {"password":"", "username":""}}]
 	    """
         Then we get error 400
         """
@@ -66,12 +54,7 @@ Feature: Search Provider Feature
         Given empty "search_providers"
         When we post to "search_providers"
 	    """
-        [{"search_provider": "aapmm", "source": "aapmm", "config": {"password":"", "username":""}}]
-	    """
-        And we get "/search_providers"
-        Then we get list with 1 items
-	    """
-        {"_items": [{"search_provider": "aapmm", "source": "aapmm", "is_closed": false, "config": {"password":"", "username":""}}]}
+        [{"search_provider": "testsearch", "source": "testsearch", "config": {"password":"", "username":""}}]
 	    """
         When we patch "search_providers/#search_providers._id#"
         """
@@ -87,12 +70,7 @@ Feature: Search Provider Feature
         Given empty "search_providers"
         When we post to "search_providers"
 	    """
-        [{"search_provider": "aapmm", "source": "aapmm", "config": {"password":"", "username":""}}]
-	    """
-        And we get "/search_providers"
-        Then we get list with 1 items
-	    """
-        {"_items": [{"search_provider": "aapmm", "source": "aapmm", "is_closed": false, "config": {"password":"", "username":""}}]}
+        [{"search_provider": "testsearch", "source": "testsearch", "config": {"password":"", "username":""}}]
 	    """
         When we delete "search_providers/#search_providers._id#"
         Then we get response code 204

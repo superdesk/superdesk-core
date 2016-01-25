@@ -74,6 +74,8 @@ def before_scenario(context, scenario):
     if 'amazons3' in scenario.tags and not context.app.config.get('AMAZON_CONTAINER_NAME', None):
         scenario.mark_skipped()
 
+    setup_search_provider(context.app)
+
     if scenario.status != 'skipped' and 'auth' in scenario.tags:
         setup_auth_user(context)
 
@@ -116,3 +118,9 @@ def before_step(context, step):
             step.text = json.dumps(step_text_json)
         except:
             pass
+
+
+def setup_search_provider(app):
+    from apps.search_providers import register_search_provider, allowed_search_providers
+    if 'testsearch' not in allowed_search_providers:
+        register_search_provider('testsearch', 'testsearch')
