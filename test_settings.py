@@ -245,6 +245,8 @@ INSTALLED_APPS.extend([
     'apps.search_providers',
     'apps.search_providers.aap_mm',
     'apps.feature_preview',
+
+    'apps.picture_crop',
 ])
 
 RESOURCE_METHODS = ['GET', 'POST']
