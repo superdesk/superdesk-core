@@ -233,7 +233,6 @@ INSTALLED_APPS.extend([
     'apps.content_filters',
     'apps.dictionaries',
     'apps.duplication',
-    'apps.aap.import_text_archive',
     'apps.spellcheck',
     'apps.templates',
     'apps.archived',
@@ -243,7 +242,6 @@ INSTALLED_APPS.extend([
     'apps.macros',
     'apps.archive_broadcast',
     'apps.search_providers',
-    'apps.search_providers.aap_mm',
     'apps.feature_preview',
 
     'apps.picture_crop',
