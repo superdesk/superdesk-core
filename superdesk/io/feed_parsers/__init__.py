@@ -70,8 +70,6 @@ class FeedParser(metaclass=ABCMeta):
             located = [c for c in cities if c['city'] == city]
             item['dateline']['located'] = located[0] if len(located) > 0 else {'city_code': city, 'city': city,
                                                                                'tz': 'UTC', 'dateline': 'city'}
-            item['dateline'].setdefault('text', city)
-
         if text:
             item['dateline']['text'] = text
 
