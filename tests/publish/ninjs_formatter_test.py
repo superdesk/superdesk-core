@@ -28,6 +28,7 @@ class NinjsFormatterTest(TestCase):
     def test_text_formatter(self):
         embargo_ts = (utcnow() + timedelta(days=2))
         article = {
+            '_id': 'tag:aap.com.au:20150613:12345',
             'guid': 'tag:aap.com.au:20150613:12345',
             '_current_version': 1,
             'anpa_category': [{'qcode': 'a'}],
@@ -44,7 +45,6 @@ class NinjsFormatterTest(TestCase):
             'word_count': '1',
             'priority': 1,
             'profile': 'snap',
-            '_id': 'urn:localhost.abc',
             'state': 'published',
             'urgency': 2,
             'pubstatus': 'usable',
@@ -58,6 +58,7 @@ class NinjsFormatterTest(TestCase):
         }
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
         expected = {
+            "_id": "tag:aap.com.au:20150613:12345",
             "version": "1",
             "place": "Australia",
             "pubstatus": "usable",
@@ -68,7 +69,6 @@ class NinjsFormatterTest(TestCase):
             "service": [{"code": "a"}],
             "headline": "This is a test headline",
             "byline": "joe",
-            "_id": "urn:localhost.abc",
             "urgency": 2,
             "priority": 1,
             "embargoed": embargo_ts.isoformat(),
@@ -280,11 +280,12 @@ class NinjsFormatterTest(TestCase):
     def test_item_with_usable_associations(self):
         article = {
             '_id': 'urn:bar',
+            'guid': 'urn:bar',
             '_current_version': 1,
             'type': 'text',
             'associations': {
                 'image': {
-                    '_id': 'foo',
+                    '_id': 'urn:foo',
                     'guid': 'urn:foo',
                     'pubstatus': 'usable',
                     'headline': 'Foo',
@@ -310,7 +311,7 @@ class NinjsFormatterTest(TestCase):
         self.assertIn('associations', formatted)
         self.assertIn('image', formatted['associations'])
         image = formatted['associations']['image']
-        self.assertEqual('foo', image['_id'])
+        self.assertEqual('urn:foo', image['_id'])
         self.assertEqual('Foo', image['headline'])
         self.assertEqual('usable', image['pubstatus'])
         self.assertNotIn('task', image)
