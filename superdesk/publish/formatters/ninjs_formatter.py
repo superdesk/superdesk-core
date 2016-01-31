@@ -13,7 +13,7 @@ import superdesk
 from eve.utils import config
 from superdesk.publish.formatters import Formatter
 from superdesk.errors import FormatterError
-from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO
+from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, GUID_FIELD
 from superdesk.metadata.packages import RESIDREF, GROUP_ID, GROUPS, ROOT_GROUP, REFS
 from superdesk.utils import json_serialize_datetime_objectId
 
@@ -46,7 +46,7 @@ class NINJSFormatter(Formatter):
             pub_seq_num = superdesk.get_resource_service('subscribers').generate_sequence_number(subscriber)
 
             ninjs = {
-                '_id': article['_id'],
+                '_id': article[GUID_FIELD],
                 'version': str(article.get(config.VERSION, 1)),
                 'type': self._get_type(article)
             }
@@ -144,7 +144,7 @@ class NINJSFormatter(Formatter):
         """Format all associated items for simple items (not packages)."""
         associations = {}
         for key, item in article.get('associations', {}).items():
-            seq, formatted = self.format(item, subscriber)[0]
+            _seq, formatted = self.format(item, subscriber)[0]
             associations[key] = json.loads(formatted)
         return associations
 
