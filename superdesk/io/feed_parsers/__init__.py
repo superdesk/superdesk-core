@@ -63,7 +63,7 @@ class FeedParser(metaclass=ABCMeta):
         :type text: str
         """
 
-        item['dateline'] = {}
+        item.setdefault('dateline', {})
 
         if city:
             cities = find_cities()

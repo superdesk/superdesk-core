@@ -21,6 +21,8 @@ from superdesk.publish import init_app
 @mock.patch('superdesk.publish.subscribers.SubscribersService.generate_sequence_number', lambda self, subscriber: 1)
 class Newsml12FormatterTest(TestCase):
     article = {
+        '_id': 'urn:localhost.abc',
+        'guid': 'urn:localhost.abc',
         'source': 'AAP',
         'anpa_category': [{'qcode': 'a', 'name': 'Australian General News'}],
         'headline': 'This is a test headline',
@@ -34,7 +36,6 @@ class Newsml12FormatterTest(TestCase):
         'word_count': '1',
         'priority': 1,
         '_current_version': 5,
-        '_id': 'urn:localhost.abc',
         'state': 'published',
         'urgency': 2,
         'pubstatus': 'usable',
@@ -65,6 +66,8 @@ class Newsml12FormatterTest(TestCase):
     }
 
     preformatted = {
+        '_id': 'urn:localhost.123',
+        'guid': 'urn:localhost.123',
         'source': 'AAP',
         'anpa_category': [{'qcode': 'a', 'name': 'Australian General News'}],
         'headline': 'This is a test headline',
@@ -76,7 +79,6 @@ class Newsml12FormatterTest(TestCase):
         'type': 'preformatted',
         'body_html': 'The story body',
         'word_count': '1',
-        '_id': 'urn:localhost.123',
         '_current_version': 5,
         'state': 'published',
         'urgency': 2,
@@ -92,6 +94,7 @@ class Newsml12FormatterTest(TestCase):
 
     picture = {
         '_id': 'tag:localhost:2015:cf15b059-b997-4e34-a103-85b8d7ea4ba3',
+        'guid': 'tag:localhost:2015:cf15b059-b997-4e34-a103-85b8d7ea4ba3',
         'firstcreated': '2015-09-20T06:12:57.000Z',
         'versioncreated': '2015-09-20T06:14:11.000Z',
         'dateline': {
@@ -130,7 +133,6 @@ class Newsml12FormatterTest(TestCase):
         },
         'state': 'published',
         'anpa_category': [{'qcode': 'a', 'name': 'Australian General News'}],
-        'guid': '20150731001161435160',
         'source': 'AAP Image',
         '_current_version': 1,
         'original_source': 'AAP Image/AAP',
@@ -310,6 +312,7 @@ class Newsml12FormatterTest(TestCase):
 
     package = {
         '_id': 'urn:newsml:localhost:2015-08-12T11:59:58.457029:7e90d257-92f6-406d-9186-95653b211701',
+        'guid': 'urn:newsml:localhost:2015-08-12T11:59:58.457029:7e90d257-92f6-406d-9186-95653b211701',
         'type': 'composite',
         '_current_version': 1,
         'groups': [
@@ -343,7 +346,6 @@ class Newsml12FormatterTest(TestCase):
         'pubstatus': 'usable',
         'state': 'published',
         'marked_for_not_publication': False,
-        'guid': 'urn:newsml:localhost:2015-08-12T11:59:58.457029:7e90d257-92f6-406d-9186-95653b211701',
         'dateline': {
             'located': {
                 'alt_name': '',

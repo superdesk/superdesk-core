@@ -85,7 +85,6 @@ class TextParserTest(ItemTest):
         self.assertEqual("SOCCER-ENGLAND/CHELSEA-BENITEZ", self.item["slugline"])
         self.assertEqual("Soccer-Smiling Benitez pleads for support "
                          "after midweek outburst against opponent", self.item["headline"])
-        self.assertEqual("Bangalore", self.item.get("dateline", {}).get('located', {}).get('city'))
         self.assertEqual("SOCCER-ENGLAND/CHELSEA-BENITEZ:Soccer-Smiling Benitez pleads for support after midweek outburst", self.item.get('description'))  # noqa
 
     def test_content_set(self):

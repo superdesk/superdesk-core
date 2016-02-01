@@ -17,7 +17,8 @@ from eve.utils import config
 from superdesk.publish.formatters import Formatter
 import superdesk
 from superdesk.errors import FormatterError
-from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, ITEM_STATE, CONTENT_STATE
+from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, ITEM_STATE, CONTENT_STATE,\
+    GUID_FIELD
 from superdesk.metadata.packages import PACKAGE_TYPE, GROUP_ID, REFS, RESIDREF, ROLE, ROOT_GROUP
 from superdesk.utc import utcnow
 from flask import current_app as app
@@ -92,7 +93,7 @@ class NewsML12Formatter(Formatter):
         date_id = article.get('firstcreated').strftime("%Y%m%d")
         SubElement(news_identifier, 'ProviderId').text = app.config['NEWSML_PROVIDER_ID']
         SubElement(news_identifier, 'DateId').text = date_id
-        SubElement(news_identifier, 'NewsItemId').text = article[config.ID_FIELD]
+        SubElement(news_identifier, 'NewsItemId').text = article[GUID_FIELD]
         SubElement(news_identifier, 'RevisionId', attrib=revision).text = str(article.get(config.VERSION, ''))
         SubElement(news_identifier, 'PublicIdentifier').text = \
             self._generate_public_identifier(article[config.ID_FIELD], article.get(config.VERSION, ''),
