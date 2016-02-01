@@ -11,10 +11,10 @@
 
 
 import os
+import flask
 import importlib
 import jinja2
 import eve
-import superdesk.factory.settings
 import superdesk
 from flask.ext.mail import Mail
 from eve.io.mongo import MongoJSONEncoder
@@ -35,31 +35,32 @@ sentry = Sentry(register_signal=False, wrap_wsgi=False)
 def get_app(config=None, media_storage=None):
     """App factory.
 
-    :param config: configuration that can override config from `settings.py`
+    :param config: configuration that can override config from `default_settings.py`
     :return: a new SuperdeskEve app instance
     """
-    if config is None:
-        config = {}
 
-    abs_path = os.path.abspath(os.path.dirname(__file__))
-    config.setdefault('APP_ABSPATH', abs_path)
+    abs_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+    app_config = flask.Config(abs_path)
+    app_config.from_object('superdesk.factory.default_settings')
+    app_config.setdefault('APP_ABSPATH', abs_path)
+    app_config.setdefault('DOMAIN', {})
 
-    for key in dir(superdesk.factory.settings):
-        if key.isupper():
-            config.setdefault(key, getattr(superdesk.factory.settings, key))
+    try:
+        app_config.update(config or {})
+    except TypeError:
+        app_config.from_object(config)
 
     if media_storage is None:
         media_storage = SuperdeskGridFSMediaStorage
-
-    config.setdefault('DOMAIN', {})
 
     app = eve.Eve(
         data=SuperdeskDataLayer,
         auth=TokenAuth,
         media=media_storage,
-        settings=config,
+        settings=app_config,
         json_encoder=MongoJSONEncoder,
-        validator=SuperdeskValidator)
+        validator=SuperdeskValidator,
+        template_folder=os.path.join(abs_path, 'templates'))
 
     superdesk.app = app
 
@@ -89,7 +90,7 @@ def get_app(config=None, media_storage=None):
 
     init_celery(app)
 
-    for module_name in app.config['INSTALLED_APPS']:
+    for module_name in app.config.get('INSTALLED_APPS', []):
         app_module = importlib.import_module(module_name)
         try:
             app_module.init_app(app)

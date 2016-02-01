@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+import superdesk
 
 from flask import current_app as app
 from superdesk.activity import add_activity, ACTIVITY_UPDATE
@@ -17,11 +18,10 @@ from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification
 from superdesk.utils import compare_preferences
-import superdesk
+from superdesk.resource import Resource
+
 
 logger = logging.getLogger(__name__)
-
-from superdesk.resource import Resource
 
 
 class RolesResource(Resource):
