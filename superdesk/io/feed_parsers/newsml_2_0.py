@@ -101,9 +101,7 @@ class NewsMLTwoFeedParser(XMLFeedParser):
 
             elem = elemTree.find(self.qname(key))
             if elem is not None:
-                if dest == 'dateline':
-                    self.set_dateline(item, city=elem.text)
-                elif dest == 'urgency':
+                if dest == 'urgency':
                     item[dest] = int(elem.text)
                 else:
                     item[dest] = elem.text
@@ -113,7 +111,6 @@ class NewsMLTwoFeedParser(XMLFeedParser):
         parse_meta_item_text('headline')
         # parse_meta_item_text('creditline')
         parse_meta_item_text('by', 'byline')
-        parse_meta_item_text('name', 'dateline', meta.find(self.qname('located')))
 
         item['slugline'] = item.get('slugline', '')
         item['headline'] = item.get('headline', '')
