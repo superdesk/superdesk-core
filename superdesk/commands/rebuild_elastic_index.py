@@ -37,7 +37,7 @@ class RebuildElasticIndex(superdesk.Command):
             print('Deleting index: ', index_name)
             get_indices(es).delete(index_name)
             print('Creating alias: ', index_name)
-            get_indices(es).put_alias(index_name, clone_name)
+            get_indices(es).put_alias(index=clone_name, name=index_name)
             print('Alias created.')
         except elasticsearch.exceptions.NotFoundError as nfe:
             print(nfe)

@@ -110,7 +110,7 @@ def create_server(config):
     """
     try:
         host = config['WS_HOST']
-        port = config['WS_PORT']
+        port = int(config['WS_PORT'])
         loop = asyncio.get_event_loop()
         server = loop.run_until_complete(websockets.serve(connection_handler, host, port))
         loop.add_signal_handler(signal.SIGTERM, loop.stop)

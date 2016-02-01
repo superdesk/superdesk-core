@@ -48,7 +48,13 @@ class VocabulariesResource(Resource):
         'items': {
             'type': 'list',
             'required': True
-        }
+        },
+        'service': {
+            'type': 'dict',
+        },
+        'priority': {
+            'type': 'integer'
+        },
     }
 
     item_url = 'regex("[\w]+")'
