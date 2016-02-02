@@ -26,8 +26,7 @@ from test_factory import setup_auth_user
 readonly_fields = ['display_name', 'password', 'phone', 'first_name', 'last_name']
 
 
-def before_all(context):
-    config = {}
+def setup_before_all(context, config, app_factory):
     if AMAZON_CONTAINER_NAME:
         config['AMAZON_CONTAINER_NAME'] = AMAZON_CONTAINER_NAME
         config['AMAZON_ACCESS_KEY_ID'] = AMAZON_ACCESS_KEY_ID
@@ -36,30 +35,15 @@ def before_all(context):
         config['AMAZON_SERVE_DIRECT_LINKS'] = AMAZON_SERVE_DIRECT_LINKS
         config['AMAZON_S3_USE_HTTPS'] = AMAZON_S3_USE_HTTPS
 
-    tests.setup(context=context, config=config, app_factory=get_app)
+    tests.setup(context=context, config=config, app_factory=app_factory)
     os.environ['BEHAVE_TESTING'] = '1'
 
 
-def before_feature(context, feature):
-    if 'tobefixed' in feature.tags:
-        feature.mark_skipped()
-
-    if 'dbauth' in feature.tags and LDAP_SERVER:
-        feature.mark_skipped()
-
-    if 'ldapauth' in feature.tags and not LDAP_SERVER:
-        feature.mark_skipped()
-
-    if 'amazons3' in feature.tags and not context.app.config.get('AMAZON_CONTAINER_NAME', None):
-        feature.mark_skipped()
-
-
-def before_scenario(context, scenario):
-    config = {}
+def setup_before_scenario(context, scenario, config, app_factory):
     if scenario.status != 'skipped' and 'notesting' in scenario.tags:
         config['SUPERDESK_TESTING'] = False
 
-    tests.setup(context=context, config=config, app_factory=get_app)
+    tests.setup(context=context, config=config, app_factory=app_factory)
     context.headers = [
         ('Content-Type', 'application/json'),
         ('Origin', 'localhost')
@@ -90,6 +74,30 @@ def before_scenario(context, scenario):
 
     if scenario.status != 'skipped' and 'notification' in scenario.tags:
         tests.setup_notification(context)
+
+
+def before_all(context):
+    config = {}
+    setup_before_all(context, config, app_factory=get_app)
+
+
+def before_feature(context, feature):
+    if 'tobefixed' in feature.tags:
+        feature.mark_skipped()
+
+    if 'dbauth' in feature.tags and LDAP_SERVER:
+        feature.mark_skipped()
+
+    if 'ldapauth' in feature.tags and not LDAP_SERVER:
+        feature.mark_skipped()
+
+    if 'amazons3' in feature.tags and not context.app.config.get('AMAZON_CONTAINER_NAME', None):
+        feature.mark_skipped()
+
+
+def before_scenario(context, scenario):
+    config = {}
+    setup_before_scenario(context, scenario, config, app_factory=get_app)
 
 
 def after_scenario(context, scenario):
