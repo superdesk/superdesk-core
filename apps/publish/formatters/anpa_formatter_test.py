@@ -214,3 +214,10 @@ class ANPAFormatterTest(SuperdeskTestCase):
         self.assertEqual('r', map_priority(None))
         self.assertEqual('r', map_priority(7))
         self.assertEqual('r', map_priority(''))
+
+    def test_dateline_with_empty_text(self):
+        f = AAPAnpaFormatter()
+        subscriber = self.app.data.find('subscribers', None, None)[0]
+        item = self.article.copy()
+        item.update({'dateline': {'text': None}})
+        seq, out = f.format(item, subscriber)[0]
