@@ -95,7 +95,7 @@ class AAPAnpaFormatter(Formatter):
                     anpa.append(article.get(BYLINE).encode('ascii', 'ignore'))
                     anpa.append(b'\x0D\x0A')
 
-                if 'dateline' in article and 'text' in article['dateline']:
+                if article.get('dateline', {}).get('text'):
                     anpa.append(article.get('dateline').get('text').encode('ascii', 'ignore'))
 
                 body = self.append_body_footer(article)
