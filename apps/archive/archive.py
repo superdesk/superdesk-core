@@ -164,9 +164,6 @@ class ArchiveService(BaseService):
             if doc.get('version') == 0:
                 doc[config.VERSION] = doc['version']
 
-            if not doc.get('ingest_provider'):
-                doc['source'] = config.DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES
-
             doc.setdefault('priority', config.DEFAULT_PRIORITY_VALUE_FOR_MANUAL_ARTICLES)
             doc.setdefault('urgency', config.DEFAULT_URGENCY_VALUE_FOR_MANUAL_ARTICLES)
 
