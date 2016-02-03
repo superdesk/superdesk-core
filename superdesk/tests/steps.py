@@ -147,7 +147,8 @@ def json_match(context_data, response_data):
 
 def get_fixture_path(context, fixture):
     path = context.app.settings.get('BEHAVE_TESTS_FIXTURES_PATH',
-                                    os.path.join(os.path.abspath(os.path.dirname(__file__)), 'fixtures'))
+                                    os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')),
+                                                 'features', 'steps', 'fixtures'))
     return os.path.join(path, fixture)
 
 
