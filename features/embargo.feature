@@ -209,7 +209,7 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     """
     Then we get error 400
     """
-    {"_message": "Package can't have item which has emabrgo. Slugline/Unique Name of the item having embargo: text with embargo/#text_with_embargo"}
+    {"_message": "Package can't have item which has embargo. Slugline/Unique Name of the item having embargo: text with embargo/#text_with_embargo"}
     """
 
   @auth

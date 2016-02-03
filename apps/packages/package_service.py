@@ -419,7 +419,7 @@ class PackageService():
             doc = get_resource_service(ARCHIVE).find_one(req=None, _id=item_ref)
 
             if doc.get(EMBARGO):
-                raise SuperdeskApiError.badRequestError("Package can't have item which has emabrgo. "
+                raise SuperdeskApiError.badRequestError("Package can't have item which has embargo. "
                                                         "Slugline/Unique Name of the item having embargo: %s/%s" %
                                                         (doc.get('slugline'), doc.get('unique_name')))
 

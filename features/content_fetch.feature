@@ -186,8 +186,14 @@ Feature: Fetch Items from Ingest
       Then we get list with 2 items
       """
       {"_items": [
-              {"family_id": "tag_reuters.com_2014_newsml_LOVEA6M0L7U2E"},
-              {"family_id": "tag_reuters.com_2014_newsml_LOVEA6M0L7U2E"}
+              {
+                "family_id": "tag_reuters.com_2014_newsml_LOVEA6M0L7U2E",
+                "unique_id": 1
+               },
+              {
+                "family_id": "tag_reuters.com_2014_newsml_LOVEA6M0L7U2E",
+                "unique_id": 2
+              }
               ]}
       """
 

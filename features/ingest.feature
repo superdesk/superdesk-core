@@ -158,8 +158,14 @@ Feature: Fetch From Ingest
         {"_message": "Deleting an Ingest Source after receiving items is prohibited."}
         """
 
+
     @auth
     Scenario: Ingested item must have unique id and unique name
+        Given empty "archive"
+        And "desks"
+        """
+        [{"name": "Sports"}]
+        """
         Given "ingest"
             """
             [{
@@ -167,10 +173,48 @@ Feature: Fetch From Ingest
                 "urgency": "1",
                 "source": "example.com",
                 "versioncreated": "2013-11-11T11:11:11+00:00"
+            }, {
+                "guid": "tag_example.com_0000_newsml_BRE9A606",
+                "urgency": "1",
+                "source": "example.com",
+                "versioncreated": "2013-11-11T11:11:11+00:00"
             }]
             """
         Then we get "unique_id" in "/ingest/tag_example.com_0000_newsml_BRE9A605"
         And we get "unique_name" in "/ingest/tag_example.com_0000_newsml_BRE9A605"
+        When we get "/ingest"
+        Then we get existing resource
+        """
+        {
+            "_items": [
+                {
+                    "_id": "tag_example.com_0000_newsml_BRE9A605",
+                    "unique_id": 1
+                },
+                {
+                    "_id": "tag_example.com_0000_newsml_BRE9A606",
+                    "unique_id": 2
+                }
+            ]
+        }
+        """
+
+        When we post to "/ingest/tag_example.com_0000_newsml_BRE9A606/fetch"
+        """
+        {"desk": "#desks._id#"}
+        """
+        Then we get new resource
+        When we get "/archive?q=#desks._id#"
+        Then we get list with 1 items
+        """
+        {"_items": [
+          {
+              "ingest_id": "tag_example.com_0000_newsml_BRE9A606",
+              "unique_id": 1
+          }
+        ]}
+        """
+
 
     @auth
     @provider
