@@ -428,6 +428,10 @@ def item_schema(extra=None):
                 'marked_for_legal': {
                     'type': 'boolean',
                     'default': False
+                },
+                'marked_archived_only': {
+                    'type': 'boolean',
+                    'default': False
                 }
             }
         },

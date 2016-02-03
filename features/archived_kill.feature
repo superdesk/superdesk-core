@@ -97,6 +97,26 @@ Feature: Kill a content item in the (dusty) archive
     Then we get list with 0 items
 
   @auth @notification
+  Scenario: Kill a Text Article that exists only in Archived
+    Given "archived" with objectid
+    """
+    [{
+      "_id": "56aad5a61d41c8aa98ddd015", "guid": "123", "item_id": "123", "_current_version": "1", "type": "text", "abstract": "test", "state": "fetched", "slugline": "slugline",
+      "headline": "headline", "anpa_category" : [{"qcode" : "e", "name" : "Entertainment"}],
+      "flags" : {"marked_archived_only": true},
+      "subject":[{"qcode": "17004000", "name": "Statistics"}],
+      "body_html": "Test Document body"
+    }]
+    """
+    When we patch "/archived/56aad5a61d41c8aa98ddd015"
+    """
+    {}
+    """
+    When we get "/archived"
+    Then we get list with 0 items
+    And we get 1 emails
+
+  @auth @notification
   Scenario: Kill a Text Article also kills the Digital Story in the Dusty Archive
     When we post to "/archive" with success
     """
