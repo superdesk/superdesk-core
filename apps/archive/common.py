@@ -47,8 +47,8 @@ BROADCAST_GENRE = 'Broadcast Script'
 RE_OPENS = 'reopens'
 
 
-def get_org_name_abbr():
-    return app.config.get('ORGANIZATION_NAME_ABBREVIATION')
+def get_default_source():
+    return app.config.get('DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES')
 
 
 def update_version(updates, original):
@@ -79,10 +79,16 @@ def on_create_item(docs, repo_type=ARCHIVE):
         set_default_state(doc, CONTENT_STATE.DRAFT)
         doc.setdefault(config.ID_FIELD, doc[GUID_FIELD])
 
+        if repo_type == ARCHIVE and not doc.get('ingest_provider'):
+            # set the source for the article
+            set_default_source(doc)
+
         copy_metadata_from_user_preferences(doc, repo_type)
 
         if not doc.get(ITEM_OPERATION):
             doc[ITEM_OPERATION] = ITEM_CREATE
+
+
 
 
 def format_dateline_to_locmmmddsrc(located, current_timestamp, source=None):
@@ -93,7 +99,7 @@ def format_dateline_to_locmmmddsrc(located, current_timestamp, source=None):
     """
 
     if source is None:
-        source = get_org_name_abbr()
+        source = get_default_source()
 
     dateline_location = "{city_code}"
     dateline_location_format_fields = located.get('dateline', 'city')
@@ -119,6 +125,36 @@ def format_dateline_to_locmmmddsrc(located, current_timestamp, source=None):
                                                   source=source)
 
 
+def set_default_source(doc):
+    """
+    Set the source for the item.
+    If desk level source is specified then use that source else default from global settings.
+    :param {dict} doc: doc where source is defined
+    """
+
+    # set the source for the article as default
+    source = get_default_source()
+    desk_id = doc.get('task', {}).get('desk')
+
+    if desk_id:
+        # if desk level source is specified then use that instead of the default source
+        desk = get_resource_service('desks').find_one(req=None, _id=desk_id)
+        source = desk.get('source') or source
+
+    doc['source'] = source
+
+    if not doc.get('dateline'):
+        return
+
+    doc['dateline']['source'] = source
+
+    if not (doc['dateline'].get('located') and doc['dateline'].get('date')):
+        return
+
+    doc['dateline']['text'] = format_dateline_to_locmmmddsrc(doc['dateline'].get('located'),
+                                                             doc['dateline'].get('date'), source)
+
+
 def on_duplicate_item(doc):
     """Make sure duplicated item has basic fields populated."""
 
@@ -128,6 +164,7 @@ def on_duplicate_item(doc):
     set_sign_off(doc)
     doc['force_unlock'] = True
     doc[ITEM_OPERATION] = ITEM_DUPLICATE
+    set_default_source(doc)
 
 
 def update_dates_for(doc):
@@ -548,18 +585,19 @@ def copy_metadata_from_user_preferences(doc, repo_type=ARCHIVE):
 
     if repo_type == ARCHIVE:
         user = get_user()
+        source = doc.get('source') or get_default_source()
 
         if doc.get('operation', '') != 'fetch':
             if 'dateline' not in doc:
                 current_date_time = dateline_ts = utcnow()
-                doc['dateline'] = {'date': current_date_time, 'source': get_org_name_abbr(), 'located': None,
+                doc['dateline'] = {'date': current_date_time, 'source': source, 'located': None,
                                    'text': None}
 
                 if user and user.get('user_preferences', {}).get('dateline:located'):
                     located = user.get('user_preferences', {}).get('dateline:located', {}).get('located')
                     if located:
                         doc['dateline']['located'] = located
-                        doc['dateline']['text'] = format_dateline_to_locmmmddsrc(located, dateline_ts)
+                        doc['dateline']['text'] = format_dateline_to_locmmmddsrc(located, dateline_ts, source)
 
             if BYLINE not in doc and user and user.get(BYLINE):
                     doc[BYLINE] = user[BYLINE]
