@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from test_settings import LDAP_SERVER
+from superdesk.tests.test_settings import LDAP_SERVER
 from flask import json
 from superdesk.tests import TestCase, setup, setup_db_user, test_user, get_prefixed_url, add_to_context
 from superdesk.factory import get_app

@@ -101,7 +101,7 @@ def setup(context=None, config=None, app_factory=get_app):
 
     app_abspath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     app_config = Config(app_abspath)
-    app_config.from_object('test_settings')
+    app_config.from_object('superdesk.tests.test_settings')
     app_config['APP_ABSPATH'] = app_abspath
 
     app_config.update(get_test_settings())
