@@ -13,8 +13,9 @@ Feature: Duplication of Content within Desk
       """
       And "archive"
       """
-      [{  "type":"text", "headline": "test1", "guid": "123", "original_creator": "#CONTEXT_USER_ID#", "state": "submitted",
-          "subject":[{"qcode": "17004000", "name": "Statistics"}], "body_html": "Test Document body",
+      [{  "type":"text", "headline": "test1", "guid": "123", "original_creator": "#CONTEXT_USER_ID#",
+          "state": "submitted", "source": "REUTERS", "subject":[{"qcode": "17004000", "name": "Statistics"}],
+          "body_html": "Test Document body",
           "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}]
       """
 
@@ -42,7 +43,8 @@ Feature: Duplication of Content within Desk
       When we get "/archive/#duplicate._id#"
       Then we get existing resource
       """
-      {"state": "submitted", "_current_version": 4, "task": {"desk": "#desks._id#", "stage": "#desks.working_stage#", "user": "#CONTEXT_USER_ID#"}}
+      {"state": "submitted", "_current_version": 4, "source": "SAP",
+       "task": {"desk": "#desks._id#", "stage": "#desks.working_stage#", "user": "#CONTEXT_USER_ID#"}}
       """
       Then there is no "last_production_desk" in task
       And there is no "last_authoring_desk" in task
@@ -77,6 +79,28 @@ Feature: Duplication of Content within Desk
       When we get "/archive?q=#desks._id#"
       Then we get list with 2 items
 
+    @auth
+    Scenario: Duplicate a content where desk has source
+       When we patch "desks/#desks._id#"
+       """
+       {"source": "FOO"}
+       """
+       Then we get OK response
+       When we post to "/archive/123/duplicate"
+       """
+       {"desk": "#desks._id#"}
+       """
+       When we get "/archive/#duplicate._id#"
+       Then we get existing resource
+       """
+       {"state": "submitted", "_current_version": 1, "source": "FOO",
+       "task": {"desk": "#desks._id#", "stage": "#desks.working_stage#", "user": "#CONTEXT_USER_ID#"}}
+       """
+       When we get "/archive/#duplicate._id#?version=all"
+       Then we get list with 1 items
+       When we get "/archive?q=#desks._id#"
+       Then we get list with 2 items
+      
     @auth
     @provider
     Scenario: Duplicate a package
