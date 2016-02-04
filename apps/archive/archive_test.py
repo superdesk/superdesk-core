@@ -11,7 +11,6 @@
 
 from bson import ObjectId
 
-from flask import current_app as app
 from superdesk import get_resource_service
 from test_factory import SuperdeskTestCase
 from eve.utils import date_to_str
@@ -23,11 +22,7 @@ from datetime import timedelta, datetime
 from pytz import timezone
 from apps.archive.common import validate_schedule, remove_media_files, \
     format_dateline_to_locmmmddsrc, convert_task_attributes_to_objectId, \
-    is_genre, BROADCAST_GENRE
-
-
-def get_org_name():
-    return app.config.get('ORGANIZATION_NAME_ABBREVIATION')
+    is_genre, BROADCAST_GENRE, get_default_source, set_default_source
 
 
 class RemoveSpikedContentTestCase(SuperdeskTestCase):
@@ -249,28 +244,28 @@ class ArchiveTestCase(SuperdeskTestCase):
     def test_format_dateline_to_format_when_only_city_is_present(self):
         located, formatted_date, current_ts = self._get_located_and_current_utc_ts()
         formatted_dateline = format_dateline_to_locmmmddsrc(located, current_ts)
-        self.assertEqual(formatted_dateline, 'SYDNEY %s %s -' % (formatted_date, get_org_name()))
+        self.assertEqual(formatted_dateline, 'SYDNEY %s %s -' % (formatted_date, get_default_source()))
 
     def test_format_dateline_to_format_when_only_city_and_state_are_present(self):
         located, formatted_date, current_ts = self._get_located_and_current_utc_ts()
 
         located['dateline'] = "city,state"
         formatted_dateline = format_dateline_to_locmmmddsrc(located, current_ts)
-        self.assertEqual(formatted_dateline, 'SYDNEY, NSW %s %s -' % (formatted_date, get_org_name()))
+        self.assertEqual(formatted_dateline, 'SYDNEY, NSW %s %s -' % (formatted_date, get_default_source()))
 
     def test_format_dateline_to_format_when_only_city_and_country_are_present(self):
         located, formatted_date, current_ts = self._get_located_and_current_utc_ts()
 
         located['dateline'] = "city,country"
         formatted_dateline = format_dateline_to_locmmmddsrc(located, current_ts)
-        self.assertEqual(formatted_dateline, 'SYDNEY, AU %s %s -' % (formatted_date, get_org_name()))
+        self.assertEqual(formatted_dateline, 'SYDNEY, AU %s %s -' % (formatted_date, get_default_source()))
 
     def test_format_dateline_to_format_when_city_state_and_country_are_present(self):
         located, formatted_date, current_ts = self._get_located_and_current_utc_ts()
 
         located['dateline'] = "city,state,country"
         formatted_dateline = format_dateline_to_locmmmddsrc(located, current_ts)
-        self.assertEqual(formatted_dateline, 'SYDNEY, NSW, AU %s %s -' % (formatted_date, get_org_name()))
+        self.assertEqual(formatted_dateline, 'SYDNEY, NSW, AU %s %s -' % (formatted_date, get_default_source()))
 
     def test_if_task_attributes_converted_to_objectid(self):
         doc = {
@@ -289,6 +284,50 @@ class ArchiveTestCase(SuperdeskTestCase):
         self.assertEqual(doc['task']['stage'], 'test')
         self.assertEqual(doc['task']['last_authoring_desk'], 3245)
         self.assertIsNone(doc['task']['last_production_desk'])
+
+    def test_if_no_source_defined_on_desk(self):
+        desk = {'name': 'sports'}
+        self.app.data.insert('desks', [desk])
+        located, formatted_date, current_ts = self._get_located_and_current_utc_ts()
+        doc = {
+            '_id': '123',
+            'task': {
+                'desk': desk['_id'],
+                'stage': desk['working_stage']
+            },
+            'dateline': {
+                'located': located,
+                'date': current_ts
+            }
+        }
+
+        set_default_source(doc)
+        self.assertEqual(doc['source'], get_default_source())
+        self.assertEqual(doc['dateline']['source'], get_default_source())
+        self.assertEqual(doc['dateline']['text'], 'SYDNEY %s %s -' % (formatted_date,
+                                                                      get_default_source()))
+
+    def test_if_source_defined_on_desk(self):
+        source = 'FOO'
+        desk = {'name': 'sports', 'source': source}
+        self.app.data.insert('desks', [desk])
+        located, formatted_date, current_ts = self._get_located_and_current_utc_ts()
+        doc = {
+            '_id': '123',
+            'task': {
+                'desk': desk['_id'],
+                'stage': desk['working_stage']
+            },
+            'dateline': {
+                'located': located,
+                'date': current_ts
+            }
+        }
+
+        set_default_source(doc)
+        self.assertEqual(doc['source'], source)
+        self.assertEqual(doc['dateline']['source'], source)
+        self.assertEqual(doc['dateline']['text'], 'SYDNEY %s %s -' % (formatted_date, source))
 
 
 class ArchiveCommonTestCase(SuperdeskTestCase):

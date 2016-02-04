@@ -405,7 +405,7 @@ Feature: News Items Archive
         """
         Then we get new resource
         """
-        {"type": "text", "source":"AAP", "priority":6, "urgency":3}
+        {"type": "text", "source":"SAP", "priority":6, "urgency":3}
         """
 
     @auth
@@ -503,3 +503,41 @@ Feature: News Items Archive
         """
         {"_issues": {"validator exception": "400: Duplicate subjects are not allowed"}, "_status": "ERR"}
         """
+
+    @auth
+ 	Scenario: Create content on a desk with no source setting on the desk
+ 	    Given "desks"
+ 	    """
+         [{"name": "sports"}]
+         """
+         And "archive"
+         """
+         [{  "type":"text", "headline": "test1", "guid": "123", "original_creator": "#CONTEXT_USER_ID#", "state": "submitted",
+               "subject":[{"qcode": "17004000", "name": "Statistics"}], "body_html": "Test Document body",
+               "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}]
+         """
+         When we get "archive/123"
+         Then we get OK response
+         Then we get existing resource
+         """
+         {"guid": "123", "source": "SAP", "dateline": {"source": "SAP"}}
+         """
+ 
+ 	@auth
+ 	Scenario: Create content on a desk with source setting on the desk
+ 	    Given "desks"
+ 	    """
+         [{"name": "sports", "source": "FOO"}]
+         """
+         And "archive"
+         """
+         [{  "type":"text", "headline": "test1", "guid": "123", "original_creator": "#CONTEXT_USER_ID#", "state": "submitted",
+               "subject":[{"qcode": "17004000", "name": "Statistics"}], "body_html": "Test Document body",
+               "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}]
+         """
+         When we get "archive/123"
+         Then we get OK response
+         Then we get existing resource
+         """
+         {"guid": "123", "source": "FOO", "dateline": {"source": "FOO"}}
+         """ 
