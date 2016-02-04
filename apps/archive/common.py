@@ -89,8 +89,6 @@ def on_create_item(docs, repo_type=ARCHIVE):
             doc[ITEM_OPERATION] = ITEM_CREATE
 
 
-
-
 def format_dateline_to_locmmmddsrc(located, current_timestamp, source=None):
     """
     Formats dateline to "Location, Month Date Source -"

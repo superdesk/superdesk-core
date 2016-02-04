@@ -11,7 +11,6 @@
 
 from bson import ObjectId
 
-from flask import current_app as app
 from superdesk import get_resource_service
 from test_factory import SuperdeskTestCase
 from eve.utils import date_to_str
