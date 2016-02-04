@@ -733,6 +733,7 @@ def step_impl_when_upload_image_with_guid(context, file_name, destination, guid)
         set_placeholder(context, 'original.href', context.archive['renditions']['original']['href'])
         set_placeholder(context, 'original.media', context.archive['renditions']['original']['media'])
 
+
 @when('we upload a new dictionary with success')
 def when_upload_dictionary(context):
     data = json.loads(apply_placeholders(context, context.text))
