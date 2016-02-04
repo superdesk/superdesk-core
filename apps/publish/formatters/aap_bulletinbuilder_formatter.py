@@ -17,6 +17,7 @@ from superdesk.errors import FormatterError
 from superdesk.metadata.item import ITEM_TYPE, PACKAGE_TYPE
 from bs4 import BeautifulSoup
 from .field_mappers.locator_mapper import LocatorMapper
+from apps.publish.formatters.aap_formatter_common import set_subject
 
 
 class AAPBulletinBuilderFormatter(Formatter):
@@ -31,9 +32,10 @@ class AAPBulletinBuilderFormatter(Formatter):
         :return: tuple (int, str) of publish sequence of the subscriber, formatted article as string
         """
         try:
-            article['slugline'] = self.append_legal(article=article, truncate=True)
+            doc = article
+            doc['slugline'] = self.append_legal(article=doc, truncate=True)
             pub_seq_num = superdesk.get_resource_service('subscribers').generate_sequence_number(subscriber)
-            body_html = self.append_body_footer(article).strip('\r\n')
+            body_html = self.append_body_footer(doc).strip('\r\n')
             soup = BeautifulSoup(body_html, 'html.parser')
 
             if not len(soup.find_all('p')):
@@ -53,23 +55,26 @@ class AAPBulletinBuilderFormatter(Formatter):
                 else:
                     p.replace_with('')
 
-            article['body_text'] = re.sub(' +', ' ', soup.get_text())
+            doc['body_text'] = re.sub(' +', ' ', soup.get_text())
 
             # get the first category and derive the locator
-            category = next((iter(article.get('anpa_category', []))), None)
+            category = next((iter(doc.get('anpa_category', []))), None)
             if category:
-                locator = LocatorMapper().map(article, category.get('qcode').upper())
+                locator = LocatorMapper().map(doc, category.get('qcode').upper())
                 if locator:
-                    article['place'] = [{'qcode': locator, 'name': locator}]
+                    doc['place'] = [{'qcode': locator, 'name': locator}]
+
+                doc['first_category'] = category
+                doc['first_subject'] = set_subject(category, doc)
 
             odbc_item = {
-                'id': article.get(config.ID_FIELD),
-                'version': article.get(config.VERSION),
-                ITEM_TYPE: article.get(ITEM_TYPE),
-                PACKAGE_TYPE: article.get(PACKAGE_TYPE, ''),
-                'headline': article.get('headline', ''),
-                'slugline': article.get('slugline', ''),
-                'data': superdesk.json.dumps(article, default=json_serialize_datetime_objectId)
+                'id': doc.get(config.ID_FIELD),
+                'version': doc.get(config.VERSION),
+                ITEM_TYPE: doc.get(ITEM_TYPE),
+                PACKAGE_TYPE: doc.get(PACKAGE_TYPE, ''),
+                'headline': doc.get('headline', ''),
+                'slugline': doc.get('slugline', ''),
+                'data': superdesk.json.dumps(doc, default=json_serialize_datetime_objectId)
             }
 
             return [(pub_seq_num, odbc_item)]
