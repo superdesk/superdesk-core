@@ -13,13 +13,13 @@ import importlib
 import sys
 import imp
 
-from flask import current_app as app
-
-import macros
+from flask import current_app
 
 
-def load_macros():
-    module = app.config['MACROS_MODULE']
+def load_macros(app=None):
+    if not app:
+        app = current_app
+    module = app.config.get('MACROS_MODULE', 'superdesk.macros')
     load_module(module)
 
 

@@ -30,14 +30,16 @@ def do_conversion(item, rate, prefix, search_param):
     be a valid regular expression pattern, and not just an arbitrary string.
     :return: modified story
     """
+    diff = {}
 
     def convert(match):
         from_value = float(match.group(1))
         to_value = rate * from_value
-        return prefix % to_value
+        diff.setdefault(match.group(0), prefix % to_value)
+        return diff[match.group(0)]
 
     for field in ['body_html', 'body_text', 'abstract', 'headline', 'slugline']:
         if item.get(field, None):
             item[field] = re.sub(search_param, convert, item[field])
 
-    return item
+    return {'item': item, 'diff': diff}
