@@ -131,18 +131,17 @@ Feature: Content Publishing
       }
       """
       When we get "/legal_archive/#archive.123.take_package#?version=all"
-      Then we get list with 2 items
+      Then we get list with 1 items
       """
       {"_items" : [
-        {"_id": "#archive.123.take_package#", "headline": "test", "_current_version": 1,
-         "type": "composite", "package_type": "takes", "state": "draft",
-         "task": {"desk": "Sports", "stage": "Incoming Stage", "user": "test_user"}},
+
         {"_id": "#archive.123.take_package#", "headline": "test", "_current_version": 2,
          "state": "published", "type": "composite", "package_type": "takes",
          "task": {"desk": "Sports", "stage": "Incoming Stage", "user": "test_user"}}
        ]
       }
       """
+      When we enqueue published
       When we get "/publish_queue"
       Then we get list with 2 items
       """
@@ -156,6 +155,7 @@ Feature: Content Publishing
       }
       """
       When run import legal publish queue
+      When we enqueue published
       And we get "/legal_publish_queue"
       Then we get list with 2 items
       """
@@ -221,6 +221,7 @@ Feature: Content Publishing
       {"_items" : [{"_id": "123", "guid": "123", "headline": "test", "_current_version": 2, "state": "published",
         "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}]}
       """
+      When we enqueue published
       When we get "/publish_queue"
       Then we get list with 1 items
 
@@ -269,6 +270,7 @@ Feature: Content Publishing
       Then we get latest
       When we publish "#archive._id#" with "publish" type and "published" state
       Then we get OK response
+      When we enqueue published
       When we get "/publish_queue"
       Then we get list with 0 items
 
@@ -317,6 +319,7 @@ Feature: Content Publishing
       Then we get latest
       When we publish "#archive._id#" with "publish" type and "published" state
       Then we get OK response
+      When we enqueue published
       When we get "/publish_queue"
       Then we get list with 0 items
 
@@ -379,6 +382,7 @@ Feature: Content Publishing
       {"_items" : [{"_id": "123", "guid": "123", "headline": "test", "_current_version": 2, "state": "published",
         "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}]}
       """
+      When we enqueue published
       When we get "/publish_queue"
       Then we get list with 1 items
 
@@ -469,6 +473,7 @@ Feature: Content Publishing
       {"_current_version": 2, "state": "scheduled", "operation": "publish"}
       """
       And we get expiry for schedule and embargo content 60 minutes after "#archive_publish.publish_schedule#"
+      When we enqueue published
       When we get "/publish_queue"
       Then we get list with 1 items
       """
@@ -520,6 +525,7 @@ Feature: Content Publishing
       """
       {"_current_version": 2, "state": "scheduled"}
       """
+      When we enqueue published
       When we get "/publish_queue"
       Then we get list with 2 items
       """
@@ -556,6 +562,7 @@ Feature: Content Publishing
           ]
       }
       """
+      When we enqueue published
       When we get "/publish_queue"
       Then we get list with 0 items
       When we get "/published"
@@ -732,6 +739,7 @@ Feature: Content Publishing
       """
       And we publish "#archive._id#" with "publish" type and "published" state
       Then we get OK response
+      When we enqueue published
       When we get "/legal_archive/123"
       Then we get OK response
       And we get existing resource
@@ -754,6 +762,7 @@ Feature: Content Publishing
       """
       {"_current_version": 2, "state": "corrected", "operation": "correct", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
       """
+      When we enqueue published
       When we post to "/archive/#archive._id#/unlock"
       """
       {}
@@ -800,6 +809,7 @@ Feature: Content Publishing
       """
       And we publish "#archive._id#" with "publish" type and "published" state
       Then we get OK response
+      When we enqueue published
       When we get "/legal_archive/123"
       Then we get OK response
       And we get existing resource
@@ -837,6 +847,7 @@ Feature: Content Publishing
       """
       {"_current_version": 3, "state": "corrected", "operation": "correct", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
       """
+      When we enqueue published
       When we post to "/archive/#archive._id#/unlock"
       """
       {}
@@ -881,6 +892,7 @@ Feature: Content Publishing
       """
       {"_current_version": 4, "state": "killed", "operation": "kill", "pubstatus": "canceled", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
       """
+      When we enqueue published
       When we post to "/archive/#archive._id#/unlock"
       """
       {}
@@ -1138,7 +1150,7 @@ Feature: Content Publishing
       Then we get OK response
       And we get existing resource
       """
-      {"_current_version": 2, "source": "Superdesk Sports", "state": "published", "task":{"desk": "#desks._id#"}}
+      {"_current_version": 2, "source": "AAP", "state": "published", "task":{"desk": "#desks._id#"}}
       """
 
     @auth
@@ -1188,6 +1200,7 @@ Feature: Content Publishing
 
       And we publish "122" with "publish" type and "published" state
       Then we get OK response
+      When we enqueue published
       When we get "/publish_queue"
       Then we get list with 0 items
 
@@ -1374,6 +1387,7 @@ Feature: Content Publishing
         ]
       }
       """
+      When we enqueue published
       When we get "/publish_queue"
       Then we get list with 4 items
       """
