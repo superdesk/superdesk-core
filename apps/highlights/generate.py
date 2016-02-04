@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
 from flask import render_template
 from jinja2 import Template
+from superdesk.errors import SuperdeskApiError
 
 
 def get_template(highlightId):
@@ -34,6 +35,7 @@ class GenerateHighlightsService(superdesk.Service):
             package = service.find_one(req=None, _id=doc['package'])
             if not package:
                 superdesk.abort(404)
+            export = doc.get('export')
             stringTemplate = get_template(package.get('highlight'))
 
             doc.clear()
@@ -50,6 +52,10 @@ class GenerateHighlightsService(superdesk.Service):
                     if 'residRef' in ref:
                         item = service.find_one(req=None, _id=ref.get('residRef'))
                         if item:
+                            if not export and (item.get('lock_session') or item.get('state') != 'published'):
+                                message = 'Locked or not published items in highlight list.'
+                                raise SuperdeskApiError.forbiddenError(message)
+
                             html = item.get('body_html')
                             if html:
                                 soup = BeautifulSoup(html, "html.parser")
@@ -77,6 +83,10 @@ class GenerateHighlightsResource(superdesk.Resource):
             'required': True,
         },
         'preview': {
+            'type': 'boolean',
+            'default': False,
+        },
+        'export': {
             'type': 'boolean',
             'default': False,
         }

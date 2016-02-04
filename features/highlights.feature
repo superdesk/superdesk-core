@@ -189,8 +189,8 @@ Feature: Highlights
         Given "archive"
         """
         [
-            {"guid": "item1", "type": "text", "headline": "item1", "body_html": "<p>item1 first</p><p>item1 second</p>", "task": {"desk": "#desks._id#"}},
-            {"guid": "item2", "type": "text", "headline": "item2", "body_html": "<p>item2 first</p><p>item2 second</p>", "task": {"desk": "#desks._id#"}}
+            {"guid": "item1", "type": "text", "headline": "item1", "body_html": "<p>item1 first</p><p>item1 second</p>", "task": {"desk": "#desks._id#"}, "state": "published"},
+            {"guid": "item2", "type": "text", "headline": "item2", "body_html": "<p>item2 first</p><p>item2 second</p>", "task": {"desk": "#desks._id#"}, "state": "published"}
         ]
         """ 
 		When we post to "archive"
@@ -233,7 +233,7 @@ Feature: Highlights
         """
 
         When we get "/archive"
-        Then we get list with 4 items
+        Then we get list with 2 items
 
         When we post to "generate_highlights"
         """
@@ -301,7 +301,7 @@ Feature: Highlights
             
         When we post to "generate_highlights"
         """
-        {"package": "package"}
+        {"package": "package", "export": true}
         """
 
         Then we get new resource
@@ -315,12 +315,18 @@ Feature: Highlights
 
         When we post to "generate_highlights"
         """
-        {"package": "package", "preview": true}
+        {"package": "package", "preview": true,  "export": true}
         """
         Then we get new resource
         """
         {"type": "text"}
         """
+        
+        When we post to "generate_highlights"
+        """
+        {"package": "package"}
+        """
+        Then we get response code 403
         
     @auth
     Scenario: Prepopulate highlights when creating a package
