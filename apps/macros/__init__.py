@@ -8,9 +8,10 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from .macro_register import register  # NOQA
-from .macros import MacrosResource, MacrosService
+from apps.macros.macro_register import register, load_macros  # NOQA
+from apps.macros.macros import MacrosResource, MacrosService
 
 
 def init_app(app):
     MacrosResource('macros', app=app, service=MacrosService())
+    load_macros(app)

@@ -22,6 +22,7 @@ if os.path.isdir('macros'):
                 m = sys.modules[module]
                 imp.reload(m)
             else:
+                print(module)
                 importlib.import_module(module)
         except:
             pass
