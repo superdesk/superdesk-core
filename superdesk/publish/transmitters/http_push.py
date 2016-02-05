@@ -43,8 +43,9 @@ class HTTPPushService(PublishService):
         resource_url = queue_item.get('destination', {}).get('config', {}).get('resource_url')
         response = requests.post(resource_url, data=json.dumps(item), headers=self.headers)
         if response.status_code != requests.codes.created:  # @UndefinedVariable
-            raise PublishHTTPPushError.httpPushError(Exception('Error pushing item %s' % response.text),
-                                                     queue_item.get('destination', {}))
+            message = 'Error pushing item %s: %s' % (response.status_code, response.text)
+            raise PublishHTTPPushError.httpPushError(Exception(message,
+                                                     queue_item.get('destination', {})))
 
     def _copy_published_media_files(self, item, assets_url):
         """Copy the media files for the given item to the publish_items endpoint
