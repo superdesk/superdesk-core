@@ -1,8 +1,12 @@
 import superdesk
+import traceback
 from superdesk import get_resource_service
 from .resource import Resource
 from .services import BaseService
-from flask import current_app as app
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 def init_app(app):
@@ -40,12 +44,13 @@ class SequencesService(BaseService):
         """
         Generates Sequence Number
         :param key: key to identify the sequence
-        :param max_seq_num: default $MAX_VALUE_OF_PUBLISH_SEQUENCE, maximal possible value
+        :param max_seq_num: default None, maximal possible value, None means no upper limit
         :param min_seq_num: default 1, init value, sequence will start from the NEXT one
         :returns: sequence number
         """
-        if not max_seq_number:
-            max_seq_number = app.config['MAX_VALUE_OF_PUBLISH_SEQUENCE']
+        if not key_name:
+            logger.error('Empty sequence key is used: {}'.format('\n'.join(traceback.format_stack())))
+            raise KeyError('Sequence key cannot be empty')
 
         target_resource = get_resource_service('sequences')
         sequence_number = target_resource.find_and_modify(
@@ -55,11 +60,13 @@ class SequencesService(BaseService):
             new=True
         ).get('sequence_number')
 
-        if not (min_seq_number <= sequence_number + 1 <= max_seq_number):
-            target_resource.find_and_modify(
-                query={'key': key_name, 'sequence_number': sequence_number},
-                update={'sequence_number': min_seq_number},
-                upsert=True
-            )
+        if max_seq_number:
+            if sequence_number > max_seq_number:
+                target_resource.find_and_modify(
+                    query={'key': key_name},
+                    update={'sequence_number': min_seq_number},
+                    upsert=True)
+
+                sequence_number = min_seq_number
 
         return sequence_number
