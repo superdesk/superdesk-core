@@ -30,8 +30,7 @@ def load_module(module):
     :param module: name of he module
     """
     try:
-        m = sys.modules[module]
-        imp.reload(m)
+        imp.reload(sys.modules[module])
     except (AttributeError, KeyError):
         try:
             importlib.import_module(module)

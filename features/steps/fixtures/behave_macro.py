@@ -11,7 +11,6 @@
 
 def update_fields(item, **kwargs):
     """Updates the abstract field"""
-
     item['abstract'] = 'Abstract has been updated'
     return item
 
