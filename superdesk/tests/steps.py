@@ -44,7 +44,7 @@ from eve.utils import ParsedRequest
 import shutil
 from apps.dictionaries.resource import DICTIONARY_FILE
 from test_factory import setup_auth_user
-
+from bson import ObjectId
 
 external_url = 'http://thumbs.dreamstime.com/z/digital-nature-10485007.jpg'
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S%z"
@@ -291,6 +291,21 @@ def step_impl_given_(context, resource):
         if is_user_resource(resource):
             for item in items:
                 item.setdefault('needs_activation', False)
+
+        get_resource_service(resource).post(items)
+        context.data = items
+        context.resource = resource
+        setattr(context, resource, items[-1])
+
+
+@given('"{resource}" with objectid')
+def step_impl_given_with_objectid(context, resource):
+    data = apply_placeholders(context, context.text)
+    with context.app.test_request_context(context.app.config['URL_PREFIX']):
+        items = [parse(item, resource) for item in json.loads(data)]
+        for item in items:
+            if '_id' in item:
+                item['_id'] = ObjectId(item['_id'])
 
         get_resource_service(resource).post(items)
         context.data = items
