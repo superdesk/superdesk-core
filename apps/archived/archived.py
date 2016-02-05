@@ -173,7 +173,9 @@ class ArchivedService(BaseService):
         Overriding to handle with Kill workflow in the Archived repo:
             1. Check if Article has an associated Digital Story and if Digital Story has more Takes.
                If both Digital Story and more Takes exists then all of them would be killed along with the one requested
-            2. For each article being killed do the following:
+            2. If the item is flagged as archived only then it was never created by or published from the system so all
+                that needs to be done is to delete it and send an email to all subscribers
+            3. For each article being killed do the following:
                 i.   Create an entry in archive, archive_versions and published collections.
                 ii.  Query the Publish Queue in Legal Archive and find the subscribers who received the article
                      previously and create transmission entries in Publish Queue.
@@ -198,11 +200,22 @@ class ArchivedService(BaseService):
         updated.update(updates)
 
         for article in articles_to_kill:
-            # Step 2(i)
+
+            # Step 2, If it is flagged as archived only it has no related items in the system so can be deleted.
+            # An email is sent to all subscribers
+            if original.get('flags', {}).get('marked_archived_only', False):
+                super().delete({'item_id': article['item_id']})
+                logger.info('Delete for article: {}'.format(article[config.ID_FIELD]))
+
+                kill_service.broadcast_kill_email(article)
+                logger.info('Broadcast kill email for article: {}'.format(article[config.ID_FIELD]))
+                continue
+
+            # Step 3(i)
             self._remove_and_set_kill_properties(article, articles_to_kill, updated)
             logger.info('Removing and setting properties for article: {}'.format(article[config.ID_FIELD]))
 
-            # Step 2(ii)
+            # Step 3(ii)
             transmission_details = list(
                 get_resource_service(LEGAL_PUBLISH_QUEUE_NAME).get(req=None,
                                                                    lookup={'item_id': article[config.ID_FIELD]}))
@@ -215,22 +228,22 @@ class ArchivedService(BaseService):
                 kill_service.queue_transmission(article, subscribers)
                 logger.info('Queued Transmission for article: {}'.format(article[config.ID_FIELD]))
 
-            # Step 2(iii)
+            # Step 3(iii)
             import_into_legal_archive.apply_async(kwargs={'doc': article})
             logger.info('Legal Archive import for article: {}'.format(article[config.ID_FIELD]))
 
-            # Step 2(iv)
+            # Step 3(iv)
             super().delete({'item_id': article[config.ID_FIELD]})
             logger.info('Delete for article: {}'.format(article[config.ID_FIELD]))
 
-            # Step 2(i) - Creating entries in published collection
+            # Step 3(i) - Creating entries in published collection
             docs = [article]
             get_resource_service(ARCHIVE).post(docs)
             insert_into_versions(doc=article)
             get_resource_service('published').post(docs)
             logger.info('Insert into archive and published for article: {}'.format(article[config.ID_FIELD]))
 
-            # Step 2(v)
+            # Step 3(v)
             kill_service.broadcast_kill_email(article)
             logger.info('Broadcast kill email for article: {}'.format(article[config.ID_FIELD]))
 
