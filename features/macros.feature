@@ -36,11 +36,11 @@ Feature: Macros
     Scenario: Trigger macro via name
         When we post to "/macros"
             """
-            {"macro": "usd_to_aud", "item": {"body_html": "$10"}}
+            {"macro": "usd_to_aud", "item": {"body_html": "$10 bar", "headline": "foo $5"}}
             """
         Then we get new resource
             """
-            {"item": {"body_html": "AUD 14"}}
+            {"item": {"body_html": "AUD 14 bar", "headline": "foo AUD 7"}, "diff": {"$10": "AUD 14", "$5": "AUD 7"}}
             """
 
     @auth

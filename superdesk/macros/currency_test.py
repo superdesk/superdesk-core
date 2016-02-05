@@ -8,12 +8,13 @@ class CurrencyTestCase(unittest.TestCase):
 
     def test_usd_to_aud(self):
         item = {'body_html': '$100'}
-        res = usd_to_aud(item)
+        res, diff = usd_to_aud(item)
         aud = float(res['body_html'][3:])
         self.assertGreater(aud, 100)  # if this fails, check first the currency ;)
+        self.assertGreater(float(diff['$100'].split(' ')[1]), 100)
 
     def test_usd_to_cad(self):
         item = {'body_html': '$100'}
-        res = usd_to_cad(item)
+        res, diff = usd_to_cad(item)
         cad = float(res['body_html'][3:])
         self.assertGreater(cad, 100)  # if this fails, check first the currency ;)

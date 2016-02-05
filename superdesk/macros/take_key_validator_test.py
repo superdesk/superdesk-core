@@ -10,7 +10,7 @@
 
 
 import unittest
-from macros.take_key_validator import validate
+from superdesk.macros.take_key_validator import validate
 from nose.tools import assert_raises
 
 
