@@ -35,7 +35,12 @@ class MacrosService(superdesk.Service):
         try:
             ids = []
             for doc in docs:
-                doc['item'] = self.execute_macro(doc['item'], doc['macro'])
+                res = self.execute_macro(doc['item'], doc['macro'])
+                if isinstance(res, tuple):
+                    doc['item'] = res[0]
+                    doc['diff'] = res[1]
+                else:
+                    doc['item'] = res
                 if doc.get('commit'):
                     item = superdesk.get_resource_service('archive').find_one(req=None, _id=doc['item']['_id'])
                     updates = doc['item'].copy()
@@ -71,5 +76,9 @@ class MacrosResource(superdesk.Resource):
         'commit': {
             'type': 'boolean',
             'default': False,
+        },
+        'diff': {
+            'type': 'dict',
+            'readonly': True,
         },
     }

@@ -153,8 +153,8 @@ def get_fixture_path(context, fixture):
 
 
 def get_macro_path(macro):
-    abspath = os.path.abspath("macros")
-    return os.path.join(abspath, macro)
+    abspath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+    return os.path.join(abspath, 'macros', macro)
 
 
 def get_self_href(resource, context):
