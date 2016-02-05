@@ -36,8 +36,9 @@ class MacrosService(superdesk.Service):
             ids = []
             for doc in docs:
                 res = self.execute_macro(doc['item'], doc['macro'])
-                if 'item' in res and 'diff' in res:
-                    doc.update(res)
+                if isinstance(res, tuple):
+                    doc['item'] = res[0]
+                    doc['diff'] = res[1]
                 else:
                     doc['item'] = res
                 if doc.get('commit'):

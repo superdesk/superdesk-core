@@ -11,18 +11,18 @@ import imp
 import importlib
 
 
-if os.path.isdir('macros'):
-    macros = [f[:-3] for f in os.listdir(os.path.abspath('macros'))
-              if f.endswith('.py') and not f.endswith('_test.py') and not f.startswith('__')]
+macros_folder = os.path.realpath(os.path.dirname(__file__))
 
-    for macro in macros:
-        try:
-            module = 'macros.{}'.format(macro)
-            if module in sys.modules.keys():
-                m = sys.modules[module]
-                imp.reload(m)
-            else:
-                print(module)
-                importlib.import_module(module)
-        except:
-            pass
+macros = [f[:-3] for f in os.listdir(macros_folder)
+          if f.endswith('.py') and not f.endswith('_test.py') and not f.startswith('__')]
+
+for macro in macros:
+    try:
+        module = 'superdesk.macros.{}'.format(macro)
+        if module in sys.modules.keys():
+            m = sys.modules[module]
+            imp.reload(m)
+        else:
+            importlib.import_module(module)
+    except:
+        pass

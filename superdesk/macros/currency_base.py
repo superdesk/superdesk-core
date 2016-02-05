@@ -42,4 +42,4 @@ def do_conversion(item, rate, prefix, search_param):
         if item.get(field, None):
             item[field] = re.sub(search_param, convert, item[field])
 
-    return {'item': item, 'diff': diff}
+    return (item, diff)

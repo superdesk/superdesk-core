@@ -10,7 +10,7 @@
 
 
 import unittest
-from macros.dollar_AUD_character_replace import find_and_replace
+from superdesk.macros.dollar_AUD_character_replace import find_and_replace
 
 
 class DollarAUDReplaceTestCase(unittest.TestCase):
