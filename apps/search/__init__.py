@@ -24,11 +24,10 @@ class SearchService(superdesk.Service):
 
     It can search against different collections like Ingest, Production, Archived etc.. at the same time.
     """
+    repos = ['ingest', 'archive', 'published', 'archived']
 
     def __init__(self, datasource, backend):
         super().__init__(datasource=datasource, backend=backend)
-        self._default_repos = ['ingest', 'archive', 'published', 'archived']
-
         self._private_filters = dict(ingest={'and': [{'term': {'_type': 'ingest'}}]},
                                      archive={'and': [{'exists': {'field': 'task.desk'}},
                                                       {'terms': {
@@ -55,10 +54,10 @@ class SearchService(superdesk.Service):
         repos = args.get('repo')
 
         if repos is None:
-            return self._default_repos.copy()
+            return self.repos.copy()
         else:
             repos = repos.split(',')
-            return [repo for repo in repos if repo in self._default_repos]
+            return [repo for repo in repos if repo in self.repos]
 
     def _get_filters(self, repos):
         """
@@ -93,7 +92,7 @@ class SearchService(superdesk.Service):
 
         set_filters(query, filters)
 
-        hits = elastic.es.search(body=query, index=elastic.index, doc_type=types)
+        hits = elastic.es.search(body=query, index=self._get_index(), doc_type=types)
         docs = elastic._parse_hits(hits, 'ingest')  # any resource here will do
 
         for resource in types:
@@ -114,6 +113,13 @@ class SearchService(superdesk.Service):
         docs = doc[app.config['ITEMS']]
         for item in docs:
             build_custom_hateoas({'self': {'title': item['_type'], 'href': '/{}/{{_id}}'.format(item['_type'])}}, item)
+
+    def _get_index(self):
+        """Get index id for all repos."""
+        indexes = {app.data.elastic.index}
+        for repo in self.repos:
+            indexes.add(app.config['ELASTICSEARCH_INDEXES'].get(repo, app.data.elastic.index))
+        return ','.join(indexes)
 
 
 class SearchResource(superdesk.Resource):
