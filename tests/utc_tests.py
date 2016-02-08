@@ -11,9 +11,10 @@
 
 from datetime import datetime, timedelta
 from superdesk.tests import TestCase
-from superdesk.utc import get_date, utcnow, get_expiry_date
+from superdesk.utc import get_date, utcnow, get_expiry_date, local_to_utc, utc_to_local, set_time
 from pytz import utc, timezone # flake8: noqa
 from nose.tools import assert_raises
+import pytz
 
 
 class UTCTestCase(TestCase):
@@ -60,3 +61,27 @@ class UTCTestCase(TestCase):
         with assert_raises(TypeError) as error_context:
             offset = '01.02.2013 13:30'
             get_expiry_date(minutes=5, offset=offset)
+
+    def test_utc_to_local(self):
+        # with day light saving on
+        utc_dt = datetime(2015, 2, 8, 23, 0, 0, 0, pytz.UTC)
+        local_dt = utc_to_local('Australia/Sydney', utc_dt)
+        self.assertEqual(utc_dt.hour - local_dt.hour, 13)
+
+        # without day light saving
+        utc_dt = datetime(2015, 6, 8, 23, 0, 0, 0, pytz.UTC)
+        local_dt = utc_to_local('Australia/Sydney', utc_dt)
+        self.assertEqual(utc_dt.hour - local_dt.hour, 14)
+
+    def test_local_to_utc(self):
+        # with day light saving on
+        local_tz = pytz.timezone('Australia/Sydney')
+        local_dt = datetime(2015, 2, 8, 8, 0, 0, 0, local_tz)
+        utc_dt = local_to_utc('Australia/Sydney', local_dt)
+        self.assertEqual(utc_dt.hour - local_dt.hour, 13)
+
+        # without day light saving
+        local_dt = local_tz.normalize(datetime(2015, 2, 8, 8, 0, 0, 0).replace(tzinfo=local_tz))
+        utc_dt = local_to_utc('Australia/Sydney', local_dt)
+        self.assertEqual(utc_dt.hour - local_dt.hour, 14)
+

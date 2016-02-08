@@ -15,15 +15,20 @@ from flask import current_app as app
 from superdesk import Resource, Service, config
 from superdesk.utils import SuperdeskBaseEnum
 from superdesk.resource import build_custom_hateoas
-from superdesk.utc import utcnow
+from superdesk.utc import utcnow, set_time, local_to_utc
 from superdesk.errors import SuperdeskApiError
 from superdesk.metadata.item import metadata_schema, ITEM_STATE, CONTENT_STATE
 from superdesk.celery_app import celery
-from apps.rules.routing_rules import Weekdays, set_time
+from apps.rules.routing_rules import Weekdays
 from apps.archive.common import ARCHIVE, CUSTOM_HATEOAS, item_schema, format_dateline_to_locmmmddsrc
 from apps.archive.common import insert_into_versions
 from apps.auth import get_user
 from flask import render_template_string
+
+import pytz
+from pytz import all_timezones_set
+from enum import Enum
+from datetime import datetime, timedelta
 
 
 CONTENT_TEMPLATE_PRIVILEGE = 'content_templates'
@@ -60,14 +65,20 @@ def get_next_run(schedule, now=None):
         now = utcnow()
 
     now = now.replace(second=0)
-    next_run = set_time(now, schedule.get('create_at'))
+
+    # adjust current time to the schedule's timezone
+    tz_name = schedule.get('time_zone')
+    if tz_name:
+        next_run = local_to_utc(tz_name, set_time(now, schedule.get('create_at')))
+    else:
+        next_run = set_time(now, schedule.get('create_at'))
 
     # if the time passed already today do it tomorrow earliest
     if next_run <= now:
-        next_run += datetime.timedelta(days=1)
+        next_run += timedelta(days=1)
 
     while next_run.weekday() not in allowed_days:
-        next_run += datetime.timedelta(days=1)
+        next_run += timedelta(days=1)
 
     return next_run
 
@@ -100,6 +111,11 @@ class ContentTemplatesResource(Resource):
             'is_active': {'type': 'boolean'},
             'create_at': {'type': 'string'},
             'day_of_week': {'type': 'list'},
+            'time_zone': {
+                'type': 'string',
+                'nullable': False,
+                'default': 'UTC'
+            }
         }},
 
         'last_run': {'type': 'datetime', 'readonly': True},
