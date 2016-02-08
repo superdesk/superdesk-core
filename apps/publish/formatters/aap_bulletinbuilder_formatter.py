@@ -17,6 +17,7 @@ from superdesk.errors import FormatterError
 from superdesk.metadata.item import ITEM_TYPE, PACKAGE_TYPE
 from bs4 import BeautifulSoup
 from .field_mappers.locator_mapper import LocatorMapper
+from apps.publish.formatters.aap_formatter_common import set_subject
 
 
 class AAPBulletinBuilderFormatter(Formatter):
@@ -31,6 +32,7 @@ class AAPBulletinBuilderFormatter(Formatter):
         :return: tuple (int, str) of publish sequence of the subscriber, formatted article as string
         """
         try:
+
             article['slugline'] = self.append_legal(article=article, truncate=True)
             pub_seq_num = superdesk.get_resource_service('subscribers').generate_sequence_number(subscriber)
             body_html = self.append_body_footer(article).strip('\r\n')
@@ -54,7 +56,6 @@ class AAPBulletinBuilderFormatter(Formatter):
                     p.replace_with('')
 
             article['body_text'] = re.sub(' +', ' ', soup.get_text())
-
             # get the first category and derive the locator
             category = next((iter(article.get('anpa_category', []))), None)
             if category:
@@ -62,14 +63,17 @@ class AAPBulletinBuilderFormatter(Formatter):
                 if locator:
                     article['place'] = [{'qcode': locator, 'name': locator}]
 
+                article['first_category'] = category
+                article['first_subject'] = set_subject(category, article)
+
             odbc_item = {
                 'id': article.get(config.ID_FIELD),
                 'version': article.get(config.VERSION),
                 ITEM_TYPE: article.get(ITEM_TYPE),
                 PACKAGE_TYPE: article.get(PACKAGE_TYPE, ''),
-                'headline': article.get('headline', ''),
-                'slugline': article.get('slugline', ''),
-                'data': superdesk.json.dumps(article, default=json_serialize_datetime_objectId)
+                'headline': article.get('headline', '').replace('\'', '\'\''),
+                'slugline': article.get('slugline', '').replace('\'', '\'\''),
+                'data': superdesk.json.dumps(article, default=json_serialize_datetime_objectId).replace('\'', '\'\'')
             }
 
             return [(pub_seq_num, odbc_item)]

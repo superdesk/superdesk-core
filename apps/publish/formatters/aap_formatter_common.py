@@ -40,7 +40,7 @@ def set_subject(category, article):
         # set the subject reference with the first value, in case we can't do better
         subject_reference = article['subject'][0].get('qcode')
         # we have multiple categories and multiple subjects
-        if len(article['subject']) > 1 and len(article.get('anpa_category') or []) > 1:
+        if len(article['subject']) > 1 and category:
             # we need to find a more relevant subject reference if possible
             all_categories = superdesk.get_resource_service('vocabularies').find_one(req=None, _id='categories')
             ref_cat = [cat for cat in all_categories['items'] if

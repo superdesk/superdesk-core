@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from apps.publish.formatters.field_mappers import FieldMapper
+from apps.publish.formatters.aap_formatter_common import set_subject
 
 
 class LocatorMapper(FieldMapper):
@@ -115,6 +116,14 @@ class LocatorMapper(FieldMapper):
         :return: if found then the locator as string else None
         """
         subjects = article.get('subject') or []
+
+        # for sports category
+        if category == 'S' or category == 'T':
+            subject = set_subject({'qcode': category}, article) or ''
+            feature = locators.get('{}000'.format(subject[:5])) or locators.get(subject)
+            if feature:
+                return feature
+
         for subject in subjects:
             qcode = subject.get('qcode', '')
             feature = locators.get(qcode)
