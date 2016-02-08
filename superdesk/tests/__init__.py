@@ -20,7 +20,7 @@ from flask import json, Config
 from superdesk.notification_mock import setup_notification_mock, teardown_notification_mock
 from superdesk import get_resource_service
 from superdesk.factory import get_app
-from eve_elastic import get_es, get_indices
+from eve_elastic import get_es
 
 test_user = {
     'username': 'test_user',
@@ -72,11 +72,13 @@ def get_test_settings():
 
 def drop_elastic(app):
     with app.app_context():
-        try:
-            es = get_es(app.config['ELASTICSEARCH_URL'])
-            get_indices(es).delete(app.config['ELASTICSEARCH_INDEX'])
-        except elasticsearch.exceptions.NotFoundError:
-            pass
+        es = get_es(app.config['ELASTICSEARCH_URL'])
+        indexes = [app.config['ELASTICSEARCH_INDEX']] + list(app.config['ELASTICSEARCH_INDEXES'].values())
+        for index in indexes:
+            try:
+                es.indices.delete(index)
+            except elasticsearch.exceptions.NotFoundError:
+                pass
 
 
 def drop_mongo(app):
