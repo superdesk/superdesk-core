@@ -12,6 +12,7 @@ from copy import copy
 from copy import deepcopy
 from functools import partial
 import logging
+from flask import current_app as app
 from superdesk import get_resource_service
 from apps.content import push_content_notification
 import superdesk
@@ -40,7 +41,6 @@ from apps.legal_archive.commands import import_into_legal_archive
 from apps.packages import TakesPackageService
 from apps.packages.package_service import PackageService
 from apps.publish.published_item import LAST_PUBLISHED_VERSION, PUBLISHED
-from settings import DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES
 
 
 logger = logging.getLogger(__name__)
@@ -114,6 +114,7 @@ class BasePublishService(BaseService):
 
             if original[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
                 self._publish_package_items(original, updates)
+                self._process_publish_updates(original, updates)
                 self._update_archive(original, updates, should_insert_into_versions=auto_publish)
             else:
                 updated = deepcopy(original)
@@ -150,21 +151,11 @@ class BasePublishService(BaseService):
                     package.update(package_updates)
                     self._import_into_legal_archive(package)
                     self.update_published_collection(published_item_id=package_id)
-                    """
-                    This sequence is for test purposes, it will be removed once the feature is finished.
-                    """
-#                     package = get_resource_service('published').find_one(req=None, item_id=package_id)
-#                     enqueue_item(package)
 
+                self._process_publish_updates(original, updates)
                 self._update_archive(original, updated, should_insert_into_versions=auto_publish)
                 self.update_published_collection(published_item_id=original[config.ID_FIELD], updated=updated)
-                """
-                This sequence is for test purposes, it will be removed once the feature is finished.
-                """
-#                 item = get_resource_service('published').find_one(req=None, item_id=original[config.ID_FIELD])
-#                 enqueue_item(item)
 
-            self._process_publish_updates(original, updates)
             push_notification('item:publish', item=str(id), unique_name=original['unique_name'],
                               desk=str(original.get('task', {}).get('desk', '')),
                               user=str(user.get(config.ID_FIELD, '')))
@@ -257,7 +248,7 @@ class BasePublishService(BaseService):
             desk = get_resource_service('desks').find_one(req=None, _id=original['task']['desk'])
         if not original.get('ingest_provider'):
             updates['source'] = desk['source'] if desk and desk.get('source', '') \
-                else DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES
+                else app.settings['DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES']
         updates['pubstatus'] = PUB_STATUS.CANCELED if self.publish_type == 'kill' else PUB_STATUS.USABLE
         self._set_item_expiry(updates, original)
 
@@ -410,7 +401,7 @@ class BasePublishService(BaseService):
         published_item = copy(published_item)
         if updated:
             published_item.update(updated)
-        published_item['is_take_item'] = self._is_take_item(published_item)
+        published_item['is_take_item'] = self.takes_package_service.get_take_package_id(published_item) is not None
         if not published_item.get('digital_item_id'):
             published_item['digital_item_id'] = self.get_digital_id_for_package_item(published_item)
         get_resource_service(PUBLISHED).update_published_items(published_item_id, LAST_PUBLISHED_VERSION, False)
