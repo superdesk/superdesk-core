@@ -19,33 +19,52 @@ class SelectorcodeMapperTest(SuperdeskTestCase):
              {'_id': 2, 'name': 'Sports'},
              {'_id': 3, 'name': 'Finance'}]
 
+    article1 = {
+        'subject': [{'qcode': '10006000'}, {'qcode': '15011002'}]
+
+    }
+    article2 = {
+        'subject': [{'qcode': '15011002'}, {'qcode': '10006000'}]
+
+    }
+    article3 = {
+        'subject': [{'qcode': '15063000'}, {'qcode': '15067000'}]
+
+    }
+    article4 = {
+        'subject': [{'qcode': '9999999'}]
+
+    }
+    article5 = {
+        'subject': [{'qcode': '15000000'}, {'qcode': '15063000'}]
+
+    }
+    category1 = 'I'
+    category2 = 'D'
+    locator_map = LocatorMapper()
+    vocab = [{'_id': 'categories', 'items': [
+        {"is_active": True, "name": "Overseas Sport", "qcode": "S", "subject": "15000000"},
+        {"is_active": True, "name": "Domestic Sport", "qcode": "T", "subject": "15000000"},
+        {'is_active': True, 'name': 'Finance', 'qcode': 'F', 'subject': '04000000'},
+        {'is_active': True, 'name': 'World News', 'qcode': 'I'},
+        {"is_active": True, "name": "Entertainment", "qcode": "e", "subject": "01000000"},
+        {"is_active": True, "name": "Australian General News", "qcode": "a"}
+    ]}]
+
     def setUp(self):
         super().setUp()
         self.app.data.insert('desks', self.desks)
+        self.app.data.insert('vocabularies', self.vocab)
         init_app(self.app)
 
-    def test_map_subject_code(self):
-        article1 = {
-            'subject': [{'qcode': '10006000'}, {'qcode': '15011002'}]
+    def test_locator_code_for_international_domestic_news(self):
+        self.assertEqual(self.locator_map.map(self.article1, self.category1), 'TRAVI')
+        self.assertEqual(self.locator_map.map(self.article2, self.category2), 'TRAVD')
 
-        }
-        article2 = {
-            'subject': [{'qcode': '15011002'}, {'qcode': '10006000'}]
+    def test_locator_code_for_international_domestic_sport(self):
+        self.assertEqual(self.locator_map.map(self.article3, 'S'), 'VOL')
+        self.assertEqual(self.locator_map.map(self.article3, 'T'), 'VOL')
+        self.assertEqual(self.locator_map.map(self.article5, 'T'), 'TTEN')
 
-        }
-        article3 = {
-            'subject': [{'qcode': '15063000'}, {'qcode': '15067000'}]
-
-        }
-        article4 = {
-            'subject': [{'qcode': '9999999'}]
-
-        }
-        category1 = 'I'
-        category2 = 'D'
-        f = LocatorMapper()
-        self.assertEqual(f.map(article1, category1), 'TRAVI')
-        self.assertEqual(f.map(article2, category2), 'TRAVD')
-        self.assertEqual(f.map(article3, 'S'), 'TTEN')
-        self.assertEqual(f.map(article3, 'T'), 'TTEN')
-        self.assertIsNone(f.map(article4, category2))
+    def test_locator_code_is_none(self):
+        self.assertIsNone(self.locator_map.map(self.article4, self.category2))
