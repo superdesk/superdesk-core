@@ -11,6 +11,7 @@
 
 import arrow
 import datetime
+import pytz
 from pytz import utc, timezone  # flake8: noqa
 
 tzinfo = getattr(datetime, 'tzinfo', object)
@@ -42,3 +43,31 @@ def get_expiry_date(minutes, offset=None):
             raise TypeError('offset must be a datetime.date, not a %s' % type(offset))
     else:
         return utcnow() + datetime.timedelta(minutes=minutes)
+
+
+def local_to_utc(local_tz_name, local_datetime):
+    local_tz = pytz.timezone(local_tz_name)
+    utc_dat = local_datetime.replace(tzinfo=local_tz).astimezone(pytz.utc)
+    return pytz.utc.normalize(utc_dat)
+
+
+def utc_to_local(local_tz_name, utc_datetime):
+    local_tz = pytz.timezone(local_tz_name)
+    local_dt = utc_datetime.replace(tzinfo=pytz.utc).astimezone(local_tz)
+    return local_tz.normalize(local_dt)
+
+
+def set_time(current_datetime, timestr, second=0):
+    """Set time of given datetime according to timestr.
+
+    Time format for timestr is `%H%M`, eg. 1014.
+
+    :param datetime current_datetime
+    :param string timestr
+    :param int second
+    """
+    if timestr is None:
+        timestr = '0000'
+    time = datetime.datetime.strptime(timestr, '%H%M')
+    return current_datetime.replace(hour=time.hour, minute=time.minute, second=second)
+
