@@ -42,8 +42,8 @@ Feature: Archive Broadcast
           "place": [{"qcode": "VIC", "name": "VIC"}],
           "body_html": "Take-1",
           "dateline": {
-            "source": "SAP",
-            "text": "Los Angeles, Aug 11 SAP -"
+            "source": "AAP",
+            "text": "Los Angeles, Aug 11 AAP -"
           }
       }]
       """
@@ -83,8 +83,8 @@ Feature: Archive Broadcast
           "place": [{"qcode": "VIC", "name": "VIC"}],
           "family_id": "xyz",
           "dateline": {
-            "source": "SAP",
-            "text": "Los Angeles, Aug 11 SAP -"
+            "source": "AAP",
+            "text": "Los Angeles, Aug 11 AAP -"
           },
           "genre": [{"name": "Broadcast Script", "value": "Broadcast Script"}],
           "broadcast": {
@@ -121,8 +121,8 @@ Feature: Archive Broadcast
           "place": [{"qcode": "VIC", "name": "VIC"}],
           "family_id": "xyz",
           "dateline": {
-            "source": "SAP",
-            "text": "Los Angeles, Aug 11 SAP -"
+            "source": "AAP",
+            "text": "Los Angeles, Aug 11 AAP -"
           },
           "genre": [{"name": "Broadcast Script", "value": "Broadcast Script"}],
           "broadcast": {
@@ -174,8 +174,8 @@ Feature: Archive Broadcast
           "place": [{"qcode": "VIC", "name": "VIC"}],
           "body_html": "Take-1",
           "dateline": {
-            "source": "SAP",
-            "text": "Los Angeles, Aug 11 SAP -"
+            "source": "AAP",
+            "text": "Los Angeles, Aug 11 AAP -"
           }
       }]
       """
@@ -213,8 +213,8 @@ Feature: Archive Broadcast
           "place": [{"qcode": "VIC", "name": "VIC"}],
           "family_id": "xyz",
           "dateline": {
-            "source": "SAP",
-            "text": "Los Angeles, Aug 11 SAP -"
+            "source": "AAP",
+            "text": "Los Angeles, Aug 11 AAP -"
           },
           "genre": [{"name": "Broadcast Script", "value": "Broadcast Script"}],
           "broadcast": {
@@ -269,8 +269,8 @@ Feature: Archive Broadcast
           "place": [{"qcode": "VIC", "name": "VIC"}],
           "body_html": "Take-1",
           "dateline": {
-            "source": "SAP",
-            "text": "Los Angeles, Aug 11 SAP -"
+            "source": "AAP",
+            "text": "Los Angeles, Aug 11 AAP -"
           }
       }]
       """
@@ -350,8 +350,8 @@ Feature: Archive Broadcast
           "place": [{"qcode": "VIC", "name": "VIC"}],
           "body_html": "Take-1",
           "dateline": {
-            "source": "SAP",
-            "text": "Los Angeles, Aug 11 SAP -"
+            "source": "AAP",
+            "text": "Los Angeles, Aug 11 AAP -"
           }
       }]
       """
@@ -391,8 +391,8 @@ Feature: Archive Broadcast
         "place": [{"qcode": "VIC", "name": "VIC"}],
         "family_id": "xyz",
         "dateline": {
-          "source": "SAP",
-          "text": "Los Angeles, Aug 11 SAP -"
+          "source": "AAP",
+          "text": "Los Angeles, Aug 11 AAP -"
         },
         "genre": [{"name": "Broadcast Script", "value": "Broadcast Script"}],
         "broadcast": {
@@ -442,8 +442,8 @@ Feature: Archive Broadcast
           "place": [{"qcode": "VIC", "name": "VIC"}],
           "body_html": "Take-1",
           "dateline": {
-            "source": "SAP",
-            "text": "Los Angeles, Aug 11 SAP -"
+            "source": "AAP",
+            "text": "Los Angeles, Aug 11 AAP -"
           }
       }]
       """
@@ -488,8 +488,8 @@ Feature: Archive Broadcast
           "place": [{"qcode": "VIC", "name": "VIC"}],
           "body_html": "Take-1",
           "dateline": {
-            "source": "SAP",
-            "text": "Los Angeles, Aug 11 SAP -"
+            "source": "AAP",
+            "text": "Los Angeles, Aug 11 AAP -"
           }
       }]
       """
@@ -553,8 +553,8 @@ Feature: Archive Broadcast
           "place": [{"qcode": "VIC", "name": "VIC"}],
           "body_html": "Take-1",
           "dateline": {
-            "source": "SAP",
-            "text": "Los Angeles, Aug 11 SAP -"
+            "source": "AAP",
+            "text": "Los Angeles, Aug 11 AAP -"
           }
       }]
       """
@@ -621,8 +621,8 @@ Feature: Archive Broadcast
           "place": [{"qcode": "VIC", "name": "VIC"}],
           "body_html": "Take-1",
           "dateline": {
-            "source": "SAP",
-            "text": "Los Angeles, Aug 11 SAP -"
+            "source": "AAP",
+            "text": "Los Angeles, Aug 11 AAP -"
           }
       }]
       """
@@ -789,8 +789,8 @@ Feature: Archive Broadcast
           "place": [{"qcode": "VIC", "name": "VIC"}],
           "body_html": "Take-1",
           "dateline": {
-            "source": "SAP",
-            "text": "Los Angeles, Aug 11 SAP -"
+            "source": "AAP",
+            "text": "Los Angeles, Aug 11 AAP -"
           }
       }]
       """
@@ -830,8 +830,8 @@ Feature: Archive Broadcast
           "place": [{"qcode": "VIC", "name": "VIC"}],
           "family_id": "xyz",
           "dateline": {
-            "source": "SAP",
-            "text": "Los Angeles, Aug 11 SAP -"
+            "source": "AAP",
+            "text": "Los Angeles, Aug 11 AAP -"
           },
           "genre": [{"name": "Broadcast Script", "value": "Broadcast Script"}],
           "broadcast": {
@@ -901,8 +901,8 @@ Feature: Archive Broadcast
           "place": [{"qcode": "VIC", "name": "VIC"}],
           "body_html": "Take-1",
           "dateline": {
-            "source": "SAP",
-            "text": "Los Angeles, Aug 11 SAP -"
+            "source": "AAP",
+            "text": "Los Angeles, Aug 11 AAP -"
           }
       }]
       """
@@ -1016,8 +1016,8 @@ Feature: Archive Broadcast
           "place": [{"qcode": "VIC", "name": "VIC"}],
           "body_html": "Take-1",
           "dateline": {
-            "source": "SAP",
-            "text": "Los Angeles, Aug 11 SAP -"
+            "source": "AAP",
+            "text": "Los Angeles, Aug 11 AAP -"
           }
       }]
       """
@@ -1086,7 +1086,6 @@ Feature: Archive Broadcast
       "headline": "headline",
       "slugline": "comics",
       "anpa_take_key": "take key=3",
-      "state": "in_progress",
       "priority": 3,
       "urgency": 1,
       "linked_in_packages": [{"package_type" : "takes","package" : "#TAKE_PACKAGE#"}]
@@ -1166,8 +1165,8 @@ Feature: Archive Broadcast
           "place": [{"qcode": "VIC", "name": "VIC"}],
           "body_html": "Take-1",
           "dateline": {
-            "source": "SAP",
-            "text": "Los Angeles, Aug 11 SAP -"
+            "source": "AAP",
+            "text": "Los Angeles, Aug 11 AAP -"
           }
       }]
       """
@@ -1274,8 +1273,8 @@ Feature: Archive Broadcast
           "place": [{"qcode": "VIC", "name": "VIC"}],
           "body_html": "Take-1",
           "dateline": {
-            "source": "SAP",
-            "text": "Los Angeles, Aug 11 SAP -"
+            "source": "AAP",
+            "text": "Los Angeles, Aug 11 AAP -"
           }
       }]
       """
@@ -1394,8 +1393,8 @@ Feature: Archive Broadcast
           "place": [{"qcode": "VIC", "name": "VIC"}],
           "body_html": "Take-1",
           "dateline": {
-            "source": "SAP",
-            "text": "Los Angeles, Aug 11 SAP -"
+            "source": "AAP",
+            "text": "Los Angeles, Aug 11 AAP -"
           }
       }]
       """
@@ -1431,8 +1430,8 @@ Feature: Archive Broadcast
       "body_html": "TEST",
       "headline": "TEST",
       "dateline": {
-        "source": "SAP",
-        "text": "Los Angeles, Aug 11 SAP -"
+        "source": "AAP",
+        "text": "Los Angeles, Aug 11 AAP -"
       }
     }
     """
@@ -1481,7 +1480,7 @@ Feature: Archive Broadcast
       "urgency": 1, "priority": 1,
       "_current_version": 4,
       "headline": "Kill\/Takedown notice ~~~ Kill\/Takedown notice",
-      "body_html": "<p>Please kill story slugged comics ex Los Angeles, Aug 11 SAP -.<\/p>"
+      "body_html": "<p>Please kill story slugged comics ex Los Angeles, Aug 11 AAP -.<\/p>"
     }
     """
     And we get "/archive/#BROADCAST_TWO#" and match
@@ -1568,8 +1567,8 @@ Feature: Archive Broadcast
           "place": [{"qcode": "VIC", "name": "VIC"}],
           "body_html": "Take-1",
           "dateline": {
-            "source": "SAP",
-            "text": "Los Angeles, Aug 11 SAP -"
+            "source": "AAP",
+            "text": "Los Angeles, Aug 11 AAP -"
           }
       }]
       """
@@ -1706,7 +1705,7 @@ Feature: Archive Broadcast
       "anpa_take_key": "KILL\/TAKEDOWN",
       "urgency": 1, "priority": 1, "_current_version": 4,
       "headline": "Kill\/Takedown notice ~~~ Kill\/Takedown notice",
-      "body_html": "<p>Please kill story slugged comics ex Los Angeles, Aug 11 SAP -.<\/p>"
+      "body_html": "<p>Please kill story slugged comics ex Los Angeles, Aug 11 AAP -.<\/p>"
     }
     """
     And we get "/archive/#BROADCAST_TWO#" and match
@@ -1797,8 +1796,8 @@ Feature: Archive Broadcast
           "place": [{"qcode": "VIC", "name": "VIC"}],
           "body_html": "Take-1",
           "dateline": {
-            "source": "SAP",
-            "text": "Los Angeles, Aug 11 SAP -"
+            "source": "AAP",
+            "text": "Los Angeles, Aug 11 AAP -"
           }
       }]
       """
@@ -1998,8 +1997,8 @@ Feature: Archive Broadcast
           "place": [{"qcode": "VIC", "name": "VIC"}],
           "body_html": "Take-1",
           "dateline": {
-            "source": "SAP",
-            "text": "Los Angeles, Aug 11 SAP -"
+            "source": "AAP",
+            "text": "Los Angeles, Aug 11 AAP -"
           }
       },
       {
@@ -2025,8 +2024,8 @@ Feature: Archive Broadcast
           "place": [{"qcode": "VIC", "name": "VIC"}],
           "body_html": "Take-1",
           "dateline": {
-            "source": "SAP",
-            "text": "Los Angeles, Aug 11 SAP -"
+            "source": "AAP",
+            "text": "Los Angeles, Aug 11 AAP -"
           }
       }]
       """

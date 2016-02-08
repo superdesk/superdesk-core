@@ -405,7 +405,7 @@ Feature: News Items Archive
         """
         Then we get new resource
         """
-        {"type": "text", "source":"SAP", "priority":6, "urgency":3}
+        {"type": "text", "source":"AAP", "priority":6, "urgency":3}
         """
 
     @auth
@@ -520,7 +520,7 @@ Feature: News Items Archive
          Then we get OK response
          Then we get existing resource
          """
-         {"guid": "123", "source": "SAP", "dateline": {"source": "SAP"}}
+         {"guid": "123", "source": "AAP", "dateline": {"source": "AAP"}}
          """
  
  	@auth
