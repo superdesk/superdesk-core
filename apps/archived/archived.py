@@ -195,7 +195,6 @@ class ArchivedService(BaseService):
         articles_to_kill = self._find_articles_to_kill({'_id': id})
         logger.info('Fetched articles to kill for id: {}'.format(id))
         articles_to_kill.sort(key=itemgetter(ITEM_TYPE), reverse=True)  # Needed because package has to be inserted last
-        kill_service = EnqueueKilledService()
 
         updated = original.copy()
         updated.update(updates)
@@ -208,7 +207,7 @@ class ArchivedService(BaseService):
                 super().delete({'item_id': article['item_id']})
                 logger.info('Delete for article: {}'.format(article[config.ID_FIELD]))
 
-                kill_service.broadcast_kill_email(article)
+                KillPublishService().broadcast_kill_email(article)
                 logger.info('Broadcast kill email for article: {}'.format(article[config.ID_FIELD]))
                 continue
 
@@ -226,7 +225,7 @@ class ArchivedService(BaseService):
                 query = {'$and': [{config.ID_FIELD: {'$in': subscriber_ids}}]}
                 subscribers = list(get_resource_service('subscribers').get(req=None, lookup=query))
 
-                kill_service.queue_transmission(article, subscribers)
+                EnqueueKilledService().queue_transmission(article, subscribers)
                 logger.info('Queued Transmission for article: {}'.format(article[config.ID_FIELD]))
 
             article[config.ID_FIELD] = article.pop('item_id', article['item_id'])

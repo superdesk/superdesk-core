@@ -230,8 +230,9 @@ class TakesPackageService():
         if package:
             refs = self.get_package_refs(package)
             if refs:
-                ref = next((ref for ref in refs if ref.get(SEQUENCE) == 1
-                            and ref.get(RESIDREF, '') != item.get('item_id', '')), None)
+                ref = next((ref for ref in refs
+                            if ref.get(SEQUENCE) == 1 and ref.get(RESIDREF, '') != item.get('item_id', '')),
+                           None)
                 if ref:
                     return ref.get(RESIDREF, None)
 

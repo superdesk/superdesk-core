@@ -43,7 +43,7 @@ Feature: Duplication of Content within Desk
       When we get "/archive/#duplicate._id#"
       Then we get existing resource
       """
-      {"state": "submitted", "_current_version": 4, "source": "SAP",
+      {"state": "submitted", "_current_version": 4, "source": "AAP",
        "task": {"desk": "#desks._id#", "stage": "#desks.working_stage#", "user": "#CONTEXT_USER_ID#"}}
       """
       Then there is no "last_production_desk" in task
