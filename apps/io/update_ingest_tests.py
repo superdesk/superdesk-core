@@ -477,3 +477,33 @@ class UpdateIngestTest(SuperdeskTestCase):
         for relative in family_members:
             self.assertEqual(relative['pubstatus'], 'canceled')
             self.assertEqual(relative['state'], 'killed')
+
+    def test_ingest_update(self):
+        provider_name = 'reuters'
+        guid = 'tag_reuters.com_2014_newsml_KBN0FL0NN:5'
+        provider = get_resource_service('ingest_providers').find_one(name=provider_name, req=None)
+        provider_service = self._get_provider_service(provider)
+        provider_service.provider = provider
+        provider_service.URL = provider.get('config', {}).get('url')
+        items = provider_service.fetch_ingest(guid)
+        self.ingest_items(items, provider, provider_service)
+
+        items[0]['ingest_provider'] = provider['_id']
+        items[0]['expiry'] = utcnow() + timedelta(hours=11)
+
+        service = get_resource_service('ingest')
+        service.post(items)
+
+        self.assertEqual(items[0]['unique_id'], 1)
+
+        # change the headline
+        items[0]['headline'] = 'Updated headline'
+
+        # ingest the item again
+        self.ingest_items(items, provider, provider_service)
+
+        # see the update to the headline and unique_id survives
+        elastic_item = self.app.data._search_backend('ingest').find_one('ingest', _id=guid, req=None)
+        self.assertEqual(elastic_item['headline'], 'Updated headline')
+        self.assertEqual(elastic_item['unique_id'], 1)
+        self.assertEqual(elastic_item['unique_name'], '#1')

@@ -47,13 +47,8 @@ class IngestService(BaseService):
         self.on_created(docs)
         return ids
 
-    def put_in_mongo(self, id, document):
-        resolve_default_values(document, app.config['DOMAIN'][self.datasource]['defaults'])
-        original = self.find_one(req=None, _id=id)
-        self.on_replace(document, original)
-        resolve_document_etag(document, self.datasource)
-        res = self.backend.replace_in_mongo(self.datasource, id, document, original)
-        self.on_replaced(document, original)
+    def patch_in_mongo(self, id, document, original):
+        res = self.backend.update_in_mongo(self.datasource, id, document, original)
         return res
 
     def set_ingest_provider_sequence(self, item, provider):
