@@ -15,7 +15,7 @@ from superdesk import get_resource_service
 import superdesk
 from superdesk.celery_app import update_key
 from superdesk.errors import SuperdeskApiError
-from superdesk.metadata.item import not_analyzed, ITEM_STATE, PUBLISH_STATES, EMBARGO
+from superdesk.metadata.item import not_analyzed, ITEM_STATE, PUBLISH_STATES
 from superdesk.metadata.utils import aggregations
 from superdesk.resource import Resource
 from superdesk.services import BaseService
@@ -317,8 +317,10 @@ class PublishedItemService(BaseService):
         """
         desk_id = doc.get('task', {}).get('desk', None)
         stage_id = doc.get('task', {}).get('stage', None)
+        offset = doc.get('schedule_settings', {}).get('utc_published_schedule') or \
+            doc.get('schedule_settings', {}).get('utc_embargo')
 
-        doc['expiry'] = get_expiry(desk_id, stage_id, offset=doc.get(EMBARGO, doc.get('publish_schedule')))
+        doc['expiry'] = get_expiry(desk_id, stage_id, offset=offset)
 
     def move_to_archived(self, _id):
         published_items = list(self.get_from_mongo(req=None, lookup={'item_id': _id}))

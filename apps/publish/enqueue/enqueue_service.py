@@ -261,7 +261,8 @@ class EnqueueService:
                             publish_queue_item['subscriber_id'] = subscriber['_id']
                             publish_queue_item['destination'] = destination
                             publish_queue_item['published_seq_num'] = pub_seq_num
-                            publish_queue_item['publish_schedule'] = doc.get('publish_schedule', None)
+                            publish_queue_item['publish_schedule'] = \
+                                doc.get('schedule_settings', {}).get('utc_publish_schedule', None)
                             publish_queue_item['unique_name'] = doc.get('unique_name', None)
                             publish_queue_item['content_type'] = doc.get('type', None)
                             publish_queue_item['headline'] = doc.get('headline', None)

@@ -114,7 +114,11 @@ class TakesPackageService():
         takes_package[ITEM_TYPE] = CONTENT_TYPE.COMPOSITE
         takes_package[PACKAGE_TYPE] = TAKES_PACKAGE
         fields_for_creating_takes_package = self.fields_for_creating_take.copy()
-        fields_for_creating_takes_package.extend(['publish_schedule', 'event_id', 'rewrite_of', 'task',
+        fields_for_creating_takes_package.extend(['publish_schedule',
+                                                  'schedule_settings',
+                                                  'event_id',
+                                                  'rewrite_of',
+                                                  'task',
                                                   EMBARGO])
 
         for field in fields_for_creating_takes_package:
@@ -167,6 +171,7 @@ class TakesPackageService():
             takes_package.pop('unique_id', None)
             takes_package.pop('unique_name', None)
             takes_package.pop('publish_schedule', None)
+            takes_package.pop('schedule_settings', None)
 
             resolve_document_version(takes_package, ARCHIVE, 'PATCH', takes_package)
             archive_service.patch(takes_package_id, takes_package)

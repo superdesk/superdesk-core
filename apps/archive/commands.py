@@ -52,7 +52,10 @@ class UpdateOverdueScheduledContent(superdesk.Command):
 
             for item in items:
                 logger.info('updating overdue scheduled article with id {} and headline {} -- expired on: {} now: {}'.
-                            format(item[config.ID_FIELD], item['headline'], item['publish_schedule'], now))
+                            format(item[config.ID_FIELD],
+                                   item['headline'],
+                                   item.get('schedule_settings', {}).get('utc_publish_schedule', '-'),
+                                   now))
 
                 superdesk.get_resource_service(ARCHIVE).patch(item[config.ID_FIELD], item_update)
         finally:
@@ -234,7 +237,7 @@ def get_overdue_scheduled_items(expired_date_time, resource, limit=100):
 
     logger.info('Get overdue scheduled content from {}'.format(resource))
     query = {'$and': [
-        {'publish_schedule': {'$lte': expired_date_time}},
+        {'schedule_settings.utc_publish_schedule': {'$lte': expired_date_time}},
         {ITEM_STATE: CONTENT_STATE.SCHEDULED}
     ]}
 

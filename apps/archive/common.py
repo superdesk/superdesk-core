@@ -19,7 +19,7 @@ from pytz import timezone
 
 import superdesk
 from superdesk.users.services import get_sign_off
-from superdesk.utc import utcnow, get_expiry_date
+from superdesk.utc import utcnow, get_expiry_date, local_to_utc
 from superdesk import get_resource_service
 from superdesk.metadata.item import metadata_schema, ITEM_STATE, CONTENT_STATE, \
     LINKED_IN_PACKAGES, BYLINE, SIGN_OFF, EMBARGO, ITEM_TYPE, CONTENT_TYPE
@@ -430,10 +430,30 @@ def validate_schedule(schedule, package_sequence=1):
     if schedule:
         if not isinstance(schedule, datetime):
             raise SuperdeskApiError.badRequestError("Schedule date is not recognized")
+        if not schedule.date() or schedule.date().year <= 1970:
+            raise SuperdeskApiError.badRequestError("Schedule date is not recognized")
+        if not schedule.time():
+            raise SuperdeskApiError.badRequestError("Schedule time is not recognized")
         if schedule < utcnow():
             raise SuperdeskApiError.badRequestError("Schedule cannot be earlier than now")
         if package_sequence > 1:
             raise SuperdeskApiError.badRequestError("Takes cannot be scheduled.")
+
+
+def update_schedule_settings(updates, field_name, value):
+    # adjust given  to the schedule's timezone
+
+    schedule_settings = updates.get('schedule_settings', {})
+
+    if field_name and value:
+        tz_name = schedule_settings.get('time_zone')
+        if tz_name:
+            schedule_settings['utc_{}'.format(field_name)] = local_to_utc(tz_name, value)
+        else:
+            schedule_settings['utc_{}'.format(field_name)] = value
+            schedule_settings['time_zone'] = None
+
+    updates['schedule_settings'] = schedule_settings
 
 
 def item_schema(extra=None):
@@ -452,6 +472,15 @@ def item_schema(extra=None):
         'publish_schedule': {
             'type': 'datetime',
             'nullable': True
+        },
+        'schedule_settings': {
+            'type': 'dict',
+            'nullable': True,
+            'schema': {
+                'time_zone': {'type': 'string', 'nullable': True},
+                'utc_publish_schedule': {'type': 'datetime', 'nullable': True},
+                'utc_embargo': {'type': 'datetime', 'nullable': True}
+            }
         },
         'flags': {
             'type': 'dict',
