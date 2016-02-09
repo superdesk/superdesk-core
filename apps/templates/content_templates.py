@@ -9,7 +9,6 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import re
-import datetime
 import superdesk
 from flask import current_app as app
 from superdesk import Resource, Service, config
@@ -24,11 +23,7 @@ from apps.archive.common import ARCHIVE, CUSTOM_HATEOAS, item_schema, format_dat
 from apps.archive.common import insert_into_versions
 from apps.auth import get_user
 from flask import render_template_string
-
-import pytz
-from pytz import all_timezones_set
-from enum import Enum
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 
 CONTENT_TEMPLATE_PRIVILEGE = 'content_templates'

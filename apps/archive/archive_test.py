@@ -202,15 +202,24 @@ class RemoveSpikedContentTestCase(SuperdeskTestCase):
         self.assertFalse(deleted)
 
     def test_query_getting_overdue_scheduled_content(self):
-        self.app.data.insert(ARCHIVE, [{'publish_schedule': get_expiry_date(-10), 'state': 'published'}])
-        self.app.data.insert(ARCHIVE, [{'publish_schedule': get_expiry_date(-10), 'state': 'scheduled'}])
-        self.app.data.insert(ARCHIVE, [{'publish_schedule': get_expiry_date(0), 'state': 'spiked'}])
-        self.app.data.insert(ARCHIVE, [{'publish_schedule': get_expiry_date(10), 'state': 'scheduled'}])
+
+        self.app.data.insert(ARCHIVE,
+                             [{'schedule_settings': {'utc_publish_schedule': get_expiry_date(-10)},
+                               'state': 'published'}])
+        self.app.data.insert(ARCHIVE,
+                             [{'schedule_settings': {'utc_publish_schedule': get_expiry_date(-10)},
+                               'state': 'scheduled'}])
+        self.app.data.insert(ARCHIVE,
+                             [{'schedule_settings': {'utc_publish_schedule': get_expiry_date(0)},
+                               'state': 'spiked'}])
+        self.app.data.insert(ARCHIVE,
+                             [{'schedule_settings': {'utc_publish_schedule': get_expiry_date(10)},
+                               'state': 'scheduled'}])
         self.app.data.insert(ARCHIVE, [{'unique_id': 97, 'state': 'spiked'}])
 
         now = date_to_str(utcnow())
-        overdueItems = get_overdue_scheduled_items(now, 'archive')
-        self.assertEquals(1, overdueItems.count())
+        overdue_items = get_overdue_scheduled_items(now, 'archive')
+        self.assertEquals(1, overdue_items.count())
 
 
 class ArchiveTestCase(SuperdeskTestCase):

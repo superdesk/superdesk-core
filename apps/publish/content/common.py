@@ -33,7 +33,8 @@ from eve.versioning import resolve_document_version
 
 from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
 from apps.archive.common import get_user, insert_into_versions, item_operations
-from apps.archive.common import validate_schedule, ITEM_OPERATION, convert_task_attributes_to_objectId, is_genre, \
+from apps.archive.common import validate_schedule, ITEM_OPERATION, update_schedule_settings, \
+    convert_task_attributes_to_objectId, is_genre, \
     BROADCAST_GENRE, get_expiry
 from apps.common.components.utils import get_component
 from apps.item_autosave.components.item_autosave import ItemAutosave
@@ -188,6 +189,7 @@ class BasePublishService(BaseService):
                     Exception("Previous takes are not published."))
 
             validate_schedule(updated.get('publish_schedule'), takes_package.get(SEQUENCE, 1) if takes_package else 1)
+            update_schedule_settings(updated, 'publish_schedule', updated.get('publish_schedule'))
 
             if original[ITEM_TYPE] != CONTENT_TYPE.COMPOSITE and updates.get(EMBARGO):
                 get_resource_service(ARCHIVE).validate_embargo(updated)
@@ -262,8 +264,9 @@ class BasePublishService(BaseService):
         """
         desk_id = original.get('task', {}).get('desk')
         stage_id = original.get('task', {}).get('stage')
-        offset = updates.get(EMBARGO, original.get(EMBARGO)) or \
-            updates.get('publish_schedule', original.get('publish_schedule'))
+        schedule_settings = updates.get('schedule_settings', original.get('schedule_settings', {})) or {}
+        offset = schedule_settings.get('utc_publish_schedule') or schedule_settings.get('utc_embargo')
+
         updates['expiry'] = get_expiry(desk_id, stage_id, offset=offset)
 
     def _is_take_item(self, item):
@@ -316,7 +319,7 @@ class BasePublishService(BaseService):
                 package_updates['body_html'] = body_html
 
             metadata_tobe_copied = self.takes_package_service.fields_for_creating_take.copy()
-            metadata_tobe_copied.extend(['publish_schedule', 'byline'])
+            metadata_tobe_copied.extend(['publish_schedule', 'schedule_settings', 'byline'])
             updated_take = original_of_take_to_be_published.copy()
             updated_take.update(updates_of_take_to_be_published)
             metadata_from = updated_take
@@ -417,6 +420,7 @@ class BasePublishService(BaseService):
         :param dict updates: updates related to document
         """
         updates['publish_schedule'] = None
+        updates['schedule_settings'] = {}
         updates[ITEM_STATE] = self.published_state
 
     def _set_updates(self, original, updates, last_updated, preserve_state=False):

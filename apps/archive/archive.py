@@ -13,7 +13,7 @@ from superdesk.resource import Resource
 from superdesk.metadata.utils import extra_response_fields, item_url, aggregations, is_normal_package
 from .common import remove_unwanted, update_state, set_item_expiry, remove_media_files, \
     on_create_item, on_duplicate_item, get_user, update_version, set_sign_off, \
-    handle_existing_data, item_schema, validate_schedule, is_item_in_package, \
+    handle_existing_data, item_schema, validate_schedule, is_item_in_package, update_schedule_settings, \
     ITEM_OPERATION, ITEM_RESTORE, ITEM_UPDATE, ITEM_DESCHEDULE, ARCHIVE as SOURCE, \
     LAST_PRODUCTION_DESK, LAST_AUTHORING_DESK, convert_task_attributes_to_objectId, BROADCAST_GENRE
 from superdesk.media.crop import CropService
@@ -202,7 +202,9 @@ class ArchiveService(BaseService):
             # check if there is a takes package and deschedule the takes package.
             package = TakesPackageService().get_take_package(original)
             if package and package.get('state') == 'scheduled':
-                package_updates = {'publish_schedule': None, 'groups': package.get('groups')}
+                package_updates = {'publish_schedule': None,
+                                   'schedule_settings': {},
+                                   'groups': package.get('groups')}
                 self.patch(package.get(config.ID_FIELD), package_updates)
 
             return
@@ -368,6 +370,7 @@ class ArchiveService(BaseService):
         copied_item.pop(LINKED_IN_PACKAGES, None)
         copied_item.pop(EMBARGO, None)
         copied_item.pop('publish_schedule', None)
+        copied_item.pop('schedule_settings', None)
         copied_item.pop('lock_time', None)
         copied_item.pop('lock_session', None)
         copied_item.pop('lock_user', None)
@@ -415,19 +418,10 @@ class ArchiveService(BaseService):
         """
         updates['state'] = 'in_progress'
         updates['publish_schedule'] = None
+        updates['schedule_settings'] = {}
         updates[ITEM_OPERATION] = ITEM_DESCHEDULE
         # delete entry from published repo
         get_resource_service('published').delete_by_article_id(doc['_id'])
-
-    def validate_schedule(self, schedule):
-        if not isinstance(schedule, datetime.date):
-            raise SuperdeskApiError.badRequestError("Schedule date is not recognized")
-        if not schedule.date() or schedule.date().year <= 1970:
-            raise SuperdeskApiError.badRequestError("Schedule date is not recognized")
-        if not schedule.time():
-            raise SuperdeskApiError.badRequestError("Schedule time is not recognized")
-        if schedule < utcnow():
-            raise SuperdeskApiError.badRequestError("Schedule cannot be earlier than now")
 
     def can_edit(self, item, user_id):
         """
@@ -562,6 +556,7 @@ class ArchiveService(BaseService):
 
             package = TakesPackageService().get_take_package(original) or {}
             validate_schedule(updates['publish_schedule'], package.get(SEQUENCE, 1))
+            update_schedule_settings(updates, 'publish_schedule', updates['publish_schedule'])
 
         if original[ITEM_TYPE] == CONTENT_TYPE.PICTURE:
             CropService().validate_multiple_crops(updates, original)
@@ -607,6 +602,7 @@ class ArchiveService(BaseService):
         if updates.get('publish_schedule') \
                 and datetime.datetime.fromtimestamp(0).date() == updates.get('publish_schedule').date():
             updates['publish_schedule'] = None
+            updates['schedule_settings'] = {}
 
         if updates.get('force_unlock', False):
             del updates['force_unlock']
