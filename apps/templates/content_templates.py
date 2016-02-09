@@ -21,6 +21,7 @@ from superdesk.metadata.item import metadata_schema, ITEM_STATE, CONTENT_STATE
 from superdesk.celery_app import celery
 from apps.rules.routing_rules import Weekdays, set_time
 from apps.archive.common import ARCHIVE, CUSTOM_HATEOAS, item_schema, format_dateline_to_locmmmddsrc
+from apps.archive.common import insert_into_versions
 from apps.auth import get_user
 from flask import render_template_string
 
@@ -301,10 +302,15 @@ def create_scheduled_content(now=None):
         now = utcnow()
     templates = get_scheduled_templates(now)
     production = superdesk.get_resource_service(ARCHIVE)
+    items = []
     for template in templates:
         try:
             set_template_timestamps(template, now)
             item = get_item_from_template(template)
+            item[config.VERSION] = 1
             production.post([item])
+            insert_into_versions(doc=item)
+            items.append(item)
         except app.data.OriginalChangedError:
             pass  # ignore template if it changed meanwhile
+    return items
