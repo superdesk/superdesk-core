@@ -1,4 +1,3 @@
-@wip
 Feature: Templates
 
     @auth
@@ -88,8 +87,18 @@ Feature: Templates
         And we get "/archive"
         Then we get list with 1 items
         """
-        {"_items": [{"headline": "test", "firstcreated": "__now__", "versioncreated": "__now__"}]}
+        {"_items": [{
+            "headline": "test",
+            "firstcreated": "__now__",
+            "versioncreated": "__now__",
+            "_updated": "__now__",
+            "_created": "__now__",
+            "_current_version": 1,
+            "_etag": "__any_value__"
+        }]}
         """
+        When we get "/archive/#ITEM_ID#?version=all"
+        Then we get list with 1 items
 
     @auth
     Scenario: Apply template to an item
@@ -143,7 +152,6 @@ Feature: Templates
         }
         """
 
-    @wip
     @auth
     Scenario: For kill Template Dateline, Schedule and Desk settings should be null.
     Given "desks"
