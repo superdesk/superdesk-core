@@ -33,6 +33,7 @@ from superdesk.stats import stats
 from superdesk.upload import url_for_media
 from superdesk.utc import utcnow, get_expiry_date
 from superdesk.workflow import set_default_state
+from copy import deepcopy
 
 UPDATE_SCHEDULE_DEFAULT = {'minutes': 5}
 LAST_UPDATED = 'last_updated'
@@ -427,8 +428,14 @@ def ingest_items(items, provider, feeding_service, rule_set=None, routing_scheme
 
 def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=None):
     try:
-        item.setdefault(superdesk.config.ID_FIELD, generate_guid(type=GUID_NEWSML))
-        item[FAMILY_ID] = item[superdesk.config.ID_FIELD]
+        ingest_service = superdesk.get_resource_service('ingest')
+
+        # determine if we already have this item
+        old_item = ingest_service.find_one(guid=item[GUID_FIELD], req=None)
+
+        if not old_item:
+            item.setdefault(superdesk.config.ID_FIELD, generate_guid(type=GUID_NEWSML))
+            item[FAMILY_ID] = item[superdesk.config.ID_FIELD]
 
         item['ingest_provider'] = str(provider[superdesk.config.ID_FIELD])
         item.setdefault('source', provider.get('source', ''))
@@ -448,13 +455,6 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
 
         apply_rule_set(item, provider, rule_set)
 
-        ingest_service = superdesk.get_resource_service('ingest')
-
-        if item.get('ingest_provider_sequence') is None:
-            ingest_service.set_ingest_provider_sequence(item, provider)
-
-        old_item = ingest_service.find_one(guid=item[GUID_FIELD], req=None)
-
         if item.get('pubstatus', '') == 'canceled':
             item[ITEM_STATE] = CONTENT_STATE.KILLED
             ingest_cancel(item)
@@ -468,13 +468,16 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
 
         new_version = True
         if old_item:
-            # In case we already have the item, preserve the _id
-            item[superdesk.config.ID_FIELD] = old_item[superdesk.config.ID_FIELD]
-            ingest_service.put_in_mongo(item[superdesk.config.ID_FIELD], item)
+            updates = deepcopy(item)
+            ingest_service.patch_in_mongo(old_item[superdesk.config.ID_FIELD], updates, old_item)
+            item.update(old_item)
+            item.update(updates)
             # if the feed is versioned and this is not a new version
             if 'version' in item and 'version' in old_item and item.get('version') == old_item.get('version'):
                 new_version = False
         else:
+            if item.get('ingest_provider_sequence') is None:
+                ingest_service.set_ingest_provider_sequence(item, provider)
             try:
                 ingest_service.post_in_mongo([item])
             except HTTPException as e:
