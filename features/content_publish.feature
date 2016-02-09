@@ -756,6 +756,14 @@ Feature: Content Publishing
       {}
       """
       Then we get OK response
+      When we get "/workqueue?source={"filter": {"term": {"lock_user": "#CONTEXT_USER_ID#"}}}"
+      Then we get list with 1 items
+      """
+      {"_items": [{"guid": "123", "headline": "test", "state": "published",
+                   "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+                   "subject":[{"qcode": "17004000", "name": "Statistics"}],
+                    "slugline": "test", "body_html": "Test Document body"}]}
+      """
       When we publish "#archive._id#" with "correct" type and "corrected" state
       Then we get OK response
       And we get existing resource
