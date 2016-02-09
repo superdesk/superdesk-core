@@ -136,6 +136,17 @@ class EveBackend():
         self.replace_in_search(endpoint_name, id, document, original)
         return res
 
+    def update_in_mongo(self, endpoint_name, id, updates, original):
+        updates.setdefault(config.LAST_UPDATED, utcnow())
+        if config.ETAG not in updates:
+            updated = original.copy()
+            updated.update(updates)
+            resolve_document_etag(updated, endpoint_name)
+            updates[config.ETAG] = updated[config.ETAG]
+        backend = self._backend(endpoint_name)
+        res = backend.update(endpoint_name, id, updates, original)
+        return res if res is not None else updates
+
     def replace_in_mongo(self, endpoint_name, id, document, original):
         backend = self._backend(endpoint_name)
         res = backend.replace(endpoint_name, id, document, original)
