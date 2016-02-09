@@ -110,6 +110,9 @@ class RemoveExpiredContent(superdesk.Command):
         # Step 3: Processing items to expire
         for item in not_killed_items:
             item_id = item.get(config.ID_FIELD)
+            item.setdefault(config.VERSION, 1)
+            item.setdefault('expiry', expiry_datetime)
+            item.setdefault('unique_name', '')
             expiry_msg = log_msg_format.format(**item)
             logger.info('{} Processing expired item. {}'.format(log_msg, expiry_msg))
 

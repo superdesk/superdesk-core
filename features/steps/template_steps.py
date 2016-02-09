@@ -1,5 +1,6 @@
 
 from datetime import datetime, timedelta
+from superdesk.tests import set_placeholder
 from steps import when, then, get_json_data, parse_date  # @UnresolvedImport
 
 
@@ -8,7 +9,9 @@ def when_we_run_create_content_task(context):
     from apps.templates import create_scheduled_content
     now = datetime.now() + timedelta(days=8)
     with context.app.app_context():
-        create_scheduled_content(now)
+        items = create_scheduled_content(now)
+        for item in items:
+            set_placeholder(context, 'ITEM_ID', str(item['_id']))
 
 
 @then('next run is on monday "{time}"')
