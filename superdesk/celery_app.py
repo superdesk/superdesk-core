@@ -96,7 +96,7 @@ register('eve/json', dumps, loads, content_type='application/json')
 def handle_exception(exc):
     """Log exception to logger and sentry."""
     logger.exception(exc)
-    superdesk.app.sentry.captureException(exc)
+    superdesk.app.sentry.captureException()
 
 
 class AppContextTask(TaskBase):

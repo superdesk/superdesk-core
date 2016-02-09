@@ -9,7 +9,6 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-
 import os
 import flask
 import importlib
@@ -23,13 +22,10 @@ from superdesk.celery_app import init_celery
 from eve.auth import TokenAuth
 from superdesk.storage.desk_media_storage import SuperdeskGridFSMediaStorage
 from superdesk.validator import SuperdeskValidator
-from raven.contrib.flask import Sentry
 from superdesk.errors import SuperdeskError, SuperdeskApiError
 from superdesk.io import registered_feeding_services
 from superdesk.datalayer import SuperdeskDataLayer  # noqa
-
-
-sentry = Sentry(register_signal=False, wrap_wsgi=False)
+from superdesk.factory.sentry import SuperdeskSentry
 
 
 def get_app(config=None, media_storage=None):
@@ -71,6 +67,7 @@ def get_app(config=None, media_storage=None):
     app.jinja_loader = custom_loader
 
     app.mail = Mail(app)
+    app.sentry = SuperdeskSentry(app)
 
     @app.errorhandler(SuperdeskError)
     def client_error_handler(error):
@@ -109,9 +106,6 @@ def get_app(config=None, media_storage=None):
 
     # we can only put mapping when all resources are registered
     app.data.elastic.put_mapping(app)
-
-    app.sentry = sentry
-    sentry.init_app(app)
 
     # instantiate registered provider classes (leave non-classes intact)
     for key, provider in registered_feeding_services.items():
