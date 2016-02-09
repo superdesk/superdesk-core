@@ -242,7 +242,6 @@ class UpdateIngestTest(SuperdeskTestCase):
         service.post(items)
 
         # ingest the items and expire them
-        self.ingest_items(items, provider, provider_service)
         before = service.get(req=None, lookup={})
         self.assertEqual(6, before.count())
 
@@ -269,9 +268,6 @@ class UpdateIngestTest(SuperdeskTestCase):
         items[1]['expiry'] = now - timedelta(hours=11)
         items[2]['expiry'] = now + timedelta(hours=11)
         items[5]['versioncreated'] = now + timedelta(minutes=11)
-
-        service = get_resource_service('ingest')
-        service.post(items)
 
         # ingest the items and expire them
         self.ingest_items(items, provider, provider_service)
@@ -344,9 +340,6 @@ class UpdateIngestTest(SuperdeskTestCase):
             item['ingest_provider'] = provider['_id']
             item['expiry'] = utcnow() + timedelta(hours=11)
 
-        service = get_resource_service('ingest')
-        service.post(items)
-
         # ingest the items
         self.ingest_items(items, provider, provider_service)
 
@@ -373,8 +366,6 @@ class UpdateIngestTest(SuperdeskTestCase):
         provider_service = self._get_provider_service(provider)
         feeding_parser = provider_service.get_feed_parser(provider)
         items = [feeding_parser.parse(file_path, provider)]
-        service = get_resource_service('ingest')
-        service.post(items)
 
         # ingest the items and check the subject code has been derived
         self.ingest_items(items, provider, provider_service)
@@ -391,8 +382,6 @@ class UpdateIngestTest(SuperdeskTestCase):
         provider_service = self._get_provider_service(provider)
         feeding_parser = provider_service.get_feed_parser(provider)
         items = [feeding_parser.parse(file_path, provider)]
-        service = get_resource_service('ingest')
-        service.post(items)
 
         # ingest the items and check the subject code has been derived
         self.ingest_items(items, provider, provider_service)
@@ -418,9 +407,6 @@ class UpdateIngestTest(SuperdeskTestCase):
                 item['ingest_provider'] = provider['_id']
                 item['expiry'] = utcnow() + timedelta(hours=11)
 
-            service = get_resource_service('ingest')
-            service.post(items)
-
             # ingest the items and check the subject code has been derived
             self.ingest_items(items, provider, provider_service)
             self.assertEqual(items[0]['anpa_category'][0]['qcode'], 'f')
@@ -444,9 +430,6 @@ class UpdateIngestTest(SuperdeskTestCase):
             for item in items:
                 item['ingest_provider'] = provider['_id']
                 item['expiry'] = utcnow() + timedelta(hours=11)
-
-            service = get_resource_service('ingest')
-            service.post(items)
 
             # ingest the items and check the subject code has been derived
             self.ingest_items(items, provider, provider_service)
@@ -486,16 +469,17 @@ class UpdateIngestTest(SuperdeskTestCase):
         provider_service.provider = provider
         provider_service.URL = provider.get('config', {}).get('url')
         items = provider_service.fetch_ingest(guid)
-        self.ingest_items(items, provider, provider_service)
-
         items[0]['ingest_provider'] = provider['_id']
         items[0]['expiry'] = utcnow() + timedelta(hours=11)
 
-        service = get_resource_service('ingest')
-        service.post(items)
+        self.ingest_items(items, provider, provider_service)
 
         self.assertEqual(items[0]['unique_id'], 1)
+        original_id = items[0]['_id']
 
+        items = provider_service.fetch_ingest(guid)
+        items[0]['ingest_provider'] = provider['_id']
+        items[0]['expiry'] = utcnow() + timedelta(hours=11)
         # change the headline
         items[0]['headline'] = 'Updated headline'
 
@@ -503,7 +487,7 @@ class UpdateIngestTest(SuperdeskTestCase):
         self.ingest_items(items, provider, provider_service)
 
         # see the update to the headline and unique_id survives
-        elastic_item = self.app.data._search_backend('ingest').find_one('ingest', _id=guid, req=None)
+        elastic_item = self.app.data._search_backend('ingest').find_one('ingest', _id=original_id, req=None)
         self.assertEqual(elastic_item['headline'], 'Updated headline')
         self.assertEqual(elastic_item['unique_id'], 1)
         self.assertEqual(elastic_item['unique_name'], '#1')
