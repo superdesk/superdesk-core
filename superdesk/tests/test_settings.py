@@ -251,6 +251,7 @@ INSTALLED_APPS.extend([
     'apps.feature_preview',
 
     'apps.picture_crop',
+    'apps.workqueue',
 ])
 
 RESOURCE_METHODS = ['GET', 'POST']
