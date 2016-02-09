@@ -161,8 +161,7 @@ CELERY_ROUTES = {
 
 CELERYBEAT_SCHEDULE = {}  # disable beat when testing
 
-SENTRY_DSN = env('SENTRY_DSN')
-SENTRY_INCLUDE_PATHS = ['superdesk']
+SENTRY_DSN = ''
 
 INSTALLED_APPS = [
     'apps.auth',

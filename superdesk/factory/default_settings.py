@@ -198,7 +198,7 @@ CELERYBEAT_SCHEDULE = {
 }
 
 SENTRY_DSN = env('SENTRY_DSN')
-SENTRY_INCLUDE_PATHS = ['superdesk']
+SENTRY_INCLUDE_PATHS = ['superdesk', 'apps']
 
 INSTALLED_APPS = [
     'apps.auth',
