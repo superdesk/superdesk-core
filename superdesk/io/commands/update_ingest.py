@@ -33,6 +33,7 @@ from superdesk.stats import stats
 from superdesk.upload import url_for_media
 from superdesk.utc import utcnow, get_expiry_date
 from superdesk.workflow import set_default_state
+from copy import deepcopy
 
 UPDATE_SCHEDULE_DEFAULT = {'minutes': 5}
 LAST_UPDATED = 'last_updated'
@@ -467,8 +468,10 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
 
         new_version = True
         if old_item:
-            item = ingest_service.patch_in_mongo(old_item[superdesk.config.ID_FIELD], item, old_item)
-            item[superdesk.config.ID_FIELD] = old_item[superdesk.config.ID_FIELD]
+            updates = deepcopy(item)
+            ingest_service.patch_in_mongo(old_item[superdesk.config.ID_FIELD], updates, old_item)
+            item.update(old_item)
+            item.update(updates)
             # if the feed is versioned and this is not a new version
             if 'version' in item and 'version' in old_item and item.get('version') == old_item.get('version'):
                 new_version = False
