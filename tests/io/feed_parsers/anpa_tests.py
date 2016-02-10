@@ -46,10 +46,16 @@ class ANPATestCase(TestCase):
         item = self.open('anpa-2.tst')
         self.assertEqual('This is part of an Associated Press investigation into the hidden costs of green energy.',
                          item['ednote'])
+        self.assertEqual('1stLd-Writethru', item['anpa_take_key'])
 
     def test_tab_content(self):
         item = self.open('anpa-3.tst')
         self.assertEqual('preformatted', item['type'])
+
+    def test_header_lines_only(self):
+        item = self.open('anpa-4.tst')
+        self.assertEqual('text', item['type'])
+        self.assertRegex(item['body_html'], '<p>Ex-bodyguard testifies about lewd messages sent to Paltrow')
 
     def test_map_priority(self):
         self.assertEqual(1, self.parser.map_priority('F'))

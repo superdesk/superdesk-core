@@ -49,12 +49,14 @@ class ANPAFeedParser(FileFeedParser):
 
             # parse second header line
             m = re.match(
-                b'([a-z]) ([a-z])(\x13|\x14)(\x11|\x12) (am-|pm-|bc-)([a-z-]+)(.*) '
+                b'([a-z]) ([a-z])(\x13|\x14)(\x11|\x12) (am-|pm-|bc-|ap-)([a-z-.]+)(.*) '
                 b'([0-9]{1,2})-([0-9]{1,2}) ([0-9]{4})',
                 lines[1], flags=re.I)
             if m:
                 item['priority'] = self.map_priority(m.group(1).decode())
                 item['anpa_category'] = [{'qcode': m.group(2).decode()}]
+                item['slugline'] = m.group(6).decode('latin-1', 'replace')
+                item['anpa_take_key'] = m.group(7).decode('latin-1', 'replace').strip()
                 item['word_count'] = int(m.group(10).decode())
                 if m.group(4) == b'\x12':
                     item[ITEM_TYPE] = CONTENT_TYPE.PREFORMATTED
@@ -80,13 +82,18 @@ class ANPAFeedParser(FileFeedParser):
 
                 # content metadata
                 header_lines = [l.strip('^<= ') for l in text if l.startswith('^')]
+                if len(header_lines) > 1:
+                    item['headline'] = header_lines[1].rstrip('\r\n^<= ')
                 if len(header_lines) > 3:
-                    item['headline'] = header_lines[1]
-                    item['byline'] = header_lines[-2]
+                    item['byline'] = header_lines[-2].rstrip('\r\n^<= ')
+
+                    # if there is no body use header lines
+                    if len(body_lines) == 1 and not body_lines[0]:
+                        item['body_html'] = '<p>' + '</p><p>'.join(header_lines[2:]) + '</p>'
 
                 # slugline
                 if len(header_lines) > 1:
-                    m = re.match('[A-Z]{2}-[A-Z]{2}--([a-z-0-9]+)', header_lines[0], flags=re.I)
+                    m = re.match('[A-Z]{2}-[A-Z]{2}--([a-z-0-9.]+)', header_lines[0], flags=re.I)
                     if m:
                         item['slugline'] = m.group(1)
 
