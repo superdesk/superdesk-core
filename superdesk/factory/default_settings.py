@@ -155,7 +155,11 @@ CELERY_ROUTES = {
     'apps.archive.remove_scheduled': {
         'queue': 'publish',
         'routing_key': 'publish.remove_scheduled'
-    }
+    },
+    'apps.publish.enqueue.enqueue_published': {
+        'queue': 'publish',
+        'routing_key': 'publish.enqueue'
+    },
 }
 
 
@@ -194,7 +198,11 @@ CELERYBEAT_SCHEDULE = {
     'legal:import_publish_queue': {
         'task': 'apps.legal_archive.import_legal_publish_queue',
         'schedule': timedelta(minutes=5)
-    }
+    },
+    'publish:enqueue': {
+        'task': 'apps.publish.enqueue.enqueue_published',
+        'schedule': timedelta(seconds=10)
+    },
 }
 
 SENTRY_DSN = env('SENTRY_DSN')
