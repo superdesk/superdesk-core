@@ -75,7 +75,11 @@ ELASTICSEARCH_INDEX = env('ELASTICSEARCH_INDEX', 'superdesk')
 if env('ELASTIC_PORT'):
     ELASTICSEARCH_URL = env('ELASTIC_PORT').replace('tcp:', 'http:')
 
-ELASTICSEARCH_INDEXES = {'archived': 'sptest_archived'}
+ELASTICSEARCH_INDEXES = {
+    'archived': 'sptest_archived',
+    'archive': 'sptest_archive',
+    'ingest': 'sptest_ingest',
+}
 
 ELASTICSEARCH_SETTINGS = {
     'settings': {
