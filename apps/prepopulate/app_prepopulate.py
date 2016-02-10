@@ -147,12 +147,7 @@ class PrepopulateService(BaseService):
             if doc.get('remove_first'):
                 drop_elastic(superdesk.app)
                 drop_mongo(superdesk.app)
-                # call the create index with settings
-                superdesk.app.data.elastic.create_index(
-                    superdesk.app.config['ELASTICSEARCH_INDEX'],
-                    superdesk.app.config['ELASTICSEARCH_SETTINGS']
-                )
-                superdesk.app.data.elastic.put_mapping(superdesk.app)
+                app.data.elastic.init_app(superdesk.app)
 
             user = get_resource_service('users').find_one(username=get_default_user()['username'], req=None)
             if not user:

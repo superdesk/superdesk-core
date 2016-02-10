@@ -156,6 +156,9 @@ class BasePublishService(BaseService):
                 self._update_archive(original, updated, should_insert_into_versions=auto_publish)
                 self.update_published_collection(published_item_id=original[config.ID_FIELD], updated=updated)
 
+                from apps.publish.enqueue import enqueue_published
+                enqueue_published.apply_async()
+
             push_notification('item:publish', item=str(id), unique_name=original['unique_name'],
                               desk=str(original.get('task', {}).get('desk', '')),
                               user=str(user.get(config.ID_FIELD, '')))
