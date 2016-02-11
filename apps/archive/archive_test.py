@@ -22,7 +22,8 @@ from datetime import timedelta, datetime
 from pytz import timezone
 from apps.archive.common import validate_schedule, remove_media_files, \
     format_dateline_to_locmmmddsrc, convert_task_attributes_to_objectId, \
-    is_genre, BROADCAST_GENRE, get_default_source, set_default_source
+    is_genre, BROADCAST_GENRE, get_default_source, set_default_source, \
+    get_utc_schedule
 
 
 class RemoveSpikedContentTestCase(SuperdeskTestCase):
@@ -372,3 +373,11 @@ class ArchiveCommonTestCase(SuperdeskTestCase):
 
         self.assertFalse(is_genre(content, BROADCAST_GENRE))
         self.assertTrue(is_genre(content, 'Article'))
+
+    def test_get_utc_schedule(self):
+        embargo_date = utcnow() + timedelta(minutes=10)
+        content = {
+            'embargo': embargo_date
+        }
+        utc_schedule = get_utc_schedule(content, 'embargo')
+        self.assertEqual(utc_schedule, embargo_date)

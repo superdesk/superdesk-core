@@ -42,6 +42,7 @@ PUBLISH_STATES = {CONTENT_STATE.PUBLISHED, CONTENT_STATE.SCHEDULED, CONTENT_STAT
 BYLINE = 'byline'
 SIGN_OFF = 'sign_off'
 EMBARGO = 'embargo'
+PUBLISH_SCHEDULE = 'publish_schedule'
 
 metadata_schema = {
     config.ID_FIELD: {

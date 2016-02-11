@@ -22,7 +22,7 @@ from superdesk.users.services import get_sign_off
 from superdesk.utc import utcnow, get_expiry_date, local_to_utc
 from superdesk import get_resource_service
 from superdesk.metadata.item import metadata_schema, ITEM_STATE, CONTENT_STATE, \
-    LINKED_IN_PACKAGES, BYLINE, SIGN_OFF, EMBARGO, ITEM_TYPE, CONTENT_TYPE
+    LINKED_IN_PACKAGES, BYLINE, SIGN_OFF, EMBARGO, ITEM_TYPE, CONTENT_TYPE, PUBLISH_SCHEDULE
 from superdesk.workflow import set_default_state, is_workflow_state_transition_valid
 from superdesk.metadata.item import GUID_NEWSML, GUID_FIELD, GUID_TAG, not_analyzed
 from superdesk.metadata.packages import PACKAGE_TYPE, TAKES_PACKAGE, SEQUENCE
@@ -443,9 +443,9 @@ def validate_schedule(schedule, package_sequence=1):
 def update_schedule_settings(updates, field_name, value):
     # adjust given  to the schedule's timezone
 
-    schedule_settings = updates.get('schedule_settings', {})
+    schedule_settings = updates.get('schedule_settings', {}) or {}
 
-    if field_name and value:
+    if field_name:
         tz_name = schedule_settings.get('time_zone')
         if tz_name:
             schedule_settings['utc_{}'.format(field_name)] = local_to_utc(tz_name, value)
@@ -454,6 +454,16 @@ def update_schedule_settings(updates, field_name, value):
             schedule_settings['time_zone'] = None
 
     updates['schedule_settings'] = schedule_settings
+
+
+def get_utc_schedule(doc, field_name):
+
+    if 'schedule_settings' not in doc or \
+            not doc.get('schedule_settings') or \
+            field_name not in doc.get('schedule_settings', {}):
+        update_schedule_settings(doc, field_name, doc.get(field_name))
+
+    return doc.get('schedule_settings', {}).get('utc_{}'.format(field_name))
 
 
 def item_schema(extra=None):
@@ -469,7 +479,7 @@ def item_schema(extra=None):
             'type': 'number',
         },
         'task': {'type': 'dict'},
-        'publish_schedule': {
+        PUBLISH_SCHEDULE: {
             'type': 'datetime',
             'nullable': True
         },

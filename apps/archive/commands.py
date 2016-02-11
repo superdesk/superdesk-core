@@ -17,7 +17,8 @@ from apps.packages import PackageService
 from superdesk.celery_task_utils import is_task_running, mark_task_as_not_running, get_lock_id
 from superdesk.utc import utcnow
 from .archive import SOURCE as ARCHIVE
-from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTENT_TYPE
+from apps.archive.common import get_utc_schedule
+from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTENT_TYPE, PUBLISH_SCHEDULE
 from superdesk.metadata.packages import PACKAGE_TYPE, TAKES_PACKAGE
 from superdesk.lock import lock, unlock
 from superdesk import get_resource_service
@@ -54,7 +55,7 @@ class UpdateOverdueScheduledContent(superdesk.Command):
                 logger.info('updating overdue scheduled article with id {} and headline {} -- expired on: {} now: {}'.
                             format(item[config.ID_FIELD],
                                    item['headline'],
-                                   item.get('schedule_settings', {}).get('utc_publish_schedule', '-'),
+                                   get_utc_schedule(item, PUBLISH_SCHEDULE) or '',
                                    now))
 
                 superdesk.get_resource_service(ARCHIVE).patch(item[config.ID_FIELD], item_update)
