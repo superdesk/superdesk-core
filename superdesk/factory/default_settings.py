@@ -290,6 +290,7 @@ INSTALLED_APPS.extend([
     'apps.archive_broadcast',
     'apps.search_providers',
     'apps.feature_preview',
+    'apps.workqueue',
 ])
 
 RESOURCE_METHODS = ['GET', 'POST']
