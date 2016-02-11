@@ -1,32 +1,33 @@
 language: python
 
-sudo: required
+sudo: false
 
 python:
     - "3.4"
+    - "3.5"
 
 services:
     - mongodb
     - elasticsearch
     - redis-server
 
+addons:
+  apt:
+    sources:
+    - mongodb-3.0-precise
+    packages:
+    - mongodb-org-server
+
 cache:
   directories:
     - $HOME/.cache/pip
 
-before_install:
-    - sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 7F0CEB10
-    - echo 'deb http://downloads-distro.mongodb.org/repo/ubuntu-upstart dist 10gen' | sudo tee /etc/apt/sources.list.d/mongodb.list
-    - sudo apt-get update
-    - sudo apt-get install -y mongodb-org-server=2.6.6
-
 install:
     - pip install .
     - pip install -r requirements.txt
-    - pip install coveralls==1.0a2;
 
 script:
     - flake8
-    - nosetests --with-coverage --cover-package=superdesk
+    - nosetests
     - behave --format progress2 --logging-level ERROR
 
