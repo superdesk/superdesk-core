@@ -12,7 +12,7 @@ Feature: Content Locking
         """
         Then we get new resource
         """
-        {"_id": "item-1", "guid": "item-1", "headline": "test"}
+        {"_id": "item-1", "guid": "item-1", "headline": "test", "lock_user": "#CONTEXT_USER_ID#"}
         """
         And item "item-1" is assigned
         When we patch "/archive/item-1"
@@ -20,6 +20,12 @@ Feature: Content Locking
         {"headline": "test 2"}
         """
         Then we get OK response
+        
+        When we get "/workqueue?source={"filter": {"term": {"lock_user": "#CONTEXT_USER_ID#"}}}"
+        Then we get list with 1 items
+        """
+        {"_items": [{"_id": "item-1", "guid": "item-1", "headline": "test 2"}]}
+        """
 
     @auth
     Scenario: Unlocking version 0 draft item deletes the item
@@ -33,7 +39,7 @@ Feature: Content Locking
         """
         Then we get new resource
         """
-        {"_id": "item-1", "guid": "item-1", "headline": "test"}
+        {"_id": "item-1", "guid": "item-1", "headline": "test", "lock_user": "#CONTEXT_USER_ID#"}
         """
 
         When we post to "/archive/item-1/unlock"
@@ -55,7 +61,7 @@ Feature: Content Locking
         """
         Then we get new resource
         """
-        {"_id": "item-1", "guid": "item-1", "headline": "test"}
+        {"_id": "item-1", "guid": "item-1", "headline": "test", "lock_user": "#CONTEXT_USER_ID#"}
         """
 
         When we post to "/archive/item-1/unlock"
@@ -64,6 +70,9 @@ Feature: Content Locking
         """
         And we get "/archive/item-1"
         Then we get response code 200
+
+        When we get "/workqueue?source={"filter": {"term": {"lock_user": "#CONTEXT_USER_ID#"}}}"
+        Then we get list with 0 items
 
     @auth
     Scenario: Fail edit on locked item
