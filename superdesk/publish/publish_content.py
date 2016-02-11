@@ -18,6 +18,7 @@ import superdesk.publish
 from superdesk.errors import PublishQueueError
 from superdesk.celery_task_utils import is_task_running, mark_task_as_not_running
 from superdesk import get_resource_service
+from superdesk.metadata.item import PUBLISH_SCHEDULE
 
 logger = logging.getLogger(__name__)
 
@@ -103,8 +104,8 @@ def is_on_time(queue_item):
     """
 
     try:
-        if queue_item.get('publish_schedule'):
-            publish_schedule = queue_item['publish_schedule']
+        if queue_item.get(PUBLISH_SCHEDULE):
+            publish_schedule = queue_item[PUBLISH_SCHEDULE]
             if type(publish_schedule) is not datetime:
                 raise PublishQueueError.bad_schedule_error(Exception("Schedule is not datetime"), queue_item['_id'])
             return utcnow() >= publish_schedule
@@ -121,7 +122,7 @@ def update_content_state(queue_item):
     Updates the state of the content item to published, in archive and published collections.
     """
 
-    if queue_item.get('publish_schedule'):
+    if queue_item.get(PUBLISH_SCHEDULE):
         try:
             item_update = {'state': 'published'}
             get_resource_service('archive').patch(queue_item['item_id'], item_update)

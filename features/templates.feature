@@ -46,7 +46,7 @@ Feature: Templates
     Scenario: User can create highlight template
         When we post to "content_templates"
         """
-        {"template_name": "default highlight", "template_type": "highlights", 
+        {"template_name": "default highlight", "template_type": "highlights",
          "data": {"body_html": "{% for item in items %} <h2>{{ item.headline }}</h2> {{ item.body_html }} <p></p> {% endfor %}"}
         }
         """

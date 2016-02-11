@@ -62,8 +62,8 @@ def get_next_run(schedule, now=None):
     now = now.replace(second=0)
 
     # adjust current time to the schedule's timezone
-    tz_name = schedule.get('time_zone')
-    if tz_name:
+    tz_name = schedule.get('time_zone', 'UTC')
+    if tz_name != 'UTC':
         next_run = local_to_utc(tz_name, set_time(now, schedule.get('create_at')))
     else:
         next_run = set_time(now, schedule.get('create_at'))
@@ -108,8 +108,7 @@ class ContentTemplatesResource(Resource):
             'day_of_week': {'type': 'list'},
             'time_zone': {
                 'type': 'string',
-                'nullable': False,
-                'default': 'UTC'
+                'nullable': True
             }
         }},
 

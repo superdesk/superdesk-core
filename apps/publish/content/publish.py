@@ -10,7 +10,7 @@
 
 import logging
 from superdesk.errors import SuperdeskApiError
-from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, CONTENT_STATE
+from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, CONTENT_STATE, PUBLISH_SCHEDULE
 
 from apps.archive.common import set_sign_off, ITEM_OPERATION
 
@@ -50,7 +50,7 @@ class ArchivePublishService(BasePublishService):
         """
 
         updates.setdefault(ITEM_OPERATION, ITEM_PUBLISH)
-        if original.get('publish_schedule') or updates.get('publish_schedule'):
+        if original.get(PUBLISH_SCHEDULE) or updates.get(PUBLISH_SCHEDULE):
             updates[ITEM_STATE] = CONTENT_STATE.SCHEDULED
         else:
             super().set_state(original, updates)

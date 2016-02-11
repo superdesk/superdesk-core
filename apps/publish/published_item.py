@@ -15,7 +15,7 @@ from superdesk import get_resource_service
 import superdesk
 from superdesk.celery_app import update_key
 from superdesk.errors import SuperdeskApiError
-from superdesk.metadata.item import not_analyzed, ITEM_STATE, PUBLISH_STATES
+from superdesk.metadata.item import not_analyzed, ITEM_STATE, PUBLISH_STATES, PUBLISH_SCHEDULE, EMBARGO
 from superdesk.metadata.utils import aggregations
 from superdesk.resource import Resource
 from superdesk.services import BaseService
@@ -26,7 +26,7 @@ from eve.utils import ParsedRequest, config
 from flask import current_app as app
 
 from apps.archive.archive import SOURCE as ARCHIVE
-from apps.archive.common import handle_existing_data, item_schema, remove_media_files, get_expiry
+from apps.archive.common import handle_existing_data, item_schema, remove_media_files, get_expiry, get_utc_schedule
 from apps.packages import TakesPackageService
 
 
@@ -317,9 +317,7 @@ class PublishedItemService(BaseService):
         """
         desk_id = doc.get('task', {}).get('desk', None)
         stage_id = doc.get('task', {}).get('stage', None)
-        offset = doc.get('schedule_settings', {}).get('utc_published_schedule') or \
-            doc.get('schedule_settings', {}).get('utc_embargo')
-
+        offset = get_utc_schedule(doc, PUBLISH_SCHEDULE) or get_utc_schedule(doc, EMBARGO)
         doc['expiry'] = get_expiry(desk_id, stage_id, offset=offset)
 
     def move_to_archived(self, _id):

@@ -15,6 +15,7 @@ from superdesk.publish.formatters import Formatter
 import superdesk
 from superdesk.errors import FormatterError
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO
+from apps.archive.common import get_utc_schedule
 
 
 class NITFFormatter(Formatter):
@@ -58,7 +59,8 @@ class NITFFormatter(Formatter):
 
         if article.get(EMBARGO):
             docdata = SubElement(head, 'docdata', {'management-status': 'embargoed'})
-            SubElement(docdata, 'date.expire', {'norm': str(article.get(EMBARGO).isoformat())})
+            SubElement(docdata, 'date.expire',
+                       {'norm': str(get_utc_schedule(article, EMBARGO).isoformat())})
         else:
             docdata = SubElement(head, 'docdata', {'management-status': article['pubstatus']})
             SubElement(docdata, 'date.expire', {'norm': str(article.get('expiry', ''))})
