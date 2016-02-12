@@ -18,7 +18,7 @@ from apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE_TYPE, TAKES_PACKAGE, PACKAGE, \
     LAST_TAKE, REFS, MAIN_GROUP, SEQUENCE, RESIDREF
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, PUBLISH_STATES, ITEM_STATE, \
-    CONTENT_STATE, EMBARGO, PUBLISH_SCHEDULE
+    CONTENT_STATE, EMBARGO, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS
 from apps.archive.common import insert_into_versions, ITEM_CREATE, RE_OPENS
 from .package_service import get_item_ref, create_root_group
 
@@ -116,7 +116,7 @@ class TakesPackageService():
         takes_package[PACKAGE_TYPE] = TAKES_PACKAGE
         fields_for_creating_takes_package = self.fields_for_creating_take.copy()
         fields_for_creating_takes_package.extend([PUBLISH_SCHEDULE,
-                                                  'schedule_settings',
+                                                  SCHEDULE_SETTINGS,
                                                   'event_id',
                                                   'rewrite_of',
                                                   'task',
@@ -172,7 +172,7 @@ class TakesPackageService():
             takes_package.pop('unique_id', None)
             takes_package.pop('unique_name', None)
             takes_package.pop(PUBLISH_SCHEDULE, None)
-            takes_package.pop('schedule_settings', None)
+            takes_package.pop(SCHEDULE_SETTINGS, None)
 
             resolve_document_version(takes_package, ARCHIVE, 'PATCH', takes_package)
             archive_service.patch(takes_package_id, takes_package)

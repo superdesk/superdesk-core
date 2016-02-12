@@ -24,6 +24,7 @@ from apps.archive.common import insert_into_versions
 from apps.auth import get_user
 from flask import render_template_string
 from datetime import timedelta
+from copy import deepcopy
 
 
 CONTENT_TEMPLATE_PRIVILEGE = 'content_templates'
@@ -153,7 +154,9 @@ class ContentTemplatesService(Service):
             self._process_kill_template(updates)
 
         if updates.get('schedule'):
-            updates['next_run'] = get_next_run(updates.get('schedule'))
+            original_schedule = deepcopy(original.get('schedule'))
+            original_schedule.update(updates.get('schedule'))
+            updates['next_run'] = get_next_run(original_schedule)
 
     def get_scheduled_templates(self, now):
         """

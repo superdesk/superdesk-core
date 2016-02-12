@@ -43,6 +43,7 @@ BYLINE = 'byline'
 SIGN_OFF = 'sign_off'
 EMBARGO = 'embargo'
 PUBLISH_SCHEDULE = 'publish_schedule'
+SCHEDULE_SETTINGS = 'schedule_settings'
 
 metadata_schema = {
     config.ID_FIELD: {
