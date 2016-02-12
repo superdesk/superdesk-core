@@ -46,6 +46,12 @@ def get_expiry_date(minutes, offset=None):
 
 
 def local_to_utc(local_tz_name, local_datetime):
+    """
+    Converts the local_datetime to utc
+    :param local_tz_name: Name of the local timezone
+    :param local_datetime: Value of the local datetime
+    :return: the utc datetime
+    """
     if local_datetime:
         local_tz = pytz.timezone(local_tz_name)
         utc_dat = local_datetime.replace(tzinfo=local_tz).astimezone(pytz.utc)
@@ -53,9 +59,16 @@ def local_to_utc(local_tz_name, local_datetime):
 
 
 def utc_to_local(local_tz_name, utc_datetime):
-    local_tz = pytz.timezone(local_tz_name)
-    local_dt = utc_datetime.replace(tzinfo=pytz.utc).astimezone(local_tz)
-    return local_tz.normalize(local_dt)
+    """
+    COnverts utc datetime to local
+    :param local_tz_name: Name of the local timezone
+    :param utc_datetime: Value of the utc datetime
+    :return: local datetime
+    """
+    if utc_datetime and local_tz_name:
+        local_tz = pytz.timezone(local_tz_name)
+        local_dt = utc_datetime.replace(tzinfo=pytz.utc).astimezone(local_tz)
+        return local_tz.normalize(local_dt)
 
 
 def set_time(current_datetime, timestr, second=0):

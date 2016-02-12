@@ -101,6 +101,52 @@ Feature: Templates
         Then we get list with 1 items
 
     @auth
+    Scenario: User can schedule a content creation with different timezone
+        Given "desks"
+        """
+        [{"name": "sports"}]
+        """
+        And "stages"
+        """
+        [{"name": "schedule", "desk": "#desks._id#"}]
+        """
+
+        When we post to "content_templates"
+        """
+        {"template_name": "test", "template_type": "create",
+         "data": {"headline": "test", "type": "text", "slugline": "test", "firstcreated": "2015-10-10T10:10:10+0000", "versioncreated": "2015-10-10T10:10:10+0000"},
+         "schedule": {"day_of_week": ["MON"], "create_at": "0815", "is_active": true,
+         "time_zone": "Australia/Sydney"},
+         "template_desk": "#desks._id#", "template_stage": "#stages._id#"}
+        """
+        Then we get new resource
+        And next run is on monday "2210"
+
+        When we patch latest
+        """
+        {"schedule": {"day_of_week": ["MON"], "create_at": "0915", "is_active": true}}
+        """
+        Then next run is on monday "2310"
+
+        When we run create content task
+        And we run create content task
+        And we get "/archive"
+        Then we get list with 1 items
+        """
+        {"_items": [{
+            "headline": "test",
+            "firstcreated": "__now__",
+            "versioncreated": "__now__",
+            "_updated": "__now__",
+            "_created": "__now__",
+            "_current_version": 1,
+            "_etag": "__any_value__"
+        }]}
+        """
+        When we get "/archive/#ITEM_ID#?version=all"
+        Then we get list with 1 items
+
+    @auth
     Scenario: Apply template to an item
         When we post to "content_templates"
         """

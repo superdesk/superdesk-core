@@ -18,7 +18,7 @@ from apps.content import push_content_notification
 import superdesk
 from superdesk.errors import InvalidStateTransitionError, SuperdeskApiError, PublishQueueError
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, GUID_FIELD, ITEM_STATE, CONTENT_STATE, \
-    PUBLISH_STATES, EMBARGO, PUB_STATUS, PUBLISH_SCHEDULE
+    PUBLISH_STATES, EMBARGO, PUB_STATUS, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS
 from superdesk.metadata.packages import SEQUENCE, LINKED_IN_PACKAGES, GROUPS, PACKAGE
 from superdesk.metadata.utils import item_url
 from superdesk.notification import push_notification
@@ -322,7 +322,7 @@ class BasePublishService(BaseService):
                 package_updates['body_html'] = body_html
 
             metadata_tobe_copied = self.takes_package_service.fields_for_creating_take.copy()
-            metadata_tobe_copied.extend([PUBLISH_SCHEDULE, 'schedule_settings', 'byline'])
+            metadata_tobe_copied.extend([PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, 'byline'])
             updated_take = original_of_take_to_be_published.copy()
             updated_take.update(updates_of_take_to_be_published)
             metadata_from = updated_take
@@ -423,7 +423,7 @@ class BasePublishService(BaseService):
         :param dict updates: updates related to document
         """
         updates[PUBLISH_SCHEDULE] = None
-        updates['schedule_settings'] = {}
+        updates[SCHEDULE_SETTINGS] = {}
         updates[ITEM_STATE] = self.published_state
 
     def _set_updates(self, original, updates, last_updated, preserve_state=False):
