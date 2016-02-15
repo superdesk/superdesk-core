@@ -30,6 +30,7 @@ class NITFFormatter(Formatter):
             nitf = self.get_nitf(article, subscriber, pub_seq_num)
             return [(pub_seq_num, self.XML_ROOT + etree.tostring(nitf).decode('utf-8'))]
         except Exception as ex:
+            print(ex)
             raise FormatterError.nitfFormatterError(ex, subscriber)
 
     def get_nitf(self, article, destination, pub_seq_num):
@@ -41,7 +42,7 @@ class NITFFormatter(Formatter):
         body_content.text = self.append_body_footer(article)
         body_end = SubElement(body, "body.end")
 
-        etree.Element('doc-id', attrib={'id-string': article['guid']})
+        etree.Element('doc-id', attrib={'id-string': article.get('guid')})
 
         self.__append_meta(article, head, destination, pub_seq_num)
         self.__format_head(article, head)
@@ -51,7 +52,7 @@ class NITFFormatter(Formatter):
 
     def __format_head(self, article, head):
         title = SubElement(head, 'title')
-        title.text = article['headline']
+        title.text = article.get('headline', '')
 
         tobject = SubElement(head, 'tobject', {'tobject.type': 'news'})
         self.__format_subjects(article, tobject)
@@ -60,7 +61,7 @@ class NITFFormatter(Formatter):
             docdata = SubElement(head, 'docdata', {'management-status': 'embargoed'})
             SubElement(docdata, 'date.expire', {'norm': str(article.get(EMBARGO).isoformat())})
         else:
-            docdata = SubElement(head, 'docdata', {'management-status': article['pubstatus']})
+            docdata = SubElement(head, 'docdata', {'management-status': article.get('pubstatus', '')})
             SubElement(docdata, 'date.expire', {'norm': str(article.get('expiry', ''))})
 
         SubElement(docdata, 'urgency', {'id-string': str(article.get('urgency', ''))})
@@ -72,7 +73,7 @@ class NITFFormatter(Formatter):
         for subject in article.get('subject', []):
             SubElement(tobject, 'tobject.subject',
                        {'tobject.subject.refnum': subject.get('qcode', ''),
-                        'tobject.subject.matter': subject['name']})
+                        'tobject.subject.matter': subject.get('name', '')})
 
     def __format_keywords(self, article, head):
         if article.get('keywords'):
@@ -83,13 +84,13 @@ class NITFFormatter(Formatter):
     def __format_body_head(self, article, body_head):
         hedline = SubElement(body_head, 'hedline')
         hl1 = SubElement(hedline, 'hl1')
-        hl1.text = article['headline']
+        hl1.text = article.get('headline', '')
 
         if article.get('byline'):
             byline = SubElement(body_head, 'byline')
             byline.text = "By " + article['byline']
 
-        if article.get('dateline').get('text'):
+        if article.get('dateline', {}).get('text'):
             dateline = SubElement(body_head, 'dateline')
             dateline.text = article['dateline']['text']
 
