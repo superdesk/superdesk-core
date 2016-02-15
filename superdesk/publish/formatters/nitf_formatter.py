@@ -30,7 +30,6 @@ class NITFFormatter(Formatter):
             nitf = self.get_nitf(article, subscriber, pub_seq_num)
             return [(pub_seq_num, self.XML_ROOT + etree.tostring(nitf).decode('utf-8'))]
         except Exception as ex:
-            print(ex)
             raise FormatterError.nitfFormatterError(ex, subscriber)
 
     def get_nitf(self, article, destination, pub_seq_num):
