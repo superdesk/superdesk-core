@@ -48,11 +48,11 @@ class HTTPFeedingService(FeedingService, metaclass=ABCMeta):
         :return: Authentication Token
         :rtype: str
         """
-        token = {'token': self._generate_auth_token(provider), 'created': utcnow()}
-        get_resource_service('ingest_providers').system_update(provider[config.ID_FIELD], updates={'token': token},
+        token = {'auth_token': self._generate_auth_token(provider), 'created': utcnow()}
+        get_resource_service('ingest_providers').system_update(provider[config.ID_FIELD], updates={'tokens': token},
                                                                original=provider)
 
-        return token['token']
+        return token['auth_token']
 
     def _generate_auth_token(self, provider):
         """
@@ -114,9 +114,9 @@ class HTTPFeedingService(FeedingService, metaclass=ABCMeta):
         :return: Authentication Token
         :rtype: str
         """
-        token = provider.get('token')
+        token = provider.get('tokens')
         if token and self._is_valid_token(token):
-            return token.get('token')
+            return token.get('auth_token')
 
         return self._generate_token_and_update_provider(provider) if update else ''
 
