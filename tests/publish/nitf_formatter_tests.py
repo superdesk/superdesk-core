@@ -44,6 +44,22 @@ class NitfFormatterTest(TestCase):
         slugline = self.base_formatter.append_legal(article)
         self.assertEqual(slugline, 'Obama Republican Healthc')
 
+    def test_formatter(self):
+        article = {
+            'headline': 'test headline',
+            'body_html': 'test body',
+            'type': 'text',
+            'priority': '1',
+            '_id': 'urn:localhost.abc',
+            'urgency': 2
+        }
+
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        nitf_xml = etree.fromstring(doc)
+        self.assertEqual(nitf_xml.find('head/title').text, article['headline'])
+        self.assertEqual(nitf_xml.find('body/body.content').text, article['body_html'])
+        self.assertEqual(nitf_xml.find('head/docdata/urgency').get('id-string'), '2')
+
     def test_company_codes(self):
         article = {
             'guid': 'tag:aap.com.au:20150613:12345',
