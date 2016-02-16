@@ -11,6 +11,7 @@
 
 import arrow
 import datetime
+import pytz
 from pytz import utc, timezone  # flake8: noqa
 
 tzinfo = getattr(datetime, 'tzinfo', object)
@@ -36,9 +37,51 @@ def get_date(date_or_string):
 
 def get_expiry_date(minutes, offset=None):
     if offset:
-        if type(offset) is not datetime:
+        if type(offset) is datetime.datetime:
             return offset + datetime.timedelta(minutes=minutes)
         else:
             raise TypeError('offset must be a datetime.date, not a %s' % type(offset))
     else:
         return utcnow() + datetime.timedelta(minutes=minutes)
+
+
+def local_to_utc(local_tz_name, local_datetime):
+    """
+    Converts the local_datetime to utc
+    :param local_tz_name: Name of the local timezone
+    :param local_datetime: Value of the local datetime
+    :return: the utc datetime
+    """
+    if local_datetime:
+        local_tz = pytz.timezone(local_tz_name)
+        utc_dat = local_datetime.replace(tzinfo=local_tz).astimezone(pytz.utc)
+        return pytz.utc.normalize(utc_dat)
+
+
+def utc_to_local(local_tz_name, utc_datetime):
+    """
+    COnverts utc datetime to local
+    :param local_tz_name: Name of the local timezone
+    :param utc_datetime: Value of the utc datetime
+    :return: local datetime
+    """
+    if utc_datetime and local_tz_name:
+        local_tz = pytz.timezone(local_tz_name)
+        local_dt = utc_datetime.replace(tzinfo=pytz.utc).astimezone(local_tz)
+        return local_tz.normalize(local_dt)
+
+
+def set_time(current_datetime, timestr, second=0):
+    """Set time of given datetime according to timestr.
+
+    Time format for timestr is `%H%M`, eg. 1014.
+
+    :param datetime current_datetime
+    :param string timestr
+    :param int second
+    """
+    if timestr is None:
+        timestr = '0000'
+    time = datetime.datetime.strptime(timestr, '%H%M')
+    return current_datetime.replace(hour=time.hour, minute=time.minute, second=second)
+

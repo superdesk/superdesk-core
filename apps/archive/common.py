@@ -19,10 +19,10 @@ from pytz import timezone
 
 import superdesk
 from superdesk.users.services import get_sign_off
-from superdesk.utc import utcnow, get_expiry_date
+from superdesk.utc import utcnow, get_expiry_date, local_to_utc
 from superdesk import get_resource_service
 from superdesk.metadata.item import metadata_schema, ITEM_STATE, CONTENT_STATE, \
-    LINKED_IN_PACKAGES, BYLINE, SIGN_OFF, EMBARGO, ITEM_TYPE, CONTENT_TYPE
+    LINKED_IN_PACKAGES, BYLINE, SIGN_OFF, EMBARGO, ITEM_TYPE, CONTENT_TYPE, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS
 from superdesk.workflow import set_default_state, is_workflow_state_transition_valid
 from superdesk.metadata.item import GUID_NEWSML, GUID_FIELD, GUID_TAG, not_analyzed
 from superdesk.metadata.packages import PACKAGE_TYPE, TAKES_PACKAGE, SEQUENCE
@@ -430,10 +430,52 @@ def validate_schedule(schedule, package_sequence=1):
     if schedule:
         if not isinstance(schedule, datetime):
             raise SuperdeskApiError.badRequestError("Schedule date is not recognized")
+        if not schedule.date() or schedule.date().year <= 1970:
+            raise SuperdeskApiError.badRequestError("Schedule date is not recognized")
+        if not schedule.time():
+            raise SuperdeskApiError.badRequestError("Schedule time is not recognized")
         if schedule < utcnow():
             raise SuperdeskApiError.badRequestError("Schedule cannot be earlier than now")
         if package_sequence > 1:
             raise SuperdeskApiError.badRequestError("Takes cannot be scheduled.")
+
+
+def update_schedule_settings(updates, field_name, value):
+    """
+    Calculates and sets the utc schedule for the given field
+    :param updates: Where the time_zone information will be read and the updated
+    schedule_settings will be recorded
+    :param field_name: Name of he field: either publish_schedule or embargo
+    :param value: The original value
+    """
+
+    schedule_settings = updates.get(SCHEDULE_SETTINGS, {}) or {}
+
+    if field_name:
+        tz_name = schedule_settings.get('time_zone')
+        if tz_name:
+            schedule_settings['utc_{}'.format(field_name)] = local_to_utc(tz_name, value)
+        else:
+            schedule_settings['utc_{}'.format(field_name)] = value
+            schedule_settings['time_zone'] = None
+
+    updates[SCHEDULE_SETTINGS] = schedule_settings
+
+
+def get_utc_schedule(doc, field_name):
+    """
+    Gets the utc value of the given field.
+    :param doc: Article
+    :param field_name: Name of he field: either publish_schedule or embargo
+    :return: the utc value of the field
+    """
+
+    if SCHEDULE_SETTINGS not in doc or \
+            not doc.get(SCHEDULE_SETTINGS) or \
+            field_name not in doc.get(SCHEDULE_SETTINGS, {}):
+        update_schedule_settings(doc, field_name, doc.get(field_name))
+
+    return doc.get(SCHEDULE_SETTINGS, {}).get('utc_{}'.format(field_name))
 
 
 def item_schema(extra=None):
@@ -449,9 +491,18 @@ def item_schema(extra=None):
             'type': 'number',
         },
         'task': {'type': 'dict'},
-        'publish_schedule': {
+        PUBLISH_SCHEDULE: {
             'type': 'datetime',
             'nullable': True
+        },
+        SCHEDULE_SETTINGS: {
+            'type': 'dict',
+            'nullable': True,
+            'schema': {
+                'time_zone': {'type': 'string', 'nullable': True},
+                'utc_publish_schedule': {'type': 'datetime', 'nullable': True},
+                'utc_embargo': {'type': 'datetime', 'nullable': True}
+            }
         },
         'flags': {
             'type': 'dict',

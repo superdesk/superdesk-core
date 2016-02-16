@@ -13,7 +13,7 @@ from superdesk.resource import Resource
 from superdesk.metadata.utils import extra_response_fields, item_url, aggregations, is_normal_package
 from .common import remove_unwanted, update_state, set_item_expiry, remove_media_files, \
     on_create_item, on_duplicate_item, get_user, update_version, set_sign_off, \
-    handle_existing_data, item_schema, validate_schedule, is_item_in_package, \
+    handle_existing_data, item_schema, validate_schedule, is_item_in_package, update_schedule_settings, \
     ITEM_OPERATION, ITEM_RESTORE, ITEM_UPDATE, ITEM_DESCHEDULE, ARCHIVE as SOURCE, \
     LAST_PRODUCTION_DESK, LAST_AUTHORING_DESK, convert_task_attributes_to_objectId, BROADCAST_GENRE
 from superdesk.media.crop import CropService
@@ -26,7 +26,7 @@ from eve.utils import parse_request, config, date_to_str, ParsedRequest
 from superdesk.services import BaseService
 from superdesk.users.services import current_user_has_privilege, is_admin
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, CONTENT_TYPE, ITEM_TYPE, EMBARGO, \
-    PUBLISH_STATES
+    PUBLISH_STATES, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, RESIDREF, SEQUENCE
 from apps.common.components.utils import get_component
 from apps.item_autosave.components.item_autosave import ItemAutosave
@@ -156,6 +156,7 @@ class ArchiveService(BaseService):
 
             # Do the validation after Circular Reference check passes in Package Service
             self.validate_embargo(doc)
+            update_schedule_settings(doc, EMBARGO, doc.get(EMBARGO))
 
             if doc.get('media'):
                 self.mediaService.on_create([doc])
@@ -196,13 +197,15 @@ class ArchiveService(BaseService):
         user = get_user()
         self._validate_updates(original, updates, user)
 
-        if 'publish_schedule' in updates and original[ITEM_STATE] == CONTENT_STATE.SCHEDULED:
+        if PUBLISH_SCHEDULE in updates and original[ITEM_STATE] == CONTENT_STATE.SCHEDULED:
             self.deschedule_item(updates, original)  # this is an deschedule action
 
             # check if there is a takes package and deschedule the takes package.
             package = TakesPackageService().get_take_package(original)
-            if package and package.get('state') == 'scheduled':
-                package_updates = {'publish_schedule': None, 'groups': package.get('groups')}
+            if package and package.get(ITEM_STATE) == CONTENT_STATE.SCHEDULED:
+                package_updates = {PUBLISH_SCHEDULE: None,
+                                   SCHEDULE_SETTINGS: {},
+                                   'groups': package.get('groups')}
                 self.patch(package.get(config.ID_FIELD), package_updates)
 
             return
@@ -349,7 +352,7 @@ class ArchiveService(BaseService):
         on_duplicate_item(new_doc)
         resolve_document_version(new_doc, SOURCE, 'PATCH', new_doc)
 
-        if original_doc.get('task', {}).get('desk') is not None and new_doc.get('state') != 'submitted':
+        if original_doc.get('task', {}).get('desk') is not None and new_doc.get(ITEM_STATE) != CONTENT_STATE.SUBMITTED:
             new_doc[ITEM_STATE] = CONTENT_STATE.SUBMITTED
 
         convert_task_attributes_to_objectId(new_doc)
@@ -367,7 +370,8 @@ class ArchiveService(BaseService):
         del copied_item['guid']
         copied_item.pop(LINKED_IN_PACKAGES, None)
         copied_item.pop(EMBARGO, None)
-        copied_item.pop('publish_schedule', None)
+        copied_item.pop(PUBLISH_SCHEDULE, None)
+        copied_item.pop(SCHEDULE_SETTINGS, None)
         copied_item.pop('lock_time', None)
         copied_item.pop('lock_session', None)
         copied_item.pop('lock_user', None)
@@ -413,21 +417,12 @@ class ArchiveService(BaseService):
         :param dict updates: updates for the document
         :param doc: original is document.
         """
-        updates['state'] = 'in_progress'
-        updates['publish_schedule'] = None
+        updates[ITEM_STATE] = CONTENT_STATE.PROGRESS
+        updates[PUBLISH_SCHEDULE] = None
+        updates[SCHEDULE_SETTINGS] = {}
         updates[ITEM_OPERATION] = ITEM_DESCHEDULE
         # delete entry from published repo
         get_resource_service('published').delete_by_article_id(doc['_id'])
-
-    def validate_schedule(self, schedule):
-        if not isinstance(schedule, datetime.date):
-            raise SuperdeskApiError.badRequestError("Schedule date is not recognized")
-        if not schedule.date() or schedule.date().year <= 1970:
-            raise SuperdeskApiError.badRequestError("Schedule date is not recognized")
-        if not schedule.time():
-            raise SuperdeskApiError.badRequestError("Schedule time is not recognized")
-        if schedule < utcnow():
-            raise SuperdeskApiError.badRequestError("Schedule cannot be earlier than now")
 
     def can_edit(self, item, user_id):
         """
@@ -484,23 +479,25 @@ class ArchiveService(BaseService):
         """
 
         if item[ITEM_TYPE] != CONTENT_TYPE.COMPOSITE:
-            embargo = item.get(EMBARGO)
-            if embargo:
-                if item.get('publish_schedule') or item[ITEM_STATE] == CONTENT_STATE.SCHEDULED:
-                    raise SuperdeskApiError.badRequestError("An item can't have both Publish Schedule and Embargo")
+            if EMBARGO in item:
+                embargo = item.get(EMBARGO)
+                if embargo:
+                    if item.get(PUBLISH_SCHEDULE) or item[ITEM_STATE] == CONTENT_STATE.SCHEDULED:
+                        raise SuperdeskApiError.badRequestError("An item can't have both Publish Schedule and Embargo")
 
-                package = TakesPackageService().get_take_package(item)
-                if package:
-                    raise SuperdeskApiError.badRequestError("Takes doesn't support Embargo")
+                    package = TakesPackageService().get_take_package(item)
+                    if package:
+                        raise SuperdeskApiError.badRequestError("Takes doesn't support Embargo")
 
-                if item.get('rewrite_of'):
-                    raise SuperdeskApiError.badRequestError("Rewrites doesn't support Embargo")
+                    if item.get('rewrite_of'):
+                        raise SuperdeskApiError.badRequestError("Rewrites doesn't support Embargo")
 
-                if not isinstance(embargo, datetime.date) or not embargo.time():
-                    raise SuperdeskApiError.badRequestError("Invalid Embargo")
+                    if not isinstance(embargo, datetime.date) or not embargo.time():
+                        raise SuperdeskApiError.badRequestError("Invalid Embargo")
 
-                if item[ITEM_STATE] not in PUBLISH_STATES and embargo <= utcnow():
-                    raise SuperdeskApiError.badRequestError("Embargo cannot be earlier than now")
+                    if item[ITEM_STATE] not in PUBLISH_STATES and embargo <= utcnow():
+                        raise SuperdeskApiError.badRequestError("Embargo cannot be earlier than now")
+
         elif is_normal_package(item):
             if item.get(EMBARGO):
                 raise SuperdeskApiError.badRequestError("A Package doesn't support Embargo")
@@ -531,6 +528,8 @@ class ArchiveService(BaseService):
                 - if Public Service Announcements are being added to a package or genre is being updated for a
                 broadcast, is invalid for scheduling, the updates contain duplicate anpa_category or subject codes
         """
+        updated = original.copy()
+        updated.update(updates)
 
         lock_user = original.get('lock_user', None)
         force_unlock = updates.get('force_unlock', False)
@@ -554,14 +553,18 @@ class ArchiveService(BaseService):
                 any(genre.get('value', '').lower() != BROADCAST_GENRE.lower() for genre in updates.get('genre')):
             raise SuperdeskApiError.badRequestError('Cannot change the genre for broadcast content.')
 
-        if updates.get('publish_schedule') and original[ITEM_STATE] != CONTENT_STATE.SCHEDULED \
-                and datetime.datetime.fromtimestamp(0).date() != updates['publish_schedule'].date():
+        if PUBLISH_SCHEDULE in updates or "schedule_settings" in updates:
             if is_item_in_package(original):
                 raise SuperdeskApiError.badRequestError(
                     'This item is in a package and it needs to be removed before the item can be scheduled!')
 
             package = TakesPackageService().get_take_package(original) or {}
-            validate_schedule(updates['publish_schedule'], package.get(SEQUENCE, 1))
+
+            if updates.get(PUBLISH_SCHEDULE):
+                validate_schedule(updates[PUBLISH_SCHEDULE], package.get(SEQUENCE, 1))
+
+            update_schedule_settings(updated, PUBLISH_SCHEDULE, updated.get(PUBLISH_SCHEDULE))
+            updates[SCHEDULE_SETTINGS] = updated.get(SCHEDULE_SETTINGS, {})
 
         if original[ITEM_TYPE] == CONTENT_TYPE.PICTURE:
             CropService().validate_multiple_crops(updates, original)
@@ -569,9 +572,11 @@ class ArchiveService(BaseService):
             self.packageService.on_update(updates, original)
 
         # Do the validation after Circular Reference check passes in Package Service
-        updated = original.copy()
-        updated.update(updates)
+
         self.validate_embargo(updated)
+        if EMBARGO in updates or "schedule_settings" in updates:
+            update_schedule_settings(updated, EMBARGO, updated.get(EMBARGO))
+            updates[SCHEDULE_SETTINGS] = updated.get(SCHEDULE_SETTINGS, {})
 
         # Ensure that there are no duplicate categories in the update
         category_qcodes = [q['qcode'] for q in updates.get('anpa_category', []) or []]
@@ -604,9 +609,10 @@ class ArchiveService(BaseService):
         set_sign_off(updates, original=original)
 
         # Clear publish_schedule field
-        if updates.get('publish_schedule') \
-                and datetime.datetime.fromtimestamp(0).date() == updates.get('publish_schedule').date():
-            updates['publish_schedule'] = None
+        if updates.get(PUBLISH_SCHEDULE) \
+                and datetime.datetime.fromtimestamp(0).date() == updates.get(PUBLISH_SCHEDULE).date():
+            updates[PUBLISH_SCHEDULE] = None
+            updates[SCHEDULE_SETTINGS] = {}
 
         if updates.get('force_unlock', False):
             del updates['force_unlock']

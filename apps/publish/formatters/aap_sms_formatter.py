@@ -10,6 +10,7 @@
 
 from superdesk.publish.formatters import Formatter
 from apps.publish.formatters.aap_formatter_common import map_priority
+from apps.archive.common import get_utc_schedule
 import superdesk
 from bs4 import BeautifulSoup
 from superdesk.errors import FormatterError
@@ -31,7 +32,8 @@ class AAPSMSFormatter(Formatter):
 
             body = self.append_body_footer(article)
             if article.get(EMBARGO):
-                embargo = '{}{}'.format('Embargo Content. Timestamp: ', article.get(EMBARGO).isoformat())
+                embargo = '{}{}'.format('Embargo Content. Timestamp: ',
+                                        get_utc_schedule(article, EMBARGO).isoformat())
                 body = embargo + body
 
             if article[ITEM_TYPE] == CONTENT_TYPE.TEXT:

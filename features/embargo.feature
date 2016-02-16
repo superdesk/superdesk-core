@@ -30,19 +30,107 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
   Scenario: Create a Text Article with Embargo
     When we post to "/archive" with success
     """
-    [{"guid": "text-article-with-embargo", "type": "text", "embargo": "#DATE+2#"}]
+    [{"guid": "text-article-with-embargo", "type": "text", "embargo": "2020-02-13T22:46:19.000Z"}]
+    """
+    When we get "/archive"
+      Then we get list with 2 items
+      """
+      {
+        "_items":
+          [
+            {"embargo":  "2020-02-13T22:46:19+0000",
+             "schedule_settings":  {"utc_embargo": "2020-02-13T22:46:19+0000"}
+            }
+          ]
+      }
+      """
+    Then we get "embargo" in "/archive/text-article-with-embargo"
+
+  @auth
+  Scenario: Create a Text Article with Embargo an time zone
+    When we post to "/archive" with success
+    """
+    [{"guid": "text-article-with-embargo",
+      "type": "text",
+      "embargo": "2020-02-13T22:46:19.000Z",
+      "schedule_settings":{"time_zone": "Australia/Sydney"}}]
+    """
+    When we get "/archive"
+    Then we get list with 2 items
+    """
+    {
+      "_items":
+        [
+          {"embargo":  "2020-02-13T22:46:19+0000",
+           "schedule_settings":  {"utc_embargo": "2020-02-13T12:41:19+0000"}
+          }
+        ]
+    }
     """
     Then we get "embargo" in "/archive/text-article-with-embargo"
 
   @auth
-  Scenario: Update a Text Article with Embargo
+  Scenario: Update a Text Article with Embargo and timezone
     When we patch "/archive/123"
     """
-    {"embargo": "#DATE+2#", "headline": "here comes the embargo"}
+    {"embargo": "2020-02-13T22:46:19+0000", "headline": "here comes the embargo"}
     """
     Then we get response code 200
     When we get "/archive/123"
-    Then we get "embargo"
+    Then we get existing resource
+    """
+    {"embargo":  "2020-02-13T22:46:19+0000",
+     "schedule_settings":  {"utc_embargo": "2020-02-13T22:46:19+0000"}
+    }
+    """
+    When we patch "/archive/123"
+    """
+    {"schedule_settings": {"time_zone": "Australia/Sydney"}}
+    """
+    Then we get response code 200
+    When we get "/archive/123"
+    Then we get existing resource
+    """
+    {"embargo":  "2020-02-13T22:46:19+0000",
+     "schedule_settings":  {"utc_embargo": "2020-02-13T12:41:19+0000"}
+    }
+    """
+    When we patch "/archive/123"
+    """
+    {"embargo": "2020-03-13T22:46:19+0000"}
+    """
+    Then we get response code 200
+    When we get "/archive/123"
+    Then we get existing resource
+    """
+    {"embargo":  "2020-03-13T22:46:19+0000",
+     "schedule_settings":  {"utc_embargo": "2020-03-13T12:41:19+0000"}
+    }
+    """
+    When we patch "/archive/123"
+    """
+    {"schedule_settings": {"time_zone": null}}
+    """
+    Then we get response code 200
+    When we get "/archive/123"
+    Then we get existing resource
+    """
+    {"embargo":  "2020-03-13T22:46:19+0000",
+     "schedule_settings":  {"utc_embargo": "2020-03-13T22:46:19+0000"}
+    }
+    """
+   When we patch "/archive/123"
+    """
+    {"embargo": null}
+    """
+    Then we get response code 200
+    When we get "/archive/123"
+    Then we get existing resource
+    """
+    {"embargo":  null,
+     "schedule_settings":  {"utc_embargo": null}
+    }
+    """
 
   @auth
   Scenario: An article with Embargo always goes to Wire Subscribers irrespective of publish action until embargo lapses

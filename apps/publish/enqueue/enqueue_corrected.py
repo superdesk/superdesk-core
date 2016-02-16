@@ -12,9 +12,8 @@ from superdesk import get_resource_service
 from superdesk.metadata.item import EMBARGO, CONTENT_STATE
 from superdesk.publish import SUBSCRIBER_TYPES
 from superdesk.utc import utcnow
-
+from apps.archive.common import get_utc_schedule
 from eve.utils import config
-
 from apps.publish.enqueue.enqueue_service import EnqueueService
 
 
@@ -53,7 +52,7 @@ class EnqueueCorrectedService(EnqueueService):
             if not self.takes_package_service.get_take_package_id(doc):
                 # Step 3
                 query = {'is_active': True}
-                if doc.get(EMBARGO) and doc.get(EMBARGO) > utcnow():
+                if doc.get(EMBARGO) and get_utc_schedule(doc, EMBARGO) > utcnow():
                     query['subscriber_type'] = SUBSCRIBER_TYPES.WIRE
 
                 active_subscribers = list(get_resource_service('subscribers').get(req=None, lookup=query))

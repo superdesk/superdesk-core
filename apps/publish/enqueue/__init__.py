@@ -8,7 +8,6 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import json
 import logging
 from superdesk import get_resource_service
 import superdesk
@@ -62,7 +61,7 @@ class EnqueueContent(superdesk.Command):
             items = get_published_items()
             logger.warning('***** ITEMS %s' % [i['_id'] for i in items])
 
-            if items.count() > 0:
+            if len(items) > 0:
                 enqueue_items(items)
         finally:
             unlock(lock_name, '')
@@ -91,12 +90,11 @@ def get_published_items():
     """
     Returns a list of items marked for publishing.
     """
-    req = ParsedRequest()
-    query = {'query': {'filtered': {'filter': {'term': {QUEUE_STATE: PUBLISH_STATE.PENDING}}}},
-             'sort': [{'publish_sequence_no': 'asc'}]}
-    req.args = {'source': json.dumps(query)}
-    req.max_results = 1000
-    return get_resource_service(PUBLISHED).get(req=req, lookup=None)
+    query = {QUEUE_STATE: PUBLISH_STATE.PENDING}
+    request = ParsedRequest()
+    request.sort = 'publish_sequence_no'
+    request.max_results = 100
+    return list(get_resource_service(PUBLISHED).get_from_mongo(req=request, lookup=query))
 
 
 def enqueue_items(published_items):

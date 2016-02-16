@@ -22,6 +22,7 @@ from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
 from eve.utils import config
 from superdesk.metadata.item import CONTENT_STATE
+from superdesk.utc import set_time
 
 logger = logging.getLogger(__name__)
 
@@ -61,21 +62,6 @@ class Weekdays(Enum):
         :param datetime day
         """
         return cls(day.weekday()).name
-
-
-def set_time(current_datetime, timestr, second=0):
-    """Set time of given datetime according to timestr.
-
-    Time format for timestr is `%H%M`, eg. 1014.
-
-    :param datetime current_datetime
-    :param string timestr
-    :param int second
-    """
-    if timestr is None:
-        timestr = '0000'
-    time = datetime.strptime(timestr, '%H%M')
-    return current_datetime.replace(hour=time.hour, minute=time.minute, second=second)
 
 
 class RoutingRuleSchemeResource(Resource):

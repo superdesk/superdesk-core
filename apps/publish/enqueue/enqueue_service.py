@@ -13,7 +13,7 @@ import logging
 import json
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
-from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, EMBARGO, CONTENT_STATE
+from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, EMBARGO, CONTENT_STATE, PUBLISH_SCHEDULE
 from superdesk.metadata.packages import SEQUENCE, PACKAGE_TYPE
 from superdesk.notification import push_notification
 from superdesk.publish import SUBSCRIBER_TYPES
@@ -22,7 +22,7 @@ from superdesk.publish.formatters import get_formatter
 from superdesk.utc import utcnow
 from copy import deepcopy
 from eve.utils import config, ParsedRequest
-from apps.archive.common import get_user
+from apps.archive.common import get_user, get_utc_schedule
 from apps.packages import TakesPackageService
 from apps.packages.package_service import PackageService
 from apps.publish.published_item import PUBLISH_STATE, QUEUE_STATE
@@ -261,12 +261,12 @@ class EnqueueService:
                             publish_queue_item['subscriber_id'] = subscriber['_id']
                             publish_queue_item['destination'] = destination
                             publish_queue_item['published_seq_num'] = pub_seq_num
-                            publish_queue_item['publish_schedule'] = doc.get('publish_schedule', None)
+                            publish_queue_item[PUBLISH_SCHEDULE] = get_utc_schedule(doc, PUBLISH_SCHEDULE) or None
                             publish_queue_item['unique_name'] = doc.get('unique_name', None)
                             publish_queue_item['content_type'] = doc.get('type', None)
                             publish_queue_item['headline'] = doc.get('headline', None)
 
-                            if doc.get('publish_schedule', None):
+                            if doc.get(PUBLISH_SCHEDULE, None):
                                 publish_queue_item['publishing_action'] = CONTENT_STATE.SCHEDULED
                             else:
                                 publish_queue_item['publishing_action'] = self.published_state
@@ -441,7 +441,7 @@ class Old:
         :return bool: True if there's at least one
         """
 
-        if doc.get(EMBARGO) and doc.get(EMBARGO) > utcnow():
+        if doc.get(EMBARGO) and get_utc_schedule(doc, EMBARGO) > utcnow():
             return False
 
         subscribers, subscribers_yet_to_receive = self.get_subscribers(doc, SUBSCRIBER_TYPES.DIGITAL)
