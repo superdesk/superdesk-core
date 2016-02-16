@@ -10,7 +10,7 @@
 
 import datetime
 import traceback
-
+import superdesk
 import requests
 from flask import current_app as app
 
@@ -62,10 +62,16 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
         self.URL = provider_config.get('url')
 
         for channel in self._get_channels():
-            for guid in self._get_article_ids(channel, last_updated, updated):
-                items = self.fetch_ingest(guid)
-                if items:
-                    yield items
+            ids = self._get_article_ids(channel, last_updated, updated)
+            for id in ids:
+                try:
+                    items = self.fetch_ingest(id)
+                    if items:
+                        yield items
+                # if there was an exception processing the one of the bunch log it and continue
+                except Exception as ex:
+                    logger.warn('Reuters item {} has not been retrieved'.format(id))
+                    logger.exception(ex)
 
     def _get_channels(self):
         """Get subscribed channels."""
@@ -132,25 +138,89 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
 
     def _get_article_ids(self, channel, last_updated, updated):
         """
-        Get article ids which should be upserted.
+        Get article ids which should be upserted also save the poll token that is returned.
         """
-
         ids = set()
-        payload = {'channel': channel, 'fieldsRef': 'id',
-                   'dateRange': "%s-%s" % (self._format_date(last_updated), self._format_date(updated))}
+        payload = {'channel': channel, 'fieldsRef': 'id'}
 
-        logger.info('Reuters requesting Date Range |{}| for channel {}'.format(payload['dateRange'], channel))
+        # check if the channel has a pollToken if not fall back to dateRange
+        last_poll_token = self._get_poll_token(channel)
+        if last_poll_token is not None:
+            logger.info("Reuters requesting channel {} with poll token {}".format(channel, last_poll_token))
+            payload['pollToken'] = last_poll_token
+        else:
+            payload['dateRange'] = "%s-%s" % (self._format_date(last_updated), self._format_date(updated))
+            logger.info("Reuters requesting channel {} with dateRange {}".format(channel, payload['dateRange']))
+
         tree = self._get_tree('items', payload)
+        status_code = tree.find('status').get('code') if tree.tag == 'results' else tree.get('code')
+        # check the returned status
+        if status_code != '10':
+            logger.warn("Reuters channel request returned status code {}".format(status_code))
+            # status code 30 indicates failure
+            if status_code == '30':
+                # invalid token
+                logger.warn("Reuters error on channel {} code {} {}".format(channel, tree.find('error').get('code'),
+                                                                            tree.find('error').text))
+                if tree.find('error').get('code') == '2100':
+                    self._save_poll_token(channel, None)
+                    logger.warn("Reuters channel invalid token reseting {}".format(status_code))
+                return ids
+
+        # extract the returned poll token if there is one
+        poll_token = tree.find('pollToken')
+        if poll_token is not None:
+            # a new token indicated new content
+            if poll_token.text != last_poll_token:
+                logger.info("Reuters channel {} new token {}".format(channel, poll_token.text))
+                self._save_poll_token(channel, poll_token.text)
+            else:
+                # the token has not changed, so nothing new
+                logger.info("Reuters channel {} nothing new".format(channel))
+                return ids
+        else:
+            logger.info("Reuters channel {} retrieved no token".format(channel))
+            return ids
+
         for result in tree.findall('result'):
-            ids.add(result.find('guid').text)
+            id = result.find('id').text
+            ids.add(id)
+            logger.info("Reuters id : {}".format(id))
 
         return ids
+
+    def _save_poll_token(self, channel, poll_token):
+        """
+        Saves the poll token for the passed channel in the config section of the
+        :param channel:
+        :param poll_token:
+        :return:
+        """
+        # get the provider in case it has been updated by another channel
+        ingest_provider_service = superdesk.get_resource_service('ingest_providers')
+        provider = ingest_provider_service.find_one(req=None, _id=self.provider[superdesk.config.ID_FIELD])
+        provider_token = provider.get('tokens')
+        if 'poll_tokens' not in provider_token:
+            provider_token['poll_tokens'] = {channel: poll_token}
+        else:
+            provider_token['poll_tokens'][channel] = poll_token
+        upd_provider = {'tokens': provider_token}
+        ingest_provider_service.system_update(self.provider[superdesk.config.ID_FIELD], upd_provider, self.provider)
+
+    def _get_poll_token(self, channel):
+        """
+        Get the poll token from provider config if it is available.
+        :param channel:
+        :return: token
+        """
+        if 'tokens' in self.provider and 'poll_tokens' in self.provider['tokens']:
+            return self.provider.get('tokens').get('poll_tokens').get(channel, None)
 
     def _format_date(self, date):
         return date.strftime(self.DATE_FORMAT)
 
-    def fetch_ingest(self, guid):
-        items = self._parse_items(guid)
+    def fetch_ingest(self, id):
+        items = self._parse_items(id)
         result_items = []
         while items:
             item = items.pop()
@@ -164,12 +234,12 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
 
         return result_items
 
-    def _parse_items(self, guid):
+    def _parse_items(self, id):
         """
         Parse item message and return given items.
         """
 
-        payload = {'id': guid}
+        payload = {'id': id}
         tree = self._get_tree('item', payload)
 
         parser = self.get_feed_parser(self.provider, tree)

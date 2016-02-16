@@ -26,8 +26,8 @@ def setup_provider(token, hours):
         'feeding_service': 'test',
         'feed_parser': 'newsml2',
         'content_expiry': 2880,
-        'token': {
-            'token': token,
+        'tokens': {
+            'auth_token': token,
             'created': utcnow() - timedelta(hours=hours),
         }
     }
@@ -72,7 +72,7 @@ class GetTokenTestCase(TestCase):
         if provider['config']['username']:
             token = TestFeedingService()._generate_auth_token(provider, update=True)
             self.assertNotEquals('', token)
-            self.assertEquals(token, provider['token']['token'])
+            self.assertEquals(token, provider['tokens']['auth_token'])
 
             dbprovider = superdesk.get_resource_service('ingest_providers').find_one(name='test http', req=None)
-            self.assertEquals(token, dbprovider['token']['token'])
+            self.assertEquals(token, dbprovider['tokens']['auth_token'])
