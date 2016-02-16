@@ -45,7 +45,8 @@ class SearchService(superdesk.Service):
         """Get elastic query."""
         args = getattr(req, 'args', {})
         query = json.loads(args.get('source')) if args.get('source') else {'query': {'filtered': {}}}
-        query['aggs'] = aggregations
+        if app.data.elastic.should_aggregate(req):
+            query['aggs'] = aggregations
         return query
 
     def _get_types(self, req):
@@ -79,8 +80,6 @@ class SearchService(superdesk.Service):
         query = self._get_query(req)
         types = self._get_types(req)
         filters = self._get_filters(types)
-
-        query['aggs'] = aggregations
 
         stages = superdesk.get_resource_service('users').get_invisible_stages_ids(g.get('user', {}).get('_id'))
         if stages:
