@@ -499,6 +499,6 @@ class UpdateIngestTest(SuperdeskTestCase):
         provider_service.provider = provider
         provider_service.URL = provider.get('config', {}).get('url')
         ids = provider_service._get_article_ids('channel1', utcnow(), utcnow() + timedelta(minutes=-10))
-        self.assertEqual(len(ids),3)
+        self.assertEqual(len(ids), 3)
         provider = get_resource_service('ingest_providers').find_one(name=provider_name, req=None)
         self.assertEqual(provider['tokens']['poll_tokens']['channel1'], 'ExwaY31kfnR2Z2J1cWZ2YnxoYH9kfw==')
