@@ -15,15 +15,17 @@ from superdesk.celery_app import celery
 from superdesk.celery_task_utils import get_lock_id
 from superdesk.lock import lock, unlock
 from superdesk.utc import utcnow
+from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
 
 from bson.objectid import ObjectId
 from eve.utils import config, ParsedRequest
 
-from apps.archive.common import ITEM_OPERATION
+from apps.archive.common import ITEM_OPERATION, ARCHIVE
 from apps.publish.enqueue.enqueue_corrected import EnqueueCorrectedService
 from apps.publish.enqueue.enqueue_killed import EnqueueKilledService
 from apps.publish.enqueue.enqueue_published import EnqueuePublishedService
 from apps.publish.published_item import PUBLISH_STATE, QUEUE_STATE, PUBLISHED
+from apps.legal_archive.commands import import_into_legal_archive
 
 
 logger = logging.getLogger(__name__)
@@ -73,11 +75,21 @@ def enqueue_item(published_item):
     """
     published_item_id = ObjectId(published_item[config.ID_FIELD])
     published_service = get_resource_service(PUBLISHED)
+    archive_service = get_resource_service(ARCHIVE)
     published_update = {QUEUE_STATE: PUBLISH_STATE.IN_PROGRESS, 'last_queue_event': utcnow()}
     try:
+        logger.info('Queueing item with id: {} and item_id: {}'.format(published_item_id, published_item['item_id']))
+        if published_item.get(ITEM_STATE) == CONTENT_STATE.SCHEDULED:
+            # if scheduled then change the state to published
+            logger.info('Publishing scheduled item_id: {}'.format(published_item_id))
+            published_update[ITEM_STATE] = CONTENT_STATE.PUBLISHED
+            res = archive_service.patch(published_item['item_id'], {ITEM_STATE: CONTENT_STATE.PUBLISHED})
+            import_into_legal_archive.apply_async(kwargs={'doc': res})
+
         published_service.patch(published_item_id, published_update)
         get_enqueue_service(published_item[ITEM_OPERATION]).enqueue_item(published_item)
         published_service.patch(published_item_id, {QUEUE_STATE: PUBLISH_STATE.QUEUED})
+        logger.info('Queued item with id: {} and item_id: {}'.format(published_item_id, published_item['item_id']))
     except KeyError:
         published_service.patch(published_item_id, {QUEUE_STATE: PUBLISH_STATE.PENDING})
         logger.error('No enqueue service found for operation %s', published_item[ITEM_OPERATION])
@@ -106,7 +118,8 @@ def enqueue_items(published_items):
 
     for queue_item in published_items:
         try:
-            enqueue_item(queue_item)
+            if not queue_item.get('publish_schedule') or queue_item.get('publish_schedule') > utcnow():
+                enqueue_item(queue_item)
         except Exception as ex:
             logger.exception(ex)
             failed_items[str(queue_item.get('_id'))] = queue_item
