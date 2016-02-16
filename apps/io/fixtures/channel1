@@ -1,0 +1,19 @@
+<results>
+    <result>
+        <id>tag:reuters.com,0000:newsml_L3N15V1FU:1147689808</id>
+        <guid>tag:reuters.com,0000:newsml_L3N15V1FU</guid>
+        <version>1147689808</version>
+    </result>
+    <result>
+        <id>tag:reuters.com,0000:newsml_L3N15V181:779851386</id>
+        <guid>tag:reuters.com,0000:newsml_L3N15V181</guid>
+        <version>779851386</version>
+    </result>
+    <result>
+        <id>tag:reuters.com,0000:newsml_L3N15O2J0:1353575241</id>
+        <guid>tag:reuters.com,0000:newsml_L3N15O2J0</guid>
+        <version>1353575241</version>
+    </result>
+    <pollToken>ExwaY31kfnR2Z2J1cWZ2YnxoYH9kfw==</pollToken>
+    <status code="10"/>
+</results>

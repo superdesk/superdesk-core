@@ -69,7 +69,7 @@ class IngestProviderResource(Resource):
             'accepted_count': {
                 'type': 'integer'
             },
-            'token': {
+            'tokens': {
                 'type': 'dict'
             },
             'is_closed': {

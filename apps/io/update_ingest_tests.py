@@ -491,3 +491,14 @@ class UpdateIngestTest(SuperdeskTestCase):
         self.assertEqual(elastic_item['headline'], 'Updated headline')
         self.assertEqual(elastic_item['unique_id'], 1)
         self.assertEqual(elastic_item['unique_name'], '#1')
+
+    def test_get_article_ids(self):
+        provider_name = 'reuters'
+        provider = self._get_provider(provider_name)
+        provider_service = self._get_provider_service(provider)
+        provider_service.provider = provider
+        provider_service.URL = provider.get('config', {}).get('url')
+        ids = provider_service._get_article_ids('channel1', utcnow(), utcnow() + timedelta(minutes=-10))
+        self.assertEqual(len(ids), 3)
+        provider = get_resource_service('ingest_providers').find_one(name=provider_name, req=None)
+        self.assertEqual(provider['tokens']['poll_tokens']['channel1'], 'ExwaY31kfnR2Z2J1cWZ2YnxoYH9kfw==')
