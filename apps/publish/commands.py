@@ -11,7 +11,7 @@
 import logging
 import superdesk
 from superdesk.celery_task_utils import is_task_running, mark_task_as_not_running
-from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
+from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, PUBLISH_SCHEDULE
 from superdesk.utc import utcnow
 
 from eve.utils import date_to_str, config
@@ -49,7 +49,7 @@ class UpdateOverdueScheduledPublishedContent(superdesk.Command):
 
             for item in items:
                 logger.info('updating overdue scheduled article with id {} and headline {} -- expired on: {} now: {}'.
-                            format(item[config.ID_FIELD], item['headline'], item['publish_schedule'], now))
+                            format(item[config.ID_FIELD], item['headline'], item[PUBLISH_SCHEDULE], now))
 
                 superdesk.get_resource_service('published').\
                     update_published_items(item['item_id'], ITEM_STATE, CONTENT_STATE.PUBLISHED)

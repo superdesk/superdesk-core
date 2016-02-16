@@ -18,7 +18,7 @@ from superdesk.utc import utcnow
 import superdesk
 from superdesk.errors import FormatterError
 from superdesk.publish.formatters.nitf_formatter import NITFFormatter
-from apps.archive.common import ARCHIVE
+from apps.archive.common import ARCHIVE, get_utc_schedule
 from superdesk.metadata.packages import PACKAGE_TYPE, REFS, RESIDREF, ROLE, GROUPS, GROUP_ID, ID_REF
 
 
@@ -117,7 +117,8 @@ class NewsMLG2Formatter(Formatter):
         self._format_pubstatus(article, item_meta)
 
         if article.get(EMBARGO):
-            SubElement(item_meta, 'embargoed').text = article[EMBARGO].isoformat()
+            SubElement(item_meta, 'embargoed').text = \
+                get_utc_schedule(article, EMBARGO).isoformat()
 
         # optional properties
         self._format_ednote(article, item_meta)

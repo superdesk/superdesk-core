@@ -23,6 +23,7 @@ from superdesk.io.iptc import subject_codes
 from apps.publish.formatters.field_mappers.selectorcode_mapper import SelectorcodeMapper
 from apps.publish.formatters.field_mappers.locator_mapper import LocatorMapper
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO
+from apps.archive.common import get_utc_schedule
 
 
 class AAPIpNewsFormatter(Formatter):
@@ -97,7 +98,8 @@ class AAPIpNewsFormatter(Formatter):
                     odbc_item['headline'] = '{}:{}'.format(headline_prefix, odbc_item['headline'])
 
                 if article.get(EMBARGO):
-                    embargo = '{}{}'.format('Embargo Content. Timestamp: ', article.get(EMBARGO).isoformat())
+                    embargo = '{}{}'.format('Embargo Content. Timestamp: ',
+                                            get_utc_schedule(article, EMBARGO).isoformat())
                     odbc_item['article_text'] = embargo + odbc_item['article_text']
 
                 docs.append((pub_seq_num, odbc_item))

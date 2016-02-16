@@ -18,7 +18,7 @@ from apps.content import push_content_notification
 import superdesk
 from superdesk.errors import InvalidStateTransitionError, SuperdeskApiError, PublishQueueError
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, GUID_FIELD, ITEM_STATE, CONTENT_STATE, \
-    PUBLISH_STATES, EMBARGO, PUB_STATUS
+    PUBLISH_STATES, EMBARGO, PUB_STATUS, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS
 from superdesk.metadata.packages import SEQUENCE, LINKED_IN_PACKAGES, GROUPS, PACKAGE
 from superdesk.metadata.utils import item_url
 from superdesk.notification import push_notification
@@ -33,8 +33,9 @@ from eve.versioning import resolve_document_version
 
 from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
 from apps.archive.common import get_user, insert_into_versions, item_operations
-from apps.archive.common import validate_schedule, ITEM_OPERATION, convert_task_attributes_to_objectId, is_genre, \
-    BROADCAST_GENRE, get_expiry
+from apps.archive.common import validate_schedule, ITEM_OPERATION, update_schedule_settings, \
+    convert_task_attributes_to_objectId, is_genre, \
+    BROADCAST_GENRE, get_expiry, get_utc_schedule
 from apps.common.components.utils import get_component
 from apps.item_autosave.components.item_autosave import ItemAutosave
 from apps.legal_archive.commands import import_into_legal_archive
@@ -187,7 +188,8 @@ class BasePublishService(BaseService):
                 raise PublishQueueError.previous_take_not_published_error(
                     Exception("Previous takes are not published."))
 
-            validate_schedule(updated.get('publish_schedule'), takes_package.get(SEQUENCE, 1) if takes_package else 1)
+            validate_schedule(updated.get(PUBLISH_SCHEDULE), takes_package.get(SEQUENCE, 1) if takes_package else 1)
+            update_schedule_settings(updated, PUBLISH_SCHEDULE, updated.get(PUBLISH_SCHEDULE))
 
             if original[ITEM_TYPE] != CONTENT_TYPE.COMPOSITE and updates.get(EMBARGO):
                 get_resource_service(ARCHIVE).validate_embargo(updated)
@@ -262,8 +264,12 @@ class BasePublishService(BaseService):
         """
         desk_id = original.get('task', {}).get('desk')
         stage_id = original.get('task', {}).get('stage')
-        offset = updates.get(EMBARGO, original.get(EMBARGO)) or \
-            updates.get('publish_schedule', original.get('publish_schedule'))
+
+        if EMBARGO in updates or PUBLISH_SCHEDULE in updates:
+            offset = get_utc_schedule(updates, PUBLISH_SCHEDULE) or get_utc_schedule(updates, EMBARGO)
+        elif EMBARGO in original or PUBLISH_SCHEDULE in original:
+            offset = get_utc_schedule(original, PUBLISH_SCHEDULE) or get_utc_schedule(original, EMBARGO)
+
         updates['expiry'] = get_expiry(desk_id, stage_id, offset=offset)
 
     def _is_take_item(self, item):
@@ -316,7 +322,7 @@ class BasePublishService(BaseService):
                 package_updates['body_html'] = body_html
 
             metadata_tobe_copied = self.takes_package_service.fields_for_creating_take.copy()
-            metadata_tobe_copied.extend(['publish_schedule', 'byline'])
+            metadata_tobe_copied.extend([PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, 'byline'])
             updated_take = original_of_take_to_be_published.copy()
             updated_take.update(updates_of_take_to_be_published)
             metadata_from = updated_take
@@ -416,7 +422,8 @@ class BasePublishService(BaseService):
         :param dict original: original document
         :param dict updates: updates related to document
         """
-        updates['publish_schedule'] = None
+        updates[PUBLISH_SCHEDULE] = None
+        updates[SCHEDULE_SETTINGS] = {}
         updates[ITEM_STATE] = self.published_state
 
     def _set_updates(self, original, updates, last_updated, preserve_state=False):

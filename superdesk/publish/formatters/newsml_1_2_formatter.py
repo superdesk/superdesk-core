@@ -22,6 +22,7 @@ from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, ITEM_STATE
 from superdesk.metadata.packages import PACKAGE_TYPE, GROUP_ID, REFS, RESIDREF, ROLE, ROOT_GROUP
 from superdesk.utc import utcnow
 from flask import current_app as app
+from apps  .archive.common import get_utc_schedule
 
 
 logger = logging.getLogger(__name__)
@@ -138,7 +139,8 @@ class NewsML12Formatter(Formatter):
             SubElement(news_management, 'Status', {'FormalName': 'Embargoed'})
             status_will_change = SubElement(news_management, 'StatusWillChange')
             SubElement(status_will_change, 'FutureStatus', {'FormalName': article['pubstatus']})
-            SubElement(status_will_change, 'DateAndTime').text = article[EMBARGO].isoformat()
+            SubElement(status_will_change, 'DateAndTime').text = \
+                get_utc_schedule(article, EMBARGO).isoformat()
         else:
             SubElement(news_management, 'Status', {'FormalName': article['pubstatus']})
 

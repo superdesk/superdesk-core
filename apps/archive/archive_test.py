@@ -22,7 +22,8 @@ from datetime import timedelta, datetime
 from pytz import timezone
 from apps.archive.common import validate_schedule, remove_media_files, \
     format_dateline_to_locmmmddsrc, convert_task_attributes_to_objectId, \
-    is_genre, BROADCAST_GENRE, get_default_source, set_default_source
+    is_genre, BROADCAST_GENRE, get_default_source, set_default_source, \
+    get_utc_schedule
 
 
 class RemoveSpikedContentTestCase(SuperdeskTestCase):
@@ -202,15 +203,24 @@ class RemoveSpikedContentTestCase(SuperdeskTestCase):
         self.assertFalse(deleted)
 
     def test_query_getting_overdue_scheduled_content(self):
-        self.app.data.insert(ARCHIVE, [{'publish_schedule': get_expiry_date(-10), 'state': 'published'}])
-        self.app.data.insert(ARCHIVE, [{'publish_schedule': get_expiry_date(-10), 'state': 'scheduled'}])
-        self.app.data.insert(ARCHIVE, [{'publish_schedule': get_expiry_date(0), 'state': 'spiked'}])
-        self.app.data.insert(ARCHIVE, [{'publish_schedule': get_expiry_date(10), 'state': 'scheduled'}])
+
+        self.app.data.insert(ARCHIVE,
+                             [{'schedule_settings': {'utc_publish_schedule': get_expiry_date(-10)},
+                               'state': 'published'}])
+        self.app.data.insert(ARCHIVE,
+                             [{'schedule_settings': {'utc_publish_schedule': get_expiry_date(-10)},
+                               'state': 'scheduled'}])
+        self.app.data.insert(ARCHIVE,
+                             [{'schedule_settings': {'utc_publish_schedule': get_expiry_date(0)},
+                               'state': 'spiked'}])
+        self.app.data.insert(ARCHIVE,
+                             [{'schedule_settings': {'utc_publish_schedule': get_expiry_date(10)},
+                               'state': 'scheduled'}])
         self.app.data.insert(ARCHIVE, [{'unique_id': 97, 'state': 'spiked'}])
 
         now = date_to_str(utcnow())
-        overdueItems = get_overdue_scheduled_items(now, 'archive')
-        self.assertEquals(1, overdueItems.count())
+        overdue_items = get_overdue_scheduled_items(now, 'archive')
+        self.assertEquals(1, overdue_items.count())
 
 
 class ArchiveTestCase(SuperdeskTestCase):
@@ -363,3 +373,11 @@ class ArchiveCommonTestCase(SuperdeskTestCase):
 
         self.assertFalse(is_genre(content, BROADCAST_GENRE))
         self.assertTrue(is_genre(content, 'Article'))
+
+    def test_get_utc_schedule(self):
+        embargo_date = utcnow() + timedelta(minutes=10)
+        content = {
+            'embargo': embargo_date
+        }
+        utc_schedule = get_utc_schedule(content, 'embargo')
+        self.assertEqual(utc_schedule, embargo_date)

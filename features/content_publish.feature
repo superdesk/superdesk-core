@@ -488,6 +488,89 @@ Feature: Content Publishing
       Then we get error 404
 
     @auth
+    Scenario: Schedule a user content publish with different time zone
+      Given empty "subscribers"
+      And "desks"
+      """
+      [{"name": "Sports", "content_expiry": 60}]
+      """
+      And the "validators"
+      """
+      [{"_id": "publish_text", "act": "publish", "type": "text", "schema":{}}]
+      """
+      And "archive"
+      """
+      [{"guid": "123", "headline": "test", "_current_version": 1, "state": "fetched",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "subject":[{"qcode": "17004000", "name": "Statistics"}],
+        "slugline": "test",
+        "body_html": "Test Document body"}]
+      """
+      When we patch "/archive/123"
+      """
+      {
+        "publish_schedule":"2020-02-13T22:46:19.000Z",
+        "schedule_settings": {"time_zone": "Australia/Sydney"}
+      }
+      """
+      And we post to "/subscribers" with success
+      """
+      {
+        "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
+      When we get "/archive"
+      Then we get list with 1 items
+      """
+      {
+        "_items":
+          [
+            {"publish_schedule":  "2020-02-13T22:46:19+0000",
+             "schedule_settings":  {"utc_publish_schedule": "2020-02-13T12:41:19+0000"}
+            }
+          ]
+      }
+      """
+      When we patch "/archive/123"
+      """
+      {"publish_schedule":  "2020-03-13T22:46:19+0000"}
+      """
+      Then we get response code 200
+      When we get "/archive/123"
+      Then we get existing resource
+      """
+      {"publish_schedule":  "2020-03-13T22:46:19+0000",
+       "schedule_settings":  {"utc_publish_schedule": "2020-03-13T12:41:19+0000"}
+      }
+      """
+      When we patch "/archive/123"
+      """
+      {"schedule_settings":  {"time_zone": null}}
+      """
+      Then we get response code 200
+      When we get "/archive/123"
+      Then we get existing resource
+      """
+      {"publish_schedule":  "2020-03-13T22:46:19+0000",
+       "schedule_settings":  {"utc_publish_schedule": "2020-03-13T22:46:19+0000"}
+      }
+      """
+      When we patch "/archive/123"
+      """
+      {"publish_schedule":  null}
+      """
+      Then we get response code 200
+      When we get "/archive/123"
+      Then we get existing resource
+      """
+      {"publish_schedule":  null,
+       "schedule_settings":  {"utc_publish_schedule": null}
+      }
+      """
+
+
+    @auth
     Scenario: Deschedule an item
       Given empty "subscribers"
       And "desks"

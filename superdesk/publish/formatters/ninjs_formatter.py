@@ -16,6 +16,7 @@ from superdesk.errors import FormatterError
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, GUID_FIELD
 from superdesk.metadata.packages import RESIDREF, GROUP_ID, GROUPS, ROOT_GROUP, REFS
 from superdesk.utils import json_serialize_datetime_objectId
+from apps.archive.common import get_utc_schedule
 
 
 def filter_empty_vals(data):
@@ -76,7 +77,7 @@ class NINJSFormatter(Formatter):
                 ninjs['associations'] = self._format_related(article, subscriber)
 
             if article.get(EMBARGO):
-                ninjs['embargoed'] = article.get(EMBARGO).isoformat()
+                ninjs['embargoed'] = get_utc_schedule(article, EMBARGO).isoformat()
 
             if article.get('priority'):
                 ninjs['priority'] = article['priority']
