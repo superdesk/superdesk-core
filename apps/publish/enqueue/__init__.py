@@ -15,7 +15,7 @@ from superdesk.celery_app import celery
 from superdesk.celery_task_utils import get_lock_id
 from superdesk.lock import lock, unlock
 from superdesk.utc import utcnow
-from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
+from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, SCHEDULE_SETTINGS
 
 from bson.objectid import ObjectId
 from eve.utils import config, ParsedRequest
@@ -57,6 +57,7 @@ class EnqueueContent(superdesk.Command):
         """
         lock_name = get_lock_id('publish', 'enqueue_published')
         if not lock(lock_name, '', expire=5):
+            logger.info('Enqueue Task: {} is already running.'.format(lock_name))
             return
 
         try:
@@ -115,13 +116,15 @@ def enqueue_items(published_items):
     :param list published_items: the list of items marked for publishing
     """
     failed_items = {}
+    current_utc = utcnow()
 
     for queue_item in published_items:
         try:
-            if not queue_item.get('publish_schedule') or queue_item.get('publish_schedule') > utcnow():
+            if not queue_item.get(SCHEDULE_SETTINGS, {}).get('utc_publish_schedule') \
+                    or queue_item.get(SCHEDULE_SETTINGS, {}).get('utc_publish_schedule') < current_utc:
                 enqueue_item(queue_item)
-        except Exception as ex:
-            logger.exception(ex)
+        except:
+            logger.exception('Failed to queue item {}'.format(queue_item.get('_id')))
             failed_items[str(queue_item.get('_id'))] = queue_item
 
     # mark failed items as pending so that Celery tasks will try again

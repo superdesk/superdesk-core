@@ -67,6 +67,7 @@ def get_test_settings():
     test_settings['CELERY_ALWAYS_EAGER'] = 'True'
     test_settings['CONTENT_EXPIRY_MINUTES'] = 99
     test_settings['VERSION'] = '_current_version'
+    test_settings['ELASTICSEARCH_FORCE_REFRESH'] = True
     return test_settings
 
 

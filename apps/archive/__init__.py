@@ -18,8 +18,7 @@ from superdesk.celery_app import celery
 
 from .archive import ArchiveResource, ArchiveService, ArchiveVersionsResource, AutoSaveResource, \
     ArchiveSaveService
-from .commands import UpdateOverdueScheduledContent, RemoveExpiredContent
-from apps.publish.commands import UpdateOverdueScheduledPublishedContent
+from .commands import RemoveExpiredContent
 from .ingest import IngestResource, AppIngestService
 from .item_comments import ItemCommentsResource, ItemCommentsSubResource, ItemCommentsService, ItemCommentsSubService
 from .user_content import UserContentResource, UserContentService
@@ -111,12 +110,6 @@ def init_app(app):
 
     superdesk.intrinsic_privilege(ArchiveUnlockResource.endpoint_name, method=['POST'])
     superdesk.intrinsic_privilege(ArchiveLinkResource.endpoint_name, method=['POST'])
-
-
-@celery.task
-def remove_scheduled():
-    UpdateOverdueScheduledContent().run()
-    UpdateOverdueScheduledPublishedContent().run()
 
 
 @celery.task()

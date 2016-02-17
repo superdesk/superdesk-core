@@ -18,7 +18,7 @@ from eve.utils import config
 from superdesk.lock import lock, unlock
 from superdesk.celery_task_utils import get_lock_id
 from superdesk import get_resource_service
-from superdesk.metadata.item import PUBLISH_SCHEDULE
+
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +51,6 @@ def publish():
         if items.count() > 0:
             transmit_items(items)
 
-        logger.info('Task: {} completed successfully.'.format(lock_name))
     except:
         logger.exception('Task: {} failed.'.format(lock_name))
     finally:
@@ -68,16 +67,20 @@ def transmit_items(queue_items):
     failed_items = {}
 
     for queue_item in queue_items:
+        log_msg = '_id: {_id}  item_id: {item_id}  ' \
+                  'item_version: {item_version} headline: {headline}'.format(**queue_item)
         try:
             # update the status of the item to in-progress
+            logger.info('Transmitting queue item {}'.format(log_msg))
             queue_update = {'state': 'in-progress', 'transmit_started_at': utcnow()}
             publish_queue_service.patch(queue_item.get(config.ID_FIELD), queue_update)
             destination = queue_item['destination']
             transmitter = superdesk.publish.registered_transmitters[destination.get('delivery_type')]
             transmitter.transmit(queue_item)
-        except Exception as ex:
-            logger.exception(ex)
-            failed_items[str(queue_item.get('_id'))] = queue_item
+            logger.info('Transmitted queue item {}'.format(log_msg))
+        except:
+            logger.exception('Failed to transmit queue item {}'.format(log_msg))
+            failed_items[str(queue_item.get(config.ID_FIELD))] = queue_item
 
     # mark failed items as pending so that Celery tasks will try again
     if len(failed_items) > 0:

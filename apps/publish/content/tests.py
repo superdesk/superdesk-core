@@ -291,6 +291,7 @@ class ArchivePublishTestCase(SuperdeskTestCase):
                           'task': {'user': '1', 'desk': '123456789ABCDEF123456789'},
                           ITEM_STATE: CONTENT_STATE.FETCHED},
                          {'guid': 'tag:localhost:2015:69b961ab-a7b402fed4fb',
+                          '_id': 'test_item_9',
                           'last_version': 3,
                           config.VERSION: 4,
                           'body_html': 'Student Crime. Police Missing.',
@@ -491,24 +492,52 @@ class ArchivePublishTestCase(SuperdeskTestCase):
             "Transmission Details are empty for published item %s" % original[config.ID_FIELD]
 
         lookup = {'item_id': original[config.ID_FIELD], config.VERSION: published_version_number}
-        items_in_published_collection = list(get_resource_service(PUBLISHED).get(req=None, lookup=lookup))
+        request = ParsedRequest()
+        request.args = {'aggregations': 0}
+        items_in_published_collection = list(get_resource_service(PUBLISHED).get(req=request, lookup=lookup))
         assert len(items_in_published_collection) > 0, \
             "Item not found in published collection %s" % original[config.ID_FIELD]
 
-    def test_queue_transmission(self):
+    def test_queue_transmission_for_item_scheduled_future(self):
         self._is_publish_queue_empty()
 
         doc = copy(self.articles[9])
         doc['item_id'] = doc['_id']
         schedule_date = utcnow() + timedelta(hours=2)
-        get_resource_service(ARCHIVE).patch(id=doc['_id'], updates={'publish_schedule': schedule_date})
+        updates = {
+            'publish_schedule': schedule_date,
+            'schedule_settings': {
+                'utc_publish_schedule': schedule_date
+            }
+        }
+        get_resource_service(ARCHIVE).patch(id=doc['_id'], updates=updates)
         get_resource_service(ARCHIVE_PUBLISH).patch(id=doc['_id'], updates={ITEM_STATE: CONTENT_STATE.SCHEDULED})
         enqueue_published()
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
-        self.assertEqual(7, queue_items.count())
+        self.assertEqual(0, queue_items.count())
 
-        for item in queue_items:
-            self.assertEqual(schedule_date, item["publish_schedule"])
+    def test_queue_transmission_for_item_scheduled_elapsed(self):
+        self._is_publish_queue_empty()
+
+        doc = copy(self.articles[9])
+        doc['item_id'] = doc['_id']
+        schedule_date = utcnow() + timedelta(minutes=10)
+        updates = {
+            'publish_schedule': schedule_date,
+            'schedule_settings': {
+                'utc_publish_schedule': schedule_date
+            }
+        }
+        get_resource_service(ARCHIVE).patch(id=doc['_id'], updates=updates)
+        get_resource_service(ARCHIVE_PUBLISH).patch(id=doc['_id'], updates={ITEM_STATE: CONTENT_STATE.SCHEDULED})
+        queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
+        self.assertEqual(0, queue_items.count())
+        get_resource_service(PUBLISHED).update_published_items(doc['_id'], 'schedule_settings',
+                                                               {'utc_publish_schedule':
+                                                                utcnow() + timedelta(minutes=-5)})
+        enqueue_published()
+        queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
+        self.assertEqual(5, queue_items.count())
 
     def test_queue_transmission_for_digital_channels(self):
         self._is_publish_queue_empty()
@@ -630,7 +659,7 @@ class ArchivePublishTestCase(SuperdeskTestCase):
                     {'term': {'item_id': item_id}}, {'term': {LAST_PUBLISHED_VERSION: last_version}}
             ]}}}}
             request = ParsedRequest()
-            request.args = {'source': json.dumps(query)}
+            request.args = {'source': json.dumps(query), 'aggregations': 0}
             return self.app.data.find(PUBLISHED, req=request, lookup=None)
 
         ValidatorsPopulateCommand().run(self.filename)
@@ -645,7 +674,9 @@ class ArchivePublishTestCase(SuperdeskTestCase):
 
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(7, queue_items.count())
-        published_items = self.app.data.find(PUBLISHED, None, None)
+        request = ParsedRequest()
+        request.args = {'aggregations': 0}
+        published_items = self.app.data.find(PUBLISHED, request, None)
         self.assertEqual(2, published_items.count())
         published_digital_doc = next((item for item in published_items
                                       if item.get(PACKAGE_TYPE) == TAKES_PACKAGE), None)
@@ -661,7 +692,7 @@ class ArchivePublishTestCase(SuperdeskTestCase):
 
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(14, queue_items.count())
-        published_items = self.app.data.find(PUBLISHED, None, None)
+        published_items = self.app.data.find(PUBLISHED, request, None)
         self.assertEqual(4, published_items.count())
         last_published_digital = get_publish_items(published_digital_doc['item_id'], True)
         self.assertEqual(1, last_published_digital.count())
