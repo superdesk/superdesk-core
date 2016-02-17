@@ -21,3 +21,4 @@ label = 'Validate Headline'
 shortcut = 'w'
 callback = validate
 desks = ['POLITICS']
+access_type = 'backend'

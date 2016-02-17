@@ -24,12 +24,13 @@ class MacrosService(superdesk.Service):
     def get(self, req, lookup):
         """Return all registered macros."""
         desk = getattr(req, 'args', {}).get('desk')
+        frontend_macros = self.get_frontend_macros()
+
         if desk:
-            return ListCursor([get_public_props(macro) for macro in macros
-                               if desk.upper() in macro.get('desks', []) or
-                               macro.get('desks') is None])
+            return ListCursor([get_public_props(macro) for macro in frontend_macros if
+                               desk.upper() in macro.get('desks', []) or macro.get('desks') is None])
         else:
-            return ListCursor([get_public_props(macro) for macro in macros])
+            return ListCursor([get_public_props(macro) for macro in frontend_macros])
 
     def create(self, docs, **kwargs):
         try:
@@ -57,6 +58,9 @@ class MacrosService(superdesk.Service):
     def execute_macro(self, doc, macro_name):
         macro = self.get_macro_by_name(macro_name)
         return macro['callback'](doc)
+
+    def get_frontend_macros(self):
+        return [m for m in macros if m.get('access_type') == 'frontend']
 
 
 class MacrosResource(superdesk.Resource):

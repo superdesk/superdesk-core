@@ -50,10 +50,17 @@ def register_macros():
     print(macro_modules)
 
     for macro_module in macro_modules:
-        register(name=macro_module.name,
-                 label=macro_module.label,
-                 shortcut=macro_module.shortcut,
-                 callback=macro_module.callback)
+        kwargs = {'name': macro_module.name,
+                  'callback': macro_module.callback,
+                  'access_type': macro_module.access_type}
+
+        if hasattr(macro_module, 'label'):
+            kwargs['label'] = macro_module.label
+
+        if hasattr(macro_module, 'shortcut'):
+            kwargs['shortcut'] = macro_module.shortcut
+
+        register(**kwargs)
 
 
 class MacroRegister():
