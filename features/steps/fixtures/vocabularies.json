@@ -3,6 +3,7 @@
         "_id": "categories",
         "display_name": "Categories",
         "type": "manageable",
+        "unique_field": "qcode",
         "items": [
             {"is_active": true, "name": "Australian General News", "qcode": "a"},
             {"is_active": true, "name": "Australian Weather", "qcode": "b", "subject": "17000000"},
