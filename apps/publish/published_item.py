@@ -283,11 +283,9 @@ class PublishedItemService(BaseService):
         return doc and 'rewritten_by' in doc and doc['rewritten_by']
 
     def update_published_items(self, _id, field, state):
-        print('*** id **** ', _id)
         items = self.get_other_published_items(_id)
         for item in items:
             try:
-                print('************************here****************')
                 super().system_update(ObjectId(item[config.ID_FIELD]), {field: state}, item)
             except:
                 # This part is used in unit testing

@@ -105,9 +105,10 @@ class PublishContentTests(SuperdeskTestCase):
             {
                 '_id': '1', 'item_id': 'item_1', 'queue_state': 'pending',
                 'state': 'scheduled',
+                'publish_schedule': utcnow() + timedelta(minutes=20),
                 'schedule_settings': {
                     'utc_publish_schedule': utcnow() + timedelta(minutes=20),
-                    'time_zone': 'australia/sydney'
+                    'time_zone': None
                 }
             }
         ]
@@ -121,9 +122,10 @@ class PublishContentTests(SuperdeskTestCase):
             {
                 '_id': '1', 'item_id': 'item_1', 'queue_state': 'pending',
                 'state': 'scheduled',
+                'publish_schedule': utcnow() + timedelta(minutes=-2),
                 'schedule_settings': {
                     'utc_publish_schedule': utcnow() + timedelta(minutes=-2),
-                    'time_zone': 'australia/sydney'
+                    'time_zone': None
                 }
             }
         ]

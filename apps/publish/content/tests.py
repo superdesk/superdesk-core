@@ -532,9 +532,11 @@ class ArchivePublishTestCase(SuperdeskTestCase):
         get_resource_service(ARCHIVE_PUBLISH).patch(id=doc['_id'], updates={ITEM_STATE: CONTENT_STATE.SCHEDULED})
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(0, queue_items.count())
+        schedule_in_past = utcnow() + timedelta(minutes=-10)
         get_resource_service(PUBLISHED).update_published_items(doc['_id'], 'schedule_settings',
-                                                               {'utc_publish_schedule':
-                                                                utcnow() + timedelta(minutes=-5)})
+                                                               {'utc_publish_schedule': schedule_in_past})
+        get_resource_service(PUBLISHED).update_published_items(doc['_id'], 'publish_schedule', schedule_in_past)
+
         enqueue_published()
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(5, queue_items.count())

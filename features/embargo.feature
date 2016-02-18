@@ -339,11 +339,7 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     """
     When we enqueue published
     When we get "/publish_queue"
-    Then we get list with 2 items
-    """
-    {"_items": [{"subscriber_id": "123", "publishing_action": "scheduled", "content_type": "text", "destination":{"name":"email"}},
-                {"subscriber_id": "321", "publishing_action": "scheduled", "content_type": "composite", "destination":{"name":"email"}}]}
-    """
+    Then we get list with 0 items
     When we patch "/archive/123"
     """
     {"publish_schedule": null}

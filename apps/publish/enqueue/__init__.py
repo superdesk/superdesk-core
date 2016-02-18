@@ -9,18 +9,19 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+
 from superdesk import get_resource_service
 import superdesk
 from superdesk.celery_app import celery
 from superdesk.celery_task_utils import get_lock_id
 from superdesk.lock import lock, unlock
 from superdesk.utc import utcnow
-from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, SCHEDULE_SETTINGS
+from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, PUBLISH_SCHEDULE
 
 from bson.objectid import ObjectId
 from eve.utils import config, ParsedRequest
 
-from apps.archive.common import ITEM_OPERATION, ARCHIVE
+from apps.archive.common import ITEM_OPERATION, ARCHIVE, get_utc_schedule
 from apps.publish.enqueue.enqueue_corrected import EnqueueCorrectedService
 from apps.publish.enqueue.enqueue_killed import EnqueueKilledService
 from apps.publish.enqueue.enqueue_published import EnqueuePublishedService
@@ -84,8 +85,9 @@ def enqueue_item(published_item):
             # if scheduled then change the state to published
             logger.info('Publishing scheduled item_id: {}'.format(published_item_id))
             published_update[ITEM_STATE] = CONTENT_STATE.PUBLISHED
-            res = archive_service.patch(published_item['item_id'], {ITEM_STATE: CONTENT_STATE.PUBLISHED})
-            import_into_legal_archive.apply_async(kwargs={'doc': res})
+            archive_service.patch(published_item['item_id'], {ITEM_STATE: CONTENT_STATE.PUBLISHED})
+            original = archive_service.find_one(req=None, _id=published_item['item_id'])
+            import_into_legal_archive.apply_async(kwargs={'doc': original})
 
         published_service.patch(published_item_id, published_update)
         get_enqueue_service(published_item[ITEM_OPERATION]).enqueue_item(published_item)
@@ -93,7 +95,7 @@ def enqueue_item(published_item):
         logger.info('Queued item with id: {} and item_id: {}'.format(published_item_id, published_item['item_id']))
     except KeyError:
         published_service.patch(published_item_id, {QUEUE_STATE: PUBLISH_STATE.PENDING})
-        logger.error('No enqueue service found for operation %s', published_item[ITEM_OPERATION])
+        logger.exception('No enqueue service found for operation %s', published_item[ITEM_OPERATION])
     except:
         published_service.patch(published_item_id, {QUEUE_STATE: PUBLISH_STATE.PENDING})
         raise
@@ -120,8 +122,8 @@ def enqueue_items(published_items):
 
     for queue_item in published_items:
         try:
-            if not queue_item.get(SCHEDULE_SETTINGS, {}).get('utc_publish_schedule') \
-                    or queue_item.get(SCHEDULE_SETTINGS, {}).get('utc_publish_schedule') < current_utc:
+            schedule_utc_datetime = get_utc_schedule(queue_item, PUBLISH_SCHEDULE)
+            if not schedule_utc_datetime or schedule_utc_datetime < current_utc:
                 enqueue_item(queue_item)
         except:
             logger.exception('Failed to queue item {}'.format(queue_item.get('_id')))

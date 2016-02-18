@@ -1999,13 +1999,13 @@ def run_overdue_schedule_jobs(context):
     with context.app.test_request_context(context.app.config['URL_PREFIX']):
         ids = json.loads(apply_placeholders(context, context.text))
         lapse_time = utcnow() - timedelta(minutes=5)
-        updates = {'publish_schedule': lapse_time, 'state': 'published'}
+        updates = {'publish_schedule': lapse_time, 'utc_publish_schedule': lapse_time}
 
         for item_id in ids:
             original = get_resource_service('archive').find_one(req=None, _id=item_id)
             get_resource_service('archive').system_update(item_id, updates, original)
             get_resource_service('published').update_published_items(item_id, 'publish_schedule', lapse_time)
-            get_resource_service('published').update_published_items(item_id, 'state', 'published')
+            get_resource_service('published').update_published_items(item_id, 'utc_publish_schedule', lapse_time)
 
 
 @when('we get takes package "{url}" and validate')

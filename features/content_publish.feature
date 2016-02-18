@@ -439,7 +439,7 @@ Feature: Content Publishing
       {"_issues": {"validator exception": "500: Failed to publish the item: PublishQueueError Error 9009 - Item could not be queued"}}
       """
 
-    @auth
+    @auth @test
     Scenario: Schedule a user content publish
       Given empty "subscribers"
       And "desks"
@@ -475,17 +475,42 @@ Feature: Content Publishing
       And we get expiry for schedule and embargo content 60 minutes after "#archive_publish.publish_schedule#"
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 1 items
-      """
-      {
-        "_items":
-          [
-            {"destination":{"name":"Test"}, "publish_schedule": "#archive.publish_schedule#"}
-          ]
-      }
-      """
+      Then we get list with 0 items
       When we get "/legal_archive/123"
       Then we get error 404
+      When the publish schedule lapses
+      """
+      ["123", "#archive.123.take_package#"]
+      """
+      When we enqueue published
+      And we get "/published"
+      Then we get list with 2 items
+      """
+      {
+        "_items": [
+          {
+            "_id": "123", "type": "text", "state": "published", "_current_version": 2
+          },
+          {
+            "_id": "#archive.123.take_package#", "type": "composite", "state": "published", "_current_version": 2
+          }
+        ]
+      }
+      """
+      When we get "/publish_queue"
+      Then we get list with 1 items
+      When we get "/legal_archive/123"
+      Then we get OK response
+      And we get existing resource
+      """
+      {"_current_version": 2, "state": "published", "type": "text", "task":{"desk": "#desks.name#"}}
+      """
+      When we get "/legal_archive/#archive.123.take_package#"
+      Then we get OK response
+      And we get existing resource
+      """
+      {"_current_version": 2, "state": "published", "type": "composite", "task":{"desk": "#desks.name#"}}
+      """
 
     @auth
     Scenario: Schedule a user content publish with different time zone
@@ -610,17 +635,7 @@ Feature: Content Publishing
       """
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 2 items
-      """
-      {
-        "_items":
-          [
-            {"destination":{"name":"Test"}, "publish_schedule":"2016-05-30T10:00:00+0000", "content_type": "text"},
-            {"destination":{"name":"Test"}, "publish_schedule":"2016-05-30T10:00:00+0000",
-            "content_type": "composite"}
-          ]
-      }
-      """
+      Then we get list with 0 items
       When we patch "/archive/123"
       """
       {"publish_schedule": null}
@@ -1605,7 +1620,24 @@ Feature: Content Publishing
       """
       ["123", "#archive.123.take_package#"]
       """
-      And we post to "/archive/123/link"
+      When we enqueue published
+      And we get "/published"
+      Then we get list with 2 items
+      """
+      {
+        "_items": [
+          {
+            "_id": "123", "type": "text", "state": "published"
+          },
+          {
+            "_id": "#archive.123.take_package#", "type": "composite", "state": "published"
+          }
+        ]
+      }
+      """
+      When we get "/publish_queue"
+      Then we get list with 1 items
+      When we post to "/archive/123/link"
       """
       [{"desk": "#desks._id#"}]
       """
