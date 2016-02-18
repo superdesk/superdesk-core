@@ -439,7 +439,7 @@ Feature: Content Publishing
       {"_issues": {"validator exception": "500: Failed to publish the item: PublishQueueError Error 9009 - Item could not be queued"}}
       """
 
-    @auth @test
+    @auth
     Scenario: Schedule a user content publish
       Given empty "subscribers"
       And "desks"
