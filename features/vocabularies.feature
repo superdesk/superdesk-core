@@ -89,10 +89,67 @@ Feature: Vocabularies
     Then we get response code 200
     When we patch "/vocabularies/categories"
     """
-    {"items": [{"name": "National", "value": "A", "is_active": true}, {"name": "Domestic Sports", "value": "T", "is_active": true}]}
+    {"items": [{"name": "National", "qcode": "A", "is_active": true}, {"name": "Domestic Sports", "qcode": "T", "is_active": true}]}
     """
     Then we get updated response
     And we get notifications
     """
     [{"event": "vocabularies:updated", "extra": {"vocabulary": "Categories", "user": "#CONTEXT_USER_ID#"}}]
     """
+
+  @auth @vocabulary
+  Scenario: Vocabulary update fails if unique field is defined and non-unique value given
+    When we get "/vocabularies/categories"
+    Then we get response code 200
+    When we patch "/vocabularies/categories"
+    """
+    {"items": [{"name": "National", "qcode": "A", "is_active": true}, {"name": "Domestic Sports", "qcode": "a", "is_active": true}]}
+    """
+    Then we get error 400
+    """
+    {"_status": "ERR",
+    "_issues": {"validator exception": "400: Value a for field qcode is not unique"}}
+    """
+
+  @auth @vocabulary
+  Scenario: Vocabulary update fails if unique field is defined and no value given
+    When we get "/vocabularies/categories"
+    Then we get response code 200
+    When we patch "/vocabularies/categories"
+    """
+    {"items": [{"name": "National", "value": "A", "is_active": true}]}
+    """
+    Then we get error 400
+    """
+    {"_status": "ERR",
+    "_issues": {"validator exception": "400: qcode cannot be empty"}}
+    """
+
+  @auth @vocabulary
+  Scenario: Vocabulary update succeeds if unique field is defined
+    When we get "/vocabularies/categories"
+    Then we get response code 200
+    When we patch "/vocabularies/categories"
+    """
+    {"items": [
+      {"name": "National", "qcode": "A", "is_active": true},
+      {"name": "Domestic Sports", "qcode": "B", "is_active": true}
+     ]}
+    """
+    Then we get updated response
+
+  @auth @vocabulary
+  Scenario: Vocabulary update succeeds if no unique field is defined with non-unique value
+    When we get "/vocabularies/genre"
+    Then we get response code 200
+    When we patch "/vocabularies/genre"
+    """
+    {"items": [
+      {"name": "Article", "value": "A", "is_active": true},
+      {"name": "Sidebar", "value": "A", "is_active": true},
+      {"name": "Article", "value": "A", "is_active": true}
+     ]}
+    """
+    Then we get updated response
+
+

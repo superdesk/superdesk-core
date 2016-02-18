@@ -3,6 +3,7 @@
         "_id": "categories",
         "display_name": "Categories",
         "type": "manageable",
+        "unique_field": "qcode",
         "items": [
             {"is_active": true, "name": "Australian General News", "qcode": "a"},
             {"is_active": true, "name": "Australian Weather", "qcode": "b", "subject": "17000000"},
@@ -36,6 +37,7 @@
         "_id": "default_categories",
         "display_name": "Default Categories",
         "type": "manageable",
+        "unique_field": "qcode",
         "items": [
             {"is_active": true, "qcode": "a"},
             {"is_active": true, "qcode": "e"},
@@ -80,6 +82,7 @@
         "_id": "urgency",
         "display_name": "Urgency",
         "type": "manageable",
+        "unique_field": "value",
         "items": [
             {"is_active": true, "name": "1", "value": 1},
             {"is_active": true, "name": "2", "value": 2},
@@ -155,6 +158,7 @@
         "_id": "geographical_restrictions",
         "display_name": "Geographical Restrictions",
         "type": "manageable",
+        "unique_field": "value",
         "items": [
             {"is_active": true, "name": "New South Wales", "value": "NSW"},
             {"is_active": true, "name": "Victoria", "value": "VIC"},
@@ -216,6 +220,7 @@
         "_id": "crop_sizes",
         "display_name": "Image Crop Sizes",
         "type": "manageable",
+        "unique_field": "name",
         "items": [
             {"is_active": true, "name": "4-3", "width": 800, "height": 600},
             {"is_active": true, "name": "16-9", "width": 1280, "height": 720}
@@ -225,6 +230,7 @@
         "_id": "keywords",
         "display_name": "Keywords for Articles",
         "type": "manageable",
+         "unique_field": "value",
         "items": [
             {
                 "is_active": true,
@@ -295,6 +301,7 @@
         "_id": "footers",
         "display_name": "Public Service Announcements",
         "type": "manageable",
+        "unique_field": "name",
         "items": [
             {"is_active": true, "name": "Suicide", "value": "Readers seeking support and information about suicide prevention can contact Lifeline on 13 11 14.<br>Suicide Call Back Service 1300 659 467<br>MensLine Australia 1300 78 99 78<br>Multicultural Mental Health Australia www.mmha.org.au<br>Local Aboriginal Medical Service available from www.vibe.com.au"},
             {"is_active": true, "name": "Children", "value": "Kids Helpline 1800 55 1800 (for young people aged 5 to 25)"},
@@ -305,6 +312,7 @@
         "_id": "company_codes",
         "display_name": "Financial Company Codes",
         "type": "manageable",
+        "unique_field": "qcode",
         "items": [
             {"is_active": true, "name": "1-PAGE LIMITED", "qcode": "1PG", "security_exchange": "ASX"},
             {"is_active": true, "name": "1300 SMILES LIMITED", "qcode": "ONT", "security_exchange": "ASX"},
