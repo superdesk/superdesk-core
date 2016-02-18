@@ -20,3 +20,4 @@ label = 'Update Fields'
 shortcut = 'w'
 callback = update_fields
 desks = ['POLITICS']
+access_type = 'frontend'

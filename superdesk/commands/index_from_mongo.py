@@ -27,6 +27,35 @@ class IndexFromMongo(superdesk.Command):
     default_page_size = 500
 
     def run(self, mongo_collection_name, page_size):
+        for items in self.get_mongo_items(mongo_collection_name, page_size):
+            print('{} Inserting {} items'.format(time.strftime('%X %x %Z'), len(items)))
+            s = time.time()
+
+            for i in range(1, 4):
+                try:
+                    success, failed = superdesk.app.data._search_backend(mongo_collection_name).bulk_insert(
+                        mongo_collection_name, items)
+                except Exception as ex:
+                    print('Exception thrown on insert to elastic {}', ex)
+                    time.sleep(10)
+                    continue
+                else:
+                    break
+
+            print('{} Inserted {} items in {:.3f} seconds'.format(time.strftime('%X %x %Z'), success, time.time() - s))
+            if failed:
+                print('Failed to do bulk insert of items {}. Errors: {}'.format(len(failed), failed))
+                raise BulkIndexError(resource=mongo_collection_name, errors=failed)
+
+        return 'Finished indexing collection {}'.format(mongo_collection_name)
+
+    def get_mongo_items(self, mongo_collection_name, page_size):
+        """
+        Generates list of items from given mongo collection per page size
+        :param mongo_collection_name: Name of the collection to get the items
+        :param page_size: Size of every list in each iteration
+        :return: list of items
+        """
         bucket_size = int(page_size) if page_size else self.default_page_size
         print('Indexing data from mongo/{} to elastic/{}'.format(mongo_collection_name, mongo_collection_name))
 
@@ -51,29 +80,11 @@ class IndexFromMongo(superdesk.Command):
 
             cursor = service.get_from_mongo(req, lookup)
             items = list(cursor)
-
             water_mark = items[len(items) - 1][config.ID_FIELD]
             print('{} Retrieved from Mongo in {:.3f} seconds to {}'.format(time.strftime('%X %x %Z'), time.time() - s,
                   water_mark))
 
-            s = time.time()
-            print('{} Inserting {} items'.format(time.strftime('%X %x %Z'), len(items)))
-            for i in range(1, 4):
-                try:
-                    success, failed = superdesk.app.data._search_backend(mongo_collection_name).bulk_insert(
-                        mongo_collection_name, items)
-                except Exception as ex:
-                    print('Exception thrown on insert to elastic {}', ex)
-                    time.sleep(10)
-                    continue
-                else:
-                    break
-            print('{} Inserted {} items in {:.3f} seconds'.format(time.strftime('%X %x %Z'), success, time.time() - s))
-            if failed:
-                print('Failed to do bulk insert of items {}. Errors: {}'.format(len(failed), failed))
-                raise BulkIndexError(resource=mongo_collection_name, errors=failed)
-
-        return 'Finished indexing collection {}'.format(mongo_collection_name)
+            yield items
 
 
 superdesk.command('app:index_from_mongo', IndexFromMongo())
