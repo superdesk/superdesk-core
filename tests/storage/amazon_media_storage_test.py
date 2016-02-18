@@ -11,6 +11,7 @@ class AmazonMediaStorageTestCase(TestCase):
         self.app.config['AMAZON_CONTAINER_NAME'] = 'AMAZON_CONTAINER_NAME'
         self.app.config['AMAZON_S3_USE_HTTPS'] = True
         self.app.config['AMAZON_SERVE_DIRECT_LINKS'] = True
+        self.app.config['AMAZON_SERVER'] = 'amazonaws.com'
         self.amazon = AmazonMediaStorage(self.app)
 
     def test_media_id(self):
