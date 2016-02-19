@@ -77,6 +77,11 @@ published_item_fields = {
     },
     'last_queue_event': {
         'type': 'datetime'
+    },
+    # item is moved to legal. True if moved else false.
+    'moved_to_legal': {
+        'type': 'boolean',
+        'default': False
     }
 }
 
@@ -93,7 +98,7 @@ class PublishedItemResource(Resource):
     }
 
     schema = item_schema(published_item_fields)
-    etag_ignore_fields = [config.ID_FIELD, 'highlights', 'item_id', LAST_PUBLISHED_VERSION]
+    etag_ignore_fields = [config.ID_FIELD, 'highlights', 'item_id', LAST_PUBLISHED_VERSION, 'moved_to_legal']
 
     privileges = {'POST': 'publish_queue', 'PATCH': 'publish_queue'}
     item_methods = ['GET', 'PATCH']
@@ -326,3 +331,51 @@ class PublishedItemService(BaseService):
             return
         get_resource_service('archived').post(published_items)
         self.delete_by_article_id(_id)
+
+    def set_moved_to_legal(self, item_id, version, status):
+        """
+        Update the legal flag
+        :param str item_id: id of the document
+        :param int version: version of the document
+        :param boolean status: True if the item is moved to legal else false
+        """
+        items = self.get_other_published_items(item_id)
+
+        for item in items:
+            try:
+                if item.get(config.VERSION) <= version and not item.get('moved_to_legal', False):
+                    super().system_update(item.get(config.ID_FIELD), {'moved_to_legal': status}, item)
+            except:
+                logger.exception('Failed to set the moved_to_legal flag '
+                                 'for item {} and version {}'.format(item_id, version))
+
+    def get_published_items_by_moved_to_legal(self, item_ids, move_to_legal):
+        """
+        Get the pulished items where flag is moved
+        :param list item_ids: List of item
+        :param bool move_to_legal: move_to_legal boolean flag
+        :return: list of published items
+        """
+        if item_ids:
+            try:
+                query = {
+                    'query': {
+                        'filtered': {
+                            'filter': {
+                                'and': [
+                                    {'terms': {'item_id': item_ids}},
+                                    {'term': {'moved_to_legal': move_to_legal}}
+                                ]
+                            }
+                        }
+                    }
+                }
+
+                request = ParsedRequest()
+                request.args = {'source': json.dumps(query)}
+                return list(super().get(req=request, lookup=None))
+            except:
+                logger.exception('Failed to get published items '
+                                 'by moved to legal: {} -- ids: {}.'.format(move_to_legal, item_ids))
+
+        return []

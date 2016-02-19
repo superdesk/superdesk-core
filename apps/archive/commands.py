@@ -21,45 +21,47 @@ from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTEN
 from superdesk.metadata.packages import PACKAGE_TYPE, TAKES_PACKAGE
 from superdesk.lock import lock, unlock
 from superdesk import get_resource_service
+from superdesk.publish.publish_queue import MovedToLegal
 
 logger = logging.getLogger(__name__)
 
 
 class RemoveExpiredContent(superdesk.Command):
+    log_msg = ''
 
     def run(self):
         now = utcnow()
-        expiry_time_log_msg = 'Expiry Time: {}.'.format(now)
-        logger.info('{} Starting to remove expired content at.'.format(expiry_time_log_msg))
+        self.log_msg = 'Expiry Time: {}.'.format(now)
+        logger.info('{} Starting to remove expired content at.'.format(self.log_msg))
         lock_name = get_lock_id('archive', 'remove_expired')
         if not lock(lock_name, '', expire=600):
-            logger.info('{} Remove expired content task is already running.'.format(expiry_time_log_msg))
+            logger.info('{} Remove expired content task is already running.'.format(self.log_msg))
             return
         try:
-            logger.info('{} Removing expired content for expiry.'.format(expiry_time_log_msg))
-            self._remove_expired_items(now, expiry_time_log_msg)
+            logger.info('{} Removing expired content for expiry.'.format(self.log_msg))
+            self._remove_expired_items(now)
         finally:
             unlock(lock_name, '')
 
         push_notification('content:expired')
-        logger.info('{} Completed remove expired content.'.format(expiry_time_log_msg))
+        logger.info('{} Completed remove expired content.'.format(self.log_msg))
 
-    def _remove_expired_items(self, expiry_datetime, log_msg):
+    def _remove_expired_items(self, expiry_datetime):
         """
         Remove the expired items.
         :param datetime expiry_datetime: expiry datetime
         :param str log_msg: log message to be prefixed
         """
-        logger.info('{} Starting to remove published expired items.'.format(log_msg))
+        logger.info('{} Starting to remove published expired items.'.format(self.log_msg))
         archive_service = get_resource_service(ARCHIVE)
         published_service = get_resource_service('published')
 
         expired_items = list(archive_service.get_expired_items(expiry_datetime))
         if len(expired_items) == 0:
-            logger.info('{} No items found to expire.'.format(log_msg))
+            logger.info('{} No items found to expire.'.format(self.log_msg))
             return
 
-        # Step 1: Get the killed Items
+        # Step 1: Get the spiked killed Items
         spiked_killed_items = [item for item in expired_items
                                if item.get(ITEM_STATE) in {CONTENT_STATE.KILLED, CONTENT_STATE.SPIKED}]
 
@@ -80,19 +82,26 @@ class RemoveExpiredContent(superdesk.Command):
             item.setdefault('expiry', expiry_datetime)
             item.setdefault('unique_name', '')
             expiry_msg = log_msg_format.format(**item)
-            logger.info('{} Processing expired item. {}'.format(log_msg, expiry_msg))
+            logger.info('{} Processing expired item. {}'.format(self.log_msg, expiry_msg))
 
             processed_items = set()
             if item_id not in items_to_be_archived and self._can_remove_item(item, processed_items):
                 # item can be archived and removed from the database
-                logger.info('{} Removing item. {}'.format(log_msg, expiry_msg))
-                logger.info('{} Items to be removed. {}'.format(log_msg, processed_items))
+                logger.info('{} Removing item. {}'.format(self.log_msg, expiry_msg))
+                logger.info('{} Items to be removed. {}'.format(self.log_msg, processed_items))
                 items_to_be_archived = items_to_be_archived | processed_items
 
+        items_to_expire = items_to_be_archived | [item.get(config.ID_FIELD) for item in spiked_killed_items
+                                                  if item.get(ITEM_STATE) == CONTENT_STATE.KILLED]
+
+        if not self._check_if_items_in_legal_archive(items_to_expire):
+            logger.exception('{} CANNOT EXPIRE ITEMS AS ITEMS ARE NOT MOVE TO LEGAL ARCHIVE.'.format(self.log_msg))
+            return
+
         # move to archived collection
-        logger.info('{} Archiving items.'.format(log_msg))
+        logger.info('{} Archiving items.'.format(self.log_msg))
         for item in items_to_be_archived:
-            self._move_to_archived(item, log_msg)
+            self._move_to_archived(item)
 
         for item in spiked_killed_items:
             # delete from the published collection and queue
@@ -100,17 +109,17 @@ class RemoveExpiredContent(superdesk.Command):
             try:
                 if item.get(ITEM_STATE) == CONTENT_STATE.KILLED:
                     published_service.delete_by_article_id(item.get(config.ID_FIELD))
-                    logger.info('{} Deleting killed item from published. {}'.format(log_msg, msg))
+                    logger.info('{} Deleting killed item from published. {}'.format(self.log_msg, msg))
 
                 items_to_remove.add(item.get(config.ID_FIELD))
             except:
-                logger.exception('{} Failed to delete killed item from published. {}'.format(log_msg, msg))
+                logger.exception('{} Failed to delete killed item from published. {}'.format(self.log_msg, msg))
 
         if items_to_remove:
-            logger.info('{} Deleting articles.: {}'.format(log_msg, items_to_remove))
+            logger.info('{} Deleting articles.: {}'.format(self.log_msg, items_to_remove))
             archive_service.delete_by_article_ids(list(items_to_remove))
 
-        logger.info('{} Deleting killed and spiked items from archive.'.format(log_msg))
+        logger.info('{} Deleting killed and spiked items from archive.'.format(self.log_msg))
 
     def _can_remove_item(self, item, processed_item=None):
         """
@@ -159,12 +168,11 @@ class RemoveExpiredContent(superdesk.Command):
 
         return is_expired
 
-    def _move_to_archived(self, _id, log_msg):
+    def _move_to_archived(self, _id):
         """
         Moves all the published version of an article to archived.
         Deletes all published version of an article in the published collection
         :param str _id: id of the document to be moved
-        :param str log_msg: log message to be prefixed
         """
         published_service = get_resource_service('published')
         archived_service = get_resource_service('archived')
@@ -175,15 +183,52 @@ class RemoveExpiredContent(superdesk.Command):
         try:
             if published_items:
                 archived_service.post(published_items)
-                logger.info('{} Archived published item'.format(log_msg))
+                logger.info('{} Archived published item'.format(self.log_msg))
                 published_service.delete_by_article_id(_id)
-                logger.info('{} Deleted published item.'.format(log_msg))
+                logger.info('{} Deleted published item.'.format(self.log_msg))
 
             archive_service.delete_by_article_ids([_id])
-            logger.info('{} Delete archive item.'.format(log_msg))
+            logger.info('{} Delete archive item.'.format(self.log_msg))
         except:
             failed_items = [item.get(config.ID_FIELD) for item in published_items]
-            logger.exception('{} Failed to move to archived. {}'.format(log_msg, failed_items))
+            logger.exception('{} Failed to move to archived. {}'.format(self.log_msg, failed_items))
+
+    def _check_if_items_in_legal_archive(self, item_ids):
+        """
+        Checks if all items are moved to legal or not
+        :param list item_ids: list of item id to be verified
+        :param str log_msg: log message
+        :return bool: True if items in legal archive else false
+        """
+        logger.info('{} checking for items in legal archive. Items: {}'.format(self.log_msg, item_ids))
+
+        items_not_moved_to_legal = get_resource_service('published').\
+            get_published_items_by_moved_to_legal(item_ids, False)
+
+        if len(items_not_moved_to_legal) > 0:
+            logger.warning('{} Items are not moved to legal archive {}.'.format(self.log_msg,
+                                                                                set([item.get('item_id')
+                                                                                     for item in
+                                                                                     items_not_moved_to_legal])))
+            return False
+
+        lookup = {
+            '$and': [
+                {'moved_to_legal': {'$ne': MovedToLegal.MOVED}},
+                {'item_id': {'$in': item_ids}}
+            ]
+        }
+
+        items_not_moved_to_legal = list(get_resource_service('publish_queue').get(req=None, lookup=lookup))
+
+        if len(items_not_moved_to_legal) > 0:
+            logger.warning('{} Items are not moved to legal publish queue {}.'.format(self.log_msg,
+                                                                                      set([item.get('item_id')
+                                                                                           for item in
+                                                                                           items_not_moved_to_legal])))
+            return False
+
+        return True
 
 
 def get_overdue_scheduled_items(expired_date_time, resource, limit=100):

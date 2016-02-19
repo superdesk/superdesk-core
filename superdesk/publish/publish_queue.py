@@ -14,8 +14,25 @@ from superdesk import get_resource_service
 from superdesk.notification import push_notification
 from superdesk.resource import Resource
 from superdesk.services import BaseService
+from superdesk.utils import SuperdeskBaseEnum
 
 logger = logging.getLogger(__name__)
+
+
+class QueueState(SuperdeskBaseEnum):
+    PENDING = 'pending'
+    IN_PROGRESS = 'in-progress'
+    RETRYING = 'retrying'
+    SUCCESS = 'success'
+    CANCELED = 'canceled'
+    ERROR = 'error'
+    FAILED = 'failed'
+
+
+class MovedToLegal(SuperdeskBaseEnum):
+    NOT_MOVED = 0
+    PENDING_STATE_MOVED = 1
+    MOVED = 2
 
 
 class PublishQueueResource(Resource):
@@ -63,11 +80,27 @@ class PublishQueueResource(Resource):
         },
         'state': {
             'type': 'string',
-            'allowed': ['pending', 'in-progress', 'success', 'canceled', 'error'],
+            'allowed': QueueState.values(),
             'nullable': False
         },
         'error_message': {
             'type': 'string'
+        },
+        # to indicate the queue item is moved to legal
+        # 0 - not moved, 1 - pending moved, 2 - success, canceled, failed moved
+        'moved_to_legal': {
+            'type': 'integer',
+            'default': MovedToLegal.NOT_MOVED.value,
+            'allowed': MovedToLegal.values(),
+            'required': True
+        },
+        'retry_attempt': {
+            'type': 'integer',
+            'default': 0,
+            'required': True
+        },
+        'next_retry_attempt_at': {
+            'type': 'datetime'
         }
     }
 
@@ -76,6 +109,7 @@ class PublishQueueResource(Resource):
         'field': 'item_id'
     }
 
+    etag_ignore_fields = ['moved_to_legal']
     datasource = {'default_sort': [('_created', -1)]}
     privileges = {'POST': 'publish_queue', 'PATCH': 'publish_queue'}
 
@@ -86,7 +120,8 @@ class PublishQueueService(BaseService):
         subscriber_service = get_resource_service('subscribers')
 
         for doc in docs:
-            doc['state'] = 'pending'
+            doc['state'] = QueueState.PENDING.value
+            doc['moved_to_legal'] = MovedToLegal.NOT_MOVED.value
 
             if 'published_seq_num' not in doc:
                 subscriber = subscriber_service.find_one(req=None, _id=doc['subscriber_id'])

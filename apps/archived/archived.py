@@ -231,7 +231,7 @@ class ArchivedService(BaseService):
             article[config.ID_FIELD] = article.pop('item_id', article['item_id'])
 
             # Step 3(iii)
-            import_into_legal_archive.apply_async(kwargs={'doc': article})
+            import_into_legal_archive.apply_async(kwargs={'item_id': article})
             logger.info('Legal Archive import for article: {}'.format(article[config.ID_FIELD]))
 
             # Step 3(iv)

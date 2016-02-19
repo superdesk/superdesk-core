@@ -11,15 +11,16 @@
 import unittest
 
 from unittest import mock
-from unittest.mock import MagicMock
-
+from unittest.mock import MagicMock, ANY
+from superdesk.tests import TestCase
 from superdesk.publish.publish_content import STATE_PENDING
 
 
-class TransmitItemsTestCase(unittest.TestCase):
+class TransmitItemsTestCase(TestCase):
     """Tests for the transmit_items() function."""
 
     def setUp(self):
+        super().setUp()
         try:
             from superdesk.publish.publish_content import transmit_items
         except ImportError:
@@ -48,7 +49,8 @@ class TransmitItemsTestCase(unittest.TestCase):
         queue_items = [item_1]
         self.func_under_test(queue_items)
 
-        fake_get_service().system_update.assert_called_with('item_1', {'state': STATE_PENDING}, orig_item)
+        fake_get_service().system_update.assert_called_with('item_1', {'retry_attempt': 1, 'state': 'retrying',
+                                                                       'next_retry_attempt_at': ANY}, orig_item)
 
     @mock.patch('superdesk.publish.publish_content.logger')
     @mock.patch('superdesk.publish.publish_content.get_resource_service')
@@ -64,13 +66,12 @@ class TransmitItemsTestCase(unittest.TestCase):
             'destination': {},
             'item_id': 'test',
             'headline': 'test headline',
-            'item_version': 4
+            'item_version': 4,
+            'state': 'pending'
         }
         queue_items = [item_1]
 
         self.func_under_test(queue_items)
         fake_logger = mocks[1]
-        expected_msg = (
-            'Failed to set the publish queue item back to '
-            '"pending" state: item_1')
+        expected_msg = 'Failed to set the state for failed publish queue item item_1.'
         fake_logger.error.assert_any_call(expected_msg)
