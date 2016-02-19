@@ -9,21 +9,24 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+
 from superdesk import get_resource_service
 import superdesk
 from superdesk.celery_app import celery
 from superdesk.celery_task_utils import get_lock_id
 from superdesk.lock import lock, unlock
 from superdesk.utc import utcnow
+from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, PUBLISH_SCHEDULE
 
 from bson.objectid import ObjectId
 from eve.utils import config, ParsedRequest
 
-from apps.archive.common import ITEM_OPERATION
+from apps.archive.common import ITEM_OPERATION, ARCHIVE, get_utc_schedule
 from apps.publish.enqueue.enqueue_corrected import EnqueueCorrectedService
 from apps.publish.enqueue.enqueue_killed import EnqueueKilledService
 from apps.publish.enqueue.enqueue_published import EnqueuePublishedService
 from apps.publish.published_item import PUBLISH_STATE, QUEUE_STATE, PUBLISHED
+from apps.legal_archive.commands import import_into_legal_archive
 
 
 logger = logging.getLogger(__name__)
@@ -55,6 +58,7 @@ class EnqueueContent(superdesk.Command):
         """
         lock_name = get_lock_id('publish', 'enqueue_published')
         if not lock(lock_name, '', expire=5):
+            logger.info('Enqueue Task: {} is already running.'.format(lock_name))
             return
 
         try:
@@ -73,14 +77,25 @@ def enqueue_item(published_item):
     """
     published_item_id = ObjectId(published_item[config.ID_FIELD])
     published_service = get_resource_service(PUBLISHED)
+    archive_service = get_resource_service(ARCHIVE)
     published_update = {QUEUE_STATE: PUBLISH_STATE.IN_PROGRESS, 'last_queue_event': utcnow()}
     try:
+        logger.info('Queueing item with id: {} and item_id: {}'.format(published_item_id, published_item['item_id']))
+        if published_item.get(ITEM_STATE) == CONTENT_STATE.SCHEDULED:
+            # if scheduled then change the state to published
+            logger.info('Publishing scheduled item_id: {}'.format(published_item_id))
+            published_update[ITEM_STATE] = CONTENT_STATE.PUBLISHED
+            archive_service.patch(published_item['item_id'], {ITEM_STATE: CONTENT_STATE.PUBLISHED})
+            original = archive_service.find_one(req=None, _id=published_item['item_id'])
+            import_into_legal_archive.apply_async(kwargs={'doc': original})
+
         published_service.patch(published_item_id, published_update)
         get_enqueue_service(published_item[ITEM_OPERATION]).enqueue_item(published_item)
         published_service.patch(published_item_id, {QUEUE_STATE: PUBLISH_STATE.QUEUED})
+        logger.info('Queued item with id: {} and item_id: {}'.format(published_item_id, published_item['item_id']))
     except KeyError:
         published_service.patch(published_item_id, {QUEUE_STATE: PUBLISH_STATE.PENDING})
-        logger.error('No enqueue service found for operation %s', published_item[ITEM_OPERATION])
+        logger.exception('No enqueue service found for operation %s', published_item[ITEM_OPERATION])
     except:
         published_service.patch(published_item_id, {QUEUE_STATE: PUBLISH_STATE.PENDING})
         raise
@@ -103,12 +118,15 @@ def enqueue_items(published_items):
     :param list published_items: the list of items marked for publishing
     """
     failed_items = {}
+    current_utc = utcnow()
 
     for queue_item in published_items:
         try:
-            enqueue_item(queue_item)
-        except Exception as ex:
-            logger.exception(ex)
+            schedule_utc_datetime = get_utc_schedule(queue_item, PUBLISH_SCHEDULE)
+            if not schedule_utc_datetime or schedule_utc_datetime < current_utc:
+                enqueue_item(queue_item)
+        except:
+            logger.exception('Failed to queue item {}'.format(queue_item.get('_id')))
             failed_items[str(queue_item.get('_id'))] = queue_item
 
     # mark failed items as pending so that Celery tasks will try again

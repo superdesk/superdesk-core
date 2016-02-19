@@ -152,10 +152,6 @@ CELERY_ROUTES = {
         'queue': 'publish',
         'routing_key': 'publish.transmit'
     },
-    'apps.archive.remove_scheduled': {
-        'queue': 'publish',
-        'routing_key': 'publish.remove_scheduled'
-    },
     'apps.publish.enqueue.enqueue_published': {
         'queue': 'publish',
         'routing_key': 'publish.enqueue'
@@ -186,10 +182,6 @@ CELERYBEAT_SCHEDULE = {
     'publish:transmit': {
         'task': 'superdesk.publish.transmit',
         'schedule': timedelta(seconds=10)
-    },
-    'publish:remove_overdue_scheduled': {
-        'task': 'apps.archive.remove_scheduled',
-        'schedule': crontab(minute=10)
     },
     'content:schedule': {
         'task': 'apps.templates.content_templates.create_scheduled_content',

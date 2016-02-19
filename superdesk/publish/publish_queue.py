@@ -37,6 +37,8 @@ class PublishQueueResource(Resource):
         'published_seq_num': {
             'type': 'integer'
         },
+        # publish_schedule is to indicate the item schedule datetime.
+        # entries in the queue are created after schedule has elasped.
         'publish_schedule': {
             'type': 'datetime'
         },

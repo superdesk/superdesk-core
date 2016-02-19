@@ -13,13 +13,12 @@ import logging
 import json
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
-from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, EMBARGO, CONTENT_STATE, PUBLISH_SCHEDULE
+from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, PUBLISH_SCHEDULE
 from superdesk.metadata.packages import SEQUENCE, PACKAGE_TYPE
 from superdesk.notification import push_notification
 from superdesk.publish import SUBSCRIBER_TYPES
 from apps.publish.content.common import BasePublishService
 from superdesk.publish.formatters import get_formatter
-from superdesk.utc import utcnow
 from copy import deepcopy
 from eve.utils import config, ParsedRequest
 from apps.archive.common import get_user, get_utc_schedule
@@ -261,18 +260,13 @@ class EnqueueService:
                             publish_queue_item['subscriber_id'] = subscriber['_id']
                             publish_queue_item['destination'] = destination
                             publish_queue_item['published_seq_num'] = pub_seq_num
+                            # publish_schedule is just to indicate in the queue item is create via scheduled item
                             publish_queue_item[PUBLISH_SCHEDULE] = get_utc_schedule(doc, PUBLISH_SCHEDULE) or None
                             publish_queue_item['unique_name'] = doc.get('unique_name', None)
                             publish_queue_item['content_type'] = doc.get('type', None)
                             publish_queue_item['headline'] = doc.get('headline', None)
-
-                            if doc.get(PUBLISH_SCHEDULE, None):
-                                publish_queue_item['publishing_action'] = CONTENT_STATE.SCHEDULED
-                            else:
-                                publish_queue_item['publishing_action'] = self.published_state
-
+                            publish_queue_item['publishing_action'] = self.published_state
                             publish_queue_item.pop(ITEM_STATE, None)
-
                             get_resource_service('publish_queue').post([publish_queue_item])
                             queued = True
                 except:
@@ -429,22 +423,3 @@ class EnqueueService:
             item_list = subscriber_items.get(sid, {}).get('items', {})
             item_list[item_id] = digital_item_id
             subscriber_items[sid] = {'subscriber': subscriber, 'items': item_list}
-
-
-class Old:
-    def sending_to_digital_subscribers(self, doc):
-        """
-        Returns False if item has embargo and is in future.
-        Returns True if there is a digital subscriber either in the previously sent or in yet to be sent subscribers
-
-        :param doc: document
-        :return bool: True if there's at least one
-        """
-
-        if doc.get(EMBARGO) and get_utc_schedule(doc, EMBARGO) > utcnow():
-            return False
-
-        subscribers, subscribers_yet_to_receive = self.get_subscribers(doc, SUBSCRIBER_TYPES.DIGITAL)
-        subscribers = list(self.digital(subscribers))
-        subscribers_yet_to_receive = list(self.digital(subscribers_yet_to_receive))
-        return len(subscribers) > 0 or len(subscribers_yet_to_receive) > 0

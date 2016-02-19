@@ -11,56 +11,18 @@ from superdesk.notification import push_notification
 
 import superdesk
 import logging
-from eve.utils import ParsedRequest, date_to_str, config
+from eve.utils import ParsedRequest, config
 
 from apps.packages import PackageService
-from superdesk.celery_task_utils import is_task_running, mark_task_as_not_running, get_lock_id
+from superdesk.celery_task_utils import get_lock_id
 from superdesk.utc import utcnow
 from .archive import SOURCE as ARCHIVE
-from apps.archive.common import get_utc_schedule
-from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTENT_TYPE, PUBLISH_SCHEDULE
+from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTENT_TYPE
 from superdesk.metadata.packages import PACKAGE_TYPE, TAKES_PACKAGE
 from superdesk.lock import lock, unlock
 from superdesk import get_resource_service
 
 logger = logging.getLogger(__name__)
-
-UPDATE_OVERDUE_SCHEDULED_DEFAULT = {'minutes': 10}
-
-
-class UpdateOverdueScheduledContent(superdesk.Command):
-    """
-    Updates the overdue scheduled stories
-    """
-
-    def run(self):
-        self.update_overdue_scheduled()
-
-    def update_overdue_scheduled(self):
-        """
-        Updates the overdue scheduled content on archive collection.
-        """
-
-        logger.info('Updating overdue scheduled content')
-
-        if is_task_running("archive", "update_overdue_scheduled", UPDATE_OVERDUE_SCHEDULED_DEFAULT):
-            return
-
-        try:
-            now = date_to_str(utcnow())
-            items = get_overdue_scheduled_items(now, ARCHIVE)
-            item_update = {ITEM_STATE: CONTENT_STATE.PUBLISHED}
-
-            for item in items:
-                logger.info('updating overdue scheduled article with id {} and headline {} -- expired on: {} now: {}'.
-                            format(item[config.ID_FIELD],
-                                   item['headline'],
-                                   get_utc_schedule(item, PUBLISH_SCHEDULE) or '',
-                                   now))
-
-                superdesk.get_resource_service(ARCHIVE).patch(item[config.ID_FIELD], item_update)
-        finally:
-            mark_task_as_not_running("archive", "update_overdue_scheduled")
 
 
 class RemoveExpiredContent(superdesk.Command):
@@ -248,5 +210,4 @@ def get_overdue_scheduled_items(expired_date_time, resource, limit=100):
 
     return superdesk.get_resource_service(resource).get_from_mongo(req=req, lookup=query)
 
-superdesk.command('archive:remove_overdue_scheduled', UpdateOverdueScheduledContent())
 superdesk.command('archive:remove_expired', RemoveExpiredContent())

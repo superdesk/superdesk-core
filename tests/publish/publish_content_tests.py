@@ -28,49 +28,48 @@ class TransmitItemsTestCase(unittest.TestCase):
             self.func_under_test = transmit_items
 
     @mock.patch('superdesk.publish.publish_content.get_resource_service')
-    @mock.patch(
-        'superdesk.publish.publish_content.is_on_time',
-        return_value=True)
     def test_marks_items_failed_to_transmit_as_pending(self, *mocks):
 
-        fake_get_service = mocks[1]
+        fake_get_service = mocks[0]
         fake_get_service().patch.side_effect = Exception('Error patching item')
 
-        orig_item = MagicMock(name='orig_item')  # item's original state in DB
+        orig_item = {'_id': 'item_1'}  # item's original state in DB
         fake_get_service().find_one.return_value = orig_item
 
         item_1 = {
             '_id': 'item_1',
-            'destination': {}
+            'destination': {},
+            'item_id': 'test',
+            'headline': 'test headline',
+            'item_version': 4,
+            'state': 'pending'
         }
 
         queue_items = [item_1]
         self.func_under_test(queue_items)
 
-        fake_get_service().system_update.assert_called_with(
-            'item_1', {'state': STATE_PENDING}, orig_item)
+        fake_get_service().system_update.assert_called_with('item_1', {'state': STATE_PENDING}, orig_item)
 
     @mock.patch('superdesk.publish.publish_content.logger')
     @mock.patch('superdesk.publish.publish_content.get_resource_service')
-    @mock.patch(
-        'superdesk.publish.publish_content.is_on_time',
-        return_value=True)
     def test_logs_error_even_when_marking_failed_items_fails(self, *mocks):
 
-        fake_get_service = mocks[1]
+        fake_get_service = mocks[0]
         fake_get_service().patch.side_effect = Exception('Error patching item')
         fake_get_service().find_one.return_value = MagicMock(name='orig_item')
         fake_get_service().system_update.side_effect = Exception('Update error')
 
         item_1 = {
             '_id': 'item_1',
-            'destination': {}
+            'destination': {},
+            'item_id': 'test',
+            'headline': 'test headline',
+            'item_version': 4
         }
         queue_items = [item_1]
 
         self.func_under_test(queue_items)
-
-        fake_logger = mocks[2]
+        fake_logger = mocks[1]
         expected_msg = (
             'Failed to set the publish queue item back to '
             '"pending" state: item_1')
