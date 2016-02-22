@@ -14,7 +14,7 @@ from flask import request
 from copy import deepcopy
 
 import superdesk
-from apps.tasks import send_to
+from apps.tasks import send_to, apply_onstage_rule
 from apps.desks import DeskTypes
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
@@ -102,6 +102,9 @@ class MoveService(BaseService):
         insert_into_versions(id_=original[config.ID_FIELD])
 
         push_content_notification([archived_doc, original])
+
+        # finally apply any on stage rules/macros
+        apply_onstage_rule(archived_doc, original[config.ID_FIELD])
 
         return archived_doc
 

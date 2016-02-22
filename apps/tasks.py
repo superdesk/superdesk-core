@@ -30,12 +30,15 @@ from superdesk.activity import add_activity, ACTIVITY_CREATE, ACTIVITY_UPDATE
 from apps.archive.archive import get_subject
 from superdesk.workflow import is_workflow_state_transition_valid
 from apps.archive.archive import SOURCE as ARCHIVE
-from superdesk import get_resource_service
+from superdesk import get_resource_service, config
 
 task_statuses = ['todo', 'in_progress', 'done']
 default_status = 'todo'
 ITEM_SEND = 'send'
 item_operations.append(ITEM_SEND)
+MACRO_INCOMING = 'incoming'
+MACRO_OUTGOING = 'outgoing'
+MACRO_ONSTAGE = 'onstage'
 
 
 def init_app(app):
@@ -74,7 +77,7 @@ def send_to(doc, update=None, desk_id=None, stage_id=None, user_id=None, default
     task = {'desk': desk_id, 'stage': stage_id, 'user': original_task.get('user') if user_id is None else user_id}
 
     if current_stage:
-        apply_stage_rule(doc, update, current_stage, is_incoming=False)
+        apply_stage_rule(doc, update, current_stage, MACRO_OUTGOING)
 
     if desk_id:
         desk = superdesk.get_resource_service('desks').find_one(req=None, _id=desk_id)
@@ -95,7 +98,7 @@ def send_to(doc, update=None, desk_id=None, stage_id=None, user_id=None, default
         task['stage'] = stage_id
 
     if destination_stage:
-        apply_stage_rule(doc, update, destination_stage, is_incoming=True)
+        apply_stage_rule(doc, update, destination_stage, MACRO_INCOMING)
         if destination_stage.get('task_status'):
             task['status'] = destination_stage['task_status']
 
@@ -108,8 +111,7 @@ def send_to(doc, update=None, desk_id=None, stage_id=None, user_id=None, default
         doc['expiry'] = get_item_expiry(desk=desk, stage=destination_stage)
 
 
-def apply_stage_rule(doc, update, stage, is_incoming):
-    rule_type = 'incoming' if is_incoming else 'outgoing'
+def apply_stage_rule(doc, update, stage, rule_type):
     macro_type = '{}_macro'.format(rule_type)
 
     if stage.get(macro_type):
@@ -128,6 +130,18 @@ def apply_stage_rule(doc, update, stage, is_incoming):
                         macro.get('label'),
                         stage.get('name'))
             raise SuperdeskApiError.badRequestError(message)
+
+
+def apply_onstage_rule(doc, id):
+    """
+    Apply any on stage macro/rule that may be defined for the stage
+    :param doc:
+    :return:
+    """
+    doc[config.ID_FIELD] = id
+    stage = get_resource_service('stages').find_one(req=None, _id=doc.get('task', {}).get('stage'))
+    if stage:
+        apply_stage_rule(doc, None, stage, 'onstage')
 
 
 class TaskResource(Resource):

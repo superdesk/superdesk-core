@@ -72,6 +72,9 @@ class StagesResource(Resource):
         },
         'outgoing_macro': {
             'type': 'string'
+        },
+        'onstage_macro': {
+            'type': 'string'
         }
     }
 
