@@ -130,3 +130,27 @@ Feature: Search Feature
         Then we get list with 1 items
         When we get "/search?source={"query":{"filtered":{"filter": null,"query":{"query_string":{"query":"slugline:(absent)","lenient":false,"default_operator":"AND"}}}}}"
         Then we get list with 0 items
+
+    @auth
+    Scenario: Get item by guid no matter where it is
+        Given "ingest"
+        """
+        [{"_id": "item-ingest"}]
+        """
+        And "archive"
+        """
+        [{"_id": "item-archive"}]
+        """
+        And "published"
+        """
+        [{"_id": "item-published", "state": "published"}]
+        """
+
+        When we get "/search/item-ingest"
+        Then we get response code 200
+
+        When we get "/search/item-archive"
+        Then we get response code 200
+
+        When we get "/search/item-published"
+        Then we get response code 200

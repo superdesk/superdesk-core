@@ -238,7 +238,7 @@ metadata_schema = {
         'type': 'string',
         'nullable': True,
     },
-    'description': {
+    'description_text': {
         'type': 'string',
         'nullable': True
     },

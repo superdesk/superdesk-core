@@ -270,6 +270,7 @@ INSTALLED_APPS.extend([
     'apps.publish',
     'apps.publish.formatters',
     'apps.content_filters',
+    'apps.content_types',
     'apps.dictionaries',
     'apps.duplication',
     'apps.spellcheck',
@@ -283,6 +284,7 @@ INSTALLED_APPS.extend([
     'apps.search_providers',
     'apps.feature_preview',
     'apps.workqueue',
+    'apps.picture_crop',
 ])
 
 RESOURCE_METHODS = ['GET', 'POST']
