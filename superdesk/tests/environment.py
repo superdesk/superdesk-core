@@ -58,6 +58,9 @@ def setup_before_scenario(context, scenario, config, app_factory):
     if 'amazons3' in scenario.tags and not context.app.config.get('AMAZON_CONTAINER_NAME', None):
         scenario.mark_skipped()
 
+    if 'alchemy' in scenario.tags and not context.app.config.get('KEYWORDS_KEY_API'):
+        scenario.mark_skipped()
+
     setup_search_provider(context.app)
 
     if scenario.status != 'skipped' and 'auth' in scenario.tags:

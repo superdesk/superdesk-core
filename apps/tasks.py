@@ -109,6 +109,7 @@ def send_to(doc, update=None, desk_id=None, stage_id=None, user_id=None, default
     else:
         doc['task'].update(task)
         doc['expiry'] = get_item_expiry(desk=desk, stage=destination_stage)
+        superdesk.get_resource_service('desks').apply_desk_metadata(doc, doc)
 
 
 def apply_stage_rule(doc, update, stage, rule_type):
@@ -158,7 +159,7 @@ class TaskResource(Resource):
     item_url = item_url
     schema = {
         'slugline': metadata_schema['slugline'],
-        'description_text': metadata_schema['description'],
+        'description_text': metadata_schema['description_text'],
         'type': metadata_schema['type'],
         'planning_item': Resource.rel('planning', True, type='string'),
         'task': {

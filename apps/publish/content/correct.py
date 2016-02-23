@@ -13,6 +13,7 @@ from superdesk import get_resource_service
 from superdesk.media.crop import CropService
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
 from superdesk.metadata.packages import PACKAGE_TYPE
+from superdesk.utc import utcnow
 
 from eve.utils import config
 
@@ -38,6 +39,7 @@ class CorrectPublishService(BasePublishService):
         CropService().validate_multiple_crops(updates, original)
         super().on_update(updates, original)
         updates[ITEM_OPERATION] = ITEM_CORRECT
+        updates['versioncreated'] = utcnow()
         set_sign_off(updates, original)
 
     def on_updated(self, updates, original):

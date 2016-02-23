@@ -41,6 +41,7 @@ __entities__ = {
     'vocabularies': ('vocabularies.json', '', True),
     'validators': ('validators.json', '', True),
     'content_templates': ('content_templates.json', ['template_name'], False),
+    'content_types': ('content_types.json', '', True),
     'ingest_providers': ('ingest_providers.json', '', True),
     'published': (None, [[('expiry', pymongo.ASCENDING),
                           ('_created', pymongo.ASCENDING),
@@ -81,15 +82,23 @@ __entities__ = {
     'archived': (None, [[('archived_id', pymongo.ASCENDING), {'unique': True}]], False),
     'legal_archive_versions': (None, [[('_id_document', pymongo.ASCENDING),
                                        ('_current_version', pymongo.ASCENDING)]], False),
-    'legal_publish_queue': (None, [[('_updated', pymongo.DESCENDING)]], False)
+    'legal_publish_queue': (None, [[('_updated', pymongo.DESCENDING)]], False),
+
+    'dictionaries': ('dictionaries.json', '', True),
+    'ingest_providers': ('ingest_providers.json', '', True),
+    'subscribers': ('subscribers.json', '', True),
+    'workspaces': ('workspaces.json', '', True),
 }
 
 
-def get_filepath(filename):
+def get_filepath(filename, path=None):
     basedir = app.config.get(
         'INIT_DATA_PATH',
         os.path.join(os.path.abspath(os.path.dirname(__file__)), 'data_initialization')
     )
+
+    if path:
+        basedir = path
 
     return os.path.join(basedir, filename)
 
@@ -104,19 +113,20 @@ class AppInitializeWithDataCommand(superdesk.Command):
     """
 
     option_list = [
-        superdesk.Option('--entity-name', '-n', dest='entity_name', default='')
+        superdesk.Option('--entity-name', '-n', dest='entity_name', default=''),
+        superdesk.Option('--full-path', '-p', dest='path'),
     ]
 
-    def run(self, entity_name=None, index_only='false'):
+    def run(self, entity_name=None, path=None, index_only='false'):
         logger.info('Starting data import')
         if entity_name:
             (file_name, index_params, do_patch) = __entities__[entity_name]
-            self.import_file(entity_name, file_name, index_params, do_patch)
+            self.import_file(entity_name, path, file_name, index_params, do_patch)
             return 0
 
         for name, (file_name, index_params, do_patch) in __entities__.items():
             try:
-                self.import_file(name, file_name, index_params, do_patch)
+                self.import_file(name, path, file_name, index_params, do_patch)
             except Exception as ex:
                 logger.info('Exception loading entity {} from {}'.format(name, file_name))
                 logger.exception(ex)
@@ -124,7 +134,7 @@ class AppInitializeWithDataCommand(superdesk.Command):
         logger.info('Data import finished')
         return 0
 
-    def import_file(self, entity_name, file_name, index_params, do_patch=False):
+    def import_file(self, entity_name, path, file_name, index_params, do_patch=False):
         """
         imports seed data based on the entity_name (resource name) from the file_name specified.
         index_params use to create index for that entity/resource
@@ -143,7 +153,7 @@ class AppInitializeWithDataCommand(superdesk.Command):
         """
         print('Config: ', app.config['APP_ABSPATH'])
         if file_name:
-            file_path = get_filepath(file_name)
+            file_path = get_filepath(file_name, path)
             print('Got file path: ', file_path)
             with open(file_path, 'rt') as app_prepopulation:
                 service = get_resource_service(entity_name)
