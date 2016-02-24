@@ -97,7 +97,9 @@ Feature: Content Expiry Published Items
     When we enqueue published
     When we get "/publish_queue"
     Then we get list with 2 items
-    When we expire items
+    When we transmit items
+    And run import legal publish queue
+    And we expire items
     """
     ["123"]
     """
@@ -142,6 +144,8 @@ Feature: Content Expiry Published Items
     }
     """
     When we enqueue published
+    When we transmit items
+    And run import legal publish queue
     When we get "/publish_queue"
     Then we get list with 2 items
     When we post to "/archive" with "package" and success
@@ -176,6 +180,8 @@ Feature: Content Expiry Published Items
     When we get "published"
     Then we get list with 3 items
     When we enqueue published
+    When we transmit items
+    And run import legal publish queue
     When we get "publish_queue"
     Then we get list with 3 items
     When we expire items
@@ -184,7 +190,6 @@ Feature: Content Expiry Published Items
     """
     When we get "published"
     Then we get list with 3 items
-    When we enqueue published
     When we get "publish_queue"
     Then we get list with 3 items
     When we expire items
@@ -193,7 +198,6 @@ Feature: Content Expiry Published Items
     """
     When we get "published"
     Then we get list with 0 items
-    When we enqueue published
     When we get "publish_queue"
     Then we get list with 0 items
 
@@ -216,7 +220,9 @@ Feature: Content Expiry Published Items
     }
     """
     When we enqueue published
-    When we get "/publish_queue"
+    And we transmit items
+    And run import legal publish queue
+    And we get "/publish_queue"
     Then we get list with 2 items
     When we post to "/archive" with success
     """
@@ -258,7 +264,8 @@ Feature: Content Expiry Published Items
     """
     When we publish "#package1#" with "publish" type and "published" state
     Then we get OK response
-    When we post to "/archive" with "package2" and success
+    When we enqueue published
+    And we post to "/archive" with "package2" and success
     """
     {
       "guid": "package2", "type": "composite", "headline": "test package", "state": "fetched",
@@ -281,7 +288,10 @@ Feature: Content Expiry Published Items
       ]
     }
     """
-    When we expire items
+    Then we get OK response
+    When we transmit items
+    And run import legal publish queue
+    And we expire items
     """
     ["123", "#archive.123.take_package#"]
     """
@@ -323,7 +333,6 @@ Feature: Content Expiry Published Items
       ]
     }
     """
-    When we enqueue published
     When we get "publish_queue"
     Then we get list with 5 items
     When we get "archive"
@@ -351,7 +360,6 @@ Feature: Content Expiry Published Items
       ]
     }
     """
-    When we enqueue published
     When we get "publish_queue"
     Then we get list with 5 items
     When we get "archive"
@@ -371,7 +379,6 @@ Feature: Content Expiry Published Items
     """
     When we get "published"
     Then we get list with 0 items
-    When we enqueue published
     When we get "publish_queue"
     Then we get list with 0 items
     When we get "archive"
@@ -407,6 +414,9 @@ Feature: Content Expiry Published Items
     """
     When we publish "123" with "publish" type and "published" state
     Then we get OK response
+    When we enqueue published
+    And we transmit items
+    And run import legal publish queue
     When we expire items
     """
     ["123", "#archive.123.take_package#"]
@@ -456,7 +466,6 @@ Feature: Content Expiry Published Items
     Then we get list with 0 items
     When we get "published"
     Then we get list with 0 items
-    When we enqueue published
     When we get "publish_queue"
     Then we get list with 0 items
     When we get "archived"
@@ -515,6 +524,9 @@ Feature: Content Expiry Published Items
     Then we get OK response
     When we publish "123" with "publish" type and "published" state
     Then we get OK response
+    When we enqueue published
+    And we transmit items
+    And run import legal publish queue
     When we post to "/archive" with "package1" and success
     """
     {
@@ -537,6 +549,7 @@ Feature: Content Expiry Published Items
       ]
     }
     """
+    Then we get OK response
     When we expire items
     """
     ["123", "#archive.123.take_package#"]
@@ -586,7 +599,6 @@ Feature: Content Expiry Published Items
     Then we get list with 3 items
     When we get "published"
     Then we get list with 2 items
-    When we enqueue published
     When we get "publish_queue"
     Then we get list with 2 items
     When we expire items
@@ -597,7 +609,6 @@ Feature: Content Expiry Published Items
     Then we get list with 0 items
     When we get "published"
     Then we get list with 0 items
-    When we enqueue published
     When we get "publish_queue"
     Then we get list with 0 items
     When we get "archived"
@@ -631,6 +642,9 @@ Feature: Content Expiry Published Items
   Scenario: Expire the master story then it expires all related broadcast content.
     When we publish "123" with "publish" type and "published" state
     Then we get OK response
+    When we enqueue published
+    And we transmit items
+    And run import legal publish queue
     When we post to "archive/123/broadcast" with "broadcast1" and success
     """
     [{"desk": "#desks._id#"}]
@@ -663,6 +677,9 @@ Feature: Content Expiry Published Items
     Then we get OK response
     When we publish "#broadcast1#" with "publish" type and "published" state
     Then we get OK response
+    When we enqueue published
+    And we transmit items
+    And run import legal publish queue
     When we expire items
     """
     ["123", "#archive.123.take_package#"]
@@ -671,7 +688,6 @@ Feature: Content Expiry Published Items
     Then we get list with 2 items
     When we get "published"
     Then we get list with 3 items
-    When we enqueue published
     When we get "publish_queue"
     Then we get list with 4 items
     When we get "archived"
@@ -684,7 +700,6 @@ Feature: Content Expiry Published Items
     Then we get list with 0 items
     When we get "published"
     Then we get list with 0 items
-    When we enqueue published
     When we get "publish_queue"
     Then we get list with 0 items
     When we get "archived"
@@ -697,6 +712,9 @@ Feature: Content Expiry Published Items
   Scenario: Broadcast in a package then master story and broadcast content cannot expires unless package expire.
     When we publish "123" with "publish" type and "published" state
     Then we get OK response
+    When we enqueue published
+    And we transmit items
+    And run import legal publish queue
     When we post to "archive/123/broadcast" with "broadcast1" and success
     """
     [{"desk": "#desks._id#"}]
@@ -729,6 +747,9 @@ Feature: Content Expiry Published Items
     Then we get OK response
     When we publish "#broadcast1#" with "publish" type and "published" state
     Then we get OK response
+    When we enqueue published
+    And we transmit items
+    And run import legal publish queue
     When we post to "/archive" with "package1" and success
     """
     {
@@ -771,7 +792,6 @@ Feature: Content Expiry Published Items
     Then we get list with 0 items
     When we get "published"
     Then we get list with 0 items
-    When we enqueue published
     When we get "publish_queue"
     Then we get list with 0 items
     When we get "archived"
@@ -784,21 +804,29 @@ Feature: Content Expiry Published Items
   Scenario: Correct/kill an item and then expire
     When we publish "123" with "publish" type and "published" state
     Then we get OK response
+    When we enqueue published
+    And we transmit items
+    And run import legal publish queue
     When we publish "123" with "correct" type and "corrected" state
     """
     {"body_html": "Corrected", "slugline": "corrected", "headline": "corrected"}
     """
     Then we get OK response
+    When we enqueue published
+    And we transmit items
+    And run import legal publish queue
     When we publish "123" with "kill" type and "killed" state
     """
     {"body_html": "killed", "slugline": "killed", "headline": "killed"}
     """
     Then we get OK response
+    When we enqueue published
+    And we transmit items
+    And run import legal publish queue
     When we get "archive"
     Then we get list with 0 items
     When we get "published"
     Then we get list with 6 items
-    When we enqueue published
     When we get "publish_queue"
     Then we get list with 6 items
     When we get "archived"
@@ -811,7 +839,6 @@ Feature: Content Expiry Published Items
     Then we get list with 0 items
     When we get "published"
     Then we get list with 0 items
-    When we enqueue published
     When we get "publish_queue"
     Then we get list with 0 items
     When we get "archived"

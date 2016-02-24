@@ -35,6 +35,8 @@ def setup_before_all(context, config, app_factory):
         config['AMAZON_SERVE_DIRECT_LINKS'] = AMAZON_SERVE_DIRECT_LINKS
         config['AMAZON_S3_USE_HTTPS'] = AMAZON_S3_USE_HTTPS
 
+    # set the MAX_TRANSMIT_RETRY_ATTEMPT to zero so that transmit does not retry
+    config['MAX_TRANSMIT_RETRY_ATTEMPT'] = 0
     tests.setup(context=context, config=config, app_factory=app_factory)
     os.environ['BEHAVE_TESTING'] = '1'
 

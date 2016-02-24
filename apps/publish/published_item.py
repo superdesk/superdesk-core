@@ -344,7 +344,7 @@ class PublishedItemService(BaseService):
         for item in items:
             try:
                 if item.get(config.VERSION) <= version and not item.get('moved_to_legal', False):
-                    super().system_update(item.get(config.ID_FIELD), {'moved_to_legal': status}, item)
+                    super().system_update(ObjectId(item.get(config.ID_FIELD)), {'moved_to_legal': status}, item)
             except:
                 logger.exception('Failed to set the moved_to_legal flag '
                                  'for item {} and version {}'.format(item_id, version))

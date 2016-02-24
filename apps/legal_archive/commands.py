@@ -26,7 +26,7 @@ from superdesk.users.services import get_display_name
 from apps.archive.common import ARCHIVE
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
 from superdesk.lock import lock, unlock
-from superdesk.publish.publish_queue import QueueState, MovedToLegal
+from superdesk.publish.publish_queue import QueueState
 
 logger = logging.getLogger(__name__)
 
@@ -125,8 +125,7 @@ class LegalArchiveImport:
                 logger.info('Inserted de-normalized version history for article {}'.format(log_msg))
 
             # Set the flag that item is moved to legal.
-            get_resource_service('published').set_moved_to_legal(legal_archive_doc.get(config.ID_FIELD),
-                                                                 legal_archive_doc.get(config.VERSION),
+            get_resource_service('published').set_moved_to_legal(doc.get(config.ID_FIELD), doc.get(config.VERSION),
                                                                  True)
 
             logger.info('Upsert completed for article ' + log_msg)
@@ -218,19 +217,9 @@ class LegalArchiveImport:
         """
         publish_queue_service = get_resource_service('publish_queue')
 
-        lookup = {
-            '$and': [
-                {'$or': [
-                    {'state': QueueState.PENDING.value},
-                    {'state': QueueState.SUCCESS.value},
-                    {'state': QueueState.FAILED.value},
-                    {'state': QueueState.CANCELED.value}
-                ]}
-            ]
-        }
-
+        lookup = {}
         if max_date:
-            lookup['$and'].append({config.LAST_UPDATED: {'$gte': max_date}})
+            lookup['$and'] = [{config.LAST_UPDATED: {'$gte': max_date}}]
 
         req = ParsedRequest()
         req.max_results = 500
@@ -258,8 +247,8 @@ class LegalArchiveImport:
         legal_queue_item = queue_item.copy()
         lookup = {
             'item_id': legal_queue_item.get('item_id'),
-            'item_version': legal_queue_item('item_version'),
-            'subscriber_id': legal_queue_item('subscriber_id')
+            'item_version': legal_queue_item.get('item_version'),
+            'subscriber_id': legal_queue_item.get('subscriber_id')
         }
 
         log_msg = '{item_id} -- version {item_version} -- subscriber {subscriber_id}.'.format(**lookup)
@@ -277,17 +266,16 @@ class LegalArchiveImport:
             legal_publish_queue_service.put(existing_queue_item.get(config.ID_FIELD), legal_queue_item)
             logger.info('Updated queue item: {}'.format(log_msg))
 
-        moved_to_legal = MovedToLegal.PENDING_STATE_MOVED.value
-        if queue_item['state'] != QueueState.PENDING.value:
-            moved_to_legal = MovedToLegal.MOVED.value
+        if queue_item['state'] in {QueueState.SUCCESS.value, QueueState.CANCELED.value, QueueState.FAILED.value}:
+            updates = dict()
+            updates['moved_to_legal'] = True
 
-        updates = dict()
-        updates['moved_to_legal'] = moved_to_legal
-
-        try:
-            get_resource_service('publish_queue').system_update(queue_item.get(config.ID_FIELD), updates, queue_item)
-        except:
-            logger.exception('Failed to set moved to legal flag for queue item {}.'.format(log_msg))
+            try:
+                get_resource_service('publish_queue').system_update(queue_item.get(config.ID_FIELD),
+                                                                    updates, queue_item)
+                logger.info('Queue item moved to legal. {}'.format(log_msg))
+            except:
+                logger.exception('Failed to set moved to legal flag for queue item {}.'.format(log_msg))
 
         logger.info('Processed queue item: {}'.format(log_msg))
 

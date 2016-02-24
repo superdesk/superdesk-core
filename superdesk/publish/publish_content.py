@@ -63,7 +63,10 @@ def publish():
 def get_queue_items():
     lookup = {
         '$and': [
-            {'$or': [{'state': QueueState.PENDING.value}, {'state': QueueState.RETRYING.value}]},
+            {'$or': [
+                {'state': QueueState.PENDING.value},
+                {'state': QueueState.RETRYING.value, 'next_retry_attempt_at': {'$lte': utcnow()}}
+            ]},
             {'destination.delivery_type': {'$ne': 'pull'}}
         ]
     }
@@ -82,10 +85,6 @@ def transmit_items(queue_items):
         try:
             # update the status of the item to in-progress
             logger.info('Transmitting queue item {}'.format(log_msg))
-            if not can_transmit_queue_item(queue_item):
-                logger.info('Cannot transmit queue item {}.'.format(log_msg))
-                continue
-
             queue_update = {'state': 'in-progress', 'transmit_started_at': utcnow()}
             publish_queue_service.patch(queue_item.get(config.ID_FIELD), queue_update)
             destination = queue_item['destination']
@@ -96,19 +95,20 @@ def transmit_items(queue_items):
             logger.exception('Failed to transmit queue item {}'.format(log_msg))
             failed_items[str(queue_item.get(config.ID_FIELD))] = queue_item
 
-    # mark failed items as pending so that Celery tasks will try again
     if len(failed_items) > 0:
+        # failed items will retry based on MAX_TRANSMIT_RETRY_ATTEMPT
         max_retry_attempt = app.config.get('MAX_TRANSMIT_RETRY_ATTEMPT')
         retry_attempt_delay = app.config.get('TRANSMIT_RETRY_ATTEMPT_DELAY_MINUTES')
         for item_id in failed_items.keys():
             try:
                 orig_item = publish_queue_service.find_one(req=None, _id=item_id)
-                updates = {}
-                if orig_item.get('retry_attempt', 0) <= max_retry_attempt:
+                updates = {config.LAST_UPDATED: utcnow()}
+                if orig_item.get('retry_attempt', 0) < max_retry_attempt:
                     updates['retry_attempt'] = orig_item.get('retry_attempt', 0) + 1
                     updates['state'] = QueueState.RETRYING.value
                     updates['next_retry_attempt_at'] = utcnow() + timedelta(minutes=retry_attempt_delay)
                 else:
+                    # all retry attempts exhausted marking the item as failed.
                     updates['state'] = QueueState.FAILED.value
 
                 publish_queue_service.system_update(orig_item.get(config.ID_FIELD), updates, orig_item)

@@ -2020,3 +2020,10 @@ def we_get_takes_package_and_validate(context, url):
         context_data = json.loads(apply_placeholders(context, context.text))
         assert_equal(json_match(context_data, response_data), True,
                      msg=str(context_data) + '\n != \n' + str(response_data))
+
+
+@when('we transmit items')
+def expire_content(context):
+    with context.app.test_request_context(context.app.config['URL_PREFIX']):
+        from superdesk.publish.publish_content import PublishContent
+        PublishContent().run()

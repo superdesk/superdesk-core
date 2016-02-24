@@ -150,8 +150,8 @@ class BasePublishService(BaseService):
                     package_updates.setdefault(ITEM_OPERATION, updates.get(ITEM_OPERATION, ITEM_PUBLISH))
                     self._update_archive(package, package_updates)
                     package.update(package_updates)
-                    self._import_into_legal_archive(package)
                     self.update_published_collection(published_item_id=package_id)
+                    self._import_into_legal_archive(package)
 
                 self._process_publish_updates(original, updates)
                 self._update_archive(original, updated, should_insert_into_versions=auto_publish)

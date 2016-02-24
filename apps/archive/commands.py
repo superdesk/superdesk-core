@@ -21,7 +21,6 @@ from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTEN
 from superdesk.metadata.packages import PACKAGE_TYPE, TAKES_PACKAGE
 from superdesk.lock import lock, unlock
 from superdesk import get_resource_service
-from superdesk.publish.publish_queue import MovedToLegal
 
 logger = logging.getLogger(__name__)
 
@@ -91,10 +90,10 @@ class RemoveExpiredContent(superdesk.Command):
                 logger.info('{} Items to be removed. {}'.format(self.log_msg, processed_items))
                 items_to_be_archived = items_to_be_archived | processed_items
 
-        items_to_expire = items_to_be_archived | [item.get(config.ID_FIELD) for item in spiked_killed_items
-                                                  if item.get(ITEM_STATE) == CONTENT_STATE.KILLED]
+        items_to_expire = items_to_be_archived | set([item.get(config.ID_FIELD) for item in spiked_killed_items
+                                                      if item.get(ITEM_STATE) == CONTENT_STATE.KILLED])
 
-        if not self._check_if_items_in_legal_archive(items_to_expire):
+        if not self._check_if_items_in_legal_archive(list(items_to_expire)):
             logger.exception('{} CANNOT EXPIRE ITEMS AS ITEMS ARE NOT MOVE TO LEGAL ARCHIVE.'.format(self.log_msg))
             return
 
@@ -214,8 +213,8 @@ class RemoveExpiredContent(superdesk.Command):
 
         lookup = {
             '$and': [
-                {'moved_to_legal': {'$ne': MovedToLegal.MOVED}},
-                {'item_id': {'$in': item_ids}}
+                {'item_id': {'$in': item_ids}},
+                {'moved_to_legal': False},
             ]
         }
 

@@ -29,12 +29,6 @@ class QueueState(SuperdeskBaseEnum):
     FAILED = 'failed'
 
 
-class MovedToLegal(SuperdeskBaseEnum):
-    NOT_MOVED = 0
-    PENDING_STATE_MOVED = 1
-    MOVED = 2
-
-
 class PublishQueueResource(Resource):
     schema = {
         'item_id': Resource.rel('archive', type='string'),
@@ -87,17 +81,14 @@ class PublishQueueResource(Resource):
             'type': 'string'
         },
         # to indicate the queue item is moved to legal
-        # 0 - not moved, 1 - pending moved, 2 - success, canceled, failed moved
+        # True is set after state of the item is success, cancelled or failed. For other state it is false
         'moved_to_legal': {
-            'type': 'integer',
-            'default': MovedToLegal.NOT_MOVED.value,
-            'allowed': MovedToLegal.values(),
-            'required': True
+            'type': 'boolean',
+            'default': False
         },
         'retry_attempt': {
             'type': 'integer',
-            'default': 0,
-            'required': True
+            'default': 0
         },
         'next_retry_attempt_at': {
             'type': 'datetime'
@@ -121,7 +112,7 @@ class PublishQueueService(BaseService):
 
         for doc in docs:
             doc['state'] = QueueState.PENDING.value
-            doc['moved_to_legal'] = MovedToLegal.NOT_MOVED.value
+            doc['moved_to_legal'] = False
 
             if 'published_seq_num' not in doc:
                 subscriber = subscriber_service.find_one(req=None, _id=doc['subscriber_id'])
