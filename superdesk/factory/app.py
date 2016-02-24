@@ -26,6 +26,7 @@ from superdesk.errors import SuperdeskError, SuperdeskApiError
 from superdesk.io import registered_feeding_services
 from superdesk.datalayer import SuperdeskDataLayer  # noqa
 from superdesk.factory.sentry import SuperdeskSentry
+from superdesk.storage.amazon.amazon_media_storage import AmazonMediaStorage
 
 
 def get_app(config=None, media_storage=None):
@@ -46,7 +47,9 @@ def get_app(config=None, media_storage=None):
     except TypeError:
         app_config.from_object(config)
 
-    if media_storage is None:
+    if not media_storage and app_config.get('AMAZON_CONTAINER_NAME'):
+        media_storage = AmazonMediaStorage
+    elif not media_storage:
         media_storage = SuperdeskGridFSMediaStorage
 
     app = eve.Eve(

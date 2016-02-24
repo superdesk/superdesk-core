@@ -43,6 +43,8 @@ DATE_FORMAT = '%Y-%m-%dT%H:%M:%S+0000'
 PAGINATION_LIMIT = 200
 
 LOG_CONFIG_FILE = env('LOG_CONFIG_FILE', 'logging_config.yml')
+LOG_SERVER_ADDRESS = env('LOG_SERVER_ADDRESS', 'localhost')
+LOG_SERVER_PORT = int(env('LOG_SERVER_PORT', 5555))
 
 APPLICATION_NAME = env('APP_NAME', 'Superdesk')
 server_url = urlparse(env('SUPERDESK_URL', 'http://localhost:5000/api'))
