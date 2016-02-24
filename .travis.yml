@@ -28,5 +28,5 @@ install:
 script:
     - flake8
     - nosetests
-    - behave --format progress2 --logging-level ERROR
+    - behave --format progress3 --logging-level ERROR
 

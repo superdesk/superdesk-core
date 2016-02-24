@@ -12,6 +12,7 @@ import inspect
 import importlib
 import sys
 import imp
+import os
 
 from flask import current_app
 
@@ -47,7 +48,7 @@ def register_macros():
                      not m.startswith('__')]
     # DO NOT REMOVE: This is a hack introduced long time back to solve the problem
     # where macros were not getting loaded for celery jobs.
-    print(macro_modules)
+    print(macro_modules, file=open(os.devnull, 'w'))
 
     for macro_module in macro_modules:
         kwargs = {'name': macro_module.name,
