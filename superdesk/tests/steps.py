@@ -1956,6 +1956,14 @@ def validate_published_item_expiry(context, publish_expiry_in_desk):
         assert_expiry(response_data, publish_expiry_in_desk)
 
 
+@then('we get updated timestamp "{field}"')
+def step_we_get_updated_timestamp(context, field):
+    data = get_json_data(context.response)
+    timestamp = arrow.get(data[field])
+    now = utcnow()
+    assert timestamp + timedelta(seconds=5) > now, 'timestamp < now (%s, %s)' % (timestamp, now)  # 5s tolerance
+
+
 def assert_expiry(item, publish_expiry_in_desk):
     embargo = item.get('embargo')
     actual = parse_date(item.get('expiry'))

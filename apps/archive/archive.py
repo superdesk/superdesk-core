@@ -168,6 +168,8 @@ class ArchiveService(BaseService):
             doc.setdefault('priority', config.DEFAULT_PRIORITY_VALUE_FOR_MANUAL_ARTICLES)
             doc.setdefault('urgency', config.DEFAULT_URGENCY_VALUE_FOR_MANUAL_ARTICLES)
 
+            self._add_desk_metadata(doc, {})
+
             convert_task_attributes_to_objectId(doc)
 
     def on_created(self, docs):
@@ -215,6 +217,8 @@ class ArchiveService(BaseService):
 
         remove_unwanted(updates)
         self._add_system_updates(original, updates, user)
+
+        self._add_desk_metadata(updates, original)
 
         if original[ITEM_TYPE] == CONTENT_TYPE.PICTURE:  # create crops
             CropService().create_multiple_crops(updates, original)
@@ -638,6 +642,16 @@ class ArchiveService(BaseService):
         req.max_results = config.MAX_EXPIRY_QUERY_LIMIT
         req.sort = 'expiry,_created'
         return self.get_from_mongo(req=None, lookup=query)
+
+    def _add_desk_metadata(self, updates, original):
+        """Populate updates metadata from item desk in case it's set.
+
+        It will only add data which is not set yet on the item.
+
+        :param updates: updates to item that should be saved
+        :param original: original item version before update
+        """
+        return get_resource_service('desks').apply_desk_metadata(updates, original)
 
 
 class AutoSaveResource(Resource):

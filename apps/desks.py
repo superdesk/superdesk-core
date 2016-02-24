@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import superdesk
 from flask import current_app as app
 from superdesk.errors import SuperdeskApiError
 from superdesk.resource import Resource
@@ -15,7 +16,6 @@ from superdesk import config
 from superdesk.utils import SuperdeskBaseEnum
 from bson.objectid import ObjectId
 from superdesk.services import BaseService
-import superdesk
 from superdesk.notification import push_notification
 from superdesk.activity import add_activity, ACTIVITY_UPDATE
 from superdesk.metadata.item import FAMILY_ID
@@ -80,7 +80,10 @@ desks_schema = {
         'type': 'string',
         'default': DeskTypes.authoring.value,
         'allowed': DeskTypes.values()
-    }
+    },
+    'desk_metadata': {
+        'type': 'dict',
+    },
 }
 
 
@@ -243,6 +246,22 @@ class DesksService(BaseService):
                 push_notification('activity', _dest=activity['recipients'])
         else:
             push_notification(self.notification_key, updated=1, desk_id=str(desk.get(config.ID_FIELD)))
+
+    def apply_desk_metadata(self, updates, original):
+        """Apply desk metadata in case it was set in updates and metadata is not set yet on item.
+
+        :param updates: updates to item that should be saved
+        :param original: original item version before update
+        """
+        desk_id = updates.get('task', {}).get('desk', {})
+        if not desk_id:
+            return
+        desk = self.find_one(req=None, _id=desk_id)
+        if not desk:
+            return
+        for key, val in desk.get('desk_metadata', {}).items():
+            if key not in updates and key not in original:
+                updates[key] = val
 
 
 class UserDesksResource(Resource):

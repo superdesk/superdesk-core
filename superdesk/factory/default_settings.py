@@ -43,6 +43,8 @@ DATE_FORMAT = '%Y-%m-%dT%H:%M:%S+0000'
 PAGINATION_LIMIT = 200
 
 LOG_CONFIG_FILE = env('LOG_CONFIG_FILE', 'logging_config.yml')
+LOG_SERVER_ADDRESS = env('LOG_SERVER_ADDRESS', 'localhost')
+LOG_SERVER_PORT = int(env('LOG_SERVER_PORT', 5555))
 
 APPLICATION_NAME = env('APP_NAME', 'Superdesk')
 server_url = urlparse(env('SUPERDESK_URL', 'http://localhost:5000/api'))
@@ -270,6 +272,7 @@ INSTALLED_APPS.extend([
     'apps.publish',
     'apps.publish.formatters',
     'apps.content_filters',
+    'apps.content_types',
     'apps.dictionaries',
     'apps.duplication',
     'apps.spellcheck',
@@ -283,6 +286,7 @@ INSTALLED_APPS.extend([
     'apps.search_providers',
     'apps.feature_preview',
     'apps.workqueue',
+    'apps.picture_crop',
 ])
 
 RESOURCE_METHODS = ['GET', 'POST']
@@ -297,6 +301,8 @@ AMAZON_SECRET_ACCESS_KEY = env('AMAZON_SECRET_ACCESS_KEY', '')
 AMAZON_REGION = env('AMAZON_REGION', 'us-east-1')
 AMAZON_SERVE_DIRECT_LINKS = env('AMAZON_SERVE_DIRECT_LINKS', False)
 AMAZON_S3_USE_HTTPS = env('AMAZON_S3_USE_HTTPS', False)
+AMAZON_SERVER = env('AMAZON_SERVER', 'amazonaws.com')
+AMAZON_PROXY_SERVER = env('AMAZON_PROXY_SERVER', None)
 
 RENDITIONS = {
     'picture': {
