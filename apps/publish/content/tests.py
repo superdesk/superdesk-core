@@ -31,9 +31,11 @@ from apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.metadata.item import TAKES_PACKAGE, PACKAGE_TYPE, ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTENT_TYPE
 from apps.publish.published_item import LAST_PUBLISHED_VERSION
 from unittest import mock
+from unittest.mock import MagicMock, patch
 from apps.publish.enqueue.enqueue_service import EnqueueService
 from apps.publish.enqueue.enqueue_published import EnqueuePublishedService
 from apps.publish.enqueue import enqueue_published
+from superdesk.media.crop import CropService
 
 ARCHIVE_PUBLISH = 'archive_publish'
 ARCHIVE_CORRECT = 'archive_correct'
@@ -347,6 +349,9 @@ class ArchivePublishTestCase(SuperdeskTestCase):
             json.dump(self.json_data, file)
         init_app(self.app)
         ValidatorsPopulateCommand().run(self.filename)
+
+        self.app.media.url_for_media = MagicMock(return_value='url_for_media')
+        self.app.media.put = MagicMock(return_value='media_id')
 
     def tearDown(self):
         super().tearDown()
@@ -790,3 +795,47 @@ class ArchivePublishTestCase(SuperdeskTestCase):
         removed_items, added_items = ArchivePublishService()._get_changed_items(items, updates)
         self.assertEqual(len(removed_items), 1)
         self.assertEqual(len(added_items), 1)
+
+    def test_publish_associations(self):
+        item = {
+            'associations': {
+                'sidebar': {
+                    'headline': 'foo',
+                    'pubstatus': 'canceled',
+                },
+                'image': {
+                    'pubstatus': 'usable',
+                    'headline': 'bar',
+                    'fetch_endpoint': 'paimg',
+                    'renditions': {
+                        'original': {
+                            'href': 'https://c2.staticflickr.com/4/3665/9203816834_3329fac058_t.jpg',
+                            'width': 100,
+                            'height': 67,
+                            'mimetype': 'image/jpeg'
+                        },
+                        'thumbnail': {
+                            'CropLeft': 10,
+                            'CropRight': 50,
+                            'CropTop': 10,
+                            'CropBottom': 40,
+                        }
+                    }
+                }
+            }
+        }
+
+        thumbnail_crop = {'width': 40, 'height': 30}
+        with patch.object(CropService, 'get_crop_by_name', return_value=thumbnail_crop):
+            ArchivePublishService()._publish_associations(item, 'baz')
+
+        self.assertNotIn('sidebar', item['associations'])
+        self.assertIn('image', item['associations'])
+
+        image = item['associations']['image']
+        renditions = image['renditions']
+        print(renditions)
+        self.assertEqual(40, renditions['thumbnail']['width'])
+        self.assertEqual(30, renditions['thumbnail']['height'])
+        self.assertEqual('image/jpeg', renditions['thumbnail']['mimetype'])
+        self.assertEqual('url_for_media', renditions['thumbnail']['href'])

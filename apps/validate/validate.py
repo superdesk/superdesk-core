@@ -9,11 +9,17 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+import cerberus
 import superdesk
-from cerberus import Validator
 from superdesk.metadata.item import ITEM_TYPE
 
 logger = logging.getLogger(__name__)
+
+
+class SchemaValidator(cerberus.Validator):
+    def _validate_type_picture(self, field, value):
+        """Allow type picture in schema."""
+        pass
 
 
 class ValidateResource(superdesk.Resource):
@@ -38,12 +44,27 @@ class ValidateService(superdesk.Service):
 
         return [doc['errors'] for doc in docs]
 
+    def _get_validators(self, doc):
+        """Get validators.
+
+        In case there is profile defined for item with respective content type it will
+        use its schema for validations, otherwise it will fall back to action/item_type filter.
+        """
+        profile = doc['validate'].get('profile')
+        if profile:
+            content_type = superdesk.get_resource_service('content_types').find_one(req=None, _id=profile)
+            if content_type:
+                return [content_type]
+        lookup = {'act': doc['act'], 'type': doc[ITEM_TYPE]}
+        return superdesk.get_resource_service('validators').get(req=None, lookup=lookup)
+
     def _validate(self, doc, **kwargs):
         lookup = {'act': doc['act'], 'type': doc[ITEM_TYPE]}
         use_headline = kwargs and 'headline' in kwargs
         validators = superdesk.get_resource_service('validators').get(req=None, lookup=lookup)
+        validators = self._get_validators(doc)
         for validator in validators:
-            v = Validator()
+            v = SchemaValidator()
             v.allow_unknown = True
             v.validate(doc['validate'], validator['schema'])
             error_list = v.errors

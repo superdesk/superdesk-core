@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8; -*-
 #
 # This file is part of Superdesk.
@@ -252,6 +251,9 @@ INSTALLED_APPS.extend([
 
     'apps.picture_crop',
     'apps.workqueue',
+
+    'apps.content_types',
+    'apps.keywords',
 ])
 
 RESOURCE_METHODS = ['GET', 'POST']
