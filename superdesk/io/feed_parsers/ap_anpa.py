@@ -86,7 +86,7 @@ class AP_ANPAFeedParser(ANPAFeedParser):
         :param item:
         :return:
         """
-        if len(item.get('slugline','')) > 4:
+        if len(item.get('slugline', '')) > 4:
             qcode = self.slug_code_map.get(item['slugline'][:4])
             if qcode:
                 try:
