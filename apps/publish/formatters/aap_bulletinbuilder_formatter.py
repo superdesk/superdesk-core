@@ -18,6 +18,7 @@ from superdesk.metadata.item import ITEM_TYPE, PACKAGE_TYPE
 from bs4 import BeautifulSoup
 from .field_mappers.locator_mapper import LocatorMapper
 from apps.publish.formatters.aap_formatter_common import set_subject
+import json
 
 
 class AAPBulletinBuilderFormatter(Formatter):
@@ -76,7 +77,7 @@ class AAPBulletinBuilderFormatter(Formatter):
                 'data': superdesk.json.dumps(article, default=json_serialize_datetime_objectId).replace('\'', '\'\'')
             }
 
-            return [(pub_seq_num, odbc_item)]
+            return [(pub_seq_num, json.dumps(odbc_item))]
         except Exception as ex:
             raise FormatterError.bulletinBuilderFormatterError(ex, subscriber)
 

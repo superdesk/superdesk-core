@@ -95,3 +95,5 @@ def transmit_items(queue_items):
                     'state: {}'.format(item_id))
 
         logger.error('Failed to publish the following items: {}'.format(failed_items.keys()))
+
+superdesk.command('publish:transmit', PublishContent())

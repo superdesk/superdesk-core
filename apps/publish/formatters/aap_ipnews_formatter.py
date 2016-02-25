@@ -24,6 +24,7 @@ from apps.publish.formatters.field_mappers.selectorcode_mapper import Selectorco
 from apps.publish.formatters.field_mappers.locator_mapper import LocatorMapper
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO
 from apps.archive.common import get_utc_schedule
+import json
 
 
 class AAPIpNewsFormatter(Formatter):
@@ -102,7 +103,7 @@ class AAPIpNewsFormatter(Formatter):
                                             get_utc_schedule(article, EMBARGO).isoformat())
                     odbc_item['article_text'] = embargo + odbc_item['article_text']
 
-                docs.append((pub_seq_num, odbc_item))
+                docs.append((pub_seq_num, json.dumps(odbc_item)))
 
             return docs
         except Exception as ex:

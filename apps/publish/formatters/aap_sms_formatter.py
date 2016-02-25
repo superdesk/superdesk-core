@@ -15,6 +15,7 @@ import superdesk
 from bs4 import BeautifulSoup
 from superdesk.errors import FormatterError
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO
+import json
 
 
 class AAPSMSFormatter(Formatter):
@@ -42,7 +43,7 @@ class AAPSMSFormatter(Formatter):
             odbc_item['StoryText'] = body.replace('\'', '\'\'')  # @article_text
             odbc_item['ident'] = '0'
 
-            return [(pub_seq_num, odbc_item)]
+            return [(pub_seq_num, json.dumps(odbc_item))]
         except Exception as ex:
             raise FormatterError.AAPSMSFormatterError(ex, subscriber)
 
