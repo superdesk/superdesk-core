@@ -43,7 +43,8 @@ class FilterConditionResource(Resource):
                         'headline',
                         'body_html',
                         'genre',
-                        'subject'],
+                        'subject',
+                        'desk'],
         },
         'operator': {
             'type': 'string',
@@ -235,6 +236,8 @@ class FilterConditionService(BaseService):
             return 'genre.name'
         elif field == 'subject':
             return 'subject.qcode'
+        elif field == 'desk':
+            return 'task.desk'
         else:
             return field
 
@@ -243,7 +246,7 @@ class FilterConditionService(BaseService):
         operator = filter_condition['operator']
         filter_value = filter_condition['value']
 
-        if field not in article:
+        if not self._is_field_in_article(field, article):
             if operator in ['nin', 'notlike']:
                 return True
             else:
@@ -253,6 +256,12 @@ class FilterConditionService(BaseService):
         filter_value = self._get_mongo_value(operator, filter_value, field)
         return self._run_filter(article_value, operator, filter_value)
 
+    def _is_field_in_article(self, field, article):
+        if field == 'desk':
+            return field in article.get('task', {})
+        else:
+            return field in article
+
     def _get_field_value(self, field, article):
         if field == 'anpa_category':
             return [c['qcode'] for c in article[field]]
@@ -260,6 +269,8 @@ class FilterConditionService(BaseService):
             return [g['name'] for g in article[field]]
         elif field == 'subject':
             return [s['qcode'] for s in article[field]]
+        elif field == 'desk':
+            return str(article.get('task', {}).get(field))
         else:
             return article[field]
 
@@ -333,6 +344,11 @@ class FilterConditionParametersService(BaseService):
                             },
                            {'field': 'body_html',
                             'operators': ['in', 'nin', 'like', 'notlike', 'startswith', 'endswith']
+                            },
+                           {'field': 'desk',
+                            'operators': ['in', 'nin'],
+                            'values': values['desk'],
+                            'value_field': '_id'
                             }])
 
     def _get_field_values(self):
@@ -343,4 +359,5 @@ class FilterConditionParametersService(BaseService):
         values['priority'] = get_resource_service('vocabularies').find_one(req=None, _id='priority')['items']
         values['type'] = get_resource_service('vocabularies').find_one(req=None, _id='type')['items']
         values['subject'] = get_subjectcodeitems()
+        values['desk'] = list(get_resource_service('desks').get(None, {}))
         return values
