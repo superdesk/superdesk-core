@@ -11,7 +11,7 @@ from superdesk.notification import push_notification
 
 import superdesk
 import logging
-from eve.utils import ParsedRequest, config
+from eve.utils import config
 
 from apps.packages import PackageService
 from superdesk.celery_task_utils import get_lock_id
@@ -93,7 +93,7 @@ class RemoveExpiredContent(superdesk.Command):
         items_to_expire = items_to_be_archived | set([item.get(config.ID_FIELD) for item in spiked_killed_items
                                                       if item.get(ITEM_STATE) == CONTENT_STATE.KILLED])
 
-        if not self._check_if_items_in_legal_archive(list(items_to_expire)):
+        if not self.check_if_items_imported_to_legal_archive(list(items_to_expire)):
             logger.exception('{} CANNOT EXPIRE ITEMS AS ITEMS ARE NOT MOVE TO LEGAL ARCHIVE.'.format(self.log_msg))
             return
 
@@ -192,7 +192,7 @@ class RemoveExpiredContent(superdesk.Command):
             failed_items = [item.get(config.ID_FIELD) for item in published_items]
             logger.exception('{} Failed to move to archived. {}'.format(self.log_msg, failed_items))
 
-    def _check_if_items_in_legal_archive(self, item_ids):
+    def check_if_items_imported_to_legal_archive(self, item_ids):
         """
         Checks if all items are moved to legal or not
         :param list item_ids: list of item id to be verified
@@ -229,29 +229,5 @@ class RemoveExpiredContent(superdesk.Command):
 
         return True
 
-
-def get_overdue_scheduled_items(expired_date_time, resource, limit=100):
-    """
-    Fetches the overdue scheduled articles from given collection. Overdue Conditions:
-        1.  it should be in 'scheduled' state
-        2.  publish_schedule is less than or equal to expired_date_time
-
-    :param expired_date_time: DateTime that scheduled tate will be checked against
-    :param resource: Name of the resource to check the data from
-    :param limit: Number of return items
-    :return: overdue scheduled articles from published collection
-    """
-
-    logger.info('Get overdue scheduled content from {}'.format(resource))
-    query = {'$and': [
-        {'schedule_settings.utc_publish_schedule': {'$lte': expired_date_time}},
-        {ITEM_STATE: CONTENT_STATE.SCHEDULED}
-    ]}
-
-    req = ParsedRequest()
-    req.sort = '_modified'
-    req.max_results = limit
-
-    return superdesk.get_resource_service(resource).get_from_mongo(req=req, lookup=query)
 
 superdesk.command('archive:remove_expired', RemoveExpiredContent())

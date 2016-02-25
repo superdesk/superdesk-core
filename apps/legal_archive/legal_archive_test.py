@@ -8,8 +8,13 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from datetime import timedelta
 from .commands import LegalArchiveImport
 from test_factory import SuperdeskTestCase
+from superdesk.utc import utcnow
+from superdesk import get_resource_service
+from eve.versioning import resolve_document_version
+from apps.archive.common import insert_into_versions, ARCHIVE
 
 
 class LegalArchiveTestCase(SuperdeskTestCase):
@@ -55,3 +60,114 @@ class LegalArchiveTestCase(SuperdeskTestCase):
         self.assertEqual(task.get('desk'), '1234')
         self.assertEqual(task.get('stage'), 'dddd')
         self.assertEqual(task.get('user'), '')
+
+
+class ImportLegalArchiveCommandTestCase(SuperdeskTestCase):
+    desks = [{'name': 'Sports'}]
+    users = [{'username': 'test1', 'first_name': 'test', 'last_name': 'user', 'email': 'a@a.com'}]
+
+    def setUp(self):
+        super().setUp()
+        try:
+            from apps.legal_archive.commands import ImportLegalArchiveCommand
+        except ImportError:
+            self.fail("Could not import class under test (ImportLegalArchiveCommand).")
+        else:
+            self.class_under_test = ImportLegalArchiveCommand
+            self.app.data.insert('desks', self.desks)
+            self.app.data.insert('users', self.users)
+            self.validators = [
+                {
+                    'schema': {},
+                    'type': 'text',
+                    'act': 'publish',
+                    '_id': 'publish_text'
+                },
+                {
+                    'schema': {},
+                    'type': 'text',
+                    'act': 'correct',
+                    '_id': 'correct_text'
+                },
+                {
+                    'schema': {},
+                    'type': 'text',
+                    'act': 'kill',
+                    '_id': 'kill_text'
+                }
+            ]
+
+            self.app.data.insert("validators", self.validators)
+            self.class_under_test = ImportLegalArchiveCommand
+            self.archive_items = [
+                {
+                    'task': {'desk': self.desks[0]['_id'], 'stage': self.desks[0]['incoming_stage'], 'user': '123'},
+                    '_id': 'item1', 'state': 'in_progress', 'headline': 'item 1', 'type': 'text',
+                    'slugline': 'item 1 slugline', '_current_version': 1, '_created': utcnow() - timedelta(minutes=3),
+                    'expired': utcnow() - timedelta(minutes=30)
+                },
+                {
+                    'task': {'desk': self.desks[0]['_id'], 'stage': self.desks[0]['incoming_stage'], 'user': '123'},
+                    '_id': 'item2', 'state': 'in_progress', 'headline': 'item 2', 'type': 'text',
+                    'slugline': 'item 2 slugline', '_current_version': 1, '_created': utcnow() - timedelta(minutes=2),
+                    'expired': utcnow() - timedelta(minutes=30)
+                },
+                {
+                    'task': {'desk': self.desks[0]['_id'], 'stage': self.desks[0]['incoming_stage'], 'user': '123'},
+                    '_id': 'item3', 'state': 'in_progress', 'headline': 'item 2', 'type': 'text',
+                    'slugline': 'item 2 slugline', '_current_version': 1, '_created': utcnow() - timedelta(minutes=1),
+                    'expired': utcnow() - timedelta(minutes=30)
+                }
+            ]
+
+            get_resource_service(ARCHIVE).post(self.archive_items)
+            for item in self.archive_items:
+                resolve_document_version(item, ARCHIVE, 'POST')
+                insert_into_versions(id_=item['_id'])
+
+    def test_import_into_legal_archive(self):
+        archive_publish = get_resource_service('archive_publish')
+        archive_correct = get_resource_service('archive_correct')
+        legal_archive = get_resource_service('legal_archive')
+        archive = get_resource_service('archive_publish')
+        published = get_resource_service('published')
+
+        self.app.config['Import_LegalArchive_Command_Testing'] = True
+
+        for item in self.archive_items:
+            archive_publish.patch(item['_id'], {'headline': 'publishing', 'abstract': 'publishing'})
+
+        for item in self.archive_items:
+            legal_item = legal_archive.find_one(req=None, _id=item['_id'])
+            self.assertIsNone(legal_item, 'Item: {} is not none.'.format(item['_id']))
+
+        archive_correct.patch(self.archive_items[1]['_id'], {'headline': 'correcting', 'abstract': 'correcting'})
+
+        self.app.config['Import_LegalArchive_Command_Testing'] = False
+
+        self.class_under_test().run(1)
+
+        # items are not expired
+        for item in self.archive_items:
+            legal_item = legal_archive.find_one(req=None, _id=item['_id'])
+            self.assertIsNone(legal_item, 'Item: {} is not none.'.format(item['_id']))
+
+        # expire the items
+        for item in self.archive_items:
+            original = archive.find_one(req=None, _id=item['_id'])
+            archive.system_update(item['_id'], {'expiry': utcnow() - timedelta(minutes=30)}, original)
+            published.update_published_items(item['_id'], 'expiry', utcnow() - timedelta(minutes=30))
+
+        # run the command after expiry
+        self.class_under_test().run(1)
+
+        # items are expired
+        for item in self.archive_items:
+            legal_item = legal_archive.find_one(req=None, _id=item['_id'])
+            self.assertEqual(legal_item['_id'], item['_id'], 'item {} not imported to legal'.format(item['_id']))
+
+        # items are moved to legal
+        for item in self.archive_items:
+            published_items = list(published.get_other_published_items(item['_id']))
+            for published_item in published_items:
+                self.assertEqual(published_item['moved_to_legal'], True)

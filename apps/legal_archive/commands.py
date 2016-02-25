@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+import json
 
 from bson.objectid import ObjectId
 from celery.exceptions import MaxRetriesExceededError
@@ -35,16 +36,26 @@ class LegalArchiveImport:
     log_msg_format = "{{'_id': {_id}, 'unique_name': {unique_name}, 'version': {_current_version}, " \
                      "'expired_on': {expiry}}}."
 
-    def upsert_into_legal_archive(self, doc):
+    def upsert_into_legal_archive(self, item_id):
         """
         Once publish actions are performed on the article do the below:
             1.  Get legal archive article.
             2.  De-normalize the expired article
             3.  Upserting Legal Archive.
             4.  Get Version History and De-normalize and Inserting Legal Archive Versions
-        :param dict doc: doc from 'archive' collection.
+        :param dict item_id: id of the document from 'archive' collection.
         """
         try:
+            # used for unit of ImportLegalArchiveCommand
+            if app.config.get('Import_LegalArchive_Command_Testing', False):
+                return
+
+            doc = get_resource_service(ARCHIVE).find_one(req=None, _id=item_id)
+
+            if not doc:
+                logger.error('Could not find the document {} to import to legal archive.'.format(item_id))
+                return
+
             if not doc.get(ITEM_STATE) in {CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED, CONTENT_STATE.KILLED}:
                 logger.error('Invalid state: {}. Cannot move the item to legal archive. item: {}'.
                              format(doc.get(ITEM_STATE), self.log_msg_format.format(**doc)))
@@ -77,6 +88,7 @@ class LegalArchiveImport:
                     legal_archive_doc.get(config.ID_FIELD), legal_archive_doc.get(config.VERSION),
                     article_in_legal_archive.get(config.VERSION)
                 ))
+                self._set_moved_to_legal(doc)
                 return
 
             # Step 2 - De-normalizing the legal archive doc
@@ -125,12 +137,11 @@ class LegalArchiveImport:
                 logger.info('Inserted de-normalized version history for article {}'.format(log_msg))
 
             # Set the flag that item is moved to legal.
-            get_resource_service('published').set_moved_to_legal(doc.get(config.ID_FIELD), doc.get(config.VERSION),
-                                                                 True)
+            self._set_moved_to_legal(doc)
 
             logger.info('Upsert completed for article ' + log_msg)
         except:
-            logger.exception('Failed to import into legal archive {}.'.format(doc.get(config.ID_FIELD)))
+            logger.exception('Failed to import into legal archive {}.'.format(item_id))
             raise
 
     def _denormalize_user_desk(self, legal_archive_doc, log_msg):
@@ -180,6 +191,14 @@ class LegalArchiveImport:
             return ''
 
         return get_display_name(user)
+
+    def _set_moved_to_legal(self, doc):
+        """
+        set the moved to legal flag.
+        :param dict doc: document
+        """
+        get_resource_service('published').set_moved_to_legal(doc.get(config.ID_FIELD), doc.get(config.VERSION),
+                                                             True)
 
     def import_legal_publish_queue(self):
         """
@@ -280,20 +299,20 @@ class LegalArchiveImport:
         logger.info('Processed queue item: {}'.format(log_msg))
 
 
-@celery.task(bind=True, max_retries=5, default_retry_delay=180)
-def import_into_legal_archive(self, doc):
+@celery.task(bind=True, default_retry_delay=180)
+def import_into_legal_archive(self, item_id):
     """
     Called async to import into legal archive.
     :param self: celery task
-    :param dict doc: document to import into legal_archive
+    :param str item_id: document id to import into legal_archive
     """
     try:
-        LegalArchiveImport().upsert_into_legal_archive(doc)
+        LegalArchiveImport().upsert_into_legal_archive(item_id)
     except MaxRetriesExceededError:
-        logger.exception('Failed to process legal archive doc {} after retrying.'.format(doc.get(config.ID_FIELD)))
+        logger.exception('Failed to process legal archive doc {} after retrying.'.format(item_id))
     except Exception as exc:
         # we can't loose stuff for legal archive.
-        logger.exception('Failed to process legal archive doc {}. Retrying again.'.format(doc.get(config.ID_FIELD)))
+        logger.exception('Failed to process legal archive doc {}. Retrying again.'.format(item_id))
         raise self.retry(exc=exc)
 
 
@@ -303,7 +322,7 @@ class ImportLegalPublishQueueCommand(superdesk.Command):
     """
 
     def run(self):
-        logger.info('Importing Legal Publish Queue')
+        logger.info('Import to Legal Publish Queue')
         lock_name = get_lock_id('legal_archive', 'import_legal_publish_queue')
         if not lock(lock_name, '', expire=600):
             return
@@ -313,4 +332,77 @@ class ImportLegalPublishQueueCommand(superdesk.Command):
             unlock(lock_name, '')
 
 
+class ImportLegalArchiveCommand(superdesk.Command):
+    """
+    This command import archive into legal archive.
+    As per the publishing logic the import to legal archive is done asynchronously. If this fails
+    then you are missing records in legal archive. Use this command to manually import archive
+    items into legal archive.
+    """
+
+    default_page_size = 500
+
+    option_list = [
+        superdesk.Option('--page-size', '-p', dest='page_size')
+    ]
+
+    def run(self, page_size):
+        logger.info('Import to Legal Archive')
+        lock_name = get_lock_id('legal_archive', 'import_to_legal_archive')
+        page_size = int(page_size) if page_size else self.default_page_size
+        if not lock(lock_name, '', expire=1800):
+            return
+        try:
+            legal_archive_import = LegalArchiveImport()
+            for items in self.get_expired_items(page_size):
+                for item in items:
+                    try:
+                        legal_archive_import.upsert_into_legal_archive(item.get('item_id'))
+                    except:
+                        logger.exception('Failed to import into legal '
+                                         'archive via command {}.'.format(item.get('item_id')))
+        except:
+            logger.exception('Failed to import into legal archive.')
+        finally:
+            unlock(lock_name, '')
+
+    def get_expired_items(self, page_size):
+        """
+        Get expired item that are not moved to legal
+        :return:
+        """
+        query = {
+            'query': {
+                'filtered': {
+                    'filter': {
+                        'and': [
+                            {'range': {'expiry': {'lt': 'now'}}},
+                            {'term': {'moved_to_legal': False}},
+                            {'not': {'term': {'state': CONTENT_STATE.SCHEDULED}}}
+                        ]
+                    }
+                }
+            }
+        }
+
+        service = get_resource_service('published')
+        req = ParsedRequest()
+        req.args = {'source': json.dumps(query)}
+        req.sort = '[("publish_sequence_no", 1)]'
+        cursor = service.get(req=req, lookup=None)
+        count = cursor.count()
+        no_of_pages = len(range(0, count, page_size))
+        logger.info('Number of items to move to legal archive: {}, pages={}'.format(count, no_of_pages))
+
+        for page in range(0, no_of_pages):
+            req = ParsedRequest()
+            req.args = {'source': json.dumps(query)}
+            req.sort = '[("publish_sequence_no", 1)]'
+            req.max_results = page_size
+            cursor = service.get(req=req, lookup=None)
+            items = list(cursor)
+            logger.info('Fetched No. of Items: {} import in to legal archive.'.format(len(items)))
+            yield items
+
 superdesk.command('legal_publish_queue:import', ImportLegalPublishQueueCommand())
+superdesk.command('legal_archive:import', ImportLegalArchiveCommand())

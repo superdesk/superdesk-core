@@ -534,7 +534,7 @@ class BasePublishService(BaseService):
 
         if doc.get(ITEM_STATE) != CONTENT_STATE.SCHEDULED:
             kwargs = {
-                'doc': doc
+                'item_id': doc.get(config.ID_FIELD)
             }
             import_into_legal_archive.apply_async(kwargs=kwargs)  # @UndefinedVariable
 
