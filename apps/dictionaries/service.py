@@ -25,6 +25,8 @@ def encode_dict(words_dict):
 
 
 def decode_dict(words_list):
+    if isinstance(words_list, dict):
+        return words_list
     return json.loads(words_list)
 
 
@@ -154,7 +156,7 @@ class DictionaryService(BaseService):
             updates['content'] = json.loads(updates.pop('content_list'))
 
         # handle manual changes
-        nwords = original.get('content', {}).copy()
+        nwords = decode_dict(original.get('content', {})).copy()
         for word, val in updates.get('content', {}).items():
             if val:
                 add_words(nwords, word, val)

@@ -20,7 +20,7 @@ from superdesk.activity import ACTIVITY_EVENT, notify_and_add_activity
 from superdesk.celery_app import celery
 from superdesk.celery_task_utils import get_lock_id, get_host_id
 from superdesk.errors import ProviderError
-from superdesk.io import registered_feeding_services, registered_feed_parsers
+from superdesk.io.register import registered_feeding_services, registered_feed_parsers
 from superdesk.io.iptc import subject_codes
 from superdesk.lock import lock, unlock
 from superdesk.media.media_operations import download_file_from_url, process_file
