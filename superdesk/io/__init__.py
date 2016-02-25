@@ -8,7 +8,6 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-
 """Superdesk IO"""
 
 import logging
@@ -16,16 +15,15 @@ import logging
 import superdesk
 from superdesk.celery_app import celery
 from superdesk.errors import SuperdeskIngestError, AlreadyExistsError
-from .commands.add_provider import AddProvider  # NOQA
-from .ingest import IngestResource, IngestService
+from superdesk.io.ingest import IngestResource, IngestService
+from superdesk.io.register import registered_feed_parsers, allowed_feed_parsers  # noqa
+from superdesk.io.register import registered_feeding_services, allowed_feeding_services  # noqa
+from superdesk.io.register import feeding_service_errors, publish_errors  # noqa
 
-registered_feed_parsers = {}
-allowed_feed_parsers = []
+from superdesk.io.commands.add_provider import AddProvider  # noqa
+from superdesk.io.commands.update_ingest import UpdateIngest
+from superdesk.io.commands.remove_expired_content import RemoveExpiredContent
 
-registered_feeding_services = {}
-allowed_feeding_services = []
-feeding_service_errors = {}
-publish_errors = []
 
 logger = logging.getLogger(__name__)
 
@@ -92,11 +90,9 @@ def register_feed_parser(parser_name, parser_class):
 
 @celery.task(soft_time_limit=15)
 def update_ingest():
-    from .commands.update_ingest import UpdateIngest
     UpdateIngest().run()
 
 
 @celery.task
 def gc_ingest():
-    from .commands.remove_expired_content import RemoveExpiredContent
     RemoveExpiredContent().run()
