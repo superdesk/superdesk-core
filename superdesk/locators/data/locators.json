@@ -1889,7 +1889,7 @@
       },
       {
         "qcode": "AZ.07",
-        "name": "?li Bayramli",
+        "name": "Əli Bayramli",
         "cities": [
           {
             "qcode": "Zubovka",
@@ -1901,7 +1901,7 @@
       },
       {
         "qcode": "AZ.20",
-        "name": "G?nc?",
+        "name": "Gəncə",
         "cities": [
           {
             "qcode": "Ganja",
@@ -1913,11 +1913,11 @@
       },
       {
         "qcode": "AZ.30",
-        "name": "L?nk?ran S?h?ri",
+        "name": "Lankaran District",
         "cities": [
           {
-            "qcode": "L?nk?ran",
-            "name": "L?nk?ran",
+            "qcode": "Lankaran",
+            "name": "Lankaran",
             "dateline_format": "city",
             "timezone": "Asia/Baku"
           }
@@ -1925,7 +1925,7 @@
       },
       {
         "qcode": "AZ.33",
-        "name": "Ming?cevir",
+        "name": "Mingəçevir",
         "cities": [
           {
             "qcode": "Mingelchaur",
@@ -1949,7 +1949,7 @@
       },
       {
         "qcode": "AZ.48",
-        "name": "S?ki",
+        "name": "Shaki",
         "cities": [
           {
             "qcode": "Sheki",
@@ -1973,11 +1973,11 @@
       },
       {
         "qcode": "AZ.61",
-        "name": "Xank?ndi",
+        "name": "Xankəndi",
         "cities": [
           {
-            "qcode": "Xank?ndi",
-            "name": "Xank?ndi",
+            "qcode": "Xankəndi",
+            "name": "Xankəndi",
             "dateline_format": "city",
             "timezone": "Asia/Baku"
           }
@@ -16625,7 +16625,7 @@
       },
       {
         "qcode": "DZ.49",
-        "name": "Naama ???????",
+        "name": "Naama",
         "cities": [
           {
             "qcode": "Ain Sefra",
@@ -17153,7 +17153,7 @@
       },
       {
         "qcode": "EG.02",
-        "name": "Al Ba?r al A?mar",
+        "name": "Al Bahr al Ahmar",
         "cities": [
           {
             "qcode": "Al Ghardaqah",
@@ -17165,7 +17165,7 @@
       },
       {
         "qcode": "EG.03",
-        "name": "Al Bu?ayrah",
+        "name": "Al-Buḥayrah",
         "cities": [
           {
             "qcode": "Damanhur",
@@ -17639,7 +17639,7 @@
       },
       {
         "qcode": "EG.22",
-        "name": "Matru?",
+        "name": "Matruh",
         "cities": [
           {
             "qcode": "Marsa Matruh",
@@ -17651,7 +17651,7 @@
       },
       {
         "qcode": "EG.28",
-        "name": "Mu?afaz¸at al Uqsur",
+        "name": "Muḩāfaz̧at al Uqşur",
         "cities": [
           {
             "qcode": "Luxor",
@@ -30329,7 +30329,7 @@
       },
       {
         "qcode": "IQ.18",
-        "name": "Sala? ad Din",
+        "name": "Salah ad Din",
         "cities": [
           {
             "qcode": "Samarra'",
@@ -30485,7 +30485,7 @@
       },
       {
         "qcode": "IR.03",
-        "name": "Chahar Ma?all va Bakhtiari",
+        "name": "Chahar Mahall va Bakhtiari",
         "cities": [
           {
             "qcode": "Borujen",
@@ -30893,7 +30893,7 @@
       },
       {
         "qcode": "IR.05",
-        "name": "Kohgiluyeh va Buyer A?mad",
+        "name": "Kohgiluyeh va Buyer A mad",
         "cities": [
           {
             "qcode": "Dehdasht",
@@ -36245,7 +36245,7 @@
       },
       {
         "qcode": "KW.04",
-        "name": "Al A?madi",
+        "name": "al-Ah'madi",
         "cities": [
           {
             "qcode": "Ar Riqqah",
@@ -36257,7 +36257,7 @@
       },
       {
         "qcode": "KW.00",
-        "name": "Mu?afaz¸at al Wafrah",
+        "name": "Muafaz¸at al Wafrah",
         "cities": [
           {
             "qcode": "Al Fahahil",
@@ -37109,7 +37109,7 @@
     "states": [
       {
         "qcode": "LY.63",
-        "name": "Al Jabal al Akh?ar",
+        "name": "Al Jabal al Akhdar",
         "cities": [
           {
             "qcode": "Al Bayda'",
@@ -42977,7 +42977,7 @@
       },
       {
         "qcode": "OM.10",
-        "name": "Mu?afaz¸at al Buraymi",
+        "name": "Muafaz¸at al Buraymi",
         "cities": [
           {
             "qcode": "Al Buraymi",
@@ -46385,7 +46385,7 @@
     "states": [
       {
         "qcode": "QA.01",
-        "name": "Ad Daw?ah",
+        "name": "Ad Dawah",
         "cities": [
           {
             "qcode": "Doha",
@@ -49745,7 +49745,7 @@
       },
       {
         "qcode": "SA.10",
-        "name": "Ar Riya?",
+        "name": "Ar Riya",
         "cities": [
           {
             "qcode": "Riyadh",
@@ -49811,7 +49811,7 @@
       },
       {
         "qcode": "SA.13",
-        "name": "?a'il",
+        "name": "Hayil",
         "cities": [
           {
             "qcode": "Hayil",
@@ -61481,7 +61481,7 @@
       },
       {
         "qcode": "VN.45",
-        "name": "Bà R?a-Vung Tàu",
+        "name": "Bà Rịa-Vũng Tàu",
         "cities": [
           {
             "qcode": "Vung Tau",
@@ -61493,7 +61493,7 @@
       },
       {
         "qcode": "VN.71",
-        "name": "B?c Giang",
+        "name": "Bac Giang",
         "cities": [
           {
             "qcode": "Bac Giang",
@@ -61505,7 +61505,7 @@
       },
       {
         "qcode": "VN.73",
-        "name": "B?c Liêu",
+        "name": "Bac Liêu",
         "cities": [
           {
             "qcode": "Bac Lieu",
@@ -61517,7 +61517,7 @@
       },
       {
         "qcode": "VN.03",
-        "name": "B?n Tre",
+        "name": "Ben Tre",
         "cities": [
           {
             "qcode": "Ben Tre",
@@ -61529,7 +61529,7 @@
       },
       {
         "qcode": "VN.46",
-        "name": "Bình Ð?nh",
+        "name": "Bình Ðinh",
         "cities": [
           {
             "qcode": "Quy Nhon",
@@ -61553,7 +61553,7 @@
       },
       {
         "qcode": "VN.47",
-        "name": "Bình Thu?n",
+        "name": "Bình Thun",
         "cities": [
           {
             "qcode": "Phan Thiet",
@@ -61577,7 +61577,7 @@
       },
       {
         "qcode": "VN.48",
-        "name": "C?n Tho",
+        "name": "Can Tho",
         "cities": [
           {
             "qcode": "Can Tho",
@@ -61589,7 +61589,7 @@
       },
       {
         "qcode": "VN.78",
-        "name": "Ðà N?ng",
+        "name": "Đà Nẵng",
         "cities": [
           {
             "qcode": "Turan",
@@ -61601,7 +61601,7 @@
       },
       {
         "qcode": "VN.07",
-        "name": "Ð?c L?k",
+        "name": "Đắk Lắk",
         "cities": [
           {
             "qcode": "Buon Ma Thuot",
@@ -61613,7 +61613,7 @@
       },
       {
         "qcode": "VN.43",
-        "name": "Ð?ng Nai",
+        "name": "Ðong Nai",
         "cities": [
           {
             "qcode": "Bien Hoa",
@@ -61625,7 +61625,7 @@
       },
       {
         "qcode": "VN.09",
-        "name": "Ð?ng Tháp",
+        "name": "Đồng Tháp",
         "cities": [
           {
             "qcode": "Cao Lanh",
@@ -61655,7 +61655,7 @@
       },
       {
         "qcode": "VN.44",
-        "name": "Ha N?i",
+        "name": "Ha Noi",
         "cities": [
           {
             "qcode": "Ha Noi",
@@ -61679,7 +61679,7 @@
       },
       {
         "qcode": "VN.79",
-        "name": "H?i Duong",
+        "name": "Hai Duong",
         "cities": [
           {
             "qcode": "Hai Duong",
@@ -61691,7 +61691,7 @@
       },
       {
         "qcode": "VN.13",
-        "name": "H?i Phòng",
+        "name": "Hai Phòng",
         "cities": [
           {
             "qcode": "Haiphong",
@@ -61703,7 +61703,7 @@
       },
       {
         "qcode": "VN.20",
-        "name": "H? Chí Minh",
+        "name": "Ho Chí Minh",
         "cities": [
           {
             "qcode": "Can Gio",
@@ -61757,7 +61757,7 @@
       },
       {
         "qcode": "VN.21",
-        "name": "Ki?n Giang",
+        "name": "Kiến Giang",
         "cities": [
           {
             "qcode": "Rach Gia",
@@ -61769,7 +61769,7 @@
       },
       {
         "qcode": "VN.23",
-        "name": "Lâm Ð?ng",
+        "name": "Lâm Ðang",
         "cities": [
           {
             "qcode": "Da Lat",
@@ -61781,7 +61781,7 @@
       },
       {
         "qcode": "VN.39",
-        "name": "L?ng Son",
+        "name": "Lang Son",
         "cities": [
           {
             "qcode": "Lang Son",
@@ -61823,7 +61823,7 @@
       },
       {
         "qcode": "VN.82",
-        "name": "Nam Ð?nh",
+        "name": "Nam Ðinh",
         "cities": [
           {
             "qcode": "Nam Dinh",
@@ -61835,7 +61835,7 @@
       },
       {
         "qcode": "VN.58",
-        "name": "Ngh? An",
+        "name": "Nghệ An",
         "cities": [
           {
             "qcode": "Vinh",
@@ -61847,7 +61847,7 @@
       },
       {
         "qcode": "VN.60",
-        "name": "Ninh Thu?n",
+        "name": "Ninh Thun",
         "cities": [
           {
             "qcode": "Phan Rang-Thap Cham",
@@ -61859,7 +61859,7 @@
       },
       {
         "qcode": "VN.83",
-        "name": "Phú Th?",
+        "name": "Phú Thọ",
         "cities": [
           {
             "qcode": "Viet Tri",
@@ -61889,7 +61889,7 @@
       },
       {
         "qcode": "VN.84",
-        "name": "Qu?ng Nam",
+        "name": "Quang Nam",
         "cities": [
           {
             "qcode": "Tam Ky",
@@ -61901,7 +61901,7 @@
       },
       {
         "qcode": "VN.30",
-        "name": "Qu?ng Ninh",
+        "name": "Quảng Nam",
         "cities": [
           {
             "qcode": "Cam Pha Mines",
@@ -61991,7 +61991,7 @@
       },
       {
         "qcode": "VN.66",
-        "name": "Th?a Thiên-Hu?",
+        "name": "Thừa Thiên-Huế",
         "cities": [
           {
             "qcode": "Hue",
@@ -62003,7 +62003,7 @@
       },
       {
         "qcode": "VN.37",
-        "name": "Ti?n Giang",
+        "name": "Tiền Giang",
         "cities": [
           {
             "qcode": "My Tho",
@@ -62171,7 +62171,7 @@
       },
       {
         "qcode": "YE.08",
-        "name": "Al ?udaydah",
+        "name": "Al Hudaydah",
         "cities": [
           {
             "qcode": "Al Hudaydah",
@@ -62201,7 +62201,7 @@
       },
       {
         "qcode": "YE.04",
-        "name": "?a?ramawt",
+        "name": "Al Mukalla",
         "cities": [
           {
             "qcode": "Al Mukalla",
@@ -62213,7 +62213,7 @@
       },
       {
         "qcode": "YE.23",
-        "name": "Mu?afaz¸at Ibb",
+        "name": "Muafaz¸at Ibb",
         "cities": [
           {
             "qcode": "Ibb",
@@ -62225,7 +62225,7 @@
       },
       {
         "qcode": "YE.25",
-        "name": "Mu?afaz¸at Ta‘izz",
+        "name": "Muafaz¸at Ta‘izz",
         "cities": [
           {
             "qcode": "Ta`izz",
