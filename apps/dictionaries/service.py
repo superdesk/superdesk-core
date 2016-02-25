@@ -38,7 +38,7 @@ def train(features):
 
 
 def words(text):
-    return [w for w in re.findall('[^\W_]+', text.lower()) if not w.isdigit()]
+    return [w for w in re.findall('[^\n]+', text) if not w.isdigit()]
 
 
 def add_word(words, word, count):
@@ -68,6 +68,12 @@ def merge(doc, words):
 
 
 def read_from_file(doc):
+    """
+    Plain text file
+    One word per line
+    UTF-8 encoding
+    """
+
     content = doc.pop(DICTIONARY_FILE)
     if 'text/' not in content.mimetype:
         raise SuperdeskApiError.badRequestError('A text dictionary file is required')
