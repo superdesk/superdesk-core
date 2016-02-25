@@ -13,7 +13,6 @@ import json
 import logging
 from superdesk import get_resource_service
 import superdesk
-from superdesk.celery_app import update_key
 from superdesk.errors import SuperdeskApiError
 from superdesk.metadata.item import not_analyzed, ITEM_STATE, PUBLISH_STATES, PUBLISH_SCHEDULE, EMBARGO
 from superdesk.metadata.utils import aggregations
@@ -154,10 +153,8 @@ class PublishedItemService(BaseService):
     def set_defaults(self, doc):
         doc['item_id'] = doc[config.ID_FIELD]
         doc['versioncreated'] = utcnow()
-        doc['publish_sequence_no'] = update_key(self.SEQ_KEY_NAME, flag=True)
-
+        doc['publish_sequence_no'] = get_resource_service('sequences').get_next_sequence_number(self.SEQ_KEY_NAME)
         self.__set_published_item_expiry(doc)
-
         doc.pop(config.ID_FIELD, None)
         doc.pop('lock_user', None)
         doc.pop('lock_time', None)
