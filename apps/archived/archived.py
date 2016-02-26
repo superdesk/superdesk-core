@@ -244,7 +244,7 @@ class ArchivedService(BaseService):
             logger.info('Insert into archive and published for article: {}'.format(article[config.ID_FIELD]))
 
             # Step 3(iii)
-            import_into_legal_archive.apply_async(kwargs={'item_id': article[config.ID_FIELD]})
+            import_into_legal_archive.apply_async(countdown=3, kwargs={'item_id': article[config.ID_FIELD]})
             logger.info('Legal Archive import for article: {}'.format(article[config.ID_FIELD]))
 
             # Step 3(v)

@@ -536,7 +536,9 @@ class BasePublishService(BaseService):
             kwargs = {
                 'item_id': doc.get(config.ID_FIELD)
             }
-            import_into_legal_archive.apply_async(kwargs=kwargs)  # @UndefinedVariable
+
+            # countdown=3 is for elasticsearch to be refreshed with archive and published changes
+            import_into_legal_archive.apply_async(countdown=3, kwargs=kwargs)  # @UndefinedVariable
 
 
 superdesk.workflow_state('published')

@@ -12,7 +12,6 @@ import logging
 import json
 
 from bson.objectid import ObjectId
-from celery.exceptions import MaxRetriesExceededError
 
 import superdesk
 from copy import deepcopy
@@ -49,6 +48,8 @@ class LegalArchiveImport:
             # used for unit of ImportLegalArchiveCommand
             if app.config.get('Import_LegalArchive_Command_Testing', False):
                 return
+
+            logger.warning('Import item into legal {}.'.format(item_id))
 
             doc = get_resource_service(ARCHIVE).find_one(req=None, _id=item_id)
 
@@ -308,12 +309,10 @@ def import_into_legal_archive(self, item_id):
     """
     try:
         LegalArchiveImport().upsert_into_legal_archive(item_id)
-    except MaxRetriesExceededError:
-        logger.exception('Failed to process legal archive doc {} after retrying.'.format(item_id))
-    except Exception as exc:
+    except Exception:
         # we can't loose stuff for legal archive.
         logger.exception('Failed to process legal archive doc {}. Retrying again.'.format(item_id))
-        raise self.retry(exc=exc)
+        raise self.retry()
 
 
 class ImportLegalPublishQueueCommand(superdesk.Command):

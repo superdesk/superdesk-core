@@ -49,9 +49,9 @@ def publish():
         return
 
     try:
-        items = get_queue_items()
+        items = list(get_queue_items())
 
-        if items.count() > 0:
+        if len(items) > 0:
             transmit_items(items)
 
     except:
@@ -70,7 +70,7 @@ def get_queue_items():
             {'destination.delivery_type': {'$ne': 'pull'}}
         ]
     }
-    request = ParsedRequest
+    request = ParsedRequest()
     request.max_results = app.config.get('MAX_TRANSMIT_QUERY_LIMIT', 500)
     return get_resource_service(PUBLISH_QUEUE).get(req=request, lookup=lookup)
 
