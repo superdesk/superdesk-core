@@ -11,6 +11,7 @@
 
 from bson import ObjectId
 
+from unittest.mock import MagicMock
 from superdesk import get_resource_service
 from test_factory import SuperdeskTestCase
 from eve.utils import date_to_str
@@ -221,6 +222,15 @@ class RemoveSpikedContentTestCase(SuperdeskTestCase):
         now = date_to_str(utcnow())
         overdue_items = get_overdue_scheduled_items(now, 'archive')
         self.assertEquals(1, overdue_items.count())
+
+    def test_delete_by_ids(self):
+        ids = self.app.data.insert(ARCHIVE, self.articles)
+        archive_service = get_resource_service(ARCHIVE)
+        archive_service.on_delete = MagicMock()
+        archive_service.delete_by_article_ids(ids)
+        self.assertTrue(self.app.data.elastic.is_empty(ARCHIVE))
+        self.assertTrue(self.app.data.mongo.is_empty(ARCHIVE))
+        self.assertEqual(len(self.articles), archive_service.on_delete.call_count)
 
 
 class ArchiveTestCase(SuperdeskTestCase):
