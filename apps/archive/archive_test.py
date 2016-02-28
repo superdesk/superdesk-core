@@ -184,7 +184,7 @@ class RemoveSpikedContentTestCase(SuperdeskTestCase):
 
         now = utcnow()
         expired_items = get_resource_service(ARCHIVE).get_expired_items(now)
-        self.assertEquals(2, expired_items.count())
+        self.assertEquals(1, expired_items.count())
 
     def test_query_removing_media_files_keeps(self):
         self.app.data.insert(ARCHIVE, [{'state': 'spiked',
@@ -205,10 +205,10 @@ class RemoveSpikedContentTestCase(SuperdeskTestCase):
     def test_query_getting_overdue_scheduled_content(self):
 
         self.app.data.insert(ARCHIVE,
-                             [{'schedule_settings': {'utc_publish_schedule': get_expiry_date(-10)},
+                             [{'schedule_settings': {'utc_publish_schedule': get_expiry_date(0)},
                                'state': 'published'}])
         self.app.data.insert(ARCHIVE,
-                             [{'schedule_settings': {'utc_publish_schedule': get_expiry_date(-10)},
+                             [{'schedule_settings': {'utc_publish_schedule': get_expiry_date(0)},
                                'state': 'scheduled'}])
         self.app.data.insert(ARCHIVE,
                              [{'schedule_settings': {'utc_publish_schedule': get_expiry_date(0)},

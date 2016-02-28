@@ -36,6 +36,8 @@ def get_date(date_or_string):
 
 
 def get_expiry_date(minutes, offset=None):
+    if minutes < 0:
+        return None
     if offset:
         if type(offset) is datetime.datetime:
             return offset + datetime.timedelta(minutes=minutes)
