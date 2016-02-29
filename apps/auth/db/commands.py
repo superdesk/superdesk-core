@@ -30,7 +30,7 @@ class CreateUserCommand(superdesk.Command):
         superdesk.Option('--admin', '-a', dest='admin', required=False, action='store_true'),
     )
 
-    def run(self, username, password, email, admin):
+    def run(self, username, password, email, admin=False):
 
         # force type conversion to boolean
         user_type = 'administrator' if admin else 'user'
@@ -52,14 +52,12 @@ class CreateUserCommand(superdesk.Command):
             user = superdesk.get_resource_service('users').find_one(username=userdata.get('username'), req=None)
 
             if user:
-                logger.info('updating user %s' % (userdata))
-                superdesk.get_resource_service('users').patch(user.get('_id'), userdata)
-                return userdata
+                logger.info('user already exists %s' % (userdata))
             else:
                 logger.info('creating user %s' % (userdata))
                 superdesk.get_resource_service('users').post([userdata])
+                logger.info('user saved %s' % (userdata))
 
-            logger.info('user saved %s' % (userdata))
             return userdata
 
 
