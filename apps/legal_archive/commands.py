@@ -45,9 +45,6 @@ class LegalArchiveImport:
         :param dict item_id: id of the document from 'archive' collection.
         """
         try:
-            # used for unit of ImportLegalArchiveCommand
-            if app.config.get('Import_LegalArchive_Command_Testing', False):
-                return
 
             logger.warning('Import item into legal {}.'.format(item_id))
 

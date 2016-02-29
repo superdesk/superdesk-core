@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from unittest.mock import MagicMock
 from datetime import timedelta
 from .commands import LegalArchiveImport
 from test_factory import SuperdeskTestCase
@@ -132,7 +133,8 @@ class ImportLegalArchiveCommandTestCase(SuperdeskTestCase):
         archive = get_resource_service('archive_publish')
         published = get_resource_service('published')
 
-        self.app.config['Import_LegalArchive_Command_Testing'] = True
+        self.original_method = LegalArchiveImport.upsert_into_legal_archive
+        LegalArchiveImport.upsert_into_legal_archive = MagicMock()
 
         for item in self.archive_items:
             archive_publish.patch(item['_id'], {'headline': 'publishing', 'abstract': 'publishing'})
@@ -143,8 +145,7 @@ class ImportLegalArchiveCommandTestCase(SuperdeskTestCase):
 
         archive_correct.patch(self.archive_items[1]['_id'], {'headline': 'correcting', 'abstract': 'correcting'})
 
-        self.app.config['Import_LegalArchive_Command_Testing'] = False
-
+        LegalArchiveImport.upsert_into_legal_archive = self.original_method
         self.class_under_test().run(1)
 
         # items are not expired
