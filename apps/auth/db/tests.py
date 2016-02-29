@@ -27,3 +27,16 @@ class UsersTestCase(SuperdeskTestCase):
             auth_user2 = get_resource_service('auth').authenticate(user)
             self.assertEquals(auth_user2['username'], user['username'])
             self.assertEquals(auth_user2['_id'], auth_user['_id'])
+
+    def test_create_user_command_no_update(self):
+        if not self.app.config.get('LDAP_SERVER'):
+            user = {'username': 'foo', 'password': 'bar', 'email': 'baz'}
+            cmd = CreateUserCommand()
+            cmd.run(
+                user['username'], user['password'], user['email'], admin=True
+            )
+            cmd.run(
+                user['username'], "new_password", user['email'], admin=True,
+                no_update=True
+            )
+            get_resource_service('auth').authenticate(user)
