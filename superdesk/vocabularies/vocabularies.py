@@ -50,6 +50,9 @@ class VocabulariesResource(Resource):
             'type': 'list',
             'required': True
         },
+        'single_value': {
+            'type': 'boolean',
+        },
         'service': {
             'type': 'dict',
         },
