@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+import json
 
 from bson.objectid import ObjectId
 
@@ -25,95 +26,121 @@ from superdesk.users.services import get_display_name
 from apps.archive.common import ARCHIVE
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
 from superdesk.lock import lock, unlock
+from superdesk.publish.publish_queue import QueueState
 
 logger = logging.getLogger(__name__)
 
 
 class LegalArchiveImport:
-
     log_msg_format = "{{'_id': {_id}, 'unique_name': {unique_name}, 'version': {_current_version}, " \
                      "'expired_on': {expiry}}}."
 
-    def upsert_into_legal_archive(self, doc):
+    def upsert_into_legal_archive(self, item_id):
         """
         Once publish actions are performed on the article do the below:
             1.  Get legal archive article.
             2.  De-normalize the expired article
             3.  Upserting Legal Archive.
             4.  Get Version History and De-normalize and Inserting Legal Archive Versions
-        :param dict doc: doc from 'archive' collection.
+        :param dict item_id: id of the document from 'archive' collection.
         """
+        try:
 
-        if not doc.get(ITEM_STATE) in {CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED, CONTENT_STATE.KILLED}:
-            logger.error('Invalid state: {}. Cannot move the item to legal archive. item: {}'.
-                         format(doc.get(ITEM_STATE), self.log_msg_format.format(**doc)))
-            return
+            logger.warning('Import item into legal {}.'.format(item_id))
 
-        # required for behave test.
-        legal_archive_doc = deepcopy(doc)
+            doc = get_resource_service(ARCHIVE).find_one(req=None, _id=item_id)
 
-        legal_archive_service = get_resource_service(LEGAL_ARCHIVE_NAME)
-        legal_archive_versions_service = get_resource_service(LEGAL_ARCHIVE_VERSIONS_NAME)
+            if not doc:
+                logger.error('Could not find the document {} to import to legal archive.'.format(item_id))
+                return
 
-        log_msg = self.log_msg_format.format(**legal_archive_doc)
-        version_id_field = versioned_id_field(app.config['DOMAIN'][ARCHIVE])
-        logger.info('Preparing Article to be inserted into Legal Archive ' + log_msg)
+            if not doc.get(ITEM_STATE) in {CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED, CONTENT_STATE.KILLED}:
+                logger.error('Invalid state: {}. Cannot move the item to legal archive. item: {}'.
+                             format(doc.get(ITEM_STATE), self.log_msg_format.format(**doc)))
+                return
 
-        # Removing Irrelevant properties
-        legal_archive_doc.pop(config.ETAG, None)
-        legal_archive_doc.pop('lock_user', None)
-        legal_archive_doc.pop('lock_session', None)
-        legal_archive_doc.pop('lock_time', None)
+            # required for behave test.
+            legal_archive_doc = deepcopy(doc)
 
-        logger.info('Removed irrelevant properties from the article {}'.format(log_msg))
+            legal_archive_service = get_resource_service(LEGAL_ARCHIVE_NAME)
+            legal_archive_versions_service = get_resource_service(LEGAL_ARCHIVE_VERSIONS_NAME)
 
-        # Step 1
-        article_in_legal_archive = legal_archive_service.find_one(req=None, _id=legal_archive_doc[config.ID_FIELD])
+            log_msg = self.log_msg_format.format(**legal_archive_doc)
+            version_id_field = versioned_id_field(app.config['DOMAIN'][ARCHIVE])
+            logger.info('Preparing Article to be inserted into Legal Archive ' + log_msg)
 
-        # Step 2 - De-normalizing the legal archive doc
-        self._denormalize_user_desk(legal_archive_doc, log_msg)
-        logger.info('De-normalized article {}'.format(log_msg))
+            # Removing irrelevant properties
+            legal_archive_doc.pop(config.ETAG, None)
+            legal_archive_doc.pop('lock_user', None)
+            legal_archive_doc.pop('lock_session', None)
+            legal_archive_doc.pop('lock_time', None)
 
-        # Step 3 - Upserting Legal Archive
-        logger.info('Upserting Legal Archive Repo with article {}'.format(log_msg))
+            logger.info('Removed irrelevant properties from the article {}'.format(log_msg))
 
-        if article_in_legal_archive:
-            legal_archive_service.put(legal_archive_doc[config.ID_FIELD], legal_archive_doc)
-        else:
-            legal_archive_service.post([legal_archive_doc])
+            # Step 1
+            article_in_legal_archive = legal_archive_service.find_one(req=None, _id=legal_archive_doc[config.ID_FIELD])
 
-        # Step 4 - Get Version History and De-normalize and Inserting Legal Archive Versions
-        lookup = {version_id_field: legal_archive_doc[config.ID_FIELD]}
-        version_history = list(get_resource_service('archive_versions').get(req=None, lookup=lookup))
-        legal_version_history = list(legal_archive_versions_service.get(req=None, lookup=lookup))
+            if article_in_legal_archive and \
+               article_in_legal_archive.get(config.VERSION, 0) > legal_archive_doc.get(config.VERSION):
+                logger.info('Item {} version: {} already in legal archive. Legal Archive document version {}'.format(
+                    legal_archive_doc.get(config.ID_FIELD), legal_archive_doc.get(config.VERSION),
+                    article_in_legal_archive.get(config.VERSION)
+                ))
+                self._set_moved_to_legal(doc)
+                return
 
-        logger.info('Fetched version history for article {}'.format(log_msg))
-        versions_to_insert = [version for version in version_history
-                              if not any(legal_version for legal_version in legal_version_history
-                                         if version[config.VERSION] == legal_version[config.VERSION])]
+            # Step 2 - De-normalizing the legal archive doc
+            self._denormalize_user_desk(legal_archive_doc, log_msg)
+            logger.info('De-normalized article {}'.format(log_msg))
 
-        # This happens when user kills an article from Dusty Archive
-        if article_in_legal_archive and article_in_legal_archive[config.VERSION] < legal_archive_doc[config.VERSION] \
-                and len(versions_to_insert) == 0:
-            resource_def = app.config['DOMAIN'][ARCHIVE]
-            versioned_doc = deepcopy(legal_archive_doc)
-            versioned_doc[versioned_id_field(resource_def)] = legal_archive_doc[config.ID_FIELD]
-            versioned_doc[config.ID_FIELD] = ObjectId()
-            versions_to_insert.append(versioned_doc)
+            # Step 3 - Upserting Legal Archive
+            logger.info('Upserting Legal Archive Repo with article {}'.format(log_msg))
 
-        for version_doc in versions_to_insert:
-            self._denormalize_user_desk(version_doc,
-                                        self.log_msg_format.format(_id=version_doc[version_id_field],
-                                                                   unique_name=version_doc.get('unique_name'),
-                                                                   _current_version=version_doc[config.VERSION],
-                                                                   expiry=version_doc.get('expiry')))
-            version_doc.pop(config.ETAG, None)
+            if article_in_legal_archive:
+                legal_archive_service.put(legal_archive_doc[config.ID_FIELD], legal_archive_doc)
+            else:
+                legal_archive_service.post([legal_archive_doc])
 
-        if versions_to_insert:
-            legal_archive_versions_service.post(versions_to_insert)
-            logger.info('Inserted de-normalized version history for article {}'.format(log_msg))
+            # Step 4 - Get Version History and De-normalize and Inserting Legal Archive Versions
+            lookup = {version_id_field: legal_archive_doc[config.ID_FIELD]}
+            version_history = list(get_resource_service('archive_versions').get(req=None, lookup=lookup))
+            legal_version_history = list(legal_archive_versions_service.get(req=None, lookup=lookup))
 
-        logger.info('Upsert completed for article ' + log_msg)
+            logger.info('Fetched version history for article {}'.format(log_msg))
+            versions_to_insert = [version for version in version_history
+                                  if not any(legal_version for legal_version in legal_version_history
+                                             if version[config.VERSION] == legal_version[config.VERSION])]
+
+            # This happens when user kills an article from Dusty Archive
+            if article_in_legal_archive and \
+               article_in_legal_archive[config.VERSION] < legal_archive_doc[config.VERSION] and \
+               len(versions_to_insert) == 0:
+
+                resource_def = app.config['DOMAIN'][ARCHIVE]
+                versioned_doc = deepcopy(legal_archive_doc)
+                versioned_doc[versioned_id_field(resource_def)] = legal_archive_doc[config.ID_FIELD]
+                versioned_doc[config.ID_FIELD] = ObjectId()
+                versions_to_insert.append(versioned_doc)
+
+            for version_doc in versions_to_insert:
+                self._denormalize_user_desk(version_doc,
+                                            self.log_msg_format.format(_id=version_doc[version_id_field],
+                                                                       unique_name=version_doc.get('unique_name'),
+                                                                       _current_version=version_doc[config.VERSION],
+                                                                       expiry=version_doc.get('expiry')))
+                version_doc.pop(config.ETAG, None)
+
+            if versions_to_insert:
+                legal_archive_versions_service.post(versions_to_insert)
+                logger.info('Inserted de-normalized version history for article {}'.format(log_msg))
+
+            # Set the flag that item is moved to legal.
+            self._set_moved_to_legal(doc)
+
+            logger.info('Upsert completed for article ' + log_msg)
+        except:
+            logger.exception('Failed to import into legal archive {}.'.format(item_id))
+            raise
 
     def _denormalize_user_desk(self, legal_archive_doc, log_msg):
         """
@@ -163,6 +190,14 @@ class LegalArchiveImport:
 
         return get_display_name(user)
 
+    def _set_moved_to_legal(self, doc):
+        """
+        set the moved to legal flag.
+        :param dict doc: document
+        """
+        get_resource_service('published').set_moved_to_legal(doc.get(config.ID_FIELD), doc.get(config.VERSION),
+                                                             True)
+
     def import_legal_publish_queue(self):
         """
         Import legal publish queue.
@@ -197,16 +232,15 @@ class LegalArchiveImport:
         :param datetime max_date:
         :return : list of publish queue items
         """
-        legal_publish_queue_service = get_resource_service('publish_queue')
+        publish_queue_service = get_resource_service('publish_queue')
 
         lookup = {}
         if max_date:
-            lookup[config.LAST_UPDATED] = {'$gte': max_date}
+            lookup['$and'] = [{config.LAST_UPDATED: {'$gte': max_date}}]
 
         req = ParsedRequest()
         req.max_results = 500
-
-        return legal_publish_queue_service.get(req=req, lookup=lookup)
+        return publish_queue_service.get(req=req, lookup=lookup)
 
     def _get_max_date_from_publish_queue(self):
         """
@@ -229,9 +263,9 @@ class LegalArchiveImport:
         legal_publish_queue_service = get_resource_service(LEGAL_PUBLISH_QUEUE_NAME)
         legal_queue_item = queue_item.copy()
         lookup = {
-            'item_id': legal_queue_item['item_id'],
-            'item_version': legal_queue_item['item_version'],
-            'subscriber_id': legal_queue_item['subscriber_id']
+            'item_id': legal_queue_item.get('item_id'),
+            'item_version': legal_queue_item.get('item_version'),
+            'subscriber_id': legal_queue_item.get('subscriber_id')
         }
 
         log_msg = '{item_id} -- version {item_version} -- subscriber {subscriber_id}.'.format(**lookup)
@@ -242,8 +276,6 @@ class LegalArchiveImport:
         legal_queue_item['subscriber_id'] = subscribers[str(queue_item['subscriber_id'])]['name']
         legal_queue_item['_subscriber_id'] = queue_item['subscriber_id']
 
-        legal_queue_item.pop(config.ETAG, None)
-
         if not existing_queue_item:
             legal_publish_queue_service.post([legal_queue_item])
             logger.info('Inserted queue item: {}'.format(log_msg))
@@ -251,28 +283,42 @@ class LegalArchiveImport:
             legal_publish_queue_service.put(existing_queue_item.get(config.ID_FIELD), legal_queue_item)
             logger.info('Updated queue item: {}'.format(log_msg))
 
+        if queue_item['state'] in {QueueState.SUCCESS.value, QueueState.CANCELED.value, QueueState.FAILED.value}:
+            updates = dict()
+            updates['moved_to_legal'] = True
+
+            try:
+                get_resource_service('publish_queue').system_update(queue_item.get(config.ID_FIELD),
+                                                                    updates, queue_item)
+                logger.info('Queue item moved to legal. {}'.format(log_msg))
+            except:
+                logger.exception('Failed to set moved to legal flag for queue item {}.'.format(log_msg))
+
         logger.info('Processed queue item: {}'.format(log_msg))
 
 
-@celery.task(bind=True)
-def import_into_legal_archive(self, doc):
+@celery.task(bind=True, default_retry_delay=180)
+def import_into_legal_archive(self, item_id):
     """
     Called async to import into legal archive.
     :param self: celery task
-    :param dict doc: document to import into legal_archive
+    :param str item_id: document id to import into legal_archive
     """
     try:
-        LegalArchiveImport().upsert_into_legal_archive(doc)
-    except:
-        logger.exception("Failed to import into legal archive.")
+        LegalArchiveImport().upsert_into_legal_archive(item_id)
+    except Exception:
+        # we can't loose stuff for legal archive.
+        logger.exception('Failed to process legal archive doc {}. Retrying again.'.format(item_id))
+        raise self.retry()
 
 
 class ImportLegalPublishQueueCommand(superdesk.Command):
     """
     This command import publish queue records into legal publish queue.
     """
+
     def run(self):
-        logger.info('Importing Legal Publish Queue')
+        logger.info('Import to Legal Publish Queue')
         lock_name = get_lock_id('legal_archive', 'import_legal_publish_queue')
         if not lock(lock_name, '', expire=600):
             return
@@ -282,4 +328,77 @@ class ImportLegalPublishQueueCommand(superdesk.Command):
             unlock(lock_name, '')
 
 
+class ImportLegalArchiveCommand(superdesk.Command):
+    """
+    This command import archive into legal archive.
+    As per the publishing logic the import to legal archive is done asynchronously. If this fails
+    then you are missing records in legal archive. Use this command to manually import archive
+    items into legal archive.
+    """
+
+    default_page_size = 500
+
+    option_list = [
+        superdesk.Option('--page-size', '-p', dest='page_size')
+    ]
+
+    def run(self, page_size):
+        logger.info('Import to Legal Archive')
+        lock_name = get_lock_id('legal_archive', 'import_to_legal_archive')
+        page_size = int(page_size) if page_size else self.default_page_size
+        if not lock(lock_name, '', expire=1800):
+            return
+        try:
+            legal_archive_import = LegalArchiveImport()
+            for items in self.get_expired_items(page_size):
+                for item in items:
+                    try:
+                        legal_archive_import.upsert_into_legal_archive(item.get('item_id'))
+                    except:
+                        logger.exception('Failed to import into legal '
+                                         'archive via command {}.'.format(item.get('item_id')))
+        except:
+            logger.exception('Failed to import into legal archive.')
+        finally:
+            unlock(lock_name, '')
+
+    def get_expired_items(self, page_size):
+        """
+        Get expired item that are not moved to legal
+        :return:
+        """
+        query = {
+            'query': {
+                'filtered': {
+                    'filter': {
+                        'and': [
+                            {'range': {'expiry': {'lt': 'now'}}},
+                            {'term': {'moved_to_legal': False}},
+                            {'not': {'term': {'state': CONTENT_STATE.SCHEDULED}}}
+                        ]
+                    }
+                }
+            }
+        }
+
+        service = get_resource_service('published')
+        req = ParsedRequest()
+        req.args = {'source': json.dumps(query)}
+        req.sort = '[("publish_sequence_no", 1)]'
+        cursor = service.get(req=req, lookup=None)
+        count = cursor.count()
+        no_of_pages = len(range(0, count, page_size))
+        logger.info('Number of items to move to legal archive: {}, pages={}'.format(count, no_of_pages))
+
+        for page in range(0, no_of_pages):
+            req = ParsedRequest()
+            req.args = {'source': json.dumps(query)}
+            req.sort = '[("publish_sequence_no", 1)]'
+            req.max_results = page_size
+            cursor = service.get(req=req, lookup=None)
+            items = list(cursor)
+            logger.info('Fetched No. of Items: {} import in to legal archive.'.format(len(items)))
+            yield items
+
 superdesk.command('legal_publish_queue:import', ImportLegalPublishQueueCommand())
+superdesk.command('legal_archive:import', ImportLegalArchiveCommand())
