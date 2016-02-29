@@ -30,6 +30,10 @@ class SearchProviderResource(Resource):
             'type': 'boolean',
             'default': False
         },
+        'is_default': {
+            'type': 'boolean',
+            'default': False
+        },
         'last_item_update': {'type': 'datetime'},
         'config': {
             'type': 'dict'
