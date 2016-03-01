@@ -14,6 +14,7 @@ from test_factory import SuperdeskTestCase
 from apps.publish import init_app
 from apps.publish.formatters.aap_ipnews_formatter import AAPIpNewsFormatter
 from apps.publish.formatters.aap_formatter_common import set_subject
+import json
 
 
 class AapIpNewsFormatterTest(SuperdeskTestCase):
@@ -62,6 +63,7 @@ class AapIpNewsFormatterTest(SuperdeskTestCase):
 
         f = AAPIpNewsFormatter()
         seq, item = f.format(self.article, subscriber)[0]
+        item = json.loads(item)
 
         self.assertGreater(int(seq), 0)
         self.assertEqual(seq, item['sequence'])
@@ -96,6 +98,7 @@ class AapIpNewsFormatterTest(SuperdeskTestCase):
 
         f = AAPIpNewsFormatter()
         seq, item = f.format(article, subscriber)[0]
+        item = json.loads(item)
 
         expected = '\r\nThe story body line 1 \r\nLine 2 \r\n\r\nabcdefghi abcdefghi abcdefghi abcdefghi ' \
                    'abcdefghi abcdefghi abcdefghi abcdefghi \r\nmore'
@@ -126,6 +129,7 @@ class AapIpNewsFormatterTest(SuperdeskTestCase):
         docs = f.format(article, subscriber)
         self.assertEqual(len(docs), 2)
         for seq, doc in docs:
+            doc = json.loads(doc)
             if doc['category'] == 'S':
                 self.assertEqual(doc['subject_reference'], '15011002')
                 self.assertEqual(doc['subject_detail'], 'four-man sled')
@@ -162,6 +166,7 @@ class AapIpNewsFormatterTest(SuperdeskTestCase):
 
         f = AAPIpNewsFormatter()
         seq, doc = f.format(article, subscriber)[0]
+        doc = json.loads(doc)
         codes = set(doc['selector_codes'].split(' '))
         expected_codes_str = 'an5 an4 an7 an6 ax5 an3 ax6 ax7 0hw an8 0ir px6 ax4 ax3 ax8 px5 0ah 0px px3 az'
         expected_codes_str += ' px8 0fh px7 px4 pn3 pn4 pn5 pn6 pn7 px0'
@@ -192,6 +197,7 @@ class AapIpNewsFormatterTest(SuperdeskTestCase):
 
         f = AAPIpNewsFormatter()
         seq, doc = f.format(article, subscriber)[0]
+        doc = json.loads(doc)
         codes = set(doc['selector_codes'].split(' '))
         expected_codes_str = 'an5 an4 an7 an6 ax5 ax6 ax7 an8 px6 ax4 ax8 px5 0ah 0px'
         expected_codes_str += ' px8 0fh px7 px4 pn4 pn5 pn6 pn7 px0'
@@ -220,6 +226,7 @@ class AapIpNewsFormatterTest(SuperdeskTestCase):
 
         f = AAPIpNewsFormatter()
         seq, doc = f.format(article, subscriber)[0]
+        doc = json.loads(doc)
         self.assertEqual(doc['subject_reference'], '00000000')
         self.assertEqual(doc['headline'], 'VIC:This is a test headline')
 
@@ -242,6 +249,7 @@ class AapIpNewsFormatterTest(SuperdeskTestCase):
         }
 
         seq, doc = f.format(article, subscriber)[0]
+        doc = json.loads(doc)
         self.assertEqual(doc['subject_reference'], '00000000')
         self.assertEqual(doc['headline'], 'This is a test headline')
 
@@ -252,6 +260,7 @@ class AapIpNewsFormatterTest(SuperdeskTestCase):
 
         f = AAPIpNewsFormatter()
         seq, item = f.format(doc, subscriber)[0]
+        item = json.loads(item)
 
         self.assertGreater(int(seq), 0)
         self.assertEqual(seq, item['sequence'])

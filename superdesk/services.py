@@ -135,13 +135,13 @@ class BaseService():
     def delete_action(self, lookup=None):
         if lookup is None:
             lookup = {}
-
-        if lookup:
-            doc = self.find_one(req=None, **lookup)
+            docs = []
+        else:
+            docs = self.get_from_mongo(None, lookup)
+        for doc in docs:
             self.on_delete(doc)
         res = self.delete(lookup)
-
-        if lookup and doc:
+        for doc in docs:
             self.on_deleted(doc)
         return res
 

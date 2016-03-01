@@ -155,8 +155,8 @@ class BasePublishService(BaseService):
                     package_updates.setdefault(ITEM_OPERATION, updates.get(ITEM_OPERATION, ITEM_PUBLISH))
                     self._update_archive(package, package_updates)
                     package.update(package_updates)
-                    self._import_into_legal_archive(package)
                     self.update_published_collection(published_item_id=package_id)
+                    self._import_into_legal_archive(package)
 
                 self._process_publish_updates(original, updates)
                 self._update_archive(original, updated, should_insert_into_versions=auto_publish)
@@ -539,9 +539,60 @@ class BasePublishService(BaseService):
 
         if doc.get(ITEM_STATE) != CONTENT_STATE.SCHEDULED:
             kwargs = {
-                'doc': doc
+                'item_id': doc.get(config.ID_FIELD)
             }
-            import_into_legal_archive.apply_async(kwargs=kwargs)  # @UndefinedVariable
+
+            # countdown=3 is for elasticsearch to be refreshed with archive and published changes
+            import_into_legal_archive.apply_async(countdown=3, kwargs=kwargs)  # @UndefinedVariable
+
+    def _publish_associations(self, parent, guid):
+        """Publish parent item associations."""
+        associations = parent.get('associations', {})
+        for rel, item in associations.copy().items():
+            if item.get('pubstatus', 'usable') != 'usable':
+                associations.pop(rel)
+                continue
+            self._publish_renditions(item, rel, guid)
+
+    def _publish_renditions(self, item, rel, guid):
+        """Publish item renditions."""
+        images = []
+        renditions = item.get('renditions', {})
+        original = renditions.get('original')
+        crop_service = CropService()
+        for rendition_name, rendition in renditions.items():
+            crop = get_crop(rendition)
+            rend_spec = crop_service.get_crop_by_name(rendition_name)
+            if crop and rend_spec:
+                file_name = '%s/%s/%s' % (guid, rel, rendition_name)
+                rendition['media'] = app.media.media_id(file_name)
+                rendition['href'] = app.media.url_for_media(rendition['media'])
+                rendition['width'] = rend_spec['width']
+                rendition['height'] = rend_spec['height']
+                rendition['mimetype'] = original.get('mimetype')
+                images.append({
+                    'rendition': rendition_name,
+                    'file_name': file_name,
+                    'media': rendition['media'],
+                    'spec': rend_spec,
+                    'crop': crop,
+                })
+        publish_images.delay(images=images, original=original, item=item)
+
+
+def get_crop(rendition):
+    fields = ('CropLeft', 'CropTop', 'CropRight', 'CropBottom')
+    return {field: rendition[field] for field in fields if field in rendition}
+
+
+@celery.task
+def publish_images(images, original, item):
+    orig_file = get_file(original, item)
+    for image in images:
+        content_type = original['mimetype']
+        ok, output = crop_image(orig_file, image['file_name'], image['crop'], image['spec'])
+        if ok:
+            app.media.put(output, image['file_name'], content_type, _id=image['media'])
 
     def _publish_associations(self, parent, guid):
         """Publish parent item associations."""

@@ -23,6 +23,9 @@ from superdesk.utc import utcnow
 from urllib.parse import urlparse, urlunparse
 
 
+requests.packages.urllib3.disable_warnings()
+
+
 class ReutersHTTPFeedingService(HTTPFeedingService):
     """
     Feeding Service class which can read article(s) using HTTP provided by Reuters.

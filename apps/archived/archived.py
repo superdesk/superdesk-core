@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from operator import itemgetter
-
+from copy import deepcopy
 from flask import current_app as app
 from eve.utils import config, ParsedRequest
 import logging
@@ -20,7 +20,7 @@ from apps.legal_archive.commands import import_into_legal_archive
 from apps.legal_archive.resource import LEGAL_PUBLISH_QUEUE_NAME
 from apps.packages.takes_package_service import TakesPackageService
 from apps.publish.content.common import ITEM_KILL
-from apps.publish.published_item import published_item_fields
+from apps.publish.published_item import published_item_fields, QUEUE_STATE, PUBLISH_STATE
 from apps.packages import PackageService
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
@@ -230,10 +230,6 @@ class ArchivedService(BaseService):
 
             article[config.ID_FIELD] = article.pop('item_id', article['item_id'])
 
-            # Step 3(iii)
-            import_into_legal_archive.apply_async(kwargs={'doc': article})
-            logger.info('Legal Archive import for article: {}'.format(article[config.ID_FIELD]))
-
             # Step 3(iv)
             super().delete({'item_id': article[config.ID_FIELD]})
             logger.info('Delete for article: {}'.format(article[config.ID_FIELD]))
@@ -242,8 +238,14 @@ class ArchivedService(BaseService):
             docs = [article]
             get_resource_service(ARCHIVE).post(docs)
             insert_into_versions(doc=article)
-            get_resource_service('published').post(docs)
+            published_doc = deepcopy(article)
+            published_doc[QUEUE_STATE] = PUBLISH_STATE.QUEUED
+            get_resource_service('published').post([published_doc])
             logger.info('Insert into archive and published for article: {}'.format(article[config.ID_FIELD]))
+
+            # Step 3(iii)
+            import_into_legal_archive.apply_async(countdown=3, kwargs={'item_id': article[config.ID_FIELD]})
+            logger.info('Legal Archive import for article: {}'.format(article[config.ID_FIELD]))
 
             # Step 3(v)
             KillPublishService().broadcast_kill_email(article)
@@ -326,7 +328,8 @@ class ArchivedService(BaseService):
             package_service = PackageService()
             item_refs = package_service.get_item_refs(article)
             for ref in item_refs:
-                item_in_package = [item for item in articles_to_kill if item.get('item_id') == ref[RESIDREF]]
+                item_in_package = [item for item in articles_to_kill
+                                   if item.get('item_id', item.get(config.ID_FIELD)) == ref[RESIDREF]]
                 ref['location'] = ARCHIVE
                 ref[config.VERSION] = item_in_package[0][config.VERSION]
 
