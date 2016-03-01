@@ -29,6 +29,10 @@ from superdesk.resource import Resource
 logger = logging.getLogger(__name__)
 
 
+class ProviderNotFoundError(SuperdeskApiError):
+    pass
+
+
 class SearchIngestResource(superdesk.Resource):
     resource_methods = ['GET', 'POST']
     schema = {
@@ -43,7 +47,7 @@ class SearchIngestService(superdesk.Service):
         self.source = source
 
     def get_provider(self):
-        provider = get_resource_service('ingest_providers').find_one(source=self.source, req=None)
+        provider = get_resource_service('search_providers').find_one(source=self.source, req=None)
         if provider and 'config' in provider and 'username' in provider['config']:
             self.backend.set_credentials(provider['config']['username'], provider['config'].get('password', ''))
         return provider
@@ -90,6 +94,8 @@ class SearchIngestService(superdesk.Service):
             for doc in results.docs:
                 doc['ingest_provider'] = str(provider[superdesk.config.ID_FIELD])
             return results
+        else:
+            raise ProviderNotFoundError('provider not found source=%s' % (self.source, ))
 
     def fetch_rendition(self, rendition):
         """Get file stream for given rendition specs.

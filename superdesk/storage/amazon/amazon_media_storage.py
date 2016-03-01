@@ -60,8 +60,11 @@ class AmazonMediaStorage(MediaStorage):
         if not self.app.config.get('AMAZON_SERVE_DIRECT_LINKS', False):
             return upload_url(str(media_id))
         protocol = 'https' if self.app.config.get('AMAZON_S3_USE_HTTPS', False) else 'http'
-        endpoint = 's3-%s.amazonaws.com' % self.app.config.get('AMAZON_REGION')
-        return '%s://%s.%s/%s' % (protocol, self.container_name, endpoint, media_id)
+        endpoint = 's3-%s.%s' % (self.app.config.get('AMAZON_REGION'), self.app.config['AMAZON_SERVER'])
+        url = '%s.%s/%s' % (self.container_name, endpoint, media_id)
+        if self.app.config.get('AMAZON_PROXY_SERVER'):
+            url = '%s/%s' % (str(self.app.config.get('AMAZON_PROXY_SERVER')), url)
+        return '%s://%s' % (protocol, url)
 
     def media_id(self, filename):
         if not self.app.config.get('AMAZON_SERVE_DIRECT_LINKS', False):

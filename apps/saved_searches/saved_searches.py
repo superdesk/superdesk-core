@@ -24,6 +24,25 @@ from superdesk.utils import ListCursor
 logger = logging.getLogger(__name__)
 
 
+def decode_filter(data):
+    """Decode json in case it's string otherwise return data as is (dict).
+
+    :param data
+    """
+    try:
+        return json.loads(data)
+    except TypeError:
+        return data
+
+
+def encode_filter(data):
+    """Encode filter for storage.
+
+    :param data
+    """
+    return json.dumps(data) if isinstance(data, dict) else data
+
+
 class SavedSearchesResource(Resource):
     endpoint_name = resource_title = 'saved_searches'
     schema = {
@@ -65,7 +84,7 @@ class AllSavedSearchesService(BaseService):
     def get(self, req, lookup):
         items = list(super().get(req, lookup))
         for item in items:
-            item['filter'] = json.loads(item.get('filter'))
+            item['filter'] = decode_filter(item.get('filter'))
 
         return ListCursor(items)
 
@@ -84,7 +103,7 @@ class SavedSearchesService(BaseService):
         if repo.find(',') >= 0:
             repo = repo.split(',').pop(0)
         self.validate_and_run_elastic_query(query, repo)
-        doc['filter'] = json.dumps(doc.get('filter'))
+        doc['filter'] = encode_filter(doc.get('filter'))
 
     def on_update(self, updates, original):
         """
@@ -109,7 +128,7 @@ class SavedSearchesService(BaseService):
         req.where = json.dumps({'$or': [lookup, {'is_global': True}]})
         items = list(super().get(req, lookup=None))
         for item in items:
-            item['filter'] = json.loads(item.get('filter'))
+            item['filter'] = decode_filter(item.get('filter'))
 
         return ListCursor(items)
 
@@ -119,7 +138,7 @@ class SavedSearchesService(BaseService):
         """
 
         parsed_request = ParsedRequest()
-        parsed_request.args = {"source": json.dumps(elastic_query)}
+        parsed_request.args = {"source": encode_filter(elastic_query)}
 
         return parsed_request
 
@@ -184,6 +203,7 @@ class SavedSearchItemsService(SavedSearchesService):
         if not saved_search:
             raise SuperdeskApiError.notFoundError("Invalid Saved Search")
 
-        saved_search['filter'] = json.loads(saved_search.get('filter'))
+        saved_search['filter'] = decode_filter(saved_search.get('filter'))
+
         repo, query = super().process_query(saved_search)
         return super().validate_and_run_elastic_query(query, repo)

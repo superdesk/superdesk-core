@@ -161,7 +161,7 @@ Feature: Package Publishing
         """
         [{
               "original_source" : "AAP Image/AAP",
-              "description" : "A test picture",
+              "description_text" : "A test picture",
               "state" : "submitted",
               "headline" : "ABC SHOP CLOSURES",
               "byline" : "PAUL MILLER",
@@ -312,7 +312,7 @@ Feature: Package Publishing
         """
         [{
               "original_source" : "AAP Image/AAP",
-              "description" : "A test picture",
+              "description_text" : "A test picture",
               "state" : "submitted",
               "headline" : "ABC SHOP CLOSURES",
               "byline" : "PAUL MILLER",
@@ -455,7 +455,7 @@ Feature: Package Publishing
         """
         [{
               "original_source" : "AAP Image/AAP",
-              "description" : "A test picture",
+              "description_text" : "A test picture",
               "state" : "submitted",
               "headline" : "ABC SHOP CLOSURES",
               "byline" : "PAUL MILLER",
@@ -600,7 +600,7 @@ Feature: Package Publishing
         """
         [{
               "original_source" : "AAP Image/AAP",
-              "description" : "A test picture",
+              "description_text" : "A test picture",
               "state" : "submitted",
               "headline" : "ABC SHOP CLOSURES",
               "byline" : "PAUL MILLER",
@@ -2583,7 +2583,7 @@ Feature: Package Publishing
         """
         [{
               "original_source" : "AAP Image/AAP",
-              "description" : "A test picture",
+              "description_text" : "A test picture",
               "state" : "submitted",
               "headline" : "ABC-4",
               "byline" : "PAUL MILLER",
@@ -2611,7 +2611,7 @@ Feature: Package Publishing
               "slugline" : "ABC SHOP CLOSURES"
         }, {
               "original_source" : "AAP Image/AAP",
-              "description" : "A test picture",
+              "description_text" : "A test picture",
               "state" : "submitted",
               "headline" : "ABC-5",
               "byline" : "PAUL MILLER",
@@ -2638,7 +2638,7 @@ Feature: Package Publishing
               "slugline" : "ABC SHOP CLOSURES"
         }, {
               "original_source" : "AAP Image/AAP",
-              "description" : "A test picture",
+              "description_text" : "A test picture",
               "state" : "submitted",
               "headline" : "ABC-6",
               "byline" : "PAUL MILLER",
@@ -5335,4 +5335,3 @@ Feature: Package Publishing
       """
         {"_issues": {"validator exception": "['item-1 headline: ABSTRACT is a required field', 'item-2 headline: ABSTRACT is a required field', 'compositeitem: HEADLINE is a required field']"}, "_status": "ERR"}
       """
-

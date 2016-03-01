@@ -11,9 +11,11 @@
 import logging
 
 from apps.search_providers import allowed_search_providers
+from eve.utils import config
 from superdesk.errors import SuperdeskApiError
 from superdesk.services import BaseService
 from superdesk.utils import ListCursor
+
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +42,23 @@ class SearchProviderService(BaseService):
 
         provider = super().find_one(req, **lookup)
         return provider if provider and provider['search_provider'] in allowed_search_providers else None
+
+    def on_created(self, docs):
+        for doc in docs:
+            if doc.get('is_default'):
+                self.find_and_modify(
+                    query={'$and': [{'_id': {'$ne': doc[config.ID_FIELD]}}, {'is_default': True}]},
+                    update={'$set': {'is_default': False}},
+                    upsert=False
+                )
+
+    def on_updated(self, updates, original):
+        if updates.get('is_default'):
+            self.find_and_modify(
+                query={'$and': [{'_id': {'$ne': original[config.ID_FIELD]}}, {'is_default': True}]},
+                update={'$set': {'is_default': False}},
+                upsert=False
+            )
 
     def on_delete(self, doc):
         """

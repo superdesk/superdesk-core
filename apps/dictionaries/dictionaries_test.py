@@ -19,7 +19,10 @@ class WordsTestCase(SuperdeskTestCase):
 
     def test_words_parsing(self):
         self.assertEquals(['abc'], words('abc'))
-        self.assertEquals(['3d', 'x5'], words('3d 123 x5'))
+        self.assertEqual(['abc bce'], words('abc bce'))
+        self.assertEqual(['abc bce', 'wer tyu'], words('abc bce\nwer tyu'))
+        self.assertEqual(['you\'d'], words('you\'d'))
+        self.assertEqual(['you\'d', 'will'], words('you\'d\nwill'))
 
     def test_base_language(self):
         self.assertEqual(DictionaryService().get_base_language('en-AU'), 'en')

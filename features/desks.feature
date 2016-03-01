@@ -281,3 +281,30 @@ Feature: Desks
         """
             {"_items": [{"name": "Domestic", "old_sluglines": ["slugline1"], "slugline": "slugline2", "headline": "one"}]}
         """
+
+    @auth
+    Scenario: When creating/updating item add desk metadata
+        Given "desks"
+        """
+        [{"desk_metadata": {"anpa_category": [{"qcode": "sport"}], "headline": "sports", "slugline": "sp"}}]
+        """
+        And "archive"
+        """
+        [{"_id": "item1", "headline": "test", "type": "text"}]
+        """
+        When we patch "/archive/item1"
+        """
+        {"task": {"desk": "#desks._id#"}, "slugline": "foo"}
+        """
+        Then we get updated response
+        """
+        {"anpa_category": [{"qcode": "sport"}], "slugline": "foo", "headline": "test"}
+        """
+        When we post to "/archive"
+        """
+        {"slugline": "x", "task": {"desk": "#desks._id#"}}
+        """
+        Then we get new resource
+        """
+        {"slugline": "x", "headline": "sports", "anpa_category": [{"qcode": "sport"}]}
+        """

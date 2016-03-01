@@ -25,6 +25,8 @@ def encode_dict(words_dict):
 
 
 def decode_dict(words_list):
+    if isinstance(words_list, dict):
+        return words_list
     return json.loads(words_list)
 
 
@@ -36,7 +38,7 @@ def train(features):
 
 
 def words(text):
-    return [w for w in re.findall('[^\W_]+', text.lower()) if not w.isdigit()]
+    return [w for w in re.findall('[^\n]+', text) if not w.isdigit()]
 
 
 def add_word(words, word, count):
@@ -66,6 +68,12 @@ def merge(doc, words):
 
 
 def read_from_file(doc):
+    """
+    Plain text file
+    One word per line
+    UTF-8 encoding
+    """
+
     content = doc.pop(DICTIONARY_FILE)
     if 'text/' not in content.mimetype:
         raise SuperdeskApiError.badRequestError('A text dictionary file is required')
@@ -154,7 +162,7 @@ class DictionaryService(BaseService):
             updates['content'] = json.loads(updates.pop('content_list'))
 
         # handle manual changes
-        nwords = original.get('content', {}).copy()
+        nwords = decode_dict(original.get('content', {})).copy()
         for word, val in updates.get('content', {}).items():
             if val:
                 add_words(nwords, word, val)
