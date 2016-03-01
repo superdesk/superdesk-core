@@ -27,12 +27,15 @@ from superdesk.io import registered_feeding_services
 from superdesk.datalayer import SuperdeskDataLayer  # noqa
 from superdesk.factory.sentry import SuperdeskSentry
 from superdesk.storage.amazon.amazon_media_storage import AmazonMediaStorage
+from superdesk.logging import configure_logging
 
 
-def get_app(config=None, media_storage=None):
+def get_app(config=None, media_storage=None, config_object=None):
     """App factory.
 
     :param config: configuration that can override config from `default_settings.py`
+    :param media_storage: media storage class to use
+    :param config_object: config object to load (can be module name, module or an object)
     :return: a new SuperdeskEve app instance
     """
 
@@ -41,6 +44,9 @@ def get_app(config=None, media_storage=None):
     app_config.from_object('superdesk.factory.default_settings')
     app_config.setdefault('APP_ABSPATH', abs_path)
     app_config.setdefault('DOMAIN', {})
+
+    if config_object:
+        app_config.from_object(config_object)
 
     try:
         app_config.update(config or {})
@@ -113,5 +119,7 @@ def get_app(config=None, media_storage=None):
     # instantiate registered provider classes (leave non-classes intact)
     for key, provider in registered_feeding_services.items():
         registered_feeding_services[key] = provider() if isinstance(provider, type) else provider
+
+    configure_logging(app.config['LOG_CONFIG_FILE'])
 
     return app
