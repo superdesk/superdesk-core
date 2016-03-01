@@ -57,6 +57,7 @@ class AapBulletinBuilderFormatterTest(SuperdeskTestCase):
 
         subscriber = self.app.data.find('subscribers', None, None)[0]
         seq, item = self._formatter.format(article, subscriber)[0]
+        item = json.loads(item)
         self.assertGreater(int(seq), 0)
         self.assertEqual(article[config.ID_FIELD], item.get('id'))
         self.assertEqual(article[config.VERSION], item.get('version'))
@@ -87,6 +88,7 @@ class AapBulletinBuilderFormatterTest(SuperdeskTestCase):
 
         subscriber = self.app.data.find('subscribers', None, None)[0]
         seq, item = self._formatter.format(article, subscriber)[0]
+        item = json.loads(item)
         self.assertGreater(int(seq), 0)
         test_article = json.loads(item.get('data'))
         self.assertEqual(test_article['body_text'], body_text)
@@ -111,6 +113,7 @@ class AapBulletinBuilderFormatterTest(SuperdeskTestCase):
 
         subscriber = self.app.data.find('subscribers', None, None)[0]
         seq, item = self._formatter.format(article, subscriber)[0]
+        item = json.loads(item)
         self.assertGreater(int(seq), 0)
         test_article = json.loads(item.get('data'))
         self.assertEqual(test_article['body_text'], body_text)
@@ -132,6 +135,7 @@ class AapBulletinBuilderFormatterTest(SuperdeskTestCase):
 
         subscriber = self.app.data.find('subscribers', None, None)[0]
         seq, item = self._formatter.format(article, subscriber)[0]
+        item = json.loads(item)
         self.assertGreater(int(seq), 0)
         test_article = json.loads(item.get('data'))
         self.assertEqual(test_article['body_text'], body_text)
@@ -158,6 +162,7 @@ class AapBulletinBuilderFormatterTest(SuperdeskTestCase):
 
         subscriber = self.app.data.find('subscribers', None, None)[0]
         seq, item = self._formatter.format(article, subscriber)[0]
+        item = json.loads(item)
         self.assertGreater(int(seq), 0)
         test_article = json.loads(item.get('data'))
         self.assertEqual(test_article['headline'], 'This is a test headline')
@@ -165,6 +170,7 @@ class AapBulletinBuilderFormatterTest(SuperdeskTestCase):
         article['anpa_category'] = [{'qcode': 'a'}]
         article['place'] = [{'qcode': 'VIC', 'name': 'VIC'}]
         seq, item = self._formatter.format(article, subscriber)[0]
+        item = json.loads(item)
         self.assertGreater(int(seq), 0)
         test_article = json.loads(item.get('data'))
         self.assertEqual(test_article['headline'], 'This is a test headline')
@@ -192,6 +198,7 @@ class AapBulletinBuilderFormatterTest(SuperdeskTestCase):
 
         subscriber = self.app.data.find('subscribers', None, None)[0]
         seq, item = self._formatter.format(article, subscriber)[0]
+        item = json.loads(item)
 
         formatted_article = json.loads(item.get('data'))
         self.assertEqual(formatted_article['body_text'],

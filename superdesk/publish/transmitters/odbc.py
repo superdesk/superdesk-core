@@ -12,6 +12,7 @@ from superdesk.publish import register_transmitter
 from superdesk.publish.publish_service import PublishService
 from superdesk.errors import PublishODBCError
 import superdesk
+import json
 
 try:
     import pyodbc
@@ -41,7 +42,7 @@ class ODBCPublishService(PublishService):
 
         try:
             with pyodbc.connect(config['connection_string']) as conn:
-                item = queue_item['formatted_item']
+                item = json.loads(queue_item['formatted_item'])
 
                 ret = self._CallStoredProc(conn, procName=config['stored_procedure'], paramDict=item)
                 conn.commit()

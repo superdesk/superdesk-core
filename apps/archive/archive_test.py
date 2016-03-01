@@ -11,11 +11,10 @@
 
 from bson import ObjectId
 
+from unittest.mock import MagicMock
 from superdesk import get_resource_service
 from test_factory import SuperdeskTestCase
-from eve.utils import date_to_str
 from superdesk.utc import get_expiry_date, utcnow
-from apps.archive.commands import get_overdue_scheduled_items
 from apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.errors import SuperdeskApiError
 from datetime import timedelta, datetime
@@ -184,7 +183,7 @@ class RemoveSpikedContentTestCase(SuperdeskTestCase):
 
         now = utcnow()
         expired_items = get_resource_service(ARCHIVE).get_expired_items(now)
-        self.assertEquals(2, expired_items.count())
+        self.assertEquals(1, expired_items.count())
 
     def test_query_removing_media_files_keeps(self):
         self.app.data.insert(ARCHIVE, [{'state': 'spiked',
@@ -202,25 +201,14 @@ class RemoveSpikedContentTestCase(SuperdeskTestCase):
         deleted = remove_media_files(archive_items[0])
         self.assertFalse(deleted)
 
-    def test_query_getting_overdue_scheduled_content(self):
-
-        self.app.data.insert(ARCHIVE,
-                             [{'schedule_settings': {'utc_publish_schedule': get_expiry_date(-10)},
-                               'state': 'published'}])
-        self.app.data.insert(ARCHIVE,
-                             [{'schedule_settings': {'utc_publish_schedule': get_expiry_date(-10)},
-                               'state': 'scheduled'}])
-        self.app.data.insert(ARCHIVE,
-                             [{'schedule_settings': {'utc_publish_schedule': get_expiry_date(0)},
-                               'state': 'spiked'}])
-        self.app.data.insert(ARCHIVE,
-                             [{'schedule_settings': {'utc_publish_schedule': get_expiry_date(10)},
-                               'state': 'scheduled'}])
-        self.app.data.insert(ARCHIVE, [{'unique_id': 97, 'state': 'spiked'}])
-
-        now = date_to_str(utcnow())
-        overdue_items = get_overdue_scheduled_items(now, 'archive')
-        self.assertEquals(1, overdue_items.count())
+    def test_delete_by_ids(self):
+        ids = self.app.data.insert(ARCHIVE, self.articles)
+        archive_service = get_resource_service(ARCHIVE)
+        archive_service.on_delete = MagicMock()
+        archive_service.delete_by_article_ids(ids)
+        self.assertTrue(self.app.data.elastic.is_empty(ARCHIVE))
+        self.assertTrue(self.app.data.mongo.is_empty(ARCHIVE))
+        self.assertEqual(len(self.articles), archive_service.on_delete.call_count)
 
 
 class ArchiveTestCase(SuperdeskTestCase):
@@ -381,3 +369,79 @@ class ArchiveCommonTestCase(SuperdeskTestCase):
         }
         utc_schedule = get_utc_schedule(content, 'embargo')
         self.assertEqual(utc_schedule, embargo_date)
+
+
+class ExpiredArchiveContentTestCase(SuperdeskTestCase):
+
+    def setUp(self):
+        super().setUp()
+        try:
+            from apps.archive.commands import RemoveExpiredContent
+        except ImportError:
+            self.fail("Could not import class under test (RemoveExpiredContent).")
+        else:
+            self.class_under_test = RemoveExpiredContent
+            self.published_items = [
+                {
+                    '_id': 'item1', 'item_id': 'item1', 'headline': 'headline',
+                    'source': 'aap', 'body_html': 'test', '_current_version': 3,
+                    'moved_to_legal': True
+                },
+                {
+                    '_id': 'item2', 'item_id': 'item2', 'headline': 'headline',
+                    'source': 'aap', 'body_html': 'test', '_current_version': 3,
+                    'moved_to_legal': True
+                },
+                {
+                    '_id': 'item3', 'item_id': 'item3', 'headline': 'headline',
+                    'source': 'aap', 'body_html': 'test', '_current_version': 3,
+                    'moved_to_legal': False
+                },
+                {
+                    '_id': 'item4', 'item_id': 'item4', 'headline': 'headline',
+                    'source': 'aap', 'body_html': 'test', '_current_version': 3,
+                    'moved_to_legal': True
+                }
+            ]
+
+            self.queue_items = [
+                {
+                    '_id': 'item1', 'item_id': 'item1', 'headline': 'headline',
+                    'item_version': 3, 'moved_to_legal': True
+                },
+                {
+                    '_id': 'item2', 'item_id': 'item2', 'headline': 'headline',
+                    'source': 'aap', 'body_html': 'test', 'item_version': 3,
+                    'moved_to_legal': True
+                },
+                {
+                    '_id': 'item3', 'item_id': 'item3', 'headline': 'headline',
+                    'source': 'aap', 'body_html': 'test', 'item_version': 3,
+                    'moved_to_legal': False
+                },
+                {
+                    '_id': 'item4', 'item_id': 'item4', 'headline': 'headline',
+                    'source': 'aap', 'body_html': 'test', 'item_version': 3,
+                    'moved_to_legal': False
+                },
+                {
+                    '_id': 'item5', 'item_id': 'item4', 'headline': 'headline',
+                    'source': 'aap', 'body_html': 'test', 'item_version': 3,
+                    'moved_to_legal': True
+                }
+            ]
+
+            self.app.data.insert('published', self.published_items)
+            self.app.data.insert('publish_queue', self.queue_items)
+
+    def test_items_moved_to_legal_success(self):
+        result = self.class_under_test().check_if_items_imported_to_legal_archive(['item1', 'item2'])
+        self.assertEqual(result, True)
+
+    def test_items_moved_to_legal_fail_if_published_item_not_moved(self):
+        result = self.class_under_test().check_if_items_imported_to_legal_archive(['item2', 'item3'])
+        self.assertEqual(result, False)
+
+    def test_items_moved_to_legal_fail_if_published_queue_item_not_moved(self):
+        result = self.class_under_test().check_if_items_imported_to_legal_archive(['item1', 'item4'])
+        self.assertEqual(result, False)

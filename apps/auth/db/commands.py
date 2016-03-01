@@ -10,7 +10,7 @@
 
 import logging
 from base64 import b64encode
-from flask import current_app as app, json
+from flask import current_app as app
 import superdesk
 from superdesk.utils import get_hash, is_hashed
 
@@ -27,22 +27,21 @@ class CreateUserCommand(superdesk.Command):
         superdesk.Option('--username', '-u', dest='username', required=True),
         superdesk.Option('--password', '-p', dest='password', required=True),
         superdesk.Option('--email', '-e', dest='email', required=True),
-        superdesk.Option('--admin', '-a', dest='admin', required=False),
+        superdesk.Option('--admin', '-a', dest='admin', required=False, action='store_true'),
     )
 
-    def run(self, username, password, email, admin='false'):
+    def run(self, username, password, email, admin=False):
 
         # force type conversion to boolean
-        is_admin = False if admin is None else json.loads(admin)
-        user_type = 'administrator' if is_admin else 'user'
+        user_type = 'administrator' if admin else 'user'
 
         userdata = {
             'username': username,
             'password': password,
             'email': email,
             'user_type': user_type,
-            'is_active': is_admin,
-            'needs_activation': not is_admin
+            'is_active': admin,
+            'needs_activation': not admin
         }
 
         with app.test_request_context('/users', method='POST'):
@@ -53,14 +52,12 @@ class CreateUserCommand(superdesk.Command):
             user = superdesk.get_resource_service('users').find_one(username=userdata.get('username'), req=None)
 
             if user:
-                logger.info('updating user %s' % (userdata))
-                superdesk.get_resource_service('users').patch(user.get('_id'), userdata)
-                return userdata
+                logger.info('user already exists %s' % (userdata))
             else:
                 logger.info('creating user %s' % (userdata))
                 superdesk.get_resource_service('users').post([userdata])
+                logger.info('user saved %s' % (userdata))
 
-            logger.info('user saved %s' % (userdata))
             return userdata
 
 

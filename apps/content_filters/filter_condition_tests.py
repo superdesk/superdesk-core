@@ -27,8 +27,8 @@ class FilterConditionTests(SuperdeskTestCase):
             self.articles = [{'_id': '1', 'urgency': 1, 'headline': 'story', 'state': 'fetched'},
                              {'_id': '2', 'headline': 'prtorque', 'state': 'fetched'},
                              {'_id': '3', 'urgency': 3, 'state': 'fetched'},
-                             {'_id': '4', 'urgency': 4, 'state': 'fetched'},
-                             {'_id': '5', 'urgency': 2, 'state': 'fetched'},
+                             {'_id': '4', 'urgency': 4, 'state': 'fetched', 'task': {'desk': '1'}},
+                             {'_id': '5', 'urgency': 2, 'state': 'fetched', 'task': {'desk': '2'}},
                              {'_id': '6', 'state': 'fetched'},
                              {'_id': '7', 'genre': [{'name': 'Sidebar'}], 'state': 'fetched'},
                              {'_id': '8', 'subject': [{'name': 'adult education',
@@ -98,6 +98,34 @@ class FilterConditionTests(SuperdeskTestCase):
                 get_from_mongo(req=self.req, lookup=query)
             self.assertEqual(1, docs.count())
             self.assertEqual('7', docs[0]['_id'])
+
+    def test_mongo_using_desk_filter_complete_string(self):
+        f = FilterConditionService()
+        doc = {'field': 'desk', 'operator': 'in', 'value': '1'}
+        query = f.get_mongo_query(doc)
+        with self.app.app_context():
+            docs = superdesk.get_resource_service('archive').\
+                get_from_mongo(req=self.req, lookup=query)
+            self.assertEqual(1, docs.count())
+            self.assertEqual('4', docs[0]['_id'])
+
+    def test_mongo_using_desk_filter_nin(self):
+        f = FilterConditionService()
+        doc = {'field': 'desk', 'operator': 'nin', 'value': '1'}
+        query = f.get_mongo_query(doc)
+        with self.app.app_context():
+            docs = superdesk.get_resource_service('archive').\
+                get_from_mongo(req=self.req, lookup=query)
+            self.assertEqual(8, docs.count())
+
+    def test_mongo_using_desk_filter_in_list(self):
+        f = FilterConditionService()
+        doc = {'field': 'desk', 'operator': 'in', 'value': '1,2'}
+        query = f.get_mongo_query(doc)
+        with self.app.app_context():
+            docs = superdesk.get_resource_service('archive').\
+                get_from_mongo(req=self.req, lookup=query)
+            self.assertEqual(2, docs.count())
 
     def test_mongo_using_category_filter_complete_string(self):
         f = FilterConditionService()

@@ -86,8 +86,7 @@ def enqueue_item(published_item):
             logger.info('Publishing scheduled item_id: {}'.format(published_item_id))
             published_update[ITEM_STATE] = CONTENT_STATE.PUBLISHED
             archive_service.patch(published_item['item_id'], {ITEM_STATE: CONTENT_STATE.PUBLISHED})
-            original = archive_service.find_one(req=None, _id=published_item['item_id'])
-            import_into_legal_archive.apply_async(kwargs={'doc': original})
+            import_into_legal_archive.apply_async(countdown=3, kwargs={'item_id': published_item['item_id']})
 
         published_service.patch(published_item_id, published_update)
         get_enqueue_service(published_item[ITEM_OPERATION]).enqueue_item(published_item)

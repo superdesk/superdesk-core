@@ -11,6 +11,7 @@
 from test_factory import SuperdeskTestCase
 from apps.publish import init_app
 from apps.publish.formatters.aap_sms_formatter import AAPSMSFormatter
+import json
 
 
 class AapSMSFormatterTest(SuperdeskTestCase):
@@ -40,6 +41,7 @@ class AapSMSFormatterTest(SuperdeskTestCase):
 
         f = AAPSMSFormatter()
         seq, item = f.format(self.article, subscriber)[0]
+        item = json.loads(item)
 
         self.assertGreater(int(seq), 0)
         self.assertDictEqual(item, {'Category': 'a', 'Priority': 'f', 'Sequence': item['Sequence'], 'ident': '0',
