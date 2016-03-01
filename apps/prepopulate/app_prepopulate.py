@@ -24,6 +24,8 @@ from eve.utils import date_to_str
 from flask import current_app as app
 from eve.versioning import insert_versioning_documents
 from bson.objectid import ObjectId
+from apps.search_providers import allowed_search_providers,\
+    register_search_provider
 
 
 def apply_placeholders(placeholders, text):
@@ -153,6 +155,10 @@ class PrepopulateService(BaseService):
             if not user:
                 get_resource_service('users').post([get_default_user()])
             prepopulate_data(doc.get('profile') + '.json', get_default_user())
+            if app.config.get('SUPERDESK_TESTING'):
+                for provider in ['paimg', 'aapmm']:
+                    if provider not in allowed_search_providers:
+                        register_search_provider(provider, provider)
         return ['OK']
 
 
