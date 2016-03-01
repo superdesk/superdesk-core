@@ -19,7 +19,7 @@ import superdesk
 from superdesk.errors import InvalidStateTransitionError, SuperdeskApiError, PublishQueueError
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, GUID_FIELD, ITEM_STATE, CONTENT_STATE, \
     PUBLISH_STATES, EMBARGO, PUB_STATUS, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS
-from superdesk.metadata.packages import SEQUENCE, LINKED_IN_PACKAGES, GROUPS, PACKAGE
+from superdesk.metadata.packages import SEQUENCE, LINKED_IN_PACKAGES, GROUPS, PACKAGE, RESIDREF
 from superdesk.metadata.utils import item_url
 from superdesk.notification import push_notification
 from superdesk.publish import SUBSCRIBER_TYPES
@@ -95,6 +95,7 @@ class BasePublishService(BaseService):
         self._validate(original, updates)
         self._set_updates(original, updates, updates.get(config.LAST_UPDATED, utcnow()))
         convert_task_attributes_to_objectId(updates)  # ???
+        self._process_publish_updates(original, updates)
 
     def on_updated(self, updates, original):
         original = get_resource_service(ARCHIVE).find_one(req=None, _id=original[config.ID_FIELD])
@@ -114,51 +115,19 @@ class BasePublishService(BaseService):
         """
         try:
             user = get_user()
-            last_updated = updates.get(config.LAST_UPDATED, utcnow())
             auto_publish = updates.pop('auto_publish', False)
 
             if original[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
                 self._publish_package_items(original, updates)
-                self._process_publish_updates(original, updates)
                 self._update_archive(original, updates, should_insert_into_versions=auto_publish)
             else:
                 self._publish_associations(original, id)
                 updated = deepcopy(original)
                 updated.update(updates)
-                # if target_for is set the we don't to digital client.
-                targeted_for = updates.get('targeted_for', original.get('targeted_for'))
-                if original[ITEM_TYPE] in {CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED} \
-                        and not (targeted_for or is_genre(original, BROADCAST_GENRE)):
 
-                    # check if item is in a digital package
-                    package = self.takes_package_service.get_take_package(original)
+                if self.published_state != CONTENT_STATE.KILLED:
+                    self._process_takes_package(original, updated, updates)
 
-                    if not package:
-                        '''
-                        If type of the item is text or preformatted then item need to be sent to
-                        digital subscribers, so package the item as a take.
-                        '''
-                        package_id = self.takes_package_service.package_story_as_a_take(updated, {}, None)
-                        package = get_resource_service(ARCHIVE).find_one(req=None, _id=package_id)
-
-                    package_id = package[config.ID_FIELD]
-                    package_updates = self.process_takes(updates_of_take_to_be_published=updates,
-                                                         original_of_take_to_be_published=original,
-                                                         package=package)
-
-                    # If the original package is corrected then the next take shouldn't change it
-                    # back to 'published'
-                    preserve_state = package.get(ITEM_STATE, '') == CONTENT_STATE.CORRECTED and \
-                        updates.get(ITEM_OPERATION, ITEM_PUBLISH) == ITEM_PUBLISH
-
-                    self._set_updates(package, package_updates, last_updated, preserve_state)
-                    package_updates.setdefault(ITEM_OPERATION, updates.get(ITEM_OPERATION, ITEM_PUBLISH))
-                    self._update_archive(package, package_updates)
-                    package.update(package_updates)
-                    self.update_published_collection(published_item_id=package_id)
-                    self._import_into_legal_archive(package)
-
-                self._process_publish_updates(original, updates)
                 self._update_archive(original, updated, should_insert_into_versions=auto_publish)
                 self.update_published_collection(published_item_id=original[config.ID_FIELD], updated=updated)
 
@@ -176,6 +145,36 @@ class BasePublishService(BaseService):
         except Exception as e:
             logger.exception("Something bad happened while publishing %s".format(id))
             raise SuperdeskApiError.internalError(message="Failed to publish the item: {}".format(str(e)))
+
+    def _process_takes_package(self, original, updated, updates):
+        # if target_for is set then we don't to digital client.
+        targeted_for = updates.get('targeted_for', original.get('targeted_for'))
+        if original[ITEM_TYPE] in {CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED} \
+                and not (targeted_for or is_genre(original, BROADCAST_GENRE)):
+            # check if item is in a digital package
+            last_updated = updates.get(config.LAST_UPDATED, utcnow())
+            package = self.takes_package_service.get_take_package(original)
+            if not package:
+                '''
+                If type of the item is text or preformatted then item need to be sent to
+                digital subscribers, so package the item as a take.
+                '''
+                package_id = self.takes_package_service.package_story_as_a_take(updated, {}, None)
+                package = get_resource_service(ARCHIVE).find_one(req=None, _id=package_id)
+            package_id = package[config.ID_FIELD]
+            package_updates = self.process_takes(updates_of_take_to_be_published=updates,
+                                                 original_of_take_to_be_published=original,
+                                                 package=package)
+            # If the original package is corrected then the next take shouldn't change it
+            # back to 'published'
+            preserve_state = package.get(ITEM_STATE, '') == CONTENT_STATE.CORRECTED and \
+                updates.get(ITEM_OPERATION, ITEM_PUBLISH) == ITEM_PUBLISH
+            self._set_updates(package, package_updates, last_updated, preserve_state)
+            package_updates.setdefault(ITEM_OPERATION, updates.get(ITEM_OPERATION, ITEM_PUBLISH))
+            self._update_archive(package, package_updates)
+            package.update(package_updates)
+            self.update_published_collection(published_item_id=package_id)
+            self._import_into_legal_archive(package)
 
     def _validate(self, original, updates):
         self.raise_if_not_marked_for_publication(original)
@@ -341,11 +340,25 @@ class BasePublishService(BaseService):
                 if metadata in metadata_from:
                     package_updates[metadata] = metadata_from.get(metadata)
 
+            if self.published_state == 'killed':
+                # if published then update the groups in the take
+                # to reflect the correct version, headline and slugline
+                archive_service = get_resource_service(ARCHIVE)
+                for ref in take_refs:
+                    if ref.get(RESIDREF) != take_article_id:
+                        archive_item = archive_service.find_one(req=None, _id=ref.get(RESIDREF))
+                        ref['headline'] = archive_item.get('headline')
+                        ref['slugline'] = archive_item.get('slugline')
+                        ref[config.VERSION] = archive_item.get(config.VERSION)
+
+            take_ref = next((ref for ref in take_refs if ref.get(RESIDREF) == take_article_id), None)
+            if take_ref:
+                # for published take update the version, headline and slugline
+                take_ref['headline'] = updated_take.get('headline')
+                take_ref['slugline'] = updated_take.get('slugline')
+                take_ref[config.VERSION] = updated_take.get(config.VERSION)
+
             package_updates[GROUPS] = groups
-            self.package_service.update_field_in_package(package_updates,
-                                                         original_of_take_to_be_published[config.ID_FIELD],
-                                                         config.VERSION,
-                                                         updates_of_take_to_be_published[config.VERSION])
 
         return package_updates
 
@@ -445,7 +458,6 @@ class BasePublishService(BaseService):
         updates.setdefault(config.LAST_UPDATED, last_updated)
 
         if original[config.VERSION] == updates.get(config.VERSION, original[config.VERSION]):
-            resolve_document_version(document=updates, resource=ARCHIVE, method='PATCH', latest_doc=original)
             resolve_document_version(document=updates, resource=ARCHIVE, method='PATCH', latest_doc=original)
 
         if updates.get(EMBARGO, original.get(EMBARGO)) \

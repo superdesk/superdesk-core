@@ -16,7 +16,7 @@ from superdesk.metadata.packages import PACKAGE_TYPE
 from superdesk import get_resource_service
 from superdesk.utc import utcnow
 import logging
-from copy import copy
+from copy import copy, deepcopy
 from superdesk.emails import send_article_killed_email
 from superdesk.errors import SuperdeskApiError
 from apps.archive.common import ITEM_OPERATION, ARCHIVE, insert_into_versions
@@ -64,6 +64,9 @@ class KillPublishService(BasePublishService):
         self.broadcast_kill_email(original)
         super().update(id, updates, original)
         self._publish_kill_for_takes(updates, original)
+        updated = deepcopy(original)
+        updated.update(updates)
+        self._process_takes_package(original, updated, updates)
         get_resource_service('archive_broadcast').kill_broadcast(updates, original)
 
     def broadcast_kill_email(self, original):
