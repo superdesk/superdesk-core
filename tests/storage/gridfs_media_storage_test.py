@@ -13,7 +13,6 @@ class GridFSMediaStorageTestCase(unittest.TestCase):
 
     def setUp(self):
         self.app = flask.Flask(__name__)
-        self.app.config['SERVER_NAME'] = 'localhost'
         self.app.config['DOMAIN'] = {'upload': {}}
         self.app.data = SuperdeskDataLayer(self.app)
         self.media = SuperdeskGridFSMediaStorage(self.app)
