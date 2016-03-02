@@ -10,6 +10,7 @@
 
 import requests
 import re
+from . import macro_replacement_fields
 
 RATE_SERVICE = 'http://download.finance.yahoo.com/d/quotes.csv?s={}=X&f=nl1d1'
 
@@ -38,7 +39,7 @@ def do_conversion(item, rate, prefix, search_param):
         diff.setdefault(match.group(0), prefix % to_value)
         return diff[match.group(0)]
 
-    for field in ['body_html', 'body_text', 'abstract', 'headline', 'slugline']:
+    for field in macro_replacement_fields:
         if item.get(field, None):
             item[field] = re.sub(search_param, convert, item[field])
 

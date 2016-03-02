@@ -10,7 +10,7 @@ import sys
 import imp
 import importlib
 
-
+macro_replacement_fields = {'body_html', 'body_text', 'abstract', 'headline', 'slugline', 'description_text'}
 macros_folder = os.path.realpath(os.path.dirname(__file__))
 
 macros = [f[:-3] for f in os.listdir(macros_folder)

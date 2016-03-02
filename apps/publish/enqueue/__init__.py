@@ -51,7 +51,7 @@ def get_enqueue_service(operation):
 class EnqueueContent(superdesk.Command):
     """Runs deliveries"""
 
-    def run(self, provider_type=None):
+    def run(self):
         """
         Fetches items from publish queue as per the configuration,
         calls the transmit function.
