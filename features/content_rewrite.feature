@@ -656,3 +656,95 @@ Feature: Rewrite content
             "linked_in_packages": [{"package_type" : "takes","package" : "#TAKE_PACKAGE#"}]
         }
         """
+
+    @auth
+    Scenario: Associate a story as update
+      Given the "validators"
+      """
+        [
+        {
+            "schema": {},
+            "type": "text",
+            "act": "publish",
+            "_id": "publish_text"
+        },
+        {
+            "_id": "publish_composite",
+            "act": "publish",
+            "type": "composite",
+            "schema": {}
+        }
+        ]
+      """
+      And "desks"
+      """
+      [{"name": "Sports"}]
+      """
+      And "archive"
+      """
+      [{"guid": "123", "type": "text", "headline": "test", "_current_version": 1, "state": "fetched",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "subject":[{"qcode": "17004000", "name": "Statistics"}],
+        "body_html": "Test Document body", "genre": [{"name": "Article", "value": "Article"}],
+        "flags": {"marked_for_legal": true},
+        "body_footer": "Suicide Call Back Service 1300 659 467",
+        "place": [{"qcode" : "ACT", "world_region" : "Oceania", "country" : "Australia",
+        "name" : "ACT", "state" : "Australian Capital Territory"}],
+        "company_codes" : [{"qcode" : "1PG", "security_exchange" : "ASX", "name" : "1-PAGE LIMITED"}]
+      },{"guid": "456", "type": "text", "headline": "test", "_current_version": 1, "state": "submitted"}]
+      """
+      When we post to "/stages"
+      """
+      [
+        {
+        "name": "another stage",
+        "description": "another stage",
+        "task_status": "in_progress",
+        "desk": "#desks._id#"
+        }
+      ]
+      """
+      And we post to "/archive/123/move"
+        """
+        [{"task": {"desk": "#desks._id#", "stage": "#stages._id#"}}]
+        """
+      Then we get OK response
+      When we post to "/subscribers" with success
+      """
+      {
+        "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
+      And we publish "123" with "publish" type and "published" state
+      Then we get OK response
+      And we get existing resource
+      """
+      {"_current_version": 3, "state": "published", "task":{"desk": "#desks._id#", "stage": "#stages._id#"}}
+      """
+      When we get "/published"
+      Then we get existing resource
+      """
+      {"_items" : [{"_id": "123", "guid": "123", "headline": "test", "_current_version": 3, "state": "published",
+        "task": {"desk": "#desks._id#", "stage": "#stages._id#", "user": "#CONTEXT_USER_ID#"}}]}
+      """
+      When we rewrite "123"
+      """
+      {"update": {"_id": "456", "type": "text", "headline": "test", "_current_version": 1, "state": "submitted"}}
+      """
+      When we get "/published"
+      Then we get existing resource
+      """
+      {"_items" : [{"_id": "123", "rewritten_by": "456"},
+                   {"package_type": "takes", "rewritten_by": "456"}]}
+      """
+      When we get "/archive/456"
+      Then we get existing resource
+      """
+      {"_id": "456", "anpa_take_key": "update", "rewrite_of": "#archive.123.take_package#"}
+      """
+      When we get "/archive/123"
+      Then we get existing resource
+      """
+      {"_id": "123", "rewritten_by": "456", "place": [{"qcode" : "ACT"}]}
+      """
