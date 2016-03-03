@@ -463,7 +463,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
         if rend:
             baseImageRend = rend.get('baseImage') or next(iter(rend.values()))
             if baseImageRend:
-                href = feeding_service.prepare_href(baseImageRend['href'])
+                href = feeding_service.prepare_href(baseImageRend['href'], rend.get('mimetype'))
                 update_renditions(item, href, old_item)
 
         new_version = True

@@ -19,7 +19,8 @@ from apps.io.tests import setup_providers, teardown_providers
 from features.steps.steps import get_macro_path
 from .test_settings import LDAP_SERVER, AMAZON_CONTAINER_NAME, \
     AMAZON_ACCESS_KEY_ID, AMAZON_SECRET_ACCESS_KEY, AMAZON_REGION, \
-    AMAZON_SERVE_DIRECT_LINKS, AMAZON_S3_USE_HTTPS
+    AMAZON_SERVE_DIRECT_LINKS, AMAZON_S3_USE_HTTPS, AMAZON_SERVER, \
+    AMAZON_PROXY_SERVER, AMAZON_URL_GENERATOR
 from test_factory import setup_auth_user
 
 
@@ -34,6 +35,9 @@ def setup_before_all(context, config, app_factory):
         config['AMAZON_REGION'] = AMAZON_REGION
         config['AMAZON_SERVE_DIRECT_LINKS'] = AMAZON_SERVE_DIRECT_LINKS
         config['AMAZON_S3_USE_HTTPS'] = AMAZON_S3_USE_HTTPS
+        config['AMAZON_SERVER'] = AMAZON_SERVER
+        config['AMAZON_PROXY_SERVER'] = AMAZON_PROXY_SERVER
+        config['AMAZON_URL_GENERATOR'] = AMAZON_URL_GENERATOR
 
     # set the MAX_TRANSMIT_RETRY_ATTEMPT to zero so that transmit does not retry
     config['MAX_TRANSMIT_RETRY_ATTEMPT'] = 0

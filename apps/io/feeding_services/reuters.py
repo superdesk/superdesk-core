@@ -262,7 +262,7 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
 
         return items
 
-    def prepare_href(self, href):
+    def prepare_href(self, href, mimetype=None):
         (scheme, netloc, path, params, query, fragment) = urlparse(href)
         new_href = urlunparse((scheme, netloc, path, '', '', ''))
         return '%s?auth_token=%s' % (new_href, self._get_auth_token(self.provider, update=True))

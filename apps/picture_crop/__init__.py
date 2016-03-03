@@ -56,7 +56,7 @@ class PictureCropService(superdesk.Service):
             ok, output = crop_image(orig_file, filename, crop, size)
             if ok:
                 media = app.media.put(output, filename, orig['mimetype'])
-                doc['href'] = app.media.url_for_media(media)
+                doc['href'] = app.media.url_for_media(media, orig['mimetype'])
                 doc['width'] = output.width
                 doc['height'] = output.height
                 ids.append(media)
