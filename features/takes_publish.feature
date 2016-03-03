@@ -486,7 +486,16 @@ Feature: Take Package Publishing
                   "body_html": "Killed",
                   "headline": "Story is Killed",
                   "slugline": "killed",
-                  "last_published_version": true
+                  "last_published_version": true,
+                  "groups": [
+                    {"refs": [{"idRef" : "main"}], "id": "root"},
+                    {"refs":[
+                      {"_current_version": 4, "guid": "123"},
+                      {"_current_version": 5, "guid": "#TAKE2#"},
+                      {"_current_version": 5, "guid": "#TAKE3#"}
+                    ],
+                    "id" : "main"}
+                  ]
               }
           ]
       }
@@ -1211,7 +1220,7 @@ Feature: Take Package Publishing
       }
       """
 
-    @auth @test @vocabulary
+    @auth @vocabulary
     Scenario: Publishing of Takes with different metadata should go to at least subscribers that received first take
         Given the "validators"
         """
