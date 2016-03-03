@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import json
 from unittest.mock import MagicMock
 from datetime import timedelta
 from .commands import LegalArchiveImport
@@ -16,6 +17,7 @@ from superdesk.utc import utcnow
 from superdesk import get_resource_service
 from eve.versioning import resolve_document_version
 from apps.archive.common import insert_into_versions, ARCHIVE
+from eve.utils import ParsedRequest
 
 
 class LegalArchiveTestCase(SuperdeskTestCase):
@@ -37,9 +39,9 @@ class LegalArchiveTestCase(SuperdeskTestCase):
 
     def setUp(self):
         super().setUp()
-        self.app.data.insert("desks", self.desks)
-        self.app.data.insert("users", self.users)
-        self.app.data.insert("stages", self.stages)
+        self.app.data.insert('desks', self.desks)
+        self.app.data.insert('users', self.users)
+        self.app.data.insert('stages', self.stages)
 
     def test_denormalize_desk_user(self):
         LegalArchiveImport()._denormalize_user_desk(self.archive[0], '')
@@ -72,7 +74,7 @@ class ImportLegalArchiveCommandTestCase(SuperdeskTestCase):
         try:
             from apps.legal_archive.commands import ImportLegalArchiveCommand
         except ImportError:
-            self.fail("Could not import class under test (ImportLegalArchiveCommand).")
+            self.fail('Could not import class under test (ImportLegalArchiveCommand).')
         else:
             self.class_under_test = ImportLegalArchiveCommand
             self.app.data.insert('desks', self.desks)
@@ -98,7 +100,14 @@ class ImportLegalArchiveCommandTestCase(SuperdeskTestCase):
                 }
             ]
 
-            self.app.data.insert("validators", self.validators)
+            self.subscribers = [
+                {'name': 'Test', 'is_active': True, 'subscriber_type': 'wire',
+                 'email': 'test@test.com', 'sequence_num_settings': {'max': 9999, 'min': 1},
+                 'destinations': [{'name': 'test', 'delivery_type': 'email', 'format': 'nitf',
+                                   'config': {'recipients': 'test@test.com'}}]}
+            ]
+            self.app.data.insert('validators', self.validators)
+            self.app.data.insert('subscribers', self.subscribers)
             self.class_under_test = ImportLegalArchiveCommand
             self.archive_items = [
                 {
@@ -132,6 +141,7 @@ class ImportLegalArchiveCommandTestCase(SuperdeskTestCase):
         legal_archive = get_resource_service('legal_archive')
         archive = get_resource_service('archive_publish')
         published = get_resource_service('published')
+        publish_queue = get_resource_service('publish_queue')
 
         self.original_method = LegalArchiveImport.upsert_into_legal_archive
         LegalArchiveImport.upsert_into_legal_archive = MagicMock()
@@ -172,3 +182,12 @@ class ImportLegalArchiveCommandTestCase(SuperdeskTestCase):
             published_items = list(published.get_other_published_items(item['_id']))
             for published_item in published_items:
                 self.assertEqual(published_item['moved_to_legal'], True)
+
+        # items are moved to legal publish queue
+        for item in self.archive_items:
+            req = ParsedRequest()
+            req.where = json.dumps({'item_id': item['_id']})
+            queue_items = list(publish_queue.get(req=req, lookup=None))
+            self.assertGreaterEqual(len(queue_items), 1)
+            for queue_item in queue_items:
+                self.assertEqual(queue_item['moved_to_legal'], True)

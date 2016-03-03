@@ -158,6 +158,10 @@ CELERY_ROUTES = {
         'queue': 'publish',
         'routing_key': 'publish.enqueue'
     },
+    'apps.legal_archive.import_legal_archive': {
+        'queue': 'legal',
+        'routing_key': 'legal.archive'
+    }
 }
 
 
@@ -197,6 +201,10 @@ CELERYBEAT_SCHEDULE = {
         'task': 'apps.publish.enqueue.enqueue_published',
         'schedule': timedelta(seconds=10)
     },
+    'legal:import_legal_archive': {
+        'task': 'apps.legal_archive.import_legal_archive',
+        'schedule': crontab(minute=30, hour=0)
+    }
 }
 
 SENTRY_DSN = env('SENTRY_DSN')

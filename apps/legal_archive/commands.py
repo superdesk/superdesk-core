@@ -195,7 +195,8 @@ class LegalArchiveImport:
         set the moved to legal flag.
         :param dict doc: document
         """
-        get_resource_service('published').set_moved_to_legal(doc.get(config.ID_FIELD), doc.get(config.VERSION),
+        get_resource_service('published').set_moved_to_legal(doc.get(config.ID_FIELD),
+                                                             doc.get(config.VERSION),
                                                              True)
 
     def import_legal_publish_queue(self):
@@ -211,6 +212,16 @@ class LegalArchiveImport:
             logger.info('No Items to import.')
             return
 
+        self.process_queue_items(queue_items)
+
+        logger.info('Completed importing of publish queue items {}.'.format(max_date))
+
+    def process_queue_items(self, queue_items, force_move=False):
+        """
+        Process queue items.
+        :param list queue_items: list of queue item to be
+        :param bool force_move:
+        """
         logger.info('Items to import {}.'.format(len(queue_items)))
         logger.info('Get subscribers info for de-normalising queue items.')
         subscriber_ids = list({str(queue_item['subscriber_id']) for queue_item in queue_items})
@@ -220,11 +231,9 @@ class LegalArchiveImport:
 
         for queue_item in queue_items:
             try:
-                self._upsert_into_legal_archive_publish_queue(queue_item, subscribers)
+                self._upsert_into_legal_archive_publish_queue(queue_item, subscribers, force_move)
             except:
                 logger.exception("Failed to import publish queue item. {}".format(queue_item.get(config.ID_FIELD)))
-
-        logger.info('Completed importing of publish queue items {}.'.format(max_date))
 
     def _get_publish_queue_items_to_import(self, max_date):
         """
@@ -254,11 +263,12 @@ class LegalArchiveImport:
         queue_item = list(legal_publish_queue_service.get(req=req, lookup={}))
         return queue_item[0][config.LAST_UPDATED] if queue_item else None
 
-    def _upsert_into_legal_archive_publish_queue(self, queue_item, subscribers):
+    def _upsert_into_legal_archive_publish_queue(self, queue_item, subscribers, force_move):
         """
         Upsert into legal publish queue.
         :param dict queue_item: publish_queue collection item
         :param dict subscribers: subscribers information
+        :param bool force_move: true set the flag to move to legal.
         """
         legal_publish_queue_service = get_resource_service(LEGAL_PUBLISH_QUEUE_NAME)
         legal_queue_item = queue_item.copy()
@@ -283,7 +293,9 @@ class LegalArchiveImport:
             legal_publish_queue_service.put(existing_queue_item.get(config.ID_FIELD), legal_queue_item)
             logger.info('Updated queue item: {}'.format(log_msg))
 
-        if queue_item['state'] in {QueueState.SUCCESS.value, QueueState.CANCELED.value, QueueState.FAILED.value}:
+        if queue_item['state'] in {QueueState.SUCCESS.value,
+                                   QueueState.CANCELED.value,
+                                   QueueState.FAILED.value} or force_move:
             updates = dict()
             updates['moved_to_legal'] = True
 
@@ -350,13 +362,25 @@ class ImportLegalArchiveCommand(superdesk.Command):
             return
         try:
             legal_archive_import = LegalArchiveImport()
+            publish_queue = get_resource_service('publish_queue')
             for items in self.get_expired_items(page_size):
                 for item in items:
                     try:
                         legal_archive_import.upsert_into_legal_archive(item.get('item_id'))
+                        req = ParsedRequest()
+                        req.where = json.dumps({'item_id': item['item_id']})
+                        queue_items = list(publish_queue.get(req=req, lookup=None))
+                        if queue_items:
+                            try:
+                                logger.info('Import to Legal Publish Queue')
+                                legal_archive_import.process_queue_items(queue_items, True)
+                            except:
+                                logger.exception('Failed to import into legal publish queue  '
+                                                 'archive via command {}.'.format(item.get('item_id')))
                     except:
                         logger.exception('Failed to import into legal '
                                          'archive via command {}.'.format(item.get('item_id')))
+
         except:
             logger.exception('Failed to import into legal archive.')
         finally:
