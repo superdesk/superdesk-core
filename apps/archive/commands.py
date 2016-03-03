@@ -60,21 +60,23 @@ class RemoveExpiredContent(superdesk.Command):
             logger.info('{} No items found to expire.'.format(self.log_msg))
             return
 
-        # Step 1: Get the spiked killed Items
-        spiked_killed_items = [item for item in expired_items
-                               if item.get(ITEM_STATE) in {CONTENT_STATE.KILLED, CONTENT_STATE.SPIKED}]
+        # delete spiked items
+        self.delete_spiked_items(expired_items)
+
+        # get killed items
+        killed_items = [item for item in expired_items if item.get(ITEM_STATE) in {CONTENT_STATE.KILLED}]
 
         items_to_remove = set()
         items_to_be_archived = set()
 
-        # Step 2: Get the not killed and spiked items
+        # Get the not killed and spiked items
         not_killed_items = [item for item in expired_items
                             if item.get(ITEM_STATE) not in {CONTENT_STATE.KILLED, CONTENT_STATE.SPIKED}]
 
         log_msg_format = "{{'_id': {_id}, 'unique_name': {unique_name}, 'version': {_current_version}, " \
                          "'expired_on': {expiry}}}."
 
-        # Step 3: Processing items to expire
+        # Processing items to expire
         for item in not_killed_items:
             item_id = item.get(config.ID_FIELD)
             item.setdefault(config.VERSION, 1)
@@ -90,7 +92,7 @@ class RemoveExpiredContent(superdesk.Command):
                 logger.info('{} Items to be removed. {}'.format(self.log_msg, processed_items))
                 items_to_be_archived = items_to_be_archived | processed_items
 
-        items_to_expire = items_to_be_archived | set([item.get(config.ID_FIELD) for item in spiked_killed_items
+        items_to_expire = items_to_be_archived | set([item.get(config.ID_FIELD) for item in killed_items
                                                       if item.get(ITEM_STATE) == CONTENT_STATE.KILLED])
 
         if not self.check_if_items_imported_to_legal_archive(list(items_to_expire)):
@@ -102,14 +104,12 @@ class RemoveExpiredContent(superdesk.Command):
         for item in items_to_be_archived:
             self._move_to_archived(item)
 
-        for item in spiked_killed_items:
+        for item in killed_items:
             # delete from the published collection and queue
             msg = log_msg_format.format(**item)
             try:
-                if item.get(ITEM_STATE) == CONTENT_STATE.KILLED:
-                    published_service.delete_by_article_id(item.get(config.ID_FIELD))
-                    logger.info('{} Deleting killed item from published. {}'.format(self.log_msg, msg))
-
+                published_service.delete_by_article_id(item.get(config.ID_FIELD))
+                logger.info('{} Deleting killed item from published. {}'.format(self.log_msg, msg))
                 items_to_remove.add(item.get(config.ID_FIELD))
             except:
                 logger.exception('{} Failed to delete killed item from published. {}'.format(self.log_msg, msg))
@@ -118,7 +118,7 @@ class RemoveExpiredContent(superdesk.Command):
             logger.info('{} Deleting articles.: {}'.format(self.log_msg, items_to_remove))
             archive_service.delete_by_article_ids(list(items_to_remove))
 
-        logger.info('{} Deleting killed and spiked items from archive.'.format(self.log_msg))
+        logger.info('{} Deleting killed from archive.'.format(self.log_msg))
 
     def _can_remove_item(self, item, processed_item=None):
         """
@@ -191,6 +191,22 @@ class RemoveExpiredContent(superdesk.Command):
         except:
             failed_items = [item.get(config.ID_FIELD) for item in published_items]
             logger.exception('{} Failed to move to archived. {}'.format(self.log_msg, failed_items))
+
+    def delete_spiked_items(self, items):
+        """
+        delete spiked items.
+        :param list items:
+        """
+        try:
+            logger.info('{} deleting spiked items.'.format(self.log_msg))
+            spiked_ids = [item.get(config.ID_FIELD) for item in items
+                          if item.get(ITEM_STATE) in {CONTENT_STATE.SPIKED}]
+            if spiked_ids:
+                logger.warning('{} deleting spiked items: {}.'.format(self.log_msg, spiked_ids))
+                get_resource_service('archive').delete_by_article_ids(spiked_ids)
+            logger.info('{} deleted spiked items.'.format(self.log_msg))
+        except:
+            logger.exception('{} Failed to delete spiked items.'.format(self.log_msg))
 
     def check_if_items_imported_to_legal_archive(self, item_ids):
         """
