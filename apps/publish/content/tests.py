@@ -558,7 +558,9 @@ class ArchivePublishTestCase(SuperdeskTestCase):
 
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(2, queue_items.count())
-        self.assertEqual('3', queue_items[0]["subscriber_id"])
+        expected_subscribers = ['3', '5']
+        for item in queue_items:
+            self.assertIn(item["subscriber_id"], expected_subscribers, 'item {}'.format(item))
 
     def test_queue_transmission_for_wire_channels(self):
         self._is_publish_queue_empty()
@@ -571,10 +573,9 @@ class ArchivePublishTestCase(SuperdeskTestCase):
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
 
         self.assertEqual(5, queue_items.count())
-        expected_subscribers = ['1', '2', '5']
-        self.assertIn(queue_items[0]["subscriber_id"], expected_subscribers)
-        self.assertIn(queue_items[1]["subscriber_id"], expected_subscribers)
-        self.assertIn(queue_items[2]["subscriber_id"], expected_subscribers)
+        expected_subscribers = ['1', '2', '4', '5']
+        for item in queue_items:
+            self.assertIn(item['subscriber_id'], expected_subscribers, 'item {}'.format(item))
 
     def test_queue_transmission_wrong_article_type_fails(self):
         self._is_publish_queue_empty()
@@ -655,10 +656,9 @@ class ArchivePublishTestCase(SuperdeskTestCase):
         enqueue_published()
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(4, queue_items.count())
-        expected_subscribers = ['1', '2']
-        self.assertIn(queue_items[0]["subscriber_id"], expected_subscribers)
-        self.assertIn(queue_items[1]["subscriber_id"], expected_subscribers)
-        self.assertIn(queue_items[2]["subscriber_id"], expected_subscribers)
+        expected_subscribers = ['1', '2', '4']
+        for item in queue_items:
+            self.assertIn(item["subscriber_id"], expected_subscribers, 'item {}'.format(item))
 
     def test_maintain_latest_version_for_published(self):
         def get_publish_items(item_id, last_version):
