@@ -246,6 +246,14 @@ metadata_schema = {
         'type': 'string',
         'nullable': True
     },
+    'copyrightnotice': {
+        'type': 'string',
+        'nullable': True
+    },
+    'usageterms': {
+        'type': 'string',
+        'nullable': True
+    },
     'groups': {
         'type': 'list',
         'minlength': 1
