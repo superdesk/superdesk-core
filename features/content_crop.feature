@@ -169,7 +169,8 @@ Feature: Cropping the Image Articles
       """
       {
         "headline": "Testing",
-        "renditions": {"4-3" : {"CropLeft":10,"CropRight":810,"CropTop":10,"CropBottom":610}}
+        "renditions": {"4-3" : {"CropLeft":10,"CropRight":810,"CropTop":10,"CropBottom":610}},
+        "correction_sequence": "2"
       }
       """
       Then we get updated response

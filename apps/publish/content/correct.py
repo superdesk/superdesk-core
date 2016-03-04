@@ -40,6 +40,7 @@ class CorrectPublishService(BasePublishService):
         super().on_update(updates, original)
         updates[ITEM_OPERATION] = ITEM_CORRECT
         updates['versioncreated'] = utcnow()
+        updates['correction_sequence'] = original.get('correction_sequence', 1) + 1
         set_sign_off(updates, original)
 
     def on_updated(self, updates, original):
