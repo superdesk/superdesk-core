@@ -188,6 +188,10 @@ metadata_schema = {
         'type': 'string',
         'nullable': True,
     },
+    'correction_sequence': {
+        'type': 'integer',
+        'mapping': not_analyzed
+    },
     'keywords': {
         'type': 'list',
         'mapping': not_analyzed
