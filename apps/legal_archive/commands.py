@@ -351,10 +351,10 @@ class ImportLegalArchiveCommand(superdesk.Command):
     default_page_size = 500
 
     option_list = [
-        superdesk.Option('--page-size', '-p', dest='page_size')
+        superdesk.Option('--page-size', '-p', dest='page_size', required=False)
     ]
 
-    def run(self, page_size):
+    def run(self, page_size=None):
         logger.info('Import to Legal Archive')
         lock_name = get_lock_id('legal_archive', 'import_to_legal_archive')
         page_size = int(page_size) if page_size else self.default_page_size
