@@ -129,7 +129,6 @@ Feature: Templates
         Then next run is on monday "2310"
 
         When we run create content task
-        And we run create content task
         And we get "/archive"
         Then we get list with 1 items
         """
