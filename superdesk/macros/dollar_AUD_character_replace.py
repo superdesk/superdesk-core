@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import re
+from . import macro_replacement_fields
 
 
 def find_and_replace(item, **kwargs):
@@ -17,7 +18,7 @@ def find_and_replace(item, **kwargs):
 
     aud = 'AUD '
 
-    for field in ['body_html', 'body_text', 'abstract', 'headline', 'slugline']:
+    for field in macro_replacement_fields:
         if item.get(field, None):
             item[field] = re.sub('[$]', aud, item[field])
 
