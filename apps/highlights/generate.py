@@ -52,7 +52,8 @@ class GenerateHighlightsService(superdesk.Service):
                     if 'residRef' in ref:
                         item = service.find_one(req=None, _id=ref.get('residRef'))
                         if item:
-                            if not export and (item.get('lock_session') or item.get('state') != 'published'):
+                            if not (export or preview) and \
+                                    (item.get('lock_session') or item.get('state') != 'published'):
                                 message = 'Locked or not published items in highlight list.'
                                 raise SuperdeskApiError.forbiddenError(message)
 
@@ -68,7 +69,7 @@ class GenerateHighlightsService(superdesk.Service):
             else:
                 doc['body_html'] = render_template('default_highlight_template.txt', package=package, items=items)
         if preview:
-            return ['' for doc in docs]
+            return [doc['body_html'] for doc in docs]
         else:
             return service.post(docs, **kwargs)
 
