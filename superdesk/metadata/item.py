@@ -105,14 +105,17 @@ metadata_schema = {
         'type': 'string',
         'mapping': not_analyzed
     },
-
     # Copyright Information
     'usageterms': {
         'type': 'string',
         'mapping': not_analyzed,
         'nullable': True,
     },
-
+    'copyrightnotice': {
+        'type': 'string',
+        'mapping': not_analyzed,
+        'nullable': True
+    },
     # Category Details
     'anpa_category': {
         'type': 'list',
@@ -243,14 +246,6 @@ metadata_schema = {
         'nullable': True,
     },
     'description_text': {
-        'type': 'string',
-        'nullable': True
-    },
-    'copyrightnotice': {
-        'type': 'string',
-        'nullable': True
-    },
-    'usageterms': {
         'type': 'string',
         'nullable': True
     },
