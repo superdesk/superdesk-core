@@ -186,7 +186,8 @@ class QueueItemsTestCase(TestCase):
     def test_get_queue_items(self):
         items = list(self.func_under_test())
         self.assertEqual(len(items), 2)
-        self.assertListEqual([item['item_id'] for item in items], ['item_1', 'item_6'])
+        for item in items:
+            self.assertIn(item['item_id'], ['item_1', 'item_6'])
 
     def test_get_queue_items_with_retrying_items(self):
         item = self.app.data.find_one('publish_queue', req=None, _id=self.queue_items[1]['_id'])
@@ -195,4 +196,5 @@ class QueueItemsTestCase(TestCase):
                              item)
         items = list(self.func_under_test())
         self.assertEqual(len(items), 3)
-        self.assertListEqual([item['item_id'] for item in items], ['item_1', 'item_2', 'item_6'])
+        for item in items:
+            self.assertIn(item['item_id'], ['item_1', 'item_2', 'item_6'])
