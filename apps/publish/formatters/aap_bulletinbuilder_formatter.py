@@ -77,7 +77,7 @@ class AAPBulletinBuilderFormatter(Formatter):
                 'data': superdesk.json.dumps(article, default=json_serialize_datetime_objectId).replace('\'', '\'\'')
             }
 
-            return [(pub_seq_num, json.dumps(odbc_item))]
+            return [(pub_seq_num, json.dumps(odbc_item, default=json_serialize_datetime_objectId))]
         except Exception as ex:
             raise FormatterError.bulletinBuilderFormatterError(ex, subscriber)
 
