@@ -85,7 +85,7 @@ class RSSFeedingService(FeedingService):
         super().__init__()
         self.auth_info = None
 
-    def prepare_href(self, url):
+    def prepare_href(self, url, mimetype=None):
         """
         Prepare a link to an external resource (e.g. an image file) so
         that it can be directly used by the ingest machinery for fetching it.

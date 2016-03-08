@@ -58,8 +58,8 @@ class EmailFeedingService(FeedingService):
             raise IngestEmailError.emailError(ex, provider)
         return new_items
 
-    def prepare_href(self, href):
-        return url_for_media(href)
+    def prepare_href(self, href, mimetype=None):
+        return url_for_media(href, mimetype)
 
 
 register_feeding_service(EmailFeedingService.NAME, EmailFeedingService(), EmailFeedingService.ERRORS)

@@ -112,7 +112,7 @@ class FeedingService(metaclass=ABCMeta):
             provider.get('name')
         ))
 
-    def prepare_href(self, href):
+    def prepare_href(self, href, mimetype=None):
         """
         Prepare a link to an external resource (e.g. an image file) so that it can be directly used by the ingest
         machinery for fetching it.

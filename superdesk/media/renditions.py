@@ -32,7 +32,7 @@ def generate_renditions(original, media_id, inserted, file_type, content_type,
     :param bool insert_metadata: boolean to inserted metadata or not. For AWS storage it is false.
     :return: dict of renditions
     """
-    rend = {'href': url_for_media(media_id), 'media': media_id, 'mimetype': content_type}
+    rend = {'href': url_for_media(media_id, content_type), 'media': media_id, 'mimetype': content_type}
     renditions = {'original': rend}
 
     if file_type != 'image':
@@ -59,7 +59,7 @@ def generate_renditions(original, media_id, inserted, file_type, content_type,
                             content_type=rend_content_type,
                             metadata=metadata if insert_metadata else None)
         inserted.append(_id)
-        renditions[rendition] = {'href': url_for_media(_id), 'media': _id,
+        renditions[rendition] = {'href': url_for_media(_id, rend_content_type), 'media': _id,
                                  'mimetype': 'image/%s' % ext, 'width': width, 'height': height}
     return renditions
 

@@ -150,7 +150,7 @@ class CropService():
                                               metadata=metadata)
             crop['media'] = file_id
             crop['mimetype'] = content_type
-            crop['href'] = url_for_media(file_id)
+            crop['href'] = url_for_media(file_id, content_type)
             crop['CropTop'] = doc.get('CropTop', None)
             crop['CropLeft'] = doc.get('CropLeft', None)
             crop['CropRight'] = doc.get('CropRight', None)

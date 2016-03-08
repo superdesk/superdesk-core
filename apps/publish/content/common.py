@@ -578,7 +578,7 @@ class BasePublishService(BaseService):
             if crop and rend_spec:
                 file_name = '%s/%s/%s' % (guid, rel, rendition_name)
                 rendition['media'] = app.media.media_id(file_name)
-                rendition['href'] = app.media.url_for_media(rendition['media'])
+                rendition['href'] = app.media.url_for_media(rendition['media'], original.get('mimetype'))
                 rendition['width'] = rend_spec['width']
                 rendition['height'] = rend_spec['height']
                 rendition['mimetype'] = original.get('mimetype')
@@ -627,7 +627,7 @@ def publish_images(images, original, item):
             if crop and rend_spec:
                 file_name = '%s/%s/%s' % (guid, rel, rendition_name)
                 rendition['media'] = app.media.media_id(file_name)
-                rendition['href'] = app.media.url_for_media(rendition['media'])
+                rendition['href'] = app.media.url_for_media(rendition['media'], original.get('mimetype'))
                 rendition['width'] = rend_spec['width']
                 rendition['height'] = rend_spec['height']
                 rendition['mimetype'] = original.get('mimetype')
