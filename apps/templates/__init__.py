@@ -13,7 +13,7 @@ from superdesk import register_jinja_filter
 from .content_templates import ContentTemplatesResource, ContentTemplatesService, CONTENT_TEMPLATE_PRIVILEGE
 from .content_templates import ContentTemplatesApplyResource, ContentTemplatesApplyService
 from .content_templates import create_scheduled_content  # noqa
-from .filters import format_datetime_filter
+from .filters import format_datetime_filter, first_paragraph_filter
 
 
 def init_app(app):
@@ -27,3 +27,4 @@ def init_app(app):
     ContentTemplatesApplyResource(endpoint_name, app=app, service=service)
 
     register_jinja_filter('format_datetime', format_datetime_filter)
+    register_jinja_filter('first_paragraph', first_paragraph_filter)

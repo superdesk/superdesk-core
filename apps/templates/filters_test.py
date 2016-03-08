@@ -68,3 +68,9 @@ class ConvertDatetimeFiltersTest(SuperdeskTestCase):
         item = {'versioncreated': '2015-06-01T22:54:53+0000'}
         result = render_template_string(template_string, item=item)
         self.assertEqual(result, '02 Jun 2015 08:53 AEST')
+
+    def test_get_first_paragraph(self):
+        template_string = '{{ item.body_html | first_paragraph()}}'
+        item = {'body_html': '<p><br></p><p>First paragraph</p><p>Second paragraph</p>'}
+        result = render_template_string(template_string, item=item)
+        self.assertEqual(result, '<p>First paragraph</p>')
