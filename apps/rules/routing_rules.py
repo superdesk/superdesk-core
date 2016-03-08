@@ -305,18 +305,18 @@ class RoutingRuleSchemeService(BaseService):
 
             if schedule.get('hour_of_day_from') or schedule.get('hour_of_day_to'):
                 try:
-                    from_time = datetime.strptime(schedule.get('hour_of_day_from'), '%H%M')
+                    from_time = datetime.strptime(schedule.get('hour_of_day_from'), '%H:%M:%S')
                 except:
                     raise SuperdeskApiError.badRequestError(message="Invalid value for from time.")
 
                 to_time = schedule.get('hour_of_day_to', '')
                 if to_time:
                     try:
-                        to_time = datetime.strptime(to_time, '%H%M')
+                        to_time = datetime.strptime(to_time, '%H:%M:%S')
                     except:
                         raise SuperdeskApiError.badRequestError(
                             message="Invalid value for hour_of_day_to "
-                                    "(expected %H%M).")
+                                    "(expected %H:%M:%S).")
 
                     if from_time > to_time:
                         raise SuperdeskApiError.badRequestError(
