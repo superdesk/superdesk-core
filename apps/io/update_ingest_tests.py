@@ -389,7 +389,7 @@ class UpdateIngestTest(SuperdeskTestCase):
 
     def test_subject_to_anpa_category_derived_ingest(self):
         vocab = [{'_id': 'iptc_category_map',
-                  'items': [{'name': 'Finance', 'category': 'f', 'subject': '04000000', 'is_active': True}]},
+                  'items': [{'name': 'Finance', 'category': 'f', 'qcode': '04000000', 'is_active': True}]},
                  {'_id': 'categories',
                   'items': [{'is_active': True, 'name': 'Australian Weather', 'qcode': 'b', 'subject': '17000000'}]}]
 
@@ -413,7 +413,7 @@ class UpdateIngestTest(SuperdeskTestCase):
 
     def test_subject_to_anpa_category_derived_ingest_ignores_inactive_map_entries(self):
         vocab = [{'_id': 'iptc_category_map',
-                  'items': [{'name': 'Finance', 'category': 'f', 'subject': '04000000', 'is_active': False}]},
+                  'items': [{'name': 'Finance', 'category': 'f', 'qcode': '04000000', 'is_active': False}]},
                  {'_id': 'categories',
                   'items': [{'is_active': True, 'name': 'Australian Weather', 'qcode': 'b', 'subject': '17000000'}]}]
 

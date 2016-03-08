@@ -283,8 +283,8 @@ Feature: Fetch From Ingest
           [{
               "_id": "iptc_category_map",
               "items": [
-                {"name" : "Finance", "category" : "f", "subject" : "04000000", "is_active" : true},
-                {"name" : "Weather", "category" : "b", "subject" : "17000000", "is_active" : true}
+                {"name" : "Finance", "category" : "f", "qcode" : "04000000", "is_active" : true},
+                {"name" : "Weather", "category" : "b", "qcode" : "17000000", "is_active" : true}
               ]
            },
            {

@@ -282,7 +282,7 @@ def derive_category(item, provider):
         if subject_map:
             for entry in (map_entry for map_entry in subject_map['items'] if map_entry['is_active']):
                 for subject in item.get('subject', []):
-                    if subject['qcode'] == entry['subject']:
+                    if subject['qcode'] == entry['qcode']:
                             if not any(c['qcode'] == entry['category'] for c in categories):
                                 categories.append({'qcode': entry['category']})
             if len(categories):
