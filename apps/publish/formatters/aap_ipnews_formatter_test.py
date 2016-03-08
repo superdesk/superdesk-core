@@ -42,7 +42,8 @@ class AapIpNewsFormatterTest(SuperdeskTestCase):
         'body_html': 'The story body',
         'word_count': '1',
         'priority': 1,
-        'place': [{'qcode': 'VIC', 'name': 'VIC'}]
+        'place': [{'qcode': 'VIC', 'name': 'VIC'}],
+        'genre': []
     }
 
     vocab = [{'_id': 'categories', 'items': [

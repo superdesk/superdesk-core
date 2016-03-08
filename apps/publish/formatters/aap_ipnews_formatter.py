@@ -59,7 +59,7 @@ class AAPIpNewsFormatter(Formatter):
                 else:
                     odbc_item['subject_reference'] = '00000000'
 
-                odbc_item['take_key'] = article.get('anpa_take_key', None)  # @take_key
+                odbc_item['take_key'] = article.get('anpa_take_key', '').replace('\'', '\'\'')  # @take_key
                 odbc_item['usn'] = article.get('unique_id', None)  # @usn
                 if article[ITEM_TYPE] == CONTENT_TYPE.PREFORMATTED:  # @article_text
                     odbc_item['article_text'] = self.append_body_footer(article).replace('\'', '\'\'')
@@ -76,7 +76,7 @@ class AAPIpNewsFormatter(Formatter):
                                 text.write(l + ' \r\n')
                     odbc_item['article_text'] = text.getvalue().replace('\'', '\'\'')
 
-                if 'genre' in article:
+                if 'genre' in article and len(article['genre']) >= 1:
                     odbc_item['genre'] = article['genre'][0].get('name', None)
                 else:
                     odbc_item['genre'] = 'Current'  # @genre
