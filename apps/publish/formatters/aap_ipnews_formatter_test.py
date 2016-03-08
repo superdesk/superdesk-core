@@ -48,8 +48,8 @@ class AapIpNewsFormatterTest(SuperdeskTestCase):
     vocab = [{'_id': 'categories', 'items': [
         {'is_active': True, 'name': 'Overseas Sport', 'qcode': 'S', 'subject': '15000000'},
         {'is_active': True, 'name': 'Finance', 'qcode': 'F', 'subject': '04000000'}
-    ]}, {'_id': 'geographical_restrictions', 'items': [{'name': 'New South Wales', 'value': 'NSW', 'is_active': True},
-                                                       {'name': 'Victoria', 'value': 'VIC', 'is_active': True}]}]
+    ]}, {'_id': 'geographical_restrictions', 'items': [{'name': 'New South Wales', 'qcode': 'NSW', 'is_active': True},
+                                                       {'name': 'Victoria', 'qcode': 'VIC', 'is_active': True}]}]
 
     def setUp(self):
         super().setUp()

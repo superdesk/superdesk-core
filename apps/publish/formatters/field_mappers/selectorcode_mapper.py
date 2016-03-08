@@ -150,7 +150,7 @@ class SelectorcodeMapper(FieldMapper):
                                                                                _id='geographical_restrictions')
         item = next((i for i in geo_resource.get('items') if i['name'] == name), None)
         if item:
-            return item.get('value')
+            return item.get('qcode')
         else:
             return ''
 

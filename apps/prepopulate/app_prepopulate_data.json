@@ -303,15 +303,15 @@
             "display_name": "Subscriber Types",
             "type": "unmanageable",
             "items": [
-                {"is_active": true, "name": "Digital/Internet", "value": "digital",
-                    "formats": [{"name": "NINJS", "value": "ninjs"}, {"name": "AAP NewsML 1.2", "value": "newsml12"}, {"name": "NewsML G2", "value": "newsmlg2"},
-                                {"name": "AAP Bulletin Builder", "value": "AAP BULLETIN BUILDER"}]},
-                {"is_active": true, "name": "Wire/Paper", "value": "wire",
-                    "formats": [{"name": "AAP ANPA", "value": "AAP ANPA"}, {"name": "NITF", "value": "nitf"}, {"name": "AAP IPNEWS", "value": "AAP IPNEWS"},
-                                {"name": "AAP SMS", "value": "AAP SMS"}]},
-                {"is_active": true, "name": "Broadcast", "value": "broadcast",
-                    "formats": [{"name": "AAP ANPA", "value": "AAP ANPA"}, {"name": "NITF", "value": "nitf"}, {"name": "AAP IPNEWS", "value": "AAP IPNEWS"},
-                                {"name": "AAP SMS", "value": "AAP SMS"}]}
+                {"is_active": true, "name": "Digital/Internet", "qcode": "digital",
+                    "formats": [{"name": "NINJS", "qcode": "ninjs"}, {"name": "AAP NewsML 1.2", "qcode": "newsml12"}, {"name": "NewsML G2", "qcode": "newsmlg2"},
+                                {"name": "AAP Bulletin Builder", "qcode": "AAP BULLETIN BUILDER"}]},
+                {"is_active": true, "name": "Wire/Paper", "qcode": "wire",
+                    "formats": [{"name": "AAP ANPA", "qcode": "AAP ANPA"}, {"name": "NITF", "qcode": "nitf"}, {"name": "AAP IPNEWS", "qcode": "AAP IPNEWS"},
+                                {"name": "AAP SMS", "qcode": "AAP SMS"}]},
+                {"is_active": true, "name": "Broadcast", "qcode": "broadcast",
+                    "formats": [{"name": "AAP ANPA", "qcode": "AAP ANPA"}, {"name": "NITF", "qcode": "nitf"}, {"name": "AAP IPNEWS", "qcode": "AAP IPNEWS"},
+                                {"name": "AAP SMS", "qcode": "AAP SMS"}]}
             ]
         },
 		"resource": "vocabularies",
@@ -322,8 +322,8 @@
         "data": {
             "_id": "desk_types",
             "items": [
-                {"is_active": true, "name": "authoring", "value": "authoring"},
-                {"is_active": true, "name": "production", "value": "production"}
+                {"is_active": true, "name": "authoring", "qcode": "authoring"},
+                {"is_active": true, "name": "production", "qcode": "production"}
             ]
         },
 		"resource": "vocabularies",
@@ -347,16 +347,16 @@
         "data": {
             "_id": "genre",
             "items": [
-                {"is_active": true, "name": "Article (news)", "value": "Article"},
-                {"is_active": true, "name": "Sidebar", "value": "Sidebar"},
-                {"is_active": true, "name": "Factbox", "value": "Factbox"},
-                {"is_active": true, "name": "Feature", "value": "Feature"},
-                {"is_active": true, "name": "Newsfeature", "value": "Newsfeature"},
-                {"is_active": true, "name": "Backgrounder", "value": "Backgrounder"},
-                {"is_active": true, "name": "Opinion", "value": "Opinion"},
-                {"is_active": true, "name": "View (incl parly sketch)", "value": "View"},
-                {"is_active": true, "name": "Modular", "value": "Modular"},
-                {"is_active": true, "name": "Broadcast Script", "value": "Broadcast Script"}
+                {"is_active": true, "name": "Article (news)", "qcode": "Article"},
+                {"is_active": true, "name": "Sidebar", "qcode": "Sidebar"},
+                {"is_active": true, "name": "Factbox", "qcode": "Factbox"},
+                {"is_active": true, "name": "Feature", "qcode": "Feature"},
+                {"is_active": true, "name": "Newsfeature", "qcode": "Newsfeature"},
+                {"is_active": true, "name": "Backgrounder", "qcode": "Backgrounder"},
+                {"is_active": true, "name": "Opinion", "qcode": "Opinion"},
+                {"is_active": true, "name": "View (incl parly sketch)", "qcode": "View"},
+                {"is_active": true, "name": "Modular", "qcode": "Modular"},
+                {"is_active": true, "name": "Broadcast Script", "qcode": "Broadcast Script"}
             ]
         },
 		"resource": "vocabularies",
