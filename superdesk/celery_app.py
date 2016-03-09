@@ -168,18 +168,20 @@ def update_key(key, flag=False, db=None):
 
 def _update_subtask_progress(task_id, current=None, total=None, done=None):
     redis_db = redis.from_url(celery.conf['CELERY_RESULT_BACKEND'])
+    try:
+        current_key = 'current_%s' % task_id
+        total_key = 'total_%s' % task_id
+        done_key = 'done_%s' % task_id
 
-    current_key = 'current_%s' % task_id
-    total_key = 'total_%s' % task_id
-    done_key = 'done_%s' % task_id
+        crt_current = update_key(current_key, current, redis_db)
+        crt_total = update_key(total_key, total, redis_db)
+        crt_done = update_key(done_key, done, redis_db)
 
-    crt_current = update_key(current_key, current, redis_db)
-    crt_total = update_key(total_key, total, redis_db)
-    crt_done = update_key(done_key, done, redis_db)
+        if crt_done and crt_current == crt_total:
+            redis_db.delete(current_key)
+            redis_db.delete(crt_total)
+            redis_db.delete(done_key)
 
-    if crt_done and crt_current == crt_total:
-        redis_db.delete(current_key)
-        redis_db.delete(crt_total)
-        redis_db.delete(done_key)
-
-    return task_id, crt_current, crt_total
+        return task_id, crt_current, crt_total
+    finally:
+        redis_db.disconnect()
