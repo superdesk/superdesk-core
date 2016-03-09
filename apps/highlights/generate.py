@@ -1,9 +1,7 @@
 
 import superdesk
-from bs4 import BeautifulSoup
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
 from flask import render_template
-from jinja2 import Template
 from superdesk.errors import SuperdeskApiError
 
 
@@ -52,23 +50,20 @@ class GenerateHighlightsService(superdesk.Service):
                     if 'residRef' in ref:
                         item = service.find_one(req=None, _id=ref.get('residRef'))
                         if item:
-                            if not export and (item.get('lock_session') or item.get('state') != 'published'):
+                            if not (export or preview) and \
+                                    (item.get('lock_session') or item.get('state') != 'published'):
                                 message = 'Locked or not published items in highlight list.'
                                 raise SuperdeskApiError.forbiddenError(message)
 
-                            html = item.get('body_html')
-                            if html:
-                                soup = BeautifulSoup(html, "html.parser")
-                                item['first_paragraph_body_html'] = str(soup.p)
                             items.append(item)
 
             if stringTemplate:
-                template = Template(stringTemplate)
+                template = superdesk.app.jinja_env.from_string(stringTemplate)
                 doc['body_html'] = template.render(package=package, items=items)
             else:
                 doc['body_html'] = render_template('default_highlight_template.txt', package=package, items=items)
         if preview:
-            return ['' for doc in docs]
+            return [doc['body_html'] for doc in docs]
         else:
             return service.post(docs, **kwargs)
 

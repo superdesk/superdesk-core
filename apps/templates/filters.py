@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+from bs4 import BeautifulSoup
 from superdesk.utc import get_date, timezone
 from superdesk import config
 
@@ -40,4 +41,15 @@ def format_datetime_filter(date_or_string, timezone_string=None, date_format=Non
         logger.warning('Failed to convert datetime. Arguments: Date - {} Timezone - {} format - {}.'.format(
             date_or_string, timezone_string, date_format
         ))
+        return ''
+
+
+def first_paragraph_filter(input_string):
+    soup = BeautifulSoup(input_string, 'html.parser')
+    try:
+        # all non-empty paragraphs: ignores <p><br></p> sections
+        all_paragraphs = [p for p in soup.find_all('p') if p.get_text()]
+        return all_paragraphs[0]
+    except:
+        logger.warning('Failed to locate the first paragraph from input_string: {}.'.format(input_string))
         return ''
