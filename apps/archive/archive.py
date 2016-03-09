@@ -554,7 +554,7 @@ class ArchiveService(BaseService):
 
         # if broadcast then update to genre is not allowed.
         if original.get('broadcast') and updates.get('genre') and \
-                any(genre.get('value', '').lower() != BROADCAST_GENRE.lower() for genre in updates.get('genre')):
+                any(genre.get('qcode', '').lower() != BROADCAST_GENRE.lower() for genre in updates.get('genre')):
             raise SuperdeskApiError.badRequestError('Cannot change the genre for broadcast content.')
 
         if PUBLISH_SCHEDULE in updates or "schedule_settings" in updates:

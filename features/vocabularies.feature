@@ -145,9 +145,9 @@ Feature: Vocabularies
     When we patch "/vocabularies/genre"
     """
     {"items": [
-      {"name": "Article", "value": "A", "is_active": true},
-      {"name": "Sidebar", "value": "A", "is_active": true},
-      {"name": "Article", "value": "A", "is_active": true}
+      {"name": "Article", "qcode": "A", "is_active": true},
+      {"name": "Sidebar", "qcode": "A", "is_active": true},
+      {"name": "Article", "qcode": "A", "is_active": true}
      ]}
     """
     Then we get updated response

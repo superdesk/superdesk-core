@@ -28,7 +28,7 @@ Feature: Rewrite content
       [{"guid": "123", "type": "text", "headline": "test", "_current_version": 1, "state": "fetched",
         "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
         "subject":[{"qcode": "17004000", "name": "Statistics"}],
-        "body_html": "Test Document body", "genre": [{"name": "Article", "value": "Article"}],
+        "body_html": "Test Document body", "genre": [{"name": "Article", "qcode": "Article"}],
         "flags": {"marked_for_legal": true},
         "body_footer": "Suicide Call Back Service 1300 659 467",
         "place": [{"qcode" : "ACT", "world_region" : "Oceania", "country" : "Australia",
@@ -85,7 +85,7 @@ Feature: Rewrite content
       Then we get existing resource
       """
       {"_items" : [{"_id": "#REWRITE_ID#", "anpa_take_key": "update", "rewrite_of": "#archive.123.take_package#",
-        "task": {"desk": "#desks._id#", "stage": "#desks.working_stage#"}, "genre": [{"name": "Article", "value": "Article"}],
+        "task": {"desk": "#desks._id#", "stage": "#desks.working_stage#"}, "genre": [{"name": "Article", "qcode": "Article"}],
         "flags": {"marked_for_legal": true},
         "body_footer": "Suicide Call Back Service 1300 659 467",
         "company_codes" : [{"qcode" : "1PG", "security_exchange" : "ASX", "name" : "1-PAGE LIMITED"}],

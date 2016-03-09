@@ -671,5 +671,5 @@ def is_genre(item, genre_value):
     :param str genre_value: genre_value as string
     :return: If exists then true else false
     """
-    return item.get('genre') and any(genre.get('value', '').lower() == genre_value.lower()
+    return item.get('genre') and any(genre.get('qcode', '').lower() == genre_value.lower()
                                      for genre in item.get('genre', []))

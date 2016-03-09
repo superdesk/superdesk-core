@@ -35,7 +35,7 @@ Feature: Archive Broadcast
               "desk": "#desks._id#",
               "stage": "#desks.working_stage#"
           },
-          "genre": [{"name": "Article", "value": "Article"}],
+          "genre": [{"name": "Article", "qcode": "Article"}],
           "urgency": 1,
           "priority": 3,
           "family_id": "xyz",
@@ -86,7 +86,7 @@ Feature: Archive Broadcast
             "source": "AAP",
             "text": "Los Angeles, Aug 11 AAP -"
           },
-          "genre": [{"name": "Broadcast Script", "value": "Broadcast Script"}],
+          "genre": [{"name": "Broadcast Script", "qcode": "Broadcast Script"}],
           "broadcast": {
             "status": "",
             "master_id": "123"
@@ -124,7 +124,7 @@ Feature: Archive Broadcast
             "source": "AAP",
             "text": "Los Angeles, Aug 11 AAP -"
           },
-          "genre": [{"name": "Broadcast Script", "value": "Broadcast Script"}],
+          "genre": [{"name": "Broadcast Script", "qcode": "Broadcast Script"}],
           "broadcast": {
             "status": "",
             "master_id": "123"
@@ -167,7 +167,7 @@ Feature: Archive Broadcast
               "desk": "#desks._id#",
               "stage": "#desks.working_stage#"
           },
-          "genre": [{"name": "Article", "value": "Article"}],
+          "genre": [{"name": "Article", "qcode": "Article"}],
           "urgency": 1,
           "priority": 3,
           "family_id": "xyz",
@@ -216,7 +216,7 @@ Feature: Archive Broadcast
             "source": "AAP",
             "text": "Los Angeles, Aug 11 AAP -"
           },
-          "genre": [{"name": "Broadcast Script", "value": "Broadcast Script"}],
+          "genre": [{"name": "Broadcast Script", "qcode": "Broadcast Script"}],
           "broadcast": {
             "status": "",
             "master_id": "123"
@@ -262,7 +262,7 @@ Feature: Archive Broadcast
               "desk": "#desks._id#",
               "stage": "#desks.working_stage#"
           },
-          "genre": [{"name": "Article", "value": "Article"}],
+          "genre": [{"name": "Article", "qcode": "Article"}],
           "urgency": 1,
           "priority": 3,
           "family_id": "xyz",
@@ -343,7 +343,7 @@ Feature: Archive Broadcast
               "desk": "#desks._id#",
               "stage": "#desks.working_stage#"
           },
-          "genre": [{"name": "Article", "value": "Article"}],
+          "genre": [{"name": "Article", "qcode": "Article"}],
           "urgency": 1,
           "priority": 3,
           "family_id": "xyz",
@@ -394,7 +394,7 @@ Feature: Archive Broadcast
           "source": "AAP",
           "text": "Los Angeles, Aug 11 AAP -"
         },
-        "genre": [{"name": "Broadcast Script", "value": "Broadcast Script"}],
+        "genre": [{"name": "Broadcast Script", "qcode": "Broadcast Script"}],
         "broadcast": {
           "status": "",
           "master_id": "123"
@@ -403,7 +403,7 @@ Feature: Archive Broadcast
     """
     When we patch "archive/#broadcast._id#"
     """
-    {"genre": [{"name": "Article", "value": "Article"}]}
+    {"genre": [{"name": "Article", "qcode": "Article"}]}
     """
     Then we get error 400
     """
@@ -435,7 +435,7 @@ Feature: Archive Broadcast
               "desk": "#desks._id#",
               "stage": "#desks.working_stage#"
           },
-          "genre": [{"name": "Article", "value": "Article"}],
+          "genre": [{"name": "Article", "qcode": "Article"}],
           "urgency": 1,
           "priority": 3,
           "family_id": "xyz",
@@ -481,7 +481,7 @@ Feature: Archive Broadcast
               "desk": "#desks._id#",
               "stage": "#desks.working_stage#"
           },
-          "genre": [{"name": "Article", "value": "Article"}],
+          "genre": [{"name": "Article", "qcode": "Article"}],
           "urgency": 1,
           "priority": 3,
           "family_id": "xyz",
@@ -546,7 +546,7 @@ Feature: Archive Broadcast
               "desk": "#desks._id#",
               "stage": "#desks.working_stage#"
           },
-          "genre": [{"name": "Article", "value": "Article"}],
+          "genre": [{"name": "Article", "qcode": "Article"}],
           "urgency": 1,
           "priority": 3,
           "family_id": "xyz",
@@ -614,7 +614,7 @@ Feature: Archive Broadcast
               "desk": "#desks._id#",
               "stage": "#desks.working_stage#"
           },
-          "genre": [{"name": "Article", "value": "Article"}],
+          "genre": [{"name": "Article", "qcode": "Article"}],
           "urgency": 1,
           "priority": 3,
           "family_id": "xyz",
@@ -675,7 +675,7 @@ Feature: Archive Broadcast
               "desk": "#desks._id#",
               "stage": "#desks.working_stage#"
           },
-          "genre": [{"name": "Article", "value": "Article"}],
+          "genre": [{"name": "Article", "qcode": "Article"}],
           "urgency": 1,
           "priority": 3,
           "family_id": "xyz",
@@ -738,7 +738,7 @@ Feature: Archive Broadcast
           "_current_version": 1,
           "urgency": 1,
           "priority": 3,
-          "genre": [{"name": "Broadcast Script", "value": "Broadcast Script"}],
+          "genre": [{"name": "Broadcast Script", "qcode": "Broadcast Script"}],
           "broadcast": {
             "status": "",
             "takes_package_id": "#TAKE_PACKAGE#",
@@ -782,7 +782,7 @@ Feature: Archive Broadcast
               "desk": "#desks._id#",
               "stage": "#desks.working_stage#"
           },
-          "genre": [{"name": "Article", "value": "Article"}],
+          "genre": [{"name": "Article", "qcode": "Article"}],
           "urgency": 1,
           "priority": 3,
           "family_id": "xyz",
@@ -833,7 +833,7 @@ Feature: Archive Broadcast
             "source": "AAP",
             "text": "Los Angeles, Aug 11 AAP -"
           },
-          "genre": [{"name": "Broadcast Script", "value": "Broadcast Script"}],
+          "genre": [{"name": "Broadcast Script", "qcode": "Broadcast Script"}],
           "broadcast": {
             "status": "",
             "master_id": "123"
@@ -894,7 +894,7 @@ Feature: Archive Broadcast
               "desk": "#desks._id#",
               "stage": "#desks.working_stage#"
           },
-          "genre": [{"name": "Article", "value": "Article"}],
+          "genre": [{"name": "Article", "qcode": "Article"}],
           "urgency": 1,
           "priority": 3,
           "family_id": "xyz",
@@ -1009,7 +1009,7 @@ Feature: Archive Broadcast
               "desk": "#desks._id#",
               "stage": "#desks.working_stage#"
           },
-          "genre": [{"name": "Article", "value": "Article"}],
+          "genre": [{"name": "Article", "qcode": "Article"}],
           "urgency": 1,
           "priority": 3,
           "family_id": "xyz",
@@ -1158,7 +1158,7 @@ Feature: Archive Broadcast
               "desk": "#desks._id#",
               "stage": "#desks.working_stage#"
           },
-          "genre": [{"name": "Article", "value": "Article"}],
+          "genre": [{"name": "Article", "qcode": "Article"}],
           "urgency": 1,
           "priority": 3,
           "family_id": "xyz",
@@ -1266,7 +1266,7 @@ Feature: Archive Broadcast
               "desk": "#desks._id#",
               "stage": "#desks.working_stage#"
           },
-          "genre": [{"name": "Article", "value": "Article"}],
+          "genre": [{"name": "Article", "qcode": "Article"}],
           "urgency": 1,
           "priority": 3,
           "family_id": "xyz",
@@ -1386,7 +1386,7 @@ Feature: Archive Broadcast
               "desk": "#desks._id#",
               "stage": "#desks.working_stage#"
           },
-          "genre": [{"name": "Article", "value": "Article"}],
+          "genre": [{"name": "Article", "qcode": "Article"}],
           "urgency": 1,
           "priority": 3,
           "family_id": "xyz",
@@ -1560,7 +1560,7 @@ Feature: Archive Broadcast
               "desk": "#desks._id#",
               "stage": "#desks.working_stage#"
           },
-          "genre": [{"name": "Article", "value": "Article"}],
+          "genre": [{"name": "Article", "qcode": "Article"}],
           "urgency": 1,
           "priority": 3,
           "family_id": "xyz",
@@ -1789,7 +1789,7 @@ Feature: Archive Broadcast
               "desk": "#desks._id#",
               "stage": "#desks.working_stage#"
           },
-          "genre": [{"name": "Article", "value": "Article"}],
+          "genre": [{"name": "Article", "qcode": "Article"}],
           "urgency": 1,
           "priority": 3,
           "family_id": "xyz",
@@ -1990,7 +1990,7 @@ Feature: Archive Broadcast
               "desk": "#desks._id#",
               "stage": "#desks.working_stage#"
           },
-          "genre": [{"name": "Article", "value": "Article"}],
+          "genre": [{"name": "Article", "qcode": "Article"}],
           "urgency": 1,
           "priority": 3,
           "family_id": "xyz",
@@ -2017,7 +2017,7 @@ Feature: Archive Broadcast
               "desk": "#desks._id#",
               "stage": "#desks.working_stage#"
           },
-          "genre": [{"name": "Article", "value": "Article"}],
+          "genre": [{"name": "Article", "qcode": "Article"}],
           "urgency": 1,
           "priority": 3,
           "family_id": "xyz",

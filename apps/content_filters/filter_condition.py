@@ -313,7 +313,7 @@ class FilterConditionParametersService(BaseService):
                            {'field': 'genre',
                             'operators': ['in', 'nin'],
                             'values': values['genre'],
-                            'value_field': 'value'
+                            'value_field': 'qcode'
                             },
                            {'field': 'subject',
                             'operators': ['in', 'nin'],
