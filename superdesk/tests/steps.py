@@ -1812,8 +1812,8 @@ def when_we_schedule_the_routing_scheme(context, scheme_id):
                 Weekdays.dayname(now + timedelta(days=1)),
                 Weekdays.dayname(now + timedelta(days=2))
             ],
-            'hour_of_day_from': '1600',
-            'hour_of_day_to': '2000'
+            'hour_of_day_from': '16:00:00',
+            'hour_of_day_to': '20:00:00'
         }
 
         if len(res.get('rules')) > 1:

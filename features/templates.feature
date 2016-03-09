@@ -70,17 +70,17 @@ Feature: Templates
         """
         {"template_name": "test", "template_type": "create",
          "data": {"headline": "test", "type": "text", "slugline": "test", "firstcreated": "2015-10-10T10:10:10+0000", "versioncreated": "2015-10-10T10:10:10+0000"},
-         "schedule": {"day_of_week": ["MON"], "create_at": "0815", "is_active": true},
+         "schedule": {"day_of_week": ["MON"], "create_at": "08:15:00", "is_active": true},
          "template_desk": "#desks._id#", "template_stage": "#stages._id#"}
         """
         Then we get new resource
-        And next run is on monday "0815"
+        And next run is on monday "08:15:00"
 
         When we patch latest
         """
-        {"schedule": {"day_of_week": ["MON"], "create_at": "0915", "is_active": true}}
+        {"schedule": {"day_of_week": ["MON"], "create_at": "09:15:00", "is_active": true}}
         """
-        Then next run is on monday "0915"
+        Then next run is on monday "09:15:00"
 
         When we run create content task
         And we run create content task
@@ -115,18 +115,18 @@ Feature: Templates
         """
         {"template_name": "test", "template_type": "create",
          "data": {"headline": "test", "type": "text", "slugline": "test", "firstcreated": "2015-10-10T10:10:10+0000", "versioncreated": "2015-10-10T10:10:10+0000"},
-         "schedule": {"day_of_week": ["MON"], "create_at": "0815", "is_active": true,
+         "schedule": {"day_of_week": ["MON"], "create_at": "08:15:00", "is_active": true,
          "time_zone": "Australia/Sydney"},
          "template_desk": "#desks._id#", "template_stage": "#stages._id#"}
         """
         Then we get new resource
-        And next run is on monday "2210"
+        And next run is on monday "22:10:00"
 
         When we patch latest
         """
-        {"schedule": {"day_of_week": ["MON"], "create_at": "0915", "is_active": true}}
+        {"schedule": {"day_of_week": ["MON"], "create_at": "09:15:00", "is_active": true}}
         """
-        Then next run is on monday "2310"
+        Then next run is on monday "23:10:00"
 
         When we run create content task
         And we get "/archive"
@@ -210,7 +210,7 @@ Feature: Templates
     {
      "template_name": "test", "template_type": "create",
      "template_desk": "#desks._id#", "template_stage": "#desks.incoming_stage#",
-     "schedule": {"create_at": "08:00", "day_of_week": ["MON", "TUE"]},
+     "schedule": {"create_at": "08:00:00", "day_of_week": ["MON", "TUE"]},
      "data": {
         "anpa_take_key": "TAKEDOWN",
         "urgency": 1,
@@ -225,7 +225,7 @@ Feature: Templates
     {"_id": "__any_value__",
      "template_name": "test", "template_type": "create",
      "template_desk": "#desks._id#", "template_stage": "#desks.incoming_stage#",
-     "schedule": {"create_at": "08:00", "day_of_week": ["MON", "TUE"]},
+     "schedule": {"create_at": "08:00:00", "day_of_week": ["MON", "TUE"]},
      "data": {
         "anpa_take_key": "TAKEDOWN", "urgency": 1, "priority": 1, "headline": "headline", "dateline": {"text": "Test"}
      }

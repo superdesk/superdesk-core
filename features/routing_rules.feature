@@ -374,7 +374,7 @@ Feature: Routing Scheme and Routing Rules
               "schedule": {
                 "day_of_week": ["FRI", "TUE"],
                 "hour_of_day_from": "ddd",
-                "hour_of_day_to": "0040"
+                "hour_of_day_to": "00:40:00"
               }
             }
           ]
@@ -398,7 +398,7 @@ Feature: Routing Scheme and Routing Rules
               "schedule": {
                 "day_of_week": ["FRI", "TUE"],
                 "hour_of_day_from": "",
-                "hour_of_day_to": "0040"
+                "hour_of_day_to": "00:40:00"
               }
             }
           ]
@@ -421,8 +421,8 @@ Feature: Routing Scheme and Routing Rules
               },
               "schedule": {
                 "day_of_week": ["FRI", "TUE"],
-                "hour_of_day_from": "0600",
-                "hour_of_day_to": "0400"
+                "hour_of_day_from": "06:00:00",
+                "hour_of_day_to": "04:00:00"
               }
             }
           ]
@@ -445,8 +445,8 @@ Feature: Routing Scheme and Routing Rules
               },
               "schedule": {
                 "day_of_week": ["FRI", "TUE"],
-                "hour_of_day_from": "0400",
-                "hour_of_day_to": "0600",
+                "hour_of_day_from": "04:00:00",
+                "hour_of_day_to": "06:00:00",
                 "time_zone": "Timezone/Invalid"
               }
             }
@@ -470,7 +470,7 @@ Feature: Routing Scheme and Routing Rules
               },
               "schedule": {
                 "day_of_week": ["FRI", "TUE"],
-                "hour_of_day_from": "0400",
+                "hour_of_day_from": "04:00:00",
                 "hour_of_day_to": "",
                 "time_zone": "Europe/Rome"
               }
