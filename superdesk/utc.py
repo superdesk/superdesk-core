@@ -73,17 +73,17 @@ def utc_to_local(local_tz_name, utc_datetime):
         return local_tz.normalize(local_dt)
 
 
-def set_time(current_datetime, timestr, second=0):
+def set_time(current_datetime, timestr):
     """Set time of given datetime according to timestr.
 
-    Time format for timestr is `%H%M`, eg. 1014.
+    Time format for timestr is `%H:%M:%S`, eg. 10:14:00.
 
     :param datetime current_datetime
     :param string timestr
     :param int second
     """
     if timestr is None:
-        timestr = '0000'
-    time = datetime.datetime.strptime(timestr, '%H%M')
-    return current_datetime.replace(hour=time.hour, minute=time.minute, second=second)
+        timestr = '00:00:00'
+    time = datetime.datetime.strptime(timestr, '%H:%M:%S')
+    return current_datetime.replace(hour=time.hour, minute=time.minute, second=time.second)
 

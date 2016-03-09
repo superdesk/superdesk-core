@@ -48,10 +48,17 @@ class AmazonObjectWrapper(BytesIO):
         self.md5 = s3_object['ETag'][1:-1]
 
 
+def _guess_extension(content_type):
+    ext = str(guess_extension(content_type))
+    if ext in ['.jpe', '.jpeg']:
+        return '.jpg'
+    return ext
+
+
 def url_for_media_default(app, media_id, content_type=None):
     protocol = 'https' if app.config.get('AMAZON_S3_USE_HTTPS', False) else 'http'
     endpoint = 's3-%s.%s' % (app.config.get('AMAZON_REGION'), app.config['AMAZON_SERVER'])
-    extension = str(guess_extension(content_type)) if content_type else ''
+    extension = str(_guess_extension(content_type)) if content_type else ''
     url = '%s.%s/%s%s' % (app.config['AMAZON_CONTAINER_NAME'], endpoint, media_id, extension)
     if app.config.get('AMAZON_PROXY_SERVER'):
         url = '%s/%s' % (str(app.config.get('AMAZON_PROXY_SERVER')), url)
@@ -60,7 +67,7 @@ def url_for_media_default(app, media_id, content_type=None):
 
 def url_for_media_partial(app, media_id, content_type=None):
     protocol = 'https' if app.config.get('AMAZON_S3_USE_HTTPS', False) else 'http'
-    extension = str(guess_extension(content_type)) if content_type else ''
+    extension = str(_guess_extension(content_type)) if content_type else ''
     url = '%s%s' % (media_id, extension)
     if app.config.get('AMAZON_PROXY_SERVER'):
         url = '%s/%s' % (str(app.config.get('AMAZON_PROXY_SERVER')), url)

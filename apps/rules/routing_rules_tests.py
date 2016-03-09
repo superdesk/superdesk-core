@@ -59,8 +59,8 @@ class OnCreateMethodTestCase(RoutingRuleSchemeServiceTest):
                 'name': 'rule_1',
                 'schedule': {
                     'day_of_week': ['MON'],
-                    'hour_of_day_from': '0800',
-                    'hour_of_day_to': '1800',
+                    'hour_of_day_from': '08:00:00',
+                    'hour_of_day_to': '18:00:00',
                     'time_zone': 'UTC'
                 }
             }]
@@ -114,8 +114,8 @@ class OnUpdateMethodTestCase(RoutingRuleSchemeServiceTest):
                 'name': 'rule_1',
                 'schedule': {
                     'day_of_week': ['MON'],
-                    'hour_of_day_from': '0800',
-                    'hour_of_day_to': '1800',
+                    'hour_of_day_from': '08:00:00',
+                    'hour_of_day_to': '18:00:00',
                     'time_zone': 'UTC'
                 }
             }]
@@ -182,7 +182,7 @@ class ValidateScheduleMethodTestCase(RoutingRuleSchemeServiceTest):
         self.assertIn('invalid/zone', msg)
 
     def test_allows_empty_end_time(self):
-        self.schedule['hour_of_day_from'] = '1030'
+        self.schedule['hour_of_day_from'] = '10:30:00'
         self.schedule['hour_of_day_to'] = ''
 
         try:
@@ -201,24 +201,24 @@ class GetScheduledRoutingRulesMethodTestCase(RoutingRuleSchemeServiceTest):
             'name': 'rule_1',
             'schedule': {
                 'day_of_week': ['SAT'],
-                'hour_of_day_from': '0100',
-                'hour_of_day_to': '2300',
+                'hour_of_day_from': '01:00:00',
+                'hour_of_day_to': '23:00:00',
                 'time_zone': 'UTC',
             }
         }, {
             'name': 'rule_2',
             'schedule': {
                 'day_of_week': ['MON', 'TUE', 'WED'],
-                'hour_of_day_from': '2100',
-                'hour_of_day_to': '2200',
+                'hour_of_day_from': '21:00:00',
+                'hour_of_day_to': '22:00:00',
                 'time_zone': 'UTC',
             }
         }, {
             'name': 'rule_3',
             'schedule': {
                 'day_of_week': ['TUE'],
-                'hour_of_day_from': '2200',
-                'hour_of_day_to': '2300',
+                'hour_of_day_from': '22:00:00',
+                'hour_of_day_to': '23:00:00',
                 'time_zone': 'UTC',
             }
         }]
@@ -235,16 +235,16 @@ class GetScheduledRoutingRulesMethodTestCase(RoutingRuleSchemeServiceTest):
             'name': 'rule_berlin',
             'schedule': {
                 'day_of_week': ['TUE'],
-                'hour_of_day_from': '1400',
-                'hour_of_day_to': '1500',
+                'hour_of_day_from': '14:00:00',
+                'hour_of_day_to': '15:00:00',
                 'time_zone': 'Europe/Berlin',  # UTC +01:00/+02:00
             }
         }, {
             'name': 'rule_singapore',
             'schedule': {
                 'day_of_week': ['TUE'],
-                'hour_of_day_from': '2200',
-                'hour_of_day_to': '2300',
+                'hour_of_day_from': '22:00:00',
+                'hour_of_day_to': '23:00:00',
                 'time_zone': 'Asia/Singapore',  # always UTC +08:00
             }
         }]
@@ -261,8 +261,8 @@ class GetScheduledRoutingRulesMethodTestCase(RoutingRuleSchemeServiceTest):
             'name': 'rule_berlin',
             'schedule': {
                 'day_of_week': ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'],
-                'hour_of_day_from': '1450',
-                'hour_of_day_to': '1455',
+                'hour_of_day_from': '14:50:00',
+                'hour_of_day_to': '14:55:00',
                 'time_zone': None,
             }
         }]
@@ -280,7 +280,7 @@ class GetScheduledRoutingRulesMethodTestCase(RoutingRuleSchemeServiceTest):
             'schedule': {
                 'day_of_week': ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'],
                 'hour_of_day_from': None,
-                'hour_of_day_to': '2030',
+                'hour_of_day_to': '20:30:00',
                 'time_zone': 'UTC',
             }
         }]
@@ -295,7 +295,7 @@ class GetScheduledRoutingRulesMethodTestCase(RoutingRuleSchemeServiceTest):
             'name': 'rule_berlin',
             'schedule': {
                 'day_of_week': ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'],
-                'hour_of_day_from': '1845',
+                'hour_of_day_from': '18:45:00',
                 'hour_of_day_to': None,
                 'time_zone': 'UTC',
             }

@@ -21,24 +21,25 @@ class TemplatesTestCase(unittest.TestCase):
         return next_run - self.now.replace(second=0)
 
     def test_inactive_schedule(self):
-        self.assertEqual(None, get_next_run({'is_active': False, 'day_of_week': self.weekdays, 'create_at': '0915'}))
+        self.assertEqual(None,
+                         get_next_run({'is_active': False, 'day_of_week': self.weekdays, 'create_at': '09:15:00'}))
 
     def test_next_run_same_day_later(self):
-        delta = self.get_delta('0908', self.weekdays)
+        delta = self.get_delta('09:08:00', self.weekdays)
         self.assertEqual(delta.days, 0)
         self.assertEqual(delta.seconds, 180)
 
     def test_next_run_next_day(self):
-        delta = self.get_delta('0903', self.weekdays)
+        delta = self.get_delta('09:03:00', self.weekdays)
         self.assertEqual(delta.days, 0)
         self.assertEqual(delta.seconds, 3600 * 24 - 120)
 
     def test_next_run_next_week(self):
-        delta = self.get_delta('0903', [self.now.strftime('%a').upper()])
+        delta = self.get_delta('09:03:00', [self.now.strftime('%a').upper()])
         self.assertEqual(delta.days, 6)
 
     def test_next_run_now(self):
-        delta = self.get_delta('0905', self.weekdays)
+        delta = self.get_delta('09:05:00', self.weekdays)
         self.assertEqual(delta.days, 1)
 
     def test_get_item_from_template(self):

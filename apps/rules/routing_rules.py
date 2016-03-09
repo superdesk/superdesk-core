@@ -305,18 +305,18 @@ class RoutingRuleSchemeService(BaseService):
 
             if schedule.get('hour_of_day_from') or schedule.get('hour_of_day_to'):
                 try:
-                    from_time = datetime.strptime(schedule.get('hour_of_day_from'), '%H%M')
+                    from_time = datetime.strptime(schedule.get('hour_of_day_from'), '%H:%M:%S')
                 except:
                     raise SuperdeskApiError.badRequestError(message="Invalid value for from time.")
 
                 to_time = schedule.get('hour_of_day_to', '')
                 if to_time:
                     try:
-                        to_time = datetime.strptime(to_time, '%H%M')
+                        to_time = datetime.strptime(to_time, '%H:%M:%S')
                     except:
                         raise SuperdeskApiError.badRequestError(
                             message="Invalid value for hour_of_day_to "
-                                    "(expected %H%M).")
+                                    "(expected %H:%M:%S).")
 
                     if from_time > to_time:
                         raise SuperdeskApiError.badRequestError(
@@ -372,14 +372,14 @@ class RoutingRuleSchemeService(BaseService):
                 # midnight, since at that point a new day has already begun).
                 hour_of_day_from = schedule.get('hour_of_day_from')
                 if not hour_of_day_from:
-                    hour_of_day_from = '0000'  # might be both '' or None
+                    hour_of_day_from = '00:00:00'  # might be both '' or None
                 from_time = set_time(now_tz_schedule, hour_of_day_from)
 
                 hour_of_day_to = schedule.get('hour_of_day_to')
                 if hour_of_day_to:
                     to_time = set_time(now_tz_schedule, hour_of_day_to)
                 else:
-                    to_time = set_time(now_tz_schedule, '2359') + delta_minute
+                    to_time = set_time(now_tz_schedule, '23:59:59') + delta_minute
 
                 # check if the current day of week and time of day both match
                 day_of_week_matches = Weekdays.is_scheduled_day(
