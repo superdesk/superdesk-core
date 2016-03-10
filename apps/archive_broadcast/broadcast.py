@@ -76,9 +76,9 @@ class ArchiveBroadcastService(BaseService):
 
         doc['task']['user'] = get_user().get('_id')
         genre_list = get_resource_service('vocabularies').find_one(req=None, _id='genre') or {}
-        broadcast_genre = [{'value': genre.get('value'), 'name': genre.get('name')}
+        broadcast_genre = [{'qcode': genre.get('qcode'), 'name': genre.get('name')}
                            for genre in genre_list.get('items', [])
-                           if genre.get('value') == BROADCAST_GENRE and genre.get('is_active')]
+                           if genre.get('qcode') == BROADCAST_GENRE and genre.get('is_active')]
 
         if not broadcast_genre:
             raise SuperdeskApiError.badRequestError(message="Cannot find the {} genre.".format(BROADCAST_GENRE))

@@ -196,5 +196,4 @@ class QueueItemsTestCase(TestCase):
                              item)
         items = list(self.func_under_test())
         self.assertEqual(len(items), 3)
-        for item in items:
-            self.assertIn(item['item_id'], ['item_1', 'item_2', 'item_6'])
+        self.assertListEqual([item_l['item_id'] for item_l in items], ['item_1', 'item_2', 'item_6'])

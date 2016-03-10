@@ -1471,7 +1471,7 @@ Feature: Content Publishing
         "state": "published",
         "task":{"desk": "#desks._id#", "stage": "#desks.working_stage#"},
         "_id": "#broadcast._id#",
-        "genre": [{"name": "Broadcast Script", "value": "Broadcast Script"}],
+        "genre": [{"name": "Broadcast Script", "qcode": "Broadcast Script"}],
         "broadcast": {
             "master_id": "123"
           }
@@ -1487,7 +1487,7 @@ Feature: Content Publishing
               "state": "published",
               "task":{"desk": "#desks._id#", "stage": "#desks.working_stage#"},
               "_id": "#broadcast._id#",
-              "genre": [{"name": "Broadcast Script", "value": "Broadcast Script"}],
+              "genre": [{"name": "Broadcast Script", "qcode": "Broadcast Script"}],
               "broadcast": {
                   "master_id": "123"
               }

@@ -335,7 +335,7 @@ class ArchiveCommonTestCase(SuperdeskTestCase):
 
     def test_broadcast_content(self):
         content = {
-            'genre': [{'name': 'Broadcast Script', 'value': 'Broadcast Script'}]
+            'genre': [{'name': 'Broadcast Script', 'qcode': 'Broadcast Script'}]
         }
 
         self.assertTrue(is_genre(content, BROADCAST_GENRE))
@@ -356,7 +356,7 @@ class ArchiveCommonTestCase(SuperdeskTestCase):
 
     def test_broadcast_content_if_genre_is_other_than_broadcast(self):
         content = {
-            'genre': [{'name': 'Article', 'value': 'Article'}]
+            'genre': [{'name': 'Article', 'qcode': 'Article'}]
         }
 
         self.assertFalse(is_genre(content, BROADCAST_GENRE))

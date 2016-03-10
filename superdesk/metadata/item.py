@@ -145,7 +145,7 @@ metadata_schema = {
             'type': 'object',
             'properties': {
                 'name': not_analyzed,
-                'value': not_analyzed
+                'qcode': not_analyzed
             }
         }
     },

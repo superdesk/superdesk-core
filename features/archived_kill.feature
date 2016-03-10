@@ -360,7 +360,7 @@ Feature: Kill a content item in the (dusty) archive
     Given "archived"
     """
     [{"item_id": "123", "guid": "123", "type": "text", "headline": "test", "slugline": "slugline",
-      "genre": [{"name": "Broadcast Script", "value": "Broadcast Script"}], "headline": "headline",
+      "genre": [{"name": "Broadcast Script", "qcode": "Broadcast Script"}], "headline": "headline",
       "anpa_category" : [{"qcode" : "e", "name" : "Entertainment"}], "state": "published",
       "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
       "subject":[{"qcode": "17004000", "name": "Statistics"}], "body_html": "Test Document body", "_current_version": 2}]
@@ -552,7 +552,7 @@ Feature: Kill a content item in the (dusty) archive
       "subject":[{"qcode": "17004000", "name": "Statistics"}], "body_html": "Test Document body", "_current_version": 2},
      {"item_id": "234", "anpa_category" : [{"qcode" : "e", "name" : "Entertainment"}], "state": "published",
       "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
-      "genre" : [{"name" : "Broadcast Script", "value" : "Broadcast Script"}], "headline": "broadcast",
+      "genre" : [{"name" : "Broadcast Script", "qcode" : "Broadcast Script"}], "headline": "broadcast",
       "slugline" : "broadcast", "broadcast" : {"master_id" : "123"}, "type" : "text",
       "subject":[{"qcode": "17004000", "name": "Statistics"}], "body_html": "Test Document body", "_current_version": 2}
     ]
