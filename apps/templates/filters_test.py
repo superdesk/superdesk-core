@@ -74,3 +74,9 @@ class ConvertDatetimeFiltersTest(SuperdeskTestCase):
         item = {'body_html': '<p><br></p><p>First paragraph</p><p>Second paragraph</p>'}
         result = render_template_string(template_string, item=item)
         self.assertEqual(result, '<p>First paragraph</p>')
+
+    def test_get_first_paragraph_doesnt_fail_with_empty_body(self):
+        template_string = '{{ item.body_html | first_paragraph()}}'
+        item = {'headline': 'Sample headline'}
+        result = render_template_string(template_string, item=item)
+        self.assertEqual(result, '')
