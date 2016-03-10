@@ -38,7 +38,7 @@ def train(features):
 
 
 def words(text):
-    return [w for w in re.findall('[^\n]+', text) if not w.isdigit()]
+    return [w.strip() for w in re.findall('[^\n]+', text) if not w.isdigit()]
 
 
 def add_word(words, word, count):
