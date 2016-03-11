@@ -13,10 +13,14 @@ from flask.ext.mail import Message
 from superdesk.celery_app import celery
 from flask import current_app as app, render_template, render_template_string
 from superdesk import get_resource_service
+from superdesk.logging import logger
 
 
 @celery.task(bind=True, max_retries=3, soft_time_limit=10)
 def send_email(self, subject, sender, recipients, text_body, html_body):
+    if app.config('SUPERDESK_TESTING'):
+        logger.info('sending email "%s" to %d recipients', subject, len(recipients))
+        return
     msg = Message(subject, sender=sender, recipients=recipients)
     msg.body = text_body
     msg.html = html_body
