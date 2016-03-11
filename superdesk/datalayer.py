@@ -85,3 +85,6 @@ class SuperdeskDataLayer(DataLayer):
         datasource = self.datasource(resource)
         backend = config.SOURCES.get(datasource[0], {'backend': 'mongo'}).get('backend', 'mongo')
         return getattr(self, backend)
+
+    def get_mongo_collection(self, resource):
+        return self.mongo.pymongo('users').db[resource]

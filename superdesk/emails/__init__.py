@@ -7,12 +7,19 @@
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
-from eve.utils import config
 
+import hashlib
+from datetime import timedelta
+from superdesk.utc import utcnow
+from eve.utils import config
+from bson.json_util import dumps
 from flask.ext.mail import Message
 from superdesk.celery_app import celery
 from flask import current_app as app, render_template, render_template_string
 from superdesk import get_resource_service
+
+
+EMAIL_TIMESTAMP_RESOURCE = 'email_timestamps'
 
 
 @celery.task(bind=True, max_retries=3, soft_time_limit=10)
@@ -75,7 +82,24 @@ def send_user_mentioned_email(recipients, user_name, doc, url):
                      text_body=text_body, html_body=html_body)
 
 
+def get_activity_digest(value):
+    h = hashlib.sha1()
+    json_encoder = app.data.json_encoder_class()
+    h.update(dumps(value, sort_keys=True,
+                   default=json_encoder.default).encode('utf-8'))
+    return h.hexdigest()
+
+
 def send_activity_emails(activity, recipients):
+    now = utcnow()
+    message_id = get_activity_digest(activity)
+    email_timestamps = app.data.get_mongo_collection(EMAIL_TIMESTAMP_RESOURCE)
+    last_message_info = email_timestamps.find_one(message_id)
+    resend_interval = app.config.get('EMAIL_NOTIFICATION_RESEND', 24)
+
+    if last_message_info and last_message_info['_created'] + timedelta(hours=resend_interval) > now:
+        return
+
     admins = app.config['ADMINS']
     app_name = app.config['APPLICATION_NAME']
     notification = render_template_string(activity.get('message'), **activity.get('data'))
@@ -84,6 +108,7 @@ def send_activity_emails(activity, recipients):
     subject = render_template("notification_subject.txt", notification=notification)
     send_email.delay(subject=subject, sender=admins[0], recipients=recipients,
                      text_body=text_body, html_body=html_body)
+    email_timestamps.update({'_id': message_id}, {'_id': message_id, '_created': now}, upsert=True)
 
 
 def send_article_killed_email(article, recipients, trasmitted_at):
