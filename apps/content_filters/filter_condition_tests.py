@@ -438,6 +438,17 @@ class FilterConditionTests(SuperdeskTestCase):
         self.assertFalse(f.does_match(doc, self.articles[4]))
         self.assertFalse(f.does_match(doc, self.articles[5]))
 
+    def test_does_match_with_in_filter_case_insensitive(self):
+        f = FilterConditionService()
+        doc = {'field': 'source', 'operator': 'in', 'value': 'aap,reuters'}
+        self.assertTrue(f.does_match(doc, {'source': 'AAP'}))
+        self.assertTrue(f.does_match(doc, {'source': 'aap'}))
+        self.assertTrue(f.does_match(doc, {'source': 'REUTERS'}))
+        doc = {'field': 'source', 'operator': 'in', 'value': 'AAP'}
+        self.assertTrue(f.does_match(doc, {'source': 'AAP'}))
+        self.assertTrue(f.does_match(doc, {'source': 'aap'}))
+        self.assertFalse(f.does_match(doc, {'source': 'REUTERS'}))
+
     def test_does_match_with_nin_filter(self):
         f = FilterConditionService()
         doc = {'field': 'urgency', 'operator': 'nin', 'value': '2,3,4'}
