@@ -336,3 +336,70 @@ Feature: Highlights
         Given highlights
         When we create highlights package
         Then we get new package with items
+
+
+    @auth
+    Scenario: Generate text item from highlights using filter
+        Given "desks"
+        """
+        [{"name": "desk1"}]
+        """
+        Given "archive"
+        """
+        [
+            {"guid": "item1", "type": "text", "headline": "item1", "task": {"desk": "#desks._id#"}, "state": "published"},
+            {"guid": "item2", "type": "text", "headline": "item2", "body_html": "<p>item2 first</p><p>item2 second</p>", "task": {"desk": "#desks._id#"}, "state": "published"}
+        ]
+        """
+		When we post to "archive"
+		"""
+		{   "guid": "package",
+		    "type": "composite",
+		    "headline": "highlights",
+		    "groups": [{
+		        "id": "root",
+		        "refs": [{
+		            "idRef": "main"
+		        }]
+		    }, {
+		        "id": "main",
+		        "refs": [{
+		            "residRef": "item1"
+		        }, {
+		            "residRef": "item2"
+		        }]
+		    }],
+		    "task": {
+		        "desk": "#desks._id#"
+		    }
+		}
+		"""
+
+        Then we get new resource
+        """
+        {"_id": "__any_value__", "type": "composite", "headline": "highlights"}
+        """
+
+        When we post to "generate_highlights"
+        """
+        {"package": "package"}
+        """
+
+        Then we get new resource
+        """
+        {"_id": "__any_value__",
+        "type": "text",
+        "headline": "highlights",
+        "body_html": "\n<h2>item1</h2>\n\n<p></p>\n\n<h2>item2</h2>\n<p>item2 first</p>\n<p></p>\n"}
+        """
+
+        When we get "/archive"
+        Then we get list with 2 items
+
+        When we post to "generate_highlights"
+        """
+        {"package": "package", "preview": true}
+        """
+        Then we get new resource
+        """
+        {"type": "text"}

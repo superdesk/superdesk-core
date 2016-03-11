@@ -45,8 +45,8 @@ def format_datetime_filter(date_or_string, timezone_string=None, date_format=Non
 
 
 def first_paragraph_filter(input_string):
-    soup = BeautifulSoup(input_string, 'html.parser')
     try:
+        soup = BeautifulSoup(input_string, 'html.parser')
         # all non-empty paragraphs: ignores <p><br></p> sections
         all_paragraphs = [p for p in soup.find_all('p') if p.get_text()]
         return all_paragraphs[0]
