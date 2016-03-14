@@ -39,7 +39,7 @@ class EmailFeedingService(FeedingService):
 
             rv, data = imap.select(config.get('mailbox', None), readonly=False)
             if rv == 'OK':
-                rv, data = imap.search(None, config.get('filter', None))
+                rv, data = imap.search(None, config.get('filter', '(UNSEEN)'))
                 if rv == 'OK':
                     new_items = []
                     for num in data[0].split():
@@ -48,6 +48,7 @@ class EmailFeedingService(FeedingService):
                             try:
                                 parser = self.get_feed_parser(provider, data)
                                 new_items.append(parser.parse(data, provider))
+                                rv, data = imap.store(num, '+FLAGS', '\\Seen')
                             except IngestEmailError:
                                 continue
                 imap.close()
