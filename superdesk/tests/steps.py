@@ -113,6 +113,9 @@ def json_match(context_data, response_data):
     if isinstance(context_data, dict):
         assert isinstance(response_data, dict), 'response data is not dict, but %s' % type(response_data)
         for key in context_data:
+            if context_data[key] == "__none__":
+                assert response_data[key] is None
+                continue
             if context_data[key] == "__no_value__":
                 test_key_is_not_present(key, response_data)
                 continue

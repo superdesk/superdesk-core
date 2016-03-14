@@ -10,6 +10,7 @@
 
 import flask
 import logging
+from bson import ObjectId
 from flask import current_app as app
 from eve.utils import config
 from superdesk.activity import add_activity, ACTIVITY_CREATE, ACTIVITY_UPDATE
@@ -163,7 +164,7 @@ class UsersService(BaseService):
                 status = 'enabled and active' if active else 'enabled but inactive'
 
             if can_send_mail:
-                send_user_status_changed_email([user['email']], status)
+                send_user_status_changed_email([user.get('email')], status)
 
     def __send_notification(self, updates, user):
         user_id = user['_id']
@@ -261,12 +262,18 @@ class UsersService(BaseService):
         archive_autosave_service = get_resource_service('archive_autosave')
 
         doc_to_unlock = {'lock_user': None, 'lock_session': None, 'lock_time': None, 'force_unlock': True}
+        user = ObjectId(user_id) if isinstance(user_id, str) else user_id
+        query = {
+            '$or': [{'lock_user': user},
+                    {'task.user': user, 'task.desk': {'$exists': False}}]
+        }
 
-        items_locked_by_user = archive_service.get(req=None, lookup={'lock_user': user_id})
+        items_locked_by_user = archive_service.get_from_mongo(req=None, lookup=query)
+
         if items_locked_by_user and items_locked_by_user.count():
             for item in items_locked_by_user:
                 # delete the item if nothing is saved so far
-                if item[config.VERSION] == 1 and item['state'] == 'draft':
+                if item[config.VERSION] == 0 and item['state'] == 'draft':
                     get_resource_service('archive').delete(lookup={'_id': item['_id']})
                 else:
                     archive_service.update(item['_id'], doc_to_unlock, item)
