@@ -58,19 +58,25 @@ def _guess_extension(content_type):
 def url_for_media_default(app, media_id, content_type=None):
     protocol = 'https' if app.config.get('AMAZON_S3_USE_HTTPS', False) else 'http'
     endpoint = 's3-%s.%s' % (app.config.get('AMAZON_REGION'), app.config['AMAZON_SERVER'])
-    extension = str(_guess_extension(content_type)) if content_type else ''
-    url = '%s.%s/%s%s' % (app.config['AMAZON_CONTAINER_NAME'], endpoint, media_id, extension)
     if app.config.get('AMAZON_PROXY_SERVER'):
-        url = '%s/%s' % (str(app.config.get('AMAZON_PROXY_SERVER')), url)
+        extension = str(_guess_extension(content_type)) if content_type else ''
+        url = '%s.%s/%s%s' % (app.config['AMAZON_CONTAINER_NAME'], endpoint, media_id, extension)
+        url = '%s/%s/%s' % (str(app.config.get('AMAZON_PROXY_SERVER')),
+                            str(app.config.get('AMAZON_URL_VERSION')), url)
+    else:
+        url = '%s.%s/%s' % (app.config['AMAZON_CONTAINER_NAME'], endpoint, media_id)
     return '%s://%s' % (protocol, url)
 
 
 def url_for_media_partial(app, media_id, content_type=None):
     protocol = 'https' if app.config.get('AMAZON_S3_USE_HTTPS', False) else 'http'
-    extension = str(_guess_extension(content_type)) if content_type else ''
-    url = '%s%s' % (media_id, extension)
     if app.config.get('AMAZON_PROXY_SERVER'):
-        url = '%s/%s' % (str(app.config.get('AMAZON_PROXY_SERVER')), url)
+        extension = str(_guess_extension(content_type)) if content_type else ''
+        url = '%s%s' % (media_id, extension)
+        url = '%s/%s/%s' % (str(app.config.get('AMAZON_PROXY_SERVER')),
+                            str(app.config.get('AMAZON_URL_VERSION')), url)
+    else:
+        url = media_id
     return '%s://%s' % (protocol, url)
 
 url_generators = {
