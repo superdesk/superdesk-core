@@ -114,7 +114,7 @@ def get_app(config=None, media_storage=None, config_object=None):
         app.jinja_env.filters[name] = jinja_filter
 
     # we can only put mapping when all resources are registered
-    app.data.elastic.put_mapping(app)
+    app.data.elastic.init_index(app)
 
     # instantiate registered provider classes (leave non-classes intact)
     for key, provider in registered_feeding_services.items():
