@@ -464,6 +464,10 @@ class BasePublishService(BaseService):
                 and updates.get('ednote', original.get('ednote', '')).find('Embargo') == -1:
             updates['ednote'] = '{} {}'.format(original.get('ednote', ''), 'Embargoed.').strip()
 
+        user = get_user()
+        if user and user.get(config.ID_FIELD):
+            updates['version_creator'] = user[config.ID_FIELD]
+
     def _update_archive(self, original, updates, versioned_doc=None, should_insert_into_versions=True):
         """
         Updates the articles into archive collection and inserts the latest into archive_versions.
