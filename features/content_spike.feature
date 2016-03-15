@@ -135,3 +135,47 @@ Feature: Content Spiking
         """
         {"sign_off": "abc/foo/bar"}
         """
+
+    @auth
+    Scenario: Spike a non-empty package
+        Given empty "archive"
+        And "desks"
+        """
+        [{"name": "test desk"}]
+        """
+        Given "archive"
+        """
+        [{"headline": "test", "_id": "item-1", "guid": "item-1", "slugline": "WORMS", "linked_in_packages": [{"package": "package-1"}]}]
+        """
+        When we post to "archive" with success
+        """
+        {
+            "groups": [
+                {"id": "root", "refs": [{"idRef": "main"}], "role": "grpRole:NEP"},
+                {
+                    "id": "main",
+                    "refs": [
+                        {
+                            "headline": "test package with text",
+                            "residRef": "item-1",
+                            "slugline": "awesome article"
+                        }
+                    ],
+                    "role": "grpRole:Main"
+                }
+            ],
+            "_id": "package-1",
+            "guid": "package-1",
+            "type": "composite",
+            "task": {"user": "#user._id#", "desk": "#desks._id#"}
+        }
+        """
+        When we spike "package-1"
+        Then we get OK response
+        When we get "/archive/item-1"
+        Then we get existing resource
+        """
+        {"linked_in_packages": []}
+        """
+        When we spike "item-1"
+        Then we get OK response
