@@ -18,7 +18,7 @@ from apps.tasks import send_to, apply_onstage_rule
 from apps.desks import DeskTypes
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
-from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
+from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, SIGN_OFF
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.metadata.utils import item_url
@@ -92,6 +92,7 @@ class MoveService(BaseService):
 
         # set the change in desk type when content is moved.
         self.set_change_in_desk_type(archived_doc, original)
+        archived_doc.pop(SIGN_OFF, None)
         set_sign_off(archived_doc, original=original)
         convert_task_attributes_to_objectId(archived_doc)
         resolve_document_version(archived_doc, ARCHIVE, 'PATCH', original)

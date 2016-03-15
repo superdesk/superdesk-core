@@ -54,6 +54,28 @@ Feature: News Items Archive
         Then we get list with 3 items
 
     @auth
+    Scenario: Force update sign-off
+        Given "archive"
+        """
+        [{"_id": "xyz", "guid": "testid", "headline": "test"}]
+        """
+
+        When we patch given
+        """
+        {"headline": "TEST 2", "sign_off": "abc"}
+        """
+
+        And we patch latest
+        """
+        {"headline": "TEST 3", "sign_off": "123"}
+        """
+
+        Then we get updated response
+        """
+        {"headline": "TEST 3", "sign_off": "123"}
+        """
+
+    @auth
     Scenario: Update item and keep version
         Given "archive"
         """

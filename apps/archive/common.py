@@ -186,6 +186,7 @@ def set_sign_off(updates, original=None, repo_type=ARCHIVE, user=None):
     Set sign_off on updates object. Rules:
         1. updates['sign_off'] = original['sign_off'] + sign_off of the user performing operation.
         2. If the last modified user and the user performing operation are same then sign_off shouldn't change
+        3. If sign_off is received on updates, this value will be preserved
     """
 
     if repo_type != ARCHIVE:
@@ -195,6 +196,8 @@ def set_sign_off(updates, original=None, repo_type=ARCHIVE, user=None):
     if not user:
         return
 
+    if SIGN_OFF in updates:
+        return
     sign_off = get_sign_off(user)
     current_sign_off = '' if original is None else original.get(SIGN_OFF, '')
 
