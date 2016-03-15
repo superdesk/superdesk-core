@@ -14,7 +14,7 @@ from setuptools import setup, find_packages
 LONG_DESCRIPTION = "Superdesk Server Core"
 
 install_requires = [
-    'eve>=0.6',
+    'eve>=0.6,<0.6.2',
     'eve-elastic>=0.3.2,<0.4',
     'elasticsearch==1.9.0',
     'flask>=0.10',
