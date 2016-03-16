@@ -419,3 +419,52 @@ Feature: User Resource
         """
         {"username": "foobar", "sign_off": "FBAR"}
         """
+
+    @auth
+    @notification
+    Scenario: Delete a user removes content in draft state and releases user lock
+        Given we login as user "foo" with password "bar" and user type "admin"
+        And "archive"
+        """
+        [{"_id": "item2", "headline": "test", "slugline": "test", "state": "draft",
+         "task": {"user": "#CONTEXT_USER_ID#"}, "_current_version": 0}]
+        """
+        When we get "/users/foo"
+        Then we get existing resource
+        """
+        {"username": "foo"}
+        """
+        When we patch "/users/foo"
+        """
+        {"email": "foo@bar.org"}
+        """
+        Then we get OK response
+        When we post to "/desks"
+        """
+        {"name": "Sports Desk", "members": [{"user": "#CONTEXT_USER_ID#"}]}
+        """
+        Then we get OK response
+        When we post to "archive"
+        """
+        {"_id": "item1", "headline": "test", "slugline": "test", "state": "in_progress",
+         "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
+        """
+        Then we get OK response
+        When we post to "/archive/item1/lock"
+        """
+        {}
+        """
+        Then we get new resource
+        """
+        {"_id": "item1", "headline": "test", "lock_user": "#CONTEXT_USER_ID#"}
+        """
+        When we switch user
+        And we delete "/users/foo"
+        Then we get response code 204
+        When we get "/archive/item1"
+        Then we get existing resource
+        """
+        {"_id": "item1", "headline": "test", "lock_user": "__none__"}
+        """
+        When we get "/archive/item2"
+        Then we get response code 404
