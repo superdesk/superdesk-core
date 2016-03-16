@@ -116,6 +116,11 @@ metadata_schema = {
         'mapping': not_analyzed,
         'nullable': True
     },
+    'copyrightholder': {
+        'type': 'string',
+        'mapping': not_analyzed,
+        'nullable': True
+    },
     # Category Details
     'anpa_category': {
         'type': 'list',
