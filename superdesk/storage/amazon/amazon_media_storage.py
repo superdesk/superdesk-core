@@ -55,20 +55,18 @@ def _guess_extension(content_type):
     return ext
 
 
-def url_for_media_default(app, media_id, content_type=None):
+def url_for_media_default(app, media_id):
     protocol = 'https' if app.config.get('AMAZON_S3_USE_HTTPS', False) else 'http'
     endpoint = 's3-%s.%s' % (app.config.get('AMAZON_REGION'), app.config['AMAZON_SERVER'])
-    extension = str(_guess_extension(content_type)) if content_type else ''
-    url = '%s.%s/%s%s' % (app.config['AMAZON_CONTAINER_NAME'], endpoint, media_id, extension)
+    url = '%s.%s/%s' % (app.config['AMAZON_CONTAINER_NAME'], endpoint, media_id)
     if app.config.get('AMAZON_PROXY_SERVER'):
         url = '%s/%s' % (str(app.config.get('AMAZON_PROXY_SERVER')), url)
     return '%s://%s' % (protocol, url)
 
 
-def url_for_media_partial(app, media_id, content_type=None):
+def url_for_media_partial(app, media_id):
     protocol = 'https' if app.config.get('AMAZON_S3_USE_HTTPS', False) else 'http'
-    extension = str(_guess_extension(content_type)) if content_type else ''
-    url = '%s%s' % (media_id, extension)
+    url = str(media_id)
     if app.config.get('AMAZON_PROXY_SERVER'):
         url = '%s/%s' % (str(app.config.get('AMAZON_PROXY_SERVER')), url)
     return '%s://%s' % (protocol, url)
@@ -95,12 +93,13 @@ class AmazonMediaStorage(MediaStorage):
             return upload_url(str(media_id))
         url_generator = url_generators.get(self.app.config.get('AMAZON_URL_GENERATOR', 'default'),
                                            url_for_media_default)
-        return url_generator(self.app, media_id, content_type)
+        return url_generator(self.app, media_id)
 
-    def media_id(self, filename):
+    def media_id(self, filename, content_type=None):
         if not self.app.config.get('AMAZON_SERVE_DIRECT_LINKS', False):
             return str(bson.ObjectId())
-        return '%s/%s' % (time.strftime('%Y%m%d'), filename)
+        extension = str(_guess_extension(content_type)) if content_type else ''
+        return '%s/%s%s' % (time.strftime('%Y%m%d'), filename, extension)
 
     def fetch_rendition(self, rendition):
         stream, name, mime = download_file_from_url(rendition.get('href'))
@@ -185,7 +184,7 @@ class AmazonMediaStorage(MediaStorage):
         to appropriately identify the file when it is retrieved.
         """
         logger.debug('Going to save file file=%s media=%s ' % (filename, _id))
-        _id = _id or self.media_id(filename)
+        _id = _id or self.media_id(filename, content_type=content_type)
         found = self._check_exists(_id)
         if found:
             return _id
