@@ -42,7 +42,6 @@ __entities__ = {
     'validators': ('validators.json', '', True),
     'content_templates': ('content_templates.json', ['template_name'], False),
     'content_types': ('content_types.json', '', True),
-    'ingest_providers': ('ingest_providers.json', '', True),
     'published': (None, [[('expiry', pymongo.ASCENDING),
                           ('_created', pymongo.ASCENDING),
                           ('state', pymongo.ASCENDING)],
