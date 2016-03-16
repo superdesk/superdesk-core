@@ -299,7 +299,7 @@ metadata_schema = {
         'type': 'dict',
     },
     'alt_text': {
-        'type': 'text',
+        'type': 'string',
         'nullable': True,
         'mapping': not_analyzed,
     },
