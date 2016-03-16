@@ -275,16 +275,19 @@ class FilterConditionService(BaseService):
             return article[field]
 
     def _run_filter(self, article_value, operator, filter_value):
+        def get_lower_case(value):
+            return value.lower() if isinstance(value, str) else value
+
         if operator == 'in':
             if isinstance(article_value, list):
-                return any([v in filter_value for v in article_value])
+                return any([get_lower_case(v) in map(get_lower_case, filter_value) for v in article_value])
             else:
-                return article_value in filter_value
+                return get_lower_case(article_value) in map(get_lower_case, filter_value)
         if operator == 'nin':
             if isinstance(article_value, list):
-                return all([v not in filter_value for v in article_value])
+                return all([get_lower_case(v) not in map(get_lower_case, filter_value) for v in article_value])
             else:
-                return article_value not in filter_value
+                return get_lower_case(article_value) not in map(get_lower_case, filter_value)
         if operator == 'like' or operator == 'startswith' or operator == 'endswith':
             return filter_value.match(article_value)
         if operator == 'notlike':
