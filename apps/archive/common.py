@@ -544,6 +544,11 @@ def item_schema(extra=None):
             'type': 'string',
             'mapping': not_analyzed
         },
+        'rewritten_by': {
+            'type': 'string',
+            'mapping': not_analyzed,
+            'nullable': True
+        },
         'rewrite_of': {
             'type': 'string',
             'mapping': not_analyzed,

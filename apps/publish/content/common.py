@@ -134,7 +134,8 @@ class BasePublishService(BaseService):
                 from apps.publish.enqueue import enqueue_published
                 enqueue_published.apply_async()
 
-            push_notification('item:publish', item=str(id), unique_name=original['unique_name'],
+            push_notification('item:publish', item=str(id),
+                              unique_name=original['unique_name'],
                               desk=str(original.get('task', {}).get('desk', '')),
                               user=str(user.get(config.ID_FIELD, '')))
         except SuperdeskApiError as e:
@@ -204,6 +205,12 @@ class BasePublishService(BaseService):
 
             if updates.get('dateline'):
                 raise SuperdeskApiError.badRequestError("Dateline can't be modified after publishing")
+
+        if self.publish_type == ITEM_PUBLISH and updated.get('rewritten_by'):
+            # if update is published then user cannot publish the takes
+            rewritten_by = get_resource_service(ARCHIVE).find_one(req=None, _id=updated.get('rewritten_by'))
+            if rewritten_by and rewritten_by.get(ITEM_STATE) in PUBLISH_STATES:
+                raise SuperdeskApiError.badRequestError("Cannot publish the story after Update is published.!")
 
         validate_item = {'act': self.publish_type, 'type': original['type'], 'validate': updated}
         validation_errors = get_resource_service('validate').post([validate_item])
@@ -696,6 +703,6 @@ superdesk.workflow_action(
 
 superdesk.workflow_action(
     name='rewrite',
-    include_states=['published', 'corrected'],
+    exclude_states=['killed', 'spiked', 'scheduled'],
     privileges=['rewrite']
 )

@@ -45,18 +45,12 @@ published_item_fields = {
     'publish_state': {
         'type': 'string'
     },
-
     # last_published_version field is set to true for last published version of the item in the published collection
     # and for the older version is set to false. This field is used to display the last version of the digital copy
     # in the published view.
     LAST_PUBLISHED_VERSION: {
         'type': 'boolean',
         'default': True
-    },
-    'rewritten_by': {
-        'type': 'string',
-        'mapping': not_analyzed,
-        'nullable': True
     },
     QUEUE_STATE: {
         'type': 'string',
@@ -258,8 +252,14 @@ class PublishedItemService(BaseService):
         except:
             return []
 
-    def get_rewritten_items_by_event_story(self, event_id, rewrite_id):
-        """ Returns all the published and rewritten stories for the given event and rewrite_id"""
+    def get_rewritten_items_by_event_story(self, event_id, rewrite_id, rewrite_field):
+        """
+        Returns all the rewritten stories from published and archive collection
+        for the given event and rewrite_id.
+        :param str event_id: event id of the document
+        :param str rewrite_id: rewrite id of the document
+        :param str rewrite_field: field name 'rewrite_of' or 'rewritten_by'
+        """
         try:
             query = {'query':
                      {'filtered':
@@ -267,12 +267,12 @@ class PublishedItemService(BaseService):
                        {'bool':
                         {'must': [
                             {'term': {'event_id': event_id}},
-                            {'term': {'rewritten_by': rewrite_id}}
+                            {'term': {rewrite_field: rewrite_id}}
                         ]}}}}}
 
             request = ParsedRequest()
-            request.args = {'source': json.dumps(query)}
-            return super().get(req=request, lookup=None)
+            request.args = {'source': json.dumps(query), 'repo': 'archive,published'}
+            return list(get_resource_service('search').get(req=request, lookup=None))
         except:
             return []
 

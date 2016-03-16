@@ -20,6 +20,5 @@ def validate(item, **kwargs):
 
 name = 'take_key_validator'
 label = 'validate take key'
-shortcut = 'v'
 callback = validate
 access_type = 'frontend'

@@ -11,7 +11,7 @@
 import logging
 from flask import request
 from superdesk import get_resource_service, Service, config
-from superdesk.metadata.item import ITEM_STATE, EMBARGO, CONTENT_STATE, CONTENT_TYPE, ITEM_TYPE
+from superdesk.metadata.item import ITEM_STATE, EMBARGO, CONTENT_STATE, CONTENT_TYPE, ITEM_TYPE, PUBLISH_STATES
 from superdesk.resource import Resource, build_custom_hateoas
 from apps.archive.common import CUSTOM_HATEOAS, ITEM_CREATE, ARCHIVE, BROADCAST_GENRE
 from superdesk.metadata.utils import item_url
@@ -82,7 +82,7 @@ class ArchiveRewriteService(Service):
         if not original.get('event_id'):
             raise SuperdeskApiError.notFoundError(message='Event id does not exist')
 
-        if get_resource_service('published').is_rewritten_before(original[config.ID_FIELD]):
+        if original.get('rewritten_by'):
             raise SuperdeskApiError.badRequestError(message='Article has been rewritten before !')
 
         if not is_workflow_state_transition_valid('rewrite', original[ITEM_STATE]):
@@ -91,7 +91,11 @@ class ArchiveRewriteService(Service):
         if not TakesPackageService().is_last_takes_package_item(original):
             raise SuperdeskApiError.badRequestError(message="Only last take of the package can be rewritten.")
 
+        if original.get('rewrite_of') and not (original.get(ITEM_STATE) in PUBLISH_STATES):
+            raise SuperdeskApiError.badRequestError(message="Cannot create update of a not published updated.")
+
         if update:
+            # in case of associate as update
             if update.get('rewrite_of'):
                 raise SuperdeskApiError.badRequestError("Rewrite story has been used as update before !")
 
@@ -103,7 +107,7 @@ class ArchiveRewriteService(Service):
                 raise InvalidStateTransitionError()
 
             if update.get(ITEM_TYPE) not in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
-                raise SuperdeskApiError.badRequestError("Rewrite story can only be text or preformatted !")
+                raise SuperdeskApiError.badRequestError("Rewrite story can only be text or pre-formatted !")
 
             if update.get('genre') and \
                     any(genre.get('value', '').lower() == BROADCAST_GENRE.lower() for genre in update.get('genre')):
@@ -144,30 +148,46 @@ class ArchiveRewriteService(Service):
         return rewrite
 
     def _add_rewritten_flag(self, original, digital, rewrite):
-        """ Adds rewritten_by field to the existing published items """
+        """
+        Adds rewritten_by field to the existing published items.
+        :param dict original: item on which rewrite is triggered
+        :param dict digital: digital item
+        :param dict rewrite: rewritten document
+        """
         get_resource_service('published').update_published_items(original[config.ID_FIELD],
                                                                  'rewritten_by', rewrite[config.ID_FIELD])
         if digital:
+            # update the rewritten_by for digital
             get_resource_service('published').update_published_items(digital[config.ID_FIELD], 'rewritten_by',
                                                                      rewrite[config.ID_FIELD])
+            get_resource_service(ARCHIVE).system_update(digital[config.ID_FIELD],
+                                                        {'rewritten_by': rewrite[config.ID_FIELD]}, digital)
 
         # modify the original item as well.
         get_resource_service(ARCHIVE).system_update(original[config.ID_FIELD],
                                                     {'rewritten_by': rewrite[config.ID_FIELD]}, original)
 
-    def _clear_rewritten_flag(self, event_id, rewrite_id):
-        """ Clears rewritten_by field from the existing published items """
+    def _clear_rewritten_flag(self, event_id, rewrite_id, rewrite_field):
+        """
+        Clears rewritten_by or rewrite_of field from the existing published and archive items
+        :param str event_id: event id of the document
+        :param str rewrite_id: rewrite id of the document
+        :param str rewrite_field: field name 'rewrite_of' or 'rewritten_by'
+        """
         publish_service = get_resource_service('published')
         archive_service = get_resource_service(ARCHIVE)
-        published_rewritten_stories = publish_service.get_rewritten_items_by_event_story(event_id, rewrite_id)
+
+        published_rewritten_stories = publish_service.get_rewritten_items_by_event_story(event_id,
+                                                                                         rewrite_id, rewrite_field)
         processed_items = set()
         for doc in published_rewritten_stories:
-            publish_service.update_published_items(doc['item_id'], 'rewritten_by', None)
-            if doc['item_id'] not in processed_items:
+            doc_id = doc.get(config.ID_FIELD)
+            publish_service.update_published_items(doc_id, rewrite_field, None)
+            if doc_id not in processed_items:
                 # clear the flag from the archive as well.
-                archive_item = archive_service.find_one(req=None, _id=doc['item_id'])
-                archive_service.system_update(doc['item_id'], {'rewritten_by': None}, archive_item)
-                processed_items.add(doc['item_id'])
+                archive_item = archive_service.find_one(req=None, _id=doc_id)
+                archive_service.system_update(doc_id, {rewrite_field: None}, archive_item)
+                processed_items.add(doc_id)
 
     def _set_take_key(self, rewrite, event_id):
         """

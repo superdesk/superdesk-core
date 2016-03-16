@@ -581,7 +581,7 @@ Feature: Rewrite content
         """
 
     @auth
-        Scenario: A new take on a published rewrite succeeds
+    Scenario: A new take on a published rewrite succeeds
         Given the "validators"
         """
           [
@@ -748,3 +748,258 @@ Feature: Rewrite content
       """
       {"_id": "123", "rewritten_by": "456", "place": [{"qcode" : "ACT"}]}
       """
+
+    @auth
+    Scenario: Fail to publish original story after rewrite is published
+        Given the "validators"
+        """
+          [
+          {
+              "schema": {},
+              "type": "text",
+              "act": "publish",
+              "_id": "publish_text"
+          },
+          {
+              "_id": "publish_composite",
+              "act": "publish",
+              "type": "composite",
+              "schema": {}
+          }
+          ]
+        """
+        And "desks"
+        """
+        [{"name": "Sports"}]
+        """
+        And "archive"
+        """
+        [{"guid": "123", "type": "text", "headline": "test", "_current_version": 1, "state": "fetched",
+          "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+          "subject":[{"qcode": "17004000", "name": "Statistics"}],
+          "body_html": "Test Document body"}]
+        """
+        When we post to "/subscribers" with success
+        """
+        {
+          "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+          "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+        }
+        """
+        When we rewrite "123"
+        """
+        {"desk_id": "#desks._id#"}
+        """
+        And we patch "archive/#REWRITE_ID#"
+        """
+        {"abstract": "test", "body_html": "Test Document body", "headline": "RETAKE", "slugline": "RETAKE"}
+        """
+        When we publish "#REWRITE_ID#" with "publish" type and "published" state
+        When we get "/published"
+        Then we get existing resource
+        """
+        {"_items" : [{"_id": "#REWRITE_ID#", "anpa_take_key": "update"}]}
+        """
+        When we publish "123" with "publish" type and "published" state
+        Then we get error 400
+        """
+        {"_status": "ERR",
+         "_issues": {"validator exception": "400: Cannot publish the story after Update is published.!"}}
+        """
+
+    @auth
+    Scenario: Fail to publish last take after rewrite is published
+        Given the "validators"
+        """
+          [
+          {
+              "schema": {},
+              "type": "text",
+              "act": "publish",
+              "_id": "publish_text"
+          },
+          {
+              "_id": "publish_composite",
+              "act": "publish",
+              "type": "composite",
+              "schema": {}
+          }
+          ]
+        """
+        And "desks"
+        """
+        [{"name": "Sports"}]
+        """
+        And "archive"
+        """
+        [{"guid": "123", "type": "text", "headline": "test", "_current_version": 1, "state": "fetched",
+          "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+          "subject":[{"qcode": "17004000", "name": "Statistics"}],
+          "body_html": "Test Document body"}]
+        """
+        When we post to "/subscribers" with success
+        """
+        {
+          "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+          "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+        }
+        """
+        Then we get OK response
+        When we post to "archive/123/link"
+        """
+        [{}]
+        """
+        Then we get next take as "TAKE"
+        """
+        {
+            "_id": "#TAKE#",
+            "type": "text",
+            "headline": "test",
+            "anpa_take_key": "=2",
+            "state": "draft",
+            "original_creator": "#CONTEXT_USER_ID#",
+            "takes": {
+                "_id": "#TAKE_PACKAGE#",
+                "package_type": "takes",
+                "type": "composite"
+            },
+            "linked_in_packages": [{"package_type" : "takes","package" : "#TAKE_PACKAGE#"}]
+        }
+        """
+        When we patch "/archive/#TAKE#"
+        """
+        {"body_html": "Take-2", "abstract": "Take-1 abstract changed"}
+        """
+        And we post to "/archive/#TAKE#/move"
+        """
+        [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
+        """
+		And we get "/archive"
+        Then we get list with 3 items
+        When we rewrite "#TAKE#"
+        """
+        {"desk_id": "#desks._id#"}
+        """
+        And we patch "archive/#REWRITE_ID#"
+        """
+        {"abstract": "test", "body_html": "Test Document body", "headline": "RETAKE", "slugline": "RETAKE"}
+        """
+        Then we get OK response
+        When we publish "123" with "publish" type and "published" state
+        Then we get OK response
+        When we publish "#REWRITE_ID#" with "publish" type and "published" state
+        Then we get OK response
+        When we publish "#TAKE#" with "publish" type and "published" state
+        Then we get error 400
+        """
+        {"_status": "ERR",
+         "_issues": {"validator exception": "400: Cannot publish the story after Update is published.!"}}
+        """
+
+    @auth
+    Scenario: Link the rewrite to the 2nd last take if the last take is spiked
+        Given the "validators"
+        """
+          [
+          {
+              "schema": {},
+              "type": "text",
+              "act": "publish",
+              "_id": "publish_text"
+          },
+          {
+              "_id": "publish_composite",
+              "act": "publish",
+              "type": "composite",
+              "schema": {}
+          }
+          ]
+        """
+        And "desks"
+        """
+        [{"name": "Sports"}]
+        """
+        And "archive"
+        """
+        [{"guid": "123", "type": "text", "headline": "test", "_current_version": 1, "state": "fetched",
+          "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+          "subject":[{"qcode": "17004000", "name": "Statistics"}],
+          "body_html": "Test Document body"}]
+        """
+        When we post to "/subscribers" with success
+        """
+        {
+          "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+          "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+        }
+        """
+        Then we get OK response
+        When we post to "archive/123/link"
+        """
+        [{}]
+        """
+        Then we get next take as "TAKE"
+        """
+        {
+            "_id": "#TAKE#",
+            "type": "text",
+            "headline": "test",
+            "anpa_take_key": "=2",
+            "state": "draft",
+            "original_creator": "#CONTEXT_USER_ID#",
+            "takes": {
+                "_id": "#TAKE_PACKAGE#",
+                "package_type": "takes",
+                "type": "composite"
+            },
+            "linked_in_packages": [{"package_type" : "takes","package" : "#TAKE_PACKAGE#"}]
+        }
+        """
+        When we patch "/archive/#TAKE#"
+        """
+        {"body_html": "Take-2", "abstract": "Take-1 abstract changed"}
+        """
+        And we post to "/archive/#TAKE#/move"
+        """
+        [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
+        """
+        Then we get OK response
+        When we rewrite "#TAKE#"
+        """
+        {"desk_id": "#desks._id#"}
+        """
+        And we patch "archive/#REWRITE_ID#"
+        """
+        {"abstract": "test", "body_html": "Test Document body",
+         "headline": "RETAKE", "slugline": "RETAKE", "rewrite_of": "#TAKE_PACKAGE#"}
+        """
+        Then we get OK response
+        When we get "/archive/#TAKE#"
+        Then we get existing resource
+        """
+        {"_id": "#TAKE#", "rewritten_by": "#REWRITE_ID#"}
+        """
+        When we get "/archive/#TAKE_PACKAGE#"
+        Then we get existing resource
+        """
+        {"_id": "#TAKE_PACKAGE#", "rewritten_by": "#REWRITE_ID#"}
+        """
+        When we get "/archive/123"
+        Then we get no "rewritten_by"
+        When we spike "#TAKE#"
+        Then we get OK response
+        And we get spiked content "#TAKE#"
+        And we get "rewritten_by" not populated
+        When we get "/archive/123"
+        Then we get existing resource
+        """
+        {"_id": "123", "rewritten_by": "#REWRITE_ID#"}
+        """
+        When we get "archive/#REWRITE_ID#"
+        Then we get existing resource
+        """
+        {"abstract": "test", "body_html": "Test Document body",
+         "headline": "RETAKE", "slugline": "RETAKE", "rewrite_of": "#TAKE_PACKAGE#"}
+        """
+
+
