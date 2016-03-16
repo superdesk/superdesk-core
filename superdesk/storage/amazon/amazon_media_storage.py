@@ -55,7 +55,7 @@ def _guess_extension(content_type):
     return ext
 
 
-def url_for_media_default(app, media_id, content_type=None):
+def url_for_media_default(app, media_id):
     protocol = 'https' if app.config.get('AMAZON_S3_USE_HTTPS', False) else 'http'
     endpoint = 's3-%s.%s' % (app.config.get('AMAZON_REGION'), app.config['AMAZON_SERVER'])
     url = '%s.%s/%s' % (app.config['AMAZON_CONTAINER_NAME'], endpoint, media_id)
@@ -64,7 +64,7 @@ def url_for_media_default(app, media_id, content_type=None):
     return '%s://%s' % (protocol, url)
 
 
-def url_for_media_partial(app, media_id, content_type=None):
+def url_for_media_partial(app, media_id):
     protocol = 'https' if app.config.get('AMAZON_S3_USE_HTTPS', False) else 'http'
     url = str(media_id)
     if app.config.get('AMAZON_PROXY_SERVER'):
@@ -93,7 +93,7 @@ class AmazonMediaStorage(MediaStorage):
             return upload_url(str(media_id))
         url_generator = url_generators.get(self.app.config.get('AMAZON_URL_GENERATOR', 'default'),
                                            url_for_media_default)
-        return url_generator(self.app, media_id, content_type)
+        return url_generator(self.app, media_id)
 
     def media_id(self, filename, content_type=None):
         if not self.app.config.get('AMAZON_SERVE_DIRECT_LINKS', False):
