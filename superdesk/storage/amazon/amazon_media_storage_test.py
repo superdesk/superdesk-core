@@ -24,7 +24,8 @@ class AmazonMediaStorageTestCase(unittest.TestCase):
         'AMAZON_S3_USE_HTTPS': False,
         'AMAZON_SERVER': 'amazonaws.com',
         'AMAZON_PROXY_SERVER': 's3.proxy.com',
-        'AMAZON_URL_GENERATOR': 'default'
+        'AMAZON_URL_GENERATOR': 'default',
+        'AMAZON_URL_VERSION': 'v2'
     }
 
     @mock.patch('superdesk.storage.amazon.amazon_media_storage.boto3', MagicMock())
@@ -32,12 +33,12 @@ class AmazonMediaStorageTestCase(unittest.TestCase):
         app = MagicMock()
         app.config = self.config
         url = AmazonMediaStorage(app).url_for_media('media_id', 'image/jpeg')
-        self.assertEqual(url, 'http://s3.proxy.com/test_container.s3-test_region.amazonaws.com/media_id.jpg')
+        self.assertEqual(url, 'http://s3.proxy.com/v2/test_container.s3-test_region.amazonaws.com/media_id.jpg')
 
         app.config['AMAZON_S3_USE_HTTPS'] = True
         url = AmazonMediaStorage(app).url_for_media('media_id', 'image/jpeg')
-        self.assertEqual(url, 'https://s3.proxy.com/test_container.s3-test_region.amazonaws.com/media_id.jpg')
+        self.assertEqual(url, 'https://s3.proxy.com/v2/test_container.s3-test_region.amazonaws.com/media_id.jpg')
 
         app.config['AMAZON_URL_GENERATOR'] = 'partial'
         url = AmazonMediaStorage(app).url_for_media('media_id', 'image/jpeg')
-        self.assertEqual(url, 'https://s3.proxy.com/media_id.jpg')
+        self.assertEqual(url, 'https://s3.proxy.com/v2/media_id.jpg')
