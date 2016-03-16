@@ -120,7 +120,7 @@ def setup(context=None, config=None, app_factory=get_app):
     drop_mongo(app)
 
     # create index again after dropping it
-    app.data.elastic.init_app(app)
+    app.data.elastic.init_index(app)
 
     if context:
         context.app = app
