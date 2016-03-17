@@ -13,7 +13,8 @@ from eve.io.base import DataLayer
 from eve.io.mongo import Mongo, MongoJSONEncoder
 from eve.utils import config, ParsedRequest
 from eve_elastic import Elastic, ElasticJSONSerializer, InvalidSearchString  # noqa @UnusedImport
-from flask import current_app as app
+from flask import current_app
+from superdesk.lock import lock, unlock
 
 
 class SuperdeskJSONEncoder(MongoJSONEncoder, ElasticJSONSerializer):
@@ -29,10 +30,25 @@ class SuperdeskDataLayer(DataLayer):
     serializers.update(Elastic.serializers)
 
     def init_app(self, app):
+        app.data = self  # app.data must be set for locks to work
         self.mongo = Mongo(app)
         self.driver = self.mongo.driver
         self.storage = self.driver
-        self.elastic = Elastic(app, serializer=SuperdeskJSONEncoder())
+        self.elastic = Elastic(app, serializer=SuperdeskJSONEncoder(), skip_index_init=True)
+        self.init_elastic(app)
+
+    def init_elastic(self, app):
+        """ Init elastic index.
+
+        It will create index and put mapping. It should run only once so locks are in place.
+        Thus mongo must be already setup on an up before running this.
+        """
+        with app.app_context():
+            if lock('elastic', expire=10):
+                try:
+                    self.elastic.init_index(app)
+                finally:
+                    unlock('elastic')
 
     def find(self, resource, req, lookup):
         return superdesk.get_resource_service(resource).get(req=req, lookup=lookup)
@@ -75,7 +91,7 @@ class SuperdeskDataLayer(DataLayer):
         return self._backend(resource).is_empty(resource)
 
     def _search_backend(self, resource):
-        if resource.endswith(app.config['VERSIONS']):
+        if resource.endswith(current_app.config['VERSIONS']):
             return
         datasource = self.datasource(resource)
         backend = config.SOURCES.get(datasource[0], {}).get('search_backend', None)

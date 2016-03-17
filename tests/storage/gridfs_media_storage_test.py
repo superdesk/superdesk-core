@@ -15,6 +15,7 @@ class GridFSMediaStorageTestCase(unittest.TestCase):
         self.app = flask.Flask(__name__)
         self.app.config['SERVER_NAME'] = 'localhost'
         self.app.config['DOMAIN'] = {'upload': {}}
+        self.app.config['MONGO_DBNAME'] = 'sptests'
         self.app.data = SuperdeskDataLayer(self.app)
         self.media = SuperdeskGridFSMediaStorage(self.app)
         self.app.register_blueprint(bp)
