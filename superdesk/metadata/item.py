@@ -141,6 +141,17 @@ metadata_schema = {
             }
         }
     },
+    'cvs': {
+        'type': 'list',
+        'nullable': True,
+        'mapping': {
+            'type': 'object',
+            'properties': {
+                'qcode': not_analyzed,
+                'name': not_analyzed,
+            }
+        }
+    },
     'genre': {
         'type': 'list',
         'nullable': True,

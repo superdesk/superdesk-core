@@ -134,7 +134,7 @@ class ArchiveRewriteService(Service):
             else:
                 extended_fields = [
                     'abstract', 'anpa_category', 'pubstatus', 'slugline', 'urgency',
-                    'subject', 'priority', 'byline', 'dateline', 'headline', 'place',
+                    'subject', 'cvs', 'priority', 'byline', 'dateline', 'headline', 'place',
                     'genre', 'body_footer', 'company_codes', 'keywords'
                 ]
 

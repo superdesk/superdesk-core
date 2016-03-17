@@ -44,6 +44,7 @@ class FilterConditionResource(Resource):
                         'body_html',
                         'genre',
                         'subject',
+                        'cvs',
                         'desk',
                         'sms'],
         },
@@ -239,6 +240,8 @@ class FilterConditionService(BaseService):
             return 'genre.name'
         elif field == 'subject':
             return 'subject.qcode'
+        elif field == 'cvs':
+            return 'cvs.qcode'
         elif field == 'desk':
             return 'task.desk'
         elif field == 'sms':
@@ -275,6 +278,8 @@ class FilterConditionService(BaseService):
         elif field == 'genre':
             return [g['name'] for g in article[field]]
         elif field == 'subject':
+            return [s['qcode'] for s in article[field]]
+        elif field == 'cvs':
             return [s['qcode'] for s in article[field]]
         elif field == 'desk':
             return str(article.get('task', {}).get(field))
