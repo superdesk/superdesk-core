@@ -96,7 +96,7 @@ class UsersResource(Resource):
             'desk': Resource.rel('desks'),  # Default desk of the user, which would be selected when logged-in.
             SIGN_OFF: {  # Used for putting a sign-off on the content when it's created/updated except kill
                 'type': 'string',
-                'required': True,
+                'required': False,
                 'regex': '^[a-zA-Z0-9]+$'
             },
             BYLINE: {

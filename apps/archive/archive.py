@@ -26,7 +26,7 @@ from eve.utils import parse_request, config, date_to_str, ParsedRequest
 from superdesk.services import BaseService
 from superdesk.users.services import current_user_has_privilege, is_admin
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, CONTENT_TYPE, ITEM_TYPE, EMBARGO, \
-    PUBLISH_STATES, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS
+    PUBLISH_STATES, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, SIGN_OFF
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, RESIDREF, SEQUENCE
 from apps.common.components.utils import get_component
 from apps.item_autosave.components.item_autosave import ItemAutosave
@@ -311,7 +311,8 @@ class ArchiveService(BaseService):
         old['_id'] = old['_id_document']
         old['_updated'] = old['versioncreated'] = utcnow()
         set_item_expiry(old, doc)
-        del old['_id_document']
+        old.pop('_id_document', None)
+        old.pop(SIGN_OFF, None)
         old[ITEM_OPERATION] = ITEM_RESTORE
 
         resolve_document_version(old, SOURCE, 'PATCH', curr)
@@ -320,8 +321,9 @@ class ArchiveService(BaseService):
 
         super().replace(id=item_id, document=old, original=curr)
 
-        del doc['old_version']
-        del doc['last_version']
+        old.pop('old_version', None)
+        old.pop('last_version', None)
+
         doc.update(old)
         return item_id
 
@@ -379,6 +381,7 @@ class ArchiveService(BaseService):
         copied_item.pop('lock_time', None)
         copied_item.pop('lock_session', None)
         copied_item.pop('lock_user', None)
+        copied_item.pop(SIGN_OFF, None)
 
         task = copied_item.get('task', {})
         task.pop(LAST_PRODUCTION_DESK, None)

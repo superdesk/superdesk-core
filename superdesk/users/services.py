@@ -98,7 +98,10 @@ def set_sign_off(user):
     """
 
     if SIGN_OFF not in user:
-        if 'first_name' not in user or 'last_name' not in user:
+        signOffMapping = app.config.get('SIGN_OFF_MAPPING', None)
+        if signOffMapping and signOffMapping in user:
+            user[SIGN_OFF] = user[signOffMapping]
+        elif 'first_name' not in user or 'last_name' not in user:
             user[SIGN_OFF] = user['username'][:3].upper()
         else:
             user[SIGN_OFF] = '{first_name[0]}{last_name[0]}'.format(**user)
