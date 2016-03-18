@@ -16,7 +16,7 @@ from flask import current_app as app
 import superdesk
 from superdesk import get_resource_service, config
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
-from superdesk.metadata.item import ITEM_STATE
+from superdesk.metadata.item import ITEM_STATE, CONTENT_TYPE, ITEM_TYPE
 from superdesk.notification import push_notification
 from superdesk.services import BaseService
 from superdesk.metadata.utils import item_url
@@ -26,6 +26,7 @@ from superdesk.workflow import is_workflow_state_transition_valid
 from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
 from apps.packages import PackageService, TakesPackageService
 from apps.archive.archive_rewrite import ArchiveRewriteService
+from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE
 
 logger = logging.getLogger(__name__)
 
@@ -120,6 +121,22 @@ class ArchiveSpikeService(BaseService):
 
         if original.get('broadcast'):
             updates['broadcast'] = None
+
+        if original[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
+            # remove links from items in the package
+            package_service = PackageService()
+            items = package_service.get_item_refs(original)
+            for item in items:
+                package_item = get_resource_service(ARCHIVE).find_one(req=None, _id=item['guid'])
+                if package_item:
+                    linked_in_packages = [linked for linked in package_item.get(LINKED_IN_PACKAGES, [])
+                                          if linked.get(PACKAGE) != original.get(config.ID_FIELD)]
+                    super().system_update(package_item[config.ID_FIELD],
+                                          {LINKED_IN_PACKAGES: linked_in_packages},
+                                          package_item)
+
+            # and remove all the items from the package
+            updates['groups'] = []
 
         item = self.backend.update(self.datasource, id, updates, original)
         push_notification('item:spike', item=str(item.get(config.ID_FIELD)), user=str(user))
