@@ -147,9 +147,9 @@ class PrepopulateService(BaseService):
     def create(self, docs, **kwargs):
         for doc in docs:
             if doc.get('remove_first'):
-                drop_elastic(superdesk.app)
                 drop_mongo(superdesk.app)
-                app.data.elastic.init_app(superdesk.app)
+                drop_elastic(superdesk.app)
+                app.data.init_elastic(superdesk.app)
 
             user = get_resource_service('users').find_one(username=get_default_user()['username'], req=None)
             if not user:
