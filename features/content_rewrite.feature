@@ -1002,4 +1002,59 @@ Feature: Rewrite content
          "headline": "RETAKE", "slugline": "RETAKE", "rewrite_of": "#TAKE_PACKAGE#"}
         """
 
-
+    @auth
+    Scenario: Cannot create rewrite of a rewrite if the original rewrite is not published
+        Given the "validators"
+        """
+          [
+          {
+              "schema": {},
+              "type": "text",
+              "act": "publish",
+              "_id": "publish_text"
+          },
+          {
+              "_id": "publish_composite",
+              "act": "publish",
+              "type": "composite",
+              "schema": {}
+          }
+          ]
+        """
+        And "desks"
+        """
+        [{"name": "Sports"}]
+        """
+        And "archive"
+        """
+        [{"guid": "123", "type": "text", "headline": "test", "_current_version": 1, "state": "fetched",
+          "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+          "subject":[{"qcode": "17004000", "name": "Statistics"}],
+          "body_html": "Test Document body"}]
+        """
+        When we post to "/subscribers" with success
+        """
+        {
+          "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+          "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+        }
+        """
+        Then we get OK response
+        When we rewrite "123"
+        """
+        {"desk_id": "#desks._id#"}
+        """
+        And we patch "archive/#REWRITE_ID#"
+        """
+        {"abstract": "test", "body_html": "Test Document body", "headline": "RETAKE", "slugline": "RETAKE"}
+        """
+        Then we get OK response
+        When we rewrite "#REWRITE_ID#"
+        """
+        {"desk_id": "#desks._id#"}
+        """
+        Then we get error 400
+        """
+        {"_status": "ERR",
+         "_message": "Rewrite is not published. Cannot rewrite the story again."}
+        """

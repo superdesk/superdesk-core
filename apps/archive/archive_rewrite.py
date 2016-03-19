@@ -92,7 +92,7 @@ class ArchiveRewriteService(Service):
             raise SuperdeskApiError.badRequestError(message="Only last take of the package can be rewritten.")
 
         if original.get('rewrite_of') and not (original.get(ITEM_STATE) in PUBLISH_STATES):
-            raise SuperdeskApiError.badRequestError(message="Cannot create update of a not published updated.")
+            raise SuperdeskApiError.badRequestError(message="Rewrite is not published. Cannot rewrite the story again.")
 
         if update:
             # in case of associate as update
