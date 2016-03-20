@@ -832,6 +832,16 @@ def step_impl_then_get_list(context, total_count):
         test_json(context)
 
 
+@then('we get list ordered by {field} with {total_count} items')
+def step_impl_ordered_list(context, field, total_count):
+    step_impl_then_get_list(context, total_count)
+    data = get_json_data(context.response)
+    fields = []
+    for i in data['_items']:
+        fields.append(i[field])
+    assert sorted(fields) == fields
+
+
 @then('we get "{value}" in formatted output')
 def step_impl_then_get_formatted_output(context, value):
     assert_200(context.response)

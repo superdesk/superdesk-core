@@ -154,3 +154,15 @@ Feature: Publish Queue
     """
     [{"event": "publish_queue:update", "extra": {"queue_id": "#publish_queue._id#", "state": "success"}}]
     """
+
+  @auth
+  Scenario: publish queue us returned in correct order
+    Given "publish_queue"
+    """
+    [{"_id":4, "_created":"2016-05-30T10:00:00+00:00", "subscriber_id": 4, "published_seq_num": 2},
+    {"_id":3, "_created":"2016-05-30T10:00:00+00:00", "subscriber_id": 4, "published_seq_num": 3},
+    {"_id":2, "_created":"2016-05-30T10:00:00+00:00", "subscriber_id": 3, "published_seq_num": 1},
+    {"_id":1, "_created":"2016-05-30T10:00:00+00:00", "subscriber_id": 2, "published_seq_num": 1}]
+    """
+    When we get "/publish_queue"
+    Then we get list ordered by _id with 4 items
