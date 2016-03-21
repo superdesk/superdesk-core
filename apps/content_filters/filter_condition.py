@@ -276,7 +276,7 @@ class FilterConditionService(BaseService):
 
     def _run_filter(self, article_value, operator, filter_value):
         def get_lower_case(value):
-            return value.lower() if isinstance(value, str) else value
+            return str(value).lower()
 
         if operator == 'in':
             if isinstance(article_value, list):
