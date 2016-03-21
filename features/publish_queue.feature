@@ -166,3 +166,4 @@ Feature: Publish Queue
     """
     When we get "/publish_queue"
     Then we get list ordered by _id with 4 items
+    
