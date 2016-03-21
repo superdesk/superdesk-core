@@ -448,7 +448,7 @@
     			"delivery_type" : "http_push",
     			"format": "ninjs",
     			"name" : "HTTP Push",
-    			"config": { "resource_url": "http://localhost:5050/publish", "assets_url": "http://localhost:5050/assets" }
+    			"config": { "resource_url": "http://localhost:5050/publish", "assets_url": "http://localhost:5050/assets", "packaged": "true" }
     		}]
     	},
     	"resource": "subscribers",

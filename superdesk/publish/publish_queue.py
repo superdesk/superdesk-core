@@ -19,6 +19,9 @@ from superdesk.utils import SuperdeskBaseEnum
 logger = logging.getLogger(__name__)
 
 
+PUBLISHED_IN_PACKAGE = 'published_in_package'
+
+
 class QueueState(SuperdeskBaseEnum):
     PENDING = 'pending'
     IN_PROGRESS = 'in-progress'
@@ -44,6 +47,9 @@ class PublishQueueResource(Resource):
                 'delivery_type': {'type': 'string', 'required': True},
                 'config': {'type': 'dict'}
             }
+        },
+        PUBLISHED_IN_PACKAGE: {
+            'type': 'string'
         },
         'published_seq_num': {
             'type': 'integer'

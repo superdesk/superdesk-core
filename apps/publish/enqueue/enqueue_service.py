@@ -12,9 +12,10 @@ from functools import partial
 import logging
 import json
 from superdesk import get_resource_service
-from superdesk.errors import SuperdeskApiError
+from superdesk.errors import SuperdeskApiError, SuperdeskPublishError
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, PUBLISH_SCHEDULE
-from superdesk.metadata.packages import SEQUENCE, PACKAGE_TYPE
+from superdesk.metadata.packages import SEQUENCE, PACKAGE_TYPE, GROUPS,\
+    ROOT_GROUP, GROUP_ID, REFS, RESIDREF
 from superdesk.notification import push_notification
 from superdesk.publish import SUBSCRIBER_TYPES
 from apps.publish.content.common import BasePublishService
@@ -25,6 +26,7 @@ from apps.archive.common import get_user, get_utc_schedule
 from apps.packages import TakesPackageService
 from apps.packages.package_service import PackageService
 from apps.publish.published_item import PUBLISH_STATE, QUEUE_STATE
+from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +46,6 @@ class EnqueueService:
     package_service = PackageService()
 
     def _enqueue_item(self, item):
-        print('_enqueue_item', item)
         if item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and item.get(PACKAGE_TYPE):
             self.publish(doc=item, target_media_type=SUBSCRIBER_TYPES.DIGITAL)
         elif item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
@@ -123,8 +124,6 @@ class EnqueueService:
         """
         try:
             self._enqueue_item(item)
-#                 logger.exception('Nothing is saved to publish queue for story: {} for action: {}'.
-#                                  format(item[config.ID_FIELD], self.publish_type))
         except SuperdeskApiError as e:
             raise e
         except KeyError as e:
@@ -243,6 +242,10 @@ class EnqueueService:
                         continue
 
                     for destination in subscriber['destinations']:
+                        embed_package_items = doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and \
+                            PACKAGE_TYPE not in doc and destination['config'].get('packaged', False)
+                        if embed_package_items:
+                            doc = self._embed_package_items(doc)
                         # Step 2(a)
                         formatter = get_formatter(destination['format'], doc)
 
@@ -266,6 +269,8 @@ class EnqueueService:
                             publish_queue_item['content_type'] = doc.get('type', None)
                             publish_queue_item['headline'] = doc.get('headline', None)
                             publish_queue_item['publishing_action'] = self.published_state
+                            if doc.get(PUBLISHED_IN_PACKAGE):
+                                publish_queue_item[PUBLISHED_IN_PACKAGE] = doc[PUBLISHED_IN_PACKAGE]
                             publish_queue_item.pop(ITEM_STATE, None)
                             get_resource_service('publish_queue').post([publish_queue_item])
                             queued = True
@@ -276,6 +281,24 @@ class EnqueueService:
             return no_formatters, queued
         except:
             raise
+
+    def _embed_package_items(self, package):
+        """ Embeds all package items in the package document
+        """
+        for group in package.get(GROUPS, []):
+            if group[GROUP_ID] == ROOT_GROUP:
+                continue
+            for ref in group[REFS]:
+                if RESIDREF not in ref:
+                    continue
+                package_item = get_resource_service('published').find_one(req=None, item_id=ref[RESIDREF],
+                                                                          _current_version=ref[config.VERSION])
+                if not package_item:
+                    msg = 'Can not find package %s published item %s' % (package['item_id'], ref['residRef'])
+                    raise SuperdeskPublishError(500, msg)
+                package_item[config.ID_FIELD] = package_item['item_id']
+                ref['package_item'] = package_item
+        return package
 
     def _update_headline_sequence(self, doc):
         """ Updates the headline of the text story if there's any sequence value in it """

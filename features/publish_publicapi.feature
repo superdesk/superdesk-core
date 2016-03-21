@@ -403,3 +403,243 @@ Feature: Publish content to the public API
         """
         {"guid": "compositeitem", "_current_version": 2, "state": "published"}
         """
+
+  @auth
+  @notification
+  Scenario: Publish a composite item with embedded items
+    Given empty "archive"
+    Given "desks"
+        """
+        [{"name": "test_desk1"}]
+        """
+    And the "validators"
+        """
+        [{"_id": "publish_composite", "act": "publish", "type": "composite", "schema":{}},
+        {"_id": "publish_text", "act": "publish", "type": "text", "schema":{}},
+        {"_id": "publish_picture", "act": "publish", "type": "picture", "schema":{}}]
+        """
+    When we post to "archive" with success
+        """
+        [{
+            "headline" : "WA:Navy steps in with WA asylum-seeker boat",
+            "guid" : "item1",
+            "state" : "submitted",
+            "type" : "text",
+            "body_html": "item content",
+            "task": {
+                "user": "#CONTEXT_USER_ID#",
+                "status": "todo",
+                "stage": "#desks.incoming_stage#",
+                "desk": "#desks._id#"
+            }
+        }]
+        """
+    When we post to "archive" with success
+      """
+      [{
+            "original_source" : "AAP Image/AAP",
+            "description_text" : "A test picture",
+            "state" : "submitted",
+            "headline" : "ABC SHOP CLOSURES",
+            "byline" : "PAUL MILLER",
+            "source" : "AAP Image",
+            "mimetype" : "image/jpeg",
+            "type" : "picture",
+            "pubstatus" : "usable",
+            "task": {
+                "user": "#CONTEXT_USER_ID#",
+                "status": "todo",
+                "stage": "#desks.incoming_stage#",
+                "desk": "#desks._id#"
+            },
+            "guid" : "item2",
+            "renditions" : {
+                "original_source" : {
+                    "href" : "https://one-api.aap.com.au/api/v3/Assets/20150723001158639795/Original/download",
+                    "mimetype" : "image/jpeg"
+                },
+                "original" : {
+                    "height" : 4176,
+                    "media" : "55b078b21d41c8e974d17ec5",
+                    "href" : "http://localhost:5000/api/upload/55b078b21d41c8e974d17ec5/raw?_schema=http",
+                    "mimetype" : "image/jpeg",
+                    "width" : 2784
+                },
+                "thumbnail" : {
+                    "height" : 120,
+                    "media" : "55b078b41d41c8e974d17ed3",
+                    "href" : "http://localhost:5000/api/upload/55b078b41d41c8e974d17ed3/raw?_schema=http",
+                    "mimetype" : "image/jpeg",
+                    "width" : 80
+                },
+                "viewImage" : {
+                    "height" : 640,
+                    "media" : "55b078b31d41c8e974d17ed1",
+                    "href" : "http://localhost:5000/api/upload/55b078b31d41c8e974d17ed1/raw?_schema=http",
+                    "mimetype" : "image/jpeg",
+                    "width" : 426
+                },
+                "baseImage" : {
+                    "height" : 1400,
+                    "media" : "55b078b31d41c8e974d17ecf",
+                    "href" : "http://localhost:5000/api/upload/55b078b31d41c8e974d17ecf/raw?_schema=http",
+                    "mimetype" : "image/jpeg",
+                    "width" : 933
+                }
+            },
+            "slugline" : "ABC SHOP CLOSURES"
+      }]
+      """
+    When we post to "archive" with success
+        """
+        [{
+            "groups": [
+            {
+                "id": "root",
+                "refs": [
+                    {
+                        "idRef": "main"
+                    },
+                    {
+                        "idRef": "sidebars"
+                    }
+                ],
+                "role": "grpRole:NEP"
+            },
+            {
+                "id": "main",
+                "refs": [
+                    {
+                        "renditions": {},
+                        "slugline": "Boat",
+                        "guid": "item1",
+                        "headline": "WA:Navy steps in with WA asylum-seeker boat",
+                        "location": "archive",
+                        "type": "text",
+                        "itemClass": "icls:text",
+                        "residRef": "item1"
+                    }
+                ],
+                "role": "grpRole:main"
+            },
+            {
+                "id": "sidebars",
+                "refs": [
+                    {
+                        "renditions": {
+                            "original_source": {
+                                "href": "https://one-api.aap.com.au/api/v3/Assets/20150723001158639795/Original/download",
+                                "mimetype": "image/jpeg"
+                            },
+                            "original": {
+                                "width": 2784,
+                                "height": 4176,
+                                "href": "http://localhost:5000/api/upload/55b078b21d41c8e974d17ec5/raw?_schema=http",
+                                "mimetype": "image/jpeg",
+                                "media": "55b078b21d41c8e974d17ec5"
+                            },
+                            "thumbnail": {
+                                "width": 80,
+                                "height": 120,
+                                "href": "http://localhost:5000/api/upload/55b078b41d41c8e974d17ed3/raw?_schema=http",
+                                "mimetype": "image/jpeg",
+                                "media": "55b078b41d41c8e974d17ed3"
+                            },
+                            "viewImage": {
+                                "width": 426,
+                                "height": 640,
+                                "href": "http://localhost:5000/api/upload/55b078b31d41c8e974d17ed1/raw?_schema=http",
+                                "mimetype": "image/jpeg",
+                                "media": "55b078b31d41c8e974d17ed1"
+                            },
+                            "baseImage": {
+                                "width": 933,
+                                "height": 1400,
+                                "href": "http://localhost:5000/api/upload/55b078b31d41c8e974d17ecf/raw?_schema=http",
+                                "mimetype": "image/jpeg",
+                                "media": "55b078b31d41c8e974d17ecf"
+                            }
+                        },
+                        "slugline": "ABC SHOP CLOSURES",
+                        "type": "picture",
+                        "guid": "item2",
+                        "headline": "ABC SHOP CLOSURES",
+                        "location": "archive",
+                        "itemClass": "icls:picture",
+                        "residRef": "item2"
+                    }
+                ],
+                "role": "grpRole:sidebars"
+            }],
+            "task": {
+                "user": "#CONTEXT_USER_ID#",
+                "status": "todo",
+                "stage": "#desks.incoming_stage#",
+                "desk": "#desks._id#"
+            },
+            "guid" : "compositeitem",
+            "headline" : "WA:Navy steps in with WA asylum-seeker boat",
+            "state" : "submitted",
+            "type" : "composite"
+        }]
+        """
+    When we post to "/subscribers" with success
+        """
+        {
+        "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com", "packaged": true}}]
+        }
+        """
+    And we publish "compositeitem" with "publish" type and "published" state
+    Then we get OK response
+    And we get notifications
+        """
+        [{"event": "item:publish", "extra": {"item": "compositeitem"}}]
+        """
+    And we get existing resource
+        """
+        {"_current_version": 2, "state": "published", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
+        """
+    When we enqueue published
+    When we get "/publish_queue"
+    Then we get existing resource
+        """
+        {"_items":
+        	[
+        		{"item_id" : "compositeitem", "state": "pending", "content_type": "composite"},
+        		{"state": "pending", "content_type": "composite", "published_in_package": "compositeitem"},
+        		{"item_id" : "item2", "state": "pending", "content_type": "picture", "published_in_package": "compositeitem"}
+        	]
+        }
+        """
+    When we get "/published/compositeitem"
+    Then we get existing resource
+        """
+        {"guid": "compositeitem", "_current_version": 2, "state": "published"}
+        """
+    When we get "/publish_queue/compositeitem"
+    Then we get formatted item
+    	"""
+    	{
+    		"_id": "compositeitem",
+    		"type": "composite",
+    		"associations": {
+    			"main": [
+    				{
+    					"headline": "WA:Navy steps in with WA asylum-seeker boat",
+    					"type": "composite"
+    				}
+    			],
+    			"sidebars": [
+    				{
+    					"_id": "item2",
+    					"type": "picture",
+    					"headline": "ABC SHOP CLOSURES",
+    					"renditions": {
+    						"thumbnail": {"mimetype": "image/jpeg"}
+    					}
+    				}
+    			]
+    		}
+    	}
+    	"""

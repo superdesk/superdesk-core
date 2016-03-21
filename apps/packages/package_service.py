@@ -23,6 +23,7 @@ from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE_TYPE, TAKES_
 from apps.archive.common import insert_into_versions
 from apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.utc import utcnow
+from superdesk.factory.default_settings import VERSION
 
 logger = logging.getLogger(__name__)
 package_create_signal = superdesk.signals.signal('package.create')  # @UndefinedVariable
@@ -300,8 +301,10 @@ class PackageService():
         non_root_groups = (group for group in package.get(GROUPS, []) if group.get(GROUP_ID) != ROOT_GROUP)
         for g in (ref for group in non_root_groups for ref in group.get(REFS, [])):
             if g.get(RESIDREF, '') == old_ref_id:
+                new_item = get_resource_service('archive').find_one(req=None, _id=new_ref_id)
                 g[RESIDREF] = new_ref_id
                 g['guid'] = new_ref_id
+                g[VERSION] = new_item[VERSION]
 
     def update_field_in_package(self, package, ref_id, field, field_value):
         """

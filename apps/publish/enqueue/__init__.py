@@ -63,7 +63,6 @@ class EnqueueContent(superdesk.Command):
 
         try:
             items = get_published_items()
-            logger.warning('***** ITEMS %s' % [i['_id'] for i in items])
 
             if len(items) > 0:
                 enqueue_items(items)

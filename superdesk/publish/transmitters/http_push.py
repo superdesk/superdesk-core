@@ -9,13 +9,13 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import json
+from superdesk import app
+from superdesk.publish import register_transmitter
 
 from eve.utils import config
 import requests
-
-from superdesk import app
 from superdesk.errors import PublishHTTPPushError
-from superdesk.publish import register_transmitter
+from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
 from superdesk.publish.publish_service import PublishService
 
 
@@ -34,18 +34,19 @@ class HTTPPushService(PublishService):
         item['guid'] = item[config.ID_FIELD]
         del item[config.ID_FIELD]
 
-        assets_url = queue_item.get('destination', {}).get('config', {}).get('assets_url')
+        destination = queue_item.get('destination', {})
+        assets_url = destination.get('config', {}).get('assets_url')
         try:
             self._copy_published_media_files(json.loads(queue_item['formatted_item']), assets_url)
         except Exception as e:
-            raise PublishHTTPPushError.httpPushError(e, queue_item.get('destination', {}))
+            raise PublishHTTPPushError.httpPushError(e, destination)
 
-        resource_url = queue_item.get('destination', {}).get('config', {}).get('resource_url')
-        response = requests.post(resource_url, data=json.dumps(item), headers=self.headers)
-        if response.status_code != requests.codes.created:  # @UndefinedVariable
-            message = 'Error pushing item %s: %s' % (response.status_code, response.text)
-            raise PublishHTTPPushError.httpPushError(Exception(message,
-                                                     queue_item.get('destination', {})))
+        if not queue_item.get(PUBLISHED_IN_PACKAGE) or not destination.get('config', {}).get('packaged', False):
+            resource_url = destination.get('config', {}).get('resource_url')
+            response = requests.post(resource_url, data=json.dumps(item), headers=self.headers)
+            if response.status_code != requests.codes.created:  # @UndefinedVariable
+                message = 'Error pushing item %s: %s' % (response.status_code, response.text)
+                raise PublishHTTPPushError.httpPushError(Exception(message, destination))
 
     def _copy_published_media_files(self, item, assets_url):
         """Copy the media files for the given item to the publish_items endpoint
