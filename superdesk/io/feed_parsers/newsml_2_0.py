@@ -116,7 +116,7 @@ class NewsMLTwoFeedParser(XMLFeedParser):
         item['headline'] = item.get('headline', '')
 
         try:
-            item['description'] = meta.find(self.qname('description')).text
+            item['description_text'] = meta.find(self.qname('description')).text
         except AttributeError:
             pass
 
