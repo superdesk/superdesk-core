@@ -226,18 +226,22 @@ class TakesPackageService():
                         logger.exception("Unexpected error while spiking items of takes package")
                         break
 
-    def get_first_take_in_takes_package(self, item):
+    def get_take_by_take_no(self, item, take_no=1, package=None):
         """
-        Returns the id of the first take in the takes package.
+        Returns the id of the take in the takes package by take number.
         :param dict item: document
-        :return str: id of the first take else None
+        :param int take_no: take number in the takes package
+        :param dict package: takes package
+        :return str: id of the take else None
         """
-        package = self.get_take_package(item)
+        if not package:
+            package = self.get_take_package(item)
+
         if package:
             refs = self.get_package_refs(package)
             if refs:
                 ref = next((ref for ref in refs
-                            if ref.get(SEQUENCE) == 1 and ref.get(RESIDREF, '') != item.get('item_id', '')),
+                            if ref.get(SEQUENCE) == take_no and ref.get(RESIDREF, '') != item.get('item_id', '')),
                            None)
                 if ref:
                     return ref.get(RESIDREF, None)
