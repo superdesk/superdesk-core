@@ -325,40 +325,6 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     """
 
   @auth
-  Scenario: Embargo can't be set on a de-scheduled item as Digital Story is created when scheduled
-    When we patch "/archive/123"
-    """
-    {"publish_schedule": "#DATE+1#"}
-    """
-    Then we get OK response
-    When we publish "#archive._id#" with "publish" type and "published" state
-    Then we get OK response
-    And we get existing resource
-    """
-    {"_current_version": 3, "state": "scheduled"}
-    """
-    When we enqueue published
-    When we get "/publish_queue"
-    Then we get list with 0 items
-    When we patch "/archive/123"
-    """
-    {"publish_schedule": null}
-    """
-    When we enqueue published
-    And we get "/publish_queue"
-    Then we get list with 0 items
-    When we get "/published"
-    Then we get list with 0 items
-    When we patch "/archive/123"
-    """
-    {"embargo": "#DATE+1#"}
-    """
-    Then we get error 400
-    """
-    {"_issues": {"validator exception": "400: Takes doesn't support Embargo"}}
-    """
-
-  @auth
   Scenario: Can't set an Embargo after publishing
     When we publish "#archive._id#" with "publish" type and "published" state
     Then we get OK response
