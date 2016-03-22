@@ -46,67 +46,72 @@ class NINJSFormatter(Formatter):
         try:
             pub_seq_num = superdesk.get_resource_service('subscribers').generate_sequence_number(subscriber)
 
-            ninjs = {
-                '_id': article[GUID_FIELD],
-                'version': str(article.get(config.VERSION, 1)),
-                'type': self._get_type(article)
-            }
-
-            try:
-                ninjs['byline'] = self._get_byline(article)
-            except:
-                pass
-
-            located = article.get('dateline', {}).get('located', {})
-            if located:
-                ninjs['located'] = located.get('city', '')
-
-            for copy_property in self.direct_copy_properties:
-                if article.get(copy_property) is not None:
-                    ninjs[copy_property] = article[copy_property]
-
-            if article.get('body_html'):
-                ninjs['body_html'] = self.append_body_footer(article)
-
-            if article.get('description'):
-                ninjs['description_html'] = self.append_body_footer(article)
-
-            if article[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
-                ninjs['associations'] = self._get_associations(article)
-            elif article.get('associations', {}):
-                ninjs['associations'] = self._format_related(article, subscriber)
-
-            if article.get(EMBARGO):
-                ninjs['embargoed'] = get_utc_schedule(article, EMBARGO).isoformat()
-
-            if article.get('priority'):
-                ninjs['priority'] = article['priority']
-            else:
-                ninjs['priority'] = 5
-
-            if article.get('subject'):
-                ninjs['subject'] = self._get_subject(article)
-
-            if article.get('anpa_category'):
-                ninjs['service'] = self._get_service(article)
-
-            if article.get('renditions'):
-                ninjs['renditions'] = self._get_renditions(article)
-
-            if article.get('abstract'):
-                ninjs['description_text'] = article.get('abstract')
-            elif article.get('description_text'):
-                ninjs['description_text'] = article.get('description_text')
-
-            if article.get('company_codes'):
-                ninjs['organisation'] = [{'name': c.get('name', ''), 'rel': 'Securities Identifier',
-                                          'symbols': [{'ticker': c.get('qcode', ''),
-                                                       'exchange': c.get('security_exchange', '')}]}
-                                         for c in article['company_codes']]
-
+            ninjs = self._transform_to_ninjs(article)
             return [(pub_seq_num, json.dumps(ninjs, default=json_serialize_datetime_objectId))]
         except Exception as ex:
             raise FormatterError.ninjsFormatterError(ex, subscriber)
+
+    def _transform_to_ninjs(self, article, recursive=True):
+        ninjs = {
+            '_id': article[GUID_FIELD],
+            'version': str(article.get(config.VERSION, 1)),
+            'type': self._get_type(article)
+        }
+
+        try:
+            ninjs['byline'] = self._get_byline(article)
+        except:
+            pass
+
+        located = article.get('dateline', {}).get('located', {})
+        if located:
+            ninjs['located'] = located.get('city', '')
+
+        for copy_property in self.direct_copy_properties:
+            if article.get(copy_property) is not None:
+                ninjs[copy_property] = article[copy_property]
+
+        if article.get('body_html'):
+            ninjs['body_html'] = self.append_body_footer(article)
+
+        if article.get('description'):
+            ninjs['description_html'] = self.append_body_footer(article)
+
+        if recursive:
+            if article[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
+                ninjs['associations'] = self._get_associations(article)
+            elif article.get('associations', {}):
+                ninjs['associations'] = self._format_related(article)
+
+        if article.get(EMBARGO):
+            ninjs['embargoed'] = get_utc_schedule(article, EMBARGO).isoformat()
+
+        if article.get('priority'):
+            ninjs['priority'] = article['priority']
+        else:
+            ninjs['priority'] = 5
+
+        if article.get('subject'):
+            ninjs['subject'] = self._get_subject(article)
+
+        if article.get('anpa_category'):
+            ninjs['service'] = self._get_service(article)
+
+        if article.get('renditions'):
+            ninjs['renditions'] = self._get_renditions(article)
+
+        if article.get('abstract'):
+            ninjs['description_text'] = article.get('abstract')
+        elif article.get('description_text'):
+            ninjs['description_text'] = article.get('description_text')
+
+        if article.get('company_codes'):
+            ninjs['organisation'] = [{'name': c.get('name', ''), 'rel': 'Securities Identifier',
+                                      'symbols': [{'ticker': c.get('qcode', ''),
+                                                   'exchange': c.get('security_exchange', '')}]}
+                                     for c in article['company_codes']]
+
+        return ninjs
 
     def can_format(self, format_type, article):
         return format_type == 'ninjs'
@@ -137,16 +142,17 @@ class NINJSFormatter(Formatter):
                     item = {}
                     item['_id'] = ref[RESIDREF]
                     item[ITEM_TYPE] = ref[ITEM_TYPE]
+                    if ref.get('package_item'):
+                        item.update(self._transform_to_ninjs(ref['package_item'], recursive=False))
                     items.append(item)
                     associations[group[GROUP_ID]] = items
         return associations
 
-    def _format_related(self, article, subscriber):
+    def _format_related(self, article):
         """Format all associated items for simple items (not packages)."""
         associations = {}
         for key, item in article.get('associations', {}).items():
-            _seq, formatted = self.format(item, subscriber)[0]
-            associations[key] = json.loads(formatted)
+            associations[key] = self._transform_to_ninjs(item)
         return associations
 
     def _get_subject(self, article):

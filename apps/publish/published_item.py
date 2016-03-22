@@ -27,6 +27,7 @@ from flask import current_app as app
 from apps.archive.archive import SOURCE as ARCHIVE
 from apps.archive.common import handle_existing_data, item_schema, remove_media_files, get_expiry, get_utc_schedule
 from apps.packages import TakesPackageService
+from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
 
 
 logger = logging.getLogger(__name__)
@@ -75,6 +76,9 @@ published_item_fields = {
     'moved_to_legal': {
         'type': 'boolean',
         'default': False
+    },
+    PUBLISHED_IN_PACKAGE: {
+        'type': 'string'
     }
 }
 
