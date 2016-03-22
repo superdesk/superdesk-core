@@ -610,7 +610,7 @@ Feature: Content Publishing
       """
       [{"guid": "123", "headline": "test", "_current_version": 1, "state": "fetched",
         "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
-        "publish_schedule":"2016-05-30T10:00:00+00:00",
+        "publish_schedule": "#DATE+1#",
         "subject":[{"qcode": "17004000", "name": "Statistics"}],
         "slugline": "test",
         "body_html": "Test Document body"}]
@@ -651,11 +651,6 @@ Feature: Content Publishing
                   "type": "text",
                   "_id": "123"
 
-              },
-              {
-                  "_current_version": 2,
-                  "state": "in_progress",
-                  "type": "composite"
               }
           ]
       }

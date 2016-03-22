@@ -27,7 +27,7 @@ from superdesk.services import BaseService
 from superdesk.users.services import current_user_has_privilege, is_admin
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, CONTENT_TYPE, ITEM_TYPE, EMBARGO, \
     PUBLISH_STATES, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, SIGN_OFF
-from superdesk.metadata.packages import LINKED_IN_PACKAGES, RESIDREF, SEQUENCE
+from superdesk.metadata.packages import LINKED_IN_PACKAGES, RESIDREF, SEQUENCE, PACKAGE_TYPE, TAKES_PACKAGE
 from apps.common.components.utils import get_component
 from apps.item_autosave.components.item_autosave import ItemAutosave
 from apps.common.models.base_model import InvalidEtag
@@ -203,13 +203,13 @@ class ArchiveService(BaseService):
             self.deschedule_item(updates, original)  # this is an deschedule action
 
             # check if there is a takes package and deschedule the takes package.
-            package = TakesPackageService().get_take_package(original)
+            takes_service = TakesPackageService()
+            package = takes_service.get_take_package(original)
             if package and package.get(ITEM_STATE) == CONTENT_STATE.SCHEDULED:
-                package_updates = {PUBLISH_SCHEDULE: None,
-                                   SCHEDULE_SETTINGS: {},
-                                   'groups': package.get('groups')}
-                self.patch(package.get(config.ID_FIELD), package_updates)
-
+                get_resource_service('published').delete_by_article_id(package.get(config.ID_FIELD))
+                self.delete_by_article_ids([package.get(config.ID_FIELD)])
+                updates[LINKED_IN_PACKAGES] = [package for package in original.get(LINKED_IN_PACKAGES, [])
+                                               if package.get(PACKAGE_TYPE) != TAKES_PACKAGE]
             return
 
         if self.__is_req_for_save(updates):
