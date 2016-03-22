@@ -472,3 +472,66 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     """
     And we get "/archive/#copy._id#"
     Then there is no "embargo" in response
+
+  @auth
+  Scenario: Deschedule an article then embargo the same article
+    When we patch "/archive/123"
+    """
+    {"publish_schedule": "#DATE+1#"}
+    """
+    Then we get response code 200
+    When we publish "123" with "publish" type and "published" state
+    Then we get OK response
+    And we get existing resource
+    """
+    {"state": "scheduled", "_id": "123"}
+    """
+    When we get "/archive/#archive.123.take_package#"
+    Then we get existing resource
+    """
+    {"state": "scheduled", "_id": "#archive.123.take_package#"}
+    """
+    When we get "/published"
+    Then we get list with 2 items
+    """
+    {"_items": [
+      {"state": "scheduled", "_id": "123", "type": "text"},
+      {"state": "scheduled", "_id": "#archive.123.take_package#", "type": "composite"}
+    ]}
+    """
+    When we enqueue published
+    When we get "/publish_queue"
+    Then we get list with 0 items
+    When we patch "/archive/123"
+    """
+    {"publish_schedule": null}
+    """
+    Then we get OK response
+    When we get "/archive/123"
+    Then we get existing resource
+    """
+    {"state": "in_progress", "_id": "123", "publish_schedule": "__none__"}
+    """
+    When we get "/archive/#TAKE_PACKAGE#"
+    Then we get error 404
+    When we get "/published"
+    Then we get list with 0 items
+    When we get "/publish_queue"
+    Then we get list with 0 items
+    When we patch "/archive/123"
+    """
+    {"embargo": "#DATE+1#"}
+    """
+    Then we get OK response
+    When we publish "123" with "publish" type and "published" state
+    Then we get OK response
+    And we get expiry for schedule and embargo content 4320 minutes after "#archive_publish.embargo#"
+    And we check if article has Embargo and Ed. Note of the article has embargo indication
+    When we get "/published"
+    Then we check if article has Embargo and Ed. Note of the article has embargo indication
+    When we enqueue published
+    When we get "/publish_queue"
+    Then we get list with 1 items
+    """
+    {"_items": [{"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}}]}
+    """
