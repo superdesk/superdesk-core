@@ -87,7 +87,8 @@ class PreferencesResource(Resource):
         'enabled': False,
         'default': False,
         'label': 'Enable Feature Preview',
-        'category': 'feature'
+        'category': 'feature',
+        'privileges': ['feature_preview']
     })
 
     superdesk.register_default_user_preference('archive:view', {
@@ -194,6 +195,7 @@ class PreferencesService(BaseService):
         doc[_session_preferences_key] = session_prefs
         self.enhance_document_with_user_privileges(doc)
         enhance_document_with_default_prefs(doc)
+        self._filter_preferences_by_privileges(doc)
 
     def on_update(self, updates, original):
         existing_user_preferences = original.get(_user_preferences_key, {}).copy()
@@ -293,3 +295,12 @@ class PreferencesService(BaseService):
             except:
                 logger.warn('On_Role_Privileges_Revoked:Failed to update user:{} with role:{}.'.
                             format(user.get(config.ID_FIELD), role.get(config.ID_FIELD)), exc_info=True)
+
+    def _filter_preferences_by_privileges(self, doc):
+        privileges = doc[_privileges_key]
+        preferences = doc[_user_preferences_key]
+
+        def has_missing_privileges(pref):
+            return [priv for priv in pref.get('privileges', []) if not privileges.get(priv)]
+
+        doc[_user_preferences_key] = {k: v for k, v in preferences.items() if not has_missing_privileges(v)}

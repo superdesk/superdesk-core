@@ -157,7 +157,7 @@ Feature: User preferences
 
         When we patch "/users/#users._id#"
         """
-        {"user_type": "user", "privileges": {"archive:spike": 1}}
+        {"user_type": "user", "privileges": {"archive:spike": 1, "users": 1}}
         """
 
         When we get "/preferences/#SESSION_ID#"
@@ -166,13 +166,24 @@ Feature: User preferences
         {
             "active_privileges": {"archive:spike": 1},
             "user_preferences": {
-                "feature:preview": {
-                    "category": "feature",
-                    "default": false,
-                    "enabled": false,
-                    "label": "Enable Feature Preview",
-                    "type": "bool"
-                }
+                "archive:view": {}
+            }
+        }
+        """
+        And there is no "feature:preview" preference
+
+        When we patch "/users/#users._id#"
+        """
+        {"user_type": "user", "privileges": {"archive:spike": 1, "feature_preview": 1}}
+        """
+
+        When we get "/preferences/#SESSION_ID#"
+        Then we get existing resource
+        """
+        {
+            "active_privileges": {"archive:spike": 1, "feature_preview": 1},
+            "user_preferences": {
+                "feature:preview": {}
             }
         }
         """
@@ -205,13 +216,7 @@ Feature: User preferences
                 }
             ],
             "user_preferences": {
-                "feature:preview": {
-                    "category": "feature",
-                    "default": false,
-                    "enabled": false,
-                    "label": "Enable Feature Preview",
-                    "type": "bool"
-                }
+                "archive:view": {}
             }
         }
         """
