@@ -18,6 +18,7 @@ from superdesk.utc import utcnow, set_time, local_to_utc
 from superdesk.errors import SuperdeskApiError
 from superdesk.metadata.item import metadata_schema, ITEM_STATE, CONTENT_STATE
 from superdesk.celery_app import celery
+from superdesk.utils import plaintext_filter
 from apps.rules.routing_rules import Weekdays
 from apps.archive.common import ARCHIVE, CUSTOM_HATEOAS, item_schema, format_dateline_to_locmmmddsrc
 from apps.archive.common import insert_into_versions
@@ -33,6 +34,7 @@ TEMPLATE_FIELDS = {'template_name', 'template_type', 'schedule', 'type', 'state'
                    config.ID_FIELD, config.LAST_UPDATED, config.DATE_CREATED,
                    config.ETAG, 'task'}
 KILL_TEMPLATE_NOT_REQUIRED_FIELDS = ['schedule', 'dateline', 'template_desk', 'template_stage']
+PLAINTEXT_FIELDS = {'headline'}
 
 
 class TemplateType(SuperdeskBaseEnum):
@@ -262,6 +264,8 @@ def render_content_template(item, template):
         if template.get('template_stage'):
             updates['task']['stage'] = template.get('template_stage')
 
+    filter_plaintext_fields(updates)
+
     return updates
 
 
@@ -306,7 +310,16 @@ def get_item_from_template(template):
     if dateline.get('located'):
         dateline['text'] = format_dateline_to_locmmmddsrc(dateline['located'], dateline['date'])
 
+    filter_plaintext_fields(item)
+
     return item
+
+
+def filter_plaintext_fields(item):
+    """Filter out html from plaintext fields."""
+    for field in PLAINTEXT_FIELDS:
+        if field in item:
+            item[field] = plaintext_filter(item[field])
 
 
 @celery.task(soft_time_limit=120)
