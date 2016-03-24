@@ -1908,6 +1908,12 @@ def broadcast_key_has_value(context, key, value):
         assert data[key] == value, 'key "%s" does not have valid value "%s"' % (key, data[key])
 
 
+@then('there is no "{key}" preference')
+def there_is_no_preference(context, key):
+    data = get_json_data(context.response)
+    assert key not in data['user_preferences'], '%s is in %s' % (key, data['user_preferences'].keys())
+
+
 @then('there is no "{key}" in "{namespace}" preferences')
 def there_is_no_key_in_namespace_preferences(context, key, namespace):
     data = get_json_data(context.response)['user_preferences']
