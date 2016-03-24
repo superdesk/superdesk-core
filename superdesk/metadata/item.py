@@ -15,6 +15,7 @@ from eve.utils import config
 from superdesk.utils import SuperdeskBaseEnum
 
 not_analyzed = {'type': 'string', 'index': 'not_analyzed'}
+not_indexed = {'type': 'string', 'index': 'no'}
 GUID_TAG = 'tag'
 GUID_FIELD = 'guid'
 GUID_NEWSML = 'newsml'
@@ -363,6 +364,12 @@ metadata_schema = {
 
     # template used to create an item
     'template': Resource.rel('content_templates'),
+
+    'body_footer': {  # Public Service Announcements
+        'type': 'string',
+        'nullable': True,
+        'mapping': not_indexed,
+    },
 }
 
 metadata_schema['lock_user']['versioned'] = False

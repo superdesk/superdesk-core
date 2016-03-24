@@ -571,11 +571,6 @@ def item_schema(extra=None):
                 'rewrite_id': {'type': 'string', 'mapping': not_analyzed}
             }
         },
-        'body_footer': {  # Public Service Announcements
-            'type': 'string',
-            'nullable': True,
-            'mapping': not_analyzed
-        },
         'company_codes': {
             'type': 'list',
             'mapping': {
