@@ -110,3 +110,12 @@ class RenderTemplateTestCase(SuperdeskTestCase):
         self.assertEqual(updates['body_html'], 'This article has slugline: Testing and dateline: '
                                                'hello world at 02 Jun 2015 08:53 AEST')
         self.assertListEqual(updates['place'], ['Australia'])
+
+    def test_headline_strip_tags(self):
+        template = {'data': {'headline': ' test\nit<br>'}}
+
+        updates = render_content_template({}, template)
+        self.assertEqual('test it', updates['headline'])
+
+        item = get_item_from_template(template)
+        self.assertEqual('test it', item['headline'])

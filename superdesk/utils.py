@@ -17,6 +17,7 @@ from bson import ObjectId
 from enum import Enum
 from importlib import import_module
 from eve.utils import config
+from bs4 import BeautifulSoup
 
 
 required_string = {'type': 'string', 'required': True, 'nullable': False, 'empty': False}
@@ -168,3 +169,10 @@ def sha(text):
     :param text: text str
     """
     return hashlib.sha256(text.encode()).hexdigest()
+
+
+def plaintext_filter(value):
+    """Filter out html from value."""
+    soup = BeautifulSoup(value, 'html.parser')
+    text = soup.get_text()
+    return text.replace('\n', ' ').strip()
