@@ -35,11 +35,11 @@ Feature: Templates
     Scenario: User can create personal template
         When we post to "content_templates"
         """
-        {"template_name": "personal", "template_type": "create", "template_desk": null}
+        {"template_name": "personal", "template_type": "create", "template_desk": null, "data": {"body_footer": "test"}}
         """
         Then we get new resource
         """
-        {"template_desk": null, "user": "#CONTEXT_USER_ID#", "is_public": false}
+        {"template_desk": null, "user": "#CONTEXT_USER_ID#", "is_public": false, "data": {"body_footer": "test"}}
         """
 
     @auth
