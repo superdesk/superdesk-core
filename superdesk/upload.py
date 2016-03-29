@@ -50,9 +50,9 @@ def get_upload_as_data_uri(media_id):
     raise SuperdeskApiError.notFoundError('File not found on media storage.')
 
 
-def url_for_media(media_id):
+def url_for_media(media_id, mimetype=None):
     try:
-        url = app.media.url_for_media(media_id)
+        url = app.media.url_for_media(media_id, mimetype)
         if url:
             return url
         return url_for('upload_raw.get_upload_as_data_uri', media_id=media_id,
