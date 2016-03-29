@@ -23,7 +23,7 @@ def init_parsed_request(elastic_query):
 def get_highlighted_items(highlights_id):
     """Get items marked for given highlight and passing date range query."""
     highlight = get_resource_service('highlights').find_one(req=None, _id=highlights_id)
-    req = init_parsed_request({
+    query = {
         'query': {
             'filtered': {'filter': {'and': [
                 {'range': {'versioncreated': {'gte': highlight.get('auto_insert', 'now/d')}}},
@@ -33,8 +33,10 @@ def get_highlighted_items(highlights_id):
         'sort': [
             {'versioncreated': 'desc'},
         ]
-    })
-    return get_resource_service('archive').get(req, lookup=None)
+    }
+    request = ParsedRequest()
+    request.args = {'source': json.dumps(query), 'repo': 'archive,published'}
+    return list(get_resource_service('search').get(req=request, lookup=None))
 
 
 def init_highlight_package(doc):
