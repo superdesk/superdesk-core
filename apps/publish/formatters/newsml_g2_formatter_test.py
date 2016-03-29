@@ -688,7 +688,8 @@ class NewsMLG2FormatterTest(SuperdeskTestCase):
             '{http://iptc.org/std/nar/2006-10-01/}itemSet/{http://iptc.org/std/nar/2006-10-01/}newsItem/' +
             '{http://iptc.org/std/nar/2006-10-01/}contentSet/{http://iptc.org/std/nar/2006-10-01/}inlineXML/' +
             '{http://iptc.org/std/nar/2006-10-01/}nitf/{http://iptc.org/std/nar/2006-10-01/}body/' +
-            '{http://iptc.org/std/nar/2006-10-01/}body.content').text, 'The story body')
+            '{http://iptc.org/std/nar/2006-10-01/}body.content/' +
+            '{http://iptc.org/std/nar/2006-10-01/}p').text, 'The story body')
         self.assertEqual(xml.find(
             '{http://iptc.org/std/nar/2006-10-01/}itemSet/{http://iptc.org/std/nar/2006-10-01/}newsItem/' +
             '{http://iptc.org/std/nar/2006-10-01/}itemMeta/{http://iptc.org/std/nar/2006-10-01/}embargoed').text,

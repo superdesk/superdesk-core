@@ -10,15 +10,20 @@
 
 
 import os
-import unittest
+from superdesk.tests import TestCase
 
 from superdesk.etree import etree
 from superdesk.io.feed_parsers.nitf import NITFFeedParser, get_subjects
 
 
-class NITFTestCase(unittest.TestCase):
+class NITFTestCase(TestCase):
+
+    vocab = [{'_id': 'genre', 'items': [{'name': 'Current'}]}]
 
     def setUp(self):
+        super().setUp()
+        with self.app.app_context():
+            self.app.data.insert('vocabularies', self.vocab)
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.normpath(os.path.join(dirname, '../fixtures', self.filename))
         provider = {'name': 'Test'}
@@ -185,7 +190,7 @@ class PATestCase2(NITFTestCase):
         self.assertEqual(58, self.item.get('word_count'))
 
 
-class ParseSubjects(unittest.TestCase):
+class ParseSubjects(TestCase):
     def test_get_subjects(self):
         xml = ('<?xml version="1.0" encoding="UTF-8"?>'
                '<nitf><head>'

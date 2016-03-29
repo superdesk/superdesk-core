@@ -47,7 +47,7 @@ class NitfFormatterTest(TestCase):
     def test_formatter(self):
         article = {
             'headline': 'test headline',
-            'body_html': 'test body',
+            'body_html': '<p>test body</p>',
             'type': 'text',
             'priority': '1',
             '_id': 'urn:localhost.abc',
@@ -57,8 +57,8 @@ class NitfFormatterTest(TestCase):
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
         nitf_xml = etree.fromstring(doc)
         self.assertEqual(nitf_xml.find('head/title').text, article['headline'])
-        self.assertEqual(nitf_xml.find('body/body.content').text, article['body_html'])
-        self.assertEqual(nitf_xml.find('head/docdata/urgency').get('id-string'), '2')
+        self.assertEqual(nitf_xml.find('body/body.content/p').text, 'test body')
+        self.assertEqual(nitf_xml.find('head/docdata/urgency').get('ed-urg'), '2')
 
     def test_company_codes(self):
         article = {

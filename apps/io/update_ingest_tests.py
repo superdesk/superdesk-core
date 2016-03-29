@@ -391,7 +391,8 @@ class UpdateIngestTest(SuperdeskTestCase):
         vocab = [{'_id': 'iptc_category_map',
                   'items': [{'name': 'Finance', 'category': 'f', 'qcode': '04000000', 'is_active': True}]},
                  {'_id': 'categories',
-                  'items': [{'is_active': True, 'name': 'Australian Weather', 'qcode': 'b', 'subject': '17000000'}]}]
+                  'items': [{'is_active': True, 'name': 'Australian Weather', 'qcode': 'b', 'subject': '17000000'}]},
+                 {'_id': 'genre', 'items': [{'qcode': 'feature', 'name': 'feature'}]}]
 
         self.app.data.insert('vocabularies', vocab)
 
@@ -415,7 +416,8 @@ class UpdateIngestTest(SuperdeskTestCase):
         vocab = [{'_id': 'iptc_category_map',
                   'items': [{'name': 'Finance', 'category': 'f', 'qcode': '04000000', 'is_active': False}]},
                  {'_id': 'categories',
-                  'items': [{'is_active': True, 'name': 'Australian Weather', 'qcode': 'b', 'subject': '17000000'}]}]
+                  'items': [{'is_active': True, 'name': 'Australian Weather', 'qcode': 'b', 'subject': '17000000'}]},
+                 {'_id': 'genre', 'items': [{'qcode': 'feature', 'name': 'feature'}]}]
 
         self.app.data.insert('vocabularies', vocab)
 
