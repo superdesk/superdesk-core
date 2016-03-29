@@ -52,7 +52,7 @@ class SuperdeskGridFSMediaStorage(GridFSMediaStorage):
 
         :param media_id: media id from media_id method
         """
-        return upload_url(str(content_type))
+        return upload_url(str(media_id))
 
     def fetch_rendition(self, rendition):
         return self.get(rendition.get('media'), 'upload')

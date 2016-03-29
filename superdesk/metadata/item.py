@@ -289,6 +289,13 @@ metadata_schema = {
         'type': 'string',
         'mapping': not_analyzed
     },
+    'poi': {
+        'type': 'dict',
+        'schema': {
+            'x': {'type': 'float', 'nullable': False},
+            'y': {'type': 'float', 'nullable': False}
+        },
+    },
     'renditions': {
         'type': 'dict'
     },

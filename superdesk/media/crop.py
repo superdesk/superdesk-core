@@ -25,10 +25,10 @@ class CropService():
 
     crop_sizes = []
 
-    def validate_crop(self, original, crop_name, doc):
+    def validate_crop(self, original, updates, crop_name):
         """
-
         :param dict original: original item
+        :param dict updates: updated renditions
         :param str crop_name: name of the crop
         :param dict doc: crop co-ordinates
         :raises SuperdeskApiError.badRequestError:
@@ -52,10 +52,50 @@ class CropService():
 
         # Check if the crop name is valid
         crop = self.get_crop_by_name(crop_name)
-        if not crop and 'CropLeft' in doc:
+        crop_data = updates.get('renditions', {}).get(crop_name, {})
+        if not crop and 'CropLeft' in crop_data:
             raise SuperdeskApiError.badRequestError(message='Unknown crop name! (name=%s)' % crop_name)
 
-        self._validate_aspect_ratio(crop, doc)
+        self._validate_values(crop_data)
+        self._validate_poi(original, updates, crop_name)
+        self._validate_aspect_ratio(crop, crop_data)
+
+    def _validate_values(self, crop):
+        int_fields = ('CropLeft', 'CropTop', 'CropRight', 'CropBottom', 'width', 'height')
+        for field in int_fields:
+            if field in crop and type(crop[field]) != int:
+                raise SuperdeskApiError.badRequestError('Invalid value for %s in renditions' % field)
+
+    def _validate_poi(self, original, updates, crop_name):
+        """
+        Validate the crop point of interest in the renditions dictionary for the given crop
+        :param dict original: original item
+        :param dict updates: updated renditions
+        """
+        renditions = original.get('renditions', {})
+        original_image = renditions['original']
+        updated_renditions = updates.get('renditions', {})
+        if 'poi' in updates:
+            if 'x' not in updates['poi'] or 'y' not in updates['poi']:
+                del updates['poi']
+                return
+            poi = updates['poi']
+        elif 'poi' not in original:
+            return
+        else:
+            if crop_name not in updated_renditions:
+                return
+            poi = original['poi']
+
+        crop_data = updated_renditions[crop_name] if crop_name in updated_renditions else renditions[crop_name]
+        orig_poi_x = int(original_image['width'] * poi['x'])
+        orig_poi_y = int(original_image['height'] * poi['y'])
+
+        if orig_poi_y < crop_data.get('CropTop', 0) \
+                or orig_poi_y > crop_data.get('CropBottom', original_image['height']) \
+                or orig_poi_x < crop_data.get('CropLeft', 0) \
+                or orig_poi_x > crop_data.get('CropRight', original_image['width']):
+            raise SuperdeskApiError('Point of interest outside the crop %s limits' % crop_name)
 
     def _validate_aspect_ratio(self, crop, doc):
         """
@@ -185,9 +225,36 @@ class CropService():
             original_copy = deepcopy(original)
             for key in update_renditions:
                 if self.get_crop_by_name(key):
-                    renditions, crop_created = self.create_crop(original_copy, key, update_renditions.get(key, {}))
+                    renditions, crop_created = self.create_crop(original_copy, key,
+                                                                update_renditions.get(key, {}))
+            poi = updates.get('poi', {})
+            if poi:
+                for crop_name in renditions:
+                    self._set_crop_poi(renditions, crop_name, poi)
 
             updates['renditions'] = renditions
+
+    def _set_crop_poi(self, renditions, crop_name, poi):
+        """
+        Set the crop point of interest in the renditions dictionary for the given crop
+        :param dict renditions: updated renditions
+        :param string crop_name: the crop for which to set the poi
+        :param dict poi: the point of interest dictionary
+        """
+        fields = ('CropLeft', 'CropTop', 'CropRight', 'CropBottom')
+        if 'x' in poi and 'y' in poi:
+            original_image = renditions['original']
+            crop_data = renditions[crop_name]
+            orig_poi_x = int(original_image['width'] * poi['x'])
+            orig_poi_y = int(original_image['height'] * poi['y'])
+
+            if any(name in crop_data for name in fields):
+                crop_poi_x = orig_poi_x - crop_data.get('CropLeft', 0)
+                crop_poi_y = orig_poi_y - crop_data.get('CropTop', 0)
+            else:
+                crop_poi_x = int(crop_data.get('width', original_image['width']) * poi['x'])
+                crop_poi_y = int(crop_data.get('height', original_image['height']) * poi['y'])
+            renditions[crop_name]['poi'] = {'x': crop_poi_x, 'y': crop_poi_y}
 
     def validate_multiple_crops(self, updates, original):
         """
@@ -198,7 +265,7 @@ class CropService():
         renditions = updates.get('renditions', {})
         if renditions and original.get(ITEM_TYPE) == CONTENT_TYPE.PICTURE:
             for key in renditions:
-                self.validate_crop(original, key, renditions.get(key, {}))
+                self.validate_crop(original, updates, key)
 
     def delete_replaced_crop_files(self, updates, original):
         """
