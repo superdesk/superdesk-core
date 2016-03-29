@@ -44,7 +44,8 @@ class FilterConditionResource(Resource):
                         'body_html',
                         'genre',
                         'subject',
-                        'desk'],
+                        'desk',
+                        'sms'],
         },
         'operator': {
             'type': 'string',
@@ -190,6 +191,8 @@ class FilterConditionService(BaseService):
     def _get_type(self, field):
         if field == 'urgency':
             return int
+        elif field == 'sms':
+            return bool
         else:
             return str
 
@@ -238,6 +241,8 @@ class FilterConditionService(BaseService):
             return 'subject.qcode'
         elif field == 'desk':
             return 'task.desk'
+        elif field == 'sms':
+            return 'flags.marked_for_sms'
         else:
             return field
 
@@ -259,6 +264,8 @@ class FilterConditionService(BaseService):
     def _is_field_in_article(self, field, article):
         if field == 'desk':
             return field in article.get('task', {})
+        elif field == 'sms':
+            return 'marked_for_sms' in article.get('flags', {})
         else:
             return field in article
 
@@ -271,6 +278,8 @@ class FilterConditionService(BaseService):
             return [s['qcode'] for s in article[field]]
         elif field == 'desk':
             return str(article.get('task', {}).get(field))
+        elif field == 'sms':
+            return str(article.get('flags', {}).get('marked_for_sms'))
         else:
             return article[field]
 
@@ -352,6 +361,11 @@ class FilterConditionParametersService(BaseService):
                             'operators': ['in', 'nin'],
                             'values': values['desk'],
                             'value_field': '_id'
+                            },
+                           {'field': 'sms',
+                            'operators': ['in', 'nin'],
+                            'values': values['sms'],
+                            'value_field': 'name'
                             }])
 
     def _get_field_values(self):
@@ -363,4 +377,5 @@ class FilterConditionParametersService(BaseService):
         values['type'] = get_resource_service('vocabularies').find_one(req=None, _id='type')['items']
         values['subject'] = get_subjectcodeitems()
         values['desk'] = list(get_resource_service('desks').get(None, {}))
+        values['sms'] = [{'qcode': 0, 'name': 'False'}, {'qcode': 1, 'name': 'True'}]
         return values

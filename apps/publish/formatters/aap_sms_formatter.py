@@ -26,9 +26,10 @@ class AAPSMSFormatter(Formatter):
         """
         try:
             pub_seq_num = superdesk.get_resource_service('subscribers').generate_sequence_number(subscriber)
+            sms_message = article.get('sms_message', article.get('headline', '')).replace('\'', '\'\'')
 
             odbc_item = {'Sequence': pub_seq_num, 'Category': article.get('anpa_category', [{}])[0].get('qcode'),
-                         'Headline': article.get('headline', '').replace('\'', '\'\''),
+                         'Headline': sms_message,
                          'Priority': map_priority(article.get('priority'))}
 
             body = self.append_body_footer(article)
@@ -53,4 +54,6 @@ class AAPSMSFormatter(Formatter):
         published = superdesk.get_resource_service('publish_queue').get(req=None, lookup=lookup)
         if published and published.count():
             return False
-        return format_type == 'AAP SMS' and article[ITEM_TYPE] in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]
+        return article.get('flags', {}).get('marked_for_sms', False) and \
+            format_type == 'AAP SMS' and \
+            article[ITEM_TYPE] in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]

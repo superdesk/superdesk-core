@@ -26,7 +26,7 @@ class FilterConditionTests(SuperdeskTestCase):
         with self.app.test_request_context(self.app.config.get('URL_PREFIX')):
             self.articles = [{'_id': '1', 'urgency': 1, 'headline': 'story', 'state': 'fetched'},
                              {'_id': '2', 'headline': 'prtorque', 'state': 'fetched'},
-                             {'_id': '3', 'urgency': 3, 'state': 'fetched'},
+                             {'_id': '3', 'urgency': 3, 'state': 'fetched', 'flags': {'marked_for_sms': True}},
                              {'_id': '4', 'urgency': 4, 'state': 'fetched', 'task': {'desk': '1'}},
                              {'_id': '5', 'urgency': 2, 'state': 'fetched', 'task': {'desk': '2'}},
                              {'_id': '6', 'state': 'fetched'},
@@ -117,6 +117,15 @@ class FilterConditionTests(SuperdeskTestCase):
             docs = superdesk.get_resource_service('archive').\
                 get_from_mongo(req=self.req, lookup=query)
             self.assertEqual(8, docs.count())
+
+    def test_mongo_using_sms_filter_with_is(self):
+        f = FilterConditionService()
+        doc = {'field': 'sms', 'operator': 'in', 'value': 'true'}
+        query = f.get_mongo_query(doc)
+        with self.app.app_context():
+            docs = superdesk.get_resource_service('archive').\
+                get_from_mongo(req=self.req, lookup=query)
+            self.assertEqual(1, docs.count())
 
     def test_mongo_using_desk_filter_in_list(self):
         f = FilterConditionService()
@@ -233,6 +242,17 @@ class FilterConditionTests(SuperdeskTestCase):
             doc_ids = [d['_id'] for d in docs]
             self.assertEqual(1, docs.count())
             self.assertTrue('7' in doc_ids)
+
+    def test_elastic_using_sms_filter(self):
+        f = FilterConditionService()
+        doc = {'field': 'sms', 'operator': 'in', 'value': 'true'}
+        query = f.get_elastic_query(doc)
+        with self.app.app_context():
+            self._setup_elastic_args(query)
+            docs = superdesk.get_resource_service('archive').get(req=self.req, lookup=None)
+            doc_ids = [d['_id'] for d in docs]
+            self.assertEqual(1, docs.count())
+            self.assertTrue('3' in doc_ids)
 
     def test_elastic_using_subject_filter_complete_string(self):
         f = FilterConditionService()
@@ -426,6 +446,18 @@ class FilterConditionTests(SuperdeskTestCase):
         self.assertFalse(f.does_match(doc, self.articles[4]))
         self.assertFalse(f.does_match(doc, self.articles[5]))
         self.assertFalse(f.does_match(doc, self.articles[6]))
+        self.assertTrue(f.does_match(doc, self.articles[7]))
+
+    def test_does_match_with_sms_filter(self):
+        f = FilterConditionService()
+        doc = {'field': 'sms', 'operator': 'nin', 'value': 'true'}
+        self.assertTrue(f.does_match(doc, self.articles[0]))
+        self.assertTrue(f.does_match(doc, self.articles[1]))
+        self.assertFalse(f.does_match(doc, self.articles[2]))
+        self.assertTrue(f.does_match(doc, self.articles[3]))
+        self.assertTrue(f.does_match(doc, self.articles[4]))
+        self.assertTrue(f.does_match(doc, self.articles[5]))
+        self.assertTrue(f.does_match(doc, self.articles[6]))
         self.assertTrue(f.does_match(doc, self.articles[7]))
 
     def test_does_match_with_in_filter(self):
