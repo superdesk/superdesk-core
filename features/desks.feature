@@ -257,6 +257,31 @@ Feature: Desks
 
     @auth
     @notification
+    Scenario: Simple sluglines for desk with no place
+        Given we have "desks" with "SPORTS_DESK_ID" and success
+        """
+        [{"name": "Sports", "desk_type": "authoring"}]
+        """
+        Given "published"
+         """
+         [{"_id":"1","slugline": "slugline1", "last_published_version": "True", "state": "published",
+         "task": {"desk": "#SPORTS_DESK_ID#"}, "headline": "one", "family_id": 1},
+         {"_id":"2","slugline": "slugline2", "last_published_version": "True", "state": "published",
+         "task": {"desk": "#SPORTS_DESK_ID#"}, "place": null, "headline": "two", "family_id": 2}]
+         """
+        When we post to "users"
+        """
+        {"username": "foo", "email": "foo@bar.com", "is_active": true, "sign_off": "abc"}
+        """
+        When we get "/desks/#SPORTS_DESK_ID#/sluglines"
+        Then we get existing resource
+        """
+            {"_items": [{"headline": "one", "slugline": "slugline1", "name": "Domestic", "old_sluglines": []},
+            {"headline": "two", "slugline": "slugline2", "name": "-", "old_sluglines": []}]}
+        """
+
+    @auth
+    @notification
     Scenario: Simple change of slugline in same family
         Given we have "desks" with "SPORTS_DESK_ID" and success
         """

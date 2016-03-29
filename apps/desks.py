@@ -343,10 +343,11 @@ class SluglineDeskService(BaseService):
             versioncreated = item.get(self.VERSION_CREATED)
             placename = 'Domestic'
             # Determine if the item is either domestic or rest of the world
-            if self.PLACE in item and len(item[self.PLACE]) > 0 and self.GROUP in item.get(self.PLACE)[0] \
-                    and item.get(self.PLACE)[0][self.GROUP] == 'Rest Of World':
+            place = next((place for place in (item.get('place') or [])), None)
+
+            if place and place.get(self.GROUP) == 'Rest Of World':
                 row = True
-                placename = item.get(self.PLACE)[0].get(self.NAME, 'Domestic')
+                placename = place.get(self.NAME, 'Domestic')
             else:
                 row = False
             # Find if there are other sluglines in this items family
