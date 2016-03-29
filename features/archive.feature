@@ -116,6 +116,40 @@ Feature: News Items Archive
 
     @auth
     @vocabulary
+    Scenario: Upload image with point of interest into archive
+        Given empty "archive"
+        When we upload a file "bike.jpg" to "archive"
+        Then we get new resource
+        """
+        {"guid": "__any_value__", "firstcreated": "__any_value__", "versioncreated": "__any_value__", "state": "draft"}
+        """
+        And we get "bike.jpg" metadata
+        And we get "picture" renditions
+        When we patch latest
+        """
+        {
+        	"renditions": {
+        		"4-3": {"CropBottom": 1100, "CropLeft": 100, "CropRight": 900, "CropTop": 500},
+        		"thumbnail": {"width": 90, "height": 120}
+        	},
+        	"poi": {"x": 0.41, "y": 0.52}
+        }
+        """
+        When we get "/archive"
+        Then we get list with 1 items
+        """
+        {"_items": [{
+	        	"renditions": {
+	        		"4-3": {"CropBottom": 1100, "CropLeft": 100, "CropRight": 900, "CropTop": 500, "poi" : {"y" : 332, "x" : 391}},
+	        		"thumbnail": {"width": 90, "height": 120, "poi": {"x": 36, "y": 62}}
+	        	},
+	        	"poi": {"x": 0.41, "y": 0.52}
+        	}]
+        }
+        """
+
+    @auth
+    @vocabulary
     Scenario: Upload image into archive and validate metadata set by API
         Given empty "archive"
         When we upload a file "bike.jpg" to "archive"

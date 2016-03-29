@@ -50,7 +50,7 @@ class CropTestCase(TestCase):
         crop = {'height': 600, 'width': 800}
         self.assertIsNone(self.service._validate_aspect_ratio(crop, doc))
 
-    def test_validate_aspect_ratio_succeeds(self):
+    def test_validate_aspect_ratio_succeeds_2(self):
         doc = {'CropLeft': 0, 'CropRight': 1600, 'CropTop': 0, 'CropBottom': 1200}
         crop = {'height': 600, 'width': 800}
         self.assertIsNone(self.service._validate_aspect_ratio(crop, doc))
@@ -62,9 +62,9 @@ class CropTestCase(TestCase):
 
     def test_validate_crop_raises_error_if_item_is_not_picture(self):
         original = {"type": "text"}
-        doc = {'CropLeft': 0, 'CropRight': 800, 'CropTop': 0, 'CropBottom': 600}
+        doc = {'renditions': {'4-3': {'CropLeft': 0, 'CropRight': 800, 'CropTop': 0, 'CropBottom': 600}}}
         with self.assertRaises(SuperdeskApiError) as context:
-            self.service.validate_crop(original, "4-3", doc)
+            self.service.validate_crop(original, doc, "4-3")
 
         ex = context.exception
         self.assertEqual(ex.message, 'Only images can be cropped!')
@@ -72,9 +72,9 @@ class CropTestCase(TestCase):
 
     def test_validate_crop_raises_error_if_renditions_are_missing(self):
         original = {"type": "picture"}
-        doc = {'CropLeft': 0, 'CropRight': 800, 'CropTop': 0, 'CropBottom': 600}
+        doc = {'renditions': {'4-3': {'CropLeft': 0, 'CropRight': 800, 'CropTop': 0, 'CropBottom': 600}}}
         with self.assertRaises(SuperdeskApiError) as context:
-            self.service.validate_crop(original, "4-3", doc)
+            self.service.validate_crop(original, doc, "4-3")
 
         ex = context.exception
         self.assertEqual(ex.message, 'Missing renditions!')
@@ -83,9 +83,9 @@ class CropTestCase(TestCase):
     def test_validate_crop_raises_error_if_original_rendition_is_missing(self):
         original = {"type": "picture",
                     "renditions": {"4-3": {'CropLeft': 0, 'CropRight': 800, 'CropTop': 0, 'CropBottom': 600}}}
-        doc = {'CropLeft': 0, 'CropRight': 800, 'CropTop': 0, 'CropBottom': 600}
+        doc = {'renditions': {'4-3': {'CropLeft': 0, 'CropRight': 800, 'CropTop': 0, 'CropBottom': 600}}}
         with self.assertRaises(SuperdeskApiError) as context:
-            self.service.validate_crop(original, "4-3", doc)
+            self.service.validate_crop(original, doc, "4-3")
 
         ex = context.exception
         self.assertEqual(ex.message, 'Missing original rendition!')
@@ -97,9 +97,9 @@ class CropTestCase(TestCase):
                         "original": {'CropLeft': 0, 'CropRight': 800, 'CropTop': 0, 'CropBottom': 600}
                     }
                     }
-        doc = {'CropLeft': 0, 'CropRight': 800, 'CropTop': 0, 'CropBottom': 600}
+        doc = {'renditions': {'d': {'CropLeft': 0, 'CropRight': 800, 'CropTop': 0, 'CropBottom': 600}}}
         with self.assertRaises(SuperdeskApiError) as context:
-            self.service.validate_crop(original, "d", doc)
+            self.service.validate_crop(original, doc, "d")
 
         ex = context.exception
         self.assertEqual(ex.message, 'Unknown crop name! (name=d)')

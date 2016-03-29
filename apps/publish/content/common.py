@@ -591,7 +591,7 @@ class BasePublishService(BaseService):
             rend_spec = crop_service.get_crop_by_name(rendition_name)
             if crop and rend_spec:
                 file_name = '%s/%s/%s' % (guid, rel, rendition_name)
-                rendition['media'] = app.media.media_id(file_name)
+                rendition['media'] = app.media.media_id(file_name, original.get('mimetype'))
                 rendition['href'] = app.media.url_for_media(rendition['media'], original.get('mimetype'))
                 rendition['width'] = rend_spec['width']
                 rendition['height'] = rend_spec['height']

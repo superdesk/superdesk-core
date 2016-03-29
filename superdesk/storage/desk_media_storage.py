@@ -35,7 +35,7 @@ class SuperdeskGridFSMediaStorage(GridFSMediaStorage):
                     logger.exception('Failed to load metadata for file: %s with key: %s and value: %s', _id, k, v)
         return media_file
 
-    def media_id(self, filename):
+    def media_id(self, filename, content_type=None):
         """Get media id for given filename.
 
         It can be used by async task to first generate id upload file later.
@@ -47,7 +47,7 @@ class SuperdeskGridFSMediaStorage(GridFSMediaStorage):
         except bson.errors.InvalidId:
             return bson.ObjectId(sha(str(filename))[:24])
 
-    def url_for_media(self, media_id, mimetype=None):
+    def url_for_media(self, media_id, content_type=None):
         """Return url for givne media id.
 
         :param media_id: media id from media_id method
