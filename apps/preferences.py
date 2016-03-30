@@ -300,7 +300,8 @@ class PreferencesService(BaseService):
         privileges = doc[_privileges_key]
         preferences = doc[_user_preferences_key]
 
-        def has_missing_privileges(pref):
-            return [priv for priv in pref.get('privileges', []) if not privileges.get(priv)]
+        def has_missing_privileges(prefs):
+            prefs = prefs if isinstance(prefs, list) else [prefs]
+            return [priv for pref in prefs for priv in pref.get('privileges', []) if not privileges.get(priv)]
 
         doc[_user_preferences_key] = {k: v for k, v in preferences.items() if not has_missing_privileges(v)}
