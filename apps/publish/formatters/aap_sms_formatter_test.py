@@ -22,10 +22,20 @@ class AapSMSFormatterTest(SuperdeskTestCase):
                                       }]
                     }]
 
-    article = {
+    article1 = {
         'priority': 1,
         'anpa_category': [{'qcode': 'a'}],
         'headline': 'This is a test headline',
+        'type': 'text',
+        'body_html': 'The story body',
+        'body_footer': 'call helpline 999 if you are planning to quit smoking'
+    }
+
+    article2 = {
+        'priority': 1,
+        'anpa_category': [{'qcode': 'a'}],
+        'headline': 'This is a test headline',
+        'sms_message': 'This is the sms message',
         'type': 'text',
         'body_html': 'The story body',
         'body_footer': 'call helpline 999 if you are planning to quit smoking'
@@ -36,15 +46,35 @@ class AapSMSFormatterTest(SuperdeskTestCase):
         self.app.data.insert('subscribers', self.subscribers)
         init_app(self.app)
 
-    def TestSMSFormatter(self):
+    def test_sms_can_format(self):
+        f = AAPSMSFormatter()
+        self.assertFalse(f.can_format("AAP SMS", self.article1))
+        self.assertFalse(f.can_format("AAP SMS", self.article2))
+        self.article2['flags'] = {'marked_for_sms': True}
+        self.assertTrue(f.can_format("AAP SMS", self.article2))
+
+    def test_sms_formatter(self):
         subscriber = self.app.data.find('subscribers', None, None)[0]
 
         f = AAPSMSFormatter()
-        seq, item = f.format(self.article, subscriber)[0]
+        seq, item = f.format(self.article1, subscriber)[0]
         item = json.loads(item)
 
         self.assertGreater(int(seq), 0)
         self.assertDictEqual(item, {'Category': 'a', 'Priority': 'f', 'Sequence': item['Sequence'], 'ident': '0',
                                     'Headline': 'This is a test headline',
+                                    'StoryText':
+                                        'The story bodycall helpline 999 if you are planning to quit smoking'})
+
+    def test_sms_formatter_with_sms_message(self):
+        subscriber = self.app.data.find('subscribers', None, None)[0]
+
+        f = AAPSMSFormatter()
+        seq, item = f.format(self.article2, subscriber)[0]
+        item = json.loads(item)
+
+        self.assertGreater(int(seq), 0)
+        self.assertDictEqual(item, {'Category': 'a', 'Priority': 'f', 'Sequence': item['Sequence'], 'ident': '0',
+                                    'Headline': 'This is the sms message',
                                     'StoryText':
                                         'The story bodycall helpline 999 if you are planning to quit smoking'})

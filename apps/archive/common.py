@@ -521,6 +521,10 @@ def item_schema(extra=None):
                 'marked_archived_only': {
                     'type': 'boolean',
                     'default': False
+                },
+                'marked_for_sms': {
+                    'type': 'boolean',
+                    'default': False
                 }
             }
         },
@@ -559,6 +563,11 @@ def item_schema(extra=None):
         },
         EMBARGO: {
             'type': 'datetime',
+            'nullable': True
+        },
+        'sms_message': {
+            'type': 'string',
+            'mapping': not_analyzed,
             'nullable': True
         },
         'broadcast': {
