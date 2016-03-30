@@ -17,6 +17,9 @@ class ContentTypesResource(superdesk.Resource):
         'schema': {
             'type': 'dict',
         },
+        'editor': {
+            'type': 'dict',
+        },
         'priority': {
             'type': 'integer',
             'default': 0,
