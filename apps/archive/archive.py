@@ -644,7 +644,7 @@ class ArchiveService(BaseService):
         req = ParsedRequest()
         req.max_results = config.MAX_EXPIRY_QUERY_LIMIT
         req.sort = 'expiry,_created'
-        return self.get_from_mongo(req=None, lookup=query)
+        return self.get_from_mongo(req=req, lookup=query)
 
     def _add_desk_metadata(self, updates, original):
         """Populate updates metadata from item desk in case it's set.
