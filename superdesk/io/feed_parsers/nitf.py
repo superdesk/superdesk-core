@@ -18,6 +18,8 @@ from superdesk.utc import utc
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE
 from superdesk.etree import get_word_count
 from superdesk.io.iptc import subject_codes
+import re
+import superdesk
 
 SUBJECT_TYPE = 'tobject.subject.type'
 SUBJECT_MATTER = 'tobject.subject.matter'
@@ -120,6 +122,29 @@ def parse_meta(tree, item):
         elif attribute_name == 'anpa-format':
             anpa_format = elem.get('content').lower() if elem.get('content') is not None else 'x'
             item[ITEM_TYPE] = CONTENT_TYPE.TEXT if anpa_format == 'x' else CONTENT_TYPE.PREFORMATTED
+        elif attribute_name == 'aap-priority':
+            item['priority'] = elem.get('content')
+        elif attribute_name == 'aap-original-creator':
+            query = {'username': re.compile('^{}$'.format(elem.get('content')), re.IGNORECASE)}
+            user = superdesk.get_resource_service('users').find_one(req=None, **query)
+            if user is not None:
+                item['original_creator'] = user.get('_id')
+        elif attribute_name == 'aap-version-creator':
+            query = {'username': re.compile('^{}$'.format(elem.get('content')), re.IGNORECASE)}
+            user = superdesk.get_resource_service('users').find_one(req=None, **query)
+            if user:
+                item['version_creator'] = user.get('_id')
+        elif attribute_name == 'aap-desk':
+            desk = superdesk.get_resource_service('desks').find_one(req=None, name=elem.get('content'))
+            if desk:
+                item['task'] = {'desk': desk.get('_id'), 'stage': desk.get('incoming_stage')}
+        elif attribute_name == 'aap-source':
+            item['source'] = elem.get('content')
+        elif attribute_name == 'aap-original-source':
+            pass
+        elif attribute_name == 'aap-place':
+            locator_map = superdesk.get_resource_service('vocabularies').find_one(req=None, _id='locators')
+            item['place'] = [x for x in locator_map.get('items', []) if x['qcode'] == elem.get('content')]
 
 
 class NITFFeedParser(XMLFeedParser):
@@ -152,6 +177,12 @@ class NITFFeedParser(XMLFeedParser):
             item['place'] = get_places(docdata)
             item['keywords'] = get_keywords(docdata)
 
+            if xml.find('head/tobject/tobject.property') is not None:
+                genre = xml.find('head/tobject/tobject.property').get('tobject.property.type')
+                genre_map = superdesk.get_resource_service('vocabularies').find_one(req=None, _id='genre')
+                if genre_map is not None:
+                    item['genre'] = [x for x in genre_map.get('items', []) if x['name'] == genre]
+
             if docdata.find('ed-msg') is not None:
                 item['ednote'] = docdata.find('ed-msg').attrib.get('info')
 
@@ -161,8 +192,11 @@ class NITFFeedParser(XMLFeedParser):
                 if xml.find('head/title') is not None:
                     item['headline'] = xml.find('head/title').text
 
-            elem = xml.find('body/body.head/abstract')
+            elem = xml.find('body/body.head/abstract/p')
             item['abstract'] = elem.text if elem is not None else ''
+            if elem is None:
+                elem = xml.find('body/body.head/abstract')
+                item['abstract'] = elem.text if elem is not None else ''
 
             elem = xml.find('body/body.head/dateline/location/city')
             if elem is not None:
