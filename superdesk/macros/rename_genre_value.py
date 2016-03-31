@@ -46,3 +46,4 @@ def rename_genre_value(**kwargs):
 name = 'rename_genre_value'
 callback = rename_genre_value
 access_type = 'backend'
+action_type = 'background-thread'

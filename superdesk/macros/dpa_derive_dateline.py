@@ -45,3 +45,4 @@ def dpa_derive_dateline(item, **kwargs):
 name = 'Derive dateline from article text for DPA'
 callback = dpa_derive_dateline
 access_type = 'backend'
+action_type = 'direct'

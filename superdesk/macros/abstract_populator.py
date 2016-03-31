@@ -37,3 +37,4 @@ shortcut = 'a'
 callback = populate
 desks = ['POLITICS']
 access_type = 'frontend'
+action_type = 'direct'

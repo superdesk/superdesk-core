@@ -26,3 +26,4 @@ name = 'Validate for Publish'
 label = 'Validate for Publish'
 callback = validate_for_publish
 access_type = 'frontend'
+action_type = 'direct'

@@ -29,3 +29,4 @@ label = '$ -> AUD'
 shortcut = '$'
 callback = find_and_replace
 access_type = 'frontend'
+action_type = 'direct'

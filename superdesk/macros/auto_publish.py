@@ -15,7 +15,7 @@ from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
 def auto_publish(item, **kwargs):
     """
     Publish the passed item. The macro must be called as an on stage macro as publishing an item that is in transit
-    i.e. an incomming or outgoing macro will fail.
+    i.e. an incoming or outgoing macro will fail.
     :param item:
     :param kwargs:
     :return:
@@ -28,4 +28,5 @@ def auto_publish(item, **kwargs):
 name = 'Auto Publish'
 label = 'Auto Publish'
 callback = auto_publish
-access_type = 'frontend'
+access_type = 'backend'
+action_type = 'direct'

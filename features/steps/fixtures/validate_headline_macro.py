@@ -22,3 +22,4 @@ shortcut = 'w'
 callback = validate
 desks = ['POLITICS']
 access_type = 'backend'
+action_type = 'direct'

@@ -55,3 +55,4 @@ def noise11_derive_metadata(item, **kwargs):
 name = 'Derive metadata for Noise11'
 callback = noise11_derive_metadata
 access_type = 'backend'
+action_type = 'direct'
