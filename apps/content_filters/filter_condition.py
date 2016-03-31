@@ -320,7 +320,7 @@ class FilterConditionParametersService(BaseService):
                            {'field': 'urgency',
                             'operators': ['in', 'nin'],
                             'values': values['urgency'],
-                            'value_field': 'value'
+                            'value_field': 'qcode'
                             },
                            {'field': 'genre',
                             'operators': ['in', 'nin'],
@@ -335,7 +335,7 @@ class FilterConditionParametersService(BaseService):
                            {'field': 'priority',
                             'operators': ['in', 'nin'],
                             'values': values['priority'],
-                            'value_field': 'value'
+                            'value_field': 'qcode'
                             },
                            {'field': 'keywords',
                             'operators': ['in', 'nin', 'like', 'notlike', 'startswith', 'endswith']
@@ -346,7 +346,7 @@ class FilterConditionParametersService(BaseService):
                            {'field': 'type',
                             'operators': ['in', 'nin'],
                             'values': values['type'],
-                            'value_field': 'value'
+                            'value_field': 'qcode'
                             },
                            {'field': 'source',
                             'operators': ['in', 'nin', 'like', 'notlike', 'startswith', 'endswith']
