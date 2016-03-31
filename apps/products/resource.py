@@ -42,4 +42,3 @@ class ProductsResource(Resource):
     }
 
     privileges = {'POST': 'products', 'PATCH': 'products', 'DELETE': 'products'}
-

@@ -10,9 +10,17 @@
 
 from superdesk import get_resource_service
 from superdesk.services import BaseService
+from eve.utils import ParsedRequest
+from superdesk.errors import SuperdeskApiError
 
 
 class ProductsService(BaseService):
     def on_delete(self, doc):
-        'Check the connected subscribers'
-        pass
+        # Check if any subscriber is using the product
+        req = ParsedRequest()
+        lookup = {'products': {'$in': [doc['_id']]}}
+        subscribers = list(get_resource_service('subscribers').get(req=req, lookup=lookup))
+        if len(subscribers) > 0:
+            names = [s['name'] for s in subscribers]
+            raise SuperdeskApiError.badRequestError(
+                message="Product is used by the subscriber(s): {}".format(", ".join(names)))
