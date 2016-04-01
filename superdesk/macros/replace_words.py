@@ -54,3 +54,4 @@ label = 'Replace American Words'
 shortcut = 'a'
 callback = find_and_replace
 access_type = 'frontend'
+action_type = 'interactive'

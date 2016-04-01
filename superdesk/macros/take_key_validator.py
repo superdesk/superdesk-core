@@ -22,3 +22,4 @@ name = 'take_key_validator'
 label = 'validate take key'
 callback = validate
 access_type = 'frontend'
+action_type = 'direct'

@@ -38,3 +38,4 @@ def clean_keywords(**kwargs):
 name = 'clean_keywords'
 callback = clean_keywords
 access_type = 'backend'
+action_type = 'direct'

@@ -53,7 +53,8 @@ def register_macros():
     for macro_module in macro_modules:
         kwargs = {'name': macro_module.name,
                   'callback': macro_module.callback,
-                  'access_type': macro_module.access_type}
+                  'access_type': macro_module.access_type,
+                  'action_type': macro_module.action_type}
 
         if hasattr(macro_module, 'label'):
             kwargs['label'] = macro_module.label

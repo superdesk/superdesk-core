@@ -54,3 +54,4 @@ def update_to_pass_validation(item, **kwargs):
 name = 'update to pass validation'
 callback = update_to_pass_validation
 access_type = 'backend'
+action_type = 'direct'
