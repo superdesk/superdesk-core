@@ -213,6 +213,10 @@ metadata_schema = {
         'type': 'integer',
         'nullable': True
     },
+    'ranking': {
+        'type': 'integer',
+        'nullable': True
+    },
     'profile': {
         'type': 'string',
     },
