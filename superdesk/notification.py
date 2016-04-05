@@ -61,12 +61,12 @@ def push_notification(name, **kwargs):
         init_app(app)
 
     if not app.notification_client.open:
-        logger.info('No connection to broker. Dropping event %s' % name)
+        logger.warning('No connection to broker. Dropping event %s' % name)
         return
 
     try:
         message = _create_socket_message(event=name, extra=kwargs)
-        logger.info('Sending the message to the broker...')
+        logger.debug('Sending the message: {} to the broker.'.format(message))
         app.notification_client.send(message)
     except Exception as err:
         logger.exception(err)
