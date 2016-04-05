@@ -105,7 +105,8 @@ Feature: Publish content to the public API
                         "width" : 640,
                         "href" : "http://localhost:5000/api/upload/55b032041d41c8d278d21b6f/raw?_schema=http",
                         "mimetype" : "image/jpeg",
-                        "height" : 401
+                        "height" : 401,
+                        "poi": {"x": 160, "y": 100}
                     },
                     "original_source" : {
                         "href" : "https://one-api.aap.com.au/api/v3/Assets/20150723001158606583/Original/download",
@@ -115,19 +116,22 @@ Feature: Publish content to the public API
                         "width" : 191,
                         "href" : "http://localhost:5000/api/upload/55b032051d41c8d278d21b73/raw?_schema=http",
                         "mimetype" : "image/jpeg",
-                        "height" : 120
+                        "height" : 120,
+                        "poi": {"x": 47, "y": 30}
                     },
                     "baseImage" : {
                         "width" : 1400,
                         "href" : "http://localhost:5000/api/upload/55b032051d41c8d278d21b71/raw?_schema=http",
                         "mimetype" : "image/jpeg",
-                        "height" : 878
+                        "height" : 878,
+                        "poi": {"x": 350, "y": 219}
                     },
                     "original" : {
                         "width" : 2828,
                         "href" : "http://localhost:5000/api/upload/55b032041d41c8d278d21b6b/raw?_schema=http",
                         "mimetype" : "image/jpeg",
-                        "height" : 1775
+                        "height" : 1775,
+                        "poi": {"x": 707, "y": 443}
                     }
                 },
                 "byline" : "MICKEY MOUSE",
@@ -188,6 +192,23 @@ Feature: Publish content to the public API
         """
         {"_items": [{"state": "pending"}]}
         """
+    When we get "/publish_queue/20150723001158606583"
+    Then we get formatted item
+    	"""
+    	{
+    		"_id": "20150723001158606583",
+    		"type": "picture",
+    		"renditions" : {
+                "viewImage" : {
+                    "width" : 640,
+                    "href" : "http://localhost:5000/api/upload/55b032041d41c8d278d21b6f/raw?_schema=http",
+                    "mimetype" : "image/jpeg",
+                    "height" : 401,
+                    "poi": {"x": 160, "y": 100}
+                }
+    		}
+    	}
+		"""
     When we get "/published"
     Then we get existing resource
         """
