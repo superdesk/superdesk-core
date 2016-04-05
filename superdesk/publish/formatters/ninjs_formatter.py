@@ -40,7 +40,7 @@ class NINJSFormatter(Formatter):
                               'urgency', 'pubstatus', 'mimetype', 'place', 'copyrightholder',
                               'body_text', 'body_html', 'profile', 'slugline', 'keywords')
 
-    rendition_properties = ('href', 'width', 'height', 'mimetype')
+    rendition_properties = ('href', 'width', 'height', 'mimetype', 'poi')
 
     def format(self, article, subscriber):
         try:
