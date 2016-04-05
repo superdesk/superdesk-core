@@ -32,6 +32,6 @@ class EnqueueKilledService(EnqueueService):
         subscribers, subscribers_yet_to_receive = [], []
         query = {'$and': [{'item_id': doc['item_id']},
                           {'publishing_action': {'$in': [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]}}]}
-        subscribers = self._get_subscribers_for_previously_sent_items(query)
+        subscribers, subscriber_codes = self._get_subscribers_for_previously_sent_items(query)
 
-        return subscribers, subscribers_yet_to_receive
+        return subscribers, subscribers_yet_to_receive, subscriber_codes

@@ -11,11 +11,19 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     """
     [{"name": "Sports", "content_expiry": "4320"}]
     """
+    And "products"
+      """
+      [{
+        "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+      }]
+      """
     And "subscribers"
     """
     [{"_id": "123", "name":"Wire Subscriber","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+      "products": ["1"],
       "destinations":[{"name":"email","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]},
      {"_id": "321", "name":"Digital Subscriber","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+      "products": ["1"],
       "destinations":[{"name":"email","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]}
     ]
     """

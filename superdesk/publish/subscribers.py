@@ -120,7 +120,8 @@ class SubscribersService(BaseService):
             self._validate_seq_num_settings(doc)
 
     def on_update(self, updates, original):
-        self._validate_products(updates)
+        if 'products' in updates:
+            self._validate_products(updates)
         self._validate_seq_num_settings(updates)
 
     def on_deleted(self, doc):

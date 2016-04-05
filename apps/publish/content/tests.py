@@ -50,9 +50,13 @@ class ArchivePublishTestCase(SuperdeskTestCase):
     def init_data(self):
         self.users = [{'_id': '1', 'username': 'admin'}]
         self.desks = [{'_id': ObjectId('123456789ABCDEF123456789'), 'name': 'desk1'}]
+        self.products = [{"_id": "1", "name": "prod1"},
+                         {"_id": "2", "name": "prod2", "codes": "abc,def"},
+                         {"_id": "3", "name": "prod3", "codes": "xyz"}]
         self.subscribers = [{"_id": "1", "name": "sub1", "is_active": True, "subscriber_type": SUBSCRIBER_TYPES.WIRE,
                              "media_type": "media", "sequence_num_settings": {"max": 10, "min": 1},
                              "email": "test@test.com",
+                             "products": ["1"],
                              "destinations": [{"name": "dest1", "format": "nitf",
                                                "delivery_type": "ftp",
                                                "config": {"address": "127.0.0.1", "username": "test"}
@@ -61,6 +65,7 @@ class ArchivePublishTestCase(SuperdeskTestCase):
                             {"_id": "2", "name": "sub2", "is_active": True, "subscriber_type": SUBSCRIBER_TYPES.WIRE,
                              "media_type": "media", "sequence_num_settings": {"max": 10, "min": 1},
                              "email": "test@test.com",
+                             "products": ["1"],
                              "destinations": [{"name": "dest2", "format": "AAP ANPA", "delivery_type": "filecopy",
                                                "config": {"address": "/share/copy"}
                                                },
@@ -71,6 +76,7 @@ class ArchivePublishTestCase(SuperdeskTestCase):
                             {"_id": "3", "name": "sub3", "is_active": True, "subscriber_type": SUBSCRIBER_TYPES.DIGITAL,
                              "media_type": "media", "sequence_num_settings": {"max": 10, "min": 1},
                              "email": "test@test.com",
+                             "products": ["1"],
                              "destinations": [{"name": "dest1", "format": "nitf",
                                                "delivery_type": "ftp",
                                                "config": {"address": "127.0.0.1", "username": "test"}
@@ -79,6 +85,7 @@ class ArchivePublishTestCase(SuperdeskTestCase):
                             {"_id": "4", "name": "sub4", "is_active": True, "subscriber_type": SUBSCRIBER_TYPES.WIRE,
                              "media_type": "media", "sequence_num_settings": {"max": 10, "min": 1},
                              "geo_restrictions": "New South Wales", "email": "test@test.com",
+                             "products": ["1"],
                              "destinations": [{"name": "dest1", "format": "nitf",
                                                "delivery_type": "ftp",
                                                "config": {"address": "127.0.0.1", "username": "test"}
@@ -87,6 +94,7 @@ class ArchivePublishTestCase(SuperdeskTestCase):
                             {"_id": "5", "name": "sub5", "is_active": True, "subscriber_type": SUBSCRIBER_TYPES.ALL,
                              "media_type": "media", "sequence_num_settings": {"max": 10, "min": 1},
                              "email": "test@test.com",
+                             "products": ["1", "2"],
                              "destinations": [{"name": "dest1", "format": "ninjs",
                                                "delivery_type": "ftp",
                                                "config": {"address": "127.0.0.1", "username": "test"}
@@ -333,6 +341,7 @@ class ArchivePublishTestCase(SuperdeskTestCase):
 
         self.app.data.insert('users', self.users)
         self.app.data.insert('desks', self.desks)
+        self.app.data.insert('products', self.products)
         self.app.data.insert('subscribers', self.subscribers)
         self.app.data.insert(ARCHIVE, self.articles)
 
@@ -432,8 +441,8 @@ class ArchivePublishTestCase(SuperdeskTestCase):
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(0, queue_items.count())
 
-    def _add_content_filters(self, subscriber, is_global=False):
-        subscriber['content_filter'] = {'filter_id': 1, 'filter_type': 'blocking'}
+    def _add_content_filters(self, product, is_global=False):
+        product['content_filter'] = {'filter_id': 1, 'filter_type': 'blocking'}
         self.app.data.insert('filter_conditions',
                              [{'_id': 1,
                                'field': 'headline',
@@ -552,9 +561,9 @@ class ArchivePublishTestCase(SuperdeskTestCase):
         doc = copy(self.articles[1])
         doc['item_id'] = doc['_id']
 
-        subscribers, subscribers_yet_to_receive = \
+        subscribers, subscribers_yet_to_receive, subscriber_codes = \
             EnqueuePublishedService().get_subscribers(doc, SUBSCRIBER_TYPES.DIGITAL)
-        EnqueueService().queue_transmission(doc, subscribers)
+        EnqueueService().queue_transmission(doc, subscribers, subscriber_codes)
 
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(2, queue_items.count())
@@ -562,20 +571,24 @@ class ArchivePublishTestCase(SuperdeskTestCase):
         for item in queue_items:
             self.assertIn(item["subscriber_id"], expected_subscribers, 'item {}'.format(item))
 
-    def test_queue_transmission_for_wire_channels(self):
+    def test_queue_transmission_for_wire_channels_with_codes(self):
         self._is_publish_queue_empty()
 
         doc = copy(self.articles[1])
         doc['item_id'] = doc['_id']
 
-        subscribers, subscribers_yet_to_receive = EnqueuePublishedService().get_subscribers(doc, SUBSCRIBER_TYPES.WIRE)
-        EnqueueService().queue_transmission(doc, subscribers)
+        subscribers, subscribers_yet_to_receive, subscriber_codes = \
+            EnqueuePublishedService().get_subscribers(doc, SUBSCRIBER_TYPES.WIRE)
+        EnqueueService().queue_transmission(doc, subscribers, subscriber_codes)
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
 
         self.assertEqual(5, queue_items.count())
         expected_subscribers = ['1', '2', '4', '5']
         for item in queue_items:
             self.assertIn(item['subscriber_id'], expected_subscribers, 'item {}'.format(item))
+            if item['subscriber_id'] == '5':
+                self.assertIn('def', item['codes'])
+                self.assertIn('abc', item['codes'])
 
     def test_queue_transmission_wrong_article_type_fails(self):
         self._is_publish_queue_empty()
@@ -584,15 +597,16 @@ class ArchivePublishTestCase(SuperdeskTestCase):
         doc['item_id'] = doc['_id']
         doc[ITEM_TYPE] = CONTENT_TYPE.PICTURE
 
-        subscribers, subscribers_yet_to_receive = \
+        subscribers, subscribers_yet_to_receive, subscriber_codes = \
             EnqueuePublishedService().get_subscribers(doc, SUBSCRIBER_TYPES.DIGITAL)
-        no_formatters, queued = EnqueueService().queue_transmission(doc, subscribers)
+        no_formatters, queued = EnqueueService().queue_transmission(doc, subscribers, subscriber_codes)
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(1, queue_items.count())
         self.assertEqual(1, len(no_formatters))
         self.assertTrue(queued)
 
-        subscribers, subscribers_yet_to_receive = EnqueuePublishedService().get_subscribers(doc, SUBSCRIBER_TYPES.WIRE)
+        subscribers, subscribers_yet_to_receive, subscriber_codes = \
+            EnqueuePublishedService().get_subscribers(doc, SUBSCRIBER_TYPES.WIRE)
         no_formatters, queued = EnqueueService().queue_transmission(doc, subscribers)
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(2, queue_items.count())
@@ -617,20 +631,21 @@ class ArchivePublishTestCase(SuperdeskTestCase):
         self._is_publish_queue_empty()
 
     def test_can_publish_article(self):
-        subscriber = self.subscribers[0]
-        self._add_content_filters(subscriber, is_global=False)
+        product = self.products[0]
+        self._add_content_filters(product, is_global=False)
 
-        can_it = EnqueueService().conforms_content_filter(subscriber, self.articles[8])
+        can_it = EnqueueService().conforms_content_filter(product, self.articles[8])
         self.assertFalse(can_it)
-        subscriber['content_filter']['filter_type'] = 'permitting'
+        product['content_filter']['filter_type'] = 'permitting'
 
-        can_it = EnqueueService().conforms_content_filter(subscriber, self.articles[8])
+        can_it = EnqueueService().conforms_content_filter(product, self.articles[8])
         self.assertTrue(can_it)
-        subscriber.pop('content_filter')
+        product.pop('content_filter')
 
     def test_can_publish_article_with_global_filters(self):
         subscriber = self.subscribers[0]
-        self._add_content_filters(subscriber, is_global=True)
+        product = self.products[0]
+        self._add_content_filters(product, is_global=True)
 
         service = get_resource_service('content_filters')
         req = ParsedRequest()
@@ -644,7 +659,7 @@ class ArchivePublishTestCase(SuperdeskTestCase):
         can_it = EnqueueService().conforms_global_filter(subscriber, global_filters, self.articles[8])
         self.assertTrue(can_it)
 
-        subscriber.pop('content_filter')
+        product.pop('content_filter')
 
     def test_targeted_for_excludes_digital_subscribers(self):
         ValidatorsPopulateCommand().run(self.filename)

@@ -39,6 +39,7 @@ class PublishQueueResource(Resource):
 
         'formatted_item': {'type': 'string', 'nullable': False},
         'subscriber_id': Resource.rel('subscribers'),
+        'codes': {'type': 'list', 'nullable': True},
         'destination': {
             'type': 'dict',
             'schema': {

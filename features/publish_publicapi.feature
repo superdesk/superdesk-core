@@ -51,10 +51,17 @@ Feature: Publish content to the public API
         """
         [{"_id": "publish_text", "act": "publish", "type": "text", "schema":{}}]
         """
-    When we post to "/subscribers" with success
+    When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+    And we post to "/subscribers" with success
         """
         {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
         }
         """
@@ -169,10 +176,17 @@ Feature: Publish content to the public API
         """
         [{"_id": "publish_picture", "act": "publish", "type": "picture", "schema":{}}]
         """
-    When we post to "/subscribers" with success
+    When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+    And we post to "/subscribers" with success
         """
         {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
         }
         """
@@ -396,10 +410,17 @@ Feature: Publish content to the public API
             "type" : "composite"
         }]
         """
-    When we post to "/subscribers" with success
+    When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+    And we post to "/subscribers" with success
         """
         {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
         }
         """
@@ -604,10 +625,17 @@ Feature: Publish content to the public API
             "type" : "composite"
         }]
         """
-    When we post to "/subscribers" with success
+    When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+    And we post to "/subscribers" with success
         """
         {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com", "packaged": true}}]
         }
         """

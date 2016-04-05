@@ -100,13 +100,19 @@ class ImportLegalArchiveCommandTestCase(SuperdeskTestCase):
                 }
             ]
 
+            self.products = [{'_id': '1', 'name': 'prod1'},
+                             {'_id': '2', 'name': 'prod2', 'codes': 'abc,def'},
+                             {'_id': '3', 'name': 'prod3', 'codes': 'xyz'}]
+
             self.subscribers = [
                 {'name': 'Test', 'is_active': True, 'subscriber_type': 'wire',
                  'email': 'test@test.com', 'sequence_num_settings': {'max': 9999, 'min': 1},
+                 'products': ['1'],
                  'destinations': [{'name': 'test', 'delivery_type': 'email', 'format': 'nitf',
                                    'config': {'recipients': 'test@test.com'}}]}
             ]
             self.app.data.insert('validators', self.validators)
+            self.app.data.insert('products', self.products)
             self.app.data.insert('subscribers', self.subscribers)
             self.class_under_test = ImportLegalArchiveCommand
             self.archive_items = [

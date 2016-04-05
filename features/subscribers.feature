@@ -5,10 +5,17 @@ Feature: Subscribers
     Given empty "subscribers"
     When we get "/subscribers"
     Then we get list with 0 items
-    When we post to "/subscribers" with success
+    When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+    And we post to "/subscribers" with success
     """
     {
       "name":"News1","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+      "products": ["#products._id#"],
       "destinations":[{"name":"destination1","format": "nitf", "delivery_type":"FTP","config":{"ip":"144.122.244.55","password":"xyz"}}]
     }
     """
@@ -18,57 +25,50 @@ Feature: Subscribers
     {"_items":[{"name":"News1"}]}
     """
 
-  @auth
-  Scenario: Update a subscriber
+    @auth
+  Scenario: Add a new subscriber without product fails
     Given empty "subscribers"
+    When we get "/subscribers"
+    Then we get list with 0 items
     When we post to "/subscribers"
     """
     {
-      "name":"News1","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-      "destinations":[{"name":"destination1","format": "nitf", "delivery_type":"FTP","config":{"ip":"144.122.244.55","password":"xyz"}}]
+      "name":"News1","media_type":"media", "subscriber_type": "digital",
+      "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+      "destinations":[{"name":"destination1","format": "nitf",
+      "delivery_type":"FTP","config":{"ip":"144.122.244.55","password":"xyz"}}]
     }
     """
-    And we patch latest
+    Then we get error 400
     """
-    {"destinations":[{"name":"destination2", "format": "nitf", "delivery_type":"email", "config":{"recipients":"abc@abc.com"}}]}
+    {"_message": "Subscriber must have at least one product assigned!"}
     """
-    Then we get updated response
-    """
-    {"destinations":[{"name":"destination2", "format": "nitf", "delivery_type":"email", "config":{"recipients":"abc@abc.com"}}]}
-    """
+
 
   @auth
-  @vocabulary
-  Scenario: Update a subscriber with publish filter
-    Given empty "filter_conditions"
-    When we post to "/filter_conditions" with success
-    """
-    [{"name": "sport", "field": "anpa_category", "operator": "in", "value": "4"}]
-    """
-
-    Then we get latest
-    Given empty "content_filters"
-    When we post to "/content_filters" with success
-    """
-    [{"content_filter": [{"expression": {"fc": ["#filter_conditions._id#"]}}], "name": "soccer-only"}]
-    """
-
-    Then we get latest
+  Scenario: Update a subscriber
     Given empty "subscribers"
-    When we post to "/subscribers" with success
+    When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+    And we post to "/subscribers"
     """
     {
       "name":"News1","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+      "products": ["#products._id#"],
       "destinations":[{"name":"destination1","format": "nitf", "delivery_type":"FTP","config":{"ip":"144.122.244.55","password":"xyz"}}]
     }
     """
     And we patch latest
     """
-    {"content_filter":{"filter_id":"#content_filters._id#"}}
+    {"destinations":[{"name":"destination2", "format": "nitf", "delivery_type":"email", "config":{"recipients":"abc@abc.com"}}]}
     """
     Then we get updated response
     """
-    {"content_filter":{"filter_id":"#content_filters._id#", "filter_type":"blocking"}}
+    {"destinations":[{"name":"destination2", "format": "nitf", "delivery_type":"email", "config":{"recipients":"abc@abc.com"}}]}
     """
 
   @auth
@@ -88,7 +88,14 @@ Feature: Subscribers
 
     Then we get latest
     Given empty "subscribers"
-    When we post to "/subscribers" with success
+    When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz",
+        "content_filter": {"filter_id":"#content_filters._id#", "filter_type":"blocking"}
+      }
+      """
+    And we post to "/subscribers" with success
     """
     {
       "name":"News1",
@@ -97,7 +104,7 @@ Feature: Subscribers
       "sequence_num_settings":{"min" : 1, "max" : 10},
       "email": "test@test.com",
       "destinations":[{"name":"destination1","format": "nitf", "delivery_type":"FTP","config":{"ip":"144.122.244.55","password":"xyz"}}],
-      "content_filter": {"filter_id":"#content_filters._id#", "filter_type":"blocking"}
+      "products": ["#products._id#"]
     }
     """
     And we get "/subscribers?filter_condition={"field":"anpa_category", "operator":"in", "value":"4"}"
@@ -106,16 +113,24 @@ Feature: Subscribers
     {"_items":[{
     "filter_conditions": [{"name": "sport"}],
     "content_filters": [{"name": "soccer-only"}],
+    "products": [{"name": "prod-1"}],
     "selected_subscribers": [{"name":"News1"}]}]}
     """
 
   @auth
   Scenario: Deleting a Subscriber is not allowed
     Given empty "subscribers"
-    When we post to "/subscribers"
+    When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+    And we post to "/subscribers"
     """
     {
       "name":"News1","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+      "products": ["#products._id#"],
       "destinations":[{"name":"destination1","format": "nitf", "delivery_type":"FTP","config":{"ip":"144.122.244.55","password":"xyz"}}]
     }
     """
@@ -125,10 +140,18 @@ Feature: Subscribers
   @auth
   Scenario: Creating a Subscriber should fail if there are no destinations
     Given empty "subscribers"
-    When we post to "/subscribers"
+     When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+    And we post to "/subscribers"
     """
     {
-      "name":"News1", "subscriber_type": "digital","media_type":"media", "sequence_num_settings":{"min" : 1, "max" : 10}
+      "name":"News1",
+      "products": ["#products._id#"],
+      "subscriber_type": "digital","media_type":"media", "sequence_num_settings":{"min" : 1, "max" : 10}
     }
     """
     Then we get error 400
@@ -139,6 +162,7 @@ Feature: Subscribers
     """
     {
       "name":"News1", "subscriber_type": "digital","media_type":"media", "sequence_num_settings":{"min" : 1, "max" : 10},
+      "products": ["#products._id#"],
       "destinations": []
     }
     """
@@ -152,10 +176,17 @@ Feature: Subscribers
     Given empty "subscribers"
     When we get "/subscribers"
     Then we get list with 0 items
-    When we post to "/subscribers" with success
+    When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+    And we post to "/subscribers" with success
     """
     {
       "name":"News1","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+      "products": ["#products._id#"],
       "destinations":[{"name":"destination1","format": "nitf", "delivery_type":"FTP","config":{"ip":"144.122.244.55","password":"xyz"}}]
     }
     """
@@ -176,10 +207,17 @@ Feature: Subscribers
   @auth
   Scenario: Creating a Subscriber should fail when Mandatory properties are not passed for destinations
     Given empty "subscribers"
-    When we post to "/subscribers"
+    When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+    And we post to "/subscribers"
     """
     {
       "name":"News1", "subscriber_type": "digital","media_type":"media", "sequence_num_settings":{"min" : 1, "max" : 10},
+      "products": ["#products._id#"],
       "destinations":[{"name": ""}]
     }
     """
@@ -195,10 +233,17 @@ Feature: Subscribers
   @auth
   Scenario: Creating a Subscriber with sequence number should fail if min value is less than or equal to 0
     Given empty "subscribers"
-    When we post to "/subscribers"
+    When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+    And we post to "/subscribers"
     """
     {
       "name":"News1", "subscriber_type": "digital","media_type":"media", "sequence_num_settings":{"min" : 0, "max" : 10}, "email": "test@test.com",
+      "products": ["#products._id#"],
       "destinations":[{"name":"destination1","format": "nitf", "delivery_type":"FTP","config":{"ip":"144.122.244.55","password":"xyz"}}]
     }
     """
@@ -211,10 +256,17 @@ Feature: Subscribers
   @notification
   Scenario: Update critical errors for subscriber 1
     Given empty "subscribers"
-    When we post to "/subscribers" with success
+    When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+    And we post to "/subscribers" with success
     """
     {
       "name":"News1","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+      "products": ["#products._id#"],
       "destinations":[{"name":"destination1","format": "nitf", "delivery_type":"FTP","config":{"ip":"144.122.244.55","password":"xyz"}}]
     }
     """
@@ -246,10 +298,18 @@ Feature: Subscribers
 
     Then we get latest
     Given empty "subscribers"
-    When we post to "/subscribers" with success
+    When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+    And we post to "/subscribers" with success
     """
     {
-      "name":"News1","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+      "name":"News1","media_type":"media", "subscriber_type": "digital",
+      "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+      "products": ["#products._id#"],
       "destinations":[{"name":"destination1","format": "nitf", "delivery_type":"FTP","config":{"ip":"144.122.244.55","password":"xyz"}}]
     }
     """
