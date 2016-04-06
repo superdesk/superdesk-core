@@ -10,21 +10,23 @@
 
 """Superdesk push notifications"""
 
-import os
 import logging
-import asyncio
-import websockets
+import os
+import json
 
-from flask import current_app as app, json
 from datetime import datetime
+from flask import current_app as app
 from superdesk.utils import json_serialize_datetime_objectId
+from superdesk.websockets_comms import SocketMessageProducer
+
 
 logger = logging.getLogger(__name__)
+exchange_name = 'socket_notification'
 
 
 class ClosedSocket():
     """Mimic closed socket to simplify logic when connection
-    can't be estabilished at first place.
+    can't be established at first place.
     """
     def __init__(self):
         self.open = False
@@ -34,57 +36,37 @@ class ClosedSocket():
 
 
 def init_app(app):
-    """Create websocket connection and put it on app object."""
-    host = app.config['WS_HOST']
-    port = app.config['WS_PORT']
     try:
-        try:
-            loop = asyncio.get_event_loop()
-        except:
-            loop = asyncio.new_event_loop()
-
-        app.notification_client = loop.run_until_complete(websockets.connect('ws://%s:%s/server' % (host, port)))
-        logger.info('websocket connected on=%s:%s' % app.notification_client.local_address)
+        app.notification_client = SocketMessageProducer(app.config['BROKER_URL'])
     except (RuntimeError, OSError):
         # not working now, but we can try later when actually sending something
         app.notification_client = ClosedSocket()
 
 
-def _notify(**kwargs):
+def _create_socket_message(**kwargs):
     """Send out all kwargs as json string."""
     kwargs.setdefault('_created', datetime.utcnow().isoformat())
     kwargs.setdefault('_process', os.getpid())
-    message = json.dumps(kwargs, default=json_serialize_datetime_objectId)
-
-    @asyncio.coroutine
-    def send_message():
-        yield from app.notification_client.send(message)
-
-    try:
-        loop = asyncio.get_event_loop()
-    except:
-        loop = asyncio.new_event_loop()
-    loop.run_until_complete(send_message())
+    return json.dumps(kwargs, default=json_serialize_datetime_objectId)
 
 
 def push_notification(name, **kwargs):
-    """Push notification to websocket.
-
-    In case socket is closed it will try to reconnect.
-
+    """Push notification to broker.
+    In case connection is closed it will try to reconnect.
     :param name: event name
     """
     logger.info('pushing event {0} ({1})'.format(name, json.dumps(kwargs, default=json_serialize_datetime_objectId)))
-
     if not app.notification_client.open:
         app.notification_client.close()
         init_app(app)
 
     if not app.notification_client.open:
-        logger.info('No connection to websocket server. Dropping event %s' % name)
+        logger.warning('No connection to broker. Dropping event %s' % name)
         return
 
     try:
-        _notify(event=name, extra=kwargs)
+        message = _create_socket_message(event=name, extra=kwargs)
+        logger.debug('Sending the message: {} to the broker.'.format(message))
+        app.notification_client.send(message)
     except Exception as err:
         logger.exception(err)
