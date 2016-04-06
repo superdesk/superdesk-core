@@ -7,6 +7,8 @@
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
+import json
+import itertools
 
 import superdesk
 from flask import current_app as app
@@ -352,7 +354,8 @@ class SluglineDeskService(BaseService):
                 row = False
             # Find if there are other sluglines in this items family
             newer, older_slugline = self._find_other_sluglines(item.get(FAMILY_ID), slugline,
-                                                               item.get(self.VERSION_CREATED))
+                                                               item.get(self.VERSION_CREATED),
+                                                               lookup['task.desk'])
             # there are no newer sluglines than the current one
             if not newer:
                 if row:
@@ -362,7 +365,13 @@ class SluglineDeskService(BaseService):
                     self._add_slugline_to_places(docs, placename, slugline, headline, older_slugline, versioncreated)
 
         docs.extend(row_docs)
-        desk_items.docs = docs
+        items = []
+
+        # group by place and sort all items of a place by versioncreated.
+        for key, group in itertools.groupby(docs, lambda x: x['name']):
+            items.append({'place': key, 'items': sorted(group, key=lambda k: k['versioncreated'], reverse=True)})
+
+        desk_items.docs = items
         return desk_items
 
     def _add_slugline_to_places(self, places, placename, slugline, headline, old_sluglines, versioncreated):
@@ -378,14 +387,14 @@ class SluglineDeskService(BaseService):
         :param versioncreated:
         :return:
         """
-        places.append({self.NAME: placename if not any(p[self.NAME] == placename for p in places) else '-',
+        places.append({self.NAME: placename,
                        self.SLUGLINE: slugline if not any(self._get_slugline_with_legal(p).lower() == slugline.lower()
                                                           for p in places) else '-',
                        self.HEADLINE: headline,
                        self.OLD_SLUGLINES: old_sluglines,
                        self.VERSION_CREATED: versioncreated})
 
-    def _find_other_sluglines(self, family_id, slugline, versioncreated):
+    def _find_other_sluglines(self, family_id, slugline, versioncreated, desk_id):
         """
         This function given a family_id will return a tuple with the first value true if there is
          a more recent story in the family, the second value in the tuple will be a list of any sluglines
@@ -393,12 +402,25 @@ class SluglineDeskService(BaseService):
         :param family_id:
         :param slugline:
         :param versioncreated:
+        :param desk_id:
         :return: A tuple as described above
         """
         older_sluglines = []
         req = ParsedRequest()
-        lookup = {'family_id': family_id}
-        family = superdesk.get_resource_service('published').get_from_mongo(req=req, lookup=lookup)
+        query = {
+            'query': {
+                'filtered': {
+                    'filter': {
+                        'and': [
+                            {'term': {'family_id': family_id}},
+                            {'term': {'task.desk': desk_id}},
+                        ]
+                    }
+                }
+            }
+        }
+        req.args = {'source': json.dumps(query), 'aggregations': 0}
+        family = superdesk.get_resource_service('published').get(req=req, lookup=None)
         for member in family:
             member_slugline = self._get_slugline_with_legal(member)
             if member_slugline.lower() != slugline.lower():
