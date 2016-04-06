@@ -166,15 +166,6 @@ class AmazonMediaStorage(MediaStorage):
                         logger.exception(ex)
         return headers
 
-    def transform_metadata_to_amazon_format(self, metadata):
-        if not metadata:
-            return {}
-        file_metadata = {}
-        for key, value in metadata.items():
-            new_key = self.user_metadata_header + key
-            file_metadata[new_key] = value
-        return file_metadata
-
     def put(self, content, filename=None, content_type=None, resource=None, metadata=None, _id=None):
         """ Saves a new file using the storage system, preferably with the name
         specified. If there already exists a file with this name name, the
@@ -183,6 +174,8 @@ class AmazonMediaStorage(MediaStorage):
         of the stored file will be returned. The content type argument is used
         to appropriately identify the file when it is retrieved.
         """
+        # XXX: we don't use metadata here as Amazon S3 as a limit of 2048 bytes (keys + values)
+        #      and they are anyway stored in MongoDB (and still part of the file). See issue SD-4231
         logger.debug('Going to save file file=%s media=%s ' % (filename, _id))
         _id = _id or self.media_id(filename, content_type=content_type)
         found = self._check_exists(_id)
@@ -190,9 +183,8 @@ class AmazonMediaStorage(MediaStorage):
             return _id
 
         try:
-            file_metadata = self.transform_metadata_to_amazon_format(metadata)
             self.client.put_object(Key=_id, Body=content, Bucket=self.container_name,
-                                   ContentType=content_type, Metadata=file_metadata, **self.kwargs)
+                                   ContentType=content_type, **self.kwargs)
             return _id
         except Exception as ex:
             logger.exception(ex)
