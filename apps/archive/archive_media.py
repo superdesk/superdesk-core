@@ -20,6 +20,7 @@ from superdesk.upload import url_for_media
 from .common import update_dates_for, generate_guid, GUID_TAG, set_original_creator, \
     generate_unique_id_and_name, set_item_expiry
 from superdesk.activity import add_activity
+from superdesk import get_resource_service
 
 
 logger = logging.getLogger(__name__)
@@ -44,8 +45,14 @@ class ArchiveMediaService():
 
             try:
                 doc[ITEM_TYPE] = self.type_av.get(file_type)
-
+                # renditions required by superdesk
                 rendition_spec = config.RENDITIONS['picture']
+                # load custom crop sizes
+                custom_crops = get_resource_service('vocabularies').find_one(req=None, _id='crop_sizes')
+                if custom_crops:
+                    for crop in custom_crops.get('items'):
+                        # complete list of wanted renditions
+                        rendition_spec[crop['name']] = crop
                 renditions = generate_renditions(file, doc['media'], inserted, file_type,
                                                  content_type, rendition_spec, url_for_media)
                 doc['renditions'] = renditions
