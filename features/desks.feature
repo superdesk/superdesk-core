@@ -240,9 +240,13 @@ Feature: Desks
         Given "published"
          """
          [{"_id":"1","slugline": "slugline1", "last_published_version": "True", "state": "published",
-         "task": {"desk": "#SPORTS_DESK_ID#"}, "place": [{"name": "FED"}], "headline": "one", "family_id": 1},
+           "task": {"desk": "#SPORTS_DESK_ID#"}, "place": [{"name": "FED"}],
+           "headline": "one", "family_id": 1},
          {"_id":"2","slugline": "slugline2", "last_published_version": "True", "state": "published",
-         "task": {"desk": "#SPORTS_DESK_ID#"}, "place": [{"name": "FED"}], "headline": "two", "family_id": 2}]
+         "task": {"desk": "#SPORTS_DESK_ID#"}, "place": [{"name": "FED"}], "headline": "two", "family_id": 2},
+         {"_id":"3","slugline": "slugline3", "last_published_version": "True", "state": "published",
+         "task": {"desk": "#SPORTS_DESK_ID#"}, "place": [{"name": "EUR", "group": "Rest Of World"}],
+         "headline": "three", "family_id": 3}]
          """
         When we post to "users"
         """
@@ -251,8 +255,22 @@ Feature: Desks
         When we get "/desks/#SPORTS_DESK_ID#/sluglines"
         Then we get existing resource
         """
-            {"_items": [{"headline": "one", "slugline": "slugline1", "name": "Domestic", "old_sluglines": []},
-            {"headline": "two", "slugline": "slugline2", "name": "-", "old_sluglines": []}]}
+            {"_items": [
+                    {
+                        "place": "Domestic",
+                        "items": [
+                            {"headline": "one", "slugline": "slugline1", "name": "Domestic", "old_sluglines": []},
+                            {"headline": "two", "slugline": "slugline2", "name": "Domestic", "old_sluglines": []}
+                        ]
+                    },
+                    {
+                        "place": "EUR",
+                        "items": [
+                            {"headline": "three", "slugline": "slugline3", "name": "EUR", "old_sluglines": []}
+                        ]
+                    }
+                ]
+            }
         """
 
     @auth
@@ -276,8 +294,17 @@ Feature: Desks
         When we get "/desks/#SPORTS_DESK_ID#/sluglines"
         Then we get existing resource
         """
-            {"_items": [{"headline": "one", "slugline": "slugline1", "name": "Domestic", "old_sluglines": []},
-            {"headline": "two", "slugline": "slugline2", "name": "-", "old_sluglines": []}]}
+            {
+                "_items": [
+                    {
+                        "place": "Domestic",
+                        "items": [
+                            {"headline": "one", "slugline": "slugline1", "name": "Domestic", "old_sluglines": []},
+                            {"headline": "two", "slugline": "slugline2", "name": "Domestic", "old_sluglines": []}
+                        ]
+                    }
+                ]
+            }
         """
 
     @auth
@@ -304,7 +331,15 @@ Feature: Desks
         When we get "/desks/#SPORTS_DESK_ID#/sluglines"
         Then we get existing resource
         """
-            {"_items": [{"name": "Domestic", "old_sluglines": ["slugline1"], "slugline": "slugline2", "headline": "one"}]}
+            {"_items":
+                [
+                    {
+                        "place": "Domestic",
+                        "items": [{"name": "Domestic", "old_sluglines": ["slugline1"], "slugline":
+                                    "slugline2", "headline": "one"}]
+                    }
+                ]
+            }
         """
 
     @auth
