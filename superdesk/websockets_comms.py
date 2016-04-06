@@ -154,9 +154,10 @@ class SocketCommunication:
         self.broker_url = broker_url
         self.messages = {}
         self.event_interval = {
+            'ingest:update': 5,
             'ingest:cleaned': 5,
             'content:expired': 5,
-            'ingest_provider:update': 5,
+            'publish_queue:update': 5,
         }
 
     @asyncio.coroutine
