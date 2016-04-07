@@ -18,8 +18,8 @@ from superdesk import get_resource_service
 logger = logging.getLogger(__name__)
 
 
-def populate_vocabularies(json_data):
-    service = get_resource_service('vocabularies')
+def populate_table_json(service_name, json_data):
+    service = get_resource_service(service_name)
     for item in json_data:
         id_name = item.get("_id")
 
@@ -39,9 +39,11 @@ def process_vocabularies(filepath):
     if not os.path.exists(filepath):
         raise FileNotFoundError
 
+    [table_name, ext] = os.path.basename(filepath).split('.')
+
     with open(filepath, 'rt') as vocabularies:
         json_data = json.loads(vocabularies.read())
-        populate_vocabularies(json_data)
+        populate_table_json(table_name, json_data)
 
 
 class VocabulariesPopulateCommand(superdesk.Command):

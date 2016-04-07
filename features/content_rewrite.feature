@@ -1058,3 +1058,28 @@ Feature: Rewrite content
         {"_status": "ERR",
          "_message": "Rewrite is not published. Cannot rewrite the story again."}
         """
+
+    @auth
+    @content_type
+    Scenario: Archive rewrite should preserve profile and metadata specific to that profile
+        Given "desks"
+        """
+        [{"name": "Sports"}]
+        """
+        And "archive"
+        """
+        [{"type":"text", "headline": "Rewrite preserves profile", "_id": "xyz", "profile": "story",
+          "subject": [{"scheme": "territory", "qcode": "paterritory:uk", "name": "UK"}],
+          "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}]
+        """
+        When we rewrite "xyz"
+        """
+        {"desk_id": "#desks._id#"}
+        """
+        And we get "/archive"
+        Then we get existing resource
+        """
+        {"_items" : [{"headline": "Rewrite preserves profile", "profile": "story",
+         "subject": [{"scheme": "territory", "qcode": "paterritory:uk", "name": "UK"}],
+         "task": {"desk": "#desks._id#"}}]}
+        """
