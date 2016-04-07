@@ -16,7 +16,6 @@ import superdesk
 from superdesk.errors import FormatterError
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO
 from apps.archive.common import get_utc_schedule
-from bs4 import BeautifulSoup
 
 
 class NITFFormatter(Formatter):
@@ -49,7 +48,7 @@ class NITFFormatter(Formatter):
         body_head = SubElement(body, "body.head")
         body_content = SubElement(body, "body.content")
 
-        self.__map_html_to_xml(body_content, self.append_body_footer(article))
+        self.map_html_to_xml(body_content, self.append_body_footer(article))
 
         body_end = SubElement(body, "body.end")
 
@@ -58,31 +57,6 @@ class NITFFormatter(Formatter):
         self.__format_body_head(article, body_head)
         self.__format_body_end(article, body_end)
         return nitf
-
-    def __map_html_to_xml(self, element, html):
-        """
-        Map the html text tags to xml
-        :param element: The xml element to populate
-        :param html: the html to parse the text from
-        :return:
-        """
-        soup = BeautifulSoup(html, 'html.parser')
-        # if there are no ptags just br
-        if not len(soup.find_all('p')) and len(soup.find_all('br')):
-            para = SubElement(element, 'p')
-            for br in soup.find_all('br'):
-                SubElement(para, 'br').text = br.get_text()
-
-        for p in soup.find_all('p'):
-            para = SubElement(element, 'p')
-            if len(p.find_all('br')) > 0:
-                for br in p.find_all('br'):
-                    SubElement(para, 'br').text = br.get_text()
-            para.text = p.get_text()
-
-        # there neither ptags pr br's
-        if len(list(element)) == 0:
-            SubElement(element, 'p').text = soup.get_text()
 
     def __format_head(self, article, head):
         title = SubElement(head, 'title')
@@ -136,7 +110,7 @@ class NITFFormatter(Formatter):
 
         if article.get('abstract'):
             abstract = SubElement(body_head, 'abstract')
-            self.__map_html_to_xml(abstract, article.get('abstract'))
+            self.map_html_to_xml(abstract, article.get('abstract'))
 
         for company in article.get('company_codes', []):
             org = SubElement(body_head, 'org', attrib={'idsrc': company.get('security_exchange', ''),

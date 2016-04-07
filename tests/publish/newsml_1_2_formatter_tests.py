@@ -31,7 +31,7 @@ class Newsml12FormatterTest(TestCase):
         'subject': [{'qcode': '02011001'}, {'qcode': '02011002'}],
         'anpa_take_key': 'take_key',
         'unique_id': '1',
-        'body_html': 'The story body',
+        'body_html': '<p>The story body</p>',
         'type': 'text',
         'word_count': '1',
         'priority': 1,
@@ -61,7 +61,7 @@ class Newsml12FormatterTest(TestCase):
              'country': 'Australia', 'world_region': 'Oceania'}
         ],
         'ednote': 'this is test',
-        'body_footer': 'call helpline 999 if you are planning to quit smoking',
+        'body_footer': '<p>call helpline 999 if you are planning to quit smoking</p>',
         'company_codes': [{'name': 'YANCOAL AUSTRALIA LIMITED', 'qcode': 'YAL', 'security_exchange': 'ASX'}]
     }
 
@@ -721,7 +721,7 @@ class Newsml12FormatterTest(TestCase):
         self.formatter._format_news_component(self.article, self.newsml)
         self.assertEqual(self.newsml.find('NewsComponent/NewsComponent/Role').
                          get('FormalName'), 'Main')
-        self.assertEqual(self.newsml.find('NewsComponent/NewsComponent/NewsLines/Headline').
+        self.assertEqual(self.newsml.find('NewsComponent/NewsComponent/NewsLines/HeadLine').
                          text, 'This is a test headline')
         self.assertEqual(self.newsml.find('NewsComponent/NewsComponent/NewsLines/ByLine').
                          text, 'joe')
@@ -732,19 +732,23 @@ class Newsml12FormatterTest(TestCase):
         self.assertEqual(self.newsml.find('NewsComponent/NewsComponent/NewsLines/KeywordLine').
                          text, 'slugline')
         self.assertEqual(
-            self.newsml.findall('NewsComponent/NewsComponent/DescriptiveMetadata/SubjectCode/Subject')[0].
-            get('FormalName'), '02011001')
+            self.newsml.findall(
+                'NewsComponent/NewsComponent/DescriptiveMetadata/SubjectCode/Subject')[0].get('FormalName'), '02011001')
         self.assertEqual(
-            self.newsml.findall('NewsComponent/NewsComponent/DescriptiveMetadata/SubjectCode/Subject')[1].
-            get('FormalName'), '02011002')
-        self.assertEqual(self.newsml.find('NewsComponent/NewsComponent/DescriptiveMetadata/Property').
-                         get('Value'), 'a')
+            self.newsml.findall(
+                'NewsComponent/NewsComponent/DescriptiveMetadata/SubjectCode/Subject')[1].get('FormalName'), '02011002')
+        self.assertEqual(self.newsml.find(
+            'NewsComponent/NewsComponent/DescriptiveMetadata/Property').get('Value'), 'a')
         self.assertEqual(
-            self.newsml.findall('NewsComponent/NewsComponent/NewsComponent/ContentItem/DataContent')[0].
-            text, 'sample abstract')
+            self.newsml.findall(
+                'NewsComponent/NewsComponent/NewsComponent/ContentItem/DataContent')[0].text, 'sample abstract')
+        self.assertEqual(self.newsml.findall(
+            'NewsComponent/NewsComponent/NewsComponent/ContentItem/DataContent/nitf/body/body.content/p')[0].text,
+            'The story body')
         self.assertEqual(
-            self.newsml.findall('NewsComponent/NewsComponent/NewsComponent/ContentItem/DataContent')[1].
-            text, 'The story body<br>call helpline 999 if you are planning to quit smoking')
+            self.newsml.findall(
+                'NewsComponent/NewsComponent/NewsComponent/ContentItem/DataContent/nitf/body/body.content/p')[1].text,
+            'call helpline 999 if you are planning to quit smoking')
         self.assertEqual(self.newsml.find('.//NewsLines/NewsLine/NewsLineText').text, 'this is test')
 
         company_info = self.newsml.find('NewsComponent/NewsComponent/Metadata/Property[@FormalName="Ticker Symbol"]')
@@ -772,16 +776,17 @@ class Newsml12FormatterTest(TestCase):
     def test_format_place(self):
         doc = self.article.copy()
         self.formatter._format_place(doc, self.newsml)
-        self.assertEqual(self.newsml.find('Location/Property[@FormalName="CountryArea"]').text, "New South Wales")
-        self.assertEqual(self.newsml.find('Location/Property[@FormalName="Country"]').text, "Australia")
-        self.assertEqual(self.newsml.find('Location/Property[@FormalName="WorldRegion"]').text, "Oceania")
+        self.assertEqual(self.newsml.find(
+            'Location/Property[@FormalName="CountryArea"]').get('Value'), "New South Wales")
+        self.assertEqual(self.newsml.find('Location/Property[@FormalName="Country"]').get('Value'), "Australia")
+        self.assertEqual(self.newsml.find('Location/Property[@FormalName="WorldRegion"]').get('Value'), "Oceania")
 
     def test_format_dateline(self):
         doc = self.article.copy()
         self.formatter._format_dateline(doc, self.newsml)
-        self.assertEqual(self.newsml.find('Location/Property[@FormalName="City"]').text, "Los Angeles")
-        self.assertEqual(self.newsml.find('Location/Property[@FormalName="CountryArea"]').text, "California")
-        self.assertEqual(self.newsml.find('Location/Property[@FormalName="Country"]').text, "USA")
+        self.assertEqual(self.newsml.find('Location/Property[@FormalName="City"]').get('Value'), "Los Angeles")
+        self.assertEqual(self.newsml.find('Location/Property[@FormalName="CountryArea"]').get('Value'), "California")
+        self.assertEqual(self.newsml.find('Location/Property[@FormalName="Country"]').get('Value'), "USA")
 
     def test_duration(self):
         self.assertEqual(self.formatter._get_total_duration(None), 0)
@@ -795,7 +800,7 @@ class Newsml12FormatterTest(TestCase):
         seq, xml_str = self.formatter.format(doc, {'name': 'Test Subscriber'})[0]
         xml = etree.fromstring(xml_str)
 
-        self.assertEqual(xml.find('NewsItem/NewsComponent/NewsComponent/NewsLines/Headline').text,
+        self.assertEqual(xml.find('NewsItem/NewsComponent/NewsComponent/NewsLines/HeadLine').text,
                          'NUS CHRISTOPHER PYNE PROTEST')
         self.assertEqual(xml.find('NewsItem/NewsComponent/NewsComponent/NewsLines/ByLine').text, 'TRACEY NEARMY')
         self.assertEqual(xml.find('NewsItem/NewsComponent/NewsComponent/NewsLines/CreditLine').text, 'AAP Image/AAP')
@@ -819,7 +824,7 @@ class Newsml12FormatterTest(TestCase):
         doc = self.video.copy()
         seq, xml_str = self.formatter.format(doc, {'name': 'Test Subscriber'})[0]
         xml = etree.fromstring(xml_str)
-        self.assertEqual(xml.find('NewsItem/NewsComponent/NewsComponent/NewsLines/Headline').text, 'test video')
+        self.assertEqual(xml.find('NewsItem/NewsComponent/NewsComponent/NewsLines/HeadLine').text, 'test video')
         self.assertEqual(xml.find('NewsItem/NewsComponent/NewsComponent/NewsLines/ByLine').text, 'test video')
         self.assertEqual(xml.find('NewsItem/NewsComponent/NewsComponent/NewsLines/CreditLine').text, 'AAP Video/AAP')
         self.assertEqual(xml.find('NewsItem/NewsComponent/NewsComponent/NewsLines/KeywordLine').text,
