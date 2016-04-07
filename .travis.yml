@@ -4,6 +4,7 @@ sudo: false
 
 python:
     - "3.4"
+    - "3.5"
 
 services:
     - mongodb
@@ -14,8 +15,10 @@ addons:
   apt:
     sources:
     - mongodb-3.0-precise
+    - elasticsearch-1.7
     packages:
     - mongodb-org-server
+    - elasticsearch
 
 cache:
   directories:
