@@ -92,7 +92,8 @@ class AllSavedSearchesService(BaseService):
 class SavedSearchesService(BaseService):
     def on_create(self, docs):
         for doc in docs:
-            doc.setdefault('user', request.view_args.get('user'))
+            if 'user' not in doc:
+                doc = request.view_args.get('user')
             self.process(doc)
 
     def process(self, doc):
