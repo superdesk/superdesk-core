@@ -10,15 +10,18 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
+import arrow
 import logging
 import asyncio
 import websockets
 import signal
 
+from datetime import timedelta
 from threading import Thread
 from kombu import Queue, Exchange, Connection
 from kombu.mixins import ConsumerMixin
 from kombu.pools import producers
+from superdesk.utc import utcnow
 from superdesk.utils import get_random_string
 from flask import json
 
@@ -149,6 +152,13 @@ class SocketCommunication:
         self.host = host
         self.port = port
         self.broker_url = broker_url
+        self.messages = {}
+        self.event_interval = {
+            'ingest:update': 5,
+            'ingest:cleaned': 5,
+            'content:expired': 5,
+            'publish_queue:update': 5,
+        }
 
     @asyncio.coroutine
     def _client_loop(self, websocket):
@@ -173,8 +183,23 @@ class SocketCommunication:
     def broadcast(self, message):
         """Broadcast message to all clients.
 
+        If event is in `event_interval` it will only send such event every x seconds.
+
         :param message: message as it was received - no encoding/decoding.
         """
+        message_data = json.loads(message)
+        message_id = message_data.get('event', '')
+        message_created = arrow.get(message_data.get('_created', utcnow()))
+        last_created = self.messages.get(message_id)
+        ttl = self.event_interval.get(message_id, 0)
+
+        if last_created and last_created + timedelta(seconds=ttl) > message_created:
+            logger.info('skiping event %s' % (message_id, ))
+            return
+
+        if ttl:
+            self.messages[message_id] = message_created
+
         logger.debug('broadcast %s' % message)
         for websocket in self.clients.copy():
             try:
