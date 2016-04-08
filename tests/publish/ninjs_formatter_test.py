@@ -53,7 +53,7 @@ class NinjsFormatterTest(TestCase):
             'abstract': 'sample abstract',
             'place': 'Australia',
             'embargo': embargo_ts,
-            'body_footer': 'call helpline 999 if you are planning to quit smoking',
+            'body_footer': '<p>call helpline 999 if you are planning to quit smoking</p>',
             'company_codes': [{'name': 'YANCOAL AUSTRALIA LIMITED', 'qcode': 'YAL', 'security_exchange': 'ASX'}]
         }
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
@@ -62,7 +62,7 @@ class NinjsFormatterTest(TestCase):
             "version": "1",
             "place": "Australia",
             "pubstatus": "usable",
-            "body_html": "The story body<br>call helpline 999 if you are planning to quit smoking",
+            "body_html": "The story body<p>call helpline 999 if you are planning to quit smoking</p>",
             "type": "text",
             "subject": [{"code": "02011001", "name": "international court or tribunal"},
                         {"code": "02011002", "name": "extradition"}],
@@ -108,7 +108,7 @@ class NinjsFormatterTest(TestCase):
             'source': 'AAP',
             'description': 'The most amazing picture you will ever see',
             'guid': '20150723001158606583',
-            'body_footer': 'call helpline 999 if you are planning to quit smoking'
+            'body_footer': '<p>call helpline 999 if you are planning to quit smoking</p>'
         }
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
         expected = {
@@ -131,7 +131,7 @@ class NinjsFormatterTest(TestCase):
             "versioncreated": "2015-07-23T00:15:00.000Z",
             "_id": "20150723001158606583",
             "description_html":
-                "The most amazing picture you will ever see<br>call helpline 999 if you are planning to quit smoking",
+            "The most amazing picture you will ever see<p>call helpline 999 if you are planning to quit smoking</p>",
             "type": "picture",
             "priority": 5,
             "slugline": "AMAZING PICTURE",

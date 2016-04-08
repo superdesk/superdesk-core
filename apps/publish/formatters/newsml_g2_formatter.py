@@ -88,8 +88,8 @@ class NewsMLG2Formatter(Formatter):
         SubElement(header, 'sent').text = self.string_now
         SubElement(header, 'sender').text = get_newsml_provider_id()
         SubElement(header, 'transmitId').text = str(pub_seq_num)
-        SubElement(header, 'origin').text = article.get('original_source', article.get('source', ''))
         SubElement(header, 'priority').text = str(article.get('priority', 5))
+        SubElement(header, 'origin').text = article.get('original_source', article.get('source', ''))
 
     def _format_item(self, news_message):
         return SubElement(news_message, 'itemSet')
@@ -125,8 +125,8 @@ class NewsMLG2Formatter(Formatter):
         self._format_signal(article, item_meta)
 
         content_meta = SubElement(item, 'contentMeta')
-        self._format_timestamps(article, content_meta)
         SubElement(content_meta, 'urgency').text = str(article.get('urgency', 5))
+        self._format_timestamps(article, content_meta)
         self._format_creator(article, content_meta)
         self._format_located(article, content_meta)
         self._format_subject(article, content_meta)

@@ -202,4 +202,4 @@ class AapBulletinBuilderFormatterTest(SuperdeskTestCase):
 
         formatted_article = json.loads(item.get('data'))
         self.assertEqual(formatted_article['body_text'],
-                         'The story body call helpline 999 if you are planning to quit smoking')
+                         'The story body\r\ncall helpline 999 if you are planning to quit smoking')
