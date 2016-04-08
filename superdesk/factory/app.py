@@ -44,6 +44,7 @@ def get_app(config=None, media_storage=None, config_object=None):
     app_config.from_object('superdesk.factory.default_settings')
     app_config.setdefault('APP_ABSPATH', abs_path)
     app_config.setdefault('DOMAIN', {})
+    app_config.setdefault('SOURCES', {})
 
     if config_object:
         app_config.from_object(config_object)

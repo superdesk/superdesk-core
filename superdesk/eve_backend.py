@@ -9,6 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
+import eve.io.base
+
 from flask import current_app as app
 from eve.utils import document_etag, config, ParsedRequest
 from eve.io.mongo import MongoJSONEncoder
@@ -122,14 +124,21 @@ class EveBackend():
         :param original: original document
         """
         backend = self._backend(endpoint_name)
-        res = backend.update(endpoint_name, id, updates, original)
+        updates.setdefault(config.LAST_UPDATED, utcnow())
+        updated = original.copy()
+        updated.pop(config.ETAG, None)  # make sure we update
+
+        try:
+            backend.update(endpoint_name, id, updates, updated)
+        except eve.io.base.DataLayer.OriginalChangedError:
+            return updates  # item is there but there are no changes made - ignore
 
         search_backend = self._lookup_backend(endpoint_name)
         if search_backend is not None:
             doc = backend.find_one(endpoint_name, req=None, _id=id)
             search_backend.update(endpoint_name, id, doc)
 
-        return res if res is not None else updates
+        return updates
 
     def replace(self, endpoint_name, id, document, original):
         res = self.replace_in_mongo(endpoint_name, id, document, original)
@@ -169,14 +178,11 @@ class EveBackend():
         search_backend = self._lookup_backend(endpoint_name)
         docs = self.get_from_mongo(endpoint_name, lookup=lookup, req=ParsedRequest())
         ids = [doc[config.ID_FIELD] for doc in docs]
-        res = backend.remove(endpoint_name, {config.ID_FIELD: {'$in': ids}})
-        if res and res.get('n', 0) > 0 and search_backend is not None:
+        backend.remove(endpoint_name, {config.ID_FIELD: {'$in': ids}})
+        if search_backend and ids:
             self._remove_documents_from_search_backend(endpoint_name, ids)
-
-        if res and res.get('n', 0) == 0:
+        if not ids:
             logger.warn("No documents for {} resource were deleted using lookup {}".format(endpoint_name, lookup))
-
-        return res
 
     def _remove_documents_from_search_backend(self, endpoint_name, ids):
         """

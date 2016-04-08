@@ -14,6 +14,7 @@ from apps.preferences import PreferencesService
 
 class Preference_Tests(SuperdeskTestCase):
     def setUp(self):
+        super().setUp()
         self._default_user_settings = {
             "archive:view": {
                 "default": "mgrid",

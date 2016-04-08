@@ -7,9 +7,16 @@ from flask import current_app as app
 from superdesk.logging import logger
 
 
+_lock_resource_settings = {
+    'internal_resource': True,
+    'versioning': False,
+}
+
+
 def _get_lock():
     """Get mongolock instance using app mongodb."""
-    return mongolock.MongoLock(client=app.data.mongo.pymongo().db)
+    app.register_resource('_lock', _lock_resource_settings)  # setup dummy resource for locks
+    return mongolock.MongoLock(client=app.data.mongo.pymongo('_lock').db)
 
 
 _lock = LocalProxy(_get_lock)
