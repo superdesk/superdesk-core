@@ -1,7 +1,8 @@
 Feature: Cropping the Image Articles
 
     @auth
-    Scenario: Publish a picture without the crops fails
+    @vocabulary
+    Scenario: Crops generated automatically for pictures
       Given the "validators"
       """
         [
@@ -39,12 +40,7 @@ Feature: Cropping the Image Articles
       }
       """
       When we publish "123" with "publish" type and "published" state
-      Then we get response code 400
-      """
-      {
-          "_issues": {"validator exception": "[['RENDITIONS is a required field']]"}
-      }
-      """
+      Then we get response code 200
 
     @auth
     @vocabulary
@@ -189,6 +185,59 @@ Feature: Cropping the Image Articles
       And we get rendition "16-9" with mimetype "image/jpeg"
       And we fetch a file "#rendition.4-3.href#"
       And we get OK response
+
+
+    @auth
+    @vocabulary
+    Scenario: Create a story with a featured image
+      When upload a file "bike.jpg" to "archive" with "bike"
+      And we post to "/archive"
+      """
+      [{"guid": "feature_image", "slugline": "feature_image"}]
+      """
+      When we patch "/archive/feature_image"
+      """
+      {
+      	"associations": {
+      		"feature_image": {
+      			"_id": "bike",
+      			"poi": {"x": 0.2, "y": 0.3}
+      		}
+      	}
+      }
+      """
+      Then we get OK response
+      And we get existing resource
+      """
+      {
+      	"associations": {
+      		"feature_image": {
+      			"_id": "bike",
+      			"poi": {"x": 0.2, "y": 0.3},
+      			"renditions": {
+      				"16-9" : {
+      					"poi" : {"y" : 216, "x" : 108}
+      				},
+      				"4-3" : {
+      					"poi" : {"y" : 180, "x" : 90}
+      				},
+      				"original" : {
+      					"poi" : {"y" : 480, "x" : 240}
+      				},
+      				"viewImage" : {
+      					"poi" : {"y" : 192, "x" : 96}
+      				},
+      				"baseImage" : {
+      					"poi" : {"y" : 420, "x" : 210}
+      				},
+      				"thumbnail" : {
+      					"poi" : {"y" : 36, "x" : 18}
+      				}
+      			}
+      		}
+      	}
+      }
+      """
 
 
     @auth

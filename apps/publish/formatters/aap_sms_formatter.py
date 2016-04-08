@@ -50,7 +50,7 @@ class AAPSMSFormatter(Formatter):
 
     def can_format(self, format_type, article):
         # need to check that a story with the same headline has not been published to SMS before
-        lookup = {'destination.format': format_type, 'headline': article['headline']}
+        lookup = {'destination.format': format_type, 'headline': article.get('headline')}
         published = superdesk.get_resource_service('publish_queue').get(req=None, lookup=lookup)
         if published and published.count():
             return False
