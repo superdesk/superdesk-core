@@ -109,17 +109,23 @@ class CropService():
 
         width = doc['CropRight'] - doc['CropLeft']
         height = doc['CropBottom'] - doc['CropTop']
-        crop_width = int(crop['width'])
-        crop_height = int(crop['height'])
-
-        if width < crop_width or height < crop_height:
-            raise SuperdeskApiError.badRequestError(
-                message='Wrong crop size. Minimum crop size is {}x{}.'.format(crop['width'], crop['height']))
-
-        doc_ratio = round(width / height, 1)
-        spec_ratio = round(crop_width / crop_height, 1)
-        if doc_ratio != spec_ratio:
-            raise SuperdeskApiError.badRequestError(message='Wrong aspect ratio!')
+        assert (crop.get('width') and crop.get('height')) or crop.get('ratio')
+        if crop.get('width') and crop.get('height'):
+            expected_crop_width = int(crop['width'])
+            expected_crop_height = int(crop['height'])
+            if width < expected_crop_width or height < expected_crop_height:
+                raise SuperdeskApiError.badRequestError(
+                    message='Wrong crop size. Minimum crop size is {}x{}.'.format(crop['width'], crop['height']))
+                doc_ratio = round(width / height, 1)
+                spec_ratio = round(expected_crop_width / expected_crop_height, 1)
+                if doc_ratio != spec_ratio:
+                    raise SuperdeskApiError.badRequestError(message='Wrong aspect ratio!')
+        elif crop.get('ratio'):
+            ratio = crop.get('ratio')
+            if type(crop.get('ratio')) not in [int, float]:
+                ratio = ratio.split(':')
+                ratio = int(ratio[0]) / int(ratio[1])
+            assert(abs((width / height) - ratio) <= 0.0001)
 
     def get_crop_by_name(self, crop_name):
         """

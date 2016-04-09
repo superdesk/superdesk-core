@@ -198,44 +198,51 @@ Feature: Cropping the Image Articles
       When we patch "/archive/feature_image"
       """
       {
-      	"associations": {
-      		"feature_image": {
-      			"_id": "bike",
-      			"poi": {"x": 0.2, "y": 0.3}
-      		}
-      	}
+        "associations": {
+          "feature_image": {
+            "_id": "bike",
+            "poi": {"x": 0.2, "y": 0.3}
+          }
+        }
       }
       """
       Then we get OK response
+
       And we get existing resource
       """
       {
-      	"associations": {
-      		"feature_image": {
-      			"_id": "bike",
-      			"poi": {"x": 0.2, "y": 0.3},
-      			"renditions": {
-      				"16-9" : {
-      					"poi" : {"y" : 216, "x" : 108}
-      				},
-      				"4-3" : {
-      					"poi" : {"y" : 180, "x" : 90}
-      				},
-      				"original" : {
-      					"poi" : {"y" : 480, "x" : 240}
-      				},
-      				"viewImage" : {
-      					"poi" : {"y" : 192, "x" : 96}
-      				},
-      				"baseImage" : {
-      					"poi" : {"y" : 420, "x" : 210}
-      				},
-      				"thumbnail" : {
-      					"poi" : {"y" : 36, "x" : 18}
-      				}
-      			}
-      		}
-      	}
+        "associations": {
+          "feature_image": {
+            "_id": "bike",
+            "poi": {"x": 0.2, "y": 0.3},
+            "renditions": {
+              "16-9" : {
+                "poi" : {"y" : 202, "x" : 240},
+                "width": 1200, "height": 675
+              },
+              "4-3" : {
+                "poi" : {"y" : 270, "x" : 240},
+                "width": 1200, "height": 900
+              },
+              "original" : {
+                "poi" : {"y" : 480, "x" : 240},
+                "width": 1200, "height": 1600
+              },
+              "viewImage" : {
+                "poi" : {"y" : 192, "x" : 96},
+                "width": 480, "height": 640
+              },
+              "baseImage" : {
+                "poi" : {"y" : 420, "x" : 210},
+                "width": 1050, "height": 1400
+              },
+              "thumbnail" : {
+                "poi" : {"y" : 36, "x" : 18},
+                "width": 90, "height": 120
+              }
+            }
+          }
+        }
       }
       """
 

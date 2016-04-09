@@ -142,7 +142,7 @@ def _get_cropping_data(doc):
         return (doc['CropLeft'], doc['CropTop'], doc['CropRight'], doc['CropBottom'])
 
 
-def crop_image(content, file_name, cropping_data, exact_size=None):
+def crop_image(content, file_name, cropping_data, exact_size=None, image_format=None):
     """Crop image stream to given crop.
 
     :param content: image file stream
@@ -162,7 +162,7 @@ def crop_image(content, file_name, cropping_data, exact_size=None):
         logger.debug('Cropped image {} from stream, going to save it'.format(file_name))
         try:
             out = BytesIO()
-            cropped.save(out, img.format)
+            cropped.save(out, image_format or img.format)
             out.seek(0)
             setattr(out, 'width', cropped.size[0])
             setattr(out, 'height', cropped.size[1])
