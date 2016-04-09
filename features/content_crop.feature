@@ -109,6 +109,7 @@ Feature: Cropping the Image Articles
                     "type": "dict",
                     "required": true,
                     "schema": {
+                        "small": {"type": "dict", "required": true},
                         "4-3": {"type": "dict", "required": true},
                         "16-9": {"type": "dict", "required": true}
                     }
@@ -124,6 +125,7 @@ Feature: Cropping the Image Articles
                     "type": "dict",
                     "required": false,
                     "schema": {
+                        "small": {"type": "dict", "required": false},
                         "4-3": {"type": "dict", "required": false},
                         "16-9": {"type": "dict", "required": false}
                     }
@@ -145,12 +147,14 @@ Feature: Cropping the Image Articles
       """
       {
         "renditions": {
+          "small": {"CropLeft":0,"CropRight":600,"CropTop":0,"CropBottom":600},
           "4-3": {"CropLeft":0,"CropRight":800,"CropTop":0,"CropBottom":600},
           "16-9": {"CropLeft":0,"CropRight":1280,"CropTop":0,"CropBottom":720}
         }
       }
       """
-      Then we get rendition "4-3" with mimetype "image/jpeg"
+      Then we get rendition "small" with mimetype "image/jpeg"
+      And we get rendition "4-3" with mimetype "image/jpeg"
       And we get rendition "16-9" with mimetype "image/jpeg"
       When we post to "/subscribers" with success
       """
@@ -217,11 +221,11 @@ Feature: Cropping the Image Articles
             "poi": {"x": 0.2, "y": 0.3},
             "renditions": {
               "16-9" : {
-                "poi" : {"y" : 202, "x" : 240},
+                "poi" : {"y" : 18, "x" : 240},
                 "width": 1200, "height": 675
               },
               "4-3" : {
-                "poi" : {"y" : 270, "x" : 240},
+                "poi" : {"y" : 130, "x" : 240},
                 "width": 1200, "height": 900
               },
               "original" : {
