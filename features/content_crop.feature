@@ -109,6 +109,7 @@ Feature: Cropping the Image Articles
                     "type": "dict",
                     "required": true,
                     "schema": {
+                        "small": {"type": "dict", "required": true},
                         "4-3": {"type": "dict", "required": true},
                         "16-9": {"type": "dict", "required": true}
                     }
@@ -124,6 +125,7 @@ Feature: Cropping the Image Articles
                     "type": "dict",
                     "required": false,
                     "schema": {
+                        "small": {"type": "dict", "required": false},
                         "4-3": {"type": "dict", "required": false},
                         "16-9": {"type": "dict", "required": false}
                     }
@@ -145,12 +147,14 @@ Feature: Cropping the Image Articles
       """
       {
         "renditions": {
+          "small": {"CropLeft":0,"CropRight":600,"CropTop":0,"CropBottom":600},
           "4-3": {"CropLeft":0,"CropRight":800,"CropTop":0,"CropBottom":600},
           "16-9": {"CropLeft":0,"CropRight":1280,"CropTop":0,"CropBottom":720}
         }
       }
       """
-      Then we get rendition "4-3" with mimetype "image/jpeg"
+      Then we get rendition "small" with mimetype "image/jpeg"
+      And we get rendition "4-3" with mimetype "image/jpeg"
       And we get rendition "16-9" with mimetype "image/jpeg"
       When we post to "/subscribers" with success
       """
@@ -198,44 +202,51 @@ Feature: Cropping the Image Articles
       When we patch "/archive/feature_image"
       """
       {
-      	"associations": {
-      		"feature_image": {
-      			"_id": "bike",
-      			"poi": {"x": 0.2, "y": 0.3}
-      		}
-      	}
+        "associations": {
+          "feature_image": {
+            "_id": "bike",
+            "poi": {"x": 0.2, "y": 0.3}
+          }
+        }
       }
       """
       Then we get OK response
+
       And we get existing resource
       """
       {
-      	"associations": {
-      		"feature_image": {
-      			"_id": "bike",
-      			"poi": {"x": 0.2, "y": 0.3},
-      			"renditions": {
-      				"16-9" : {
-      					"poi" : {"y" : 216, "x" : 108}
-      				},
-      				"4-3" : {
-      					"poi" : {"y" : 180, "x" : 90}
-      				},
-      				"original" : {
-      					"poi" : {"y" : 480, "x" : 240}
-      				},
-      				"viewImage" : {
-      					"poi" : {"y" : 192, "x" : 96}
-      				},
-      				"baseImage" : {
-      					"poi" : {"y" : 420, "x" : 210}
-      				},
-      				"thumbnail" : {
-      					"poi" : {"y" : 36, "x" : 18}
-      				}
-      			}
-      		}
-      	}
+        "associations": {
+          "feature_image": {
+            "_id": "bike",
+            "poi": {"x": 0.2, "y": 0.3},
+            "renditions": {
+              "16-9" : {
+                "poi" : {"y" : 18, "x" : 240},
+                "width": 1200, "height": 675
+              },
+              "4-3" : {
+                "poi" : {"y" : 130, "x" : 240},
+                "width": 1200, "height": 900
+              },
+              "original" : {
+                "poi" : {"y" : 480, "x" : 240},
+                "width": 1200, "height": 1600
+              },
+              "viewImage" : {
+                "poi" : {"y" : 192, "x" : 96},
+                "width": 480, "height": 640
+              },
+              "baseImage" : {
+                "poi" : {"y" : 420, "x" : 210},
+                "width": 1050, "height": 1400
+              },
+              "thumbnail" : {
+                "poi" : {"y" : 36, "x" : 18},
+                "width": 90, "height": 120
+              }
+            }
+          }
+        }
       }
       """
 

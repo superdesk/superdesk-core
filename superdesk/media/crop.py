@@ -16,6 +16,7 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.media.media_operations import crop_image, process_file_from_stream
 from superdesk.upload import url_for_media
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE
+from.renditions import _resize_image
 
 
 logger = logging.getLogger(__name__)
@@ -109,17 +110,27 @@ class CropService():
 
         width = doc['CropRight'] - doc['CropLeft']
         height = doc['CropBottom'] - doc['CropTop']
-        crop_width = int(crop['width'])
-        crop_height = int(crop['height'])
-
-        if width < crop_width or height < crop_height:
+        if not (crop.get('width') or crop.get('height') or crop.get('ratio')):
             raise SuperdeskApiError.badRequestError(
-                message='Wrong crop size. Minimum crop size is {}x{}.'.format(crop['width'], crop['height']))
-
-        doc_ratio = round(width / height, 1)
-        spec_ratio = round(crop_width / crop_height, 1)
-        if doc_ratio != spec_ratio:
-            raise SuperdeskApiError.badRequestError(message='Wrong aspect ratio!')
+                message='Crop data are missing. width, height or ratio need to be defined')
+        if crop.get('width') and crop.get('height'):
+            expected_crop_width = int(crop['width'])
+            expected_crop_height = int(crop['height'])
+            if width < expected_crop_width or height < expected_crop_height:
+                raise SuperdeskApiError.badRequestError(
+                    message='Wrong crop size. Minimum crop size is {}x{}.'.format(crop['width'], crop['height']))
+                doc_ratio = round(width / height, 1)
+                spec_ratio = round(expected_crop_width / expected_crop_height, 1)
+                if doc_ratio != spec_ratio:
+                    raise SuperdeskApiError.badRequestError(message='Wrong aspect ratio!')
+        elif crop.get('ratio'):
+            ratio = crop.get('ratio')
+            if type(ratio) not in [int, float]:
+                ratio = ratio.split(':')
+                ratio = int(ratio[0]) / int(ratio[1])
+            if abs((width / height) - ratio) > 0.01:
+                raise SuperdeskApiError.badRequestError(
+                    message='Ratio %s is not respected. We got %f' % (crop.get('ratio'), abs((width / height))))
 
     def get_crop_by_name(self, crop_name):
         """
@@ -148,26 +159,28 @@ class CropService():
         original_crop = renditions.get(crop_name, {})
         fields = ('CropLeft', 'CropTop', 'CropRight', 'CropBottom')
         crop_created = False
-
         if any(crop_data.get(name) != original_crop.get(name) for name in fields):
             original_image = renditions.get('original', {})
             original_file = superdesk.app.media.fetch_rendition(original_image)
             if not original_file:
                 raise SuperdeskApiError.badRequestError('Original file couldn\'t be found')
-
             try:
                 cropped, out = crop_image(original_file, crop_name, crop_data)
-
+                crop = self.get_crop_by_name(crop_name)
                 if not cropped:
                     raise SuperdeskApiError.badRequestError('Saving crop failed.')
-
+                # resize if needed
+                if crop.get('width') or crop.get('height'):
+                    out, width, height = _resize_image(out, size=(crop.get('width'), crop.get('height')))
+                    crop['width'] = width
+                    crop['height'] = height
+                    out.seek(0)
                 renditions[crop_name] = self._save_cropped_image(out, original_image, crop_data)
                 crop_created = True
             except SuperdeskApiError:
                 raise
             except Exception as ex:
                 raise SuperdeskApiError.badRequestError('Generating crop failed: {}'.format(str(ex)))
-
         return renditions, crop_created
 
     def _save_cropped_image(self, file_stream, original, doc):
