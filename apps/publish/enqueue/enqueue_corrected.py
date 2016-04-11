@@ -45,7 +45,7 @@ class EnqueueCorrectedService(EnqueueService):
         query = {'$and': [{'item_id': doc['item_id']},
                           {'publishing_action': {'$in': [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]}}]}
 
-        subscribers = self._get_subscribers_for_previously_sent_items(query)
+        subscribers, subscriber_codes = self._get_subscribers_for_previously_sent_items(query)
 
         if subscribers:
             # step 2
@@ -65,8 +65,10 @@ class EnqueueCorrectedService(EnqueueService):
                 if doc.get('targeted_for'):
                     subscribers_yet_to_receive = list(self.non_digital(subscribers_yet_to_receive))
                 # Step 5
-                subscribers_yet_to_receive = \
+                subscribers_yet_to_receive, codes = \
                     self.filter_subscribers(doc, subscribers_yet_to_receive,
                                             SUBSCRIBER_TYPES.WIRE if doc.get('targeted_for') else target_media_type)
+                if codes:
+                    subscriber_codes.update(codes)
 
-        return subscribers, subscribers_yet_to_receive
+        return subscribers, subscribers_yet_to_receive, subscriber_codes

@@ -52,10 +52,17 @@ Feature: Rewrite content
         [{"task": {"desk": "#desks._id#", "stage": "#stages._id#"}}]
         """
       Then we get OK response
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -108,11 +115,18 @@ Feature: Rewrite content
         """
         [{"name": "Sports"}]
         """
-        When we post to "/subscribers" with success
+        When we post to "/products" with success
+        """
+        {
+          "name":"prod-1","codes":"abc,xyz"
+        }
+        """
+        And we post to "/subscribers" with success
         """
         {
           "name":"News1","media_type":"media", "subscriber_type": "digital",
           "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+          "products": ["#products._id#"],
           "destinations":[{"name":"destination1","format": "nitf", "delivery_type":"FTP","config":{"ip":"144.122.244.55","password":"xyz"}}]
         }
         """
@@ -217,11 +231,18 @@ Feature: Rewrite content
         """
         [{"name": "Sports"}]
         """
-        When we post to "/subscribers" with success
+        When we post to "/products" with success
+        """
+        {
+          "name":"prod-1","codes":"abc,xyz"
+        }
+        """
+        And we post to "/subscribers" with success
         """
         {
           "name":"News1","media_type":"media", "subscriber_type": "digital",
           "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+          "products": ["#products._id#"],
           "destinations":[{"name":"destination1","format": "nitf", "delivery_type":"FTP","config":{"ip":"144.122.244.55","password":"xyz"}}]
         }
         """
@@ -334,10 +355,17 @@ Feature: Rewrite content
           "subject":[{"qcode": "17004000", "name": "Statistics"}],
           "body_html": "Test Document body"}]
         """
-        When we post to "/subscribers" with success
+        When we post to "/products" with success
+        """
+        {
+          "name":"prod-1","codes":"abc,xyz"
+        }
+        """
+        And we post to "/subscribers" with success
         """
         {
           "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+          "products": ["#products._id#"],
           "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
         }
         """
@@ -399,10 +427,17 @@ Feature: Rewrite content
         "subject":[{"qcode": "17004000", "name": "Statistics"}],
         "body_html": "Test Document body"}]
       """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -473,10 +508,17 @@ Feature: Rewrite content
         "subject":[{"qcode": "17004000", "name": "Statistics"}],
         "body_html": "Test Document body"}]
       """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -547,10 +589,17 @@ Feature: Rewrite content
           "subject":[{"qcode": "17004000", "name": "Statistics"}],
           "body_html": "Test Document body"}]
         """
-        When we post to "/subscribers" with success
+        When we post to "/products" with success
+        """
+        {
+          "name":"prod-1","codes":"abc,xyz"
+        }
+        """
+        And we post to "/subscribers" with success
         """
         {
           "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+          "products": ["#products._id#"],
           "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
         }
         """
@@ -610,10 +659,17 @@ Feature: Rewrite content
           "subject":[{"qcode": "17004000", "name": "Statistics"}],
           "body_html": "Test Document body"}]
         """
-        When we post to "/subscribers" with success
+        When we post to "/products" with success
+        """
+        {
+          "name":"prod-1","codes":"abc,xyz"
+        }
+        """
+        And we post to "/subscribers" with success
         """
         {
           "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+          "products": ["#products._id#"],
           "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
         }
         """
@@ -709,10 +765,17 @@ Feature: Rewrite content
         [{"task": {"desk": "#desks._id#", "stage": "#stages._id#"}}]
         """
       Then we get OK response
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -779,10 +842,17 @@ Feature: Rewrite content
           "subject":[{"qcode": "17004000", "name": "Statistics"}],
           "body_html": "Test Document body"}]
         """
-        When we post to "/subscribers" with success
+        When we post to "/products" with success
+        """
+        {
+          "name":"prod-1","codes":"abc,xyz"
+        }
+        """
+        And we post to "/subscribers" with success
         """
         {
           "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+          "products": ["#products._id#"],
           "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
         }
         """
@@ -837,10 +907,17 @@ Feature: Rewrite content
           "subject":[{"qcode": "17004000", "name": "Statistics"}],
           "body_html": "Test Document body"}]
         """
-        When we post to "/subscribers" with success
+        When we post to "/products" with success
+        """
+        {
+          "name":"prod-1","codes":"abc,xyz"
+        }
+        """
+        And we post to "/subscribers" with success
         """
         {
           "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+          "products": ["#products._id#"],
           "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
         }
         """
@@ -926,10 +1003,17 @@ Feature: Rewrite content
           "subject":[{"qcode": "17004000", "name": "Statistics"}],
           "body_html": "Test Document body"}]
         """
-        When we post to "/subscribers" with success
+        When we post to "/products" with success
+        """
+        {
+          "name":"prod-1","codes":"abc,xyz"
+        }
+        """
+        And we post to "/subscribers" with success
         """
         {
           "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+          "products": ["#products._id#"],
           "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
         }
         """
@@ -1032,10 +1116,17 @@ Feature: Rewrite content
           "subject":[{"qcode": "17004000", "name": "Statistics"}],
           "body_html": "Test Document body"}]
         """
-        When we post to "/subscribers" with success
+        When we post to "/products" with success
+        """
+        {
+          "name":"prod-1","codes":"abc,xyz"
+        }
+        """
+        And we post to "/subscribers" with success
         """
         {
           "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+          "products": ["#products._id#"],
           "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
         }
         """

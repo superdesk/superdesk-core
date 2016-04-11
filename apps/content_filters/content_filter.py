@@ -85,7 +85,7 @@ class ContentFilterService(BaseService):
 
         # check if the filter is referenced by any subscribers...
         subscribers = self._get_referencing_subscribers(filter_id)
-        if subscribers.count() > 0:
+        if len(subscribers) > 0:
             references = ','.join(s['name'] for s in subscribers)
             raise SuperdeskApiError.badRequestError(
                 'Content filter has been referenced by '
@@ -125,9 +125,19 @@ class ContentFilterService(BaseService):
         :rtype: :py:class:`pymongo.cursor.Cursor`
         """
         subscribers_service = get_resource_service('subscribers')
-        subscribers = subscribers_service.get(
+        products_service = get_resource_service('products')
+        subscribers = []
+
+        products = products_service.get(
             req=None,
             lookup={'content_filter.filter_id': filter_id})
+
+        for p in products:
+            subs = list(subscribers_service.get(
+                req=None,
+                lookup={'products': p['_id']}))
+            subscribers.extend(subs)
+
         return subscribers
 
     def _get_referencing_routing_schemes(self, filter_id):

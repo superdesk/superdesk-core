@@ -32,10 +32,17 @@ Feature: Cropping the Image Articles
       """
       [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
       """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -83,10 +90,17 @@ Feature: Cropping the Image Articles
         }
       }
       """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
       """
       {
       "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+      "products": ["#products._id#"],
       "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -156,10 +170,17 @@ Feature: Cropping the Image Articles
       Then we get rendition "small" with mimetype "image/jpeg"
       And we get rendition "4-3" with mimetype "image/jpeg"
       And we get rendition "16-9" with mimetype "image/jpeg"
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
       """
       {
       "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+      "products": ["#products._id#"],
       "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
       }
       """

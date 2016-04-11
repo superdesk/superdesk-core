@@ -81,15 +81,23 @@ class EnqueueService:
                     raise SuperdeskApiError.badRequestError(
                         "Package item with id: {} has not been published.".format(guid))
 
-                subscribers = self._get_subscribers_for_package_item(package_item)
+                subscribers, subscriber_codes = self._get_subscribers_for_package_item(package_item)
                 digital_item_id = BasePublishService().get_digital_id_for_package_item(package_item)
-                self._extend_subscriber_items(subscriber_items, subscribers, package_item, digital_item_id)
+                self._extend_subscriber_items(subscriber_items,
+                                              subscribers,
+                                              package_item,
+                                              digital_item_id,
+                                              subscriber_codes)
 
             for removed_id in removed_items:
                 package_item = archive_service.find_one(req=None, _id=removed_id)
-                subscribers = self._get_subscribers_for_package_item(package_item)
+                subscribers, subscriber_codes = self._get_subscribers_for_package_item(package_item)
                 digital_item_id = None
-                self._extend_subscriber_items(subscriber_items, subscribers, package_item, digital_item_id)
+                self._extend_subscriber_items(subscriber_items,
+                                              subscribers,
+                                              package_item,
+                                              digital_item_id,
+                                              subscriber_codes)
 
             self.publish_package(package, target_subscribers=subscriber_items)
 
@@ -164,36 +172,75 @@ class EnqueueService:
                 If the nothing is queued.
         """
         # Step 1
-        subscribers, subscribers_yet_to_receive = self.get_subscribers(doc, target_media_type)
+        subscribers, subscribers_yet_to_receive, subscriber_codes = self.get_subscribers(doc, target_media_type)
 
         # Step 2
         if target_media_type == SUBSCRIBER_TYPES.WIRE:
             self._update_headline_sequence(doc)
 
         # Step 3
-        no_formatters, queued = self.queue_transmission(doc, subscribers)
+        no_formatters, queued = self.queue_transmission(doc, subscribers, subscriber_codes)
 
         # Step 4
         if subscribers_yet_to_receive:
-            formatters_not_found, queued_new_subscribers = self.queue_transmission(doc, subscribers_yet_to_receive)
+            formatters_not_found, queued_new_subscribers = \
+                self.queue_transmission(doc, subscribers_yet_to_receive, subscriber_codes)
             no_formatters.extend(formatters_not_found)
             queued = queued or queued_new_subscribers
 
         # Step 5
-        user = get_user()
+        self._push_formatter_notification(doc, no_formatters)
+
+        # Step 6
+        if not target_media_type and not queued:
+            logger.exception('Nothing is saved to publish queue for story: {} for action: {}'.
+                             format(doc[config.ID_FIELD], self.publish_type))
+
+        return queued
+
+    def _push_formatter_notification(self, doc, no_formatters=[]):
         if len(no_formatters) > 0:
+            user = get_user()
             push_notification('item:publish:wrong:format',
                               item=str(doc[config.ID_FIELD]), unique_name=doc['unique_name'],
                               desk=str(doc.get('task', {}).get('desk', '')),
                               user=str(user.get(config.ID_FIELD, '')),
                               formats=no_formatters)
 
-        # Step 7
-        if not target_media_type and not queued:
-            logger.exception('Nothing is saved to publish queue for story: {} for action: {}'.
-                             format(doc[config.ID_FIELD], self.publish_type))
+    def _get_subscriber_codes(self, subscribers):
+        subscriber_codes = {}
+        all_products = list(get_resource_service('products').get(req=None, lookup=None))
 
-        return queued
+        for subscriber in subscribers:
+            codes = []
+            products = [p for p in all_products if p[config.ID_FIELD] in subscriber.get('products', [])]
+
+            for product in products:
+                codes.extend(product.get('codes', '').split(','))
+                subscriber_codes[subscriber[config.ID_FIELD]] = list(set(codes))
+
+        return subscriber_codes
+
+    def resend(self, doc, subscribers):
+        subscriber_codes = self._get_subscriber_codes(subscribers)
+        wire_subscribers = list(self.non_digital(subscribers))
+        digital_subscribers = list(self.digital(subscribers))
+
+        if len(wire_subscribers) > 0:
+            doc['item_id'] = doc[config.ID_FIELD]
+            self._resend_to_subscribers(doc, wire_subscribers, subscriber_codes)
+
+        if len(digital_subscribers) > 0:
+            package = self.takes_package_service.get_take_package(doc)
+            package['item_id'] = package[config.ID_FIELD]
+            self._resend_to_subscribers(package, digital_subscribers, subscriber_codes)
+
+    def _resend_to_subscribers(self, doc, subscribers, subscriber_codes):
+        formatter_messages, queued = self.queue_transmission(doc, subscribers, subscriber_codes)
+        self._push_formatter_notification(doc, formatter_messages)
+        if not queued:
+            logger.exception('Nothing is saved to publish queue for story: {} for action: {}'.
+                             format(doc[config.ID_FIELD], 'resend'))
 
     def publish_package(self, package, target_subscribers):
         """
@@ -208,6 +255,7 @@ class EnqueueService:
         for items in target_subscribers.values():
             updated = deepcopy(package)
             subscriber = items['subscriber']
+            codes = items['codes']
             wanted_items = [item for item in items['items'] if items['items'].get(item, None)]
             unwanted_items = [item for item in all_items if item not in wanted_items]
             for i in unwanted_items:
@@ -218,9 +266,9 @@ class EnqueueService:
                     return
             for key in wanted_items:
                 self.package_service.replace_ref_in_package(updated, key, items['items'][key])
-            self.queue_transmission(updated, [subscriber])
+            self.queue_transmission(updated, [subscriber], {subscriber[config.ID_FIELD]: codes})
 
-    def queue_transmission(self, doc, subscribers):
+    def queue_transmission(self, doc, subscribers, subscriber_codes={}):
         """
         Method formats and then queues the article for transmission to the passed subscribers.
         ::Important Note:: Format Type across Subscribers can repeat. But we can't have formatted item generated once
@@ -260,7 +308,8 @@ class EnqueueService:
                             publish_queue_item['item_id'] = doc['item_id']
                             publish_queue_item['item_version'] = doc[config.VERSION]
                             publish_queue_item['formatted_item'] = formatted_doc
-                            publish_queue_item['subscriber_id'] = subscriber['_id']
+                            publish_queue_item['subscriber_id'] = subscriber[config.ID_FIELD]
+                            publish_queue_item['codes'] = subscriber_codes.get(subscriber[config.ID_FIELD])
                             publish_queue_item['destination'] = destination
                             publish_queue_item['published_seq_num'] = pub_seq_num
                             # publish_schedule is just to indicate in the queue item is create via scheduled item
@@ -331,16 +380,18 @@ class EnqueueService:
         """
         Returns list of subscribers that have previously received the item.
         :param dict lookup: elastic query to filter the publish queue
-        :return: list of subscribers
+        :return: list of subscribers and list of product codes per subscriber
         """
         req = ParsedRequest()
         subscribers = []
-        queued_items = get_resource_service('publish_queue').get(req=req, lookup=lookup)
-        if queued_items.count():
+        subscriber_codes = {}
+        queued_items = list(get_resource_service('publish_queue').get(req=req, lookup=lookup))
+        if len(queued_items) > 0:
             subscriber_ids = {queued_item['subscriber_id'] for queued_item in queued_items}
+            subscriber_codes = {q['subscriber_id']: q['codes'] for q in queued_items}
             query = {'$and': [{config.ID_FIELD: {'$in': list(subscriber_ids)}}]}
             subscribers = list(get_resource_service('subscribers').get(req=None, lookup=query))
-        return subscribers
+        return subscribers, subscriber_codes
 
     def filter_subscribers(self, doc, subscribers, target_media_type):
         """
@@ -350,13 +401,16 @@ class EnqueueService:
         :param target_media_type: dictate if the doc being queued is a Takes Package or an Individual Article.
                 Valid values are - Wire, Digital. If Digital then the doc being queued is a Takes Package and if Wire
                 then the doc being queues is an Individual Article.
-        :return: List of of filtered subscriber.
+        :return: List of of filtered subscribers and list of product codes per subscriber.
         """
         filtered_subscribers = []
+        subscriber_codes = {}
         req = ParsedRequest()
         req.args = {'is_global': True}
-        service = get_resource_service('content_filters')
-        global_filters = list(service.get(req=req, lookup=None))
+        filter_service = get_resource_service('content_filters')
+        existing_products = {p[config.ID_FIELD]: p for p in
+                             list(get_resource_service('products').get(req=req, lookup=None))}
+        global_filters = list(filter_service.get(req=req, lookup=None))
 
         for subscriber in subscribers:
             if target_media_type and subscriber.get('subscriber_type', '') != SUBSCRIBER_TYPES.ALL:
@@ -376,19 +430,31 @@ class EnqueueService:
                     continue
 
             if not self.conforms_global_filter(subscriber, global_filters, doc):
-                continue
+                    continue
 
-            if not self.conforms_content_filter(subscriber, doc):
-                continue
+            product_codes = []
+            subscriber_added = False
+            for product_id in subscriber.get('products', []):
+                # check if the product filter conforms with the story
+                product = existing_products.get(product_id)
+                if product and self.conforms_content_filter(product, doc):
+                    # gather the codes of products
+                    if product.get('codes'):
+                        product_codes.extend(product.get('codes', '').split(','))
+                    if not subscriber_added:
+                        filtered_subscribers.append(subscriber)
+                        subscriber_added = True
 
-            filtered_subscribers.append(subscriber)
+            # unify the list of codes by removing duplicates
+            if subscriber_added:
+                subscriber_codes[subscriber[config.ID_FIELD]] = list(set(product_codes))
 
-        return filtered_subscribers
+        return filtered_subscribers, subscriber_codes
 
-    def conforms_content_filter(self, subscriber, doc):
+    def conforms_content_filter(self, product, doc):
         """
         Checks if the document matches the subscriber filter
-        :param subscriber: Subscriber to get the filter
+        :param product: Product where the filter is used
         :param doc: Document to test the filter against
         :return:
         True if there's no filter
@@ -397,7 +463,7 @@ class EnqueueService:
         False if doesn't match and permitting
         True if doesn't match and blocking
         """
-        content_filter = subscriber.get('content_filter')
+        content_filter = product.get('content_filter')
 
         if content_filter is None or 'filter_id' not in content_filter or content_filter['filter_id'] is None:
             return True
@@ -425,14 +491,14 @@ class EnqueueService:
         service = get_resource_service('content_filters')
         gfs = subscriber.get('global_filters', {})
         for global_filter in global_filters:
-            if gfs.get(str(global_filter['_id']), True):
+            if gfs.get(str(global_filter[config.ID_FIELD]), True):
                 # Global filter applies to this subscriber
                 if service.does_match(global_filter, doc):
                     # All global filters behaves like blocking filters
                     return False
         return True
 
-    def _extend_subscriber_items(self, subscriber_items, subscribers, item, digital_item_id):
+    def _extend_subscriber_items(self, subscriber_items, subscribers, item, digital_item_id, subscriber_codes):
         """
         Extends the subscriber_items with the given list of subscribers for the item
         :param subscriber_items: The existing list of subscribers
@@ -445,4 +511,6 @@ class EnqueueService:
             sid = subscriber[config.ID_FIELD]
             item_list = subscriber_items.get(sid, {}).get('items', {})
             item_list[item_id] = digital_item_id
-            subscriber_items[sid] = {'subscriber': subscriber, 'items': item_list}
+            subscriber_items[sid] = {'subscriber': subscriber,
+                                     'items': item_list,
+                                     'codes': subscriber_codes.get(sid, [])}

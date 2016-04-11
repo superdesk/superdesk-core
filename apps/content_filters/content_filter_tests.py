@@ -87,13 +87,23 @@ class ContentFilterTests(SuperdeskTestCase):
                                    "content_filter": [{"expression": {"fc": [3]}}, {"expression": {"fc": [5]}}],
                                    "name": "soccer-only4"}])
 
-            self.app.data.insert('subscribers',
+            self.app.data.insert('products',
                                  [{"_id": 1,
                                    "content_filter": {"filter_id": 3, "filter_type": "blocking"},
+                                   "name": "p-1"}])
+
+            self.app.data.insert('products',
+                                 [{"_id": 2,
+                                   "content_filter": {"filter_id": 1, "filter_type": "blocking"},
+                                   "name": "p-2"}])
+
+            self.app.data.insert('subscribers',
+                                 [{"_id": 1,
+                                   "products": [1],
                                    "name": "sub1"}])
             self.app.data.insert('subscribers',
                                  [{"_id": 2,
-                                   "content_filter": {"filter_id": 1, "filter_type": "blocking"},
+                                   "products": [2],
                                    "name": "sub2"}])
 
             self.app.data.insert('routing_schemes', [

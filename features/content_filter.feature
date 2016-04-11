@@ -127,12 +127,23 @@ Feature: Content Filter
     Then we get latest
 
     Given empty "subscribers"
-    When we post to "/subscribers" with success
+    When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz",
+        "content_filter": {
+            "filter_id": "#content_filters._id#",
+            "filter_type": "blocking"
+        }
+      }
+      """
+    And we post to "/subscribers" with success
     """
     {
         "name": "Subscriber Foo",
         "media_type": "media",
         "subscriber_type": "digital",
+        "products": ["#products._id#"],
         "sequence_num_settings":{"min" : 1, "max" : 10},
         "email": "foo@bar.com",
         "destinations": [{
@@ -140,11 +151,7 @@ Feature: Content Filter
             "format": "nitf",
             "delivery_type": "FTP",
             "config": {"ip":"127.0.0.1", "password": "xyz"}
-        }],
-        "content_filter": {
-            "filter_id": "#content_filters._id#",
-            "filter_type": "blocking"
-        }
+        }]
     }
     """
     Then we get latest

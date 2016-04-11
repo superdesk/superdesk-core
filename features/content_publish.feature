@@ -36,17 +36,25 @@ Feature: Content Publishing
       """
       {"_current_version": 1, "state": "fetched", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
       """
-      When we post to "/subscribers" with "digital" and success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with "digital" and success
       """
       {
         "name":"Channel 1","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
-      When we post to "/subscribers" with "wire" and success
+      And we post to "/subscribers" with "wire" and success
       """
       {
         "name":"Channel 2","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -199,12 +207,19 @@ Feature: Content Publishing
       """
       [{"content_filter": [{"expression": {"fc": ["#filter_conditions._id#"]}}], "name": "soccer-only"}]
       """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+        """
+        {
+          "name":"prod-1","codes":"abc,xyz",
+          "content_filter":{"filter_id":"#content_filters._id#", "filter_type": "permitting"}
+        }
+        """
+      And we post to "/subscribers" with success
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital",  "email": "test@test.com",
         "sequence_num_settings":{"min" : 1, "max" : 10},
-        "content_filter":{"filter_id":"#content_filters._id#", "filter_type": "permitting"},
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -257,12 +272,19 @@ Feature: Content Publishing
       """
       [{"content_filter": [{"expression": {"fc": ["#filter_conditions._id#"]}}], "name": "soccer-only"}]
       """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz",
+        "content_filter":{"filter_id":"#content_filters._id#", "filter_type": "blocking"}
+      }
+      """
+      And we post to "/subscribers" with success
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital",  "email": "test@test.com",
         "sequence_num_settings":{"min" : 1, "max" : 10},
-        "content_filter":{"filter_id":"#content_filters._id#", "filter_type": "blocking"},
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -307,11 +329,18 @@ Feature: Content Publishing
       [{"content_filter": [{"expression": {"fc": ["#filter_conditions._id#"]}}],
         "name": "soccer-only", "is_global": true}]
       """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital",  "email": "test@test.com",
         "sequence_num_settings":{"min" : 1, "max" : 10},
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -356,13 +385,20 @@ Feature: Content Publishing
       [{"content_filter": [{"expression": {"fc": ["#filter_conditions._id#"]}}],
         "name": "soccer-only", "is_global": true}]
       """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
       """
       {
         "name":"Channel 3",
         "media_type":"media",
         "subscriber_type": "digital",
         "email": "test@test.com",
+        "products": ["#products._id#"],
         "sequence_num_settings":{"min" : 1, "max" : 10},
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}],
         "global_filters": {"#content_filters._id#": false}
@@ -426,10 +462,17 @@ Feature: Content Publishing
         "slugline": "test",
         "body_html": "Test Document body"}]
       """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -459,10 +502,17 @@ Feature: Content Publishing
         "slugline": "test",
         "body_html": "Test Document body"}]
       """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -538,10 +588,17 @@ Feature: Content Publishing
         "schedule_settings": {"time_zone": "Australia/Sydney"}
       }
       """
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
       And we post to "/subscribers" with success
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -615,14 +672,22 @@ Feature: Content Publishing
         "slugline": "test",
         "body_html": "Test Document body"}]
       """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
       """
       [{
         "name":"Digital","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       },
       {
         "name":"Wire","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       ]
@@ -675,10 +740,17 @@ Feature: Content Publishing
         "slugline": "test",
         "body_html": "Test Document body"}]
       """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -706,10 +778,17 @@ Feature: Content Publishing
         "slugline": "test",
         "body_html": "Test Document body"}]
       """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -738,10 +817,17 @@ Feature: Content Publishing
         "slugline": "test",
         "body_html": "Test Document body"}]
       """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -778,10 +864,17 @@ Feature: Content Publishing
         "slugline": "test",
         "body_html": "Test Document body"}]
       """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -823,10 +916,17 @@ Feature: Content Publishing
         "slugline": "test",
         "body_html": "Test Document body"}]
       """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -901,10 +1001,17 @@ Feature: Content Publishing
         "slugline": "test",
         "body_html": "Test Document body"}]
       """
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
       And we post to "/subscribers" with success
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -1051,10 +1158,17 @@ Feature: Content Publishing
         "slugline": "test",
         "body_html": "Test Document body"}]
       """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -1093,10 +1207,17 @@ Feature: Content Publishing
         "slugline": "test",
         "body_html": "Test Document body"}]
       """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -1185,10 +1306,17 @@ Feature: Content Publishing
         "slugline": "test",
         "body_html": "Test Document body"}]
       """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -1238,10 +1366,17 @@ Feature: Content Publishing
         "subject":[{"qcode": "17004000", "name": "Statistics"}],
         "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}]
       """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -1292,11 +1427,17 @@ Feature: Content Publishing
         "slugline": "test",
         "body_html": "Test Document body"}]
       """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10},
-        "email": "test@test.com",
+        "email": "test@test.com", "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "AAP SMS", "delivery_type":"ODBC","config":{}}]
       }
       """
@@ -1336,10 +1477,17 @@ Feature: Content Publishing
         "dateline": {},
         "subject":[{"qcode": "17004000", "name": "Statistics"}], "body_html": "Test Document body"}]
       """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -1368,10 +1516,17 @@ Feature: Content Publishing
         "slugline": "test",
         "body_html": "Test Document body", "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}]
       """
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
       And we post to "/subscribers" with success
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -1429,10 +1584,17 @@ Feature: Content Publishing
         "slugline": "test",
         "body_html": "Test Document body"}]
       """
-      When we post to "/subscribers" with "DigitalSubscriber" and success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with "DigitalSubscriber" and success
       """
       {
         "name":"Digital","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -1440,6 +1602,7 @@ Feature: Content Publishing
       """
       {
         "name":"Wire","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -1559,10 +1722,17 @@ Feature: Content Publishing
         "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
         "subject":[{"qcode": "17004000", "name": "Statistics"}]}]
       """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -1584,9 +1754,16 @@ Feature: Content Publishing
 
     @auth
     Scenario: User should be able to create a new take after the publish schedule passes
-      Given "subscribers"
+      Given "products"
+      """
+      [{
+        "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+      }]
+      """
+      And "subscribers"
       """
       [{"name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+       "products": ["1"],
        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }]
       """
@@ -1683,17 +1860,25 @@ Feature: Content Publishing
       """
       {"_current_version": 1, "state": "fetched", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
       """
-      When we post to "/subscribers" with "digital" and success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with "digital" and success
       """
       {
         "name":"Channel 1","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
-      When we post to "/subscribers" with "wire" and success
+      And we post to "/subscribers" with "wire" and success
       """
       {
         "name":"Channel 2","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """

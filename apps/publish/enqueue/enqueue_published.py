@@ -35,10 +35,12 @@ class EnqueuePublishedService(EnqueueService):
         :param str target_media_type: dictate if the doc being queued is a Takes Package or an Individual Article.
                 Valid values are - Wire, Digital. If Digital then the doc being queued is a Takes Package and if Wire
                 then the doc being queues is an Individual Article.
-        :return: (list, list) List of filtered subscriber,
+        :return: (list, list, dict) List of filtered subscriber,
                 List of subscribers that have not received item previously (empty list in this case).
+                List of product codes per subscriber
         """
         subscribers, subscribers_yet_to_receive, takes_subscribers = [], [], []
+        subscriber_codes, take_codes, codes = {}, {}, {}
         first_take = None
 
         # Step 1
@@ -52,7 +54,7 @@ class EnqueuePublishedService(EnqueueService):
             # Step 1a
             query = {'$and': [{'item_id': doc['item_id']},
                               {'publishing_action': {'$in': [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]}}]}
-            takes_subscribers = self._get_subscribers_for_previously_sent_items(query)
+            takes_subscribers, take_codes = self._get_subscribers_for_previously_sent_items(query)
 
         # Step 2
         if doc.get('targeted_for'):
@@ -70,17 +72,25 @@ class EnqueuePublishedService(EnqueueService):
                 # if first take is published then subsequent takes should to same subscribers.
                 query = {'$and': [{'item_id': first_take},
                                   {'publishing_action': {'$in': [CONTENT_STATE.PUBLISHED]}}]}
-                subscribers = self._get_subscribers_for_previously_sent_items(query)
+                subscribers, subscriber_codes = self._get_subscribers_for_previously_sent_items(query)
 
         # Step 4
         if not first_take:
-            subscribers = self.filter_subscribers(doc, subscribers,
-                                                  SUBSCRIBER_TYPES.WIRE if doc.get('targeted_for')
-                                                  else target_media_type)
+            subscribers, codes = self.filter_subscribers(doc, subscribers,
+                                                         SUBSCRIBER_TYPES.WIRE if doc.get('targeted_for')
+                                                         else target_media_type)
 
         if takes_subscribers:
             # Step 4a
             subscribers_ids = set(s[config.ID_FIELD] for s in takes_subscribers)
             subscribers = takes_subscribers + [s for s in subscribers if s[config.ID_FIELD] not in subscribers_ids]
 
-        return subscribers, subscribers_yet_to_receive
+        if take_codes:
+            # join the codes
+            subscriber_codes.update(take_codes)
+
+        if codes:
+            # join the codes
+            subscriber_codes.update(codes)
+
+        return subscribers, subscribers_yet_to_receive, subscriber_codes

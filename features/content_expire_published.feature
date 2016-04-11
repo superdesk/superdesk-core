@@ -47,10 +47,17 @@ Feature: Content Expiry Published Items
     
     ]
     """
-    When we post to "/subscribers" with "digital" and success
+    When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+    And we post to "/subscribers" with "digital" and success
     """
     {
       "name":"Channel 1","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+      "products": ["#products._id#"],
       "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
     }
     """
@@ -58,6 +65,7 @@ Feature: Content Expiry Published Items
     """
     {
       "name":"Channel 2","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+      "products": ["#products._id#"],
       "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
     }
     """

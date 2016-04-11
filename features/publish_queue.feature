@@ -8,10 +8,17 @@ Feature: Publish Queue
     """
     [{"headline": "test"}]
     """
+    When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
     And we post to "/subscribers" with success
     """
     {
       "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+      "products": ["#products._id#"],
       "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
     }
     """
@@ -34,6 +41,109 @@ Feature: Publish Queue
     """
 
   @auth
+  Scenario: Transmission will have the collated codes
+    Given empty "archive"
+    And empty "subscribers"
+    And empty "products"
+    And "products"
+      """
+      [{
+        "_id":"570340ef1d41c89b50716dad", "name":"prod-1","codes":"abc"
+      },
+      {
+        "_id":"570340ef1d41c89b50716dae", "name":"prod-2","codes":"def,xyz"
+      },
+      {
+        "_id":"570340ef1d41c89b50716daf", "name":"prod-3"
+      }]
+      """
+    And the "validators"
+      """
+      [{"_id": "publish_text", "act": "publish", "type": "text", "schema":{}},
+       {"_id": "correct_text", "act": "correct", "type": "text", "schema":{}},
+       {"_id": "kill_text", "act": "kill", "type": "text", "schema":{}}]
+      """
+
+    And "desks"
+      """
+      [{"name": "Sports"}]
+      """
+    And "archive"
+      """
+      [{"guid": "123", "type": "text", "headline": "test", "_current_version": 1, "state": "fetched",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "subject":[{"qcode": "17004000", "name": "Statistics"}],
+        "slugline": "test",
+        "body_html": "Test Document body"}]
+      """
+    And "subscribers"
+      """
+      [{
+        "name":"Channel 3",
+        "media_type":"media",
+        "subscriber_type": "digital",
+        "sequence_num_settings":{"min" : 1, "max" : 10},
+        "email": "test@test.com",
+        "products": ["570340ef1d41c89b50716dad", "570340ef1d41c89b50716dae", "570340ef1d41c89b50716daf"],
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }]
+      """
+
+    When we publish "#archive._id#" with "publish" type and "published" state
+    Then we get OK response
+
+    When we enqueue published
+    When we get "/publish_queue"
+    Then we get list with 1 items
+    """
+    {
+      "_items": [
+        {
+          "state": "pending",
+          "content_type": "composite",
+          "subscriber_id": "#subscribers._id#",
+          "item_id": "#archive.123.take_package#",
+          "item_version": 2,
+          "codes": ["abc", "xyz", "def"]
+        }
+      ]
+    }
+    """
+    When we publish "#archive._id#" with "correct" type and "corrected" state
+    """
+    {"body_html": "Corrected", "slugline": "corrected", "headline": "corrected"}
+    """
+    Then we get OK response
+    When we enqueue published
+    And we get "/publish_queue"
+    Then we get list with 2 items
+    """
+    {
+      "_items": [
+        {
+          "headline": "corrected",
+          "codes": ["abc", "xyz", "def"]
+        }
+      ]
+    }
+    """
+    When we publish "#archive._id#" with "kill" type and "killed" state
+    Then we get OK response
+    When we enqueue published
+    And we get "/publish_queue"
+    Then we get list with 3 items
+    """
+    {
+      "_items": [
+        {
+          "publishing_action": "killed",
+          "codes": ["abc", "xyz", "def"]
+        }
+      ]
+    }
+    """
+
+  @auth
   Scenario: Patch a transmission entry
     Given empty "archive"
     And empty "subscribers"
@@ -41,10 +151,17 @@ Feature: Publish Queue
     """
     [{"headline": "test"}]
     """
+    When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
     And we post to "/subscribers" with success
     """
     {
       "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+      "products": ["#products._id#"],
       "destinations":[{"name":"destination2","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
     }
     """
@@ -92,10 +209,17 @@ Feature: Publish Queue
       """
       [{"name": "Sports"}]
       """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"destination2","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -127,10 +251,17 @@ Feature: Publish Queue
     """
     [{"headline": "test"}]
     """
-    When we post to "/subscribers" with success
+    When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+    And we post to "/subscribers" with success
     """
     {
       "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+      "products": ["#products._id#"],
       "destinations":[{"name":"destination2","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
     }
     """
@@ -166,4 +297,4 @@ Feature: Publish Queue
     """
     When we get "/publish_queue"
     Then we get list ordered by _id with 4 items
-    
+

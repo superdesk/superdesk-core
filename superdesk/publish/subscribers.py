@@ -88,17 +88,9 @@ class SubscribersResource(Resource):
                 }
             }
         },
-        'content_filter': {
-            'type': 'dict',
-            'schema': {
-                'filter_id': Resource.rel('content_filters', nullable=True),
-                'filter_type': {
-                    'type': 'string',
-                    'allowed': ['blocking', 'permitting'],
-                    'default': 'blocking'
-                }
-            },
-            'nullable': True
+        'products': {
+            'type': 'list',
+            'schema': Resource.rel('products', True)
         },
         'global_filters': {
             'type': 'dict',
@@ -124,9 +116,12 @@ class SubscribersService(BaseService):
 
     def on_create(self, docs):
         for doc in docs:
+            self._validate_products(doc)
             self._validate_seq_num_settings(doc)
 
     def on_update(self, updates, original):
+        if 'products' in updates:
+            self._validate_products(updates)
         self._validate_seq_num_settings(updates)
 
     def on_deleted(self, doc):
@@ -144,11 +139,15 @@ class SubscribersService(BaseService):
         """
         req = ParsedRequest()
         all_subscribers = list(super().get(req=req, lookup=None))
+        selected_products = {}
         selected_subscribers = {}
         selected_content_filters = {}
 
         filter_condition_service = get_resource_service('filter_conditions')
         content_filter_service = get_resource_service('content_filters')
+        product_service = get_resource_service('products')
+
+        existing_products = list(product_service.get(req=req, lookup=None))
         existing_filter_conditions = filter_condition_service.check_similar(filter_condition)
         for fc in existing_filter_conditions:
             existing_content_filters = content_filter_service.get_content_filters_by_filter_condition(fc['_id'])
@@ -161,16 +160,26 @@ class SubscribersService(BaseService):
                         if gfs.get(str(pf['_id']), True):
                             selected_subscribers[s['_id']] = s
 
+                for product in existing_products:
+                    if product.get('content_filter') and \
+                        'filter_id' in product['content_filter'] and \
+                            product['content_filter']['filter_id'] == pf['_id']:
+                        selected_products[product['_id']] = product
+
                 for s in all_subscribers:
-                    if s.get('content_filter') and \
-                        'filter_id' in s['content_filter'] and \
-                            s['content_filter']['filter_id'] == pf['_id']:
-                        selected_subscribers[s['_id']] = s
+                    for p in s.get('products', []):
+                        if p in selected_products:
+                            selected_subscribers[s['_id']] = s
 
         res = {'filter_conditions': existing_filter_conditions,
                'content_filters': list(selected_content_filters.values()),
+               'products': list(selected_products.values()),
                'selected_subscribers': list(selected_subscribers.values())}
         return [res]
+
+    def _validate_products(self, subscriber):
+        if len(subscriber.get('products', [])) == 0:
+            raise SuperdeskApiError.badRequestError(message="Subscriber must have at least one product assigned!")
 
     def _validate_seq_num_settings(self, subscriber):
         """

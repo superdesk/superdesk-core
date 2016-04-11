@@ -15,10 +15,17 @@ Feature: Package Publishing
         """
         [{"name": "Sports"}]
         """
-        When we post to "/subscribers" with success
+        When we post to "/products" with success
+        """
+        {
+          "name":"prod-1","codes":"abc,xyz"
+        }
+        """
+        And we post to "/subscribers" with success
         """
         {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
         }
         """
@@ -265,10 +272,17 @@ Feature: Package Publishing
       """
       {}
       """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
           """
           {
           "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+          "products": ["#products._id#"],
           "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }
           """
@@ -408,10 +422,17 @@ Feature: Package Publishing
               "type" : "composite"
           }]
           """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
           """
           {
           "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+          "products": ["#products._id#"],
           "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }
           """
@@ -551,10 +572,17 @@ Feature: Package Publishing
               "type" : "composite"
           }]
           """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
           """
           {
           "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+          "products": ["#products._id#"],
           "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }
           """
@@ -696,10 +724,17 @@ Feature: Package Publishing
               "type" : "composite"
           }]
           """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
           """
           {
           "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+          "products": ["#products._id#"],
           "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }
           """
@@ -814,12 +849,19 @@ Feature: Package Publishing
               "type" : "composite"
           }]
           """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
           """
           {
             "name":"Channel 3","media_type":"media",
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
+            "products": ["#products._id#"],
             "email": "test@test.com",
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }
@@ -946,12 +988,19 @@ Feature: Package Publishing
               "type" : "composite"
           }]
           """
-          When we post to "/subscribers" with success
+          When we post to "/products" with success
+          """
+          {
+            "name":"prod-1","codes":"abc,xyz"
+          }
+          """
+          And we post to "/subscribers" with success
           """
           {
             "name":"Channel 3","media_type":"media",
             "subscriber_type": "wire",
             "sequence_num_settings":{"min" : 1, "max" : 10},
+            "products": ["#products._id#"],
             "email": "test@test.com",
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }
@@ -1076,13 +1125,20 @@ Feature: Package Publishing
               "type" : "composite"
           }]
           """
-      Given "subscribers"
+        Given "products"
+        """
+        [{
+          "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+        }]
+        """
+        And "subscribers"
           """
           [{
             "_id": "sub-1",
             "name":"Channel 3","media_type":"media",
             "subscriber_type": "wire",
             "sequence_num_settings":{"min" : 1, "max" : 10},
+            "products": ["1"],
             "email": "test@test.com",
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }, {
@@ -1090,6 +1146,7 @@ Feature: Package Publishing
             "name":"Channel 4","media_type":"media",
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
+            "products": ["1"],
             "email": "test@test.com",
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }]
@@ -1239,7 +1296,13 @@ Feature: Package Publishing
               "type" : "composite"
           }]
           """
-      Given "subscribers"
+        Given "products"
+        """
+        [{
+          "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+        }]
+        """
+        And "subscribers"
           """
           [{
             "_id": "sub-1",
@@ -1247,6 +1310,7 @@ Feature: Package Publishing
             "subscriber_type": "wire",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
+            "products": ["1"],
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }, {
             "_id": "sub-2",
@@ -1254,6 +1318,7 @@ Feature: Package Publishing
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
+            "products": ["1"],
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }]
           """
@@ -1397,7 +1462,13 @@ Feature: Package Publishing
               "anpa_category": [{"qcode": "A", "name": "Sport"}]
           }]
           """
-      Given "subscribers"
+          Given "products"
+          """
+          [{
+            "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+          }]
+          """
+          And "subscribers"
           """
           [{
             "_id": "sub-1",
@@ -1405,6 +1476,7 @@ Feature: Package Publishing
             "subscriber_type": "wire",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
+            "products": ["1"],
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }, {
             "_id": "sub-2",
@@ -1412,6 +1484,7 @@ Feature: Package Publishing
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
+            "products": ["1"],
             "destinations":[{"name":"Test","format": "newsml12", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }]
           """
@@ -1532,7 +1605,13 @@ Feature: Package Publishing
               "anpa_category": [{"qcode": "A", "name": "Sport"}]
           }]
           """
-      Given "subscribers"
+          Given "products"
+          """
+          [{
+            "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+          }]
+          """
+          And "subscribers"
           """
           [{
             "_id": "sub-1",
@@ -1540,6 +1619,7 @@ Feature: Package Publishing
             "subscriber_type": "wire",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
+            "products": ["1"],
             "destinations":[{"name":"Test","format": "nitf", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }, {
             "_id": "sub-2",
@@ -1547,6 +1627,7 @@ Feature: Package Publishing
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
+            "products": ["1"],
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }]
           """
@@ -1667,7 +1748,13 @@ Feature: Package Publishing
               "anpa_category": [{"qcode": "A", "name": "Sport"}]
           }]
           """
-      Given "subscribers"
+          Given "products"
+          """
+          [{
+            "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+          }]
+          """
+          And "subscribers"
           """
           [{
             "_id": "sub-1",
@@ -1675,6 +1762,7 @@ Feature: Package Publishing
             "subscriber_type": "wire",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
+            "products": ["1"],
             "destinations":[{"name":"Test","format": "nitf", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }]
           """
@@ -1742,13 +1830,20 @@ Feature: Package Publishing
               }
           }]
           """
-      Given "subscribers"
+      Given "products"
+      """
+      [{
+        "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+      }]
+      """
+      And "subscribers"
       """
       [{
         "_id": "sub-2",
         "name":"Channel 3","media_type":"media",
         "subscriber_type": "digital",
         "sequence_num_settings":{"min" : 1, "max" : 10},
+        "products": ["1"],
         "email": "test@test.com",
         "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
       }]
@@ -1926,13 +2021,24 @@ Feature: Package Publishing
       [{"content_filter": [{"expression": {"fc": ["#filter_conditions._id#"]}}], "name": "soccer-only"}]
       """
       Then we get latest
-      Given "subscribers"
+      Given "products"
+      """
+      [{
+        "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+      },
+      {
+        "_id": "2", "name":"prod-2", "codes":"abc,xyz",
+        "content_filter":{"filter_id":"#content_filters._id#", "filter_type":"blocking"}
+      }]
+      """
+      And "subscribers"
       """
       [{
             "_id": "sub-1",
             "name":"Channel 3","media_type":"media",
             "subscriber_type": "wire",
             "sequence_num_settings":{"min" : 1, "max" : 10},
+            "products": ["1"],
             "email": "test@test.com",
             "destinations":[{"name":"Test","format": "nitf", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }, {
@@ -1941,13 +2047,14 @@ Feature: Package Publishing
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
-            "content_filter":{"filter_id":"#content_filters._id#", "filter_type":"blocking"},
+            "products": ["2"],
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }, {
             "_id": "sub-3",
             "name":"Channel 5","media_type":"media",
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
+            "products": ["1"],
             "email": "test@test.com",
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }]
@@ -2162,7 +2269,17 @@ Feature: Package Publishing
       [{"content_filter": [{"expression": {"fc": ["#filter_conditions._id#"]}}], "name": "soccer-only"}]
       """
       Then we get latest
-      Given "subscribers"
+      Given "products"
+      """
+      [{
+        "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+      },
+      {
+        "_id": "2", "name":"prod-2", "codes":"abc,xyz",
+        "content_filter":{"filter_id":"#content_filters._id#", "filter_type":"blocking"}
+      }]
+      """
+      And "subscribers"
       """
       [{
             "_id": "sub-1",
@@ -2170,6 +2287,7 @@ Feature: Package Publishing
             "subscriber_type": "wire",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
+            "products": ["1"],
             "destinations":[{"name":"Test","format": "nitf", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }, {
             "_id": "sub-2",
@@ -2177,7 +2295,7 @@ Feature: Package Publishing
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
-            "content_filter":{"filter_id":"#content_filters._id#", "filter_type":"blocking"},
+            "products": ["2"],
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }, {
             "_id": "sub-3",
@@ -2185,7 +2303,7 @@ Feature: Package Publishing
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
-            "content_filter":{"filter_id":"#content_filters._id#", "filter_type":"blocking"},
+            "products": ["2"],
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }]
       """
@@ -2361,13 +2479,20 @@ Feature: Package Publishing
               }
           }]
           """
-      Given "subscribers"
+      Given "products"
+      """
+      [{
+        "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+      }]
+      """
+      And "subscribers"
       """
       [{
         "_id": "sub-2",
         "name":"Channel 3","media_type":"media",
         "subscriber_type": "digital",
         "sequence_num_settings":{"min" : 1, "max" : 10},
+        "products": ["1"],
         "email": "test@test.com",
         "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
       }]
@@ -2675,7 +2800,17 @@ Feature: Package Publishing
         [{"content_filter": [{"expression": {"fc": ["#filter_conditions._id#"]}}], "name": "soccer-only"}]
         """
         Then we get latest
-        Given "subscribers"
+        Given "products"
+        """
+        [{
+          "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+        },
+        {
+          "_id": "2", "name":"prod-2", "codes":"abc,xyz",
+          "content_filter":{"filter_id":"#content_filters._id#", "filter_type":"blocking"}
+        }]
+        """
+        And "subscribers"
         """
         [{
               "_id": "sub-1",
@@ -2683,6 +2818,7 @@ Feature: Package Publishing
               "subscriber_type": "digital",
               "sequence_num_settings":{"min" : 1, "max" : 10},
               "email": "test@test.com",
+              "products": ["1"],
               "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
             }, {
               "_id": "sub-2",
@@ -2690,7 +2826,7 @@ Feature: Package Publishing
               "subscriber_type": "digital",
               "sequence_num_settings":{"min" : 1, "max" : 10},
               "email": "test@test.com",
-              "content_filter":{"filter_id":"#content_filters._id#", "filter_type":"blocking"},
+              "products": ["2"],
               "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
             }, {
               "_id": "sub-3",
@@ -2698,7 +2834,7 @@ Feature: Package Publishing
               "subscriber_type": "digital",
               "sequence_num_settings":{"min" : 1, "max" : 10},
               "email": "test@test.com",
-              "content_filter":{"filter_id":"#content_filters._id#", "filter_type":"blocking"},
+              "products": ["2"],
               "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
             }]
         """
@@ -3082,12 +3218,19 @@ Feature: Package Publishing
         """
         {"body_html": "xyz"}
         """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
           """
           {
             "name":"Channel 3","media_type":"media",
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
+            "products": ["#products._id#"],
             "email": "test@test.com",
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }
@@ -3350,12 +3493,19 @@ Feature: Package Publishing
               }
           }]
           """
-      When we post to "/subscribers" with success
+          When we post to "/products" with success
+          """
+          {
+            "name":"prod-1","codes":"abc,xyz"
+          }
+          """
+          And we post to "/subscribers" with success
           """
           {
             "name":"Channel 3","media_type":"media",
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
+            "products": ["#products._id#"],
             "email": "test@test.com",
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }
@@ -3487,13 +3637,20 @@ Feature: Package Publishing
               }
           }]
           """
-      Given "subscribers"
+      Given "products"
+      """
+      [{
+        "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+      }]
+      """
+      And "subscribers"
       """
       [{
         "_id": "sub-2",
         "name":"Channel 3","media_type":"media",
         "subscriber_type": "digital",
         "sequence_num_settings":{"min" : 1, "max" : 10},
+        "products": ["1"],
         "email": "test@test.com",
         "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
       }]
@@ -3737,12 +3894,19 @@ Feature: Package Publishing
               }
           }]
           """
-      When we post to "/subscribers" with success
+          When we post to "/products" with success
+          """
+          {
+            "name":"prod-1","codes":"abc,xyz"
+          }
+          """
+        And we post to "/subscribers" with success
           """
           {
             "name":"Channel 3","media_type":"media",
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
+            "products": ["#products._id#"],
             "email": "test@test.com",
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }
@@ -3867,12 +4031,19 @@ Feature: Package Publishing
               }
           }]
           """
-      When we post to "/subscribers" with success
+        When we post to "/products" with success
+        """
+        {
+          "name":"prod-1","codes":"abc,xyz"
+        }
+        """
+        And we post to "/subscribers" with success
           """
           {
             "name":"Channel 3","media_type":"media",
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
+            "products": ["#products._id#"],
             "email": "test@test.com",
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }
@@ -4092,7 +4263,21 @@ Feature: Package Publishing
       [{"content_filter": [{"expression": {"fc": ["#filter_conditions._id#"]}}], "name": "soccer-only"}]
       """
       Then we get latest
-      Given "subscribers"
+      Given "products"
+        """
+        [{
+          "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+        },
+        {
+          "_id": "2", "name":"prod-2", "codes":"def",
+          "content_filter":{"filter_id":"#content_filters._id#", "filter_type":"blocking"}
+        },
+        {
+          "_id": "3", "name":"prod-3",
+          "content_filter":{"filter_id":"#content_filters._id#", "filter_type": "permitting"}
+        }]
+        """
+        And "subscribers"
       """
       [{
             "_id": "sub-1",
@@ -4100,7 +4285,7 @@ Feature: Package Publishing
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
-            "content_filter":{"filter_id":"#content_filters._id#", "filter_type": "blocking"},
+            "products": ["2"],
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }, {
             "_id": "sub-2",
@@ -4108,6 +4293,7 @@ Feature: Package Publishing
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
+            "products": ["1"],
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }, {
             "_id": "sub-3",
@@ -4115,7 +4301,7 @@ Feature: Package Publishing
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
-            "content_filter":{"filter_id":"#content_filters._id#", "filter_type": "permitting"},
+            "products": ["3"],
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }]
       """
@@ -4343,7 +4529,21 @@ Feature: Package Publishing
       [{"content_filter": [{"expression": {"fc": ["#filter_conditions._id#"]}}], "name": "soccer-only"}]
       """
       Then we get latest
-      Given "subscribers"
+      Given "products"
+        """
+        [{
+          "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+        },
+        {
+          "_id": "2", "name":"prod-2", "codes":"def",
+          "content_filter":{"filter_id":"#content_filters._id#", "filter_type":"blocking"}
+        },
+        {
+          "_id": "3", "name":"prod-3",
+          "content_filter":{"filter_id":"#content_filters._id#", "filter_type": "permitting"}
+        }]
+        """
+      And "subscribers"
       """
       [{
             "_id": "sub-1",
@@ -4351,7 +4551,7 @@ Feature: Package Publishing
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
-            "content_filter":{"filter_id":"#content_filters._id#", "filter_type": "blocking"},
+            "products": ["2"],
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }, {
             "_id": "sub-2",
@@ -4359,6 +4559,7 @@ Feature: Package Publishing
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
+            "products": ["1"],
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }, {
             "_id": "sub-3",
@@ -4366,7 +4567,7 @@ Feature: Package Publishing
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
-            "content_filter":{"filter_id":"#content_filters._id#", "filter_type": "permitting"},
+            "products": ["3"],
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }]
       """
@@ -4594,12 +4795,19 @@ Feature: Package Publishing
               "type" : "composite"
           }]
           """
-      When we post to "/subscribers" with success
+          When we post to "/products" with success
+          """
+          {
+            "name":"prod-1","codes":"abc,xyz"
+          }
+          """
+          And we post to "/subscribers" with success
           """
           {
             "name":"Channel 3","media_type":"media",
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
+            "products": ["#products._id#"],
             "email": "test@test.com",
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }
@@ -4674,7 +4882,13 @@ Feature: Package Publishing
               }
           }]
           """
-      Given "subscribers"
+      Given "products"
+      """
+      [{
+        "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+      }]
+      """
+      And "subscribers"
       """
       [{
         "_id": "sub-2",
@@ -4682,6 +4896,7 @@ Feature: Package Publishing
         "subscriber_type": "digital",
         "sequence_num_settings":{"min" : 1, "max" : 10},
         "email": "test@test.com",
+        "products": ["1"],
         "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
       }]
       """
@@ -4817,13 +5032,20 @@ Feature: Package Publishing
           {"_id": "kill_composite", "act": "kill", "type": "composite", "schema":{}},
           {"_id": "kill_text", "act": "kill", "type": "text", "schema":{}}]
           """
-      Given "subscribers"
+      Given "products"
+      """
+      [{
+        "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+      }]
+      """
+      And "subscribers"
       """
       [{
         "_id": "sub-2",
         "name":"Channel 3","media_type":"media",
         "subscriber_type": "digital",
         "sequence_num_settings":{"min" : 1, "max" : 10},
+        "products": ["1"],
         "email": "test@test.com",
         "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
       }]
@@ -5006,7 +5228,21 @@ Feature: Package Publishing
       [{"content_filter": [{"expression": {"fc": ["#filter_conditions._id#"]}}], "name": "soccer-only"}]
       """
       Then we get latest
-      Given "subscribers"
+      Given "products"
+        """
+        [{
+          "_id": "1", "name":"prod-1", "codes":"abc,xyz"
+        },
+        {
+          "_id": "2", "name":"prod-2", "codes":"def",
+          "content_filter":{"filter_id":"#content_filters._id#", "filter_type":"blocking"}
+        },
+        {
+          "_id": "3", "name":"prod-3",
+          "content_filter":{"filter_id":"#content_filters._id#", "filter_type": "permitting"}
+        }]
+        """
+      And "subscribers"
       """
       [{
             "_id": "sub-1",
@@ -5014,7 +5250,7 @@ Feature: Package Publishing
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
-            "content_filter":{"filter_id":"#content_filters._id#", "filter_type": "blocking"},
+            "products": ["2"],
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }, {
             "_id": "sub-2",
@@ -5022,6 +5258,7 @@ Feature: Package Publishing
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
+            "products": ["1"],
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }, {
             "_id": "sub-3",
@@ -5029,7 +5266,7 @@ Feature: Package Publishing
             "subscriber_type": "digital",
             "sequence_num_settings":{"min" : 1, "max" : 10},
             "email": "test@test.com",
-            "content_filter":{"filter_id":"#content_filters._id#", "filter_type": "permitting"},
+            "products": ["3"],
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }]
       """
@@ -5148,12 +5385,19 @@ Feature: Package Publishing
               "type" : "composite"
           }]
           """
-      When we post to "/subscribers" with success
+        When we post to "/products" with success
+          """
+          {
+            "name":"prod-1","codes":"abc,xyz"
+          }
+          """
+        And we post to "/subscribers" with success
           """
           {
             "name":"Channel 3","media_type":"media",
             "subscriber_type": "wire",
             "sequence_num_settings":{"min" : 1, "max" : 10},
+            "products": ["#products._id#"],
             "email": "test@test.com",
             "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com"}}]
           }

@@ -77,10 +77,17 @@ Feature: Take Package Publishing
       """
       [{"name": "Sports"}]
       """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -167,10 +174,17 @@ Feature: Take Package Publishing
       """
       [{"name": "Sports"}]
       """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -266,13 +280,21 @@ Feature: Take Package Publishing
       """
       [{"name": "Sports"}]
       """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
       """
       [{
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }, {
         "name":"Channel 4","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }]
       """
@@ -521,12 +543,19 @@ Feature: Take Package Publishing
       """
       [{"content_filter": [{"expression": {"fc": ["#filter_conditions._id#"]}}], "name": "soccer-only"}]
       """
-      When we post to "/subscribers" with "First_Wire_Subscriber" and success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz",
+        "content_filter":{"filter_id":"#content_filters._id#", "filter_type": "permitting"}
+      }
+      """
+      And we post to "/subscribers" with "First_Wire_Subscriber" and success
       """
       [{
         "name":"Soccer Client1","media_type":"media", "subscriber_type": "wire",
         "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "content_filter":{"filter_id":"#content_filters._id#", "filter_type": "permitting"},
+        "products": ["#products._id#"],
         "destinations":[
             {"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}
           ]
@@ -537,7 +566,7 @@ Feature: Take Package Publishing
       [{
         "name":"Soccer Client Digital","media_type":"media", "subscriber_type": "digital",
         "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "content_filter":{"filter_id":"#content_filters._id#", "filter_type": "permitting"},
+        "products": ["#products._id#"],
         "destinations":[
             {"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}
           ]
@@ -627,7 +656,7 @@ Feature: Take Package Publishing
       [{
         "name":"Soccer Client2","media_type":"media", "subscriber_type": "wire",
         "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "content_filter":{"filter_id":"#content_filters._id#", "filter_type": "permitting"},
+        "products": ["#products._id#"],
         "destinations":[
             {"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}
           ]
@@ -744,10 +773,17 @@ Feature: Take Package Publishing
       """
       [{"name": "Sports"}]
       """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -848,10 +884,17 @@ Feature: Take Package Publishing
       """
       [{"name": "Sports"}]
       """
-      When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
       """
       {
         "name":"Channel 3","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
       """
@@ -1024,13 +1067,21 @@ Feature: Take Package Publishing
       """
       [{"name": "Sports", "members": [{"user": "#CONTEXT_USER_ID#"}]}]
       """
-       When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
       """
       [{
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }, {
         "name":"Channel 4","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }]
       """
@@ -1253,29 +1304,42 @@ Feature: Take Package Publishing
         [{"content_filter": [{"expression": {"fc": ["#OverseasSport#"]}}], "name": "overseas-sport"}]
         """
         Then we get OK response
-        When we post to "/subscribers" with "DomesticSportSubscriber" and success
+        When we post to "/products" with success
+        """
+        {
+          "name":"prod-1","codes":"abc,xyz",
+          "content_filter" : {
+            "filter_type" : "permitting",
+            "filter_id" : "#DomesticSportFilter#"
+          }
+        }
+        """
+        And we post to "/subscribers" with "DomesticSportSubscriber" and success
         """
         {
           "name":"DomesticSportSubscriber","media_type":"media", "subscriber_type": "digital",
           "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-          "content_filter" : {
-            "filter_type" : "permitting",
-            "filter_id" : "#DomesticSportFilter#"
-          },
+          "products": ["#products._id#"],
           "destinations":[{"name":"destination1","format": "nitf", "delivery_type":"FTP",
           "config":{"ip":"144.122.244.55","password":"xyz"}}]
         }
         """
-        Then we get OK response
-        When we post to "/subscribers" with "OverseasSportSubscriber" and success
+        When we post to "/products" with success
+        """
+        {
+          "name":"prod-2","codes":"abc,xyz",
+          "content_filter" : {
+            "filter_type" : "permitting",
+            "filter_id" : "#OverseasSportFilter#"
+          }
+        }
+        """
+        And we post to "/subscribers" with "OverseasSportSubscriber" and success
         """
         {
           "name":"OverseasSportSubscriber","media_type":"media", "subscriber_type": "digital",
           "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-          "content_filter" : {
-            "filter_type" : "permitting",
-            "filter_id" : "#OverseasSportFilter#"
-          },
+          "products": ["#products._id#"],
           "destinations":[{"name":"destination1","format": "nitf", "delivery_type":"FTP",
           "config":{"ip":"144.122.244.55","password":"xyz"}}]
         }
@@ -1493,13 +1557,21 @@ Feature: Take Package Publishing
       """
       [{"name": "Sports", "members": [{"user": "#CONTEXT_USER_ID#"}]}]
       """
-       When we post to "/subscribers" with success
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
       """
       [{
         "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }, {
         "name":"Channel 4","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }]
       """

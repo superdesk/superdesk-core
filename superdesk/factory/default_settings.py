@@ -277,6 +277,7 @@ INSTALLED_APPS.extend([
     'apps.privilege',
     'apps.rules',
     'apps.highlights',
+    'apps.products',
     'apps.publish',
     'apps.publish.formatters',
     'apps.content_filters',
