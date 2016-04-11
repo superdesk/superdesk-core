@@ -126,9 +126,19 @@ class ArchiveRewriteService(Service):
         fields = ['family_id', 'event_id', 'flags']
 
         if new_file:
-            fields.extend(['abstract', 'anpa_category', 'pubstatus', 'slugline', 'urgency',
-                           'subject', 'priority', 'byline', 'dateline', 'headline', 'place',
-                           'genre', 'body_footer', 'company_codes', 'keywords'])
+            if 'profile' in original:
+                content_type = get_resource_service('content_types').find_one(req=None, _id=original['profile'])
+                extended_fields = list(content_type['schema'].keys())
+                # extra fields needed.
+                extended_fields.extend(['profile', 'associations'])
+            else:
+                extended_fields = [
+                    'abstract', 'anpa_category', 'pubstatus', 'slugline', 'urgency',
+                    'subject', 'priority', 'byline', 'dateline', 'headline', 'place',
+                    'genre', 'body_footer', 'company_codes', 'keywords'
+                ]
+
+            fields.extend(extended_fields)
 
         for field in fields:
                 if original.get(field):

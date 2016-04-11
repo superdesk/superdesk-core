@@ -13,7 +13,7 @@ from nose.tools import assert_raises
 from superdesk.tests import TestCase
 from superdesk.media.crop import CropService
 from superdesk.errors import SuperdeskApiError
-from superdesk.vocabularies.command import populate_vocabularies
+from superdesk.vocabularies.command import populate_table_json
 
 
 class CropTestCase(TestCase):
@@ -31,7 +31,7 @@ class CropTestCase(TestCase):
     def setUp(self):
         super().setUp()
         self.service = CropService()
-        populate_vocabularies([self.crop_sizes])
+        populate_table_json('vocabularies', [self.crop_sizes])
 
     def test_validate_aspect_ratio_fails(self):
         doc = {'CropLeft': 0, 'CropRight': 80, 'CropTop': 0, 'CropBottom': 60}
