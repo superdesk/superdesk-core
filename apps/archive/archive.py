@@ -619,7 +619,7 @@ class ArchiveService(BaseService):
             content_type = superdesk.get_resource_service('content_types').find_one(req=None, _id=profile)
             if content_type:
                 defaults = {name: field.get('default', None)
-                            for (name, field) in content_type.get('schema', {}).items()
+                            for (name, field) in content_type.get('editor', {}).items()
                             if field.get('default', None)}
 
         defaults.setdefault('priority', config.DEFAULT_PRIORITY_VALUE_FOR_MANUAL_ARTICLES)

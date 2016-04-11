@@ -602,7 +602,7 @@ Feature: News Items Archive
       Scenario: Create content item based on a content type with default values
          Given "content_types"
           """
-          [{"_id": "snap", "schema": {"headline": {"default": "default_headline"}, "priority": {"default": 10}}}]
+          [{"_id": "snap", "editor": {"headline": {"default": "default_headline"}, "priority": {"default": 10}}}]
           """
          When we post to "/archive"
           """
