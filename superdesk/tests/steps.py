@@ -2054,3 +2054,9 @@ def expire_content(context):
     with context.app.test_request_context(context.app.config['URL_PREFIX']):
         from superdesk.publish.publish_content import PublishContent
         PublishContent().run()
+
+
+@when('we remove item "{_id}" from mongo')
+def remove_item_from_mongo(context, _id):
+    with context.app.app_context():
+        context.app.data.mongo.remove('archive', {'_id': _id})
