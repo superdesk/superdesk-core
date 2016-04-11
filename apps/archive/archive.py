@@ -230,11 +230,10 @@ class ArchiveService(BaseService):
             _id = updates_feature_image[config.ID_FIELD] if config.ID_FIELD in updates_feature_image \
                 else original_feature_image[config.ID_FIELD]
             image_item = self.find_one(req=None, _id=_id)
-            if not image_item:
-                raise SuperdeskApiError.badRequestError('Invalid featured image item identifier')
-            image_item['poi'] = updates_feature_image['poi']
-            image_item = self.patch(_id, image_item)
-            updates['associations']['feature_image']['renditions'] = image_item['renditions']
+            if image_item:
+                image_item['poi'] = updates_feature_image['poi']
+                image_item = self.patch(_id, image_item)
+                updates['associations']['feature_image']['renditions'] = image_item['renditions']
 
     def on_updated(self, updates, original):
         get_component(ItemAutosave).clear(original['_id'])
