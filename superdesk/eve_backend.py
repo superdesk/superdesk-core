@@ -9,6 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
+import eve.io.base
+
 from flask import current_app as app
 from eve.utils import document_etag, config, ParsedRequest
 from eve.io.mongo import MongoJSONEncoder
@@ -16,6 +18,7 @@ from superdesk.utc import utcnow
 from superdesk.logging import logger, item_msg
 from eve.methods.common import resolve_document_etag
 from elasticsearch.exceptions import RequestError
+from superdesk.errors import SuperdeskApiError
 
 
 class EveBackend():
@@ -109,10 +112,10 @@ class EveBackend():
             updated.update(updates)
             resolve_document_etag(updated, endpoint_name)
             updates[config.ETAG] = updated[config.ETAG]
-        return self.system_update(endpoint_name, id, updates, original)
+        return self._change_request(endpoint_name, id, updates, original)
 
     def system_update(self, endpoint_name, id, updates, original):
-        """Only update what is provided, without affecting etag/last_updated.
+        """Only update what is provided, without affecting etag.
 
         This is useful when you want to make some changes without affecting users.
 
@@ -121,15 +124,32 @@ class EveBackend():
         :param updates: changes made to document
         :param original: original document
         """
-        backend = self._backend(endpoint_name)
-        res = backend.update(endpoint_name, id, updates, original)
+        updates.setdefault(config.LAST_UPDATED, utcnow())
+        updated = original.copy()
+        updated.pop(config.ETAG, None)  # make sure we update
+        return self._change_request(endpoint_name, id, updates, updated)
 
+    def _change_request(self, endpoint_name, id, updates, original):
+        backend = self._backend(endpoint_name)
         search_backend = self._lookup_backend(endpoint_name)
-        if search_backend is not None:
+
+        try:
+            backend.update(endpoint_name, id, updates, original)
+        except eve.io.base.DataLayer.OriginalChangedError:
+            if not backend.find_one(endpoint_name, req=None, _id=id):
+                # item is in elastic, not in mongo - not good
+                logger.warn("Item is missing in mongo resource=%s id=%s".format(endpoint_name, id))
+                self._remove_documents_from_search_backend(endpoint_name, [id])
+                raise SuperdeskApiError.notFoundError()
+            else:
+                # item is there, but no change was done - ok
+                return updates
+
+        if search_backend:
             doc = backend.find_one(endpoint_name, req=None, _id=id)
             search_backend.update(endpoint_name, id, doc)
 
-        return res if res is not None else updates
+        return updates
 
     def replace(self, endpoint_name, id, document, original):
         res = self.replace_in_mongo(endpoint_name, id, document, original)
@@ -169,14 +189,11 @@ class EveBackend():
         search_backend = self._lookup_backend(endpoint_name)
         docs = self.get_from_mongo(endpoint_name, lookup=lookup, req=ParsedRequest())
         ids = [doc[config.ID_FIELD] for doc in docs]
-        res = backend.remove(endpoint_name, {config.ID_FIELD: {'$in': ids}})
-        if res and res.get('n', 0) > 0 and search_backend is not None:
+        backend.remove(endpoint_name, {config.ID_FIELD: {'$in': ids}})
+        if search_backend and ids:
             self._remove_documents_from_search_backend(endpoint_name, ids)
-
-        if res and res.get('n', 0) == 0:
+        if not ids:
             logger.warn("No documents for {} resource were deleted using lookup {}".format(endpoint_name, lookup))
-
-        return res
 
     def _remove_documents_from_search_backend(self, endpoint_name, ids):
         """

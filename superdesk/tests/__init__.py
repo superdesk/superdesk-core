@@ -10,7 +10,6 @@
 
 
 import os
-import pymongo
 import unittest
 import elasticsearch
 import logging
@@ -67,6 +66,14 @@ def get_test_settings():
     test_settings['CELERY_ALWAYS_EAGER'] = 'True'
     test_settings['CONTENT_EXPIRY_MINUTES'] = 99
     test_settings['VERSION'] = '_current_version'
+
+    # limit mongodb connections
+    test_settings['MONGO_CONNECT'] = False
+    test_settings['ARCHIVED_CONNECT'] = False
+    test_settings['LEGAL_ARCHIVE_CONNECT'] = False
+    test_settings['MONGO_MAX_POOL_SIZE'] = 1
+    test_settings['ARCHIVED_MAX_POOL_SIZE'] = 1
+    test_settings['LEGAL_ARCHIVE_MAX_POOL_SIZE'] = 1
     return test_settings
 
 
@@ -84,19 +91,15 @@ def drop_elastic(app):
 def drop_mongo(app):
     with app.app_context():
         drop_mongo_db(app, 'MONGO', 'MONGO_DBNAME')
-        drop_mongo_db(app, 'LEGAL_ARCHIVE', 'LEGAL_ARCHIVE_DBNAME')
         drop_mongo_db(app, 'ARCHIVED', 'ARCHIVED_DBNAME')
+        drop_mongo_db(app, 'LEGAL_ARCHIVE', 'LEGAL_ARCHIVE_DBNAME')
 
 
 def drop_mongo_db(app, db_prefix, dbname):
-    try:
-        if app.config.get(dbname):
-            app.data.mongo.pymongo(prefix=db_prefix).cx.drop_database(app.config[dbname])
-    except pymongo.errors.ConnectionFailure:
-        raise ValueError('Invalid mongo config or server is down (uri=%s db=%s)' %
-                         (db_prefix, app.config[dbname]))
-    except AttributeError:
-        pass
+    if app.config.get(dbname):
+        db = app.data.mongo.pymongo(prefix=db_prefix).cx
+        db.drop_database(app.config[dbname])
+        db.close()
 
 
 def setup(context=None, config=None, app_factory=get_app):
@@ -108,6 +111,11 @@ def setup(context=None, config=None, app_factory=get_app):
 
     app_config.update(get_test_settings())
     app_config.update(config or {})
+
+    app_config.update({
+        'DEBUG': True,
+        'TESTING': True,
+    })
 
     app = app_factory(app_config)
     logger = logging.getLogger('superdesk')
@@ -195,6 +203,9 @@ class TestCase(unittest.TestCase):
     def tearDown(self):
         if hasattr(self, 'ctx'):
             self.ctx.pop()
+        with self.app.app_context():
+            mongoclient = self.app.data.mongo.pymongo().cx
+            mongoclient.close()
 
     def get_fixture_path(self, filename):
         rootpath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))

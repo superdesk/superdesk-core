@@ -51,6 +51,7 @@ class RssIngestServiceTest(TestCase):
     """Base class for RSSFeedingService tests."""
 
     def setUp(self):
+        super().setUp()
         try:
             from superdesk.io.feeding_services.rss import RSSFeedingService
         except ImportError:

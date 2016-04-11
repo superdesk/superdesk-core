@@ -76,7 +76,3 @@ class SuperdeskTestCase(TestCase):
         setup(self, app_factory=get_app)
         self.ctx = self.app.app_context()
         self.ctx.push()
-
-    def tearDown(self):
-        if hasattr(self, 'ctx'):
-            self.ctx.pop()

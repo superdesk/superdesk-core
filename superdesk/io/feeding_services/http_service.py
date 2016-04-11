@@ -51,7 +51,7 @@ class HTTPFeedingService(FeedingService, metaclass=ABCMeta):
         token = {'auth_token': self._generate_auth_token(provider), 'created': utcnow()}
         get_resource_service('ingest_providers').system_update(provider[config.ID_FIELD], updates={'tokens': token},
                                                                original=provider)
-
+        provider['tokens'] = token
         return token['auth_token']
 
     def _generate_auth_token(self, provider):

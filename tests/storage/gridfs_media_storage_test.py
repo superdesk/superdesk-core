@@ -1,7 +1,7 @@
 
 import io
+import eve
 import bson
-import flask
 import unittest
 from unittest.mock import Mock
 from superdesk.upload import bp
@@ -12,7 +12,7 @@ from superdesk.storage.desk_media_storage import SuperdeskGridFSMediaStorage
 class GridFSMediaStorageTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.app = flask.Flask(__name__)
+        self.app = eve.Eve(__name__, {'DOMAIN': {}})
         self.app.config['SERVER_NAME'] = 'localhost'
         self.app.config['DOMAIN'] = {'upload': {}}
         self.app.config['MONGO_DBNAME'] = 'sptests'

@@ -352,3 +352,25 @@ Feature: Content Locking
         """
         {"_id": "item-1", "linked_in_packages": [{"package": "package-2"}]}
         """
+
+    @auth
+    Scenario: Unlocking an item that expired in mongo (bug)
+        Given "archive"
+        """
+        [{"_id": "item-1", "guid": "item-1", "headline": "test", "_current_version": 1}]
+        """
+        When we post to "/archive/item-1/lock"
+        """
+        {}
+        """
+
+        When we remove item "item-1" from mongo
+
+        And we post to "/archive/item-1/unlock"
+        """
+        {}
+        """
+        Then we get error 404
+
+        When we get "/workqueue"
+        Then we get list with 0 items

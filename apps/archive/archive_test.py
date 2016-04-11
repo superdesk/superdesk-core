@@ -9,8 +9,9 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-from bson import ObjectId
+import unittest
 
+from bson import ObjectId
 from unittest.mock import MagicMock
 from superdesk import get_resource_service
 from test_factory import SuperdeskTestCase
@@ -206,15 +207,12 @@ class RemoveSpikedContentTestCase(SuperdeskTestCase):
         archive_service = get_resource_service(ARCHIVE)
         archive_service.on_delete = MagicMock()
         archive_service.delete_by_article_ids(ids)
-        self.assertTrue(self.app.data.elastic.is_empty(ARCHIVE))
         self.assertTrue(self.app.data.mongo.is_empty(ARCHIVE))
+        self.assertTrue(self.app.data.elastic.is_empty(ARCHIVE))
         self.assertEqual(len(self.articles), archive_service.on_delete.call_count)
 
 
 class ArchiveTestCase(SuperdeskTestCase):
-    def setUp(self):
-        super().setUp()
-
     def test_validate_schedule(self):
         validate_schedule(utcnow() + timedelta(hours=2))
 
@@ -328,10 +326,7 @@ class ArchiveTestCase(SuperdeskTestCase):
         self.assertEqual(doc['dateline']['text'], 'SYDNEY %s %s -' % (formatted_date, source))
 
 
-class ArchiveCommonTestCase(SuperdeskTestCase):
-
-    def setUp(self):
-        super().setUp()
+class ArchiveCommonTestCase(unittest.TestCase):
 
     def test_broadcast_content(self):
         content = {
