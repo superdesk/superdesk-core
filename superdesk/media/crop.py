@@ -110,7 +110,9 @@ class CropService():
 
         width = doc['CropRight'] - doc['CropLeft']
         height = doc['CropBottom'] - doc['CropTop']
-        assert (crop.get('width') or crop.get('height')) or crop.get('ratio')
+        if not (crop.get('width') or crop.get('height') or crop.get('ratio')):
+            raise SuperdeskApiError.badRequestError(
+                message='Crop data are missing. width, height or ratio need to be defined')
         if crop.get('width') and crop.get('height'):
             expected_crop_width = int(crop['width'])
             expected_crop_height = int(crop['height'])
@@ -123,10 +125,12 @@ class CropService():
                     raise SuperdeskApiError.badRequestError(message='Wrong aspect ratio!')
         elif crop.get('ratio'):
             ratio = crop.get('ratio')
-            if type(crop.get('ratio')) not in [int, float]:
+            if type(ratio) not in [int, float]:
                 ratio = ratio.split(':')
                 ratio = int(ratio[0]) / int(ratio[1])
-            assert(abs((width / height) - ratio) <= 0.01)
+            if abs((width / height) - ratio) > 0.01:
+                raise SuperdeskApiError.badRequestError(
+                    message='Ratio %s is not respected. We got %f' % (crop.get('ratio'), abs((width / height))))
 
     def get_crop_by_name(self, crop_name):
         """

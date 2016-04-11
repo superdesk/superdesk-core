@@ -141,7 +141,8 @@ def _resize_image(content, size, format='png', keepProportions=True):
     if keepProportions:
         width, height = img.size
         new_width, new_height = size
-        assert new_width is not None or new_height is not None
+        if new_width is None and new_height is None:
+            raise Exception('size parameter requires at least width or height value')
         # resize with width and height
         if new_width is not None and new_height is not None:
             x_ratio = width / new_width
