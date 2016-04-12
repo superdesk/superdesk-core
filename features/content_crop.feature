@@ -224,7 +224,7 @@ Feature: Cropping the Image Articles
       """
       {
         "associations": {
-          "feature_image": {
+          "featureimage": {
             "_id": "bike",
             "poi": {"x": 0.2, "y": 0.3}
           }
@@ -237,7 +237,7 @@ Feature: Cropping the Image Articles
       """
       {
         "associations": {
-          "feature_image": {
+          "featureimage": {
             "_id": "bike",
             "poi": {"x": 0.2, "y": 0.3},
             "renditions": {
