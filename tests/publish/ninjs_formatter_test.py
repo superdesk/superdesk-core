@@ -50,7 +50,7 @@ class NinjsFormatterTest(TestCase):
             'pubstatus': 'usable',
             'creditline': 'sample creditline',
             'keywords': ['traffic'],
-            'abstract': 'sample abstract',
+            'abstract': '<p>sample <b>abstract</b></p>',
             'place': 'Australia',
             'embargo': embargo_ts,
             'body_footer': '<p>call helpline 999 if you are planning to quit smoking</p>',
@@ -75,6 +75,7 @@ class NinjsFormatterTest(TestCase):
             "profile": "snap",
             "slugline": "slugline",
             "description_text": "sample abstract",
+            "description_html": "<p>sample <b>abstract</b></p>",
             'keywords': ['traffic'],
             'organisation': [{'name': 'YANCOAL AUSTRALIA LIMITED', 'rel': 'Securities Identifier',
                               'symbols': [{'ticker': 'YAL', 'exchange': 'ASX'}]}]
