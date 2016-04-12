@@ -11,9 +11,10 @@
 import os
 import json
 import flask
-from apps.archive.common import ITEM_OPERATION
 import superdesk
+import werkzeug.exceptions
 
+from apps.archive.common import ITEM_OPERATION
 from superdesk import get_resource_service
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
 from superdesk.resource import Resource
@@ -79,7 +80,12 @@ def prepopulate_data(file_name, default_user=get_default_user()):
                 if not res:
                     raise Exception()
             else:
-                ids = service.post([data])
+                try:
+                    ids = service.post([data])
+                except werkzeug.exceptions.Conflict:
+                    ids = [data['_id']]  # data with given id is there already
+                except superdesk.errors.SuperdeskApiError:
+                    continue  # an error raised by validation - can't guess why, so ignore
                 if not ids:
                     raise Exception()
                 if id_name:
