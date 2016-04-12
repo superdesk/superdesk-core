@@ -17,6 +17,7 @@ from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, GUID_FIELD
 from superdesk.metadata.packages import RESIDREF, GROUP_ID, GROUPS, ROOT_GROUP, REFS
 from superdesk.utils import json_serialize_datetime_objectId
 from apps.archive.common import get_utc_schedule
+from bs4 import BeautifulSoup
 
 
 def filter_empty_vals(data):
@@ -100,8 +101,12 @@ class NINJSFormatter(Formatter):
         if article.get('renditions'):
             ninjs['renditions'] = self._get_renditions(article)
 
+        # SDPA-317
         if article.get('abstract'):
-            ninjs['description_text'] = article.get('abstract')
+            abstract = article.get('abstract')
+            ninjs['description_html'] = abstract
+            soup = BeautifulSoup(abstract, 'html.parser')
+            ninjs['description_text'] = soup.get_text()
         elif article.get('description_text'):
             ninjs['description_text'] = article.get('description_text')
 
