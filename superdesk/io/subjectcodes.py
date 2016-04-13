@@ -20,36 +20,42 @@ bp = Blueprint('subjectcodes', __name__)
 
 
 class SubjectIndex():
-    """Subjects index."""
+    """
+    Subjects index.
+    """
 
     newscode_pattern = re.compile('[0-9]{8,9}')
 
     def __init__(self):
-        self.subjects = {}
+        self.subjects = []
         self.last_modified = datetime.fromtimestamp(0)
 
-    def register(self, subjects, last_modified=None):
-        """Register subjects.
+    def register(self, subjects, last_modified=None, processed=False):
+        """
+        Register subjects.
 
         :param subjects: dict with subject qcode as key and name as value
         :param last_modified: datetime for last subjects modification, last one is sent to clients
         """
-        self.subjects.update(subjects)
         if last_modified is not None:
             self.last_modified = max(self.last_modified, last_modified)
 
-    def get_items(self):
-        """Get list of all subjects.
+        if processed:
+            self.subjects.extend(subjects)
+        else:
+            # Each subject is a dict with `qcode`, `name` and `parent` keys.
+            for code in sorted(subjects):
+                self.subjects.append({'qcode': code, 'name': subjects[code], 'parent': self._get_parent_code(code)})
 
-        Each subject is a dict with `qcode`, `name` and `parent` keys.
+    def get_items(self):
         """
-        items = []
-        for code in sorted(self.subjects):
-            items.append({'qcode': code, 'name': self.subjects[code], 'parent': self._get_parent_code(code)})
-        return items
+        Get list of all subjects.
+        """
+        return self.subjects
 
     def _get_parent_code(self, code):
-        """Compute parent code for iptc newscode.
+        """
+        Compute parent code for iptc newscode.
 
         :param code: iptc newscode without `subj:` prefix
         """

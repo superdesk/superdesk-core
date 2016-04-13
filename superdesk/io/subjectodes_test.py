@@ -35,6 +35,17 @@ class SubjectcodeTestCase(unittest.TestCase):
         self.assertEqual(3, len(self.subjects.get_items()))
         self.assertEqual(None, self.subjects.get_items()[2]['parent'])
 
+    def test_subjectcodes_register_processed(self):
+        self.subjects.register([
+            {'is_active': True, 'name': 'Kultur og underholdning', 'qcode': '01000000', 'parent': None}
+        ], last_modified=datetime(2015, 10, 10), processed=True)
+        self.assertEqual(1, len(self.subjects.get_items()))
+
+        self.subjects.register([
+            {'is_active': True, 'name': 'bibliotek og museum', 'qcode': '01009000', 'parent': '01000000'}
+        ], last_modified=datetime(2015, 10, 10), processed=True)
+        self.assertEqual(2, len(self.subjects.get_items()))
+
     def test_iptc_init(self):
         init_app(self)
         self.assertEqual(1404, len(self.subjects.get_items()))

@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 class TakesPackageService():
     # metadata field of take
-    fields_for_creating_take = ['headline', 'anpa_category', 'pubstatus', 'slugline', 'urgency', 'subject',
+    fields_for_creating_take = ['headline', 'anpa_category', 'pubstatus', 'slugline', 'urgency', 'subject', 'cvs',
                                 'dateline', 'place', 'priority', 'abstract', 'ednote', 'source', 'body_footer',
                                 'operation', 'flags', 'genre', 'company_codes', 'keywords', 'published_in_package']
 
