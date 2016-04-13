@@ -439,8 +439,8 @@
 
     {
     	"data": {
-    		"name" : "Everything",
-            "_id": 1
+            "name" : "all",
+            "_id": "570e04e23c5e9f89fe95366e"
     	},
     	"resource": "products",
     	"username": "admin",
