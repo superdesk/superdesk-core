@@ -141,6 +141,7 @@ class ArchivedService(BaseService):
 
             req = ParsedRequest()
             req.sort = '[("%s", -1)]' % config.VERSION
+            req.args = {}
             takes_package = list(self.get(req=req, lookup={'item_id': takes_package_id}))
             if not takes_package:
                 raise bad_req_error(message='Digital Story of the article not found in Archived repo')
@@ -154,7 +155,9 @@ class ArchivedService(BaseService):
                     if get_resource_service(ARCHIVE).find_one(req=None, _id=takes_ref[RESIDREF]):
                         raise bad_req_error(message="Can't Kill as Take(s) are still available in production")
 
-                    take = list(self.get(req=None, lookup={'item_id': takes_ref[RESIDREF]}))
+                    req = ParsedRequest()
+                    req.args = {}
+                    take = list(self.get(req=req, lookup={'item_id': takes_ref[RESIDREF]}))
                     if not take:
                         raise bad_req_error(message='One of Take(s) not found in Archived repo')
 
@@ -277,7 +280,7 @@ class ArchivedService(BaseService):
 
         req = ParsedRequest()
         req.sort = '[("%s", -1)]' % config.VERSION
-
+        req.args = {}
         archived_doc = list(self.get(req=req, lookup={'item_id': archived_doc['item_id']}))[0]
         articles_to_kill = [archived_doc]
         takes_package_service = TakesPackageService()

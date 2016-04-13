@@ -50,6 +50,22 @@ Feature: Kill a content item in the (dusty) archive
       "headline": "headline", "anpa_category" : [{"qcode" : "e", "name" : "Entertainment"}],
       "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
       "subject":[{"qcode": "17004000", "name": "Statistics"}], "targeted_for": [{"name": "Digital", "allow": false}],
+      "dateline" : {
+        "located" : {
+            "state_code" : "NSW",
+            "city" : "Sydney",
+            "tz" : "Australia/Sydney",
+            "country_code" : "AU",
+            "dateline" : "city",
+            "alt_name" : "",
+            "state" : "New South Wales",
+            "city_code" : "Sydney",
+            "country" : "Australia"
+        },
+        "source" : "AAP",
+        "date" : "2016-04-13T04:29:14",
+        "text" : "SYDNEY April 13 AAP -"
+      },
       "body_html": "Test Document body"}]
     """
     Then we get OK response
