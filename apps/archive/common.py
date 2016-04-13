@@ -19,7 +19,7 @@ from pytz import timezone
 
 import superdesk
 from superdesk.users.services import get_sign_off
-from superdesk.utc import utcnow, get_expiry_date, local_to_utc
+from superdesk.utc import utcnow, get_expiry_date, local_to_utc, get_date
 from superdesk import get_resource_service
 from superdesk.metadata.item import metadata_schema, ITEM_STATE, CONTENT_STATE, \
     LINKED_IN_PACKAGES, BYLINE, SIGN_OFF, EMBARGO, ITEM_TYPE, CONTENT_TYPE, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS
@@ -151,6 +151,9 @@ def set_default_source(doc):
 
     if not (doc['dateline'].get('located') and doc['dateline'].get('date')):
         return
+
+    if isinstance(doc['dateline'].get('date'), str):
+        doc['dateline']['date'] = get_date(doc['dateline'].get('date'))
 
     doc['dateline']['text'] = format_dateline_to_locmmmddsrc(doc['dateline'].get('located'),
                                                              doc['dateline'].get('date'), source)

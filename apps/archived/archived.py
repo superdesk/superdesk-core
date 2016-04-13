@@ -277,7 +277,6 @@ class ArchivedService(BaseService):
 
         req = ParsedRequest()
         req.sort = '[("%s", -1)]' % config.VERSION
-
         archived_doc = list(self.get(req=req, lookup={'item_id': archived_doc['item_id']}))[0]
         articles_to_kill = [archived_doc]
         takes_package_service = TakesPackageService()
