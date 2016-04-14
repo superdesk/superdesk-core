@@ -119,12 +119,9 @@ class SubscribersService(BaseService):
 
     def on_create(self, docs):
         for doc in docs:
-            self._validate_products(doc)
             self._validate_seq_num_settings(doc)
 
     def on_update(self, updates, original):
-        if 'products' in updates:
-            self._validate_products(updates)
         self._validate_seq_num_settings(updates)
 
     def on_deleted(self, doc):
@@ -179,10 +176,6 @@ class SubscribersService(BaseService):
                'products': list(selected_products.values()),
                'selected_subscribers': list(selected_subscribers.values())}
         return [res]
-
-    def _validate_products(self, subscriber):
-        if len(subscriber.get('products', [])) == 0:
-            raise SuperdeskApiError.badRequestError(message="Subscriber must have at least one product assigned!")
 
     def _validate_seq_num_settings(self, subscriber):
         """

@@ -594,6 +594,25 @@ class ArchivePublishTestCase(SuperdeskTestCase):
                 self.assertIn('xyz', item['codes'])
                 self.assertIn('klm', item['codes'])
 
+    def test_get_subscribers_without_product(self):
+        doc = copy(self.articles[1])
+        doc['item_id'] = doc['_id']
+
+        subscriber_service = get_resource_service('subscribers')
+
+        for sub in self.subscribers:
+            sub.pop('products', None)
+            subscriber_service.delete({'_id': sub['_id']})
+
+        subscriber_service.post(self.subscribers)
+
+        subscribers, subscribers_yet_to_receive, subscriber_codes = \
+            EnqueuePublishedService().get_subscribers(doc, SUBSCRIBER_TYPES.WIRE)
+
+        self.assertEqual(0, len(subscribers))
+        self.assertEqual(0, len(subscribers))
+        self.assertDictEqual({}, subscriber_codes)
+
     def test_queue_transmission_wrong_article_type_fails(self):
         self._is_publish_queue_empty()
 
