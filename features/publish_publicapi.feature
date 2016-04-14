@@ -210,7 +210,7 @@ Feature: Publish content to the public API
     Then we get formatted item
     	"""
     	{
-    		"_id": "20150723001158606583",
+    		"guid": "20150723001158606583",
     		"type": "picture",
     		"renditions" : {
                 "viewImage" : {
@@ -670,7 +670,7 @@ Feature: Publish content to the public API
     Then we get formatted item
     	"""
     	{
-    		"_id": "compositeitem",
+    		"guid": "compositeitem",
     		"type": "composite",
     		"associations": {
     			"main": [
@@ -681,7 +681,7 @@ Feature: Publish content to the public API
     			],
     			"sidebars": [
     				{
-    					"_id": "item2",
+    					"guid": "item2",
     					"type": "picture",
     					"headline": "ABC SHOP CLOSURES",
     					"renditions": {

@@ -58,7 +58,7 @@ class NinjsFormatterTest(TestCase):
         }
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
         expected = {
-            "_id": "tag:aap.com.au:20150613:12345",
+            "guid": "tag:aap.com.au:20150613:12345",
             "version": "1",
             "place": "Australia",
             "pubstatus": "usable",
@@ -84,7 +84,7 @@ class NinjsFormatterTest(TestCase):
 
     def test_picture_formatter(self):
         article = {
-            '_id': '20150723001158606583',
+            'guid': '20150723001158606583',
             '_current_version': 1,
             'slugline': "AMAZING PICTURE",
             'original_source': 'AAP',
@@ -130,7 +130,7 @@ class NinjsFormatterTest(TestCase):
             "pubstatus": "usable",
             "version": "1",
             "versioncreated": "2015-07-23T00:15:00.000Z",
-            "_id": "20150723001158606583",
+            "guid": "20150723001158606583",
             "description_html":
             "The most amazing picture you will ever see<p>call helpline 999 if you are planning to quit smoking</p>",
             "type": "picture",
@@ -141,7 +141,7 @@ class NinjsFormatterTest(TestCase):
 
     def test_composite_formatter(self):
         article = {
-            '_id': 'urn:newsml:localhost:2015-07-24T15:05:00.116047:435c93c2-492c-4668-ab47-ae6e2b9b1c2c',
+            'guid': 'urn:newsml:localhost:2015-07-24T15:05:00.116047:435c93c2-492c-4668-ab47-ae6e2b9b1c2c',
             'groups': [
                 {
                     'id': 'root',
@@ -257,14 +257,14 @@ class NinjsFormatterTest(TestCase):
         expected = {
             "headline": "WA:Navy steps in with WA asylum-seeker boat",
             "version": "2",
-            "_id": "urn:newsml:localhost:2015-07-24T15:05:00.116047:435c93c2-492c-4668-ab47-ae6e2b9b1c2c",
+            "guid": "urn:newsml:localhost:2015-07-24T15:05:00.116047:435c93c2-492c-4668-ab47-ae6e2b9b1c2c",
             "associations": {
                 "main": [
-                    {"_id": "tag:localhost:2015:515b895a-b336-48b2-a506-5ffaf561b916", "type": "text"}
+                    {"guid": "tag:localhost:2015:515b895a-b336-48b2-a506-5ffaf561b916", "type": "text"}
                 ],
                 "sidebars": [
                     {
-                        "_id": "urn:newsml:localhost:2015-07-24T15:04:29.589984:af3bef9a-5002-492b-a15a-8b460e69b164",
+                        "guid": "urn:newsml:localhost:2015-07-24T15:04:29.589984:af3bef9a-5002-492b-a15a-8b460e69b164",
                         "type": "picture"
                     }
                 ]
@@ -312,7 +312,7 @@ class NinjsFormatterTest(TestCase):
         self.assertIn('associations', formatted)
         self.assertIn('image', formatted['associations'])
         image = formatted['associations']['image']
-        self.assertEqual('urn:foo', image['_id'])
+        self.assertEqual('urn:foo', image['guid'])
         self.assertEqual('Foo', image['headline'])
         self.assertEqual('usable', image['pubstatus'])
         self.assertNotIn('task', image)

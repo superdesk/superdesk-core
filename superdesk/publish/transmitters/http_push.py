@@ -12,7 +12,6 @@ import json
 from superdesk import app
 from superdesk.publish import register_transmitter
 
-from eve.utils import config
 import requests
 from superdesk.errors import PublishHTTPPushError
 from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
@@ -31,8 +30,6 @@ class HTTPPushService(PublishService):
         @see: PublishService._transmit
         """
         item = json.loads(queue_item['formatted_item'])
-        item['guid'] = item[config.ID_FIELD]
-        del item[config.ID_FIELD]
 
         destination = queue_item.get('destination', {})
         assets_url = destination.get('config', {}).get('assets_url')
