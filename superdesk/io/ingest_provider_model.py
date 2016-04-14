@@ -56,6 +56,10 @@ class IngestProviderResource(Resource):
                 'default': content_type,
                 'allowed': content_type
             },
+            'allow_remove_ingested': {
+                'type': 'boolean',
+                'default': False
+            },
             'content_expiry': {
                 'type': 'integer',
                 'default': app.config['INGEST_EXPIRY_MINUTES']

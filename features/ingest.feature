@@ -351,3 +351,73 @@ Feature: Fetch From Ingest
 		  ]
 		}
   		"""
+
+    @auth
+    @provider
+    Scenario: Delete an ingest package
+        Given empty "ingest"
+        When we fetch from "reuters" ingest "tag_reuters.com_2014_newsml_KBN0FL0NM:10"
+        And we get "/ingest"
+        Then we get existing resource
+        """
+        {
+            "_items": [
+                {
+                    "guid": "tag_reuters.com_2014_newsml_LYNXMPEA6F0MS:2",
+                    "ingest_provider_sequence": "3",
+                    "state": "ingested",
+                    "type": "picture"
+                },
+                {
+                    "groups": [
+                        {
+                            "refs": [
+                                {"itemClass": "icls:text", "guid": "tag_reuters.com_2014_newsml_KBN0FL0NN:5"},
+                                {"itemClass": "icls:picture", "guid": "tag_reuters.com_2014_newsml_LYNXMPEA6F13M:1"},
+                                {"itemClass": "icls:picture", "guid": "tag_reuters.com_2014_newsml_LYNXMPEA6F0MS:2"},
+                                {"itemClass": "icls:picture", "guid": "tag_reuters.com_2014_newsml_LYNXMPEA6F0MT:2"}
+                            ]
+                        },
+                        {"refs": [{"itemClass": "icls:text", "guid": "tag_reuters.com_2014_newsml_KBN0FL0ZP:2"}]}
+                    ],
+                    "guid": "tag_reuters.com_2014_newsml_KBN0FL0NM:10",
+                    "ingest_provider_sequence": "6",
+                    "state": "ingested",
+                    "type": "composite",
+                    "usageterms": "NO ARCHIVAL USE"
+                },
+                {
+                    "guid": "tag_reuters.com_2014_newsml_LYNXMPEA6F0MT:2",
+                    "ingest_provider_sequence": "2",
+                    "state": "ingested",
+                    "type": "picture"
+                },
+                {
+                    "guid": "tag_reuters.com_2014_newsml_KBN0FL0ZP:2",
+                    "ingest_provider_sequence": "1",
+                    "state": "ingested",
+                    "type": "text"
+                },
+                {
+                    "guid": "tag_reuters.com_2014_newsml_LYNXMPEA6F13M:1",
+                    "ingest_provider_sequence": "4",
+                    "state": "ingested",
+                    "type": "picture"
+                },
+                {
+                    "guid": "tag_reuters.com_2014_newsml_KBN0FL0NN:5",
+                    "ingest_provider_sequence": "5",
+                    "state": "ingested",
+                    "type": "text"
+                }
+            ]
+        }
+        """
+
+        When we find for "ingest" the id as "ingest_packet" by "source={"filter":{"term":{"guid": "tag_reuters.com_2014_newsml_KBN0FL0NM:10"}}}"
+
+        When we delete "/ingest/#ingest_packet#"
+        Then we get response code 204
+
+        When we get "/ingest"
+        Then we get list with 0 items

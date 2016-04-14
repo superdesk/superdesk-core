@@ -17,6 +17,9 @@ from eve.methods.common import resolve_document_etag
 from superdesk import get_resource_service
 from eve.utils import config
 from flask import current_app as app
+from apps.auth import get_user
+from superdesk.notification import push_notification
+import superdesk
 
 SOURCE = 'ingest'
 
@@ -34,6 +37,7 @@ class IngestResource(Resource):
         'search_backend': 'elastic',
         'aggregations': aggregations
     }
+    privileges = {'DELETE': 'fetch'}
 
 
 class IngestService(BaseService):
@@ -62,3 +66,26 @@ class IngestService(BaseService):
             max_seq_number=app.config['MAX_VALUE_OF_INGEST_SEQUENCE']
         )
         item['ingest_provider_sequence'] = str(sequence_number)
+
+    def on_deleted(self, docs):
+        docs = docs if isinstance(docs, list) else [docs]
+        file_ids = [rend.get('media')
+                    for doc in docs
+                    for rend in doc.get('renditions', {}).values()
+                    if not doc.get('archived') and rend.get('media')]
+
+        for file_id in file_ids:
+            superdesk.app.media.delete(file_id)
+
+        ids = [ref.get('residRef')
+               for doc in docs
+               for group in doc.get('groups', {})
+               for ref in group.get('refs', {})
+               if ref.get('residRef')]
+
+        if ids:
+            self.delete({'_id': {'$in': ids}})
+
+        user = get_user(required=True)
+        if docs:
+            push_notification('item:deleted', item=str(docs[0].get(config.ID_FIELD)), user=str(user))
