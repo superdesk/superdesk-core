@@ -53,6 +53,14 @@ class VocabulariesResource(Resource):
         'single_value': {
             'type': 'boolean',
         },
+        'schema_field': {
+            'type': 'string',
+            'required': False,
+            'nullable': True
+        },
+        'dependent': {
+            'type': 'boolean',
+        },
         'service': {
             'type': 'dict',
         },
