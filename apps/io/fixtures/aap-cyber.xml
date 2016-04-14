@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<nitf schemaLocation="http://www.iptc.org/std/NITF/3.6/specification http://www.iptc.org/std/NITF/3.6/specification/nitf-3-6.xsd"
+      version="-//IPTC//DTD NITF 3.6//EN">
+    <head>
+        <meta content="78" name="anpa-sequence"/>
+        <meta content="slugged" name="anpa-keyword"/>
+        <meta content="taken" name="anpa-takekey"/>
+        <meta content="a" name="anpa-category"/>
+        <meta content="6" name="aap-priority"/>
+        <meta content="admin" name="aap-original-creator"/>
+        <meta content="admin" name="aap-version-creator"/>
+        <meta content="Finance Desk" name="aap-desk"/>
+        <meta content="None default stage" name="aap-stage"/>
+        <meta content="AAP" name="aap-source"/>
+        <meta content="" name="aap-original-source"/>
+        <meta content="PAC" name="aap-place"/>
+        <title>Headline</title>
+        <tobject tobject.type="news">
+            <tobject.property tobject.property.type="Article (news)"/>
+            <tobject.subject tobject.subject.refnum="04000000" tobject.subject.type="Finance"
+                             tobject.subject.matter="Finance (General)"/>
+        </tobject>
+        <docdata management-status="usable">
+            <date.expire norm="2016-05-24 20:53:25+00:00"/>
+            <urgency ed-urg="3"/>
+            <date.issue norm="2016-04-13 04:52:21+00:00"/>
+            <doc-id id-string="urn:newsml:localhost:2016-04-13T14:52:21.830724:0a686ee3-ec38-4fbf-beeb-aae311aecfdb"/>
+        </docdata>
+    </head>
+    <body>
+        <body.head>
+            <hedline>
+                <hl1>Headline</hl1>
+            </hedline>
+            <byline>By John Doe</byline>
+            <dateline>SYDNEY March 22 AAP -</dateline>
+            <abstract>
+                <p>abstract</p>
+            </abstract>
+        </body.head>
+        <body.content>
+            <p>body1</p>
+        </body.content>
+        <body.end/>
+    </body>
+</nitf>

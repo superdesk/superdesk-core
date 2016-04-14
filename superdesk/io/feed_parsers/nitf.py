@@ -134,10 +134,6 @@ def parse_meta(tree, item):
             user = superdesk.get_resource_service('users').find_one(req=None, **query)
             if user:
                 item['version_creator'] = user.get('_id')
-        elif attribute_name == 'aap-desk':
-            desk = superdesk.get_resource_service('desks').find_one(req=None, name=elem.get('content'))
-            if desk:
-                item['task'] = {'desk': desk.get('_id'), 'stage': desk.get('incoming_stage')}
         elif attribute_name == 'aap-source':
             item['source'] = elem.get('content')
         elif attribute_name == 'aap-original-source':
@@ -145,6 +141,18 @@ def parse_meta(tree, item):
         elif attribute_name == 'aap-place':
             locator_map = superdesk.get_resource_service('vocabularies').find_one(req=None, _id='locators')
             item['place'] = [x for x in locator_map.get('items', []) if x['qcode'] == elem.get('content')]
+
+    desk_name = tree.find('head/meta[@name="aap-desk"]')
+    if desk_name is not None:
+        desk = superdesk.get_resource_service('desks').find_one(req=None, name=desk_name.get('content'))
+        if desk:
+            item['task'] = {'desk': desk.get('_id')}
+            stage_name = tree.find('head/meta[@name="aap-stage"]')
+            if stage_name is not None:
+                lookup = {'$and': [{'name': stage_name.get('content')}, {'desk': str(desk.get('_id'))}]}
+                stages = superdesk.get_resource_service('stages').get(req=None, lookup=lookup)
+                for stage in stages:
+                    item['task']['stage'] = stage.get('_id')
 
 
 class NITFFeedParser(XMLFeedParser):

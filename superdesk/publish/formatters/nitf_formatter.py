@@ -153,6 +153,11 @@ class NITFFormatter(Formatter):
         if article.get('task', {}).get('desk') is not None:
             desk = superdesk.get_resource_service('desks').find_one(_id=article.get('task', {}).get('desk'), req=None)
             SubElement(head, 'meta', {'name': 'aap-desk', 'content': desk.get('name', '')})
+        if article.get('task', {}).get('stage') is not None:
+            stage = superdesk.get_resource_service('stages').find_one(_id=article.get('task', {}).get('stage'),
+                                                                      req=None)
+            if stage is not None:
+                SubElement(head, 'meta', {'name': 'aap-stage', 'content': stage.get('name', '')})
 
         SubElement(head, 'meta', {'name': 'aap-source', 'content': article.get('source', '')})
         SubElement(head, 'meta', {'name': 'aap-original-source', 'content': article.get('original_source', '')})

@@ -482,6 +482,79 @@ Feature: Auto Routing
         ]}
         """
 
+    @auth @provider @vocabulary
+    Scenario: Content is fetched to desk and stage contained in the ingested item
+        Given empty "desks"
+        Given "filter_conditions"
+        """
+        [{
+            "_id": "2222222222bbbb2222222222",
+            "name": "Finance Subject",
+            "field": "subject",
+            "operator": "in",
+            "value": "04000000"
+        }]
+        """
+        Given "content_filters"
+        """
+        [{
+            "_id": "1234567890abcd1234567890",
+            "name": "Finance Content",
+            "content_filter": [
+                {
+                    "expression": {
+                        "fc": ["2222222222bbbb2222222222"]
+                    }
+                }
+            ]
+        }]
+        """
+
+        When we post to "/desks"
+        """
+          {
+            "name": "Finance Desk", "members": [{"user": "#CONTEXT_USER_ID#"}]
+          }
+        """
+        Then we get response code 201
+        When we post to "/stages"
+        """
+        {"name": "None default stage", "description": "A stage that is not default incomming", "desk": "#desks._id#"}
+        """
+        Then we get OK response
+        When we post to "/routing_schemes"
+        """
+        [
+          {
+            "name": "routing rule scheme 1",
+            "rules": [
+              {
+                "name": "Finance Rule 1",
+                "filter": "1234567890abcd1234567890",
+                "actions": {
+                  "preserve_desk": true,
+                  "exit": false
+                }
+              }
+            ]
+          }
+        ]
+        """
+        Then we get response code 201
+        When we ingest with routing scheme "AAP" "aap-cyber.xml"
+        """
+        #routing_schemes._id#
+        """
+        When we get "/archive?q=#desks._id#"
+        Then we get list with 1 items
+        """
+        {"_items": [
+          {
+              "headline": "Headline",
+              "task": {"stage": "#stages._id#"}
+          }
+        ]}
+        """
 
     @auth @provider @clean @vocabulary
     Scenario: Content is fetched and transformed different stages
