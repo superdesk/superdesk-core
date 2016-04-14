@@ -212,11 +212,11 @@ class EnqueueService:
         all_products = list(get_resource_service('products').get(req=None, lookup=None))
 
         for subscriber in subscribers:
-            codes = []
+            codes = self._get_codes(subscriber)
             products = [p for p in all_products if p[config.ID_FIELD] in subscriber.get('products', [])]
 
             for product in products:
-                codes.extend(product.get('codes', '').split(','))
+                codes.extend(self._get_codes(product))
                 subscriber_codes[subscriber[config.ID_FIELD]] = list(set(codes))
 
         return subscriber_codes
@@ -432,15 +432,14 @@ class EnqueueService:
             if not self.conforms_global_filter(subscriber, global_filters, doc):
                     continue
 
-            product_codes = []
+            product_codes = self._get_codes(subscriber)
             subscriber_added = False
             for product_id in subscriber.get('products', []):
                 # check if the product filter conforms with the story
                 product = existing_products.get(product_id)
                 if product and self.conforms_content_filter(product, doc):
                     # gather the codes of products
-                    if product.get('codes'):
-                        product_codes.extend(product.get('codes', '').split(','))
+                    product_codes.extend(self._get_codes(product))
                     if not subscriber_added:
                         filtered_subscribers.append(subscriber)
                         subscriber_added = True
@@ -514,3 +513,9 @@ class EnqueueService:
             subscriber_items[sid] = {'subscriber': subscriber,
                                      'items': item_list,
                                      'codes': subscriber_codes.get(sid, [])}
+
+    def _get_codes(self, item):
+        if item.get('codes'):
+            return [c.strip() for c in item.get('codes').split(',') if c]
+        else:
+            return []

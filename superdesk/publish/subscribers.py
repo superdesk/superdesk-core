@@ -92,6 +92,9 @@ class SubscribersResource(Resource):
             'type': 'list',
             'schema': Resource.rel('products', True)
         },
+        'codes': {
+            'type': 'string'
+        },
         'global_filters': {
             'type': 'dict',
             'valueschema': {

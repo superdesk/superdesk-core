@@ -84,6 +84,7 @@ Feature: Publish Queue
         "subscriber_type": "digital",
         "sequence_num_settings":{"min" : 1, "max" : 10},
         "email": "test@test.com",
+        "codes": "ptr, axx,",
         "products": ["570340ef1d41c89b50716dad", "570340ef1d41c89b50716dae", "570340ef1d41c89b50716daf"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }]
@@ -104,7 +105,7 @@ Feature: Publish Queue
           "subscriber_id": "#subscribers._id#",
           "item_id": "#archive.123.take_package#",
           "item_version": 2,
-          "codes": ["abc", "xyz", "def"]
+          "codes": ["abc", "xyz", "def", "ptr", "axx"]
         }
       ]
     }

@@ -51,7 +51,7 @@ class ArchivePublishTestCase(SuperdeskTestCase):
         self.users = [{'_id': '1', 'username': 'admin'}]
         self.desks = [{'_id': ObjectId('123456789ABCDEF123456789'), 'name': 'desk1'}]
         self.products = [{"_id": "1", "name": "prod1"},
-                         {"_id": "2", "name": "prod2", "codes": "abc,def"},
+                         {"_id": "2", "name": "prod2", "codes": "abc,def,"},
                          {"_id": "3", "name": "prod3", "codes": "xyz"}]
         self.subscribers = [{"_id": "1", "name": "sub1", "is_active": True, "subscriber_type": SUBSCRIBER_TYPES.WIRE,
                              "media_type": "media", "sequence_num_settings": {"max": 10, "min": 1},
@@ -94,6 +94,7 @@ class ArchivePublishTestCase(SuperdeskTestCase):
                             {"_id": "5", "name": "sub5", "is_active": True, "subscriber_type": SUBSCRIBER_TYPES.ALL,
                              "media_type": "media", "sequence_num_settings": {"max": 10, "min": 1},
                              "email": "test@test.com",
+                             "codes": "xyz,  klm",
                              "products": ["1", "2"],
                              "destinations": [{"name": "dest1", "format": "ninjs",
                                                "delivery_type": "ftp",
@@ -587,8 +588,11 @@ class ArchivePublishTestCase(SuperdeskTestCase):
         for item in queue_items:
             self.assertIn(item['subscriber_id'], expected_subscribers, 'item {}'.format(item))
             if item['subscriber_id'] == '5':
+                self.assertEqual(4, len(item['codes']))
                 self.assertIn('def', item['codes'])
                 self.assertIn('abc', item['codes'])
+                self.assertIn('xyz', item['codes'])
+                self.assertIn('klm', item['codes'])
 
     def test_queue_transmission_wrong_article_type_fails(self):
         self._is_publish_queue_empty()

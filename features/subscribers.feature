@@ -16,6 +16,7 @@ Feature: Subscribers
     {
       "name":"News1","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
       "products": ["#products._id#"],
+      "codes"" "xyz, abc",
       "destinations":[{"name":"destination1","format": "nitf", "delivery_type":"FTP","config":{"ip":"144.122.244.55","password":"xyz"}}]
     }
     """
