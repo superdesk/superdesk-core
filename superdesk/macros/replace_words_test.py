@@ -26,11 +26,11 @@ class ReplaceWordsTest(SuperdeskTestCase):
                 "display_name": "Replace Words",
                 "type": "manageable",
                 "items": [
-                    {"is_active": True, "qcode": "a.m.", "name": "am"},
-                    {"is_active": True, "qcode": "center", "name": "centre"},
-                    {"is_active": True, "qcode": "color", "name": "colour"},
-                    {"is_active": True, "qcode": "tire", "name": "tyre"},
-                    {"is_active": True, "qcode": "George W. Bush", "name": "George W Bush"}
+                    {"is_active": True, "existing": "a.m.", "replacement": "am"},
+                    {"is_active": True, "existing": "center", "replacement": "centre"},
+                    {"is_active": True, "existing": "color", "replacement": "colour"},
+                    {"is_active": True, "existing": "tire", "replacement": "tyre"},
+                    {"is_active": True, "existing": "George W. Bush", "replacement": "George W Bush"}
                 ]}
 
             self.app.data.insert('vocabularies', [vocab])
