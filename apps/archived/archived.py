@@ -195,6 +195,7 @@ class ArchivedService(BaseService):
         articles_to_kill = self._find_articles_to_kill({'_id': id})
         logger.info('Fetched articles to kill for id: {}'.format(id))
         articles_to_kill.sort(key=itemgetter(ITEM_TYPE), reverse=True)  # Needed because package has to be inserted last
+        kill_service = KillPublishService()
 
         updated = original.copy()
         updated.update(updates)
@@ -207,12 +208,13 @@ class ArchivedService(BaseService):
                 super().delete({'item_id': article['item_id']})
                 logger.info('Delete for article: {}'.format(article[config.ID_FIELD]))
 
-                KillPublishService().broadcast_kill_email(article)
+                kill_service.broadcast_kill_email(article)
                 logger.info('Broadcast kill email for article: {}'.format(article[config.ID_FIELD]))
                 continue
 
             # Step 3(i)
             self._remove_and_set_kill_properties(article, articles_to_kill, updated)
+            kill_service.apply_kill_override(article, article)
             logger.info('Removing and setting properties for article: {}'.format(article[config.ID_FIELD]))
 
             # Step 3(ii)
@@ -248,7 +250,7 @@ class ArchivedService(BaseService):
             logger.info('Legal Archive import for article: {}'.format(article[config.ID_FIELD]))
 
             # Step 3(v)
-            KillPublishService().broadcast_kill_email(article)
+            kill_service.broadcast_kill_email(article)
             logger.info('Broadcast kill email for article: {}'.format(article[config.ID_FIELD]))
 
     def on_updated(self, updates, original):

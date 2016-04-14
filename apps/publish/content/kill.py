@@ -16,11 +16,10 @@ from superdesk.metadata.packages import PACKAGE_TYPE
 from superdesk import get_resource_service
 from superdesk.utc import utcnow
 import logging
-from copy import copy, deepcopy
+from copy import deepcopy
 from superdesk.emails import send_article_killed_email
 from superdesk.errors import SuperdeskApiError
 from apps.archive.common import ITEM_OPERATION, ARCHIVE, insert_into_versions
-from apps.templates.content_templates import render_content_template
 
 logger = logging.getLogger(__name__)
 
@@ -59,15 +58,42 @@ class KillPublishService(BasePublishService):
     def update(self, id, updates, original):
         """
         Kill will broadcast kill email notice to all subscriber in the system and then kill the item.
-        If item is a take then all the takes are killed as well.
+        Kill for multiple items is triggered
+        - for all takes and takes_package if one of the take is killed.
+        - for broadcast items if master item is killed.
+        In case of the multiple items the kill header text will be different but rest
+        of the body_html will be same.
+
+        If any other fields needs in the kill template that needs to be based on the item that is being
+        killed (not the item that is being actioned on) then modify the article_killed_override.json file'
+        For example:
+        If there are 2 takes and Take1 is killed and 'body_html' of the take1 is 'Story killed due to legal reason.'
+
+        Take1: {'slugline': 'test1', 'versioncreated': '2016-04-04T00:00:00+0000',
+        'dateline': {'text': 'London, PA May 4'}}
+
+        Take2: {'slugline': 'test2', 'versioncreated': '2016-04-05T00:00:00+0000',
+        'dateline': {'text': 'London, PA May 5'}}
+
+        Then body_html for Take1 will be:
+        'body_html':<p>Please kill story slugged test1 ex London, PA May 4 at 04 May 2016 10:00 AEDT<p>
+                    <p>Story killed due to legal reason.</p>
+
+        Then body_html for Take2 will be:
+        'body_html':<p>Please kill story slugged test2 ex London, PA May 5 at 05 May 2016 10:00 AEDT<p>
+                    <p>Story killed due to legal reason.</p>
         """
         self.broadcast_kill_email(original)
+        updates_copy = deepcopy(updates)
+        original_copy = deepcopy(original)
+        original_copy.update(updates_copy)
+        self.apply_kill_override(original_copy, updates)
         super().update(id, updates, original)
-        self._publish_kill_for_takes(updates, original)
+        self._publish_kill_for_takes(updates_copy, original_copy)
         updated = deepcopy(original)
         updated.update(updates)
-        self._process_takes_package(original, updated, updates)
-        get_resource_service('archive_broadcast').kill_broadcast(updates, original)
+        self._process_takes_package(original, updated, updates_copy)
+        get_resource_service('archive_broadcast').kill_broadcast(updates_copy, original_copy)
 
     def broadcast_kill_email(self, original):
         """
@@ -92,8 +118,11 @@ class KillPublishService(BasePublishService):
             for ref in[ref for group in package.get('groups', []) if group['id'] == 'main'
                        for ref in group.get('refs')]:
                 if ref[GUID_FIELD] != original[config.ID_FIELD]:
+                    updates_data = deepcopy(updates)
                     original_data = super().find_one(req=None, _id=ref[GUID_FIELD])
-                    updates_data = copy(updates)
+                    original_data_copy = deepcopy(original_data)
+                    original_data_copy.update(updates_data)
+                    self.apply_kill_override(original_data_copy, updates_data)
                     '''
                     Popping out the config.VERSION as Take referenced by original and Take referenced by original_data
                     might have different and if not popped out then it might jump the versions.
@@ -104,21 +133,19 @@ class KillPublishService(BasePublishService):
                                          should_insert_into_versions=True)
                     self.update_published_collection(published_item_id=original_data['_id'])
 
-    def kill_item(self, item):
+    def kill_item(self, updates, original):
         """
         Kill the item after applying the template.
         :param dict item: Item
+        :param str body_html: body_html of the original item that triggered the kill.
         """
-        # get the kill template
-        template = get_resource_service('content_templates').get_template_by_name('kill')
-        if not template:
-            SuperdeskApiError.badRequestError(message="Kill Template missing.")
-
         # apply the kill template
-        updates = render_content_template(item, template)
+        original_copy = deepcopy(original)
+        updates_data = self._apply_kill_template(original_copy)
+        updates_data['body_html'] = updates.get('body_html', '')
         # resolve the document version
-        resolve_document_version(document=updates, resource=ARCHIVE, method='PATCH', latest_doc=item)
+        resolve_document_version(document=updates_data, resource=ARCHIVE, method='PATCH', latest_doc=original)
         # kill the item
-        self.patch(item.get(config.ID_FIELD), updates)
+        self.patch(original.get(config.ID_FIELD), updates_data)
         # insert into versions
-        insert_into_versions(id_=item[config.ID_FIELD])
+        insert_into_versions(id_=original[config.ID_FIELD])

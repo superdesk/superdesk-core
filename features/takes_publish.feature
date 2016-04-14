@@ -298,6 +298,21 @@ Feature: Take Package Publishing
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }]
       """
+      And we post to "content_templates"
+        """
+          {
+            "data": {
+              "body_html": "<p>This is test story.<\/p>",
+              "type": "text",
+              "abstract": "This article has been removed",
+              "headline": "Kill\/Takedown notice ~~~ Kill\/Takedown notice",
+              "urgency": 1, "priority": 1,
+              "anpa_take_key": "KILL\/TAKEDOWN"
+            },
+            "template_name": "kill",
+            "template_type": "kill"
+          }
+        """
       When we post to "archive" with success
       """
       [{
@@ -340,7 +355,7 @@ Feature: Take Package Publishing
       """
       When we patch "/archive/#TAKE2#"
       """
-      {"body_html": "Take-2", "abstract": "Take-2 Abstract"}
+      {"body_html": "Take-2", "abstract": "Take-2 Abstract", "slugline": "Take-2 slugline"}
       """
       And we post to "/archive/#TAKE2#/move"
       """
@@ -355,7 +370,7 @@ Feature: Take Package Publishing
       {
           "type": "text",
           "headline": "Take-1 headline",
-          "slugline": "Take-1 slugline",
+          "slugline": "Take-2 slugline",
           "anpa_take_key": "Take=3",
           "state": "draft",
           "original_creator": "#CONTEXT_USER_ID#"
@@ -363,7 +378,7 @@ Feature: Take Package Publishing
       """
       When we patch "/archive/#TAKE3#"
       """
-      {"body_html": "Take-3", "abstract": "Take-3 Abstract"}
+      {"body_html": "Take-3", "abstract": "Take-3 Abstract", "slugline": "Take-3 slugline"}
       """
       And we post to "/archive/#TAKE3#/move"
       """
@@ -416,7 +431,7 @@ Feature: Take Package Publishing
       """
       When we publish "#TAKE2#" with "kill" type and "killed" state
       """
-      {"body_html": "Killed", "headline": "Story is Killed", "slugline": "killed"}
+      {"body_html": "Killed Story", "headline": "Kill/Takedown notice ~~~ Kill/Takedown notice"}
       """
       Then we get OK response
       When we get "/published"
@@ -477,27 +492,24 @@ Feature: Take Package Publishing
                   "_current_version": 4,
                   "state": "killed",
                   "last_published_version": true,
-                  "body_html": "Killed",
-                  "headline": "Story is Killed",
-                  "slugline": "killed"
+                  "headline": "Kill/Takedown notice ~~~ Kill/Takedown notice",
+                  "slugline": "Take-1 slugline"
               },
               {
                   "_id": "#TAKE2#",
                   "_current_version": 5,
                   "state": "killed",
                   "last_published_version": true,
-                  "body_html": "Killed",
-                  "headline": "Story is Killed",
-                  "slugline": "killed"
+                  "headline": "Kill/Takedown notice ~~~ Kill/Takedown notice",
+                  "slugline": "Take-2 slugline"
               },
               {
                   "_id": "#TAKE3#",
                   "_current_version": 5,
                   "state": "killed",
                   "last_published_version": true,
-                  "body_html": "Killed",
-                  "headline": "Story is Killed",
-                  "slugline": "killed"
+                  "headline": "Kill/Takedown notice ~~~ Kill/Takedown notice",
+                  "slugline": "Take-3 slugline"
               },
               {
                   "_id": "#archive.123.take_package#",
@@ -505,9 +517,8 @@ Feature: Take Package Publishing
                   "state": "killed",
                   "type": "composite",
                   "package_type": "takes",
-                  "body_html": "Killed",
-                  "headline": "Story is Killed",
-                  "slugline": "killed",
+                  "headline": "Kill/Takedown notice ~~~ Kill/Takedown notice",
+                  "slugline": "Take-2 slugline",
                   "last_published_version": true,
                   "groups": [
                     {"refs": [{"idRef" : "main"}], "id": "root"},
@@ -522,6 +533,13 @@ Feature: Take Package Publishing
           ]
       }
       """
+      When we get "/archive/123"
+      Then we get text "Please kill story slugged Take-1 slugline" in response field "body_html"
+      When we get "/archive/#TAKE2#"
+      Then we get text "Please kill story slugged Take-2 slugline" in response field "body_html"
+      When we get "/archive/#TAKE3#"
+      Then we get text "Please kill story slugged Take-3 slugline" in response field "body_html"
+
 
     @auth @vocabulary
     Scenario: Publish subsequent takes to same wire clients as published before.

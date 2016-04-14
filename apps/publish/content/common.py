@@ -12,7 +12,11 @@ from copy import copy
 from copy import deepcopy
 from functools import partial
 import logging
-from flask import current_app as app
+import json
+import html
+from flask import current_app as app, render_template
+
+from apps.templates.content_templates import render_content_template_by_name
 from superdesk import get_resource_service
 from apps.content import push_content_notification
 import superdesk
@@ -150,7 +154,7 @@ class BasePublishService(BaseService):
             raise SuperdeskApiError.internalError(message="Failed to publish the item: {}".format(str(e)))
 
     def _process_takes_package(self, original, updated, updates):
-        # if target_for is set then we don't to digital client.
+        # if targeted_for is set then we don't to digital client.
         targeted_for = updates.get('targeted_for', original.get('targeted_for'))
         if original[ITEM_TYPE] in {CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED} \
                 and not (targeted_for or is_genre(original, BROADCAST_GENRE)):
@@ -165,15 +169,23 @@ class BasePublishService(BaseService):
                 package_id = self.takes_package_service.package_story_as_a_take(updated, {}, None)
                 package = get_resource_service(ARCHIVE).find_one(req=None, _id=package_id)
             package_id = package[config.ID_FIELD]
+
             package_updates = self.process_takes(updates_of_take_to_be_published=updates,
                                                  original_of_take_to_be_published=original,
                                                  package=package)
+
             # If the original package is corrected then the next take shouldn't change it
             # back to 'published'
             preserve_state = package.get(ITEM_STATE, '') == CONTENT_STATE.CORRECTED and \
                 updates.get(ITEM_OPERATION, ITEM_PUBLISH) == ITEM_PUBLISH
             self._set_updates(package, package_updates, last_updated, preserve_state)
             package_updates.setdefault(ITEM_OPERATION, updates.get(ITEM_OPERATION, ITEM_PUBLISH))
+
+            if self.published_state == CONTENT_STATE.KILLED:
+                package_copy = deepcopy(package)
+                package_copy.update(package_updates)
+                self.apply_kill_override(package_copy, package_updates)
+
             self._update_archive(package, package_updates)
             package.update(package_updates)
             self.update_published_collection(published_item_id=package_id)
@@ -325,7 +337,7 @@ class BasePublishService(BaseService):
 
             if takes and self.published_state != 'killed':
                 body_html_list = [take.get('body_html', '') for take in takes]
-                if self.published_state == 'published':
+                if self.published_state == CONTENT_STATE.PUBLISHED:
                     body_html_list.append(body_html)
                 else:
                     body_html_list[sequence_num_of_take_to_be_published - 1] = body_html
@@ -349,7 +361,7 @@ class BasePublishService(BaseService):
                 if metadata in metadata_from:
                     package_updates[metadata] = metadata_from.get(metadata)
 
-            if self.published_state == 'killed':
+            if self.published_state == CONTENT_STATE.KILLED:
                 # if published then update the groups in the take
                 # to reflect the correct version, headline and slugline
                 archive_service = get_resource_service(ARCHIVE)
@@ -605,6 +617,28 @@ class BasePublishService(BaseService):
                     'crop': crop,
                 })
         publish_images.delay(images=images, original=original, item=item)
+
+    def _apply_kill_template(self, item):
+        # apply the kill template
+        updates = render_content_template_by_name(item, 'kill')
+        return updates
+
+    def apply_kill_override(self, item, updates):
+        """
+        Kill requires content to be generate based on the item that getting killed (and not the
+        item that is being actioned on).
+        :param dict item: item to kill
+        :param dict updates: updates that needs to be modified based on the template
+        :return:
+        """
+        try:
+            kill_header = json.loads(render_template('article_killed_override.json', item=item))
+            for key, value in kill_header.items():
+                kill_header[key] = html.unescape(value)
+
+            updates.update(kill_header)
+        except:
+            logger.exception('Failed to apply kill header template to item {}.'.format(item))
 
 
 def get_crop(rendition):

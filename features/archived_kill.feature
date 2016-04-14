@@ -36,7 +36,7 @@ Feature: Kill a content item in the (dusty) archive
     When we post to "content_templates"
     """
     {"template_name": "kill", "template_type": "kill",
-     "data": {"body_html": "<p>Please kill story slugged {{ item.slugline }} ex {{ item.dateline['text'] }}.<\/p>",
+     "data": {"body_html": "<p>Story killed due to court case. Please remove the story from your archive.<\/p>",
               "type": "text", "abstract": "This article has been removed", "headline": "Kill\/Takedown notice ~~~ Kill\/Takedown notice",
               "urgency": 1, "priority": 1,  "anpa_take_key": "KILL\/TAKEDOWN"}
     }
@@ -46,7 +46,7 @@ Feature: Kill a content item in the (dusty) archive
   Scenario: Kill a Text Article in the Dusty Archive
     When we post to "/archive" with success
     """
-    [{"guid": "123", "type": "text", "state": "fetched", "slugline": "slugline",
+    [{"guid": "123", "type": "text", "state": "fetched", "slugline": "archived",
       "headline": "headline", "anpa_category" : [{"qcode" : "e", "name" : "Entertainment"}],
       "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
       "subject":[{"qcode": "17004000", "name": "Statistics"}], "targeted_for": [{"name": "Digital", "allow": false}],
@@ -100,7 +100,7 @@ Feature: Kill a content item in the (dusty) archive
     Then we get list with 1 items
     When we patch "/archived/123:2"
     """
-    {}
+    {"body_html": "Killed body."}
     """
     Then we get OK response
     And we get 1 emails
@@ -119,6 +119,10 @@ Feature: Kill a content item in the (dusty) archive
         {"item_id": "123", "content_type": "text", "item_version": 3, "publishing_action": "killed"}
      ]}
     """
+    When we get "/archive/123"
+    Then we get OK response
+    And we get text "Please kill story slugged archived" in response field "body_html"
+    And we get text "Killed body" in response field "body_html"
     When we get "/archived/123:2"
     Then we get error 404
     When we get "/archived"
@@ -214,7 +218,7 @@ Feature: Kill a content item in the (dusty) archive
     Then we get list with 2 items
     When we patch "/archived/123:2"
     """
-    {}
+    {"body_html": "Killed body"}
     """
     Then we get OK response
     And we get 2 emails
@@ -222,6 +226,14 @@ Feature: Kill a content item in the (dusty) archive
     Then we get list with 2 items
     When we get "/publish_queue"
     Then we get list with 2 items
+    When we get "/archive/123"
+    Then we get OK response
+    And we get text "Please kill story slugged slugline" in response field "body_html"
+    And we get text "Killed body" in response field "body_html"
+    When we get "/archive/#archive.123.take_package#"
+    Then we get OK response
+    And we get text "Please kill story slugged slugline" in response field "body_html"
+    And we get text "Killed body" in response field "body_html"
     When we get "/archived"
     Then we get list with 0 items
     When we transmit items

@@ -238,6 +238,22 @@ class ContentTemplatesApplyService(Service):
         return [docs[0].get(config.ID_FIELD)]
 
 
+def render_content_template_by_name(item, template_name):
+    """
+    Apply template by name
+    :param dict item: item on which template is applied
+    :param str template_name: template name
+    :return dict: updates to the item
+    """
+    # get the kill template
+    template = superdesk.get_resource_service('content_templates').get_template_by_name(template_name)
+    if not template:
+        SuperdeskApiError.badRequestError(message='{} Template missing.'.format(template_name))
+
+    # apply the kill template
+    return render_content_template(item, template)
+
+
 def render_content_template(item, template):
     """
     Render the template.

@@ -2060,3 +2060,14 @@ def expire_content(context):
 def remove_item_from_mongo(context, _id):
     with context.app.app_context():
         context.app.data.mongo.remove('archive', {'_id': _id})
+
+
+@then('we get text "{text}" in response field "{field}"')
+def we_get_text_in_field(context, text, field):
+    with context.app.test_request_context(context.app.config['URL_PREFIX']):
+        resp = parse_json_response(context.response)
+        assert field in resp, 'Field {} not found in response.'.format(field)
+        assert isinstance(resp.get(field), str), 'Invalid type'
+        assert text in resp.get(field, ''), '{} contains text: {}. Text To find: {}'.format(field,
+                                                                                            resp.get(field, ''),
+                                                                                            text)

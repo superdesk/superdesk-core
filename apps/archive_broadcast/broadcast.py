@@ -349,6 +349,7 @@ class ArchiveBroadcastService(BaseService):
                         if refs:
                             correct_service.patch(package.get(config.ID_FIELD), package_updates)
                         else:
+                            package_updates['body_html'] = updates.get('body_html', '')
                             kill_service.patch(package.get(config.ID_FIELD), package_updates)
 
                         processed_packages.add(package.get(config.ID_FIELD))
@@ -362,4 +363,4 @@ class ArchiveBroadcastService(BaseService):
                         item_id, package.get(config.ID_FIELD)
                     ))
 
-            kill_service.kill_item(item)
+            kill_service.kill_item(updates, item)
