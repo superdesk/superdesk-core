@@ -24,11 +24,11 @@ def find_and_replace(item, **kwargs):
 
     def do_find_replace(input_string, words_list):
         for word in words_list:
-            pattern = r'{}'.format(re.escape(word.get('qcode', '')))
+            pattern = r'{}'.format(re.escape(word.get('existing', '')))
 
             if re.search(pattern, input_string, flags=re.IGNORECASE):
-                diff[word.get('qcode', '')] = word.get('name', '')
-                input_string = re.sub(pattern, word.get('name', ''), input_string, flags=re.IGNORECASE)
+                diff[word.get('existing', '')] = word.get('replacement', '')
+                input_string = re.sub(pattern, word.get('replacement', ''), input_string, flags=re.IGNORECASE)
 
         return input_string
 
