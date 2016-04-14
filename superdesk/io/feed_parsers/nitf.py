@@ -151,8 +151,8 @@ def parse_meta(tree, item):
             if stage_name is not None:
                 lookup = {'$and': [{'name': stage_name.get('content')}, {'desk': str(desk.get('_id'))}]}
                 stages = superdesk.get_resource_service('stages').get(req=None, lookup=lookup)
-                for stage in stages:
-                    item['task']['stage'] = stage.get('_id')
+                if stages is not None and stages.count() == 1:
+                    item['task']['stage'] = stages[0].get('_id')
 
 
 class NITFFeedParser(XMLFeedParser):

@@ -211,8 +211,7 @@ class RoutingRuleSchemeService(BaseService):
                 if rule.get('actions', {}).get('preserve_desk', False) and ingest_item.get('task', {}).get('desk'):
                     desk = get_resource_service('desks').find_one(req=None, _id=ingest_item['task']['desk'])
                     if ingest_item.get('task', {}).get('stage'):
-                        stage = get_resource_service('stages').find_one(req=None, _id=ingest_item['task']['stage'])
-                        stage_id = stage[config.ID_FIELD]
+                        stage_id = ingest_item['task']['stage']
                     else:
                         stage_id = desk['incoming_stage']
                     self.__fetch(ingest_item, [{'desk': desk[config.ID_FIELD], 'stage': stage_id}])
