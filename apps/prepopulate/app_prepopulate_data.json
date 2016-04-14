@@ -453,7 +453,7 @@
     		"subscriber_type": "digital",
             "email": "public_api@test.com",
     		"is_active" : true,
-            "products": [1],
+            "products": ["-id product everything-"],
             "sequence_num_settings":{"min" : 1, "max" : 10},
     		"destinations" : [{
     			"delivery_type" : "http_push",

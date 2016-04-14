@@ -54,7 +54,7 @@ class NINJSFormatter(Formatter):
 
     def _transform_to_ninjs(self, article, recursive=True):
         ninjs = {
-            '_id': article[GUID_FIELD],
+            'guid': article[GUID_FIELD],
             'version': str(article.get(config.VERSION, 1)),
             'type': self._get_type(article)
         }
@@ -145,7 +145,7 @@ class NINJSFormatter(Formatter):
                 if RESIDREF in ref:
                     items = associations.get(group[GROUP_ID], [])
                     item = {}
-                    item['_id'] = ref[RESIDREF]
+                    item['guid'] = ref[RESIDREF]
                     item[ITEM_TYPE] = ref[ITEM_TYPE]
                     if ref.get('package_item'):
                         item.update(self._transform_to_ninjs(ref['package_item'], recursive=False))
