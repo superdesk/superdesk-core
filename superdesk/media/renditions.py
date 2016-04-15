@@ -15,6 +15,8 @@ import logging
 from flask import current_app as app
 from .media_operations import process_file_from_stream
 from .media_operations import crop_image
+from eve.utils import config
+from superdesk import get_resource_service
 
 
 logger = logging.getLogger(__name__)
@@ -163,3 +165,22 @@ def _resize_image(content, size, format='png', keepProportions=True):
     resized.save(out, format, quality=85)
     out.seek(0)
     return out, new_width, new_height
+
+
+def get_renditions_spec():
+    '''
+    Return the list of the needed renditions. It contains the ones defined in
+    settings in `RENDITIONS.picture` and the ones defined in vocabularies in `crop_sizes`
+
+    @return: list
+        Returns the list of renditions specification.
+    '''
+    # renditions required by superdesk
+    rendition_spec = config.RENDITIONS['picture']
+    # load custom renditions sizes
+    custom_crops = get_resource_service('vocabularies').find_one(req=None, _id='crop_sizes')
+    if custom_crops:
+        for crop in custom_crops.get('items'):
+            # complete list of wanted renditions
+            rendition_spec[crop['name']] = crop
+    return rendition_spec
