@@ -38,6 +38,7 @@ class TransmitItemsTestCase(TestCase):
         item_1 = {
             '_id': 'item_1',
             'destination': {},
+            'subscriber_id': '1',
             'item_id': 'test',
             'headline': 'test headline',
             'item_version': 4,
@@ -61,6 +62,7 @@ class TransmitItemsTestCase(TestCase):
         item_1 = {
             '_id': 'item_1',
             'destination': {},
+            'subscriber_id': '1',
             'item_id': 'test',
             'headline': 'test headline',
             'item_version': 4,
@@ -88,6 +90,7 @@ class TransmitItemsTestCase(TestCase):
         item_1 = {
             '_id': 'item_1',
             'destination': {},
+            'subscriber_id': '1',
             'item_id': 'test',
             'headline': 'test headline',
             'item_version': 4,
@@ -112,6 +115,7 @@ class TransmitItemsTestCase(TestCase):
 
         item_1 = {
             '_id': 'item_1',
+            'subscriber_id': '1',
             'destination': {},
             'item_id': 'test',
             'headline': 'test headline',

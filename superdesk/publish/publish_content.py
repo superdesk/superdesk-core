@@ -22,7 +22,6 @@ from superdesk.celery_task_utils import get_lock_id
 from superdesk import get_resource_service
 from .publish_queue import QueueState
 
-
 logger = logging.getLogger(__name__)
 
 UPDATE_SCHEDULE_DEFAULT = {'seconds': 10}
@@ -72,14 +71,20 @@ def get_queue_items():
     }
     request = ParsedRequest()
     request.max_results = app.config.get('MAX_TRANSMIT_QUERY_LIMIT', 500)
+    # ensure we publish in the correct sequence
+    request.sort = '[("_created", 1), ("subscriber_id", 1), ("published_seq_num", 1)]'
     return get_resource_service(PUBLISH_QUEUE).get(req=request, lookup=lookup)
 
 
-def transmit_items(queue_items):
-    publish_queue_service = get_resource_service(PUBLISH_QUEUE)
-    failed_items = {}
+@celery.task(soft_time_limit=1800, bind=True)
+def transmit_subscriber_items(self, queue_items, subscriber):
+    # Attempt to obtain a lock for transmissions to the subscriber
+    lock_name = get_lock_id("Subscriber", "Transmit", subscriber)
+    if not lock(lock_name, expire=300):
+        return
 
     for queue_item in queue_items:
+        publish_queue_service = get_resource_service(PUBLISH_QUEUE)
         log_msg = '_id: {_id}  item_id: {item_id}  state: {state} ' \
                   'item_version: {item_version} headline: {headline}'.format(**queue_item)
         try:
@@ -93,15 +98,10 @@ def transmit_items(queue_items):
             logger.info('Transmitted queue item {}'.format(log_msg))
         except:
             logger.exception('Failed to transmit queue item {}'.format(log_msg))
-            failed_items[str(queue_item.get(config.ID_FIELD))] = queue_item
-
-    if len(failed_items) > 0:
-        # failed items will retry based on MAX_TRANSMIT_RETRY_ATTEMPT
-        max_retry_attempt = app.config.get('MAX_TRANSMIT_RETRY_ATTEMPT')
-        retry_attempt_delay = app.config.get('TRANSMIT_RETRY_ATTEMPT_DELAY_MINUTES')
-        for item_id in failed_items.keys():
+            max_retry_attempt = app.config.get('MAX_TRANSMIT_RETRY_ATTEMPT')
+            retry_attempt_delay = app.config.get('TRANSMIT_RETRY_ATTEMPT_DELAY_MINUTES')
             try:
-                orig_item = publish_queue_service.find_one(req=None, _id=item_id)
+                orig_item = publish_queue_service.find_one(req=None, _id=queue_item['_id'])
                 updates = {config.LAST_UPDATED: utcnow()}
                 if orig_item.get('retry_attempt', 0) < max_retry_attempt:
                     updates['retry_attempt'] = orig_item.get('retry_attempt', 0) + 1
@@ -113,22 +113,20 @@ def transmit_items(queue_items):
 
                 publish_queue_service.system_update(orig_item.get(config.ID_FIELD), updates, orig_item)
             except:
-                logger.error('Failed to set the state for failed publish queue item {}.'.format(item_id))
+                logger.error('Failed to set the state for failed publish queue item {}.'.format(queue_item['_id']))
 
-        logger.error('Failed to publish the following items: {}'.format(failed_items.keys()))
+    # Release the lock for the subscriber
+    lock_name = get_lock_id("Subscriber", "Transmit", subscriber)
+    unlock(lock_name)
 
 
-def can_transmit_queue_item(queue_item):
-    """
-    Check if the queue item can be tranmitted or not
-    :param dict queue_item: queue item
-    :return boolean: True or False
-    """
-    if queue_item.get('state') == QueueState.RETRYING:
-        if not queue_item.get('next_retry_attempt_at') <= utcnow():
-            return False
-
-    return True
+def transmit_items(queue_items):
+    # get a distinct list of the subscribers that have queued items
+    subscribers = list(set([q['subscriber_id'] for q in queue_items]))
+    # extract the queued items for each subscriber and transmit them
+    for subscriber in subscribers:
+        sub_queue_items = [item for item in queue_items if item['subscriber_id'] == subscriber]
+        transmit_subscriber_items.apply_async(kwargs={'queue_items': sub_queue_items, 'subscriber': str(subscriber)})
 
 
 superdesk.command('publish:transmit', PublishContent())
