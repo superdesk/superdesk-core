@@ -82,6 +82,19 @@ Feature: Stages
         Then we get global content expiry
 
     @auth @notification
+    Scenario: Adding content to a stage having -1 expiry will get global expiry for the content
+        When we post to "/stages"
+        """
+        {"name": "update expiry", "desk": "#desks._id#", "content_expiry": -1}
+        """
+        And we post to "/archive"
+        """
+        [{"_id": "testid1", "guid": "testid1", "task": {"desk": "#desks._id#", "stage" :"#stages._id#"}}]
+        """
+        And we get "archive/testid1"
+        Then we get global content expiry
+
+    @auth @notification
     Scenario: Can delete an empty stage
         When we post to "/stages"
         """
