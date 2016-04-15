@@ -24,11 +24,11 @@ Feature: Prepopulate
                    {"username": "test_user"}]}
         """
 
-        When we find for "users" the id as "user_admin" by "{"username": "admin"}"
-        When we find for "users" the id as "user_admin1" by "{"username": "admin1"}"
-        When we find for "users" the id as "user_admin2" by "{"username": "admin2"}"
-        When we find for "users" the id as "user_admin3" by "{"username": "admin3"}"
-        When we find for "users" the id as "user_admin4" by "{"username": "admin4"}"
+        When we find for "users" the id as "user_admin" by "where={"username": "admin"}"
+        When we find for "users" the id as "user_admin1" by "where={"username": "admin1"}"
+        When we find for "users" the id as "user_admin2" by "where={"username": "admin2"}"
+        When we find for "users" the id as "user_admin3" by "where={"username": "admin3"}"
+        When we find for "users" the id as "user_admin4" by "where={"username": "admin4"}"
 
         And we get "/desks"
         Then we get list with 2 items

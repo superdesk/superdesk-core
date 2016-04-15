@@ -597,7 +597,7 @@ def step_impl_we_get_latest(context):
 
 @when('we find for "{resource}" the id as "{name}" by "{search_criteria}"')
 def when_we_find_for_resource_the_id_as_name_by_search_criteria(context, resource, name, search_criteria):
-    url = '/' + resource + '?where=' + search_criteria
+    url = '/' + resource + '?' + search_criteria
     context.response = context.client.get(get_prefixed_url(context.app, url), headers=context.headers)
     if context.response.status_code == 200:
         expect_json_length(context.response, 1, path='_items')
