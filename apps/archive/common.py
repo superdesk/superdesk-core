@@ -328,9 +328,9 @@ def get_item_expiry(desk, stage, offset=None):
     :return datetime: expiry datetime
     """
     expiry_minutes = app.settings['CONTENT_EXPIRY_MINUTES']
-    if stage and stage.get('content_expiry'):
+    if stage and (stage.get('content_expiry') or 0) > 0:
         expiry_minutes = stage.get('content_expiry')
-    elif desk and desk.get('content_expiry'):
+    elif desk and (desk.get('content_expiry') or 0) > 0:
         expiry_minutes = desk.get('content_expiry')
 
     return get_expiry_date(expiry_minutes, offset=offset)
