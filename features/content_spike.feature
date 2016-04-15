@@ -1,6 +1,7 @@
 Feature: Content Spiking
 
     @auth
+    @notification
     Scenario: Spike a user content and validate metadata set by API
         Given "archive"
         """
@@ -14,6 +15,10 @@ Feature: Content Spiking
         When we spike "item-1"
         Then we get OK response
         And we get spiked content "item-1"
+        And we get notifications
+        """
+        [{"event": "item:spike", "extra": {"item": "item-1", "user": "#CONTEXT_USER_ID#"}}]
+        """
         And we get version 2
         And we get global content expiry
         When we get "/archive/item-1"
@@ -70,6 +75,7 @@ Feature: Content Spiking
         Then we get OK response
 
     @auth
+    @notification
     Scenario: Unspike a content
         Given empty "archive"
         Given we have "administrator" as type of user
@@ -80,6 +86,10 @@ Feature: Content Spiking
         When we spike "item-1"
         And we unspike "item-1"
         Then we get unspiked content "item-1"
+        And we get notifications
+        """
+        [{"event": "item:unspike", "extra": {"item": "item-1", "user": "#CONTEXT_USER_ID#"}}]
+        """
         And we get version 3
         And we get global content expiry
 
