@@ -180,7 +180,7 @@ class ArchiveSpikeService(BaseService):
             updates['groups'] = []
 
         item = self.backend.update(self.datasource, id, updates, original)
-        push_notification('item:spike', item=str(item.get(config.ID_FIELD)), user=str(user))
+        push_notification('item:spike', item=str(id), user=str(user.get(config.ID_FIELD)))
         self._removed_refs_from_package(id)
         return item
 
@@ -228,7 +228,7 @@ class ArchiveUnspikeService(BaseService):
         self.backend.update(self.datasource, id, updates, original)
         item = get_resource_service(ARCHIVE).find_one(req=None, _id=id)
 
-        push_notification('item:unspike', item=str(id), user=str(user))
+        push_notification('item:unspike', item=str(id), user=str(user.get(config.ID_FIELD)))
         return item
 
 
