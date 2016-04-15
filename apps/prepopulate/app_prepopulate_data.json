@@ -319,6 +319,34 @@
     },
 
     {
+        "resource":"ingest_providers",
+        "username": "admin",
+        "id_name": "-id Ingest Provider-",
+        "data": {
+          "name": "aap",
+          "feeding_service": "file",
+          "feed_parser": "nitf",
+          "config": {"path": "/"},
+          "source": "aap",
+          "allow_remove_ingested" : true,
+          "is_closed": true
+        }
+    },
+    {
+        "resource":"ingest_providers",
+        "username": "admin",
+        "data": {
+          "name": "afp",
+          "feeding_service": "afp_file",
+          "feed_parser": "newsml12",
+          "config": {"path": "/"},
+          "source": "afp",
+          "allow_remove_ingested" : true,
+          "is_closed": true
+        }
+    },
+
+    {
         "data": {
             "_id": "desk_types",
             "items": [
@@ -750,6 +778,7 @@
         "resource": "ingest",
         "data": {
             "headline": "ingest1",
+            "ingest_provider": "-id Ingest Provider-",
             "type": "text",
             "guid": "ingest1",
             "versioncreated": "2015-01-03T10:00:00+0000"
@@ -1025,30 +1054,6 @@
 		        "status": "todo",
 		        "stage": "one"
 		    }
-        }
-    },
-    {
-        "resource":"ingest_providers",
-        "username": "admin",
-        "data": {
-          "name": "aap",
-          "feeding_service": "file",
-          "feed_parser": "nitf",
-          "config": {"path": "/"},
-          "source": "aap",
-          "is_closed": true
-        }
-    },
-    {
-        "resource":"ingest_providers",
-        "username": "admin",
-        "data": {
-          "name": "afp",
-          "feeding_service": "afp_file",
-          "feed_parser": "newsml12",
-          "config": {"path": "/"},
-          "source": "afp",
-          "is_closed": true
         }
     },
     {
