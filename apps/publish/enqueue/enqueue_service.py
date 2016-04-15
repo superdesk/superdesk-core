@@ -419,18 +419,12 @@ class EnqueueService:
                         target_media_type == SUBSCRIBER_TYPES.DIGITAL and not can_send_takes_packages:
                     continue
 
-            if doc.get('targeted_for'):
-                found_match = [t for t in doc['targeted_for'] if t['name'] == subscriber.get('subscriber_type', '')]
-
-                if len(found_match) == 0 and subscriber.get('geo_restrictions'):
-                    found_match = [t for t in doc['targeted_for'] if t['name'] == subscriber['geo_restrictions']]
-                    if len(found_match) == 0 or found_match[0]['allow'] is False:
-                        continue
-                elif len(found_match) > 0 and found_match[0]['allow'] is False:
-                    continue
+            conforms, skip_filters = self.conforms_targets(subscriber, doc)
+            if not conforms:
+                continue
 
             if not self.conforms_global_filter(subscriber, global_filters, doc):
-                    continue
+                continue
 
             product_codes = self._get_codes(subscriber)
             subscriber_added = False
@@ -444,11 +438,54 @@ class EnqueueService:
                         filtered_subscribers.append(subscriber)
                         subscriber_added = True
 
+            if skip_filters and not subscriber_added:
+                filtered_subscribers.append(subscriber)
+                subscriber_added = True
+
             # unify the list of codes by removing duplicates
             if subscriber_added:
                 subscriber_codes[subscriber[config.ID_FIELD]] = list(set(product_codes))
 
         return filtered_subscribers, subscriber_codes
+
+    def conforms_targets(self, subscriber, article):
+        """
+        Checks if the given article has any target information and if it does
+        it checks if the target satisfies any of the target information
+        :param subscriber: Subscriber to test
+        :param article: article
+        :return:
+            bool: True/False if the article conforms the targets
+            bool: True if the given subscriber is specifically targeted, False otherwise
+        """
+
+        # If not targeted at all then Return true
+        if not BasePublishService().is_targeted(article):
+            return True, False
+
+        geo_restrictions = subscriber.get('geo_restrictions')
+        subscriber_type = subscriber.get('subscriber_type')
+
+        for t in article.get('target_subscribers', []):
+            if t.get('_id') == subscriber['_id']:
+                return True, True
+
+        if geo_restrictions:
+            for region in article.get('target_regions', []):
+                if region['name'] == geo_restrictions and region['allow']:
+                    return True, False
+                if region['name'] != geo_restrictions and not region['allow']:
+                    return True, False
+
+        if subscriber_type:
+            for t in article.get('target_types', []):
+                if t['name'] == subscriber_type and t['allow']:
+                    return True
+                if t['name'] != subscriber_type and not t['allow']:
+                    return True, False
+
+        # If nothing has matched so far then it doesn't conform the targets
+        return False, False
 
     def conforms_content_filter(self, product, doc):
         """

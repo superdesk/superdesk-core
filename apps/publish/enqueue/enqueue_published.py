@@ -57,7 +57,7 @@ class EnqueuePublishedService(EnqueueService):
             takes_subscribers, take_codes = self._get_subscribers_for_previously_sent_items(query)
 
         # Step 2
-        if doc.get('targeted_for'):
+        if doc.get('target_regions'):
             subscribers = list(self.non_digital(subscribers))
 
         # Step 3
@@ -77,7 +77,7 @@ class EnqueuePublishedService(EnqueueService):
         # Step 4
         if not first_take:
             subscribers, codes = self.filter_subscribers(doc, subscribers,
-                                                         SUBSCRIBER_TYPES.WIRE if doc.get('targeted_for')
+                                                         SUBSCRIBER_TYPES.WIRE if doc.get('target_regions')
                                                          else target_media_type)
 
         if takes_subscribers:

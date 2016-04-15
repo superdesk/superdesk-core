@@ -159,8 +159,7 @@ class AapIpNewsFormatterTest(SuperdeskTestCase):
             'priority': 1,
             'task': {'desk': 1},
             'urgency': 1,
-            'place': [{'qcode': 'VIC', 'name': 'VIC'}],
-            'targeted_for': [{'name': 'New South Wales', 'allow': False}, {'name': 'Victoria', 'allow': True}]
+            'place': [{'qcode': 'VIC', 'name': 'VIC'}]
         }
 
         subscriber = self.app.data.find('subscribers', None, None)[0]
@@ -190,8 +189,7 @@ class AapIpNewsFormatterTest(SuperdeskTestCase):
             'priority': 1,
             'task': {'desk': 1},
             'urgency': 1,
-            'place': [{'qcode': 'VIC', 'name': 'VIC'}],
-            'targeted_for': [{'name': 'New South Wales', 'allow': False}, {'name': 'Victoria', 'allow': False}]
+            'place': [{'qcode': 'VIC', 'name': 'VIC'}]
         }
 
         subscriber = self.app.data.find('subscribers', None, None)[0]

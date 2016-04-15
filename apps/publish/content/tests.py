@@ -24,6 +24,7 @@ from apps.validators import ValidatorsPopulateCommand
 from superdesk.metadata.packages import RESIDREF
 from test_factory import SuperdeskTestCase
 from superdesk.publish import init_app, publish_queue
+from apps.publish.content.common import BasePublishService
 from superdesk.utc import utcnow
 from superdesk import get_resource_service
 import superdesk
@@ -277,7 +278,7 @@ class ArchivePublishTestCase(SuperdeskTestCase):
                           '_id': '8',
                           'last_version': 3,
                           config.VERSION: 4,
-                          'targeted_for': [{'name': 'New South Wales', 'allow': True}],
+                          'target_regions': [{'name': 'New South Wales', 'allow': True}],
                           'body_html': 'Take-1 body',
                           'urgency': 4,
                           'headline': 'Take-1 headline',
@@ -647,11 +648,37 @@ class ArchivePublishTestCase(SuperdeskTestCase):
 
         enqueue_published()
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
-        self.assertEqual(4, queue_items.count())
+        self.assertEqual(1, queue_items.count())
 
         # this will delete queue transmission for the wire article not the takes package.
         publish_queue.PublishQueueService(PUBLISH_QUEUE, superdesk.get_backend()).delete_by_article_id(doc['_id'])
         self._is_publish_queue_empty()
+
+    def test_conform_target_regions(self):
+        doc = {'headline': 'test'}
+        subscriber = {'geo_restrictions': 'Queensland'}
+        self.assertTrue(EnqueueService().conforms_targets(subscriber, doc))
+        doc = {'headline': 'test', 'target_regions': []}
+        self.assertTrue(EnqueueService().conforms_targets(subscriber, doc))
+        doc = {'headline': 'test', 'target_regions': [{'name': 'Victoria', 'allow': True}]}
+        self.assertTupleEqual((False, False), EnqueueService().conforms_targets(subscriber, doc))
+        doc = {'headline': 'test', 'target_regions': [{'name': 'Victoria', 'allow': False}]}
+        self.assertTrue(EnqueueService().conforms_targets(subscriber, doc))
+        doc = {'headline': 'test', 'target_regions': [{'name': 'Queensland', 'allow': True}]}
+        self.assertTrue(EnqueueService().conforms_targets(subscriber, doc))
+        doc = {'headline': 'test', 'target_regions': [{'name': 'Queensland', 'allow': False}]}
+        self.assertTupleEqual((False, False), EnqueueService().conforms_targets(subscriber, doc))
+
+    def test_conform_target_subscribers(self):
+        doc = {'headline': 'test'}
+        subscriber = {'_id': 1}
+        self.assertTupleEqual((True, False), EnqueueService().conforms_targets(subscriber, doc))
+        doc = {'headline': 'test', 'target_subscribers': []}
+        self.assertTupleEqual((True, False), EnqueueService().conforms_targets(subscriber, doc))
+        doc = {'headline': 'test', 'target_subscribers': [{'_id': 2}]}
+        self.assertTupleEqual((False, False), EnqueueService().conforms_targets(subscriber, doc))
+        doc = {'headline': 'test', 'target_subscribers': [{'_id': 1}]}
+        self.assertTupleEqual((True, True), EnqueueService().conforms_targets(subscriber, doc))
 
     def test_can_publish_article(self):
         product = self.products[0]
@@ -684,16 +711,28 @@ class ArchivePublishTestCase(SuperdeskTestCase):
 
         product.pop('content_filter')
 
+    def test_is_targeted(self):
+        doc = {'headline': 'test'}
+        self.assertFalse(BasePublishService().is_targeted(doc))
+        doc = {'headline': 'test', 'target_regions': []}
+        self.assertFalse(BasePublishService().is_targeted(doc))
+        doc = {'headline': 'test', 'target_regions': [{'New South Wales'}]}
+        self.assertTrue(BasePublishService().is_targeted(doc))
+        doc = {'headline': 'test', 'target_regions': [], 'target_types': []}
+        self.assertFalse(BasePublishService().is_targeted(doc))
+        doc = {'headline': 'test', 'target_regions': [], 'target_types': [{'Digital'}]}
+        self.assertTrue(BasePublishService().is_targeted(doc))
+
     def test_targeted_for_excludes_digital_subscribers(self):
         ValidatorsPopulateCommand().run(self.filename)
-        updates = {'targeted_for': [{'name': 'New South Wales', 'allow': True}]}
+        updates = {'target_regions': [{'name': 'New South Wales', 'allow': True}]}
         doc_id = self.articles[9][config.ID_FIELD]
         get_resource_service(ARCHIVE).patch(id=doc_id, updates=updates)
 
         get_resource_service(ARCHIVE_PUBLISH).patch(id=doc_id, updates={ITEM_STATE: CONTENT_STATE.PUBLISHED})
         enqueue_published()
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
-        self.assertEqual(4, queue_items.count())
+        self.assertEqual(1, queue_items.count())
         expected_subscribers = ['1', '2', '4']
         for item in queue_items:
             self.assertIn(item["subscriber_id"], expected_subscribers, 'item {}'.format(item))

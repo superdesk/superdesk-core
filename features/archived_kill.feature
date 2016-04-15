@@ -49,7 +49,8 @@ Feature: Kill a content item in the (dusty) archive
     [{"guid": "123", "type": "text", "state": "fetched", "slugline": "archived",
       "headline": "headline", "anpa_category" : [{"qcode" : "e", "name" : "Entertainment"}],
       "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
-      "subject":[{"qcode": "17004000", "name": "Statistics"}], "targeted_for": [{"name": "Digital", "allow": false}],
+      "subject":[{"qcode": "17004000", "name": "Statistics"}],
+      "target_types": [{"name": "digital", "allow": false}],
       "dateline" : {
         "located" : {
             "state_code" : "NSW",

@@ -62,12 +62,12 @@ class EnqueueCorrectedService(EnqueueService):
 
             if len(subscribers_yet_to_receive) > 0:
                 # Step 4
-                if doc.get('targeted_for'):
+                if doc.get('target_regions'):
                     subscribers_yet_to_receive = list(self.non_digital(subscribers_yet_to_receive))
                 # Step 5
                 subscribers_yet_to_receive, codes = \
                     self.filter_subscribers(doc, subscribers_yet_to_receive,
-                                            SUBSCRIBER_TYPES.WIRE if doc.get('targeted_for') else target_media_type)
+                                            SUBSCRIBER_TYPES.WIRE if doc.get('target_regions') else target_media_type)
                 if codes:
                     subscriber_codes.update(codes)
 

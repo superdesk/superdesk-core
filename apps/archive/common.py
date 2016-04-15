@@ -539,7 +539,7 @@ def item_schema(extra=None):
             'allowed': item_operations,
             'index': 'not_analyzed'
         },
-        'targeted_for': {
+        'target_regions': {
             'type': 'list',
             'nullable': True,
             'schema': {
@@ -549,6 +549,21 @@ def item_schema(extra=None):
                     'allow': {'type': 'boolean'}
                 }
             }
+        },
+        'target_types': {
+            'type': 'list',
+            'nullable': True,
+            'schema': {
+                'type': 'dict',
+                'schema': {
+                    'name': {'type': 'string'},
+                    'allow': {'type': 'boolean'}
+                }
+            }
+        },
+        'target_subscribers': {
+            'type': 'list',
+            'nullable': True
         },
         'event_id': {
             'type': 'string',
