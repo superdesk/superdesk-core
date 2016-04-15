@@ -86,6 +86,7 @@ __entities__ = {
     'dictionaries': ('dictionaries.json', '', True),
     'ingest_providers': ('ingest_providers.json', '', True),
     'search_providers': ('search_providers.json', '', True),
+    'products': ('products.json', '', True),
     'subscribers': ('subscribers.json', '', True),
     'workspaces': ('workspaces.json', '', True),
 }
