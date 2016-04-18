@@ -33,8 +33,7 @@ class UsersResource(Resource):
             },
             'password': {
                 'type': 'string',
-                'minlength': 5,
-                'readonly': self.readonly
+                'minlength': 5
             },
             'first_name': {
                 'type': 'string',
@@ -45,8 +44,7 @@ class UsersResource(Resource):
                 'readonly': self.readonly
             },
             'display_name': {
-                'type': 'string',
-                'readonly': self.readonly
+                'type': 'string'
             },
             'email': {
                 'unique': True,
@@ -55,12 +53,10 @@ class UsersResource(Resource):
             },
             'phone': {
                 'type': 'phone_number',
-                'readonly': self.readonly,
                 'nullable': True
             },
             'language': {
                 'type': 'string',
-                'readonly': self.readonly,
                 'nullable': True
             },
             'user_info': {

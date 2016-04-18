@@ -21,7 +21,7 @@ class ADUsersService(UsersService):
     Service class for UsersResource and should be used when AD is active.
     """
 
-    readonly_fields = ['email', 'phone', 'first_name', 'last_name']
+    readonly_fields = ['email', 'first_name', 'last_name']
 
     def on_fetched(self, doc):
         super().on_fetched(doc)
