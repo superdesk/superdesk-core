@@ -24,7 +24,7 @@ from superdesk.io.register import registered_feeding_services, registered_feed_p
 from superdesk.io.iptc import subject_codes
 from superdesk.lock import lock, unlock
 from superdesk.media.media_operations import download_file_from_url, process_file
-from superdesk.media.renditions import generate_renditions
+from superdesk.media.renditions import generate_renditions, get_renditions_spec
 from superdesk.metadata.item import GUID_NEWSML, GUID_FIELD, FAMILY_ID, ITEM_TYPE, CONTENT_TYPE, CONTENT_STATE, \
     ITEM_STATE
 from superdesk.metadata.utils import generate_guid
@@ -520,12 +520,10 @@ def update_renditions(item, href, old_item):
 
         content, filename, content_type = download_file_from_url(href)
         file_type, ext = content_type.split('/')
-
         metadata = process_file(content, file_type)
         file_guid = app.media.put(content, filename, content_type, metadata)
         inserted.append(file_guid)
-
-        rendition_spec = app.config.get('RENDITIONS', {}).get('picture', {})
+        rendition_spec = get_renditions_spec()
         renditions = generate_renditions(content, file_guid, inserted, file_type,
                                          content_type, rendition_spec, url_for_media)
         item['renditions'] = renditions
