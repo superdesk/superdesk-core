@@ -311,7 +311,7 @@ class NinjsFormatterTest(TestCase):
         formatted = json.loads(doc)
         self.assertIn('associations', formatted)
         self.assertIn('image', formatted['associations'])
-        image = formatted['associations']['image']
+        image = formatted['associations']['image'][0]
         self.assertEqual('urn:foo', image['guid'])
         self.assertEqual('Foo', image['headline'])
         self.assertEqual('usable', image['pubstatus'])

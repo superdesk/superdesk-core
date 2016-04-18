@@ -53,8 +53,12 @@ class HTTPPushService(PublishService):
         @param assets_url: the url where the media can be uploaded
         @type assets_url: string
         """
-        for name, rendition in item.get('renditions', {}).items():
-            del item['renditions'][name]['href']
+        renditions = item.get('renditions', {})
+        for assoc_list in item.get('associations', {}).values():
+            for assoc in assoc_list:
+                renditions.update(assoc.get('renditions', {}))
+        for name, rendition in renditions.items():
+            del renditions[name]['href']
             if not self._media_exists(rendition['media'], assets_url):
                 media = app.media.get(rendition['media'], resource='upload')
                 files = {'media': (rendition['media'], media, rendition.get('mimetype') or rendition['mime_type'])}

@@ -41,7 +41,7 @@ class NINJSFormatter(Formatter):
                               'urgency', 'pubstatus', 'mimetype', 'place', 'copyrightholder',
                               'body_text', 'body_html', 'profile', 'slugline', 'keywords')
 
-    rendition_properties = ('href', 'width', 'height', 'mimetype', 'poi')
+    rendition_properties = ('href', 'width', 'height', 'mimetype', 'poi', 'media')
 
     def format(self, article, subscriber):
         try:
@@ -81,6 +81,9 @@ class NINJSFormatter(Formatter):
         if recursive:
             if article[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
                 ninjs['associations'] = self._get_associations(article)
+                if 'associations' in article:
+                    for group, assoc in self._format_related(article).items():
+                        ninjs['associations'][group] = ninjs['associations'].get(group, []) + assoc
             elif article.get('associations', {}):
                 ninjs['associations'] = self._format_related(article)
 
@@ -157,7 +160,7 @@ class NINJSFormatter(Formatter):
         """Format all associated items for simple items (not packages)."""
         associations = {}
         for key, item in article.get('associations', {}).items():
-            associations[key] = self._transform_to_ninjs(item)
+            associations[key] = [self._transform_to_ninjs(item)]
         return associations
 
     def _get_subject(self, article):

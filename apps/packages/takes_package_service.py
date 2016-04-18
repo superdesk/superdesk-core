@@ -125,6 +125,8 @@ class TakesPackageService():
         for field in fields_for_creating_takes_package:
             if field in target:
                 takes_package[field] = target.get(field)
+        if target.get('associations', {}).get('featureimage'):
+            takes_package['associations'] = {'featureimage': target['associations']['featureimage']}
 
         takes_package.setdefault(config.VERSION, 1)
 
