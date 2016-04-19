@@ -559,7 +559,7 @@ Feature: Archive Broadcast
     And the "content_templates"
       """
       [
-      {"template_name": "kill", "template_type": "kill",
+      {"template_name": "kill", "template_type": "kill", "is_public": true,
        "data": {"body_html": "<p>Story killed due to court case. Please remove the story from your archive.<\/p>",
                 "type": "text", "abstract": "This article has been removed", "headline": "Kill\/Takedown notice ~~~ Kill\/Takedown notice",
                 "urgency": 1, "priority": 1,  "anpa_take_key": "KILL\/TAKEDOWN",
@@ -1459,7 +1459,8 @@ Feature: Archive Broadcast
               "anpa_take_key": "KILL\/TAKEDOWN"
             },
             "template_name": "kill",
-            "template_type": "kill"
+            "template_type": "kill",
+            "is_public": true
           }
       """
     Then we get new resource
@@ -1653,7 +1654,8 @@ Feature: Archive Broadcast
               "anpa_take_key": "KILL\/TAKEDOWN"
             },
             "template_name": "kill",
-            "template_type": "kill"
+            "template_type": "kill",
+            "is_public": true
           }
       """
     Then we get new resource
@@ -1901,7 +1903,8 @@ Feature: Archive Broadcast
             "anpa_take_key": "KILL\/TAKEDOWN"
           },
           "template_name": "kill",
-          "template_type": "kill"
+          "template_type": "kill",
+          "is_public": true
         }
       """
     Then we get new resource
@@ -2109,7 +2112,8 @@ Feature: Archive Broadcast
             "anpa_take_key": "KILL\/TAKEDOWN"
           },
           "template_name": "kill",
-          "template_type": "kill"
+          "template_type": "kill",
+          "is_public": true
         }
       """
     Then we get new resource
