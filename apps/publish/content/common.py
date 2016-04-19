@@ -193,13 +193,20 @@ class BasePublishService(BaseService):
             self.update_published_collection(published_item_id=package_id)
             self._import_into_legal_archive(package)
 
-    def is_targeted(self, article):
-        """ Returns True if the given article has been targeted by region or
-        subscriber type or specific subscribers
+    def is_targeted(self, article, target=None):
         """
-        return len(article.get('target_regions', []) +
-                   article.get('target_types', []) +
-                   article.get('target_subscribers', [])) > 0
+        Returns True if the given article has been targeted by region or
+        subscriber type or specific subscribers
+        :param article: Article to check
+        :param target: Optional specific target to check if exists
+        :return:
+        """
+        if target:
+            return len(article.get(target, [])) > 0
+        else:
+            return len(article.get('target_regions', []) +
+                       article.get('target_types', []) +
+                       article.get('target_subscribers', [])) > 0
 
     def _validate(self, original, updates):
         self.raise_if_not_marked_for_publication(original)

@@ -38,6 +38,10 @@ class ProductsResource(Resource):
                 }
             },
             'nullable': True
+        },
+        'geo_restrictions': {
+            'type': 'string',
+            'nullable': True
         }
     }
 

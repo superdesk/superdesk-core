@@ -34,10 +34,6 @@ class SubscribersResource(Resource):
         'media_type': {
             'type': 'string'
         },
-        'geo_restrictions': {
-            'type': 'string',
-            'nullable': True
-        },
         'subscriber_type': {
             'type': 'string',
             'allowed': subscriber_types,

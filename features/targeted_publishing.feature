@@ -14,7 +14,8 @@ Feature: Targeted Publishing
     And "products"
     """
     [{"_id": "1", "name":"prod-1", "codes":"abc,xyz"},
-     {"_id": "2", "name":"prod-2", "codes":"klm"}]
+     {"_id": "2", "name":"prod-2", "codes":"klm", "geo_restrictions": "Victoria"},
+     {"_id": "3", "name":"prod-3", "codes":"klm", "geo_restrictions": "Queensland"}]
     """
     And "subscribers"
     """
@@ -33,7 +34,6 @@ Feature: Targeted Publishing
       "name":"Wire channel with geo restriction Victoria",
       "media_type":"media",
       "subscriber_type": "wire",
-      "geo_restrictions": "Queensland",
       "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
       "products": ["2"],
       "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
@@ -44,7 +44,7 @@ Feature: Targeted Publishing
       "media_type":"media",
       "subscriber_type": "wire",
       "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-      "products": ["2"],
+      "products": ["1"],
       "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
     },
     {
@@ -54,7 +54,7 @@ Feature: Targeted Publishing
       "subscriber_type": "wire",
       "geo_restrictions": "Queensland",
       "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-      "products": ["2"],
+      "products": ["3"],
       "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
     },
     {
@@ -103,7 +103,7 @@ Feature: Targeted Publishing
     {
       "_items":
         [
-          {"subscriber_id": "sub-2"}
+          {"subscriber_id": "sub-4"}
         ]
     }
     """
@@ -238,7 +238,7 @@ Feature: Targeted Publishing
       "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
       "subject":[{"qcode": "17004000", "name": "Statistics"}],
       "target_regions": [{"name": "Queensland", "allow": true}],
-      "target_subscribers": [{"_id": "sub-4"}],
+      "target_subscribers": [{"_id": "sub-3"}],
       "body_html": "Test Document body"}]
     """
     Then we get OK response
@@ -256,14 +256,14 @@ Feature: Targeted Publishing
     {
       "_items":
         [
-          {"subscriber_id": "sub-2"},
+          {"subscriber_id": "sub-3"},
           {"subscriber_id": "sub-4"}
         ]
     }
     """
 
   @auth @notification @test
-  Scenario: Correct a story to target subscribers even no products then corect with a changed target
+  Scenario: Correct a story to target subscribers even no products then correct with a changed target
     When we post to "/archive" with success
     """
     [{"guid": "123", "type": "text", "state": "fetched", "slugline": "slugline",
