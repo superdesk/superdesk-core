@@ -54,7 +54,7 @@ class NINJSFormatter(Formatter):
 
     def _transform_to_ninjs(self, article, recursive=True):
         ninjs = {
-            'guid': article[GUID_FIELD],
+            'guid': article.get(GUID_FIELD),
             'version': str(article.get(config.VERSION, 1)),
             'type': self._get_type(article)
         }
