@@ -460,13 +460,12 @@ def update_schedule_settings(updates, field_name, value):
 
     schedule_settings = updates.get(SCHEDULE_SETTINGS, {}) or {}
 
-    if field_name:
+    if field_name and value:
         tz_name = schedule_settings.get('time_zone')
-        if tz_name:
+        if tz_name and not value.tzinfo:
             schedule_settings['utc_{}'.format(field_name)] = local_to_utc(tz_name, value)
         else:
             schedule_settings['utc_{}'.format(field_name)] = value
-            schedule_settings['time_zone'] = None
 
     updates[SCHEDULE_SETTINGS] = schedule_settings
 
