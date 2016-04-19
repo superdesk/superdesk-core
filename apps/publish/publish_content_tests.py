@@ -131,3 +131,19 @@ class PublishContentTests(SuperdeskTestCase):
         ]
         enqueue_items(queue_items)
         fake_enqueue_item.assert_called_with(queue_items[0])
+
+    @mock.patch('apps.publish.enqueue.enqueue_item')
+    def test_enqueue_item_scheduled_with_timezone(self, *mocks):
+        fake_enqueue_item = mocks[0]
+        queue_items = [
+            {
+                '_id': '1', 'item_id': 'item_1', 'queue_state': 'pending',
+                'state': 'scheduled',
+                'publish_schedule': utcnow() + timedelta(minutes=5),
+                'schedule_settings': {
+                    'time_zone': 'Pacific/Fiji'  # something far east
+                }
+            }
+        ]
+        enqueue_items(queue_items)
+        assert not fake_enqueue_item.called, 'not scheduled yet %s' % (queue_items[0]['publish_schedule'], )
