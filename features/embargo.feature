@@ -70,7 +70,7 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
       "_items":
         [
           {"embargo":  "2020-02-13T22:46:19+0000",
-           "schedule_settings":  {"utc_embargo": "2020-02-13T12:41:19+0000"}
+           "schedule_settings":  {"utc_embargo": "2020-02-13T11:46:19+0000"}
           }
         ]
     }
@@ -100,7 +100,7 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     Then we get existing resource
     """
     {"embargo":  "2020-02-13T22:46:19+0000",
-     "schedule_settings":  {"utc_embargo": "2020-02-13T12:41:19+0000"}
+     "schedule_settings":  {"utc_embargo": "2020-02-13T11:46:19+0000"}
     }
     """
     When we patch "/archive/123"
@@ -112,7 +112,7 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     Then we get existing resource
     """
     {"embargo":  "2020-03-13T22:46:19+0000",
-     "schedule_settings":  {"utc_embargo": "2020-03-13T12:41:19+0000"}
+     "schedule_settings":  {"utc_embargo": "2020-03-13T11:46:19+0000"}
     }
     """
     When we patch "/archive/123"

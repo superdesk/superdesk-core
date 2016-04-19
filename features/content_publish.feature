@@ -609,7 +609,7 @@ Feature: Content Publishing
         "_items":
           [
             {"publish_schedule":  "2020-02-13T22:46:19+0000",
-             "schedule_settings":  {"utc_publish_schedule": "2020-02-13T12:41:19+0000"}
+             "schedule_settings":  {"utc_publish_schedule": "2020-02-13T11:46:19+0000"}
             }
           ]
       }
@@ -623,7 +623,7 @@ Feature: Content Publishing
       Then we get existing resource
       """
       {"publish_schedule":  "2020-03-13T22:46:19+0000",
-       "schedule_settings":  {"utc_publish_schedule": "2020-03-13T12:41:19+0000"}
+       "schedule_settings":  {"utc_publish_schedule": "2020-03-13T11:46:19+0000"}
       }
       """
       When we patch "/archive/123"
