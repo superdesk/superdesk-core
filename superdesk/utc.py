@@ -56,7 +56,7 @@ def local_to_utc(local_tz_name, local_datetime):
     """
     if local_datetime:
         local_tz = pytz.timezone(local_tz_name)
-        utc_dat = local_datetime.replace(tzinfo=local_tz).astimezone(pytz.utc)
+        utc_dat = local_tz.localize(local_datetime.replace(tzinfo=None))
         return pytz.utc.normalize(utc_dat)
 
 

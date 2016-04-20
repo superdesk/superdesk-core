@@ -9,15 +9,15 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
+import pytz
+import unittest
 from datetime import datetime, timedelta
-from superdesk.tests import TestCase
 from superdesk.utc import get_date, utcnow, get_expiry_date, local_to_utc, utc_to_local, set_time
 from pytz import utc, timezone # flake8: noqa
 from nose.tools import assert_raises
-import pytz
 
 
-class UTCTestCase(TestCase):
+class UTCTestCase(unittest.TestCase):
 
     def test_get_date(self):
         self.assertIsInstance(get_date('2012-12-12'), datetime)
@@ -76,12 +76,15 @@ class UTCTestCase(TestCase):
     def test_local_to_utc(self):
         # with day light saving on
         local_tz = pytz.timezone('Australia/Sydney')
-        local_dt = datetime(2015, 2, 8, 8, 0, 0, 0, local_tz)
+        local_dt = datetime(2015, 2, 8, 18, 0, 0, 0, local_tz)
         utc_dt = local_to_utc('Australia/Sydney', local_dt)
-        self.assertEqual(utc_dt.hour - local_dt.hour, 13)
+        self.assertEqual(local_dt.hour - utc_dt.hour, 11)
 
         # without day light saving
-        local_dt = local_tz.normalize(datetime(2015, 2, 8, 8, 0, 0, 0).replace(tzinfo=local_tz))
+        local_dt = local_tz.normalize(datetime(2015, 6, 8, 18, 0, 0, 0).replace(tzinfo=local_tz))
         utc_dt = local_to_utc('Australia/Sydney', local_dt)
-        self.assertEqual(utc_dt.hour - local_dt.hour, 14)
+        self.assertEqual(local_dt.hour - utc_dt.hour, 10)
 
+    def test_local_to_utc_europe(self):
+        utc_dt = local_to_utc('Europe/Prague', datetime(2016, 4, 19, 15, 8, 0))
+        self.assertEqual('2016-04-19T13:08:00+00:00', utc_dt.isoformat())
