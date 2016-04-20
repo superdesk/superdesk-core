@@ -7,6 +7,7 @@ import logging
 from superdesk import get_resource_service
 from flask import current_app as app
 from re import findall
+from collections import OrderedDict
 
 logger = logging.getLogger(__name__)
 
@@ -30,66 +31,126 @@ Options can be sent to index creation and in this case the last element in the l
 dictionary:
 [[("first_name", pymongo.ASCENDING), ("last_name", pymongo.ASCENDING)], {'sparse': True}]]
 """
-__entities__ = {
-    'roles': ('roles.json', ['name'], False),
-    'users': ('users.json', [[('first_name', pymongo.ASCENDING),
-                             ('last_name', pymongo.DESCENDING)],
-                             'username'], False),
-    'desks': ('desks.json', ['incoming_stage'], False),
-    'stages': ('stages.json', ['desk'], False),
-    'groups': ('groups.json', '', False),
-    'vocabularies': ('vocabularies.json', '', True),
-    'validators': ('validators.json', '', True),
-    'content_templates': ('content_templates.json', ['template_name'], False),
-    'content_types': ('content_types.json', '', True),
-    'published': (None, [[('expiry', pymongo.ASCENDING),
-                          ('_created', pymongo.ASCENDING),
-                          ('state', pymongo.ASCENDING)],
-                         [('item_id', pymongo.ASCENDING),
-                          ('state', pymongo.ASCENDING)],
-                         [('publish_sequence_no', pymongo.ASCENDING)],
-                         [('queue_state', pymongo.ASCENDING)]], False),
-    'activity': (None, [[('_created', pymongo.DESCENDING),
-                         {'expireAfterSeconds': 86400}],
-                        [('item', pymongo.ASCENDING),
-                         ('read', pymongo.ASCENDING),
-                         ('user', pymongo.ASCENDING)],
-                        [('resource', pymongo.ASCENDING),
-                         ('data.provider_id', pymongo.ASCENDING)]], False),
-    'archive': (None, [[('_updated', pymongo.ASCENDING)],
-                       [('expiry', pymongo.ASCENDING),
-                        ('state', pymongo.ASCENDING)],
-                       [('type', pymongo.ASCENDING)],
-                       [('groups.refs.residRef', pymongo.ASCENDING), {'sparse': True}],
-                       [('schedule_settings.utc_publish_schedule', pymongo.ASCENDING),
-                        ('state', pymongo.ASCENDING)],
-                       [('unique_name', pymongo.ASCENDING)]], False),
-    'archive_versions': (None, [[('_id_document', pymongo.ASCENDING),
-                                 ('_current_version', pymongo.ASCENDING)]], False),
-    'ingest': (None, [[('expiry', pymongo.ASCENDING),
-                       ('ingest_provider', pymongo.ASCENDING)],
-                      [('guid', pymongo.ASCENDING)]], False),
-    'publish_queue': (None, [[('_created', pymongo.DESCENDING),
-                              ('state', pymongo.ASCENDING),
-                              ('destination.delivery_type', pymongo.ASCENDING)],
-                             [('item_id', pymongo.ASCENDING),
-                              ('item_version', pymongo.ASCENDING)],
-                             [('state', pymongo.ASCENDING),
-                              ('destination.delivery_type', pymongo.ASCENDING)],
-                             [('subscriber_id', pymongo.ASCENDING)],
-                             [('_updated', pymongo.DESCENDING)]], False),
-    'archived': (None, [[('archived_id', pymongo.ASCENDING), {'unique': True}]], False),
-    'legal_archive_versions': (None, [[('_id_document', pymongo.ASCENDING),
-                                       ('_current_version', pymongo.ASCENDING)]], False),
-    'legal_publish_queue': (None, [[('_updated', pymongo.DESCENDING)]], False),
-
-    'dictionaries': ('dictionaries.json', '', True),
-    'ingest_providers': ('ingest_providers.json', '', True),
-    'search_providers': ('search_providers.json', '', True),
-    'products': ('products.json', '', True),
-    'subscribers': ('subscribers.json', '', True),
-    'workspaces': ('workspaces.json', '', True),
-}
+__entities__ = OrderedDict([
+    ('roles', ('roles.json', ['name'], False)),
+    ('users', ('users.json', [
+        [
+            ('first_name', pymongo.ASCENDING),
+            ('last_name', pymongo.DESCENDING)
+        ], 'username'], False)),
+    ('stages', ('stages.json', ['desk'], False)),
+    ('desks', ('desks.json', ['incoming_stage'], False)),
+    ('groups', ('groups.json', '', False)),
+    ('vocabularies', ('vocabularies.json', '', True)),
+    ('validators', ('validators.json', '', True)),
+    ('content_templates', ('content_templates.json', ['template_name'], False)),
+    ('content_types', ('content_types.json', '', True)),
+    ('published', (None, [
+        [
+            ('expiry', pymongo.ASCENDING),
+            ('_created', pymongo.ASCENDING),
+            ('state', pymongo.ASCENDING)
+        ],
+        [
+            ('item_id', pymongo.ASCENDING),
+            ('state', pymongo.ASCENDING)
+        ],
+        [
+            ('publish_sequence_no', pymongo.ASCENDING)
+        ],
+        [
+            ('queue_state', pymongo.ASCENDING)
+        ]], False)),
+    ('activity', (None, [
+        [
+            ('_created', pymongo.DESCENDING),
+            {'expireAfterSeconds': 86400}
+        ],
+        [
+            ('item', pymongo.ASCENDING),
+            ('read', pymongo.ASCENDING),
+            ('user', pymongo.ASCENDING)
+        ],
+        [
+            ('resource', pymongo.ASCENDING),
+            ('data.provider_id', pymongo.ASCENDING)
+        ]], False)),
+    ('archive', (None, [
+        [
+            ('_updated', pymongo.ASCENDING)
+        ],
+        [
+            ('expiry', pymongo.ASCENDING),
+            ('state', pymongo.ASCENDING)
+        ],
+        [
+            ('type', pymongo.ASCENDING)
+        ],
+        [
+            ('groups.refs.residRef', pymongo.ASCENDING),
+            {'sparse': True}
+        ],
+        [
+            ('schedule_settings.utc_publish_schedule', pymongo.ASCENDING),
+            ('state', pymongo.ASCENDING)
+        ],
+        [
+            ('unique_name', pymongo.ASCENDING)
+        ]], False)),
+    ('archive_versions', (None, [
+        [
+            ('_id_document', pymongo.ASCENDING),
+            ('_current_version', pymongo.ASCENDING)
+        ]], False)),
+    ('ingest', (None, [
+        [
+            ('expiry', pymongo.ASCENDING),
+            ('ingest_provider', pymongo.ASCENDING)
+        ],
+        [
+            ('guid', pymongo.ASCENDING)
+        ]], False)),
+    ('publish_queue', (None, [
+        [
+            ('_created', pymongo.DESCENDING),
+            ('state', pymongo.ASCENDING),
+            ('destination.delivery_type', pymongo.ASCENDING)
+        ],
+        [
+            ('item_id', pymongo.ASCENDING),
+            ('item_version', pymongo.ASCENDING)
+        ],
+        [
+            ('state', pymongo.ASCENDING),
+            ('destination.delivery_type', pymongo.ASCENDING)
+        ],
+        [
+            ('subscriber_id', pymongo.ASCENDING)
+        ],
+        [
+            ('_updated', pymongo.DESCENDING)
+        ]], False)),
+    ('archived', (None, [
+        [
+            ('archived_id', pymongo.ASCENDING),
+            {'unique': True}
+        ]], False)),
+    ('legal_archive_versions', (None, [
+        [
+            ('_id_document', pymongo.ASCENDING),
+            ('_current_version', pymongo.ASCENDING)
+        ]], False)),
+    ('legal_publish_queue', (None, [
+        [
+            ('_updated', pymongo.DESCENDING)
+        ]], False)),
+    ('dictionaries', ('dictionaries.json', '', True)),
+    ('ingest_providers', ('ingest_providers.json', '', True)),
+    ('search_providers', ('search_providers.json', '', True)),
+    ('products', ('products.json', '', True)),
+    ('subscribers', ('subscribers.json', '', True)),
+    ('workspaces', ('workspaces.json', '', True)),
+])
 
 
 def get_filepath(filename, path=None):
