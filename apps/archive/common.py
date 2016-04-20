@@ -459,13 +459,13 @@ def update_schedule_settings(updates, field_name, value):
     """
 
     schedule_settings = updates.get(SCHEDULE_SETTINGS, {}) or {}
-
+    utc_field_name = 'utc_{}'.format(field_name)
     if field_name:
         tz_name = schedule_settings.get('time_zone')
         if tz_name:
-            schedule_settings['utc_{}'.format(field_name)] = local_to_utc(tz_name, value)
+            schedule_settings[utc_field_name] = local_to_utc(tz_name, value)
         else:
-            schedule_settings['utc_{}'.format(field_name)] = value
+            schedule_settings[utc_field_name] = value
             schedule_settings['time_zone'] = None
 
     updates[SCHEDULE_SETTINGS] = schedule_settings
@@ -478,13 +478,13 @@ def get_utc_schedule(doc, field_name):
     :param field_name: Name of he field: either publish_schedule or embargo
     :return: the utc value of the field
     """
-
+    utc_field_name = 'utc_{}'.format(field_name)
     if SCHEDULE_SETTINGS not in doc or \
             not doc.get(SCHEDULE_SETTINGS) or \
-            field_name not in doc.get(SCHEDULE_SETTINGS, {}):
+            utc_field_name not in doc.get(SCHEDULE_SETTINGS, {}):
         update_schedule_settings(doc, field_name, doc.get(field_name))
 
-    return doc.get(SCHEDULE_SETTINGS, {}).get('utc_{}'.format(field_name))
+    return doc.get(SCHEDULE_SETTINGS, {}).get(utc_field_name)
 
 
 def item_schema(extra=None):

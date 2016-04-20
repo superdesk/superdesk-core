@@ -156,8 +156,8 @@ class ArchiveService(BaseService):
                 self.packageService.on_create([doc])
 
             # Do the validation after Circular Reference check passes in Package Service
-            self.validate_embargo(doc)
             update_schedule_settings(doc, EMBARGO, doc.get(EMBARGO))
+            self.validate_embargo(doc)
 
             if doc.get('media'):
                 self.mediaService.on_create([doc])
@@ -199,8 +199,6 @@ class ArchiveService(BaseService):
         self._validate_updates(original, updates, user)
 
         if PUBLISH_SCHEDULE in updates and original[ITEM_STATE] == CONTENT_STATE.SCHEDULED:
-            self.deschedule_item(updates, original)  # this is an deschedule action
-
             # check if there is a takes package and deschedule the takes package.
             takes_service = TakesPackageService()
             package = takes_service.get_take_package(original)
@@ -430,18 +428,30 @@ class ArchiveService(BaseService):
         if new_versions:
             get_resource_service('archive_versions').post(new_versions)
 
-    def deschedule_item(self, updates, doc):
+    def update(self, id, updates, original):
+        if PUBLISH_SCHEDULE in updates and original[ITEM_STATE] == CONTENT_STATE.SCHEDULED:
+            self.deschedule_item(updates, original)  # this is an deschedule action
+        # elif updates.get(EMBARGO) is None and original.get(EMBARGO):
+        #     self.remove_embargo(updates)
+
+        return super().update(id, updates, original)
+
+    def deschedule_item(self, updates, original):
         """
         Deschedule an item. This operation removed the item from publish queue and published collection.
         :param dict updates: updates for the document
-        :param doc: original is document.
+        :param original: original is document.
         """
         updates[ITEM_STATE] = CONTENT_STATE.PROGRESS
         updates[PUBLISH_SCHEDULE] = None
         updates[SCHEDULE_SETTINGS] = {}
         updates[ITEM_OPERATION] = ITEM_DESCHEDULE
         # delete entry from published repo
-        get_resource_service('published').delete_by_article_id(doc['_id'])
+        get_resource_service('published').delete_by_article_id(original['_id'])
+
+    def remove_embargo(self, updates):
+        updates[EMBARGO] = None
+        updates[SCHEDULE_SETTINGS] = {}
 
     def can_edit(self, item, user_id):
         """
@@ -499,7 +509,7 @@ class ArchiveService(BaseService):
 
         if item[ITEM_TYPE] != CONTENT_TYPE.COMPOSITE:
             if EMBARGO in item:
-                embargo = item.get(EMBARGO)
+                embargo = item.get(SCHEDULE_SETTINGS, {}).get('utc_{}'.format(EMBARGO))
                 if embargo:
                     if item.get(PUBLISH_SCHEDULE) or item[ITEM_STATE] == CONTENT_STATE.SCHEDULED:
                         raise SuperdeskApiError.badRequestError("An item can't have both Publish Schedule and Embargo")
@@ -578,11 +588,12 @@ class ArchiveService(BaseService):
                     'This item is in a package and it needs to be removed before the item can be scheduled!')
 
             package = TakesPackageService().get_take_package(original) or {}
+            update_schedule_settings(updated, PUBLISH_SCHEDULE, updated.get(PUBLISH_SCHEDULE))
 
             if updates.get(PUBLISH_SCHEDULE):
-                validate_schedule(updates[PUBLISH_SCHEDULE], package.get(SEQUENCE, 1))
+                validate_schedule(updated.get(SCHEDULE_SETTINGS, {}).get('utc_{}'.format(PUBLISH_SCHEDULE)),
+                                  package.get(SEQUENCE, 1))
 
-            update_schedule_settings(updated, PUBLISH_SCHEDULE, updated.get(PUBLISH_SCHEDULE))
             updates[SCHEDULE_SETTINGS] = updated.get(SCHEDULE_SETTINGS, {})
 
         if original[ITEM_TYPE] == CONTENT_TYPE.PICTURE:
@@ -590,11 +601,11 @@ class ArchiveService(BaseService):
         elif original[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
             self.packageService.on_update(updates, original)
 
+        # update the embargo date
+        update_schedule_settings(updated, EMBARGO, updated.get(EMBARGO))
         # Do the validation after Circular Reference check passes in Package Service
-
         self.validate_embargo(updated)
         if EMBARGO in updates or "schedule_settings" in updates:
-            update_schedule_settings(updated, EMBARGO, updated.get(EMBARGO))
             updates[SCHEDULE_SETTINGS] = updated.get(SCHEDULE_SETTINGS, {})
 
         # Ensure that there are no duplicate categories in the update

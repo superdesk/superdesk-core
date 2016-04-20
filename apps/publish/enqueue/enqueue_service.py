@@ -369,7 +369,7 @@ class EnqueueService:
             if not package_item_takes_package:
                 # this item has not been published to digital subscribers so
                 # the list of subscribers are empty
-                return []
+                return [], {}
 
             query = {'$and': [{'item_id': package_item_takes_package[config.ID_FIELD]},
                               {'publishing_action': package_item_takes_package[ITEM_STATE]}]}

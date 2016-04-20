@@ -747,7 +747,7 @@ Feature: Package Publishing
 
 
       @auth
-      @notification
+      @notification @test
       Scenario: Publish a package with two text stories and one digital subscriber
       Given empty "archive"
       Given "desks"
