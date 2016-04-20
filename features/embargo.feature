@@ -19,10 +19,25 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
       """
     And "subscribers"
     """
-    [{"_id": "123", "name":"Wire Subscriber","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+    [{"_id": "123",
+      "name":"Wire Subscriber",
+      "media_type":"media",
+      "subscriber_type": "wire",
+      "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
       "products": ["1"],
       "destinations":[{"name":"email","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]},
-     {"_id": "321", "name":"Digital Subscriber","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+     {"_id": "321",
+      "name":"Digital Subscriber",
+      "media_type":"media",
+      "subscriber_type": "digital",
+      "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+      "products": ["1"],
+      "destinations":[{"name":"email","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]},
+     {"_id": "456",
+      "name":"2nd Wire Subscriber",
+      "media_type":"non-media",
+      "subscriber_type": "wire",
+      "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
       "products": ["1"],
       "destinations":[{"name":"email","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]}
     ]
@@ -141,7 +156,7 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     """
 
   @auth
-  Scenario: An article with Embargo always goes to Wire Subscribers irrespective of publish action until embargo lapses
+  Scenario: An article with Embargo always goes to Wire Media Subscribers irrespective of publish action until embargo lapses
     When we patch "/archive/123"
     """
     {"embargo": "#DATE+2#"}

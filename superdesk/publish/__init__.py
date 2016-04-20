@@ -22,7 +22,9 @@ registered_transmitters = {}
 transmitter_errors = {}
 
 subscriber_types = ['digital', 'wire', 'all']
+subscriber_media_types = ['media', 'non-media', 'both']
 SUBSCRIBER_TYPES = namedtuple('SUBSCRIBER_TYPES', ['DIGITAL', 'WIRE', 'ALL'])(*subscriber_types)
+SUBSCRIBER_MEDIA_TYPES = namedtuple('SUBSCRIBER_MEDIA_TYPES', ['MEDIA', 'NONMEDIA', 'BOTH'])(*subscriber_media_types)
 
 
 def register_transmitter(transmitter_type, transmitter, errors):
