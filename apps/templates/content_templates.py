@@ -147,18 +147,25 @@ class ContentTemplatesService(Service):
                 raise SuperdeskApiError.badRequestError(
                     message="Invalid kill template. "
                             "{} are not allowed".format(', '.join(KILL_TEMPLATE_NOT_REQUIRED_FIELDS)))
+            if doc.get('template_type') == TemplateType.KILL.value:
+                self._validate_kill_template(doc)
             if get_user():
                 doc.setdefault('user', get_user()[config.ID_FIELD])
 
     def on_update(self, updates, original):
         if updates.get('template_type') and updates.get('template_type') != original.get('template_type') and \
            updates.get('template_type') == TemplateType.KILL.value:
+            self._validate_kill_template(updates)
             self._process_kill_template(updates)
 
         if updates.get('schedule'):
             original_schedule = deepcopy(original.get('schedule'))
             original_schedule.update(updates.get('schedule'))
             updates['next_run'] = get_next_run(original_schedule)
+
+    def on_delete(self, doc):
+        if doc.get('template_type') == TemplateType.KILL.value:
+            raise SuperdeskApiError.badRequestError('Kill templates can not be deleted.')
 
     def get_scheduled_templates(self, now):
         """
@@ -177,6 +184,19 @@ class ContentTemplatesService(Service):
         """
         query = {'template_name': re.compile('^{}$'.format(template_name), re.IGNORECASE)}
         return self.find_one(req=None, **query)
+
+    def _validate_kill_template(self, doc):
+        """
+        Validates input values for kill templates
+        """
+        if doc.get('template_type') != TemplateType.KILL.value:
+            return
+
+        if doc.get('template_desk'):
+            raise SuperdeskApiError.badRequestError('Kill templates can not be assigned to desks')
+        if 'is_public' in doc and doc['is_public'] is False:
+            raise SuperdeskApiError.badRequestError('Kill templates must be public')
+        doc['is_public'] = True
 
     def _process_kill_template(self, doc):
         """

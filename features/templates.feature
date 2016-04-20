@@ -1,7 +1,7 @@
 Feature: Templates
 
     @auth
-    Scenario: Get predifined templates
+    Scenario: Get predefined templates
     Given "desks"
     """
     [
@@ -10,7 +10,7 @@ Feature: Templates
     """
     When we post to "content_templates"
     """
-    {"template_name": "kill", "template_type": "kill", "template_desk": "#desks._id#",
+    {"template_name": "kill", "template_type": "kill", "template_desk": "#desks._id#", "is_public": true,
      "data": {"anpa_take_key": "TAKEDOWN"}}
     """
     Then we get error 400
@@ -19,7 +19,7 @@ Feature: Templates
     """
     When we post to "content_templates"
     """
-    {"template_name": "kill", "template_type": "kill", "data": {"anpa_take_key": "TAKEDOWN"}}
+    {"template_name": "kill", "template_type": "kill", "is_public": true, "data": {"anpa_take_key": "TAKEDOWN"}}
     """
     Then we get new resource
     """
@@ -152,6 +152,7 @@ Feature: Templates
         {
             "template_name": "kill",
             "template_type": "kill",
+            "is_public": true,
             "data": {
                 "body_html": "<p>Please kill story slugged {{ item.slugline }} ex {{ item.dateline['text'] }} at {{item.versioncreated | format_datetime(date_format='%d %b %Y %H:%S %Z')}}.<\/p>",
                 "type": "text",
