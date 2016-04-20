@@ -45,11 +45,12 @@ class NewsML12Formatter(Formatter):
         CONTENT_TYPE.TEXT: 'Text'
     }
 
-    def format(self, article, subscriber):
+    def format(self, article, subscriber, codes=None):
         """
         Create article in NewsML1.2 format
         :param dict article:
         :param dict subscriber:
+        :param list codes:
         :return [(int, str)]: return a List of tuples. A tuple consist of
             publish sequence number and formatted article string.
         :raises FormatterError: if the formatter fails to format an article

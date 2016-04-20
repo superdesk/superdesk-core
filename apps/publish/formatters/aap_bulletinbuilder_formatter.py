@@ -25,11 +25,12 @@ class AAPBulletinBuilderFormatter(Formatter):
     """
     Bulletin Builder Formatter
     """
-    def format(self, article, subscriber):
+    def format(self, article, subscriber, codes=None):
         """
         Formats the article as require by the subscriber
         :param dict article: article to be formatted
         :param dict subscriber: subscriber receiving the article
+        :param list codes: selector codes
         :return: tuple (int, str) of publish sequence of the subscriber, formatted article as string
         """
         try:

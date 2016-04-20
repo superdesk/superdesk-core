@@ -301,7 +301,9 @@ class EnqueueService:
                             no_formatters.append(destination['format'])
                             continue
 
-                        formatted_docs = formatter.format(doc, subscriber)
+                        formatted_docs = formatter.format(doc,
+                                                          subscriber,
+                                                          subscriber_codes.get(subscriber[config.ID_FIELD]))
 
                         for pub_seq_num, formatted_doc in formatted_docs:
                             publish_queue_item = dict()

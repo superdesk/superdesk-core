@@ -43,7 +43,7 @@ class NINJSFormatter(Formatter):
 
     rendition_properties = ('href', 'width', 'height', 'mimetype', 'poi', 'media')
 
-    def format(self, article, subscriber):
+    def format(self, article, subscriber, codes=None):
         try:
             pub_seq_num = superdesk.get_resource_service('subscribers').generate_sequence_number(subscriber)
 
