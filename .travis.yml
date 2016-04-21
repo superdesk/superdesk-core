@@ -6,16 +6,18 @@ python:
     - "3.4"
 
 services:
-    - mongodb
     - elasticsearch
+    - mongodb
     - redis-server
 
 addons:
   apt:
     sources:
     - mongodb-3.0-precise
+    - elasticsearch-1.7
     packages:
     - mongodb-org-server
+    - elasticsearch
 
 cache:
   directories:
