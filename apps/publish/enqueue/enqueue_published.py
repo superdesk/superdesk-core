@@ -27,9 +27,8 @@ class EnqueuePublishedService(EnqueueService):
         1. If the item has embargo and is a future date then fetch active Wire Subscribers.
            Otherwise get all active subscribers.
             a. Get the list of takes subscribers if Takes Package
-        2. If targeted_for is set then exclude internet/digital subscribers.
-        3. If takes package then subsequent takes are sent to same wire subscriber as first take.
-        4. Filter the subscriber list based on the publish filter and global filters (if configured).
+        2. If takes package then subsequent takes are sent to same wire subscriber as first take.
+        3. Filter the subscriber list based on the publish filter and global filters (if configured).
             a. Publish to takes package subscribers if the takes package is received by the subscriber.
         :param dict doc: Document to publish/correct/kill
         :param str target_media_type: dictate if the doc being queued is a Takes Package or an Individual Article.
@@ -58,10 +57,6 @@ class EnqueuePublishedService(EnqueueService):
             takes_subscribers, take_codes = self._get_subscribers_for_previously_sent_items(query)
 
         # Step 2
-        if doc.get('target_regions'):
-            subscribers = list(self.non_digital(subscribers))
-
-        # Step 3
         if doc.get(ITEM_TYPE) in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
             # get first take
             first_take = self.takes_package_service.get_take_by_take_no(doc, 1)
@@ -75,11 +70,9 @@ class EnqueuePublishedService(EnqueueService):
                                   {'publishing_action': {'$in': [CONTENT_STATE.PUBLISHED]}}]}
                 subscribers, subscriber_codes = self._get_subscribers_for_previously_sent_items(query)
 
-        # Step 4
+        # Step 3
         if not first_take:
-            subscribers, codes = self.filter_subscribers(doc, subscribers,
-                                                         SUBSCRIBER_TYPES.WIRE if doc.get('target_regions')
-                                                         else target_media_type)
+            subscribers, codes = self.filter_subscribers(doc, subscribers, target_media_type)
 
         if takes_subscribers:
             # Step 4a

@@ -154,10 +154,8 @@ class BasePublishService(BaseService):
             raise SuperdeskApiError.internalError(message="Failed to publish the item: {}".format(str(e)))
 
     def _process_takes_package(self, original, updated, updates):
-        # if target_for is set then we don't to digital client.
-        targeted = self.is_targeted(updates) or self.is_targeted(original)
         if original[ITEM_TYPE] in {CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED} \
-                and not (targeted or is_genre(original, BROADCAST_GENRE)):
+                and not is_genre(original, BROADCAST_GENRE):
             # check if item is in a digital package
             last_updated = updates.get(config.LAST_UPDATED, utcnow())
             package = self.takes_package_service.get_take_package(original)

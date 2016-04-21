@@ -545,6 +545,7 @@ def item_schema(extra=None):
             'schema': {
                 'type': 'dict',
                 'schema': {
+                    'qcode': {'type': 'string'},
                     'name': {'type': 'string'},
                     'allow': {'type': 'boolean'}
                 }
@@ -556,6 +557,7 @@ def item_schema(extra=None):
             'schema': {
                 'type': 'dict',
                 'schema': {
+                    'qcode': {'type': 'string'},
                     'name': {'type': 'string'},
                     'allow': {'type': 'boolean'}
                 }

@@ -14,8 +14,8 @@ Feature: Targeted Publishing
     And "products"
     """
     [{"_id": "1", "name":"prod-1", "codes":"abc,xyz"},
-     {"_id": "2", "name":"prod-2", "codes":"klm", "geo_restrictions": "Victoria"},
-     {"_id": "3", "name":"prod-3", "codes":"klm", "geo_restrictions": "Queensland"}]
+     {"_id": "2", "name":"prod-2", "codes":"klm", "geo_restrictions": "VIC"},
+     {"_id": "3", "name":"prod-3", "codes":"klm", "geo_restrictions": "QLD"}]
     """
     And "subscribers"
     """
@@ -52,7 +52,6 @@ Feature: Targeted Publishing
       "name":"Wire channel with geo restriction Queensland",
       "media_type":"media",
       "subscriber_type": "wire",
-      "geo_restrictions": "Queensland",
       "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
       "products": ["3"],
       "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
@@ -85,16 +84,18 @@ Feature: Targeted Publishing
       "headline": "headline",
       "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
       "subject":[{"qcode": "17004000", "name": "Statistics"}],
-      "target_regions": [{"name": "Queensland", "allow": true}],
+      "target_regions": [{"qcode": "QLD", "name": "Queensland", "allow": true}],
       "body_html": "Test Document body"}]
     """
     Then we get OK response
     When we publish "#archive._id#" with "publish" type and "published" state
     Then we get OK response
     When we get "/published"
-    Then we get list with 1 items
+    Then we get list with 2 items
     """
-    {"_items" : [{"_id": "123", "state": "published", "type": "text", "_current_version": 2}]}
+    {"_items" :
+      [{"_id": "123", "state": "published", "type": "text", "_current_version": 2},
+       {"type": "composite"}]}
     """
     When we enqueue published
     And we get "/publish_queue"
@@ -116,14 +117,14 @@ Feature: Targeted Publishing
       "headline": "headline",
       "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
       "subject":[{"qcode": "17004000", "name": "Statistics"}],
-      "target_regions": [{"name": "New South Wales", "allow": false}],
+      "target_regions": [{"qcode": "NSW", "name": "New South Wales", "allow": false}],
       "body_html": "Test Document body"}]
     """
     Then we get OK response
     When we publish "#archive._id#" with "publish" type and "published" state
     Then we get OK response
     When we get "/published"
-    Then we get list with 1 items
+    Then we get list with 2 items
     """
     {"_items" : [{"_id": "123", "state": "published", "type": "text", "_current_version": 2}]}
     """
@@ -148,14 +149,14 @@ Feature: Targeted Publishing
       "headline": "headline",
       "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
       "subject":[{"qcode": "17004000", "name": "Statistics"}],
-      "target_regions": [{"name": "New South Wales", "allow": true}],
+      "target_regions": [{"qcode": "NSW", "name": "New South Wales", "allow": true}],
       "body_html": "Test Document body"}]
     """
     Then we get OK response
     When we publish "#archive._id#" with "publish" type and "published" state
     Then we get OK response
     When we get "/published"
-    Then we get list with 1 items
+    Then we get list with 2 items
     """
     {"_items" : [{"_id": "123", "state": "published", "type": "text", "_current_version": 2}]}
     """
@@ -172,14 +173,14 @@ Feature: Targeted Publishing
       "headline": "headline",
       "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
       "subject":[{"qcode": "17004000", "name": "Statistics"}],
-      "target_types": [{"name": "digital", "allow": true}],
+      "target_types": [{"qcode":"digital", "name": "digital", "allow": true}],
       "body_html": "Test Document body"}]
     """
     Then we get OK response
     When we publish "#archive._id#" with "publish" type and "published" state
     Then we get OK response
     When we get "/published"
-    Then we get list with 1 items
+    Then we get list with 2 items
     """
     {"_items" : [{"_id": "123", "state": "published", "type": "text", "_current_version": 2}]}
     """
@@ -210,7 +211,7 @@ Feature: Targeted Publishing
     When we publish "#archive._id#" with "publish" type and "published" state
     Then we get OK response
     When we get "/published"
-    Then we get list with 1 items
+    Then we get list with 2 items
     """
     {"_items" : [{"_id": "123", "state": "published", "type": "text", "_current_version": 2}]}
     """
@@ -237,7 +238,7 @@ Feature: Targeted Publishing
       "headline": "headline",
       "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
       "subject":[{"qcode": "17004000", "name": "Statistics"}],
-      "target_regions": [{"name": "Queensland", "allow": true}],
+      "target_regions": [{"qcode": "QLD", "name": "Queensland", "allow": true}],
       "target_subscribers": [{"_id": "sub-3"}],
       "body_html": "Test Document body"}]
     """
@@ -245,7 +246,7 @@ Feature: Targeted Publishing
     When we publish "#archive._id#" with "publish" type and "published" state
     Then we get OK response
     When we get "/published"
-    Then we get list with 1 items
+    Then we get list with 2 items
     """
     {"_items" : [{"_id": "123", "state": "published", "type": "text", "_current_version": 2}]}
     """
@@ -262,8 +263,8 @@ Feature: Targeted Publishing
     }
     """
 
-  @auth @notification @test
-  Scenario: Correct a story to target subscribers even no products then correct with a changed target
+  @auth @notification
+  Scenario: Correct a targeted story with a added target ignores the change
     When we post to "/archive" with success
     """
     [{"guid": "123", "type": "text", "state": "fetched", "slugline": "slugline",
@@ -277,7 +278,7 @@ Feature: Targeted Publishing
     When we publish "#archive._id#" with "publish" type and "published" state
     Then we get OK response
     When we get "/published"
-    Then we get list with 1 items
+    Then we get list with 2 items
     """
     {"_items" : [{"_id": "123", "state": "published", "type": "text", "_current_version": 2}]}
     """
@@ -319,12 +320,14 @@ Feature: Targeted Publishing
     Then we get OK response
     When we enqueue published
     And we get "/publish_queue"
-    Then we get list with 10 items
+    Then we get list with 9 items
     """
     {
       "_items":
         [
-          {"subscriber_id": "sub-2", "headline": "corrected2"}
+          {"subscriber_id": "sub-1", "codes": ["Aaa", "abc", "xyz"], "headline": "corrected2"},
+          {"subscriber_id": "sub-4", "headline": "corrected"},
+          {"subscriber_id": "sub-5", "codes": ["ptk", "rst"], "headline": "corrected2"}
         ]
     }
     """

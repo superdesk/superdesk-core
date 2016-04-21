@@ -120,6 +120,9 @@ class TakesPackageService():
                                                   'event_id',
                                                   'rewrite_of',
                                                   'task',
+                                                  'target_regions',
+                                                  'target_types',
+                                                  'target_subscribers',
                                                   EMBARGO])
 
         for field in fields_for_creating_takes_package:

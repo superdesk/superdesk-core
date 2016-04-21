@@ -434,10 +434,13 @@ class EnqueueService:
                 # check if the product filter conforms with the story
                 product = existing_products.get(product_id)
 
+                if not product:
+                    continue
+
                 if not self.conforms_product_targets(product, doc):
                     continue
 
-                if product and self.conforms_content_filter(product, doc):
+                if self.conforms_content_filter(product, doc):
                     # gather the codes of products
                     product_codes.extend(self._get_codes(product))
                     if not subscriber_added:
@@ -471,9 +474,9 @@ class EnqueueService:
         geo_restrictions = product.get('geo_restrictions')
         if geo_restrictions:
             for region in article.get('target_regions', []):
-                if region['name'] == geo_restrictions and region['allow']:
+                if region['qcode'] == geo_restrictions and region['allow']:
                     return True
-                if region['name'] != geo_restrictions and not region['allow']:
+                if region['qcode'] != geo_restrictions and not region['allow']:
                     return True
         return False
 
@@ -495,14 +498,14 @@ class EnqueueService:
         subscriber_type = subscriber.get('subscriber_type')
 
         for t in article.get('target_subscribers', []):
-            if t.get('_id') == subscriber['_id']:
+            if str(t.get('_id')) == str(subscriber['_id']):
                 return True, True
 
         if subscriber_type:
             for t in article.get('target_types', []):
-                if t['name'] == subscriber_type and t['allow']:
+                if t['qcode'] == subscriber_type and t['allow']:
                     return True, False
-                if t['name'] != subscriber_type and not t['allow']:
+                if t['qcode'] != subscriber_type and not t['allow']:
                     return True, False
 
         # If there's a region target then continue with the subscriber to check products

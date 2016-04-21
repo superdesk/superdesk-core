@@ -58,7 +58,7 @@ class ANPAFormatterTest(SuperdeskTestCase):
         subscriber = self.app.data.find('subscribers', None, None)[0]
 
         f = AAPAnpaFormatter()
-        seq, item = f.format(self.article.copy(), subscriber)[0]
+        seq, item = f.format(self.article.copy(), subscriber, ['axx'])[0]
 
         self.assertGreater(int(seq), 0)
 
@@ -154,7 +154,7 @@ class ANPAFormatterTest(SuperdeskTestCase):
         multi_article.pop('anpa_category')
         multi_article['anpa_category'] = [{'qcode': 'a'}, {'qcode': 'b'}]
         f = AAPAnpaFormatter()
-        docs = f.format(multi_article, subscriber)
+        docs = f.format(multi_article, subscriber, ['Axy', 'Bkl'])
         self.assertEqual(len(docs), 2)
         cat = 'a'
         for seq, doc in docs:

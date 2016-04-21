@@ -50,7 +50,7 @@ Feature: Kill a content item in the (dusty) archive
       "headline": "headline", "anpa_category" : [{"qcode" : "e", "name" : "Entertainment"}],
       "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
       "subject":[{"qcode": "17004000", "name": "Statistics"}],
-      "target_types": [{"name": "digital", "allow": false}],
+      "target_types": [{"qcode": "digital", "allow": false}],
       "dateline" : {
         "located" : {
             "state_code" : "NSW",
@@ -73,7 +73,7 @@ Feature: Kill a content item in the (dusty) archive
     When we publish "#archive._id#" with "publish" type and "published" state
     Then we get OK response
     When we get "/published"
-    Then we get list with 1 items
+    Then we get list with 2 items
     """
     {"_items" : [{"_id": "123", "state": "published", "type": "text", "_current_version": 2}]}
     """
@@ -84,7 +84,7 @@ Feature: Kill a content item in the (dusty) archive
     And run import legal publish queue
     And we expire items
     """
-    ["123"]
+    ["123", "#archive.123.take_package#"]
     """
     And we get "/published"
     Then we get list with 0 items
@@ -92,7 +92,7 @@ Feature: Kill a content item in the (dusty) archive
     And we get "/publish_queue"
     Then we get list with 0 items
     When we get "/archived"
-    Then we get list with 1 items
+    Then we get list with 2 items
     """
     {"_items" : [{"item_id": "123", "state": "published", "type": "text", "_current_version": 2}]}
     """
@@ -104,9 +104,9 @@ Feature: Kill a content item in the (dusty) archive
     {"body_html": "Killed body."}
     """
     Then we get OK response
-    And we get 1 emails
+    And we get 2 emails
     When we get "/published"
-    Then we get list with 1 items
+    Then we get list with 2 items
     """
     {"_items" : [{"_id": "123", "state": "killed", "type": "text", "_current_version": 3, "queue_state": "queued"}]}
     """
@@ -137,7 +137,7 @@ Feature: Kill a content item in the (dusty) archive
     Then we get list with 3 items
     When we expire items
     """
-    ["123"]
+    ["123", "#archive.123.take_package#"]
     """
     And we get "/published"
     Then we get list with 0 items
