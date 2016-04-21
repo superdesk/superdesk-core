@@ -616,7 +616,8 @@ class BasePublishService(BaseService):
                     'spec': rend_spec,
                     'crop': crop,
                 })
-        publish_images.delay(images=images, original=original, item=item)
+        if images:
+            publish_images.delay(images=images, original=original, item=item)
 
     def _apply_kill_template(self, item):
         # apply the kill template
