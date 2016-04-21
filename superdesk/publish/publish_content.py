@@ -48,10 +48,15 @@ def publish():
         return
 
     try:
+        # Query any oustanding transmit requests
         items = list(get_queue_items())
-
         if len(items) > 0:
             transmit_items(items)
+
+        # Query any outstanding retry attempts
+        retry_items = list(get_queue_items(True))
+        if len(retry_items) > 0:
+            transmit_items(retry_items)
 
     except:
         logger.exception('Task: {} failed.'.format(lock_name))
@@ -59,16 +64,22 @@ def publish():
         unlock(lock_name, '')
 
 
-def get_queue_items():
-    lookup = {
-        '$and': [
-            {'$or': [
+def get_queue_items(retries=False):
+    if retries:
+        lookup = {
+            '$and': [
+                {'state': QueueState.RETRYING.value},
+                {'next_retry_attempt_at': {'$lte': utcnow()}},
+                {'destination.delivery_type': {'$ne': 'pull'}}
+            ]
+        }
+    else:
+        lookup = {
+            '$and': [
                 {'state': QueueState.PENDING.value},
-                {'state': QueueState.RETRYING.value, 'next_retry_attempt_at': {'$lte': utcnow()}}
-            ]},
-            {'destination.delivery_type': {'$ne': 'pull'}}
-        ]
-    }
+                {'destination.delivery_type': {'$ne': 'pull'}}
+            ]
+        }
     request = ParsedRequest()
     request.max_results = app.config.get('MAX_TRANSMIT_QUERY_LIMIT', 500)
     # ensure we publish in the correct sequence
