@@ -62,8 +62,7 @@ class HTTPPushService(PublishService):
             if not self._media_exists(rendition['media'], assets_url):
                 media = app.media.get(rendition['media'], resource='upload')
                 files = {'media': (
-                    rendition['media'], media,
-                    rendition.get('mimetype') or rendition['mime_type']
+                    rendition['media'], media, rendition['mimetype']
                 )}
                 response = requests.post(
                     assets_url, files=files, data={'media_id': rendition['media']}
