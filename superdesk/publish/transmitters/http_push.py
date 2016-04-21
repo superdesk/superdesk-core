@@ -61,10 +61,17 @@ class HTTPPushService(PublishService):
             del renditions[name]['href']
             if not self._media_exists(rendition['media'], assets_url):
                 media = app.media.get(rendition['media'], resource='upload')
-                files = {'media': (rendition['media'], media, rendition.get('mimetype') or rendition['mime_type'])}
-                response = requests.post(assets_url, files=files, data={'media_id': rendition['media']})
+                files = {'media': (
+                    rendition['media'], media, rendition['mimetype']
+                )}
+                response = requests.post(
+                    assets_url, files=files, data={'media_id': rendition['media']}
+                )
                 if response.status_code != requests.codes.created:  # @UndefinedVariable
-                    raise Exception('Error pushing item %s media file %s' % (item._id, rendition['media']))
+                    raise Exception('Error pushing item %s media file %s: %s %s' % (
+                        item.get("_id", ""), rendition.get('media', ""),
+                        response.status_code, response.text
+                    ))
 
     def _media_exists(self, media_id, assets_url):
         """Returns true if the media with the given id exists at the service identified by assets_url.
