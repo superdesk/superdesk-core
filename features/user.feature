@@ -50,10 +50,7 @@ Feature: User Resource
         """
         {"username": "foo", "password": "barbar", "email": "foo@bar.com", "phone": "0123", "is_active": true}
         """
-        Then we get error 400
-        """
-        {"_issues": {"phone": {"pattern": 1}}, "_status": "ERR"}
-        """
+        Then we get response code 201
 
     @auth
     Scenario: List users
