@@ -11,7 +11,8 @@
 from eve.versioning import resolve_document_version
 from .common import BasePublishService, BasePublishResource, ITEM_KILL
 from eve.utils import config
-from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE, GUID_FIELD, PUB_STATUS
+from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE, GUID_FIELD, PUB_STATUS, EMBARGO, SCHEDULE_SETTINGS, \
+    PUBLISH_SCHEDULE
 from superdesk.metadata.packages import PACKAGE_TYPE
 from superdesk import get_resource_service
 from superdesk.utc import utcnow
@@ -50,6 +51,7 @@ class KillPublishService(BasePublishService):
 
         updates['pubstatus'] = PUB_STATUS.CANCELED
         updates['versioncreated'] = utcnow()
+
         super().on_update(updates, original)
         updates[ITEM_OPERATION] = ITEM_KILL
         self.takes_package_service.process_killed_takes_package(original)
@@ -83,6 +85,10 @@ class KillPublishService(BasePublishService):
         'body_html':<p>Please kill story slugged test2 ex London, PA May 5 at 05 May 2016 10:00 AEDT<p>
                     <p>Story killed due to legal reason.</p>
         """
+        # kill cannot be scheduled and embargoed.
+        updates[EMBARGO] = None
+        updates[PUBLISH_SCHEDULE] = None
+        updates[SCHEDULE_SETTINGS] = {}
         self.broadcast_kill_email(original)
         updates_copy = deepcopy(updates)
         original_copy = deepcopy(original)

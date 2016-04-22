@@ -61,7 +61,7 @@ Feature: Groups
         Then we get deleted response
 
 
-    @auth @test
+    @auth
     Scenario: Unique name for group
       Given empty "groups"
       When we post to "/groups"

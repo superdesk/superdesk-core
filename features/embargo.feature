@@ -215,7 +215,6 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     """
     {"_items": [{"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}}]}
     """
-    When embargo lapses for "#archive._id#"
     When we enqueue published
     And we publish "#archive._id#" with "correct" type and "corrected" state
     Then we get OK response
@@ -232,10 +231,109 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     Then we validate the published item expiry to be after publish expiry set in desk settings 4320
 
   @auth
+  Scenario: Publish an article with Embargo and embargo lapses
+    When we patch "/archive/123"
+    """
+    {"embargo": "#DATE+2#"}
+    """
+    And we publish "#archive._id#" with "publish" type and "published" state
+    Then we get OK response
+    And we get existing resource
+    """
+    {"_current_version": 3, "state": "published", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
+    """
+    And we get expiry for schedule and embargo content 4320 minutes after "#archive_publish.embargo#"
+    And we check if article has Embargo and Ed. Note of the article has embargo indication
+    When we get "/published"
+    Then we get existing resource
+    """
+    {"_items" : [{"_id": "123", "guid": "123", "headline": "test", "_current_version": 3, "state": "published",
+      "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}]}
+    """
+    And we check if article has Embargo and Ed. Note of the article has embargo indication
+    When we enqueue published
+    When we get "/publish_queue"
+    Then we get list with 1 items
+    """
+    {"_items": [{"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}}]}
+    """
+    When embargo lapses for "#archive._id#"
+    And we publish "#archive._id#" with "correct" type and "corrected" state
+    Then we get OK response
+    When we enqueue published
+    When we get "/publish_queue"
+    Then we get list with 2 items
+    """
+    {"_items": [{"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
+                {"subscriber_id": "123", "publishing_action": "corrected", "content_type": "text", "destination":{"name":"email"}}]}
+    """
+    When we get "/archive/#archive.123.take_package#"
+    """
+    {"ednote": ""}
+    """
+    When we get "/published"
+    Then we validate the published item expiry to be after publish expiry set in desk settings 4320
+
+  @auth
+  Scenario: Publish an article with Embargo and change embargo in correction
+    When we patch "/archive/123"
+    """
+    {"embargo": "#DATE+2#"}
+    """
+    And we publish "#archive._id#" with "publish" type and "published" state
+    Then we get OK response
+    And we get existing resource
+    """
+    {"_current_version": 3, "state": "published", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
+    """
+    And we get expiry for schedule and embargo content 4320 minutes after "#archive_publish.embargo#"
+    And we check if article has Embargo and Ed. Note of the article has embargo indication
+    When we get "/published"
+    Then we get existing resource
+    """
+    {"_items" : [{"_id": "123", "guid": "123", "headline": "test", "_current_version": 3, "state": "published",
+      "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}]}
+    """
+    And we check if article has Embargo and Ed. Note of the article has embargo indication
+    When we enqueue published
+    When we get "/publish_queue"
+    Then we get list with 1 items
+    """
+    {"_items": [{"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}}]}
+    """
+    When we publish "#archive._id#" with "correct" type and "corrected" state
+    """
+    {"embargo": "#DATE+3#"}
+    """
+    Then we get OK response
+    When we enqueue published
+    When we get "/publish_queue"
+    Then we get list with 2 items
+    """
+    {"_items": [{"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
+                {"subscriber_id": "123", "publishing_action": "corrected", "content_type": "text", "destination":{"name":"email"}}]}
+    """
+    When we get "/published"
+    Then we validate the published item expiry to be after publish expiry set in desk settings 4320
+    And we check if article has Embargo and Ed. Note of the article has embargo indication
+    When we publish "#archive._id#" with "correct" type and "corrected" state
+    """
+    {"embargo": null}
+    """
+    Then we get OK response
+    When we enqueue published
+    When we get "/published"
+    Then we validate the published item expiry to be after publish expiry set in desk settings 4320
+    When we get "/archive/#archive.123.take_package#"
+    """
+    {"ednote": ""}
+    """
+
+  @auth
   Scenario: Creating/Updating an item without a future Embargo should fail
     When we post to "/archive"
     """
-    [{"guid": "text-article-with-embargo", "type": "text", "embargo": "#DATE-1#"}]
+    [{"guid": "text-article-with-embargo", "type": "text", "embargo": "#DATE-2#"}]
     """
     Then we get error 400
     """

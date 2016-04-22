@@ -68,7 +68,7 @@ Feature: User Resource
         ["bar", "foo"]
         """
 
-    @auth @test
+    @auth
     Scenario: Fetch single user
         Given "users"
         """

@@ -134,7 +134,7 @@ class BasePublishService(BaseService):
                 if self.published_state != CONTENT_STATE.KILLED:
                     self._process_takes_package(original, updated, updates)
 
-                self._update_archive(original, updated, should_insert_into_versions=auto_publish)
+                self._update_archive(original, updates, should_insert_into_versions=auto_publish)
                 self.update_published_collection(published_item_id=original[config.ID_FIELD], updated=updated)
 
             from apps.publish.enqueue import enqueue_published
@@ -168,6 +168,8 @@ class BasePublishService(BaseService):
                 '''
                 package_id = self.takes_package_service.package_story_as_a_take(updated, {}, None)
                 package = get_resource_service(ARCHIVE).find_one(req=None, _id=package_id)
+                updates[LINKED_IN_PACKAGES] = updated[LINKED_IN_PACKAGES]
+
             package_id = package[config.ID_FIELD]
 
             package_updates = self.process_takes(updates_of_take_to_be_published=updates,
@@ -207,16 +209,19 @@ class BasePublishService(BaseService):
                 raise PublishQueueError.previous_take_not_published_error(
                     Exception("Previous takes are not published."))
 
-            validate_schedule(updated.get(PUBLISH_SCHEDULE), takes_package.get(SEQUENCE, 1) if takes_package else 1)
             update_schedule_settings(updated, PUBLISH_SCHEDULE, updated.get(PUBLISH_SCHEDULE))
+            validate_schedule(updated.get(SCHEDULE_SETTINGS, {}).get('utc_{}'.format(PUBLISH_SCHEDULE)),
+                              takes_package.get(SEQUENCE, 1) if takes_package else 1)
 
-            if original[ITEM_TYPE] != CONTENT_TYPE.COMPOSITE and updates.get(EMBARGO):
-                get_resource_service(ARCHIVE).validate_embargo(updated)
+        if original[ITEM_TYPE] != CONTENT_TYPE.COMPOSITE and updates.get(EMBARGO):
+            update_schedule_settings(updated, EMBARGO, updated.get(EMBARGO))
+            get_resource_service(ARCHIVE).validate_embargo(updated)
 
         if self.publish_type in [ITEM_CORRECT, ITEM_KILL]:
-            if updates.get(EMBARGO):
+            if updates.get(EMBARGO) and not original.get(EMBARGO):
                 raise SuperdeskApiError.badRequestError("Embargo can't be set after publishing")
 
+        if self.publish_type in [ITEM_CORRECT, ITEM_KILL]:
             if updates.get('dateline'):
                 raise SuperdeskApiError.badRequestError("Dateline can't be modified after publishing")
 
@@ -347,7 +352,7 @@ class BasePublishService(BaseService):
                 package_updates['body_html'] = body_html
 
             metadata_tobe_copied = self.takes_package_service.fields_for_creating_take.copy()
-            metadata_tobe_copied.extend([PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, 'byline'])
+            metadata_tobe_copied.extend([PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, 'byline', EMBARGO])
             updated_take = original_of_take_to_be_published.copy()
             updated_take.update(updates_of_take_to_be_published)
             metadata_from = updated_take

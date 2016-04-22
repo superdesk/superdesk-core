@@ -109,7 +109,7 @@ Feature: Cropping the Image Articles
 
 
     @auth
-    @vocabulary @test
+    @vocabulary
     Scenario: Correct a picture with the crops succeeds
       Given the "validators"
       """
