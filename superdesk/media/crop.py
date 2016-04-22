@@ -233,7 +233,7 @@ class CropService():
         :param dict original: original of the updated item
         """
         update_renditions = updates.get('renditions', {})
-        if original.get(ITEM_TYPE) == CONTENT_TYPE.PICTURE and update_renditions:
+        if original.get(ITEM_TYPE) == CONTENT_TYPE.PICTURE:
             renditions = original.get('renditions', {})
             original_copy = deepcopy(original)
             for key in update_renditions:
