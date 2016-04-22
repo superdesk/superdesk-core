@@ -742,7 +742,7 @@ Feature: Link content in takes
         }
         """
 
-    @auth @test
+    @auth
     Scenario: If the user is the member of a desk then New Take on a desk is allowed
         Given "desks"
         """

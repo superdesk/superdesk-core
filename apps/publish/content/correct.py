@@ -11,13 +11,13 @@
 import logging
 from superdesk import get_resource_service
 from superdesk.media.crop import CropService
-from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, EMBARGO
+from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, EMBARGO, SCHEDULE_SETTINGS
 from superdesk.metadata.packages import PACKAGE_TYPE
 from superdesk.utc import utcnow
 
 from eve.utils import config
 
-from apps.archive.common import set_sign_off, ITEM_OPERATION, insert_into_versions, get_utc_schedule
+from apps.archive.common import set_sign_off, ITEM_OPERATION, insert_into_versions
 
 from .common import BasePublishService, BasePublishResource, ITEM_CORRECT
 
@@ -40,7 +40,9 @@ class CorrectPublishService(BasePublishService):
 
         if original.get(EMBARGO) or updates.get(EMBARGO):
             # embargo time elapsed
-            if get_utc_schedule(original, EMBARGO) < utcnow():
+            utc_embargo = updates.get(SCHEDULE_SETTINGS, {}).get('utc_{}'.format(EMBARGO)) or \
+                original.get(SCHEDULE_SETTINGS, {}).get('utc_{}'.format(EMBARGO))
+            if utc_embargo and utc_embargo < utcnow():
                 # remove embargo information. so the next correction is without embargo.
                 updates[EMBARGO] = None
                 super().set_state(original, updates)

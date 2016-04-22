@@ -238,7 +238,7 @@ Feature: Routing Scheme and Routing Rules
       Then we get response code 400
 
 
-    @auth @test
+    @auth
     Scenario: Create a valid Routing Scheme with an empty filter
       Given empty "desks"
 

@@ -18,7 +18,7 @@ Feature: Content Expiry Not Published Items
     {"_current_version": 1, "state": "fetched", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
     """
 
-  @auth @test
+  @auth
   Scenario: Item on a desk and not part of any package is expired .
     When we expire items
     """

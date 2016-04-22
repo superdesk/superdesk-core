@@ -26,7 +26,7 @@ from eve.utils import parse_request, config, date_to_str, ParsedRequest
 from superdesk.services import BaseService
 from superdesk.users.services import current_user_has_privilege, is_admin
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, CONTENT_TYPE, ITEM_TYPE, EMBARGO, \
-    PUBLISH_STATES, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, SIGN_OFF
+    PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, SIGN_OFF
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, RESIDREF, SEQUENCE, PACKAGE_TYPE, TAKES_PACKAGE
 from apps.common.components.utils import get_component
 from apps.item_autosave.components.item_autosave import ItemAutosave
@@ -429,10 +429,9 @@ class ArchiveService(BaseService):
             get_resource_service('archive_versions').post(new_versions)
 
     def update(self, id, updates, original):
+        # this needs to here as resolve_nested_documents (in eve) will add the schedule_settings
         if PUBLISH_SCHEDULE in updates and original[ITEM_STATE] == CONTENT_STATE.SCHEDULED:
             self.deschedule_item(updates, original)  # this is an deschedule action
-        # elif updates.get(EMBARGO) is None and original.get(EMBARGO):
-        #     self.remove_embargo(updates)
 
         return super().update(id, updates, original)
 
@@ -448,10 +447,6 @@ class ArchiveService(BaseService):
         updates[ITEM_OPERATION] = ITEM_DESCHEDULE
         # delete entry from published repo
         get_resource_service('published').delete_by_article_id(original['_id'])
-
-    def remove_embargo(self, updates):
-        updates[EMBARGO] = None
-        updates[SCHEDULE_SETTINGS] = {}
 
     def can_edit(self, item, user_id):
         """
@@ -514,8 +509,12 @@ class ArchiveService(BaseService):
                     if item.get(PUBLISH_SCHEDULE) or item[ITEM_STATE] == CONTENT_STATE.SCHEDULED:
                         raise SuperdeskApiError.badRequestError("An item can't have both Publish Schedule and Embargo")
 
+                    if (item[ITEM_STATE] not in {CONTENT_STATE.KILLED, CONTENT_STATE.SCHEDULED}) \
+                            and embargo <= utcnow():
+                        raise SuperdeskApiError.badRequestError("Embargo cannot be earlier than now")
+
                     package = TakesPackageService().get_take_package(item)
-                    if package:
+                    if package and package.get(SEQUENCE, 1) > 1:
                         raise SuperdeskApiError.badRequestError("Takes doesn't support Embargo")
 
                     if item.get('rewrite_of'):
@@ -523,9 +522,6 @@ class ArchiveService(BaseService):
 
                     if not isinstance(embargo, datetime.date) or not embargo.time():
                         raise SuperdeskApiError.badRequestError("Invalid Embargo")
-
-                    if item[ITEM_STATE] not in PUBLISH_STATES and embargo <= utcnow():
-                        raise SuperdeskApiError.badRequestError("Embargo cannot be earlier than now")
 
         elif is_normal_package(item):
             if item.get(EMBARGO):

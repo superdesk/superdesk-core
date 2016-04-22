@@ -86,7 +86,6 @@ Feature: Fetch Items from Ingest
 
     @auth
     @provider
-    @test
     Scenario: Fetch a package and validate metadata set by API
       Given empty "ingest"
       And "desks"
