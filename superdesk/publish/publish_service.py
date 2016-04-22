@@ -9,12 +9,14 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+
+from bson import ObjectId
+
 import superdesk
 
 from superdesk import get_resource_service, config
 from superdesk.utc import utcnow
 from superdesk.errors import SubscriberError, SuperdeskPublishError, PublishQueueError
-
 
 logger = logging.getLogger(__name__)
 
@@ -40,9 +42,9 @@ class PublishService():
         else:
             try:
                 self._transmit(queue_item, subscriber) or []
-                update_item_status(queue_item, 'success')
+                self.update_item_status(queue_item, 'success')
             except SuperdeskPublishError as error:
-                update_item_status(queue_item, 'error', error)
+                self.update_item_status(queue_item, 'error', error)
                 self.close_transmitter(subscriber, error)
                 raise error
 
@@ -64,20 +66,22 @@ class PublishService():
 
             get_resource_service('subscribers').system_update(subscriber[config.ID_FIELD], update, subscriber)
 
+    def update_item_status(self, queue_item, status, error=None):
+        try:
+            item_update = {'state': status}
+            if status == 'in-progress':
+                item_update['transmit_started_at'] = utcnow()
+            elif status == 'success':
+                item_update['completed_at'] = utcnow()
+            elif status == 'error' and error:
+                item_update['error_message'] = '{}:{}'.format(error, str(error.system_exception))
 
-def update_item_status(queue_item, status, error=None):
-    try:
-        item_update = {'state': status}
-        if status == 'in-progress':
-            item_update['transmit_started_at'] = utcnow()
-        elif status == 'success':
-            item_update['completed_at'] = utcnow()
-        elif status == 'error' and error:
-            item_update['error_message'] = '{}:{}'.format(error, str(error.system_exception))
-
-        superdesk.get_resource_service('publish_queue').patch(queue_item.get('_id'), item_update)
-    except Exception as ex:
-        raise PublishQueueError.item_update_error(ex)
+            publish_queue_service = superdesk.get_resource_service('publish_queue')
+            queue_id = ObjectId(queue_item.get('_id')) if isinstance(queue_item.get('_id'), str) else queue_item.get(
+                '_id')
+            publish_queue_service.patch(queue_id, item_update)
+        except Exception as ex:
+            raise PublishQueueError.item_update_error(ex)
 
 
 def get_file_extension(queue_item):

@@ -15,10 +15,11 @@ from nose.tools import assert_raises
 from superdesk.errors import PublishQueueError
 from apps.publish import init_app
 from superdesk.publish.publish_service import PublishService
+from bson import ObjectId
 
 
 class PublishServiceTests(SuperdeskTestCase):
-    queue_items = [{"_id": "1",
+    queue_items = [{"_id": "571075791d41c81e204c5c8c",
                     "destination": {"name": "NITF", "delivery_type": "ftp", "format": "nitf", "config": {}},
                     "subscriber_id": "1",
                     "state": "in-progress",
@@ -35,6 +36,7 @@ class PublishServiceTests(SuperdeskTestCase):
         super().setUp()
         with self.app.app_context():
             self.app.data.insert('subscribers', self.subscribers)
+            self.queue_items[0]['_id'] = ObjectId(self.queue_items[0]['_id'])
             self.app.data.insert('publish_queue', self.queue_items)
 
             init_app(self.app)

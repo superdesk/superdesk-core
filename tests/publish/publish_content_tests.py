@@ -38,6 +38,7 @@ class TransmitItemsTestCase(TestCase):
         item_1 = {
             '_id': 'item_1',
             'destination': {},
+            'subscriber_id': '1',
             'item_id': 'test',
             'headline': 'test headline',
             'item_version': 4,
@@ -61,6 +62,7 @@ class TransmitItemsTestCase(TestCase):
         item_1 = {
             '_id': 'item_1',
             'destination': {},
+            'subscriber_id': '1',
             'item_id': 'test',
             'headline': 'test headline',
             'item_version': 4,
@@ -88,6 +90,7 @@ class TransmitItemsTestCase(TestCase):
         item_1 = {
             '_id': 'item_1',
             'destination': {},
+            'subscriber_id': '1',
             'item_id': 'test',
             'headline': 'test headline',
             'item_version': 4,
@@ -112,6 +115,7 @@ class TransmitItemsTestCase(TestCase):
 
         item_1 = {
             '_id': 'item_1',
+            'subscriber_id': '1',
             'destination': {},
             'item_id': 'test',
             'headline': 'test headline',
@@ -185,15 +189,21 @@ class QueueItemsTestCase(TestCase):
 
     def test_get_queue_items(self):
         items = list(self.func_under_test())
-        self.assertEqual(len(items), 2)
+        self.assertEqual(len(items), 1)
         for item in items:
-            self.assertIn(item['item_id'], ['item_1', 'item_6'])
+            self.assertIn(item['item_id'], ['item_1'])
+
+    def test_get_retry_queue_items(self):
+        items = list(self.func_under_test(True))
+        self.assertEqual(len(items), 1)
+        for item in items:
+            self.assertIn(item['item_id'], ['item_6'])
 
     def test_get_queue_items_with_retrying_items(self):
         item = self.app.data.find_one('publish_queue', req=None, _id=self.queue_items[1]['_id'])
         self.app.data.update('publish_queue', item.get('_id'),
                              {'next_retry_attempt_at': utcnow() - timedelta(minutes=30)},
                              item)
-        items = list(self.func_under_test())
-        self.assertEqual(len(items), 3)
-        self.assertListEqual([item_l['item_id'] for item_l in items], ['item_1', 'item_2', 'item_6'])
+        items = list(self.func_under_test(True))
+        self.assertEqual(len(items), 2)
+        self.assertListEqual([item_l['item_id'] for item_l in items], ['item_2', 'item_6'])
