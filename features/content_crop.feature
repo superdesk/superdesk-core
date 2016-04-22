@@ -232,7 +232,6 @@ Feature: Cropping the Image Articles
       }
       """
       Then we get OK response
-
       And we get existing resource
       """
       {
@@ -270,6 +269,9 @@ Feature: Cropping the Image Articles
         }
       }
       """
+      When we get "/archive/bike"
+      Then we get OK response
+      And we get no "poi"
       When we patch "/archive/feature_image"
       """
       {
