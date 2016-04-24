@@ -32,11 +32,12 @@ class HTTPPushService(PublishService):
         item = json.loads(queue_item['formatted_item'])
 
         destination = queue_item.get('destination', {})
-        assets_url = destination.get('config', {}).get('assets_url')
-        try:
-            self._copy_published_media_files(json.loads(queue_item['formatted_item']), assets_url)
-        except Exception as e:
-            raise PublishHTTPPushError.httpPushError(e, destination)
+        assets_url = destination.get('config', {}).get('assets_url', None)
+        if type(assets_url) == str and assets_url.strip():
+            try:
+                self._copy_published_media_files(json.loads(queue_item['formatted_item']), assets_url)
+            except Exception as e:
+                raise PublishHTTPPushError.httpPushError(e, destination)
 
         if not queue_item.get(PUBLISHED_IN_PACKAGE) or not destination.get('config', {}).get('packaged', False):
             resource_url = destination.get('config', {}).get('resource_url')
