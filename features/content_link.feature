@@ -44,7 +44,6 @@ Feature: Link content in takes
             "headline": "test1",
             "slugline": "comics",
             "anpa_take_key": "Take=2",
-            "abstract" : "abstract",
             "state": "draft",
             "priority": 1,
             "urgency": 1,
@@ -800,7 +799,6 @@ Feature: Link content in takes
             "headline": "test1",
             "slugline": "comics",
             "anpa_take_key": "Take=2",
-            "abstract" : "abstract",
             "original_creator": "#CONTEXT_USER_ID#",
             "takes": {
                 "_id": "#TAKE_PACKAGE#",
