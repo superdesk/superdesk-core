@@ -1,8 +1,5 @@
+# Changelog
 
-+## [unreleased]
+## [1.0-beta1] 2016-04-25
 
-- feat(ninjs): output profile and slugline in ninjs
-- fix(celery): use application context for task error handling
-- fix(websockets): remove client when connection is closed
-- add `service.find` method which is using mongo syntax for queries
-
+- initial release
