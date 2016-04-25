@@ -8,22 +8,18 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-
-import logging
-
 import superdesk
 from superdesk import get_backend
 
-from apps.content_filters.filter_condition import (
-    FilterConditionResource, FilterConditionService,
-    FilterConditionParametersResource, FilterConditionParametersService)
+from apps.content_filters.filter_condition.filter_condition_resource import FilterConditionResource
+from apps.content_filters.filter_condition.filter_condition_service import FilterConditionService
+from apps.content_filters.content_filter.content_filter_resource import ContentFilterResource
+from apps.content_filters.content_filter.content_filter_service import ContentFilterService
 
-from apps.content_filters.content_filter import (
-    ContentFilterResource, ContentFilterService,
-    ContentFilterTestResource, ContentFilterTestService)
+from apps.content_filters.filter_condition.filter_condition_parameters import \
+    FilterConditionParametersResource, FilterConditionParametersService
 
-
-logger = logging.getLogger(__name__)
+from apps.content_filters.content_filter.content_filter_test import ContentFilterTestResource, ContentFilterTestService
 
 
 def init_app(app):
