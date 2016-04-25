@@ -52,7 +52,7 @@ class UsersResource(Resource):
                 'required': True
             },
             'phone': {
-                'type': 'phone_number',
+                'type': 'string',
                 'nullable': True
             },
             'language': {
