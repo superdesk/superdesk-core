@@ -658,7 +658,7 @@ def publish_images(images, original, item):
     for image in images:
         content_type = original['mimetype']
         ok, output = crop_image(orig_file, image['file_name'], image['crop'], image['spec'])
-        if ok:
+        if ok and output:
             app.media.put(output, image['file_name'], content_type, _id=image['media'])
 
 
