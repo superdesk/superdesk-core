@@ -42,7 +42,7 @@ class HTTPPushService(PublishService):
         if not queue_item.get(PUBLISHED_IN_PACKAGE) or not destination.get('config', {}).get('packaged', False):
             resource_url = destination.get('config', {}).get('resource_url')
             response = requests.post(resource_url, data=json.dumps(item), headers=self.headers)
-            if response.status_code != requests.codes.created:  # @UndefinedVariable
+            if response.status_code not in (requests.codes.created, requests.codes.accepted):  # @UndefinedVariable
                 message = 'Error pushing item %s: %s' % (response.status_code, response.text)
                 raise PublishHTTPPushError.httpPushError(Exception(message, destination))
 
