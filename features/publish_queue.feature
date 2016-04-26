@@ -40,6 +40,64 @@ Feature: Publish Queue
     }
     """
 
+
+  @auth
+  Scenario: No transmission will happen if subscriber doesn't have product
+    Given empty "archive"
+    And empty "subscribers"
+    And empty "products"
+    And "products"
+      """
+      [{
+        "_id":"570340ef1d41c89b50716dad", "name":"prod-1","codes":"abc"
+      },
+      {
+        "_id":"570340ef1d41c89b50716dae", "name":"prod-2","codes":"def,xyz"
+      },
+      {
+        "_id":"570340ef1d41c89b50716daf", "name":"prod-3"
+      }]
+      """
+    And the "validators"
+      """
+      [{"_id": "publish_text", "act": "publish", "type": "text", "schema":{}},
+       {"_id": "correct_text", "act": "correct", "type": "text", "schema":{}},
+       {"_id": "kill_text", "act": "kill", "type": "text", "schema":{}}]
+      """
+
+    And "desks"
+      """
+      [{"name": "Sports"}]
+      """
+    And "archive"
+      """
+      [{"guid": "123", "type": "text", "headline": "test", "_current_version": 1, "state": "fetched",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "subject":[{"qcode": "17004000", "name": "Statistics"}],
+        "slugline": "test",
+        "body_html": "Test Document body"}]
+      """
+    And "subscribers"
+      """
+      [{
+        "name":"Channel 3",
+        "media_type":"media",
+        "subscriber_type": "digital",
+        "sequence_num_settings":{"min" : 1, "max" : 10},
+        "email": "test@test.com",
+        "codes": "ptr, axx,",
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }]
+      """
+
+    When we publish "#archive._id#" with "publish" type and "published" state
+    Then we get OK response
+
+    When we enqueue published
+    When we get "/publish_queue"
+    Then we get list with 0 items
+
+
   @auth
   Scenario: Transmission will have the collated codes
     Given empty "archive"
@@ -84,6 +142,7 @@ Feature: Publish Queue
         "subscriber_type": "digital",
         "sequence_num_settings":{"min" : 1, "max" : 10},
         "email": "test@test.com",
+        "codes": "ptr, axx,",
         "products": ["570340ef1d41c89b50716dad", "570340ef1d41c89b50716dae", "570340ef1d41c89b50716daf"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }]
@@ -104,7 +163,7 @@ Feature: Publish Queue
           "subscriber_id": "#subscribers._id#",
           "item_id": "#archive.123.take_package#",
           "item_version": 2,
-          "codes": ["abc", "xyz", "def"]
+          "codes": ["abc", "xyz", "def", "ptr", "axx"]
         }
       ]
     }

@@ -19,7 +19,7 @@ import json
 
 
 class AAPSMSFormatter(Formatter):
-    def format(self, article, subscriber):
+    def format(self, article, subscriber, codes=None):
         """
         Constructs a dictionary that represents the parameters passed to the SMS InsertAlerts stored procedure
         :return: returns the sequence number of the subscriber and the constructed parameter dictionary

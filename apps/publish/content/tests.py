@@ -24,6 +24,7 @@ from apps.validators import ValidatorsPopulateCommand
 from superdesk.metadata.packages import RESIDREF
 from test_factory import SuperdeskTestCase
 from superdesk.publish import init_app, publish_queue
+from apps.publish.content.common import BasePublishService
 from superdesk.utc import utcnow
 from superdesk import get_resource_service
 import superdesk
@@ -50,11 +51,13 @@ class ArchivePublishTestCase(SuperdeskTestCase):
     def init_data(self):
         self.users = [{'_id': '1', 'username': 'admin'}]
         self.desks = [{'_id': ObjectId('123456789ABCDEF123456789'), 'name': 'desk1'}]
-        self.products = [{"_id": "1", "name": "prod1"},
-                         {"_id": "2", "name": "prod2", "codes": "abc,def"},
+        self.products = [{"_id": "1", "name": "prod1", "geo_restrictions": "NSW", "email": "test@test.com"},
+                         {"_id": "2", "name": "prod2", "codes": "abc,def,"},
                          {"_id": "3", "name": "prod3", "codes": "xyz"}]
-        self.subscribers = [{"_id": "1", "name": "sub1", "is_active": True, "subscriber_type": SUBSCRIBER_TYPES.WIRE,
-                             "media_type": "media", "sequence_num_settings": {"max": 10, "min": 1},
+        self.subscribers = [{"_id": "1", "name": "sub1", "is_active": True,
+                             "subscriber_type": SUBSCRIBER_TYPES.WIRE,
+                             "media_type": "media",
+                             "sequence_num_settings": {"max": 10, "min": 1},
                              "email": "test@test.com",
                              "products": ["1"],
                              "destinations": [{"name": "dest1", "format": "nitf",
@@ -62,7 +65,8 @@ class ArchivePublishTestCase(SuperdeskTestCase):
                                                "config": {"address": "127.0.0.1", "username": "test"}
                                                }]
                              },
-                            {"_id": "2", "name": "sub2", "is_active": True, "subscriber_type": SUBSCRIBER_TYPES.WIRE,
+                            {"_id": "2", "name": "sub2", "is_active": True,
+                             "subscriber_type": SUBSCRIBER_TYPES.WIRE,
                              "media_type": "media", "sequence_num_settings": {"max": 10, "min": 1},
                              "email": "test@test.com",
                              "products": ["1"],
@@ -73,7 +77,8 @@ class ArchivePublishTestCase(SuperdeskTestCase):
                                                "config": {"recipients": "test@sourcefabric.org"}
                                                }]
                              },
-                            {"_id": "3", "name": "sub3", "is_active": True, "subscriber_type": SUBSCRIBER_TYPES.DIGITAL,
+                            {"_id": "3", "name": "sub3", "is_active": True,
+                             "subscriber_type": SUBSCRIBER_TYPES.DIGITAL,
                              "media_type": "media", "sequence_num_settings": {"max": 10, "min": 1},
                              "email": "test@test.com",
                              "products": ["1"],
@@ -82,18 +87,20 @@ class ArchivePublishTestCase(SuperdeskTestCase):
                                                "config": {"address": "127.0.0.1", "username": "test"}
                                                }]
                              },
-                            {"_id": "4", "name": "sub4", "is_active": True, "subscriber_type": SUBSCRIBER_TYPES.WIRE,
+                            {"_id": "4", "name": "sub4", "is_active": True,
+                             "subscriber_type": SUBSCRIBER_TYPES.WIRE,
                              "media_type": "media", "sequence_num_settings": {"max": 10, "min": 1},
-                             "geo_restrictions": "New South Wales", "email": "test@test.com",
                              "products": ["1"],
                              "destinations": [{"name": "dest1", "format": "nitf",
                                                "delivery_type": "ftp",
                                                "config": {"address": "127.0.0.1", "username": "test"}
                                                }]
                              },
-                            {"_id": "5", "name": "sub5", "is_active": True, "subscriber_type": SUBSCRIBER_TYPES.ALL,
+                            {"_id": "5", "name": "sub5", "is_active": True,
+                             "subscriber_type": SUBSCRIBER_TYPES.ALL,
                              "media_type": "media", "sequence_num_settings": {"max": 10, "min": 1},
                              "email": "test@test.com",
+                             "codes": "xyz,  klm",
                              "products": ["1", "2"],
                              "destinations": [{"name": "dest1", "format": "ninjs",
                                                "delivery_type": "ftp",
@@ -276,7 +283,7 @@ class ArchivePublishTestCase(SuperdeskTestCase):
                           '_id': '8',
                           'last_version': 3,
                           config.VERSION: 4,
-                          'targeted_for': [{'name': 'New South Wales', 'allow': True}],
+                          'target_regions': [{'qcode': 'NSW', 'name': 'New South Wales', 'allow': True}],
                           'body_html': 'Take-1 body',
                           'urgency': 4,
                           'headline': 'Take-1 headline',
@@ -587,8 +594,29 @@ class ArchivePublishTestCase(SuperdeskTestCase):
         for item in queue_items:
             self.assertIn(item['subscriber_id'], expected_subscribers, 'item {}'.format(item))
             if item['subscriber_id'] == '5':
+                self.assertEqual(4, len(item['codes']))
                 self.assertIn('def', item['codes'])
                 self.assertIn('abc', item['codes'])
+                self.assertIn('xyz', item['codes'])
+                self.assertIn('klm', item['codes'])
+
+    def test_get_subscribers_without_product(self):
+        doc = copy(self.articles[1])
+        doc['item_id'] = doc['_id']
+
+        subscriber_service = get_resource_service('subscribers')
+
+        for sub in self.subscribers:
+            sub.pop('products', None)
+            subscriber_service.delete({'_id': sub['_id']})
+
+        subscriber_service.post(self.subscribers)
+
+        subscribers, subscribers_yet_to_receive, subscriber_codes = \
+            EnqueuePublishedService().get_subscribers(doc, SUBSCRIBER_TYPES.WIRE)
+
+        self.assertEqual(0, len(subscribers))
+        self.assertDictEqual({}, subscriber_codes)
 
     def test_queue_transmission_wrong_article_type_fails(self):
         self._is_publish_queue_empty()
@@ -624,11 +652,40 @@ class ArchivePublishTestCase(SuperdeskTestCase):
 
         enqueue_published()
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
-        self.assertEqual(4, queue_items.count())
+        self.assertEqual(7, queue_items.count())
 
         # this will delete queue transmission for the wire article not the takes package.
         publish_queue.PublishQueueService(PUBLISH_QUEUE, superdesk.get_backend()).delete_by_article_id(doc['_id'])
-        self._is_publish_queue_empty()
+        queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
+        self.assertEqual(2, queue_items.count())
+
+    def test_conform_target_regions(self):
+        doc = {'headline': 'test'}
+        product = {'geo_restrictions': 'QLD'}
+        self.assertTrue(EnqueueService().conforms_product_targets(product, doc))
+        doc = {'headline': 'test', 'target_regions': []}
+        self.assertTrue(EnqueueService().conforms_product_targets(product, doc))
+        doc = {'headline': 'test', 'target_regions': [{'qcode': 'VIC', 'name': 'Victoria', 'allow': True}]}
+        self.assertFalse(EnqueueService().conforms_product_targets(product, doc))
+        doc = {'headline': 'test', 'target_regions': [{'qcode': 'VIC', 'name': 'Victoria', 'allow': False}]}
+        self.assertTrue(EnqueueService().conforms_product_targets(product, doc))
+        doc = {'headline': 'test', 'target_regions': [{'qcode': 'QLD', 'name': 'Queensland', 'allow': True}]}
+        self.assertTrue(EnqueueService().conforms_product_targets(product, doc))
+        doc = {'headline': 'test', 'target_regions': [{'qcode': 'QLD', 'name': 'Queensland', 'allow': False}]}
+        self.assertFalse(EnqueueService().conforms_product_targets(product, doc))
+
+    def test_conform_target_subscribers(self):
+        doc = {'headline': 'test'}
+        subscriber = {'_id': 1}
+        self.assertTupleEqual((True, False), EnqueueService().conforms_subscriber_targets(subscriber, doc))
+        doc = {'headline': 'test', 'target_subscribers': []}
+        self.assertTupleEqual((True, False), EnqueueService().conforms_subscriber_targets(subscriber, doc))
+        doc = {'headline': 'test', 'target_subscribers': [{'_id': 2}]}
+        self.assertTupleEqual((False, False), EnqueueService().conforms_subscriber_targets(subscriber, doc))
+        doc = {'headline': 'test', 'target_subscribers': [{'_id': 1}]}
+        self.assertTupleEqual((True, True), EnqueueService().conforms_subscriber_targets(subscriber, doc))
+        doc = {'headline': 'test', 'target_subscribers': [{'_id': 2}], 'target_regions': [{'name': 'Victoria'}]}
+        self.assertTupleEqual((True, False), EnqueueService().conforms_subscriber_targets(subscriber, doc))
 
     def test_can_publish_article(self):
         product = self.products[0]
@@ -661,17 +718,29 @@ class ArchivePublishTestCase(SuperdeskTestCase):
 
         product.pop('content_filter')
 
-    def test_targeted_for_excludes_digital_subscribers(self):
+    def test_is_targeted(self):
+        doc = {'headline': 'test'}
+        self.assertFalse(BasePublishService().is_targeted(doc))
+        doc = {'headline': 'test', 'target_regions': []}
+        self.assertFalse(BasePublishService().is_targeted(doc))
+        doc = {'headline': 'test', 'target_regions': [{'qcode': 'NSW'}]}
+        self.assertTrue(BasePublishService().is_targeted(doc))
+        doc = {'headline': 'test', 'target_regions': [], 'target_types': []}
+        self.assertFalse(BasePublishService().is_targeted(doc))
+        doc = {'headline': 'test', 'target_regions': [], 'target_types': [{'qcode': 'digital'}]}
+        self.assertTrue(BasePublishService().is_targeted(doc))
+
+    def test_targeted_for_includes_digital_subscribers(self):
         ValidatorsPopulateCommand().run(self.filename)
-        updates = {'targeted_for': [{'name': 'New South Wales', 'allow': True}]}
+        updates = {'target_regions': [{'qcode': 'NSW', 'name': 'New South Wales', 'allow': True}]}
         doc_id = self.articles[9][config.ID_FIELD]
         get_resource_service(ARCHIVE).patch(id=doc_id, updates=updates)
 
         get_resource_service(ARCHIVE_PUBLISH).patch(id=doc_id, updates={ITEM_STATE: CONTENT_STATE.PUBLISHED})
         enqueue_published()
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
-        self.assertEqual(4, queue_items.count())
-        expected_subscribers = ['1', '2', '4']
+        self.assertEqual(7, queue_items.count())
+        expected_subscribers = ['1', '2', '3', '4', '5']
         for item in queue_items:
             self.assertIn(item["subscriber_id"], expected_subscribers, 'item {}'.format(item))
 

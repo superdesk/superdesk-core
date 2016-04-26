@@ -212,11 +212,11 @@ class EnqueueService:
         all_products = list(get_resource_service('products').get(req=None, lookup=None))
 
         for subscriber in subscribers:
-            codes = []
+            codes = self._get_codes(subscriber)
             products = [p for p in all_products if p[config.ID_FIELD] in subscriber.get('products', [])]
 
             for product in products:
-                codes.extend(product.get('codes', '').split(','))
+                codes.extend(self._get_codes(product))
                 subscriber_codes[subscriber[config.ID_FIELD]] = list(set(codes))
 
         return subscriber_codes
@@ -301,7 +301,9 @@ class EnqueueService:
                             no_formatters.append(destination['format'])
                             continue
 
-                        formatted_docs = formatter.format(doc, subscriber)
+                        formatted_docs = formatter.format(doc,
+                                                          subscriber,
+                                                          subscriber_codes.get(subscriber[config.ID_FIELD]))
 
                         for pub_seq_num, formatted_doc in formatted_docs:
                             publish_queue_item = dict()
@@ -419,37 +421,99 @@ class EnqueueService:
                         target_media_type == SUBSCRIBER_TYPES.DIGITAL and not can_send_takes_packages:
                     continue
 
-            if doc.get('targeted_for'):
-                found_match = [t for t in doc['targeted_for'] if t['name'] == subscriber.get('subscriber_type', '')]
-
-                if len(found_match) == 0 and subscriber.get('geo_restrictions'):
-                    found_match = [t for t in doc['targeted_for'] if t['name'] == subscriber['geo_restrictions']]
-                    if len(found_match) == 0 or found_match[0]['allow'] is False:
-                        continue
-                elif len(found_match) > 0 and found_match[0]['allow'] is False:
-                    continue
+            conforms, skip_filters = self.conforms_subscriber_targets(subscriber, doc)
+            if not conforms:
+                continue
 
             if not self.conforms_global_filter(subscriber, global_filters, doc):
-                    continue
+                continue
 
-            product_codes = []
+            product_codes = self._get_codes(subscriber)
             subscriber_added = False
             for product_id in subscriber.get('products', []):
                 # check if the product filter conforms with the story
                 product = existing_products.get(product_id)
-                if product and self.conforms_content_filter(product, doc):
+
+                if not product:
+                    continue
+
+                if not self.conforms_product_targets(product, doc):
+                    continue
+
+                if self.conforms_content_filter(product, doc):
                     # gather the codes of products
-                    if product.get('codes'):
-                        product_codes.extend(product.get('codes', '').split(','))
+                    product_codes.extend(self._get_codes(product))
                     if not subscriber_added:
                         filtered_subscribers.append(subscriber)
                         subscriber_added = True
+
+            if skip_filters and not subscriber_added:
+                filtered_subscribers.append(subscriber)
+                subscriber_added = True
 
             # unify the list of codes by removing duplicates
             if subscriber_added:
                 subscriber_codes[subscriber[config.ID_FIELD]] = list(set(product_codes))
 
         return filtered_subscribers, subscriber_codes
+
+    def conforms_product_targets(self, product, article):
+        """
+        Checks if the given article has any target information and if it does
+        it checks if the product satisfies any of the target information
+        :param product: Product to test
+        :param article: article
+        :return:
+            bool: True if the article conforms the targets for the given product
+        """
+
+        # If not targeted at all then Return true
+        if not BasePublishService().is_targeted(article, 'target_regions'):
+            return True
+
+        geo_restrictions = product.get('geo_restrictions')
+        if geo_restrictions:
+            for region in article.get('target_regions', []):
+                if region['qcode'] == geo_restrictions and region['allow']:
+                    return True
+                if region['qcode'] != geo_restrictions and not region['allow']:
+                    return True
+        return False
+
+    def conforms_subscriber_targets(self, subscriber, article):
+        """
+        Checks if the given article has any target information and if it does
+        it checks if the subscriber satisfies any of the target information
+        :param subscriber: Subscriber to test
+        :param article: article
+        :return:
+            bool: True/False if the article conforms the targets
+            bool: True if the given subscriber is specifically targeted, False otherwise
+        """
+        # If not targeted at all then Return true
+        if not BasePublishService().is_targeted(article, 'target_subscribers') and \
+                not BasePublishService().is_targeted(article, 'target_types'):
+            return True, False
+
+        subscriber_type = subscriber.get('subscriber_type')
+
+        for t in article.get('target_subscribers', []):
+            if str(t.get('_id')) == str(subscriber['_id']):
+                return True, True
+
+        if subscriber_type:
+            for t in article.get('target_types', []):
+                if t['qcode'] == subscriber_type and t['allow']:
+                    return True, False
+                if t['qcode'] != subscriber_type and not t['allow']:
+                    return True, False
+
+        # If there's a region target then continue with the subscriber to check products
+        if BasePublishService().is_targeted(article, 'target_regions'):
+            return True, False
+
+        # Nothing matches so this subscriber doesn't conform
+        return False, False
 
     def conforms_content_filter(self, product, doc):
         """
@@ -514,3 +578,9 @@ class EnqueueService:
             subscriber_items[sid] = {'subscriber': subscriber,
                                      'items': item_list,
                                      'codes': subscriber_codes.get(sid, [])}
+
+    def _get_codes(self, item):
+        if item.get('codes'):
+            return [c.strip() for c in item.get('codes').split(',') if c]
+        else:
+            return []

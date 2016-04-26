@@ -154,10 +154,8 @@ class BasePublishService(BaseService):
             raise SuperdeskApiError.internalError(message="Failed to publish the item: {}".format(str(e)))
 
     def _process_takes_package(self, original, updated, updates):
-        # if targeted_for is set then we don't to digital client.
-        targeted_for = updates.get('targeted_for', original.get('targeted_for'))
         if original[ITEM_TYPE] in {CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED} \
-                and not (targeted_for or is_genre(original, BROADCAST_GENRE)):
+                and not is_genre(original, BROADCAST_GENRE):
             # check if item is in a digital package
             last_updated = updates.get(config.LAST_UPDATED, utcnow())
             package = self.takes_package_service.get_take_package(original)
@@ -192,6 +190,21 @@ class BasePublishService(BaseService):
             package.update(package_updates)
             self.update_published_collection(published_item_id=package_id)
             self._import_into_legal_archive(package)
+
+    def is_targeted(self, article, target=None):
+        """
+        Returns True if the given article has been targeted by region or
+        subscriber type or specific subscribers
+        :param article: Article to check
+        :param target: Optional specific target to check if exists
+        :return:
+        """
+        if target:
+            return len(article.get(target, [])) > 0
+        else:
+            return len(article.get('target_regions', []) +
+                       article.get('target_types', []) +
+                       article.get('target_subscribers', [])) > 0
 
     def _validate(self, original, updates):
         self.raise_if_not_marked_for_publication(original)
@@ -306,7 +319,7 @@ class BasePublishService(BaseService):
         """ Returns True if the item was a take
         """
         return item[ITEM_TYPE] != CONTENT_TYPE.COMPOSITE and \
-            (not (item.get('targeted_for') or is_genre(item, BROADCAST_GENRE)))
+            (not (self.is_targeted(item) or is_genre(item, BROADCAST_GENRE)))
 
     def process_takes(self, updates_of_take_to_be_published, package, original_of_take_to_be_published=None):
         """

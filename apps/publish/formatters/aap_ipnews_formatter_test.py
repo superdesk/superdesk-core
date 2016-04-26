@@ -59,7 +59,7 @@ class AapIpNewsFormatterTest(SuperdeskTestCase):
         self.app.data.insert('desks', self.desks)
         init_app(self.app)
 
-    def testIPNewsFormatter(self):
+    def testIPNewsFormatterWithNoSelector(self):
         subscriber = self.app.data.find('subscribers', None, None)[0]
 
         f = AAPIpNewsFormatter()
@@ -76,6 +76,7 @@ class AapIpNewsFormatterTest(SuperdeskTestCase):
                               'subject_matter': 'international law', 'news_item_type': 'News',
                               'subject_reference': '02011001', 'subject': 'crime, law and justice',
                               'wordcount': '1', 'subject_detail': 'international court or tribunal',
+                              'selector_codes': ' ',
                               'genre': 'Current', 'keyword': 'slugline', 'author': 'joe'})
 
     def testIPNewsHtmlToText(self):
@@ -127,7 +128,7 @@ class AapIpNewsFormatterTest(SuperdeskTestCase):
         subscriber = self.app.data.find('subscribers', None, None)[0]
 
         f = AAPIpNewsFormatter()
-        docs = f.format(article, subscriber)
+        docs = f.format(article, subscriber, ['Aaa', 'Bbb', 'Ccc'])
         self.assertEqual(len(docs), 2)
         for seq, doc in docs:
             doc = json.loads(doc)
@@ -140,7 +141,7 @@ class AapIpNewsFormatterTest(SuperdeskTestCase):
                 self.assertEqual(doc['subject_detail'], 'viniculture')
                 self.assertEqual(doc['headline'], 'VIC:This is a test headline')
                 codes = set(doc['selector_codes'].split(' '))
-                expected_codes = set('cxx 0fh axx az and pxx 0ah 0ir 0px 0hw pnd pxd cnd cxd 0nl axd'.split(' '))
+                expected_codes = set('Aaa Bbb Ccc'.split(' '))
                 self.assertSetEqual(codes, expected_codes)
 
     def testGeoBlock(self):
@@ -159,49 +160,17 @@ class AapIpNewsFormatterTest(SuperdeskTestCase):
             'priority': 1,
             'task': {'desk': 1},
             'urgency': 1,
-            'place': [{'qcode': 'VIC', 'name': 'VIC'}],
-            'targeted_for': [{'name': 'New South Wales', 'allow': False}, {'name': 'Victoria', 'allow': True}]
+            'place': [{'qcode': 'VIC', 'name': 'VIC'}]
         }
 
         subscriber = self.app.data.find('subscribers', None, None)[0]
 
         f = AAPIpNewsFormatter()
-        seq, doc = f.format(article, subscriber)[0]
+        codes = ['an5', 'an4', 'an7', 'an6', 'ax5', 'an3', 'ax6', 'ax7', '0hw']
+        seq, doc = f.format(article, subscriber, codes)[0]
         doc = json.loads(doc)
         codes = set(doc['selector_codes'].split(' '))
-        expected_codes_str = 'an5 an4 an7 an6 ax5 an3 ax6 ax7 0hw an8 0ir px6 ax4 ax3 ax8 px5 0ah 0px px3 az'
-        expected_codes_str += ' px8 0fh px7 px4 pn3 pn4 pn5 pn6 pn7 px0'
-        expected_codes = set(expected_codes_str.split(' '))
-        self.assertSetEqual(codes, expected_codes)
-
-    def testGeoBlockNotTwoStates(self):
-        article = {
-            'source': 'AAP',
-            'anpa_category': [{'qcode': 'a'}],
-            'headline': 'This is a test headline',
-            'byline': 'joe',
-            'slugline': 'slugline',
-            'subject': [{'qcode': '04001005'}, {'qcode': '15011002'}],
-            'anpa_take_key': 'take_key',
-            'unique_id': '1',
-            'type': 'text',
-            'body_html': 'body',
-            'word_count': '1',
-            'priority': 1,
-            'task': {'desk': 1},
-            'urgency': 1,
-            'place': [{'qcode': 'VIC', 'name': 'VIC'}],
-            'targeted_for': [{'name': 'New South Wales', 'allow': False}, {'name': 'Victoria', 'allow': False}]
-        }
-
-        subscriber = self.app.data.find('subscribers', None, None)[0]
-
-        f = AAPIpNewsFormatter()
-        seq, doc = f.format(article, subscriber)[0]
-        doc = json.loads(doc)
-        codes = set(doc['selector_codes'].split(' '))
-        expected_codes_str = 'an5 an4 an7 an6 ax5 ax6 ax7 an8 px6 ax4 ax8 px5 0ah 0px'
-        expected_codes_str += ' px8 0fh px7 px4 pn4 pn5 pn6 pn7 px0'
+        expected_codes_str = 'an5 an4 an7 an6 ax5 an3 ax6 ax7 0hw'
         expected_codes = set(expected_codes_str.split(' '))
         self.assertSetEqual(codes, expected_codes)
 
@@ -260,7 +229,7 @@ class AapIpNewsFormatterTest(SuperdeskTestCase):
         doc['body_footer'] = '<p>call helpline 999 if you are planning to quit smoking</p>'
 
         f = AAPIpNewsFormatter()
-        seq, item = f.format(doc, subscriber)[0]
+        seq, item = f.format(doc, subscriber, ['Axx'])[0]
         item = json.loads(item)
 
         self.assertGreater(int(seq), 0)
@@ -275,6 +244,7 @@ class AapIpNewsFormatterTest(SuperdeskTestCase):
                               'subject_matter': 'international law', 'news_item_type': 'News',
                               'subject_reference': '02011001', 'subject': 'crime, law and justice',
                               'wordcount': '1', 'subject_detail': 'international court or tribunal',
+                              'selector_codes': 'Axx',
                               'genre': 'Current', 'keyword': 'slugline', 'author': 'joe'})
 
 

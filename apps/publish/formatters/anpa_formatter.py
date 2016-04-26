@@ -16,12 +16,11 @@ from superdesk.errors import FormatterError
 from bs4 import BeautifulSoup
 import datetime
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, BYLINE, EMBARGO
-from .field_mappers.selectorcode_mapper import SelectorcodeMapper
 from .field_mappers.locator_mapper import LocatorMapper
 
 
 class AAPAnpaFormatter(Formatter):
-    def format(self, article, subscriber):
+    def format(self, article, subscriber, codes=None):
         try:
             docs = []
             for category in article.get('anpa_category'):
@@ -30,13 +29,15 @@ class AAPAnpaFormatter(Formatter):
 
                 # selector codes are only injected for those subscribers that are defined
                 # in the mapper
-                selectors = dict()
-                SelectorcodeMapper().map(article, category.get('qcode').upper(),
-                                         subscriber=subscriber,
-                                         formatted_item=selectors)
-                if 'selector_codes' in selectors and selectors['selector_codes']:
+                # Ta 20/04/16: Keeping selector code mapper section here for the time being
+                # selectors = dict()
+                # SelectorcodeMapper().map(article, category.get('qcode').upper(),
+                #                          subscriber=subscriber,
+                #                          formatted_item=selectors)
+
+                if codes:
                     anpa.append(b'\x05')
-                    anpa.append(selectors['selector_codes'].encode('ascii'))
+                    anpa.append(' '.join(codes).encode('ascii'))
                     anpa.append(b'\x0D\x0A')
 
                 # start of message header (syn syn soh)

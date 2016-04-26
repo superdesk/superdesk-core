@@ -31,7 +31,7 @@ class NITFFormatter(Formatter):
     _debug_message_extra = {
         'schemaLocation': '{} {}'.format(_schema_uri, _schema_ref)}
 
-    def format(self, article, subscriber):
+    def format(self, article, subscriber, codes=None):
         try:
             pub_seq_num = superdesk.get_resource_service('subscribers').generate_sequence_number(subscriber)
 

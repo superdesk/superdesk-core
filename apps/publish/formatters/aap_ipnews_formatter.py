@@ -20,7 +20,6 @@ from apps.publish.formatters.aap_formatter_common import map_priority, set_subje
 import superdesk
 from superdesk.errors import FormatterError
 from superdesk.io.iptc import subject_codes
-from apps.publish.formatters.field_mappers.selectorcode_mapper import SelectorcodeMapper
 from apps.publish.formatters.field_mappers.locator_mapper import LocatorMapper
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO
 from apps.archive.common import get_utc_schedule
@@ -29,7 +28,7 @@ import json
 
 class AAPIpNewsFormatter(Formatter):
 
-    def format(self, article, subscriber):
+    def format(self, article, subscriber, codes=None):
         """
         Constructs a dictionary that represents the parameters passed to the IPNews InsertNews stored procedure
         :return: returns the sequence number of the subscriber and the constructed parameter dictionary
@@ -90,10 +89,13 @@ class AAPIpNewsFormatter(Formatter):
                 odbc_item['service_level'] = 'a'  # @service_level
                 odbc_item['fullStory'] = 1
                 odbc_item['ident'] = '0'  # @ident
+                odbc_item['selector_codes'] = ' '.join(codes) if codes else ' '
 
-                SelectorcodeMapper().map(article, category.get('qcode').upper(),
-                                         subscriber=subscriber,
-                                         formatted_item=odbc_item)
+                # Ta 20/04/16: Keeping selector code mapper section here for the time being
+                # SelectorcodeMapper().map(article, category.get('qcode').upper(),
+                #                          subscriber=subscriber,
+                #                          formatted_item=odbc_item)
+
                 headline_prefix = LocatorMapper().map(article, category.get('qcode').upper())
                 if headline_prefix:
                     odbc_item['headline'] = '{}:{}'.format(headline_prefix, odbc_item['headline'])

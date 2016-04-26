@@ -10,7 +10,7 @@
 
 from superdesk import get_resource_service
 from superdesk.metadata.item import EMBARGO, CONTENT_STATE
-from superdesk.publish import SUBSCRIBER_TYPES
+from superdesk.publish import SUBSCRIBER_TYPES, SUBSCRIBER_MEDIA_TYPES
 from superdesk.utc import utcnow
 from apps.archive.common import get_utc_schedule
 from eve.utils import config
@@ -54,6 +54,7 @@ class EnqueueCorrectedService(EnqueueService):
                 query = {'is_active': True}
                 if doc.get(EMBARGO) and get_utc_schedule(doc, EMBARGO) > utcnow():
                     query['subscriber_type'] = SUBSCRIBER_TYPES.WIRE
+                    query['media_type'] = SUBSCRIBER_MEDIA_TYPES.MEDIA
 
                 active_subscribers = list(get_resource_service('subscribers').get(req=None, lookup=query))
                 subscribers_yet_to_receive = [a for a in active_subscribers
@@ -62,12 +63,11 @@ class EnqueueCorrectedService(EnqueueService):
 
             if len(subscribers_yet_to_receive) > 0:
                 # Step 4
-                if doc.get('targeted_for'):
+                if doc.get('target_regions'):
                     subscribers_yet_to_receive = list(self.non_digital(subscribers_yet_to_receive))
                 # Step 5
                 subscribers_yet_to_receive, codes = \
-                    self.filter_subscribers(doc, subscribers_yet_to_receive,
-                                            SUBSCRIBER_TYPES.WIRE if doc.get('targeted_for') else target_media_type)
+                    self.filter_subscribers(doc, subscribers_yet_to_receive, target_media_type)
                 if codes:
                     subscriber_codes.update(codes)
 
