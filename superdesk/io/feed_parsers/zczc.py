@@ -58,8 +58,12 @@ class ZCZCFeedParser(FileFeedParser):
     def can_parse(self, file_path):
         try:
             with open(file_path, 'r', encoding='ascii') as f:
-                return self.START_OF_MESSAGE in f.readlines()[0]
-        finally:
+                lines = f.readlines()
+                for line in lines:
+                    if self.START_OF_MESSAGE in line:
+                        return True
+                return False
+        except:
             return False
 
     def parse(self, filename, provider=None):
