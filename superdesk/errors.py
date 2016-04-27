@@ -558,5 +558,25 @@ class PublishHTTPPushError(SuperdeskPublishError):
         return PublishHTTPPushError(14000, exception, destination)
 
 
+class PublishHTTPPushClientError(PublishHTTPPushError):
+    _codes = {
+        14001: "HTTP push publish client error",
+    }
+
+    @classmethod
+    def httpPushError(cls, exception=None, destination=None):
+        return PublishHTTPPushClientError(14001, exception, destination)
+
+
+class PublishHTTPPushServerError(PublishHTTPPushError):
+    _codes = {
+        14002: "HTTP push publish server error",
+    }
+
+    @classmethod
+    def httpPushError(cls, exception=None, destination=None):
+        return PublishHTTPPushServerError(14002, exception, destination)
+
+
 class AlreadyExistsError(Exception):
     pass
