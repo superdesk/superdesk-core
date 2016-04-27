@@ -711,6 +711,6 @@ superdesk.workflow_action(
 
 superdesk.workflow_action(
     name='rewrite',
-    exclude_states=['killed', 'spiked', 'scheduled'],
+    exclude_states=['killed', 'spiked'],
     privileges=['rewrite']
 )
