@@ -84,7 +84,7 @@ class FilterConditionTests(SuperdeskTestCase):
             self.req.args = {'source': json.dumps({'query': {'bool': {'must_not': [elastic_translation]}}})}
         elif search_type == 'filter':
             self.req.args = {'source': json.dumps({'query': {
-                                                   'filtered': {
+                                                   'bool': {
                                                        'filter': {
                                                            'bool': {
                                                                'should': [elastic_translation]}}}}})}

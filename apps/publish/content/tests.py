@@ -677,9 +677,9 @@ class ArchivePublishTestCase(SuperdeskTestCase):
 
     def test_maintain_latest_version_for_published(self):
         def get_publish_items(item_id, last_version):
-            query = {'query': {'filtered': {'filter': {'and': [
+            query = {'query': {'bool': {'filter': {'bool': {'must':[
                     {'term': {'item_id': item_id}}, {'term': {LAST_PUBLISHED_VERSION: last_version}}
-            ]}}}}
+            ]}}}}}
             request = ParsedRequest()
             request.args = {'source': json.dumps(query), 'aggregations': 0}
             return self.app.data.find(PUBLISHED, req=request, lookup=None)

@@ -25,10 +25,10 @@ def get_highlighted_items(highlights_id):
     highlight = get_resource_service('highlights').find_one(req=None, _id=highlights_id)
     query = {
         'query': {
-            'filtered': {'filter': {'and': [
+            'bool': {'filter': {'bool': {'must': [
                 {'range': {'versioncreated': {'gte': highlight.get('auto_insert', 'now/d')}}},
                 {'term': {'highlights': str(highlights_id)}},
-            ]}}
+            ]}}}
         },
         'sort': [
             {'versioncreated': 'desc'},
@@ -58,7 +58,7 @@ class HighlightsService(BaseService):
     def on_delete(self, doc):
         service = get_resource_service('archive')
         highlights_id = str(doc['_id'])
-        query = {'query': {'filtered': {'filter': {'term': {'highlights': highlights_id}}}}}
+        query = {'query': {'bool': {'filter': {'term': {'highlights': highlights_id}}}}}
         req = init_parsed_request(query)
         proposedItems = service.get(req=req, lookup=None)
         for item in proposedItems:

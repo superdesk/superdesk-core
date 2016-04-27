@@ -393,13 +393,15 @@ class ImportLegalArchiveCommand(superdesk.Command):
         """
         query = {
             'query': {
-                'filtered': {
+                'bool': {
                     'filter': {
-                        'and': [
-                            {'range': {'expiry': {'lt': 'now'}}},
-                            {'term': {'moved_to_legal': False}},
-                            {'not': {'term': {'state': CONTENT_STATE.SCHEDULED}}}
-                        ]
+                        'bool': {
+                            'must': [
+                                {'range': {'expiry': {'lt': 'now'}}},
+                                {'term': {'moved_to_legal': False}}
+                            ],
+                            'must_not': {'term': {'state': CONTENT_STATE.SCHEDULED}}
+                        }
                     }
                 }
             }

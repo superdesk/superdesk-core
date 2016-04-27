@@ -292,10 +292,11 @@ class SluglineDesksResource(Resource):
     datasource = {'source': 'published',
                   'search_backend': 'elastic',
                   'default_sort': [('slugline.phrase', 1), ("versioncreated", 0)],
-                  'elastic_filter': {"and": [{"range": {"versioncreated": {"gte": "now-24H"}}},
+                  'elastic_filter': {"bool": {
+                                     "must": [{"range": {"versioncreated": {"gte": "now-24H"}}},
                                              {"term": {"last_published_version": True}},
                                              {"term": {"type": "text"}}
-                                             ]}}
+                                             ]}}}
     resource_methods = ['GET']
     item_methods = []
 
@@ -409,12 +410,14 @@ class SluglineDeskService(BaseService):
         req = ParsedRequest()
         query = {
             'query': {
-                'filtered': {
+                'bool': {
                     'filter': {
-                        'and': [
-                            {'term': {'family_id': family_id}},
-                            {'term': {'task.desk': desk_id}},
-                        ]
+                        'bool': {
+                            'must:'[
+                                {'term': {'family_id': family_id}},
+                                {'term': {'task.desk': desk_id}},
+                            ]
+                        }
                     }
                 }
             }

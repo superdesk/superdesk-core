@@ -230,7 +230,7 @@ class PublishedItemService(BaseService):
 
     def get_other_published_items(self, _id):
         try:
-            query = {'query': {'filtered': {'filter': {'term': {'item_id': _id}}}}}
+            query = {'query': {'bool': {'filter': {'term': {'item_id': _id}}}}}
             request = ParsedRequest()
             request.args = {'source': json.dumps(query)}
             return super().get(req=request, lookup=None)
@@ -241,7 +241,7 @@ class PublishedItemService(BaseService):
         """ Returns all the published and rewritten take stories for the same event """
         try:
             query = {'query':
-                     {'filtered':
+                     {'bool':
                       {'filter':
                        {'bool':
                         {'must': [
@@ -266,7 +266,7 @@ class PublishedItemService(BaseService):
         """
         try:
             query = {'query':
-                     {'filtered':
+                     {'bool':
                       {'filter':
                        {'bool':
                         {'must': [
@@ -361,12 +361,14 @@ class PublishedItemService(BaseService):
             try:
                 query = {
                     'query': {
-                        'filtered': {
+                        'bool': {
                             'filter': {
-                                'and': [
-                                    {'terms': {'item_id': item_ids}},
-                                    {'term': {'moved_to_legal': move_to_legal}}
-                                ]
+                                'bool': {
+                                    'must': [
+                                        {'terms': {'item_id': item_ids}},
+                                        {'term': {'moved_to_legal': move_to_legal}}
+                                    ]
+                                }
                             }
                         }
                     }

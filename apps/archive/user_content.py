@@ -25,10 +25,12 @@ class UserContentResource(Resource):
         'source': 'archive',
         'aggregations': aggregations,
         'elastic_filter': {
-            'and': [
-                {'not': {'exists': {'field': 'task.desk'}}},
-                {'not': {'term': {'version': 0}}},
-            ]
+            'bool': {
+                'must_not': [
+                    {'exists': {'field': 'task.desk'}},
+                    {'term': {'version': 0}},
+                ]
+            }
         }
     }
     resource_methods = ['GET', 'POST']

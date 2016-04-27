@@ -32,23 +32,23 @@ class SearchService(superdesk.Service):
 
     def __init__(self, datasource, backend):
         super().__init__(datasource=datasource, backend=backend)
-        self._private_filters = dict(ingest={'and': [{'term': {'_type': 'ingest'}}]},
-                                     archive={'and': [{'exists': {'field': 'task.desk'}},
+        self._private_filters = dict(ingest={'bool': {'must': [{'term': {'_type': 'ingest'}}]}},
+                                     archive={'bool': {'must': [{'exists': {'field': 'task.desk'}},
                                                       {'terms': {
                                                           ITEM_STATE: [CONTENT_STATE.FETCHED, CONTENT_STATE.DRAFT,
                                                                        CONTENT_STATE.ROUTED, CONTENT_STATE.PROGRESS,
-                                                                       CONTENT_STATE.SUBMITTED]}}]},
-                                     published={'and': [{'term': {'_type': 'published'}},
+                                                                       CONTENT_STATE.SUBMITTED]}}]}},
+                                     published={'bool': {'must': [{'term': {'_type': 'published'}},
                                                         {'terms': {ITEM_STATE: [CONTENT_STATE.SCHEDULED,
                                                                                 CONTENT_STATE.PUBLISHED,
                                                                                 CONTENT_STATE.KILLED,
-                                                                                CONTENT_STATE.CORRECTED]}}]},
-                                     archived={'and': [{'term': {'_type': 'archived'}}]})
+                                                                                CONTENT_STATE.CORRECTED]}}]}},
+                                     archived={'bool': {'must': [{'term': {'_type': 'archived'}}]}})
 
     def _get_query(self, req):
         """Get elastic query."""
         args = getattr(req, 'args', {})
-        query = json.loads(args.get('source')) if args.get('source') else {'query': {'filtered': {}}}
+        query = json.loads(args.get('source')) if args.get('source') else {'query': {'bool': {}}}
         if app.data.elastic.should_aggregate(req):
             query['aggs'] = aggregations
         return query
@@ -86,7 +86,7 @@ class SearchService(superdesk.Service):
 
         stages = superdesk.get_resource_service('users').get_invisible_stages_ids(g.get('user', {}).get('_id'))
         if stages:
-            filters.append({'and': [{'not': {'terms': {'task.stage': stages}}}]})
+            filters.append({'bool': {'must_not': {'terms': {'task.stage': stages}}}})
 
         # if the system has a setting value for the maximum search depth then apply the filter
         if not app.settings['MAX_SEARCH_DEPTH'] == -1:
