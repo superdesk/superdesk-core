@@ -15,6 +15,7 @@ from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, CONTENT
 from apps.archive.common import set_sign_off, ITEM_OPERATION
 
 from .common import BasePublishService, BasePublishResource, ITEM_PUBLISH
+from superdesk import get_resource_service, config
 
 
 logger = logging.getLogger(__name__)
@@ -38,6 +39,12 @@ class ArchivePublishService(BasePublishService):
                 raise SuperdeskApiError.badRequestError("Empty package cannot be published!")
 
     def on_update(self, updates, original):
+        if PUBLISH_SCHEDULE in original and original[ITEM_STATE] == CONTENT_STATE.SCHEDULED:
+            publish_schedule = original.get(PUBLISH_SCHEDULE, None)
+            new_original = get_resource_service('archive').patch(original[config.ID_FIELD], {PUBLISH_SCHEDULE: None})
+            original.update(new_original)
+            if publish_schedule:
+                original[PUBLISH_SCHEDULE] = publish_schedule
         updates[ITEM_OPERATION] = ITEM_PUBLISH
         super().on_update(updates, original)
         set_sign_off(updates, original)

@@ -16,7 +16,8 @@ from flask import current_app as app
 import superdesk
 from superdesk import get_resource_service, config
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
-from superdesk.metadata.item import ITEM_STATE, CONTENT_TYPE, ITEM_TYPE, PUBLISH_STATES
+from superdesk.metadata.item import ITEM_STATE, CONTENT_TYPE, ITEM_TYPE, PUBLISH_STATES,\
+    PUBLISH_SCHEDULE, CONTENT_STATE
 from superdesk.metadata.packages import SEQUENCE
 from superdesk.notification import push_notification
 from superdesk.services import BaseService
@@ -69,6 +70,9 @@ class ArchiveUnspikeResource(ArchiveResource):
 class ArchiveSpikeService(BaseService):
 
     def on_update(self, updates, original):
+        if PUBLISH_SCHEDULE in original and original[ITEM_STATE] == CONTENT_STATE.SCHEDULED:
+            new_original = get_resource_service('archive').patch(original[config.ID_FIELD], {PUBLISH_SCHEDULE: None})
+            original.update(new_original)
         updates[ITEM_OPERATION] = ITEM_SPIKE
         self._validate_item(original)
         self._validate_take(original)

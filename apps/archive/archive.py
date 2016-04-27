@@ -198,7 +198,8 @@ class ArchiveService(BaseService):
         user = get_user()
         self._validate_updates(original, updates, user)
 
-        if PUBLISH_SCHEDULE in updates and original[ITEM_STATE] == CONTENT_STATE.SCHEDULED:
+        if (PUBLISH_SCHEDULE in updates or PUBLISH_SCHEDULE in original) \
+           and original[ITEM_STATE] == CONTENT_STATE.SCHEDULED:
             # check if there is a takes package and deschedule the takes package.
             takes_service = TakesPackageService()
             package = takes_service.get_take_package(original)
@@ -252,6 +253,8 @@ class ArchiveService(BaseService):
 
         push_content_notification([updated, original])
         get_resource_service('archive_broadcast').reset_broadcast_status(updates, original)
+        if updates.get(PUBLISH_SCHEDULE, None) and original[ITEM_STATE] == CONTENT_STATE.SCHEDULED:
+            get_resource_service('archive_publish').patch(updated['_id'], updates=updated)
 
     def on_replace(self, document, original):
         document[ITEM_OPERATION] = ITEM_UPDATE
@@ -429,11 +432,18 @@ class ArchiveService(BaseService):
             get_resource_service('archive_versions').post(new_versions)
 
     def update(self, id, updates, original):
+        scheduled = PUBLISH_SCHEDULE in original and PUBLISH_SCHEDULE not in updates \
+            and original[ITEM_STATE] == CONTENT_STATE.SCHEDULED
         # this needs to here as resolve_nested_documents (in eve) will add the schedule_settings
-        if PUBLISH_SCHEDULE in updates and original[ITEM_STATE] == CONTENT_STATE.SCHEDULED:
+        if (PUBLISH_SCHEDULE in updates or PUBLISH_SCHEDULE in original) \
+           and original[ITEM_STATE] == CONTENT_STATE.SCHEDULED:
             self.deschedule_item(updates, original)  # this is an deschedule action
 
-        return super().update(id, updates, original)
+        result = super().update(id, updates, original)
+        if scheduled:
+            updates[PUBLISH_SCHEDULE] = original[PUBLISH_SCHEDULE]
+
+        return result
 
     def deschedule_item(self, updates, original):
         """
