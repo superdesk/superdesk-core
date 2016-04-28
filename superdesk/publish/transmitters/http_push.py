@@ -13,7 +13,7 @@ from superdesk import app
 from superdesk.publish import register_transmitter
 
 import requests
-from superdesk.errors import PublishHTTPPushError
+from superdesk.errors import PublishHTTPPushError, PublishHTTPPushServerError, PublishHTTPPushClientError
 from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
 from superdesk.publish.publish_service import PublishService
 
@@ -30,23 +30,18 @@ class HTTPPushService(PublishService):
         @see: PublishService._transmit
         """
         item = json.loads(queue_item['formatted_item'])
-
         destination = queue_item.get('destination', {})
-        assets_url = destination.get('config', {}).get('assets_url', None)
-        if type(assets_url) == str and assets_url.strip():
-            try:
-                self._copy_published_media_files(json.loads(queue_item['formatted_item']), assets_url)
-            except Exception as e:
-                raise PublishHTTPPushError.httpPushError(e, destination)
+
+        self._copy_published_media_files(json.loads(queue_item['formatted_item']), destination)
 
         if not queue_item.get(PUBLISHED_IN_PACKAGE) or not destination.get('config', {}).get('packaged', False):
             resource_url = destination.get('config', {}).get('resource_url')
             response = requests.post(resource_url, data=json.dumps(item), headers=self.headers)
             if response.status_code not in (requests.codes.created, requests.codes.accepted):  # @UndefinedVariable
                 message = 'Error pushing item %s: %s' % (response.status_code, response.text)
-                raise PublishHTTPPushError.httpPushError(Exception(message, destination))
+                self._raise_publish_error(response.status_code, Exception(message), destination)
 
-    def _copy_published_media_files(self, item, assets_url):
+    def _copy_published_media_files(self, item, destination):
         """Copy the media files for the given item to the publish_items endpoint
 
         @param item: the item object
@@ -54,13 +49,19 @@ class HTTPPushService(PublishService):
         @param assets_url: the url where the media can be uploaded
         @type assets_url: string
         """
+
+        assets_url = self._get_assets_url(destination)
+
+        if not (type(assets_url) == str and assets_url.strip()):
+            return
+
         renditions = item.get('renditions', {})
         for assoc_list in item.get('associations', {}).values():
             for assoc in assoc_list:
                 renditions.update(assoc.get('renditions', {}))
         for name, rendition in renditions.items():
             del renditions[name]['href']
-            if not self._media_exists(rendition['media'], assets_url):
+            if not self._media_exists(rendition['media'], destination):
                 media = app.media.get(rendition['media'], resource='upload')
                 files = {'media': (
                     rendition['media'], media, rendition['mimetype']
@@ -69,12 +70,16 @@ class HTTPPushService(PublishService):
                     assets_url, files=files, data={'media_id': rendition['media']}
                 )
                 if response.status_code != requests.codes.created:  # @UndefinedVariable
-                    raise Exception('Error pushing item %s media file %s: %s %s' % (
-                        item.get("_id", ""), rendition.get('media', ""),
-                        response.status_code, response.text
-                    ))
+                    self._raise_publish_error(
+                        response.status_code,
+                        Exception('Error pushing item %s media file %s: %s %s' % (
+                            item.get("_id", ""), rendition.get('media', ""),
+                            response.status_code, response.text
+                        )),
+                        destination
+                    )
 
-    def _media_exists(self, media_id, assets_url):
+    def _media_exists(self, media_id, destination):
         """Returns true if the media with the given id exists at the service identified by assets_url.
         Returns false otherwise. Raises Exception if the error code was not 200 or 404
 
@@ -84,9 +89,26 @@ class HTTPPushService(PublishService):
         @type assets_url: string
         @return: bool
         """
+
+        assets_url = self._get_assets_url(destination)
         response = requests.get('%s/%s' % (assets_url, media_id))
         if response.status_code not in (requests.codes.ok, requests.codes.not_found):  # @UndefinedVariable
-            raise Exception('Error querying the assets service %s' % assets_url)
+            self._raise_publish_error(
+                response.status_code,
+                Exception('Error querying the assets service %s' % assets_url),
+                destination
+            )
         return response.status_code == requests.codes.ok  # @UndefinedVariable
+
+    def _get_assets_url(self, destination):
+        return destination.get('config', {}).get('assets_url', None)
+
+    def _raise_publish_error(self, status_code, e, destination=None):
+        if status_code >= 400 and status_code < 500:
+            raise PublishHTTPPushClientError.httpPushError(e, destination)
+        elif status_code >= 500 and status_code < 600:
+            raise PublishHTTPPushServerError.httpPushError(e, destination)
+        else:
+            raise PublishHTTPPushError.httpPushError(e, destination)
 
 register_transmitter('http_push', HTTPPushService(), errors)
