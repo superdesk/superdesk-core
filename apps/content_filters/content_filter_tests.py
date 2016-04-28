@@ -221,7 +221,7 @@ class RetrievingDataTests(ContentFilterTests):
     def test_build_elastic_query_using_like_filter_single_filter_condition(self):
         doc = {'content_filter': [{"expression": {"fc": [1]}}], 'name': 'pf-1'}
         with self.app.app_context():
-            query = {'query': {'filtered': {'query': self.f._get_elastic_query(doc)}}}
+            query = {'query': {'bool': {'must': self.f._get_elastic_query(doc)}}}
             self.req.args = {'source': json.dumps(query)}
             docs = superdesk.get_resource_service('archive').get(req=self.req, lookup=None)
             doc_ids = [d['_id'] for d in docs]
@@ -233,7 +233,7 @@ class RetrievingDataTests(ContentFilterTests):
     def test_build_elastic_query_using_like_filter_single_content_filter(self):
         doc = {'content_filter': [{"expression": {"pf": [1]}}], 'name': 'pf-1'}
         with self.app.app_context():
-            query = {'query': {'filtered': {'query': self.f._get_elastic_query(doc)}}}
+            query = {'query': {'bool': {'must': self.f._get_elastic_query(doc)}}}
             self.req.args = {'source': json.dumps(query)}
             docs = superdesk.get_resource_service('archive').get(req=self.req, lookup=None)
             doc_ids = [d['_id'] for d in docs]
@@ -245,7 +245,7 @@ class RetrievingDataTests(ContentFilterTests):
     def test_build_elastic_query_using_like_filter_multi_filter_condition(self):
         doc = {'content_filter': [{"expression": {"fc": [1]}}, {"expression": {"fc": [2]}}], 'name': 'pf-1'}
         with self.app.app_context():
-            query = {'query': {'filtered': {'query': self.f._get_elastic_query(doc)}}}
+            query = {'query': {'bool': {'must': self.f._get_elastic_query(doc)}}}
             self.req.args = {'source': json.dumps(query)}
             docs = superdesk.get_resource_service('archive').get(req=self.req, lookup=None)
             doc_ids = [d['_id'] for d in docs]
@@ -258,7 +258,7 @@ class RetrievingDataTests(ContentFilterTests):
     def test_build_mongo_query_using_like_filter_multi_content_filter(self):
         doc = {'content_filter': [{"expression": {"pf": [1]}}, {"expression": {"fc": [2]}}], 'name': 'pf-1'}
         with self.app.app_context():
-            query = {'query': {'filtered': {'query': self.f._get_elastic_query(doc)}}}
+            query = {'query': {'bool': {'must': self.f._get_elastic_query(doc)}}}
             self.req.args = {'source': json.dumps(query)}
             docs = superdesk.get_resource_service('archive').get(req=self.req, lookup=None)
             doc_ids = [d['_id'] for d in docs]
@@ -271,7 +271,7 @@ class RetrievingDataTests(ContentFilterTests):
     def test_build_elastic_query_using_like_filter_multi_filter_condition2(self):
         doc = {'content_filter': [{"expression": {"fc": [3, 4]}}, {"expression": {"fc": [1, 2]}}], 'name': 'pf-1'}
         with self.app.app_context():
-            query = {'query': {'filtered': {'query': self.f._get_elastic_query(doc)}}}
+            query = {'query': {'bool': {'must': self.f._get_elastic_query(doc)}}}
             self.req.args = {'source': json.dumps(query)}
             docs = superdesk.get_resource_service('archive').get(req=self.req, lookup=None)
             doc_ids = [d['_id'] for d in docs]
@@ -282,7 +282,7 @@ class RetrievingDataTests(ContentFilterTests):
         doc = {'content_filter': [{"expression": {"fc": [4, 3]}},
                                   {"expression": {"pf": [1], "fc": [2]}}], 'name': 'pf-1'}
         with self.app.app_context():
-            query = {'query': {'filtered': {'query': self.f._get_elastic_query(doc)}}}
+            query = {'query': {'bool': {'must': self.f._get_elastic_query(doc)}}}
             self.req.args = {'source': json.dumps(query)}
             docs = superdesk.get_resource_service('archive').get(req=self.req, lookup=None)
             doc_ids = [d['_id'] for d in docs]
@@ -292,7 +292,7 @@ class RetrievingDataTests(ContentFilterTests):
     def test_build_elastic_query_using_like_filter_multi_content_filter3(self):
         doc = {'content_filter': [{"expression": {"pf": [2]}}, {"expression": {"pf": [1], "fc": [2]}}], 'name': 'pf-1'}
         with self.app.app_context():
-            query = {'query': {'filtered': {'query': self.f._get_elastic_query(doc)}}}
+            query = {'query': {'bool': {'must': self.f._get_elastic_query(doc)}}}
             self.req.args = {'source': json.dumps(query)}
             docs = superdesk.get_resource_service('archive').get(req=self.req, lookup=None)
             doc_ids = [d['_id'] for d in docs]
@@ -302,17 +302,17 @@ class RetrievingDataTests(ContentFilterTests):
     def test_build_elastic_query_using_like_filter_multi_content_filter4(self):
         doc = {'content_filter': [{"expression": {"pf": [2]}}, {"expression": {"pf": [3]}}], 'name': 'pf-1'}
         with self.app.app_context():
-            query = {'query': {'filtered': {'query': self.f._get_elastic_query(doc)}}}
+            query = {'query': {'bool': {'must': self.f._get_elastic_query(doc)}}}
             self.req.args = {'source': json.dumps(query)}
             docs = superdesk.get_resource_service('archive').get(req=self.req, lookup=None)
             doc_ids = [d['_id'] for d in docs]
             self.assertEqual(1, docs.count())
             self.assertTrue('3' in doc_ids)
 
-    def test_build_elastic_query_using_like_filter_multi_content_filter4(self):
+    def test_build_elastic_query_using_like_filter_multi_content_filter5(self):
         doc = {'content_filter': [{"expression": {"pf": [4], "fc": [4]}}], 'name': 'pf-1'}
         with self.app.app_context():
-            query = {'query': {'filtered': {'query': self.f._get_elastic_query(doc)}}}
+            query = {'query': {'bool': {'must': self.f._get_elastic_query(doc)}}}
             self.req.args = {'source': json.dumps(query)}
             docs = superdesk.get_resource_service('archive').get(req=self.req, lookup=None)
             doc_ids = [d['_id'] for d in docs]

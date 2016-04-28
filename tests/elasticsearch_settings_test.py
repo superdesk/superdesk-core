@@ -42,8 +42,8 @@ class ElasticSearchSettingsTest(TestCase):
     def test_query_prefix_soccer(self):
         query = {
             'query': {
-                'filtered': {
-                    'query': {
+                'bool': {
+                    'must': {
                         'match_phrase_prefix': {
                             'slugline.phrase': 'soccer'
                         }
@@ -65,8 +65,8 @@ class ElasticSearchSettingsTest(TestCase):
     def test_query_prefix_soccer_england(self):
         query = {
             'query': {
-                'filtered': {
-                    'query': {
+                'bool': {
+                    'must': {
                         'match_phrase_prefix': {
                             'slugline.phrase': 'soccer england'
                         }
@@ -87,8 +87,8 @@ class ElasticSearchSettingsTest(TestCase):
     def test_query_prefix_soccer_england_result_without_forward_slash(self):
         query = {
             'query': {
-                'filtered': {
-                    'query': {
+                'bool': {
+                    'must': {
                         'match_phrase_prefix': {
                             'slugline.phrase': 'soccer-england result'
                         }
@@ -107,8 +107,8 @@ class ElasticSearchSettingsTest(TestCase):
     def test_query_prefix_soccer_england_result_with_forward_slash(self):
         query = {
             'query': {
-                'filtered': {
-                    'query': {
+                'bool': {
+                    'must': {
                         'match_phrase_prefix': {
                             'slugline.phrase': 'soccer england/result'
                         }

@@ -110,5 +110,5 @@ class SearchIngestService(superdesk.Service):
 
     def _get_query(self, req):
         args = getattr(req, 'args', {})
-        query = json.loads(args.get('source')) if args.get('source') else {'query': {'filtered': {}}}
+        query = json.loads(args.get('source')) if args.get('source') else {'query': {'bool': {}}}
         return query

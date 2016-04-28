@@ -279,7 +279,7 @@ class TakesPackageService():
             takes = [ref.get(RESIDREF) for ref in refs if ref.get(SEQUENCE) < sequence]
             # elastic filter for the archive resource filters out the published items
             archive_service = get_resource_service(ARCHIVE)
-            query = {'query': {'filtered': {'filter': {'terms': {'_id': takes}}}}}
+            query = {'query': {'bool': {'filter': {'terms': {'_id': takes}}}}}
             request = ParsedRequest()
             request.args = {'source': json.dumps(query)}
             items = archive_service.get(req=request, lookup=None)

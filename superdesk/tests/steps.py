@@ -1779,12 +1779,14 @@ def validate_routed_item(context, rule_name, is_routed, is_transformed=False):
     def validate_rule(action, state):
         for destination in rule.get('actions', {}).get(action, []):
             query = {
-                'and': [
-                    {'term': {'ingest_id': str(data['ingest'])}},
-                    {'term': {'task.desk': str(destination['desk'])}},
-                    {'term': {'task.stage': str(destination['stage'])}},
-                    {'term': {'state': state}}
-                ]
+                'bool': {
+                    'must': [
+                        {'term': {'ingest_id': str(data['ingest'])}},
+                        {'term': {'task.desk': str(destination['desk'])}},
+                        {'term': {'task.stage': str(destination['stage'])}},
+                        {'term': {'state': state}}
+                    ]
+                }
             }
             item = get_archive_items(query) + get_published_items(query)
 

@@ -110,8 +110,8 @@ class EnqueueService:
         """
         published_service = get_resource_service('published')
         req = ParsedRequest()
-        query = {'query': {'filtered': {'filter': {'and': [{'term': {QUEUE_STATE: PUBLISH_STATE.QUEUED}},
-                                                           {'term': {'item_id': package['item_id']}}]}}},
+        query = {'query': {'bool': {'filter': {'bool': {"must": [{'term': {QUEUE_STATE: PUBLISH_STATE.QUEUED}},
+                                                           {'term': {'item_id': package['item_id']}}]}}}},
                  'sort': [{'publish_sequence_no': 'desc'}]}
         req.args = {'source': json.dumps(query)}
         req.max_results = 1000

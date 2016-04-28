@@ -212,10 +212,10 @@ class ContentFilterService(BaseService):
             return expressions[0]
 
     def build_elastic_query(self, doc):
-        return {'query': {'filtered': {'query': self._get_elastic_query(doc)}}}
+        return {'query': {'bool': {'must': self._get_elastic_query(doc)}}}
 
     def build_elastic_not_filter(self, doc):
-        return {'query': {'filtered': {'query': self._get_elastic_query(doc, matching=False)}}}
+        return {'query': {'bool': {'must': self._get_elastic_query(doc, matching=False)}}}
 
     def _get_elastic_query(self, doc, matching=True):
         expressions_list = []

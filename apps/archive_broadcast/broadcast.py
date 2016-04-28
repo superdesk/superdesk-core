@@ -127,7 +127,7 @@ class ArchiveBroadcastService(BaseService):
         """
         query = {
             'query': {
-                'filtered': {
+                'bool': {
                     'filter': {
                         'bool': {
                             'must': {'term': {'genre.name': BROADCAST_GENRE}},
@@ -248,9 +248,9 @@ class ArchiveBroadcastService(BaseService):
 
         query = {
             'query': {
-                'filtered': {
+                'bool': {
                     'filter': {
-                        'and': [
+                        'must': [
                             {'term': {'genre.name': BROADCAST_GENRE}},
                             {'term': {'broadcast.rewrite_id': item.get(config.ID_FIELD)}}
                         ]
