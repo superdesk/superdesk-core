@@ -232,7 +232,6 @@ Feature: Cropping the Image Articles
       }
       """
       Then we get OK response
-
       And we get existing resource
       """
       {
@@ -270,7 +269,41 @@ Feature: Cropping the Image Articles
         }
       }
       """
-
+      When we get "/archive/bike"
+      Then we get OK response
+      And we get no "poi"
+      When we patch "/archive/feature_image"
+      """
+      {
+        "associations": {
+          "featureimage": {
+            "_id": "bike",
+            "poi": {"x": 0.1, "y": 0.1},
+            "renditions": {
+              "16-9": {"CropLeft":0,"CropRight":1280,"CropTop":0,"CropBottom":720}
+            }
+          }
+        }
+      }
+      """
+      Then we get OK response
+      And we get existing resource
+      """
+      {
+        "associations": {
+          "featureimage": {
+            "_id": "bike",
+            "poi": {"x": 0.1, "y": 0.1},
+            "renditions": {
+              "16-9" : {
+                "poi" : {"y" : 160, "x" : 120},
+                "width": 1200, "height": 675
+              }
+            }
+          }
+        }
+      }
+      """
 
     @auth
     @vocabulary

@@ -220,18 +220,18 @@ class ArchiveService(BaseService):
         if original[ITEM_TYPE] == CONTENT_TYPE.PICTURE:  # create crops
             CropService().create_multiple_crops(updates, original)
 
-        updates_feature_image = updates.get('associations', {}).get('featureimage')
-        if updates_feature_image and 'poi' in updates_feature_image:
-            original_feature_image = original.get('associations', {}).get('featureimage', {})
-            if original_feature_image and original_feature_image.get('poi', {}) == updates_feature_image['poi']:
-                return
-            _id = updates_feature_image[config.ID_FIELD] if config.ID_FIELD in updates_feature_image \
-                else original_feature_image[config.ID_FIELD]
-            image_item = self.find_one(req=None, _id=_id)
-            if image_item:
-                image_item['poi'] = updates_feature_image['poi']
-                image_item = self.patch(_id, image_item)
-                updates['associations']['featureimage']['renditions'] = image_item['renditions']
+        # iterate over associations. Validate and process them if they are stored in database
+        if 'associations' in updates:
+            for item_name, item_obj in updates.get('associations').items():
+                if config.ID_FIELD in item_obj:
+                    _id = item_obj[config.ID_FIELD]
+                    stored_item = self.find_one(req=None, _id=_id)
+                    if stored_item:
+                        self._validate_updates(stored_item, item_obj, user)
+                        if stored_item[ITEM_TYPE] == CONTENT_TYPE.PICTURE:  # create crops
+                            CropService().create_multiple_crops(item_obj, stored_item)
+                        stored_item.update(item_obj)
+                        updates['associations'][item_name] = stored_item
 
     def on_updated(self, updates, original):
         get_component(ItemAutosave).clear(original['_id'])

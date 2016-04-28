@@ -128,7 +128,7 @@ class CropService():
             if type(ratio) not in [int, float]:
                 ratio = ratio.split(':')
                 ratio = int(ratio[0]) / int(ratio[1])
-            if abs((width / height) - ratio) > 0.01:
+            if abs((width / height) - ratio) > 0.1:
                 raise SuperdeskApiError.badRequestError(
                     message='Ratio %s is not respected. We got %f' % (crop.get('ratio'), abs((width / height))))
 
@@ -233,7 +233,7 @@ class CropService():
         :param dict original: original of the updated item
         """
         update_renditions = updates.get('renditions', {})
-        if original.get(ITEM_TYPE) == CONTENT_TYPE.PICTURE and update_renditions:
+        if original.get(ITEM_TYPE) == CONTENT_TYPE.PICTURE:
             renditions = original.get('renditions', {})
             original_copy = deepcopy(original)
             for key in update_renditions:
