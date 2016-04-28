@@ -24,11 +24,11 @@ class FilterConditionOperator:
 
     @staticmethod
     def factory(operator):
-        if operator + '_' == FilterConditionOperatorsEnum.in_._name_:
+        if operator + '_' == FilterConditionOperatorsEnum.in_.name:
             return InOperator(operator)
-        elif operator == FilterConditionOperatorsEnum.nin._name_:
+        elif operator == FilterConditionOperatorsEnum.nin.name:
             return NotInOperator(operator)
-        elif operator == FilterConditionOperatorsEnum.notlike._name_:
+        elif operator == FilterConditionOperatorsEnum.notlike.name:
             return NotLikeOperator(operator)
         else:
             return RegexOperator(operator)

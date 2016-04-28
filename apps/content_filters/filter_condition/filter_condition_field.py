@@ -23,24 +23,35 @@ class FilterConditionFieldsEnum(Enum):
     slugline = 10,
     source = 11,
     headline = 12,
-    body_html = 13
+    body_html = 13,
+    stage = 14
 
 
 class FilterConditionField:
 
-    field_mappings = {FilterConditionFieldsEnum.anpa_category: 'anpa_category.qcode',
-                      FilterConditionFieldsEnum.genre: 'genre.name',
-                      FilterConditionFieldsEnum.subject: 'subject.qcode',
-                      FilterConditionFieldsEnum.desk: 'task.desk',
-                      FilterConditionFieldsEnum.sms: 'flags.marked_for_sms'}
-
-    field_type_mappings = {FilterConditionFieldsEnum.urgency: int,
-                           FilterConditionFieldsEnum.sms: bool}
+    @staticmethod
+    def factory(field):
+        if FilterConditionFieldsEnum[field] == FilterConditionFieldsEnum.desk:
+            return FilterConditionDeskField(field)
+        elif FilterConditionFieldsEnum[field] == FilterConditionFieldsEnum.stage:
+            return FilterConditionStageField(field)
+        elif FilterConditionFieldsEnum[field] == FilterConditionFieldsEnum.anpa_category:
+            return FilterConditionCategoryField(field)
+        elif FilterConditionFieldsEnum[field] == FilterConditionFieldsEnum.genre:
+            return FilterConditionGenreField(field)
+        elif FilterConditionFieldsEnum[field] == FilterConditionFieldsEnum.sms:
+            return FilterConditionSmsField(field)
+        elif FilterConditionFieldsEnum[field] == FilterConditionFieldsEnum.subject:
+            return FilterConditionSubjectField(field)
+        elif FilterConditionFieldsEnum[field] == FilterConditionFieldsEnum.urgency:
+            return FilterConditionUrgencyField(field)
+        else:
+            return FilterConditionField(field)
 
     def __init__(self, field):
         self.field = FilterConditionFieldsEnum[field]
-        self.entity_name = self.field_mappings.get(self.field, field)
-        self.field_type = self.field_type_mappings.get(self.field, str)
+        self.entity_name = field
+        self.field_type = str
 
     def get_entity_name(self):
         return self.entity_name
@@ -49,23 +60,83 @@ class FilterConditionField:
         return self.field_type
 
     def is_in_article(self, article):
-        if self.field == FilterConditionFieldsEnum.desk:
-            return self.field in article.get('task', {})
-        elif self.field == FilterConditionFieldsEnum.sms:
-            return 'marked_for_sms' in article.get('flags', {})
-        else:
-            return self.field._name_ in article
+        return self.field.name in article
 
     def get_value(self, article):
-        if self.field == FilterConditionFieldsEnum.anpa_category:
-            return [c['qcode'] for c in article[self.field._name_]]
-        elif self.field == FilterConditionFieldsEnum.genre:
-            return [g['name'] for g in article[self.field._name_]]
-        elif self.field == FilterConditionFieldsEnum.subject:
-            return [s['qcode'] for s in article[self.field._name_]]
-        elif self.field == FilterConditionFieldsEnum.desk:
-            return str(article.get('task', {}).get(self.field._name_))
-        elif self.field == FilterConditionFieldsEnum.sms:
-            return str(article.get('flags', {}).get('marked_for_sms'))
-        else:
-            return article[self.field._name_]
+        return article[self.field.name]
+
+
+class FilterConditionDeskField(FilterConditionField):
+    def __init__(self, field):
+        self.field = FilterConditionFieldsEnum.desk
+        self.entity_name = 'task.desk'
+        self.field_type = str
+
+    def is_in_article(self, article):
+        return self.field.name in article.get('task', {})
+
+    def get_value(self, article):
+        return str(article.get('task', {}).get(self.field.name))
+
+
+class FilterConditionStageField(FilterConditionField):
+    def __init__(self, field):
+        self.field = FilterConditionFieldsEnum.stage
+        self.entity_name = 'task.stage'
+        self.field_type = str
+
+    def is_in_article(self, article):
+        return self.field.name in article.get('task', {})
+
+    def get_value(self, article):
+        return str(article.get('task', {}).get(self.field.name))
+
+
+class FilterConditionSubjectField(FilterConditionField):
+    def __init__(self, field):
+        self.field = FilterConditionFieldsEnum.subject
+        self.entity_name = 'subject.qcode'
+        self.field_type = str
+
+    def get_value(self, article):
+        return [s['qcode'] for s in article[self.field.name]]
+
+
+class FilterConditionCategoryField(FilterConditionField):
+    def __init__(self, field):
+        self.field = FilterConditionFieldsEnum.anpa_category
+        self.entity_name = 'anpa_category.qcode'
+        self.field_type = str
+
+    def get_value(self, article):
+        return [c['qcode'] for c in article[self.field.name]]
+
+
+class FilterConditionGenreField(FilterConditionField):
+    def __init__(self, field):
+        self.field = FilterConditionFieldsEnum.genre
+        self.entity_name = 'genre.name'
+        self.field_type = str
+
+    def get_value(self, article):
+        return [g['name'] for g in article[self.field.name]]
+
+
+class FilterConditionUrgencyField(FilterConditionField):
+    def __init__(self, field):
+        self.field = FilterConditionFieldsEnum[field]
+        self.entity_name = field
+        self.field_type = int
+
+
+class FilterConditionSmsField(FilterConditionField):
+    def __init__(self, field):
+        self.field = FilterConditionFieldsEnum.sms
+        self.entity_name = 'flags.marked_for_sms'
+        self.field_type = bool
+
+    def is_in_article(self, article):
+        return 'marked_for_sms' in article.get('flags', {})
+
+    def get_value(self, article):
+        return str(article.get('flags', {}).get('marked_for_sms'))

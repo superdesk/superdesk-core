@@ -74,6 +74,11 @@ class FilterConditionParametersService(BaseService):
                             'values': values['desk'],
                             'value_field': '_id'
                             },
+                           {'field': 'stage',
+                            'operators': ['in', 'nin'],
+                            'values': values['stage'],
+                            'value_field': '_id'
+                            },
                            {'field': 'sms',
                             'operators': ['in', 'nin'],
                             'values': values['sms'],
@@ -90,5 +95,13 @@ class FilterConditionParametersService(BaseService):
         values['type'] = vocabularies_resource.find_one(req=None, _id='type')['items']
         values['subject'] = get_subjectcodeitems()
         values['desk'] = list(get_resource_service('desks').get(None, {}))
+        values['stage'] = self._get_stage_field_values(values['desk'])
         values['sms'] = [{'qcode': 0, 'name': 'False'}, {'qcode': 1, 'name': 'True'}]
         return values
+
+    def _get_stage_field_values(self, desks):
+        stages = list(get_resource_service('stages').get(None, {}))
+        for stage in stages:
+            desk = next(filter(lambda d: d['_id'] == stage['desk'], desks))
+            stage['name'] = '{}: {}'.format(desk['name'], stage['name'])
+        return stages

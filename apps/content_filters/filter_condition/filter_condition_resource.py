@@ -35,6 +35,7 @@ class FilterConditionResource(Resource):
                         'genre',
                         'subject',
                         'desk',
+                        'stage',
                         'sms'],
         },
         'operator': {

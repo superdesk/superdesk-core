@@ -16,7 +16,7 @@ from apps.content_filters.filter_condition.filter_condition_operator import \
 class FilterCondition:
 
     def __init__(self, field, operator, value):
-        self.field = FilterConditionField(field)
+        self.field = FilterConditionField.factory(field)
         self.operator = FilterConditionOperator.factory(operator)
         self.value = FilterConditionValue(self.operator, value)
 
