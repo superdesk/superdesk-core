@@ -2002,3 +2002,187 @@ Feature: Content Publishing
         ]
       }
       """
+
+    @auth
+    Scenario: Publish item with custom subject fields
+      Given the "content_types"
+      """
+        [
+            {
+                "_id": "Standard",
+                "label": "Standard",
+                "priority": 80,
+                "enabled": true,
+                "schema": {
+                    "slugline": {"type": "string", "required": true, "maxlength": 64, "minlength": 1},
+                    "subject": {
+                      "type": "list",
+                      "mandatory_in_list": {"scheme": {"subject": "subject_custom", "category": "category"}},
+                      "schema": {
+                         "type": "dict",
+                         "schema": {
+                            "name": {},
+                            "qcode": {},
+                            "scheme": {
+                               "type": "string",
+                               "required": true,
+                               "allowed": ["subject_custom", "category"]
+                            },
+                            "service": {},
+                            "parent": {}
+                          }
+                      }
+                    }
+                },
+                "editor": {
+                    "slugline": {"order": 1},
+                    "category": {"order": 2, "sdWidth": "half", "required": true},
+                    "subject_custom": {"order": 3, "sdWidth": "full", "required": true}
+                }
+            }
+        ]
+      """
+      And "desks"
+      """
+      [{"name": "Sports", "content_expiry": 60}]
+      """
+      When we post to "/archive" with success
+      """
+      [{"guid": "123", "type": "text", "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "subject": [{"name": "DiDFødselsdag", "qcode": "DiDFødselsdag", "scheme": "category", "service": {"d": 1, "i": 1}},
+                    {"name": "arkeologi", "qcode": "01001000", "scheme": "subject_custom", "parent": "01000000"}],
+        "slugline": "test", "state": "fetched", "profile": "Standard"}]
+      """
+      Then we get OK response
+      And we get existing resource
+      """
+      {"_current_version": 1, "state": "fetched", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
+      """
+      When we publish "#archive._id#" with "publish" type and "published" state
+      Then we get OK response
+      And we get existing resource
+      """
+      {"_current_version": 2, "state": "published", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
+      """
+
+
+    @auth
+    Scenario: Fail on category when publish item with custom subject fields
+      Given the "content_types"
+      """
+        [
+            {
+                "_id": "Standard",
+                "label": "Standard",
+                "priority": 80,
+                "enabled": true,
+                "schema": {
+                    "slugline": {"type": "string", "required": true, "maxlength": 64, "minlength": 1},
+                    "subject": {
+                      "type": "list",
+                      "mandatory_in_list": {"scheme": {"subject": "subject_custom", "category": "category"}},
+                      "schema": {
+                         "type": "dict",
+                         "schema": {
+                            "name": {},
+                            "qcode": {},
+                            "scheme": {
+                               "type": "string",
+                               "required": true,
+                               "allowed": ["subject_custom", "category"]
+                            },
+                            "service": {},
+                            "parent": {}
+                          }
+                      }
+                    }
+                },
+                "editor": {
+                    "slugline": {"order": 1},
+                    "category": {"order": 2, "sdWidth": "half", "required": true},
+                    "subject_custom": {"order": 3, "sdWidth": "full", "required": true}
+                }
+            }
+        ]
+      """
+      And "desks"
+      """
+      [{"name": "Sports", "content_expiry": 60}]
+      """
+      When we post to "/archive" with success
+      """
+      [{"guid": "123", "type": "text", "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "subject": [{"name": "arkeologi", "qcode": "01001000", "scheme": "subject_custom", "parent": "01000000"}],
+        "slugline": "test", "state": "fetched", "profile": "Standard"}]
+      """
+      Then we get OK response
+      And we get existing resource
+      """
+      {"_current_version": 1, "state": "fetched", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
+      """
+      When we publish "#archive._id#" with "publish" type and "published" state
+      Then we get error 400
+      """
+        {"_issues": {"validator exception": "[['CATEGORY is a required field']]"}}
+      """
+
+
+    @auth
+    Scenario: Fail on subject when publish item with custom subject fields
+      Given the "content_types"
+      """
+        [
+            {
+                "_id": "Standard",
+                "label": "Standard",
+                "priority": 80,
+                "enabled": true,
+                "schema": {
+                    "slugline": {"type": "string", "required": true, "maxlength": 64, "minlength": 1},
+                    "subject": {
+                      "type": "list",
+                      "mandatory_in_list": {"scheme": {"subject": "subject_custom", "category": "category"}},
+                      "schema": {
+                         "type": "dict",
+                         "schema": {
+                            "name": {},
+                            "qcode": {},
+                            "scheme": {
+                               "type": "string",
+                               "required": true,
+                               "allowed": ["subject_custom", "category"]
+                            },
+                            "service": {},
+                            "parent": {}
+                          }
+                      }
+                    }
+                },
+                "editor": {
+                    "slugline": {"order": 1},
+                    "category": {"order": 2, "sdWidth": "half", "required": true},
+                    "subject_custom": {"order": 3, "sdWidth": "full", "required": true}
+                }
+            }
+        ]
+      """
+      And "desks"
+      """
+      [{"name": "Sports", "content_expiry": 60}]
+      """
+      When we post to "/archive" with success
+      """
+      [{"guid": "123", "type": "text", "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "subject": [{"name": "DiDFødselsdag", "qcode": "DiDFødselsdag", "scheme": "category", "service": {"d": 1, "i": 1}}],
+        "slugline": "test", "state": "fetched", "profile": "Standard"}]
+      """
+      Then we get OK response
+      And we get existing resource
+      """
+      {"_current_version": 1, "state": "fetched", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
+      """
+      When we publish "#archive._id#" with "publish" type and "published" state
+      Then we get error 400
+      """
+        {"_issues": {"validator exception": "[['SUBJECT is a required field']]"}}
+      """
