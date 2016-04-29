@@ -95,9 +95,52 @@ Feature: Rewrite content
         "task": {"desk": "#desks._id#", "stage": "#desks.working_stage#"}, "genre": [{"name": "Article", "qcode": "Article"}],
         "flags": {"marked_for_legal": true},
         "body_footer": "Suicide Call Back Service 1300 659 467",
+        "body_html": "Test Document body",
         "company_codes" : [{"qcode" : "1PG", "security_exchange" : "ASX", "name" : "1-PAGE LIMITED"}],
         "place": [{"qcode" : "ACT"}]}]}
       """
+      When we get "/archive/123"
+      Then we get existing resource
+      """
+      {"_id": "123", "rewritten_by": "#REWRITE_ID#", "place": [{"qcode" : "ACT"}]}
+      """
+
+    @auth
+    Scenario: Rewrite an un-published content
+      Given "desks"
+      """
+      [{"name": "Sports"}]
+      """
+      And "archive"
+      """
+      [{"guid": "123", "type": "text", "headline": "test", "_current_version": 1, "state": "fetched",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "subject":[{"qcode": "17004000", "name": "Statistics"}],
+        "body_html": "Test Document body", "genre": [{"name": "Article", "qcode": "Article"}],
+        "flags": {"marked_for_legal": true},
+        "body_footer": "Suicide Call Back Service 1300 659 467",
+        "place": [{"qcode" : "ACT", "world_region" : "Oceania", "country" : "Australia",
+        "name" : "ACT", "state" : "Australian Capital Territory"}],
+        "company_codes" : [{"qcode" : "1PG", "security_exchange" : "ASX", "name" : "1-PAGE LIMITED"}]
+      }]
+      """
+      When we post to "/stages"
+      """
+      [
+        {
+        "name": "another stage",
+        "description": "another stage",
+        "task_status": "in_progress",
+        "desk": "#desks._id#"
+        }
+      ]
+      """
+      When we rewrite "123"
+      """
+      {"desk_id": "#desks._id#"}
+      """
+      When we get "/archive/#REWRITE_ID#"
+      Then there is no "body_html" in response
       When we get "/archive/123"
       Then we get existing resource
       """
