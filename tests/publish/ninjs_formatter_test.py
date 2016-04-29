@@ -323,3 +323,62 @@ class NinjsFormatterTest(TestCase):
         self.assertEqual(80, rendition['height'])
         self.assertEqual('image/jpeg', rendition['mimetype'])
         self.assertNotIn('CropLeft', rendition)
+
+    def test_vidible_formatting(self):
+        article = {
+            '_id': 'tag:aap.com.au:20150613:12345',
+            'guid': 'tag:aap.com.au:20150613:12345',
+            '_current_version': 1,
+            'source': 'AAP',
+            'headline': 'This is a test headline',
+            'slugline': 'slugline',
+            'unique_id': '1',
+            'body_html': 'The story body',
+            'type': 'text',
+            'state': 'published',
+            'pubstatus': 'usable',
+            'associations': {
+                "embedded5346670761": {
+                    "uri": "56ba77bde4b0568f54a1ce68",
+                    "type": "video",
+                    "title": "Embed title",
+                    "company": "Press Association",
+                    "url": "https://videos.vidible.tv/prod/2016-02/09/56ba777ce4b0b6448ed478f5_640x360.mp4",
+                    "thumbnail": "https://cdn-ssl.vidible.tv/2016-02/09/56ba777ce4b0b6448ed478f5_60x60.jpg",
+                    "duration": 100,
+                    "width": 400,
+                    "height": 200
+                }
+            }
+        }
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        expected = {
+            "guid": "tag:aap.com.au:20150613:12345",
+            "version": "1",
+            "pubstatus": "usable",
+            "body_html": "The story body",
+            "type": "text",
+            "headline": "This is a test headline",
+            "slugline": "slugline",
+            "priority": 5,
+            'associations': {
+                "embedded5346670761": [{
+                    "guid": "56ba77bde4b0568f54a1ce68",
+                    "type": "video",
+                    "version": "1",
+                    "priority": 5,
+                    "headline": "Embed title",
+                    "organisation": [{"name": "Press Association"}],
+                    "renditions": {
+                        "original": {
+                            "href": "https://videos.vidible.tv/prod/2016-02/09/56ba777ce4b0b6448ed478f5_640x360.mp4",
+                            "thumbnail": "https://cdn-ssl.vidible.tv/2016-02/09/56ba777ce4b0b6448ed478f5_60x60.jpg",
+                            "duration": 100,
+                            "width": 400,
+                            "height": 200
+                        }
+                    }
+                }]
+            }
+        }
+        self.assertEqual(json.loads(doc), expected)

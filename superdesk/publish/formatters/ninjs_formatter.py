@@ -42,6 +42,8 @@ class NINJSFormatter(Formatter):
                               'body_text', 'body_html', 'profile', 'slugline', 'keywords')
 
     rendition_properties = ('href', 'width', 'height', 'mimetype', 'poi', 'media')
+    vidible_fields = {field: field for field in rendition_properties}
+    vidible_fields.update({'url': 'href', 'duration': 'duration', 'thumbnail': 'thumbnail'})
 
     def format(self, article, subscriber, codes=None):
         try:
@@ -54,7 +56,7 @@ class NINJSFormatter(Formatter):
 
     def _transform_to_ninjs(self, article, recursive=True):
         ninjs = {
-            'guid': article.get(GUID_FIELD),
+            'guid': article.get(GUID_FIELD, article.get('uri')),
             'version': str(article.get(config.VERSION, 1)),
             'type': self._get_type(article)
         }
@@ -71,6 +73,9 @@ class NINJSFormatter(Formatter):
         for copy_property in self.direct_copy_properties:
             if article.get(copy_property) is not None:
                 ninjs[copy_property] = article[copy_property]
+
+        if 'title' in article:
+            ninjs['headline'] = article['title']
 
         if article.get('body_html'):
             ninjs['body_html'] = self.append_body_footer(article)
@@ -103,6 +108,8 @@ class NINJSFormatter(Formatter):
 
         if article.get('renditions'):
             ninjs['renditions'] = self._get_renditions(article)
+        elif 'url' in article:
+            ninjs['renditions'] = self._generate_renditions(article)
 
         # SDPA-317
         if article.get('abstract'):
@@ -118,8 +125,21 @@ class NINJSFormatter(Formatter):
                                       'symbols': [{'ticker': c.get('qcode', ''),
                                                    'exchange': c.get('security_exchange', '')}]}
                                      for c in article['company_codes']]
+        elif 'company' in article:
+            ninjs['organisation'] = [{'name': article['company']}]
 
         return ninjs
+
+    def _generate_renditions(self, article):
+        """
+        For associated items that have custom structure generate renditions based on the item
+        custom properties.
+        """
+        renditions = {'original': {}}
+        for orig_field, dest_field in self.vidible_fields.items():
+            if orig_field in article:
+                renditions['original'][dest_field] = article[orig_field]
+        return renditions
 
     def can_format(self, format_type, article):
         return format_type == 'ninjs'
