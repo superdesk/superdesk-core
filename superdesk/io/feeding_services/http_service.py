@@ -83,8 +83,10 @@ class HTTPFeedingService(FeedingService, metaclass=ABCMeta):
         }
 
         response = session.get(auth_url, params=payload, verify=False, timeout=30)
-        tree = etree.fromstring(response.content)  # workaround for http mock lib
+        if response.status_code < 200 or response.status_code >= 300:
+            raise IngestApiError.apiAuthError(provider=provider)
 
+        tree = etree.fromstring(response.content)  # workaround for http mock lib
         return tree.text
 
     def _is_valid_token(self, token):
@@ -100,7 +102,7 @@ class HTTPFeedingService(FeedingService, metaclass=ABCMeta):
         ttl = timedelta(hours=12)
         created = arrow.get(token.get('created')).datetime
 
-        return created + ttl >= utcnow()
+        return created + ttl >= utcnow() and token.get('auth_token')
 
     def _get_auth_token(self, provider, update=False):
         """
@@ -115,6 +117,7 @@ class HTTPFeedingService(FeedingService, metaclass=ABCMeta):
         :rtype: str
         """
         token = provider.get('tokens')
+
         if token and self._is_valid_token(token):
             return token.get('auth_token')
 
