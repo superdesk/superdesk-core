@@ -16,10 +16,34 @@ from superdesk.metadata.item import ITEM_TYPE
 logger = logging.getLogger(__name__)
 
 
+def check_json(doc, field, value):
+    if isinstance(doc, dict):
+        if field in doc and doc[field] == value:
+            return True
+        for key in doc:
+            if check_json(doc[key], field, value):
+                return True
+        return False
+    elif isinstance(doc, list):
+        for item in doc:
+            if check_json(item, field, value):
+                return True
+        return False
+    else:
+        return False
+
+
 class SchemaValidator(cerberus.Validator):
     def _validate_type_picture(self, field, value):
         """Allow type picture in schema."""
         pass
+
+    def _validate_mandatory_in_list(self, mandatory, field, value):
+        """Validates if all elements from mandatory are presented in the list"""
+        for key in mandatory:
+            for key_field in mandatory[key]:
+                if not check_json(value, key, mandatory[key][key_field]):
+                    self._error(key_field, 'is a required field')
 
 
 class ValidateResource(superdesk.Resource):
