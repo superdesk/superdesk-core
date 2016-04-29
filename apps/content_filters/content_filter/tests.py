@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from test_factory import SuperdeskTestCase
-from apps.content_filters.content_filter import ContentFilterService
+from apps.content_filters.content_filter.content_filter_service import ContentFilterService
 from superdesk.publish import SubscribersService
 from eve.utils import ParsedRequest
 import json
@@ -318,6 +318,9 @@ class RetrievingDataTests(ContentFilterTests):
             doc_ids = [d['_id'] for d in docs]
             self.assertEqual(1, docs.count())
             self.assertTrue('3' in doc_ids)
+
+
+class FilteringDataTests(ContentFilterTests):
 
     def test_does_match_returns_true_for_nonexisting_filter(self):
         for article in self.articles:

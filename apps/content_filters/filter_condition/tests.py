@@ -9,7 +9,9 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from test_factory import SuperdeskTestCase
-from apps.content_filters.filter_condition import FilterConditionService
+from apps.content_filters.filter_condition.filter_condition_service import FilterConditionService
+from apps.content_filters.filter_condition.filter_condition import FilterCondition
+from apps.content_filters.filter_condition.filter_condition_operator import FilterConditionOperator
 from eve.utils import ParsedRequest
 import json
 import superdesk
@@ -90,9 +92,8 @@ class FilterConditionTests(SuperdeskTestCase):
                                                                'should': [elastic_translation]}}}}})}
 
     def test_mongo_using_genre_filter_complete_string(self):
-        f = FilterConditionService()
-        doc = {'field': 'genre', 'operator': 'in', 'value': 'Sidebar'}
-        query = f.get_mongo_query(doc)
+        f = FilterCondition('genre', 'in', 'Sidebar')
+        query = f.get_mongo_query()
         with self.app.app_context():
             docs = superdesk.get_resource_service('archive').\
                 get_from_mongo(req=self.req, lookup=query)
@@ -100,9 +101,8 @@ class FilterConditionTests(SuperdeskTestCase):
             self.assertEqual('7', docs[0]['_id'])
 
     def test_mongo_using_desk_filter_complete_string(self):
-        f = FilterConditionService()
-        doc = {'field': 'desk', 'operator': 'in', 'value': '1'}
-        query = f.get_mongo_query(doc)
+        f = FilterCondition('desk', 'in', '1')
+        query = f.get_mongo_query()
         with self.app.app_context():
             docs = superdesk.get_resource_service('archive').\
                 get_from_mongo(req=self.req, lookup=query)
@@ -110,36 +110,32 @@ class FilterConditionTests(SuperdeskTestCase):
             self.assertEqual('4', docs[0]['_id'])
 
     def test_mongo_using_desk_filter_nin(self):
-        f = FilterConditionService()
-        doc = {'field': 'desk', 'operator': 'nin', 'value': '1'}
-        query = f.get_mongo_query(doc)
+        f = FilterCondition('desk', 'nin', '1')
+        query = f.get_mongo_query()
         with self.app.app_context():
             docs = superdesk.get_resource_service('archive').\
                 get_from_mongo(req=self.req, lookup=query)
             self.assertEqual(8, docs.count())
 
     def test_mongo_using_sms_filter_with_is(self):
-        f = FilterConditionService()
-        doc = {'field': 'sms', 'operator': 'in', 'value': 'true'}
-        query = f.get_mongo_query(doc)
+        f = FilterCondition('sms', 'in', 'true')
+        query = f.get_mongo_query()
         with self.app.app_context():
             docs = superdesk.get_resource_service('archive').\
                 get_from_mongo(req=self.req, lookup=query)
             self.assertEqual(1, docs.count())
 
     def test_mongo_using_desk_filter_in_list(self):
-        f = FilterConditionService()
-        doc = {'field': 'desk', 'operator': 'in', 'value': '1,2'}
-        query = f.get_mongo_query(doc)
+        f = FilterCondition('desk', 'in', '1,2')
+        query = f.get_mongo_query()
         with self.app.app_context():
             docs = superdesk.get_resource_service('archive').\
                 get_from_mongo(req=self.req, lookup=query)
             self.assertEqual(2, docs.count())
 
     def test_mongo_using_category_filter_complete_string(self):
-        f = FilterConditionService()
-        doc = {'field': 'anpa_category', 'operator': 'in', 'value': 'a,i'}
-        query = f.get_mongo_query(doc)
+        f = FilterCondition('anpa_category', 'in', 'a,i')
+        query = f.get_mongo_query()
         with self.app.app_context():
             docs = superdesk.get_resource_service('archive').\
                 get_from_mongo(req=self.req, lookup=query)
@@ -147,9 +143,8 @@ class FilterConditionTests(SuperdeskTestCase):
             self.assertEqual('9', docs[0]['_id'])
 
     def test_mongo_using_subject_filter_complete_string(self):
-        f = FilterConditionService()
-        doc = {'field': 'subject', 'operator': 'in', 'value': '05005003'}
-        query = f.get_mongo_query(doc)
+        f = FilterCondition('subject', 'in', '05005003')
+        query = f.get_mongo_query()
         with self.app.app_context():
             docs = superdesk.get_resource_service('archive').\
                 get_from_mongo(req=self.req, lookup=query)
@@ -157,9 +152,8 @@ class FilterConditionTests(SuperdeskTestCase):
             self.assertEqual('8', docs[0]['_id'])
 
     def test_mongo_using_like_filter_complete_string(self):
-        f = FilterConditionService()
-        doc = {'field': 'headline', 'operator': 'like', 'value': 'story'}
-        query = f.get_mongo_query(doc)
+        f = FilterCondition('headline', 'like', 'story')
+        query = f.get_mongo_query()
         with self.app.app_context():
             docs = superdesk.get_resource_service('archive').\
                 get_from_mongo(req=self.req, lookup=query)
@@ -167,9 +161,8 @@ class FilterConditionTests(SuperdeskTestCase):
             self.assertEqual('1', docs[0]['_id'])
 
     def test_mongo_using_like_filter_partial_string(self):
-        f = FilterConditionService()
-        doc = {'field': 'headline', 'operator': 'like', 'value': 'tor'}
-        query = f.get_mongo_query(doc)
+        f = FilterCondition('headline', 'like', 'tor')
+        query = f.get_mongo_query()
         with self.app.app_context():
             docs = superdesk.get_resource_service('archive').\
                 get_from_mongo(req=self.req, lookup=query)
@@ -179,9 +172,8 @@ class FilterConditionTests(SuperdeskTestCase):
             self.assertTrue('2' in doc_ids)
 
     def test_mongo_using_startswith_filter(self):
-        f = FilterConditionService()
-        doc = {'field': 'headline', 'operator': 'startswith', 'value': 'Sto'}
-        query = f.get_mongo_query(doc)
+        f = FilterCondition('headline', 'startswith', 'Sto')
+        query = f.get_mongo_query()
         with self.app.app_context():
             docs = superdesk.get_resource_service('archive').\
                 get_from_mongo(req=self.req, lookup=query)
@@ -189,9 +181,8 @@ class FilterConditionTests(SuperdeskTestCase):
             self.assertEqual('1', docs[0]['_id'])
 
     def test_mongo_using_endswith_filter(self):
-        f = FilterConditionService()
-        doc = {'field': 'headline', 'operator': 'endswith', 'value': 'Que'}
-        query = f.get_mongo_query(doc)
+        f = FilterCondition('headline', 'endswith', 'Que')
+        query = f.get_mongo_query()
         with self.app.app_context():
             docs = superdesk.get_resource_service('archive').\
                 get_from_mongo(req=self.req, lookup=query)
@@ -199,9 +190,8 @@ class FilterConditionTests(SuperdeskTestCase):
             self.assertEqual('2', docs[0]['_id'])
 
     def test_mongo_using_notlike_filter(self):
-        f = FilterConditionService()
-        doc = {'field': 'headline', 'operator': 'notlike', 'value': 'Que'}
-        query = f.get_mongo_query(doc)
+        f = FilterCondition('headline', 'notlike', 'Que')
+        query = f.get_mongo_query()
         with self.app.app_context():
             docs = superdesk.get_resource_service('archive').\
                 get_from_mongo(req=self.req, lookup=query)
@@ -210,9 +200,8 @@ class FilterConditionTests(SuperdeskTestCase):
             self.assertTrue('2' not in doc_ids)
 
     def test_mongo_using_in_filter(self):
-        f = FilterConditionService()
-        doc = {'field': 'urgency', 'operator': 'in', 'value': '3,4'}
-        query = f.get_mongo_query(doc)
+        f = FilterCondition('urgency', 'in', '3,4')
+        query = f.get_mongo_query()
         with self.app.app_context():
             docs = superdesk.get_resource_service('archive').\
                 get_from_mongo(req=self.req, lookup=query)
@@ -221,9 +210,8 @@ class FilterConditionTests(SuperdeskTestCase):
             self.assertEqual('4', docs[1]['_id'])
 
     def test_mongo_using_notin_filter(self):
-        f = FilterConditionService()
-        doc = {'field': 'urgency', 'operator': 'nin', 'value': '2,3,4'}
-        query = f.get_mongo_query(doc)
+        f = FilterCondition('urgency', 'nin', '2,3,4')
+        query = f.get_mongo_query()
         with self.app.app_context():
             docs = superdesk.get_resource_service('archive').\
                 get_from_mongo(req=self.req, lookup=query)
@@ -233,9 +221,8 @@ class FilterConditionTests(SuperdeskTestCase):
             self.assertTrue('2' in doc_ids)
 
     def test_elastic_using_genre_filter_complete_string(self):
-        f = FilterConditionService()
-        doc = {'field': 'genre', 'operator': 'in', 'value': 'Sidebar'}
-        query = f.get_elastic_query(doc)
+        f = FilterCondition('genre', 'in', 'Sidebar')
+        query = f.get_elastic_query()
         with self.app.app_context():
             self._setup_elastic_args(query)
             docs = superdesk.get_resource_service('archive').get(req=self.req, lookup=None)
@@ -244,9 +231,8 @@ class FilterConditionTests(SuperdeskTestCase):
             self.assertTrue('7' in doc_ids)
 
     def test_elastic_using_sms_filter(self):
-        f = FilterConditionService()
-        doc = {'field': 'sms', 'operator': 'in', 'value': 'true'}
-        query = f.get_elastic_query(doc)
+        f = FilterCondition('sms', 'in', 'true')
+        query = f.get_elastic_query()
         with self.app.app_context():
             self._setup_elastic_args(query)
             docs = superdesk.get_resource_service('archive').get(req=self.req, lookup=None)
@@ -255,9 +241,8 @@ class FilterConditionTests(SuperdeskTestCase):
             self.assertTrue('3' in doc_ids)
 
     def test_elastic_using_subject_filter_complete_string(self):
-        f = FilterConditionService()
-        doc = {'field': 'subject', 'operator': 'in', 'value': '05005003'}
-        query = f.get_elastic_query(doc)
+        f = FilterCondition('subject', 'in', '05005003')
+        query = f.get_elastic_query()
         with self.app.app_context():
             self._setup_elastic_args(query)
             docs = superdesk.get_resource_service('archive').get(req=self.req, lookup=None)
@@ -266,9 +251,8 @@ class FilterConditionTests(SuperdeskTestCase):
             self.assertTrue('8' in doc_ids)
 
     def test_elastic_using_anpa_category_filter_complete_string(self):
-        f = FilterConditionService()
-        doc = {'field': 'anpa_category', 'operator': 'in', 'value': 'a,i'}
-        query = f.get_elastic_query(doc)
+        f = FilterCondition('anpa_category', 'in', 'a,i')
+        query = f.get_elastic_query()
         with self.app.app_context():
             self._setup_elastic_args(query)
             docs = superdesk.get_resource_service('archive').get(req=self.req, lookup=None)
@@ -277,9 +261,8 @@ class FilterConditionTests(SuperdeskTestCase):
             self.assertTrue('9' in doc_ids)
 
     def test_elastic_using_in_filter(self):
-        f = FilterConditionService()
-        doc = {'field': 'urgency', 'operator': 'in', 'value': '3,4'}
-        query = f.get_elastic_query(doc)
+        f = FilterCondition('urgency', 'in', '3,4')
+        query = f.get_elastic_query()
         with self.app.app_context():
             self._setup_elastic_args(query)
             docs = superdesk.get_resource_service('archive').get(req=self.req, lookup=None)
@@ -289,9 +272,8 @@ class FilterConditionTests(SuperdeskTestCase):
             self.assertTrue('3' in doc_ids)
 
     def test_elastic_using_nin_filter(self):
-        f = FilterConditionService()
-        doc = {'field': 'urgency', 'operator': 'nin', 'value': '3,4'}
-        query = f.get_elastic_query(doc)
+        f = FilterCondition('urgency', 'nin', '3,4')
+        query = f.get_elastic_query()
         with self.app.app_context():
             self._setup_elastic_args(query, 'not')
             docs = superdesk.get_resource_service('archive').get(req=self.req, lookup=None)
@@ -301,9 +283,8 @@ class FilterConditionTests(SuperdeskTestCase):
             self.assertTrue('5' in doc_ids)
 
     def test_elastic_using_like_filter(self):
-        f = FilterConditionService()
-        doc = {'field': 'headline', 'operator': 'like', 'value': 'Tor'}
-        query = f.get_elastic_query(doc)
+        f = FilterCondition('headline', 'like', 'Tor')
+        query = f.get_elastic_query()
         with self.app.app_context():
             self._setup_elastic_args(query, 'keyword')
             docs = superdesk.get_resource_service('archive').get(req=self.req, lookup=None)
@@ -313,9 +294,8 @@ class FilterConditionTests(SuperdeskTestCase):
             self.assertTrue('2' in doc_ids)
 
     def test_elastic_using_notlike_filter(self):
-        f = FilterConditionService()
-        doc = {'field': 'headline', 'operator': 'notlike', 'value': 'que'}
-        query = f.get_elastic_query(doc)
+        f = FilterCondition('headline', 'notlike', 'que')
+        query = f.get_elastic_query()
         with self.app.app_context():
             self._setup_elastic_args(query, 'not')
             docs = superdesk.get_resource_service('archive').get(req=self.req, lookup=None)
@@ -324,9 +304,8 @@ class FilterConditionTests(SuperdeskTestCase):
             self.assertTrue('2' not in doc_ids)
 
     def test_elastic_using_startswith_filter(self):
-        f = FilterConditionService()
-        doc = {'field': 'headline', 'operator': 'startswith', 'value': 'Sto'}
-        query = f.get_elastic_query(doc)
+        f = FilterCondition('headline', 'startswith', 'Sto')
+        query = f.get_elastic_query()
         with self.app.app_context():
             self._setup_elastic_args(query, 'keyword')
             docs = superdesk.get_resource_service('archive').get(req=self.req, lookup=None)
@@ -334,9 +313,8 @@ class FilterConditionTests(SuperdeskTestCase):
             self.assertEqual('1', docs[0]['_id'])
 
     def test_elastic_using_endswith_filter(self):
-        f = FilterConditionService()
-        doc = {'field': 'headline', 'operator': 'endswith', 'value': 'Que'}
-        query = f.get_elastic_query(doc)
+        f = FilterCondition('headline', 'endswith', 'Que')
+        query = f.get_elastic_query()
         with self.app.app_context():
             self._setup_elastic_args(query, 'keyword')
             docs = superdesk.get_resource_service('archive').get(req=self.req, lookup=None)
@@ -344,152 +322,149 @@ class FilterConditionTests(SuperdeskTestCase):
             self.assertEqual('2', docs[0]['_id'])
 
     def test_get_mongo_operator(self):
-        f = FilterConditionService()
-        self.assertEqual(f._get_mongo_operator('in'), '$in')
-        self.assertEqual(f._get_mongo_operator('nin'), '$nin')
-        self.assertEqual(f._get_mongo_operator('like'), '$regex')
-        self.assertEqual(f._get_mongo_operator('notlike'), '$not')
-        self.assertEqual(f._get_mongo_operator('startswith'), '$regex')
-        self.assertEqual(f._get_mongo_operator('endswith'), '$regex')
+        self.assertEqual(FilterConditionOperator.factory('in').mongo_operator, '$in')
+        self.assertEqual(FilterConditionOperator.factory('nin').mongo_operator, '$nin')
+        self.assertEqual(FilterConditionOperator.factory('like').mongo_operator, '$regex')
+        self.assertEqual(FilterConditionOperator.factory('notlike').mongo_operator, '$not')
+        self.assertEqual(FilterConditionOperator.factory('startswith').mongo_operator, '$regex')
+        self.assertEqual(FilterConditionOperator.factory('endswith').mongo_operator, '$regex')
 
     def test_get_mongo_value(self):
-        f = FilterConditionService()
-        self.assertEqual(f._get_mongo_value('in', '1,2', 'urgency'), [1, 2])
-        self.assertEqual(f._get_mongo_value('nin', '3', 'priority'), ['3'])
-        self.assertEqual(f._get_mongo_value('like', 'test', 'headline'), re.compile('.*test.*', re.IGNORECASE))
-        self.assertEqual(f._get_mongo_value('notlike', 'test', 'headline'), re.compile('.*test.*', re.IGNORECASE))
-        self.assertEqual(f._get_mongo_value('startswith', 'test', 'headline'), re.compile('^test', re.IGNORECASE))
-        self.assertEqual(f._get_mongo_value('endswith', 'test', 'headline'), re.compile('.*test', re.IGNORECASE))
+        f = FilterCondition('urgency', 'in', '1,2')
+        self.assertEqual(f.value.get_mongo_value(f.field), [1, 2])
+
+        f = FilterCondition('priority', 'nin', '3')
+        self.assertEqual(f.value.get_mongo_value(f.field), ['3'])
+
+        f = FilterCondition('headline', 'like', 'test')
+        self.assertEqual(f.value.get_mongo_value(f.field), re.compile('.*test.*', re.IGNORECASE))
+
+        f = FilterCondition('headline', 'notlike', 'test')
+        self.assertEqual(f.value.get_mongo_value(f.field), re.compile('.*test.*', re.IGNORECASE))
+
+        f = FilterCondition('headline', 'startswith', 'test')
+        self.assertEqual(f.value.get_mongo_value(f.field), re.compile('^test', re.IGNORECASE))
+
+        f = FilterCondition('headline', 'endswith', 'test')
+        self.assertEqual(f.value.get_mongo_value(f.field), re.compile('.*test', re.IGNORECASE))
 
     def test_does_match_with_like_full(self):
-        f = FilterConditionService()
-        doc = {'field': 'headline', 'operator': 'like', 'value': 'story'}
-        self.assertTrue(f.does_match(doc, self.articles[0]))
-        self.assertFalse(f.does_match(doc, self.articles[1]))
-        self.assertFalse(f.does_match(doc, self.articles[2]))
-        self.assertFalse(f.does_match(doc, self.articles[3]))
-        self.assertFalse(f.does_match(doc, self.articles[4]))
-        self.assertFalse(f.does_match(doc, self.articles[5]))
+        f = FilterCondition('headline', 'like', 'story')
+        self.assertTrue(f.does_match(self.articles[0]))
+        self.assertFalse(f.does_match(self.articles[1]))
+        self.assertFalse(f.does_match(self.articles[2]))
+        self.assertFalse(f.does_match(self.articles[3]))
+        self.assertFalse(f.does_match(self.articles[4]))
+        self.assertFalse(f.does_match(self.articles[5]))
 
     def test_does_match_with_like_partial(self):
-        f = FilterConditionService()
-        doc = {'field': 'headline', 'operator': 'like', 'value': 'tor'}
-        self.assertTrue(f.does_match(doc, self.articles[0]))
-        self.assertTrue(f.does_match(doc, self.articles[1]))
-        self.assertFalse(f.does_match(doc, self.articles[2]))
-        self.assertFalse(f.does_match(doc, self.articles[3]))
-        self.assertFalse(f.does_match(doc, self.articles[4]))
-        self.assertFalse(f.does_match(doc, self.articles[5]))
+        f = FilterCondition('headline', 'like', 'tor')
+        self.assertTrue(f.does_match(self.articles[0]))
+        self.assertTrue(f.does_match(self.articles[1]))
+        self.assertFalse(f.does_match(self.articles[2]))
+        self.assertFalse(f.does_match(self.articles[3]))
+        self.assertFalse(f.does_match(self.articles[4]))
+        self.assertFalse(f.does_match(self.articles[5]))
 
     def test_does_match_with_startswith_filter(self):
-        f = FilterConditionService()
-        doc = {'field': 'headline', 'operator': 'startswith', 'value': 'Sto'}
-        self.assertTrue(f.does_match(doc, self.articles[0]))
-        self.assertFalse(f.does_match(doc, self.articles[1]))
-        self.assertFalse(f.does_match(doc, self.articles[2]))
-        self.assertFalse(f.does_match(doc, self.articles[3]))
-        self.assertFalse(f.does_match(doc, self.articles[4]))
-        self.assertFalse(f.does_match(doc, self.articles[5]))
+        f = FilterCondition('headline', 'startswith', 'Sto')
+        self.assertTrue(f.does_match(self.articles[0]))
+        self.assertFalse(f.does_match(self.articles[1]))
+        self.assertFalse(f.does_match(self.articles[2]))
+        self.assertFalse(f.does_match(self.articles[3]))
+        self.assertFalse(f.does_match(self.articles[4]))
+        self.assertFalse(f.does_match(self.articles[5]))
 
     def test_does_match_with_endswith_filter(self):
-        f = FilterConditionService()
-        doc = {'field': 'headline', 'operator': 'endswith', 'value': 'Que'}
-        self.assertFalse(f.does_match(doc, self.articles[0]))
-        self.assertTrue(f.does_match(doc, self.articles[1]))
-        self.assertFalse(f.does_match(doc, self.articles[2]))
-        self.assertFalse(f.does_match(doc, self.articles[3]))
-        self.assertFalse(f.does_match(doc, self.articles[4]))
-        self.assertFalse(f.does_match(doc, self.articles[5]))
+        f = FilterCondition('headline', 'endswith', 'Que')
+        self.assertFalse(f.does_match(self.articles[0]))
+        self.assertTrue(f.does_match(self.articles[1]))
+        self.assertFalse(f.does_match(self.articles[2]))
+        self.assertFalse(f.does_match(self.articles[3]))
+        self.assertFalse(f.does_match(self.articles[4]))
+        self.assertFalse(f.does_match(self.articles[5]))
 
     def test_does_match_with_notlike_filter(self):
-        f = FilterConditionService()
-        doc = {'field': 'headline', 'operator': 'notlike', 'value': 'Que'}
-        self.assertTrue(f.does_match(doc, self.articles[0]))
-        self.assertFalse(f.does_match(doc, self.articles[1]))
-        self.assertTrue(f.does_match(doc, self.articles[2]))
-        self.assertTrue(f.does_match(doc, self.articles[3]))
-        self.assertTrue(f.does_match(doc, self.articles[4]))
-        self.assertTrue(f.does_match(doc, self.articles[5]))
+        f = FilterCondition('headline', 'notlike', 'Que')
+        self.assertTrue(f.does_match(self.articles[0]))
+        self.assertFalse(f.does_match(self.articles[1]))
+        self.assertTrue(f.does_match(self.articles[2]))
+        self.assertTrue(f.does_match(self.articles[3]))
+        self.assertTrue(f.does_match(self.articles[4]))
+        self.assertTrue(f.does_match(self.articles[5]))
 
     def test_does_match_with_genre_filter(self):
-        f = FilterConditionService()
-        doc = {'field': 'genre', 'operator': 'in', 'value': 'Sidebar'}
-        self.assertFalse(f.does_match(doc, self.articles[0]))
-        self.assertFalse(f.does_match(doc, self.articles[1]))
-        self.assertFalse(f.does_match(doc, self.articles[2]))
-        self.assertFalse(f.does_match(doc, self.articles[3]))
-        self.assertFalse(f.does_match(doc, self.articles[4]))
-        self.assertFalse(f.does_match(doc, self.articles[5]))
-        self.assertTrue(f.does_match(doc, self.articles[6]))
-        self.assertFalse(f.does_match(doc, self.articles[7]))
+        f = FilterCondition('genre', 'in', 'Sidebar')
+        self.assertFalse(f.does_match(self.articles[0]))
+        self.assertFalse(f.does_match(self.articles[1]))
+        self.assertFalse(f.does_match(self.articles[2]))
+        self.assertFalse(f.does_match(self.articles[3]))
+        self.assertFalse(f.does_match(self.articles[4]))
+        self.assertFalse(f.does_match(self.articles[5]))
+        self.assertTrue(f.does_match(self.articles[6]))
+        self.assertFalse(f.does_match(self.articles[7]))
 
     def test_does_match_with_category_filter(self):
-        f = FilterConditionService()
-        doc = {'field': 'anpa_category', 'operator': 'in', 'value': 'a,i'}
-        self.assertFalse(f.does_match(doc, self.articles[0]))
-        self.assertFalse(f.does_match(doc, self.articles[1]))
-        self.assertFalse(f.does_match(doc, self.articles[2]))
-        self.assertFalse(f.does_match(doc, self.articles[3]))
-        self.assertFalse(f.does_match(doc, self.articles[4]))
-        self.assertFalse(f.does_match(doc, self.articles[5]))
-        self.assertFalse(f.does_match(doc, self.articles[6]))
-        self.assertFalse(f.does_match(doc, self.articles[7]))
-        self.assertTrue(f.does_match(doc, self.articles[8]))
+        f = FilterCondition('anpa_category', 'in', 'a,i')
+        self.assertFalse(f.does_match(self.articles[0]))
+        self.assertFalse(f.does_match(self.articles[1]))
+        self.assertFalse(f.does_match(self.articles[2]))
+        self.assertFalse(f.does_match(self.articles[3]))
+        self.assertFalse(f.does_match(self.articles[4]))
+        self.assertFalse(f.does_match(self.articles[5]))
+        self.assertFalse(f.does_match(self.articles[6]))
+        self.assertFalse(f.does_match(self.articles[7]))
+        self.assertTrue(f.does_match(self.articles[8]))
 
     def test_does_match_with_subject_filter(self):
-        f = FilterConditionService()
-        doc = {'field': 'subject', 'operator': 'in', 'value': '05005003'}
-        self.assertFalse(f.does_match(doc, self.articles[0]))
-        self.assertFalse(f.does_match(doc, self.articles[1]))
-        self.assertFalse(f.does_match(doc, self.articles[2]))
-        self.assertFalse(f.does_match(doc, self.articles[3]))
-        self.assertFalse(f.does_match(doc, self.articles[4]))
-        self.assertFalse(f.does_match(doc, self.articles[5]))
-        self.assertFalse(f.does_match(doc, self.articles[6]))
-        self.assertTrue(f.does_match(doc, self.articles[7]))
+        f = FilterCondition('subject', 'in', '05005003')
+        self.assertFalse(f.does_match(self.articles[0]))
+        self.assertFalse(f.does_match(self.articles[1]))
+        self.assertFalse(f.does_match(self.articles[2]))
+        self.assertFalse(f.does_match(self.articles[3]))
+        self.assertFalse(f.does_match(self.articles[4]))
+        self.assertFalse(f.does_match(self.articles[5]))
+        self.assertFalse(f.does_match(self.articles[6]))
+        self.assertTrue(f.does_match(self.articles[7]))
 
     def test_does_match_with_sms_filter(self):
-        f = FilterConditionService()
-        doc = {'field': 'sms', 'operator': 'nin', 'value': 'true'}
-        self.assertTrue(f.does_match(doc, self.articles[0]))
-        self.assertTrue(f.does_match(doc, self.articles[1]))
-        self.assertFalse(f.does_match(doc, self.articles[2]))
-        self.assertTrue(f.does_match(doc, self.articles[3]))
-        self.assertTrue(f.does_match(doc, self.articles[4]))
-        self.assertTrue(f.does_match(doc, self.articles[5]))
-        self.assertTrue(f.does_match(doc, self.articles[6]))
-        self.assertTrue(f.does_match(doc, self.articles[7]))
+        f = FilterCondition('sms', 'nin', 'true')
+        self.assertTrue(f.does_match(self.articles[0]))
+        self.assertTrue(f.does_match(self.articles[1]))
+        self.assertFalse(f.does_match(self.articles[2]))
+        self.assertTrue(f.does_match(self.articles[3]))
+        self.assertTrue(f.does_match(self.articles[4]))
+        self.assertTrue(f.does_match(self.articles[5]))
+        self.assertTrue(f.does_match(self.articles[6]))
+        self.assertTrue(f.does_match(self.articles[7]))
 
     def test_does_match_with_in_filter(self):
-        f = FilterConditionService()
-        doc = {'field': 'urgency', 'operator': 'in', 'value': '3,4'}
-        self.assertFalse(f.does_match(doc, self.articles[0]))
-        self.assertFalse(f.does_match(doc, self.articles[1]))
-        self.assertTrue(f.does_match(doc, self.articles[2]))
-        self.assertTrue(f.does_match(doc, self.articles[3]))
-        self.assertFalse(f.does_match(doc, self.articles[4]))
-        self.assertFalse(f.does_match(doc, self.articles[5]))
+        f = FilterCondition('urgency', 'in', '3,4')
+        self.assertFalse(f.does_match(self.articles[0]))
+        self.assertFalse(f.does_match(self.articles[1]))
+        self.assertTrue(f.does_match(self.articles[2]))
+        self.assertTrue(f.does_match(self.articles[3]))
+        self.assertFalse(f.does_match(self.articles[4]))
+        self.assertFalse(f.does_match(self.articles[5]))
 
     def test_does_match_with_in_filter_case_insensitive(self):
-        f = FilterConditionService()
-        doc = {'field': 'source', 'operator': 'in', 'value': 'aap,reuters'}
-        self.assertTrue(f.does_match(doc, {'source': 'AAP'}))
-        self.assertTrue(f.does_match(doc, {'source': 'aap'}))
-        self.assertTrue(f.does_match(doc, {'source': 'REUTERS'}))
-        doc = {'field': 'source', 'operator': 'in', 'value': 'AAP'}
-        self.assertTrue(f.does_match(doc, {'source': 'AAP'}))
-        self.assertTrue(f.does_match(doc, {'source': 'aap'}))
-        self.assertFalse(f.does_match(doc, {'source': 'REUTERS'}))
+        f = FilterCondition('source', 'in', 'aap,reuters')
+        self.assertTrue(f.does_match({'source': 'AAP'}))
+        self.assertTrue(f.does_match({'source': 'aap'}))
+        self.assertTrue(f.does_match({'source': 'REUTERS'}))
+        f = FilterCondition('source', 'in', 'AAP')
+        self.assertTrue(f.does_match({'source': 'AAP'}))
+        self.assertTrue(f.does_match({'source': 'aap'}))
+        self.assertFalse(f.does_match({'source': 'REUTERS'}))
 
     def test_does_match_with_nin_filter(self):
-        f = FilterConditionService()
-        doc = {'field': 'urgency', 'operator': 'nin', 'value': '2,3,4'}
-        self.assertTrue(f.does_match(doc, self.articles[0]))
-        self.assertTrue(f.does_match(doc, self.articles[1]))
-        self.assertFalse(f.does_match(doc, self.articles[2]))
-        self.assertFalse(f.does_match(doc, self.articles[3]))
-        self.assertFalse(f.does_match(doc, self.articles[4]))
-        self.assertTrue(f.does_match(doc, self.articles[5]))
+        f = FilterCondition('urgency', 'nin', '2,3,4')
+        self.assertTrue(f.does_match(self.articles[0]))
+        self.assertTrue(f.does_match(self.articles[1]))
+        self.assertFalse(f.does_match(self.articles[2]))
+        self.assertFalse(f.does_match(self.articles[3]))
+        self.assertFalse(f.does_match(self.articles[4]))
+        self.assertTrue(f.does_match(self.articles[5]))
 
     def test_are_equal1(self):
         f = FilterConditionService()
