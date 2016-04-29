@@ -35,11 +35,18 @@ class HTTPPushService(PublishService):
         self._copy_published_media_files(json.loads(queue_item['formatted_item']), destination)
 
         if not queue_item.get(PUBLISHED_IN_PACKAGE) or not destination.get('config', {}).get('packaged', False):
-            resource_url = destination.get('config', {}).get('resource_url')
-            response = requests.post(resource_url, data=json.dumps(item), headers=self.headers)
-            if response.status_code not in (requests.codes.created, requests.codes.accepted):  # @UndefinedVariable
-                message = 'Error pushing item %s: %s' % (response.status_code, response.text)
-                self._raise_publish_error(response.status_code, Exception(message), destination)
+            self._push_item(destination, json.dumps(item))
+
+    def _push_item(self, destination, data):
+        resource_url = self._get_resource_url(destination)
+        response = requests.post(resource_url, data=data, headers=self.headers)
+
+        # need to rethrow exception as a superdesk exception for now for notifiers.
+        try:
+            response.raise_for_status()
+        except Exception:
+            message = 'Error pushing item %s: %s' % (response.status_code, response.text)
+            self._raise_publish_error(response.status_code, Exception(message), destination)
 
     def _copy_published_media_files(self, item, destination):
         """Copy the media files for the given item to the publish_items endpoint
@@ -102,6 +109,9 @@ class HTTPPushService(PublishService):
 
     def _get_assets_url(self, destination):
         return destination.get('config', {}).get('assets_url', None)
+
+    def _get_resource_url(self, destination):
+        return destination.get('config', {}).get('resource_url')
 
     def _raise_publish_error(self, status_code, e, destination=None):
         if status_code >= 400 and status_code < 500:
