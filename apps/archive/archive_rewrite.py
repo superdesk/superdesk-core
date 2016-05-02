@@ -154,7 +154,7 @@ class ArchiveRewriteService(Service):
             send_to(doc=rewrite, desk_id=original['task']['desk'], default_stage='working_stage')
 
             # if we are rewriting a published item then copy the body_html
-            if original.get('state', '') == CONTENT_STATE.PUBLISHED:
+            if original.get('state', '') in (CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED):
                 if digital:
                     rewrite['body_html'] = digital.get('body_html', '')
                 else:
