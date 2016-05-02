@@ -43,8 +43,11 @@ def init_highlight_package(doc):
     """Add to package items marked for doc highlight."""
     main_group = doc.get('groups')[1]
     items = get_highlighted_items(doc.get('highlight'))
+    used_items = []
     for item in items:
-        main_group['refs'].append(package.get_item_ref(item))
+        if item['_id'] not in used_items:
+            main_group['refs'].append(package.get_item_ref(item))
+            used_items.append(item['_id'])
 
 
 def on_create_package(sender, docs):
@@ -98,12 +101,13 @@ class MarkedForHighlightsService(BaseService):
 
             publishedItems = publishedService.find({'item_id': item['_id']})
             for publishedItem in publishedItems:
-                updates = {
-                    'highlights': highlights,
-                    '_updated': publishedItem['_updated'],
-                    '_etag': publishedItem['_etag']
-                }
-                publishedService.update(publishedItem['_id'], updates, publishedItem)
+                if publishedItem['_current_version'] == item['_current_version'] or not highlight_on:
+                    updates = {
+                        'highlights': highlights,
+                        '_updated': publishedItem['_updated'],
+                        '_etag': publishedItem['_etag']
+                    }
+                    publishedService.update(publishedItem['_id'], updates, publishedItem)
 
             push_notification(
                 'item:highlight',
