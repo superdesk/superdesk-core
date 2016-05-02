@@ -560,7 +560,7 @@ class ArchivePublishTestCase(SuperdeskTestCase):
 
         enqueue_published()
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
-        self.assertEqual(5, queue_items.count())
+        self.assertEqual(1, queue_items.count())
 
     def test_queue_transmission_for_digital_channels(self):
         self._is_publish_queue_empty()
@@ -573,8 +573,8 @@ class ArchivePublishTestCase(SuperdeskTestCase):
         EnqueueService().queue_transmission(doc, subscribers, subscriber_codes)
 
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
-        self.assertEqual(2, queue_items.count())
-        expected_subscribers = ['3', '5']
+        self.assertEqual(1, queue_items.count())
+        expected_subscribers = ['5']
         for item in queue_items:
             self.assertIn(item["subscriber_id"], expected_subscribers, 'item {}'.format(item))
 
@@ -589,8 +589,8 @@ class ArchivePublishTestCase(SuperdeskTestCase):
         EnqueueService().queue_transmission(doc, subscribers, subscriber_codes)
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
 
-        self.assertEqual(5, queue_items.count())
-        expected_subscribers = ['1', '2', '4', '5']
+        self.assertEqual(1, queue_items.count())
+        expected_subscribers = ['5']
         for item in queue_items:
             self.assertIn(item['subscriber_id'], expected_subscribers, 'item {}'.format(item))
             if item['subscriber_id'] == '5':
@@ -630,7 +630,7 @@ class ArchivePublishTestCase(SuperdeskTestCase):
         no_formatters, queued = EnqueueService().queue_transmission(doc, subscribers, subscriber_codes)
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(1, queue_items.count())
-        self.assertEqual(1, len(no_formatters))
+        self.assertEqual(0, len(no_formatters))
         self.assertTrue(queued)
 
         subscribers, subscribers_yet_to_receive, subscriber_codes = \
@@ -662,9 +662,9 @@ class ArchivePublishTestCase(SuperdeskTestCase):
     def test_conform_target_regions(self):
         doc = {'headline': 'test'}
         product = {'geo_restrictions': 'QLD'}
-        self.assertTrue(EnqueueService().conforms_product_targets(product, doc))
+        self.assertFalse(EnqueueService().conforms_product_targets(product, doc))
         doc = {'headline': 'test', 'target_regions': []}
-        self.assertTrue(EnqueueService().conforms_product_targets(product, doc))
+        self.assertFalse(EnqueueService().conforms_product_targets(product, doc))
         doc = {'headline': 'test', 'target_regions': [{'qcode': 'VIC', 'name': 'Victoria', 'allow': True}]}
         self.assertFalse(EnqueueService().conforms_product_targets(product, doc))
         doc = {'headline': 'test', 'target_regions': [{'qcode': 'VIC', 'name': 'Victoria', 'allow': False}]}
@@ -764,7 +764,7 @@ class ArchivePublishTestCase(SuperdeskTestCase):
         enqueue_published()
 
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
-        self.assertEqual(7, queue_items.count())
+        self.assertEqual(2, queue_items.count())
         request = ParsedRequest()
         request.args = {'aggregations': 0}
         published_items = self.app.data.find(PUBLISHED, request, None)
@@ -782,7 +782,7 @@ class ArchivePublishTestCase(SuperdeskTestCase):
         enqueue_published()
 
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
-        self.assertEqual(14, queue_items.count())
+        self.assertEqual(4, queue_items.count())
         published_items = self.app.data.find(PUBLISHED, request, None)
         self.assertEqual(4, published_items.count())
         last_published_digital = get_publish_items(published_digital_doc['item_id'], True)
