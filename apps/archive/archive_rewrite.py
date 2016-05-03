@@ -153,6 +153,13 @@ class ArchiveRewriteService(Service):
             # send the document to the desk only if a new rewrite is created
             send_to(doc=rewrite, desk_id=original['task']['desk'], default_stage='working_stage')
 
+            # if we are rewriting a published item then copy the body_html
+            if original.get('state', '') in (CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED):
+                if digital:
+                    rewrite['body_html'] = digital.get('body_html', '')
+                else:
+                    rewrite['body_html'] = original.get('body_html', '')
+
         rewrite[ITEM_STATE] = CONTENT_STATE.PROGRESS
         self._set_take_key(rewrite, original.get('event_id'))
         return rewrite
