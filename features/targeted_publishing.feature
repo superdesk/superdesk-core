@@ -15,7 +15,8 @@ Feature: Targeted Publishing
     """
     [{"_id": "1", "name":"prod-1", "codes":"abc,xyz"},
      {"_id": "2", "name":"prod-2", "codes":"klm", "geo_restrictions": "VIC"},
-     {"_id": "3", "name":"prod-3", "codes":"klm", "geo_restrictions": "QLD"}]
+     {"_id": "3", "name":"prod-3", "codes":"klm", "geo_restrictions": "QLD"},
+     {"_id": "4", "name":"prod-4", "codes":"abc,xyz,klm"}]
     """
     And "subscribers"
     """
@@ -25,7 +26,7 @@ Feature: Targeted Publishing
       "media_type": "media",
       "subscriber_type": "digital",
       "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-      "products": ["1"],
+      "products": ["1", "4"],
       "codes": "Aaa",
       "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
     },
@@ -164,6 +165,38 @@ Feature: Targeted Publishing
     And we get "/publish_queue"
     Then we get list with 0 items
 
+
+
+  @auth @notification
+  Scenario: Publish a story normally doesn't publish if product has target region
+    When we post to "/archive" with success
+    """
+    [{"guid": "123", "type": "text", "state": "fetched", "slugline": "slugline",
+      "headline": "headline",
+      "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+      "subject":[{"qcode": "17004000", "name": "Statistics"}],
+      "body_html": "Test Document body"}]
+    """
+    Then we get OK response
+    When we publish "#archive._id#" with "publish" type and "published" state
+    Then we get OK response
+    When we get "/published"
+    Then we get list with 2 items
+    """
+    {"_items" : [{"_id": "123", "state": "published", "type": "text", "_current_version": 2}]}
+    """
+    When we enqueue published
+    And we get "/publish_queue"
+    Then we get list with 2 items
+    """
+    {
+      "_items":
+        [
+          {"subscriber_id": "sub-1"},
+          {"subscriber_id": "sub-3"}
+        ]
+    }
+    """
 
   @auth @notification
   Scenario: Publish a story to a target subscriber type

@@ -466,12 +466,12 @@ class EnqueueService:
         :return:
             bool: True if the article conforms the targets for the given product
         """
+        geo_restrictions = product.get('geo_restrictions')
 
         # If not targeted at all then Return true
         if not BasePublishService().is_targeted(article, 'target_regions'):
-            return True
+            return geo_restrictions is None
 
-        geo_restrictions = product.get('geo_restrictions')
         if geo_restrictions:
             for region in article.get('target_regions', []):
                 if region['qcode'] == geo_restrictions and region['allow']:
