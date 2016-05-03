@@ -154,6 +154,10 @@ CELERY_ROUTES = {
         'queue': 'publish',
         'routing_key': 'publish.transmit'
     },
+    'superdesk.publish.publish_content.transmit_subscriber_items': {
+        'queue': 'publish',
+        'routing_key': 'publish.transmit'
+    },
     'apps.publish.enqueue.enqueue_published': {
         'queue': 'publish',
         'routing_key': 'publish.enqueue'
