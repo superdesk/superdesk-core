@@ -139,3 +139,25 @@ class SuperdeskValidator(Validator):
             query = {'user': {'$exists': False}}
 
         self._is_value_unique(unique, field, value, query)
+
+    def _validate_unique_template(self, unique, field, value):
+        """Check that value is unique globally or to current user.
+
+        In case 'is_public' is false within document it will check for unique within
+        docs with same 'user' value.
+
+        Otherwise it will check for unique within docs without any 'user' value.
+        """
+        original = self._original_document or {}
+        update = self.document or {}
+
+        is_public = update.get('is_public', original.get('is_public', None))
+        template_name = update.get('template_name', original.get('template_name', None))
+
+        if is_public:
+            query = {'is_public': True}
+        else:
+            _, auth_value = auth_field_and_value(self.resource)
+            query = {'user': auth_value, 'is_public': False}
+
+        self._is_value_unique(unique, 'template_name', template_name, query)
