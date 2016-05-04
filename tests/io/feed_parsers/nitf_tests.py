@@ -13,7 +13,7 @@ import os
 from superdesk.tests import TestCase
 
 from superdesk.etree import etree
-from superdesk.io.feed_parsers.nitf import NITFFeedParser, get_subjects
+from superdesk.io.feed_parsers.nitf import NITFFeedParser
 
 
 class NITFTestCase(TestCase):
@@ -199,7 +199,7 @@ class ParseSubjects(TestCase):
                '<tobject.subject tobject.subject.refnum="02003000" '
                'tobject.subject.type="Justice" tobject.subject.matter="Police" />'
                '</tobject></head></nitf>')
-        subjects = get_subjects(etree.fromstring(xml))
+        subjects = NITFFeedParser().get_subjects(etree.fromstring(xml))
         self.assertEqual(len(subjects), 2)
         self.assertIn({'qcode': '02000000', 'name': 'Justice'}, subjects)
         self.assertIn({'qcode': '02003000', 'name': 'Police'}, subjects)
@@ -212,5 +212,5 @@ class ParseSubjects(TestCase):
                '<tobject.subject tobject.subject.refnum="00000000" '
                'tobject.subject.type="Justice" tobject.subject.matter="Police" />'
                '</tobject></head></nitf>')
-        subjects = get_subjects(etree.fromstring(xml))
+        subjects = NITFFeedParser().get_subjects(etree.fromstring(xml))
         self.assertEqual(len(subjects), 0)
