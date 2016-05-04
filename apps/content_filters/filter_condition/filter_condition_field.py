@@ -24,7 +24,8 @@ class FilterConditionFieldsEnum(Enum):
     source = 11,
     headline = 12,
     body_html = 13,
-    stage = 14
+    stage = 14,
+    ednote = 15
 
 
 class FilterConditionField:
