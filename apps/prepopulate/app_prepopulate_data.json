@@ -40,6 +40,11 @@
                     "default" : false,
                     "type" : "bool",
                     "enabled" : true
+                },
+                "spellcheck:status" : {
+                    "default": true,
+                    "type" : "bool",
+                    "enabled" : true
                 }
             }
         },
@@ -56,7 +61,14 @@
             "password": "admin",
             "user_type": "administrator",
             "username": "admin4",
-            "role": "-id Editor role-"
+            "role": "-id Editor role-",
+            "user_preferences": {
+                "spellcheck:status" : {
+                    "default": true,
+                    "type" : "bool",
+                    "enabled" : true
+                }
+            }
         },
         "id_name": "-id user admin4-",
         "resource": "users"
@@ -71,7 +83,14 @@
             "password": "admin",
             "user_type": "administrator",
             "username": "admin3",
-            "role": "-id Writer role-"
+            "role": "-id Writer role-",
+            "user_preferences": {
+                "spellcheck:status" : {
+                    "default": true,
+                    "type" : "bool",
+                    "enabled" : true
+                }
+            }
         },
         "id_name": "-id user admin3-",
         "resource": "users"
@@ -86,7 +105,14 @@
             "password": "admin",
             "user_type": "administrator",
             "username": "admin2",
-            "role": "-id Writer role-"
+            "role": "-id Writer role-",
+            "user_preferences": {
+                "spellcheck:status" : {
+                    "default": true,
+                    "type" : "bool",
+                    "enabled" : true
+                }
+            }
         },
         "id_name": "-id user admin2-",
         "resource": "users"
@@ -101,7 +127,14 @@
             "password": "admin",
             "user_type": "administrator",
             "username": "admin1",
-            "role": "-id Superadmin role-"
+            "role": "-id Superadmin role-",
+            "user_preferences": {
+                "spellcheck:status" : {
+                    "default": true,
+                    "type" : "bool",
+                    "enabled" : true
+                }
+            }
         },
         "id_name": "-id user admin1-",
         "resource": "users"

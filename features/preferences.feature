@@ -277,3 +277,34 @@ Feature: User preferences
         """
         {"user_preferences": {"destination:active": {"desk_id":"123", "stage_id":"456"}}}
         """
+
+    @auth
+    Scenario: Update editor spell checker user preferences settings
+        Given we have sessions "/sessions"
+
+        When we patch "/preferences/#SESSION_ID#"
+        """
+        {
+            "user_preferences": {
+                "spellchecker:status": {
+                    "default": true,
+                    "enabled": true,
+                    "type": "bool"
+                }
+            }
+        }
+        """
+
+        When we get "/preferences/#SESSION_ID#"
+        Then we get existing resource
+        """
+        {
+            "user_preferences": {
+                "spellchecker:status": {
+                    "default": true,
+                    "enabled": true,
+                    "type": "bool"
+                }
+            }
+        }
+        """
