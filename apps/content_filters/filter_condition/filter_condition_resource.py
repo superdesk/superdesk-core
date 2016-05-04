@@ -31,6 +31,7 @@ class FilterConditionResource(Resource):
                         'type',
                         'source',
                         'headline',
+                        'ednote',
                         'body_html',
                         'genre',
                         'subject',
