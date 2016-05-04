@@ -41,7 +41,7 @@
                     "type" : "bool",
                     "enabled" : true
                 },
-                "spellcheck:status" : {
+                "spellchecker:status" : {
                     "default": true,
                     "type" : "bool",
                     "enabled" : true
@@ -63,7 +63,7 @@
             "username": "admin4",
             "role": "-id Editor role-",
             "user_preferences": {
-                "spellcheck:status" : {
+                "spellchecker:status" : {
                     "default": true,
                     "type" : "bool",
                     "enabled" : true
@@ -85,7 +85,7 @@
             "username": "admin3",
             "role": "-id Writer role-",
             "user_preferences": {
-                "spellcheck:status" : {
+                "spellchecker:status" : {
                     "default": true,
                     "type" : "bool",
                     "enabled" : true
@@ -107,7 +107,7 @@
             "username": "admin2",
             "role": "-id Writer role-",
             "user_preferences": {
-                "spellcheck:status" : {
+                "spellchecker:status" : {
                     "default": true,
                     "type" : "bool",
                     "enabled" : true
@@ -129,7 +129,7 @@
             "username": "admin1",
             "role": "-id Superadmin role-",
             "user_preferences": {
-                "spellcheck:status" : {
+                "spellchecker:status" : {
                     "default": true,
                     "type" : "bool",
                     "enabled" : true
