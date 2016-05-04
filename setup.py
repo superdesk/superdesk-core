@@ -10,36 +10,21 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from setuptools import setup, find_packages
+from pip.req import parse_requirements
+from pip.download import PipSession
 
 LONG_DESCRIPTION = "Superdesk Server Core"
 
+parsed_requirements = parse_requirements(
+    'requirements.txt', session=PipSession()
+)
 install_requires = [
-    'eve>=0.6,<0.7',
-    'eve-elastic>=0.3.7,<0.4',
-    'elasticsearch==1.9.0',
-    'flask>=0.10',
-    'flask-mail>=0.9',
-    'flask-script>=2.0.5',
-    'pillow>=2.9,<3.0',
-    'arrow>=0.4',
-    'asyncio>=3.4',
-    'bcrypt>=1.1,<1.2',
-    'beautifulsoup4>=4.4',
-    'blinker>=1.3',
-    'celery[redis]>=3.1.18',
-    'feedparser>=5.2',
-    'hachoir3-superdesk>=3.0a1',
-    'python-magic>=0.4',
-    'python3-ldap>=0.9.8',
-    'pytz>=2015.4',
-    'raven[flask]>=5.10.0,<5.11',
-    'requests>=2.7.0',
-    'statsd>=3.1',
-    'httmock>=1.2.3',
-    'boto3>=1.1.4',
-    'websockets>=2.6',
-    'mongolock>=1.3.4',
-    'PyYAML>=3.11',
+    str(ir.req) for ir in parsed_requirements
+    if not (getattr(ir, 'link', False) or getattr(ir, 'url', False))
+]
+dependency_links = [
+    str(ir.link) for ir in parsed_requirements
+    if getattr(ir, 'link', False)
 ]
 
 package_data = {
@@ -70,6 +55,7 @@ setup(
     package_data=package_data,
     include_package_data=True,
     install_requires=install_requires,
+    dependency_links=dependency_links,
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Web Environment',
