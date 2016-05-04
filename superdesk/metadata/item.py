@@ -373,6 +373,34 @@ metadata_schema = {
         'nullable': True,
         'mapping': not_indexed,
     },
+
+    'flags': {
+        'type': 'dict',
+        'schema': {
+            'marked_for_not_publication': {
+                'type': 'boolean',
+                'default': False
+            },
+            'marked_for_legal': {
+                'type': 'boolean',
+                'default': False
+            },
+            'marked_archived_only': {
+                'type': 'boolean',
+                'default': False
+            },
+            'marked_for_sms': {
+                'type': 'boolean',
+                'default': False
+            }
+        }
+    },
+
+    'sms_message': {
+        'type': 'string',
+        'mapping': not_analyzed,
+        'nullable': True
+    },
 }
 
 metadata_schema['lock_user']['versioned'] = False

@@ -513,27 +513,7 @@ def item_schema(extra=None):
                 'utc_embargo': {'type': 'datetime', 'nullable': True}
             }
         },
-        'flags': {
-            'type': 'dict',
-            'schema': {
-                'marked_for_not_publication': {
-                    'type': 'boolean',
-                    'default': False
-                },
-                'marked_for_legal': {
-                    'type': 'boolean',
-                    'default': False
-                },
-                'marked_archived_only': {
-                    'type': 'boolean',
-                    'default': False
-                },
-                'marked_for_sms': {
-                    'type': 'boolean',
-                    'default': False
-                }
-            }
-        },
+
         ITEM_OPERATION: {
             'type': 'string',
             'allowed': item_operations,
@@ -586,11 +566,6 @@ def item_schema(extra=None):
         },
         EMBARGO: {
             'type': 'datetime',
-            'nullable': True
-        },
-        'sms_message': {
-            'type': 'string',
-            'mapping': not_analyzed,
             'nullable': True
         },
         'broadcast': {
