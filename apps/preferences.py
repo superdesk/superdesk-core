@@ -139,6 +139,12 @@ class PreferencesResource(Resource):
         'place': []
     })
 
+    superdesk.register_default_user_preference('spellchecker:status', {
+        'type': 'bool',
+        'enabled': True,
+        'default': True
+    })
+
     superdesk.register_default_user_preference('destination:active', {})
 
     superdesk.register_default_session_preference('scratchpad:items', [])
