@@ -245,3 +245,108 @@ Feature: Templates
      "data": {"anpa_take_key": "TAKEDOWN", "urgency": 1, "priority": 1, "headline": "headline", "dateline": null}
     }
     """
+
+
+    @auth
+    Scenario: Validate unique name on personal template
+        When we post to "content_templates"
+        """
+        {"template_name": "personal", "template_type": "create", "template_desk": null, "data": {"body_footer": "test"}}
+        """
+        Then we get new resource
+        """
+        {"template_desk": null, "user": "#CONTEXT_USER_ID#", "is_public": false, "data": {"body_footer": "test"}}
+        """
+
+        When we post to "content_templates"
+        """
+        {"template_name": "personal", "template_type": "create", "template_desk": null, "data": {"body_footer": "test"}}
+        """
+        Then we get error 400
+        """
+        {"_error": {"code": 400, "message": "Insertion failure: 1 document(s) contain(s) error(s)"},
+         "_issues": {"template_name": "value 'personal' is not unique"},
+         "_status": "ERR"
+        }
+        """
+
+    @auth
+    Scenario: Validate unique name on desk template
+        Given "desks"
+        """
+        [
+            {"name": "sports"}
+        ]
+        """
+        When we post to "content_templates"
+        """
+        {
+         "template_name": "desk", "template_type": "create", "data": {"body_footer": "test"},
+         "template_desk": "#desks._id#", "template_stage": "#desks.incoming_stage#", "is_public": true
+         }
+        """
+        Then we get new resource
+        """
+        {
+         "template_name": "desk", "template_type": "create", "data": {"body_footer": "test"},
+         "template_desk": "#desks._id#", "template_stage": "#desks.incoming_stage#", "is_public": true
+         }
+        """
+
+        When we post to "content_templates"
+        """
+        {
+         "template_name": "desk", "template_type": "create", "data": {"body_footer": "test"},
+         "template_desk": "#desks._id#", "template_stage": "#desks.incoming_stage#", "is_public": true
+         }
+        """
+        Then we get error 400
+        """
+        {"_error": {"code": 400, "message": "Insertion failure: 1 document(s) contain(s) error(s)"},
+         "_issues": {"template_name": ["value 'desk' is not unique", "value 'desk' is not unique"]},
+         "_status": "ERR"
+        }
+        """
+
+    @auth
+    Scenario: Add personal and desk templates with the same name and then try to change the non public to public
+        Given "desks"
+        """
+        [
+            {"name": "sports"}
+        ]
+        """
+        When we post to "content_templates"
+        """
+        {
+         "template_name": "template", "template_type": "create", "data": {"body_footer": "test"},
+         "template_desk": "#desks._id#", "template_stage": "#desks.incoming_stage#", "is_public": true
+         }
+        """
+        Then we get new resource
+        """
+        {
+         "template_name": "template", "template_type": "create", "data": {"body_footer": "test"},
+         "template_desk": "#desks._id#", "template_stage": "#desks.incoming_stage#", "is_public": true
+         }
+        """
+
+        When we post to "content_templates"
+        """
+        {"template_name": "template", "template_type": "create", "template_desk": null, "data": {"body_footer": "test"}}
+        """
+        Then we get new resource
+        """
+        {"template_desk": null, "user": "#CONTEXT_USER_ID#", "is_public": false, "data": {"body_footer": "test"}}
+        """
+
+        When we patch "content_templates/#content_templates._id#"
+        """
+        {"is_public": true}
+        """
+        Then we get error 400
+        """
+        {"_issues": {"template_name": "value 'template' is not unique"},
+         "_status": "ERR"
+        }
+        """

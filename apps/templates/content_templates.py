@@ -90,7 +90,7 @@ class ContentTemplatesResource(Resource):
 
         'template_name': {
             'type': 'string',
-            'iunique': True,
+            'unique_template': True,
             'required': True,
         },
 
@@ -119,7 +119,7 @@ class ContentTemplatesResource(Resource):
         'next_run': {'type': 'datetime', 'readonly': True},
 
         'user': Resource.rel('users'),
-        'is_public': {'type': 'boolean', 'default': False},
+        'is_public': {'type': 'boolean', 'unique_template': True, 'default': False},
     }
 
     additional_lookup = {
