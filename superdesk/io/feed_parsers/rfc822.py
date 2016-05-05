@@ -360,16 +360,16 @@ class EMailRFC822FeedParser(EmailFeedParser):
 
                             self._expand_category(item, mail_item)
 
-                            item['original_source'] = mail_item.get('Username')
-                            item['headline'] = mail_item.get('Headline')
-                            item['abstract'] = mail_item.get('Abstract')
-                            item['slugline'] = mail_item.get('Slugline')
-                            item['body_html'] = mail_item.get('Body').replace('\n', '<br />')
+                            item['original_source'] = mail_item.get('Username', '')
+                            item['headline'] = mail_item.get('Headline', '')
+                            item['abstract'] = mail_item.get('Abstract', '')
+                            item['slugline'] = mail_item.get('Slugline', '')
+                            item['body_html'] = mail_item.get('Body', '').replace('\n', '<br />')
 
                             if mail_item.get('Priority') != '':
-                                item['priority'] = int(mail_item.get('Priority'))
-                            if mail_item.get('Urgency') != '':
-                                item['urgency'] = int(mail_item.get('Urgency'))
+                                item['priority'] = int(mail_item.get('Priority', '3'))
+                            if mail_item.get('News Value') != '':
+                                item['urgency'] = int(mail_item.get('News Value', '3'))
 
                             # We expect the username passed corresponds to a superdesk user
                             query = {'email': re.compile('^{}$'.format(mail_item.get('Username')), re.IGNORECASE)}
@@ -382,8 +382,9 @@ class EMailRFC822FeedParser(EmailFeedParser):
                             item[SIGN_OFF] = user.get(SIGN_OFF)
 
                             # attempt to match the given desk name against the defined desks
+                            query = {'name': re.compile('^{}$'.format(mail_item.get('Desk', '')), re.IGNORECASE)}
                             desk = superdesk.get_resource_service('desks').find_one(
-                                req=None, name=mail_item.get('Desk'))
+                                req=None, **query)
                             if desk:
                                 item['task'] = {'desk': desk.get('_id'), 'stage': desk.get('incoming_stage')}
                             break
