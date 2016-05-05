@@ -53,9 +53,11 @@ DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S%z"
 def test_json(context):
     try:
         response_data = json.loads(context.response.get_data())
+        print('response', response_data)
     except Exception:
         fail_and_print_body(context.response, 'response is not valid json')
     context_data = json.loads(apply_placeholders(context, context.text))
+    print('context', context_data)
     assert_equal(json_match(context_data, response_data), True,
                  msg=str(context_data) + '\n != \n' + str(response_data))
     return response_data
@@ -813,9 +815,11 @@ def step_impl_then_get_next_take(context, new_take):
 
 @then('we get error {code}')
 def step_impl_then_get_error(context, code):
+    print('*********************')
     expect_status(context.response, int(code))
     if context.text:
         test_json(context)
+    print('*********************')
 
 
 @then('we get list with {total_count} items')

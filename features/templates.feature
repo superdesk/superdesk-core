@@ -265,10 +265,22 @@ Feature: Templates
         Then we get error 400
         """
         {"_error": {"code": 400, "message": "Insertion failure: 1 document(s) contain(s) error(s)"},
-         "_issues": {"template_name": "value 'personal' is not unique"},
+         "_issues": {"template_name": "Template Name is not unique"},
          "_status": "ERR"
         }
         """
+        When we post to "content_templates"
+        """
+        {"template_name": "PERSONAL", "template_type": "create", "template_desk": null, "data": {"body_footer": "test"}}
+        """
+        Then we get error 400
+        """
+        {"_error": {"code": 400, "message": "Insertion failure: 1 document(s) contain(s) error(s)"},
+         "_issues": {"template_name": "Template Name is not unique"},
+         "_status": "ERR"
+        }
+        """
+
 
     @auth
     Scenario: Validate unique name on desk template
@@ -303,7 +315,21 @@ Feature: Templates
         Then we get error 400
         """
         {"_error": {"code": 400, "message": "Insertion failure: 1 document(s) contain(s) error(s)"},
-         "_issues": {"template_name": ["value 'desk' is not unique", "value 'desk' is not unique"]},
+         "_issues": {"is_public": "Template Name is not unique", "template_name": "Template Name is not unique"},
+         "_status": "ERR"
+        }
+        """
+        When we post to "content_templates"
+        """
+        {
+         "template_name": "Desk", "template_type": "create", "data": {"body_footer": "test"},
+         "template_desk": "#desks._id#", "template_stage": "#desks.incoming_stage#", "is_public": true
+         }
+        """
+        Then we get error 400
+        """
+        {"_error": {"code": 400, "message": "Insertion failure: 1 document(s) contain(s) error(s)"},
+         "_issues": {"is_public": "Template Name is not unique", "template_name": "Template Name is not unique"},
          "_status": "ERR"
         }
         """
@@ -346,7 +372,22 @@ Feature: Templates
         """
         Then we get error 400
         """
-        {"_issues": {"template_name": "value 'template' is not unique"},
+        {"_issues": {"is_public": "Template Name is not unique"},
+         "_status": "ERR"
+        }
+        """
+        When we patch "content_templates/#content_templates._id#"
+        """
+        {"template_name": "TEMPLATE"}
+        """
+        Then we get OK response
+        When we patch "content_templates/#content_templates._id#"
+        """
+        {"is_public": true}
+        """
+        Then we get error 400
+        """
+        {"_issues": {"is_public": "Template Name is not unique"},
          "_status": "ERR"
         }
         """
