@@ -160,4 +160,11 @@ class SuperdeskValidator(Validator):
             _, auth_value = auth_field_and_value(self.resource)
             query = {'user': auth_value, 'is_public': False}
 
-        self._is_value_unique(unique, 'template_name', template_name, query)
+        query['template_name'] = re.compile('^{}$'.format(re.escape(template_name.strip())), re.IGNORECASE)
+
+        if self._id:
+            id_field = config.DOMAIN[self.resource]['id_field']
+            query[id_field] = {'$ne': self._id}
+
+        if superdesk.get_resource_service(self.resource).find_one(req=None, **query):
+            self._error(field, "Template Name is not unique")
