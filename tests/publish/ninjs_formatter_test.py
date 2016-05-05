@@ -259,15 +259,13 @@ class NinjsFormatterTest(TestCase):
             "version": "2",
             "guid": "urn:newsml:localhost:2015-07-24T15:05:00.116047:435c93c2-492c-4668-ab47-ae6e2b9b1c2c",
             "associations": {
-                "main": [
-                    {"guid": "tag:localhost:2015:515b895a-b336-48b2-a506-5ffaf561b916", "type": "text"}
-                ],
-                "sidebars": [
-                    {
-                        "guid": "urn:newsml:localhost:2015-07-24T15:04:29.589984:af3bef9a-5002-492b-a15a-8b460e69b164",
-                        "type": "picture"
-                    }
-                ]
+                "main": {
+                    "guid": "tag:localhost:2015:515b895a-b336-48b2-a506-5ffaf561b916", "type": "text"
+                },
+                "sidebars": {
+                    "guid": "urn:newsml:localhost:2015-07-24T15:04:29.589984:af3bef9a-5002-492b-a15a-8b460e69b164",
+                    "type": "picture"
+                }
             },
             "versioncreated": "2015-07-24T05:05:14.000Z",
             "type": "composite",
@@ -311,7 +309,7 @@ class NinjsFormatterTest(TestCase):
         formatted = json.loads(doc)
         self.assertIn('associations', formatted)
         self.assertIn('image', formatted['associations'])
-        image = formatted['associations']['image'][0]
+        image = formatted['associations']['image']
         self.assertEqual('urn:foo', image['guid'])
         self.assertEqual('Foo', image['headline'])
         self.assertEqual('usable', image['pubstatus'])
@@ -362,7 +360,7 @@ class NinjsFormatterTest(TestCase):
             "slugline": "slugline",
             "priority": 5,
             'associations': {
-                "embedded5346670761": [{
+                "embedded5346670761": {
                     "guid": "56ba77bde4b0568f54a1ce68",
                     "type": "video",
                     "version": "1",
@@ -378,7 +376,7 @@ class NinjsFormatterTest(TestCase):
                             "height": 200
                         }
                     }
-                }]
+                }
             }
         }
         self.assertEqual(json.loads(doc), expected)

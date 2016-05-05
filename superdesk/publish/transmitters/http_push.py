@@ -63,9 +63,8 @@ class HTTPPushService(PublishService):
             return
 
         renditions = item.get('renditions', {})
-        for assoc_list in item.get('associations', {}).values():
-            for assoc in assoc_list:
-                renditions.update(assoc.get('renditions', {}))
+        for assoc in item.get('associations', {}).values():
+            renditions.update(assoc.get('renditions', {}))
         for name, rendition in renditions.items():
             del renditions[name]['href']
             if not self._media_exists(rendition['media'], destination):
