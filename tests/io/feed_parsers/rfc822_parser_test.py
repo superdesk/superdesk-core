@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8; -*-
 #
 # This file is part of Superdesk.
@@ -117,3 +116,32 @@ class RFC822CharSetInSubject(TestCase):
     def test_headline(self):
         # This test a subject that has a charset that decodes correctly
         self.assertEqual(self.items[0]['headline'], 'Google Apps News March 2015')
+
+
+class RFC822FormattedEmail(TestCase):
+    filename = 'googleform.txt'
+
+    def setUp(self):
+        setup(context=self)
+        with self.app.app_context():
+            self.app.data.insert('users', [{
+                '_id': 123,
+                'name': 'user',
+                'user_type': 'administrator',
+                'email': 'eharvey@aap.com.au'
+            }])
+            self.app.data.insert('desks', [{'_id': 1, 'name': 'new zealand'}])
+
+            provider = {'name': 'Test', 'config': {'formatted': True}}
+            dirname = os.path.dirname(os.path.realpath(__file__))
+            fixture = os.path.normpath(os.path.join(dirname, '../fixtures', self.filename))
+            with open(fixture, mode='rb') as f:
+                bytes = f.read()
+            parser = EMailRFC822FeedParser()
+            self.items = parser.parse([(1, bytes)], provider)
+
+    def test_parsed_values(self):
+        self.assertEqual(self.items[0]['headline'], 'TEST NZ HEADER')
+        self.assertEqual(self.items[0]['task']['desk'], 1)
+        self.assertEqual(self.items[0]['original_creator'], 123)
+        self.assertEqual(self.items[0]['urgency'], 1)
