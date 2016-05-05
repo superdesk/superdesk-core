@@ -35,7 +35,11 @@ Feature: Templates
     Scenario: User can create personal template
         When we post to "content_templates"
         """
-        {"template_name": "personal", "template_type": "create", "template_desk": null, "data": {"body_footer": "test"}}
+        {"template_name": "personal", "template_type": "create", "template_desk": null, "data": {
+            "body_footer": "test",
+            "sms_message": "foo",
+            "flags": {"marked_for_sms": true}
+        }}
         """
         Then we get new resource
         """
