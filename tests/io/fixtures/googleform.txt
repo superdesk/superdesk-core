@@ -1,0 +1,47 @@
+Delivered-To: editorialformatted@aap.com.au
+Received: by 10.25.76.3 with SMTP id z3csp540263lfa;
+        Wed, 4 May 2016 21:11:46 -0700 (PDT)
+X-Received: by 10.50.123.161 with SMTP id mb1mr1361720igb.20.1462421506639;
+        Wed, 04 May 2016 21:11:46 -0700 (PDT)
+Return-Path: <takin@aap.com.au>
+Received: from mail-io0-x248.google.com (mail-io0-x248.google.com. [2607:f8b0:4001:c06::248])
+        by mx.google.com with ESMTPS id l128si7761461iof.211.2016.05.04.21.11.46
+        for <editorialformatted@aap.com.au>
+        (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
+        Wed, 04 May 2016 21:11:46 -0700 (PDT)
+Received-SPF: pass (google.com: domain of takin@aap.com.au designates 2607:f8b0:4001:c06::248 as permitted sender) client-ip=2607:f8b0:4001:c06::248;
+Authentication-Results: mx.google.com;
+       dkim=pass header.i=@aap.com.au;
+       spf=pass (google.com: domain of takin@aap.com.au designates 2607:f8b0:4001:c06::248 as permitted sender) smtp.mailfrom=takin@aap.com.au;
+       dmarc=pass (p=QUARANTINE dis=NONE) header.from=aap.com.au
+Received: by mail-io0-x248.google.com with SMTP id e63so161471701iod.2
+        for <editorialformatted@aap.com.au>; Wed, 04 May 2016 21:11:46 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=aap.com.au; s=google;
+        h=mime-version:message-id:date:subject:from:to;
+        bh=tJf0r5i5/DIi7Ow0MqPWTyC6arET2f1A7BnJE8iom5s=;
+        b=I4guaweHnMwwM02ka/wbRmTr7JIt6FC7WTrHIMJ+7fhmMuQ36Ozur4tPzgWsMG5KHK
+         8RS9Ka0Lu7bnLz0RxZm83cLlY7eDqY/SJpZNeBBt0WC7XObOixbe/FFw3L+G7OYqOSwr
+         VKPnVEUAJ+6fE+3AeA/JGUaOQtefMNZ5c0XXc=
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20130820;
+        h=x-gm-message-state:mime-version:message-id:date:subject:from:to;
+        bh=tJf0r5i5/DIi7Ow0MqPWTyC6arET2f1A7BnJE8iom5s=;
+        b=k7Zyzh59iZlz9tBUqJMBCCWn6O2ZeJ9JBUw6LirDjpBrGNNVjMFCHgEy2Xyq0Cg2v/
+         P2OMSJ+OIq6WlRtWYuQdS3aAbV7mXpESXMgL9rpMGtx3O3XAD6IVrYdU63yEPKbf7yL/
+         3H0BsndVAdGzFXOTsr9Jw7Gr5g9ce4jn+GVYtEaDkqlUBorOeW2XXs3ps+v6eEhx0tJU
+         Fs1iUMXDDnCmW/eo6u75kFv0sMyZc//2PGumHjYuNmTp9N/I03ZaEGwohnZfYs+/ZuN5
+         oh46M1rbgk2jKqXiypMJqF+0mfEMAc5tVVNPXJRQ8X31YGytUPleZQL2WH/TY7IgE0S3
+         +mEA==
+X-Gm-Message-State: AOPr4FUbgEkSwXxBJfp6pb22ZXUIgjs0pcCcYGi9V4/BCXhuRfYdRJbMeje0JXl4HM/A/V/euSR4/+snGy8+aDCbBH1ajMxY9u+h/nzrx+MQgindO/e+S3FZuHTLIGXJBfZh2zr/Ic88xGkf1kMPMtYpCTG7aGRtyJ8uk9ztGJdrzS015chCayjqleaCpCEwgoquWzSwYAVwLLA=
+MIME-Version: 1.0
+X-Received: by 10.182.193.9 with SMTP id hk9mr7937431obc.14.1462421505853;
+ Wed, 04 May 2016 21:11:45 -0700 (PDT)
+Message-ID: <f46d043c08f45e6e8f0532108aa9@google.com>
+Date: Thu, 05 May 2016 04:11:45 +0000
+Subject: Formatted Editorial Story
+From: takin@aap.com.au
+To: editorialformatted@aap.com.au
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed; delsp=yes
+
+{"Dateline":["AUCKLAND, May 5"],"Category":["INTERNATIONAL NEWS"],"Priority":[""],"Abstract":["Something about the NZ story here."],"Timestamp":["5/5/2016 14:11:44"],"Username":["eharvey@aap.com.au"],"Headline":["TEST NZ HEADER"],"Slugline":["NZTEST"],"Desk":["NEW ZEALAND"],"Genre":["ARTICLE (NEWS)"],"News Value":["1"],"Body":["Prisoners allegedly drunk on homebrew attacked staff at the Serco-run Wiri prison on Saturday, and a wing has been in lockdown as a result.\n\nThe incident is the latest in a number of high profile incidents involving Serco, including an $8 million pay out to Corrections after the Government had to step in to manage the Mt Eden facility.\n\nSerco today confirmed information supplied to the Herald from a source within the Auckland South Corrections Facility on Kiwi Tamaki Drive, Wiri."],"Place":["ADV"]}
