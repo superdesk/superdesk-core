@@ -31,3 +31,4 @@ include/
 /server/.pydevproject
 /server/.settings/org.eclipse.core.resources.prefs
 /results/
+/.settings/

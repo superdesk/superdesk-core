@@ -867,8 +867,9 @@ def step_impl_then_get_formatted_output_as_story(context, value, group, sub):
         except:
             continue
 
-        for group_item in formatted_data.get('associations', {}).get(group, []):
-            if group_item.get('guid', '') == value:
+        associations = formatted_data.get('associations', {})
+        for assoc_group in associations:
+            if assoc_group.startswith(group) and associations[assoc_group].get('guid', '') == value:
                 return
     assert False
 
@@ -890,8 +891,9 @@ def step_impl_then_get_formatted_output_pck(context, value, group, sub, pck):
         except:
             continue
 
-        for group_item in formatted_data.get('associations', {}).get(group, []):
-            if group_item.get('guid', '') == value:
+        associations = formatted_data.get('associations', {})
+        for assoc_group in associations:
+            if assoc_group.startswith(group) and associations[assoc_group].get('guid', '') == value:
                 return
     assert False
 
@@ -909,8 +911,10 @@ def step_impl_then_get_formatted_output_pck_version(context, value, group, sub, 
                 except:
                     continue
 
-                for group_item in formatted_data.get('associations', {}).get(group, []):
-                    if group_item.get('_id', '') == value:
+                associations = formatted_data.get('associations', {})
+                for assoc_group in associations:
+                    if assoc_group.startswith(group) \
+                            and associations[assoc_group].get('guid', '') == value:
                         assert False
 
                 assert True

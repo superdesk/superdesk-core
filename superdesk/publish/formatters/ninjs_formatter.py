@@ -87,8 +87,7 @@ class NINJSFormatter(Formatter):
             if article[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
                 ninjs['associations'] = self._get_associations(article)
                 if 'associations' in article:
-                    for group, assoc in self._format_related(article).items():
-                        ninjs['associations'][group] = ninjs['associations'].get(group, []) + assoc
+                    ninjs['associations'].update(self._format_related(article))
             elif article.get('associations', {}):
                 ninjs['associations'] = self._format_related(article)
 
@@ -164,23 +163,27 @@ class NINJSFormatter(Formatter):
             if group[GROUP_ID] == ROOT_GROUP:
                 continue
 
+            group_items = []
             for ref in group[REFS]:
                 if RESIDREF in ref:
-                    items = associations.get(group[GROUP_ID], [])
                     item = {}
                     item['guid'] = ref[RESIDREF]
                     item[ITEM_TYPE] = ref[ITEM_TYPE]
                     if ref.get('package_item'):
                         item.update(self._transform_to_ninjs(ref['package_item'], recursive=False))
-                    items.append(item)
-                    associations[group[GROUP_ID]] = items
+                    group_items.append(item)
+            if len(group_items) == 1:
+                associations[group[GROUP_ID]] = group_items[0]
+            elif len(group_items) > 1:
+                for index in range(0, len(group_items)):
+                    associations[group[GROUP_ID] + '-' + str(index)] = group_items[index]
         return associations
 
     def _format_related(self, article):
         """Format all associated items for simple items (not packages)."""
         associations = {}
         for key, item in article.get('associations', {}).items():
-            associations[key] = [self._transform_to_ninjs(item)]
+            associations[key] = self._transform_to_ninjs(item)
         return associations
 
     def _get_subject(self, article):

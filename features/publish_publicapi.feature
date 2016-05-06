@@ -673,22 +673,15 @@ Feature: Publish content to the public API
     		"guid": "compositeitem",
     		"type": "composite",
     		"associations": {
-    			"main": [
-    				{
-    					"headline": "WA:Navy steps in with WA asylum-seeker boat",
-    					"type": "composite"
-    				}
-    			],
-    			"sidebars": [
-    				{
-    					"guid": "item2",
-    					"type": "picture",
-    					"headline": "ABC SHOP CLOSURES",
-    					"renditions": {
-    						"thumbnail": {"mimetype": "image/jpeg"}
-    					}
-    				}
-    			]
+    			"main": {
+					"headline": "WA:Navy steps in with WA asylum-seeker boat",
+					"type": "composite" },
+    			"sidebars": {
+					"guid": "item2",
+					"type": "picture",
+					"headline": "ABC SHOP CLOSURES",
+					"renditions": {
+						"thumbnail": {"mimetype": "image/jpeg"}}}
     		}
     	}
     	"""
