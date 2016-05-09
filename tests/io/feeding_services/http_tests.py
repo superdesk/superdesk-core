@@ -10,13 +10,16 @@
 
 
 import os
+import requests
 from datetime import timedelta
+from unittest.mock import patch, MagicMock
 
 import superdesk
+from superdesk.utc import utcnow
 from superdesk.io import register_feeding_service
 from superdesk.io.feeding_services.http_service import HTTPFeedingService
 from superdesk.tests import TestCase
-from superdesk.utc import utcnow
+from superdesk.errors import IngestApiError
 
 
 def setup_provider(token, hours):
@@ -42,6 +45,14 @@ class TestFeedingService(HTTPFeedingService):
 
 
 register_feeding_service(TestFeedingService.NAME, TestFeedingService(), TestFeedingService.ERRORS)
+
+
+class ErrorResponseSession(MagicMock):
+
+    def get(self, *args, **kwargs):
+        response = requests.Response()
+        response.status_code = 401
+        return response
 
 
 class GetTokenTestCase(TestCase):
@@ -76,3 +87,12 @@ class GetTokenTestCase(TestCase):
 
             dbprovider = superdesk.get_resource_service('ingest_providers').find_one(name='test http', req=None)
             self.assertEquals(token, dbprovider['tokens']['auth_token'])
+
+    def test_generate_auth_token_raise_on_error(self):
+        provider = setup_provider('abc', 24)
+        provider['config'] = {'auth_url': 'http://example.com'}
+        with patch('requests.Session', new=ErrorResponseSession):
+            service = TestFeedingService()
+            with self.assertRaises(IngestApiError) as cm:
+                service._generate_auth_token(provider)
+            self.assertEqual(cm.exception.code, 4007)

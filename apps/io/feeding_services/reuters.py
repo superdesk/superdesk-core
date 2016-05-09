@@ -56,12 +56,8 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
             provider_config = {}
             provider['config'] = provider_config
 
-        if 'url' not in provider_config:
-            provider_config['url'] = 'http://rmb.reuters.com/rmd/rest/xml'
-
-        if 'auth_url' not in provider_config:
-            provider_config['auth_url'] = 'https://commerce.reuters.com/rmd/rest/xml/login'
-
+        provider_config.setdefault('url', 'http://rmb.reuters.com/rmd/rest/xml')
+        provider_config.setdefault('auth_url', 'https://commerce.reuters.com/rmd/rest/xml/login')
         self.URL = provider_config.get('url')
 
         for channel in self._get_channels():
