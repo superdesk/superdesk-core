@@ -11,11 +11,14 @@
 from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
 from superdesk.metadata.utils import item_url
 import logging
+from functools import partial
 from flask import request
 from superdesk import get_resource_service, Service, config
 from superdesk.errors import SuperdeskApiError
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, CONTENT_STATE
+from superdesk.publish import SUBSCRIBER_TYPES
 from apps.publish.enqueue.enqueue_service import EnqueueService
+from apps.archive.common import is_genre, BROADCAST_GENRE
 
 logger = logging.getLogger(__name__)
 
@@ -35,16 +38,20 @@ class ResendResource(ArchiveResource):
 
 
 class ResendService(Service):
+
+    digital = partial(filter, lambda s: (s.get('subscriber_type', '') in {SUBSCRIBER_TYPES.DIGITAL,
+                                                                          SUBSCRIBER_TYPES.ALL}))
+
     def create(self, docs, **kwargs):
         doc = docs[0] if len(docs) > 0 else {}
         article_id = request.view_args['original_id']
         article_version = doc.get('version')
         article = self._validate_article(article_id, article_version)
-        subscribers = self._validate_subscribers(doc.get('subscribers'))
+        subscribers = self._validate_subscribers(doc.get('subscribers'), article)
         EnqueueService().resend(article, subscribers)
         return [article_id]
 
-    def _validate_subscribers(self, subscriber_ids):
+    def _validate_subscribers(self, subscriber_ids, article):
         if not subscriber_ids:
             raise SuperdeskApiError.badRequestError(message='No subscribers selected!')
 
@@ -53,6 +60,11 @@ class ResendService(Service):
 
         if len(subscribers) == 0:
             raise SuperdeskApiError.badRequestError(message='No active subscribers found!')
+
+        if is_genre(article, BROADCAST_GENRE):
+            digital_subscribers = list(self.digital(subscribers))
+            if len(digital_subscribers) > 0:
+                raise SuperdeskApiError.badRequestError('Only wire subscribers can receive broadcast stories!')
 
         return subscribers
 
