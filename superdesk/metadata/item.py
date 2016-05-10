@@ -200,7 +200,9 @@ metadata_schema = {
     },
     'keywords': {
         'type': 'list',
-        'mapping': not_analyzed
+        'mapping': {
+            'type': 'string'
+        }
     },
     'word_count': {
         'type': 'integer'
