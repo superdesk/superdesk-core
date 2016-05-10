@@ -799,3 +799,118 @@ Feature: Auto Routing
           }
         ]}
         """
+
+
+        @auth @provider @vocabulary
+        Scenario: Content is ingested and auto published to targeted subscribers
+        Given empty "desks"
+        Given the "validators"
+        """
+          [{"_id": "publish_text", "act": "publish", "type": "text", "schema":{}}]
+        """
+        Given "filter_conditions"
+        """
+        [{
+            "_id": "2222222222bbbb2222222222",
+            "name": "Finance Subject",
+            "field": "subject",
+            "operator": "in",
+            "value": "04000000"
+        }]
+        """
+        Given "content_filters"
+        """
+        [{
+            "_id": "1234567890abcd1234567890",
+            "name": "Finance Content",
+            "content_filter": [
+                {
+                    "expression": {
+                        "fc": ["2222222222bbbb2222222222"]
+                    }
+                }
+            ]
+        }]
+        """
+        Given "subscribers"
+        """
+        [{
+          "_id": "sub-1",
+          "name":"Channel 1",
+          "media_type": "media",
+          "subscriber_type": "digital",
+          "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+          "codes": "Aaa",
+          "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+        },
+        {
+          "_id": "sub-2",
+          "name":"Wire channel with geo restriction Victoria",
+          "media_type":"media",
+          "subscriber_type": "wire",
+          "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+          "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+        },
+        {
+          "_id": "sub-3",
+          "name":"Wire channel without geo restriction",
+          "media_type":"media",
+          "subscriber_type": "wire",
+          "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+          "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+        }]
+        """
+        When we post to "/desks"
+        """
+          {
+            "name": "Finance Desk", "members": [{"user": "#CONTEXT_USER_ID#"}]
+          }
+        """
+        Then we get response code 201
+        When we post to "/routing_schemes"
+        """
+        [
+          {
+            "name": "routing rule scheme 1",
+            "rules": [
+              {
+                "name": "Finance Rule 1",
+                "filter": "1234567890abcd1234567890",
+                "actions": {
+                  "fetch": [],
+                  "publish": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "target_subscribers": [{"_id":"sub-2"}]}],
+                  "exit": true
+                }
+              }
+            ]
+          }
+        ]
+        """
+        Then we get response code 201
+        When we ingest with routing scheme "AAP" "aap-finance.xml"
+        """
+        #routing_schemes._id#
+        """
+        When we get "/published"
+        Then we get list with 2 items
+        """
+        {"_items": [
+          {
+              "headline": "ASIA:Samsung sells defence, petrochemical units", "type": "text"
+          },
+          {
+              "headline": "ASIA:Samsung sells defence, petrochemical units", "type": "composite"
+          }
+        ]}
+        """
+        When we enqueue published
+        And we get "/publish_queue"
+        Then we get list with 1 items
+        """
+        {
+          "_items":
+            [
+              {"subscriber_id": "sub-2"}
+            ]
+        }
+        """

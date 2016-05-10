@@ -9,7 +9,15 @@ Feature: Routing Scheme and Routing Rules
     @auth @vocabulary
     Scenario: Create a valid Routing Scheme
       Given empty "desks"
-      And we have "/filter_conditions" with "FCOND_ID" and success
+      Given empty "subscribers"
+      When we post to "/subscribers" with success
+      """
+      {
+        "name":"News1","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "destinations":[{"name":"destination1","format": "nitf", "delivery_type":"FTP","config":{"ip":"144.122.244.55","password":"xyz"}}]
+      }
+      """
+      Given we have "/filter_conditions" with "FCOND_ID" and success
       """
       [{
           "name": "Sports Content",
@@ -78,6 +86,29 @@ Feature: Routing Scheme and Routing Rules
           ]
       }
       """
+      When we post to "/routing_schemes"
+      """
+      [
+        {
+          "name": "routing rule scheme 2",
+          "rules": [
+            {
+              "name": "Sports Rule",
+              "filter": "#FILTER_ID#",
+              "actions": {
+                "publish": [
+                            {"desk": "#desks._id#",
+                              "stage": "#desks.incoming_stage#",
+                              "macro": "transform",
+                              "target_subscribers": [{"_id": "#subscribers._id#"}]}]
+              }
+            }
+          ]
+        }
+      ]
+      """
+      Then we get response code 201
+
 
     @auth @vocabulary
     Scenario: A Routing Scheme must have a unique name
