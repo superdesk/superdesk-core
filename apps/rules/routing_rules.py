@@ -107,7 +107,11 @@ class RoutingRuleSchemeResource(Resource):
                                     'schema': {
                                         'desk': Resource.rel('desks', True),
                                         'stage': Resource.rel('stages', True),
-                                        'macro': {'type': 'string'}
+                                        'macro': {'type': 'string'},
+                                        'target_subscribers': {
+                                            'type': 'list',
+                                            'nullable': True
+                                        },
                                     }
                                 }
                             },
@@ -412,6 +416,10 @@ class RoutingRuleSchemeService(BaseService):
                              'stage': str(destination.get('stage')),
                              'state': CONTENT_STATE.ROUTED,
                              'macro': destination.get('macro', None)}])[0]
+
+                if destination.get('target_subscribers'):
+                    get_resource_service('archive').patch(item_id,
+                                                          {'target_subscribers': destination.get('target_subscribers')})
 
                 archive_items.append(item_id)
             except:
