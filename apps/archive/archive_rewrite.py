@@ -48,7 +48,9 @@ class ArchiveRewriteService(Service):
         self._validate_rewrite(original, update_document)
 
         digital = TakesPackageService().get_take_package(original)
-        rewrite = self._create_rewrite_article(original, digital, new_file=(update_document is None))
+        rewrite = self._create_rewrite_article(original, digital,
+                                               new_file=(update_document is None),
+                                               desk_id=doc.get('desk_id'))
 
         if update_document:
             # process the existing story
@@ -56,7 +58,6 @@ class ArchiveRewriteService(Service):
             rewrite[config.ID_FIELD] = update_document[config.ID_FIELD]
             ids = [update_document[config.ID_FIELD]]
         else:
-            # create a new story as update
             ids = archive_service.post([rewrite])
             build_custom_hateoas(CUSTOM_HATEOAS, rewrite)
 
@@ -113,7 +114,7 @@ class ArchiveRewriteService(Service):
                     any(genre.get('value', '').lower() == BROADCAST_GENRE.lower() for genre in update.get('genre')):
                 raise SuperdeskApiError.badRequestError("Broadcast cannot be a update story !")
 
-    def _create_rewrite_article(self, original, digital, new_file=True):
+    def _create_rewrite_article(self, original, digital, new_file=True, desk_id=None):
         """
         Creates a new story and sets the metadata from original and digital
         :param original: original story
@@ -151,7 +152,7 @@ class ArchiveRewriteService(Service):
 
         if new_file:
             # send the document to the desk only if a new rewrite is created
-            send_to(doc=rewrite, desk_id=original['task']['desk'], default_stage='working_stage')
+            send_to(doc=rewrite, desk_id=(desk_id or original['task']['desk']), default_stage='working_stage')
 
             # if we are rewriting a published item then copy the body_html
             if original.get('state', '') in (CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED):
