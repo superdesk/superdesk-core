@@ -370,10 +370,12 @@ class NinjsFormatterTest(TestCase):
                     "renditions": {
                         "original": {
                             "href": "https://videos.vidible.tv/prod/2016-02/09/56ba777ce4b0b6448ed478f5_640x360.mp4",
-                            "thumbnail": "https://cdn-ssl.vidible.tv/2016-02/09/56ba777ce4b0b6448ed478f5_60x60.jpg",
                             "duration": 100,
                             "width": 400,
                             "height": 200
+                        },
+                        "thumbnail": {
+                            "href": "https://cdn-ssl.vidible.tv/2016-02/09/56ba777ce4b0b6448ed478f5_60x60.jpg"
                         }
                     }
                 }

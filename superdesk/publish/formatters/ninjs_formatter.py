@@ -43,7 +43,7 @@ class NINJSFormatter(Formatter):
 
     rendition_properties = ('href', 'width', 'height', 'mimetype', 'poi', 'media')
     vidible_fields = {field: field for field in rendition_properties}
-    vidible_fields.update({'url': 'href', 'duration': 'duration', 'thumbnail': 'thumbnail'})
+    vidible_fields.update({'url': 'href', 'duration': 'duration'})
 
     def format(self, article, subscriber, codes=None):
         try:
@@ -138,6 +138,8 @@ class NINJSFormatter(Formatter):
         for orig_field, dest_field in self.vidible_fields.items():
             if orig_field in article:
                 renditions['original'][dest_field] = article[orig_field]
+        if 'thumbnail' in article:
+            renditions['thumbnail'] = {'href': article['thumbnail']}
         return renditions
 
     def can_format(self, format_type, article):
