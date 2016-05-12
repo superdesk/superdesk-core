@@ -232,6 +232,7 @@ Feature: Highlights
         {"_id": "__any_value__",
         "type": "text",
         "headline": "highlights",
+        "_current_version": 1,
         "body_html": "\n<h2>item1</h2>\n<p>item1 first</p>\n<p></p>\n\n<h2>item2</h2>\n<p>item2 first</p>\n<p></p>\n"}
         """
 

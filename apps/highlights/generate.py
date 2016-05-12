@@ -3,6 +3,7 @@ import superdesk
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
 from flask import render_template, render_template_string
 from superdesk.errors import SuperdeskApiError
+from eve.utils import config
 
 
 def get_template(highlightId):
@@ -43,6 +44,7 @@ class GenerateHighlightsService(superdesk.Service):
             doc['byline'] = package.get('byline')
             doc['task'] = package.get('task')
             doc['family_id'] = package.get('guid')
+            doc[config.VERSION] = 1
 
             items = []
             for group in package.get('groups', []):
