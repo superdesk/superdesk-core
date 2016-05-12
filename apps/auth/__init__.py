@@ -12,6 +12,7 @@ import flask
 import logging
 import superdesk
 
+from eve.utils import config
 from apps.auth.auth import SuperdeskTokenAuth
 from .auth import AuthUsersResource, AuthResource  # noqa
 from .sessions import SessionsResource, UserSessionClearResource
@@ -54,9 +55,18 @@ def get_user(required=False):
     :param boolean required: if True and there is no user it will raise an error
     """
     user = flask.g.get('user', {})
-    if '_id' not in user and required:
+    if config.ID_FIELD not in user and required:
         raise SuperdeskApiError.notFoundError('Invalid user.')
     return user
+
+
+def get_user_id(required=False):
+    """Get authenticated user id.
+
+    :param boolean requred: if True and there is no user it will raise an error
+    """
+    user = get_user(required)
+    return user.get(config.ID_FIELD)
 
 
 superdesk.command('session:gc', RemoveExpiredSessions())

@@ -1,6 +1,8 @@
 
 import superdesk
 
+from apps.auth import get_user_id
+
 
 CONTENT_TYPE_PRIVILEGE = 'content_type'
 
@@ -12,6 +14,9 @@ class ContentTypesResource(superdesk.Resource):
             'unique': True,
         },
         'label': {
+            'type': 'string',
+        },
+        'description': {
             'type': 'string',
         },
         'schema': {
@@ -28,6 +33,7 @@ class ContentTypesResource(superdesk.Resource):
             'type': 'boolean',
             'default': True,
         },
+        'updated_by': superdesk.Resource.rel('users', nullable=True),
     }
 
     item_url = 'regex("[\w,.:-]+")'
@@ -42,4 +48,12 @@ class ContentTypesResource(superdesk.Resource):
 
 
 class ContentTypesService(superdesk.Service):
-    pass
+    def _set_updated_by(self, doc):
+        doc['updated_by'] = get_user_id()
+
+    def on_create(self, docs):
+        for doc in docs:
+            self._set_updated_by(doc)
+
+    def on_update(self, updates, original):
+        self._set_updated_by(updates)
