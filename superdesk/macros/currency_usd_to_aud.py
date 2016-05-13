@@ -10,9 +10,10 @@
 
 import os
 from . import currency_base
+from decimal import Decimal
 
 
-USD_TO_AUD = 1.40  # backup
+USD_TO_AUD = Decimal('1.40')  # backup
 
 
 def get_rate():
@@ -26,11 +27,14 @@ def get_rate():
 def usd_to_aud(item, **kwargs):
     """Convert USD to AUD."""
 
-    rate = get_rate()
+    rate = kwargs.get('rate') or get_rate()
     if os.environ.get('BEHAVE_TESTING'):
         rate = USD_TO_AUD
 
-    return currency_base.do_conversion(item, rate, 'AUD %d', '\$([0-9]+)')
+    regex = r'((\$US)|(\$)|(USD)|(\$US))\s*\-?\s*\(?(((\d{1,3}((\,\d{3})*|\d*))?' \
+            r'(\.\d{1,4})?)|((\d{1,3}((\,\d{3})*|\d*))(\.\d{0,4})?))\)?([mb])?'
+
+    return currency_base.do_conversion(item, rate, '$A', regex, match_index=0, value_index=6)
 
 
 name = 'usd_to_aud'
