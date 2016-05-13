@@ -346,7 +346,8 @@ MAIL_USE_SSL = json.loads(env('MAIL_USE_SSL', 'False').lower())
 MAIL_USERNAME = env('MAIL_USERNAME', '')
 MAIL_PASSWORD = env('MAIL_PASSWORD', '')
 MAIL_DEFAULT_SENDER = MAIL_USERNAME or 'superdesk@localhost'
-ADMINS = [MAIL_USERNAME]
+MAIL_FROM = env('MAIL_FROM', MAIL_USERNAME)
+ADMINS = [MAIL_FROM]
 SUPERDESK_TESTING = (env('SUPERDESK_TESTING', 'false').lower() == 'true')
 
 # Default TimeZone
