@@ -244,7 +244,8 @@ class BasePublishService(BaseService):
             if rewritten_by and rewritten_by.get(ITEM_STATE) in PUBLISH_STATES:
                 raise SuperdeskApiError.badRequestError("Cannot publish the story after Update is published.!")
 
-        validate_item = {'act': self.publish_type, 'type': original['type'], 'validate': updated}
+        publish_type = 'auto_publish' if updates.get('auto_publish') else self.publish_type
+        validate_item = {'act': publish_type, 'type': original['type'], 'validate': updated}
         validation_errors = get_resource_service('validate').post([validate_item])
         if validation_errors[0]:
             raise ValidationError(validation_errors)
