@@ -348,6 +348,10 @@ DEFAULT_PRIORITY_VALUE_FOR_MANUAL_ARTICLES = env('DEFAULT_PRIORITY_VALUE_FOR_MAN
 # Defines default value for Urgency to be set for manually created articles
 DEFAULT_URGENCY_VALUE_FOR_MANUAL_ARTICLES = env('DEFAULT_URGENCY_VALUE_FOR_MANUAL_ARTICLES', 3)
 
+# Defines default value for genre to be set for manually created articles
+DEFAULT_GENRE_VALUE_FOR_MANUAL_ARTICLES = env('DEFAULT_GENRE_VALUE_FOR_MANUAL_ARTICLES',
+                                              [{'qcode': 'Article', 'name': 'Article (news)'}])
+
 # Determines if the ODBC publishing mechanism will be used, If enabled then pyodbc must be installed along with it's
 # dependencies
 ODBC_PUBLISH = env('ODBC_PUBLISH', None)
