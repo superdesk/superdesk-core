@@ -99,7 +99,8 @@ class FilterConditionService(BaseService):
             # find the exact matches
             existing_docs = list(self.get(None, {'field': filter_condition['field'],
                                                  'operator': filter_condition['operator'],
-                                                 'value': filter_condition['value']}))
+                                                 'value': {'$regex': re.compile('{}'.format(filter_condition['value']),
+                                                                                re.IGNORECASE)}}))
         return existing_docs
 
     def _are_equal(self, fc1, fc2):
