@@ -461,7 +461,8 @@ Feature: News Items Archive
         """
         Then we get new resource
         """
-        {"type": "text", "source":"AAP", "priority":6, "urgency":3}
+        {"type": "text", "source":"AAP", "priority":6, "urgency":3,
+        "genre": [{"qcode": "Article", "name": "Article (news)"}]}
         """
 
     @auth

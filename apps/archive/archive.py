@@ -630,6 +630,7 @@ class ArchiveService(BaseService):
 
         defaults.setdefault('priority', config.DEFAULT_PRIORITY_VALUE_FOR_MANUAL_ARTICLES)
         defaults.setdefault('urgency', config.DEFAULT_URGENCY_VALUE_FOR_MANUAL_ARTICLES)
+        defaults.setdefault('genre', config.DEFAULT_GENRE_VALUE_FOR_MANUAL_ARTICLES)
         resolve_default_values(doc, defaults)
 
     def _add_system_updates(self, original, updates, user):
