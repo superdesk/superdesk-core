@@ -28,6 +28,7 @@ from .workflow import *  # noqa
 
 API_NAME = 'Superdesk API'
 VERSION = (0, 0, 1)
+SCHEMA_VERSION = 0
 DOMAIN = {}
 COMMANDS = {}
 BLUEPRINTS = []
