@@ -34,8 +34,7 @@ class SuperdeskDataLayer(DataLayer):
         self.mongo = Mongo(app)
         self.driver = self.mongo.driver
         self.storage = self.driver
-        self.elastic = Elastic(app, serializer=SuperdeskJSONEncoder(), skip_index_init=True)
-        self.init_elastic(app)
+        self.elastic = Elastic(app, serializer=SuperdeskJSONEncoder(), skip_index_init=True, retry_on_timeout=True)
 
     def init_elastic(self, app):
         """ Init elastic index.
