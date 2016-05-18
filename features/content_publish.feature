@@ -1836,6 +1836,12 @@ Feature: Content Publishing
             "_id": "publish_text"
         },
         {
+            "schema": {},
+            "type": "text",
+            "act": "auto_publish",
+            "_id": "auto_publish_text"
+        },
+        {
             "_id": "publish_composite",
             "act": "publish",
             "type": "composite",

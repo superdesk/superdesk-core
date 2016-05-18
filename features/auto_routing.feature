@@ -730,7 +730,7 @@ Feature: Auto Routing
         Given empty "desks"
         Given the "validators"
         """
-          [{"_id": "publish_text", "act": "publish", "type": "text", "schema":{}}]
+          [{"_id": "publish_text", "act": "auto_publish", "type": "text", "schema":{}}]
         """
         Given "filter_conditions"
         """
@@ -806,7 +806,7 @@ Feature: Auto Routing
         Given empty "desks"
         Given the "validators"
         """
-          [{"_id": "publish_text", "act": "publish", "type": "text", "schema":{}}]
+          [{"_id": "publish_text", "act": "auto_publish", "type": "text", "schema":{}}]
         """
         Given "filter_conditions"
         """
