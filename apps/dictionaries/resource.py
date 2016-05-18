@@ -9,15 +9,23 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk.resource import Resource
-
+from superdesk.utils import SuperdeskBaseEnum
 
 DICTIONARY_FILE = 'file'
 
 
+class DictionaryType(SuperdeskBaseEnum):
+    """
+    Defines Dictionary Type
+    """
+    DICTIONARY = 'dictionary'
+    ABBREVIATIONS = 'abbreviations'
+
+
 class DictionariesResource(Resource):
-    '''
+    """
     Dictionaries schema
-    '''
+    """
     schema = {
         'name': {
             'type': 'string',
@@ -41,6 +49,11 @@ class DictionariesResource(Resource):
             'type': 'string',
             'default': 'true',
         },
+        'type': {
+            'type': 'string',
+            'default': DictionaryType.DICTIONARY.value,
+            'allowed': DictionaryType.values()
+        }
     }
     item_methods = ['GET', 'PATCH', 'PUT', 'DELETE']
     resource_methods = ['GET', 'POST', 'DELETE']
