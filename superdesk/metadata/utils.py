@@ -22,18 +22,13 @@ extra_response_fields = [GUID_FIELD, 'headline', 'firstcreated', 'versioncreated
 aggregations = {
     'type': {'terms': {'field': 'type'}},
     'desk': {'terms': {'field': 'task.desk', 'size': 0}},
-    'stage': {'terms': {'field': 'task.stage', 'size': 0}},
     'category': {'terms': {'field': 'anpa_category.name', 'size': 0}},
     'source': {'terms': {'field': 'source', 'size': 0}},
-    'state': {'terms': {'field': 'state'}},
     'urgency': {'terms': {'field': 'urgency'}},
     'priority': {'terms': {'field': 'priority'}},
     'legal': {'terms': {'field': 'flags.marked_for_legal'}},
     'sms': {'terms': {'field': 'flags.marked_for_sms'}},
-    'genre': {'terms': {'field': 'genre.name', 'size': 0}},
-    'day': {'date_range': {'field': 'firstcreated', 'format': 'dd-MM-yyy HH:mm:ss', 'ranges': [{'from': 'now-24H'}]}},
-    'week': {'date_range': {'field': 'firstcreated', 'format': 'dd-MM-yyy HH:mm:ss', 'ranges': [{'from': 'now-1w'}]}},
-    'month': {'date_range': {'field': 'firstcreated', 'format': 'dd-MM-yyy HH:mm:ss', 'ranges': [{'from': 'now-1M'}]}},
+    'genre': {'terms': {'field': 'genre.name', 'size': 0}}
 }
 
 

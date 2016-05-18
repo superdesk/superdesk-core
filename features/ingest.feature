@@ -22,7 +22,7 @@ Feature: Fetch From Ingest
 
         When we get "/ingest"
         Then we get list with 1 items
-        And we get aggregations "type,desk,urgency,stage,category,source,state,day,week,month"
+        And we get aggregations "type,desk,urgency,category,source,priority,genre,sms,legal"
 
 
     @auth
