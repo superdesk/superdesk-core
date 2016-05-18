@@ -28,7 +28,7 @@ from superdesk.io import register_feed_parser
 from superdesk.io.feed_parsers import EmailFeedParser
 from superdesk.io.iptc import subject_codes
 from superdesk.media.media_operations import process_file_from_stream
-from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, GUID_TAG, SIGN_OFF, BYLINE
+from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, GUID_TAG, SIGN_OFF, BYLINE, FORMATS, FORMAT
 from superdesk.metadata.utils import generate_guid
 from superdesk.users.errors import UserNotRegisteredException
 from superdesk.utc import utcnow
@@ -200,8 +200,8 @@ class EMailRFC822FeedParser(EmailFeedParser):
             if html_body is not None:
                 item['body_html'] = html_body
             else:
-                item['body_html'] = text_body
-                item[ITEM_TYPE] = CONTENT_TYPE.PREFORMATTED
+                item['body_html'] = '<pre>' + text_body + '</pre>'
+                item[FORMAT] = FORMATS.PRESERVED
 
             # if there is composite item then add the main group and references
             if comp_item:

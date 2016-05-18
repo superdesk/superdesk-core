@@ -709,9 +709,9 @@ class NewsMLG2FormatterTest(SuperdeskTestCase):
             '{http://iptc.org/std/nar/2006-10-01/}name')
         self.assertEqual(company_details.text, 'YANCOAL AUSTRALIA LIMITED')
 
-    def testPreformattedFomatter(self):
+    def testPreservedFomat(self):
         article = dict(self.article)
-        article['type'] = 'preformatted'
+        article['format'] = 'preserved'
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
         xml = etree.fromstring(doc)
         self.assertEqual(xml.find(

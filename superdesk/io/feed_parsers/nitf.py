@@ -15,9 +15,10 @@ from superdesk.io.feed_parsers import XMLFeedParser
 import xml.etree.ElementTree as etree
 from superdesk.errors import ParserError
 from superdesk.utc import utc
-from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE
+from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, FORMAT, FORMATS
 from superdesk.etree import get_word_count
 from superdesk.io.iptc import subject_codes
+from bs4 import BeautifulSoup
 import re
 import superdesk
 
@@ -55,6 +56,12 @@ class NITFFeedParser(XMLFeedParser):
                 item['expiry'] = self.get_norm_datetime(docdata.find('date.expire'))
             item['subject'] = self.get_subjects(xml)
             item['body_html'] = self.get_content(xml)
+            body_elem = xml.find('body/body.content')
+            # if the body contains only a single pre tag we mark the format as preserved
+            if len(body_elem) == 1 and body_elem[0].tag == 'pre':
+                item[FORMAT] = FORMATS.PRESERVED
+            else:
+                item[FORMAT] = FORMATS.HTML
             item['place'] = self.get_places(docdata)
             item['keywords'] = self.get_keywords(docdata)
 
@@ -91,6 +98,18 @@ class NITFFeedParser(XMLFeedParser):
         except Exception as ex:
             raise ParserError.nitfParserError(ex, provider)
 
+    def parse_to_preformatted(self, element):
+        """
+        Extract the contnt of the element as a plain string with line enders
+        :param element:
+        :return:
+        """
+        elements = []
+        soup = BeautifulSoup(element, 'html.parser')
+        for elem in soup.findAll(True):
+            elements.append(elem.get_text() + '\r\n')
+        return ''.join(elements)
+
     def parse_meta(self, tree, item):
         for elem in tree.findall('head/meta'):
             attribute_name = elem.get('name')
@@ -107,7 +126,16 @@ class NITFFeedParser(XMLFeedParser):
                 item['anpa_take_key'] = elem.get('content')
             elif attribute_name == 'anpa-format':
                 anpa_format = elem.get('content').lower() if elem.get('content') is not None else 'x'
-                item[ITEM_TYPE] = CONTENT_TYPE.TEXT if anpa_format == 'x' else CONTENT_TYPE.PREFORMATTED
+                if anpa_format == 't':
+                    item[FORMAT] = FORMATS.PRESERVED
+                    if not item['body_html'].startswith('<pre>'):
+                        # convert content to text in a pre tag
+                        item['body_html'] = '<pre>' + self.parse_to_preformatted(self.get_content(tree)) + '</pre>'
+                    else:
+                        item['body_html'] = self.parse_to_preformatted(self.get_content(tree))
+                else:
+                    item[FORMAT] = FORMATS.HTML
+
             elif attribute_name == 'aap-priority':
                 item['priority'] = self.map_priority(elem.get('content'))
             elif attribute_name == 'aap-original-creator':
