@@ -90,10 +90,12 @@ class DictionaryService(BaseService):
                 raise SuperdeskApiError.badRequestError(message='The dictionary already exists',
                                                         payload={'name': 'duplicate'})
             self.__set_default(doc)
+            self._validate_dictionary(doc)
 
             if doc.get(DICTIONARY_FILE):
                 words = read_from_file(doc)
                 merge(doc, words)
+
             if 'content' in doc:
                 doc['content'] = encode_dict(doc['content'])
 
@@ -110,6 +112,15 @@ class DictionaryService(BaseService):
         if doc and 'content' in doc:
             doc['content'] = decode_dict(doc['content'])
         return doc
+
+    def _validate_dictionary(self, updates, original={}):
+        dict_type = updates.get('type', original.get('type', DictionaryType.DICTIONARY.value))
+        if dict_type == DictionaryType.ABBREVIATIONS.value and not updates.get('user', original.get('user')):
+            raise SuperdeskApiError.badRequestError(message='User is required for the abbreviations dictionary.',
+                                                    payload={'user': 'missing'})
+
+        if original and dict_type != original.get('type', DictionaryType.DICTIONARY.value):
+            raise SuperdeskApiError.badRequestError(message='The dictionary type cannot be changed.')
 
     def get_base_language(self, lang):
         if lang and lang.find('-') > 0:
@@ -164,6 +175,8 @@ class DictionaryService(BaseService):
 
         if 'type' not in original:
             self.__set_default(updates)
+
+        self._validate_dictionary(updates, original)
 
         # handle manual changes
         if original.get('type', DictionaryType.DICTIONARY.value) == DictionaryType.DICTIONARY.value:
