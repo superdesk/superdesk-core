@@ -213,12 +213,12 @@ Feature: Publish content to the public API
     		"guid": "20150723001158606583",
     		"type": "picture",
     		"renditions" : {
-                "viewImage" : {
-                    "width" : 640,
-                    "href" : "http://localhost:5000/api/upload/55b032041d41c8d278d21b6f/raw?_schema=http",
+                "original" : {
+                    "width" : 2828,
+                    "href" : "http://localhost:5000/api/upload/55b032041d41c8d278d21b6b/raw?_schema=http",
                     "mimetype" : "image/jpeg",
-                    "height" : 401,
-                    "poi": {"x": 160, "y": 100}
+                    "height" : 1775,
+                    "poi": {"x": 707, "y": 443}
                 }
     		}
     	}
@@ -681,7 +681,7 @@ Feature: Publish content to the public API
 					"type": "picture",
 					"headline": "ABC SHOP CLOSURES",
 					"renditions": {
-						"thumbnail": {"mimetype": "image/jpeg"}}}
+						"original": {"mimetype": "image/jpeg"}}}
     		}
     	}
     	"""

@@ -95,7 +95,7 @@ class NinjsFormatterTest(TestCase):
                     'mimetype': 'image/jpeg',
                     "height": 401
                 },
-                'original_source': {
+                'original': {
                     'href': 'https://one-api.aap.com.au/api/v3/Assets/20150723001158606583/Original/download',
                     'mimetype': 'image/jpeg'
                 },
@@ -115,13 +115,7 @@ class NinjsFormatterTest(TestCase):
         expected = {
             "byline": "MICKEY MOUSE",
             "renditions": {
-                "viewImage": {
-                    "href": "http://localhost:5000/api/upload/55b032041d41c8d278d21b6f/raw?_schema=http",
-                    "mimetype": "image/jpeg",
-                    "width": 640,
-                    "height": 401
-                },
-                "original_source": {
+                "original": {
                     "href": "https://one-api.aap.com.au/api/v3/Assets/20150723001158606583/Original/download",
                     "mimetype": "image/jpeg"
                 },
@@ -293,7 +287,7 @@ class NinjsFormatterTest(TestCase):
                     'copyrightholder': 'Foo ltd.',
                     'description_text': 'Foo picture',
                     'renditions': {
-                        'thumbnail': {
+                        'original': {
                             'href': 'http://example.com',
                             'width': 100,
                             'height': 80,
@@ -316,7 +310,7 @@ class NinjsFormatterTest(TestCase):
         self.assertNotIn('task', image)
         self.assertEqual('Foo ltd.', image['copyrightholder'])
         self.assertEqual('Foo picture', image['description_text'])
-        rendition = image['renditions']['thumbnail']
+        rendition = image['renditions']['original']
         self.assertEqual(100, rendition['width'])
         self.assertEqual(80, rendition['height'])
         self.assertEqual('image/jpeg', rendition['mimetype'])
