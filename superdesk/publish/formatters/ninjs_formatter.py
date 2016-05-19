@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import json
+import logging
 import superdesk
 from eve.utils import config
 from superdesk.publish.formatters import Formatter
@@ -16,8 +17,12 @@ from superdesk.errors import FormatterError
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, GUID_FIELD
 from superdesk.metadata.packages import RESIDREF, GROUP_ID, GROUPS, ROOT_GROUP, REFS
 from superdesk.utils import json_serialize_datetime_objectId
+from superdesk.media.renditions import get_renditions_spec
 from apps.archive.common import get_utc_schedule
 from bs4 import BeautifulSoup
+
+
+logger = logging.getLogger(__name__)
 
 
 def filter_empty_vals(data):
@@ -201,8 +206,15 @@ class NINJSFormatter(Formatter):
 
     def _get_renditions(self, article):
         """Get renditions for article."""
+        # renditions list that we want to publish
+        renditions_to_publish = ['original'] + list(get_renditions_spec(without_internal_renditions=True).keys())
+        # get the actual article's renditions
+        actual_renditions = article.get('renditions', {})
+        # filter renditions and keep only the ones we want to publish
+        actual_renditions = {name: actual_renditions.get(name) for name in renditions_to_publish}
+        # format renditions to Ninjs
         renditions = {}
-        for name, rendition in article.get('renditions', {}).items():
+        for name, rendition in actual_renditions.items():
             renditions[name] = self._format_rendition(rendition)
         return renditions
 
