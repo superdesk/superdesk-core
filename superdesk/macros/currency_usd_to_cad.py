@@ -26,11 +26,11 @@ def get_rate():
 def usd_to_cad(item, **kwargs):
     """Convert USD to CAD."""
 
-    rate = get_rate()
+    rate = kwargs.get('rate') or get_rate()
     if os.environ.get('BEHAVE_TESTING'):
         rate = USD_TO_CAD
 
-    return currency_base.do_conversion(item, rate, 'CAD %d', '\$([0-9]+)')
+    return currency_base.do_conversion(item, rate, 'CAD ', '\$([0-9]+)', match_index=0, value_index=1)
 
 
 name = 'usd_to_cad'
