@@ -606,10 +606,11 @@ class BasePublishService(BaseService):
         """Publish parent item associations."""
         associations = parent.get('associations', {})
         for rel, item in associations.copy().items():
-            if item.get('pubstatus', 'usable') != 'usable':
-                associations.pop(rel)
-                continue
-            self._publish_renditions(item, rel, guid)
+            if item:
+                if item.get('pubstatus', 'usable') != 'usable':
+                    associations.pop(rel)
+                    continue
+                self._publish_renditions(item, rel, guid)
 
     def _publish_renditions(self, item, rel, guid):
         """Publish item renditions."""
