@@ -185,7 +185,6 @@ Feature: Link content in takes
         }
         """
 
-
     @auth
     Scenario: Metadata is copied from published takes
         Given the "validators"
@@ -556,7 +555,6 @@ Feature: Link content in takes
         When we get "/archive/#TAKE_PACKAGE#"
         Then we get response code 404
 
-
     @auth
     Scenario: Killing a takes packages spikes all unpublished takes.
         Given the "validators"
@@ -813,5 +811,269 @@ Feature: Link content in takes
             "place": [{"is_active": true, "name": "ACT", "qcode": "ACT",
                   "state": "Australian Capital Territory",
                   "country": "Australia", "world_region": "Oceania"}]
+        }
+        """
+
+    @auth
+    Scenario: Link a story as the second take of another story
+        Given "desks"
+        """
+        [{"name": "Sports"}]
+        """
+        When we post to "archive"
+        """
+        [{
+            "guid": "123",
+            "type": "text",
+            "headline": "test1",
+            "slugline": "comics",
+            "abstract" : "abstract",
+            "state": "draft",
+            "task": {
+                "user": "#CONTEXT_USER_ID#"
+            },
+            "priority": 5,
+            "urgency": 4,
+            "ednote": "ednote",
+            "place": [{"is_active": true, "name": "ACT", "qcode": "ACT",
+                  "state": "Australian Capital Territory",
+                  "country": "Australia", "world_region": "Oceania"}]
+        },
+        {
+            "guid": "456",
+            "type": "text",
+            "headline": "test2",
+            "slugline": "comics2",
+            "abstract" : "abstract",
+            "state": "draft",
+            "task": {
+                "user": "#CONTEXT_USER_ID#"
+            },
+            "priority": 1,
+            "urgency": 1,
+            "ednote": "ednote",
+            "place": [{"is_active": true, "name": "ACT", "qcode": "ACT",
+                  "state": "Australian Capital Territory",
+                  "country": "Australia", "world_region": "Oceania"}]
+        }]
+        """
+        And we post to "/archive/123/move"
+        """
+        [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
+        """
+        Then we get OK response
+        When we post to "archive/123/link"
+        """
+        [{"link_id": "456"}]
+        """
+        Then we get next take as "TAKE"
+        """
+        {
+            "_id": "456",
+            "type": "text",
+            "headline": "test1",
+            "slugline": "comics",
+            "anpa_take_key": "=2",
+            "state": "draft",
+            "priority": 5,
+            "urgency": 4,
+            "ednote": "ednote",
+            "place": [{"is_active": true, "name": "ACT", "qcode": "ACT",
+                  "state": "Australian Capital Territory",
+                  "country": "Australia", "world_region": "Oceania"}],
+            "original_creator": "#CONTEXT_USER_ID#",
+            "takes": {
+                "_id": "#TAKE_PACKAGE#",
+                "package_type": "takes",
+                "type": "composite"
+            },
+            "linked_in_packages": [{"package_type" : "takes","package" : "#TAKE_PACKAGE#"}]
+        }
+        """
+        When we get "archive"
+        Then we get list with 3 items
+        """
+        {
+            "_items": [
+                {
+                    "groups": [
+                        {"id": "root", "refs": [{"idRef": "main"}]},
+                        {
+                            "id": "main",
+                            "refs": [
+                                {
+                                    "headline": "test1",
+                                    "slugline": "comics",
+                                    "residRef": "123",
+                                    "sequence": 1
+                                },
+                                {
+                                    "headline": "test1",
+                                    "slugline": "comics",
+                                    "residRef": "456",
+                                    "sequence": 2
+                                }
+                            ]
+                        }
+                    ],
+                    "type": "composite",
+                    "package_type": "takes",
+                    "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"},
+                    "sequence": 2,
+                    "_current_version": 1
+                },
+                {
+                    "_id": "456",
+                    "headline": "test1",
+                    "type": "text",
+                    "linked_in_packages": [{"package_type": "takes"}],
+                    "takes": {}
+                },
+                {
+                    "guid": "123",
+                    "headline": "test1",
+                    "type": "text",
+                    "linked_in_packages": [{"package_type": "takes"}],
+                    "takes": {}
+                }
+            ]
+        }
+        """
+
+    @auth
+    Scenario: Link a story as the next take of an existing take story
+        Given "desks"
+        """
+        [{"name": "Sports"}]
+        """
+        When we post to "archive"
+          """
+          [{
+              "guid": "123",
+              "type": "text",
+              "headline": "test1",
+              "slugline": "comics",
+              "anpa_take_key": "Take",
+              "state": "draft",
+              "subject":[{"qcode": "17004000", "name": "Statistics"}],
+              "task": {
+                  "user": "#CONTEXT_USER_ID#"
+              },
+              "body_html": "Take-1"
+          },
+            {
+                "guid": "456",
+                "type": "text",
+                "headline": "test2",
+                "slugline": "comics2",
+                "abstract" : "abstract",
+                "state": "submitted",
+                "subject":[{"qcode": "123456789", "name": "Finance"}],
+                "task": {
+                    "user": "#CONTEXT_USER_ID#"
+                },
+                "priority": 1,
+                "urgency": 1,
+                "ednote": "ednote",
+                "place": [{"is_active": true, "name": "ACT", "qcode": "ACT",
+                      "state": "Australian Capital Territory",
+                      "country": "Australia", "world_region": "Oceania"}]
+            }]
+          """
+          And we post to "/archive/123/move"
+          """
+          [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
+          """
+          Then we get OK response
+          When we post to "archive/123/link"
+          """
+          [{}]
+          """
+          Then we get next take as "TAKE"
+          """
+          {
+              "type": "text",
+              "headline": "test1",
+              "slugline": "comics",
+              "anpa_take_key": "Take=2",
+              "subject":[{"qcode": "17004000", "name": "Statistics"}],
+              "state": "draft",
+              "original_creator": "#CONTEXT_USER_ID#"
+          }
+          """
+        When we post to "archive/#TAKE#/link"
+        """
+        [{"link_id": "456"}]
+        """
+        Then we get next take as "TAKE"
+        """
+        {
+            "_id": "456",
+            "type": "text",
+            "headline": "test1",
+            "slugline": "comics",
+            "anpa_take_key": "Take=3",
+            "state": "submitted",
+            "priority": 6,
+            "urgency": 3,
+            "ednote": "ednote",
+            "place": [],
+            "original_creator": "#CONTEXT_USER_ID#",
+            "subject":[{"qcode": "17004000", "name": "Statistics"}],
+            "takes": {
+                "_id": "#TAKE_PACKAGE#",
+                "package_type": "takes",
+                "type": "composite"
+            },
+            "linked_in_packages": [{"package_type" : "takes","package" : "#TAKE_PACKAGE#"}]
+        }
+        """
+        When we get "archive"
+        Then we get list with 4 items
+        """
+        {
+            "_items": [
+                {
+                    "groups": [
+                        {
+                            "id": "main",
+                            "refs": [
+                                {
+                                    "headline": "test1",
+                                    "slugline": "comics",
+                                    "residRef": "123",
+                                    "sequence": 1
+                                },
+                                {
+                                    "headline": "test1",
+                                    "slugline": "comics",
+                                    "residRef": "456",
+                                    "sequence": 3
+                                }
+                            ]
+                        }
+                    ],
+                    "type": "composite",
+                    "package_type": "takes",
+                    "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"},
+                    "sequence": 3,
+                    "_current_version": 2
+                },
+                {
+                    "_id": "456",
+                    "headline": "test1",
+                    "type": "text",
+                    "state": "submitted",
+                    "linked_in_packages": [{"package_type": "takes"}],
+                    "takes": {}
+                },
+                {
+                    "guid": "123",
+                    "headline": "test1",
+                    "type": "text",
+                    "linked_in_packages": [{"package_type": "takes"}],
+                    "takes": {}
+                }
+            ]
         }
         """
