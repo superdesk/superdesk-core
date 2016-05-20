@@ -167,7 +167,7 @@ def _resize_image(content, size, format='png', keepProportions=True):
     return out, new_width, new_height
 
 
-def get_renditions_spec():
+def get_renditions_spec(without_internal_renditions=False):
     '''
     Return the list of the needed renditions. It contains the ones defined in
     settings in `RENDITIONS.picture` and the ones defined in vocabularies in `crop_sizes`
@@ -175,8 +175,10 @@ def get_renditions_spec():
     @return: list
         Returns the list of renditions specification.
     '''
+    rendition_spec = {}
     # renditions required by superdesk
-    rendition_spec = config.RENDITIONS['picture']
+    if not without_internal_renditions:
+        rendition_spec = config.RENDITIONS['picture']
     # load custom renditions sizes
     custom_crops = get_resource_service('vocabularies').find_one(req=None, _id='crop_sizes')
     if custom_crops:
