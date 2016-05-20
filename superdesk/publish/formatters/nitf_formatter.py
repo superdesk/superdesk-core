@@ -14,7 +14,7 @@ from xml.etree.ElementTree import SubElement
 from superdesk.publish.formatters import Formatter
 import superdesk
 from superdesk.errors import FormatterError
-from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO
+from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, SIGN_OFF
 from apps.archive.common import get_utc_schedule
 
 
@@ -164,3 +164,5 @@ class NITFFormatter(Formatter):
 
         if 'place' in article and article['place'] is not None and len(article.get('place', [])) > 0:
             SubElement(head, 'meta', {'name': 'aap-place', 'content': article.get('place')[0]['qcode']})
+        if SIGN_OFF in article:
+            SubElement(head, 'meta', {'name': 'aap-signoff', 'content': article.get(SIGN_OFF, '')})
