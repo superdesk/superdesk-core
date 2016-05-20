@@ -8,7 +8,7 @@ Feature: Dictionaries Upload
         """
         Then we get new resource
         """
-        {"name": "test", "language_id": "en"}
+        {"name": "test", "language_id": "en", "type": "dictionary"}
         """
 
         When we upload to an existing dictionary with success
@@ -17,7 +17,7 @@ Feature: Dictionaries Upload
         """
         Then we get existing resource
         """
-        {"name": "test", "language_id": "en"}
+        {"name": "test", "language_id": "en", "type": "dictionary"}
         """
 
     @auth
@@ -57,12 +57,12 @@ Feature: Dictionaries Upload
     Scenario: Create duplicate dictionary for the same language
         When we upload a new dictionary with success
         """
-        {"name": "dict", "language_id": "en"}
+        {"name": "dict", "language_id": "en", "type": "dictionary"}
         """
 
         When we post to "/dictionaries"
         """
-        {"name": "dict", "language_id": "en"}
+        {"name": "dict", "language_id": "en", "type": "dictionary"}
         """   
         Then we get error 400
         """
@@ -113,6 +113,33 @@ Feature: Dictionaries Upload
             {"name": "#users._id#:en", "language_id": "ro", "user": "#users._id#"}
             """
         Then we get new resource
+        When we patch "/dictionaries/#dictionaries._id#"
+            """
+            {"type": "abbreviations"}
+            """
+        Then we get error 400
+            """
+            {"_issues": {"validator exception": "400: The dictionary type cannot be changed."}}
+            """
+
+
+     @auth
+    Scenario: Create personal duplicate abbreviations dictionary for different languages
+        When we post to "/users"
+            """
+            {"username": "foo", "email": "foo@bar.com", "is_active": true, "sign_off": "abc"}
+            """
+        And we post to "/dictionaries"
+            """
+            {"name": "#users._id#:en", "language_id": "en", "user": "#users._id#", "type": "abbreviations"}
+            """
+        Then we get new resource
+
+        When we post to "/dictionaries"
+            """
+            {"name": "#users._id#:en", "language_id": "ro", "user": "#users._id#", "type": "abbreviations"}
+            """
+        Then we get new resource
     
         
      @auth
@@ -131,8 +158,43 @@ Feature: Dictionaries Upload
             """
             {"name": "#users._id#:en", "language_id": "en", "user": "#users._id#"}
             """
-                Then we get error 400
-        """
-        {"_issues": {"name": "duplicate"}}
-        """            
-   
+        Then we get error 400
+            """
+            {"_issues": {"name": "duplicate"}}
+            """
+
+    @auth
+    Scenario: Create personal duplicate abbreviations dictionary for the same language
+        When we post to "/users"
+            """
+            {"username": "foo", "email": "foo@bar.com", "is_active": true, "sign_off": "abc"}
+            """
+        And we post to "/dictionaries"
+            """
+            {"name": "#users._id#:en", "language_id": "en", "user": "#users._id#", "type": "abbreviations"}
+            """
+        Then we get new resource
+
+        When we post to "/dictionaries"
+            """
+            {"name": "#users._id#:en", "language_id": "en", "user": "#users._id#", "type": "abbreviations"}
+            """
+        Then we get error 400
+            """
+            {"_issues": {"name": "duplicate"}}
+            """
+
+    @auth
+    Scenario: Create personal abbreviations dictionary without user fails
+        When we post to "/users"
+            """
+            {"username": "foo", "email": "foo@bar.com", "is_active": true, "sign_off": "abc"}
+            """
+        And we post to "/dictionaries"
+            """
+            {"name": "#users._id#:en", "language_id": "en", "type": "abbreviations"}
+            """
+        Then we get error 400
+            """
+            {"_issues": {"user": "missing"}, "_message": "User is required for the abbreviations dictionary."}
+            """
