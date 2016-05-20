@@ -790,7 +790,9 @@ Feature: Rewrite content
         "place": [{"qcode" : "ACT", "world_region" : "Oceania", "country" : "Australia",
         "name" : "ACT", "state" : "Australian Capital Territory"}],
         "company_codes" : [{"qcode" : "1PG", "security_exchange" : "ASX", "name" : "1-PAGE LIMITED"}]
-      },{"guid": "456", "type": "text", "headline": "test", "_current_version": 1, "state": "submitted"}]
+      },{"guid": "456", "type": "text", "headline": "test",
+        "_current_version": 1, "state": "submitted",
+         "subject":[{"qcode": "01000000", "name": "arts, culture and entertainment"}]}]
       """
       When we post to "/stages"
       """
@@ -836,7 +838,9 @@ Feature: Rewrite content
       """
       When we rewrite "123"
       """
-      {"update": {"_id": "456", "type": "text", "headline": "test", "_current_version": 1, "state": "submitted"}}
+      {"update": {"_id": "456", "type": "text", "headline": "test",
+      "_current_version": 1, "state": "submitted",
+      "subject":[{"qcode": "01000000", "name": "arts, culture and entertainment"}]}}
       """
       When we get "/published"
       Then we get existing resource
@@ -847,7 +851,10 @@ Feature: Rewrite content
       When we get "/archive/456"
       Then we get existing resource
       """
-      {"_id": "456", "anpa_take_key": "update", "rewrite_of": "#archive.123.take_package#"}
+      {"_id": "456", "anpa_take_key": "update",
+       "rewrite_of": "#archive.123.take_package#",
+       "subject":[{"qcode": "17004000", "name": "Statistics"},
+       {"qcode": "01000000", "name": "arts, culture and entertainment"}]}
       """
       When we get "/archive/123"
       Then we get existing resource
@@ -1216,4 +1223,715 @@ Feature: Rewrite content
         {"_items" : [{"headline": "Rewrite preserves profile", "profile": "story",
          "subject": [{"scheme": "territory", "qcode": "paterritory:uk", "name": "UK"}],
          "task": {"desk": "#desks._id#"}}]}
+        """
+
+    @auth @vocabulary
+    Scenario: Rewrite should be published to previously sent subscriber where rewrite is created before original is published.
+        Given the "validators"
+        """
+          [
+          {
+              "schema": {},
+              "type": "text",
+              "act": "publish",
+              "_id": "publish_text"
+          },
+          {
+              "_id": "publish_composite",
+              "act": "publish",
+              "type": "composite",
+              "schema": {}
+          }
+          ]
+        """
+        And "desks"
+        """
+        [{"name": "Sports"}]
+        """
+        And "archive"
+        """
+        [{"guid": "123", "type": "text", "headline": "test", "_current_version": 1, "state": "fetched",
+          "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+          "subject":[{"qcode": "17004000", "name": "Statistics"}],
+          "body_html": "Test Document body"}]
+        """
+        When we post to "/filter_conditions" with success
+        """
+        [{"name": "Statistics", "field": "subject", "operator": "in", "value": "17004000"}]
+        """
+        And we post to "/content_filters" with success
+        """
+        [{
+            "name": "stats",
+            "content_filter": [{"expression" : {"fc" : ["#filter_conditions._id#"]}}]
+         }]
+        """
+        And we post to "/products" with success
+        """
+        {
+            "name":"prod-1","codes":"abc,xyz",
+            "content_filter": {
+                "filter_type": "permitting",
+                "filter_id": "#content_filters._id#"
+            }
+        }
+        """
+        And we post to "/subscribers" with "digital" and success
+        """
+            {
+                "name":"digital","media_type":"media",
+                "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10},
+                "email": "test@test.com",
+                "products": ["#products._id#"],
+                "destinations":[
+                    {"name":"Test","format": "nitf",
+                    "delivery_type":"email","config":{"recipients":"test@test.com"}}
+                ]
+            }
+        """
+        And we post to "/subscribers" with "wire" and success
+        """
+            {
+                "name":"wire","media_type":"media",
+                "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10},
+                "email": "test@test.com",
+                "products": ["#products._id#"],
+                "destinations":[
+                    {"name":"Test","format": "nitf",
+                    "delivery_type":"email","config":{"recipients":"test@test.com"}}
+                ]
+            }
+        """
+        When we rewrite "123"
+        """
+        {"desk_id": "#desks._id#"}
+        """
+        And we patch "archive/#REWRITE_ID#"
+        """
+        {"abstract": "test", "body_html": "Test Document body",
+        "headline": "Test Headline Update", "slugline": "Update",
+        "subject":[{"qcode": "01000000", "name": "arts, culture and entertainment"}]}
+        """
+        Then we get OK response
+        When we publish "123" with "publish" type and "published" state
+        Then we get OK response
+        And we store "take_package1" with value "#archive.take_package#" to context
+        When we enqueue published
+        And we get "/publish_queue"
+        Then we get list with 2 items
+        """
+        {
+            "_items": [
+              {"state": "pending", "content_type": "composite",
+              "subscriber_id": "#digital#", "item_id": "#take_package1#", "item_version": 2},
+              {"state": "pending", "content_type": "text",
+              "subscriber_id": "#wire#", "item_id": "123", "item_version": 2}
+            ]
+        }
+        """
+        When we publish "#REWRITE_ID#" with "publish" type and "published" state
+        Then we get OK response
+        And we store "take_package2" with value "#archive.take_package#" to context
+        When we enqueue published
+        And we get "/publish_queue"
+        Then we get list with 4 items
+        """
+        {
+            "_items": [
+              {"state": "pending", "content_type": "composite",
+              "subscriber_id": "#digital#", "item_id": "#take_package1#", "item_version": 2},
+              {"state": "pending", "content_type": "text",
+              "subscriber_id": "#wire#", "item_id": "123", "item_version": 2},
+              {"state": "pending", "content_type": "composite", "item_id": "#take_package2#",
+              "subscriber_id": "#digital#", "item_version": 2},
+              {"state": "pending", "content_type": "text",
+              "subscriber_id": "#wire#", "item_id": "#REWRITE_ID#", "item_version": 3}
+            ]
+        }
+        """
+
+    @auth @vocabulary
+    Scenario: Rewrite should be published to previously sent subscriber where rewrite is created after original is published.
+        Given the "validators"
+        """
+            [
+                {
+                  "schema": {},
+                  "type": "text",
+                  "act": "publish",
+                  "_id": "publish_text"
+                },
+                {
+                  "_id": "publish_composite",
+                  "act": "publish",
+                  "type": "composite",
+                  "schema": {}
+                }
+            ]
+        """
+        And "desks"
+        """
+        [{"name": "Sports"}]
+        """
+        And "archive"
+        """
+        [{"guid": "123", "type": "text", "headline": "test", "_current_version": 1, "state": "fetched",
+          "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+          "subject":[{"qcode": "17004000", "name": "Statistics"}],
+          "body_html": "Test Document body"}]
+        """
+        When we post to "/filter_conditions" with success
+        """
+        [{"name": "Statistics", "field": "subject", "operator": "in", "value": "17004000"}]
+        """
+        And we post to "/content_filters" with success
+        """
+        [{
+            "name": "stats",
+            "content_filter": [{"expression" : {"fc" : ["#filter_conditions._id#"]}}]
+         }]
+        """
+        And we post to "/products" with success
+        """
+        {
+            "name":"prod-1","codes":"abc,xyz",
+            "content_filter": {
+                "filter_type": "permitting",
+                "filter_id": "#content_filters._id#"
+            }
+        }
+        """
+        And we post to "/subscribers" with "digital" and success
+        """
+            {
+                "name":"digital","media_type":"media",
+                "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10},
+                "email": "test@test.com",
+                "products": ["#products._id#"],
+                "destinations":[
+                    {"name":"Test","format": "nitf",
+                    "delivery_type":"email","config":{"recipients":"test@test.com"}}
+                ]
+            }
+        """
+        And we post to "/subscribers" with "wire" and success
+        """
+            {
+                "name":"wire","media_type":"media",
+                "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10},
+                "email": "test@test.com",
+                "products": ["#products._id#"],
+                "destinations":[
+                    {"name":"Test","format": "nitf",
+                    "delivery_type":"email","config":{"recipients":"test@test.com"}}
+                ]
+            }
+        """
+        When we publish "123" with "publish" type and "published" state
+        Then we get OK response
+        And we store "take_package1" with value "#archive.take_package#" to context
+        When we enqueue published
+        And we get "/publish_queue"
+        Then we get list with 2 items
+        """
+        {
+            "_items": [
+              {"state": "pending", "content_type": "composite",
+              "subscriber_id": "#digital#", "item_id": "#archive.123.take_package#", "item_version": 2},
+              {"state": "pending", "content_type": "text",
+              "subscriber_id": "#wire#", "item_id": "123", "item_version": 2}
+            ]
+        }
+        """
+        When we rewrite "123"
+        """
+        {"desk_id": "#desks._id#"}
+        """
+        And we patch "archive/#REWRITE_ID#"
+        """
+        {"abstract": "test", "body_html": "Test Document body",
+        "headline": "Test Headline Update", "slugline": "Update",
+        "subject":[{"qcode": "01000000", "name": "arts, culture and entertainment"}]}
+        """
+        Then we get OK response
+        When we publish "#REWRITE_ID#" with "publish" type and "published" state
+        Then we get OK response
+        And we store "take_package2" with value "#archive.take_package#" to context
+        When we enqueue published
+        And we get "/publish_queue"
+        Then we get list with 4 items
+        """
+        {
+            "_items": [
+              {"state": "pending", "content_type": "composite",
+              "subscriber_id": "#digital#", "item_id": "#take_package1#", "item_version": 2},
+              {"state": "pending", "content_type": "text",
+              "subscriber_id": "#wire#", "item_id": "123", "item_version": 2},
+              {"state": "pending", "content_type": "composite", "item_id": "#take_package2#",
+              "subscriber_id": "#digital#", "item_version": 2},
+              {"state": "pending", "content_type": "text",
+              "subscriber_id": "#wire#", "item_id": "#REWRITE_ID#", "item_version": 3}
+            ]
+        }
+        """
+
+    @auth @vocabulary
+    Scenario: Rewrite should be published to previously sent subscriber where original is only published to digital
+        Given the "validators"
+        """
+          [
+          {
+              "schema": {},
+              "type": "text",
+              "act": "publish",
+              "_id": "publish_text"
+          },
+          {
+              "_id": "publish_composite",
+              "act": "publish",
+              "type": "composite",
+              "schema": {}
+          }
+          ]
+        """
+        And "desks"
+        """
+        [{"name": "Sports"}]
+        """
+        And "archive"
+        """
+        [{"guid": "123", "type": "text", "headline": "test", "_current_version": 1, "state": "fetched",
+          "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+          "subject":[{"qcode": "17004000", "name": "Statistics"}],
+          "body_html": "Test Document body"}]
+        """
+        When we post to "/filter_conditions" with "fc1" and success
+        """
+        [{"name": "Statistics", "field": "subject", "operator": "in", "value": "17004000"}]
+        """
+        And we post to "/content_filters" with "cf1" and success
+        """
+        [{
+            "name": "stats",
+            "content_filter": [{"expression" : {"fc" : ["#fc1#"]}}]
+         }]
+        """
+        And we post to "/products" with "product1" and success
+        """
+        {
+            "name":"prod-1","codes":"abc,xyz",
+            "content_filter": {
+                "filter_type": "permitting",
+                "filter_id": "#cf1#"
+            }
+        }
+        """
+        When we post to "/filter_conditions" with "fc2" and success
+        """
+        [{"name": "entertainment", "field": "subject", "operator": "in", "value": "01000000"}]
+        """
+        And we post to "/content_filters" with "cf2" and success
+        """
+        [{
+            "name": "entertainment",
+            "content_filter": [{"expression" : {"fc" : ["#fc2#"]}}]
+         }]
+        """
+        And we post to "/products" with "product2" and success
+        """
+        {
+            "name":"prod-2","codes":"abc,xyz",
+            "content_filter": {
+                "filter_type": "permitting",
+                "filter_id": "#cf2#"
+            }
+        }
+        """
+        And we post to "/subscribers" with "digital" and success
+        """
+            {
+                "name":"digital","media_type":"media",
+                "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10},
+                "email": "test@test.com",
+                "products": ["#product1#"],
+                "destinations":[
+                    {"name":"Test","format": "nitf",
+                    "delivery_type":"email","config":{"recipients":"test@test.com"}}
+                ]
+            }
+        """
+        And we post to "/subscribers" with "wire" and success
+        """
+            {
+                "name":"wire","media_type":"media",
+                "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10},
+                "email": "test@test.com",
+                "products": ["#product2#"],
+                "destinations":[
+                    {"name":"Test","format": "nitf",
+                    "delivery_type":"email","config":{"recipients":"test@test.com"}}
+                ]
+            }
+        """
+        When we publish "123" with "publish" type and "published" state
+        Then we get OK response
+        And we store "take_package1" with value "#archive.take_package#" to context
+        When we enqueue published
+        And we get "/publish_queue"
+        Then we get list with 1 items
+        """
+        {
+            "_items": [
+              {"state": "pending", "content_type": "composite",
+              "subscriber_id": "#digital#", "item_id": "#archive.123.take_package#", "item_version": 2}
+            ]
+        }
+        """
+        When we rewrite "123"
+        """
+        {"desk_id": "#desks._id#"}
+        """
+        And we patch "archive/#REWRITE_ID#"
+        """
+        {"abstract": "test", "body_html": "Test Document body",
+        "headline": "Test Headline Update", "slugline": "Update",
+        "subject":[{"qcode": "01000000", "name": "arts, culture and entertainment"}]}
+        """
+        Then we get OK response
+        When we publish "#REWRITE_ID#" with "publish" type and "published" state
+        Then we get OK response
+        And we store "take_package2" with value "#archive.take_package#" to context
+        When we enqueue published
+        And we get "/publish_queue"
+        Then we get list with 3 items
+        """
+        {
+            "_items": [
+              {"state": "pending", "content_type": "composite",
+              "subscriber_id": "#digital#", "item_id": "#take_package1#", "item_version": 2},
+              {"state": "pending", "content_type": "composite", "item_id": "#take_package2#",
+              "subscriber_id": "#digital#", "item_version": 2},
+              {"state": "pending", "content_type": "text",
+              "subscriber_id": "#wire#", "item_id": "#REWRITE_ID#", "item_version": 3}
+            ]
+        }
+        """
+
+    @auth @vocabulary
+    Scenario: Rewrite should be published to previously sent subscriber where original is only published to wire
+        Given the "validators"
+        """
+          [
+          {
+              "schema": {},
+              "type": "text",
+              "act": "publish",
+              "_id": "publish_text"
+          },
+          {
+              "_id": "publish_composite",
+              "act": "publish",
+              "type": "composite",
+              "schema": {}
+          }
+          ]
+        """
+        And "desks"
+        """
+        [{"name": "Sports"}]
+        """
+        And "archive"
+        """
+        [{"guid": "123", "type": "text", "headline": "test", "_current_version": 1, "state": "fetched",
+          "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+          "subject":[{"qcode": "17004000", "name": "Statistics"}],
+          "body_html": "Test Document body"}]
+        """
+        When we post to "/filter_conditions" with "fc1" and success
+        """
+        [{"name": "Statistics", "field": "subject", "operator": "in", "value": "17004000"}]
+        """
+        And we post to "/content_filters" with "cf1" and success
+        """
+        [{
+            "name": "stats",
+            "content_filter": [{"expression" : {"fc" : ["#fc1#"]}}]
+         }]
+        """
+        And we post to "/products" with "product1" and success
+        """
+        {
+            "name":"prod-1","codes":"abc,xyz",
+            "content_filter": {
+                "filter_type": "permitting",
+                "filter_id": "#cf1#"
+            }
+        }
+        """
+        When we post to "/filter_conditions" with "fc2" and success
+        """
+        [{"name": "entertainment", "field": "subject", "operator": "in", "value": "01000000"}]
+        """
+        And we post to "/content_filters" with "cf2" and success
+        """
+        [{
+            "name": "entertainment",
+            "content_filter": [{"expression" : {"fc" : ["#fc2#"]}}]
+         }]
+        """
+        And we post to "/products" with "product2" and success
+        """
+        {
+            "name":"prod-2","codes":"abc,xyz",
+            "content_filter": {
+                "filter_type": "permitting",
+                "filter_id": "#cf2#"
+            }
+        }
+        """
+        And we post to "/subscribers" with "digital" and success
+        """
+            {
+                "name":"digital","media_type":"media",
+                "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10},
+                "email": "test@test.com",
+                "products": ["#product2#"],
+                "destinations":[
+                    {"name":"Test","format": "nitf",
+                    "delivery_type":"email","config":{"recipients":"test@test.com"}}
+                ]
+            }
+        """
+        And we post to "/subscribers" with "wire" and success
+        """
+            {
+                "name":"wire","media_type":"media",
+                "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10},
+                "email": "test@test.com",
+                "products": ["#product1#"],
+                "destinations":[
+                    {"name":"Test","format": "nitf",
+                    "delivery_type":"email","config":{"recipients":"test@test.com"}}
+                ]
+            }
+        """
+        When we publish "123" with "publish" type and "published" state
+        Then we get OK response
+        And we store "take_package1" with value "#archive.take_package#" to context
+        When we enqueue published
+        And we get "/publish_queue"
+        Then we get list with 1 items
+        """
+        {
+            "_items": [
+              {"state": "pending", "content_type": "text",
+              "subscriber_id": "#wire#", "item_id": "123", "item_version": 2}
+            ]
+        }
+        """
+        When we rewrite "123"
+        """
+        {"desk_id": "#desks._id#"}
+        """
+        And we patch "archive/#REWRITE_ID#"
+        """
+        {"abstract": "test", "body_html": "Test Document body",
+        "headline": "Test Headline Update", "slugline": "Update",
+        "subject":[{"qcode": "01000000", "name": "arts, culture and entertainment"}]}
+        """
+        Then we get OK response
+        When we publish "#REWRITE_ID#" with "publish" type and "published" state
+        Then we get OK response
+        And we store "take_package2" with value "#archive.take_package#" to context
+        When we enqueue published
+        And we get "/publish_queue"
+        Then we get list with 3 items
+        """
+        {
+            "_items": [
+              {"state": "pending", "content_type": "text",
+              "subscriber_id": "#wire#", "item_id": "123", "item_version": 2},
+              {"state": "pending", "content_type": "composite", "item_id": "#take_package2#",
+              "subscriber_id": "#digital#", "item_version": 2},
+              {"state": "pending", "content_type": "text",
+              "subscriber_id": "#wire#", "item_id": "#REWRITE_ID#", "item_version": 3}
+            ]
+        }
+        """
+
+    @auth @vocabulary
+    Scenario: Rewrite of Rewrite should be published to previously sent subscriber
+        Given the "validators"
+        """
+          [
+          {
+              "schema": {},
+              "type": "text",
+              "act": "publish",
+              "_id": "publish_text"
+          },
+          {
+              "_id": "publish_composite",
+              "act": "publish",
+              "type": "composite",
+              "schema": {}
+          }
+          ]
+        """
+        And "desks"
+        """
+        [{"name": "Sports"}]
+        """
+        And "archive"
+        """
+        [{"guid": "123", "type": "text", "headline": "test", "_current_version": 1, "state": "fetched",
+          "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+          "subject":[{"qcode": "17004000", "name": "Statistics"}],
+          "body_html": "Test Document body"}]
+        """
+        When we post to "/filter_conditions" with "fc1" and success
+        """
+        [{"name": "Statistics", "field": "subject", "operator": "in", "value": "17004000"}]
+        """
+        And we post to "/content_filters" with "cf1" and success
+        """
+        [{
+            "name": "stats",
+            "content_filter": [{"expression" : {"fc" : ["#fc1#"]}}]
+         }]
+        """
+        And we post to "/products" with "product1" and success
+        """
+        {
+            "name":"prod-1","codes":"abc,xyz",
+            "content_filter": {
+                "filter_type": "permitting",
+                "filter_id": "#cf1#"
+            }
+        }
+        """
+        When we post to "/filter_conditions" with "fc2" and success
+        """
+        [{"name": "entertainment", "field": "subject", "operator": "in", "value": "01000000"}]
+        """
+        And we post to "/content_filters" with "cf2" and success
+        """
+        [{
+            "name": "entertainment",
+            "content_filter": [{"expression" : {"fc" : ["#fc2#"]}}]
+         }]
+        """
+        And we post to "/products" with "product2" and success
+        """
+        {
+            "name":"prod-2","codes":"abc,xyz",
+            "content_filter": {
+                "filter_type": "permitting",
+                "filter_id": "#cf2#"
+            }
+        }
+        """
+        And we post to "/subscribers" with "digital" and success
+        """
+            {
+                "name":"digital","media_type":"media",
+                "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10},
+                "email": "test@test.com",
+                "products": ["#product2#"],
+                "destinations":[
+                    {"name":"Test","format": "nitf",
+                    "delivery_type":"email","config":{"recipients":"test@test.com"}}
+                ]
+            }
+        """
+        And we post to "/subscribers" with "wire" and success
+        """
+            {
+                "name":"wire","media_type":"media",
+                "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10},
+                "email": "test@test.com",
+                "products": ["#product1#"],
+                "destinations":[
+                    {"name":"Test","format": "nitf",
+                    "delivery_type":"email","config":{"recipients":"test@test.com"}}
+                ]
+            }
+        """
+        When we publish "123" with "publish" type and "published" state
+        Then we get OK response
+        And we store "take_package1" with value "#archive.take_package#" to context
+        When we enqueue published
+        And we get "/publish_queue"
+        Then we get list with 1 items
+        """
+        {
+            "_items": [
+              {"state": "pending", "content_type": "text",
+              "subscriber_id": "#wire#", "item_id": "123", "item_version": 2}
+            ]
+        }
+        """
+        When we rewrite "123"
+        """
+        {"desk_id": "#desks._id#"}
+        """
+        And we patch "archive/#REWRITE_ID#"
+        """
+        {"abstract": "test", "body_html": "Test Document body",
+        "headline": "Test Headline Update", "slugline": "Update",
+        "subject":[{"qcode": "01000000", "name": "arts, culture and entertainment"}]}
+        """
+        Then we get OK response
+        And we store "rewrite1" with value "#REWRITE_ID#" to context
+        When we publish "#REWRITE_ID#" with "publish" type and "published" state
+        Then we get OK response
+        And we store "take_package2" with value "#archive.take_package#" to context
+        When we enqueue published
+        And we get "/publish_queue"
+        Then we get list with 3 items
+        """
+        {
+            "_items": [
+              {"state": "pending", "content_type": "text",
+              "subscriber_id": "#wire#", "item_id": "123", "item_version": 2},
+              {"state": "pending", "content_type": "composite", "item_id": "#take_package2#",
+              "subscriber_id": "#digital#", "item_version": 2},
+              {"state": "pending", "content_type": "text",
+              "subscriber_id": "#wire#", "item_id": "#rewrite1#", "item_version": 3}
+            ]
+        }
+        """
+        When we rewrite "#rewrite1#"
+        """
+        {"desk_id": "#desks._id#"}
+        """
+        And we patch "archive/#REWRITE_ID#"
+        """
+        {"abstract": "test", "body_html": "Test Document body",
+        "headline": "Test Headline Update", "slugline": "Update",
+        "subject":[{"qcode": "04000000", "name": "Sports"}]}
+        """
+        Then we get OK response
+        And we store "rewrite2" with value "#REWRITE_ID#" to context
+        When we publish "#rewrite2#" with "publish" type and "published" state
+        Then we get OK response
+        And we store "take_package3" with value "#archive.take_package#" to context
+        When we enqueue published
+        And we get "/publish_queue"
+        Then we get list with 5 items
+        """
+        {
+            "_items": [
+              {"state": "pending", "content_type": "text",
+              "subscriber_id": "#wire#", "item_id": "123", "item_version": 2},
+              {"state": "pending", "content_type": "composite",
+              "item_id": "#take_package2#", "subscriber_id": "#digital#", "item_version": 2},
+              {"state": "pending", "content_type": "text", "subscriber_id": "#wire#",
+              "item_id": "#rewrite1#", "item_version": 3},
+              {"state": "pending", "content_type": "composite", "item_id": "#take_package3#",
+              "subscriber_id": "#digital#", "item_version": 2},
+              {"state": "pending", "content_type": "text",
+              "subscriber_id": "#wire#", "item_id": "#rewrite2#", "item_version": 3}
+            ]
+        }
         """
