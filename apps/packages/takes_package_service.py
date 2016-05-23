@@ -88,7 +88,7 @@ class TakesPackageService():
         take_index = take_info.rfind('=')
         return take_info[0:take_index] if take_info[take_index + 1:].isdigit() else take_info
 
-    def __copy_metadata__(self, target, to, package):
+    def __copy_metadata__(self, target, to, package, set_state=False):
         # if target is the first take hence default sequence is for first take.
         sequence = package.get(SEQUENCE, 1) if package else 1
         sequence = self.__next_sequence__(sequence)
@@ -97,8 +97,10 @@ class TakesPackageService():
         to['anpa_take_key'] = '{}={}'.format(take_key, sequence)
         if target.get(ITEM_STATE) in PUBLISH_STATES:
             to['anpa_take_key'] = '{} ({})={}'.format(take_key, RE_OPENS, sequence)
-        to[config.VERSION] = 1
-        to[ITEM_STATE] = CONTENT_STATE.PROGRESS if to.get('task', {}).get('desk', None) else CONTENT_STATE.DRAFT
+
+        if set_state:
+            to[config.VERSION] = 1
+            to[ITEM_STATE] = CONTENT_STATE.PROGRESS if to.get('task', {}).get('desk', None) else CONTENT_STATE.DRAFT
 
         copy_from = package if (package.get(ITEM_STATE) in PUBLISH_STATES) else target
         fields = self.fields_for_creating_take.copy()
@@ -173,9 +175,16 @@ class TakesPackageService():
             else:
                 archive_service.system_update(target.get(config.ID_FIELD), updates, target)
 
+        link_updates = {}
+
         if not link.get(config.ID_FIELD):
-            self.__copy_metadata__(target, link, takes_package)
+            # A new story to be linked
+            self.__copy_metadata__(target, link, takes_package, set_state=True)
             archive_service.post([link])
+        else:
+            self.__copy_metadata__(target, link_updates, takes_package, set_state=False)
+
+        link.update(link_updates)
 
         if not takes_package_id:
             takes_package_id = self.package_story_as_a_take(target, takes_package, link)
@@ -193,7 +202,8 @@ class TakesPackageService():
                                                                                   takes_package_id=takes_package_id)
 
         if link.get(SEQUENCE):
-            archive_service.system_update(link[config.ID_FIELD], {SEQUENCE: link[SEQUENCE]}, link)
+            link_updates.update({SEQUENCE: link[SEQUENCE]})
+            archive_service.system_update(link[config.ID_FIELD], link_updates, link)
 
         insert_into_versions(id_=takes_package_id)
         return link
