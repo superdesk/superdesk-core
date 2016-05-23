@@ -35,7 +35,7 @@ class IPTC7901FeedParser(FileFeedParser):
 
     def parse(self, file_path, provider=None):
         try:
-            item = {ITEM_TYPE: CONTENT_TYPE.PREFORMATTED, 'guid': generate_guid(type=GUID_TAG),
+            item = {ITEM_TYPE: CONTENT_TYPE.TEXT, 'guid': generate_guid(type=GUID_TAG),
                     'versioncreated': utcnow()}
 
             with open(file_path, 'rb') as f:

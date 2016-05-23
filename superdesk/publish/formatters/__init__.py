@@ -10,7 +10,7 @@
 
 import logging
 from xml.etree.ElementTree import SubElement
-from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
+from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, FORMATS, FORMAT
 from superdesk.metadata.utils import is_takes_package
 from bs4 import BeautifulSoup
 
@@ -54,7 +54,7 @@ class Formatter(metaclass=FormatterRegistry):
 
         if body and article.get('body_footer'):
             footer = article.get('body_footer')
-            if article.get('type', '') == 'preformatted':
+            if article.get(FORMAT, '') == FORMATS.PRESERVED:
                 soup = BeautifulSoup(footer, 'html.parser')
                 body = '{}\r\n{}'.format(body, soup.get_text())
             else:

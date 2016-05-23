@@ -156,6 +156,7 @@ class PATestCase(NITFTestCase):
 
     def test_guid(self):
         self.assertEqual('af1f7ad5-5619-49de-84cc-2e608538c77fSSS-3-1', self.item.get('guid'))
+        self.assertEqual(self.item.get('format'), 'HTML')
 
     def test_subjects(self):
         self.assertEqual(4, len(self.item.get('subject')))
@@ -179,6 +180,7 @@ class PATestCase2(NITFTestCase):
 
     def test_guid(self):
         self.assertEqual('T201510140143580001T', self.item.get('guid'))
+        self.assertEqual(self.item.get('format'), 'preserved')
 
     def test_subjects(self):
         self.assertEqual(0, len(self.item.get('subject')))

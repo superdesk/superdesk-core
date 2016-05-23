@@ -21,7 +21,7 @@ import superdesk
 from superdesk.errors import FormatterError
 from superdesk.io.iptc import subject_codes
 from apps.publish.formatters.field_mappers.locator_mapper import LocatorMapper
-from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO
+from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, FORMAT, FORMATS
 from apps.archive.common import get_utc_schedule
 import json
 
@@ -60,10 +60,11 @@ class AAPIpNewsFormatter(Formatter):
 
                 odbc_item['take_key'] = article.get('anpa_take_key', '').replace('\'', '\'\'')  # @take_key
                 odbc_item['usn'] = article.get('unique_id', None)  # @usn
-                if article[ITEM_TYPE] == CONTENT_TYPE.PREFORMATTED:  # @article_text
-                    odbc_item['article_text'] = self.append_body_footer(article).replace('\'', '\'\'')
-                elif article[ITEM_TYPE] == CONTENT_TYPE.TEXT:
-                    soup = BeautifulSoup(self.append_body_footer(article), "html.parser")
+                soup = BeautifulSoup(self.append_body_footer(article), "html.parser")
+                if article.get(FORMAT) == FORMATS.PRESERVED:  # @article_text
+                    odbc_item['article_text'] = soup.get_text().replace('\'', '\'\'')
+                    odbc_item['texttab'] = 't'
+                elif article.get(FORMAT, FORMATS.HTML) == FORMATS.HTML:
                     text = StringIO()
                     for p in soup.findAll('p'):
                         text.write('\x19\r\n')
@@ -74,15 +75,12 @@ class AAPIpNewsFormatter(Formatter):
                             else:
                                 text.write(l + ' \r\n')
                     odbc_item['article_text'] = text.getvalue().replace('\'', '\'\'')
+                    odbc_item['texttab'] = 'x'
 
                 if 'genre' in article and len(article['genre']) >= 1:
                     odbc_item['genre'] = article['genre'][0].get('name', None)
                 else:
                     odbc_item['genre'] = 'Current'  # @genre
-                if article.get(ITEM_TYPE, CONTENT_TYPE.TEXT) == CONTENT_TYPE.TEXT:
-                    odbc_item['texttab'] = 'x'
-                elif article.get(ITEM_TYPE, None) == CONTENT_TYPE.PREFORMATTED:
-                    odbc_item['texttab'] = 't'
                 odbc_item['wordcount'] = article.get('word_count', None)  # @wordcount
                 odbc_item['news_item_type'] = 'News'
                 odbc_item['priority'] = map_priority(article.get('priority'))  # @priority

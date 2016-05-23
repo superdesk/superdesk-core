@@ -14,8 +14,9 @@ from xml.etree.ElementTree import SubElement
 from superdesk.publish.formatters import Formatter
 import superdesk
 from superdesk.errors import FormatterError
-from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, SIGN_OFF
+from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, FORMAT, FORMATS, SIGN_OFF
 from apps.archive.common import get_utc_schedule
+from bs4 import BeautifulSoup
 
 
 class NITFFormatter(Formatter):
@@ -48,7 +49,11 @@ class NITFFormatter(Formatter):
         body_head = SubElement(body, "body.head")
         body_content = SubElement(body, "body.content")
 
-        self.map_html_to_xml(body_content, self.append_body_footer(article))
+        if article.get(FORMAT) == FORMATS.PRESERVED:
+            soup = BeautifulSoup(self.append_body_footer(article), 'html.parser')
+            SubElement(body_content, 'pre').text = soup.get_text()
+        else:
+            self.map_html_to_xml(body_content, self.append_body_footer(article))
 
         body_end = SubElement(body, "body.end")
 

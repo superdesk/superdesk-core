@@ -31,7 +31,7 @@ class IptcTestCase(TestCase):
     def test_open_iptc7901_file(self):
         with self.app.app_context():
             item = self.open('IPTC7901.txt')
-            self.assertEqual('preformatted', item['type'])
+            self.assertEqual('text', item['type'])
             self.assertEqual('062', item['ingest_provider_sequence'])
             self.assertEqual('i', item['anpa_category'][0]['qcode'])
             self.assertEqual(211, item['word_count'])

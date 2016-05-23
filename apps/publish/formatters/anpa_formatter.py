@@ -15,7 +15,7 @@ import superdesk
 from superdesk.errors import FormatterError
 from bs4 import BeautifulSoup
 import datetime
-from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, BYLINE, EMBARGO
+from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, BYLINE, EMBARGO, FORMAT, FORMATS
 from .field_mappers.locator_mapper import LocatorMapper
 
 
@@ -56,7 +56,7 @@ class AAPAnpaFormatter(Formatter):
 
                 anpa.append(b'\x13')
                 # format identifier
-                if article[ITEM_TYPE] == CONTENT_TYPE.PREFORMATTED:
+                if article.get(FORMAT, FORMATS.HTML) == FORMATS.PRESERVED:
                     anpa.append(b'\x12')
                 else:
                     anpa.append(b'\x11')
@@ -106,10 +106,7 @@ class AAPAnpaFormatter(Formatter):
                                             get_utc_schedule(article, EMBARGO).isoformat())
                     body = embargo + body
 
-                if article[ITEM_TYPE] == CONTENT_TYPE.PREFORMATTED:
-                    anpa.append(body.encode('ascii', 'replace'))
-                else:
-                    anpa.append(BeautifulSoup(body, "html.parser").text.encode('ascii', 'replace'))
+                anpa.append(BeautifulSoup(body, "html.parser").text.encode('ascii', 'replace'))
 
                 anpa.append(b'\x0D\x0A')
                 if article.get('more_coming', False):
