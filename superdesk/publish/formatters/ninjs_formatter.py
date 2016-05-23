@@ -190,7 +190,8 @@ class NINJSFormatter(Formatter):
         """Format all associated items for simple items (not packages)."""
         associations = {}
         for key, item in article.get('associations', {}).items():
-            associations[key] = self._transform_to_ninjs(item)
+            if item:
+                associations[key] = self._transform_to_ninjs(item)
         return associations
 
     def _get_subject(self, article):
