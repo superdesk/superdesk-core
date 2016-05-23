@@ -370,18 +370,18 @@ class EMailRFC822FeedParser(EmailFeedParser):
                             item['body_html'] = '<p>' + mail_item.get('Body', '').replace('\n', '</p><p>') + '</p>'
 
                             default_source = app.config.get('DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES')
-                            city = mail_item.get('Dateline','')
+                            city = mail_item.get('Dateline', '')
                             cities = find_cities()
                             located = [c for c in cities if c['city'].lower() == city.lower()]
                             item.setdefault('dateline', {})
                             item['dateline']['located'] = located[0] if len(located) > 0 else {'city_code': city,
-                                                                                           'city': city,
-                                                                                           'tz': 'UTC',
-                                                                                           'dateline': 'city'}
+                                                                                               'city': city,
+                                                                                               'tz': 'UTC',
+                                                                                               'dateline': 'city'}
                             item['dateline']['source'] = default_source
                             item['dateline']['text'] = format_dateline_to_locmmmddsrc(item['dateline']['located'],
-                                                                                  get_date(item['firstcreated']),
-                                                                                  source=default_source)
+                                                                                      get_date(item['firstcreated']),
+                                                                                      source=default_source)
 
                             if mail_item.get('Priority') != '':
                                 item['priority'] = int(mail_item.get('Priority', '3'))
