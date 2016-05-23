@@ -31,6 +31,9 @@ class TakesPackageService():
                                 'dateline', 'place', 'priority', 'ednote', 'source', 'body_footer',
                                 'operation', 'flags', 'genre', 'company_codes', 'keywords', 'published_in_package']
 
+    # fields that shouldn't be copied if the original (target) is corrected
+    excluded_fields_after_correction = ['ednote', 'operation']
+
     def get_take_package_id(self, item):
         """
         Checks if the item is in a 'takes' package and returns the package id
@@ -98,7 +101,12 @@ class TakesPackageService():
         to[ITEM_STATE] = CONTENT_STATE.PROGRESS if to.get('task', {}).get('desk', None) else CONTENT_STATE.DRAFT
 
         copy_from = package if (package.get(ITEM_STATE) in PUBLISH_STATES) else target
-        for field in self.fields_for_creating_take:
+        fields = self.fields_for_creating_take.copy()
+
+        if copy_from.get(ITEM_STATE) == CONTENT_STATE.CORRECTED:
+            fields = [f for f in fields if f not in self.excluded_fields_after_correction]
+
+        for field in fields:
             if field in copy_from:
                 to[field] = copy_from.get(field)
 
