@@ -42,7 +42,7 @@ class RFC822JsonFormatter(SuperdeskTestCase):
         self.assertEqual(self.items[0]['priority'], 5)
         self.assertEqual(self.items[0]['sign_off'], 'TA')
         self.assertEqual(self.items[0]['anpa_category'], [{'qcode': 's'}])
-        self.assertEqual(self.items[0]['body_html'], 'Lorem ipsum')
+        self.assertEqual(self.items[0]['body_html'], '<p>Lorem ipsum</p>')
         self.assertEqual(self.items[0]['abstract'], 'Abstract-2')
         self.assertEqual(self.items[0]['headline'], 'Headline-2')
         self.assertEqual(self.items[0]['original_creator'], 1)

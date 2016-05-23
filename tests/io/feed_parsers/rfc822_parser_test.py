@@ -146,3 +146,4 @@ class RFC822FormattedEmail(TestCase):
         self.assertEqual(self.items[0]['task']['desk'], 1)
         self.assertEqual(self.items[0]['original_creator'], 123)
         self.assertEqual(self.items[0]['urgency'], 1)
+        self.assertEqual(self.items[0]['dateline']['text'],'AUCKLAND May 05 AAP -')
