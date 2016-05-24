@@ -1,0 +1,3 @@
+{% for item in items %}
+<p>{{item.dateline['text']}} {{item.abstract|striptags}} ({{item.slugline}}) {{item.anpa_take_key}} {{item.versioncreated | format_datetime('Australia/Sydney', '%H:%S')}}</p></br>
+{% endfor %}
