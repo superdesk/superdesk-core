@@ -39,3 +39,9 @@ class ANPATestCase(TestCase):
         item = self.open('ap_anpa-1.tst')
         self.assertEqual(item['subject'][0]['qcode'], '15008000')
         self.assertEqual(item['dateline']['text'], 'ATLANTA Feb 19 AP -')
+
+    def test_table_story(self):
+        item = self.open('ap_anpa-2.tst')
+        self.assertEqual(item['slugline'], 'BBO--BaseballExpanded')
+        self.assertEqual(item['format'], 'preserved')
+        self.assertGreater(item['body_html'].find('%08Baltimore;23;13;.639;_;_;8-2;L-1;16-6;7-7'), 0)
