@@ -22,7 +22,7 @@ from superdesk import get_resource_service
 EMAIL_TIMESTAMP_RESOURCE = 'email_timestamps'
 
 
-@celery.task(bind=True, max_retries=3, soft_time_limit=10)
+@celery.task(bind=True, max_retries=3, soft_time_limit=100)
 def send_email(self, subject, sender, recipients, text_body, html_body):
     msg = Message(subject, sender=sender, recipients=recipients)
     msg.body = text_body
