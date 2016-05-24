@@ -42,7 +42,7 @@ class NINJSFormatter(Formatter):
     """
     NINJS Formatter
     """
-    direct_copy_properties = ('versioncreated', 'usageterms', 'language', 'headline',
+    direct_copy_properties = ('versioncreated', 'usageterms', 'language', 'headline', 'copyrightnotice',
                               'urgency', 'pubstatus', 'mimetype', 'place', 'copyrightholder',
                               'body_text', 'body_html', 'profile', 'slugline', 'keywords')
 
@@ -78,6 +78,9 @@ class NINJSFormatter(Formatter):
         for copy_property in self.direct_copy_properties:
             if article.get(copy_property) is not None:
                 ninjs[copy_property] = article[copy_property]
+
+        if 'body_text' not in article and 'alt_text' in article:
+            ninjs['body_text'] = article['alt_text']
 
         if 'title' in article:
             ninjs['headline'] = article['title']

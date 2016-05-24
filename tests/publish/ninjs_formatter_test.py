@@ -332,6 +332,10 @@ class NinjsFormatterTest(TestCase):
             'associations': {
                 "embedded5346670761": {
                     "uri": "56ba77bde4b0568f54a1ce68",
+                    "alt_text": "alternative",
+                    "copyrightholder": "Edouard",
+                    "copyrightnotice": "Edited with Gimp",
+                    "usageterms": "indefinite-usage",
                     "type": "video",
                     "title": "Embed title",
                     "company": "Press Association",
@@ -359,6 +363,10 @@ class NinjsFormatterTest(TestCase):
                     "type": "video",
                     "version": "1",
                     "priority": 5,
+                    "body_text": "alternative",
+                    "copyrightholder": "Edouard",
+                    "copyrightnotice": "Edited with Gimp",
+                    "usageterms": "indefinite-usage",
                     "headline": "Embed title",
                     "organisation": [{"name": "Press Association"}],
                     "renditions": {
