@@ -14,9 +14,9 @@ from superdesk.metadata.item import EMBARGO, ITEM_TYPE, CONTENT_TYPE, \
 from superdesk.metadata.packages import PACKAGE_TYPE, TAKES_PACKAGE
 from superdesk.publish import SUBSCRIBER_TYPES
 from superdesk.utc import utcnow
+from superdesk.metadata.utils import is_takes_package
 from apps.archive.common import get_utc_schedule
 from eve.utils import config
-
 from apps.publish.enqueue.enqueue_service import EnqueueService
 
 
@@ -30,6 +30,7 @@ class EnqueuePublishedService(EnqueueService):
         2. If takes package then subsequent takes are sent to same wire subscriber as first take.
         3. Filter the subscriber list based on the publish filter and global filters (if configured).
             a. Publish to takes package subscribers if the takes package is received by the subscriber.
+            b. Rewrites are sent to subscribers that received the original item or the previous rewrite.
         :param dict doc: Document to publish/correct/kill
         :param str target_media_type: dictate if the doc being queued is a Takes Package or an Individual Article.
                 Valid values are - Wire, Digital. If Digital then the doc being queued is a Takes Package and if Wire
@@ -38,9 +39,19 @@ class EnqueuePublishedService(EnqueueService):
                 List of subscribers that have not received item previously (empty list in this case).
                 List of product codes per subscriber
         """
-        subscribers, subscribers_yet_to_receive, takes_subscribers = [], [], []
-        subscriber_codes, take_codes, codes = {}, {}, {}
+        subscribers, subscribers_yet_to_receive, takes_subscribers, rewrite_subscribers = [], [], [], []
+        subscriber_codes, take_codes, codes, rewrite_codes = {}, {}, {}, {}
         first_take = None
+
+        # Step 3b
+        rewrite_of = doc.get('rewrite_of')
+        rewrite_take_package = None
+        if rewrite_of:
+            rewrite_of_item = get_resource_service('archive').find_one(req=None, _id=rewrite_of)
+            if is_takes_package(rewrite_of_item):
+                rewrite_take_package = rewrite_of_item
+            else:
+                rewrite_take_package = self.takes_package_service.get_take_package(rewrite_of_item)
 
         # Step 1
         query = {'is_active': True}
@@ -57,6 +68,12 @@ class EnqueuePublishedService(EnqueueService):
                               {'publishing_action': {'$in': [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]}}]}
             takes_subscribers, take_codes = self._get_subscribers_for_previously_sent_items(query)
 
+            if rewrite_of:
+                # Step 3b
+                query = {'$and': [{'item_id': rewrite_take_package.get(config.ID_FIELD)},
+                                  {'publishing_action': {'$in': [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]}}]}
+                rewrite_subscribers, rewrite_codes = self._get_subscribers_for_previously_sent_items(query)
+
         # Step 2
         if doc.get(ITEM_TYPE) in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
             # get first take
@@ -71,18 +88,38 @@ class EnqueuePublishedService(EnqueueService):
                                   {'publishing_action': {'$in': [CONTENT_STATE.PUBLISHED]}}]}
                 subscribers, subscriber_codes = self._get_subscribers_for_previously_sent_items(query)
 
+            if rewrite_of:
+                # Step 3b
+                if rewrite_take_package.get(config.ID_FIELD) == rewrite_of:
+                    item_ids = self.package_service.get_residrefs(rewrite_take_package)
+                else:
+                    item_ids = [rewrite_of]
+
+                query = {'$and': [{'item_id': {'$in': item_ids}},
+                                  {'publishing_action': {'$in': [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]}}]}
+                rewrite_subscribers, rewrite_codes = self._get_subscribers_for_previously_sent_items(query)
+
         # Step 3
         if not first_take:
             subscribers, codes = self.filter_subscribers(doc, subscribers, target_media_type)
 
         if takes_subscribers:
-            # Step 4a
+            # Step 3a
             subscribers_ids = set(s[config.ID_FIELD] for s in takes_subscribers)
             subscribers = takes_subscribers + [s for s in subscribers if s[config.ID_FIELD] not in subscribers_ids]
+
+        if rewrite_subscribers:
+            # Step 3b
+            subscribers_ids = set(s[config.ID_FIELD] for s in rewrite_subscribers)
+            subscribers = rewrite_subscribers + [s for s in subscribers if s[config.ID_FIELD] not in subscribers_ids]
 
         if take_codes:
             # join the codes
             subscriber_codes.update(take_codes)
+
+        if rewrite_codes:
+            # join the codes
+            subscriber_codes.update(rewrite_codes)
 
         if codes:
             # join the codes
