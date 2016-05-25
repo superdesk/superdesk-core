@@ -9,7 +9,6 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
-import json
 from eve.utils import config, ParsedRequest
 from eve.versioning import resolve_document_version
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
@@ -295,12 +294,8 @@ class TakesPackageService():
         refs = self.get_package_refs(package)
         if refs:
             takes = [ref.get(RESIDREF) for ref in refs if ref.get(SEQUENCE) < sequence]
-            # elastic filter for the archive resource filters out the published items
-            archive_service = get_resource_service(ARCHIVE)
-            query = {'query': {'filtered': {'filter': {'terms': {'_id': takes}}}}}
-            request = ParsedRequest()
-            request.args = {'source': json.dumps(query)}
-            items = archive_service.get(req=request, lookup=None)
+            query = self._get_unpublished_items_query(takes)
+            items = get_resource_service(ARCHIVE).get_from_mongo(req=None, lookup=query)
             return items.count() == 0
 
         return True
@@ -316,12 +311,19 @@ class TakesPackageService():
             return []
 
         takes = [ref.get(RESIDREF) for ref in refs]
-
-        query = {'$and':
-                 [
-                     {config.ID_FIELD: {'$in': takes}},
-                     {ITEM_STATE: {'$in': [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]}}
-                 ]}
+        query = self._get_published_items_query(takes)
         request = ParsedRequest()
         request.sort = SEQUENCE
         return list(get_resource_service(ARCHIVE).get_from_mongo(req=request, lookup=query))
+
+    def _get_published_items_query(self, ids):
+        return {'$and': [
+            {config.ID_FIELD: {'$in': ids}},
+            {ITEM_STATE: {'$in': [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]}},
+        ]}
+
+    def _get_unpublished_items_query(self, ids):
+        return {'$and': [
+            {config.ID_FIELD: {'$in': ids}},
+            {ITEM_STATE: {'$nin': [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]}},
+        ]}
