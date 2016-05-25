@@ -43,7 +43,10 @@ __entities__ = OrderedDict([
     ('groups', ('groups.json', '', False)),
     ('vocabularies', ('vocabularies.json', '', True)),
     ('validators', ('validators.json', '', True)),
-    ('content_templates', ('content_templates.json', ['template_name'], False)),
+    ('content_templates', ('content_templates.json', [
+        [('template_name', pymongo.ASCENDING)],
+        [('next_run', pymongo.ASCENDING)],
+    ], False)),
     ('content_types', ('content_types.json', '', True)),
     ('published', (None, [
         [
@@ -65,6 +68,10 @@ __entities__ = OrderedDict([
         [
             ('_created', pymongo.DESCENDING),
             {'expireAfterSeconds': 86400}
+        ],
+        [
+            ('user', pymongo.ASCENDING),
+            ('_created', pymongo.DESCENDING),
         ],
         [
             ('item', pymongo.ASCENDING),
@@ -134,22 +141,33 @@ __entities__ = OrderedDict([
         [
             ('archived_id', pymongo.ASCENDING),
             {'unique': True}
-        ]], False)),
+        ],
+        [
+            ('item_id', pymongo.ASCENDING)
+        ],
+    ], False)),
+
+    ('legal_archive', (None, [
+        [('versioncreated', pymongo.DESCENDING)],
+    ], False)),
+
     ('legal_archive_versions', (None, [
         [
             ('_id_document', pymongo.ASCENDING),
             ('_current_version', pymongo.ASCENDING)
         ]], False)),
     ('legal_publish_queue', (None, [
-        [
-            ('_updated', pymongo.DESCENDING)
-        ]], False)),
+        [('_updated', pymongo.DESCENDING)]
+    ], False)),
     ('dictionaries', ('dictionaries.json', '', True)),
     ('ingest_providers', ('ingest_providers.json', '', True)),
     ('search_providers', ('search_providers.json', '', True)),
     ('products', ('products.json', '', True)),
     ('subscribers', ('subscribers.json', '', True)),
     ('workspaces', ('workspaces.json', '', True)),
+    ('item_comments', (None, [
+        [('item', pymongo.ASCENDING), ('_created', pymongo.DESCENDING)]
+    ], True))
 ])
 
 
