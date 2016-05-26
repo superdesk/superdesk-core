@@ -8,28 +8,31 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from apps.archive.common import ITEM_OPERATION, ARCHIVE, get_utc_schedule
+from apps.legal_archive.commands import import_into_legal_archive
+from apps.publish.enqueue.enqueue_published import EnqueuePublishedService
+import cProfile
 import logging
-
 from superdesk import get_resource_service
 import superdesk
-from superdesk.celery_app import celery
 from superdesk.celery_task_utils import get_lock_id
 from superdesk.lock import lock, unlock
-from superdesk.utc import utcnow
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, PUBLISH_SCHEDULE
 
-from bson.objectid import ObjectId
-from eve.utils import config, ParsedRequest
-
-from apps.archive.common import ITEM_OPERATION, ARCHIVE, get_utc_schedule
 from apps.publish.enqueue.enqueue_corrected import EnqueueCorrectedService
 from apps.publish.enqueue.enqueue_killed import EnqueueKilledService
-from apps.publish.enqueue.enqueue_published import EnqueuePublishedService
 from apps.publish.published_item import PUBLISH_STATE, QUEUE_STATE, PUBLISHED
-from apps.legal_archive.commands import import_into_legal_archive
+from bson.objectid import ObjectId
+from eve.utils import config, ParsedRequest
+from superdesk.celery_app import celery
+from superdesk.utc import utcnow
+
+from superdesk.profiling import ProfileManager
 
 
 logger = logging.getLogger(__name__)
+
+profile = cProfile.Profile()
 
 UPDATE_SCHEDULE_DEFAULT = {'seconds': 10}
 
@@ -137,4 +140,5 @@ superdesk.command('publish:enqueue', EnqueueContent())
 
 @celery.task
 def enqueue_published():
-    EnqueueContent().run()
+    with ProfileManager('publish:enqueue'):
+        EnqueueContent().run()
