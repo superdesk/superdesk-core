@@ -14,7 +14,8 @@ import collections
 from flask import json
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
-from apps.dictionaries.resource import DICTIONARY_FILE
+from eve.utils import config
+from apps.dictionaries.resource import DICTIONARY_FILE, DictionaryType
 
 
 logger = logging.getLogger(__name__)
@@ -83,12 +84,18 @@ def read_from_file(doc):
 class DictionaryService(BaseService):
     def on_create(self, docs):
         for doc in docs:
-            if self.find_one(req=None, name=doc['name'], language_id=doc['language_id']):
+            if self.find_one(req=None, name=doc['name'],
+                             language_id=doc['language_id'],
+                             type=doc.get('type', DictionaryType.DICTIONARY.value)):
                 raise SuperdeskApiError.badRequestError(message='The dictionary already exists',
                                                         payload={'name': 'duplicate'})
+            self.__set_default(doc)
+            self._validate_dictionary(doc)
+
             if doc.get(DICTIONARY_FILE):
                 words = read_from_file(doc)
                 merge(doc, words)
+
             if 'content' in doc:
                 doc['content'] = encode_dict(doc['content'])
 
@@ -106,10 +113,14 @@ class DictionaryService(BaseService):
             doc['content'] = decode_dict(doc['content'])
         return doc
 
-    def on_fetched(self, result):
-        for doc in result['_items']:
-            if 'content' in doc:
-                doc['content'] = decode_dict(doc['content'])
+    def _validate_dictionary(self, updates, original={}):
+        dict_type = updates.get('type', original.get('type', DictionaryType.DICTIONARY.value))
+        if dict_type == DictionaryType.ABBREVIATIONS.value and not updates.get('user', original.get('user')):
+            raise SuperdeskApiError.badRequestError(message='User is required for the abbreviations dictionary.',
+                                                    payload={'user': 'missing'})
+
+        if original and dict_type != original.get('type', DictionaryType.DICTIONARY.value):
+            raise SuperdeskApiError.badRequestError(message='The dictionary type cannot be changed.')
 
     def get_base_language(self, lang):
         if lang and lang.find('-') > 0:
@@ -128,7 +139,8 @@ class DictionaryService(BaseService):
             languages.append({'language_id': base_language})
 
         lookup = {'$and': [{'$or': languages},
-                           {'$or': [{'is_active': {'$exists': 0}}, {'is_active': 'true'}]}]}
+                           {'$or': [{'is_active': {'$exists': 0}}, {'is_active': 'true'}]},
+                           {'$or': [{'type': {'$exists': 0}}, {'type': DictionaryType.DICTIONARY.value}]}]}
         dicts = list(self.get(req=None, lookup=lookup))
         langs = [d['language_id'] for d in dicts]
 
@@ -161,14 +173,21 @@ class DictionaryService(BaseService):
         if updates.get('content_list'):
             updates['content'] = json.loads(updates.pop('content_list'))
 
+        if 'type' not in original:
+            self.__set_default(updates)
+
+        self._validate_dictionary(updates, original)
+
         # handle manual changes
-        nwords = decode_dict(original.get('content', {})).copy()
-        for word, val in updates.get('content', {}).items():
-            if val:
-                add_words(nwords, word, val)
-            else:
-                nwords.pop(word, None)
-        updates['content'] = nwords
+        if original.get('type', DictionaryType.DICTIONARY.value) == DictionaryType.DICTIONARY.value:
+            nwords = decode_dict(original.get('content', {})).copy()
+            for word, val in updates.get('content', {}).items():
+                if val:
+                    add_words(nwords, word, val)
+                else:
+                    nwords.pop(word, None)
+
+            updates['content'] = nwords
 
         # handle uploaded file
         if updates.get(DICTIONARY_FILE):
@@ -178,3 +197,19 @@ class DictionaryService(BaseService):
         # save it as string, otherwise it would order keys and it takes forever
         if 'content' in updates:
             updates['content'] = encode_dict(updates['content'])
+
+    def __set_default(self, doc):
+        if 'type' not in doc:
+            doc['type'] = DictionaryType.DICTIONARY.value
+
+    def on_fetched_item(self, doc):
+        self.__enhance_items([doc])
+
+    def on_fetched(self, docs):
+        self.__enhance_items(docs[config.ITEMS])
+
+    def __enhance_items(self, docs):
+        for doc in docs:
+            self.__set_default(doc)
+            if 'content' in doc:
+                doc['content'] = decode_dict(doc['content'])

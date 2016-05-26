@@ -1153,6 +1153,11 @@ def step_impl_then_get_key(context, key):
     set_placeholder(context, '%s' % key, item[key])
 
 
+@then('we store "{key}" with value "{value}" to context')
+def step_impl_then_we_store_key_value_to_context(context, key, value):
+    set_placeholder(context, key, apply_placeholders(context, value))
+
+
 @then('we get action in user activity')
 def step_impl_then_get_action(context):
     response = context.client.get(get_prefixed_url(context.app, '/activity'), headers=context.headers)
@@ -1744,6 +1749,7 @@ def step_impl_when_publish_url(context, item_id, pub_type, state):
     if linked_packages:
         take_package = linked_packages[0].get('package', '')
         set_placeholder(context, 'archive.{}.take_package'.format(item_id), take_package)
+        set_placeholder(context, 'archive.take_package'.format(item_id), take_package)
 
 
 @when('we get digital item of "{item_id}"')
@@ -1757,6 +1763,7 @@ def step_impl_when_we_get_digital(context, item_id):
         if lp.get('package_type', '') == 'takes':
             take_package = lp.get('package', '')
             set_placeholder(context, 'archive.{}.take_package'.format(item_id), take_package)
+            set_placeholder(context, 'archive.take_package'.format(item_id), take_package)
 
 
 @then('the ingest item is routed based on routing scheme and rule "{rule_name}"')

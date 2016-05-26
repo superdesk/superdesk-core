@@ -9,7 +9,6 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
-import json
 from eve.utils import config, ParsedRequest
 from eve.versioning import resolve_document_version
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
@@ -30,6 +29,9 @@ class TakesPackageService():
     fields_for_creating_take = ['headline', 'anpa_category', 'pubstatus', 'slugline', 'urgency', 'subject',
                                 'dateline', 'place', 'priority', 'ednote', 'source', 'body_footer',
                                 'operation', 'flags', 'genre', 'company_codes', 'keywords', 'published_in_package']
+
+    # fields that shouldn't be copied if the original (target) is corrected
+    excluded_fields_after_correction = ['ednote', 'operation']
 
     def get_take_package_id(self, item):
         """
@@ -85,7 +87,7 @@ class TakesPackageService():
         take_index = take_info.rfind('=')
         return take_info[0:take_index] if take_info[take_index + 1:].isdigit() else take_info
 
-    def __copy_metadata__(self, target, to, package):
+    def __copy_metadata__(self, target, to, package, set_state=False):
         # if target is the first take hence default sequence is for first take.
         sequence = package.get(SEQUENCE, 1) if package else 1
         sequence = self.__next_sequence__(sequence)
@@ -94,11 +96,18 @@ class TakesPackageService():
         to['anpa_take_key'] = '{}={}'.format(take_key, sequence)
         if target.get(ITEM_STATE) in PUBLISH_STATES:
             to['anpa_take_key'] = '{} ({})={}'.format(take_key, RE_OPENS, sequence)
-        to[config.VERSION] = 1
-        to[ITEM_STATE] = CONTENT_STATE.PROGRESS if to.get('task', {}).get('desk', None) else CONTENT_STATE.DRAFT
+
+        if set_state:
+            to[config.VERSION] = 1
+            to[ITEM_STATE] = CONTENT_STATE.PROGRESS if to.get('task', {}).get('desk', None) else CONTENT_STATE.DRAFT
 
         copy_from = package if (package.get(ITEM_STATE) in PUBLISH_STATES) else target
-        for field in self.fields_for_creating_take:
+        fields = self.fields_for_creating_take.copy()
+
+        if copy_from.get(ITEM_STATE) == CONTENT_STATE.CORRECTED:
+            fields = [f for f in fields if f not in self.excluded_fields_after_correction]
+
+        for field in fields:
             if field in copy_from:
                 to[field] = copy_from.get(field)
 
@@ -165,9 +174,16 @@ class TakesPackageService():
             else:
                 archive_service.system_update(target.get(config.ID_FIELD), updates, target)
 
+        link_updates = {}
+
         if not link.get(config.ID_FIELD):
-            self.__copy_metadata__(target, link, takes_package)
+            # A new story to be linked
+            self.__copy_metadata__(target, link, takes_package, set_state=True)
             archive_service.post([link])
+        else:
+            self.__copy_metadata__(target, link_updates, takes_package, set_state=False)
+
+        link.update(link_updates)
 
         if not takes_package_id:
             takes_package_id = self.package_story_as_a_take(target, takes_package, link)
@@ -185,7 +201,8 @@ class TakesPackageService():
                                                                                   takes_package_id=takes_package_id)
 
         if link.get(SEQUENCE):
-            archive_service.system_update(link[config.ID_FIELD], {SEQUENCE: link[SEQUENCE]}, link)
+            link_updates.update({SEQUENCE: link[SEQUENCE]})
+            archive_service.system_update(link[config.ID_FIELD], link_updates, link)
 
         insert_into_versions(id_=takes_package_id)
         return link
@@ -277,12 +294,8 @@ class TakesPackageService():
         refs = self.get_package_refs(package)
         if refs:
             takes = [ref.get(RESIDREF) for ref in refs if ref.get(SEQUENCE) < sequence]
-            # elastic filter for the archive resource filters out the published items
-            archive_service = get_resource_service(ARCHIVE)
-            query = {'query': {'filtered': {'filter': {'terms': {'_id': takes}}}}}
-            request = ParsedRequest()
-            request.args = {'source': json.dumps(query)}
-            items = archive_service.get(req=request, lookup=None)
+            query = self._get_unpublished_items_query(takes)
+            items = get_resource_service(ARCHIVE).get_from_mongo(req=None, lookup=query)
             return items.count() == 0
 
         return True
@@ -298,12 +311,19 @@ class TakesPackageService():
             return []
 
         takes = [ref.get(RESIDREF) for ref in refs]
-
-        query = {'$and':
-                 [
-                     {config.ID_FIELD: {'$in': takes}},
-                     {ITEM_STATE: {'$in': [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]}}
-                 ]}
+        query = self._get_published_items_query(takes)
         request = ParsedRequest()
         request.sort = SEQUENCE
         return list(get_resource_service(ARCHIVE).get_from_mongo(req=request, lookup=query))
+
+    def _get_published_items_query(self, ids):
+        return {'$and': [
+            {config.ID_FIELD: {'$in': ids}},
+            {ITEM_STATE: {'$in': [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]}},
+        ]}
+
+    def _get_unpublished_items_query(self, ids):
+        return {'$and': [
+            {config.ID_FIELD: {'$in': ids}},
+            {ITEM_STATE: {'$nin': [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]}},
+        ]}

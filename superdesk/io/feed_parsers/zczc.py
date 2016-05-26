@@ -11,7 +11,7 @@ from superdesk.io import register_feed_parser
 from superdesk.io.feed_parsers import FileFeedParser
 from superdesk.errors import ParserError
 from superdesk.io.iptc import subject_codes
-from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
+from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, FORMAT, FORMATS
 from superdesk.utc import utcnow
 from datetime import datetime
 import uuid
@@ -93,7 +93,7 @@ class ZCZCFeedParser(FileFeedParser):
                                 item[ITEM_TYPE] = CONTENT_TYPE.TEXT
                                 continue
                             if line[1] == self.TABULAR:
-                                item[ITEM_TYPE] = CONTENT_TYPE.PREFORMATTED
+                                item[FORMAT] = FORMATS.PRESERVED
                                 continue
                             continue
                         if line[0] == self.IPTC:
@@ -108,6 +108,9 @@ class ZCZCFeedParser(FileFeedParser):
                             break
                         if body:
                             item['body_html'] = item.get('body_html', '') + line
+                if item.get(FORMAT) == FORMATS.PRESERVED:
+                    item['body_html'] = '<pre>' + item['body_html'] + '</pre>'
+
             return self.post_process_item(item, provider)
 
         except Exception as ex:
@@ -117,9 +120,10 @@ class ZCZCFeedParser(FileFeedParser):
         item['urgency'] = 5
         item['pubstatus'] = 'usable'
         item['versioncreated'] = utcnow()
+        item[ITEM_TYPE] = CONTENT_TYPE.TEXT
         # Pagemasters
         if provider.get('source') == 'PMF':
-            item[ITEM_TYPE] = CONTENT_TYPE.PREFORMATTED
+            item[FORMAT] = FORMATS.PRESERVED
             item['original_source'] = 'Pagemasters'
             self.KEYWORD = '#'
             self.TAKEKEY = '@'
@@ -128,16 +132,16 @@ class ZCZCFeedParser(FileFeedParser):
                                self.HEADLINE: self.ITEM_HEADLINE}
         elif provider.get('source') == 'MNET':
             # Medianet
-            item[ITEM_TYPE] = CONTENT_TYPE.PREFORMATTED
+            item[FORMAT] = FORMATS.PRESERVED
             item['original_source'] = 'Medianet'
             item['urgency'] = 8
             self.HEADLINE = ':'
             self.header_map = {'%': None, self.HEADLINE: self.ITEM_HEADLINE}
         elif provider.get('source') == 'BRA':
             # Racing system
-            item[ITEM_TYPE] = CONTENT_TYPE.PREFORMATTED
+            item[FORMAT] = FORMATS.PRESERVED
         else:
-            item[ITEM_TYPE] = CONTENT_TYPE.TEXT
+            item[FORMAT] = FORMATS.HTML
 
     def post_process_item(self, item, provider):
         """

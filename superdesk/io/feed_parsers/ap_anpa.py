@@ -106,9 +106,8 @@ class AP_ANPAFeedParser(ANPAFeedParser):
             if html:
                 soup = BeautifulSoup(html, "html.parser")
                 pars = soup.findAll('p')
-                if len(pars) >= 2:
-                    first = pars[0].get_text()
-                    city, source, the_rest = first.partition(' (AP) _ ')
+                for par in pars:
+                    city, source, the_rest = par.get_text().partition(' (AP) _ ')
                     if source:
                         # sometimes the city is followed by a comma and either a date or a state
                         city = city.split(',')[0]
@@ -126,6 +125,7 @@ class AP_ANPAFeedParser(ANPAFeedParser):
                                                                                   get_date(item['firstcreated']),
                                                                                   source=item.get('original_source',
                                                                                                   'AP'))
+                        break
 
             return item
         except:

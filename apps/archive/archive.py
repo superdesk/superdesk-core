@@ -223,15 +223,16 @@ class ArchiveService(BaseService):
         # iterate over associations. Validate and process them if they are stored in database
         if 'associations' in updates:
             for item_name, item_obj in updates.get('associations').items():
-                if config.ID_FIELD in item_obj:
-                    _id = item_obj[config.ID_FIELD]
-                    stored_item = self.find_one(req=None, _id=_id)
-                    if stored_item:
-                        self._validate_updates(stored_item, item_obj, user)
-                        if stored_item[ITEM_TYPE] == CONTENT_TYPE.PICTURE:  # create crops
-                            CropService().create_multiple_crops(item_obj, stored_item)
-                        stored_item.update(item_obj)
-                        updates['associations'][item_name] = stored_item
+                if item_obj:
+                    if config.ID_FIELD in item_obj:
+                        _id = item_obj[config.ID_FIELD]
+                        stored_item = self.find_one(req=None, _id=_id)
+                        if stored_item:
+                            self._validate_updates(stored_item, item_obj, user)
+                            if stored_item[ITEM_TYPE] == CONTENT_TYPE.PICTURE:  # create crops
+                                CropService().create_multiple_crops(item_obj, stored_item)
+                            stored_item.update(item_obj)
+                            updates['associations'][item_name] = stored_item
 
     def on_updated(self, updates, original):
         get_component(ItemAutosave).clear(original['_id'])

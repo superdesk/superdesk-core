@@ -49,7 +49,7 @@ class ArchiveRewriteService(Service):
 
         digital = TakesPackageService().get_take_package(original)
         rewrite = self._create_rewrite_article(original, digital,
-                                               new_file=(update_document is None),
+                                               existing_item=update_document,
                                                desk_id=doc.get('desk_id'))
 
         if update_document:
@@ -114,19 +114,26 @@ class ArchiveRewriteService(Service):
                     any(genre.get('value', '').lower() == BROADCAST_GENRE.lower() for genre in update.get('genre')):
                 raise SuperdeskApiError.badRequestError("Broadcast cannot be a update story !")
 
-    def _create_rewrite_article(self, original, digital, new_file=True, desk_id=None):
+    def _create_rewrite_article(self, original, digital, existing_item=None, desk_id=None):
         """
         Creates a new story and sets the metadata from original and digital
-        :param original: original story
-        :param digital: digital version of the story
-        :param new_file: False if an existing file is used as update
+        :param dict original: original story
+        :param dict digital: digital version of the story
+        :param dict existing_item: existing story that is being re-written
         :return:new story
         """
         rewrite = dict()
 
         fields = ['family_id', 'event_id', 'flags']
 
-        if new_file:
+        if existing_item:
+            # for associate an existing file as update merge subjects
+            subjects = original.get('subject', [])
+            unique_subjects = {subject.get('qcode') for subject in subjects}
+            rewrite['subject'] = [subject for subject in existing_item.get('subject', [])
+                                  if subject.get('qcode') not in unique_subjects]
+            rewrite['subject'].extend(subjects)
+        else:
             if 'profile' in original:
                 content_type = get_resource_service('content_types').find_one(req=None, _id=original['profile'])
                 extended_fields = list(content_type['schema'].keys())
@@ -150,7 +157,7 @@ class ArchiveRewriteService(Service):
         else:  # if not use original's id
             rewrite['rewrite_of'] = original[config.ID_FIELD]
 
-        if new_file:
+        if not existing_item:
             # send the document to the desk only if a new rewrite is created
             send_to(doc=rewrite, desk_id=(desk_id or original['task']['desk']), default_stage='working_stage')
 

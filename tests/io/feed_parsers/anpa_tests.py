@@ -50,11 +50,12 @@ class ANPATestCase(TestCase):
 
     def test_tab_content(self):
         item = self.open('anpa-3.tst')
-        self.assertEqual('preformatted', item['type'])
+        self.assertEqual('preserved', item['format'])
 
     def test_header_lines_only(self):
         item = self.open('anpa-4.tst')
         self.assertEqual('text', item['type'])
+        self.assertEqual('HTML', item['format'])
         self.assertRegex(item['body_html'], '<p>Ex-bodyguard testifies about lewd messages sent to Paltrow')
 
     def test_map_priority(self):

@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import json
+import logging
 import superdesk
 from eve.utils import config
 from superdesk.publish.formatters import Formatter
@@ -16,8 +17,12 @@ from superdesk.errors import FormatterError
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, GUID_FIELD
 from superdesk.metadata.packages import RESIDREF, GROUP_ID, GROUPS, ROOT_GROUP, REFS
 from superdesk.utils import json_serialize_datetime_objectId
+from superdesk.media.renditions import get_renditions_spec
 from apps.archive.common import get_utc_schedule
 from bs4 import BeautifulSoup
+
+
+logger = logging.getLogger(__name__)
 
 
 def filter_empty_vals(data):
@@ -37,7 +42,7 @@ class NINJSFormatter(Formatter):
     """
     NINJS Formatter
     """
-    direct_copy_properties = ('versioncreated', 'usageterms', 'language', 'headline',
+    direct_copy_properties = ('versioncreated', 'usageterms', 'language', 'headline', 'copyrightnotice',
                               'urgency', 'pubstatus', 'mimetype', 'place', 'copyrightholder',
                               'body_text', 'body_html', 'profile', 'slugline', 'keywords')
 
@@ -73,6 +78,9 @@ class NINJSFormatter(Formatter):
         for copy_property in self.direct_copy_properties:
             if article.get(copy_property) is not None:
                 ninjs[copy_property] = article[copy_property]
+
+        if 'body_text' not in article and 'alt_text' in article:
+            ninjs['body_text'] = article['alt_text']
 
         if 'title' in article:
             ninjs['headline'] = article['title']
@@ -185,7 +193,8 @@ class NINJSFormatter(Formatter):
         """Format all associated items for simple items (not packages)."""
         associations = {}
         for key, item in article.get('associations', {}).items():
-            associations[key] = self._transform_to_ninjs(item)
+            if item:
+                associations[key] = self._transform_to_ninjs(item)
         return associations
 
     def _get_subject(self, article):
@@ -201,8 +210,16 @@ class NINJSFormatter(Formatter):
 
     def _get_renditions(self, article):
         """Get renditions for article."""
+        # renditions list that we want to publish
+        renditions_to_publish = ['original'] + list(get_renditions_spec(without_internal_renditions=True).keys())
+        # get the actual article's renditions
+        actual_renditions = article.get('renditions', {})
+        # filter renditions and keep only the ones we want to publish
+        actual_renditions = {name: actual_renditions[name] for name in renditions_to_publish
+                             if name in actual_renditions}
+        # format renditions to Ninjs
         renditions = {}
-        for name, rendition in article.get('renditions', {}).items():
+        for name, rendition in actual_renditions.items():
             renditions[name] = self._format_rendition(rendition)
         return renditions
 

@@ -15,7 +15,7 @@ from datetime import datetime
 from superdesk.errors import ParserError
 from superdesk.io import register_feed_parser
 from superdesk.io.feed_parsers import FileFeedParser
-from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, Priority, GUID_FIELD, GUID_TAG
+from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, Priority, GUID_FIELD, GUID_TAG, FORMAT, FORMATS
 from superdesk.utc import utc
 from superdesk.metadata.utils import generate_guid
 
@@ -37,7 +37,7 @@ class ANPAFeedParser(FileFeedParser):
 
     def parse(self, file_path, provider=None):
         try:
-            item = {ITEM_TYPE: CONTENT_TYPE.TEXT, GUID_FIELD: generate_guid(type=GUID_TAG)}
+            item = {ITEM_TYPE: CONTENT_TYPE.TEXT, GUID_FIELD: generate_guid(type=GUID_TAG), FORMAT: FORMATS.HTML}
 
             with open(file_path, 'rb') as f:
                 lines = [line for line in f]
@@ -59,7 +59,7 @@ class ANPAFeedParser(FileFeedParser):
                 item['anpa_take_key'] = m.group(7).decode('latin-1', 'replace').strip()
                 item['word_count'] = int(m.group(10).decode())
                 if m.group(4) == b'\x12':
-                    item[ITEM_TYPE] = CONTENT_TYPE.PREFORMATTED
+                    item[FORMAT] = FORMATS.PRESERVED
 
             # parse created date at the end of file
             m = re.search(b'\x03([a-z]+)-([a-z]+)-([0-9]+-[0-9]+-[0-9]+ [0-9]{2}[0-9]{2})GMT', lines[-4], flags=re.I)
@@ -73,11 +73,14 @@ class ANPAFeedParser(FileFeedParser):
             if m:
                 text = m.group(1).decode('latin-1', 'replace').split('\n')
 
-                # text
-                body_lines = [l.strip() for l in text if l.startswith('\t')]
-                if item[ITEM_TYPE] == CONTENT_TYPE.PREFORMATTED:
-                    item['body_text'] = '\n'.join(body_lines)
+                if item.get(FORMAT) == FORMATS.PRESERVED:
+                    # ANPA defines a number of special characters e.g. TLI (Tab Line Inicator) Hex x08 and
+                    # TTS Space Band Hex x10 These will be replaced, there will likely be others
+                    body_lines = [l.strip('^').replace('\b', '%08').replace('\x10', '%10') for l in text if
+                                  l.startswith(('\t', '^', '\b'))]
+                    item['body_html'] = '<pre>' + '\n'.join(body_lines) + '</pre>'
                 else:
+                    body_lines = [l.strip() for l in text if l.startswith(('\t'))]
                     item['body_html'] = '<p>' + '</p><p>'.join(body_lines) + '</p>'
 
                 # content metadata

@@ -1721,3 +1721,84 @@ Feature: Take Package Publishing
         ]
       }
       """
+
+
+    @auth @vocabulary
+    Scenario: New takes of a correction doesn't carry ed notes
+      Given the "validators"
+      """
+        [{"_id": "publish_text", "act": "publish", "type": "text", "schema":{}},
+         {"_id": "correct_text", "act": "correct", "type": "text", "schema":{}},
+         {"_id": "kill_text", "act": "kill", "type": "text", "schema":{}}]
+      """
+      And "desks"
+      """
+      [{"name": "Sports", "members": [{"user": "#CONTEXT_USER_ID#"}]}]
+      """
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
+      """
+      [{
+        "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }, {
+        "name":"Channel 4","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }]
+      """
+      And we post to "archive" with success
+      """
+      [{
+          "guid": "123",
+          "type": "text",
+          "headline": "Take-1 soccer headline",
+          "abstract": "Take-1 abstract",
+          "task": {
+              "user": "#CONTEXT_USER_ID#"
+          },
+          "body_html": "Take-1",
+          "state": "draft",
+          "slugline": "Take-1 slugline",
+          "urgency": "4",
+          "pubstatus": "usable",
+          "subject":[{"qcode": "17004000", "name": "Statistics"}],
+          "anpa_category": [{"qcode": "A", "name": "Sport"}],
+          "anpa_take_key": "Take"
+      }]
+      """
+      And we post to "/archive/123/move"
+      """
+      [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
+      """
+      Then we get OK response
+      When we publish "123" with "publish" type and "published" state
+      Then we get OK response
+      When we publish "123" with "correct" type and "corrected" state
+      """
+      {
+        "body_html": "corrected", "ednote": "Corrected blah blah"
+      }
+      """
+      When we post to "archive/123/link"
+      """
+      [{}]
+      """
+      Then we get next take as "TAKE2"
+      """
+      {
+          "type": "text",
+          "headline": "Take-1 soccer headline",
+          "slugline": "Take-1 slugline",
+          "anpa_take_key": "Take (reopens)=2",
+          "state": "draft",
+          "original_creator": "#CONTEXT_USER_ID#"
+      }
+      """
+      Then we get no "ednote"

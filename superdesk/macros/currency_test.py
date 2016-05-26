@@ -1,6 +1,7 @@
 
 import unittest
-from .currency import usd_to_aud
+from decimal import Decimal
+from .currency_usd_to_aud import usd_to_aud
 from .currency_usd_to_cad import usd_to_cad
 
 
@@ -8,13 +9,12 @@ class CurrencyTestCase(unittest.TestCase):
 
     def test_usd_to_aud(self):
         item = {'body_html': '$100'}
-        res, diff = usd_to_aud(item)
-        aud = float(res['body_html'][3:])
-        self.assertGreater(aud, 100)  # if this fails, check first the currency ;)
-        self.assertGreater(float(diff['$100'].split(' ')[1]), 100)
+        res, diff = usd_to_aud(item, rate=Decimal(2))
+        self.assertTrue('$100' in diff)
+        self.assertEqual(diff['$100'], '$100 ($A200)')
 
     def test_usd_to_cad(self):
         item = {'body_html': '$100'}
-        res, diff = usd_to_cad(item)
-        cad = float(res['body_html'][3:])
-        self.assertGreater(cad, 100)  # if this fails, check first the currency ;)
+        res, diff = usd_to_cad(item, rate=Decimal(2))
+        self.assertTrue('$100' in diff)
+        self.assertEqual(diff['$100'], '$100 (CAD 200)')

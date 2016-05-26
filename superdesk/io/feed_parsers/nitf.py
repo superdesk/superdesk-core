@@ -16,9 +16,10 @@ from superdesk.io.feed_parsers import XMLFeedParser
 import xml.etree.ElementTree as etree
 from superdesk.errors import ParserError
 from superdesk.utc import utc
-from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE
+from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, FORMAT, FORMATS
 from superdesk.etree import get_word_count
 from superdesk.io.iptc import subject_codes
+from bs4 import BeautifulSoup
 import re
 import superdesk
 logger = logging.getLogger(__name__)
@@ -72,6 +73,7 @@ class NITFFeedParser(XMLFeedParser):
                        },
             'subject': self.get_subjects,
             'body_html': self.get_content,
+            FORMAT: self.get_format,
             'place': self.get_place,
             'keywords': {'xpath': 'head/docdata',
                          'filter': self.get_keywords,
@@ -288,11 +290,48 @@ class NITFFeedParser(XMLFeedParser):
                 subjects.append({'name': subject_codes[qcode], 'qcode': qcode})
         return subjects
 
-    def get_content(self, tree):
+    def get_anpa_format(self, xml):
+        elem = xml.find("head/meta[@name='anpa-format']")
+        if elem is not None:
+            content = elem.get('content')
+            return content.lower() if content is not None else 'x'
+
+    def parse_to_preformatted(self, element):
+        """
+        Extract the contnt of the element as a plain string with line enders
+        :param element:
+        :return:
+        """
         elements = []
-        for elem in tree.find('body/body.content'):
-            elements.append(etree.tostring(elem, encoding='unicode'))
+        soup = BeautifulSoup(element, 'html.parser')
+        for elem in soup.findAll(True):
+            elements.append(elem.get_text() + '\r\n')
         return ''.join(elements)
+
+    def get_content(self, xml):
+        elements = []
+        for elem in xml.find('body/body.content'):
+            elements.append(etree.tostring(elem, encoding='unicode'))
+        content = ''.join(elements)
+        if self.get_anpa_format(xml) == 't':
+            if not content.startswith('<pre>'):
+                # convert content to text in a pre tag
+                content = '<pre>{}</pre>'.format(self.parse_to_preformatted(content))
+            else:
+                content = self.parse_to_preformatted(content)
+        return content
+
+    def get_format(self, xml):
+        anpa_format = self.get_anpa_format(xml)
+        if anpa_format is not None:
+            return FORMATS.PRESERVED if anpa_format == 't' else FORMATS.HTML
+
+        body_elem = xml.find('body/body.content')
+        # if the body contains only a single pre tag we mark the format as preserved
+        if len(body_elem) == 1 and body_elem[0].tag == 'pre':
+            return FORMATS.PRESERVED
+        else:
+            return FORMATS.HTML
 
     def get_place(self, tree):
         elem = tree.find("head/meta/[@name='aap-place']")

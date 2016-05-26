@@ -39,6 +39,9 @@ CONTENT_STATE = namedtuple('CONTENT_STATE', ['DRAFT', 'INGESTED', 'ROUTED', 'FET
                                              'SCHEDULED', 'HOLD'])(*content_state)
 PUBLISH_STATES = {CONTENT_STATE.PUBLISHED, CONTENT_STATE.SCHEDULED, CONTENT_STATE.CORRECTED, CONTENT_STATE.KILLED}
 
+FORMAT = 'format'
+formats = ['HTML', 'preserved']
+FORMATS = namedtuple('FORMAT', ['HTML', 'PRESERVED'])(*formats)
 
 BYLINE = 'byline'
 SIGN_OFF = 'sign_off'
@@ -403,6 +406,12 @@ metadata_schema = {
         'mapping': not_analyzed,
         'nullable': True
     },
+
+    FORMAT: {
+        'type': 'string',
+        'mapping': not_analyzed,
+        'default': FORMATS.HTML
+    }
 }
 
 metadata_schema['lock_user']['versioned'] = False
