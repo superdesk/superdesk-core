@@ -39,7 +39,7 @@ class TakesPackageService():
         :return: _id of the package or None
         """
         takes_package = [package.get(PACKAGE) for package in item.get(LINKED_IN_PACKAGES, [])
-                         if package.get(PACKAGE_TYPE)]
+                         if package.get(PACKAGE_TYPE) == TAKES_PACKAGE]
         if len(takes_package) > 1:
             message = 'Multiple takes found for item: {0}'.format(item[config.ID_FIELD])
             logger.error(message)

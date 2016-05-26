@@ -57,7 +57,7 @@ class EnqueueContent(superdesk.Command):
         calls the transmit function.
         """
         lock_name = get_lock_id('publish', 'enqueue_published')
-        if not lock(lock_name, '', expire=5):
+        if not lock(lock_name, '', expire=30):
             logger.info('Enqueue Task: {} is already running.'.format(lock_name))
             return
 
