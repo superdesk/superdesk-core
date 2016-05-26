@@ -12,9 +12,14 @@ from superdesk.resource import Resource
 
 
 class ProfilingResource(Resource):
-    '''
+    """
     Profiling schema
-    '''
-    schema = {}
-    resource_methods = ['GET', 'DELETE']
-    privileges = {'DELETE': 'profiling'}
+    """
+    schema = {
+        'name': {'type': 'string', 'required': True, 'unique': True},
+        'profiling_data': {'type': 'list', 'required': True}
+    }
+    item_url = 'regex("[\w,.:-]+")'
+    item_methods = ['GET']
+    resource_methods = ['GET', 'POST', 'DELETE']
+    privileges = {'POST': 'profiling', 'DELETE': 'profiling'}

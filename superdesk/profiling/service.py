@@ -9,15 +9,11 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import cProfile
-import io
 import logging
-import os
-import pstats
-import re
 from superdesk.errors import SuperdeskApiError
 from superdesk.services import BaseService
 
-from flask import current_app as app
+from eve.utils import config
 
 
 logger = logging.getLogger(__name__)
@@ -49,68 +45,22 @@ class ProfilingService(BaseService):
     """
     Allows reading of the profiling data
     """
-    LINE_FIELDS = {
-        1: 'ncalls',
-        2: 'tottime',
-        3: 'percall',
-        4: 'cumtime',
-        5: 'percall_cumtime',
-        6: 'filename_lineno',
-        7: 'func_name'
-    }
-    LINE_REGEX = r'\s*([\d\/]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([^\(]+)\(([^\)]+)\)$'
-    DEFAULT_SORT = 'cumulative'
-    SORT_FIELDS = [
-        'calls', 'cumulative', 'cumtime', 'file', 'filename', 'module', 'ncalls', 'pcalls',
-        'line', 'name', 'nfl', 'stdname', 'time', 'tottime'
-    ]
+
+    def on_create(self, docs):
+        for doc in docs:
+            doc[config.ID_FIELD] = doc['name']
 
     def delete(self, lookup):
         """
         Resets the profiling data.
         """
-        profile.disable()
-        if app.config.get('PROFILING_DATA_FILE'):
-            profiling_file = app.config['PROFILING_DATA_FILE']
-            try:
-                os.unlink(profiling_file)
-                profile.dump_stats(profiling_file)
-            except FileNotFoundError:
-                profile.dump_stats(profiling_file)
-            except:
-                logger.warning('Unable to writin profiling file')
-        profile.enable()
+        try:
+            profile.disable()
+            from superdesk.profiling import dump_stats
+            dump_stats(profile, 'rest')
+        finally:
+            profile.enable()
         return True
-
-    def get(self, req, lookup):
-        """
-        Returns the profiling data sorted by given field(s). (see SORT_FIELDS)
-        A profile line contains the fields listed in LINE_FIELDS.
-        """
-        profile_output = io.StringIO()
-        sort_fields = self._get_sort(req)
-        if os.path.isfile(app.config.get('PROFILING_DATA_FILE')):
-            stats_from = app.config['PROFILING_DATA_FILE']
-        else:
-            stats_from = profile
-        ps = pstats.Stats(stats_from, stream=profile_output).sort_stats(*sort_fields)
-        ps.print_stats()
-        lines = profile_output.getvalue().splitlines(True)
-        profile_lines = []
-        for line in lines:
-            processed_line = self._process_line(line)
-            if processed_line:
-                profile_lines.append(processed_line)
-        profile_res = {'sort': sort_fields, 'data': profile_lines}
-        return Cursor([profile_res])
-
-    def _process_line(self, line):
-        """
-        Reads from a text line the profiling fields into a dictionary.
-        """
-        match = re.search(self.LINE_REGEX, line)
-        if match:
-            return {self.LINE_FIELDS[index]: match.group(index) for index in range(1, 8)}
 
     def _get_sort(self, req):
         """

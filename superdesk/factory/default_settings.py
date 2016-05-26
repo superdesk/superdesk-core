@@ -423,4 +423,3 @@ MAX_TRANSMIT_QUERY_LIMIT = int(env('MAX_TRANSMIT_QUERY_LIMIT', 500))
 
 # Code profiling for performance analysis
 ENABLE_PROFILING = False
-PROFILING_DATA_FILE = 'profiling_data'

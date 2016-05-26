@@ -8,23 +8,29 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import logging
-import superdesk
-from flask import current_app as app
-
+import cProfile
 from datetime import timedelta
+import logging
+from superdesk import get_resource_service
+import superdesk
+from superdesk.celery_task_utils import get_lock_id
+from superdesk.errors import PublishHTTPPushClientError
+from superdesk.lock import lock, unlock
+import superdesk.publish
+
+from eve.utils import config, ParsedRequest
+from flask import current_app as app
 from superdesk.celery_app import celery
 from superdesk.utc import utcnow
-import superdesk.publish
-from eve.utils import config, ParsedRequest
-from superdesk.lock import lock, unlock
-from superdesk.celery_task_utils import get_lock_id
-from superdesk import get_resource_service
+
+from superdesk.profiling import ProfileManager
+
 from .publish_queue import QueueState
 
-from superdesk.errors import PublishHTTPPushClientError
 
 logger = logging.getLogger(__name__)
+
+profile = cProfile.Profile()
 
 UPDATE_SCHEDULE_DEFAULT = {'seconds': 10}
 PUBLISH_QUEUE = 'publish_queue'
@@ -44,26 +50,27 @@ def publish():
     Fetches items from publish queue as per the configuration,
     calls the transmit function.
     """
-    lock_name = get_lock_id("Transmit", "Articles")
-    if not lock(lock_name, '', expire=1800):
-        logger.info('Task: {} is already running.'.format(lock_name))
-        return
+    with ProfileManager('publish:transmit'):
+        lock_name = get_lock_id("Transmit", "Articles")
+        if not lock(lock_name, '', expire=1800):
+            logger.info('Task: {} is already running.'.format(lock_name))
+            return
 
-    try:
-        # Query any oustanding transmit requests
-        items = list(get_queue_items())
-        if len(items) > 0:
-            transmit_items(items)
+        try:
+            # Query any oustanding transmit requests
+            items = list(get_queue_items())
+            if len(items) > 0:
+                transmit_items(items)
 
-        # Query any outstanding retry attempts
-        retry_items = list(get_queue_items(True))
-        if len(retry_items) > 0:
-            transmit_items(retry_items)
+            # Query any outstanding retry attempts
+            retry_items = list(get_queue_items(True))
+            if len(retry_items) > 0:
+                transmit_items(retry_items)
 
-    except:
-        logger.exception('Task: {} failed.'.format(lock_name))
-    finally:
-        unlock(lock_name, '')
+        except:
+            logger.exception('Task: {} failed.'.format(lock_name))
+        finally:
+            unlock(lock_name, '')
 
 
 def get_queue_items(retries=False):
