@@ -9,20 +9,16 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-import textwrap
-from io import StringIO
-from bs4 import BeautifulSoup
-from .aap_odbc_formatter import AAPODBCFormatter
-from apps.publish.formatters.aap_formatter_common import map_priority
 from superdesk.publish.formatters import Formatter
+from bs4 import BeautifulSoup
 from superdesk.errors import FormatterError
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, FORMAT, FORMATS
-
+from .aap_odbc_formatter import AAPODBCFormatter
+from io import StringIO
 import json
 
 
-class AAPIpNewsFormatter(Formatter, AAPODBCFormatter):
-
+class AAPNewscentreFormatter(Formatter, AAPODBCFormatter):
     def format(self, article, subscriber, codes=None):
         """
         Constructs a dictionary that represents the parameters passed to the IPNews InsertNews stored procedure
@@ -36,36 +32,25 @@ class AAPIpNewsFormatter(Formatter, AAPODBCFormatter):
                 soup = BeautifulSoup(self.append_body_footer(article), "html.parser")
                 if article.get(FORMAT) == FORMATS.PRESERVED:  # @article_text
                     odbc_item['article_text'] = soup.get_text().replace('\'', '\'\'')
-                    odbc_item['texttab'] = 't'
-                elif article.get(FORMAT, FORMATS.HTML) == FORMATS.HTML:
+                else:
                     text = StringIO()
                     for p in soup.findAll('p'):
-                        text.write('\x19\r\n')
+                        text.write('   \r\n')
                         ptext = p.get_text('\n')
                         for l in ptext.split('\n'):
-                            if len(l) > 80:
-                                text.write(textwrap.fill(l, 80).replace('\n', ' \r\n'))
-                            else:
-                                text.write(l + ' \r\n')
+                            text.write(l + ' \r\n')
                     odbc_item['article_text'] = text.getvalue().replace('\'', '\'\'')
-                    odbc_item['texttab'] = 'x'
 
                 self.add_embargo(odbc_item, article)
 
-                odbc_item['service_level'] = 'a'  # @service_level
-                odbc_item['wordcount'] = article.get('word_count', None)  # @wordcount
-                odbc_item['priority'] = map_priority(article.get('priority'))  # @priority
-
-                # Ta 20/04/16: Keeping selector code mapper section here for the time being
-                # SelectorcodeMapper().map(article, category.get('qcode').upper(),
-                #                          subscriber=subscriber,
-                #                          formatted_item=odbc_item)
+                odbc_item['category'] = odbc_item.get('category', '').upper()
+                odbc_item['selector_codes'] = odbc_item.get('selector_codes', '').upper()
 
                 docs.append((pub_seq_num, json.dumps(odbc_item)))
 
             return docs
         except Exception as ex:
-            raise FormatterError.AAPIpNewsFormatterError(ex, subscriber)
+            raise FormatterError.AAPNewscentreFormatterError(ex, subscriber)
 
     def can_format(self, format_type, article):
-        return format_type == 'AAP IPNEWS' and article[ITEM_TYPE] in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]
+        return format_type == 'AAP NEWSCENTRE' and article[ITEM_TYPE] in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]

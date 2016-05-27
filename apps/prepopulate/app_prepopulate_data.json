@@ -344,7 +344,7 @@
                                 {"name": "AAP SMS", "qcode": "AAP SMS"}]},
                 {"is_active": true, "name": "Broadcast", "qcode": "broadcast",
                     "formats": [{"name": "AAP ANPA", "qcode": "AAP ANPA"}, {"name": "NITF", "qcode": "nitf"}, {"name": "AAP IPNEWS", "qcode": "AAP IPNEWS"},
-                                {"name": "AAP SMS", "qcode": "AAP SMS"}]}
+                                {"name": "AAP SMS", "qcode": "AAP SMS"}, {"name": "AAP NEWSCENTRE", "qcode": "AAP NEWSCENTRE"}]}
             ]
         },
 		"resource": "vocabularies",

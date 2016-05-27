@@ -448,6 +448,10 @@ class FormatterError(SuperdeskPublishError):
     def AAPSMSFormatterError(cls, exception=None, destination=None):
         return FormatterError(7008, exception, destination)
 
+    @classmethod
+    def AAPNewscentreFormatterError(cls, exception=None, destination=None):
+        return FormatterError(7009, exception, destination)
+
 
 class SubscriberError(SuperdeskPublishError):
     _codes = {
