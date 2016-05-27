@@ -400,6 +400,9 @@ DEFAULT_URGENCY_VALUE_FOR_MANUAL_ARTICLES = env('DEFAULT_URGENCY_VALUE_FOR_MANUA
 DEFAULT_GENRE_VALUE_FOR_MANUAL_ARTICLES = env('DEFAULT_GENRE_VALUE_FOR_MANUAL_ARTICLES',
                                               [{'qcode': 'Article', 'name': 'Article (news)'}])
 
+# Defines default value for Priority to be reset for update articles SD-4595
+RESET_PRIORITY_VALUE_FOR_UPDATE_ARTICLES = json.loads(env('RESET_PRIORITY_VALUE_FOR_UPDATE_ARTICLES', 'False').lower())
+
 # Determines if the ODBC publishing mechanism will be used, If enabled then pyodbc must be installed along with it's
 # dependencies
 ODBC_PUBLISH = env('ODBC_PUBLISH', None)

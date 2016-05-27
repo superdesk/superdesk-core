@@ -29,7 +29,7 @@ Feature: Rewrite content
         "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
         "subject":[{"qcode": "17004000", "name": "Statistics"}],
         "body_html": "Test Document body", "genre": [{"name": "Article", "qcode": "Article"}],
-        "flags": {"marked_for_legal": true},
+        "flags": {"marked_for_legal": true}, "priority": 2, "urgency": 2,
         "body_footer": "Suicide Call Back Service 1300 659 467",
         "place": [{"qcode" : "ACT", "world_region" : "Oceania", "country" : "Australia",
         "name" : "ACT", "state" : "Australian Capital Territory"}],
@@ -93,7 +93,7 @@ Feature: Rewrite content
       """
       {"_items" : [{"_id": "#REWRITE_ID#", "anpa_take_key": "update", "rewrite_of": "#archive.123.take_package#",
         "task": {"desk": "#desks._id#", "stage": "#desks.working_stage#"}, "genre": [{"name": "Article", "qcode": "Article"}],
-        "flags": {"marked_for_legal": true},
+        "flags": {"marked_for_legal": true}, "priority": 2, "urgency": 2,
         "body_footer": "Suicide Call Back Service 1300 659 467",
         "body_html": "Test Document body",
         "company_codes" : [{"qcode" : "1PG", "security_exchange" : "ASX", "name" : "1-PAGE LIMITED"}],
@@ -791,7 +791,7 @@ Feature: Rewrite content
         "name" : "ACT", "state" : "Australian Capital Territory"}],
         "company_codes" : [{"qcode" : "1PG", "security_exchange" : "ASX", "name" : "1-PAGE LIMITED"}]
       },{"guid": "456", "type": "text", "headline": "test",
-        "_current_version": 1, "state": "submitted",
+        "_current_version": 1, "state": "submitted", "priority": 2,
          "subject":[{"qcode": "01000000", "name": "arts, culture and entertainment"}]}]
       """
       When we post to "/stages"
@@ -839,7 +839,7 @@ Feature: Rewrite content
       When we rewrite "123"
       """
       {"update": {"_id": "456", "type": "text", "headline": "test",
-      "_current_version": 1, "state": "submitted",
+      "_current_version": 1, "state": "submitted", "priority": 2,
       "subject":[{"qcode": "01000000", "name": "arts, culture and entertainment"}]}}
       """
       When we get "/published"
@@ -851,7 +851,7 @@ Feature: Rewrite content
       When we get "/archive/456"
       Then we get existing resource
       """
-      {"_id": "456", "anpa_take_key": "update",
+      {"_id": "456", "anpa_take_key": "update", "priority": 2,
        "rewrite_of": "#archive.123.take_package#",
        "subject":[{"qcode": "17004000", "name": "Statistics"},
        {"qcode": "01000000", "name": "arts, culture and entertainment"}]}
@@ -1935,3 +1935,194 @@ Feature: Rewrite content
             ]
         }
         """
+
+    @auth
+    Scenario: Rewrite a published content with reset priority flag
+      Given the "validators"
+      """
+        [
+        {
+            "schema": {},
+            "type": "text",
+            "act": "publish",
+            "_id": "publish_text"
+        },
+        {
+            "_id": "publish_composite",
+            "act": "publish",
+            "type": "composite",
+            "schema": {}
+        }
+        ]
+      """
+      And "desks"
+      """
+      [{"name": "Sports"}]
+      """
+      And "archive"
+      """
+      [{"guid": "123", "type": "text", "headline": "test", "_current_version": 1, "state": "fetched",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "subject":[{"qcode": "17004000", "name": "Statistics"}],
+        "body_html": "Test Document body", "genre": [{"name": "Article", "qcode": "Article"}],
+        "flags": {"marked_for_legal": true}, "priority": 2, "urgency": 2,
+        "body_footer": "Suicide Call Back Service 1300 659 467",
+        "place": [{"qcode" : "ACT", "world_region" : "Oceania", "country" : "Australia",
+        "name" : "ACT", "state" : "Australian Capital Territory"}],
+        "company_codes" : [{"qcode" : "1PG", "security_exchange" : "ASX", "name" : "1-PAGE LIMITED"}]
+      }]
+      """
+      When we post to "/stages"
+      """
+      [
+        {
+        "name": "another stage",
+        "description": "another stage",
+        "task_status": "in_progress",
+        "desk": "#desks._id#"
+        }
+      ]
+      """
+      And we post to "/archive/123/move"
+        """
+        [{"task": {"desk": "#desks._id#", "stage": "#stages._id#"}}]
+        """
+      Then we get OK response
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
+      """
+      {
+        "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
+      And we publish "#archive._id#" with "publish" type and "published" state
+      Then we get OK response
+      And we get existing resource
+      """
+      {"_current_version": 3, "state": "published", "task":{"desk": "#desks._id#", "stage": "#stages._id#"}}
+      """
+      And we reset priority flag for updated articles
+      When we rewrite "123"
+      """
+      {"desk_id": "#desks._id#"}
+      """
+      Then we get OK response
+      When we get "/archive/#REWRITE_ID#"
+      Then we get existing resource
+      """
+      {"_id": "#REWRITE_ID#", "priority": 6, "urgency": 2}
+      """
+
+    @auth
+    Scenario: Associate a story as update with reset priority flag
+      Given the "validators"
+      """
+        [
+        {
+            "schema": {},
+            "type": "text",
+            "act": "publish",
+            "_id": "publish_text"
+        },
+        {
+            "_id": "publish_composite",
+            "act": "publish",
+            "type": "composite",
+            "schema": {}
+        }
+        ]
+      """
+      And "desks"
+      """
+      [{"name": "Sports"}]
+      """
+      And "archive"
+      """
+      [{"guid": "123", "type": "text", "headline": "test", "_current_version": 1, "state": "fetched",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "subject":[{"qcode": "17004000", "name": "Statistics"}],
+        "body_html": "Test Document body", "genre": [{"name": "Article", "value": "Article"}],
+        "flags": {"marked_for_legal": true},
+        "body_footer": "Suicide Call Back Service 1300 659 467",
+        "place": [{"qcode" : "ACT", "world_region" : "Oceania", "country" : "Australia",
+        "name" : "ACT", "state" : "Australian Capital Territory"}],
+        "company_codes" : [{"qcode" : "1PG", "security_exchange" : "ASX", "name" : "1-PAGE LIMITED"}]
+      },{"guid": "456", "type": "text", "headline": "test",
+        "_current_version": 1, "state": "submitted", "priority": 2,
+         "subject":[{"qcode": "01000000", "name": "arts, culture and entertainment"}]}]
+      """
+      When we post to "/stages"
+      """
+      [
+        {
+        "name": "another stage",
+        "description": "another stage",
+        "task_status": "in_progress",
+        "desk": "#desks._id#"
+        }
+      ]
+      """
+      And we post to "/archive/123/move"
+        """
+        [{"task": {"desk": "#desks._id#", "stage": "#stages._id#"}}]
+        """
+      Then we get OK response
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
+      """
+      {
+        "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
+      And we publish "123" with "publish" type and "published" state
+      Then we get OK response
+      And we get existing resource
+      """
+      {"_current_version": 3, "state": "published", "task":{"desk": "#desks._id#", "stage": "#stages._id#"}}
+      """
+      When we get "/published"
+      Then we get existing resource
+      """
+      {"_items" : [{"_id": "123", "guid": "123", "headline": "test", "_current_version": 3, "state": "published",
+        "task": {"desk": "#desks._id#", "stage": "#stages._id#", "user": "#CONTEXT_USER_ID#"}}]}
+      """
+      And we reset priority flag for updated articles
+      When we rewrite "123"
+      """
+      {"update": {"_id": "456", "type": "text", "headline": "test",
+      "_current_version": 1, "state": "submitted", "priority": 2,
+      "subject":[{"qcode": "01000000", "name": "arts, culture and entertainment"}]}}
+      """
+      When we get "/published"
+      Then we get existing resource
+      """
+      {"_items" : [{"_id": "123", "rewritten_by": "456"},
+                   {"package_type": "takes", "rewritten_by": "456"}]}
+      """
+      When we get "/archive/456"
+      Then we get existing resource
+      """
+      {"_id": "456", "anpa_take_key": "update",
+       "rewrite_of": "#archive.123.take_package#", "priority": 6,
+       "subject":[{"qcode": "17004000", "name": "Statistics"},
+       {"qcode": "01000000", "name": "arts, culture and entertainment"}]}
+      """
+      When we get "/archive/123"
+      Then we get existing resource
+      """
+      {"_id": "123", "rewritten_by": "456", "place": [{"qcode" : "ACT"}]}
+      """

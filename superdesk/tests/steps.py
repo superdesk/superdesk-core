@@ -2091,3 +2091,8 @@ def we_get_text_in_field(context, text, field):
         assert text in resp.get(field, ''), '{} contains text: {}. Text To find: {}'.format(field,
                                                                                             resp.get(field, ''),
                                                                                             text)
+
+
+@then('we reset priority flag for updated articles')
+def we_get_reset_default_priority_for_updated_articles(context):
+    context.app.config['RESET_PRIORITY_VALUE_FOR_UPDATE_ARTICLES'] = True
