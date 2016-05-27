@@ -34,5 +34,5 @@ class MilesTestCase(unittest.TestCase):
         self.assertEqual(diff['12.5 mi'], '12.5 mi (20.1 km)')
         self.assertEqual(diff['12.5mi'], '12.5mi (20.1 km)')
         self.assertEqual(diff['12.5-mi'], '12.5-mi (20.1 km)')
-        self.assertEqual(diff['12,500 miles'], '12,500 miles (20,116.8 km)')
-        self.assertEqual(diff['100-12500 Miles'], '100-12500 Miles (160.9-20,116.8 km)')
+        self.assertEqual(diff['12,500 miles'], '12,500 miles (20,117 km)')
+        self.assertEqual(diff['100-12500 Miles'], '100-12500 Miles (160.9-20,117 km)')

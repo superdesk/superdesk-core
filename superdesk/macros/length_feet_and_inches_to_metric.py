@@ -100,7 +100,7 @@ def format_output(original, converted, symbol):
 def feet_inches_to_metric(item, **kwargs):
     """Converts distance values from feet and inches to metric"""
 
-    regex = r'(\d+-?,?\.?\d*)((\s*)|(-))(((\'|ft|[fF]eet|[fF]oot)\s?(\d+)?\s?("|in)?)|(\"|[iI]nches|[iI]nch|in))'
+    regex = r'(\d+-?,?\.?\d*)((\s*)|(-))(((\'|ft\.?|[fF]eet|[fF]oot)\s?(\d+)?\s?("|in)?)|(\"|[iI]nches|[iI]nch|in))'
     return do_conversion(item, convert, format_output, regex)
 
 

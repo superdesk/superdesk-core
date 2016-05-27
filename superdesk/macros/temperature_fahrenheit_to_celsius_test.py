@@ -19,6 +19,7 @@ class TemperatureTestCase(unittest.TestCase):
                'Todays temperature is 15.7 Fahrenheit so it is hot. ' \
                'Todays temperature is 15.7 F so it is hot. ' \
                'Todays temperature is 15.7 °F so it is hot. ' \
+               'Todays temperature is 15-17 °F so it is hot. ' \
 
         item = {'body_html': text}
         res, diff = fahrenheit_to_celsius(item)
@@ -26,3 +27,4 @@ class TemperatureTestCase(unittest.TestCase):
         self.assertEqual(diff['15.7 Fahrenheit'], '15.7 Fahrenheit (-9.1 degrees Celsius)')
         self.assertEqual(diff['15.7 F'], '15.7 F (-9.1 degrees Celsius)')
         self.assertEqual(diff['15.7 °F'], '15.7 °F (-9.1 degrees Celsius)')
+        self.assertEqual(diff['15-17 °F'], '15-17 °F (-9.44--8.33 degrees Celsius)')

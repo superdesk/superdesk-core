@@ -11,6 +11,8 @@
 from . import unit_base
 from decimal import Decimal
 
+METERS_SYMBOL = 'meters'
+
 
 def convert(yards, precision=0):
     """
@@ -22,7 +24,7 @@ def convert(yards, precision=0):
     yard_to_meter_rate = Decimal(0.9144)
     yards_list = yards.split('-')
     meters = [unit_base.format_converted((Decimal(y) * yard_to_meter_rate), precision) for y in yards_list]
-    return '-'.join(meters)
+    return '-'.join(meters), METERS_SYMBOL
 
 
 def format_output(original, converted, symbol):
@@ -34,7 +36,7 @@ def yards_to_metric(item, **kwargs):
     """Converts distance values from yard to meters"""
 
     regex = r'(\d+-?,?\.?\d*)((\s*)|(-))((yd)|([yY]ards?))\b'
-    return unit_base.do_conversion(item, convert, format_output, 'meters', regex, match_index=0, value_index=1)
+    return unit_base.do_conversion(item, convert, format_output, regex, match_index=0, value_index=1)
 
 
 name = 'yards_to_metric'

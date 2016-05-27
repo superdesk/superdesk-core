@@ -11,6 +11,8 @@
 from . import unit_base
 from decimal import Decimal
 
+KILOMETER_SYMBOL = 'km'
+
 
 def convert(miles, **kwargs):
     """
@@ -21,7 +23,7 @@ def convert(miles, **kwargs):
     miles_to_km_rate = Decimal(1.609344)
     miles_list = miles.split('-')
     kilometers = [unit_base.format_converted((Decimal(m) * miles_to_km_rate), precision=1) for m in miles_list]
-    return '-'.join(kilometers)
+    return '-'.join(kilometers), KILOMETER_SYMBOL
 
 
 def format_output(original, converted, symbol):
@@ -30,10 +32,10 @@ def format_output(original, converted, symbol):
 
 
 def miles_to_metric(item, **kwargs):
-    """Converts distance values from yard to meters"""
+    """Converts distance values from miles to metric"""
 
     regex = r'(\d+-?,?\.?\d*)((\s*)|(-))((mi)|([mM]iles?))\b'
-    return unit_base.do_conversion(item, convert, format_output, 'km', regex, match_index=0, value_index=1)
+    return unit_base.do_conversion(item, convert, format_output, regex, match_index=0, value_index=1)
 
 
 name = 'miles_to_metric'

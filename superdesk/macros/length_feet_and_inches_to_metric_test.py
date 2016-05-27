@@ -19,6 +19,7 @@ class FeetInchesTestCase(unittest.TestCase):
                His height is 5'10 today
                His height is 5' 10 today
                His height is 5 ft 10 today
+               His height is 5 ft. 10 today
                His height is 5 ft 10 in today
                His height is 5' 10" today
                His height is 5' today
@@ -39,6 +40,7 @@ class FeetInchesTestCase(unittest.TestCase):
         self.assertEqual(diff['5\'10'], '5\'10 (1.78 m)')
         self.assertEqual(diff['5\' 10'], '5\' 10 (1.78 m)')
         self.assertEqual(diff['5 ft 10'], '5 ft 10 (1.78 m)')
+        self.assertEqual(diff['5 ft. 10'], '5 ft. 10 (1.78 m)')
         self.assertEqual(diff['5 ft 10 in'], '5 ft 10 in (1.78 m)')
         self.assertEqual(diff['5\' 10"'], '5\' 10" (1.78 m)')
         self.assertEqual(diff['5\''], '5\' (1.52 m)')
