@@ -390,7 +390,7 @@ class EnqueueService:
         queued_items = list(get_resource_service('publish_queue').get(req=req, lookup=lookup))
         if len(queued_items) > 0:
             subscriber_ids = {queued_item['subscriber_id'] for queued_item in queued_items}
-            subscriber_codes = {q['subscriber_id']: q['codes'] for q in queued_items}
+            subscriber_codes = {q['subscriber_id']: q.get('codes', []) for q in queued_items}
             query = {'$and': [{config.ID_FIELD: {'$in': list(subscriber_ids)}}]}
             subscribers = list(get_resource_service('subscribers').get(req=None, lookup=query))
         return subscribers, subscriber_codes
