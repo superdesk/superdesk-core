@@ -10,6 +10,7 @@
 
 import logging
 from flask import request
+from eve.utils import config
 from superdesk import get_resource_service, Service, config
 from superdesk.metadata.item import ITEM_STATE, EMBARGO, CONTENT_STATE, CONTENT_TYPE, ITEM_TYPE, PUBLISH_STATES
 from superdesk.resource import Resource, build_custom_hateoas
@@ -151,6 +152,11 @@ class ArchiveRewriteService(Service):
         for field in fields:
                 if original.get(field):
                     rewrite[field] = original[field]
+
+        # SD-4595 - Default value for the update article to be set based on the system config.
+        if config.RESET_PRIORITY_VALUE_FOR_UPDATE_ARTICLES:
+            # if True then reset to the default priority value.
+            rewrite['priority'] = int(config.DEFAULT_PRIORITY_VALUE_FOR_MANUAL_ARTICLES)
 
         if digital:  # check if there's digital
             rewrite['rewrite_of'] = digital[config.ID_FIELD]
