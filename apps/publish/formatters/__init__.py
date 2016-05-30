@@ -9,4 +9,3 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import apps.publish.formatters.newsml_g2_formatter  # NOQA
-
