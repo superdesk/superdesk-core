@@ -92,16 +92,11 @@ def do_conversion(item, converter, formatter, search_param):
     return (item, diff)
 
 
-def format_output(original, converted, symbol):
-    """ Returns the replacement string for the given original value """
-    return '{} ({} {})'.format(original, converted, symbol)
-
-
 def feet_inches_to_metric(item, **kwargs):
     """Converts distance values from feet and inches to metric"""
 
     regex = r'(\d+-?,?\.?\d*)((\s*)|(-))(((\'|ft\.?|[fF]eet|[fF]oot)\s?(\d+)?\s?("|in)?)|(\"|[iI]nches|[iI]nch|in))'
-    return do_conversion(item, convert, format_output, regex)
+    return do_conversion(item, convert, unit_base.format_output, regex)
 
 
 name = 'feet_inches_to_metric'

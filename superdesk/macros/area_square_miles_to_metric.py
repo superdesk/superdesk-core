@@ -35,16 +35,11 @@ def convert(square_miles, precision=1):
     return '-'.join(square_meter_list), symbol
 
 
-def format_output(original, converted, symbol):
-    """ Returns the replacement string for the given original value """
-    return '{} ({} {})'.format(original, converted, symbol)
-
-
 def square_mile_to_metric(item, **kwargs):
     """Converts from square miles to metric"""
 
     regex = r'(\d+-?,?\.?\d*)((\s*)|(-))((sq\.?\s*-?mi)|([sS]quare\s*-?[mM]iles?)|([sS]quare\s*-?mi))\b'
-    return unit_base.do_conversion(item, convert, format_output, regex, match_index=0, value_index=1)
+    return unit_base.do_conversion(item, convert, unit_base.format_output, regex, match_index=0, value_index=1)
 
 
 name = 'square_mile_to_metric'

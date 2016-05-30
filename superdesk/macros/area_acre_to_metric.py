@@ -35,16 +35,11 @@ def convert(acres, precision=0):
     return '-'.join(square_meter_list), symbol
 
 
-def format_output(original, converted, symbol):
-    """ Returns the replacement string for the given original value """
-    return '{} ({} {})'.format(original, converted, symbol)
-
-
 def acre_to_metric(item, **kwargs):
     """Converts acre values to metric"""
 
     regex = r'(\d+-?,?\.?\d*)((\s*)|(-))((ac)|([aA]cres?))\b'
-    return unit_base.do_conversion(item, convert, format_output, regex, match_index=0, value_index=1)
+    return unit_base.do_conversion(item, convert, unit_base.format_output, regex, match_index=0, value_index=1)
 
 
 name = 'acre_to_metric'

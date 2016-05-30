@@ -27,16 +27,11 @@ def convert(yards, precision=0):
     return '-'.join(meters), METERS_SYMBOL
 
 
-def format_output(original, converted, symbol):
-    """ Returns the replacement string for the given original value """
-    return '{} ({} {})'.format(original, converted, symbol)
-
-
 def yards_to_metric(item, **kwargs):
     """Converts distance values from yard to meters"""
 
     regex = r'(\d+-?,?\.?\d*)((\s*)|(-))((yd)|([yY]ards?))\b'
-    return unit_base.do_conversion(item, convert, format_output, regex, match_index=0, value_index=1)
+    return unit_base.do_conversion(item, convert, unit_base.format_output, regex, match_index=0, value_index=1)
 
 
 name = 'yards_to_metric'

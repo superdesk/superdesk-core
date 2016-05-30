@@ -26,16 +26,11 @@ def convert(miles, **kwargs):
     return '-'.join(kilometers), KILOMETER_SYMBOL
 
 
-def format_output(original, converted, symbol):
-    """ Returns the replacement string for the given original value """
-    return '{} ({} {})'.format(original, converted, symbol)
-
-
 def nautical_miles_to_metric(item, **kwargs):
     """Converts distance values from yard to meters"""
 
     regex = r'(\d+-?,?\.?\d*)((\s*)|(-))((nmi)|([nN]autical [mM]iles?))\b'
-    return unit_base.do_conversion(item, convert, format_output, regex, match_index=0, value_index=1)
+    return unit_base.do_conversion(item, convert, unit_base.format_output, regex, match_index=0, value_index=1)
 
 
 name = 'nautical_miles_to_metric'
