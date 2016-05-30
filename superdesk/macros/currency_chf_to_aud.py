@@ -12,32 +12,32 @@ import os
 from . import currency_base
 from decimal import Decimal
 
-EURO_TO_AUD = Decimal('1.56')  # backup
+CHF_TO_AUD = Decimal('1.40')  # backup
 
 
 def get_rate():
-    """Get GBP to AUD rate."""
+    """Get CHF to AUD rate."""
     try:
-        return currency_base.get_rate('EUR', 'AUD')
+        return currency_base.get_rate('CHF', 'AUD')
     except:
-        return EURO_TO_AUD
+        return CHF_TO_AUD
 
 
-def euro_to_aud(item, **kwargs):
-    """Convert AUD to GBP."""
+def chf_to_aud(item, **kwargs):
+    """Convert CHF to AUD."""
 
     rate = kwargs.get('rate') or get_rate()
     if os.environ.get('BEHAVE_TESTING'):
-        rate = EURO_TO_AUD
+        rate = CHF_TO_AUD
 
-    regex = r'([€]|(EUR))\s*\-?\s*\(?(((\d{1,3}((\,\d{3})*|\d*))?' \
+    regex = r'((Fr)|(CHF))\s*\-?\s*\(?(((\d{1,3}((\,\d{3})*|\d*))?' \
             r'(\.\d{1,4})?)|((\d{1,3}((\,\d{3})*|\d*))(\.\d{0,4})?))\)?([mb])?'
 
     return currency_base.do_conversion(item, rate, '$A', regex, match_index=0, value_index=4)
 
 
-name = 'euro_to_aud'
-label = 'Convert EURO to AUD'
-callback = euro_to_aud
+name = 'chf_to_aud'
+label = 'Convert CHF to AUD'
+callback = chf_to_aud
 access_type = 'frontend'
 action_type = 'interactive'

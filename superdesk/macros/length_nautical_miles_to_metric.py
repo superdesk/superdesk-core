@@ -27,7 +27,7 @@ def convert(miles, **kwargs):
 
 
 def nautical_miles_to_metric(item, **kwargs):
-    """Converts distance values from yard to meters"""
+    """Converts distance values from nautical miles to metric"""
 
     regex = r'(\d+-?,?\.?\d*)((\s*)|(-))((nmi)|([nN]autical [mM]iles?))\b'
     return unit_base.do_conversion(item, convert, unit_base.format_output, regex, match_index=0, value_index=1)
@@ -35,7 +35,6 @@ def nautical_miles_to_metric(item, **kwargs):
 
 name = 'nautical_miles_to_metric'
 label = 'Length nautical miles to kilometers'
-shortcut = 'n'
 callback = nautical_miles_to_metric
 access_type = 'frontend'
 action_type = 'interactive'

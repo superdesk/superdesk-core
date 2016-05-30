@@ -37,7 +37,6 @@ def fahrenheit_to_celsius(item, **kwargs):
 
 name = 'fahrenheit_to_celsius'
 label = 'Temperature °F to °C'
-shortcut = 'f'
 callback = fahrenheit_to_celsius
 access_type = 'frontend'
 action_type = 'interactive'

@@ -44,7 +44,6 @@ def acre_to_metric(item, **kwargs):
 
 name = 'acre_to_metric'
 label = 'Area acres to metric'
-shortcut = 'a'
 callback = acre_to_metric
 access_type = 'frontend'
 action_type = 'interactive'

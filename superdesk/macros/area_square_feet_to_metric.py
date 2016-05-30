@@ -44,7 +44,6 @@ def square_feet_to_metric(item, **kwargs):
 
 name = 'square_feet_to_metric'
 label = 'Area square feet to metric'
-shortcut = 's'
 callback = square_feet_to_metric
 access_type = 'frontend'
 action_type = 'interactive'

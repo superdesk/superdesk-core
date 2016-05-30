@@ -44,7 +44,6 @@ def square_inch_to_metric(item, **kwargs):
 
 name = 'square_inch_to_metric'
 label = 'Area square inch to metric'
-shortcut = 's'
 callback = square_inch_to_metric
 access_type = 'frontend'
 action_type = 'interactive'

@@ -16,7 +16,7 @@ CUBIC_METER_SYMBOL = 'cubic meter'
 def convert(cubic_feet, precision=1):
     """
     Converts from cubic feet to cubic m
-    :param acres: Cubic feet value in string
+    :param cubic_feet: Cubic feet value in string
     :return: cubic m value in string, and the symbol
     """
     cf_to_cm_rate = Decimal(0.0283168)
@@ -27,7 +27,7 @@ def convert(cubic_feet, precision=1):
 
 
 def cubic_feet_to_metric(item, **kwargs):
-    """Converts square feet values to metric"""
+    """Converts cubic feet values to metric"""
 
     regex = r'(\d+-?,?\.?\d*)((\s*)|(-))((cu\.?\s*-?ft)|(cb\.?\s*-?ft)|([cC]ubic\s*-?(([fF]((ee)|(oo))t)|(ft))))\b'
     return unit_base.do_conversion(item, convert, unit_base.format_output, regex, match_index=0, value_index=1)
@@ -35,7 +35,6 @@ def cubic_feet_to_metric(item, **kwargs):
 
 name = 'cubic_feet_to_metric'
 label = 'Volume cubic feet to metric'
-shortcut = 's'
 callback = cubic_feet_to_metric
 access_type = 'frontend'
 action_type = 'interactive'

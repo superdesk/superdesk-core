@@ -36,7 +36,7 @@ def convert(square_yards, precision=1):
 
 
 def square_yard_to_metric(item, **kwargs):
-    """Converts temperature values from fahrenheit to celsius"""
+    """Converts area values from sq-yd to metric"""
 
     regex = r'(\d+-?,?\.?\d*)((\s*)|(-))((sq\.?\s*-?yds?)|([sS]quare\s*-?[yY]ards?)|([sS]quare\s*-?yds?))\b'
     return unit_base.do_conversion(item, convert, unit_base.format_output, regex, match_index=0, value_index=1)
@@ -44,7 +44,6 @@ def square_yard_to_metric(item, **kwargs):
 
 name = 'square_yard_to_metric'
 label = 'Area square yards to metric'
-shortcut = 's'
 callback = square_yard_to_metric
 access_type = 'frontend'
 action_type = 'interactive'

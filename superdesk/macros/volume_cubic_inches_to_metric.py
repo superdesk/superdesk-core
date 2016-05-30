@@ -17,7 +17,7 @@ CUBIC_CENTIMETER_SYMBOL = 'cubic centimeter'
 def convert(cubic_inches, precision=1):
     """
     Converts from cubic inch to cubic m or cubic cm
-    :param acres: Cubic inch value in string
+    :param cubic_inches: Cubic inch value in string
     :return: cubic m/cm value in string, and the symbol
     """
     ci_to_ccm_rate = Decimal(16.3871)
@@ -37,7 +37,7 @@ def convert(cubic_inches, precision=1):
 
 
 def cubic_inches_to_metric(item, **kwargs):
-    """Converts square feet values to metric"""
+    """Converts cubic inch values to metric"""
 
     regex = r'(\d+-?,?\.?\d*)((\s*)|(-))((cu\.?\s*-?in)|(cb\.?\s*-?in)|([cC]ubic\s*-?([iI]nches|[iI]nch|in)))\b'
     return unit_base.do_conversion(item, convert, unit_base.format_output, regex, match_index=0, value_index=1)
@@ -45,7 +45,6 @@ def cubic_inches_to_metric(item, **kwargs):
 
 name = 'cubic_inches_to_metric'
 label = 'Volume cubic inches to metric'
-shortcut = 's'
 callback = cubic_inches_to_metric
 access_type = 'frontend'
 action_type = 'interactive'

@@ -38,7 +38,7 @@ def do_conversion(item, converter, formatter, search_param, match_index, value_i
     Performs the conversion
     :param item: story
     :param converter: function to perform conversion
-    :param symbol: symbol or prefix to be used in the results
+    :param formatter: function to do string formatting
     :param search_param: search parameter to locate the original value.  It should
     be a valid regular expression pattern, and not just an arbitrary string.
     :param match_index: int index of groups used in matching string

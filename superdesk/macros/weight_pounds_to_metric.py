@@ -16,7 +16,7 @@ CUBIC_METER_SYMBOL = 'kg'
 def convert(pounds, precision=1):
     """
     Converts from pounds to kg
-    :param acres: Pounds value in string
+    :param pounds: Pounds value in string
     :return: Kg value in string, and the symbol
     """
     lb_to_kg_rate = Decimal(0.453592)
@@ -27,7 +27,7 @@ def convert(pounds, precision=1):
 
 
 def pounds_to_metric(item, **kwargs):
-    """Converts square feet values to metric"""
+    """Converts pound values to metric"""
 
     regex = r'(\d+-?,?\.?\d*)((\s*)|(-))((lbs?)|([pP]ounds?))\b'
     return unit_base.do_conversion(item, convert, unit_base.format_output, regex, match_index=0, value_index=1)
@@ -35,7 +35,6 @@ def pounds_to_metric(item, **kwargs):
 
 name = 'pounds_to_metric'
 label = 'Weight pounds to metric'
-shortcut = 's'
 callback = pounds_to_metric
 access_type = 'frontend'
 action_type = 'interactive'

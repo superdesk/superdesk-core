@@ -16,7 +16,7 @@ CUBIC_METER_SYMBOL = 'cubic meter'
 def convert(cubic_yard, precision=1):
     """
     Converts from cubic yard to cubic m
-    :param acres: Cubic yard value in string
+    :param cubic_yard: Cubic yard value in string
     :return: cubic m value in string, and the symbol
     """
     cy_to_cm_rate = Decimal(0.764555)
@@ -27,7 +27,7 @@ def convert(cubic_yard, precision=1):
 
 
 def cubic_yard_to_metric(item, **kwargs):
-    """Converts square feet values to metric"""
+    """Converts cubic yard values to metric"""
 
     regex = r'(\d+-?,?\.?\d*)((\s*)|(-))((cu\.?\s*-?yds?)|(cb\.?\s*-?yds?)|([cC]ubic\s*-?([yY]ards?|yds?)))\b'
     return unit_base.do_conversion(item, convert, unit_base.format_output, regex, match_index=0, value_index=1)
@@ -35,7 +35,6 @@ def cubic_yard_to_metric(item, **kwargs):
 
 name = 'cubic_yard_to_metric'
 label = 'Volume cubic yard to metric'
-shortcut = 's'
 callback = cubic_yard_to_metric
 access_type = 'frontend'
 action_type = 'interactive'

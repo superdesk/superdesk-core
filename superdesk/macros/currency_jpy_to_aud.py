@@ -12,32 +12,32 @@ import os
 from . import currency_base
 from decimal import Decimal
 
-EURO_TO_AUD = Decimal('1.56')  # backup
+JPY_TO_AUD = Decimal('0.013')  # backup
 
 
 def get_rate():
-    """Get GBP to AUD rate."""
+    """Get JPY to AUD rate."""
     try:
-        return currency_base.get_rate('EUR', 'AUD')
+        return currency_base.get_rate('JPY', 'AUD')
     except:
-        return EURO_TO_AUD
+        return JPY_TO_AUD
 
 
-def euro_to_aud(item, **kwargs):
-    """Convert AUD to GBP."""
+def yen_to_aud(item, **kwargs):
+    """Convert JPY to AUD."""
 
     rate = kwargs.get('rate') or get_rate()
     if os.environ.get('BEHAVE_TESTING'):
-        rate = EURO_TO_AUD
+        rate = JPY_TO_AUD
 
-    regex = r'([€]|(EUR))\s*\-?\s*\(?(((\d{1,3}((\,\d{3})*|\d*))?' \
+    regex = r'([¥]|(JPY))\s*\-?\s*\(?(((\d{1,3}((\,\d{3})*|\d*))?' \
             r'(\.\d{1,4})?)|((\d{1,3}((\,\d{3})*|\d*))(\.\d{0,4})?))\)?([mb])?'
 
     return currency_base.do_conversion(item, rate, '$A', regex, match_index=0, value_index=4)
 
 
-name = 'euro_to_aud'
-label = 'Convert EURO to AUD'
-callback = euro_to_aud
+name = 'yen_to_aud'
+label = 'Convert JPY to AUD'
+callback = yen_to_aud
 access_type = 'frontend'
 action_type = 'interactive'

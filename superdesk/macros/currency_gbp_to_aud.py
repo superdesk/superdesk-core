@@ -38,7 +38,6 @@ def gbp_to_aud(item, **kwargs):
 
 name = 'gbp_to_aud'
 label = 'Convert GBP to AUD'
-shortcut = 'g'
 callback = gbp_to_aud
 access_type = 'frontend'
 action_type = 'interactive'

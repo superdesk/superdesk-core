@@ -101,7 +101,6 @@ def feet_inches_to_metric(item, **kwargs):
 
 name = 'feet_inches_to_metric'
 label = 'Length feet-inches to metric'
-shortcut = 'f'
 callback = feet_inches_to_metric
 access_type = 'frontend'
 action_type = 'interactive'

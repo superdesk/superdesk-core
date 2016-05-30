@@ -44,7 +44,6 @@ def square_mile_to_metric(item, **kwargs):
 
 name = 'square_mile_to_metric'
 label = 'Area square miles to metric'
-shortcut = 'm'
 callback = square_mile_to_metric
 access_type = 'frontend'
 action_type = 'interactive'
