@@ -32,7 +32,6 @@ from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, GUID_TAG, SIGN_OFF,
 from superdesk.metadata.utils import generate_guid
 from superdesk.users.errors import UserNotRegisteredException
 from superdesk.utc import utcnow, get_date
-from superdesk.locators.locators import find_cities
 from apps.archive.common import format_dateline_to_locmmmddsrc
 
 
@@ -371,7 +370,7 @@ class EMailRFC822FeedParser(EmailFeedParser):
 
                             default_source = app.config.get('DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES')
                             city = mail_item.get('Dateline', '')
-                            cities = find_cities()
+                            cities = app.locators.find_cities()
                             located = [c for c in cities if c['city'].lower() == city.lower()]
                             item.setdefault('dateline', {})
                             item['dateline']['located'] = located[0] if len(located) > 0 else {'city_code': city,
