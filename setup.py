@@ -39,7 +39,7 @@ install_requires = [
     'boto3>=1.1.4',
     'websockets>=2.6',
     'mongolock>=1.3.4',
-    'PyYAML>=3.11',
+    'PyYAML>=3.11'
 ]
 
 package_data = {

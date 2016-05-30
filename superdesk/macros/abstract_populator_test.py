@@ -10,7 +10,7 @@
 
 
 import unittest
-from superdesk.macros.abstract_populator import populate
+from .abstract_populator import populate
 
 
 class AbstractPopulatorTestCase(unittest.TestCase):
