@@ -110,11 +110,11 @@ class NITFFeedParser(XMLFeedParser):
     def _parse_xpath(self, xpath):
         """parse xpath and handle final attribute"""
         last_idx = xpath.rfind('/')
-        last = xpath[last_idx + 1:].rstrip()
         if last_idx == -1:
             msg = "No path separator found in xpath {}, ignoring it".format(xpath)
             logger.warn(msg)
             raise ValueError(msg)
+        last = xpath[last_idx + 1:].rstrip()
         if last.startswith('@'):
             # an attribute is requested
             return {'xpath': xpath[:last_idx], 'attribute': last[1:]}
