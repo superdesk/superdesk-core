@@ -17,7 +17,7 @@ install_requires = [
     'eve>=0.6,<0.7',
     'eve-elastic>=0.3.7,<0.4',
     'elasticsearch==1.9.0',
-    'flask>=0.10',
+    'flask>=0.10,<0.11',
     'flask-mail>=0.9',
     'flask-script>=2.0.5',
     'pillow>=2.9,<3.0',
