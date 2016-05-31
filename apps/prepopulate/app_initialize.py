@@ -38,15 +38,15 @@ __entities__ = OrderedDict([
             ('first_name', pymongo.ASCENDING),
             ('last_name', pymongo.DESCENDING)
         ], 'username'], False)),
-    ('stages', ('stages.json', ['desk'], False)),
-    ('desks', ('desks.json', ['incoming_stage'], False)),
+    ('stages', ('stages.json', ['desk'], True)),
+    ('desks', ('desks.json', ['incoming_stage'], True)),
     ('groups', ('groups.json', '', False)),
     ('vocabularies', ('vocabularies.json', '', True)),
     ('validators', ('validators.json', '', True)),
     ('content_templates', ('content_templates.json', [
         [('template_name', pymongo.ASCENDING)],
         [('next_run', pymongo.ASCENDING)],
-    ], False)),
+    ], True)),
     ('content_types', ('content_types.json', '', True)),
     ('published', (None, [
         [
@@ -165,9 +165,6 @@ __entities__ = OrderedDict([
     ('products', ('products.json', '', True)),
     ('subscribers', ('subscribers.json', '', True)),
     ('workspaces', ('workspaces.json', '', True)),
-    ('item_comments', (None, [
-        [('item', pymongo.ASCENDING), ('_created', pymongo.DESCENDING)]
-    ], True))
 ])
 
 
@@ -262,7 +259,15 @@ class AppInitializeWithDataCommand(superdesk.Command):
 
                     if existing_data and do_patch:
                         for item in existing_data:
-                            service.patch(item['_id'], item)
+                            existing_etag = service.find_one(
+                                req=None, _id=item['_id']
+                            ).get('_etag', None)
+                            if item.get('_etag', None) == existing_etag:
+                                service.patch(item['_id'], item)
+                            else:
+                                logger.info(
+                                    'Item id="{}" was changed by user, skipping.'.format(item['_id'])
+                                )
 
                 logger.info('File {} imported successfully.'.format(file_name))
 
