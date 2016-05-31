@@ -70,10 +70,10 @@ class ArchivePublishTestCase(SuperdeskTestCase):
                              "media_type": "media", "sequence_num_settings": {"max": 10, "min": 1},
                              "email": "test@test.com",
                              "products": ["1"],
-                             "destinations": [{"name": "dest2", "format": "AAP ANPA", "delivery_type": "filecopy",
+                             "destinations": [{"name": "dest2", "format": "nitf", "delivery_type": "filecopy",
                                                "config": {"address": "/share/copy"}
                                                },
-                                              {"name": "dest3", "format": "AAP ANPA", "delivery_type": "Email",
+                                              {"name": "dest3", "format": "nitf", "delivery_type": "Email",
                                                "config": {"recipients": "test@sourcefabric.org"}
                                                }]
                              },

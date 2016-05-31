@@ -5,13 +5,14 @@ from superdesk.notification import push_notification
 from apps.auth import get_user
 
 
-def push_content_notification(items):
+def push_content_notification(items, event='content:update'):
     """Push content:update notification for multiple items.
 
     It can be also 2 versions of same item in updated handler
     so that we sent event with both old and new desk/stage.
 
     :param list items: list of items
+    :param event: custom event name
     """
     ids = {}
     desks = {}
@@ -25,7 +26,7 @@ def push_content_notification(items):
             stages[str(task.get('stage', ''))] = 1
     user = get_user()
     push_notification(
-        'content:update',
+        event,
         user=str(user.get('_id', '')),
         items=ids,
         desks=desks,

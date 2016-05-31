@@ -158,8 +158,8 @@ Feature: Fetch From Ingest
         {"_message": "Deleting an Ingest Source after receiving items is prohibited."}
         """
 
-
     @auth
+    @notification
     Scenario: Ingested item must have unique id and unique name
         Given empty "archive"
         And "desks"
@@ -204,6 +204,16 @@ Feature: Fetch From Ingest
         {"desk": "#desks._id#"}
         """
         Then we get new resource
+        And we get notifications
+        """
+        [
+          {"event": "item:fetch", "extra": {
+            "items": {"tag_example.com_0000_newsml_BRE9A606": 1},
+            "desks": {"#desks._id#": 1},
+            "stages": {"#desks.incoming_stage#": 1}
+          }}
+        ]
+        """
         When we get "/archive?q=#desks._id#"
         Then we get list with 1 items
         """
