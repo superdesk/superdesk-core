@@ -11,7 +11,7 @@
 from abc import ABCMeta, abstractmethod
 
 from superdesk.etree import etree
-from superdesk.locators.locators import find_cities
+from flask import current_app as app
 from superdesk.metadata.item import Priority
 
 
@@ -66,7 +66,7 @@ class FeedParser(metaclass=ABCMeta):
         item.setdefault('dateline', {})
 
         if city:
-            cities = find_cities()
+            cities = app.locators.find_cities()
             located = [c for c in cities if c['city'] == city]
             item['dateline']['located'] = located[0] if len(located) > 0 else {'city_code': city, 'city': city,
                                                                                'tz': 'UTC', 'dateline': 'city'}

@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from superdesk.locators.locators import find_cities
+from flask import current_app as app
 import logging
 from apps.archive.common import format_dateline_to_locmmmddsrc
 from superdesk.utc import get_date
@@ -39,7 +39,7 @@ def update_to_pass_validation(item, **kwargs):
             item['headline'] = item['headline'][:max_headline_len] \
                 if len(item['headline']) > max_headline_len else item['headline']
         if 'dateline' not in item:
-            cities = find_cities(country_code='AU', state_code='NSW')
+            cities = app.locators.find_cities(country_code='AU', state_code='NSW')
             located = [c for c in cities if c['city'].lower() == 'sydney']
             if located:
                 item['dateline'] = {'date': item['firstcreated'], 'located': located[0]}

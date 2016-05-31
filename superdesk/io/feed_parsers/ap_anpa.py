@@ -11,7 +11,7 @@
 from .anpa import ANPAFeedParser
 from superdesk.io import register_feed_parser
 from superdesk.io.iptc import subject_codes
-from superdesk.locators.locators import find_cities
+from flask import current_app as app
 from apps.archive.common import format_dateline_to_locmmmddsrc
 from superdesk.utc import get_date
 from bs4 import BeautifulSoup
@@ -113,7 +113,7 @@ class AP_ANPAFeedParser(ANPAFeedParser):
                         city = city.split(',')[0]
                         if any(char.isdigit() for char in city):
                             return
-                        cities = find_cities()
+                        cities = app.locators.find_cities()
                         located = [c for c in cities if c['city'].lower() == city.lower()]
                         item.setdefault('dateline', {})
                         item['dateline']['located'] = located[0] if len(located) > 0 else {'city_code': city,

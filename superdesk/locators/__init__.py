@@ -10,6 +10,8 @@
 
 import json
 import os
+from superdesk.locators.locators import LocatorIndex, bp
+import superdesk
 
 
 def _load_json(file_path):
@@ -23,6 +25,11 @@ def _load_json(file_path):
         return json.load(f)
 
 
-_dir_name = os.path.dirname(os.path.realpath(__file__))
-_locators_file_path = os.path.join(_dir_name, 'data', 'locators.json')
-locators = _load_json(_locators_file_path)
+def init_app(app):
+    app.locators = LocatorIndex()
+    superdesk.blueprint(bp)
+    _locators_file_path = app.config.get(
+        'LOCATORS_DATA_FILE',
+        os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data', 'locators.json')
+    )
+    app.locators.register(_load_json(_locators_file_path))

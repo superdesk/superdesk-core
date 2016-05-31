@@ -263,7 +263,7 @@ INSTALLED_APPS.extend([
     'apps.io.feeding_services',
     'superdesk.publish',
     'superdesk.commands',
-    'superdesk.locators.locators',
+    'superdesk.locators',
 
     'apps.auth',
     'apps.archive',
