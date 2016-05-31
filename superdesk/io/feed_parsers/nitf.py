@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import logging
 from datetime import datetime
 import dateutil.parser
 from superdesk.io import register_feed_parser
@@ -21,7 +22,9 @@ from superdesk.io.iptc import subject_codes
 from bs4 import BeautifulSoup
 import re
 import superdesk
+logger = logging.getLogger(__name__)
 
+SETTINGS_MAPPING_PARAM = 'NITF_MAPPING'
 SUBJECT_TYPE = 'tobject.subject.type'
 SUBJECT_MATTER = 'tobject.subject.matter'
 SUBJECT_DETAIL = 'tobject.subject.detail'
@@ -29,155 +32,235 @@ SUBJECT_DETAIL = 'tobject.subject.detail'
 subject_fields = (SUBJECT_TYPE, SUBJECT_MATTER, SUBJECT_DETAIL)
 
 
+class SkipValue(Exception):
+    """Exception used in callback when a value is not needed"""
+
+
 class NITFFeedParser(XMLFeedParser):
     """
     Feed Parser which can parse if the feed is in NITF format.
     """
+    # FIXME: some behaviour here are specific to AAP (e.g. getPlace)
+    #        they have been kept to avoid breaking AAP, but they can
+    #        now be moved to Superdesk's settings in aap branch
 
     NAME = 'nitf'
+
+    def __init__(self):
+        super().__init__()
+        self.default_mapping = {
+            'guid': {'xpath': 'head/docdata/doc-id/@id-string',
+                     'default': None
+                     },
+            'uri': {'xpath': 'head/docdata/doc-id/@id-string',
+                    'default': None
+                    },
+            'urgency': {'xpath': 'head/docdata/urgency/@ed-urg',
+                        'default_attr': 5,
+                        'filter_value': int,
+                        },
+            'pubstatus': {'xpath': 'head/docdata/@management-status',
+                          'default_attr': 'usable',
+                          },
+            'firstcreated': {'xpath': 'head/docdata/date.issue',
+                             'filter': self.get_norm_datetime,
+                             },
+            'versioncreated': {'xpath': 'head/docdata/date.issue',
+                               'filter': self.get_norm_datetime,
+                               },
+            'expiry': {'xpath': 'head/docdata/date.expire',
+                       'filter': self.get_norm_datetime,
+                       },
+            'subject': self.get_subjects,
+            'body_html': self.get_content,
+            FORMAT: self.get_format,
+            'place': self.get_place,
+            'keywords': {'xpath': 'head/docdata',
+                         'filter': self.get_keywords,
+                         },
+            'genre': self.get_genre,
+            'ednote': 'head/docdata/ed-msg/@info',
+            'headline': self.get_headline,
+            'abstract': self.get_abstract,
+            'byline': self.get_byline,
+            # metadata
+            'slugline': "head/meta/[@name='anpa-keyword']/@content",
+            'ingest_provider_sequence': "head/meta/[@name='anpa-sequence']/@content",
+            'anpa_category': {'xpath': "head/meta/[@name='anpa-category']",
+                              'filter': lambda elem: [{'qcode': elem.get('content'), 'name': ''}],
+                              },
+            'word_count': {'xpath': "head/meta/[@name='anpa-wordcount']",
+                           'filter': lambda elem: int(elem.get('content')),
+                           },
+            'anpa_take_key': "head/meta/[@name='anpa-keyword']",
+            ITEM_TYPE: {'xpath': "head/meta/[@name='anpa-format']",
+                        'filter': self.anpa_format_filter,
+                        },
+            'priority': {'xpath': "head/meta/[@name='aap-priority']",
+                         'filter': lambda elem: self.map_priority(elem.get('content')),
+                         },
+            'original_creator': self.get_original_creator,
+            'version_creator': self.get_version_creator,
+            'original_source': "head/meta/[@name='aap-source']/@content",
+            'source': "head/meta/[@name='aap-source']/@content",
+            'task': self.get_task,
+        }
+        self.metadata_mapping = None
+
+    def _parse_xpath(self, xpath):
+        """parse xpath and handle final attribute"""
+        last_idx = xpath.rfind('/')
+        if last_idx == -1:
+            msg = "No path separator found in xpath {}, ignoring it".format(xpath)
+            logger.warn(msg)
+            raise ValueError(msg)
+        last = xpath[last_idx + 1:].rstrip()
+        if last.startswith('@'):
+            # an attribute is requested
+            return {'xpath': xpath[:last_idx], 'attribute': last[1:]}
+        else:
+            return {'xpath': xpath}
+
+    def _parse_mapping(self, value):
+        if isinstance(value, dict):
+            if not value:
+                return {}
+            try:
+                xpath = value['xpath']
+            except KeyError:
+                return value
+            else:
+                # we parse xpath to handle final @attribute syntax
+                try:
+                    value.update(self._parse_xpath(xpath))
+                except ValueError:
+                    # xpath is invalid, we ignore the key
+                    # a waring is already logged in self._parse_xpath
+                    value = {}
+                if 'filter' in value and 'attribute' in value:
+                    logging.warn('"filter" and "attribte" should not be used in the same mapping,\
+                        "attribute" will not be used: {}'.format(value))
+                return value
+        elif isinstance(value, str):
+            if not value:
+                return {}
+            try:
+                return self._parse_xpath(value)
+            except ValueError:
+                return {}
+        elif callable(value):
+            return {'callback': value}
+        else:
+            logger.warn("Can't parse mapping value {}, ignoring it".format(value))
+            return {}
+
+    def _generate_mapping(self):
+        """generate self.metadata_mapping according to settings
+
+        Settings use NITF_MAPPING dictionary.
+        If a key is not found in NITF_MAPPING, self.default_mapping is used instead.
+        If a value is a non-empty string, it is a xpath, @attribute can be used as last path component.
+        If value is empty string, the key will be ignored
+        If value is a callable, it will be executed with nitf Element as argument, return value will be used.
+        If a dictionary is used as value, following keys can be used:
+            xpath: path to the element
+            attribute: attribute to take in this element (if not present, content will be used)
+            default: value to use if element doesn't exists (default: doesn't set the key)
+            default_attr: value if element exist but attribute is missing
+            filter: callable to be used with found element
+            filter_value: callable to be used with found value
+        Note the difference between using a callable directly, and "filter" in a dict:
+        the former get the root element and can be skipped with SkipValue, while the
+        later get an element found with xpath.
+        """
+        settings_mapping = getattr(superdesk.config, SETTINGS_MAPPING_PARAM)
+        if settings_mapping is None:
+            logging.info("No mapping found in settings for NITF parser, using default one")
+            settings_mapping = {}
+        mapping = self.metadata_mapping = {}
+        for key, value in self.default_mapping.items():
+            if key in settings_mapping:
+                continue
+            mapping[key] = self._parse_mapping(value)
+
+        for key, value in settings_mapping.items():
+            mapping[key] = self._parse_mapping(value)
 
     def can_parse(self, xml):
         return xml.tag == 'nitf'
 
     def parse(self, xml, provider=None):
-        item = {}
+        if self.metadata_mapping is None:
+            self._generate_mapping()
+        item = {ITEM_TYPE: CONTENT_TYPE.TEXT,  # set the default type.
+                }
         try:
-            docdata = xml.find('head/docdata')
-            # set the default type.
-            item[ITEM_TYPE] = CONTENT_TYPE.TEXT
-            item['guid'] = item['uri'] = docdata.find('doc-id').get('id-string')
-            if docdata.find('urgency') is not None:
-                item['urgency'] = int(docdata.find('urgency').get('ed-urg', '5'))
-            item['pubstatus'] = (docdata.attrib.get('management-status', 'usable')).lower()
-            item['firstcreated'] = self.get_norm_datetime(docdata.find('date.issue'))
-            item['versioncreated'] = self.get_norm_datetime(docdata.find('date.issue'))
-
-            if docdata.find('date.expire') is not None:
-                item['expiry'] = self.get_norm_datetime(docdata.find('date.expire'))
-            item['subject'] = self.get_subjects(xml)
-            item['body_html'] = self.get_content(xml)
-            body_elem = xml.find('body/body.content')
-            # if the body contains only a single pre tag we mark the format as preserved
-            if len(body_elem) == 1 and body_elem[0].tag == 'pre':
-                item[FORMAT] = FORMATS.PRESERVED
-            else:
-                item[FORMAT] = FORMATS.HTML
-            item['place'] = self.get_places(docdata)
-            item['keywords'] = self.get_keywords(docdata)
-
-            if xml.find('head/tobject/tobject.property') is not None:
-                genre = xml.find('head/tobject/tobject.property').get('tobject.property.type')
-                genre_map = superdesk.get_resource_service('vocabularies').find_one(req=None, _id='genre')
-                if genre_map is not None:
-                    item['genre'] = [x for x in genre_map.get('items', []) if x['name'] == genre]
-
-            if docdata.find('ed-msg') is not None:
-                item['ednote'] = docdata.find('ed-msg').attrib.get('info')
-
-            if xml.find('body/body.head/hedline/hl1') is not None:
-                item['headline'] = xml.find('body/body.head/hedline/hl1').text
-            else:
-                if xml.find('head/title') is not None:
-                    item['headline'] = xml.find('head/title').text
-
-            elem = xml.find('body/body.head/abstract/p')
-            item['abstract'] = elem.text if elem is not None else ''
-            if elem is None:
-                elem = xml.find('body/body.head/abstract')
-                item['abstract'] = elem.text if elem is not None else ''
+            for key, mapping in self.metadata_mapping.items():
+                if not mapping:
+                    # key is ignored
+                    continue
+                try:
+                    xpath = mapping['xpath']
+                except KeyError:
+                    # no xpath, we must have a callable
+                    try:
+                        item[key] = mapping['callback'](xml)
+                    except KeyError:
+                        logging.warn("invalid mapping for key {}, ignoring it".format(key))
+                        continue
+                    except SkipValue:
+                        continue
+                else:
+                    elem = xml.find(xpath)
+                    if elem is None:
+                        try:
+                            item[key] = mapping['default']
+                        except KeyError:
+                            # if there is not default value we skip the key
+                            continue
+                    else:
+                        # we have an element,
+                        # do we want a filter, an attribute or the content?
+                        try:
+                            # filter
+                            item[key] = mapping['filter'](elem)
+                        except KeyError:
+                            try:
+                                attribute = mapping['attribute']
+                            except KeyError:
+                                # content
+                                item[key] = ''.join(elem.itertext())
+                            else:
+                                # attribute
+                                item[key] = elem.get(attribute, mapping.get('default_attr'))
+                        try:
+                            # filter_value is applied on found value
+                            item[key] = mapping['filter_value'](item[key])
+                        except KeyError:
+                            pass
 
             elem = xml.find('body/body.head/dateline/location/city')
             if elem is not None:
                 self.set_dateline(item, city=elem.text)
 
-            item['byline'] = self.get_byline(xml)
-
-            self.parse_meta(xml, item)
             item.setdefault('word_count', get_word_count(item['body_html']))
             return item
         except Exception as ex:
             raise ParserError.nitfParserError(ex, provider)
 
-    def parse_to_preformatted(self, element):
-        """
-        Extract the contnt of the element as a plain string with line enders
-        :param element:
-        :return:
-        """
-        elements = []
-        soup = BeautifulSoup(element, 'html.parser')
-        for elem in soup.findAll(True):
-            elements.append(elem.get_text() + '\r\n')
-        return ''.join(elements)
+    def get_norm_datetime(self, tree):
+        if tree is None:
+            return
 
-    def parse_meta(self, tree, item):
-        for elem in tree.findall('head/meta'):
-            attribute_name = elem.get('name')
+        try:
+            value = datetime.strptime(tree.attrib['norm'], '%Y%m%dT%H%M%S')
+        except ValueError:
+            try:
+                value = datetime.strptime(tree.attrib['norm'], '%Y%m%dT%H%M%S%z')
+            except ValueError:
+                value = dateutil.parser.parse(tree.attrib['norm'])
 
-            if attribute_name == 'anpa-keyword':
-                item['slugline'] = elem.get('content')
-            elif attribute_name == 'anpa-sequence':
-                item['ingest_provider_sequence'] = elem.get('content')
-            elif attribute_name == 'anpa-category':
-                item['anpa_category'] = [{'qcode': elem.get('content'), 'name': ''}]
-            elif attribute_name == 'anpa-wordcount':
-                item['word_count'] = int(elem.get('content'))
-            elif attribute_name == 'anpa-takekey':
-                item['anpa_take_key'] = elem.get('content')
-            elif attribute_name == 'anpa-format':
-                anpa_format = elem.get('content').lower() if elem.get('content') is not None else 'x'
-                if anpa_format == 't':
-                    item[FORMAT] = FORMATS.PRESERVED
-                    if not item['body_html'].startswith('<pre>'):
-                        # convert content to text in a pre tag
-                        item['body_html'] = '<pre>' + self.parse_to_preformatted(self.get_content(tree)) + '</pre>'
-                    else:
-                        item['body_html'] = self.parse_to_preformatted(self.get_content(tree))
-                else:
-                    item[FORMAT] = FORMATS.HTML
-
-            elif attribute_name == 'aap-priority':
-                item['priority'] = self.map_priority(elem.get('content'))
-            elif attribute_name == 'aap-original-creator':
-                query = {'username': re.compile('^{}$'.format(elem.get('content')), re.IGNORECASE)}
-                user = superdesk.get_resource_service('users').find_one(req=None, **query)
-                if user is not None:
-                    item['original_creator'] = user.get('_id')
-            elif attribute_name == 'aap-version-creator':
-                query = {'username': re.compile('^{}$'.format(elem.get('content')), re.IGNORECASE)}
-                user = superdesk.get_resource_service('users').find_one(req=None, **query)
-                if user:
-                    item['version_creator'] = user.get('_id')
-            elif attribute_name == 'aap-source':
-                item['original_source'] = elem.get('content')
-                item['source'] = elem.get('content')
-            elif attribute_name == 'aap-original-source':
-                pass
-            elif attribute_name == 'aap-place':
-                locator_map = superdesk.get_resource_service('vocabularies').find_one(req=None, _id='locators')
-                item['place'] = [x for x in locator_map.get('items', []) if x['qcode'] == elem.get('content')]
-
-        desk_name = tree.find('head/meta[@name="aap-desk"]')
-        if desk_name is not None:
-            desk = superdesk.get_resource_service('desks').find_one(req=None, name=desk_name.get('content'))
-            if desk:
-                item['task'] = {'desk': desk.get('_id')}
-                stage_name = tree.find('head/meta[@name="aap-stage"]')
-                if stage_name is not None:
-                    lookup = {'$and': [{'name': stage_name.get('content')}, {'desk': str(desk.get('_id'))}]}
-                    stages = superdesk.get_resource_service('stages').get(req=None, lookup=lookup)
-                    if stages is not None and stages.count() == 1:
-                        item['task']['stage'] = stages[0].get('_id')
-
-    def get_places(self, docdata):
-        places = []
-        evloc = docdata.find('evloc')
-        if evloc is not None:
-            places.append({
-                'name': evloc.attrib.get('city'),
-                'code': evloc.attrib.get('iso-cc'),
-            })
-        return places
+        return utc.normalize(value) if value.tzinfo else value
 
     def get_subjects(self, tree):
         """
@@ -207,28 +290,93 @@ class NITFFeedParser(XMLFeedParser):
                 subjects.append({'name': subject_codes[qcode], 'qcode': qcode})
         return subjects
 
+    def get_anpa_format(self, xml):
+        elem = xml.find("head/meta[@name='anpa-format']")
+        if elem is not None:
+            content = elem.get('content')
+            return content.lower() if content is not None else 'x'
+
+    def parse_to_preformatted(self, element):
+        """
+        Extract the contnt of the element as a plain string with line enders
+        :param element:
+        :return:
+        """
+        elements = []
+        soup = BeautifulSoup(element, 'html.parser')
+        for elem in soup.findAll(True):
+            elements.append(elem.get_text() + '\r\n')
+        return ''.join(elements)
+
+    def get_content(self, xml):
+        elements = []
+        for elem in xml.find('body/body.content'):
+            elements.append(etree.tostring(elem, encoding='unicode'))
+        content = ''.join(elements)
+        if self.get_anpa_format(xml) == 't':
+            if not content.startswith('<pre>'):
+                # convert content to text in a pre tag
+                content = '<pre>{}</pre>'.format(self.parse_to_preformatted(content))
+            else:
+                content = self.parse_to_preformatted(content)
+        return content
+
+    def get_format(self, xml):
+        anpa_format = self.get_anpa_format(xml)
+        if anpa_format is not None:
+            return FORMATS.PRESERVED if anpa_format == 't' else FORMATS.HTML
+
+        body_elem = xml.find('body/body.content')
+        # if the body contains only a single pre tag we mark the format as preserved
+        if len(body_elem) == 1 and body_elem[0].tag == 'pre':
+            return FORMATS.PRESERVED
+        else:
+            return FORMATS.HTML
+
+    def get_place(self, tree):
+        elem = tree.find("head/meta/[@name='aap-place']")
+        if elem is None:
+            return self.get_places(tree.find('head/docdata'))
+        locator_map = superdesk.get_resource_service('vocabularies').find_one(req=None, _id='locators')
+        return [x for x in locator_map.get('items', []) if x['qcode'] == elem.get('content')]
+
+    def get_places(self, docdata):
+        places = []
+        evloc = docdata.find('evloc')
+        if evloc is not None:
+            places.append({
+                'name': evloc.attrib.get('city'),
+                'code': evloc.attrib.get('iso-cc'),
+            })
+        return places
+
     def get_keywords(self, docdata):
         return [keyword.attrib['key'] for keyword in docdata.findall('key-list/keyword')]
 
-    def get_content(self, tree):
-        elements = []
-        for elem in tree.find('body/body.content'):
-            elements.append(etree.tostring(elem, encoding='unicode'))
-        return ''.join(elements)
+    def get_genre(self, tree):
+        elem = tree.find('head/tobject/tobject.property')
+        if elem is None:
+            raise SkipValue()
+        genre = elem.get('tobject.property.type')
+        genre_map = superdesk.get_resource_service('vocabularies').find_one(req=None, _id='genre')
+        if genre_map is not None:
+            return [x for x in genre_map.get('items', []) if x['name'] == genre]
+        else:
+            raise SkipValue()
 
-    def get_norm_datetime(self, tree):
-        if tree is None:
-            return
+    def get_headline(self, xml):
+        if xml.find('body/body.head/hedline/hl1') is not None:
+            return xml.find('body/body.head/hedline/hl1').text
+        else:
+            if xml.find('head/title') is not None:
+                return xml.find('head/title').text
+        raise SkipValue()
 
-        try:
-            value = datetime.strptime(tree.attrib['norm'], '%Y%m%dT%H%M%S')
-        except ValueError:
-            try:
-                value = datetime.strptime(tree.attrib['norm'], '%Y%m%dT%H%M%S%z')
-            except ValueError:
-                value = dateutil.parser.parse(tree.attrib['norm'])
-
-        return utc.normalize(value) if value.tzinfo else value
+    def get_abstract(self, xml):
+        elem = xml.find('body/body.head/abstract/p')
+        if elem is None:
+            elem = xml.find('body/body.head/abstract')
+        return elem.text if elem is not None else ''
 
     def get_byline(self, tree):
         elem = tree.find('body/body.head/byline')
@@ -239,6 +387,43 @@ class NITFFeedParser(XMLFeedParser):
             if person is not None:
                 byline = "{} {}".format(byline.strip(), person.text.strip())
         return byline
+
+    def anpa_format_filter(self, elem):
+        anpa_format = elem.get('content').lower() if elem.get('content') is not None else 'x'
+        return CONTENT_TYPE.TEXT if anpa_format == 'x' else CONTENT_TYPE.PREFORMATTED
+
+    def get_original_creator(self, tree):
+        elem = tree.find("head/meta/[@name='aap-original-creator']")
+        if elem is not None:
+            query = {'username': re.compile('^{}$'.format(elem.get('content')), re.IGNORECASE)}
+            user = superdesk.get_resource_service('users').find_one(req=None, **query)
+            if user is not None:
+                return user.get('_id')
+        raise SkipValue()
+
+    def get_version_creator(self, tree):
+        elem = tree.find("head/meta/[@name='aap-version-creator']")
+        if elem is not None:
+            query = {'username': re.compile('^{}$'.format(elem.get('content')), re.IGNORECASE)}
+            user = superdesk.get_resource_service('users').find_one(req=None, **query)
+            if user:
+                return user.get('_id')
+        raise SkipValue()
+
+    def get_task(self, tree):
+        desk_name = tree.find('head/meta[@name="aap-desk"]')
+        if desk_name is not None:
+            desk = superdesk.get_resource_service('desks').find_one(req=None, name=desk_name.get('content'))
+            if desk:
+                task = {'desk': desk.get('_id')}
+                stage_name = tree.find('head/meta[@name="aap-stage"]')
+                if stage_name is not None:
+                    lookup = {'$and': [{'name': stage_name.get('content')}, {'desk': str(desk.get('_id'))}]}
+                    stages = superdesk.get_resource_service('stages').get(req=None, lookup=lookup)
+                    if stages is not None and stages.count() == 1:
+                        task['stage'] = stages[0].get('_id')
+                return task
+        raise SkipValue()
 
 
 register_feed_parser(NITFFeedParser.NAME, NITFFeedParser())
