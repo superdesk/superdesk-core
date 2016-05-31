@@ -5,7 +5,7 @@ Feature: Macros
         When we get "/macros"
         Then we get list with 2+ items
             """
-            {"_items": [{"name": "usd_to_aud", "label": "Convert USD to AUD", "description": "Convert USD to AUD.", "shortcut": "c"}]}
+            {"_items": [{"name": "usd_to_aud", "label": "Convert USD to AUD", "description": "Convert USD to AUD."}]}
             """
 
     @auth
@@ -13,7 +13,7 @@ Feature: Macros
         When we get "/macros?desk=POLITICS"
         Then we get list with 2+ items
             """
-            {"_items": [{"name": "populate_abstract", "label": "Populate Abstract", "shortcut": "a"}]}
+            {"_items": [{"name": "populate_abstract", "label": "Populate Abstract", "description": "Populate the abstract field with the first sentence of the body"}]}
             """
 
     @auth
@@ -29,7 +29,7 @@ Feature: Macros
         When we get "/macros?desk=POLITICS"
         Then we get list with 2+ items
             """
-            {"_items": [{"name": "update_fields", "label": "Update Fields", "description": "Updates the abstract field", "shortcut": "w"}]}
+            {"_items": [{"name": "update_fields", "label": "Update Fields", "description": "Updates the abstract field"}]}
             """
 
     @auth

@@ -39,7 +39,6 @@ def usd_to_aud(item, **kwargs):
 
 name = 'usd_to_aud'
 label = 'Convert USD to AUD'
-shortcut = 'c'
 callback = usd_to_aud
 access_type = 'frontend'
 action_type = 'interactive'

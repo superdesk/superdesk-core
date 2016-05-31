@@ -38,7 +38,6 @@ def nzd_to_aud(item, **kwargs):
 
 name = 'nzd_to_aud'
 label = 'Convert NZD to AUD'
-shortcut = 'n'
 callback = nzd_to_aud
 access_type = 'frontend'
 action_type = 'interactive'
