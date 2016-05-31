@@ -35,7 +35,7 @@ from wooper.expect import (
     expect_headers_contain,
 )
 from wooper.assertions import (
-    assert_in, assert_equal)
+    assert_in, assert_equal, assertions)
 from urllib.parse import urlparse
 from os.path import basename
 from superdesk.tests import test_user, get_prefixed_url, set_placeholder
@@ -1030,7 +1030,10 @@ def step_impl_then_get_given_file_meta(context, filename):
             'model': 'GT-I9300',
             'xresolution': [72, 1],
             'fnumber': [26, 10],
-            'imagewidth': 3264
+            'imagewidth': 3264,
+            'brightnessvalue': [2362, 256],
+            'exposurebiasvalue': [0, 10],
+            'shutterspeedvalue': [2808, 256]
         }
     elif filename == 'green.ogg':
         metadata = {
@@ -1063,6 +1066,7 @@ def step_impl_then_get_given_file_meta(context, filename):
     else:
         raise NotImplementedError("No metadata for file '{}'.".format(filename))
 
+    assertions.maxDiff = None
     expect_json(
         context.response,
         metadata,
