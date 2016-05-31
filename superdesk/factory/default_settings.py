@@ -252,6 +252,7 @@ INSTALLED_APPS.extend([
     'superdesk.activity',
     'superdesk.vocabularies',
     'apps.comments',
+    'superdesk.profiling',
 
     'superdesk.io',
     'superdesk.io.feeding_services',
@@ -419,3 +420,6 @@ TRANSMIT_RETRY_ATTEMPT_DELAY_MINUTES = int(env('TRANSMIT_RETRY_ATTEMPT_DELAY_MIN
 
 # max transmit items to be fetched from mongo
 MAX_TRANSMIT_QUERY_LIMIT = int(env('MAX_TRANSMIT_QUERY_LIMIT', 500))
+
+# Code profiling for performance analysis
+ENABLE_PROFILING = False
