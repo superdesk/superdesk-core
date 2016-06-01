@@ -100,7 +100,7 @@ def filter_expired_items(provider, items):
     try:
         delta = timedelta(minutes=provider.get('content_expiry', app.config['INGEST_EXPIRY_MINUTES']))
         filtered_items = [item for item in items if is_not_expired(item) and
-                          item[ITEM_TYPE] in provider['content_types']]
+                          item[ITEM_TYPE] in provider.get('content_types', [])]
 
         if len(items) != len(filtered_items):
             logger.debug('Received {0} articles from provider {1}, but only {2} are eligible to be saved in ingest'
