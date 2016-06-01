@@ -23,7 +23,7 @@ Feature: Subscribers
     And we get "/subscribers"
     Then we get list with 1 items
     """
-    {"_items":[{"name":"News1"}]}
+    {"_items":[{"name":"News1", "is_targetable": true}]}
     """
 
     @auth
