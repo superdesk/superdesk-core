@@ -443,8 +443,8 @@ class ArchiveService(BaseService):
         :param original: original is document.
         """
         updates[ITEM_STATE] = CONTENT_STATE.PROGRESS
-        updates[PUBLISH_SCHEDULE] = None
-        updates[SCHEDULE_SETTINGS] = {}
+        updates[PUBLISH_SCHEDULE] = original[PUBLISH_SCHEDULE]
+        updates[SCHEDULE_SETTINGS] = original[SCHEDULE_SETTINGS]
         updates[ITEM_OPERATION] = ITEM_DESCHEDULE
         # delete entry from published repo
         get_resource_service('published').delete_by_article_id(original['_id'])

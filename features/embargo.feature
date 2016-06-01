@@ -616,6 +616,16 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     When we get "/archive/123"
     Then we get existing resource
     """
+    {"state": "in_progress", "_id": "123", "publish_schedule": "#LAST_DATE_VALUE#"}
+    """
+    When we patch "/archive/123"
+    """
+    {"publish_schedule": null}
+    """
+    Then we get OK response
+    When we get "/archive/123"
+    Then we get existing resource
+    """
     {"state": "in_progress", "_id": "123", "publish_schedule": "__none__"}
     """
     When we get "/archive/#TAKE_PACKAGE#"
