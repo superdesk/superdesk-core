@@ -81,7 +81,7 @@ class DataUpdateCommand(superdesk.Command):
         superdesk.Option('--id', '-i', dest='data_update_id', required=False,
                          choices=get_data_updates_files(strip_file_extension=True),
                          help='Data update id to run last'),
-        superdesk.Option('--fake-initial', dest='fake', required=False, action='store_true',
+        superdesk.Option('--fake-init', dest='fake', required=False, action='store_true',
                          help='Mark data updates as run without actually running them'),
     ]
 
