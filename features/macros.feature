@@ -5,7 +5,10 @@ Feature: Macros
         When we get "/macros"
         Then we get list with 2+ items
             """
-            {"_items": [{"name": "usd_to_aud", "label": "Convert USD to AUD", "description": "Convert USD to AUD."}]}
+            {"_items":
+                [{"name": "usd_to_cad",
+                  "label": "Currency USD to CAD",
+                  "description": "Convert USD to CAD."}]}
             """
 
     @auth
@@ -36,11 +39,13 @@ Feature: Macros
     Scenario: Trigger macro via name
         When we post to "/macros"
             """
-            {"macro": "usd_to_aud", "item": {"body_html": "$10 bar", "headline": "foo $5"}}
+            {"macro": "usd_to_cad",
+             "item": {"body_html": "$10 bar", "headline": "foo $5"}}
             """
         Then we get new resource
             """
-            {"item": {"body_html": "$10 ($A14) bar", "headline": "foo $5 ($A7)"}, "diff": {"$10": "$10 ($A14)", "$5": "$5 ($A7)"}}
+            {"item": {"body_html": "$10 (CAD 20) bar", "headline": "foo $5 (CAD 10)"},
+             "diff": {"$10": "$10 (CAD 20)", "$5": "$5 (CAD 10)"}}
             """
 
     @auth
@@ -52,14 +57,15 @@ Feature: Macros
 
         When we post to "/macros"
             """
-            {"macro": "usd_to_aud", "item": {"_id": "item1", "body_html": "$10"}, "commit": true}
+            {"macro": "usd_to_cad",
+             "item": {"_id": "item1", "body_html": "$10"}, "commit": true}
             """
         Then we get new resource
 
         When we get "/archive/item1"
         Then we get existing resource
             """
-            {"body_html": "$10 ($A14)"}
+            {"body_html": "$10 (CAD 20)"}
             """
 
     @auth
