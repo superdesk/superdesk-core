@@ -82,7 +82,7 @@ class DataUpdateCommand(superdesk.Command):
                          choices=get_data_updates_files(strip_file_extension=True),
                          help='Data update id to run last'),
         superdesk.Option('--fake-initial', dest='fake', required=False, action='store_true',
-                         help='Mark migrations as run without actually running them'),
+                         help='Mark data updates as run without actually running them'),
     ]
 
     def run(self, data_update_id=None, fake=False):
