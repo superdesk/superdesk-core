@@ -122,8 +122,8 @@ def format_dateline_to_locmmmddsrc(located, current_timestamp, source=None):
     else:
         formatted_date = current_timestamp.strftime('%b %d')
 
-    return "{location} {mmmdd} {source} -".format(location=dateline_location.upper(), mmmdd=formatted_date,
-                                                  source=source)
+    return "{location}, {mmmdd} {source} -".format(location=dateline_location.upper(), mmmdd=formatted_date,
+                                                   source=source)
 
 
 def set_default_source(doc):
