@@ -21,5 +21,5 @@ class MacrosTestCase(SuperdeskTestCase):
 
     def test_load_modules(self):
         with self.app.app_context():
-            self.assertIn('usd_to_aud', macros)
+            self.assertIn('usd_to_cad', macros)
             self.assertNotIn('foo name', macros)

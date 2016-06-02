@@ -10,9 +10,9 @@
 
 import os
 from . import currency_base
+from decimal import Decimal
 
-
-USD_TO_CAD = 1.3139  # backup
+USD_TO_CAD = Decimal('1.3139')  # backup
 
 
 def get_rate():
@@ -28,13 +28,13 @@ def usd_to_cad(item, **kwargs):
 
     rate = kwargs.get('rate') or get_rate()
     if os.environ.get('BEHAVE_TESTING'):
-        rate = USD_TO_CAD
+        rate = Decimal(2)
 
     return currency_base.do_conversion(item, rate, 'CAD ', '\$([0-9]+)', match_index=0, value_index=1)
 
 
 name = 'usd_to_cad'
-label = 'Convert USD to CAD'
+label = 'Currency USD to CAD'
 shortcut = 'd'
 callback = usd_to_cad
 access_type = 'frontend'
