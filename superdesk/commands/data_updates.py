@@ -81,8 +81,8 @@ class DataUpdateCommand(superdesk.Command):
         superdesk.Option('--id', '-i', dest='data_update_id', required=False,
                          choices=get_data_updates_files(strip_file_extension=True),
                          help='Data update id to run last'),
-        superdesk.Option('--fake', dest='fake', required=False, action='store_true',
-                         help='The migration won\'t be applied but registered/unregistered in database.'),
+        superdesk.Option('--fake-initial', dest='fake', required=False, action='store_true',
+                         help='Mark migrations as run without actually running them'),
     ]
 
     def run(self, data_update_id=None, fake=False):
