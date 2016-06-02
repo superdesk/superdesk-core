@@ -68,7 +68,7 @@ class EnqueuePublishedService(EnqueueService):
                               {'publishing_action': {'$in': [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]}}]}
             takes_subscribers, take_codes = self._get_subscribers_for_previously_sent_items(query)
 
-            if rewrite_of:
+            if rewrite_of and rewrite_take_package:
                 # Step 3b
                 query = {'$and': [{'item_id': rewrite_take_package.get(config.ID_FIELD)},
                                   {'publishing_action': {'$in': [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]}}]}
@@ -90,7 +90,7 @@ class EnqueuePublishedService(EnqueueService):
 
             if rewrite_of:
                 # Step 3b
-                if rewrite_take_package.get(config.ID_FIELD) == rewrite_of:
+                if rewrite_take_package and rewrite_take_package.get(config.ID_FIELD) == rewrite_of:
                     item_ids = self.package_service.get_residrefs(rewrite_take_package)
                 else:
                     item_ids = [rewrite_of]
