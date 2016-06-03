@@ -29,7 +29,7 @@ class ContentTypesResource(superdesk.Resource):
     schema = {
         '_id': {
             'type': 'string',
-            'iunique': True,
+            'unique': True,
         },
         'label': {
             'type': 'string',
