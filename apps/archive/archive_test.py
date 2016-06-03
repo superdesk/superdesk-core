@@ -229,11 +229,11 @@ class ArchiveTestCase(SuperdeskTestCase):
 
         current_timestamp = datetime.fromtimestamp(current_ts.timestamp(), tz=timezone(located['tz']))
         if current_timestamp.month == 9:
-            formatted_date = 'Sept {}'.format(current_timestamp.strftime('%d'))
+            formatted_date = 'Sept {}'.format(current_timestamp.strftime('%-d'))
         elif 3 <= current_timestamp.month <= 7:
-            formatted_date = current_timestamp.strftime('%B %d')
+            formatted_date = current_timestamp.strftime('%B %-d')
         else:
-            formatted_date = current_timestamp.strftime('%b %d')
+            formatted_date = current_timestamp.strftime('%b %-d')
 
         return located, formatted_date, current_ts
 
