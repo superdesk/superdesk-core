@@ -96,6 +96,8 @@ class ValidateService(superdesk.Service):
             for e in error_list:
                 if error_list[e] == 'required field' or type(error_list[e]) is dict:
                     message = '{} is a required field'.format(e.upper())
+                elif 'min length is 1' in error_list[e]:
+                    message = '{} is a required field'.format(e.upper())
                 elif 'min length is' in error_list[e]:
                     message = '{} is too short'.format(e.upper())
                 elif 'max length is' in error_list[e]:
