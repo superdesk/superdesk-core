@@ -519,7 +519,8 @@ class CreateItemMethodTestCase(RssIngestServiceTest):
             item.get('versioncreated'), datetime(2015, 2, 25, 17, 52, 11))
         self.assertEqual(item.get('headline'), 'Breaking News!')
         self.assertEqual(item.get('abstract'), 'Something happened...')
-        self.assertEqual(item.get('body_html'), 'This is body text.')
+        self.assertEqual(item.get('body_html'),
+                         '<p><a href="http://news.com/rss/1234abcd">source</a></p>This is body text.')
 
     def test_populates_body_text_from_content_field_as_fallback(self):
         class CustomDict(dict):
@@ -542,7 +543,8 @@ class CreateItemMethodTestCase(RssIngestServiceTest):
 
         item = self.instance._create_item(data)
 
-        self.assertEqual(item.get('body_html'), '<p>This is body</p>')
+        self.assertEqual(item.get('body_html'),
+                         '<p><a href="http://news.com/rss/1234abcd">source</a></p><p>This is body</p>')
 
     def test_does_not_use_body_text_populate_fallback_if_aliased(self):
         class CustomDict(dict):
@@ -568,7 +570,8 @@ class CreateItemMethodTestCase(RssIngestServiceTest):
 
         item = self.instance._create_item(data, field_aliases)
 
-        self.assertIsNone(item.get('body_html'))
+        self.assertEqual(item.get('body_html'),
+                         '<p><a href="http://news.com/rss/1234abcd">source</a></p>')
 
     def test_creates_item_taking_field_name_aliases_into_account(self):
         data = dict(
@@ -595,7 +598,8 @@ class CreateItemMethodTestCase(RssIngestServiceTest):
             item.get('versioncreated'), datetime(2015, 2, 25, 17, 52, 11))
         self.assertEqual(item.get('headline'), 'Breaking News!')
         self.assertEqual(item.get('abstract'), 'Something happened...')
-        self.assertEqual(item.get('body_html'), 'This is body text.')
+        self.assertEqual(item.get('body_html'),
+                         '<p><a href="http://news.com/rss/1234abcd">source</a></p>This is body text.')
 
     def test_aliases_fields_are_skipped(self):
         data = dict(
@@ -618,7 +622,8 @@ class CreateItemMethodTestCase(RssIngestServiceTest):
         self.assertEqual(
             item.get('versioncreated'), datetime(2015, 2, 25, 17, 52, 11))
         self.assertEqual(item.get('headline'), 'Breaking News!')
-        self.assertEqual(item.get('body_html'), 'This is body text.')
+        self.assertEqual(item.get('body_html'),
+                         '<p><a href="http://news.com/rss/1234abcd">source</a></p>This is body text.')
         self.assertIsNone(item.get('abstract'))  # because summary is aliased
 
     def test_aliases_fields_are_skipped_unless_themselves_aliased(self):

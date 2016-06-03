@@ -152,7 +152,7 @@ class RSSFeedingService(FeedingService):
             if t_entry_updated <= t_provider_updated:
                 continue
 
-            item = self._create_item(entry, field_aliases)
+            item = self._create_item(entry, field_aliases, provider.get('source', None))
             self.add_timestamps(item)
 
             # If the RSS entry references any images, create picture items from
@@ -235,13 +235,14 @@ class RSSFeedingService(FeedingService):
 
         return list(img_links)
 
-    def _create_item(self, data, field_aliases=None):
+    def _create_item(self, data, field_aliases=None, source=None):
         """Create a new content item from RSS feed data.
 
         :param dict data: parsed data of a single feed entry
         :param field_aliases: (optional) field name aliases. Used for content
              fields that are named differently in retrieved data.
         :type field_aliases: list of {field_name: alias} dictionaries or None
+        :param str source: the source of provider
 
         :return: created content item
         :rtype: dict
@@ -292,6 +293,10 @@ class RSSFeedingService(FeedingService):
                 except:
                     pass  # content either non-existent or parsed differently
 
+        if item.get('uri', None):
+            if not item.get('body_html', None):
+                item['body_html'] = ''
+            item['body_html'] = '<p><a href="%s">%s</a></p>' % (item['uri'], source or 'source') + item['body_html']
         return item
 
     def _create_image_items(self, image_links, text_item):
