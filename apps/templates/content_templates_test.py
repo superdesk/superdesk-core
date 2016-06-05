@@ -44,7 +44,7 @@ class TemplatesTestCase(unittest.TestCase):
 
     def test_get_item_from_template(self):
         template = {'_id': 'foo', 'name': 'test',
-                    'template_desk': 'sports', 'template_stage': 'schedule',
+                    'template_desks': ['sports'], 'template_stage': 'schedule',
                     'data': {
                         'headline': 'Foo',
                         'dateline': {
@@ -76,7 +76,7 @@ class RenderTemplateTestCase(SuperdeskTestCase):
         template = {
             '_id': 'foo',
             'template_name': 'test',
-            'template_desk': 'sports',
+            'template_desks': ['sports'],
             'template_stage': 'schedule',
             'data': {
                 'headline': 'Foo Template: {{item.headline}}',
