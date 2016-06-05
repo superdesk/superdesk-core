@@ -44,7 +44,7 @@ class TemplatesTestCase(unittest.TestCase):
 
     def test_get_item_from_template(self):
         template = {'_id': 'foo', 'name': 'test',
-                    'template_desk': 'sports', 'template_stage': 'schedule',
+                    'schedule_desk': 'sports', 'schedule_stage': 'schedule',
                     'data': {
                         'headline': 'Foo',
                         'dateline': {
@@ -76,8 +76,7 @@ class RenderTemplateTestCase(SuperdeskTestCase):
         template = {
             '_id': 'foo',
             'template_name': 'test',
-            'template_desk': 'sports',
-            'template_stage': 'schedule',
+            'template_desks': ['sports'],
             'data': {
                 'headline': 'Foo Template: {{item.headline}}',
                 'body_html': 'This article has slugline: {{item.slugline}} and dateline: {{item.dateline["text"]}} '
@@ -102,8 +101,6 @@ class RenderTemplateTestCase(SuperdeskTestCase):
 
         updates = render_content_template(item, template)
         self.assertEqual(updates['headline'], 'Foo Template: Test Template')
-        self.assertEqual(updates['task']['desk'], 'sports')
-        self.assertEqual(updates['task']['stage'], 'schedule')
         self.assertEqual(updates['urgency'], 1)
         self.assertEqual(updates['priority'], 3)
         self.assertEqual(updates['more_coming'], False)
