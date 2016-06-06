@@ -43,7 +43,6 @@ class TakesPackageService():
         if len(takes_package) > 1:
             message = 'Multiple takes found for item: {0}'.format(item[config.ID_FIELD])
             logger.error(message)
-            raise SuperdeskApiError.forbiddenError(message=message)
         return takes_package[0] if takes_package else None
 
     def get_take_package(self, item):

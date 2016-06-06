@@ -208,8 +208,9 @@ class PackageService():
         if not delete:
             data = {PACKAGE: package_id}
             if package_type:
-                data.update({PACKAGE_TYPE: TAKES_PACKAGE})
+                data.update({PACKAGE_TYPE: package_type})
             two_way_links.append(data)
+            assert len([p for p in two_way_links if p.get(PACKAGE_TYPE) == TAKES_PACKAGE]) < 2, '2 takes packages!'
 
         updates = {LINKED_IN_PACKAGES: two_way_links}
         get_resource_service(endpoint).system_update(item_id, updates, item)
