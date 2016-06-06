@@ -18,7 +18,7 @@ from bson import ObjectId
 from io import BytesIO
 from PIL import Image
 from flask import json
-from .image import get_meta
+from .image import get_meta, fix_orientation
 from .video import get_meta as video_meta
 import base64
 from superdesk.errors import SuperdeskApiError
@@ -73,6 +73,8 @@ def process_file_from_stream(content, content_type=None):
     content.seek(0)
     metadata = encode_metadata(metadata)
     metadata.update({'length': json.dumps(len(content.getvalue()))})
+    fix_orientation(content)
+    content.seek(0)
     return file_name, content_type, metadata
 
 
