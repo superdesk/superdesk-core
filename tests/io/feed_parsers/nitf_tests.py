@@ -10,6 +10,7 @@
 
 
 import os
+from superdesk import config
 from superdesk.tests import TestCase
 
 from superdesk.etree import etree
@@ -216,3 +217,38 @@ class ParseSubjects(TestCase):
                '</tobject></head></nitf>')
         subjects = NITFFeedParser().get_subjects(etree.fromstring(xml))
         self.assertEqual(len(subjects), 0)
+
+
+class MappingTestCase(TestCase):
+
+    filename = 'mapping_test.xml'
+    mapping = {
+        'subject': {'update': True,
+                    'key_hook': lambda item, value: item.setdefault('subject', []).extend(value)
+                    },
+        'subject_test': {'callback': lambda _: ['TEST OK'],
+                         'key_hook': lambda item, value: item.setdefault('subject', []).extend(value)
+                         }, }
+
+    def setUp(self):
+        super().setUp()
+        config.NITF_MAPPING = self.mapping
+        dirname = os.path.dirname(os.path.realpath(__file__))
+        fixture = os.path.normpath(os.path.join(dirname, '../fixtures', self.filename))
+        provider = {'name': 'Test'}
+        with open(fixture) as f:
+            self.nitf = f.read()
+            self.item = NITFFeedParser().parse(etree.fromstring(self.nitf), provider)
+
+    def test_update_and_hook(self):
+        subjects = self.item.get('subject')
+        # have we got both items ?
+        self.assertEqual(len(subjects), 2)
+        # the initial updated subject need to be here
+        self.assertIn({'qcode': '02000000', 'name': 'Kriminalitet og rettsvesen'}, subjects)
+        # and our key from subject_test need to be here too
+        self.assertIn('TEST OK', subjects)
+
+    def tearDown(self):
+        super().tearDown()
+        del config.NITF_MAPPING
