@@ -27,7 +27,7 @@ from apps.archive.common import insert_into_versions, item_operations,\
     convert_task_attributes_to_objectId
 from apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.workflow import is_workflow_state_transition_valid
-from apps.content import push_content_notification
+from apps.content import push_item_move_notification
 
 ITEM_MOVE = 'move'
 item_operations.append(ITEM_MOVE)
@@ -101,8 +101,7 @@ class MoveService(BaseService):
         archive_service.update(original[config.ID_FIELD], archived_doc, original)
 
         insert_into_versions(id_=original[config.ID_FIELD])
-
-        push_content_notification([archived_doc, original])
+        push_item_move_notification(original, archived_doc)
 
         # finally apply any on stage rules/macros
         apply_onstage_rule(archived_doc, original[config.ID_FIELD])

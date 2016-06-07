@@ -14,7 +14,7 @@ from flask import request
 from apps.tasks import send_to
 import superdesk
 from apps.archive.archive import SOURCE as ARCHIVE
-from apps.content import push_content_notification
+from apps.content import push_item_move_notification
 from superdesk.metadata.utils import item_url
 from apps.archive.common import generate_unique_id_and_name, remove_unwanted, \
     set_original_creator, insert_into_versions, ITEM_OPERATION, item_operations
@@ -107,7 +107,7 @@ class FetchService(BaseService):
 
         if kwargs.get('notify', True):
             ingest_doc.update({'task': dest_doc.get('task')})
-            push_content_notification([ingest_doc], 'item:fetch')
+            push_item_move_notification(ingest_doc, doc, 'item:fetch')
 
         return id_of_fetched_items
 
