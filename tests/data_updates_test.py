@@ -6,7 +6,7 @@ import shutil
 import os
 
 # change the folder where to store updates for test purpose
-DATA_UPDATES_DIR = '/tmp/data_updates'
+MAIN_DATA_UPDATES_DIR = '/tmp/data_updates'
 
 
 class DataUpdatesTestCase(TestCase):
@@ -14,12 +14,12 @@ class DataUpdatesTestCase(TestCase):
     def setUp(self):
         super().setUp()
         # if folder exists, removes
-        if os.path.exists(DATA_UPDATES_DIR):
-            shutil.rmtree(DATA_UPDATES_DIR)
+        if os.path.exists(MAIN_DATA_UPDATES_DIR):
+            shutil.rmtree(MAIN_DATA_UPDATES_DIR)
         # create new folder for tests
-        os.mkdir(DATA_UPDATES_DIR)
+        os.mkdir(MAIN_DATA_UPDATES_DIR)
         # update the folder in data_updates module
-        superdesk.commands.data_updates.DATA_UPDATES_DIR = DATA_UPDATES_DIR
+        superdesk.commands.data_updates.MAIN_DATA_UPDATES_DIR = MAIN_DATA_UPDATES_DIR
         # update the default implementation for `forwards` and `backwards` function
         superdesk.commands.data_updates.DEFAULT_DATA_UPDATE_FW_IMPLEMENTATION = 'pass'
         superdesk.commands.data_updates.DEFAULT_DATA_UPDATE_BW_IMPLEMENTATION = 'pass'
@@ -43,25 +43,28 @@ class DataUpdatesTestCase(TestCase):
 
     def test_data_update(self):
         # create migrations
-        for index in range(10):
+        for index in range(40):
             superdesk.commands.data_updates.DEFAULT_DATA_UPDATE_FW_IMPLEMENTATION = '''
             assert(mongodb_collection)
-            assert(mongodb_collection.find({}).count() is %d)
+            count = mongodb_collection.find({}).count()
+            assert count is %d, count
             assert(mongodb_database)
             ''' % (index)
             superdesk.commands.data_updates.DEFAULT_DATA_UPDATE_BW_IMPLEMENTATION = '''
             assert(mongodb_collection)
-            assert(mongodb_collection.find({}).count() is %d)
+            count = mongodb_collection.find({}).count()
+            assert count is %d, count
             assert(mongodb_database)
             ''' % (index + 1)
             GenerateUpdate().run(resource_name='data_updates')
         assert(self.number_of_data_updates_applied() is 0)
-        third_update = get_data_updates_files(True)[2]
-        Upgrade().run(data_update_id=third_update)
-        assert(self.number_of_data_updates_applied() is 3)
+        thirdieth_update = get_data_updates_files(True)[29]
+        Upgrade().run(data_update_id=thirdieth_update)
+        assert(self.number_of_data_updates_applied() is 30)
         Upgrade().run()
-        assert(self.number_of_data_updates_applied() is 10)
+        assert(self.number_of_data_updates_applied() is 40)
         Downgrade().run()
-        assert(self.number_of_data_updates_applied() is 9)
-        Downgrade().run(data_update_id=third_update)
-        assert(self.number_of_data_updates_applied() is 2)
+        assert(self.number_of_data_updates_applied() is 39)
+        Downgrade().run(data_update_id=thirdieth_update)
+        assert(self.number_of_data_updates_applied() is 29)
+        Upgrade().run()

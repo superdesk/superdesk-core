@@ -17,9 +17,11 @@ import getpass
 import os
 import re
 import time
+from datetime import datetime
 
 
-DATA_UPDATES_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir, 'data_updates'))
+MAIN_DATA_UPDATES_DIR = os.path.abspath(os.path.join(os.path.dirname(
+    os.path.realpath(__file__)), os.pardir, 'data_updates'))
 DATA_UPDATES_FILENAME_REGEX = re.compile('^(\d+).*\.py$')
 DATA_UPDATE_TEMPLATE = '''
 # -*- coding: utf-8; -*-
@@ -48,6 +50,15 @@ DEFAULT_DATA_UPDATE_FW_IMPLEMENTATION = 'raise NotImplementedError()'
 DEFAULT_DATA_UPDATE_BW_IMPLEMENTATION = 'raise NotImplementedError()'
 
 
+def get_dir():
+    try:
+        with superdesk.app.app_context():
+            return current_app.config.get('DATA_UPDATES_PATH', MAIN_DATA_UPDATES_DIR)
+    except RuntimeError:
+        # working outside of application context
+        return MAIN_DATA_UPDATES_DIR
+
+
 def get_data_updates_files(strip_file_extension=False):
     '''
 
@@ -56,10 +67,18 @@ def get_data_updates_files(strip_file_extension=False):
 
     '''
     # create folder if doens't exist
-    if not os.path.exists(DATA_UPDATES_DIR):
-        os.makedirs(DATA_UPDATES_DIR)
+    if not os.path.exists(get_dir()):
+        os.makedirs(get_dir())
+    files = []
     # list all files from data updates directory
-    files = [f for f in os.listdir(DATA_UPDATES_DIR) if os.path.isfile(os.path.join(DATA_UPDATES_DIR, f))]
+    try:
+        with superdesk.app.app_context():
+            custom_dir = current_app.config.get('DATA_UPDATES_PATH')
+            if custom_dir:
+                files += [f for f in os.listdir(custom_dir) if os.path.isfile(os.path.join(custom_dir, f))]
+    except RuntimeError:
+        pass
+    files += [f for f in os.listdir(MAIN_DATA_UPDATES_DIR) if os.path.isfile(os.path.join(MAIN_DATA_UPDATES_DIR, f))]
     # keep only data updates (00000x*.py)
     files = [f for f in files if DATA_UPDATES_FILENAME_REGEX.match(f)]
     # order file names
@@ -94,10 +113,13 @@ class DataUpdateCommand(superdesk.Command):
         if self.last_data_update:
             if self.last_data_update['name'] not in self.data_updates_files:
                 print('A data update previously applied to this database (%s) can\'t be found in %s' % (
-                      self.last_data_update['name'], DATA_UPDATES_DIR))
+                      self.last_data_update['name'], get_dir()))
 
     def compile_update_in_module(self, data_update_name):
-        date_update_script_file = os.path.join(DATA_UPDATES_DIR, '%s.py' % (data_update_name))
+        date_update_script_file = os.path.join(get_dir(), '%s.py' % (data_update_name))
+        # if doesn't exist, try the main directory
+        if not os.path.exists(date_update_script_file):
+            date_update_script_file = os.path.join(MAIN_DATA_UPDATES_DIR, '%s.py' % (data_update_name))
         # create a module instance to use as scope for our data update
         module = ModuleType('data_update_module')
         with open(date_update_script_file) as f:
@@ -106,6 +128,9 @@ class DataUpdateCommand(superdesk.Command):
             # excecute the script in the module
             exec(script, module.__dict__)
         return module
+
+    def in_db(self, update):
+        return update in map(lambda _: _['name'], self.data_updates_applied)
 
 
 class Upgrade(DataUpdateCommand):
@@ -119,9 +144,7 @@ class Upgrade(DataUpdateCommand):
         super().run(data_update_id, fake)
         data_updates_files = self.data_updates_files
         # drops updates that already have been applied
-        if self.last_data_update:
-            if self.last_data_update['name'] in data_updates_files:
-                data_updates_files = data_updates_files[data_updates_files.index(self.last_data_update['name']) + 1:]
+        data_updates_files = [update for update in data_updates_files if not self.in_db(update)]
         # drop versions after given one
         if data_update_id:
             if data_update_id not in data_updates_files:
@@ -155,8 +178,9 @@ class Downgrade(DataUpdateCommand):
         if not self.last_data_update:
             print('No data update has been already applied')
             return False
-        # drops updates which have been already made (this is rollback mode)
-        data_updates_files = data_updates_files[:data_updates_files.index(self.last_data_update['name']) + 1]
+        # drops updates which have not been already made (this is rollback mode)
+        data_updates_files = [update for update in data_updates_files if self.in_db(update)]
+
         # if data_update_id is given, go until this update (drop previous updates)
         if data_update_id:
             if data_update_id not in data_updates_files:
@@ -190,12 +214,18 @@ class GenerateUpdate(superdesk.Command):
     option_list = [
         superdesk.Option('--resource', '-r', dest='resource_name', required=True,
                          help='Resource to update'),
+        superdesk.Option('--global', dest='global_update', required=False, action='store_true',
+                         help='This data update belongs to superdesk core'),
     ]
 
-    def run(self, resource_name):
+    def run(self, resource_name, global_update=False):
         # create a data update file
-        timestamp = '%s%s' % (time.strftime('%Y%m%d-%H%M%S'), int(time.clock() * 1000000))
-        data_update_filename = os.path.join(DATA_UPDATES_DIR, '{}_{}.py'.format(timestamp, resource_name))
+        timestamp = '%s%s' % (time.strftime('%Y%m%d-%H%M%S'), datetime.now().microsecond)
+        if global_update:
+            update_dir = MAIN_DATA_UPDATES_DIR
+        else:
+            update_dir = get_dir()
+        data_update_filename = os.path.join(update_dir, '{}_{}.py'.format(timestamp, resource_name))
         with open(data_update_filename, 'w+') as f:
             template_context = {
                 'resource': resource_name,
