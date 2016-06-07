@@ -34,7 +34,7 @@ class FTPPublishService(PublishService):
             'username': url_parts.username,
             'password': url_parts.password,
             'host': url_parts.hostname,
-            'path': url_parts.path.lstrip('/'),
+            'path': url_parts.path,
         }
 
     def _transmit(self, queue_item, subscriber):
@@ -43,7 +43,7 @@ class FTPPublishService(PublishService):
         try:
             with ftplib.FTP(config.get('host')) as ftp:
                 ftp.login(config.get('username'), config.get('password'))
-                ftp.cwd(config.get('path', '').lstrip('/'))
+                ftp.cwd(config.get('path', ''))
                 ftp.set_pasv(config.get('passive', False))
 
                 filename = '{}.{}'.format(queue_item['item_id'].replace(':', '-'), get_file_extension(queue_item))
