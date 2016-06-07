@@ -28,9 +28,6 @@ class DataUpdatesResource(Resource):
     }
     internal_resource = True
     item_url = superdesk.metadata.utils.item_url
-    item_methods = ['GET', 'PATCH']
-    resource_methods = ['GET']
-    privileges = {'PATCH': 'vocabularies', }
 
 
 class DataUpdatesService(BaseService):

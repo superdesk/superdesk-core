@@ -193,15 +193,9 @@ class GenerateUpdate(superdesk.Command):
     ]
 
     def run(self, resource_name):
-        # initial id is 0
-        last_id = 0
-        files = get_data_updates_files()
-        # retrieve last id from files
-        if files:
-            # TODO: check if new ID exists in DB
-            last_id = int(DATA_UPDATES_FILENAME_REGEX.match(files[-1]).groups()[0])
         # create a data update file
-        data_update_filename = os.path.join(DATA_UPDATES_DIR, '{0:05d}.py'.format(int(last_id + 1)))
+        timestamp = '%s%s' % (time.strftime('%Y%m%d-%H%M%S'), int(time.clock() * 1000000))
+        data_update_filename = os.path.join(DATA_UPDATES_DIR, '{}_{}.py'.format(timestamp, resource_name))
         with open(data_update_filename, 'w+') as f:
             template_context = {
                 'resource': resource_name,

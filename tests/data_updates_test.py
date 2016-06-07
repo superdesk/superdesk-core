@@ -28,10 +28,8 @@ class DataUpdatesTestCase(TestCase):
         assert(len(get_data_updates_files()) is 0)
         GenerateUpdate().run(resource_name='RESOURCE_NAME')
         assert(len(get_data_updates_files()) is 1)
-        assert(get_data_updates_files() == ['00001.py'])
         GenerateUpdate().run(resource_name='RESOURNCE_NAME')
         assert(len(get_data_updates_files()) is 2)
-        assert(get_data_updates_files() == ['00001.py', '00002.py'])
 
     def number_of_data_updates_applied(self):
         return superdesk.get_resource_service('data_updates').find({}).count()
@@ -58,11 +56,12 @@ class DataUpdatesTestCase(TestCase):
             ''' % (index + 1)
             GenerateUpdate().run(resource_name='data_updates')
         assert(self.number_of_data_updates_applied() is 0)
-        Upgrade().run(data_update_id='00003')
+        third_update = get_data_updates_files(True)[2]
+        Upgrade().run(data_update_id=third_update)
         assert(self.number_of_data_updates_applied() is 3)
         Upgrade().run()
         assert(self.number_of_data_updates_applied() is 10)
         Downgrade().run()
         assert(self.number_of_data_updates_applied() is 9)
-        Downgrade().run(data_update_id='00003')
+        Downgrade().run(data_update_id=third_update)
         assert(self.number_of_data_updates_applied() is 2)
