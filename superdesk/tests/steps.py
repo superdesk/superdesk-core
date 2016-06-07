@@ -448,7 +448,7 @@ def fetch_from_provider(context, provider_name, guid, routing_scheme=None, desk_
     provider_service = registered_feeding_services[provider['feeding_service']]
     provider_service = provider_service.__class__()
 
-    if provider.get('name', '').lower() in ('aap', 'teletype', 'dpa'):
+    if provider.get('name', '').lower() in ('aap', 'dpa'):
         file_path = os.path.join(provider.get('config', {}).get('path', ''), guid)
         feeding_parser = provider_service.get_feed_parser(provider)
         if isinstance(feeding_parser, XMLFeedParser):

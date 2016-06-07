@@ -118,7 +118,7 @@ Feature: Fetch From Ingest
     @provider
     Scenario: Test iptc code expansion
         Given empty "ingest"
-        When we fetch from "teletype" ingest "Standings__2014_14_635535729050675896.tst"
+        When we fetch from "AAP" ingest "aap-1.xml"
         And we get "/ingest"
         Then we get existing resource
 		"""
