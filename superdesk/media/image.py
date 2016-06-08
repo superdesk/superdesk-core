@@ -42,14 +42,15 @@ def fix_orientation(file_stream):
     if not rv:
         return
     exif = dict(rv)
-    orientation = exif[EXIF_ORIENTATION_TAG]
-    if orientation in [3, 6, 8]:
-        degrees = ORIENTATIONS[orientation][1]
-        img2 = img.rotate(degrees)
-        file_stream.truncate(0)
-        file_stream.seek(0)
-        img2.save(file_stream, 'jpeg')
-        file_stream.seek(0)
+    if exif.get(EXIF_ORIENTATION_TAG, None):
+        orientation = exif.get(EXIF_ORIENTATION_TAG)
+        if orientation in [3, 6, 8]:
+            degrees = ORIENTATIONS[orientation][1]
+            img2 = img.rotate(degrees)
+            file_stream.truncate(0)
+            file_stream.seek(0)
+            img2.save(file_stream, 'jpeg')
+            file_stream.seek(0)
 
 
 def get_meta(file_stream):
