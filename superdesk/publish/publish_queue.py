@@ -99,7 +99,8 @@ class PublishQueueResource(Resource):
         },
         'next_retry_attempt_at': {
             'type': 'datetime'
-        }
+        },
+        'ingest_provider': Resource.rel('ingest_providers', nullable=True)
     }
 
     additional_lookup = {

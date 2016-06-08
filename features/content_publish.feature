@@ -156,9 +156,11 @@ Feature: Content Publishing
       {
         "_items": [
           {"state": "pending", "content_type": "composite",
-          "subscriber_id": "#digital#", "item_id": "#archive.123.take_package#", "item_version": 2},
+          "subscriber_id": "#digital#", "item_id": "#archive.123.take_package#",
+          "item_version": 2, "ingest_provider": "__none__"},
           {"state": "pending", "content_type": "text",
-          "subscriber_id": "#wire#", "item_id": "123", "item_version": 2}
+          "subscriber_id": "#wire#", "item_id": "123", "item_version": 2,
+          "ingest_provider": "__none__"}
         ]
       }
       """
@@ -173,6 +175,87 @@ Feature: Content Publishing
           "subscriber_id": "Channel 1", "item_id": "#archive.123.take_package#", "item_version": 2},
           {"state": "pending", "content_type": "text",
           "subscriber_id": "Channel 2", "item_id": "123", "item_version": 2}
+        ]
+      }
+      """
+
+    @auth
+    @provider
+    Scenario: Publish a ingested content
+      Given the "validators"
+      """
+        [
+        {
+            "schema": {},
+            "type": "text",
+            "act": "publish",
+            "_id": "publish_text"
+        },
+        {
+            "_id": "publish_composite",
+            "act": "publish",
+            "type": "composite",
+            "schema": {}
+        }
+        ]
+      """
+      And "desks"
+      """
+      [{"name": "Sports", "content_expiry": 60}]
+      """
+      And empty "ingest"
+      When we fetch from "AAP" ingest "aap.xml"
+      And we post to "/ingest/#AAP.AAP.115314987.5417374#/fetch"
+      """
+      {"desk": "#desks._id#"}
+      """
+      Then we get "_id"
+      When we get "/archive/#_id#"
+      Then we get OK response
+      And we get existing resource
+      """
+      {"_current_version": 1, "state": "fetched", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
+      """
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with "digital" and success
+      """
+      {
+        "name":"Channel 1","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
+      And we post to "/subscribers" with "wire" and success
+      """
+      {
+        "name":"Channel 2","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
+      And we publish "#_id#" with "publish" type and "published" state
+      Then we get OK response
+      And we get existing resource
+      """
+      {"_current_version": 2, "state": "published", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
+      """
+      When we enqueue published
+      When we get "/publish_queue"
+      Then we get list with 2 items
+      """
+      {
+        "_items": [
+          {"state": "pending", "content_type": "text",
+          "subscriber_id": "#wire#", "item_id": "#_id#", "item_version": 2,
+          "ingest_provider": "#providers.aap#"},
+          {"state": "pending", "content_type": "composite",
+          "subscriber_id": "#digital#", "item_version": 2,
+          "ingest_provider": "__none__"}
         ]
       }
       """
