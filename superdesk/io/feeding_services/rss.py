@@ -296,7 +296,8 @@ class RSSFeedingService(FeedingService):
         if item.get('uri', None):
             if not item.get('body_html', None):
                 item['body_html'] = ''
-            item['body_html'] = '<p><a href="%s">%s</a></p>' % (item['uri'], source or 'source') + item['body_html']
+            source = source or 'source'
+            item['body_html'] = '<p><a href="%s" target="_blank">%s</a></p>' % (item['uri'], source) + item['body_html']
         return item
 
     def _create_image_items(self, image_links, text_item):
