@@ -6,7 +6,7 @@ import shutil
 import os
 
 # change the folder where to store updates for test purpose
-MAIN_DATA_UPDATES_DIR = '/tmp/data_updates'
+DEFAULT_DATA_UPDATE_DIR_NAME = '/tmp/data_updates'
 
 
 class DataUpdatesTestCase(TestCase):
@@ -14,12 +14,12 @@ class DataUpdatesTestCase(TestCase):
     def setUp(self):
         super().setUp()
         # if folder exists, removes
-        if os.path.exists(MAIN_DATA_UPDATES_DIR):
-            shutil.rmtree(MAIN_DATA_UPDATES_DIR)
+        if os.path.exists(DEFAULT_DATA_UPDATE_DIR_NAME):
+            shutil.rmtree(DEFAULT_DATA_UPDATE_DIR_NAME)
         # create new folder for tests
-        os.mkdir(MAIN_DATA_UPDATES_DIR)
+        os.mkdir(DEFAULT_DATA_UPDATE_DIR_NAME)
         # update the folder in data_updates module
-        superdesk.commands.data_updates.MAIN_DATA_UPDATES_DIR = MAIN_DATA_UPDATES_DIR
+        superdesk.commands.data_updates.DEFAULT_DATA_UPDATE_DIR_NAME = DEFAULT_DATA_UPDATE_DIR_NAME
         # update the default implementation for `forwards` and `backwards` function
         superdesk.commands.data_updates.DEFAULT_DATA_UPDATE_FW_IMPLEMENTATION = 'pass'
         superdesk.commands.data_updates.DEFAULT_DATA_UPDATE_BW_IMPLEMENTATION = 'pass'

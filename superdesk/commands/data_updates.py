@@ -20,8 +20,9 @@ import time
 from datetime import datetime
 
 
+DEFAULT_DATA_UPDATE_DIR_NAME = 'data_updates'
 MAIN_DATA_UPDATES_DIR = os.path.abspath(os.path.join(os.path.dirname(
-    os.path.realpath(__file__)), os.pardir, 'data_updates'))
+    os.path.realpath(__file__)), os.pardir, DEFAULT_DATA_UPDATE_DIR_NAME))
 DATA_UPDATES_FILENAME_REGEX = re.compile('^(\d+).*\.py$')
 DATA_UPDATE_TEMPLATE = '''
 # -*- coding: utf-8; -*-
@@ -50,13 +51,18 @@ DEFAULT_DATA_UPDATE_FW_IMPLEMENTATION = 'raise NotImplementedError()'
 DEFAULT_DATA_UPDATE_BW_IMPLEMENTATION = 'raise NotImplementedError()'
 
 
-def get_dir():
+def get_dirs(only_relative_folder=False):
+    dirs = []
     try:
         with superdesk.app.app_context():
-            return current_app.config.get('DATA_UPDATES_PATH', MAIN_DATA_UPDATES_DIR)
+            dirs.append(current_app.config.get('DATA_UPDATES_PATH', DEFAULT_DATA_UPDATE_DIR_NAME))
     except RuntimeError:
         # working outside of application context
-        return MAIN_DATA_UPDATES_DIR
+        pass
+    if not only_relative_folder:
+        dirs.append(MAIN_DATA_UPDATES_DIR)
+    assert len(dirs) <= 2
+    return dirs
 
 
 def get_data_updates_files(strip_file_extension=False):
@@ -66,19 +72,14 @@ def get_data_updates_files(strip_file_extension=False):
     .py extension can be removed with `strip_file_extension` parameter.
 
     '''
-    # create folder if doens't exist
-    if not os.path.exists(get_dir()):
-        os.makedirs(get_dir())
     files = []
-    # list all files from data updates directory
-    try:
-        with superdesk.app.app_context():
-            custom_dir = current_app.config.get('DATA_UPDATES_PATH')
-            if custom_dir:
-                files += [f for f in os.listdir(custom_dir) if os.path.isfile(os.path.join(custom_dir, f))]
-    except RuntimeError:
-        pass
-    files += [f for f in os.listdir(MAIN_DATA_UPDATES_DIR) if os.path.isfile(os.path.join(MAIN_DATA_UPDATES_DIR, f))]
+    # create folder if doens't exist
+    for folder in get_dirs():
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        # list all files from data updates directory
+        if os.path.exists(folder):
+            files += [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f))]
     # keep only data updates (00000x*.py)
     files = [f for f in files if DATA_UPDATES_FILENAME_REGEX.match(f)]
     # order file names
@@ -113,13 +114,15 @@ class DataUpdateCommand(superdesk.Command):
         if self.last_data_update:
             if self.last_data_update['name'] not in self.data_updates_files:
                 print('A data update previously applied to this database (%s) can\'t be found in %s' % (
-                      self.last_data_update['name'], get_dir()))
+                      self.last_data_update['name'], ', '.join(get_dirs())))
 
     def compile_update_in_module(self, data_update_name):
-        date_update_script_file = os.path.join(get_dir(), '%s.py' % (data_update_name))
-        # if doesn't exist, try the main directory
-        if not os.path.exists(date_update_script_file):
-            date_update_script_file = os.path.join(MAIN_DATA_UPDATES_DIR, '%s.py' % (data_update_name))
+        date_update_script_file = None
+        for folder in get_dirs():
+            date_update_script_file = os.path.join(folder, '%s.py' % (data_update_name))
+            if os.path.exists(date_update_script_file):
+                break
+        assert date_update_script_file is not None, 'File %s has not been found' % (data_update_name)
         # create a module instance to use as scope for our data update
         module = ModuleType('data_update_module')
         with open(date_update_script_file) as f:
@@ -214,7 +217,7 @@ class GenerateUpdate(superdesk.Command):
     option_list = [
         superdesk.Option('--resource', '-r', dest='resource_name', required=True,
                          help='Resource to update'),
-        superdesk.Option('--global', dest='global_update', required=False, action='store_true',
+        superdesk.Option('--global', '-g', dest='global_update', required=False, action='store_true',
                          help='This data update belongs to superdesk core'),
     ]
 
@@ -224,7 +227,7 @@ class GenerateUpdate(superdesk.Command):
         if global_update:
             update_dir = MAIN_DATA_UPDATES_DIR
         else:
-            update_dir = get_dir()
+            update_dir = get_dirs(only_relative_folder=True)[0]
         data_update_filename = os.path.join(update_dir, '{}_{}.py'.format(timestamp, resource_name))
         with open(data_update_filename, 'w+') as f:
             template_context = {
