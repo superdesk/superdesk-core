@@ -28,7 +28,7 @@ Feature: Validate
       """
     Then we get existing resource
     """
-    {"errors": "__any_value__"}
+    {"errors": []}
     """
 
   @auth
@@ -49,7 +49,14 @@ Feature: Validate
   Scenario: Validate field length short
     Given the "validators"
       """
-      [{"_id": "publish", "act": "publish", "type": "text", "schema":{"headline": {"type": "string", "minlength": 2, "maxlength": 55}}}]
+      [{"_id": "publish",
+        "act": "publish",
+        "type": "text",
+        "schema":{
+          "headline": {
+            "type": "string",
+            "minlength": 2,
+            "maxlength": 55}}}]
       """
     When we post to "/validate"
       """
@@ -58,6 +65,50 @@ Feature: Validate
     Then we get existing resource
     """
     {"errors": ["HEADLINE is too short"]}
+    """
+
+  @auth
+  Scenario: Validate field minimum length fails
+    Given the "validators"
+      """
+      [{"_id": "publish",
+        "act": "publish",
+        "type": "text",
+        "schema":{
+          "headline": {
+            "type": "string",
+            "minlength": 2,
+            "required": true,
+            "maxlength": 55}}}]
+      """
+    When we post to "/validate"
+      """
+      {"act": "publish", "type": "text", "validate": {"headline": "<p></p>"}}
+      """
+    Then we get existing resource
+    """
+    {"errors": ["HEADLINE is too short"]}
+    """
+
+  @auth
+  Scenario: Validate field maximum length passes
+    Given the "validators"
+      """
+      [{"_id": "publish",
+        "act": "publish",
+        "type": "text",
+        "schema":{
+          "headline": {
+            "type": "string",
+            "maxlength": 9}}}]
+      """
+    When we post to "/validate"
+      """
+      {"act": "publish", "type": "text", "validate": {"headline": "<p>123456789</p>"}}
+      """
+    Then we get existing resource
+    """
+    {"errors": []}
     """
 
   @auth
@@ -101,7 +152,7 @@ Feature: Validate
       """
     Then we get existing resource
     """
-    {"errors": "__any_value__"}
+    {"errors": []}
     """
   @auth
   Scenario: Missing validator
