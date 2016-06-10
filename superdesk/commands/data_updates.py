@@ -103,9 +103,11 @@ class DataUpdateCommand(superdesk.Command):
                          help='Data update id to run last'),
         superdesk.Option('--fake-init', dest='fake', required=False, action='store_true',
                          help='Mark data updates as run without actually running them'),
+        superdesk.Option('--dry-run', dest='dry', required=False, action='store_true',
+                         help='Does not mark data updates as done. This can be usefull for development.'),
     ]
 
-    def run(self, data_update_id=None, fake=False):
+    def run(self, data_update_id=None, fake=False, dry=False):
         self.data_updates_service = superdesk.get_resource_service('data_updates')
         self.data_updates_files = get_data_updates_files(strip_file_extension=True)
         # retrieve existing data updates in database
@@ -143,8 +145,8 @@ class Upgrade(DataUpdateCommand):
     If `data_update_id` is given, runs new data updates until the given one.
 
     '''
-    def run(self, data_update_id=None, fake=False):
-        super().run(data_update_id, fake)
+    def run(self, data_update_id=None, fake=False, dry=False):
+        super().run(data_update_id, fake, dry)
         data_updates_files = self.data_updates_files
         # drops updates that already have been applied
         data_updates_files = [update for update in data_updates_files if not self.in_db(update)]
@@ -161,8 +163,9 @@ class Upgrade(DataUpdateCommand):
             # run the data update forward
             if not fake:
                 module_scope.DataUpdate().apply('forwards')
-            # store the applied data update in the database
-            self.data_updates_service.create([{'name': data_update_name}])
+            if not dry:
+                # store the applied data update in the database
+                self.data_updates_service.create([{'name': data_update_name}])
         if not data_updates_files:
             print('No data update to apply.')
 
@@ -174,8 +177,8 @@ class Downgrade(DataUpdateCommand):
     If `data_update_id` is given, runs all the data updates backward until the given one.
 
     '''
-    def run(self, data_update_id=None, fake=False):
-        super().run(data_update_id, fake)
+    def run(self, data_update_id=None, fake=False, dry=False):
+        super().run(data_update_id, fake, dry)
         data_updates_files = self.data_updates_files
         # check if there is something to downgrade
         if not self.last_data_update:
@@ -202,8 +205,9 @@ class Downgrade(DataUpdateCommand):
             # run the data update backward
             if not fake:
                 module_scope.DataUpdate().apply('backwards')
-            # remove the applied data update from the database
-            self.data_updates_service.delete({'name': data_update_name})
+            if not dry:
+                # remove the applied data update from the database
+                self.data_updates_service.delete({'name': data_update_name})
         if not data_updates_files:
             print('No data update to apply.')
 

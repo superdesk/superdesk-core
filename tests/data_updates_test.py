@@ -7,29 +7,32 @@ import os
 
 # change the folder where to store updates for test purpose
 DEFAULT_DATA_UPDATE_DIR_NAME = '/tmp/data_updates'
+MAIN_DATA_UPDATES_DIR = '/tmp/global_data_updates'
 
 
 class DataUpdatesTestCase(TestCase):
 
     def setUp(self):
         super().setUp()
-        # if folder exists, removes
-        if os.path.exists(DEFAULT_DATA_UPDATE_DIR_NAME):
-            shutil.rmtree(DEFAULT_DATA_UPDATE_DIR_NAME)
-        # create new folder for tests
-        os.mkdir(DEFAULT_DATA_UPDATE_DIR_NAME)
+        for folder in (DEFAULT_DATA_UPDATE_DIR_NAME, MAIN_DATA_UPDATES_DIR):
+            # if folder exists, removes
+            if os.path.exists(folder):
+                shutil.rmtree(folder)
+            # create new folder for tests
+            os.mkdir(folder)
         # update the folder in data_updates module
         superdesk.commands.data_updates.DEFAULT_DATA_UPDATE_DIR_NAME = DEFAULT_DATA_UPDATE_DIR_NAME
+        superdesk.commands.data_updates.MAIN_DATA_UPDATES_DIR = MAIN_DATA_UPDATES_DIR
         # update the default implementation for `forwards` and `backwards` function
         superdesk.commands.data_updates.DEFAULT_DATA_UPDATE_FW_IMPLEMENTATION = 'pass'
         superdesk.commands.data_updates.DEFAULT_DATA_UPDATE_BW_IMPLEMENTATION = 'pass'
 
     def test_data_update_generation(self):
-        assert(len(get_data_updates_files()) is 0)
+        assert len(get_data_updates_files()) is 0, get_data_updates_files()
         GenerateUpdate().run(resource_name='RESOURCE_NAME')
-        assert(len(get_data_updates_files()) is 1)
+        assert len(get_data_updates_files()) is 1, get_data_updates_files()
         GenerateUpdate().run(resource_name='RESOURNCE_NAME')
-        assert(len(get_data_updates_files()) is 2)
+        assert len(get_data_updates_files()) is 2, get_data_updates_files()
 
     def number_of_data_updates_applied(self):
         return superdesk.get_resource_service('data_updates').find({}).count()
