@@ -258,6 +258,7 @@ Feature: Take Package Publishing
                   "state": "published",
                   "type": "composite",
                   "package_type": "takes",
+                  "abstract": "Take-2 Abstract",
                   "body_html": "Take-1<br>Take-2"
               },
               {
