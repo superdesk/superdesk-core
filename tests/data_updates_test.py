@@ -37,12 +37,24 @@ class DataUpdatesTestCase(TestCase):
     def number_of_data_updates_applied(self):
         return superdesk.get_resource_service('data_updates').find({}).count()
 
+    def test_dry_data_update(self):
+        superdesk.commands.data_updates.DEFAULT_DATA_UPDATE_FW_IMPLEMENTATION = '''
+            count = mongodb_collection.find({}).count()
+            assert count is 0, count
+        '''
+        assert(self.number_of_data_updates_applied() is 0)
+        GenerateUpdate().run(resource_name='data_updates')
+        Upgrade().run(dry=True)
+        assert(self.number_of_data_updates_applied() is 0)
+
     def test_fake_data_update(self):
         superdesk.commands.data_updates.DEFAULT_DATA_UPDATE_FW_IMPLEMENTATION = 'raise Exception()'
         superdesk.commands.data_updates.DEFAULT_DATA_UPDATE_BW_IMPLEMENTATION = 'raise Exception()'
         GenerateUpdate().run(resource_name='data_updates')
         Upgrade().run(fake=True)
+        assert(self.number_of_data_updates_applied() is 1)
         Downgrade().run(fake=True)
+        assert(self.number_of_data_updates_applied() is 0)
 
     def test_data_update(self):
         # create migrations

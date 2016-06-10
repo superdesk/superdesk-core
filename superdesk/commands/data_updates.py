@@ -17,7 +17,7 @@ import getpass
 import os
 import re
 import time
-from datetime import datetime
+from eve.utils import ParsedRequest
 
 
 DEFAULT_DATA_UPDATE_DIR_NAME = 'data_updates'
@@ -107,12 +107,17 @@ class DataUpdateCommand(superdesk.Command):
                          help='Does not mark data updates as done. This can be usefull for development.'),
     ]
 
+    def get_applied_updates(self):
+        req = ParsedRequest()
+        req.sort = '-name'
+        return tuple(self.data_updates_service.get(req=req, lookup={}))
+
     def run(self, data_update_id=None, fake=False, dry=False):
         self.data_updates_service = superdesk.get_resource_service('data_updates')
         self.data_updates_files = get_data_updates_files(strip_file_extension=True)
         # retrieve existing data updates in database
-        self.data_updates_applied = tuple(self.data_updates_service.get(req=None, lookup={}))
-        self.last_data_update = self.data_updates_applied and self.data_updates_applied[-1] or None
+        data_updates_applied = self.get_applied_updates()
+        self.last_data_update = data_updates_applied and data_updates_applied[-1] or None
         if self.last_data_update:
             if self.last_data_update['name'] not in self.data_updates_files:
                 print('A data update previously applied to this database (%s) can\'t be found in %s' % (
@@ -135,7 +140,7 @@ class DataUpdateCommand(superdesk.Command):
         return module
 
     def in_db(self, update):
-        return update in map(lambda _: _['name'], self.data_updates_applied)
+        return update in map(lambda _: _['name'], self.get_applied_updates())
 
 
 class Upgrade(DataUpdateCommand):
@@ -226,13 +231,20 @@ class GenerateUpdate(superdesk.Command):
     ]
 
     def run(self, resource_name, global_update=False):
+        timestamp = time.strftime('%Y%m%d-%H%M%S')
         # create a data update file
-        timestamp = '%s%s' % (time.strftime('%Y%m%d-%H%M%S'), datetime.now().microsecond)
+        try:
+            last_file = get_data_updates_files()[-1]
+            name_id = int(last_file.replace('.py', '').split('_')[0]) + 1
+        except IndexError:
+            name_id = 0
         if global_update:
             update_dir = MAIN_DATA_UPDATES_DIR
         else:
             update_dir = get_dirs(only_relative_folder=True)[0]
-        data_update_filename = os.path.join(update_dir, '{}_{}.py'.format(timestamp, resource_name))
+        data_update_filename = os.path.join(update_dir, '{:05d}_{}_{}.py'.format(name_id, timestamp, resource_name))
+        if os.path.exists(data_update_filename):
+            raise Exception('The file "%s" already exists' % (data_update_filename))
         with open(data_update_filename, 'w+') as f:
             template_context = {
                 'resource': resource_name,
