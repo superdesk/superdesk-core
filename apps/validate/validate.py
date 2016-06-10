@@ -95,7 +95,11 @@ class ValidateService(superdesk.Service):
         schema = validator.get('schema', {})
         for field in schema:
             if doc.get(field) and any(k in schema[field] for k in fields_to_check):
-                doc[field] = BeautifulSoup(doc[field], 'html.parser').get_text()
+                try:
+                    doc[field] = BeautifulSoup(doc[field], 'html.parser').get_text()
+                except TypeError:
+                    # fails for json fields like subject, genre
+                    pass
 
     def _validate(self, doc, **kwargs):
         lookup = {'act': doc['act'], 'type': doc[ITEM_TYPE]}
