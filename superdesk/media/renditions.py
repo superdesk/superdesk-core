@@ -15,6 +15,7 @@ import logging
 from flask import current_app as app
 from .media_operations import process_file_from_stream
 from .media_operations import crop_image
+from .image import fix_orientation
 from eve.utils import config
 from superdesk import get_resource_service
 
@@ -56,6 +57,7 @@ def generate_renditions(original, media_id, inserted, file_type, content_type,
         cropping_data = {}
         # reset
         original.seek(0)
+        fix_orientation(original)
         # create the rendition (can be based on ratio or pixels)
         if rsize.get('width') or rsize.get('height'):
             resized, width, height = _resize_image(original, (rsize.get('width'), rsize.get('height')), ext)
