@@ -33,25 +33,25 @@ class DataUpdate(DataUpdate):
         # new `template_desks` field must contain a list of desk id
         for template in mongodb_collection.find({}):
             if template.get('template_desk'):
-                mongodb_collection.update({'_id': template['_id']}, {
+                print(mongodb_collection.update({'_id': template['_id']}, {
                     '$set': {
-                        'template_desks': [template.template.get('template_desk')]
+                        'template_desks': [template.get('template_desk')]
                     }
-                })
+                }))
         # renames fields:
         #   - template_desk -> schedule_desk
         #   - template_stage -> schedule_stage
-        mongodb_collection.update({}, {
+        print(mongodb_collection.update({}, {
             '$rename': {
                 'template_desk': 'schedule_desk',
                 'template_stage': 'schedule_stage'
             },
-        }, upsert=False, multi=True)
+        }, upsert=False, multi=True))
 
     def backwards(self, mongodb_collection, mongodb_database):
-        mongodb_collection.update({}, {
+        print(mongodb_collection.update({}, {
             '$rename': {
                 'schedule_desk': 'template_desk',
                 'schedule_stage': 'template_stage'
             },
-        }, upsert=False, multi=True)
+        }, upsert=False, multi=True))
