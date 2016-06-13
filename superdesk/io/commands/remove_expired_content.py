@@ -13,6 +13,7 @@ import superdesk
 from datetime import timedelta
 from superdesk.utc import utcnow
 from superdesk.notification import push_notification
+from apps.content import push_expired_notification
 from superdesk.errors import ProviderError
 from superdesk.stats import stats
 
@@ -65,6 +66,7 @@ def remove_expired_data(provider):
     if ids:
         print('Removing items %s' % ids)
         ingest_service.delete({'_id': {'$in': ids}})
+        push_expired_notification(ids)
 
     for file_id in file_ids:
         print('Deleting file: ', file_id)

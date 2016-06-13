@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 from superdesk.notification import push_notification
+from apps.content import push_expired_notification
 
 import superdesk
 import logging
@@ -117,6 +118,8 @@ class RemoveExpiredContent(superdesk.Command):
         if items_to_remove:
             logger.info('{} Deleting articles.: {}'.format(self.log_msg, items_to_remove))
             archive_service.delete_by_article_ids(list(items_to_remove))
+
+        push_expired_notification(items_to_expire)
 
         logger.info('{} Deleting killed from archive.'.format(self.log_msg))
 

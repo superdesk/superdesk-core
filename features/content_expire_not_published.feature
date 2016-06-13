@@ -19,6 +19,7 @@ Feature: Content Expiry Not Published Items
     """
 
   @auth
+  @notification
   Scenario: Item on a desk and not part of any package is expired .
     When we expire items
     """
@@ -28,6 +29,17 @@ Feature: Content Expiry Not Published Items
     Then we get error 404
     When we get "archive/123?versions=all"
     Then we get error 404
+    And we get notifications
+    """
+    [
+        {
+            "event": "item:expired",
+            "extra": {
+                "items": {"123": 1}
+            }
+        }
+    ]
+    """
 
   @auth
   Scenario: Item on a desk is spiked and expired.

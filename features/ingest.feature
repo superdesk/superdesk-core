@@ -1,6 +1,5 @@
 Feature: Fetch From Ingest
 
-
     @auth
     Scenario: List empty ingest
         Given empty "ingest"
@@ -207,11 +206,14 @@ Feature: Fetch From Ingest
         And we get notifications
         """
         [
-          {"event": "item:fetch", "extra": {
-            "items": {"tag_example.com_0000_newsml_BRE9A606": 1},
-            "desks": {"#desks._id#": 1},
-            "stages": {"#desks.incoming_stage#": 1}
-          }}
+            {
+                "event": "item:fetch",
+                "extra": {
+                    "item": "tag_example.com_0000_newsml_BRE9A606",
+                    "to_desk": "#desks._id#",
+                    "to_stage": "#desks.incoming_stage#"
+                }
+            }
         ]
         """
         When we get "/archive?q=#desks._id#"

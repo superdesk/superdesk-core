@@ -1,6 +1,7 @@
 Feature: Move or Send Content to another desk
 
     @auth
+    @notification
     Scenario: Send Content from personal to another desk
         Given "desks"
         """
@@ -15,6 +16,19 @@ Feature: Move or Send Content to another desk
         [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
         """
         Then we get OK response
+        And we get notifications
+        """
+        [
+            {
+                "event": "item:move",
+                "extra": {
+                    "item": "123",
+                    "to_desk": "#desks._id#",
+                    "to_stage": "#desks.incoming_stage#"
+                }
+            }
+        ]
+        """
         When we get "/archive/123?version=all"
         Then we get list with 2 items
         When we get "/archive/123"
@@ -27,6 +41,7 @@ Feature: Move or Send Content to another desk
         And there is no "last_authoring_desk" in task
 
     @auth
+    @notification
     Scenario: Send Content from one desk to another desk and validate metadata set by API
         Given we have "desks" with "SPORTS_DESK_ID" and success
         """
@@ -52,6 +67,20 @@ Feature: Move or Send Content to another desk
         [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
         """
         Then we get OK response
+        And we get notifications
+        """
+        [
+            {
+                "event": "item:move",
+                "extra": {
+                    "item": "123",
+                    "from_desk": "#SPORTS_DESK_ID#",
+                    "to_desk": "#desks._id#",
+                    "to_stage": "#desks.incoming_stage#"
+                }
+            }
+        ]
+        """
         When we get "/archive/123"
         Then we get existing resource
         """
