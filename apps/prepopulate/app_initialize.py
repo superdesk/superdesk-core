@@ -136,6 +136,9 @@ __entities__ = OrderedDict([
         ],
         [
             ('_updated', pymongo.DESCENDING)
+        ],
+        [
+            ('ingest_provider', pymongo.ASCENDING)
         ]], False)),
     ('archived', (None, [
         [

@@ -11,6 +11,9 @@
 from functools import partial
 import logging
 import json
+
+from bson import ObjectId
+
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError, SuperdeskPublishError
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, PUBLISH_SCHEDULE
@@ -320,6 +323,8 @@ class EnqueueService:
                             publish_queue_item['content_type'] = doc.get('type', None)
                             publish_queue_item['headline'] = doc.get('headline', None)
                             publish_queue_item['publishing_action'] = self.published_state
+                            publish_queue_item['ingest_provider'] = \
+                                ObjectId(doc.get('ingest_provider')) if doc.get('ingest_provider') else None
                             if doc.get(PUBLISHED_IN_PACKAGE):
                                 publish_queue_item[PUBLISHED_IN_PACKAGE] = doc[PUBLISHED_IN_PACKAGE]
                             publish_queue_item.pop(ITEM_STATE, None)
