@@ -155,12 +155,14 @@ class NITFFeedParser(XMLFeedParser):
             return {}
 
     def _generate_mapping(self):
-        """generate self.metadata_mapping according to settings
+        """generate self.metadata_mapping according to available mappings
 
-        Settings use NITF_MAPPING dictionary.
-        If a key is not found in NITF_MAPPING, self.default_mapping is used instead.
+        The following mappings are used in this order (last is more important):
+            - self.default_mapping
+            - self.MAPPING, intended for sublasses
+            - NITF_MAPPING dictionary which can be put in settings
         If a value is a non-empty string, it is a xpath, @attribute can be used as last path component.
-        If value is empty string, the key will be ignored
+        If value is empty string/dict, the key will be ignored
         If value is a callable, it will be executed with nitf Element as argument, return value will be used.
         If a dictionary is used as value, following keys can be used:
             xpath: path to the element
@@ -169,22 +171,33 @@ class NITFFeedParser(XMLFeedParser):
             default_attr: value if element exist but attribute is missing
             filter: callable to be used with found element
             filter_value: callable to be used with found value
+            key_hook: a callable which store itself the resulting value in the item,
+                      usefull for specific behaviours when several values goes to same key
+                      callable will get item and value as arguments.
+            update: a bool which indicate that default mapping must be updated instead of overwritten
         Note the difference between using a callable directly, and "filter" in a dict:
         the former get the root element and can be skipped with SkipValue, while the
         later get an element found with xpath.
         """
+        try:
+            class_mapping = self.MAPPING
+        except AttributeError:
+            class_mapping = {}
+
         settings_mapping = getattr(superdesk.config, SETTINGS_MAPPING_PARAM)
         if settings_mapping is None:
             logging.info("No mapping found in settings for NITF parser, using default one")
             settings_mapping = {}
-        mapping = self.metadata_mapping = {}
-        for key, value in self.default_mapping.items():
-            if key in settings_mapping:
-                continue
-            mapping[key] = self._parse_mapping(value)
 
-        for key, value in settings_mapping.items():
-            mapping[key] = self._parse_mapping(value)
+        mapping = self.metadata_mapping = {}
+
+        for source_mapping in (self.default_mapping, class_mapping, settings_mapping):
+            for key, value in source_mapping.items():
+                key_mapping = self._parse_mapping(value)
+                if key_mapping.get('update', False) and key in mapping:
+                    mapping[key].update(key_mapping)
+                else:
+                    mapping[key] = key_mapping
 
     def can_parse(self, xml):
         return xml.tag == 'nitf'
@@ -204,7 +217,7 @@ class NITFFeedParser(XMLFeedParser):
                 except KeyError:
                     # no xpath, we must have a callable
                     try:
-                        item[key] = mapping['callback'](xml)
+                        value = mapping['callback'](xml)
                     except KeyError:
                         logging.warn("invalid mapping for key {}, ignoring it".format(key))
                         continue
@@ -214,7 +227,7 @@ class NITFFeedParser(XMLFeedParser):
                     elem = xml.find(xpath)
                     if elem is None:
                         try:
-                            item[key] = mapping['default']
+                            value = mapping['default']
                         except KeyError:
                             # if there is not default value we skip the key
                             continue
@@ -223,21 +236,27 @@ class NITFFeedParser(XMLFeedParser):
                         # do we want a filter, an attribute or the content?
                         try:
                             # filter
-                            item[key] = mapping['filter'](elem)
+                            value = mapping['filter'](elem)
                         except KeyError:
                             try:
                                 attribute = mapping['attribute']
                             except KeyError:
                                 # content
-                                item[key] = ''.join(elem.itertext())
+                                value = ''.join(elem.itertext())
                             else:
                                 # attribute
-                                item[key] = elem.get(attribute, mapping.get('default_attr'))
-                        try:
-                            # filter_value is applied on found value
-                            item[key] = mapping['filter_value'](item[key])
-                        except KeyError:
-                            pass
+                                value = elem.get(attribute, mapping.get('default_attr'))
+
+                try:
+                    # filter_value is applied on found value
+                    value = mapping['filter_value'](value)
+                except KeyError:
+                    pass
+
+                if 'key_hook' in mapping:
+                    mapping['key_hook'](item, value)
+                else:
+                    item[key] = value
 
             elem = xml.find('body/body.head/dateline/location/city')
             if elem is not None:
