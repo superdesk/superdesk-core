@@ -31,13 +31,13 @@ class FileFeedingService(FeedingService):
     """
 
     NAME = 'file'
-    ERRORS = [ParserError.ZCZCParserError().get_error_description(),
-              ParserError.IPTC7901ParserError().get_error_description(),
-              ParserError.nitfParserError().get_error_description(),
-              ParserError.newsmlOneParserError().get_error_description(),
-              ProviderError.ingestError().get_error_description(),
-              ParserError.parseFileError().get_error_description()
-              ]
+    ERRORS = [
+        ParserError.IPTC7901ParserError().get_error_description(),
+        ParserError.nitfParserError().get_error_description(),
+        ParserError.newsmlOneParserError().get_error_description(),
+        ProviderError.ingestError().get_error_description(),
+        ParserError.parseFileError().get_error_description()
+    ]
 
     def _update(self, provider):
         self.provider = provider

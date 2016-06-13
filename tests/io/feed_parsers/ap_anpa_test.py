@@ -38,7 +38,7 @@ class ANPATestCase(TestCase):
     def test_subject_expansion(self):
         item = self.open('ap_anpa-1.tst')
         self.assertEqual(item['subject'][0]['qcode'], '15008000')
-        self.assertEqual(item['dateline']['text'], 'ATLANTA Feb 19 AP -')
+        self.assertEqual(item['dateline']['text'], 'ATLANTA, Feb 19 AP -')
 
     def test_table_story(self):
         item = self.open('ap_anpa-2.tst')

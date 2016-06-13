@@ -201,6 +201,7 @@ class TestCase(unittest.TestCase):
         self.ctx.push()
 
     def tearDown(self):
+        self.app.locators = None
         if hasattr(self, 'ctx'):
             self.ctx.pop()
         with self.app.app_context():

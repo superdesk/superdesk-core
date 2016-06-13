@@ -436,6 +436,18 @@ class RoutingRuleSchemeService(BaseService):
         items_to_publish = self.__fetch(ingest_item, destinations)
         for item in items_to_publish:
             try:
+                self._set_default_values(item)
                 get_resource_service('archive_publish').patch(item, {'auto_publish': True})
             except:
                 logger.exception("Failed to publish item %s." % item)
+
+    def _set_default_values(self, item):
+        ''' Assigns the default values to the item that about to be auto published '''
+        archive_item = get_resource_service('archive').find_one(req=None, _id=item)
+        default_values = {}
+        default_values['headline'] = archive_item.get('headline') or ' '
+        default_values['anpa_category'] = \
+            archive_item.get('anpa_category') or [{'qcode': 'a', 'name': 'Australian General News'}]
+        default_values['slugline'] = archive_item.get('slugline') or ' '
+        default_values['body_html'] = archive_item.get('body_html') or '<p></p>'
+        get_resource_service('archive').patch(item, default_values)

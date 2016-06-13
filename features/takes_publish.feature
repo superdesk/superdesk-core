@@ -1058,7 +1058,7 @@ Feature: Take Package Publishing
       Then we get list with 3 items
       When we patch "/archive/123"
       """
-      {"publish_schedule": "2016-05-30T10:00:00+00:00"}
+      {"publish_schedule": "2099-05-30T10:00:00+00:00"}
       """
       Then we get error 400
       """
@@ -1066,7 +1066,7 @@ Feature: Take Package Publishing
       """
       When we patch "/archive/#TAKE2#"
       """
-      {"publish_schedule": "2016-05-30T10:00:00+00:00"}
+      {"publish_schedule": "2099-05-30T10:00:00+00:00"}
       """
       Then we get error 400
       """

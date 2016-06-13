@@ -11,7 +11,7 @@
 
 from .iptc7901 import IPTC7901FeedParser
 from superdesk.io import register_feed_parser
-from superdesk.locators.locators import find_cities
+from flask import current_app as app
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
 
 
@@ -42,7 +42,7 @@ class DPAIPTC7901FeedParser(IPTC7901FeedParser):
                 city, source, the_rest = lines[line_num].partition(' (dpa) - ')
                 # test if we found a candidate and ensure that the city starts the line and is not crazy long
                 if source and lines[line_num].find(city) == 0 and len(city.strip()) < 20:
-                    cities = find_cities()
+                    cities = app.locators.find_cities()
                     located = [c for c in cities if c['city'].lower() == city.strip().lower()]
                     if 'dateline' not in item:
                         item['dateline'] = {}

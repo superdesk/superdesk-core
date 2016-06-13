@@ -11,6 +11,7 @@
 import logging
 import cerberus
 import superdesk
+from bs4 import BeautifulSoup
 from superdesk.metadata.item import ITEM_TYPE
 
 logger = logging.getLogger(__name__)
@@ -82,12 +83,31 @@ class ValidateService(superdesk.Service):
         lookup = {'act': doc['act'], 'type': doc[ITEM_TYPE]}
         return superdesk.get_resource_service('validators').get(req=None, lookup=lookup)
 
+    def _sanitize_fields(self, doc, validator):
+        '''
+        If maxlength or minlength is specified in the validator then
+        remove any markups from that field
+        :param doc: Article to be validated
+        :param validator: Validation rule
+        :return: updated article
+        '''
+        fields_to_check = ['minlength', 'maxlength']
+        schema = validator.get('schema', {})
+        for field in schema:
+            if doc.get(field) and any(k in schema[field] for k in fields_to_check):
+                try:
+                    doc[field] = BeautifulSoup(doc[field], 'html.parser').get_text()
+                except TypeError:
+                    # fails for json fields like subject, genre
+                    pass
+
     def _validate(self, doc, **kwargs):
         lookup = {'act': doc['act'], 'type': doc[ITEM_TYPE]}
         use_headline = kwargs and 'headline' in kwargs
         validators = superdesk.get_resource_service('validators').get(req=None, lookup=lookup)
         validators = self._get_validators(doc)
         for validator in validators:
+            self._sanitize_fields(doc['validate'], validator)
             v = SchemaValidator()
             v.allow_unknown = True
             v.validate(doc['validate'], validator['schema'])
@@ -95,6 +115,8 @@ class ValidateService(superdesk.Service):
             response = []
             for e in error_list:
                 if error_list[e] == 'required field' or type(error_list[e]) is dict:
+                    message = '{} is a required field'.format(e.upper())
+                elif 'min length is 1' == error_list[e]:
                     message = '{} is a required field'.format(e.upper())
                 elif 'min length is' in error_list[e]:
                     message = '{} is too short'.format(e.upper())

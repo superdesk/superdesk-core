@@ -5,7 +5,7 @@ Feature: Amazon S3 integration
     Scenario: Upload image into archive with storage on amazon S3
         Given empty "archive"
         When we upload a file "bike.jpg" to "archive"
-        
+
         When we get "/archive"
         Then we get list with 1 items
         """
@@ -39,6 +39,6 @@ Feature: Amazon S3 integration
                 "media" : "#archive.renditions.baseImage.media#",
                 "height" : 1400
             }
-        }   
+        }
         }]}
         """

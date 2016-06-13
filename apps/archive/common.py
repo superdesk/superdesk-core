@@ -116,14 +116,14 @@ def format_dateline_to_locmmmddsrc(located, current_timestamp, source=None):
     if located['tz'] != 'UTC':
         current_timestamp = datetime.fromtimestamp(current_timestamp.timestamp(), tz=timezone(located['tz']))
     if current_timestamp.month == 9:
-        formatted_date = 'Sept {}'.format(current_timestamp.strftime('%d'))
+        formatted_date = 'Sept {}'.format(current_timestamp.strftime('%-d'))
     elif 3 <= current_timestamp.month <= 7:
-        formatted_date = current_timestamp.strftime('%B %d')
+        formatted_date = current_timestamp.strftime('%B %-d')
     else:
-        formatted_date = current_timestamp.strftime('%b %d')
+        formatted_date = current_timestamp.strftime('%b %-d')
 
-    return "{location} {mmmdd} {source} -".format(location=dateline_location.upper(), mmmdd=formatted_date,
-                                                  source=source)
+    return "{location}, {mmmdd} {source} -".format(location=dateline_location.upper(), mmmdd=formatted_date,
+                                                   source=source)
 
 
 def set_default_source(doc):

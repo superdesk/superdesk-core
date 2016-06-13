@@ -56,6 +56,10 @@ class SubscribersResource(Resource):
             'type': 'boolean',
             'default': True
         },
+        'is_targetable': {
+            'type': 'boolean',
+            'default': True
+        },
         'critical_errors': {
             'type': 'dict',
             'valueschema': {

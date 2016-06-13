@@ -74,8 +74,9 @@ class CropService():
         :param dict updates: updated renditions
         """
         renditions = original.get('renditions', {})
-        original_image = renditions['original']
         updated_renditions = updates.get('renditions', {})
+        original_image = deepcopy(renditions['original'])
+        original_image.update(updated_renditions.get('original', {}))
         if 'poi' in updates:
             if 'x' not in updates['poi'] or 'y' not in updates['poi']:
                 del updates['poi']
@@ -146,42 +147,34 @@ class CropService():
 
         return next((c for c in self.crop_sizes if c.get('name', '').lower() == crop_name.lower()), None)
 
-    def create_crop(self, original, crop_name, crop_data):
+    def create_crop(self, original_image, crop_name, crop_data):
         """
         Create a new crop based on the crop co-ordinates
         :param original: Article to add the crop
         :param crop_name: Name of the crop
         :param doc: Crop details
         :raises SuperdeskApiError.badRequestError
-        :return dict: modified renditions
+        :return dict: rendition
         """
-        renditions = original.get('renditions', {})
-        original_crop = renditions.get(crop_name, {})
-        fields = ('CropLeft', 'CropTop', 'CropRight', 'CropBottom')
-        crop_created = False
-        if any(crop_data.get(name) != original_crop.get(name) for name in fields):
-            original_image = renditions.get('original', {})
-            original_file = superdesk.app.media.fetch_rendition(original_image)
-            if not original_file:
-                raise SuperdeskApiError.badRequestError('Original file couldn\'t be found')
-            try:
-                cropped, out = crop_image(original_file, crop_name, crop_data)
-                crop = self.get_crop_by_name(crop_name)
-                if not cropped:
-                    raise SuperdeskApiError.badRequestError('Saving crop failed.')
-                # resize if needed
-                if crop.get('width') or crop.get('height'):
-                    out, width, height = _resize_image(out, size=(crop.get('width'), crop.get('height')))
-                    crop['width'] = width
-                    crop['height'] = height
-                    out.seek(0)
-                renditions[crop_name] = self._save_cropped_image(out, original_image, crop_data)
-                crop_created = True
-            except SuperdeskApiError:
-                raise
-            except Exception as ex:
-                raise SuperdeskApiError.badRequestError('Generating crop failed: {}'.format(str(ex)))
-        return renditions, crop_created
+        original_file = superdesk.app.media.fetch_rendition(original_image)
+        if not original_file:
+            raise SuperdeskApiError.badRequestError('Original file couldn\'t be found')
+        try:
+            cropped, out = crop_image(original_file, crop_name, crop_data)
+            crop = self.get_crop_by_name(crop_name)
+            if not cropped:
+                raise SuperdeskApiError.badRequestError('Saving crop failed.')
+            # resize if needed
+            if crop.get('width') or crop.get('height'):
+                out, width, height = _resize_image(out, size=(crop.get('width'), crop.get('height')))
+                crop['width'] = width
+                crop['height'] = height
+                out.seek(0)
+            return self._save_cropped_image(out, original_image, crop_data)
+        except SuperdeskApiError:
+            raise
+        except Exception as ex:
+            raise SuperdeskApiError.badRequestError('Generating crop failed: {}'.format(str(ex)))
 
     def _save_cropped_image(self, file_stream, original, doc):
         """
@@ -234,17 +227,25 @@ class CropService():
         """
         update_renditions = updates.get('renditions', {})
         if original.get(ITEM_TYPE) == CONTENT_TYPE.PICTURE:
-            renditions = original.get('renditions', {})
-            original_copy = deepcopy(original)
+            renditions = deepcopy(original.get('renditions', {}))
+            # keep renditions updates (urls may have changed)
+            renditions.update(update_renditions)
+            if 'original' in updates.get('renditions', {}):
+                original_image = updates['renditions']['original']
+            else:
+                original_image = original['renditions']['original']
             for key in update_renditions:
                 if self.get_crop_by_name(key):
-                    renditions, crop_created = self.create_crop(original_copy, key,
-                                                                update_renditions.get(key, {}))
+                    original_crop = original.get('renditions', {}).get(key, {})
+                    fields = ('CropLeft', 'CropTop', 'CropRight', 'CropBottom')
+                    crop_data = update_renditions.get(key, {})
+                    if any(crop_data.get(name) != original_crop.get(name) for name in fields):
+                        rendition = self.create_crop(original_image, key, crop_data)
+                        renditions[key] = rendition
             poi = updates.get('poi', {})
             if poi:
                 for crop_name in renditions:
                     self._set_crop_poi(renditions, crop_name, poi)
-
             updates['renditions'] = renditions
 
     def _set_crop_poi(self, renditions, crop_name, poi):

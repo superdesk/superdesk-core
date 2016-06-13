@@ -86,6 +86,12 @@ desks_schema = {
     'desk_metadata': {
         'type': 'dict',
     },
+
+    'content_profiles': {
+        'type': 'dict',
+    },
+
+    'default_content_profile': Resource.rel('content_types', type='string', nullable=True),
 }
 
 

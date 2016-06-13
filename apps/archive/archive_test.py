@@ -229,39 +229,39 @@ class ArchiveTestCase(SuperdeskTestCase):
 
         current_timestamp = datetime.fromtimestamp(current_ts.timestamp(), tz=timezone(located['tz']))
         if current_timestamp.month == 9:
-            formatted_date = 'Sept {}'.format(current_timestamp.strftime('%d'))
+            formatted_date = 'Sept {}'.format(current_timestamp.strftime('%-d'))
         elif 3 <= current_timestamp.month <= 7:
-            formatted_date = current_timestamp.strftime('%B %d')
+            formatted_date = current_timestamp.strftime('%B %-d')
         else:
-            formatted_date = current_timestamp.strftime('%b %d')
+            formatted_date = current_timestamp.strftime('%b %-d')
 
         return located, formatted_date, current_ts
 
     def test_format_dateline_to_format_when_only_city_is_present(self):
         located, formatted_date, current_ts = self._get_located_and_current_utc_ts()
         formatted_dateline = format_dateline_to_locmmmddsrc(located, current_ts)
-        self.assertEqual(formatted_dateline, 'SYDNEY %s %s -' % (formatted_date, get_default_source()))
+        self.assertEqual(formatted_dateline, 'SYDNEY, %s %s -' % (formatted_date, get_default_source()))
 
     def test_format_dateline_to_format_when_only_city_and_state_are_present(self):
         located, formatted_date, current_ts = self._get_located_and_current_utc_ts()
 
         located['dateline'] = "city,state"
         formatted_dateline = format_dateline_to_locmmmddsrc(located, current_ts)
-        self.assertEqual(formatted_dateline, 'SYDNEY, NSW %s %s -' % (formatted_date, get_default_source()))
+        self.assertEqual(formatted_dateline, 'SYDNEY, NSW, %s %s -' % (formatted_date, get_default_source()))
 
     def test_format_dateline_to_format_when_only_city_and_country_are_present(self):
         located, formatted_date, current_ts = self._get_located_and_current_utc_ts()
 
         located['dateline'] = "city,country"
         formatted_dateline = format_dateline_to_locmmmddsrc(located, current_ts)
-        self.assertEqual(formatted_dateline, 'SYDNEY, AU %s %s -' % (formatted_date, get_default_source()))
+        self.assertEqual(formatted_dateline, 'SYDNEY, AU, %s %s -' % (formatted_date, get_default_source()))
 
     def test_format_dateline_to_format_when_city_state_and_country_are_present(self):
         located, formatted_date, current_ts = self._get_located_and_current_utc_ts()
 
         located['dateline'] = "city,state,country"
         formatted_dateline = format_dateline_to_locmmmddsrc(located, current_ts)
-        self.assertEqual(formatted_dateline, 'SYDNEY, NSW, AU %s %s -' % (formatted_date, get_default_source()))
+        self.assertEqual(formatted_dateline, 'SYDNEY, NSW, AU, %s %s -' % (formatted_date, get_default_source()))
 
     def test_if_task_attributes_converted_to_objectid(self):
         doc = {
@@ -300,8 +300,7 @@ class ArchiveTestCase(SuperdeskTestCase):
         set_default_source(doc)
         self.assertEqual(doc['source'], get_default_source())
         self.assertEqual(doc['dateline']['source'], get_default_source())
-        self.assertEqual(doc['dateline']['text'], 'SYDNEY %s %s -' % (formatted_date,
-                                                                      get_default_source()))
+        self.assertEqual(doc['dateline']['text'], 'SYDNEY, %s %s -' % (formatted_date, get_default_source()))
 
     def test_if_source_defined_on_desk(self):
         source = 'FOO'
@@ -323,7 +322,7 @@ class ArchiveTestCase(SuperdeskTestCase):
         set_default_source(doc)
         self.assertEqual(doc['source'], source)
         self.assertEqual(doc['dateline']['source'], source)
-        self.assertEqual(doc['dateline']['text'], 'SYDNEY %s %s -' % (formatted_date, source))
+        self.assertEqual(doc['dateline']['text'], 'SYDNEY, %s %s -' % (formatted_date, source))
 
 
 class ArchiveCommonTestCase(unittest.TestCase):

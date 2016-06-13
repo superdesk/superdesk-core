@@ -245,7 +245,7 @@ class LegalArchiveImport:
 
         lookup = {}
         if max_date:
-            lookup['$and'] = [{config.LAST_UPDATED: {'$gte': max_date}}]
+            lookup['$and'] = [{config.LAST_UPDATED: {'$gte': max_date}, 'moved_to_legal': False}]
 
         req = ParsedRequest()
         req.max_results = 500

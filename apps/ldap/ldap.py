@@ -118,17 +118,21 @@ class ADAuth:
                 result = ldap_conn.search(self.base_filter, user_filter, SEARCH_SCOPE_WHOLE_SUBTREE,
                                           attributes=list(self.profile_attrs.keys()))
 
+                if not result:
+                    # the search returns false in case of user not a security group member.
+                    raise CredentialsAuthError(credentials={'username': username},
+                                               message='User does not belong to security Group or '
+                                                       'could not find the user profile.')
+
                 response = dict()
+                user_profile = ldap_conn.response[0]['attributes']
 
-                if result:
-                    user_profile = ldap_conn.response[0]['attributes']
+                for ad_profile_attr, sd_profile_attr in self.profile_attrs.items():
+                    response[sd_profile_attr] = \
+                        user_profile[ad_profile_attr] if user_profile.__contains__(ad_profile_attr) else ''
 
-                    for ad_profile_attr, sd_profile_attr in self.profile_attrs.items():
-                        response[sd_profile_attr] = \
-                            user_profile[ad_profile_attr] if user_profile.__contains__(ad_profile_attr) else ''
-
-                        response[sd_profile_attr] = response[sd_profile_attr][0] \
-                            if isinstance(response[sd_profile_attr], list) else response[sd_profile_attr]
+                    response[sd_profile_attr] = response[sd_profile_attr][0] \
+                        if isinstance(response[sd_profile_attr], list) else response[sd_profile_attr]
 
                 return response
         except LDAPException as e:

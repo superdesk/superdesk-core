@@ -18,7 +18,7 @@ from bson import ObjectId
 from io import BytesIO
 from PIL import Image
 from flask import json
-from .image import get_meta
+from .image import get_meta, fix_orientation
 from .video import get_meta as video_meta
 import base64
 from superdesk.errors import SuperdeskApiError
@@ -128,6 +128,7 @@ def process_image(content):
     """
     content.seek(0)
     meta = get_meta(content)
+    fix_orientation(content)
     content.seek(0)
     return meta
 

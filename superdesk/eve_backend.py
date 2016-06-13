@@ -197,18 +197,18 @@ class EveBackend():
 
     def _remove_documents_from_search_backend(self, endpoint_name, ids):
         """
-        remove documents from search backend.
+        Remove documents from search backend
+
+        remove it by _id and not via query, so that it's not affected by elastic caching
+
         :param endpoint_name: name of the endpoint
         :param ids: list of ids
         """
         ids = [str(doc_id) for doc_id in ids]
-        batch_size = 500
         logger.info("total documents to be removed {}".format(len(ids)))
-        for i in range(0, len(ids), batch_size):
-            batch = ids[i:i + batch_size]
-            query = {'query': {'terms': {'{}._id'.format(endpoint_name): batch}}}
-            app.data._search_backend(endpoint_name).remove(endpoint_name, query)
-            logger.info("Removed {} documents from {}.".format(len(batch), endpoint_name))
+        for _id in ids:
+            app.data._search_backend(endpoint_name).remove(endpoint_name, {'_id': _id})
+        logger.info("Removed {} documents from {}.".format(len(ids), endpoint_name))
 
     def _datasource(self, endpoint_name):
         return app.data._datasource(endpoint_name)[0]

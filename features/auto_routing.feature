@@ -800,6 +800,80 @@ Feature: Auto Routing
         ]}
         """
 
+    @auth @provider @vocabulary
+    Scenario: Content is ingested and auto published with default values
+        Given empty "desks"
+        Given the "validators"
+        """
+          [{"_id": "publish_text", "act": "auto_publish", "type": "text", "schema":{}}]
+        """
+        Given "filter_conditions"
+        """
+        [{
+            "_id": "2222222222bbbb2222222222",
+            "name": "Finance Subject",
+            "field": "subject",
+            "operator": "in",
+            "value": "04000000"
+        }]
+        """
+        Given "content_filters"
+        """
+        [{
+            "_id": "1234567890abcd1234567890",
+            "name": "Finance Content",
+            "content_filter": [
+                {
+                    "expression": {
+                        "fc": ["2222222222bbbb2222222222"]
+                    }
+                }
+            ]
+        }]
+        """
+        When we post to "/desks"
+        """
+          {
+            "name": "Finance Desk", "members": [{"user": "#CONTEXT_USER_ID#"}]
+          }
+        """
+        Then we get response code 201
+        When we post to "/routing_schemes"
+        """
+        [
+          {
+            "name": "routing rule scheme 1",
+            "rules": [
+              {
+                "name": "Finance Rule 1",
+                "filter": "1234567890abcd1234567890",
+                "actions": {
+                  "fetch": [],
+                  "publish": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}],
+                  "exit": true
+                }
+              }
+            ]
+          }
+        ]
+        """
+        Then we get response code 201
+        When we ingest with routing scheme "AAP" "aap-finance-lite.xml"
+        """
+        #routing_schemes._id#
+        """
+        When we get "/published"
+        Then we get list with 2 items
+        """
+        {"_items": [
+          {
+              "headline": " ",
+              "body_html": "<p></p>",
+              "type": "text",
+              "anpa_category":  [{"name": "Australian General News", "qcode": "a"}]
+          }
+        ]}
+        """
 
         @auth @provider @vocabulary
         Scenario: Content is ingested and auto published to targeted subscribers

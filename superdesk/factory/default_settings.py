@@ -264,7 +264,7 @@ INSTALLED_APPS.extend([
     'apps.io.feeding_services',
     'superdesk.publish',
     'superdesk.commands',
-    'superdesk.locators.locators',
+    'superdesk.locators',
 
     'apps.auth',
     'apps.archive',
@@ -401,6 +401,9 @@ DEFAULT_URGENCY_VALUE_FOR_MANUAL_ARTICLES = env('DEFAULT_URGENCY_VALUE_FOR_MANUA
 DEFAULT_GENRE_VALUE_FOR_MANUAL_ARTICLES = env('DEFAULT_GENRE_VALUE_FOR_MANUAL_ARTICLES',
                                               [{'qcode': 'Article', 'name': 'Article (news)'}])
 
+# Defines default value for Priority to be reset for update articles SD-4595
+RESET_PRIORITY_VALUE_FOR_UPDATE_ARTICLES = json.loads(env('RESET_PRIORITY_VALUE_FOR_UPDATE_ARTICLES', 'False').lower())
+
 # Determines if the ODBC publishing mechanism will be used, If enabled then pyodbc must be installed along with it's
 # dependencies
 ODBC_PUBLISH = env('ODBC_PUBLISH', None)
@@ -424,3 +427,6 @@ MAX_TRANSMIT_QUERY_LIMIT = int(env('MAX_TRANSMIT_QUERY_LIMIT', 500))
 
 # Code profiling for performance analysis
 ENABLE_PROFILING = False
+
+# customer repo specific templates path
+CUSTOM_TEMPLATE_PATH = []

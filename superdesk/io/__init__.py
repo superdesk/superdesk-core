@@ -70,6 +70,16 @@ def register_feeding_service(service_name, service_class, errors):
     feeding_service_errors[service_name] = dict(errors)
 
 
+def register_feeding_service_error(service_name, error):
+    """
+    Registers an error with the service named
+    :param service_name: unique name to identify the Feeding Service class
+    :param error: tuple representing the error, the tuple contains the error_code and the error message
+    :return:
+    """
+    feeding_service_errors.get(service_name, {}).update(dict([error]))
+
+
 def register_feed_parser(parser_name, parser_class):
     """
     Registers the Feed Parser with the application.

@@ -436,7 +436,7 @@
         "schema": {
             "headline": {
                 "type": "string",
-                "required": false,
+                "required": true,
                 "nullable": false,
                 "empty": false,
                 "maxlength": 64
@@ -492,6 +492,12 @@
                 }
             },
             "description_text": {
+                "type": "string",
+                "required": true,
+                "nullable": false,
+                "empty": false
+            },
+            "alt_text": {
                 "type": "string",
                 "required": true,
                 "nullable": false,
@@ -520,7 +526,7 @@
         "schema": {
             "headline": {
                 "type": "string",
-                "required": false,
+                "required": true,
                 "nullable": false,
                 "empty": false,
                 "maxlength": 64
@@ -576,6 +582,12 @@
                 }
             },
             "description_text": {
+                "type": "string",
+                "required": true,
+                "nullable": false,
+                "empty": false
+            },
+            "alt_text": {
                 "type": "string",
                 "required": true,
                 "nullable": false,
@@ -1402,7 +1414,7 @@
             },
             "type": {
                 "type": "string",
-                "required": "true",
+                "required": true,
                 "allowed": ["text"]
             },
             "anpa_category": {
@@ -1430,7 +1442,69 @@
             },
             "subject": {
                 "type": "list",
+                "required": false,
+                "minlength": 1
+            },
+            "urgency": {
+                "type": "integer",
                 "required": true,
+                "allowed": [1, 2, 3, 4, 5]
+            },
+            "priority": {
+                "type": "integer",
+                "required": true,
+                "allowed": [1, 2, 3, 4, 5, 6, 7, 8, 9]
+            }
+        }
+    },
+    {
+        "_id": "auto_publish_preformatted",
+        "act": "auto_publish",
+        "type": "preformatted",
+        "schema": {
+            "headline": {
+                "type": "string",
+                "required": true,
+                "nullable": false,
+                "empty": false,
+                "maxlength": 64
+            },
+            "abstract": {
+                "type": "string",
+                "required": false,
+                "maxlength": 160
+            },
+            "type": {
+                "type": "string",
+                "required": true,
+                "allowed": ["preformatted"]
+            },
+            "anpa_category": {
+                "type": "list",
+                "required": true,
+                "minlength": 1
+            },
+            "pubstatus": {
+                "type": "string",
+                "required": true,
+                "allowed": ["usable"]
+            },
+            "slugline": {
+                "type": "string",
+                "required": true,
+                "nullable": false,
+                "empty": false,
+                "maxlength": 24
+            },
+            "body_html": {
+                "type": "string",
+                "required": true,
+                "nullable": false,
+                "empty": false
+            },
+            "subject": {
+                "type": "list",
+                "required": false,
                 "minlength": 1
             },
             "urgency": {
