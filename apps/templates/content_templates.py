@@ -30,10 +30,11 @@ from copy import deepcopy
 
 CONTENT_TEMPLATE_PRIVILEGE = 'content_templates'
 TEMPLATE_FIELDS = {'template_name', 'template_type', 'schedule', 'type', 'state',
-                   'last_run', 'next_run', 'template_desk', 'template_stage',
+                   'last_run', 'next_run', 'template_desks', 'schedule_desk', 'schedule_stage',
                    config.ID_FIELD, config.LAST_UPDATED, config.DATE_CREATED,
                    config.ETAG, 'task'}
-KILL_TEMPLATE_NOT_REQUIRED_FIELDS = ['schedule', 'dateline', 'template_desk', 'template_stage']
+KILL_TEMPLATE_NOT_REQUIRED_FIELDS = ['schedule', 'dateline', 'template_desks', 'schedule_desk',
+                                     'schedule_stage']
 PLAINTEXT_FIELDS = {'headline'}
 
 
@@ -101,9 +102,16 @@ class ContentTemplatesResource(Resource):
             'default': TemplateType.CREATE.value,
         },
 
-        'template_desk': Resource.rel('desks', embeddable=False, nullable=True),
+        'template_desks': {
+            'type': 'list',
+            'required': False,
+            'nullable': True,
+            'schema': Resource.rel('desks', embeddable=False, nullable=True)
+        },
 
-        'template_stage': Resource.rel('stages', embeddable=False, nullable=True),
+        'schedule_desk': Resource.rel('desks', embeddable=False, nullable=True),
+
+        'schedule_stage': Resource.rel('stages', embeddable=False, nullable=True),
 
         'schedule': {'type': 'dict', 'schema': {
             'is_active': {'type': 'boolean'},
@@ -151,6 +159,7 @@ class ContentTemplatesService(Service):
                 self._validate_kill_template(doc)
             if get_user():
                 doc.setdefault('user', get_user()[config.ID_FIELD])
+            self._validate_template_desks(doc)
 
     def on_update(self, updates, original):
         if updates.get('template_type') and updates.get('template_type') != original.get('template_type') and \
@@ -162,6 +171,7 @@ class ContentTemplatesService(Service):
             original_schedule = deepcopy(original.get('schedule'))
             original_schedule.update(updates.get('schedule'))
             updates['next_run'] = get_next_run(original_schedule)
+        self._validate_template_desks(updates)
 
     def on_delete(self, doc):
         if doc.get('template_type') == TemplateType.KILL.value:
@@ -192,11 +202,21 @@ class ContentTemplatesService(Service):
         if doc.get('template_type') != TemplateType.KILL.value:
             return
 
-        if doc.get('template_desk'):
+        if doc.get('template_desks'):
             raise SuperdeskApiError.badRequestError('Kill templates can not be assigned to desks')
         if 'is_public' in doc and doc['is_public'] is False:
             raise SuperdeskApiError.badRequestError('Kill templates must be public')
         doc['is_public'] = True
+
+    def _validate_template_desks(self, doc):
+        """
+        Validate template desks value
+        """
+        if doc.get('template_type') != TemplateType.CREATE.value and \
+                type(doc.get('template_desks')) == list and \
+                len(doc['template_desks']) > 1:
+            raise SuperdeskApiError.badRequestError(
+                message='Templates that are not create type can only be assigned to one desk!')
 
     def _process_kill_template(self, doc):
         """
@@ -294,12 +314,6 @@ def render_content_template(item, template):
         elif not (isinstance(value, dict) or isinstance(value, list)):
             updates[key] = value
 
-    if template.get('template_desk'):
-        updates['task'] = {}
-        updates['task']['desk'] = template.get('template_desk')
-        if template.get('template_stage'):
-            updates['task']['stage'] = template.get('template_stage')
-
     filter_plaintext_fields(updates)
 
     return updates
@@ -335,7 +349,8 @@ def get_item_from_template(template):
     """
     item = template.get('data', {})
     item[ITEM_STATE] = CONTENT_STATE.SUBMITTED
-    item['task'] = {'desk': template.get('template_desk'), 'stage': template.get('template_stage')}
+    if template.get('schedule_desk'):
+        item['task'] = {'desk': template['schedule_desk'], 'stage': template.get('schedule_stage')}
     item['template'] = template.get('_id')
     item.pop('firstcreated', None)
     item.pop('versioncreated', None)
