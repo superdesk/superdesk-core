@@ -308,7 +308,7 @@ def process_iptc_codes(item, provider):
             return False
 
         for subject in item['subject']:
-            if 'qcode' in subject and len(subject['qcode']) == 8:
+            if 'qcode' in subject and len(subject['qcode']) == 8 and subject['qcode'].isdigit():
                 top_qcode = subject['qcode'][:2] + '000000'
                 if not iptc_already_exists(top_qcode):
                     item['subject'].append({'qcode': top_qcode, 'name': subject_codes[top_qcode]})
