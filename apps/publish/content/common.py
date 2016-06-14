@@ -52,7 +52,6 @@ from superdesk.media.crop import CropService
 from superdesk.media.media_operations import crop_image
 from superdesk.celery_app import celery
 
-
 logger = logging.getLogger(__name__)
 
 ITEM_PUBLISH = 'publish'
@@ -370,6 +369,12 @@ class BasePublishService(BaseService):
             updated_take = original_of_take_to_be_published.copy()
             updated_take.update(updates_of_take_to_be_published)
             metadata_from = updated_take
+
+            # only the copy the abstract from the take when there is a change in abstract or it is non-empty.
+            if metadata_from.get('abstract', '') != '' and \
+                    metadata_from.get('abstract') != package.get('abstract'):
+                metadata_tobe_copied.append('abstract')
+
             # this rules has changed to use the last published metadata
             # per ticket SD-3885
             # if self.published_state == 'corrected' and len(takes) > 1:

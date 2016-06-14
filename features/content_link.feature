@@ -249,6 +249,7 @@ Feature: Link content in takes
             "slugline": "Take-1 slugline",
             "anpa_take_key": "Take=2",
             "state": "draft",
+            "abstract": "__no_value__",
             "original_creator": "#CONTEXT_USER_ID#",
             "takes": {
                 "_id": "#TAKE_PACKAGE#",
@@ -260,7 +261,7 @@ Feature: Link content in takes
         """
         When we patch "/archive/#TAKE#"
         """
-        {"body_html": "Take-2", "abstract": "Take-1 abstract changed"}
+        {"body_html": "Take-2"}
         """
         And we post to "/archive/#TAKE#/move"
         """
@@ -270,6 +271,16 @@ Feature: Link content in takes
         Then we get list with 3 items
         When we publish "123" with "publish" type and "published" state
         Then we get OK response
+        When we get "/archive/#TAKE_PACKAGE#"
+        Then we get existing resource
+        """
+        {
+            "type": "composite",
+            "headline": "Take-1 headline",
+            "slugline": "Take-1 slugline",
+            "abstract": "Take-1 abstract"
+        }
+        """
         When we post to "archive/#TAKE#/link"
         """
         [{}]
@@ -283,6 +294,7 @@ Feature: Link content in takes
             "slugline": "Take-1 slugline",
             "anpa_take_key": "Take=3",
             "state": "draft",
+            "abstract": "__no_value__",
             "original_creator": "#CONTEXT_USER_ID#",
             "takes": {
                 "_id": "#TAKE_PACKAGE#",
@@ -302,6 +314,16 @@ Feature: Link content in takes
         """
         And we publish "#TAKE#" with "publish" type and "published" state
         Then we get OK response
+        When we get "/archive/#TAKE_PACKAGE#"
+        Then we get existing resource
+        """
+        {
+            "type": "composite",
+            "headline": "Take-1 headline",
+            "slugline": "Take-1 slugline",
+            "abstract": "Take-1 abstract changed"
+        }
+        """
 	    When we enqueue published
         When we get "/publish_queue"
         Then we get "Take-1 headline=2" in formatted output
