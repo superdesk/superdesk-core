@@ -224,13 +224,14 @@ Feature: Take Package Publishing
           "headline": "Take-1 headline",
           "slugline": "Take-1 slugline",
           "anpa_take_key": "Take=2",
+          "abstract": "__no_value__",
           "state": "draft",
           "original_creator": "#CONTEXT_USER_ID#"
       }
       """
       When we patch "/archive/#TAKE#"
       """
-      {"body_html": "Take-2", "abstract": "Take-2 Abstract"}
+      {"body_html": "Take-2", "headline": "Take-2 headline", "slugline": "Take-2 slugline"}
       """
       And we post to "/archive/#TAKE#/move"
       """
@@ -240,8 +241,30 @@ Feature: Take Package Publishing
       Then we get list with 3 items
       When we publish "123" with "publish" type and "published" state
       Then we get OK response
+      When we get "/archive/#TAKE_PACKAGE#"
+      Then we get existing resource
+      """
+      {
+          "type": "composite",
+          "package_type": "takes",
+          "headline": "Take-1 headline",
+          "slugline": "Take-1 slugline",
+          "abstract": "Take-1 abstract"
+      }
+      """
       When we publish "#TAKE#" with "publish" type and "published" state
       Then we get OK response
+      When we get "/archive/#TAKE_PACKAGE#"
+      Then we get existing resource
+      """
+      {
+          "type": "composite",
+          "package_type": "takes",
+          "headline": "Take-2 headline",
+          "slugline": "Take-2 slugline",
+          "abstract": "Take-1 abstract"
+      }
+      """
       When we get "/published"
       Then we get existing resource
       """
@@ -258,6 +281,7 @@ Feature: Take Package Publishing
                   "state": "published",
                   "type": "composite",
                   "package_type": "takes",
+                  "abstract": "Take-1 abstract",
                   "body_html": "Take-1<br>Take-2"
               },
               {
