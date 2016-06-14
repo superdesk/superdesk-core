@@ -49,4 +49,4 @@ class DbAuthService(AuthService):
             return False
 
         auth = self.find_one(_id=str(kwargs.get('_id')), req=None)
-        return str(g.auth['_id']) == str(auth.get('_id'))
+        return auth and str(g.auth['_id']) == str(auth.get('_id'))

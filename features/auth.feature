@@ -241,3 +241,8 @@ Feature: Authentication
         """
         When we get "/archive"
         Then item "item-1" is unlocked
+
+    @auth
+    Scenario: user deletes his session
+        When we delete "/auth/#AUTH_ID#"
+        Then we get ok response

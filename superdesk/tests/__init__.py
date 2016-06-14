@@ -139,10 +139,11 @@ def setup_auth_user(context, user=None):
     setup_db_user(context, user)
 
 
-def add_to_context(context, token, user):
+def add_to_context(context, token, user, auth_id=None):
     context.headers.append(('Authorization', b'basic ' + b64encode(token + b':')))
     context.user = user
     set_placeholder(context, 'CONTEXT_USER_ID', str(user.get('_id')))
+    set_placeholder(context, 'AUTH_ID', str(auth_id))
 
 
 def set_placeholder(context, name, value):
@@ -181,8 +182,10 @@ def setup_db_user(context, user):
         auth_response = context.client.post(get_prefixed_url(context.app, '/auth'),
                                             data=auth_data, headers=context.headers)
 
-        token = json.loads(auth_response.get_data()).get('token').encode('ascii')
-        add_to_context(context, token, user)
+        auth_data = json.loads(auth_response.get_data())
+        token = auth_data.get('token').encode('ascii')
+        auth_id = auth_data.get('_id')
+        add_to_context(context, token, user, auth_id)
 
 
 def setup_notification(context):
