@@ -199,6 +199,7 @@ else:
 
 INSTALLED_APPS.extend([
     'superdesk.upload',
+    'superdesk.data_updates',
     'superdesk.sequences',
     'superdesk.notification',
     'superdesk.activity',
