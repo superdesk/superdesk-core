@@ -37,7 +37,8 @@ class SearchService(superdesk.Service):
                                                       {'terms': {
                                                           ITEM_STATE: [CONTENT_STATE.FETCHED, CONTENT_STATE.DRAFT,
                                                                        CONTENT_STATE.ROUTED, CONTENT_STATE.PROGRESS,
-                                                                       CONTENT_STATE.SUBMITTED]}}]},
+                                                                       CONTENT_STATE.SUBMITTED, CONTENT_STATE.SPIKED]
+                                                      }}]},
                                      published={'and': [{'term': {'_type': 'published'}},
                                                         {'terms': {ITEM_STATE: [CONTENT_STATE.SCHEDULED,
                                                                                 CONTENT_STATE.PUBLISHED,
