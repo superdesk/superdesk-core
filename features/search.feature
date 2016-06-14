@@ -154,3 +154,31 @@ Feature: Search Feature
 
         When we get "/search/item-published"
         Then we get response code 200
+
+    @auth
+    Scenario: Search returns spiked content from archive
+        Given "desks"
+        """
+        [{"name": "Sports Desk", "content_expiry": 60}]
+        """
+        Given "archive"
+            """
+            [{"guid": "1", "state": "spiked", "task": {"desk": "#desks._id#"}},
+            {"guid": "2", "state": "draft", "task": {"desk": "#desks._id#"}}]
+            """
+        When we get "/search"
+        Then we get list with 2 items
+
+    @auth
+    Scenario: Search returns only spiked content when filtered from archive
+        Given "desks"
+        """
+        [{"name": "Sports Desk", "content_expiry": 60}]
+        """
+        Given "archive"
+            """
+            [{"guid": "1", "state": "spiked", "task": {"desk": "#desks._id#"}},
+            {"guid": "2", "state": "draft", "task": {"desk": "#desks._id#"}}]
+            """
+        When we get "/search?source={"query":{"filtered":{"filter":{"and":[{"term":{"state":"spiked"}}]}}}}"
+        Then we get list with 1 items
