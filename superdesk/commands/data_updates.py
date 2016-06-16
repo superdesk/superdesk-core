@@ -104,7 +104,7 @@ class DataUpdateCommand(superdesk.Command):
         superdesk.Option('--fake-init', dest='fake', required=False, action='store_true',
                          help='Mark data updates as run without actually running them'),
         superdesk.Option('--dry-run', dest='dry', required=False, action='store_true',
-                         help='Does not mark data updates as done. This can be usefull for development.'),
+                         help='Does not mark data updates as done. This can be useful for development.'),
     ]
 
     def get_applied_updates(self):
