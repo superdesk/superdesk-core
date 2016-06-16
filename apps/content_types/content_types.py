@@ -6,22 +6,55 @@ from apps.auth import get_user_id
 CONTENT_TYPE_PRIVILEGE = 'content_type'
 
 DEFAULT_SCHEMA = {
-    'headline': {},
-    'slugline': {},
-    'genre': {},
+    'slugline': {'maxlength': 24, 'type': 'string'},
+    'genre': {'type': 'list'},
     'anpa_take_key': {},
-    'place': {},
+    'place': {'type': 'list'},
     'priority': {},
     'urgency': {},
-    'anpa_category': {},
-    'subject': {},
+    'anpa_category': {'type': 'list'},
+    'subject': {'type': 'list'},
+    'company_codes': {'type': 'list'},
     'ednote': {},
-    'abstract': {},
+    'headline': {'maxlength': 64, 'type': 'string'},
+    'abstract': {'maxlength': 160, 'type': 'string'},
     'body_html': {},
-    'byline': {},
-    'dateline': {},
+    'byline': {'type': 'string'},
+    'dateline': {'type': 'dict'},
+    'sign_off': {'type': 'string'},
+    'sms': None,
+    'footer': None,
+    'body_footer': None,
+    'media': {},
+    'media_description': {},
     'located': {},
-    'sign_off': {},
+}
+
+DEFAULT_EDITOR = {
+    'slugline': {'order': 1, 'sdWidth': 'full'},
+    'genre': {'order': 2, 'sdWidth': 'half'},
+    'anpa_take_key': {'order': 3, 'sdWidth': 'half'},
+    'place': {'order': 4, 'sdWidth': 'half'},
+    'priority': {'order': 5, 'sdWidth': 'quarter'},
+    'urgency': {'order': 6, 'sdWidth': 'quarter'},
+    'anpa_category': {'order': 7, 'sdWidth': 'full'},
+    'subject': {'order': 8, 'sdWidth': 'full'},
+    'company_codes': {'order': 9, 'sdWidth': 'full'},
+    'ednote': {'order': 10, 'sdWidth': 'full'},
+    'headline': {'order': 11, 'formatOptions': ['underline', 'anchor', 'bold', 'removeFormat']},
+    'sms': {'order': 12},
+    'abstract': {'order': 13, 'formatOptions': ['bold', 'italic', 'underline', 'anchor', 'removeFormat']},
+    'byline': {'order': 14},
+    'dateline': {'order': 15},
+    'body_html': {
+        'order': 16,
+        'formatOptions': ['h2', 'bold', 'italic', 'underline', 'quote', 'anchor', 'embed', 'picture', 'removeFormat']
+    },
+    'footer': {'order': 17},
+    'body_footer': {'order': 18},
+    'sign_off': {'order': 19},
+    'media': {},
+    'media_description': {},
 }
 
 
@@ -44,6 +77,7 @@ class ContentTypesResource(superdesk.Resource):
         },
         'editor': {
             'type': 'dict',
+            'default': DEFAULT_EDITOR,
         },
         'priority': {
             'type': 'integer',
