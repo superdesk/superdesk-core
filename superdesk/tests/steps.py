@@ -246,6 +246,7 @@ def apply_placeholders(context, text):
                     value -= timedelta(days=int(placeholder[unit + 1]))
 
             value = format_date(value)
+            placeholders['LAST_DATE_VALUE'] = value
         elif placeholder not in placeholders:
             try:
                 resource_name, field_name = placeholder.split('.', maxsplit=1)
