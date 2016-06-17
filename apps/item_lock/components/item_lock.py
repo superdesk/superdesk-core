@@ -9,11 +9,12 @@
 # at https://www.sourcefabric.org/superdesk/license
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
 import superdesk
+import logging
 from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification
 from superdesk.users.services import current_user_has_privilege
 from superdesk.utc import utcnow
-
+from superdesk.lock import lock, unlock
 from eve.utils import config
 
 from apps.common.components.base_component import BaseComponent
@@ -27,6 +28,7 @@ LOCK_USER = 'lock_user'
 LOCK_SESSION = 'lock_session'
 STATUS = '_status'
 TASK = 'task'
+logger = logging.getLogger(__name__)
 
 
 class ItemLock(BaseComponent):
@@ -42,33 +44,46 @@ class ItemLock(BaseComponent):
         item_model = get_model(ItemModel)
         item = item_model.find_one(item_filter)
 
+        # set the lock_id it per item
+        lock_id = "item_lock {}".format(item.get(config.ID_FIELD))
+
         if not item:
             raise SuperdeskApiError.notFoundError()
 
-        can_user_lock, error_message = self.can_lock(item, user_id, session_id)
+        # get the lock it not raise forbidden exception
+        if not lock(lock_id, "", 5):
+            raise SuperdeskApiError.forbiddenError(message="Item is locked by another user.")
 
-        if can_user_lock:
-            self.app.on_item_lock(item, user_id)
-            updates = {LOCK_USER: user_id, LOCK_SESSION: session_id, 'lock_time': utcnow()}
-            item_model.update(item_filter, updates)
+        try:
+            can_user_lock, error_message = self.can_lock(item, user_id, session_id)
 
-            if item.get(TASK):
-                item[TASK]['user'] = user_id
+            if can_user_lock:
+                self.app.on_item_lock(item, user_id)
+                updates = {LOCK_USER: user_id, LOCK_SESSION: session_id, 'lock_time': utcnow()}
+                item_model.update(item_filter, updates)
+
+                if item.get(TASK):
+                    item[TASK]['user'] = user_id
+                else:
+                    item[TASK] = {'user': user_id}
+
+                superdesk.get_resource_service('tasks').assign_user(item[config.ID_FIELD], item[TASK])
+                self.app.on_item_locked(item, user_id)
+                push_notification('item:lock',
+                                  item=str(item.get(config.ID_FIELD)),
+                                  item_version=str(item.get(config.VERSION)),
+                                  user=str(user_id), lock_time=updates['lock_time'],
+                                  lock_session=str(session_id))
             else:
-                item[TASK] = {'user': user_id}
+                raise SuperdeskApiError.forbiddenError(message=error_message)
 
-            superdesk.get_resource_service('tasks').assign_user(item[config.ID_FIELD], item[TASK])
-            self.app.on_item_locked(item, user_id)
-            push_notification('item:lock',
-                              item=str(item.get(config.ID_FIELD)),
-                              item_version=str(item.get(config.VERSION)),
-                              user=str(user_id), lock_time=updates['lock_time'],
-                              lock_session=str(session_id))
-        else:
-            raise SuperdeskApiError.forbiddenError(message=error_message)
-
-        item = item_model.find_one(item_filter)
-        return item
+            item = item_model.find_one(item_filter)
+            return item
+        except Exception as e:
+            raise e
+        finally:
+            # unlock the lock :)
+            unlock(lock_id)
 
     def unlock(self, item_filter, user_id, session_id, etag):
         item_model = get_model(ItemModel)
