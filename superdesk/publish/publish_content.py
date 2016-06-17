@@ -96,11 +96,11 @@ def get_queue_items(retries=False):
     return get_resource_service(PUBLISH_QUEUE).get(req=request, lookup=lookup)
 
 
-@celery.task(soft_time_limit=1800, bind=True)
+@celery.task(soft_time_limit=600, bind=True)
 def transmit_subscriber_items(self, queue_items, subscriber):
     # Attempt to obtain a lock for transmissions to the subscriber
     lock_name = get_lock_id("Subscriber", "Transmit", subscriber)
-    if not lock(lock_name, expire=300):
+    if not lock(lock_name, expire=610):
         return
 
     for queue_item in queue_items:
