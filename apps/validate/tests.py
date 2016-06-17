@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from test_factory import SuperdeskTestCase
-from apps.validate.validate import SchemaValidator
+from apps.validate.validate import SchemaValidator, ValidateService
 
 
 class ValidateMandatoryInListTest(SuperdeskTestCase):
@@ -44,3 +44,25 @@ class ValidateMandatoryInListTest(SuperdeskTestCase):
         validator._validate_mandatory_in_list(mandatory, field, value)
 
         self.assertEqual(validator._errors, {})
+
+    def test_sanitize_fields_not_in_schema(self):
+        doc = {'body_html': 'test'}
+        service = ValidateService()
+        schema = {'schema': {'body_html': None}}
+        service._sanitize_fields(doc, schema)
+        self.assertEqual('test', doc['body_html'])
+
+    def test_validate_field_without_schema(self):
+        self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
+            'slugline': None,
+            'headline': {'required': True},
+        }}])
+        service = ValidateService()
+        errors = service.create([
+            {
+                'act': 'test',
+                'type': 'test',
+                'validate': {'profile': 'foo', 'slugline': 'foo'},
+            },
+        ])
+        self.assertEqual(['HEADLINE is a required field'], errors[0])

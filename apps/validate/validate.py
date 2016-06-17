@@ -94,12 +94,19 @@ class ValidateService(superdesk.Service):
         fields_to_check = ['minlength', 'maxlength']
         schema = validator.get('schema', {})
         for field in schema:
-            if doc.get(field) and any(k in schema[field] for k in fields_to_check):
+            if doc.get(field) and schema.get(field) and any(k in schema[field] for k in fields_to_check):
                 try:
                     doc[field] = BeautifulSoup(doc[field], 'html.parser').get_text()
                 except TypeError:
                     # fails for json fields like subject, genre
                     pass
+
+    def _get_validator_schema(self, validator):
+        """Get schema for given validator.
+
+        And make sure there is no `None` value which would raise an exception.
+        """
+        return {field: schema for field, schema in validator['schema'].items() if schema}
 
     def _validate(self, doc, **kwargs):
         lookup = {'act': doc['act'], 'type': doc[ITEM_TYPE]}
@@ -110,7 +117,7 @@ class ValidateService(superdesk.Service):
             self._sanitize_fields(doc['validate'], validator)
             v = SchemaValidator()
             v.allow_unknown = True
-            v.validate(doc['validate'], validator['schema'])
+            v.validate(doc['validate'], self._get_validator_schema(validator))
             error_list = v.errors
             response = []
             for e in error_list:
