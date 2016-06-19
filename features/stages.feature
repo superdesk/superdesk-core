@@ -57,15 +57,20 @@ Feature: Stages
         """
         Then we get new resource
         """
-        {"name": "show my content", "description": "Show content items created by the current logged user", "desk": "#desks._id#"}
+        {
+            "name": "show my content",
+            "description": "Show content items created by the current logged user",
+            "desk": "#desks._id#",
+            "local_readonly": false
+        }
         """
         When we patch latest
         """
-        {"name": "My stage", "description": "Show content that I just updated"}
+        {"name": "My stage", "description": "Show content that I just updated", "local_readonly": true}
         """
         Then we get updated response
         """
-        {"name": "My stage", "description": "Show content that I just updated", "desk": "#desks._id#"}
+        {"name": "My stage", "description": "Show content that I just updated", "desk": "#desks._id#", "local_readonly": true}
         """
 
     @auth @notification

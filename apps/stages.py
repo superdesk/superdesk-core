@@ -67,6 +67,10 @@ class StagesResource(Resource):
             'type': 'boolean',
             'default': True
         },
+        'local_readonly': {
+            'type': 'boolean',
+            'default': False
+        },
         'incoming_macro': {
             'type': 'string'
         },
