@@ -61,21 +61,28 @@ Feature: Rewrite content
       And we post to "/subscribers" with success
       """
       {
-        "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "name":"Channel 3","media_type":"media",
+        "subscriber_type": "digital",
+        "sequence_num_settings":{"min" : 1, "max" : 10},
+        "email": "test@test.com",
         "products": ["#products._id#"],
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
+      """
+      And we patch "archive/123"
+      """
+      {"target_subscribers": [{"_id": "#subscribers._id#"}]}
       """
       And we publish "#archive._id#" with "publish" type and "published" state
       Then we get OK response
       And we get existing resource
       """
-      {"_current_version": 3, "state": "published", "task":{"desk": "#desks._id#", "stage": "#stages._id#"}}
+      {"_current_version": 4, "state": "published", "task":{"desk": "#desks._id#", "stage": "#stages._id#"}}
       """
       When we get "/published"
       Then we get existing resource
       """
-      {"_items" : [{"_id": "123", "guid": "123", "headline": "test", "_current_version": 3, "state": "published",
+      {"_items" : [{"_id": "123", "guid": "123", "headline": "test", "_current_version": 4, "state": "published",
         "task": {"desk": "#desks._id#", "stage": "#stages._id#", "user": "#CONTEXT_USER_ID#"}}]}
       """
       When we rewrite "123"
@@ -97,6 +104,7 @@ Feature: Rewrite content
         "body_footer": "Suicide Call Back Service 1300 659 467",
         "body_html": "Test Document body",
         "company_codes" : [{"qcode" : "1PG", "security_exchange" : "ASX", "name" : "1-PAGE LIMITED"}],
+        "target_subscribers": [{"_id": "#subscribers._id#"}],
         "place": [{"qcode" : "ACT"}]}]}
       """
       When we get "/archive/123"
@@ -121,6 +129,7 @@ Feature: Rewrite content
         "body_footer": "Suicide Call Back Service 1300 659 467",
         "place": [{"qcode" : "ACT", "world_region" : "Oceania", "country" : "Australia",
         "name" : "ACT", "state" : "Australian Capital Territory"}],
+        "target_subscribers": [{"_id": "abc"}],
         "company_codes" : [{"qcode" : "1PG", "security_exchange" : "ASX", "name" : "1-PAGE LIMITED"}]
       }]
       """
@@ -144,7 +153,12 @@ Feature: Rewrite content
       When we get "/archive/123"
       Then we get existing resource
       """
-      {"_id": "123", "rewritten_by": "#REWRITE_ID#", "place": [{"qcode" : "ACT"}]}
+      {
+        "_id": "123",
+        "rewritten_by": "#REWRITE_ID#",
+        "place": [{"qcode" : "ACT"}],
+        "target_subscribers": [{"_id": "abc"}]
+      }
       """
 
     @auth

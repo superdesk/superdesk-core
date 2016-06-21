@@ -24,6 +24,7 @@ Feature: Take Package Publishing
           "task": {
               "user": "#CONTEXT_USER_ID#"
           },
+          "target_subscribers": [{"_id": "abc"}],
           "body_html": "Take-1"
       }]
       """
@@ -45,7 +46,8 @@ Feature: Take Package Publishing
           "anpa_take_key": "Take=2",
           "subject":[{"qcode": "17004000", "name": "Statistics"}],
           "state": "draft",
-          "original_creator": "#CONTEXT_USER_ID#"
+          "original_creator": "#CONTEXT_USER_ID#",
+          "target_subscribers": [{"_id": "abc"}]
       }
       """
       When we patch "/archive/#TAKE#"
@@ -846,7 +848,8 @@ Feature: Take Package Publishing
           "pubstatus": "usable",
           "subject":[{"qcode": "17004000", "name": "Statistics"}],
           "anpa_category": [{"qcode": "A", "name": "Sport"}],
-          "anpa_take_key": "Take"
+          "anpa_take_key": "Take",
+          "target_subscribers": [{"_id": "#subscribers._id#"}]
       }]
       """
       And we post to "/archive/123/move"
@@ -867,7 +870,8 @@ Feature: Take Package Publishing
           "slugline": "Take-1 slugline",
           "anpa_take_key": "Take (reopens)=2",
           "state": "draft",
-          "original_creator": "#CONTEXT_USER_ID#"
+          "original_creator": "#CONTEXT_USER_ID#",
+          "target_subscribers": [{"_id": "#subscribers._id#"}]
       }
       """
       When we patch "/archive/#TAKE#"
