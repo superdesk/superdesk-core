@@ -21,7 +21,7 @@ from superdesk.celery_app import celery
 from superdesk.utils import plaintext_filter
 from apps.rules.routing_rules import Weekdays
 from apps.archive.common import ARCHIVE, CUSTOM_HATEOAS, item_schema, format_dateline_to_locmmmddsrc
-from apps.archive.common import insert_into_versions
+from apps.archive.common import insert_into_versions, ARCHIVE_SCHEMA_FIELDS
 from apps.auth import get_user
 from flask import render_template_string
 from datetime import timedelta
@@ -42,6 +42,13 @@ class TemplateType(SuperdeskBaseEnum):
     KILL = 'kill'
     CREATE = 'create'
     HIGHLIGHTS = 'highlights'
+
+
+def get_schema():
+    schema = deepcopy(metadata_schema)
+    schema['target_types'] = ARCHIVE_SCHEMA_FIELDS.get('target_types')
+    schema['target_regions'] = ARCHIVE_SCHEMA_FIELDS.get('target_regions')
+    return schema
 
 
 def get_next_run(schedule, now=None):
@@ -86,7 +93,7 @@ class ContentTemplatesResource(Resource):
     schema = {
         'data': {
             'type': 'dict',
-            'schema': metadata_schema,
+            'schema': get_schema(),
         },
 
         'template_name': {
