@@ -144,7 +144,8 @@ class ArchiveRewriteService(Service):
                 extended_fields = [
                     'abstract', 'anpa_category', 'pubstatus', 'slugline', 'urgency',
                     'subject', 'priority', 'byline', 'dateline', 'headline', 'place',
-                    'genre', 'body_footer', 'company_codes', 'keywords'
+                    'genre', 'body_footer', 'company_codes', 'keywords',
+                    'target_regions', 'target_types', 'target_subscribers'
                 ]
 
             fields.extend(extended_fields)
