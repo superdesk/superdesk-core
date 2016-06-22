@@ -89,9 +89,6 @@ def send_to(doc, update=None, desk_id=None, stage_id=None, user_id=None, default
             task['stage'] = desk.get(default_stage)
             destination_stage = get_resource_service('stages').find_one(req=None, _id=desk.get(default_stage))
 
-        if desk.get('default_content_profile'):
-            doc.setdefault('profile', desk['default_content_profile'])
-
     if stage_id:
         destination_stage = get_resource_service('stages').find_one(req=None, _id=stage_id)
         if not destination_stage:

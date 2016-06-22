@@ -368,28 +368,3 @@ Feature: Desks
         """
         {"slugline": "x", "headline": "sports", "anpa_category": [{"qcode": "sport"}]}
         """
-
-    @auth
-    Scenario: Associate content profiles to desks
-        Given "ingest"
-        """
-        [{"_id": "ingest1", "type": "text"}]
-        """
-        And "content_types"
-        """
-        [{"_id": "foo"}]
-        """
-        When we post to "/desks"
-        """
-        {"name": "sports", "default_content_profile": "foo", "content_profiles": {"foo": 1}}
-        """
-        Then we get new resource
-
-        When we post to "/ingest/ingest1/fetch"
-        """
-        {"desk": "#desks._id#"}
-        """
-        Then we get new resource
-        """
-        {"profile": "foo"}
-        """
