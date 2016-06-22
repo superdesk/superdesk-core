@@ -171,7 +171,7 @@ class ContentTemplatesService(Service):
             original_schedule = deepcopy(original.get('schedule'))
             original_schedule.update(updates.get('schedule'))
             updates['next_run'] = get_next_run(original_schedule)
-        self._validate_template_desks(updates)
+        self._validate_template_desks(updates, original)
 
     def on_delete(self, doc):
         if doc.get('template_type') == TemplateType.KILL.value:
@@ -208,13 +208,14 @@ class ContentTemplatesService(Service):
             raise SuperdeskApiError.badRequestError('Kill templates must be public')
         doc['is_public'] = True
 
-    def _validate_template_desks(self, doc):
+    def _validate_template_desks(self, updates, original={}):
         """
         Validate template desks value
         """
-        if doc.get('template_type') != TemplateType.CREATE.value and \
-                type(doc.get('template_desks')) == list and \
-                len(doc['template_desks']) > 1:
+        template_type = updates.get('template_type', original.get('template_type'))
+        if template_type != TemplateType.CREATE.value and \
+                type(updates.get('template_desks')) == list and \
+                len(updates['template_desks']) > 1:
             raise SuperdeskApiError.badRequestError(
                 message='Templates that are not create type can only be assigned to one desk!')
 
