@@ -48,7 +48,12 @@ class NINJSFormatter(Formatter):
 
     rendition_properties = ('href', 'width', 'height', 'mimetype', 'poi', 'media')
     vidible_fields = {field: field for field in rendition_properties}
-    vidible_fields.update({'url': 'href', 'duration': 'duration'})
+    vidible_fields.update({
+        'url': 'href',
+        'duration': 'duration',
+        'mimeType': 'mimetype',
+        'size': 'size',
+    })
 
     def format(self, article, subscriber, codes=None):
         try:
@@ -112,7 +117,6 @@ class NINJSFormatter(Formatter):
 
         if article.get('anpa_category'):
             ninjs['service'] = self._get_service(article)
-
         if article.get('renditions'):
             ninjs['renditions'] = self._get_renditions(article)
         elif 'url' in article:
