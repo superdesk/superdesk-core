@@ -11,13 +11,13 @@
 
 import eve.io.base
 
-from flask import current_app as app
+from flask import current_app as app, json
 from eve.utils import document_etag, config, ParsedRequest
 from eve.io.mongo import MongoJSONEncoder
 from superdesk.utc import utcnow
 from superdesk.logging import logger, item_msg
 from eve.methods.common import resolve_document_etag
-from elasticsearch.exceptions import RequestError
+from elasticsearch.exceptions import RequestError, NotFoundError
 from superdesk.errors import SuperdeskApiError
 
 
@@ -53,6 +53,20 @@ class EveBackend():
         req.where = MongoJSONEncoder().encode(where)
         req.max_results = max_results
         return self.get_from_mongo(endpoint_name, req, None)
+
+    def search(self, endpoint_name, source):
+        """Search for items using search backend
+
+        :param string endpoint_name
+        :param dict source
+        """
+        req = ParsedRequest()
+        req.args = {'source': json.dumps(source)}
+        search_backend = self._lookup_backend(endpoint_name)
+        if search_backend:
+            return search_backend.find(endpoint_name, req, {})
+        else:
+            logger.warn('there is no search backend for %s' % endpoint_name)
 
     def get(self, endpoint_name, req, lookup):
         backend = self._lookup_backend(endpoint_name, fallback=True)
@@ -139,7 +153,7 @@ class EveBackend():
             if not backend.find_one(endpoint_name, req=None, _id=id):
                 # item is in elastic, not in mongo - not good
                 logger.warn("Item is missing in mongo resource=%s id=%s".format(endpoint_name, id))
-                self._remove_documents_from_search_backend(endpoint_name, [id])
+                self.remove_from_search(endpoint_name, id)
                 raise SuperdeskApiError.notFoundError()
             else:
                 # item is there, but no change was done - ok
@@ -189,26 +203,32 @@ class EveBackend():
         search_backend = self._lookup_backend(endpoint_name)
         docs = self.get_from_mongo(endpoint_name, lookup=lookup, req=ParsedRequest())
         ids = [doc[config.ID_FIELD] for doc in docs]
-        backend.remove(endpoint_name, {config.ID_FIELD: {'$in': ids}})
+        removed_ids = ids
+        logger.info("total documents to be removed {}".format(len(ids)))
         if search_backend and ids:
-            self._remove_documents_from_search_backend(endpoint_name, ids)
+            removed_ids = []
+            # first remove it from search backend, so it won't show up. when this is done - remove it from mongo
+            for _id in ids:
+                try:
+                    self.remove_from_search(endpoint_name, _id)
+                    removed_ids.append(_id)
+                except NotFoundError:
+                    logger.warning('item missing from elastic _id=%s' % (_id, ))
+                    removed_ids.append(_id)
+                except:
+                    logger.exception('item can not be removed from elastic _id=%s' % (_id, ))
+        backend.remove(endpoint_name, {config.ID_FIELD: {'$in': removed_ids}})
+        logger.info("Removed {} documents from {}.".format(len(ids), endpoint_name))
         if not ids:
             logger.warn("No documents for {} resource were deleted using lookup {}".format(endpoint_name, lookup))
 
-    def _remove_documents_from_search_backend(self, endpoint_name, ids):
-        """
-        Remove documents from search backend
+    def remove_from_search(self, endpoint_name, _id):
+        """Remove document from search backend.
 
-        remove it by _id and not via query, so that it's not affected by elastic caching
-
-        :param endpoint_name: name of the endpoint
-        :param ids: list of ids
+        :param endpoint_name
+        :param _id
         """
-        ids = [str(doc_id) for doc_id in ids]
-        logger.info("total documents to be removed {}".format(len(ids)))
-        for _id in ids:
-            app.data._search_backend(endpoint_name).remove(endpoint_name, {'_id': _id})
-        logger.info("Removed {} documents from {}.".format(len(ids), endpoint_name))
+        app.data._search_backend(endpoint_name).remove(endpoint_name, {'_id': str(_id)})
 
     def _datasource(self, endpoint_name):
         return app.data._datasource(endpoint_name)[0]

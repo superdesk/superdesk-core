@@ -12,7 +12,8 @@ import logging
 import logging.config
 import yaml
 
-logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('superdesk')
 
 
 def item_msg(msg, item):
