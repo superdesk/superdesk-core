@@ -21,5 +21,5 @@ def validate(item, **kwargs):
 name = 'take_key_validator'
 label = 'validate take key'
 callback = validate
-access_type = 'frontend'
+access_type = 'backend'
 action_type = 'direct'
