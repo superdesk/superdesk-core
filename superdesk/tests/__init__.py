@@ -118,12 +118,10 @@ def setup(context=None, config=None, app_factory=get_app):
     })
 
     app = app_factory(app_config)
-    logger = logging.getLogger('superdesk')
-    logger.setLevel(logging.ERROR)
-    logger = logging.getLogger('elasticsearch')
-    logger.setLevel(logging.ERROR)
-    logger = logging.getLogger('urllib3')
-    logger.setLevel(logging.ERROR)
+    logging.getLogger('superdesk').setLevel(logging.WARNING)
+    logging.getLogger('elastic').setLevel(logging.WARNING)  # elastic datalayer
+    logging.getLogger('elasticsearch').setLevel(logging.WARNING)
+    logging.getLogger('urllib3').setLevel(logging.WARNING)
     drop_elastic(app)
     drop_mongo(app)
 
@@ -208,8 +206,12 @@ class TestCase(unittest.TestCase):
         if hasattr(self, 'ctx'):
             self.ctx.pop()
         with self.app.app_context():
-            mongoclient = self.app.data.mongo.pymongo().cx
-            mongoclient.close()
+            self.app.celery.pool.force_close_all()
+            self.app.data.mongo.pymongo().cx.close()
+            self.app.redis.connection_pool.disconnect()
+            for connection in self.app.data.elastic.es.transport.connection_pool.connections:
+                connection.pool.close()
+        del self.app
 
     def get_fixture_path(self, filename):
         rootpath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
