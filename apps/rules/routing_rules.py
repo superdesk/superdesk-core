@@ -112,6 +112,10 @@ class RoutingRuleSchemeResource(Resource):
                                             'type': 'list',
                                             'nullable': True
                                         },
+                                        'target_types': {
+                                            'type': 'list',
+                                            'nullable': True
+                                        }
                                     }
                                 }
                             },
@@ -410,22 +414,35 @@ class RoutingRuleSchemeService(BaseService):
         archive_items = []
         for destination in destinations:
             try:
+                target = self.__getTarget(destination)
                 item_id = get_resource_service('fetch') \
                     .fetch([{config.ID_FIELD: ingest_item[config.ID_FIELD],
                              'desk': str(destination.get('desk')),
                              'stage': str(destination.get('stage')),
                              'state': CONTENT_STATE.ROUTED,
-                             'macro': destination.get('macro', None)}])[0]
-
-                if destination.get('target_subscribers'):
-                    get_resource_service('archive').patch(item_id,
-                                                          {'target_subscribers': destination.get('target_subscribers')})
+                             'macro': destination.get('macro', None),
+                             'target': target}])[0]
 
                 archive_items.append(item_id)
             except:
                 logger.exception("Failed to fetch item %s to desk %s" % (ingest_item['guid'], destination))
 
         return archive_items
+
+    def __getTarget(self, destination):
+        """
+        Get the target for destination
+        :param dict destination: routing destination
+        :return dict: returns target information
+        """
+        target = {}
+        if destination.get('target_subscribers'):
+            target['target_subscribers'] = destination.get('target_subscribers')
+
+        if destination.get('target_types'):
+            target['target_types'] = destination.get('target_types')
+
+        return target
 
     def __publish(self, ingest_item, destinations):
         """

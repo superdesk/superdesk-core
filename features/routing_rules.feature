@@ -108,6 +108,30 @@ Feature: Routing Scheme and Routing Rules
       ]
       """
       Then we get response code 201
+      When we post to "/routing_schemes"
+      """
+      [
+        {
+          "name": "routing rule scheme 3",
+          "rules": [
+            {
+              "name": "Sports Rule",
+              "filter": "#FILTER_ID#",
+              "actions": {
+                "publish": [
+                            {
+                              "desk": "#desks._id#",
+                              "stage": "#desks.incoming_stage#",
+                              "target_types": [{ "allow" : true, "qcode" : "wire", "name" : "Wire/Paper"}]
+                            }
+                           ]
+              }
+            }
+          ]
+        }
+      ]
+      """
+      Then we get response code 201
 
 
     @auth @vocabulary

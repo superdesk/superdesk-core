@@ -83,6 +83,10 @@ class FetchService(BaseService):
             ingest_service.patch(id_of_item_to_be_fetched, {'archived': archived})
 
             dest_doc = dict(ingest_doc)
+
+            if doc.get('target'):
+                dest_doc.update(doc.get('target'))
+
             new_id = generate_guid(type=GUID_TAG)
             id_of_fetched_items.append(new_id)
             dest_doc[config.ID_FIELD] = new_id
@@ -116,6 +120,8 @@ class FetchService(BaseService):
         return id_of_fetched_items
 
     def __fetch_items_in_package(self, dest_doc, desk, stage, state):
+        # Note: macro and target information is not user for package publishing.
+        # Needs to looked later when package ingest requirements is clear.
         for ref in [ref for group in dest_doc.get(GROUPS, [])
                     for ref in group.get(REFS, []) if ref.get(RESIDREF)]:
             ref['location'] = ARCHIVE

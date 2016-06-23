@@ -16,6 +16,7 @@ from datetime import datetime
 from flask import current_app as app
 from eve.versioning import insert_versioning_documents
 from pytz import timezone
+from copy import deepcopy
 
 import superdesk
 from superdesk.users.services import get_sign_off
@@ -45,6 +46,106 @@ LAST_AUTHORING_DESK = 'last_authoring_desk'
 LAST_PRODUCTION_DESK = 'last_production_desk'
 BROADCAST_GENRE = 'Broadcast Script'
 RE_OPENS = 'reopens'
+
+# these fields are not available in ingest but available in archive, published, archived
+ARCHIVE_SCHEMA_FIELDS = {
+    'old_version': {
+        'type': 'number',
+    },
+    'last_version': {
+        'type': 'number',
+    },
+    'task': {'type': 'dict'},
+    PUBLISH_SCHEDULE: {
+        'type': 'datetime',
+        'nullable': True
+    },
+    SCHEDULE_SETTINGS: {
+        'type': 'dict',
+        'nullable': True,
+        'schema': {
+            'time_zone': {'type': 'string', 'nullable': True},
+            'utc_publish_schedule': {'type': 'datetime', 'nullable': True},
+            'utc_embargo': {'type': 'datetime', 'nullable': True}
+        }
+    },
+
+    ITEM_OPERATION: {
+        'type': 'string',
+        'allowed': item_operations,
+        'index': 'not_analyzed'
+    },
+    'target_regions': {
+        'type': 'list',
+        'nullable': True,
+        'schema': {
+            'type': 'dict',
+            'schema': {
+                'qcode': {'type': 'string'},
+                'name': {'type': 'string'},
+                'allow': {'type': 'boolean'}
+            }
+        }
+    },
+    'target_types': {
+        'type': 'list',
+        'nullable': True,
+        'schema': {
+            'type': 'dict',
+            'schema': {
+                'qcode': {'type': 'string'},
+                'name': {'type': 'string'},
+                'allow': {'type': 'boolean'}
+            }
+        }
+    },
+    'target_subscribers': {
+        'type': 'list',
+        'nullable': True
+    },
+    'event_id': {
+        'type': 'string',
+        'mapping': not_analyzed
+    },
+    'rewritten_by': {
+        'type': 'string',
+        'mapping': not_analyzed,
+        'nullable': True
+    },
+    'rewrite_of': {
+        'type': 'string',
+        'mapping': not_analyzed,
+        'nullable': True
+    },
+    SEQUENCE: {
+        'type': 'integer'
+    },
+    EMBARGO: {
+        'type': 'datetime',
+        'nullable': True
+    },
+    'broadcast': {
+        'type': 'dict',
+        'nullable': True,
+        'schema': {
+            'status': {'type': 'string'},
+            'master_id': {'type': 'string', 'mapping': not_analyzed},
+            'takes_package_id': {'type': 'string', 'mapping': not_analyzed},
+            'rewrite_id': {'type': 'string', 'mapping': not_analyzed}
+        }
+    },
+    'company_codes': {
+        'type': 'list',
+        'mapping': {
+            'type': 'object',
+            'properties': {
+                'qcode': not_analyzed,
+                'name': not_analyzed,
+                'security_exchange': not_analyzed
+            }
+        }
+    }
+}
 
 
 def get_default_source():
@@ -492,105 +593,7 @@ def item_schema(extra=None):
 
     :param extra: extra fields to be added to schema
     """
-    schema = {
-        'old_version': {
-            'type': 'number',
-        },
-        'last_version': {
-            'type': 'number',
-        },
-        'task': {'type': 'dict'},
-        PUBLISH_SCHEDULE: {
-            'type': 'datetime',
-            'nullable': True
-        },
-        SCHEDULE_SETTINGS: {
-            'type': 'dict',
-            'nullable': True,
-            'schema': {
-                'time_zone': {'type': 'string', 'nullable': True},
-                'utc_publish_schedule': {'type': 'datetime', 'nullable': True},
-                'utc_embargo': {'type': 'datetime', 'nullable': True}
-            }
-        },
-
-        ITEM_OPERATION: {
-            'type': 'string',
-            'allowed': item_operations,
-            'index': 'not_analyzed'
-        },
-        'target_regions': {
-            'type': 'list',
-            'nullable': True,
-            'schema': {
-                'type': 'dict',
-                'schema': {
-                    'qcode': {'type': 'string'},
-                    'name': {'type': 'string'},
-                    'allow': {'type': 'boolean'}
-                }
-            }
-        },
-        'target_types': {
-            'type': 'list',
-            'nullable': True,
-            'schema': {
-                'type': 'dict',
-                'schema': {
-                    'qcode': {'type': 'string'},
-                    'name': {'type': 'string'},
-                    'allow': {'type': 'boolean'}
-                }
-            }
-        },
-        'target_subscribers': {
-            'type': 'list',
-            'nullable': True
-        },
-        'event_id': {
-            'type': 'string',
-            'mapping': not_analyzed
-        },
-        'rewritten_by': {
-            'type': 'string',
-            'mapping': not_analyzed,
-            'nullable': True
-        },
-        'rewrite_of': {
-            'type': 'string',
-            'mapping': not_analyzed,
-            'nullable': True
-        },
-        SEQUENCE: {
-            'type': 'integer'
-        },
-        EMBARGO: {
-            'type': 'datetime',
-            'nullable': True
-        },
-        'broadcast': {
-            'type': 'dict',
-            'nullable': True,
-            'schema': {
-                'status': {'type': 'string'},
-                'master_id': {'type': 'string', 'mapping': not_analyzed},
-                'takes_package_id': {'type': 'string', 'mapping': not_analyzed},
-                'rewrite_id': {'type': 'string', 'mapping': not_analyzed}
-            }
-        },
-        'company_codes': {
-            'type': 'list',
-            'mapping': {
-                'type': 'object',
-                'properties': {
-                    'qcode': not_analyzed,
-                    'name': not_analyzed,
-                    'security_exchange': not_analyzed
-                }
-            }
-        }
-    }
-
+    schema = deepcopy(ARCHIVE_SCHEMA_FIELDS)
     schema.update(metadata_schema)
     if extra:
         schema.update(extra)
