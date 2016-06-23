@@ -100,6 +100,10 @@ class FetchService(BaseService):
             self.__fetch_items_in_package(dest_doc, desk_id, stage_id,
                                           doc.get(ITEM_STATE, CONTENT_STATE.FETCHED))
 
+            desk = get_resource_service('desks').find_one(req=None, _id=desk_id)
+            if desk and desk.get('default_content_profile'):
+                dest_doc['profile'] = desk['default_content_profile']
+
             get_resource_service(ARCHIVE).post([dest_doc])
             insert_into_versions(doc=dest_doc)
             build_custom_hateoas(custom_hateoas, dest_doc)

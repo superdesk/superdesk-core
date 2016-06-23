@@ -280,3 +280,38 @@ Feature: Fetch Items from Ingest
       {"desk": "#desks._id#"}
       """
       Then we get response code 403
+
+    @auth
+    Scenario: Use default content profiles when fetching an item
+        Given config
+        """
+        {"DEFAULT_CONTENT_TYPE": "bar"}
+        """
+        And "ingest"
+        """
+        [{"_id": "ingest1", "type": "text"}]
+        """
+        And "content_types"
+        """
+        [{"_id": "foo"}]
+        """
+        When we get "/ingest/ingest1"
+        Then we get existing resource
+        """
+        {"profile": "bar"}
+        """
+
+        When we post to "/desks"
+        """
+        {"name": "sports", "default_content_profile": "foo", "content_profiles": {"foo": 1}}
+        """
+        Then we get new resource
+
+        When we post to "/ingest/ingest1/fetch"
+        """
+        {"desk": "#desks._id#"}
+        """
+        Then we get new resource
+        """
+        {"profile": "foo"}
+        """
