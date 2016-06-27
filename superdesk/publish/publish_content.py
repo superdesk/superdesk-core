@@ -17,7 +17,6 @@ from superdesk.celery_task_utils import get_lock_id
 from superdesk.errors import PublishHTTPPushClientError
 from superdesk.lock import lock, unlock
 import superdesk.publish
-
 from eve.utils import config, ParsedRequest
 from flask import current_app as app
 from superdesk.celery_app import celery
@@ -52,7 +51,7 @@ def publish():
     """
     with ProfileManager('publish:transmit'):
         lock_name = get_lock_id("Transmit", "Articles")
-        if not lock(lock_name, '', expire=1800):
+        if not lock(lock_name, expire=1810):
             logger.info('Task: {} is already running.'.format(lock_name))
             return
 
@@ -70,7 +69,7 @@ def publish():
         except:
             logger.exception('Task: {} failed.'.format(lock_name))
         finally:
-            unlock(lock_name, '')
+            unlock(lock_name)
 
 
 def get_queue_items(retries=False):
@@ -99,7 +98,8 @@ def get_queue_items(retries=False):
 @celery.task(soft_time_limit=600, bind=True)
 def transmit_subscriber_items(self, queue_items, subscriber):
     # Attempt to obtain a lock for transmissions to the subscriber
-    lock_name = get_lock_id("Subscriber", "Transmit", subscriber)
+    lock_name = get_lock_id('Subscriber', 'Transmit', subscriber)
+
     if not lock(lock_name, expire=610):
         return
 
@@ -108,10 +108,18 @@ def transmit_subscriber_items(self, queue_items, subscriber):
         log_msg = '_id: {_id}  item_id: {item_id}  state: {state} ' \
                   'item_version: {item_version} headline: {headline}'.format(**queue_item)
         try:
+            # check the status of the queue item
+            queue_item = publish_queue_service.find_one(req=None, _id=queue_item[config.ID_FIELD])
+            if queue_item.get('state') not in [QueueState.PENDING.value, QueueState.RETRYING.value]:
+                logger.info('Transmit State is not pending/retrying for queue item: {}. It is in {}'.
+                            format(queue_item.get(config.ID_FIELD), queue_item.get('state')))
+                continue
+
             # update the status of the item to in-progress
-            logger.info('Transmitting queue item {}'.format(log_msg))
             queue_update = {'state': 'in-progress', 'transmit_started_at': utcnow()}
             publish_queue_service.patch(queue_item.get(config.ID_FIELD), queue_update)
+            logger.info('Transmitting queue item {}'.format(log_msg))
+
             destination = queue_item['destination']
             transmitter = superdesk.publish.registered_transmitters[destination.get('delivery_type')]
             transmitter.transmit(queue_item)
@@ -140,7 +148,6 @@ def transmit_subscriber_items(self, queue_items, subscriber):
                 logger.error('Failed to set the state for failed publish queue item {}.'.format(queue_item['_id']))
 
     # Release the lock for the subscriber
-    lock_name = get_lock_id("Subscriber", "Transmit", subscriber)
     unlock(lock_name)
 
 

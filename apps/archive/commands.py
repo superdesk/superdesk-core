@@ -22,7 +22,6 @@ from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTEN
 from superdesk.metadata.packages import PACKAGE_TYPE, TAKES_PACKAGE
 from superdesk.lock import lock, unlock
 from superdesk import get_resource_service
-
 logger = logging.getLogger(__name__)
 
 
@@ -34,14 +33,15 @@ class RemoveExpiredContent(superdesk.Command):
         self.log_msg = 'Expiry Time: {}.'.format(now)
         logger.info('{} Starting to remove expired content at.'.format(self.log_msg))
         lock_name = get_lock_id('archive', 'remove_expired')
-        if not lock(lock_name, '', expire=600):
+
+        if not lock(lock_name, expire=610):
             logger.info('{} Remove expired content task is already running.'.format(self.log_msg))
             return
         try:
             logger.info('{} Removing expired content for expiry.'.format(self.log_msg))
             self._remove_expired_items(now)
         finally:
-            unlock(lock_name, '')
+            unlock(lock_name)
 
         push_notification('content:expired')
         logger.info('{} Completed remove expired content.'.format(self.log_msg))

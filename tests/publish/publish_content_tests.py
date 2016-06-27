@@ -112,7 +112,6 @@ class TransmitItemsTestCase(TestCase):
     def test_logs_error_even_when_marking_failed_items_fails(self, *mocks):
         fake_get_service = mocks[0]
         fake_get_service().patch.side_effect = Exception('Error patching item')
-        fake_get_service().find_one.return_value = MagicMock(name='orig_item')
         fake_get_service().system_update.side_effect = Exception('Update error')
 
         item_1 = {
@@ -126,6 +125,7 @@ class TransmitItemsTestCase(TestCase):
         }
         queue_items = [item_1]
 
+        fake_get_service().find_one.return_value = item_1
         self.func_under_test(queue_items)
         fake_logger = mocks[1]
         expected_msg = 'Failed to set the state for failed publish queue item item_1.'

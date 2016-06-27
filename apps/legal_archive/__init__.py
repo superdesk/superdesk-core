@@ -35,11 +35,11 @@ def init_app(app):
     privilege(name=LEGAL_ARCHIVE_NAME, label='Legal Archive', description='Read from legal archive')
 
 
-@celery.task
+@celery.task(soft_time_limit=300)
 def import_legal_publish_queue():
     ImportLegalPublishQueueCommand().run()
 
 
-@celery.task
+@celery.task(soft_time_limit=1800)
 def import_legal_archive():
     ImportLegalArchiveCommand().run()

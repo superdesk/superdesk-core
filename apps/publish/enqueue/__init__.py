@@ -60,7 +60,7 @@ class EnqueueContent(superdesk.Command):
         calls the transmit function.
         """
         lock_name = get_lock_id('publish', 'enqueue_published')
-        if not lock(lock_name, '', expire=30):
+        if not lock(lock_name, expire=310):
             logger.info('Enqueue Task: {} is already running.'.format(lock_name))
             return
 
@@ -70,7 +70,7 @@ class EnqueueContent(superdesk.Command):
             if len(items) > 0:
                 enqueue_items(items)
         finally:
-            unlock(lock_name, '')
+            unlock(lock_name)
 
 
 def enqueue_item(published_item):
@@ -83,6 +83,13 @@ def enqueue_item(published_item):
     published_update = {QUEUE_STATE: PUBLISH_STATE.IN_PROGRESS, 'last_queue_event': utcnow()}
     try:
         logger.info('Queueing item with id: {} and item_id: {}'.format(published_item_id, published_item['item_id']))
+
+        published_item = published_service.find_one(req=None, _id=published_item_id)
+        if published_item.get(QUEUE_STATE) != PUBLISH_STATE.PENDING:
+            logger.info('Queue State is not pending for published item {}. It is in {}'.
+                        format(published_item_id, published_item.get(QUEUE_STATE)))
+            return
+
         if published_item.get(ITEM_STATE) == CONTENT_STATE.SCHEDULED:
             # if scheduled then change the state to published
             logger.info('Publishing scheduled item_id: {}'.format(published_item_id))
@@ -138,7 +145,7 @@ def enqueue_items(published_items):
 superdesk.command('publish:enqueue', EnqueueContent())
 
 
-@celery.task
+@celery.task(soft_time_limit=300)
 def enqueue_published():
     with ProfileManager('publish:enqueue'):
         EnqueueContent().run()

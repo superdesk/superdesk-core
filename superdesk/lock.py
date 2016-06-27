@@ -5,6 +5,7 @@ import mongolock
 from werkzeug.local import LocalProxy
 from flask import current_app as app
 from superdesk.logging import logger
+import socket
 
 
 _lock_resource_settings = {
@@ -23,7 +24,7 @@ _lock = LocalProxy(_get_lock)
 
 
 def get_host():
-    return 'pid:{pid}'.format(pid=os.getpid())
+    return 'hostid:{} pid:{}'.format(socket.gethostname(), os.getpid())
 
 
 def lock(task, host=None, expire=300, timeout=None):
