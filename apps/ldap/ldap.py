@@ -230,6 +230,7 @@ def add_default_values(doc, user_name, user_type, **kwargs):
     doc['username'] = user_name.strip()
     doc['user_type'] = 'user' if user_type is None else user_type
     doc['is_active'] = True
+    doc['is_enabled'] = True
     doc['needs_activation'] = False
     doc.update(**kwargs)
 
