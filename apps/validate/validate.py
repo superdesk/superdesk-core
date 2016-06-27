@@ -34,6 +34,18 @@ def check_json(doc, field, value):
         return False
 
 
+def set_schema_defaults(schema):
+    """Set default values for field schema.
+
+    - if field is required without minlength set make sure it's not empty
+
+    :param schema
+    """
+    if schema.get('required') and not schema.get('minlength'):
+        schema.setdefault('empty', False)
+    return schema
+
+
 class SchemaValidator(cerberus.Validator):
     def _validate_type_picture(self, field, value):
         """Allow type picture in schema."""
@@ -106,7 +118,7 @@ class ValidateService(superdesk.Service):
 
         And make sure there is no `None` value which would raise an exception.
         """
-        return {field: schema for field, schema in validator['schema'].items() if schema}
+        return {field: set_schema_defaults(schema) for field, schema in validator['schema'].items() if schema}
 
     def _validate(self, doc, **kwargs):
         lookup = {'act': doc['act'], 'type': doc[ITEM_TYPE]}
