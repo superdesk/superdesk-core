@@ -200,11 +200,17 @@ class UsersService(BaseService):
         else:
             push_notification('user', updated=1, user_id=str(user_id))
 
+    def get_avatar_renditions(self, doc):
+        renditions = get_resource_service('upload').find_one(req=None, _id=doc)
+        return renditions.get('renditions') if renditions is not None else None
+
     def on_create(self, docs):
         for user_doc in docs:
             user_doc.setdefault('display_name', get_display_name(user_doc))
             user_doc.setdefault(SIGN_OFF, set_sign_off(user_doc))
             user_doc.setdefault('role', get_resource_service('roles').get_default_role_id())
+            if user_doc.get('avatar'):
+                user_doc.setdefault('avatar_renditions', self.get_avatar_renditions(user_doc['avatar']))
 
             get_resource_service('preferences').set_user_initial_prefs(user_doc)
 
@@ -232,6 +238,9 @@ class UsersService(BaseService):
 
         if SIGN_OFF not in original:
             set_sign_off(updates)
+
+        if updates.get('avatar'):
+            updates['avatar_renditions'] = self.get_avatar_renditions(updates['avatar'])
 
     def on_updated(self, updates, user):
         if 'role' in updates or 'privileges' in updates:
