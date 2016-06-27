@@ -367,8 +367,9 @@ Feature: User Resource
         {
             "username": "foo", "display_name": "foo",
             "email": "foo@bar.com", "is_active": true,
+            "is_enabled": true,
             "needs_activation": false,
-            "_readonly": {"first_name": true, "last_name": true, "phone": true, "email": true }
+            "_readonly": {"first_name": true, "last_name": true, "email": true }
         }
         """
 
