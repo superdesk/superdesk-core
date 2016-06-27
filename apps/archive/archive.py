@@ -184,6 +184,7 @@ class ArchiveService(BaseService):
         if packages:
             self.packageService.on_created(packages)
 
+        profiles = set()
         for doc in docs:
             subject = get_subject(doc)
             if subject:
@@ -192,6 +193,11 @@ class ArchiveService(BaseService):
                 msg = 'added new {{ type }} item with empty header/title'
             add_activity(ACTIVITY_CREATE, msg,
                          self.datasource, item=doc, type=doc[ITEM_TYPE], subject=subject)
+
+            if doc.get('profile'):
+                profiles.add(doc['profile'])
+
+        get_resource_service('content_types').set_used(profiles)
         push_content_notification(docs)
 
     def on_update(self, updates, original):
@@ -260,6 +266,9 @@ class ArchiveService(BaseService):
 
         push_content_notification([updated, original])
         get_resource_service('archive_broadcast').reset_broadcast_status(updates, original)
+
+        if updates.get('profile'):
+            get_resource_service('content_types').set_used([updates.get('profile')])
 
     def on_replace(self, document, original):
         document[ITEM_OPERATION] = ITEM_UPDATE

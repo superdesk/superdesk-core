@@ -85,6 +85,10 @@ class EveBackend():
 
     def find_and_modify(self, endpoint_name, **kwargs):
         backend = self._backend(endpoint_name)
+
+        if kwargs.get('query'):
+            kwargs['query'] = backend._mongotize(kwargs['query'], endpoint_name)
+
         return backend.driver.db[endpoint_name].find_and_modify(**kwargs)
 
     def create(self, endpoint_name, docs, **kwargs):
