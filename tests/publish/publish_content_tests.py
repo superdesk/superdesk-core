@@ -31,11 +31,17 @@ class TransmitItemsTestCase(TestCase):
         else:
             self.func_under_test = transmit_items
 
+    @mock.patch('superdesk.publish.registered_transmitters')
     @mock.patch('superdesk.publish.publish_content.get_resource_service')
     def test_marks_items_as_retrying_in_case_of_failure(self, *mocks):
 
         fake_get_service = mocks[0]
-        fake_get_service().patch.side_effect = Exception('Error patching item')
+        fake_get_service().get.return_value = []
+        fake_transmitter = MagicMock()
+        fake_transmitter.transmit.side_effect = Exception('Error transmitting item')
+
+        fake_transmitters_list = mocks[1]
+        fake_transmitters_list.__getitem__.return_value = fake_transmitter
 
         item_1 = {
             '_id': 'item_1',
@@ -55,11 +61,17 @@ class TransmitItemsTestCase(TestCase):
                                                                        'state': 'retrying',
                                                                        'next_retry_attempt_at': ANY}, orig_item)
 
+    @mock.patch('superdesk.publish.registered_transmitters')
     @mock.patch('superdesk.publish.publish_content.get_resource_service')
     def test_marks_items_as_retrying_second_time_incase_of_failure(self, *mocks):
 
         fake_get_service = mocks[0]
-        fake_get_service().patch.side_effect = Exception('Error patching item')
+        fake_get_service().get.return_value = []
+        fake_transmitter = MagicMock()
+        fake_transmitter.transmit.side_effect = Exception('Error transmitting item')
+
+        fake_transmitters_list = mocks[1]
+        fake_transmitters_list.__getitem__.return_value = fake_transmitter
 
         item_1 = {
             '_id': 'item_1',
@@ -82,11 +94,17 @@ class TransmitItemsTestCase(TestCase):
                                                                        'state': 'retrying',
                                                                        'next_retry_attempt_at': ANY}, orig_item)
 
+    @mock.patch('superdesk.publish.registered_transmitters')
     @mock.patch('superdesk.publish.publish_content.get_resource_service')
     def test_marks_items_failed_to_transmit_after_all_retry_attempts(self, *mocks):
 
         fake_get_service = mocks[0]
-        fake_get_service().patch.side_effect = Exception('Error patching item')
+        fake_get_service().get.return_value = []
+        fake_transmitter = MagicMock()
+        fake_transmitter.transmit.side_effect = Exception('Error transmitting item')
+
+        fake_transmitters_list = mocks[1]
+        fake_transmitters_list.__getitem__.return_value = fake_transmitter
         self.app.config['MAX_TRANSMIT_RETRY_ATTEMPT'] = 4
 
         item_1 = {
@@ -107,13 +125,20 @@ class TransmitItemsTestCase(TestCase):
         self.func_under_test(queue_items)
         fake_get_service().system_update.assert_called_with('item_1', {'_updated': ANY, 'state': 'failed'}, orig_item)
 
+    @mock.patch('superdesk.publish.registered_transmitters')
     @mock.patch('superdesk.publish.publish_content.logger')
     @mock.patch('superdesk.publish.publish_content.get_resource_service')
     def test_logs_error_even_when_marking_failed_items_fails(self, *mocks):
         fake_get_service = mocks[0]
-        fake_get_service().patch.side_effect = Exception('Error patching item')
+        fake_get_service().get.return_value = []
         fake_get_service().find_one.return_value = MagicMock(name='orig_item')
         fake_get_service().system_update.side_effect = Exception('Update error')
+
+        fake_transmitter = MagicMock()
+        fake_transmitter.transmit.side_effect = Exception('Error transmitting item')
+
+        fake_transmitters_list = mocks[2]
+        fake_transmitters_list.__getitem__.return_value = fake_transmitter
 
         item_1 = {
             '_id': 'item_1',
@@ -131,7 +156,7 @@ class TransmitItemsTestCase(TestCase):
         expected_msg = 'Failed to set the state for failed publish queue item item_1.'
         fake_logger.error.assert_any_call(expected_msg)
 
-    def test_transmit_failure(self):
+    def test_transmit_failure_and_skip(self):
         subscriber = {
             '_id': ObjectId('56c11bd78b84bb00b0a1905e'),
             'sequence_num_settings': {'max': 9999, 'min': 1},
@@ -147,14 +172,20 @@ class TransmitItemsTestCase(TestCase):
 
         item_1 = {'_id': ObjectId(), 'state': 'pending', 'item_id': 'item_1', 'item_version': 4,
                   'headline': 'pending headline', 'destination': {'delivery_type': 'email'},
-                  'subscriber_id': subscriber['_id'], 'formatted_item': 'test'}
+                  'subscriber_id': subscriber['_id'], 'formatted_item': 'test', 'published_seq_num': 1}
 
-        self.app.data.insert('publish_queue', [item_1])
-        self.func_under_test([item_1])
+        item_2 = {'_id': ObjectId(), 'state': 'pending', 'item_id': 'item_1', 'item_version': 4,
+                  'headline': 'pending headline', 'destination': {'delivery_type': 'email'},
+                  'subscriber_id': subscriber['_id'], 'formatted_item': 'test', 'published_seq_num': 2}
+
+        self.app.data.insert('publish_queue', [item_1, item_2])
+        self.func_under_test([item_1, item_2])
         failed_item = self.app.data.find_one('publish_queue', req=None, _id=item_1['_id'])
         self.assertEqual(failed_item['state'], 'retrying')
         self.assertEqual(failed_item['retry_attempt'], 1)
         self.assertEqual(failed_item['next_retry_attempt_at'], ANY)
+        failed_item = self.app.data.find_one('publish_queue', req=None, _id=item_2['_id'])
+        self.assertEqual(failed_item['state'], 'pending')
 
     @mock.patch('superdesk.publish.publish_content.get_resource_service')
     @mock.patch('superdesk.publish.registered_transmitters')
@@ -168,12 +199,14 @@ class TransmitItemsTestCase(TestCase):
             'item_id': 'test',
             'headline': 'test headline',
             'item_version': 4,
-            'state': 'pending'
+            'state': 'pending',
+            'published_seq_num': 1
         }
 
         orig_item = item_1.copy()  # item's original state in DB
 
         fake_get_service = mocks[1]
+        fake_get_service().get.return_value = []
         fake_get_service().find_one.return_value = orig_item
         queue_items = [item_1]
 
@@ -206,6 +239,7 @@ class TransmitItemsTestCase(TestCase):
         orig_item = item_1.copy()  # item's original state in DB
 
         fake_get_service = mocks[1]
+        fake_get_service().get.return_value = []
         fake_get_service().find_one.return_value = orig_item
         queue_items = [item_1]
 
