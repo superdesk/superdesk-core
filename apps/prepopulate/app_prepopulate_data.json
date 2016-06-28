@@ -332,6 +332,41 @@
 
     {
         "data": {
+            "_id" : "kill_text",
+            "act": "kill",
+            "type": "text",
+            "schema" : {
+                "headline" : {
+                    "type" : "string",
+                    "required" : true,
+                    "minlength" : 1,
+                    "maxlength" : 55
+                },
+                "type" : {
+                    "type" : "string",
+                    "required" : "true",
+                    "allowed" : [
+                        "text"
+                    ]
+                },
+                "subject" : {
+                    "type" : "list",
+                    "required" : true,
+                    "minlength" : 1
+                },
+                "urgency" : {
+                    "type" : "integer",
+                    "required": true,
+                    "allowed": [1, 2, 3, 4, 5]
+                }
+            }
+        },
+        "resource": "validators",
+        "id_name": "-id validator kill-"
+    },
+
+    {
+        "data": {
             "_id": "subscriber_types",
             "display_name": "Subscriber Types",
             "type": "unmanageable",
