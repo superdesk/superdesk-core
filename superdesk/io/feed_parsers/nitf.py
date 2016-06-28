@@ -289,8 +289,14 @@ class NITFFeedParser(XMLFeedParser):
         :return: a list of subject dictionaries
         """
         subjects = []
+        qcodes = []  # we check qcodes to avoid duplicates
         for elem in tree.findall('head/tobject/tobject.subject'):
             qcode = elem.get('tobject.subject.refnum')
+            if qcode in qcodes:
+                # we ignore duplicates
+                continue
+            else:
+                qcodes.append(qcode)
             for field in subject_fields:
                 if elem.get(field):
                     if field == SUBJECT_TYPE:
