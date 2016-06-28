@@ -12,6 +12,7 @@ import os
 import superdesk.io.commands.update_ingest as ingest
 from datetime import timedelta
 from nose.tools import assert_raises
+from eve.utils import ParsedRequest
 
 from superdesk import etree
 from superdesk import get_resource_service
@@ -218,7 +219,7 @@ class UpdateIngestTest(SuperdeskTestCase):
 
         service = get_resource_service('ingest')
         service.post(items)
-        expiredItems = get_expired_items(provider, now)
+        expiredItems = get_expired_items(provider)
         self.assertEqual(5, expiredItems.count())
 
     def test_expiring_with_content(self):
@@ -251,6 +252,20 @@ class UpdateIngestTest(SuperdeskTestCase):
         # only one left in ingest
         after = service.get(req=None, lookup={})
         self.assertEqual(1, after.count())
+
+        req = ParsedRequest()
+        self.assertEqual(1, self.app.data.elastic.find('ingest', req, {}).count())
+        self.assertEqual(1, self.app.data.mongo.find('ingest', req, {}).count())
+
+    def test_removing_expired_items_from_elastic_only(self):
+        now = utcnow()
+        self.app.data.elastic.insert('ingest', [
+            {'_id': 'foo', 'expiry': now - timedelta(minutes=30)},
+            {'_id': 'bar', 'expiry': now + timedelta(minutes=30)},
+        ])
+
+        RemoveExpiredContent().run()
+        self.assertEqual(1, self.app.data.elastic.find('ingest', ParsedRequest(), {}).count())
 
     def test_expiring_content_with_files(self):
         provider_name = 'reuters'

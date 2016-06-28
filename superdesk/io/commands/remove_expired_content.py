@@ -8,17 +8,14 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import logging
 import superdesk
-from datetime import timedelta
+from superdesk.logging import logger
 from superdesk.utc import utcnow
 from superdesk.notification import push_notification
 from apps.content import push_expired_notification
 from superdesk.errors import ProviderError
 from superdesk.stats import stats
-
-
-logger = logging.getLogger(__name__)
+from superdesk.lock import lock, unlock
 
 
 class RemoveExpiredContent(superdesk.Command):
@@ -36,12 +33,20 @@ class RemoveExpiredContent(superdesk.Command):
                 self.remove_expired(provider)
 
     def remove_expired(self, provider):
+        lock_name = 'ingest:gc'
+
+        if not lock(lock_name, expire=300):
+            return
+
         try:
+
             remove_expired_data(provider)
             push_notification('ingest:cleaned')
         except Exception as err:
             logger.exception(err)
             raise ProviderError.expiredContentError(err, provider)
+        finally:
+            unlock(lock_name)
 
 
 superdesk.command('ingest:clean_expired', RemoveExpiredContent())
@@ -49,12 +54,10 @@ superdesk.command('ingest:clean_expired', RemoveExpiredContent())
 
 def remove_expired_data(provider):
     """Remove expired data for provider"""
-    print('Removing expired content for provider: %s' % provider.get('_id', 'Detached items'))
-    minutes_to_keep_content = provider.get('content_expiry', superdesk.app.config['INGEST_EXPIRY_MINUTES'])
-    expiration_date = utcnow() - timedelta(minutes=minutes_to_keep_content)
+    logger.info('Removing expired content for provider: %s' % provider.get('_id', 'Detached items'))
     ingest_service = superdesk.get_resource_service('ingest')
 
-    items = get_expired_items(provider, expiration_date)
+    items = get_expired_items(provider)
 
     ids = [item['_id'] for item in items]
     items.rewind()
@@ -64,29 +67,41 @@ def remove_expired_data(provider):
                 if not item.get('archived') and rend.get('media')]
 
     if ids:
-        print('Removing items %s' % ids)
+        logger.info('Removing items %s' % ids)
         ingest_service.delete({'_id': {'$in': ids}})
         push_expired_notification(ids)
 
     for file_id in file_ids:
-        print('Deleting file: ', file_id)
+        logger.info('Deleting file: %s' % file_id)
         superdesk.app.media.delete(file_id)
 
     stats.incr('ingest.expired_items', len(ids))
-    print('Removed expired content for provider: {0} count: {1}'
-          .format(provider.get('_id', 'Detached items'), len(ids)))
+    logger.info('Removed expired content for provider: {0} count: {1}'
+                .format(provider.get('_id', 'Detached items'), len(ids)))
+
+    remove_expired_from_elastic()
 
 
-def get_expired_items(provider_id, expiration_date):
-    query_filter = get_query_for_expired_items(provider_id, expiration_date)
+def remove_expired_from_elastic():
+    """Remove expired items from elastic which shouldn't be there anymore - expired before previous run."""
+    ingest = superdesk.get_resource_service('ingest')
+    items = ingest.search({'filter': {'range': {'expiry': {'lt': 'now-5m/m'}}}})
+    if items.count():
+        logger.warning('there are expired items in elastic (%d)' % (items.count(), ))
+        for item in items:
+            logger.debug('doc only in elastic item=%s' % (item, ))
+            ingest.remove_from_search(item.get('_id'))
+
+
+def get_expired_items(provider_id):
+    query_filter = get_query_for_expired_items(provider_id)
     return superdesk.get_resource_service('ingest').get_from_mongo(lookup=query_filter, req=None)
 
 
-def get_query_for_expired_items(provider, expiration_date):
+def get_query_for_expired_items(provider):
     """
     Find all ingest items with given provider id and expiry is past
     :param dict provider: ingest provider
-    :param datetime expiration_date: content expiration date for the provider
     :return str: mongo query
     """
     query = {'expiry': {'$lte': utcnow()}}
