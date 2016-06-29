@@ -20,7 +20,6 @@ from eve.utils import config
 from apps.common.components.base_component import BaseComponent
 from apps.common.models.utils import get_model
 from apps.content import push_content_notification
-
 from ..models.item import ItemModel
 
 
@@ -51,7 +50,7 @@ class ItemLock(BaseComponent):
             raise SuperdeskApiError.notFoundError()
 
         # get the lock it not raise forbidden exception
-        if not lock(lock_id, "", 5):
+        if not lock(lock_id, expire=5):
             raise SuperdeskApiError.forbiddenError(message="Item is locked by another user.")
 
         try:

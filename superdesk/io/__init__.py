@@ -103,6 +103,6 @@ def update_ingest():
     UpdateIngest().run()
 
 
-@celery.task
+@celery.task(soft_time_limit=600)
 def gc_ingest():
     RemoveExpiredContent().run()

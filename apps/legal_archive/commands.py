@@ -332,12 +332,12 @@ class ImportLegalPublishQueueCommand(superdesk.Command):
     def run(self):
         logger.info('Import to Legal Publish Queue')
         lock_name = get_lock_id('legal_archive', 'import_legal_publish_queue')
-        if not lock(lock_name, '', expire=600):
+        if not lock(lock_name, expire=310):
             return
         try:
             LegalArchiveImport().import_legal_publish_queue()
         finally:
-            unlock(lock_name, '')
+            unlock(lock_name)
 
 
 class ImportLegalArchiveCommand(superdesk.Command):
@@ -358,7 +358,7 @@ class ImportLegalArchiveCommand(superdesk.Command):
         logger.info('Import to Legal Archive')
         lock_name = get_lock_id('legal_archive', 'import_to_legal_archive')
         page_size = int(page_size) if page_size else self.default_page_size
-        if not lock(lock_name, '', expire=1800):
+        if not lock(lock_name, expire=1810):
             return
         try:
             legal_archive_import = LegalArchiveImport()
@@ -384,7 +384,7 @@ class ImportLegalArchiveCommand(superdesk.Command):
         except:
             logger.exception('Failed to import into legal archive.')
         finally:
-            unlock(lock_name, '')
+            unlock(lock_name)
 
     def get_expired_items(self, page_size):
         """

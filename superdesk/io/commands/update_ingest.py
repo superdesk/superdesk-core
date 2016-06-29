@@ -18,7 +18,7 @@ from werkzeug.exceptions import HTTPException
 import superdesk
 from superdesk.activity import ACTIVITY_EVENT, notify_and_add_activity
 from superdesk.celery_app import celery
-from superdesk.celery_task_utils import get_lock_id, get_host_id
+from superdesk.celery_task_utils import get_lock_id
 from superdesk.errors import ProviderError
 from superdesk.io.register import registered_feeding_services, registered_feed_parsers
 from superdesk.io.iptc import subject_codes
@@ -215,9 +215,8 @@ def update_provider(self, provider, rule_set=None, routing_scheme=None):
     """
 
     lock_name = get_lock_id('ingest', provider['name'], provider[superdesk.config.ID_FIELD])
-    host_name = get_host_id(self)
 
-    if not lock(lock_name, host_name, expire=1800):
+    if not lock(lock_name, expire=1810):
         return
 
     try:
@@ -251,7 +250,7 @@ def update_provider(self, provider, rule_set=None, routing_scheme=None):
         if LAST_ITEM_UPDATE in update:  # Only push a notification if there has been an update
             push_notification('ingest:update', provider_id=str(provider[superdesk.config.ID_FIELD]))
     finally:
-        unlock(lock_name, host_name)
+        unlock(lock_name)
 
 
 def process_anpa_category(item, provider):
