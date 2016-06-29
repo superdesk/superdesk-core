@@ -59,6 +59,9 @@ def register_macros():
         if hasattr(macro_module, 'label'):
             kwargs['label'] = macro_module.label
 
+        if hasattr(macro_module, 'order'):
+            kwargs['order'] = macro_module.order
+
         if hasattr(macro_module, 'shortcut'):
             kwargs['shortcut'] = macro_module.shortcut
 

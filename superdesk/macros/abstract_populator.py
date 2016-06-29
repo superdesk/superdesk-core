@@ -33,6 +33,7 @@ def populate(item, **kwargs):
 
 name = 'populate_abstract'
 label = 'Populate Abstract'
+order = 3
 shortcut = 'a'
 callback = populate
 desks = ['POLITICS']
