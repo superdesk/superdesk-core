@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import ftplib
+from superdesk.ftp import ftp_connect
 from superdesk.publish import register_transmitter
 from io import BytesIO
 from superdesk.publish.publish_service import PublishService, get_file_extension
@@ -41,14 +41,9 @@ class FTPPublishService(PublishService):
         config = queue_item.get('destination', {}).get('config', {})
 
         try:
-            with ftplib.FTP(config.get('host')) as ftp:
-                ftp.login(config.get('username'), config.get('password'))
-                ftp.cwd(config.get('path', '').lstrip('/'))
-                ftp.set_pasv(config.get('passive', False))
-
+            with ftp_connect(config) as ftp:
                 filename = '{}.{}'.format(queue_item['item_id'].replace(':', '-'), get_file_extension(queue_item))
-                b = BytesIO(bytes(queue_item['formatted_item'], 'UTF-8'))
-
+                b = BytesIO(queue_item['formatted_item'].encode('UTF-8'))
                 ftp.storbinary("STOR " + filename, b)
         except PublishFtpError:
             raise
