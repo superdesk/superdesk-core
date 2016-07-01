@@ -10,7 +10,6 @@
 
 import re
 import superdesk
-from flask import current_app as app
 from superdesk import Resource, Service, config
 from superdesk.utils import SuperdeskBaseEnum
 from superdesk.resource import build_custom_hateoas
@@ -26,6 +25,9 @@ from apps.auth import get_user
 from flask import render_template_string
 from datetime import timedelta
 from copy import deepcopy
+import logging
+from superdesk.lock import lock, unlock
+from superdesk.celery_task_utils import get_lock_id
 
 
 CONTENT_TEMPLATE_PRIVILEGE = 'content_templates'
@@ -36,6 +38,9 @@ TEMPLATE_FIELDS = {'template_name', 'template_type', 'schedule', 'type', 'state'
 KILL_TEMPLATE_NOT_REQUIRED_FIELDS = ['schedule', 'dateline', 'template_desks', 'schedule_desk',
                                      'schedule_stage']
 PLAINTEXT_FIELDS = {'headline'}
+
+
+logger = logging.getLogger(__name__)
 
 
 class TemplateType(SuperdeskBaseEnum):
@@ -383,19 +388,26 @@ def filter_plaintext_fields(item):
 
 @celery.task(soft_time_limit=120)
 def create_scheduled_content(now=None):
-    if now is None:
-        now = utcnow()
-    templates = get_scheduled_templates(now)
-    production = superdesk.get_resource_service(ARCHIVE)
-    items = []
-    for template in templates:
-        try:
+    lock_name = get_lock_id("Template", "Schedule")
+    if not lock(lock_name, expire=130):
+        logger.info('Task: {} is already running.'.format(lock_name))
+        return
+
+    try:
+        if now is None:
+            now = utcnow()
+        templates = get_scheduled_templates(now)
+        production = superdesk.get_resource_service(ARCHIVE)
+        items = []
+        for template in templates:
             set_template_timestamps(template, now)
             item = get_item_from_template(template)
             item[config.VERSION] = 1
             production.post([item])
             insert_into_versions(doc=item)
             items.append(item)
-        except app.data.OriginalChangedError:
-            pass  # ignore template if it changed meanwhile
-    return items
+        return items
+    except Exception as e:
+        logger.exception('Task: {} failed with error {}.'.format(lock_name, str(e)))
+    finally:
+        unlock(lock_name)
