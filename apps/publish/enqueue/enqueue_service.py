@@ -50,7 +50,7 @@ class EnqueueService:
 
     def _enqueue_item(self, item):
         if item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and item.get(PACKAGE_TYPE):
-            self.publish(doc=item, target_media_type=SUBSCRIBER_TYPES.DIGITAL)
+            return self.publish(doc=item, target_media_type=SUBSCRIBER_TYPES.DIGITAL)
         elif item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
             return self._publish_package_items(item)
         elif item[ITEM_TYPE] not in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
@@ -66,7 +66,7 @@ class EnqueueService:
         """
         items = self.package_service.get_residrefs(package)
         subscriber_items = {}
-
+        queued = False
         removed_items = []
         if self.publish_type in ['correct', 'kill']:
             removed_items, added_items = self._get_changed_items(items, package)
@@ -102,7 +102,9 @@ class EnqueueService:
                                               digital_item_id,
                                               subscriber_codes)
 
-            self.publish_package(package, target_subscribers=subscriber_items)
+            queued = self.publish_package(package, target_subscribers=subscriber_items)
+
+        return queued
 
     def _get_changed_items(self, existing_items, package):
         """
@@ -132,9 +134,10 @@ class EnqueueService:
     def enqueue_item(self, item):
         """
         Creates the corresponding entries in the publish queue for the given item
+        :return bool: True if item is queued else false.
         """
         try:
-            self._enqueue_item(item)
+            return self._enqueue_item(item)
         except SuperdeskApiError as e:
             raise e
         except KeyError as e:
@@ -255,6 +258,7 @@ class EnqueueService:
         :param target_subscribers: List of subscriber and items-per-subscriber
         """
         all_items = self.package_service.get_residrefs(package)
+        no_formatters, queued = [], False
         for items in target_subscribers.values():
             updated = deepcopy(package)
             subscriber = items['subscriber']
@@ -269,7 +273,15 @@ class EnqueueService:
                     return
             for key in wanted_items:
                 self.package_service.replace_ref_in_package(updated, key, items['items'][key])
-            self.queue_transmission(updated, [subscriber], {subscriber[config.ID_FIELD]: codes})
+
+            formatters, temp_queued = self.queue_transmission(updated, [subscriber],
+                                                              {subscriber[config.ID_FIELD]: codes})
+
+            no_formatters.extend(formatters)
+            if temp_queued:
+                queued = temp_queued
+
+        return queued
 
     def queue_transmission(self, doc, subscribers, subscriber_codes={}):
         """

@@ -851,3 +851,87 @@ Feature: Content Expiry Published Items
     Then we get list with 0 items
     When we get "archived"
     Then we get list with 0 items
+
+  @auth @vocabulary
+  Scenario: Expire items that not moved to legal.
+    When we publish "123" with "publish" type and "published" state
+    Then we get OK response
+    When we enqueue published
+    And we transmit items
+    And run import legal publish queue
+    When we get "/legal_archive/123"
+    Then we get OK response
+    When we get "/legal_publish_queue?where=item_id==%22123%22"
+    Then we get list with 1 items
+    """
+    {"_items" : [
+        {"item_id": "123", "item_version": 2, "state": "success", "content_type": "text"}
+      ]
+    }
+    """
+    When we get "/legal_publish_queue?where=item_id==%22#archive.123.take_package#%22"
+    Then we get list with 1 items
+    """
+    {"_items" : [
+        {"item_id": "#archive.123.take_package#", "item_version": 2, "state": "success", "content_type": "composite"}
+      ]
+    }
+    """
+    When we post to "/archive" with success
+    """
+    [{"guid": "456", "type": "text", "headline": "test", "state": "fetched", "slugline": "slugline",
+      "anpa_category" : [{"qcode" : "e", "name" : "Entertainment"}],
+      "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+      "subject":[{"qcode": "17004000", "name": "Statistics"}],
+      "body_html": "Test Document body"}]
+    """
+    And we publish "456" with "publish" type and "published" state
+    Then we get OK response
+    When we enqueue published
+    And we transmit items
+    When we get "/legal_publish_queue?where=item_id==%22456%22"
+    Then we get list with 0 items
+    When we get "/legal_publish_queue?where=item_id==%22#archive.456.take_package#%22"
+    Then we get list with 0 items
+    When we expire items
+    """
+    ["123", "#archive.123.take_package#", "456", "#archive.456.take_package#"]
+    """
+    And we get "/archive/456"
+    Then we get OK response
+    And we get existing resource
+    """
+    {"_id": "456", "type": "text", "expiry_status": "invalid"}
+    """
+    When we get "/archive/#archive.456.take_package#"
+    Then we get OK response
+    And we get existing resource
+    """
+    {"_id": "#archive.456.take_package#", "type": "composite", "expiry_status": "invalid"}
+    """
+    When we get "/archive/123"
+    Then we get error 404
+    When we get "/archive/#archive.123.take_package#"
+    Then we get error 404
+    When we expire items
+    """
+    ["456", "#archive.456.take_package#"]
+    """
+    And we get "/archive/456"
+    Then we get OK response
+    When we get "/archive/#archive.456.take_package#"
+    Then we get OK response
+    When run import legal publish queue
+    And we run import legal archive command
+    And we expire items
+    """
+    ["456", "#archive.456.take_package#"]
+    """
+    And we get "/archive/456"
+    Then we get error 404
+    When we get "/archive/#archive.456.take_package#"
+    Then we get error 404
+    When we get "/legal_archive/456"
+    Then we get OK response
+    When we get "/legal_archive/#archive.456.take_package#"
+    Then we get OK response

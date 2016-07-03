@@ -27,6 +27,9 @@ from apps.archive.common import ARCHIVE
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
 from superdesk.lock import lock, unlock
 from superdesk.publish.publish_queue import QueueState
+from superdesk.errors import update_notifiers
+from superdesk.activity import ACTIVITY_ERROR
+from superdesk.utc import utcnow
 
 logger = logging.getLogger(__name__)
 
@@ -54,14 +57,21 @@ class LegalArchiveImport:
                 logger.error('Could not find the document {} to import to legal archive.'.format(item_id))
                 return
 
+            # setting default values in case they are missing other log message will fail.
+            doc.setdefault('unique_name', 'NO UNIQUE NAME')
+            doc.setdefault(config.VERSION, 1)
+            doc.setdefault('expiry', utcnow())
+
             if not doc.get(ITEM_STATE) in {CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED, CONTENT_STATE.KILLED}:
-                logger.error('Invalid state: {}. Cannot move the item to legal archive. item: {}'.
-                             format(doc.get(ITEM_STATE), self.log_msg_format.format(**doc)))
-                return
+                # at times we have seen that item is published but the item is different in the archive collection
+                # this will notify admins about the issue but proceed to move the item into legal archive.
+                msg = 'Invalid state: {}. Moving the item to legal archive. item: {}'.\
+                    format(doc.get(ITEM_STATE), self.log_msg_format.format(**doc))
+                logger.error(msg)
+                update_notifiers(ACTIVITY_ERROR, msg=msg, resource=ARCHIVE)
 
             # required for behave test.
             legal_archive_doc = deepcopy(doc)
-
             legal_archive_service = get_resource_service(LEGAL_ARCHIVE_NAME)
             legal_archive_versions_service = get_resource_service(LEGAL_ARCHIVE_VERSIONS_NAME)
 
@@ -199,22 +209,23 @@ class LegalArchiveImport:
                                                              doc.get(config.VERSION),
                                                              True)
 
-    def import_legal_publish_queue(self):
+    def import_legal_publish_queue(self, force_move=False, page_size=500):
         """
         Import legal publish queue.
+        :param bool force_move: True force move to legal as else false.
+        :param int page_size: page_size.
         """
         logger.info('Starting to import publish queue items...')
-        max_date = self._get_max_date_from_publish_queue()
-        logger.info('Get publish queue items from datetime - {}'.format(max_date))
-        queue_items = list(self._get_publish_queue_items_to_import(max_date))
 
-        if len(queue_items) == 0:
-            logger.info('No Items to import.')
-            return
+        for items in self.get_publish_queue_items(page_size):
+            if len(items):
+                try:
+                    self.process_queue_items(items, force_move)
+                    logger.info('Imported publish queue items {} into legal publish queue.'.format(len(items)))
+                except:
+                    logger.exception('Failed to import into legal publish queue via command')
 
-        self.process_queue_items(queue_items)
-
-        logger.info('Completed importing of publish queue items {}.'.format(max_date))
+        logger.info('Completed importing of publish queue items.')
 
     def process_queue_items(self, queue_items, force_move=False):
         """
@@ -235,34 +246,6 @@ class LegalArchiveImport:
             except:
                 logger.exception("Failed to import publish queue item. {}".format(queue_item.get(config.ID_FIELD)))
 
-    def _get_publish_queue_items_to_import(self, max_date):
-        """
-        Get the queue items to import after max_date
-        :param datetime max_date:
-        :return : list of publish queue items
-        """
-        publish_queue_service = get_resource_service('publish_queue')
-
-        lookup = {}
-        if max_date:
-            lookup['$and'] = [{config.LAST_UPDATED: {'$gte': max_date}, 'moved_to_legal': False}]
-
-        req = ParsedRequest()
-        req.max_results = 500
-        return publish_queue_service.get(req=req, lookup=lookup)
-
-    def _get_max_date_from_publish_queue(self):
-        """
-        Get the max _updated date from legal_publish_queue collection
-        :return datetime: _updated time
-        """
-        legal_publish_queue_service = get_resource_service(LEGAL_PUBLISH_QUEUE_NAME)
-        req = ParsedRequest()
-        req.sort = '[("%s", -1)]' % config.LAST_UPDATED
-        req.max_results = 1
-        queue_item = list(legal_publish_queue_service.get(req=req, lookup={}))
-        return queue_item[0][config.LAST_UPDATED] if queue_item else None
-
     def _upsert_into_legal_archive_publish_queue(self, queue_item, subscribers, force_move):
         """
         Upsert into legal publish queue.
@@ -271,7 +254,7 @@ class LegalArchiveImport:
         :param bool force_move: true set the flag to move to legal.
         """
         legal_publish_queue_service = get_resource_service(LEGAL_PUBLISH_QUEUE_NAME)
-        legal_queue_item = queue_item.copy()
+        legal_queue_item = deepcopy(queue_item)
         lookup = {
             'item_id': legal_queue_item.get('item_id'),
             'item_version': legal_queue_item.get('item_version'),
@@ -283,8 +266,13 @@ class LegalArchiveImport:
         logger.info('Processing queue item: {}'.format(log_msg))
 
         existing_queue_item = legal_publish_queue_service.find_one(req=None, _id=legal_queue_item.get(config.ID_FIELD))
-        legal_queue_item['subscriber_id'] = subscribers[str(queue_item['subscriber_id'])]['name']
-        legal_queue_item['_subscriber_id'] = queue_item['subscriber_id']
+        if str(queue_item['subscriber_id']) in subscribers:
+            legal_queue_item['subscriber_id'] = subscribers[str(queue_item['subscriber_id'])]['name']
+            legal_queue_item['_subscriber_id'] = queue_item['subscriber_id']
+        else:
+            logger.warn('Subscriber is deleted from the system: {}'.format(log_msg))
+            legal_queue_item['subscriber_id'] = 'Deleted Subscriber'
+            legal_queue_item['_subscriber_id'] = queue_item['subscriber_id']
 
         if not existing_queue_item:
             legal_publish_queue_service.post([legal_queue_item])
@@ -308,6 +296,50 @@ class LegalArchiveImport:
 
         logger.info('Processed queue item: {}'.format(log_msg))
 
+    def get_publish_queue_items(self, page_size, expired_items=[]):
+        """
+        Get publish queue items that are not moved to legal
+        :param int page_size: batch size
+        :param list expired_items:
+        :return list: publish queue items
+        """
+        query = {
+            'moved_to_legal': False
+        }
+
+        if expired_items:
+            query['item_id'] = {'$in': expired_items}
+        else:
+            query['state'] = {'$in': [QueueState.SUCCESS.value, QueueState.CANCELED.value, QueueState.FAILED.value]}
+
+        service = get_resource_service('publish_queue')
+        req = ParsedRequest()
+        req.sort = '[("_id", 1)]'
+        req.where = json.dumps(query)
+        cursor = service.get(req=req, lookup=None)
+        count = cursor.count()
+        no_of_pages = 0
+        if count:
+            no_of_pages = len(range(0, count, page_size))
+            queue_id = cursor[0][config.ID_FIELD]
+        logger.info('Number of items to move to legal archive publish queue: {}, pages={}'.format(count, no_of_pages))
+
+        for page in range(0, no_of_pages):
+            logger.info('Fetching publish queue items '
+                        'for page number: {}. queue_id: {}'. format((page + 1), queue_id))
+            req = ParsedRequest()
+            req.sort = '[("_id", 1)]'
+            query['_id'] = {'$gte': str(queue_id)}
+            req.where = json.dumps(query)
+            req.max_results = page_size
+            cursor = service.get(req=req, lookup=None)
+            items = list(cursor)
+            if len(items) > 0:
+                queue_id = items[len(items) - 1][config.ID_FIELD]
+            logger.info('Fetched No. of Items: {} for page: {} '
+                        'For import in to legal archive publish_queue.'.format(len(items), (page + 1)))
+            yield items
+
 
 @celery.task(bind=True, default_retry_delay=180)
 def import_into_legal_archive(self, item_id):
@@ -328,14 +360,20 @@ class ImportLegalPublishQueueCommand(superdesk.Command):
     """
     This command import publish queue records into legal publish queue.
     """
+    default_page_size = 500
 
-    def run(self):
+    option_list = [
+        superdesk.Option('--page-size', '-p', dest='page_size', required=False)
+    ]
+
+    def run(self, page_size=None):
         logger.info('Import to Legal Publish Queue')
         lock_name = get_lock_id('legal_archive', 'import_legal_publish_queue')
+        page_size = int(page_size) if page_size else self.default_page_size
         if not lock(lock_name, expire=310):
             return
         try:
-            LegalArchiveImport().import_legal_publish_queue()
+            LegalArchiveImport().import_legal_publish_queue(page_size=page_size)
         finally:
             unlock(lock_name)
 
@@ -362,29 +400,49 @@ class ImportLegalArchiveCommand(superdesk.Command):
             return
         try:
             legal_archive_import = LegalArchiveImport()
-            publish_queue = get_resource_service('publish_queue')
+            # publish_queue = get_resource_service('publish_queue')
+            # move the publish item to legal archive.
+            expired_items = set()
             for items in self.get_expired_items(page_size):
                 for item in items:
-                    try:
-                        legal_archive_import.upsert_into_legal_archive(item.get('item_id'))
-                        req = ParsedRequest()
-                        req.where = json.dumps({'item_id': item['item_id']})
-                        queue_items = list(publish_queue.get(req=req, lookup=None))
-                        if queue_items:
-                            try:
-                                logger.info('Import to Legal Publish Queue')
-                                legal_archive_import.process_queue_items(queue_items, True)
-                            except:
-                                logger.exception('Failed to import into legal publish queue  '
-                                                 'archive via command {}.'.format(item.get('item_id')))
-                    except:
-                        logger.exception('Failed to import into legal '
-                                         'archive via command {}.'.format(item.get('item_id')))
+                    self._move_to_legal(item.get('item_id'), item.get(config.VERSION), expired_items)
 
+            # get the invalid items from archive.
+            for item in get_resource_service(ARCHIVE).get_expired_items(utcnow(), invalid_only=True):
+                self._move_to_legal(item.get(config.ID_FIELD), item.get(config.VERSION), expired_items)
+
+            # if publish item is moved but publish_queue item is not.
+            if len(expired_items):
+                try:
+                    for items in legal_archive_import.get_publish_queue_items(page_size, list(expired_items)):
+                        legal_archive_import.process_queue_items(items, True)
+                except:
+                    logger.exception('Failed to import into legal publish queue via command')
+
+            # reset the expiry status
+            archive_service = get_resource_service(ARCHIVE)
+            for item_id in expired_items:
+                try:
+                    item = archive_service.find_one(req=None, _id=item_id)
+                    if item:
+                        archive_service.system_update(item_id, {'expiry_status': ''}, item)
+                except:
+                    logger.exception('Failed to reset expiry status for item id: {}.'.format(item_id))
         except:
             logger.exception('Failed to import into legal archive.')
         finally:
             unlock(lock_name)
+
+    def _move_to_legal(self, item_id, item_version, expired_items):
+        try:
+            legal_archive_import = LegalArchiveImport()
+            legal_archive_import.upsert_into_legal_archive(item_id)
+            # set the flag to be set to true.
+            get_resource_service('published').set_moved_to_legal(item_id,
+                                                                 item_version, True)
+            expired_items.add(item_id)
+        except:
+            logger.exception('Failed to import into legal archive via command {}.'.format(item_id))
 
     def get_expired_items(self, page_size):
         """
@@ -411,18 +469,37 @@ class ImportLegalArchiveCommand(superdesk.Command):
         req.sort = '[("publish_sequence_no", 1)]'
         cursor = service.get(req=req, lookup=None)
         count = cursor.count()
-        no_of_pages = len(range(0, count, page_size))
+        no_of_pages = 0
+        if count:
+            no_of_pages = len(range(0, count, page_size))
+            sequence_no = cursor[0]['publish_sequence_no']
         logger.info('Number of items to move to legal archive: {}, pages={}'.format(count, no_of_pages))
 
         for page in range(0, no_of_pages):
+            logger.info('Fetching published items '
+                        'for page number: {} sequence no: {}'. format((page + 1), sequence_no))
             req = ParsedRequest()
-            req.args = {'source': json.dumps(query)}
+            page_query = deepcopy(query)
+            sequence_filter = {'range': {'publish_sequence_no': {'gte': sequence_no}}}
+            if page == 0:
+                sequence_filter = {'range': {'publish_sequence_no': {'gte': sequence_no}}}
+            else:
+                sequence_filter = {'range': {'publish_sequence_no': {'gt': sequence_no}}}
+
+            page_query['query']['filtered']['filter']['and'].append(sequence_filter)
+
+            req.args = {'source': json.dumps(page_query)}
             req.sort = '[("publish_sequence_no", 1)]'
             req.max_results = page_size
             cursor = service.get(req=req, lookup=None)
             items = list(cursor)
-            logger.info('Fetched No. of Items: {} import in to legal archive.'.format(len(items)))
+            if len(items):
+                sequence_no = items[len(items) - 1]['publish_sequence_no']
+
+            logger.info('Fetched No. of Items: {} for page: {} '
+                        'For import into legal archive.'.format(len(items), (page + 1)))
             yield items
+
 
 superdesk.command('legal_publish_queue:import', ImportLegalPublishQueueCommand())
 superdesk.command('legal_archive:import', ImportLegalArchiveCommand())

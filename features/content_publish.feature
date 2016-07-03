@@ -70,6 +70,21 @@ Feature: Content Publishing
       {"_items" : [{"_id": "123", "guid": "123", "headline": "test", "_current_version": 2, "state": "published",
         "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}]}
       """
+      When we enqueue published
+      When we get "/publish_queue"
+      Then we get list with 2 items
+      """
+      {
+        "_items": [
+          {"state": "pending", "content_type": "composite",
+          "subscriber_id": "#digital#", "item_id": "#archive.123.take_package#",
+          "item_version": 2, "ingest_provider": "__none__"},
+          {"state": "pending", "content_type": "text",
+          "subscriber_id": "#wire#", "item_id": "123", "item_version": 2,
+          "ingest_provider": "__none__"}
+        ]
+      }
+      """
       When we get "/legal_archive"
       Then we get existing resource
       """
@@ -126,18 +141,6 @@ Feature: Content Publishing
        ]
       }
       """
-      When we get "/legal_archive/123?version=all"
-      Then we get list with 2 items
-      """
-      {"_items" : [
-        {"_id": "123", "headline": "test", "_current_version": 1, "state": "fetched",
-         "task": {"desk": "Sports", "stage": "Incoming Stage", "user": "test_user"}},
-        {"_id": "123", "headline": "test", "_current_version": 2, "state": "published",
-         "task": {"desk": "Sports", "stage": "Incoming Stage", "user": "test_user"},
-         "body_html": "Test Document body"}
-       ]
-      }
-      """
       When we get "/legal_archive/#archive.123.take_package#?version=all"
       Then we get list with 1 items
       """
@@ -149,31 +152,17 @@ Feature: Content Publishing
        ]
       }
       """
-      When we enqueue published
-      When we get "/publish_queue"
-      Then we get list with 2 items
-      """
-      {
-        "_items": [
-          {"state": "pending", "content_type": "composite",
-          "subscriber_id": "#digital#", "item_id": "#archive.123.take_package#",
-          "item_version": 2, "ingest_provider": "__none__"},
-          {"state": "pending", "content_type": "text",
-          "subscriber_id": "#wire#", "item_id": "123", "item_version": 2,
-          "ingest_provider": "__none__"}
-        ]
-      }
-      """
-      When run import legal publish queue
+      When we transmit items
+      And run import legal publish queue
       When we enqueue published
       And we get "/legal_publish_queue"
       Then we get list with 2 items
       """
       {
         "_items": [
-          {"state": "pending", "content_type": "composite",
+          {"state": "success", "content_type": "composite",
           "subscriber_id": "Channel 1", "item_id": "#archive.123.take_package#", "item_version": 2},
-          {"state": "pending", "content_type": "text",
+          {"state": "success", "content_type": "text",
           "subscriber_id": "Channel 2", "item_id": "123", "item_version": 2}
         ]
       }
@@ -636,7 +625,9 @@ Feature: Content Publishing
       Then we get OK response
       And we get existing resource
       """
-      {"_current_version": 2, "state": "published", "type": "text", "task":{"desk": "#desks.name#"}}
+          {
+            "_id": "123", "type": "text", "state": "published", "_current_version": 2
+          }
       """
       When we get "/legal_archive/#archive.123.take_package#"
       Then we get OK response
@@ -1018,13 +1009,12 @@ Feature: Content Publishing
       When we enqueue published
       When we get "/legal_archive/123"
       Then we get OK response
-      And we get existing resource
-      """
-      {"_current_version": 1, "state": "published", "task":{"desk": "#desks.name#"}}
-      """
       When we get "/legal_archive/123?version=all"
-      Then we get list with 1 items
-      When run import legal publish queue
+      Then we get OK response
+      When we get "/legal_archive/#archive.123.take_package#"
+      Then we get OK response
+      When we transmit items
+      And run import legal publish queue
       And we get "/legal_publish_queue"
       Then we get list with 1 items
       When we post to "/archive/#archive._id#/lock"
@@ -1054,13 +1044,12 @@ Feature: Content Publishing
       Then we get OK response
       When we get "/legal_archive/123"
       Then we get OK response
-      And we get existing resource
-      """
-      {"_current_version": 2, "state": "corrected", "task":{"desk": "#desks.name#"}}
-      """
       When we get "/legal_archive/123?version=all"
-      Then we get list with 2 items
-      When run import legal publish queue
+      Then we get OK response
+      When we get "/legal_archive/#archive.123.take_package#"
+      Then we get OK response
+      When we transmit items
+      And run import legal publish queue
       And we get "/legal_publish_queue"
       Then we get list with 2 items
 
@@ -1117,7 +1106,8 @@ Feature: Content Publishing
         ]
       }
       """
-      When run import legal publish queue
+      When we transmit items
+      And run import legal publish queue
       And we get "/legal_publish_queue"
       Then we get list with 1 items
       """
@@ -1162,7 +1152,8 @@ Feature: Content Publishing
         ]
       }
       """
-      When run import legal publish queue
+      When we transmit items
+      And run import legal publish queue
       And we get "/legal_publish_queue"
       Then we get list with 2 items
       """
@@ -1209,7 +1200,8 @@ Feature: Content Publishing
         ]
       }
       """
-      When run import legal publish queue
+      When we transmit items
+      And run import legal publish queue
       And we get "/legal_publish_queue"
       Then we get list with 3 items
       """

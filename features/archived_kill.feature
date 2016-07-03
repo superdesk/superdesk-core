@@ -80,6 +80,9 @@ Feature: Kill a content item in the (dusty) archive
     When we enqueue published
     And we get "/publish_queue"
     Then we get list with 1 items
+    When run import legal publish queue
+    And we get "/legal_publish_queue"
+    Then we get list with 0 items
     When we transmit items
     And run import legal publish queue
     And we expire items

@@ -35,8 +35,9 @@ logger = logging.getLogger(__name__)
 PUBLISHED = 'published'
 LAST_PUBLISHED_VERSION = 'last_published_version'
 QUEUE_STATE = 'queue_state'
-queue_states = ['pending', 'in_progress', 'queued']
-PUBLISH_STATE = namedtuple('PUBLISH_STATE', ['PENDING', 'IN_PROGRESS', 'QUEUED'])(*queue_states)
+queue_states = ['pending', 'in_progress', 'queued', 'queued_not_transmitted']
+PUBLISH_STATE = namedtuple('PUBLISH_STATE', ['PENDING', 'IN_PROGRESS', 'QUEUED',
+                                             'QUEUED_NOT_TRANSMITTED'])(*queue_states)
 
 published_item_fields = {
     'item_id': {

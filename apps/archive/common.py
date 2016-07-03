@@ -144,6 +144,11 @@ ARCHIVE_SCHEMA_FIELDS = {
                 'security_exchange': not_analyzed
             }
         }
+    },
+    'expiry_status': {
+        'type': 'string',
+        'mapping': not_analyzed,
+        'nullable': True
     }
 }
 
