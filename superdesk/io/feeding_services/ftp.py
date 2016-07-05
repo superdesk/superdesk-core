@@ -11,8 +11,9 @@
 
 import os
 import ftplib
-import tempfile
 import logging
+import tempfile
+
 from datetime import datetime
 
 from superdesk.io import register_feeding_service
@@ -21,6 +22,7 @@ from superdesk.utc import utc
 from superdesk.etree import etree
 from superdesk.io.feeding_services import FeedingService
 from superdesk.errors import IngestFtpError
+from superdesk.ftp import ftp_connect
 
 try:
     from urllib.parse import urlparse
@@ -64,11 +66,7 @@ class FTPFeedingService(FeedingService):
             config['dest_path'] = tempfile.mkdtemp(prefix='superdesk_ingest_')
 
         try:
-            with ftplib.FTP(config.get('host')) as ftp:
-                ftp.login(config.get('username'), config.get('password'))
-                ftp.cwd(config.get('path', ''))
-                ftp.set_pasv(config.get('passive', False))
-
+            with ftp_connect(config) as ftp:
                 items = []
                 for filename, facts in ftp.mlsd():
                     if facts.get('type', '') != 'file':

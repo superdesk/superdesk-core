@@ -430,3 +430,6 @@ ENABLE_PROFILING = False
 
 # customer repo specific templates path
 CUSTOM_TEMPLATE_PATH = []
+
+# default timeout for ftp connections
+FTP_TIMEOUT = 300

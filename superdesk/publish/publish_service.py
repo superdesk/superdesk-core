@@ -91,5 +91,7 @@ def get_file_extension(queue_item):
             return 'ntf'
         if format == 'XML':
             return 'xml'
+        if format == 'NINJS':
+            return 'json'
     except Exception as ex:
         raise PublishQueueError.item_update_error(ex)
