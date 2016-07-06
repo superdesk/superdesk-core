@@ -182,12 +182,12 @@ class EnqueueService:
             self._update_headline_sequence(doc)
 
         # Step 3
-        no_formatters, queued = self.queue_transmission(doc, subscribers, subscriber_codes)
+        no_formatters, queued = self.queue_transmission(deepcopy(doc), subscribers, subscriber_codes)
 
         # Step 4
         if subscribers_yet_to_receive:
             formatters_not_found, queued_new_subscribers = \
-                self.queue_transmission(doc, subscribers_yet_to_receive, subscriber_codes)
+                self.queue_transmission(deepcopy(doc), subscribers_yet_to_receive, subscriber_codes)
             no_formatters.extend(formatters_not_found)
             queued = queued or queued_new_subscribers
 
