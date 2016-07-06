@@ -43,7 +43,7 @@ def download_file_from_url(url):
     if rv.status_code not in (200, 201):
         raise SuperdeskApiError.internalError('Failed to retrieve file from URL: %s' % url)
 
-    mime = magic.from_buffer(rv.content, mime=True).decode('UTF-8')
+    mime = magic.from_buffer(rv.content, mime=True)
     ext = mime.split('/')[1]
     name = str(ObjectId()) + ext
     return BytesIO(rv.content), name, mime
@@ -62,7 +62,7 @@ def process_file_from_stream(content, content_type=None):
     content_type = content_type or content.content_type
     content = BytesIO(content.read())
     if 'application/' in content_type:
-        content_type = magic.from_buffer(content.getvalue(), mime=True).decode('UTF-8')
+        content_type = magic.from_buffer(content.getvalue(), mime=True)
         content.seek(0)
     file_type, ext = content_type.split('/')
     try:

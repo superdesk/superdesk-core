@@ -52,6 +52,14 @@ class Formatter(metaclass=FormatterRegistry):
         elif article[ITEM_TYPE] in [CONTENT_TYPE.AUDIO, CONTENT_TYPE.PICTURE, CONTENT_TYPE.VIDEO]:
             body = article.get('description', '')
 
+        if body and article.get(FORMAT, '') == FORMATS.PRESERVED:
+            body = body.replace('\n', '\r\n').replace('\r\r', '\r')
+            soup = BeautifulSoup(body, 'html.parser')
+
+            for br in soup.find_all('br'):
+                br.replace_with('\r\n')
+            body = str(soup)
+
         if body and article.get('body_footer'):
             footer = article.get('body_footer')
             if article.get(FORMAT, '') == FORMATS.PRESERVED:
