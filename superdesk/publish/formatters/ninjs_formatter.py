@@ -214,13 +214,14 @@ class NINJSFormatter(Formatter):
 
     def _get_renditions(self, article):
         """Get renditions for article."""
-        # renditions list that we want to publish
-        renditions_to_publish = ['original'] + list(get_renditions_spec(without_internal_renditions=True).keys())
         # get the actual article's renditions
         actual_renditions = article.get('renditions', {})
-        # filter renditions and keep only the ones we want to publish
-        actual_renditions = {name: actual_renditions[name] for name in renditions_to_publish
-                             if name in actual_renditions}
+        # renditions list that we want to publish
+        if article['type'] is 'picture':
+            renditions_to_publish = ['original'] + list(get_renditions_spec(without_internal_renditions=True).keys())
+            # filter renditions and keep only the ones we want to publish
+            actual_renditions = {name: actual_renditions[name] for name in renditions_to_publish
+                                 if name in actual_renditions}
         # format renditions to Ninjs
         renditions = {}
         for name, rendition in actual_renditions.items():
