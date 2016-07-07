@@ -169,7 +169,6 @@ metadata_schema = {
     },
     'language': {
         'type': 'string',
-        'default': 'en',
         'mapping': not_analyzed,
         'nullable': True,
     },

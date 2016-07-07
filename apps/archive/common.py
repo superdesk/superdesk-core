@@ -189,6 +189,9 @@ def on_create_item(docs, repo_type=ARCHIVE):
         if 'profile' not in doc and app.config.get('DEFAULT_CONTENT_TYPE', None):
             doc['profile'] = app.config.get('DEFAULT_CONTENT_TYPE', None)
 
+        if 'language' not in doc:
+            doc['language'] = app.config.get('DEFAULT_LANGUAGE', 'en')
+
         if not doc.get(ITEM_OPERATION):
             doc[ITEM_OPERATION] = ITEM_CREATE
 
