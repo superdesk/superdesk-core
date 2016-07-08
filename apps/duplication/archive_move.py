@@ -15,6 +15,7 @@ from copy import deepcopy
 
 import superdesk
 from apps.tasks import send_to, apply_onstage_rule
+from apps.packages.takes_package_service import TakesPackageService
 from apps.desks import DeskTypes
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
@@ -73,40 +74,52 @@ class MoveService(BaseService):
         if not archived_doc:
             raise SuperdeskApiError.notFoundError('Fail to found item with guid: %s' % id)
 
-        current_stage_of_item = archived_doc.get('task', {}).get('stage')
-        if current_stage_of_item and str(current_stage_of_item) == str(doc.get('task', {}).get('stage')):
-            raise SuperdeskApiError.preconditionFailedError(message='Move is not allowed within the same stage.')
+        self._validate(archived_doc, doc)
+        self._move(archived_doc, doc)
 
-        if not is_workflow_state_transition_valid('submit_to_desk', archived_doc[ITEM_STATE]):
-            raise InvalidStateTransitionError()
+        # move the takes package where the first take is located.
+        takes_service = TakesPackageService()
+        takes_package = takes_service.get_take_package(archived_doc)
+        if takes_package and \
+                takes_service.get_take_by_take_no(archived_doc,
+                                                  package=takes_package) == archived_doc.get(config.ID_FIELD):
+            self._move(takes_package, doc)
 
+        return archived_doc
+
+    def _move(self, archived_doc, doc):
+        archive_service = get_resource_service(ARCHIVE)
         original = deepcopy(archived_doc)
         user = get_user()
-
         send_to(doc=archived_doc, desk_id=doc.get('task', {}).get('desk'), stage_id=doc.get('task', {}).get('stage'),
                 user_id=user.get(config.ID_FIELD))
-
         if archived_doc[ITEM_STATE] not in {CONTENT_STATE.PUBLISHED, CONTENT_STATE.SCHEDULED, CONTENT_STATE.KILLED}:
             archived_doc[ITEM_STATE] = CONTENT_STATE.SUBMITTED
         archived_doc[ITEM_OPERATION] = ITEM_MOVE
-
         # set the change in desk type when content is moved.
         self.set_change_in_desk_type(archived_doc, original)
         archived_doc.pop(SIGN_OFF, None)
         set_sign_off(archived_doc, original=original)
         convert_task_attributes_to_objectId(archived_doc)
         resolve_document_version(archived_doc, ARCHIVE, 'PATCH', original)
-
         del archived_doc[config.ID_FIELD]
         archive_service.update(original[config.ID_FIELD], archived_doc, original)
-
         insert_into_versions(id_=original[config.ID_FIELD])
         push_item_move_notification(original, archived_doc)
-
         # finally apply any on stage rules/macros
         apply_onstage_rule(archived_doc, original[config.ID_FIELD])
 
-        return archived_doc
+    def _validate(self, archived_doc, doc):
+        """
+        Validate that the item can be move
+        :param dict archived_doc: item to be moved
+        :param dict doc: new location details
+        """
+        current_stage_of_item = archived_doc.get('task', {}).get('stage')
+        if current_stage_of_item and str(current_stage_of_item) == str(doc.get('task', {}).get('stage')):
+            raise SuperdeskApiError.preconditionFailedError(message='Move is not allowed within the same stage.')
+        if not is_workflow_state_transition_valid('submit_to_desk', archived_doc[ITEM_STATE]):
+            raise InvalidStateTransitionError()
 
     def set_change_in_desk_type(self, updated, original):
         """
