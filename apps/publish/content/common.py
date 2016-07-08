@@ -385,6 +385,17 @@ class BasePublishService(BaseService):
                 if metadata in metadata_from:
                     package_updates[metadata] = metadata_from.get(metadata)
 
+            # rewire the takes_package to the take_packages of 'rewrite_of' item
+            if sequence_num_of_take_to_be_published == 1 and \
+                    original_of_take_to_be_published.get('rewrite_of'):
+                rewrite_of = self.find_one(req=None,
+                                           _id=original_of_take_to_be_published.get('rewrite_of'))
+                if rewrite_of:
+                    rewrite_package = self.takes_package_service.get_take_package(rewrite_of)
+
+                    if rewrite_package:
+                        package_updates['rewrite_of'] = rewrite_package.get(config.ID_FIELD)
+
             if self.published_state == CONTENT_STATE.KILLED:
                 # if published then update the groups in the take
                 # to reflect the correct version, headline and slugline

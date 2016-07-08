@@ -89,6 +89,9 @@ Feature: Rewrite content
       """
       {"desk_id": "#desks._id#"}
       """
+      Then we get OK response
+      When we get "/archive/#REWRITE_ID#"
+      Then we get OK response
       When we get "/published"
       Then we get existing resource
       """
@@ -112,12 +115,36 @@ Feature: Rewrite content
       """
       {"_id": "123", "rewritten_by": "#REWRITE_ID#", "place": [{"qcode" : "ACT"}]}
       """
+      When we publish "#REWRITE_ID#" with "publish" type and "published" state
+      Then we get OK response
+      When we get "/archive/#archive.take_package#"
+      Then we get existing resource
+      """
+      {"_id": "#archive.take_package#", "rewrite_of": "#archive.123.take_package#"}
+      """
 
     @auth
     Scenario: Rewrite an un-published content
       Given "desks"
       """
       [{"name": "Sports"}]
+      """
+      And the "validators"
+      """
+        [
+        {
+            "schema": {},
+            "type": "text",
+            "act": "publish",
+            "_id": "publish_text"
+        },
+        {
+            "_id": "publish_composite",
+            "act": "publish",
+            "type": "composite",
+            "schema": {}
+        }
+        ]
       """
       And "archive"
       """
@@ -150,6 +177,14 @@ Feature: Rewrite content
       """
       When we get "/archive/#REWRITE_ID#"
       Then there is no "body_html" in response
+      And we get existing resource
+      """
+      {
+        "_id": "#REWRITE_ID#",
+        "rewrite_of": "123",
+        "headline": "test"
+      }
+      """
       When we get "/archive/123"
       Then we get existing resource
       """
@@ -160,6 +195,21 @@ Feature: Rewrite content
         "target_subscribers": [{"_id": "abc"}]
       }
       """
+      When we publish "123" with "publish" type and "published" state
+      Then we get OK response
+      When we publish "#REWRITE_ID#" with "publish" type and "published" state
+      Then we get OK response
+      And we get existing resource
+      """
+      {"_id": "#REWRITE_ID#", "state": "published"}
+      """
+      When we get "/archive/#archive.take_package#"
+      Then we get OK response
+      And we get existing resource
+      """
+      {"state": "published", "rewrite_of": "#archive.123.take_package#"}
+      """
+
 
     @auth
     Scenario: Rewrite the non-last take fails
