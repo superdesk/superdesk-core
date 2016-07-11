@@ -454,6 +454,35 @@ Feature: News Items Archive
         """
 
     @auth
+    Scenario: Sign-off is updated when same user updates story twice
+        When we post to "/archive"
+        """
+        [{"_id": "123", "type": "text", "body_html": "<p>content</p>"}]
+        """
+        Then we get new resource
+        """
+        {"type": "text", "sign_off":"abc"}
+        """
+        When we switch user
+        And we patch latest
+        """
+        {"headline": "test4"}
+        """
+        Then we get updated response
+        """
+        {"headline": "test4", "sign_off": "abc/foo"}
+        """
+        When we setup test user
+        When we patch "/archive/123"
+        """
+        {"headline": "test5"}
+        """
+        Then we get updated response
+        """
+        {"headline": "test5", "sign_off": "foo/abc"}
+        """
+
+    @auth
     Scenario: Assign a default values to user created content Items
         When we post to "/archive"
         """
