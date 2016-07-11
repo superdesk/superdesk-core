@@ -25,7 +25,6 @@ Feature: Content Profile
                 "anpa_take_key": {},
                 "place": {},
                 "priority": {},
-                "urgency": {},
                 "anpa_category": {},
                 "subject": {},
                 "ednote": {},
