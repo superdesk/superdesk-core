@@ -403,6 +403,10 @@ class FilterConditionTests(SuperdeskTestCase):
         self.assertFalse(f.does_match(self.articles[5]))
         self.assertTrue(f.does_match(self.articles[6]))
         self.assertFalse(f.does_match(self.articles[7]))
+        self.assertFalse(f.does_match({'genre': None}))
+        self.assertTrue(f.does_match({'genre': [{'name': 'Sidebar'}]}))
+        self.assertFalse(f.does_match({'genre': [{'name': 'Article'}]}))
+        self.assertTrue(f.does_match({'genre': [{'name': 'Sidebar'}, {'name': 'Article'}]}))
 
     def test_does_match_with_category_filter(self):
         f = FilterCondition('anpa_category', 'in', 'a,i')
