@@ -621,6 +621,7 @@
             "guid": "item1",
             "versioncreated": "2015-01-07T10:10:10+0000",
             "_current_version" : 1,
+            "state": "in_progress",
             "unique_name": "item1",
             "unique_id": 1,
             "original_creator": "-id user admin-",
@@ -637,6 +638,7 @@
             "guid": "item2",
             "versioncreated": "2015-01-06T10:10:10+0000",
             "_current_version" : 1,
+            "state": "in_progress",
             "original_creator": "-id user admin-",
             "anpa_category": [{"qcode": "A", "name": "General News"}]
         }
@@ -653,6 +655,7 @@
             "priority": 3,
             "versioncreated": "2015-01-01T10:10:10+0000",
             "_current_version" : 1,
+            "state": "in_progress",
             "original_creator": "-id user admin-",
             "anpa_category": [{"qcode": "A", "name": "General News"}],
             "task" : {
@@ -674,6 +677,7 @@
             "guid": "item4",
             "versioncreated": "2015-01-01T10:10:10+0000",
             "_current_version" : 1,
+            "state": "in_progress",
             "original_creator": "-id user admin-",
             "anpa_category": [{"qcode": "A", "name": "General News"}],
             "task" : {
@@ -862,6 +866,7 @@
             "versioncreated": "2015-01-01T10:10:10+0000",
             "_current_version" : 1,
             "original_creator": "-id user admin-",
+            "state": "in_progress",
             "unique_id": 2,
             "unique_name": "package1",
             "task" : {
@@ -945,6 +950,7 @@
             "guid": "package3",
             "versioncreated": "NOW()",
             "_current_version" : 1,
+            "state": "in_progress",
             "original_creator": "-id user admin-",
             "unique_id": 2,
             "unique_name": "package3",

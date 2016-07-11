@@ -17,7 +17,7 @@ Feature: Search Feature
         """
         Given "archive"
             """
-            [{"guid": "1", "task": {"desk": "#desks._id#"}}]
+            [{"guid": "1", "task": {"desk": "#desks._id#"}, "state": "in_progress"}]
             """
         When we get "/search"
         Then we get list with 1 items
@@ -39,11 +39,15 @@ Feature: Search Feature
         """
         Given "archive"
         """
-        [{"guid": "1", "task": {"desk": "#desks._id#"}}, {"guid": "2", "task": {"desk": "#desks._id#"}},
-         {"guid": "3", "task": {"desk": "#desks._id#"}}, {"guid": "4", "task": {"desk": "#desks._id#"}},
-         {"guid": "5", "task": {"desk": "#desks._id#"}}, {"guid": "6", "task": {"desk": "#desks._id#"}},
-         {"guid": "7", "task": {"desk": "#desks._id#"}}, {"guid": "8", "task": {"desk": "#desks._id#"}},
-         {"guid": "9", "task": {"desk": "#desks._id#"}}]
+        [{"guid": "1", "task": {"desk": "#desks._id#"}, "state": "in_progress"},
+         {"guid": "2", "task": {"desk": "#desks._id#"}, "state": "in_progress"},
+         {"guid": "3", "task": {"desk": "#desks._id#"}, "state": "in_progress"},
+         {"guid": "4", "task": {"desk": "#desks._id#"}, "state": "in_progress"},
+         {"guid": "5", "task": {"desk": "#desks._id#"}, "state": "in_progress"},
+         {"guid": "6", "task": {"desk": "#desks._id#"}, "state": "in_progress"},
+         {"guid": "7", "task": {"desk": "#desks._id#"}, "state": "in_progress"},
+         {"guid": "8", "task": {"desk": "#desks._id#"}, "state": "in_progress"},
+         {"guid": "9", "task": {"desk": "#desks._id#"}, "state": "in_progress"}]
         """
         Then we set elastic limit
         When we get "/search"
@@ -68,7 +72,7 @@ Feature: Search Feature
         When we get the default incoming stage
         When we post to "/archive"
             """
-            [{"guid": "item1", "task": {"desk": "#desks._id#",
+            [{"guid": "item1", "state": "in_progress", "task": {"desk": "#desks._id#",
             "stage": "#desks.incoming_stage#", "user": "#users._id#"}}]
             """
         Then we get response code 201
@@ -104,7 +108,7 @@ Feature: Search Feature
         When we get the default incoming stage
         When we post to "/archive"
             """
-            [{"guid": "item1", "task": {"desk": "#desks._id#",
+            [{"guid": "item1", "state": "in_progress", "task": {"desk": "#desks._id#",
             "stage": "#desks.incoming_stage#", "user": "#users._id#"}}]
             """
         Then we get response code 201
@@ -164,10 +168,27 @@ Feature: Search Feature
         Given "archive"
             """
             [{"guid": "1", "state": "spiked", "task": {"desk": "#desks._id#"}},
-            {"guid": "2", "state": "draft", "task": {"desk": "#desks._id#"}}]
+            {"guid": "2", "state": "in_progress", "task": {"desk": "#desks._id#"}}]
             """
         When we get "/search"
         Then we get list with 2 items
+
+    @auth
+    Scenario: Search returns only current users drafts
+        Given "desks"
+        """
+        [{"name": "Sports Desk", "content_expiry": 60}]
+        """
+        Given "archive"
+            """
+            [{"guid": "1", "state": "draft", "task": {"desk": "#desks._id#", "user": "123"}},
+            {"guid": "2", "state": "in_progress", "task": {"desk": "#desks._id#", "user": "#users.id#"}}]
+            """
+        When we get "/search"
+        Then we get list with 1 items
+            """
+            {"_items": [{"guid": "2"}]}
+            """
 
     @auth
     Scenario: Search returns only spiked content when filtered from archive
