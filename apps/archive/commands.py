@@ -12,7 +12,7 @@ from apps.content import push_expired_notification
 
 import superdesk
 import logging
-from eve.utils import config
+from eve.utils import config, ParsedRequest
 from copy import deepcopy
 from apps.packages import PackageService
 from superdesk.celery_task_utils import get_lock_id
@@ -75,7 +75,7 @@ class RemoveExpiredContent(superdesk.Command):
         items_having_issues.update(self.check_if_items_imported_to_legal_archive(killed_items))
 
         # filter out the killed items not imported to legal.
-        killed_items = {item_id: item for item_id, item in killed_items
+        killed_items = {item_id: item for item_id, item in killed_items.items()
                         if item_id not in items_having_issues}
 
         # Get the not killed and spiked items
@@ -101,7 +101,7 @@ class RemoveExpiredContent(superdesk.Command):
                 logger.info('{} Items to be removed. {}'.format(self.log_msg, processed_items))
                 issues = self.check_if_items_imported_to_legal_archive(processed_items)
                 if issues:
-                    items_having_issues.update(issues)
+                    items_having_issues.update(processed_items)
                 else:
                     items_to_be_archived.update(processed_items)
 
@@ -128,10 +128,19 @@ class RemoveExpiredContent(superdesk.Command):
             items_to_be_archived = {item_id: item for item_id, item in items_to_be_archived.items()
                                     if item.get(ITEM_STATE) != CONTENT_STATE.KILLED}
 
+        # add killed items to items to expire
+        items_to_expire.update(killed_items)
+
+        # get the filter conditions
+        logger.info('{} filter conditions.'.format(self.log_msg))
+        req = ParsedRequest()
+        req.args = {'is_archived_filter': True}
+        filter_conditions = list(get_resource_service('content_filters').get(req=req, lookup=None))
+
         # move to archived collection
         logger.info('{} Archiving items.'.format(self.log_msg))
         for item_id, item in items_to_be_archived.items():
-            self._move_to_archived(item_id)
+            self._move_to_archived(item, filter_conditions)
 
         for item_id, item in killed_items.items():
             # delete from the published collection and queue
@@ -212,21 +221,26 @@ class RemoveExpiredContent(superdesk.Command):
 
         return is_expired
 
-    def _move_to_archived(self, item_id):
+    def _move_to_archived(self, item, filter_conditions):
         """
         Moves all the published version of an article to archived.
         Deletes all published version of an article in the published collection
         :param str item_id: item_id of the document
+        :param list filter_conditions: list of filter conditions
         """
         published_service = get_resource_service('published')
         archived_service = get_resource_service('archived')
         archive_service = get_resource_service('archive')
-
+        item_id = item.get(config.ID_FIELD)
+        moved_to_archived = self._conforms_to_archived_filter(item, filter_conditions)
         published_items = list(published_service.get_from_mongo(req=None, lookup={'item_id': item_id}))
 
         try:
             if published_items:
-                archived_service.post(published_items)
+                # moved to archive
+                if moved_to_archived:
+                    archived_service.post(published_items)
+
                 logger.info('{} Archived published item'.format(self.log_msg))
                 published_service.delete_by_article_id(item_id)
                 logger.info('{} Deleted published item.'.format(self.log_msg))
@@ -236,6 +250,23 @@ class RemoveExpiredContent(superdesk.Command):
         except:
             failed_items = [item.get(config.ID_FIELD) for item in published_items]
             logger.exception('{} Failed to move to archived. {}'.format(self.log_msg, failed_items))
+
+    def _conforms_to_archived_filter(self, item, filter_conditions):
+        """
+        Check if the item can be moved the archived collection or not
+        :param dict item: item to be moved
+        :param list filter_conditions: list of filter conditions
+        :return bool: True to archive the item else False
+        """
+        if not filter_conditions:
+            return True
+
+        filter_service = get_resource_service('content_filters')
+        for fc in filter_conditions:
+            if filter_service.does_match(fc, item):
+                return False
+
+        return True
 
     def delete_spiked_items(self, items):
         """

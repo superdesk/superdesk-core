@@ -43,6 +43,10 @@ class ContentFilterResource(Resource):
         'is_global': {
             'type': 'boolean',
             'default': False
+        },
+        'is_archived_filter': {
+            'type': 'boolean',
+            'default': False
         }
     }
 

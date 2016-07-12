@@ -935,3 +935,110 @@ Feature: Content Expiry Published Items
     Then we get OK response
     When we get "/legal_archive/#archive.456.take_package#"
     Then we get OK response
+
+  @auth @vocabulary @test
+  Scenario: Only entertainment articles are archived
+    When we publish "123" with "publish" type and "published" state
+    Then we get OK response
+    When we enqueue published
+    And we transmit items
+    And run import legal publish queue
+    When we get "/legal_archive/123"
+    Then we get OK response
+    When we get "/legal_publish_queue?where=item_id==%22123%22"
+    Then we get list with 1 items
+    """
+    {"_items" : [
+        {"item_id": "123", "item_version": 2, "state": "success", "content_type": "text"}
+      ]
+    }
+    """
+    When we get "/legal_publish_queue?where=item_id==%22#archive.123.take_package#%22"
+    Then we get list with 1 items
+    """
+    {"_items" : [
+        {"item_id": "#archive.123.take_package#", "item_version": 2, "state": "success", "content_type": "composite"}
+      ]
+    }
+    """
+    When we post to "/archive" with success
+    """
+    [{"guid": "456", "type": "text", "headline": "test", "state": "fetched", "slugline": "slugline",
+      "anpa_category" : [{"qcode" : "a", "name" : "Australian General News"}],
+      "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+      "subject":[{"qcode": "17004000", "name": "Statistics"}],
+      "body_html": "Test Document body"}]
+    """
+    And we publish "456" with "publish" type and "published" state
+    Then we get OK response
+    When we enqueue published
+    And we transmit items
+    And run import legal publish queue
+    When we get "/legal_archive/456"
+    Then we get OK response
+    When we get "/legal_publish_queue?where=item_id==%22456%22"
+    Then we get list with 1 items
+    When we post to "/archive" with success
+    """
+    [{"guid": "789", "type": "text", "headline": "test", "state": "fetched", "slugline": "slugline",
+      "anpa_category" : [{"qcode" : "s", "name" : "International Sports"}],
+      "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+      "subject":[{"qcode": "17004000", "name": "Statistics"}],
+      "body_html": "Test Document body"}]
+    """
+    And we publish "789" with "publish" type and "published" state
+    Then we get OK response
+    When we enqueue published
+    And we transmit items
+    And run import legal publish queue
+    When we get "/legal_archive/789"
+    Then we get OK response
+    When we get "/legal_publish_queue?where=item_id==%22789%22"
+    Then we get list with 1 items
+    When we post to "/filter_conditions" with success
+    """
+    [{"name": "international sport", "field": "anpa_category", "operator": "in", "value": "s"}]
+    """
+    Then we get OK response
+    When we post to "/content_filters" with success
+    """
+    [{"content_filter": [{"expression": {"fc": ["#filter_conditions._id#"]}}],
+      "name": "intl sports", "is_archived_filter": true}]
+    """
+    Then we get OK response
+    When we post to "/filter_conditions" with success
+    """
+    [{"name": "domestic", "field": "anpa_category", "operator": "in", "value": "a"}]
+    """
+    Then we get OK response
+    When we post to "/content_filters" with success
+    """
+    [{"content_filter": [{"expression": {"fc": ["#filter_conditions._id#"]}}],
+      "name": "Domestic News", "is_archived_filter": true}]
+    """
+    Then we get OK response
+    When we expire items
+    """
+    ["123", "#archive.123.take_package#",
+     "456", "#archive.456.take_package#",
+     "789", "#archive.789.take_package#"]
+    """
+    And we get "/archived"
+    Then we get list with 2 items
+    """
+    {
+      "_items": [
+        {"item_id": "123", "type": "text", "anpa_category" : [{"qcode" : "e", "name" : "Entertainment"}]},
+        {"item_id": "#archive.123.take_package#", "type": "composite",
+        "anpa_category" : [{"qcode" : "e", "name" : "Entertainment"}]}
+      ]
+    }
+    """
+    When we get "/archive/456"
+    Then we get error 404
+    When we get "/archive/789"
+    Then we get error 404
+    When we get "/archive/#archive.456.take_package#"
+    Then we get error 404
+    When we get "/archive/#archive.789.take_package#"
+    Then we get error 404
