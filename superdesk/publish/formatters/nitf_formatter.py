@@ -49,28 +49,34 @@ class NITFFormatter(Formatter):
         body_head = SubElement(body, "body.head")
         body_content = SubElement(body, "body.content")
 
-        if article.get(FORMAT) == FORMATS.PRESERVED:
-            soup = BeautifulSoup(self.append_body_footer(article), 'html.parser')
-            SubElement(body_content, 'pre').text = soup.get_text()
-        else:
-            self.map_html_to_xml(body_content, self.append_body_footer(article))
-
         body_end = SubElement(body, "body.end")
 
-        self.__append_meta(article, head, destination, pub_seq_num)
-        self.__format_head(article, head)
-        self.__format_body_head(article, body_head)
-        self.__format_body_end(article, body_end)
+        self._append_meta(article, head, destination, pub_seq_num)
+        self._format_head(article, head)
+        self._format_body_head(article, body_head)
+        self._format_body_content(article, body_content)
+        self._format_body_end(article, body_end)
         return nitf
 
-    def __format_head(self, article, head):
+    def _format_tobject(self, article, head):
+        return SubElement(head, 'tobject', {'tobject.type': 'news'})
+
+    def _format_docdata(self, article, docdata):
+        SubElement(docdata, 'urgency', {'ed-urg': str(article.get('urgency', ''))})
+        SubElement(docdata, 'date.issue', {'norm': str(article.get('firstcreated', ''))})
+        SubElement(docdata, 'doc-id', attrib={'id-string': article.get('guid', '')})
+
+        if article.get('ednote'):
+            SubElement(docdata, 'ed-msg', {'info': article.get('ednote', '')})
+
+    def _format_head(self, article, head):
         title = SubElement(head, 'title')
         title.text = article.get('headline', '')
 
-        tobject = SubElement(head, 'tobject', {'tobject.type': 'news'})
+        tobject = self._format_tobject(article, head)
         if 'genre' in article and len(article['genre']) > 0:
             SubElement(tobject, 'tobject.property', {'tobject.property.type': article['genre'][0]['name']})
-        self.__format_subjects(article, tobject)
+        self._format_subjects(article, tobject)
 
         if article.get(EMBARGO):
             docdata = SubElement(head, 'docdata', {'management-status': 'embargoed'})
@@ -80,27 +86,26 @@ class NITFFormatter(Formatter):
             docdata = SubElement(head, 'docdata', {'management-status': article.get('pubstatus', '')})
             SubElement(docdata, 'date.expire', {'norm': str(article.get('expiry', ''))})
 
-        SubElement(docdata, 'urgency', {'ed-urg': str(article.get('urgency', ''))})
-        SubElement(docdata, 'date.issue', {'norm': str(article.get('firstcreated', ''))})
-        SubElement(docdata, 'doc-id', attrib={'id-string': article.get('guid', '')})
+        self._format_docdata(article, docdata)
+        self._format_keywords(article, head)
 
-        if article.get('ednote'):
-            SubElement(docdata, 'ed-msg', {'info': article.get('ednote', '')})
-
-        self.__format_keywords(article, head)
-
-    def __format_subjects(self, article, tobject):
+    def _format_subjects(self, article, tobject):
         for subject in article.get('subject', []):
             SubElement(tobject, 'tobject.subject',
                        {'tobject.subject.refnum': subject.get('qcode', '')})
 
-    def __format_keywords(self, article, head):
+    def _format_keywords(self, article, head):
         if article.get('keywords'):
             keylist = SubElement(head, 'key-list')
             for keyword in article['keywords']:
                 SubElement(keylist, 'keyword', {'key': keyword})
 
-    def __format_body_head(self, article, body_head):
+    def _format_body_head_abstract(self, article, body_head):
+        if article.get('abstract'):
+            abstract = SubElement(body_head, 'abstract')
+            self.map_html_to_xml(abstract, article.get('abstract'))
+
+    def _format_body_head(self, article, body_head):
         hedline = SubElement(body_head, 'hedline')
         hl1 = SubElement(hedline, 'hl1')
         hl1.text = article.get('headline', '')
@@ -113,16 +118,21 @@ class NITFFormatter(Formatter):
             dateline = SubElement(body_head, 'dateline')
             dateline.text = article['dateline']['text']
 
-        if article.get('abstract'):
-            abstract = SubElement(body_head, 'abstract')
-            self.map_html_to_xml(abstract, article.get('abstract'))
+        self._format_body_head_abstract(article, body_head)
 
         for company in article.get('company_codes', []):
             org = SubElement(body_head, 'org', attrib={'idsrc': company.get('security_exchange', ''),
                                                        'value': company.get('qcode', '')})
             org.text = company.get('name', '')
 
-    def __format_body_end(self, article, body_end):
+    def _format_body_content(self, article, body_content):
+        if article.get(FORMAT) == FORMATS.PRESERVED:
+            soup = BeautifulSoup(self.append_body_footer(article), 'html.parser')
+            SubElement(body_content, 'pre').text = soup.get_text()
+        else:
+            self.map_html_to_xml(body_content, self.append_body_footer(article))
+
+    def _format_body_end(self, article, body_end):
         if article.get('ednote'):
             tagline = SubElement(body_end, 'tagline')
             tagline.text = article['ednote']
@@ -131,7 +141,10 @@ class NITFFormatter(Formatter):
         return format_type == 'nitf' and \
             article[ITEM_TYPE] in (CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED, CONTENT_TYPE.COMPOSITE)
 
-    def __append_meta(self, article, head, destination, pub_seq_num):
+    def _append_meta_priority(self, article, head):
+        SubElement(head, 'meta', {'name': 'aap-priority', 'content': str(article.get('priority', '3'))})
+
+    def _append_meta(self, article, head, destination, pub_seq_num):
         """
         Appends <meta> elements to <head>
         """
@@ -144,8 +157,7 @@ class NITFFormatter(Formatter):
             SubElement(head, 'meta',
                        {'name': 'anpa-category', 'content': article.get('anpa_category')[0].get('qcode', '')})
 
-        if 'priority' in article:
-            SubElement(head, 'meta', {'name': 'aap-priority', 'content': str(article.get('priority', '3'))})
+        self._append_meta_priority(article, head)
         original_creator = superdesk.get_resource_service('users').find_one(req=None,
                                                                             _id=article.get('original_creator', ''))
         if original_creator:
