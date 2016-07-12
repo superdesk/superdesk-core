@@ -61,7 +61,7 @@ class FilterConditionField:
         return self.field_type
 
     def is_in_article(self, article):
-        return self.field.name in article
+        return self.field.name in article and article.get(self.field.name) is not None
 
     def get_value(self, article):
         return article[self.field.name]
