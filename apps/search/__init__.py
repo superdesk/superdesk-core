@@ -32,19 +32,29 @@ class SearchService(superdesk.Service):
 
     def __init__(self, datasource, backend):
         super().__init__(datasource=datasource, backend=backend)
-        self._private_filters = dict(ingest={'and': [{'term': {'_type': 'ingest'}}]},
-                                     archive={'and': [{'exists': {'field': 'task.desk'}},
-                                                      {'terms': {
-                                                          ITEM_STATE: [CONTENT_STATE.FETCHED, CONTENT_STATE.DRAFT,
-                                                                       CONTENT_STATE.ROUTED, CONTENT_STATE.PROGRESS,
-                                                                       CONTENT_STATE.SUBMITTED, CONTENT_STATE.SPIKED]
-                                                      }}]},
-                                     published={'and': [{'term': {'_type': 'published'}},
-                                                        {'terms': {ITEM_STATE: [CONTENT_STATE.SCHEDULED,
-                                                                                CONTENT_STATE.PUBLISHED,
-                                                                                CONTENT_STATE.KILLED,
-                                                                                CONTENT_STATE.CORRECTED]}}]},
-                                     archived={'and': [{'term': {'_type': 'archived'}}]})
+
+    def _get_private_filters(self, repo):
+        if repo == 'ingest':
+            return {'and': [{'term': {'_type': 'ingest'}}]}
+        elif repo == 'archive':
+            user_id = g.get('user', {}).get('_id')
+            return {'and': [{'exists': {'field': 'task.desk'}},
+                            {'or': [{'and': [{'term': {ITEM_STATE: CONTENT_STATE.DRAFT}},
+                                             {'term': {'task.user': str(user_id)}}]},
+                                    {"terms": {ITEM_STATE: [CONTENT_STATE.FETCHED,
+                                                            CONTENT_STATE.ROUTED,
+                                                            CONTENT_STATE.PROGRESS,
+                                                            CONTENT_STATE.SUBMITTED,
+                                                            CONTENT_STATE.SPIKED]}}]}
+                            ]}
+        elif repo == 'published':
+            return {'and': [{'term': {'_type': 'published'}},
+                            {'terms': {ITEM_STATE: [CONTENT_STATE.SCHEDULED,
+                                                    CONTENT_STATE.PUBLISHED,
+                                                    CONTENT_STATE.KILLED,
+                                                    CONTENT_STATE.CORRECTED]}}]}
+        elif repo == 'archived':
+            return {'and': [{'term': {'_type': 'archived'}}]}
 
     def _get_query(self, req):
         """Get elastic query."""
@@ -72,7 +82,7 @@ class SearchService(superdesk.Service):
         filters = []
 
         for repo in repos:
-            filters.append(self._private_filters[repo])
+            filters.append(self._get_private_filters(repo))
 
         return [{'or': filters}]
 

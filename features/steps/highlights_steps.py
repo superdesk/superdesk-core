@@ -18,9 +18,12 @@ def given_highlights(context):
         get_resource_service('highlights').post([context.highlights])
         task = {'desk': context.desks['_id']}
         context.items = [
-            {'headline': 'item1', 'task': task, 'versioncreated': utcnow() - timedelta(minutes=5)},
-            {'headline': 'item2', 'task': task, 'versioncreated': utcnow() - timedelta(hours=8)},
-            {'headline': 'old', 'task': task, 'versioncreated': utcnow() - timedelta(days=2)},
+            {'headline': 'item1', 'state': 'in_progress', 'task': task,
+             'versioncreated': utcnow() - timedelta(minutes=5)},
+            {'headline': 'item2', 'state': 'in_progress', 'task': task,
+             'versioncreated': utcnow() - timedelta(hours=8)},
+            {'headline': 'old', 'state': 'in_progress', 'task': task,
+             'versioncreated': utcnow() - timedelta(days=2)},
         ]
         get_resource_service('archive').post(context.items)
         for item in context.items:

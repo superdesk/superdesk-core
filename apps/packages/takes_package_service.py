@@ -141,6 +141,7 @@ class TakesPackageService():
             takes_package['associations'] = {'featureimage': target['associations']['featureimage']}
 
         takes_package.setdefault(config.VERSION, 1)
+        takes_package[ITEM_STATE] = CONTENT_STATE.PROGRESS
 
         create_root_group([takes_package])
         self.__link_items__(takes_package, target, link)
