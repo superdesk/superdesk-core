@@ -297,6 +297,7 @@ def set_sign_off(updates, original=None, repo_type=ARCHIVE, user=None):
         1. updates['sign_off'] = original['sign_off'] + sign_off of the user performing operation.
         2. If the last modified user and the user performing operation are same then sign_off shouldn't change
         3. If sign_off is received on updates, this value will be preserved
+        4. If a users sign_off is already in the list then remove it an append it to the remaining
     """
 
     if repo_type != ARCHIVE:
@@ -313,6 +314,9 @@ def set_sign_off(updates, original=None, repo_type=ARCHIVE, user=None):
 
     if current_sign_off.endswith(sign_off):
         return
+
+    # remove the sign off from the list if already there
+    current_sign_off = current_sign_off.replace(sign_off + '/', '')
 
     updated_sign_off = '{}/{}'.format(current_sign_off, sign_off)
     updates[SIGN_OFF] = updated_sign_off[1:] if updated_sign_off.startswith('/') else updated_sign_off
