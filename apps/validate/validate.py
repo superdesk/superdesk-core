@@ -58,6 +58,12 @@ class SchemaValidator(cerberus.Validator):
                 if not check_json(value, key, mandatory[key][key_field]):
                     self._error(key_field, 'is a required field')
 
+    def _validate_mandatory_in_dictionary(self, mandatory, field, value):
+        """Validates if all elements from mandatory are presented in the dictionary"""
+        for key in mandatory:
+            if not value.get(key):
+                self._error(key, 'is a required field')
+
 
 class ValidateResource(superdesk.Resource):
     schema = {
