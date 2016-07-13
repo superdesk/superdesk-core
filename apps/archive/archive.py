@@ -392,6 +392,9 @@ class ArchiveService(BaseService):
         copied_item.pop('lock_session', None)
         copied_item.pop('lock_user', None)
         copied_item.pop(SIGN_OFF, None)
+        copied_item.pop('rewritten_by', None)
+        copied_item.pop('rewrite_of', None)
+        copied_item.pop('highlights', None)
 
         task = copied_item.get('task', {})
         task.pop(LAST_PRODUCTION_DESK, None)
