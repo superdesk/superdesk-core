@@ -99,20 +99,36 @@ class AmazonMediaStorage(MediaStorage):
             url_generator = url_for_media_default
         return url_generator(self.app, media_id)
 
-    def media_id(self, filename, content_type=None):
+    def media_id(self, filename, content_type=None, version=True):
+        """ Gets the media_id path for the `filename` given.
+            if filename doesn't have an extension one is guessed,
+            and additional `version` option to have automatic version or not to have,
+                or to send a `string` one.
+            `AMAZON_S3_SUBFOLDER` configuration is used for
+                easement deploying multiple instance on the same bucket.
+        """
         if not self.app.config.get('AMAZON_SERVE_DIRECT_LINKS', False):
             return str(bson.ObjectId())
 
         path = urlparse(filename).path
-        extension = splitext(path)[1]
-        if not extension:
+        file_extension = splitext(path)[1]
+
+        extension = ''
+        if not file_extension:
             extension = str(_guess_extension(content_type)) if content_type else ''
-            return '%s/%s%s' % (time.strftime('%Y%m%d'), filename, extension)
 
         subfolder = self.app.config.get('AMAZON_S3_SUBFOLDER', False)
         if subfolder:
-            return '%s/%s/%s' % (subfolder.strip('/'), time.strftime('%Y%m%d'), filename)
-        return '%s/%s' % (time.strftime('%Y%m%d'), filename)
+            subfolder = '%s/' % subfolder.strip('/')
+
+        if version is True:
+            # automatic version is set on 15mins granularity.
+            mins_granularity = int(int(time.strftime('%M')) / 4) * 4
+            version = '%s%s/' % (time.strftime('%Y%m%d%H%m'), mins_granularity)
+        elif version is False:
+            version = ''
+
+        return '%s%s%s%s' % (subfolder, version, filename, extension)
 
     def fetch_rendition(self, rendition):
         stream, name, mime = download_file_from_url(rendition.get('href'))
@@ -179,7 +195,7 @@ class AmazonMediaStorage(MediaStorage):
                         logger.exception(ex)
         return headers
 
-    def put(self, content, filename=None, content_type=None, resource=None, metadata=None, _id=None):
+    def put(self, content, filename=None, content_type=None, resource=None, metadata=None, _id=None, version=True):
         """ Saves a new file using the storage system, preferably with the name
         specified. If there already exists a file with this name name, the
         storage system may modify the filename as necessary to get a unique
@@ -190,7 +206,7 @@ class AmazonMediaStorage(MediaStorage):
         # XXX: we don't use metadata here as Amazon S3 as a limit of 2048 bytes (keys + values)
         #      and they are anyway stored in MongoDB (and still part of the file). See issue SD-4231
         logger.debug('Going to save file file=%s media=%s ' % (filename, _id))
-        _id = _id or self.media_id(filename, content_type=content_type)
+        _id = _id or self.media_id(filename, content_type=content_type, version=version)
         found = self._check_exists(_id)
         if found:
             return _id
