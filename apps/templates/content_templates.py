@@ -180,7 +180,7 @@ class ContentTemplatesService(Service):
             self._process_kill_template(updates)
 
         if updates.get('schedule'):
-            original_schedule = deepcopy(original.get('schedule'))
+            original_schedule = deepcopy(original.get('schedule', {}))
             original_schedule.update(updates.get('schedule'))
             updates['next_run'] = get_next_run(original_schedule)
         self._validate_template_desks(updates, original)
