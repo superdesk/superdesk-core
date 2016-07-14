@@ -139,6 +139,8 @@ def setup_auth_user(context, user=None):
 
 def add_to_context(context, token, user, auth_id=None):
     context.headers.append(('Authorization', b'basic ' + b64encode(token + b':')))
+    if getattr(context, 'user', None):
+        context.previous_user = context.user
     context.user = user
     set_placeholder(context, 'CONTEXT_USER_ID', str(user.get('_id')))
     set_placeholder(context, 'AUTH_ID', str(auth_id))

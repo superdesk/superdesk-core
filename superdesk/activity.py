@@ -22,6 +22,8 @@ from superdesk.notification import push_notification
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.utc import utcnow
+from eve.utils import ParsedRequest
+import json
 
 log = logging.getLogger(__name__)
 
@@ -149,6 +151,28 @@ class ActivityResource(Resource):
 
 
 class ActivityService(BaseService):
+
+    def get(self, req, lookup):
+        """ Filter out personal activity on personal items if inquired by another user.
+        """
+        if req is None:
+            req = ParsedRequest()
+        user = getattr(g, 'user', None)
+        if not user:
+            raise SuperdeskApiError.notFoundError('Can not determine user')
+        where_cond = {}
+        if req.where:
+            if req.where[0] != '{':
+                req.where = '{' + req.where + '}'
+            where_cond = json.loads(req.where)
+        for_user = where_cond.get('user', str(user.get('_id')))
+        if for_user != str(user.get('_id')):
+            where_item = {'$and': [{'desk': {'$ne': None}}, {'desk': {'$exists': True}},
+                                   {'resource': 'archive'}]}
+            where_cond['$or'] = [where_item, {'resource': {'$ne': 'archive'}}]
+            req.where = json.dumps(where_cond)
+
+        return self.backend.get(self.datasource, req=req, lookup=lookup)
 
     def on_update(self, updates, original):
         """ Called on the patch request to mark a activity/notification/comment as having been read and

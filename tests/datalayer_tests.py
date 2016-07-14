@@ -18,9 +18,9 @@ from superdesk.datalayer import SuperdeskJSONEncoder
 class DatalayerTestCase(TestCase):
 
     def test_find_all(self):
-        data = {'resource': 'test', 'action': 'get'}
-        superdesk.get_resource_service('activity').post([data])
-        self.assertEqual(1, superdesk.get_resource_service('activity').get(req=None, lookup={}).count())
+        data = {'name': 'test', 'privileges': {'ingest': 1, 'archive': 1, 'fetch': 1}}
+        superdesk.get_resource_service('roles').post([data])
+        self.assertEqual(1, superdesk.get_resource_service('roles').get(req=None, lookup={}).count())
 
     def test_json_encoder(self):
         _id = ObjectId()
