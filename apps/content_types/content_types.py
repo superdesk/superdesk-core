@@ -70,12 +70,10 @@ class ContentTypesResource(superdesk.Resource):
             'type': 'string',
         },
         'schema': {
-            'type': 'dict',
-            'default': DEFAULT_SCHEMA,
+            'type': 'dict'
         },
         'editor': {
-            'type': 'dict',
-            'default': DEFAULT_EDITOR,
+            'type': 'dict'
         },
         'priority': {
             'type': 'integer',
@@ -111,6 +109,9 @@ class ContentTypesService(superdesk.Service):
         for doc in docs:
             self._set_updated_by(doc)
             self._set_created_by(doc)
+            if 'schema' not in doc and 'editor' not in doc:
+                doc['schema'] = DEFAULT_SCHEMA
+                doc['editor'] = DEFAULT_EDITOR
 
     def on_update(self, updates, original):
         self._set_updated_by(updates)
