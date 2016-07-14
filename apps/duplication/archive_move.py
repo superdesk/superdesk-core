@@ -29,6 +29,7 @@ from apps.archive.common import insert_into_versions, item_operations,\
 from apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.workflow import is_workflow_state_transition_valid
 from apps.content import push_item_move_notification
+from superdesk.lock import lock, unlock
 
 ITEM_MOVE = 'move'
 item_operations.append(ITEM_MOVE)
@@ -62,10 +63,22 @@ class MoveService(BaseService):
         guid_of_item_to_be_moved = request.view_args['guid']
         guid_of_moved_items = []
 
-        for doc in docs:
-            guid_of_moved_items.append(self.move_content(guid_of_item_to_be_moved, doc)['guid'])
+        # set the lock_id it per item
+        lock_id = "item_move {}".format(guid_of_item_to_be_moved)
 
-        return guid_of_moved_items
+        if not lock(lock_id, expire=5):
+            raise SuperdeskApiError.forbiddenError(message="Item is locked for move by another user.")
+
+        try:
+            # doc represents the target desk and stage
+            doc = docs[0]
+            moved_item = self.move_content(guid_of_item_to_be_moved, doc)
+            guid_of_moved_items.append(moved_item.get(config.ID_FIELD))
+            return guid_of_moved_items
+        except Exception as e:
+            raise e
+        finally:
+            unlock(lock_id)
 
     def move_content(self, id, doc):
         archive_service = get_resource_service(ARCHIVE)
@@ -81,9 +94,13 @@ class MoveService(BaseService):
         takes_service = TakesPackageService()
         takes_package = takes_service.get_take_package(archived_doc)
         if takes_package and \
-                takes_service.get_take_by_take_no(archived_doc,
-                                                  package=takes_package) == archived_doc.get(config.ID_FIELD):
+                takes_service.get_take_by_take_no(archived_doc, package=takes_package) == id:
             self._move(takes_package, doc)
+
+        # get the recent updates again
+        archived_doc = archive_service.find_one(req=None, _id=id)
+        # finally apply any on stage rules/macros
+        apply_onstage_rule(archived_doc, id)
 
         return archived_doc
 
@@ -106,8 +123,6 @@ class MoveService(BaseService):
         archive_service.update(original[config.ID_FIELD], archived_doc, original)
         insert_into_versions(id_=original[config.ID_FIELD])
         push_item_move_notification(original, archived_doc)
-        # finally apply any on stage rules/macros
-        apply_onstage_rule(archived_doc, original[config.ID_FIELD])
 
     def _validate(self, archived_doc, doc):
         """
