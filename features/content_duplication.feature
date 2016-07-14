@@ -270,6 +270,41 @@ Feature: Duplication of Content within Desk
       Then there is no "publish_schedule" in response
 
     @auth
+    Scenario: Duplicate an Updated and Highlighted Item
+      When we rewrite "123"
+      """
+      {"desk_id": "#desks._id#"}
+      """
+      Then we get OK response
+      When we get "/archive/123"
+      """
+      {"rewritten_by": "#REWRITE_ID#"}
+      """
+      When we post to "highlights"
+      """
+      {"name": "highlight1", "desks": ["#desks._id#"]}
+      """
+      When we post to "marked_for_highlights"
+      """
+      [{"highlights": "#highlights._id#", "marked_item": "123"}]
+      """
+      When we post to "/archive/123/duplicate" with success
+      """
+      {"desk": "#desks._id#"}
+      """
+      And we get "/archive/#duplicate._id#"
+      Then there is no "rewritten_by" in response
+      Then there is no "highlights" in response
+      When we post to "/archive/#REWRITE_ID#/duplicate" with success
+      """
+      {"desk": "#desks._id#"}
+      """
+      And we get "/archive/#duplicate._id#"
+      Then there is no "rewrite_of" in response
+
+
+
+    @auth
     Scenario: Duplicate fails when item state is killed
       When we patch "/archive/123"
       """
