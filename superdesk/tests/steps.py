@@ -2101,3 +2101,18 @@ def we_get_text_in_field(context, text, field):
 @then('we reset priority flag for updated articles')
 def we_get_reset_default_priority_for_updated_articles(context):
     context.app.config['RESET_PRIORITY_VALUE_FOR_UPDATE_ARTICLES'] = True
+
+
+@then('we mark the items not moved to legal')
+def we_mark_the_items_not_moved_to_legal(context):
+    with context.app.test_request_context(context.app.config['URL_PREFIX']):
+        ids = json.loads(apply_placeholders(context, context.text))
+        for item_id in ids:
+            get_resource_service('published').update_published_items(item_id, 'moved_to_legal', False)
+
+
+@when('we run import legal archive command')
+def we_run_import_legal_archive_command(context):
+    with context.app.test_request_context(context.app.config['URL_PREFIX']):
+        from apps.legal_archive.commands import ImportLegalArchiveCommand
+        ImportLegalArchiveCommand().run()

@@ -34,8 +34,8 @@ Feature: Content Filter
     """
 
   @auth
-  @vocabulary
-  Scenario: Add a new content filter without global filter value
+  @vocabulary @test
+  Scenario: Add a new content filter without global filter value but with archived flag
     Given empty "filter_conditions"
     When we post to "/filter_conditions" with success
     """
@@ -54,7 +54,23 @@ Feature: Content Filter
     {
       "_items":
         [
-          {"is_global": false}
+          {"name": "soccer", "is_global": false, "is_archived_filter": false}
+        ]
+    }
+    """
+    When we post to "/content_filters" with success
+    """
+    [{"content_filter": [{"expression": {"fc": ["#filter_conditions._id#"]}}],
+      "name": "soccer archived", "is_archived_filter": true}]
+    """
+    And we get "/content_filters"
+    Then we get list with 2 items
+    """
+    {
+      "_items":
+        [
+          {"name": "soccer", "is_global": false, "is_archived_filter": false},
+          {"name": "soccer archived", "is_global": false, "is_archived_filter": true}
         ]
     }
     """

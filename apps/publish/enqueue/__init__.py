@@ -98,8 +98,12 @@ def enqueue_item(published_item):
             import_into_legal_archive.apply_async(countdown=3, kwargs={'item_id': published_item['item_id']})
 
         published_service.patch(published_item_id, published_update)
-        get_enqueue_service(published_item[ITEM_OPERATION]).enqueue_item(published_item)
-        published_service.patch(published_item_id, {QUEUE_STATE: PUBLISH_STATE.QUEUED})
+        queued = get_enqueue_service(published_item[ITEM_OPERATION]).enqueue_item(published_item)
+        # if the item is queued in the publish_queue then the state is "queued"
+        # else the queue state is "queued_not_transmitted"
+        queue_state = PUBLISH_STATE.QUEUED if queued else PUBLISH_STATE.QUEUED_NOT_TRANSMITTED
+        published_service.patch(published_item_id,
+                                {QUEUE_STATE: queue_state})
         logger.info('Queued item with id: {} and item_id: {}'.format(published_item_id, published_item['item_id']))
     except KeyError:
         published_service.patch(published_item_id, {QUEUE_STATE: PUBLISH_STATE.PENDING})

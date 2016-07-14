@@ -429,13 +429,22 @@ class ExpiredArchiveContentTestCase(SuperdeskTestCase):
             self.app.data.insert('publish_queue', self.queue_items)
 
     def test_items_moved_to_legal_success(self):
-        result = self.class_under_test().check_if_items_imported_to_legal_archive(['item1', 'item2'])
-        self.assertEqual(result, True)
+        test_items = dict()
+        test_items['item1'] = self.published_items[0]
+        test_items['item2'] = self.published_items[1]
+        result = self.class_under_test().check_if_items_imported_to_legal_archive(test_items)
+        self.assertDictEqual(result, {})
 
     def test_items_moved_to_legal_fail_if_published_item_not_moved(self):
-        result = self.class_under_test().check_if_items_imported_to_legal_archive(['item2', 'item3'])
-        self.assertEqual(result, False)
+        test_items = dict()
+        test_items['item2'] = self.published_items[1]
+        test_items['item3'] = self.published_items[2]
+        result = self.class_under_test().check_if_items_imported_to_legal_archive(test_items)
+        self.assertIn('item3', result)
 
     def test_items_moved_to_legal_fail_if_published_queue_item_not_moved(self):
-        result = self.class_under_test().check_if_items_imported_to_legal_archive(['item1', 'item4'])
-        self.assertEqual(result, False)
+        test_items = dict()
+        test_items['item2'] = self.published_items[1]
+        test_items['item3'] = self.published_items[3]
+        result = self.class_under_test().check_if_items_imported_to_legal_archive(test_items)
+        self.assertIn('item3', result)

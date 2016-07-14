@@ -665,11 +665,12 @@ class ArchiveService(BaseService):
         if updates.get('force_unlock', False):
             del updates['force_unlock']
 
-    def get_expired_items(self, expiry_datetime):
+    def get_expired_items(self, expiry_datetime, invalid_only=False):
         """
         Get the expired items where content state is not scheduled
         and
         :param datetime expiry_datetime: expiry datetime
+        :param bool invalid_only: True only invalid items
         :return pymongo.cursor: expired non published items.
         """
         query = {
@@ -681,6 +682,11 @@ class ArchiveService(BaseService):
                 ]}
             ]
         }
+
+        if invalid_only:
+            query['$and'].append({'expiry_status': 'invalid'})
+        else:
+            query['$and'].append({'expiry_status': {'$ne': 'invalid'}})
 
         req = ParsedRequest()
         req.max_results = config.MAX_EXPIRY_QUERY_LIMIT
