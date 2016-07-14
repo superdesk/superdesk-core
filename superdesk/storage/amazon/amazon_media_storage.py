@@ -126,6 +126,8 @@ class AmazonMediaStorage(MediaStorage):
             version = '%s%s/' % (time.strftime('%Y%m%d%H%m'), mins_granularity)
         elif version is False:
             version = ''
+        else:
+            version = '%s/' % version.strip('/')
 
         return '%s%s%s%s' % (subfolder, version, filename, extension)
 
