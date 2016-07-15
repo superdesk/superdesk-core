@@ -13,11 +13,14 @@ class AmazonMediaStorageTestCase(TestCase):
         self.app.config['AMAZON_S3_USE_HTTPS'] = True
         self.app.config['AMAZON_SERVE_DIRECT_LINKS'] = True
         self.app.config['AMAZON_SERVER'] = 'amazonaws.com'
+        self.app.config['AMAZON_S3_SUBFOLDER'] = False
         self.amazon = AmazonMediaStorage(self.app)
 
     def test_media_id(self):
         filename = 'test'
-        time_id = time.strftime('%Y%m%d')
+        # automatic version is set on 15mins granularity.
+        mins_granularity = int(int(time.strftime('%M')) / 4) * 4
+        time_id = '%s%s' % (time.strftime('%Y%m%d%H%m'), mins_granularity)
         media_id = self.amazon.media_id(filename)
         self.assertEqual('%s/%s' % (time_id, filename), media_id)
 
