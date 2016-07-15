@@ -14,7 +14,7 @@ from xml.etree.ElementTree import SubElement
 from superdesk.publish.formatters import Formatter
 import superdesk
 from superdesk.errors import FormatterError
-from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, FORMAT, FORMATS, SIGN_OFF
+from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, FORMAT, FORMATS
 from apps.archive.common import get_utc_schedule
 from bs4 import BeautifulSoup
 
@@ -142,44 +142,10 @@ class NITFFormatter(Formatter):
             article[ITEM_TYPE] in (CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED, CONTENT_TYPE.COMPOSITE)
 
     def _append_meta_priority(self, article, head):
-        SubElement(head, 'meta', {'name': 'aap-priority', 'content': str(article.get('priority', '3'))})
+        pass
 
     def _append_meta(self, article, head, destination, pub_seq_num):
         """
         Appends <meta> elements to <head>
         """
-
-        SubElement(head, 'meta', {'name': 'anpa-sequence', 'content': str(pub_seq_num)})
-        SubElement(head, 'meta', {'name': 'anpa-keyword', 'content': self.append_legal(article)})
-        SubElement(head, 'meta', {'name': 'anpa-takekey', 'content': article.get('anpa_take_key', '') or ''})
-        if 'anpa_category' in article and article['anpa_category'] is not None and len(
-                article.get('anpa_category')) > 0:
-            SubElement(head, 'meta',
-                       {'name': 'anpa-category', 'content': article.get('anpa_category')[0].get('qcode', '')})
-
-        self._append_meta_priority(article, head)
-        original_creator = superdesk.get_resource_service('users').find_one(req=None,
-                                                                            _id=article.get('original_creator', ''))
-        if original_creator:
-            SubElement(head, 'meta', {'name': 'aap-original-creator', 'content': original_creator.get('username')})
-        version_creator = superdesk.get_resource_service('users').find_one(req=None,
-                                                                           _id=article.get('version_creator', ''))
-        if version_creator:
-            SubElement(head, 'meta', {'name': 'aap-version-creator', 'content': version_creator.get('username')})
-
-        if article.get('task', {}).get('desk') is not None:
-            desk = superdesk.get_resource_service('desks').find_one(_id=article.get('task', {}).get('desk'), req=None)
-            SubElement(head, 'meta', {'name': 'aap-desk', 'content': desk.get('name', '')})
-        if article.get('task', {}).get('stage') is not None:
-            stage = superdesk.get_resource_service('stages').find_one(_id=article.get('task', {}).get('stage'),
-                                                                      req=None)
-            if stage is not None:
-                SubElement(head, 'meta', {'name': 'aap-stage', 'content': stage.get('name', '')})
-
-        SubElement(head, 'meta', {'name': 'aap-source', 'content': article.get('source', '')})
-        SubElement(head, 'meta', {'name': 'aap-original-source', 'content': article.get('original_source', '')})
-
-        if 'place' in article and article['place'] is not None and len(article.get('place', [])) > 0:
-            SubElement(head, 'meta', {'name': 'aap-place', 'content': article.get('place')[0]['qcode']})
-        if SIGN_OFF in article:
-            SubElement(head, 'meta', {'name': 'aap-signoff', 'content': article.get(SIGN_OFF, '')})
+        pass
