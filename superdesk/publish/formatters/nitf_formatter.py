@@ -151,7 +151,7 @@ class NITFFormatter(Formatter):
 
         SubElement(head, 'meta', {'name': 'anpa-sequence', 'content': str(pub_seq_num)})
         SubElement(head, 'meta', {'name': 'anpa-keyword', 'content': self.append_legal(article)})
-        SubElement(head, 'meta', {'name': 'anpa-takekey', 'content': article.get('anpa_take_key', '')})
+        SubElement(head, 'meta', {'name': 'anpa-takekey', 'content': article.get('anpa_take_key', '') or ''})
         if 'anpa_category' in article and article['anpa_category'] is not None and len(
                 article.get('anpa_category')) > 0:
             SubElement(head, 'meta',
