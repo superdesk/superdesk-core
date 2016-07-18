@@ -20,6 +20,7 @@ from flask import url_for, request, current_app as app
 from superdesk.media.renditions import generate_renditions, delete_file_on_error
 from superdesk.media.media_operations import download_file_from_url, process_file_from_stream, \
     crop_image, decode_metadata, download_file_from_encoded_str
+from superdesk.filemeta import set_filemeta
 
 
 bp = superdesk.Blueprint('upload_raw', __name__)
@@ -130,7 +131,7 @@ class UploadService(BaseService):
                                     resource=self.datasource, metadata=metadata)
             doc['media'] = file_id
             doc['mimetype'] = content_type
-            doc['filemeta'] = decode_metadata(metadata)
+            set_filemeta(doc, decode_metadata(metadata))
             inserted = [doc['media']]
             file_type = content_type.split('/')[0]
             rendition_spec = config.RENDITIONS['avatar']

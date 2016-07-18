@@ -21,6 +21,7 @@ from superdesk.publish.formatters.nitf_formatter import NITFFormatter
 from apps.archive.common import ARCHIVE, get_utc_schedule
 from superdesk.metadata.packages import PACKAGE_TYPE, REFS, RESIDREF, ROLE, GROUPS, GROUP_ID, ID_REF
 from bs4 import BeautifulSoup
+from superdesk.filemeta import get_filemeta
 
 
 def get_newsml_provider_id():
@@ -443,16 +444,16 @@ class NewsMLG2Formatter(Formatter):
                 if 'width' in value:
                     attrib['width'] = str(value.get('width'))
             elif article.get(ITEM_TYPE) in {CONTENT_TYPE.VIDEO, CONTENT_TYPE.AUDIO}:
-                if article.get('filemeta', {}).get('width'):
-                    attrib['width'] = str(article.get('filemeta', {}).get('width'))
-                if article.get('filemeta', {}).get('height'):
-                    attrib['height'] = str(article.get('filemeta', {}).get('height'))
-                if article.get('filemeta', {}).get('duration'):
-                    attrib['duration'] = article.get('filemeta', {}).get('duration')
+                if get_filemeta(article, 'width'):
+                    attrib['width'] = str(get_filemeta(article, 'width'))
+                if get_filemeta(article, 'height'):
+                    attrib['height'] = str(get_filemeta(article, 'height'))
+                if get_filemeta(article, 'duration'):
+                    attrib['duration'] = get_filemeta(article, 'duration')
                     attrib['durationunit'] = 'timeunit:normalPlayTime'
 
-            if rendition == 'original' and 'filemeta' in article and 'length' in article['filemeta']:
-                attrib['size'] = str(article.get('filemeta').get('length'))
+            if rendition == 'original' and get_filemeta(article, 'length'):
+                attrib['size'] = str(get_filemeta(article, 'length'))
             SubElement(content_set, 'remoteContent', attrib=attrib)
 
     def _format_company_codes(self, article, content_meta, item):
