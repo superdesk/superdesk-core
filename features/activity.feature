@@ -159,3 +159,29 @@ Feature: User Activity
         		 "message": "created new version {{ version }} for item {{ type }} about \"{{ subject }}\"",
         		 "data": {"version": 2, "type": "text", "subject": "test"}}]}
         """
+
+ 	@auth
+	Scenario: A user should not the see activity on personal items of another user
+		Given empty "activity"
+		Given empty "archive"
+        When we post to "/archive" with success
+        """
+        [{"guid": "some-global-unique-id", "type": "text"}]
+        """
+        And we patch "/archive/some-global-unique-id"
+        """
+        {"headline": "test"}
+        """
+        When we create a new user
+        """
+        {"username": "foo", "password": "foofoo", "email": "foo@bar.com", "sign_off": "fb"}
+        """
+        When we login as user "foo" with password "foofoo" and user type "user"
+        And we get "/activity?where={\"user\":\"#previous_user._id#\"}"
+        Then we get list with 1 items
+        """
+        {"_items": [
+        		{"resource": "users",
+        		 "message": "created user {{user}}",
+        		 "data": {"user": "foo"}}]}
+        """
