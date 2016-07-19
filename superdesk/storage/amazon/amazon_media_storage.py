@@ -20,6 +20,8 @@ import time
 import boto3
 import bson
 from eve.io.media import MediaStorage
+from urllib.parse import urlparse
+from os.path import splitext
 
 
 logger = logging.getLogger(__name__)
@@ -100,8 +102,17 @@ class AmazonMediaStorage(MediaStorage):
     def media_id(self, filename, content_type=None):
         if not self.app.config.get('AMAZON_SERVE_DIRECT_LINKS', False):
             return str(bson.ObjectId())
-        extension = str(_guess_extension(content_type)) if content_type else ''
-        return '%s/%s%s' % (time.strftime('%Y%m%d'), filename, extension)
+
+        path = urlparse(filename).path
+        extension = splitext(path)[1]
+        if not extension:
+            extension = str(_guess_extension(content_type)) if content_type else ''
+            return '%s/%s%s' % (time.strftime('%Y%m%d'), filename, extension)
+
+        subfolder = self.app.config.get('AMAZON_S3_SUBFOLDER', False)
+        if subfolder:
+            return '%s/%s/%s' % (subfolder.strip('/'), time.strftime('%Y%m%d'), filename)
+        return '%s/%s' % (time.strftime('%Y%m%d'), filename)
 
     def fetch_rendition(self, rendition):
         stream, name, mime = download_file_from_url(rendition.get('href'))
