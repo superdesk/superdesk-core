@@ -32,6 +32,7 @@ def send_email(self, subject, sender, recipients, text_body, html_body):
 
 def send_activate_account_email(doc):
     user = get_resource_service('users').find_one(req=None, _id=doc['user'])
+    first_name = user.get('first_name')
     activate_ttl = app.config['ACTIVATE_ACCOUNT_TOKEN_TIME_TO_LIVE']
     app_name = app.config['APPLICATION_NAME']
     admins = app.config['ADMINS']
@@ -40,9 +41,9 @@ def send_activate_account_email(doc):
     hours = activate_ttl * 24
     subject = render_template("account_created_subject.txt", app_name=app_name)
     text_body = render_template("account_created.txt", app_name=app_name, user=user,
-                                instance_url=client_url, expires=hours, url=url)
+                                first_name=first_name, instance_url=client_url, expires=hours, url=url)
     html_body = render_template("account_created.html", app_name=app_name, user=user,
-                                instance_url=client_url, expires=hours, url=url)
+                                first_name=first_name, instance_url=client_url, expires=hours, url=url)
     send_email.delay(subject=subject, sender=admins[0], recipients=[doc['email']],
                      text_body=text_body, html_body=html_body)
 
