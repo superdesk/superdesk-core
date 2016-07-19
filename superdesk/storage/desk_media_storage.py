@@ -35,7 +35,7 @@ class SuperdeskGridFSMediaStorage(GridFSMediaStorage):
                     logger.exception('Failed to load metadata for file: %s with key: %s and value: %s', _id, k, v)
         return media_file
 
-    def media_id(self, filename, content_type=None):
+    def media_id(self, filename, content_type=None, version=True):
         """Get media id for given filename.
 
         It can be used by async task to first generate id upload file later.
