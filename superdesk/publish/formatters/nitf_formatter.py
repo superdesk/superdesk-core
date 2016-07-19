@@ -10,7 +10,7 @@
 
 import xml.etree.ElementTree as etree
 from xml.etree.ElementTree import SubElement
-
+from flask import current_app as app
 from superdesk.publish.formatters import Formatter
 import superdesk
 from superdesk.errors import FormatterError
@@ -42,7 +42,8 @@ class NITFFormatter(Formatter):
             raise FormatterError.nitfFormatterError(ex, subscriber)
 
     def get_nitf(self, article, destination, pub_seq_num):
-        self._message_attrib.update(self._debug_message_extra)
+        if app.config.get('DEBUG', False):
+            self._message_attrib.update(self._debug_message_extra)
         nitf = etree.Element("nitf", attrib=self._message_attrib)
         head = SubElement(nitf, "head")
         body = SubElement(nitf, "body")
