@@ -34,6 +34,7 @@ from superdesk.upload import url_for_media
 from superdesk.utc import utcnow, get_expiry_date
 from superdesk.workflow import set_default_state
 from copy import deepcopy
+from superdesk.filemeta import set_filemeta
 
 UPDATE_SCHEDULE_DEFAULT = {'minutes': 5}
 LAST_UPDATED = 'last_updated'
@@ -515,6 +516,7 @@ def update_renditions(item, href, old_item):
                 item['renditions'] = old_item['renditions']
                 item['mimetype'] = old_item.get('mimetype')
                 item['filemeta'] = old_item.get('filemeta')
+                item['filemeta_json'] = old_item.get('filemeta_json')
                 return
 
         content, filename, content_type = download_file_from_url(href)
@@ -527,7 +529,7 @@ def update_renditions(item, href, old_item):
                                          content_type, rendition_spec, url_for_media)
         item['renditions'] = renditions
         item['mimetype'] = content_type
-        item['filemeta'] = metadata
+        set_filemeta(item, metadata)
     except Exception:
         for file_id in inserted:
             app.media.delete(file_id)

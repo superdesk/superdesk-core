@@ -33,6 +33,7 @@ from superdesk.metadata.utils import generate_guid
 from superdesk.users.errors import UserNotRegisteredException
 from superdesk.utc import utcnow, get_date
 from apps.archive.common import format_dateline_to_locmmmddsrc
+from superdesk.filemeta import set_filemeta
 
 
 logger = logging.getLogger(__name__)
@@ -181,7 +182,7 @@ class EMailRFC822FeedParser(EmailFeedParser):
                             media_item[ITEM_TYPE] = CONTENT_TYPE.PICTURE
                             media_item['renditions'] = renditions
                             media_item['mimetype'] = content_type
-                            media_item['filemeta'] = metadata
+                            set_filemeta(media_item, metadata)
                             media_item['slugline'] = fileName
                             if text_body is not None:
                                 media_item['body_html'] = text_body

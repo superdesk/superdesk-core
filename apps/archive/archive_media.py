@@ -20,6 +20,7 @@ from superdesk.upload import url_for_media
 from .common import update_dates_for, generate_guid, GUID_TAG, set_original_creator, \
     generate_unique_id_and_name, set_item_expiry
 from superdesk.activity import add_activity
+from superdesk.filemeta import set_filemeta
 
 
 logger = logging.getLogger(__name__)
@@ -49,7 +50,7 @@ class ArchiveMediaService():
                                                  content_type, rendition_spec, url_for_media)
                 doc['renditions'] = renditions
                 doc['mimetype'] = content_type
-                doc['filemeta'] = metadata
+                set_filemeta(doc, metadata)
 
                 add_activity('upload', 'uploaded media {{ name }}',
                              'archive', item=doc,

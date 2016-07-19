@@ -303,6 +303,9 @@ metadata_schema = {
     'filemeta': {
         'type': 'dict'
     },
+    'filemeta_json': {
+        'type': 'string'
+    },
     'media_file': {
         'type': 'string'
     },

@@ -24,6 +24,7 @@ from superdesk.utc import utcnow
 from flask import current_app as app
 from apps  .archive.common import get_utc_schedule
 from bs4 import BeautifulSoup
+from superdesk.filemeta import get_filemeta
 
 logger = logging.getLogger(__name__)
 
@@ -350,8 +351,8 @@ class NewsML12Formatter(Formatter):
             SubElement(content_item, 'MediaType', {'FormalName': media_type})
             SubElement(content_item, 'Format', {'FormalName': value.get('mimetype', '')})
             characteristics = SubElement(content_item, 'Characteristics')
-            if rendition == 'original' and 'filemeta' in article and 'length' in article['filemeta']:
-                SubElement(characteristics, 'SizeInBytes').text = str(article.get('filemeta').get('length'))
+            if rendition == 'original' and get_filemeta(article, 'length'):
+                SubElement(characteristics, 'SizeInBytes').text = str(get_filemeta(article, 'length'))
             if article.get(ITEM_TYPE) == CONTENT_TYPE.PICTURE:
                 if value.get('width'):
                     SubElement(characteristics, 'Property',
@@ -360,16 +361,16 @@ class NewsML12Formatter(Formatter):
                     SubElement(characteristics, 'Property',
                                attrib={'FormalName': 'Height', 'Value': str(value.get('height'))})
             elif article.get(ITEM_TYPE) in {CONTENT_TYPE.VIDEO, CONTENT_TYPE.AUDIO}:
-                if article.get('filemeta', {}).get('width'):
+                if get_filemeta(article, 'width'):
                     SubElement(characteristics, 'Property',
                                attrib={'FormalName': 'Width',
-                                       'Value': str(article.get('filemeta', {}).get('width'))})
-                if article.get('filemeta', {}).get('height'):
+                                       'Value': str(get_filemeta(article, 'width'))})
+                if get_filemeta(article, 'height'):
                     SubElement(characteristics, 'Property',
                                attrib={'FormalName': 'Height',
-                                       'Value': str(article.get('filemeta', {}).get('height'))})
+                                       'Value': str(get_filemeta(article, 'height'))})
 
-                duration = self._get_total_duration(article.get('filemeta', {}).get('duration'))
+                duration = self._get_total_duration(get_filemeta(article, 'duration'))
                 if duration:
                     SubElement(characteristics, 'Property',
                                attrib={'FormalName': 'TotalDuration', 'Value': str(duration)})

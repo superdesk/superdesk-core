@@ -45,6 +45,7 @@ import shutil
 from apps.dictionaries.resource import DICTIONARY_FILE
 from test_factory import setup_auth_user
 from bson import ObjectId
+from superdesk.filemeta import get_filemeta
 
 external_url = 'http://thumbs.dreamstime.com/z/digital-nature-10485007.jpg'
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S%z"
@@ -986,10 +987,10 @@ def step_impl_then_get_key_in_url(context, key, url):
 @then('we get file metadata')
 def step_impl_then_get_file_meta(context):
     assert len(
-        apply_path(
+        json.loads(apply_path(
             parse_json_response(context.response),
-            'filemeta'
-        ).items()
+            'filemeta_json'
+        )).items()
     ) > 0
     'expected non empty metadata dictionary'
 
@@ -1068,11 +1069,9 @@ def step_impl_then_get_given_file_meta(context, filename):
         raise NotImplementedError("No metadata for file '{}'.".format(filename))
 
     assertions.maxDiff = None
-    expect_json(
-        context.response,
-        metadata,
-        path='filemeta'
-    )
+    data = json.loads(context.response.get_data())
+    filemeta = get_filemeta(data)
+    json_match(filemeta, metadata)
 
 
 @then('we get "{type}" renditions')
@@ -1189,7 +1188,7 @@ def step_impl_then_get_file(context):
 
 @then('we get cropped data smaller than "{max_size}"')
 def step_impl_then_get_cropped_file(context, max_size):
-    assert int(context.fetched_data['filemeta']['length']) < int(max_size), 'was expecting smaller image'
+    assert int(get_filemeta(context.fetched_data, 'length')) < int(max_size), 'was expecting smaller image'
 
 
 @then('we can fetch a data_uri')
