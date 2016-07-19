@@ -193,7 +193,7 @@ class NewsML12Formatter(Formatter):
         if article.get('headline'):
             SubElement(news_lines, 'HeadLine').text = article.get('headline')
         if article.get('byline'):
-            SubElement(news_lines, 'ByLine').text = article.get('byline')
+            SubElement(news_lines, 'ByLine').text = article.get('byline') or ''
         if article.get('dateline', {}).get('text', ''):
             SubElement(news_lines, 'DateLine').text = article.get('dateline', {}).get('text', '')
         SubElement(news_lines, 'CreditLine').text = article.get('original_source', article.get('source', ''))

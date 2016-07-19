@@ -264,7 +264,7 @@ class NewsMLG2Formatter(Formatter):
         """
         if 'byline' in article:
             creator = SubElement(content_meta, 'creator')
-            SubElement(creator, 'name').text = article.get('byline', '')
+            SubElement(creator, 'name').text = article.get('byline', '') or ''
 
     def _format_subject(self, article, content_meta):
         """

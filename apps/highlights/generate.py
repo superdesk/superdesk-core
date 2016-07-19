@@ -41,7 +41,7 @@ class GenerateHighlightsService(superdesk.Service):
             doc[ITEM_TYPE] = CONTENT_TYPE.TEXT
             doc['headline'] = package.get('headline')
             doc['slugline'] = package.get('slugline')
-            doc['byline'] = package.get('byline')
+            doc['byline'] = package.get('byline', '') or ''
             doc['task'] = package.get('task')
             doc['family_id'] = package.get('guid')
             doc[ITEM_STATE] = CONTENT_STATE.SUBMITTED
