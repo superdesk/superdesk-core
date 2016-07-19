@@ -216,6 +216,9 @@ class ArchiveTestCase(SuperdeskTestCase):
     def test_validate_schedule(self):
         validate_schedule(utcnow() + timedelta(hours=2))
 
+    def test_validate_schedule_at_utc_zero_hours(self):
+        validate_schedule((utcnow() + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0))
+
     def test_validate_schedule_date_with_datetime_as_string_raises_superdeskApiError(self):
         self.assertRaises(SuperdeskApiError, validate_schedule, "2015-04-27T10:53:48+00:00")
 
