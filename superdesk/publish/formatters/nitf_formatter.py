@@ -42,7 +42,7 @@ class NITFFormatter(Formatter):
             raise FormatterError.nitfFormatterError(ex, subscriber)
 
     def get_nitf(self, article, destination, pub_seq_num):
-        if app.config.get('DEBUG', False):
+        if app.config.get('NITF_INCLUDE_SCHEMA', False):
             self._message_attrib.update(self._debug_message_extra)
         nitf = etree.Element("nitf", attrib=self._message_attrib)
         head = SubElement(nitf, "head")
