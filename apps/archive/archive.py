@@ -32,7 +32,7 @@ from apps.common.components.utils import get_component
 from apps.item_autosave.components.item_autosave import ItemAutosave
 from apps.common.models.base_model import InvalidEtag
 from superdesk.etree import get_word_count
-from apps.content import push_content_notification
+from apps.content import push_content_notification, push_expired_notification
 from copy import copy, deepcopy
 import superdesk
 import logging
@@ -284,7 +284,7 @@ class ArchiveService(BaseService):
         add_activity(ACTIVITY_DELETE, 'removed item {{ type }} about {{ subject }}',
                      self.datasource, item=doc,
                      type=doc[ITEM_TYPE], subject=get_subject(doc))
-        push_content_notification([doc])
+        push_expired_notification([doc])
 
     def replace(self, id, document, original):
         return self.restore_version(id, document, original) or super().replace(id, document, original)
