@@ -121,6 +121,11 @@ def get_formatter(format_type, article):
             return formatter
 
 
+def get_all_formatters():
+    ''' Returns all formatters registered '''
+    return formatters
+
+
 import superdesk.publish.formatters.nitf_formatter  # NOQA
 import superdesk.publish.formatters.ninjs_formatter  # NOQA
 import superdesk.publish.formatters.newsml_1_2_formatter  # NOQA

@@ -9,3 +9,12 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import apps.publish.formatters.newsml_g2_formatter  # NOQA
+from superdesk import get_backend
+from apps.publish.formatters.service import FormattersService
+from apps.publish.formatters.resource import FormattersResource
+
+
+def init_app(app):
+    endpoint_name = 'formatters'
+    service = FormattersService(endpoint_name, backend=get_backend())
+    FormattersResource(endpoint_name, app=app, service=service)
