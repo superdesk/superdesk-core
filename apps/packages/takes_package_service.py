@@ -328,3 +328,27 @@ class TakesPackageService():
             {config.ID_FIELD: {'$in': ids}},
             {ITEM_STATE: {'$nin': [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]}},
         ]}
+
+    def enhance_items_with_takes_packages(self, items):
+        """
+        Get the takes packages for items
+        :param items:
+        """
+        packages = []
+        for item in items:
+            takes_package_id = self.get_take_package_id(item)
+            if takes_package_id:
+                packages.append(takes_package_id)
+
+        if packages:
+            request = ParsedRequest()
+            query = {'$and': [{config.ID_FIELD: {'$in': packages}}]}
+            takes_packages = list(get_resource_service(ARCHIVE).get_from_mongo(req=request, lookup=query))
+
+            for package in takes_packages:
+                refs = self.get_package_refs(package) or []
+                takes = {ref.get(RESIDREF) for ref in refs}
+
+                for item in items:
+                    if not item.get(TAKES_PACKAGE) and item.get(config.ID_FIELD) in takes:
+                        item[TAKES_PACKAGE] = package

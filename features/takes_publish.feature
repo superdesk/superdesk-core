@@ -60,6 +60,17 @@ Feature: Take Package Publishing
       """
       And we get "/archive"
       Then we get list with 3 items
+      """
+      {
+        "_items": [
+          {"_id": "123", "type": "text", "anpa_take_key": "Take",
+           "takes": {"_id": "#TAKE_PACKAGE#", "type": "composite", "package_type": "takes"}},
+          {"_id": "#TAKE#", "type": "text", "anpa_take_key": "Take=2",
+           "takes": {"_id": "#TAKE_PACKAGE#", "type": "composite", "package_type": "takes"}},
+          {"_id": "#TAKE_PACKAGE#", "type": "composite"}
+        ]
+      }
+      """
       When we publish "#TAKE#" with "publish" type and "published" state
       Then we get response code 400
       """
@@ -276,7 +287,14 @@ Feature: Take Package Publishing
                   "_id": "123",
                   "_current_version": 3,
                   "state": "published",
-                  "body_html": "Take-1"
+                  "body_html": "Take-1",
+                  "archive_item": {
+                      "_id": "123",
+                      "type": "text",
+                      "takes": {
+                         "_id": "#TAKE_PACKAGE#", "type": "composite"
+                      }
+                  }
               },
               {
                   "_current_version": 3,
@@ -284,12 +302,23 @@ Feature: Take Package Publishing
                   "type": "composite",
                   "package_type": "takes",
                   "abstract": "Take-1 abstract",
-                  "body_html": "Take-1<br>Take-2"
+                  "body_html": "Take-1<br>Take-2",
+                  "archive_item": {
+                      "_id": "#TAKE_PACKAGE#"
+                  }
               },
               {
+                  "_id": "#TAKE#",
                   "_current_version": 4,
                   "state": "published",
-                  "body_html": "Take-2"
+                  "body_html": "Take-2",
+                  "archive_item": {
+                      "_id": "#TAKE#",
+                      "type": "text",
+                      "takes": {
+                         "_id": "#TAKE_PACKAGE#", "type": "composite"
+                      }
+                  }
               }
           ]
       }

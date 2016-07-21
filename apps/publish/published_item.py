@@ -172,9 +172,9 @@ class PublishedItemService(BaseService):
                                      .get_from_mongo(req=archive_req, lookup=query))
 
                 takes_service = TakesPackageService()
+                takes_service.enhance_items_with_takes_packages(archive_items)
                 for item in archive_items:
                     handle_existing_data(item)
-                    takes_service.enhance_with_package_info(item)
 
             for item in items:
                 archive_item = [i for i in archive_items if i.get(config.ID_FIELD) == item.get('item_id')]
