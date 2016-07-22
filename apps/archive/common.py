@@ -15,6 +15,7 @@ from eve.utils import config
 from datetime import datetime
 from flask import current_app as app
 from eve.versioning import insert_versioning_documents
+from eve.defaults import resolve_default_values
 from pytz import timezone
 from copy import deepcopy
 
@@ -189,10 +190,11 @@ def on_create_item(docs, repo_type=ARCHIVE):
             # set the source for the article
             set_default_source(doc)
 
-        copy_metadata_from_user_preferences(doc, repo_type)
-
         if 'profile' not in doc and app.config.get('DEFAULT_CONTENT_TYPE', None):
             doc['profile'] = app.config.get('DEFAULT_CONTENT_TYPE', None)
+
+        copy_metadata_from_profile(doc)
+        copy_metadata_from_user_preferences(doc, repo_type)
 
         if 'language' not in doc:
             doc['language'] = app.config.get('DEFAULT_LANGUAGE', 'en')
@@ -643,6 +645,27 @@ def convert_task_attributes_to_objectId(doc):
     if ObjectId.is_valid(task.get(LAST_AUTHORING_DESK, None)) and \
             not isinstance(task.get(LAST_AUTHORING_DESK), ObjectId):
         task[LAST_AUTHORING_DESK] = ObjectId(task.get(LAST_AUTHORING_DESK))
+
+
+def copy_metadata_from_profile(doc):
+    """
+    Set the default values defined on document profile
+
+    :param doc
+    """
+    defaults = {}
+    profile = doc.get('profile', None)
+    if profile:
+        content_type = superdesk.get_resource_service('content_types').find_one(req=None, _id=profile)
+        if content_type:
+            defaults = {name: field.get('default', None)
+                        for (name, field) in content_type.get('editor', {}).items()
+                        if field.get('default', None)}
+
+    defaults.setdefault('priority', config.DEFAULT_PRIORITY_VALUE_FOR_MANUAL_ARTICLES)
+    defaults.setdefault('urgency', config.DEFAULT_URGENCY_VALUE_FOR_MANUAL_ARTICLES)
+    defaults.setdefault('genre', config.DEFAULT_GENRE_VALUE_FOR_MANUAL_ARTICLES)
+    resolve_default_values(doc, defaults)
 
 
 def copy_metadata_from_user_preferences(doc, repo_type=ARCHIVE):

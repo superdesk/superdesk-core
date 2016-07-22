@@ -42,7 +42,6 @@ from apps.packages import PackageService, TakesPackageService
 from .archive_media import ArchiveMediaService
 from superdesk.utc import utcnow
 import datetime
-from eve.defaults import resolve_default_values
 
 
 logger = logging.getLogger(__name__)
@@ -171,7 +170,6 @@ class ArchiveService(BaseService):
             if doc.get('version') == 0:
                 doc[config.VERSION] = doc['version']
 
-            self._set_default_values(doc)
             self._add_desk_metadata(doc, {})
 
             convert_task_attributes_to_objectId(doc)
@@ -621,25 +619,6 @@ class ArchiveService(BaseService):
         subject_qcodes = [q['qcode'] for q in updates.get('subject', []) or []]
         if subject_qcodes and len(subject_qcodes) != len(set(subject_qcodes)):
             raise SuperdeskApiError.badRequestError("Duplicate subjects are not allowed")
-
-    def _set_default_values(self, doc):
-        """
-        Set the default values defined on current set profile
-        """
-        defaults = {}
-
-        profile = doc.get('profile', None)
-        if profile:
-            content_type = superdesk.get_resource_service('content_types').find_one(req=None, _id=profile)
-            if content_type:
-                defaults = {name: field.get('default', None)
-                            for (name, field) in content_type.get('editor', {}).items()
-                            if field.get('default', None)}
-
-        defaults.setdefault('priority', config.DEFAULT_PRIORITY_VALUE_FOR_MANUAL_ARTICLES)
-        defaults.setdefault('urgency', config.DEFAULT_URGENCY_VALUE_FOR_MANUAL_ARTICLES)
-        defaults.setdefault('genre', config.DEFAULT_GENRE_VALUE_FOR_MANUAL_ARTICLES)
-        resolve_default_values(doc, defaults)
 
     def _add_system_updates(self, original, updates, user):
         """

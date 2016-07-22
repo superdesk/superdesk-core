@@ -553,3 +553,23 @@ Feature: Content Profile
             }
         }
         """
+
+    @auth
+    Scenario: Content profile defaults override user profile defaults
+        Given "content_types"
+        """
+        [{"_id": "foo", "label": "Foo", "editor": {"byline": {"default": "By Foo"}}}]
+        """
+        When we patch "/users/#CONTEXT_USER_ID#"
+        """
+        {"byline": "By Admin"}
+        """
+        When we post to "/archive"
+        """
+        {"type": "text", "profile": "foo"}
+        """
+        Then we get new resource
+        """
+        {"byline": "By Foo"}
+        """
+
