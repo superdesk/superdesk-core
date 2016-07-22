@@ -44,8 +44,10 @@ def push_item_move_notification(original, doc, event='item:move'):
     """
     from_task = original.get('task', {})
     to_task = doc.get('task', {})
+    user = get_user()
     push_notification(
         event,
+        user=str(user.get(config.ID_FIELD, '')),
         item=str(original.get(config.ID_FIELD)),
         item_version=str(original.get(config.VERSION)),
         from_desk=str(from_task.get('desk')),
