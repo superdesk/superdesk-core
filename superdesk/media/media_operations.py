@@ -44,9 +44,9 @@ def download_file_from_url(url):
         raise SuperdeskApiError.internalError('Failed to retrieve file from URL: %s' % url)
 
     mime = magic.from_buffer(rv.content, mime=True)
-    ext = mime.split('/')[1]
+    ext = str(mime).split('/')[1]
     name = str(ObjectId()) + ext
-    return BytesIO(rv.content), name, mime
+    return BytesIO(rv.content), name, str(mime)
 
 
 def download_file_from_encoded_str(encoded_str):
