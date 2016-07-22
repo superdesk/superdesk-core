@@ -8,6 +8,32 @@ Feature: Fetch From Ingest
 
 
     @auth
+    Scenario: Ingested articles get default priority and urgency
+        Given "ingest"
+            """
+            [{
+                "guid": "tag_example.com_0000_newsml_BRE9A605",
+                "source": "example.com",
+                "versioncreated": "2013-11-11T11:11:11+00:00"
+            }]
+            """
+
+        When we get "/ingest"
+        Then we get existing resource
+        """
+        {
+            "_items": [
+                {
+                    "_id": "tag_example.com_0000_newsml_BRE9A605",
+                    "urgency": 3,
+                    "priority": 6
+                }
+            ]
+        }
+        """
+
+
+    @auth
     Scenario: List ingest with items for aggregates
         Given "ingest"
             """
@@ -69,7 +95,9 @@ Feature: Fetch From Ingest
                     "ingest_provider_sequence": "1",
                     "state": "ingested",
                     "type": "text",
-                    "word_count" : 780
+                    "word_count" : 780,
+                    "priority": 4,
+                    "urgency": 4
                 },
                 {
                     "guid": "tag_reuters.com_2014_newsml_LYNXMPEA6F13M:1",
