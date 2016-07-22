@@ -20,6 +20,8 @@ from superdesk import Resource, get_resource_service
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
 from superdesk.utils import ListCursor
+from superdesk.notification import push_notification
+
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +97,7 @@ class SavedSearchesService(BaseService):
             if 'user' not in doc and request:
                 doc['user'] = request.view_args.get('user')
             self.process(doc)
+        push_notification('savedsearch:update')
 
     def process(self, doc):
         """
@@ -117,6 +120,7 @@ class SavedSearchesService(BaseService):
             if 'filter' in updates:
                 self.process(updates)
             super().on_update(updates, original)
+            push_notification('savedsearch:update')
         else:
             raise SuperdeskApiError.forbiddenError("Unauthorized to modify global search")
 
