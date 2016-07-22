@@ -119,15 +119,50 @@ Feature: Stages
         {"name": "stage visibility", "desk": "#desks._id#", "is_visible" : true}
         """
         And we reset notifications
-        And we patch "/stages/#stages._id#"
+        And we get "/users/#CONTEXT_USER_ID#"
+        Then we get existing resource
+        """
+        {"_id": "#CONTEXT_USER_ID#", "invisible_stages": []}
+        """
+        When we patch "/stages/#stages._id#"
         """
         {"is_visible" : false}
         """
         Then we get response code 200
+        When we get "/users/#CONTEXT_USER_ID#"
+        Then we get existing resource
+        """
+        {"_id": "#CONTEXT_USER_ID#", "invisible_stages": ["#stages._id#"]}
+        """
         And we get notifications
         """
         [{"event": "stage_visibility_updated", "extra": {"updated": 1, "desk_id": "#desks._id#", "stage_id": "#stages._id#", "is_visible": false}}]
         """
+        When we post to "/users"
+        """
+        {"username": "foo", "email": "foo@bar.com", "is_active": true, "sign_off": "abc"}
+        """
+        Then we get OK response
+        And we get existing resource
+        """
+        {"_id": "#users._id#", "invisible_stages": ["#stages._id#"]}
+        """
+        When we patch "/stages/#stages._id#"
+        """
+        {"is_visible" : true}
+        """
+        Then we get response code 200
+        When we get "/users/#CONTEXT_USER_ID#"
+        Then we get existing resource
+        """
+        {"_id": "#CONTEXT_USER_ID#", "invisible_stages": []}
+        """
+        When we get "/users/#users._id#"
+        Then we get existing resource
+        """
+        {"_id": "#users._id#", "invisible_stages": []}
+        """
+
 
     @auth @notification
     Scenario: Get visible and invisible stages

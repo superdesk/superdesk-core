@@ -12,6 +12,8 @@ import itertools
 
 import superdesk
 from flask import current_app as app
+
+from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
 from superdesk.resource import Resource
 from superdesk import config
@@ -154,6 +156,7 @@ class DesksService(BaseService):
     def on_created(self, docs):
         for doc in docs:
             push_notification(self.notification_key, created=1, desk_id=str(doc.get(config.ID_FIELD)))
+            get_resource_service('users').update_stage_visibility_for_users()
 
     def on_update(self, updates, original):
         if updates.get('content_expiry') == 0:
@@ -252,6 +255,8 @@ class DesksService(BaseService):
                                         self.datasource, notify=added, can_push_notification=False,
                                         user=user.get('username'), desk=desk.get('name'))
                 push_notification('activity', _dest=activity['recipients'])
+
+            get_resource_service('users').update_stage_visibility_for_users()
         else:
             push_notification(self.notification_key, updated=1, desk_id=str(desk.get(config.ID_FIELD)))
 

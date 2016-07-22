@@ -12,6 +12,8 @@ from flask import current_app as app, json, g
 from eve_elastic.elastic import set_filters
 
 import superdesk
+
+from superdesk import get_resource_service
 from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE
 from superdesk.metadata.utils import aggregations, item_url
 from apps.archive.archive import SOURCE as ARCHIVE
@@ -94,8 +96,12 @@ class SearchService(superdesk.Service):
         query = self._get_query(req)
         types = self._get_types(req)
         filters = self._get_filters(types)
+        user = g.get('user', {})
+        if 'invisible_stages' in user:
+            stages = user.get('invisible_stages')
+        else:
+            stages = get_resource_service('users').get_invisible_stages_ids(user.get('_id'))
 
-        stages = superdesk.get_resource_service('users').get_invisible_stages_ids(g.get('user', {}).get('_id'))
         if stages:
             filters.append({'and': [{'not': {'terms': {'task.stage': stages}}}]})
 

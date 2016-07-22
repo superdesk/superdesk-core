@@ -63,10 +63,14 @@ class StagesResource(Resource):
         'content_expiry': {
             'type': 'integer'
         },
+        # if true then desk members can see the item on that stage
+        # if false then non-members cannot see the item on that stage
         'is_visible': {
             'type': 'boolean',
             'default': True
         },
+        # if true then desk members cannot edit items on the stage
+        # if false then desk member can edit items on the stage
         'local_readonly': {
             'type': 'boolean',
             'default': False
@@ -138,6 +142,9 @@ class StagesService(BaseService):
             if doc.get('default_incoming', False):
                 self.set_desk_ref(doc, 'incoming_stage')
 
+            if not doc.get('is_visible', True):
+                get_resource_service('users').update_stage_visibility_for_users()
+
     def on_delete(self, doc):
         """
         Checks if deleting the stage would not violate data integrity, raises an exception if it does.
@@ -207,6 +214,7 @@ class StagesService(BaseService):
                               stage_id=str(original[config.ID_FIELD]),
                               desk_id=str(original['desk']),
                               is_visible=updates.get('is_visible', original.get('is_visible', True)))
+            get_resource_service('users').update_stage_visibility_for_users()
         else:
             push_notification(self.notification_key,
                               updated=1,
