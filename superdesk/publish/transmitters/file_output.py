@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from superdesk.publish.publish_service import PublishService
+from superdesk.publish.publish_service import PublishService, get_file_extension
 from superdesk.publish import register_transmitter
 from superdesk.errors import PublishFileError
 
@@ -35,7 +35,7 @@ class FilePublishService(PublishService):
                                           queue_item['item_id'].replace(':', '-'),
                                           str(queue_item.get('item_version', '')),
                                           str(queue_item.get('published_seq_num', '')),
-                                          config.get('file_extension', 'txt')), 'wb') as f:
+                                          get_file_extension(queue_item)), 'wb') as f:
             f.write(queue_item['formatted_item'])
 
 
