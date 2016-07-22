@@ -13,7 +13,6 @@ from superdesk.errors import SuperdeskApiError
 from superdesk import get_resource_service
 from superdesk.services import BaseService
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -105,7 +104,7 @@ class FilterConditionService(BaseService):
 
     def _are_equal(self, fc1, fc2):
         def get_comparer(fc):
-            return ''.join(sorted(fc['value'].upper()))
+            return ''.join(sorted(fc['value'].upper())) if ',' in fc['value'] else fc['value'].upper()
 
         return all([fc1['field'] == fc2['field'],
                     fc1['operator'] == fc2['operator'],

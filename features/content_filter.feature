@@ -210,3 +210,30 @@ Feature: Content Filter
 
     When we delete content filter "soccer"
     Then we get error 400
+
+  @auth
+  @vocabulary
+  Scenario: Try to Add duplicate filter
+    Given "filter_conditions"
+    """
+    [{"name": "sport", "field": "anpa_category", "operator": "in", "value": "4,1"}]
+    """
+    When we post to "/filter_conditions"
+    """
+    [{"name": "water", "field": "anpa_category", "operator": "in", "value": "1,4"}]
+    """
+    Then we get error 400
+
+  @auth
+  @vocabulary
+  Scenario: Try to Add none duplicate filter
+    Given "filter_conditions"
+    """
+    [{"name": "sport", "field": "anpa_category", "operator": "in", "value": "AAP"}]
+    """
+    When we post to "/filter_conditions" with success
+    """
+    [{"name": "water", "field": "anpa_category", "operator": "in", "value": "PAA"}]
+    """
+    And we get "/filter_conditions"
+    Then we get list with 2 items
