@@ -74,7 +74,11 @@ def private_content_filter():
             {'term': {'original_creator': str(user['_id'])}},
         ]}
 
-        stages = get_resource_service('users').get_invisible_stages_ids(user.get('_id'))
+        if 'invisible_stages' in user:
+            stages = user.get('invisible_stages')
+        else:
+            stages = get_resource_service('users').get_invisible_stages_ids(user.get('_id'))
+
         if stages:
             private_filter['must_not'] = [{'terms': {'task.stage': stages}}]
 

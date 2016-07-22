@@ -100,6 +100,16 @@ class UsersResource(Resource):
                 'type': 'string',
                 'required': False,
                 'nullable': True
+            },
+            # list to hold invisible stages.
+            # This field is updated under following scenario:
+            # 1. stage visible flag is updated
+            # 2. desk membership is modified
+            # 3. new user is created
+            'invisible_stages': {
+                'type': 'list',
+                'required': False,
+                'nullable': True
             }
         }
 
@@ -116,7 +126,7 @@ class UsersResource(Resource):
             'desk'
         ]
 
-        self.etag_ignore_fields = ['session_preferences', '_etag']
+        self.etag_ignore_fields = ['session_preferences', '_etag', 'invisible_stages']
 
         self.datasource = {
             'projection': {'password': 0},

@@ -86,8 +86,8 @@ def is_sensitive_update(updates):
     return 'role' in updates or 'privileges' in updates or 'user_type' in updates
 
 
-def get_invisible_stages(user):
-    user_desks = get_resource_service('user_desks').get(req=None, lookup={'user_id': user['_id']})
+def get_invisible_stages(user_id):
+    user_desks = list(get_resource_service('user_desks').get(req=None, lookup={'user_id': user_id}))
     user_desk_ids = [d['_id'] for d in user_desks]
     return get_resource_service('stages').get_stages_by_visibility(False, user_desk_ids)
 
@@ -219,6 +219,7 @@ class UsersService(BaseService):
             self.__update_user_defaults(user_doc)
             add_activity(ACTIVITY_CREATE, 'created user {{user}}', self.datasource,
                          user=user_doc.get('display_name', user_doc.get('username')))
+            self.update_stage_visibility_for_user(user_doc)
 
     def on_update(self, updates, original):
         """
@@ -343,8 +344,7 @@ class UsersService(BaseService):
         return list(self.get(req=None, lookup={'role': role_id}))
 
     def get_invisible_stages(self, user_id):
-        user = self.find_one(_id=user_id, req=None)
-        return get_invisible_stages(user) if user and user.get('_id') else []
+        return get_invisible_stages(user_id) if user_id else []
 
     def get_invisible_stages_ids(self, user_id):
         return [str(stage['_id']) for stage in self.get_invisible_stages(user_id)]
@@ -363,6 +363,25 @@ class UsersService(BaseService):
             raise UserNotRegisteredException('No user registered with email %s' % email_address)
 
         return user
+
+    def update_stage_visibility_for_users(self):
+        logger.info('Updating Stage Visibility Started')
+        users = list(get_resource_service('users').get(req=None, lookup=None))
+        for user in users:
+            self.update_stage_visibility_for_user(user)
+
+        logger.info('Updating Stage Visibility Completed')
+
+    def update_stage_visibility_for_user(self, user):
+        try:
+            logger.info('Updating Stage Visibility for user {}.'.format(user.get(config.ID_FIELD)))
+            stages = self.get_invisible_stages_ids(user.get(config.ID_FIELD))
+            self.system_update(user.get(config.ID_FIELD), {'invisible_stages': stages}, user)
+            user['invisible_stages'] = stages
+            logger.info('Updated Stage Visibility for user {}.'.format(user.get(config.ID_FIELD)))
+        except:
+            logger.exception('Failed to update the stage visibility '
+                             'for user: {}'.format(user.get(config.ID_FIELD)))
 
 
 class DBUsersService(UsersService):

@@ -15,7 +15,11 @@ Feature: Desks
         """
         {"username": "foo", "email": "foo@bar.com", "is_active": true, "sign_off": "abc"}
         """
-        And we post to "/desks"
+        Then we get existing resource
+        """
+        {"_id": "#users._id#", "invisible_stages": []}
+        """
+        When we post to "/desks"
         """
         {"name": "Sports Desk", "members": [{"user": "#users._id#"}]}
         """
@@ -35,6 +39,21 @@ Feature: Desks
         Then we get error 412
         """
         {"_status": "ERR", "_message": "Cannot delete a Incoming Stage."}
+        """
+        When we post to "/stages"
+        """
+        {"name": "invisible1", "desk": "#desks._id#", "is_visible" : false}
+        """
+        Then we get OK response
+        When we get "/users/#users._id#"
+        Then we get existing resource
+        """
+        {"_id": "#users._id#", "invisible_stages": []}
+        """
+        When we get "/users/#CONTEXT_USER_ID#"
+        Then we get existing resource
+        """
+        {"_id": "#CONTEXT_USER_ID#", "invisible_stages": ["#stages._id#"]}
         """
 
 	@auth
