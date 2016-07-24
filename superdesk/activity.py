@@ -132,7 +132,9 @@ class ActivityResource(Resource):
             }
         },
         'item': Resource.rel('archive', type='string'),
+        'item_slugline': {'type': 'string'},
         'user': Resource.rel('users'),
+        'user_name': {'type': 'string'},
         'desk': Resource.rel('desks'),
         'resource': {'type': 'string'}
     }
@@ -263,6 +265,7 @@ def add_activity(activity_name, msg, resource=None, item=None, notify=None, noti
     user = getattr(g, 'user', None)
     if user:
         activity['user'] = user.get('_id')
+        activity['user_name'] = user.get('display_name', user.get('username'))
 
     activity['recipients'] = []
 
@@ -276,6 +279,7 @@ def add_activity(activity_name, msg, resource=None, item=None, notify=None, noti
 
     if item:
         activity['item'] = str(item.get('guid', item.get('_id')))
+        activity['item_slugline'] = item.get('slugline', item.get('headline')) or item.get('unique_name')
         if item.get('task') and item['task'].get('desk'):
             activity['desk'] = ObjectId(item['task']['desk'])
 

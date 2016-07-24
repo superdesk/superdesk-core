@@ -19,7 +19,8 @@ from superdesk.services import BaseService
 from superdesk.metadata.utils import item_url
 from apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.workflow import is_workflow_state_transition_valid
-
+from eve.utils import config
+from apps.auth import get_user
 import superdesk
 
 
@@ -63,7 +64,8 @@ class CopyService(BaseService):
             guid_of_copied_items.append(new_guid)
 
         if kwargs.get('notify', True):
-            push_notification('item:copy', copied=1)
+            user = get_user()
+            push_notification('item:copy', copied=1, user=str(user.get(config.ID_FIELD, '')))
 
         return guid_of_copied_items
 
