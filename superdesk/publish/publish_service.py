@@ -19,6 +19,10 @@ from superdesk.utc import utcnow
 from superdesk.errors import SubscriberError, SuperdeskPublishError, PublishQueueError
 
 logger = logging.getLogger(__name__)
+extensions = {
+    'NITF': 'ntf',
+    'XML': 'xml',
+    'NINJS': 'json'}
 
 
 class PublishService():
@@ -86,12 +90,26 @@ class PublishService():
 
 def get_file_extension(queue_item):
     try:
-        format = queue_item['destination']['format'].upper()
-        if format == 'NITF':
-            return 'ntf'
-        if format == 'XML':
-            return 'xml'
-        if format == 'NINJS':
-            return 'json'
+        format_ = queue_item['destination']['format'].upper()
+        # "in" is used in addition of equality, so subclass can inherit extensions
+        # e.g.: "NITF" will work for "NTB NITF"
+        try:
+            return extensions[format_]
+        except KeyError:
+            for f, ext in extensions.items():
+                if f in format_:
+                    return ext
+            return 'txt'  # default extension
     except Exception as ex:
         raise PublishQueueError.item_update_error(ex)
+
+
+def register_file_extension(format_, ext):
+    """register new file extension
+
+    :param format_: item format
+    :param ext: extension to use
+    """
+    if format_ in extensions:
+        logger.warning("overriding existing extension for {}".format(format_))
+    extensions[format_.upper()] = ext
