@@ -159,6 +159,9 @@ class PackageService():
         items if it can't remove it from the packages it belongs to.
         """
         for doc in docs:
+            # the next 'particular_type' containing line is liveblog related and it is usefull since
+            # liveblog users don't have a personal space. Therefore, if the the task/desk condition
+            # is in place, it prevents the liveblog posts from beeing published.
             if not doc.get('particular_type'):
                 if not doc.get('task') or not doc['task'].get('desk'):
                     message = 'Packages can not be created in the personal space.'
