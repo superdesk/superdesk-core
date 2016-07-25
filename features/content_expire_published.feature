@@ -1017,6 +1017,17 @@ Feature: Content Expiry Published Items
       "name": "Domestic News", "is_archived_filter": true}]
     """
     Then we get OK response
+    When we post to "/filter_conditions" with success
+    """
+    [{"name": "Entertainment", "field": "anpa_category", "operator": "in", "value": "e"}]
+    """
+    Then we get OK response
+    When we post to "/content_filters" with success
+    """
+    [{"content_filter": [{"expression": {"fc": ["#filter_conditions._id#"]}}],
+      "name": "Entertainment"}]
+    """
+    Then we get OK response
     When we expire items
     """
     ["123", "#archive.123.take_package#",
