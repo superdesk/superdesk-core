@@ -149,4 +149,9 @@ class NITFFormatter(Formatter):
         """
         Appends <meta> elements to <head>
         """
-        pass
+        if 'anpa_category' in article and article['anpa_category'] is not None and len(
+                article.get('anpa_category')) > 0:
+            SubElement(head, 'meta',
+                       {'name': 'anpa-category', 'content': article.get('anpa_category')[0].get('qcode', '')})
+
+        self._append_meta_priority(article, head)
