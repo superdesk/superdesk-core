@@ -134,8 +134,8 @@ class RemoveExpiredContent(superdesk.Command):
         # get the filter conditions
         logger.info('{} filter conditions.'.format(self.log_msg))
         req = ParsedRequest()
-        req.args = {'is_archived_filter': True}
-        filter_conditions = list(get_resource_service('content_filters').get(req=req, lookup=None))
+        filter_conditions = list(get_resource_service('content_filters').get(req=req,
+                                                                             lookup={'is_archived_filter': True}))
 
         # move to archived collection
         logger.info('{} Archiving items.'.format(self.log_msg))
@@ -238,15 +238,20 @@ class RemoveExpiredContent(superdesk.Command):
         try:
             if published_items:
                 # moved to archive
+                logger.info('{} Found {} published items for item: {}'.format(self.log_msg,
+                                                                              len(published_items), item_id))
                 if moved_to_archived:
                     archived_service.post(published_items)
+                    logger.info('{} Moved item to text archive for item {}.'.format(self.log_msg, item_id))
+                else:
+                    logger.info('{} Not Moving item to text archive for item {}.'.format(self.log_msg, item_id))
 
-                logger.info('{} Archived published item'.format(self.log_msg))
+                logger.info('{} Archived published item: {}'.format(self.log_msg, item_id))
                 published_service.delete_by_article_id(item_id)
-                logger.info('{} Deleted published item.'.format(self.log_msg))
+                logger.info('{} Deleted published item. {}'.format(self.log_msg, item_id))
 
             archive_service.delete_by_article_ids([item_id])
-            logger.info('{} Delete archive item.'.format(self.log_msg))
+            logger.info('{} Deleted archive item. {}'.format(self.log_msg, item_id))
         except:
             failed_items = [item.get(config.ID_FIELD) for item in published_items]
             logger.exception('{} Failed to move to archived. {}'.format(self.log_msg, failed_items))
@@ -259,13 +264,19 @@ class RemoveExpiredContent(superdesk.Command):
         :return bool: True to archive the item else False
         """
         if not filter_conditions:
+            logger.info('{} No filter conditions specified for Archiving item {}.'.format(self.log_msg,
+                                                                                          item.get(config.ID_FIELD)))
             return True
 
         filter_service = get_resource_service('content_filters')
         for fc in filter_conditions:
             if filter_service.does_match(fc, item):
+                logger.info('{} Filter conditions {} matched for item {}.'.format(self.log_msg, fc,
+                                                                                  item.get(config.ID_FIELD)))
                 return False
 
+        logger.info('{} No filter conditions matched Archiving item {}.'.format(self.log_msg,
+                                                                                item.get(config.ID_FIELD)))
         return True
 
     def delete_spiked_items(self, items):
