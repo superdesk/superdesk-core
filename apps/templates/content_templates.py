@@ -53,6 +53,7 @@ def get_schema():
     schema = deepcopy(metadata_schema)
     schema['target_types'] = ARCHIVE_SCHEMA_FIELDS.get('target_types')
     schema['target_regions'] = ARCHIVE_SCHEMA_FIELDS.get('target_regions')
+    schema['target_subscribers'] = ARCHIVE_SCHEMA_FIELDS.get('target_subscribers')
     return schema
 
 
