@@ -135,17 +135,6 @@ ARCHIVE_SCHEMA_FIELDS = {
             'rewrite_id': {'type': 'string', 'mapping': not_analyzed}
         }
     },
-    'company_codes': {
-        'type': 'list',
-        'mapping': {
-            'type': 'object',
-            'properties': {
-                'qcode': not_analyzed,
-                'name': not_analyzed,
-                'security_exchange': not_analyzed
-            }
-        }
-    },
     'expiry_status': {
         'type': 'string',
         'mapping': not_analyzed,

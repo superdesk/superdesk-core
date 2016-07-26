@@ -155,6 +155,17 @@ metadata_schema = {
             }
         }
     },
+    'company_codes': {
+        'type': 'list',
+        'mapping': {
+            'type': 'object',
+            'properties': {
+                'qcode': not_analyzed,
+                'name': not_analyzed,
+                'security_exchange': not_analyzed
+            }
+        }
+    },
 
     # Story Metadata
     ITEM_TYPE: {
