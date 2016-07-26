@@ -127,9 +127,7 @@ class ValidateService(superdesk.Service):
         return {field: set_schema_defaults(schema) for field, schema in validator['schema'].items() if schema}
 
     def _validate(self, doc, **kwargs):
-        lookup = {'act': doc['act'], 'type': doc[ITEM_TYPE]}
         use_headline = kwargs and 'headline' in kwargs
-        validators = superdesk.get_resource_service('validators').get(req=None, lookup=lookup)
         validators = self._get_validators(doc)
         for validator in validators:
             self._sanitize_fields(doc['validate'], validator)
@@ -139,7 +137,9 @@ class ValidateService(superdesk.Service):
             error_list = v.errors
             response = []
             for e in error_list:
-                if error_list[e] == 'required field' or type(error_list[e]) is dict:
+                if doc.get('act', None) == 'kill' and e in ('headline', 'body_html'):
+                    continue
+                elif error_list[e] == 'required field' or type(error_list[e]) is dict:
                     message = '{} is a required field'.format(e.upper())
                 elif 'min length is 1' == error_list[e]:
                     message = '{} is a required field'.format(e.upper())
