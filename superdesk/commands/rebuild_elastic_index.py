@@ -26,7 +26,7 @@ class RebuildElasticIndex(superdesk.Command):
         superdesk.Option('--index', '-i', dest='index_name')
     ]
 
-    def run(self, index_name):
+    def run(self, index_name=None):
         # if no index name is passed then use the configured one
         index_name = index_name if index_name else superdesk.app.config['ELASTICSEARCH_INDEX']
         print('Starting index rebuilding for index: {}'.format(index_name))
