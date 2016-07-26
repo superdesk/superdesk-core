@@ -11,6 +11,7 @@
 from superdesk.metadata.item import CONTENT_STATE
 from superdesk.workflow import set_default_state
 from .common import on_create_item, handle_existing_data
+from .archive import update_word_count
 from eve.utils import config
 
 from superdesk.io.ingest import IngestResource, IngestService  # NOQA
@@ -30,5 +31,6 @@ class AppIngestService(IngestService):
         for doc in docs:
             set_default_state(doc, CONTENT_STATE.INGESTED)
             handle_existing_data(doc, doc_type='ingest')
+            update_word_count(doc)
 
         on_create_item(docs, repo_type='ingest')  # do it after setting the state otherwise it will make it draft

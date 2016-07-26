@@ -68,7 +68,8 @@ Feature: Fetch From Ingest
                     "guid": "tag_reuters.com_2014_newsml_KBN0FL0ZP:2",
                     "ingest_provider_sequence": "1",
                     "state": "ingested",
-                    "type": "text"
+                    "type": "text",
+                    "word_count" : 780
                 },
                 {
                     "guid": "tag_reuters.com_2014_newsml_LYNXMPEA6F13M:1",
