@@ -159,13 +159,17 @@ class PackageService():
         items if it can't remove it from the packages it belongs to.
         """
         for doc in docs:
-            if not doc.get('task') or not doc['task'].get('desk'):
-                message = 'Packages can not be created in the personal space.'
-                logger.error(message)
-                raise SuperdeskApiError.forbiddenError(message=message)
-            if not doc['task'].get('stage'):
-                desk = get_resource_service('desks').find_one(req=None, _id=doc['task']['desk'])
-                doc['task']['stage'] = desk['working_stage']
+            # the next 'particular_type' containing line is liveblog related and it is usefull since
+            # liveblog users don't have a personal space. Therefore, if the the task/desk condition
+            # is in place, it prevents the liveblog posts from beeing published.
+            if not doc.get('particular_type'):
+                if not doc.get('task') or not doc['task'].get('desk'):
+                    message = 'Packages can not be created in the personal space.'
+                    logger.error(message)
+                    raise SuperdeskApiError.forbiddenError(message=message)
+                if not doc['task'].get('stage'):
+                    desk = get_resource_service('desks').find_one(req=None, _id=doc['task']['desk'])
+                    doc['task']['stage'] = desk['working_stage']
 
     def extract_default_association_data(self, package, assoc):
         if assoc.get(ID_REF):

@@ -12,7 +12,7 @@ import superdesk
 from eve.io.base import DataLayer
 from eve.io.mongo import Mongo, MongoJSONEncoder
 from eve.utils import config, ParsedRequest
-from eve_elastic import Elastic, ElasticJSONSerializer, InvalidSearchString  # noqa @UnusedImport
+from eve_elastic import Elastic, ElasticJSONSerializer, InvalidSearchString  # noqa
 from flask import current_app
 from superdesk.lock import lock, unlock
 
