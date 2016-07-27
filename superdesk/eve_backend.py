@@ -157,6 +157,8 @@ class EveBackend():
                 raise SuperdeskApiError.notFoundError()
             else:
                 # item is there, but no change was done - ok
+                logger.exception('Item : {} not updated in collection {}. '
+                                 'Updates are : {}'.format(id, endpoint_name, updates))
                 return updates
 
         if search_backend:
