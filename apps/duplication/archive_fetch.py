@@ -94,6 +94,7 @@ class FetchService(BaseService):
             generate_unique_id_and_name(dest_doc)
 
             dest_doc[config.VERSION] = 1
+            dest_doc['versioncreated'] = archived
             send_to(doc=dest_doc, desk_id=desk_id, stage_id=stage_id)
             dest_doc[ITEM_STATE] = doc.get(ITEM_STATE, CONTENT_STATE.FETCHED)
             dest_doc[INGEST_ID] = dest_doc[FAMILY_ID] = ingest_doc[config.ID_FIELD]
