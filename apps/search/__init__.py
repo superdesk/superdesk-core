@@ -156,6 +156,13 @@ class SearchService(superdesk.Service):
             indexes.add(app.config['ELASTICSEARCH_INDEXES'].get(repo, app.data.elastic.index))
         return ','.join(indexes)
 
+    def get_available_indexes(self):
+        """
+        Returns a set of the configured indexes
+        :return:
+        """
+        return set(self._get_index().split(','))
+
 
 class SearchResource(superdesk.Resource):
     resource_methods = ['GET']
