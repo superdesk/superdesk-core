@@ -34,7 +34,7 @@ class FileOutputTest(TestCase):
                 'published_seq_num': 1,
                 'formatted_item': b'I was here',
                 'destination': {"name": "test", "delivery_type": "File", "format": "nitf",
-                                "config": {"file_path": self.fixtures}}
+                                "config": {"file_path": self.fixtures, "file_extension": "txt"}}
                 }
         service = FilePublishService()
         try:
@@ -51,7 +51,7 @@ class FileOutputTest(TestCase):
                 'published_seq_num': 1,
                 'formatted_item': 'I was here',
                 'destination': {"name": "test", "delivery_type": "File", "format": "nitf",
-                                "config": {"file_path": self.fixtures}}
+                                "config": {"file_path": self.fixtures, "file_extension": "txt"}}
                 }
         service = FilePublishService()
         try:
@@ -59,6 +59,32 @@ class FileOutputTest(TestCase):
             self.assertTrue(True)
         finally:
             path = os.path.join(self.fixtures, 'test_file_name-1-1.txt')
+            if os.path.isfile(path):
+                os.remove(path)
+
+    def test_format_default_file_extension(self):
+        item = {'item_id': 'test_file_name',
+                'item_version': 1,
+                'published_seq_num': 1,
+                'formatted_item': 'I was here',
+                'destination': {"name": "test", "delivery_type": "File", "format": "nitf",
+                                "config": {"file_path": self.fixtures}}
+                }
+        service = FilePublishService()
+        try:
+            service._transmit(item, self.subscribers)
+            self.assertTrue(True)
+        finally:
+            path = os.path.join(self.fixtures, 'test_file_name-1-1.ntf')
+            if os.path.isfile(path):
+                os.remove(path)
+
+        item['destination']['config']['file_extension'] = ''
+        try:
+            service._transmit(item, self.subscribers)
+            self.assertTrue(True)
+        finally:
+            path = os.path.join(self.fixtures, 'test_file_name-1-1.ntf')
             if os.path.isfile(path):
                 os.remove(path)
 
