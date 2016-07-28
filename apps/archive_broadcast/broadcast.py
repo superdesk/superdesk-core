@@ -31,7 +31,7 @@ from superdesk.utc import utcnow
 
 logger = logging.getLogger(__name__)
 # field to be copied from item to broadcast item
-FIELDS_TO_COPY = ['urgency', 'priority', 'anpa_category', 'type',
+FIELDS_TO_COPY = ['urgency', 'priority', 'anpa_category', 'type', 'profile',
                   'subject', 'dateline', 'slugline', 'place']
 ARCHIVE_BROADCAST_NAME = 'archive_broadcast'
 
