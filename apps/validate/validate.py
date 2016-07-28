@@ -137,7 +137,8 @@ class ValidateService(superdesk.Service):
             error_list = v.errors
             response = []
             for e in error_list:
-                if doc.get('act', None) == 'kill' and e in ('headline', 'body_html'):
+                if doc.get('act', None) == 'kill' and doc['validate'].get('profile', None) and \
+                   e in ('headline', 'abstract', 'body_html'):
                     continue
                 elif error_list[e] == 'required field' or type(error_list[e]) is dict:
                     message = '{} is a required field'.format(e.upper())
