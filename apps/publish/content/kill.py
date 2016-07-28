@@ -20,7 +20,8 @@ import logging
 from copy import deepcopy
 from superdesk.emails import send_article_killed_email
 from superdesk.errors import SuperdeskApiError
-from apps.archive.common import ITEM_OPERATION, ARCHIVE, insert_into_versions
+from apps.archive.common import ITEM_OPERATION, ARCHIVE, insert_into_versions, get_dateline_city
+from itertools import chain
 
 logger = logging.getLogger(__name__)
 
@@ -108,9 +109,14 @@ class KillPublishService(BasePublishService):
         """
         # Get all subscribers
         subscribers = list(get_resource_service('subscribers').get(req=None, lookup=None))
-        recipients = [s.get('email') for s in subscribers if s.get('email')]
+        recipients = [s.get('email').split(',') for s in subscribers if s.get('email')]
+        recipients = list(set(chain(*recipients)))
         # send kill email.
-        send_article_killed_email(original, recipients, utcnow())
+        kill_article = original.copy()
+        kill_article['desk_name'] = get_resource_service('desks').get_desk_name(kill_article.get('task',
+                                                                                                 {}).get('desk'))
+        kill_article['city'] = get_dateline_city(kill_article.get('dateline'))
+        send_article_killed_email(kill_article, recipients, utcnow())
 
     def _publish_kill_for_takes(self, updates, original):
         """

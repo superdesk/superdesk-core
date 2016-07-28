@@ -39,7 +39,7 @@ from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
 from apps.archive.common import get_user, insert_into_versions, item_operations
 from apps.archive.common import validate_schedule, ITEM_OPERATION, update_schedule_settings, \
     convert_task_attributes_to_objectId, is_genre, \
-    BROADCAST_GENRE, get_expiry, get_utc_schedule
+    BROADCAST_GENRE, get_expiry, get_utc_schedule, get_dateline_city
 from apps.common.components.utils import get_component
 from apps.item_autosave.components.item_autosave import ItemAutosave
 from apps.legal_archive.commands import import_into_legal_archive
@@ -669,7 +669,12 @@ class BasePublishService(BaseService):
         :return:
         """
         try:
-            kill_header = json.loads(render_template('article_killed_override.json', item=item))
+            desk_name = get_resource_service('desks').get_desk_name(item.get('task', {}).get('desk'))
+            city = get_dateline_city(item.get('dateline'))
+            kill_header = json.loads(render_template('article_killed_override.json',
+                                                     item=item,
+                                                     desk_name=desk_name,
+                                                     city=city))
             for key, value in kill_header.items():
                 kill_header[key] = html.unescape(value)
 

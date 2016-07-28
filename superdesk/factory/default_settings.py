@@ -433,8 +433,8 @@ MAX_TRANSMIT_QUERY_LIMIT = int(env('MAX_TRANSMIT_QUERY_LIMIT', 500))
 # Code profiling for performance analysis
 ENABLE_PROFILING = False
 
-# customer repo specific templates path
-CUSTOM_TEMPLATE_PATH = []
+# Template path
+TEMPLATE_PATH = ''
 
 # default timeout for ftp connections
 FTP_TIMEOUT = 300

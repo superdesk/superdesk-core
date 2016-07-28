@@ -10,7 +10,7 @@
 
 import re
 import superdesk
-from superdesk import Resource, Service, config
+from superdesk import Resource, Service, config, get_resource_service
 from superdesk.utils import SuperdeskBaseEnum
 from superdesk.resource import build_custom_hateoas
 from superdesk.utc import utcnow, set_time, local_to_utc
@@ -274,6 +274,9 @@ class ContentTemplatesApplyService(Service):
         doc = docs[0] if len(docs) > 0 else {}
         template_name = doc.get('template_name')
         item = doc.get('item') or {}
+        desk = get_resource_service('desks').find_one(req=None, _id=item.get('task', {}).get('desk'))
+        if desk:
+            item['desk_name'] = desk.get('name', '')
 
         if not template_name:
             SuperdeskApiError.badRequestError(message='Invalid Template Name')

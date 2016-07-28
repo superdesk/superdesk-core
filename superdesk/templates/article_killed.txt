@@ -1,6 +1,7 @@
-{{headline}} **KILL/TAKEDOWN NOTICE**  **KILL/TAKEDOWN NOTICE**
+{{place}}:Kill/Takedown Notice Kill/Takedown Notice
+**KILL/TAKEDOWN NOTICE**  **KILL/TAKEDOWN NOTICE**
 
-    EDS: Please KILL story slugged {{slugline}}, headlined "{{headline}}" exSydney transmitted at {{trasmitted_at}}.
+    EDS: Please KILL story slugged {{item.slugline}}, headlined "{{item.headline}}" ex{{dateline}} transmitted at {{transmitted_at}}.
 
     Pursuant to your Information Supply Agreement with {{OrganizationName}} {{OrganizationNameAbbreviation}},
     {{OrganizationNameAbbreviation}} requests that you remove the above story and associated {{OrganizationNameAbbreviation}}

@@ -276,6 +276,19 @@ class DesksService(BaseService):
             if key not in updates and key not in original:
                 updates[key] = val
 
+    def get_desk_name(self, desk_id):
+        """
+        Return the item desk
+        :param desk_id:
+        :return dict: desk document
+        """
+        desk_name = ''
+        desk = get_resource_service('desks').find_one(req=None, _id=desk_id)
+        if desk:
+            desk_name = desk.get('name') or ''
+
+        return desk_name
+
 
 class UserDesksResource(Resource):
     url = 'users/<regex("[a-f0-9]{24}"):user_id>/desks'

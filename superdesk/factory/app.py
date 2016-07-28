@@ -66,13 +66,11 @@ def get_app(config=None, media_storage=None, config_object=None):
         settings=app_config,
         json_encoder=MongoJSONEncoder,
         validator=SuperdeskValidator,
-        template_folder=os.path.join(abs_path, 'templates'))
+        template_folder=app_config.get('TEMPLATE_PATH') or os.path.join(abs_path, 'templates'))
 
     superdesk.app = app
 
-    template_paths = [abs_path + '/../templates']
-    for template_path in app_config.get('CUSTOM_TEMPLATE_PATH'):
-        template_paths.append(template_path)
+    template_paths = [app_config.get('TEMPLATE_PATH') or os.path.join(abs_path, 'templates')]
 
     custom_loader = jinja2.ChoiceLoader([
         app.jinja_loader,
