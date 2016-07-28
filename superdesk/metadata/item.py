@@ -32,6 +32,8 @@ CONTENT_TYPE = namedtuple('CONTENT_TYPE',
                            'PICTURE', 'GRAPHIC', 'COMPOSITE'])(*content_type)
 
 ITEM_STATE = 'state'
+ITEM_PRIORITY = 'priority'
+ITEM_URGENCY = 'urgency'
 content_state = ['draft', 'ingested', 'routed', 'fetched', 'submitted', 'in_progress', 'spiked',
                  'published', 'killed', 'corrected', 'scheduled', 'on_hold']
 CONTENT_STATE = namedtuple('CONTENT_STATE', ['DRAFT', 'INGESTED', 'ROUTED', 'FETCHED', 'SUBMITTED', 'PROGRESS',

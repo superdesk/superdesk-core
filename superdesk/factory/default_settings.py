@@ -400,6 +400,11 @@ DEFAULT_URGENCY_VALUE_FOR_MANUAL_ARTICLES = env('DEFAULT_URGENCY_VALUE_FOR_MANUA
 # Defines default value for genre to be set for manually created articles
 DEFAULT_GENRE_VALUE_FOR_MANUAL_ARTICLES = env('DEFAULT_GENRE_VALUE_FOR_MANUAL_ARTICLES',
                                               [{'qcode': 'Article', 'name': 'Article (news)'}])
+# Defines default value for Priority to be set for manually created articles
+DEFAULT_PRIORITY_VALUE_FOR_INGESTED_ARTICLES = env('DEFAULT_PRIORITY_VALUE_FOR_INGESTED_ARTICLES', 6)
+
+# Defines default value for Urgency to be set for manually created articles
+DEFAULT_URGENCY_VALUE_FOR_INGESTED_ARTICLES = env('DEFAULT_URGENCY_VALUE_FOR_INGESTED_ARTICLES', 3)
 
 # Defines default value for Priority to be reset for update articles SD-4595
 RESET_PRIORITY_VALUE_FOR_UPDATE_ARTICLES = json.loads(env('RESET_PRIORITY_VALUE_FOR_UPDATE_ARTICLES', 'False').lower())

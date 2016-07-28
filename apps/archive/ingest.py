@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from superdesk.metadata.item import CONTENT_STATE
+from superdesk.metadata.item import CONTENT_STATE, ITEM_PRIORITY, ITEM_URGENCY
 from superdesk.workflow import set_default_state
 from .common import on_create_item, handle_existing_data
 from .archive import update_word_count
@@ -30,6 +30,8 @@ class AppIngestService(IngestService):
     def on_create(self, docs):
         for doc in docs:
             set_default_state(doc, CONTENT_STATE.INGESTED)
+            doc.setdefault(ITEM_PRIORITY, int(config.DEFAULT_PRIORITY_VALUE_FOR_INGESTED_ARTICLES))
+            doc.setdefault(ITEM_URGENCY, int(config.DEFAULT_URGENCY_VALUE_FOR_INGESTED_ARTICLES))
             handle_existing_data(doc, doc_type='ingest')
             update_word_count(doc)
 
