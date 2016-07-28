@@ -31,11 +31,14 @@ class FilePublishService(PublishService):
             raise PublishFileError.fileSaveError(ex, config)
 
     def copy_file(self, config, queue_item):
+        # use the file extension from config if it is set otherwise use extension for the format
+        extension = config.get('file_extension') if config.get('file_extension', '') != '' else get_file_extension(
+            queue_item)
         with open('{}/{}-{}-{}.{}'.format(config['file_path'],
                                           queue_item['item_id'].replace(':', '-'),
                                           str(queue_item.get('item_version', '')),
                                           str(queue_item.get('published_seq_num', '')),
-                                          get_file_extension(queue_item)), 'wb') as f:
+                                          extension), 'wb') as f:
             f.write(queue_item['formatted_item'])
 
 
