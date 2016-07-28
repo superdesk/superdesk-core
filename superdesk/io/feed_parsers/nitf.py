@@ -93,9 +93,6 @@ class NITFFeedParser(XMLFeedParser):
                            'filter': lambda elem: int(elem.get('content')),
                            },
             'anpa_take_key': "head/meta/[@name='anpa-keyword']",
-            ITEM_TYPE: {'xpath': "head/meta/[@name='anpa-format']",
-                        'filter': self.anpa_format_filter,
-                        },
             'priority': {'xpath': "head/meta/[@name='aap-priority']",
                          'filter': lambda elem: self.map_priority(elem.get('content')),
                          },
@@ -412,10 +409,6 @@ class NITFFeedParser(XMLFeedParser):
             if person is not None:
                 byline = "{} {}".format(byline.strip(), person.text.strip())
         return byline
-
-    def anpa_format_filter(self, elem):
-        anpa_format = elem.get('content').lower() if elem.get('content') is not None else 'x'
-        return CONTENT_TYPE.TEXT if anpa_format == 'x' else CONTENT_TYPE.PREFORMATTED
 
     def get_original_creator(self, tree):
         elem = tree.find("head/meta/[@name='aap-original-creator']")

@@ -183,6 +183,9 @@ class PATestCase2(NITFTestCase):
         self.assertEqual('T201510140143580001T', self.item.get('guid'))
         self.assertEqual(self.item.get('format'), 'preserved')
 
+    def test_guid(self):
+        self.assertEqual(self.item.get('type'), 'text')
+
     def test_subjects(self):
         self.assertEqual(0, len(self.item.get('subject')))
 
