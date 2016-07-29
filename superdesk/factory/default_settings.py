@@ -221,7 +221,7 @@ INSTALLED_APPS = [
 
 # LDAP settings
 LDAP_SERVER = env('LDAP_SERVER', '')  # Ex: ldap://sourcefabric.org
-LDAP_SERVER_PORT = env('LDAP_SERVER_PORT', 389)
+LDAP_SERVER_PORT = int(env('LDAP_SERVER_PORT', 389))
 
 # Fully Qualified Domain Name. Ex: sourcefabric.org
 LDAP_FQDN = env('LDAP_FQDN', '')
