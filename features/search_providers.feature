@@ -74,3 +74,11 @@ Feature: Search Provider Feature
 	    """
         When we delete "search_providers/#search_providers._id#"
         Then we get response code 204
+
+    @auth
+    Scenario: Get list of registered search providers
+        When we get "allowed_values"
+        Then we get existing resource
+        """
+        {"_items": [{"_id": "search_providers.search_provider", "items": ["testsearch"]}]}
+        """
