@@ -66,15 +66,14 @@ def get_app(config=None, media_storage=None, config_object=None):
         settings=app_config,
         json_encoder=MongoJSONEncoder,
         validator=SuperdeskValidator,
-        template_folder=app_config.get('TEMPLATE_PATH') or os.path.join(abs_path, 'templates'))
+        template_folder=os.path.join(abs_path, 'templates'))
 
     superdesk.app = app
 
-    template_paths = [app_config.get('TEMPLATE_PATH') or os.path.join(abs_path, 'templates')]
-
     custom_loader = jinja2.ChoiceLoader([
-        app.jinja_loader,
-        jinja2.FileSystemLoader(template_paths)])
+        jinja2.FileSystemLoader('templates'),
+        jinja2.FileSystemLoader(os.path.join(
+            os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'templates'))])
 
     app.jinja_loader = custom_loader
     app.mail = Mail(app)

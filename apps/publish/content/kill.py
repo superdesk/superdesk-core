@@ -90,11 +90,10 @@ class KillPublishService(BasePublishService):
         updates[EMBARGO] = None
         updates[PUBLISH_SCHEDULE] = None
         updates[SCHEDULE_SETTINGS] = {}
-        self.broadcast_kill_email(original)
         updates_copy = deepcopy(updates)
         original_copy = deepcopy(original)
-        original_copy.update(updates_copy)
         self.apply_kill_override(original_copy, updates)
+        self.broadcast_kill_email(original, updates)
         super().update(id, updates, original)
         self._publish_kill_for_takes(updates_copy, original_copy)
         updated = deepcopy(original)
@@ -102,17 +101,19 @@ class KillPublishService(BasePublishService):
         self._process_takes_package(original, updated, updates_copy)
         get_resource_service('archive_broadcast').kill_broadcast(updates_copy, original_copy)
 
-    def broadcast_kill_email(self, original):
+    def broadcast_kill_email(self, original, updates):
         """
         Sends the broadcast email to all subscribers (including in-active subscribers)
-        :param original: Document to kill
+        :param dict original: Document to kill
+        :param dict updates: kill updates
         """
         # Get all subscribers
         subscribers = list(get_resource_service('subscribers').get(req=None, lookup=None))
         recipients = [s.get('email').split(',') for s in subscribers if s.get('email')]
         recipients = list(set(chain(*recipients)))
         # send kill email.
-        kill_article = original.copy()
+        kill_article = deepcopy(original)
+        kill_article['body_html'] = updates.get('body_html')
         kill_article['desk_name'] = get_resource_service('desks').get_desk_name(kill_article.get('task',
                                                                                                  {}).get('desk'))
         kill_article['city'] = get_dateline_city(kill_article.get('dateline'))
@@ -133,7 +134,6 @@ class KillPublishService(BasePublishService):
                     updates_data = deepcopy(updates)
                     original_data = super().find_one(req=None, _id=ref[GUID_FIELD])
                     original_data_copy = deepcopy(original_data)
-                    original_data_copy.update(updates_data)
                     self.apply_kill_override(original_data_copy, updates_data)
                     '''
                     Popping out the config.VERSION as Take referenced by original and Take referenced by original_data

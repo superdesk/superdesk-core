@@ -672,9 +672,13 @@ class BasePublishService(BaseService):
             desk_name = get_resource_service('desks').get_desk_name(item.get('task', {}).get('desk'))
             city = get_dateline_city(item.get('dateline'))
             kill_header = json.loads(render_template('article_killed_override.json',
-                                                     item=item,
+                                                     slugline=item.get('slugline', ''),
+                                                     headline=item.get('headline', ''),
                                                      desk_name=desk_name,
-                                                     city=city))
+                                                     city=city,
+                                                     versioncreated=item.get('versioncreated',
+                                                                             item.get(config.LAST_UPDATED)),
+                                                     body_html=updates.get('body_html')))
             for key, value in kill_header.items():
                 kill_header[key] = html.unescape(value)
 

@@ -274,9 +274,7 @@ class ContentTemplatesApplyService(Service):
         doc = docs[0] if len(docs) > 0 else {}
         template_name = doc.get('template_name')
         item = doc.get('item') or {}
-        desk = get_resource_service('desks').find_one(req=None, _id=item.get('task', {}).get('desk'))
-        if desk:
-            item['desk_name'] = desk.get('name', '')
+        item['desk_name'] = get_resource_service('desks').get_desk_name(item.get('task', {}).get('desk'))
 
         if not template_name:
             SuperdeskApiError.badRequestError(message='Invalid Template Name')

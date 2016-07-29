@@ -23,7 +23,7 @@ from pytz import timezone
 from apps.archive.common import validate_schedule, remove_media_files, \
     format_dateline_to_locmmmddsrc, convert_task_attributes_to_objectId, \
     is_genre, BROADCAST_GENRE, get_default_source, set_default_source, \
-    get_utc_schedule
+    get_utc_schedule, get_dateline_city
 
 
 class RemoveSpikedContentTestCase(SuperdeskTestCase):
@@ -326,6 +326,33 @@ class ArchiveTestCase(SuperdeskTestCase):
         self.assertEqual(doc['source'], source)
         self.assertEqual(doc['dateline']['source'], source)
         self.assertEqual(doc['dateline']['text'], 'SYDNEY, %s %s -' % (formatted_date, source))
+
+    def test_get_dateline_city_None(self):
+        self.assertEqual(get_dateline_city(None), '')
+
+    def test_get_dateline_city_located_as_none(self):
+        self.assertEqual(get_dateline_city({'located': None}), '')
+
+    def test_get_dateline_city_located_as_none_text_as_none(self):
+        self.assertEqual(get_dateline_city({'located': None, 'text': None}), '')
+
+    def test_get_dateline_city_from_text(self):
+        self.assertEqual(get_dateline_city({'located': None, 'text': 'Sydney, 9 July AAP'}), 'Sydney')
+
+    def test_get_dateline_city_from_located(self):
+        self.assertEqual(get_dateline_city({'located': {'city': 'Melbourne'}, 'text': 'Sydney, 9 July AAP'}),
+                         'Melbourne')
+
+    def test_get_dateline_city_from_text_no_city(self):
+        self.assertEqual(get_dateline_city({'located': {'city': None}, 'text': 'Sydney, 9 July AAP'}),
+                         'Sydney')
+
+    def test_get_dateline_city_from_located_with_country(self):
+        self.assertEqual(get_dateline_city({'located': {'country': 'Canada'}, 'text': 'Sydney, 9 July AAP'}),
+                         'Sydney')
+
+    def test_get_dateline_city_from_text_with_city_state(self):
+        self.assertEqual(get_dateline_city({'located': None, 'text': 'City, State, 9 July AAP'}), 'City, State')
 
 
 class ArchiveCommonTestCase(unittest.TestCase):

@@ -11,7 +11,6 @@
 import hashlib
 from datetime import timedelta
 from superdesk.utc import utcnow
-from eve.utils import config
 from bson.json_util import dumps
 from flask.ext.mail import Message
 from superdesk.celery_app import celery
@@ -115,21 +114,13 @@ def send_activity_emails(activity, recipients):
 def send_article_killed_email(article, recipients, transmitted_at):
     admins = app.config['ADMINS']
     app_name = app.config['APPLICATION_NAME']
-
-    transmitted_at = article[config.LAST_UPDATED] if transmitted_at is None else transmitted_at
-    dateline = article.get('city', '')
     place = next(iter(article.get('place') or []), '')
     if place:
         place = place.get('qcode', '')
+    body = article.get('body_html', '')
 
-    text_body = render_template("article_killed.txt",
-                                OrganizationNameAbbreviation=app.config['ORGANIZATION_NAME_ABBREVIATION'],
-                                OrganizationName=app.config['ORGANIZATION_NAME'], app_name=app_name,
-                                item=article, transmitted_at=transmitted_at, dateline=dateline, place=place)
-    html_body = render_template("article_killed.html",
-                                OrganizationNameAbbreviation=app.config['ORGANIZATION_NAME_ABBREVIATION'],
-                                OrganizationName=app.config['ORGANIZATION_NAME'], app_name=app_name,
-                                item=article, transmitted_at=transmitted_at, dateline=dateline, place=place)
+    text_body = render_template("article_killed.txt", app_name=app_name, place=place, body=body)
+    html_body = render_template("article_killed.html", app_name=app_name, place=place, body=body)
 
     send_email.delay(subject='Transmission from circuit: E_KILL_', sender=admins[0], recipients=recipients,
                      text_body=text_body, html_body=html_body)
