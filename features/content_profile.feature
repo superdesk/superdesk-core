@@ -558,7 +558,7 @@ Feature: Content Profile
     Scenario: Content profile defaults override user profile defaults
         Given "content_types"
         """
-        [{"_id": "foo", "label": "Foo", "editor": {"byline": {"default": "By Foo"}}}]
+        [{"_id": "foo", "label": "Foo", "schema": {"byline": {"default": "By Foo"}}}]
         """
         When we patch "/users/#CONTEXT_USER_ID#"
         """
@@ -572,4 +572,3 @@ Feature: Content Profile
         """
         {"byline": "By Foo"}
         """
-
