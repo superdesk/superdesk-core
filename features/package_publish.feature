@@ -439,7 +439,7 @@ Feature: Package Publishing
       When we publish "compositeitem" with "publish" type and "published" state
       Then we get error 400
       """
-        {"_issues": {"validator exception": "['WA:Navy steps in with WA asylum-seeker boat: ABSTRACT is a required field']"}, "_status": "ERR"}
+        {"_issues": {"validator exception": "['Associated item  WA:Navy steps in with WA asylum-seeker boat: ABSTRACT is a required field']"}, "_status": "ERR"}
       """
 
     @auth
@@ -741,7 +741,7 @@ Feature: Package Publishing
       When we publish "compositeitem" with "publish" type and "published" state
       Then we get error 400
       """
-        {"_issues": {"validator exception": "['Package cannot contain spiked item']"}, "_status": "ERR"}
+        {"_issues": {"validator exception": "['Item cannot contain associated spiked item']"}, "_status": "ERR"}
       """
 
 
@@ -5305,7 +5305,7 @@ Feature: Package Publishing
           """
       Then we get error 400
       """
-      {"_issues": {"validator exception": "400: Corrected package cannot be empty!"}, "_status": "ERR"}
+      {"_issues": {"validator exception": "['Corrected package cannot be empty!']"}, "_status": "ERR"}
       """
 
 
@@ -5577,5 +5577,5 @@ Feature: Package Publishing
       When we publish "outercompositeitem" with "publish" type and "published" state
       Then we get error 400
       """
-        {"_issues": {"validator exception": "['item-1 headline: ABSTRACT is a required field', 'item-2 headline: ABSTRACT is a required field', 'compositeitem: HEADLINE is a required field']"}, "_status": "ERR"}
+        {"_issues": {"validator exception": "['Associated item  item-1 headline: ABSTRACT is a required field', 'Associated item  item-2 headline: ABSTRACT is a required field', 'Associated item  compositeitem: HEADLINE is a required field']"}, "_status": "ERR"}
       """

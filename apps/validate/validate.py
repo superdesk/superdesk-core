@@ -69,6 +69,7 @@ class ValidateResource(superdesk.Resource):
     schema = {
         'act': {'type': 'string', 'required': True},
         'type': {'type': 'string', 'required': True},
+        'embedded': {'type': 'boolean', 'required': False},
         'validate': {
             'type': 'dict',
             'required': True
@@ -99,6 +100,10 @@ class ValidateService(superdesk.Service):
             if content_type:
                 return [content_type]
         lookup = {'act': doc['act'], 'type': doc[ITEM_TYPE]}
+        if doc.get('embedded'):
+            lookup['embedded'] = doc['embedded']
+        else:
+            lookup['$or'] = [{'embedded': {'$exists': False}}, {'embedded': False}]
         return superdesk.get_resource_service('validators').get(req=None, lookup=lookup)
 
     def _sanitize_fields(self, doc, validator):
