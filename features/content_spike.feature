@@ -113,6 +113,30 @@ Feature: Content Spiking
         And we get desk spike expiry after "60"
 
     @auth
+    Scenario: Unspike a desk content to different desk
+        Given "desks"
+        """
+        [{"name": "sports"}]
+        """
+        Given "archive"
+        """
+        [{"_id": "item-1", "guid": "item-1", "_current_version": 1, "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
+        """
+        When we spike "item-1"
+        When we post to "desks"
+        """
+        [{"name": "finance"}]
+        """
+        When we unspike "item-1"
+        """
+        {"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
+        """
+        Then we get unspiked content "item-1"
+        """
+        {"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
+        """
+
+    @auth
     Scenario: Sign Off changes when content is spiked or unspiked
         Given "desks"
         """

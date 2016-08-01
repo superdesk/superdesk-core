@@ -1463,7 +1463,7 @@ def step_impl_when_unspike_url(context, item_id):
     res = get_res('/archive/' + item_id, context)
     headers = if_match(context, res.get('_etag'))
     context.response = context.client.patch(get_prefixed_url(context.app, '/archive/unspike/' + item_id),
-                                            data='{}', headers=headers)
+                                            data=apply_placeholders(context, context.text or '{}'), headers=headers)
 
 
 @then('we get spiked content "{item_id}"')
@@ -1479,6 +1479,8 @@ def get_spiked_content(context, item_id):
 
 @then('we get unspiked content "{id}"')
 def get_unspiked_content(context, id):
+    text = context.text
+    context.text = ''
     url = 'archive/{0}'.format(id)
     when_we_get_url(context, url)
     assert_200(context.response)
@@ -1489,6 +1491,8 @@ def get_unspiked_content(context, id):
     # Expiry value doesn't get set to None properly in Elastic.
     # Discussed with Petr so we'll look into this later
     # assert_equal(response_data['expiry'], None)
+    if text:
+        assert json_match(json.loads(apply_placeholders(context, text)), response_data)
 
 
 @then('we get global content expiry')

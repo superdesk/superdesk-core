@@ -190,27 +190,38 @@ class ArchiveSpikeService(BaseService):
 
 class ArchiveUnspikeService(BaseService):
 
-    def get_unspike_updates(self, doc):
+    def set_unspike_updates(self, doc, updates):
         """Generate changes for a given doc to unspike it.
 
         :param doc: document to unspike
+        :param updates: updates dict
         """
-        updates = {REVERT_STATE: None, EXPIRY: None, 'state': doc.get(REVERT_STATE),
-                   ITEM_OPERATION: ITEM_UNSPIKE}
+        updates.update({
+            REVERT_STATE: None,
+            EXPIRY: None,
+            'state': doc.get(REVERT_STATE),
+            ITEM_OPERATION: ITEM_UNSPIKE,
+        })
 
-        desk_id = doc.get('task', {}).get('desk')
-        stage_id = None
-        if desk_id:
+        task_info = updates.get('task', {})
+        desk_id = task_info.get('desk')
+        stage_id = task_info.get('stage')
+
+        if not desk_id:  # no desk was set on unspike, restore previous
+            desk_id = doc.get('task', {}).get('desk')
+            stage_id = None
+
+        if not stage_id and desk_id:  # get incoming stage for selected desk
             desk = app.data.find_one('desks', None, _id=desk_id)
-            stage_id = desk['incoming_stage']
-            updates['task'] = {
-                'desk': desk_id,
-                'stage': stage_id if desk_id else None,
-                'user': None
-            }
+            stage_id = desk['incoming_stage'] if desk else stage_id
+
+        updates['task'] = {
+            'desk': desk_id,
+            'stage': stage_id,
+            'user': None
+        }
 
         updates[EXPIRY] = get_expiry(desk_id=desk_id, stage_id=stage_id)
-        return updates
 
     def on_update(self, updates, original):
         updates[ITEM_OPERATION] = ITEM_UNSPIKE
@@ -220,14 +231,14 @@ class ArchiveUnspikeService(BaseService):
         original_state = original[ITEM_STATE]
         if not is_workflow_state_transition_valid('unspike', original_state):
             raise InvalidStateTransitionError()
+
         user = get_user(required=True)
-
         item = get_resource_service(ARCHIVE).find_one(req=None, _id=id)
-        updates.update(self.get_unspike_updates(item))
 
+        self.set_unspike_updates(item, updates)
         self.backend.update(self.datasource, id, updates, original)
-        item = get_resource_service(ARCHIVE).find_one(req=None, _id=id)
 
+        item = get_resource_service(ARCHIVE).find_one(req=None, _id=id)
         push_notification('item:unspike', item=str(id), user=str(user.get(config.ID_FIELD)))
         return item
 
