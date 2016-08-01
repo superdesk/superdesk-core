@@ -141,7 +141,6 @@ class IngestProviderResource(Resource):
 class IngestProviderService(BaseService):
     def __init__(self, datasource=None, backend=None):
         super().__init__(datasource=datasource, backend=backend)
-        self.user_service = get_resource_service('users')
 
     def _set_provider_status(self, doc, message=''):
         user = getattr(g, 'user', None)
@@ -154,6 +153,10 @@ class IngestProviderService(BaseService):
             doc['last_opened'] = doc.get('last_opened', {})
             doc['last_opened']['opened_at'] = utcnow()
             doc['last_opened']['opened_by'] = user['_id'] if user else None
+
+    @property
+    def user_service(self):
+        return get_resource_service('users')
 
     def on_create(self, docs):
         for doc in docs:

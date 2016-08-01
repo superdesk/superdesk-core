@@ -100,12 +100,18 @@ def get_app(config=None, media_storage=None, config_object=None):
 
     init_celery(app)
 
-    for module_name in app.config.get('INSTALLED_APPS', []):
+    def install_app(module_name):
         app_module = importlib.import_module(module_name)
         try:
             app_module.init_app(app)
         except AttributeError:
             pass
+
+    for module_name in app.config.get('INSTALLED_APPS', []):
+        install_app(module_name)
+
+    for module_name in app.config.get('CORE_APPS', []):
+        install_app(module_name)
 
     for resource in superdesk.DOMAIN:
         app.register_resource(resource, superdesk.DOMAIN[resource])
