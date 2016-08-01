@@ -56,6 +56,17 @@ class SuperdeskValidator(Validator):
         if not isinstance(value, FileStorage):
             self._error(field, ERROR_PATTERN)
 
+    def _validate_multiple_emails(self, multiple, field, value):
+        """
+        validates comma separated list of emails.
+        :param field: field name.
+        :param value: field value.
+        """
+        if multiple:
+            emails = value.split(',')
+            for email in emails:
+                self._validate_type_email(field, email)
+
     def _validate_unique(self, unique, field, value):
         """Validate unique with custom error msg."""
 

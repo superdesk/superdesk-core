@@ -1583,7 +1583,7 @@ Feature: Archive Broadcast
       "_id": "123"
     }
     """
-    And we get text "Please kill story slugged comics ex Los Angeles, Aug 11 AAP" in response field "body_html"
+    And we get text "Please kill story slugged comics headlined headline exLos Angeles" in response field "body_html"
     And we get text "This is kill body" in response field "body_html"
     When we get "/archive/#BROADCAST_ONE#"
     Then we get existing resource
@@ -1597,7 +1597,7 @@ Feature: Archive Broadcast
       "headline": "Kill\/Takedown notice ~~~ Kill\/Takedown notice"
     }
     """
-    And we get text "Please kill story slugged broadcast ex New York, Aug 11 AAP" in response field "body_html"
+    And we get text "Please kill story slugged broadcast headlined TEST exNew York" in response field "body_html"
     And we get text "This is kill body" in response field "body_html"
     And we get "/archive/#BROADCAST_TWO#" and match
     """
@@ -1842,7 +1842,7 @@ Feature: Archive Broadcast
       "headline": "Kill\/Takedown notice ~~~ Kill\/Takedown notice"
     }
     """
-    And we get text "Please kill story slugged comics ex New York, Aug 11 AAP" in response field "body_html"
+    And we get text "Please kill story slugged comics headlined TEST exNew York" in response field "body_html"
     And we get text "This is kill body" in response field "body_html"
     And we get "/archive/#BROADCAST_TWO#" and match
     """

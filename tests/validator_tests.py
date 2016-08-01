@@ -71,3 +71,44 @@ class ValidateIuniquePerParentMethodTestCase(SuperdeskValidatorTest):
                 parent_field, field, value)
         except Exception as ex:
             self.fail("Error unexpectedly raised: {}".format(ex))
+
+
+@mock.patch('superdesk.validator.superdesk')
+class ValidateMultipleEmailsTestCase(SuperdeskValidatorTest):
+    """Tests for the _validate_mulitple_emails() method."""
+
+    def setUp(self):
+        super().setUp()
+        klass = self._get_target_class()
+        self.validator = klass(schema={})
+        self.validator.document = {}
+
+    def test_does_not_raise_error_on_inputs_containing_email(self, fake_superdesk):
+
+        field = 'field_name'
+        value = 'abc@abc.com'
+
+        try:
+            self.validator._validate_multiple_emails(True, field, value)
+            self.assertEqual(len(self.validator.errors), 0)
+        except Exception as ex:
+            self.fail("Error unexpectedly raised: {}".format(ex))
+
+    def test_does_not_raise_error_on_inputs_containing_emails(self, fake_superdesk):
+        field = 'field_name'
+        value = 'abc@abc.com,test@abc.com'
+
+        try:
+            self.validator._validate_multiple_emails(True, field, value)
+            self.assertEqual(len(self.validator.errors), 0)
+        except Exception as ex:
+            self.fail("Error unexpectedly raised: {}".format(ex))
+
+    def test_raise_error_on_inputs_containing_emails(self, fake_superdesk):
+        field = 'field_name'
+        value = 'abc@abc.com,test'
+        try:
+            self.validator._validate_multiple_emails(True, field, value)
+            self.assertDictEqual(self.validator.errors, {'field_name': {'pattern': 1}})
+        except Exception as ex:
+            self.fail("Error unexpectedly raised: {}".format(ex))

@@ -198,23 +198,22 @@ class ArchivedService(BaseService):
         kill_service = KillPublishService()
 
         updated = original.copy()
-        updated.update(updates)
 
         for article in articles_to_kill:
-
+            updates_copy = deepcopy(updates)
+            kill_service.apply_kill_override(article, updates_copy)
+            updated.update(updates_copy)
             # Step 2, If it is flagged as archived only it has no related items in the system so can be deleted.
             # An email is sent to all subscribers
             if original.get('flags', {}).get('marked_archived_only', False):
                 super().delete({'item_id': article['item_id']})
                 logger.info('Delete for article: {}'.format(article[config.ID_FIELD]))
-
-                kill_service.broadcast_kill_email(article)
+                kill_service.broadcast_kill_email(article, updates_copy)
                 logger.info('Broadcast kill email for article: {}'.format(article[config.ID_FIELD]))
                 continue
 
             # Step 3(i)
             self._remove_and_set_kill_properties(article, articles_to_kill, updated)
-            kill_service.apply_kill_override(article, article)
             logger.info('Removing and setting properties for article: {}'.format(article[config.ID_FIELD]))
 
             # Step 3(ii)
@@ -250,7 +249,7 @@ class ArchivedService(BaseService):
             logger.info('Legal Archive import for article: {}'.format(article[config.ID_FIELD]))
 
             # Step 3(v)
-            kill_service.broadcast_kill_email(article)
+            kill_service.broadcast_kill_email(article, updates)
             logger.info('Broadcast kill email for article: {}'.format(article[config.ID_FIELD]))
 
     def on_updated(self, updates, original):

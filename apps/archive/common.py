@@ -708,3 +708,21 @@ def is_genre(item, genre_value):
     """
     return item.get('genre') and any(genre.get('qcode', '').lower() == genre_value.lower()
                                      for genre in item.get('genre', []))
+
+
+def get_dateline_city(dateline):
+    """
+    Get the dateline city
+    :param dict dateline:
+    :return str:
+    """
+    if not dateline:
+        return ''
+
+    if (dateline.get('located') or {}) and dateline.get('located', {}).get('city'):
+        city = dateline.get('located', {}).get('city') or ''
+    else:
+        city = dateline.get('text') or ''
+        city = city[:city.rfind(',')]
+
+    return city

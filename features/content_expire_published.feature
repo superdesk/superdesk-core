@@ -936,7 +936,7 @@ Feature: Content Expiry Published Items
     When we get "/legal_archive/#archive.456.take_package#"
     Then we get OK response
 
-  @auth @vocabulary @test
+  @auth @vocabulary
   Scenario: Only entertainment articles are archived
     When we publish "123" with "publish" type and "published" state
     Then we get OK response

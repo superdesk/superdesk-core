@@ -70,13 +70,10 @@ def get_app(config=None, media_storage=None, config_object=None):
 
     superdesk.app = app
 
-    template_paths = [abs_path + '/../templates']
-    for template_path in app_config.get('CUSTOM_TEMPLATE_PATH'):
-        template_paths.append(template_path)
-
     custom_loader = jinja2.ChoiceLoader([
-        app.jinja_loader,
-        jinja2.FileSystemLoader(template_paths)])
+        jinja2.FileSystemLoader('templates'),
+        jinja2.FileSystemLoader(os.path.join(
+            os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'templates'))])
 
     app.jinja_loader = custom_loader
     app.mail = Mail(app)

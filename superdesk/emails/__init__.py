@@ -11,7 +11,6 @@
 import hashlib
 from datetime import timedelta
 from superdesk.utc import utcnow
-from eve.utils import config
 from bson.json_util import dumps
 from flask.ext.mail import Message
 from superdesk.celery_app import celery
@@ -112,23 +111,16 @@ def send_activity_emails(activity, recipients):
     email_timestamps.update({'_id': message_id}, {'_id': message_id, '_created': now}, upsert=True)
 
 
-def send_article_killed_email(article, recipients, trasmitted_at):
+def send_article_killed_email(article, recipients, transmitted_at):
     admins = app.config['ADMINS']
     app_name = app.config['APPLICATION_NAME']
+    place = next(iter(article.get('place') or []), '')
+    if place:
+        place = place.get('qcode', '')
+    body = article.get('body_html', '')
 
-    headline = article.get('headline', '')
-    trasmitted_at = article[config.LAST_UPDATED] if trasmitted_at is None else trasmitted_at
-
-    text_body = render_template("article_killed.txt",
-                                OrganizationNameAbbreviation=app.config['ORGANIZATION_NAME_ABBREVIATION'],
-                                OrganizationName=app.config['ORGANIZATION_NAME'], headline=headline,
-                                slugline=article.get('slugline'),
-                                trasmitted_at=trasmitted_at, app_name=app_name)
-    html_body = render_template("article_killed.html",
-                                OrganizationNameAbbreviation=app.config['ORGANIZATION_NAME_ABBREVIATION'],
-                                OrganizationName=app.config['ORGANIZATION_NAME'], headline=headline,
-                                slugline=article.get('slugline'),
-                                trasmitted_at=trasmitted_at, app_name=app_name)
+    text_body = render_template("article_killed.txt", app_name=app_name, place=place, body=body)
+    html_body = render_template("article_killed.html", app_name=app_name, place=place, body=body)
 
     send_email.delay(subject='Transmission from circuit: E_KILL_', sender=admins[0], recipients=recipients,
                      text_body=text_body, html_body=html_body)
