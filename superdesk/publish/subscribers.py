@@ -48,8 +48,9 @@ class SubscribersResource(Resource):
             'required': True
         },
         'email': {
-            'type': 'email',
+            'type': 'string',
             'empty': False,
+            'multiple_emails': True,
             'required': True
         },
         'is_active': {
