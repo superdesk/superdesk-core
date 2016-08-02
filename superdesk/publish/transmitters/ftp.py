@@ -43,7 +43,7 @@ class FTPPublishService(PublishService):
         try:
             with ftp_connect(config) as ftp:
                 filename = '{}.{}'.format(queue_item['item_id'].replace(':', '-'), get_file_extension(queue_item))
-                b = BytesIO(queue_item['formatted_item'].encode('UTF-8'))
+                b = BytesIO(queue_item['encoded_item'])
                 ftp.storbinary("STOR " + filename, b)
         except PublishFtpError:
             raise

@@ -10,10 +10,12 @@
 
 from functools import partial
 import logging
+import io
 import json
 
 from bson import ObjectId
 
+from flask import current_app as app
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError, SuperdeskPublishError
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, PUBLISH_SCHEDULE
@@ -320,15 +322,21 @@ class EnqueueService:
                                                           subscriber,
                                                           subscriber_codes.get(subscriber[config.ID_FIELD]))
 
-                        for pub_seq_num, formatted_doc in formatted_docs:
-                            publish_queue_item = dict()
+                        for idx, publish_data in enumerate(formatted_docs):
+                            if not isinstance(publish_data, dict):
+                                pub_seq_num, formatted_doc = publish_data
+                                formatted_docs[idx] = {'published_seq_num': pub_seq_num,
+                                                       'formatted_item': formatted_doc}
+                            else:
+                                assert 'published_seq_num' in publish_data and 'formatted_item' in publish_data,\
+                                    "missing keys in publish_data"
+
+                        for publish_queue_item in formatted_docs:
                             publish_queue_item['item_id'] = doc['item_id']
                             publish_queue_item['item_version'] = doc[config.VERSION]
-                            publish_queue_item['formatted_item'] = formatted_doc
                             publish_queue_item['subscriber_id'] = subscriber[config.ID_FIELD]
                             publish_queue_item['codes'] = subscriber_codes.get(subscriber[config.ID_FIELD])
                             publish_queue_item['destination'] = destination
-                            publish_queue_item['published_seq_num'] = pub_seq_num
                             # publish_schedule is just to indicate in the queue item is create via scheduled item
                             publish_queue_item[PUBLISH_SCHEDULE] = get_utc_schedule(doc, PUBLISH_SCHEDULE) or None
                             publish_queue_item['unique_name'] = doc.get('unique_name', None)
@@ -339,6 +347,13 @@ class EnqueueService:
                                 ObjectId(doc.get('ingest_provider')) if doc.get('ingest_provider') else None
                             if doc.get(PUBLISHED_IN_PACKAGE):
                                 publish_queue_item[PUBLISHED_IN_PACKAGE] = doc[PUBLISHED_IN_PACKAGE]
+                            try:
+                                encoded_item = publish_queue_item.pop('encoded_item')
+                            except KeyError:
+                                pass
+                            else:
+                                binary = io.BytesIO(encoded_item)
+                                publish_queue_item['encoded_item_id'] = app.storage.put(binary)
                             publish_queue_item.pop(ITEM_STATE, None)
                             get_resource_service('publish_queue').post([publish_queue_item])
                             queued = True
