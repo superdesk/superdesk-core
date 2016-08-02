@@ -53,7 +53,9 @@ class DictionariesResource(Resource):
             'type': 'string',
             'default': DictionaryType.DICTIONARY.value,
             'allowed': DictionaryType.values()
-        }
+        },
+
+        '_file_id': {'type': 'objectid', 'nullable': True, 'readonly': True},
     }
     item_methods = ['GET', 'PATCH', 'PUT', 'DELETE']
     resource_methods = ['GET', 'POST', 'DELETE']

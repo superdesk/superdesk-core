@@ -10,5 +10,20 @@
 
 '''Superdesk storage module'''
 
+from eve.io.mongo.media import GridFSMediaStorage, GridFS
 
 from .desk_media_storage import SuperdeskGridFSMediaStorage  # NOQA
+
+
+class SimpleMediaStorage(GridFSMediaStorage):
+    def fs(self, resource):
+        driver = self.app.data.mongo
+
+        px = driver.current_mongo_prefix(resource)
+        if px not in self._fs:
+            self._fs[px] = GridFS(driver.pymongo(prefix=px).db)
+        return self._fs[px]
+
+
+def init_app(app):
+    app.storage = SimpleMediaStorage(app)

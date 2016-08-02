@@ -8,14 +8,20 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import io
 import re
 import logging
 import collections
-from flask import json
+
+from flask import json, current_app as app
+from eve.utils import config
+
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
-from eve.utils import config
 from apps.dictionaries.resource import DICTIONARY_FILE, DictionaryType
+
+
+FILE_ID = '_file_id'
 
 
 logger = logging.getLogger(__name__)
@@ -50,7 +56,12 @@ def add_word(words, word, count):
     :param count
     """
     words.setdefault(word, 0)
-    words[word] += count
+    try:
+        words[word] += count
+    except TypeError as e:
+        logger.error(word)
+        logger.error(count)
+        raise e
 
 
 def add_words(nwords, text, val=1):
@@ -68,13 +79,61 @@ def merge(doc, words):
         add_word(doc['content'], word, count)
 
 
+def fetch_dict(doc):
+    """Fetch dictionary content after storing it, from gridfs or json.
+
+    :param doc
+    """
+    if doc and doc.get(FILE_ID):
+        content_file = app.storage.get(doc[FILE_ID])
+        content = json.loads(content_file.read())
+        return content
+
+    if doc and doc.get('content'):
+        return decode_dict(doc['content'])
+
+    return {}
+
+
+def store_dict(updates, original):
+    """Store dictionary content.
+
+    In case it's too big - use gridfs, otherwise just json encode it.
+
+    :param updates
+    :param original
+    """
+    content = updates.pop('content', {})
+    if content:
+        content_json = json.dumps(content)
+        if is_big(content_json):
+            content_binary = io.BytesIO(content_json.encode('utf-8'))
+            updates[FILE_ID] = app.storage.put(content_binary)
+            updates['content'] = None
+        else:
+            updates['content'] = content_json
+            updates[FILE_ID] = None
+
+    if original.get(FILE_ID):
+        app.storage.delete(original[FILE_ID])
+
+
+def is_big(json_data):
+    """Test if given json data is too big for mongo document.
+
+    Using 1MB as limit atm.
+
+    :param json_data
+    """
+    return len(json_data) > 1000000
+
+
 def read_from_file(doc):
     """
     Plain text file
     One word per line
     UTF-8 encoding
     """
-
     content = doc.pop(DICTIONARY_FILE)
     if 'text/' not in content.mimetype:
         raise SuperdeskApiError.badRequestError('A text dictionary file is required')
@@ -96,21 +155,12 @@ class DictionaryService(BaseService):
                 words = read_from_file(doc)
                 merge(doc, words)
 
-            if 'content' in doc:
-                doc['content'] = encode_dict(doc['content'])
-
-    def on_created(self, docs):
-        for doc in docs:
-            doc.pop('content', None)
-
-    def on_updated(self, updates, original):
-        if 'content' in updates:
-            updates['content'] = decode_dict(updates['content'])
+            store_dict(doc, {})
 
     def find_one(self, req, **lookup):
         doc = super().find_one(req, **lookup)
-        if doc and 'content' in doc:
-            doc['content'] = decode_dict(doc['content'])
+        if doc:
+            doc['content'] = fetch_dict(doc)
         return doc
 
     def _validate_dictionary(self, updates, original={}):
@@ -160,10 +210,7 @@ class DictionaryService(BaseService):
         dicts = self.get_dictionaries(lang)
 
         for _dict in dicts:
-            if 'content' in _dict:
-                content = decode_dict(_dict['content'])
-            else:
-                content = {}
+            content = fetch_dict(_dict)
             for word, count in content.items():
                 add_word(model, word, count)
         return model
@@ -180,7 +227,7 @@ class DictionaryService(BaseService):
 
         # handle manual changes
         if original.get('type', DictionaryType.DICTIONARY.value) == DictionaryType.DICTIONARY.value:
-            nwords = decode_dict(original.get('content', {})).copy()
+            nwords = fetch_dict(original).copy()
             for word, val in updates.get('content', {}).items():
                 if val:
                     add_words(nwords, word, val)
@@ -194,9 +241,7 @@ class DictionaryService(BaseService):
             file_words = read_from_file(updates)
             merge(updates, file_words)
 
-        # save it as string, otherwise it would order keys and it takes forever
-        if 'content' in updates:
-            updates['content'] = encode_dict(updates['content'])
+        store_dict(updates, original)
 
     def __set_default(self, doc):
         if 'type' not in doc:
@@ -211,5 +256,3 @@ class DictionaryService(BaseService):
     def __enhance_items(self, docs):
         for doc in docs:
             self.__set_default(doc)
-            if 'content' in doc:
-                doc['content'] = decode_dict(doc['content'])
