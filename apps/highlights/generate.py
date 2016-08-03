@@ -5,6 +5,13 @@ from flask import render_template, render_template_string
 from superdesk.errors import SuperdeskApiError
 from eve.utils import config
 
+PACKAGE_FIELDS = {
+    'type', 'state', 'groups', 'unique_name', 'more_coming', 'pubstatus', 'origina_creator', 'flags', 'guid',
+    'schedule_settings', 'expiry', 'format', 'lock_time', 'lock_user', 'lock_session', config.ID_FIELD,
+    config.LAST_UPDATED, config.DATE_CREATED, config.ETAG, 'version', '_current_version', 'version_creator',
+    'operation', 'unique_id', 'version_created'
+}
+
 
 def get_template(highlightId):
     """Return the string template associated with highlightId or none """
@@ -17,9 +24,7 @@ def get_template(highlightId):
 
     templateService = superdesk.get_resource_service('content_templates')
     template = templateService.find_one(req=None, _id=highlight.get('template'))
-    if not template or 'body_html' not in template.get('data', {}):
-        return None
-    return template['data']['body_html']
+    return template
 
 
 class GenerateHighlightsService(superdesk.Service):
@@ -35,17 +40,20 @@ class GenerateHighlightsService(superdesk.Service):
             if not package:
                 superdesk.abort(404)
             export = doc.get('export')
-            stringTemplate = get_template(package.get('highlight'))
+            template = get_template(package.get('highlight'))
+            stringTemplate = None
+            if template and 'body_html' in template.get('data', {}):
+                stringTemplate = template['data']['body_html']
 
             doc.clear()
             doc[ITEM_TYPE] = CONTENT_TYPE.TEXT
-            doc['headline'] = package.get('headline')
-            doc['slugline'] = package.get('slugline')
-            doc['byline'] = package.get('byline', '') or ''
-            doc['task'] = package.get('task')
             doc['family_id'] = package.get('guid')
             doc[ITEM_STATE] = CONTENT_STATE.SUBMITTED
             doc[config.VERSION] = 1
+
+            for field in package:
+                if field not in PACKAGE_FIELDS:
+                    doc[field] = package[field]
 
             items = []
             for group in package.get('groups', []):

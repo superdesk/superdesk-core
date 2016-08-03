@@ -24,6 +24,7 @@ from apps.archive.common import insert_into_versions
 from apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.utc import utcnow
 from superdesk.factory.default_settings import VERSION
+from apps.templates.content_templates import render_content_template_by_id
 
 logger = logging.getLogger(__name__)
 package_create_signal = superdesk.signals.signal('package.create')  # @UndefinedVariable
@@ -58,6 +59,20 @@ def get_item_ref(item):
     }
 
 
+def copy_metadata_from_highlight_template(doc):
+    """
+    Copy the values set on highlight template
+
+    :param doc
+    """
+    highlight_id = doc.get('highlight', None)
+    if highlight_id:
+        highlight = superdesk.get_resource_service('highlights').find_one(req=None, _id=highlight_id)
+        if highlight and 'template' in highlight:
+            updates = render_content_template_by_id(doc, highlight.get('template', None))
+            doc.update(updates)
+
+
 class PackageService():
     def on_create(self, docs):
         create_root_group(docs)
@@ -68,6 +83,9 @@ class PackageService():
         for doc in docs:
             if not doc.get('ingest_provider'):
                 doc['source'] = app.config.get('DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES')
+
+            if 'highlight' in doc:
+                copy_metadata_from_highlight_template(doc)
 
         package_create_signal.send(self, docs=docs)
 

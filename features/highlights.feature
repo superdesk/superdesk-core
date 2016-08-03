@@ -264,7 +264,9 @@ Feature: Highlights
         When we post to "content_templates"
         """
         {"template_name": "default highlight", "template_type": "highlights",
-         "data": {"body_html": "<b>custom highlight template</b>\n{% for item in items %} <h2>{{ item.headline }}</h2> {{ item.body_html | first_paragraph() }} <p></p> {% endfor %}"}
+         "data": {"headline": "custom headline", "slugline": "custom slugline", "byline": "custom byline", "abstract": "custom abstract",
+                  "priority" : 1, "urgency" : 1, "language" : "nb-NO",
+                  "body_html": "<b>custom highlight template</b>\n{% for item in items %} <h2>{{ item.headline }}</h2> {{ item.body_html | first_paragraph() }} <p></p> {% endfor %}"}
         }
         """
         Then we get response code 201
@@ -300,7 +302,9 @@ Feature: Highlights
         Then we get response code 201
         Then we get new resource
         """
-        {"_id": "__any_value__", "type": "composite", "headline": "highlights"}
+        {"_id": "__any_value__", "type": "composite", "headline": "custom headline", 
+         "slugline": "custom slugline", "byline": "custom byline", "abstract": "custom abstract",
+         "priority" : 1, "urgency" : 1, "language" : "nb-NO"}
         """
 
         When we post to "generate_highlights"
@@ -310,8 +314,10 @@ Feature: Highlights
 
         Then we get new resource
         """
-        {"_id": "__any_value__", "type": "text", "headline": "highlights",
-        "body_html": "<b>custom highlight template</b>\n <h2>item1</h2> <p>item1 first</p> <p></p>  <h2>item2</h2> <p>item2 first</p> <p></p> "}
+        {"_id": "__any_value__", "type": "text", "headline": "custom headline", 
+         "slugline": "custom slugline", "byline": "custom byline", "abstract": "custom abstract",
+         "priority" : 1, "urgency" : 1, "language" : "nb-NO",
+         "body_html": "<b>custom highlight template</b>\n <h2>item1</h2> <p>item1 first</p> <p></p>  <h2>item2</h2> <p>item2 first</p> <p></p> "}
         """
 
         When we get "/archive"
