@@ -1,6 +1,6 @@
 <html>
 <body>
-<h1>{{ article.place[0].name }}:&nbsp;{{ article.headline | safe }}</h1>
+<h1>{% if 'place' in article and article.place %}{{ article.place[0].name }}:&nbsp;{% endif %}{{ article.headline | safe }}</h1>
 Published At : {{ article.versioncreated | format_datetime(date_format='%c') }}
 <br>
 <b>{{ article.slugline}}</b>&nbsp;{{ article.anpa_take_key }}
