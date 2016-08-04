@@ -649,7 +649,7 @@ def copy_metadata_from_profile(doc):
         if content_type:
             defaults = {name: field.get('default', None)
                         for (name, field) in content_type.get('schema', {}).items()
-                        if field.get('default', None)}
+                        if field and field.get('default', None)}
 
     defaults.setdefault('priority', config.DEFAULT_PRIORITY_VALUE_FOR_MANUAL_ARTICLES)
     defaults.setdefault('urgency', config.DEFAULT_URGENCY_VALUE_FOR_MANUAL_ARTICLES)
