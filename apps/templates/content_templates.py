@@ -309,6 +309,21 @@ def render_content_template_by_name(item, template_name):
     return render_content_template(item, template)
 
 
+def render_content_template_by_id(item, template_id):
+    """
+    Apply template by name
+    :param dict item: item on which template is applied
+    :param str template_id: template _id
+    :return dict: updates to the item
+    """
+    # get the kill template
+    template = superdesk.get_resource_service('content_templates').find_one(req=None, _id=template_id)
+    if not template:
+        SuperdeskApiError.badRequestError(message='{} Template missing.'.format(template_id))
+
+    return render_content_template(item, template)
+
+
 def render_content_template(item, template):
     """
     Render the template.
