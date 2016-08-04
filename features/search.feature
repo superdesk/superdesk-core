@@ -203,3 +203,37 @@ Feature: Search Feature
             """
         When we get "/search?source={"query":{"filtered":{"filter":{"and":[{"term":{"state":"spiked"}}]}}}}"
         Then we get list with 1 items
+
+    @auth
+    Scenario: Search items with highlight
+        Given "desks"
+        """
+        [{"name": "Sports Desk", "content_expiry": 60}]
+        """
+        Given "archive"
+        """
+        [{"guid": "1", "state": "in_progress", "task": {"desk": "#desks._id#"},
+         "headline": "Foo", "body_html": "foo"},
+        {"guid": "2", "state": "in_progress", "task": {"desk": "#desks._id#"},
+         "headline": "bar", "body_html": "bar"}]
+        """
+        When we get "/search?source={"query": {"filtered": {"query": {"query_string": {"query": "(foo)", "lenient": false, "default_operator": "AND"}}}}}"
+        Then we get list with 1 items
+        """
+        {
+            "_items": [{"guid": "1", "state": "in_progress", "task": {"desk": "#desks._id#"},
+                        "headline": "Foo", "body_html": "foo", "es_highlight": "__no_value__"}]
+        }
+        """
+        When we get "/search?es_highlight=1&source={"query": {"filtered": {"query": {"query_string": {"query": "(foo)", "lenient": false, "default_operator": "AND"}}}}}"
+        Then we get list with 1 items
+        """
+        {
+            "_items": [{"guid": "1", "state": "in_progress", "task": {"desk": "#desks._id#"},
+                        "headline": "Foo", "body_html": "foo",
+                        "es_highlight": {
+                            "headline": ["<span class=\"es-highlight\">Foo</span>"],
+                            "body_html": ["<span class=\"es-highlight\">foo</span>"]
+                        }}]
+        }
+        """

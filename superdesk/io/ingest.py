@@ -11,7 +11,7 @@
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.metadata.item import metadata_schema
-from superdesk.metadata.utils import extra_response_fields, item_url, aggregations
+from superdesk.metadata.utils import extra_response_fields, item_url, aggregations, elastic_highlight_query
 from eve.defaults import resolve_default_values
 from eve.methods.common import resolve_document_etag
 from superdesk import get_resource_service
@@ -35,7 +35,8 @@ class IngestResource(Resource):
     item_url = item_url
     datasource = {
         'search_backend': 'elastic',
-        'aggregations': aggregations
+        'aggregations': aggregations,
+        'es_highlight': elastic_highlight_query
     }
     privileges = {'DELETE': 'fetch'}
 
