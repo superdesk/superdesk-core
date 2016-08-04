@@ -1,0 +1,11 @@
+{% if 'place' in article and article.place %}{{ article.place[0].name }}: {% endif %}{{ article.headline | striptags }}
+Published At : {{ article.versioncreated | format_datetime(date_format='%c') }}
+{{ article.slugline}} {{ article.anpa_take_key }}
+{% if article.ednote is defined %}{{ article.ednote | safe }}{% endif %}
+----------------------------------------------------------
+{{ article.abstract | striptags}}
+
+{{ article.byline }}
+{{article.body_html | striptags}}
+{{ article.source }} {{ article.sign_off}}
+{{ article.body_footer | striptags}}

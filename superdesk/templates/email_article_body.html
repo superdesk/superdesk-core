@@ -1,0 +1,17 @@
+<html>
+<body>
+<h1>{% if 'place' in article and article.place %}{{ article.place[0].name }}:&nbsp;{% endif %}{{ article.headline | safe }}</h1>
+Published At : {{ article.versioncreated | format_datetime(date_format='%c') }}
+<br>
+<b>{{ article.slugline}}</b>&nbsp;{{ article.anpa_take_key }}
+<hr>
+{% if article.ednote is defined %}<br><font color="red">{{ article.ednote | safe }}</font><br>{% endif %}
+{% if article.abstract is defined %}<i>{{ article.abstract | safe}}</i>{% endif %}
+{% if article.byline is defined %}<br>{{ article.byline }}{% endif %}
+<br>
+{{article.body_html | safe}}
+<br>
+{{ article.source }}&nbsp;{{ article.sign_off}}
+{% if article.body_footer is defined %}<br>{{ article.body_footer | safe}}{% endif %}
+</body>
+</html>

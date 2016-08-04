@@ -408,7 +408,9 @@ class FormatterError(SuperdeskPublishError):
         7004: 'Article couldn"t be converted to NinJS',
         7005: 'Article couldn"t be converted to NewsML 1.2 format',
         7006: 'Article couldn"t be converted to NewsML G2 format',
-        7008: 'Article couldn"t be converted to AAP SMS format'
+        7008: 'Article couldn"t be converted to AAP SMS format',
+        7009: 'Article couldn"t be converted to AAP Newscentre',
+        7008: 'Article couldn"t be converted to Email'
     }
 
     @classmethod
@@ -446,6 +448,10 @@ class FormatterError(SuperdeskPublishError):
     @classmethod
     def AAPNewscentreFormatterError(cls, exception=None, destination=None):
         return FormatterError(7009, exception, destination)
+
+    @classmethod
+    def EmailFormatterError(cls, exception=None, destination=None):
+        return FormatterError(7010, exception, destination)
 
 
 class SubscriberError(SuperdeskPublishError):
