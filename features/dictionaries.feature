@@ -1,3 +1,4 @@
+@wip
 Feature: Dictionaries Upload
 
     @auth
@@ -77,11 +78,14 @@ Feature: Dictionaries Upload
             """
         And we post to "/dictionaries"
             """
-            {"name": "#users._id#:en", "language_id": "en", "user": "#users._id#"}
+            {"name": "#users._id#:en", "language_id": "en", "user": "#users._id#", "content": {"bar": 1}}
             """
         Then we get new resource
+        """
+        {}
+        """
 
-        When we patch latest
+        When we patch "/dictionaries/#dictionaries._id#"
             """
             {"content": {"foo": 1}}
             """
@@ -90,10 +94,10 @@ Feature: Dictionaries Upload
             {}
             """
 
-        When we get "/dictionaries"
-        Then we get list with 1 items
+        When we get "/dictionaries/#dictionaries._id#"
+        Then we get existing resource
             """
-            {"_items": [{"content": {"foo": 1}}]}
+            {"content": {"foo": 1, "bar": 1}}
             """
 
      @auth
