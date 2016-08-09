@@ -31,6 +31,18 @@ aggregations = {
     'genre': {'terms': {'field': 'genre.name', 'size': 0}}
 }
 
+elastic_highlight_query = {
+    'pre_tags': ['<span class=\"es-highlight\">'],
+    'post_tags': ['</span>'],
+    'fields': {
+        'body_html': {'number_of_fragments': 0},
+        'body_footer': {'number_of_fragments': 0},
+        'headline': {'number_of_fragments': 0},
+        'slugline': {'number_of_fragments': 0},
+        'abstract': {'number_of_fragments': 0}
+    }
+}
+
 
 def generate_guid(**hints):
     """

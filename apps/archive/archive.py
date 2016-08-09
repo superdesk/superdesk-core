@@ -10,7 +10,8 @@
 
 import flask
 from superdesk.resource import Resource
-from superdesk.metadata.utils import extra_response_fields, item_url, aggregations, is_normal_package
+from superdesk.metadata.utils import extra_response_fields, item_url, aggregations, \
+    is_normal_package, elastic_highlight_query
 from .common import remove_unwanted, update_state, set_item_expiry, remove_media_files, \
     on_create_item, on_duplicate_item, get_user, update_version, set_sign_off, \
     handle_existing_data, item_schema, validate_schedule, is_item_in_package, update_schedule_settings, \
@@ -100,6 +101,7 @@ class ArchiveResource(Resource):
     datasource = {
         'search_backend': 'elastic',
         'aggregations': aggregations,
+        'es_highlight': elastic_highlight_query,
         'projection': {
             'old_version': 0,
             'last_version': 0
