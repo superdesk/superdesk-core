@@ -117,8 +117,9 @@ class AmazonMediaStorage(MediaStorage):
         if not file_extension:
             extension = str(_guess_extension(content_type)) if content_type else ''
 
-        subfolder = self.app.config.get('AMAZON_S3_SUBFOLDER', False)
-        if subfolder:
+        subfolder = ''
+        env_subfolder = self.app.config.get('AMAZON_S3_SUBFOLDER', False)
+        if env_subfolder:
             subfolder = '%s/' % subfolder.strip('/')
 
         if version is True:
