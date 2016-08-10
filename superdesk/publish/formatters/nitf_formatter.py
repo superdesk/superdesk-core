@@ -62,9 +62,12 @@ class NITFFormatter(Formatter):
     def _format_tobject(self, article, head):
         return SubElement(head, 'tobject', {'tobject.type': 'news'})
 
+    def _append_docdata_dateissue(self, article, docdata):
+        SubElement(docdata, 'date.issue', {'norm': str(article.get('firstcreated', ''))})
+
     def _format_docdata(self, article, docdata):
         SubElement(docdata, 'urgency', {'ed-urg': str(article.get('urgency', ''))})
-        SubElement(docdata, 'date.issue', {'norm': str(article.get('firstcreated', ''))})
+        self._append_docdata_dateissue(article, docdata)
         SubElement(docdata, 'doc-id', attrib={'id-string': article.get('guid', '')})
 
         if article.get('ednote'):
