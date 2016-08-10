@@ -404,7 +404,20 @@ class EMailRFC822FeedParser(EmailFeedParser):
                                 req=None, **query)
                             if desk:
                                 item['task'] = {'desk': desk.get('_id'), 'stage': desk.get('incoming_stage')}
+
+                            if 'Place' in mail_item:
+                                locator_map = superdesk.get_resource_service('vocabularies').find_one(req=None,
+                                                                                                      _id='locators')
+                                place = [x for x in locator_map.get('items', []) if
+                                         x['qcode'] == mail_item.get('Place', '').upper()]
+                                if place is not None:
+                                    item['place'] = place
+
+                            if mail_item.get('Legal flag', '') == 'LEGAL':
+                                item['flags'] = {'marked_for_legal': True}
+
                             break
+
             return [item]
         except Exception as ex:
             raise IngestEmailError.emailParseError(ex, provider)
