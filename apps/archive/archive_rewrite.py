@@ -135,7 +135,7 @@ class ArchiveRewriteService(Service):
                                   if subject.get('qcode') not in unique_subjects]
             rewrite['subject'].extend(subjects)
         else:
-            if 'profile' in original:
+            if original.get('profile'):
                 content_type = get_resource_service('content_types').find_one(req=None, _id=original['profile'])
                 extended_fields = list(content_type['schema'].keys())
                 # extra fields needed.
