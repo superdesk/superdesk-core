@@ -11,6 +11,7 @@
 from collections import namedtuple
 import json
 import logging
+import flask
 from superdesk import get_resource_service
 import superdesk
 from superdesk.errors import SuperdeskApiError
@@ -84,12 +85,29 @@ published_item_fields = {
 }
 
 
+def get_content_filter():
+    """
+    filter out content of stages not visible to current user (if any).
+    :return:
+    """
+    user = getattr(flask.g, 'user', None)
+    if user:
+        if 'invisible_stages' in user:
+            stages = user.get('invisible_stages')
+        else:
+            stages = get_resource_service('users').get_invisible_stages_ids(user.get('_id'))
+
+        if stages:
+            return {'bool': {'must_not': {'terms': {'task.stage': stages}}}}
+
+
 class PublishedItemResource(Resource):
     datasource = {
         'search_backend': 'elastic',
         'aggregations': aggregations,
         'es_highlight': elastic_highlight_query,
         'default_sort': [('_updated', -1)],
+        'elastic_filter_callback': get_content_filter,
         'projection': {
             'old_version': 0,
             'last_version': 0

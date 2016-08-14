@@ -89,27 +89,43 @@ Feature: Search Feature
         Then we get response code 403
 
 
-    @auth
+    @auth @test
     Scenario: Search Invisible stages with desk membership
         Given empty "desks"
-        When we post to "users"
-            """
-            {"username": "foo", "email": "foo@bar.com", "is_active": true, "sign_off": "abc"}
-            """
+        And the "validators"
+          """
+            [
+            {
+                "schema": {},
+                "type": "text",
+                "act": "publish",
+                "_id": "publish_text"
+            },
+            {
+                "_id": "publish_composite",
+                "act": "publish",
+                "type": "composite",
+                "schema": {}
+            }
+            ]
+          """
         When we post to "/desks"
             """
-            {"name": "Sports Desk", "members": [{"user": "#users._id#"}, {"user": "#CONTEXT_USER_ID#"}]}
+            {"name": "Sports Desk", "members": [{"user": "#CONTEXT_USER_ID#"}]}
             """
         And we get "/desks"
         Then we get list with 1 items
             """
-            {"_items": [{"name": "Sports Desk", "members": [{"user": "#users._id#"}, {"user": "#CONTEXT_USER_ID#"}]}]}
+            {"_items": [{"name": "Sports Desk", "members": [{"user": "#CONTEXT_USER_ID#"}]}]}
             """
         When we get the default incoming stage
         When we post to "/archive"
             """
             [{"guid": "item1", "state": "in_progress", "task": {"desk": "#desks._id#",
-            "stage": "#desks.incoming_stage#", "user": "#users._id#"}}]
+            "stage": "#desks.incoming_stage#", "user": "#users._id#",
+            "subject":[{"qcode": "17004000", "name": "Statistics"}],
+            "slugline": "test",
+            "body_html": "Test Document body"}}]
             """
         Then we get response code 201
         When we get "/search"
@@ -123,6 +139,26 @@ Feature: Search Feature
         Then we get list with 1 items
         When we get "/archive/#archive._id#"
         Then we get response code 200
+        When we login as user "foo" with password "bar" and user type "user"
+        When we get "/search"
+        Then we get list with 0 items
+        When we get "/archive/#archive._id#"
+        Then we get response code 403
+        When we setup test user
+        And we publish "#archive._id#" with "publish" type and "published" state
+        Then we get OK response
+        When we get "/published"
+        Then we get list with 2 items
+        When we get "/archive/#archive._id#"
+        Then we get response code 200
+        When we login as user "foo" with password "bar" and user type "user"
+        When we get "/search"
+        Then we get list with 0 items
+        When we get "/published"
+        Then we get list with 0 items
+        When we get "/archive/#archive._id#"
+        Then we get response code 403
+
 
     @auth
     Scenario: Search by slugline
