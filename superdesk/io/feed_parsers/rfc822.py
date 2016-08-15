@@ -384,7 +384,17 @@ class EMailRFC822FeedParser(EmailFeedParser):
                                                                                       source=default_source)
 
                             if mail_item.get('Priority') != '':
-                                item['priority'] = int(mail_item.get('Priority', '3'))
+                                if mail_item.get('Priority', '3').isdigit():
+                                    item['priority'] = int(mail_item.get('Priority', '3'))
+                                else:
+                                    priority_map = superdesk.get_resource_service('vocabularies').find_one(
+                                        req=None, _id='priority')
+                                    priorities = [x for x in priority_map.get('items', []) if
+                                                  x['name'].upper() == mail_item.get('Priority', '').upper()]
+                                    if priorities is not None and len(priorities) > 0:
+                                        item['priority'] = int(priorities[0].get('qcode', '3'))
+                                    else:
+                                        item['priority'] = 3
                             if mail_item.get('News Value') != '':
                                 item['urgency'] = int(mail_item.get('News Value', '3'))
 
