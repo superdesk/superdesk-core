@@ -232,6 +232,7 @@ metadata_schema = {
     },
     'profile': {
         'type': 'string',
+        'nullable': True
     },
 
     # Related to state of an article
@@ -250,7 +251,8 @@ metadata_schema = {
         'type': 'string',
         'allowed': pub_status,
         'default': PUB_STATUS.USABLE,
-        'mapping': not_analyzed
+        'mapping': not_analyzed,
+        'nullable': True,
     },
     'signal': {
         'type': 'string',
@@ -271,7 +273,8 @@ metadata_schema = {
     },
     'groups': {
         'type': 'list',
-        'minlength': 1
+        'minlength': 1,
+        'nullable': True,
     },
     'body_html': {
         'type': 'string',
@@ -365,7 +368,8 @@ metadata_schema = {
     'more_coming': {'type': 'boolean', 'default': False},
     # Field which contains all the sign-offs done on this article, eg. twd/jwt/ets
     SIGN_OFF: {
-        'type': 'string'
+        'type': 'string',
+        'nullable': True,
     },
 
     # Desk and Stage Details
