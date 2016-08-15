@@ -133,8 +133,10 @@ class RFC822FormattedEmail(TestCase):
             }])
             self.app.data.insert('desks', [{'_id': 1, 'name': 'new zealand'}])
             self.app.data.insert('vocabularies', [{'_id': 'locators',
-                                                  'items': [{"is_active": True,
-                                                             'name': 'ADV', 'qcode': 'ADV', 'group': ''}]}])
+                                                  'items': [{'is_active': True,
+                                                             'name': 'ADV', 'qcode': 'ADV', 'group': ''}]},
+                                                  {'_id': 'priority', 'items': [{'is_active': True,
+                                                                                 'name': 'Urgent', 'qcode': '3'}]}])
 
             provider = {'name': 'Test', 'config': {'formatted': True}}
             dirname = os.path.dirname(os.path.realpath(__file__))
@@ -152,3 +154,4 @@ class RFC822FormattedEmail(TestCase):
         self.assertEqual(self.items[0]['dateline']['text'], 'AUCKLAND, May 5 AAP -')
         self.assertEqual(self.items[0]['place'][0]['qcode'], 'ADV')
         self.assertEqual(self.items[0]['flags']['marked_for_legal'], True)
+        self.assertEqual(self.items[0]['priority'], 3)
