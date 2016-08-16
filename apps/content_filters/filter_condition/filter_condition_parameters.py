@@ -50,7 +50,7 @@ class FilterConditionParametersService(BaseService):
                             'value_field': 'qcode'
                             },
                            {'field': 'keywords',
-                            'operators': ['in', 'nin', 'like', 'notlike', 'startswith', 'endswith']
+                            'operators': ['in', 'nin']
                             },
                            {'field': 'slugline',
                             'operators': ['in', 'nin', 'like', 'notlike', 'startswith', 'endswith']
