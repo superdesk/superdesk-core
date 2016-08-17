@@ -14,7 +14,7 @@ Feature: Link content in takes
             "headline": "test1",
             "slugline": "comics",
             "abstract" : "abstract",
-            "anpa_take_key": "Take",
+            "anpa_take_key": null,
             "guid": "123",
             "state": "draft",
             "task": {
@@ -43,7 +43,7 @@ Feature: Link content in takes
             "type": "text",
             "headline": "test1",
             "slugline": "comics",
-            "anpa_take_key": "Take=2",
+            "anpa_take_key": "=2",
             "state": "draft",
             "priority": 1,
             "urgency": 1,
@@ -120,7 +120,7 @@ Feature: Link content in takes
             "type": "text",
             "headline": "test1",
             "slugline": "comics",
-            "anpa_take_key": "Take=3",
+            "anpa_take_key": "=3",
             "state": "draft",
             "original_creator": "#CONTEXT_USER_ID#",
             "takes": {
@@ -182,6 +182,59 @@ Feature: Link content in takes
                     "takes": {}
                 }
             ]
+        }
+        """
+        When we post to "archive"
+        """
+        [{
+            "guid": "456",
+            "type": "text",
+            "headline": "test1",
+            "slugline": "comics",
+            "abstract" : "abstract",
+            "guid": "456",
+            "state": "draft",
+            "task": {
+                "user": "#CONTEXT_USER_ID#"
+            },
+            "priority": 1,
+            "urgency": 1,
+            "ednote": "ednote",
+            "place": [{"is_active": true, "name": "ACT", "qcode": "ACT",
+                  "state": "Australian Capital Territory",
+                  "country": "Australia", "world_region": "Oceania"}]
+        }]
+        """
+        And we post to "/archive/456/move"
+        """
+        [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
+        """
+        Then we get OK response
+        When we post to "archive/456/link"
+        """
+        [{}]
+        """
+        Then we get next take as "TAKE"
+        """
+        {
+            "type": "text",
+            "headline": "test1",
+            "slugline": "comics",
+            "anpa_take_key": "=2",
+            "state": "draft",
+            "priority": 1,
+            "urgency": 1,
+            "ednote": "ednote",
+            "place": [{"is_active": true, "name": "ACT", "qcode": "ACT",
+                  "state": "Australian Capital Territory",
+                  "country": "Australia", "world_region": "Oceania"}],
+            "original_creator": "#CONTEXT_USER_ID#",
+            "takes": {
+                "_id": "#TAKE_PACKAGE#",
+                "package_type": "takes",
+                "type": "composite"
+            },
+            "linked_in_packages": [{"package_type" : "takes","package" : "#TAKE_PACKAGE#"}]
         }
         """
 
