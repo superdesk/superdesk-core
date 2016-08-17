@@ -96,8 +96,12 @@ def get_app(config=None, media_storage=None, config_object=None):
         return client_error_handler(return_error)
 
     init_celery(app)
+    installed = set()
 
     def install_app(module_name):
+        if module_name in installed:
+            return
+        installed.add(module_name)
         app_module = importlib.import_module(module_name)
         try:
             app_module.init_app(app)
