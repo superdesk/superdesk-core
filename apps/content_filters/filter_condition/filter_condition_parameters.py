@@ -13,6 +13,7 @@ from superdesk.services import BaseService
 from superdesk.utils import ListCursor
 from superdesk import get_resource_service
 from superdesk.io.subjectcodes import get_subjectcodeitems
+from eve.utils import ParsedRequest
 
 
 class FilterConditionParametersResource(Resource):
@@ -92,11 +93,17 @@ class FilterConditionParametersService(BaseService):
         values = {}
         vocabularies_resource = get_resource_service('vocabularies')
         values['anpa_category'] = vocabularies_resource.find_one(req=None, _id='categories')['items']
-        values['genre'] = vocabularies_resource.find_one(req=None, _id='genre')['items']
+        req = ParsedRequest()
+        req.where = {'$or': [{"schema_field": "genre"}, {"_id": "genre"}]}
+        values['genre'] = vocabularies_resource.find_one(req=req)['items']
         values['urgency'] = vocabularies_resource.find_one(req=None, _id='urgency')['items']
         values['priority'] = vocabularies_resource.find_one(req=None, _id='priority')['items']
         values['type'] = vocabularies_resource.find_one(req=None, _id='type')['items']
-        values['subject'] = get_subjectcodeitems()
+        subject = vocabularies_resource.find_one(req=None, schema_field='subject')
+        if subject:
+            values['subject'] = subject['items']
+        else:
+            values['subject'] = get_subjectcodeitems()
         values['desk'] = list(get_resource_service('desks').get(None, {}))
         values['stage'] = self._get_stage_field_values(values['desk'])
         values['sms'] = [{'qcode': 0, 'name': 'False'}, {'qcode': 1, 'name': 'True'}]
