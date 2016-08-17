@@ -8,5 +8,5 @@ def init_app(app):
     service = ContentTypesService(endpoint_name, backend=superdesk.get_backend())
     ContentTypesResource(endpoint_name, app=app, service=service)
     superdesk.privilege(name=CONTENT_TYPE_PRIVILEGE,
-                        label='Content Types',
-                        description='Manage types')
+                        label='Content Profile',
+                        description='Manage content profiles')
