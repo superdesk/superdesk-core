@@ -877,7 +877,7 @@ Feature: Take Package Publishing
           "pubstatus": "usable",
           "subject":[{"qcode": "17004000", "name": "Statistics"}],
           "anpa_category": [{"qcode": "A", "name": "Sport"}],
-          "anpa_take_key": "Take",
+          "anpa_take_key": null,
           "target_subscribers": [{"_id": "#subscribers._id#"}]
       }]
       """
@@ -897,7 +897,7 @@ Feature: Take Package Publishing
           "type": "text",
           "headline": "Take-1 headline",
           "slugline": "Take-1 slugline",
-          "anpa_take_key": "Take (reopens)=2",
+          "anpa_take_key": "(reopens)=2",
           "state": "draft",
           "original_creator": "#CONTEXT_USER_ID#",
           "target_subscribers": [{"_id": "#subscribers._id#"}]

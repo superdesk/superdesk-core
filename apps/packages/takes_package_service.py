@@ -91,11 +91,11 @@ class TakesPackageService():
         # if target is the first take hence default sequence is for first take.
         sequence = package.get(SEQUENCE, 1) if package else 1
         sequence = self.__next_sequence__(sequence)
-        take_key = self.__strip_take_info__(target.get('anpa_take_key', ''))
+        take_key = self.__strip_take_info__(target.get('anpa_take_key') or '')
         to['event_id'] = target.get('event_id')
         to['anpa_take_key'] = '{}={}'.format(take_key, sequence)
         if target.get(ITEM_STATE) in PUBLISH_STATES:
-            to['anpa_take_key'] = '{} ({})={}'.format(take_key, RE_OPENS, sequence)
+            to['anpa_take_key'] = '{} ({})={}'.format(take_key, RE_OPENS, sequence).strip()
 
         if set_state:
             to[config.VERSION] = 1
