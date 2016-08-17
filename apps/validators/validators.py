@@ -16,6 +16,7 @@ class ValidatorsResource(superdesk.Resource):
         '_id': {'type': 'string', 'required': True, 'unique': True},
         'act': {'type': 'string', 'required': True},
         'type': {'type': 'string', 'required': True},
+        'embedded': {'type': 'boolean', 'required': False},
         'schema': {
             'type': 'dict',
             'required': False

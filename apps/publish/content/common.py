@@ -249,21 +249,29 @@ class BasePublishService(BaseService):
         if validation_errors[0]:
             raise ValidationError(validation_errors)
 
+        validation_errors = []
+        self._validate_associated_items(original, takes_package, validation_errors)
+
         if original[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
-            package_validation_errors = []
-            self._validate_package_contents(original, takes_package, package_validation_errors)
-            if len(package_validation_errors) > 0:
-                raise ValidationError(package_validation_errors)
+            self._validate_package(original, updates, validation_errors)
 
-            self._validate_package(original, updates)
+        if len(validation_errors) > 0:
+            raise ValidationError(validation_errors)
 
-    def _validate_package(self, package, updates):
+    def _validate_package(self, package, updates, validation_errors):
+        # make sure package is not scheduled or spiked
+        if package[ITEM_STATE] in (CONTENT_STATE.SPIKED, CONTENT_STATE.SCHEDULED):
+            validation_errors.append('Package cannot be {}'.format(package[ITEM_STATE]))
+
+        if package.get(EMBARGO):
+            validation_errors.append('Package cannot have Embargo')
+
         items = self.package_service.get_residrefs(package)
         if self.publish_type in [ITEM_CORRECT, ITEM_KILL]:
             removed_items, added_items = self._get_changed_items(items, updates)
             # we raise error if correction is done on a empty package. Kill is fine.
             if len(removed_items) == len(items) and len(added_items) == 0 and self.publish_type == ITEM_CORRECT:
-                raise SuperdeskApiError.badRequestError("Corrected package cannot be empty!")
+                validation_errors.append("Corrected package cannot be empty!")
 
     def raise_if_not_marked_for_publication(self, original):
         if original.get('flags', {}).get('marked_for_not_publication', False):
@@ -558,51 +566,51 @@ class BasePublishService(BaseService):
         else:
             return [], []
 
-    def _validate_package_contents(self, package, takes_package, validation_errors=[]):
+    def _validate_associated_items(self, original_item, takes_package, validation_errors=[]):
         """
-        If the item passed is a package this function will ensure that the unpublished content validates and none of
-        the content is locked by other than the publishing session, also do not allow any killed or spiked content
+        This function will ensure that the unpublished content validates and none of
+        the content is locked by other than the publishing session, also do not allow
+        any killed or spiked content.
 
         :param package:
         :param takes_package:
         :param validation_errors: validation errors are appended if there are any.
         """
-        # Ensure it is the sort of thing we need to validate
-        if package[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and not takes_package and self.publish_type == ITEM_PUBLISH:
-            items = self.package_service.get_residrefs(package)
+        items = [value for value in original_item.get('associations', {}).values()]
+        if original_item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and \
+                not takes_package and self.publish_type == ITEM_PUBLISH:
+            items.extend(self.package_service.get_residrefs(original_item))
 
-            # make sure package is not scheduled or spiked
-            if package[ITEM_STATE] in (CONTENT_STATE.SPIKED, CONTENT_STATE.SCHEDULED):
-                validation_errors.append('Package cannot be {}'.format(package[ITEM_STATE]))
+        for item in items:
+            if type(item) == dict:
+                doc = item
+            else:
+                doc = super().find_one(req=None, _id=item)
 
-            if package.get(EMBARGO):
-                validation_errors.append('Package cannot have Embargo')
+            if original_item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
+                digital = self.takes_package_service.get_take_package(doc) or {}
+                self._validate_associated_items(doc, digital, validation_errors)
 
-            if items:
-                for guid in items:
-                    doc = super().find_one(req=None, _id=guid)
+            # make sure no items are killed or spiked or scheduled
+            if doc[ITEM_STATE] in (CONTENT_STATE.KILLED, CONTENT_STATE.SPIKED, CONTENT_STATE.SCHEDULED):
+                validation_errors.append('Item cannot contain associated {} item'.format(doc[ITEM_STATE]))
 
-                    if package[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
-                        digital = self.takes_package_service.get_take_package(doc) or {}
-                        self._validate_package_contents(doc, digital, validation_errors)
+            if doc.get(EMBARGO):
+                validation_errors.append('Item cannot have associated items with Embargo')
 
-                    # make sure no items are killed or spiked or scheduled
-                    if doc[ITEM_STATE] in (CONTENT_STATE.KILLED, CONTENT_STATE.SPIKED, CONTENT_STATE.SCHEDULED):
-                        validation_errors.append('Package cannot contain {} item'.format(doc[ITEM_STATE]))
+            # don't validate items that already have published
+            if doc[ITEM_STATE] not in [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]:
+                validate_item = {'act': self.publish_type, 'type': doc[ITEM_TYPE], 'validate': doc}
+                if type(item) == dict:
+                    validate_item['embedded'] = True
+                errors = get_resource_service('validate').post([validate_item], headline=True)
+                if errors[0]:
+                    pre_errors = ['Associated item %s %s' % (doc.get('slugline', ''), error) for error in errors[0]]
+                    validation_errors.extend(pre_errors)
 
-                    if doc.get(EMBARGO):
-                        validation_errors.append('Package cannot have Items with Embargo')
-
-                    # don't validate items that already have published
-                    if doc[ITEM_STATE] not in [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]:
-                        validate_item = {'act': self.publish_type, 'type': doc[ITEM_TYPE], 'validate': doc}
-                        errors = get_resource_service('validate').post([validate_item], headline=True)
-                        if errors[0]:
-                            validation_errors.extend(errors[0])
-
-                    # check the locks on the items
-                    if doc.get('lock_session', None) and package['lock_session'] != doc['lock_session']:
-                        validation_errors.extend(['{}: packaged item cannot be locked'.format(doc['headline'])])
+            # check the locks on the items
+            if doc.get('lock_session', None) and original_item['lock_session'] != doc['lock_session']:
+                validation_errors.extend(['{}: packaged item cannot be locked'.format(doc['headline'])])
 
     def _import_into_legal_archive(self, doc):
         """
