@@ -70,7 +70,7 @@ def add_words(nwords, text, val=1):
 
 
 def read(stream):
-    return stream.read().decode('utf-8')
+    return stream.read().decode('utf-8').replace('\ufeff', '')
 
 
 def merge(doc, words):
