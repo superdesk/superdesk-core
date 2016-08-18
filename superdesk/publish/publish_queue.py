@@ -15,6 +15,7 @@ from superdesk.notification import push_notification
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.utils import SuperdeskBaseEnum
+from flask import current_app as app
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,8 @@ class PublishQueueResource(Resource):
         'item_version': {'type': 'integer', 'nullable': False},
 
         'formatted_item': {'type': 'string', 'nullable': False},
+        'item_encoding': {'type': 'string', 'nullable': True},
+        'encoded_item_id': {'type': 'objectid', 'nullable': True},
         'subscriber_id': Resource.rel('subscribers'),
         'codes': {'type': 'list', 'nullable': True},
         'destination': {
@@ -135,6 +138,19 @@ class PublishQueueService(BaseService):
                               state=updates.get('state'),
                               error_message=updates.get('error_message')
                               )
+
+    def delete(self, lookup):
+        # as encoded item is added manually to storage
+        # we also need to remove it manually on delete
+        cur = self.get_from_mongo(req=None, lookup=lookup)
+        for doc in cur:
+            try:
+                encoded_item_id = doc['encoded_item_id']
+            except KeyError:
+                pass
+            else:
+                app.storage.delete(encoded_item_id)
+        return super().delete(lookup)
 
     def delete_by_article_id(self, _id):
         lookup = {'item_id': _id}

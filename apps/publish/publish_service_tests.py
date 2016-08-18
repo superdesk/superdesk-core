@@ -23,7 +23,8 @@ class PublishServiceTests(SuperdeskTestCase):
                     "destination": {"name": "NITF", "delivery_type": "ftp", "format": "nitf", "config": {}},
                     "subscriber_id": "1",
                     "state": "in-progress",
-                    "item_id": 1
+                    "item_id": 1,
+                    "formatted_item": ''
                     }]
 
     subscribers = [{"_id": "1", "name": "Test", "subscriber_type": SUBSCRIBER_TYPES.WIRE, "media_type": "media",

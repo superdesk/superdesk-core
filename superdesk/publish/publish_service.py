@@ -14,6 +14,7 @@ from bson import ObjectId
 
 import superdesk
 
+from flask import current_app as app
 from superdesk import get_resource_service, config
 from superdesk.utc import utcnow
 from superdesk.errors import SubscriberError, SuperdeskPublishError, PublishQueueError
@@ -45,6 +46,16 @@ class PublishService():
             raise SubscriberError.subscriber_inactive_error(Exception('Subscriber inactive'), subscriber)
         else:
             try:
+                # "formatted_item" is the item as str
+                # "encoded_item" is the bytes version
+                # if "encoded_item_id" exists we use it, else
+                # we fill encoded_item using "formatted_item" and "item_encoding"
+                if 'encoded_item_id' in queue_item:
+                    encoded_item_id = queue_item['encoded_item_id']
+                    queue_item['encoded_item'] = app.storage.get(encoded_item_id).read()
+                else:
+                    encoding = queue_item.get('item_encoding', 'utf-8')
+                    queue_item['encoded_item'] = queue_item['formatted_item'].encode(encoding, errors='replace')
                 self._transmit(queue_item, subscriber) or []
                 self.update_item_status(queue_item, 'success')
             except SuperdeskPublishError as error:
