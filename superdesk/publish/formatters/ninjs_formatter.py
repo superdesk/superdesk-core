@@ -59,12 +59,12 @@ class NINJSFormatter(Formatter):
         try:
             pub_seq_num = superdesk.get_resource_service('subscribers').generate_sequence_number(subscriber)
 
-            ninjs = self._transform_to_ninjs(article)
+            ninjs = self._transform_to_ninjs(article, subscriber)
             return [(pub_seq_num, json.dumps(ninjs, default=json_serialize_datetime_objectId))]
         except Exception as ex:
             raise FormatterError.ninjsFormatterError(ex, subscriber)
 
-    def _transform_to_ninjs(self, article, recursive=True):
+    def _transform_to_ninjs(self, article, subscriber, recursive=True):
         ninjs = {
             'guid': article.get(GUID_FIELD, article.get('uri')),
             'version': str(article.get(config.VERSION, 1)),
@@ -98,11 +98,13 @@ class NINJSFormatter(Formatter):
 
         if recursive:
             if article[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
-                ninjs['associations'] = self._get_associations(article)
+                ninjs['associations'] = self._get_associations(article, subscriber)
                 if 'associations' in article:
-                    ninjs['associations'].update(self._format_related(article))
+                    ninjs['associations'].update(self._format_related(article, subscriber))
             elif article.get('associations', {}):
-                ninjs['associations'] = self._format_related(article)
+                ninjs['associations'] = self._format_related(article, subscriber)
+        elif article.get('associations'):
+            ninjs['associations'] = self._format_related(article, subscriber)
 
         if article.get(EMBARGO):
             ninjs['embargoed'] = get_utc_schedule(article, EMBARGO).isoformat()
@@ -170,7 +172,7 @@ class NINJSFormatter(Formatter):
             return CONTENT_TYPE.TEXT
         return article[ITEM_TYPE]
 
-    def _get_associations(self, article):
+    def _get_associations(self, article, subscriber):
         """Create associations dict for package groups."""
         associations = dict()
         for group in article[GROUPS]:
@@ -184,7 +186,7 @@ class NINJSFormatter(Formatter):
                     item['guid'] = ref[RESIDREF]
                     item[ITEM_TYPE] = ref[ITEM_TYPE]
                     if ref.get('package_item'):
-                        item.update(self._transform_to_ninjs(ref['package_item'], recursive=False))
+                        item.update(self._transform_to_ninjs(ref['package_item'], subscriber, recursive=False))
                     group_items.append(item)
             if len(group_items) == 1:
                 associations[group[GROUP_ID]] = group_items[0]
@@ -193,12 +195,12 @@ class NINJSFormatter(Formatter):
                     associations[group[GROUP_ID] + '-' + str(index)] = group_items[index]
         return associations
 
-    def _format_related(self, article):
+    def _format_related(self, article, subscriber):
         """Format all associated items for simple items (not packages)."""
         associations = {}
         for key, item in article.get('associations', {}).items():
             if item:
-                associations[key] = self._transform_to_ninjs(item)
+                associations[key] = self._transform_to_ninjs(item, subscriber)
         return associations
 
     def _get_subject(self, article):

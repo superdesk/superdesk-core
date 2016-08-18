@@ -456,25 +456,53 @@ Feature: Publish content to the public API
         """
     And the "validators"
         """
-        [{"_id": "publish_composite", "act": "publish", "type": "composite", "schema":{}},
-        {"_id": "publish_text", "act": "publish", "type": "text", "schema":{}},
-        {"_id": "publish_picture", "act": "publish", "type": "picture", "schema":{}}]
+        [
+            {"_id": "publish_composite", "act": "publish", "type": "composite", "schema":{}},
+            {"_id": "publish_text", "act": "publish", "type": "text", "schema":{}},
+            {"_id": "publish_picture", "act": "publish", "type": "picture", "schema":{}},
+            {"_id": "publish_embedded", "act": "publish", "type": "picture", "embedded": true, "schema": {}}
+        ]
+        """
+    And the "vocabularies"
+        """
+        [{"_id": "crop_sizes", "items": [{"is_active": true, "name": "4-3", "width": 800, "height": 600}]}]
         """
     When we post to "archive" with success
         """
-        [{
-            "headline" : "WA:Navy steps in with WA asylum-seeker boat",
-            "guid" : "item1",
-            "state" : "submitted",
-            "type" : "text",
-            "body_html": "item content",
-            "task": {
-                "user": "#CONTEXT_USER_ID#",
-                "status": "todo",
-                "stage": "#desks.incoming_stage#",
-                "desk": "#desks._id#"
+        [
+            {
+                "guid": "embedded",
+                "type": "picture",
+                "state": "submitted",
+                "pubstatus": "usable",
+                "mimetype": "image/jpeg",
+                "slugline": "foo",
+                "renditions": {}
+            },
+            {
+                "headline" : "WA:Navy steps in with WA asylum-seeker boat",
+                "guid" : "item1",
+                "state" : "submitted",
+                "type" : "text",
+                "body_html": "item content",
+                "task": {
+                    "user": "#CONTEXT_USER_ID#",
+                    "status": "todo",
+                    "stage": "#desks.incoming_stage#",
+                    "desk": "#desks._id#"
+                },
+                "associations": {
+                    "embedded1": {
+                        "guid": "embedded",
+                        "type": "picture",
+                        "state": "submitted",
+                        "pubstatus": "usable",
+                        "mimetype": "image/jpeg",
+                        "slugline": "foo"
+                    }
+                }
             }
-        }]
+        ]
         """
     When we post to "archive" with success
       """
@@ -674,8 +702,17 @@ Feature: Publish content to the public API
     		"type": "composite",
     		"associations": {
     			"main": {
+                    "body_html": "item content",
 					"headline": "WA:Navy steps in with WA asylum-seeker boat",
-					"type": "composite" },
+					"type": "composite",
+                    "associations": {
+                        "embedded1": {
+                            "type": "picture",
+                            "slugline": "foo",
+                            "pubstatus": "usable"
+                        }
+                    }
+                },
     			"sidebars": {
 					"guid": "item2",
 					"type": "picture",
