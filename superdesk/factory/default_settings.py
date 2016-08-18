@@ -217,6 +217,7 @@ SENTRY_INCLUDE_PATHS = ['superdesk', 'apps']
 CORE_APPS = [
     'superdesk.storage',
     'superdesk.allowed_values',
+    'apps.picture_crop',
 ]
 
 INSTALLED_APPS = [
@@ -306,7 +307,6 @@ INSTALLED_APPS.extend([
     'apps.search_providers',
     'apps.feature_preview',
     'apps.workqueue',
-    'apps.picture_crop',
 ])
 
 RESOURCE_METHODS = ['GET', 'POST']
