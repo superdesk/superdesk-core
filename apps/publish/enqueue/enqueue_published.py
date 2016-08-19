@@ -48,10 +48,11 @@ class EnqueuePublishedService(EnqueueService):
         rewrite_take_package = None
         if rewrite_of:
             rewrite_of_item = get_resource_service('archive').find_one(req=None, _id=rewrite_of)
-            if is_takes_package(rewrite_of_item):
-                rewrite_take_package = rewrite_of_item
-            else:
-                rewrite_take_package = self.takes_package_service.get_take_package(rewrite_of_item)
+            if rewrite_of_item:
+                if is_takes_package(rewrite_of_item):
+                    rewrite_take_package = rewrite_of_item
+                else:
+                    rewrite_take_package = self.takes_package_service.get_take_package(rewrite_of_item)
 
         # Step 1
         query = {'is_active': True}

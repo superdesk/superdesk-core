@@ -306,7 +306,7 @@ def set_sign_off(updates, original=None, repo_type=ARCHIVE, user=None):
     if SIGN_OFF in updates:
         return
     sign_off = get_sign_off(user)
-    current_sign_off = '' if original is None else original.get(SIGN_OFF, '')
+    current_sign_off = '' if original is None else (original.get(SIGN_OFF, '') or '')
 
     if current_sign_off.endswith(sign_off):
         return
