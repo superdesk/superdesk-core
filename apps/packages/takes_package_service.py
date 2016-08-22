@@ -139,6 +139,8 @@ class TakesPackageService():
                 takes_package[field] = target.get(field)
         if target.get('associations', {}).get('featureimage'):
             takes_package['associations'] = {'featureimage': target['associations']['featureimage']}
+        elif target.get('associations'):
+            takes_package['associations'] = target['associations']
 
         takes_package.setdefault(config.VERSION, 1)
         takes_package[ITEM_STATE] = CONTENT_STATE.PROGRESS

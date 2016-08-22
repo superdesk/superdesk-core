@@ -476,8 +476,16 @@ class BasePublishService(BaseService):
                     super().system_update(guid, {LINKED_IN_PACKAGES: linked_in_packages}, package_item)
 
                 package_item = super().find_one(req=None, _id=guid)
+
                 self.package_service.update_field_in_package(updates, package_item[config.ID_FIELD],
                                                              config.VERSION, package_item[config.VERSION])
+                if package_item.get('associations'):
+                    self.package_service.update_field_in_package(
+                        updates,
+                        package_item[config.ID_FIELD],
+                        'associations',
+                        package_item['associations']
+                    )
 
         updated = deepcopy(package)
         updated.update(updates)
@@ -584,8 +592,10 @@ class BasePublishService(BaseService):
         for item in items:
             if type(item) == dict:
                 doc = item
-            else:
+            elif item:
                 doc = super().find_one(req=None, _id=item)
+            else:
+                continue
 
             if original_item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
                 digital = self.takes_package_service.get_take_package(doc) or {}
