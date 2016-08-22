@@ -2,9 +2,10 @@
 
 ## [Unreleased]
 
-## Fixed
+### Fixed
 
 - Add missing associations data to HTTP PUSH publishing.
+- Fix select area of interest func for embedded pictures.
 
 ## [1.0] 2016-08-17
 
