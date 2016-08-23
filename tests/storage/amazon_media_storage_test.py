@@ -17,7 +17,9 @@ class AmazonMediaStorageTestCase(TestCase):
 
     def test_media_id(self):
         filename = 'test'
-        time_id = time.strftime('%Y%m%d')
+        # automatic version is set on 15mins granularity.
+        mins_granularity = int(int(time.strftime('%M')) / 4) * 4
+        time_id = '%s%s' % (time.strftime('%Y%m%d%H%m'), mins_granularity)
         media_id = self.amazon.media_id(filename)
         self.assertEqual('%s/%s' % (time_id, filename), media_id)
 
