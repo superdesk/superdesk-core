@@ -218,6 +218,7 @@ CORE_APPS = [
     'superdesk.storage',
     'superdesk.allowed_values',
     'apps.picture_crop',
+    'apps.picture_renditions',
 ]
 
 INSTALLED_APPS = [
