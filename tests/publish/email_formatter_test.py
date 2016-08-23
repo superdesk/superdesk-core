@@ -53,7 +53,8 @@ class EmailFormatterTest(SuperdeskTestCase):
         self.assertEqual(item['message_subject'], 'This is a test headline')
         self.assertEqual(item['message_html'], '<html>\n<body>\n<h1>VIC:&nbsp;This is a test headline</h1>\n'
                                                'Published At : Fri Jan 30 03:40:56 2015\n<br>\n<b>slugline'
-                                               '</b>&nbsp;take\n<hr>\n<br><font color="red">Very good story</font>'
+                                               '</b>&nbsp;take&nbsp;\n'
+                                               '<hr>\n<br><font color="red">Very good story</font>'
                                                '<br>\n<i>Can of beans</i>\n<br>joe\n<br>\n'
                                                '<p>BERN, July 13  - The story body of the story so far</p>\n<br>\n'
                                                'AAP&nbsp;aa/bb\n\n</body>\n</html>')
@@ -116,7 +117,8 @@ class EmailFormatterTest(SuperdeskTestCase):
         self.assertEqual(item['message_subject'], 'This is a test headline')
         self.assertEqual(item['message_html'], '<html>\n<body>\n<h1>This is a test headline</h1>\n'
                                                'Published At : Fri Jan 30 03:40:56 2015\n<br>\n<b>slugline'
-                                               '</b>&nbsp;take\n<hr>\n<br><font color="red">Very good story</font>'
+                                               '</b>&nbsp;take&nbsp;\n'
+                                               '<hr>\n<br><font color="red">Very good story</font>'
                                                '<br>\n<i>Can of beans</i>\n<br>joe\n<br>\n'
                                                '<p>BERN, July 13  - The story body of the story so far</p>\n<br>\n'
                                                'AAP&nbsp;aa/bb\n\n</body>\n</html>')
@@ -153,11 +155,49 @@ class EmailFormatterTest(SuperdeskTestCase):
         self.assertEqual(item['message_subject'], 'This is a test headline')
         self.assertEqual(item['message_html'], '<html>\n<body>\n<h1>This is a test headline</h1>\n'
                                                'Published At : Fri Jan 30 03:40:56 2015\n<br>\n<b>slugline'
-                                               '</b>&nbsp;take\n<hr>\n<br><font color="red">Very good story</font>'
+                                               '</b>&nbsp;take&nbsp;\n'
+                                               '<hr>\n<br><font color="red">Very good story</font>'
                                                '<br>\n<i>Can of beans</i>\n<br>joe\n<br>\n'
                                                '<p>BERN, July 13  - The story body of the story so far</p>\n<br>\n'
                                                'AAP&nbsp;aa/bb\n\n</body>\n</html>')
         self.assertEqual(item['message_text'], 'This is a test headline\nPublished At : Fri Jan 30 03:40:56 2015\n'
                                                'slugline take\nVery good story\n------------------------------------'
+                                               '----------------------\nCan of beans\n\njoe\nBERN, July 13 - The story '
+                                               'body of the story so far\nAAP aa/bb\n')
+
+    def test_none_takekey_ednote(self):
+        article = {
+            'source': 'AAP',
+            'headline': 'This is a test headline',
+            'abstract': 'Can of beans',
+            'byline': 'joe',
+            'ednote': None,
+            'dateline': {'text': 'BERN, July 13  -'},
+            'slugline': 'slugline',
+            'anpa_take_key': None,
+            'subject': [{'qcode': '02011001'}],
+            'format': 'HTML',
+            'type': 'text',
+            'body_html': '<p>The story body of the story so far</p>',
+            'word_count': '1',
+            'priority': 1,
+            'place': None,
+            'genre': [],
+            'sign_off': 'aa/bb'
+        }
+
+        article['versioncreated'] = datetime.datetime(year=2015, month=1, day=30, hour=2, minute=40, second=56,
+                                                      tzinfo=utc)
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        item = json.loads(doc)
+        self.assertEqual(item['message_subject'], 'This is a test headline')
+        self.assertEqual(item['message_html'], '<html>\n<body>\n<h1>This is a test headline</h1>\n'
+                                               'Published At : Fri Jan 30 03:40:56 2015\n<br>\n<b>slugline'
+                                               '</b>&nbsp;\n<hr>\n'
+                                               '\n<i>Can of beans</i>\n<br>joe\n<br>\n'
+                                               '<p>BERN, July 13  - The story body of the story so far</p>\n<br>\n'
+                                               'AAP&nbsp;aa/bb\n\n</body>\n</html>')
+        self.assertEqual(item['message_text'], 'This is a test headline\nPublished At : Fri Jan 30 03:40:56 2015\n'
+                                               'slugline \n\n------------------------------------'
                                                '----------------------\nCan of beans\n\njoe\nBERN, July 13 - The story '
                                                'body of the story so far\nAAP aa/bb\n')
