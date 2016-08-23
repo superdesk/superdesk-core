@@ -52,6 +52,7 @@ class NITFFormatter(Formatter):
 
         body_end = SubElement(body, "body.end")
 
+        self._append_title(article, head)
         self._append_meta(article, head, destination, pub_seq_num)
         self._format_head(article, head)
         self._format_body_head(article, body_head)
@@ -73,10 +74,11 @@ class NITFFormatter(Formatter):
         if article.get('ednote'):
             SubElement(docdata, 'ed-msg', {'info': article.get('ednote', '')})
 
-    def _format_head(self, article, head):
+    def _append_title(self, article, head):
         title = SubElement(head, 'title')
         title.text = article.get('headline', '')
 
+    def _format_head(self, article, head):
         tobject = self._format_tobject(article, head)
         if 'genre' in article and len(article['genre']) > 0:
             SubElement(tobject, 'tobject.property', {'tobject.property.type': article['genre'][0]['name']})
