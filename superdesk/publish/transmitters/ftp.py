@@ -11,7 +11,7 @@
 from superdesk.ftp import ftp_connect
 from superdesk.publish import register_transmitter
 from io import BytesIO
-from superdesk.publish.publish_service import PublishService, get_file_extension
+from superdesk.publish.publish_service import PublishService
 from superdesk.errors import PublishFtpError
 errors = [PublishFtpError.ftpError().get_error_description()]
 
@@ -42,7 +42,7 @@ class FTPPublishService(PublishService):
 
         try:
             with ftp_connect(config) as ftp:
-                filename = '{}.{}'.format(queue_item['item_id'].replace(':', '-'), get_file_extension(queue_item))
+                filename = PublishService.get_filename(queue_item)
                 b = BytesIO(queue_item['encoded_item'])
                 ftp.storbinary("STOR " + filename, b)
         except PublishFtpError:
