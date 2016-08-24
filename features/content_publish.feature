@@ -554,7 +554,7 @@ Feature: Content Publishing
       {"_issues": {"validator exception": "500: Failed to publish the item: PublishQueueError Error 9009 - Item could not be queued"}}
       """
 
-    @auth
+    @auth @test
     Scenario: Schedule a user content publish
       Given empty "subscribers"
       And "desks"
@@ -611,29 +611,50 @@ Feature: Content Publishing
       {
         "_items": [
           {
-            "_id": "123", "type": "text", "state": "published", "_current_version": 2
+            "_id": "123", "type": "text", "state": "published", "_current_version": 3
           },
           {
-            "_id": "#archive.123.take_package#", "type": "composite", "state": "published", "_current_version": 2
+            "_id": "#archive.123.take_package#", "type": "composite", "state": "published", "_current_version": 3
           }
         ]
       }
       """
       When we get "/publish_queue"
       Then we get list with 1 items
+      When we transmit items
+      And run import legal publish queue
       When we get "/legal_archive/123"
       Then we get OK response
       And we get existing resource
       """
           {
-            "_id": "123", "type": "text", "state": "published", "_current_version": 2
+            "_id": "123", "type": "text", "state": "published", "_current_version": 3
           }
       """
       When we get "/legal_archive/#archive.123.take_package#"
       Then we get OK response
       And we get existing resource
       """
-      {"_current_version": 2, "state": "published", "type": "composite", "task":{"desk": "#desks.name#"}}
+      {"_current_version": 3, "state": "published", "type": "composite", "task":{"desk": "#desks.name#"}}
+      """
+      When we expire items
+      """
+      ["123", "#archive.123.take_package#"]
+      """
+      And we get "/published"
+      Then we get list with 0 items
+      When we enqueue published
+      When we get "/publish_queue"
+      Then we get list with 0 items
+      When we get "/archived"
+      Then we get list with 2 items
+      """
+      {"_items" : [
+        {"package_type": "takes", "item_id": "#archive.123.take_package#",
+         "state": "published", "type": "composite", "_current_version": 3},
+        {"item_id": "123", "state": "published", "type": "text", "_current_version": 3}
+        ]
+      }
       """
 
     @auth
