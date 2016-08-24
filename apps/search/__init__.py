@@ -41,14 +41,18 @@ class SearchService(superdesk.Service):
         elif repo == 'archive':
             user_id = g.get('user', {}).get('_id')
             return {'and': [{'exists': {'field': 'task.desk'}},
-                            {'or': [{'and': [{'term': {ITEM_STATE: CONTENT_STATE.DRAFT}},
+                            {'bool': {
+                                'should': [
+                                    {'and': [{'term': {ITEM_STATE: CONTENT_STATE.DRAFT}},
                                              {'term': {'task.user': str(user_id)}}]},
-                                    {"terms": {ITEM_STATE: [CONTENT_STATE.FETCHED,
+                                    {'terms': {ITEM_STATE: [CONTENT_STATE.FETCHED,
                                                             CONTENT_STATE.ROUTED,
                                                             CONTENT_STATE.PROGRESS,
                                                             CONTENT_STATE.SUBMITTED,
-                                                            CONTENT_STATE.SPIKED]}}]}
-                            ]}
+                                                            CONTENT_STATE.SPIKED]}},
+                                ],
+                                'must_not': {'term': {'version': 0}}
+                            }}]}
         elif repo == 'published':
             return {'and': [{'term': {'_type': 'published'}},
                             {'terms': {ITEM_STATE: [CONTENT_STATE.SCHEDULED,
