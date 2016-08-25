@@ -40,7 +40,8 @@ class FilterConditionTests(SuperdeskTestCase):
                                                        'qcode': '05005003',
                                                        'parent': '05005000'}], 'state': 'fetched'},
                              {'_id': '9', 'state': 'fetched', 'anpa_category':
-                                 [{'qcode': 'a', 'name': 'Aus News'}]}]
+                                 [{'qcode': 'a', 'name': 'Aus News'}]},
+                             {'_id': '10', 'body_html': '<p>Mention<p>'}]
 
             self.app.data.insert('archive', self.articles)
 
@@ -115,7 +116,7 @@ class FilterConditionTests(SuperdeskTestCase):
         with self.app.app_context():
             docs = superdesk.get_resource_service('archive').\
                 get_from_mongo(req=self.req, lookup=query)
-            self.assertEqual(8, docs.count())
+            self.assertEqual(9, docs.count())
 
     def test_mongo_using_sms_filter_with_is(self):
         f = FilterCondition('sms', 'in', 'true')
@@ -195,7 +196,7 @@ class FilterConditionTests(SuperdeskTestCase):
         with self.app.app_context():
             docs = superdesk.get_resource_service('archive').\
                 get_from_mongo(req=self.req, lookup=query)
-            self.assertEqual(8, docs.count())
+            self.assertEqual(9, docs.count())
             doc_ids = [d['_id'] for d in docs]
             self.assertTrue('2' not in doc_ids)
 
@@ -215,7 +216,7 @@ class FilterConditionTests(SuperdeskTestCase):
         with self.app.app_context():
             docs = superdesk.get_resource_service('archive').\
                 get_from_mongo(req=self.req, lookup=query)
-            self.assertEqual(6, docs.count())
+            self.assertEqual(7, docs.count())
             doc_ids = [d['_id'] for d in docs]
             self.assertTrue('1' in doc_ids)
             self.assertTrue('2' in doc_ids)
@@ -374,6 +375,10 @@ class FilterConditionTests(SuperdeskTestCase):
         self.assertFalse(f.does_match(self.articles[3]))
         self.assertFalse(f.does_match(self.articles[4]))
         self.assertFalse(f.does_match(self.articles[5]))
+
+    def test_does_match_with_startswith_filter_html_field(self):
+        f = FilterCondition('body_html', 'startswith', 'men')
+        self.assertTrue(f.does_match(self.articles[9]))
 
     def test_does_match_with_endswith_filter(self):
         f = FilterCondition('headline', 'endswith', 'Que')
