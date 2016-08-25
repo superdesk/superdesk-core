@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from apps.archive.common import ITEM_OPERATION, ARCHIVE, get_utc_schedule
+from apps.archive.common import ITEM_OPERATION, ARCHIVE, get_utc_schedule, insert_into_versions
 from apps.legal_archive.commands import import_into_legal_archive
 from apps.publish.enqueue.enqueue_published import EnqueuePublishedService
 import cProfile
@@ -24,6 +24,7 @@ from apps.publish.enqueue.enqueue_killed import EnqueueKilledService
 from apps.publish.published_item import PUBLISH_STATE, QUEUE_STATE, PUBLISHED
 from bson.objectid import ObjectId
 from eve.utils import config, ParsedRequest
+from eve.versioning import resolve_document_version
 from superdesk.celery_app import celery
 from superdesk.utc import utcnow
 
@@ -92,18 +93,34 @@ def enqueue_item(published_item):
 
         if published_item.get(ITEM_STATE) == CONTENT_STATE.SCHEDULED:
             # if scheduled then change the state to published
-            logger.info('Publishing scheduled item_id: {}'.format(published_item_id))
-            published_update[ITEM_STATE] = CONTENT_STATE.PUBLISHED
-            archive_service.patch(published_item['item_id'], {ITEM_STATE: CONTENT_STATE.PUBLISHED})
+            # change the `version` and `versioncreated` for the item
+            # in archive collection and published collection.
+            versioncreated = utcnow()
+            item_updates = {'versioncreated': versioncreated, ITEM_STATE: CONTENT_STATE.PUBLISHED}
+            resolve_document_version(document=item_updates, resource=ARCHIVE,
+                                     method='PATCH',
+                                     latest_doc={config.VERSION: published_item[config.VERSION]})
+            # update the archive collection
+            archive_service.patch(published_item['item_id'], item_updates)
+            # insert into version.
+            insert_into_versions(published_item['item_id'], doc=None)
+            # import to legal archive
             import_into_legal_archive.apply_async(countdown=3, kwargs={'item_id': published_item['item_id']})
+            logger.info('Modified the version of scheduled item: {}'.format(published_item_id))
+
+            logger.info('Publishing scheduled item_id: {}'.format(published_item_id))
+            # update the published collection
+            published_update.update(item_updates)
+            published_item.update({'versioncreated': versioncreated,
+                                   ITEM_STATE: CONTENT_STATE.PUBLISHED,
+                                   config.VERSION: item_updates[config.VERSION]})
 
         published_service.patch(published_item_id, published_update)
         queued = get_enqueue_service(published_item[ITEM_OPERATION]).enqueue_item(published_item)
         # if the item is queued in the publish_queue then the state is "queued"
         # else the queue state is "queued_not_transmitted"
         queue_state = PUBLISH_STATE.QUEUED if queued else PUBLISH_STATE.QUEUED_NOT_TRANSMITTED
-        published_service.patch(published_item_id,
-                                {QUEUE_STATE: queue_state})
+        published_service.patch(published_item_id, {QUEUE_STATE: queue_state})
         logger.info('Queued item with id: {} and item_id: {}'.format(published_item_id, published_item['item_id']))
     except KeyError:
         published_service.patch(published_item_id, {QUEUE_STATE: PUBLISH_STATE.PENDING})
