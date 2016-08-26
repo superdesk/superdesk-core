@@ -655,3 +655,13 @@ Feature: News Items Archive
          """
          {"guid": "456", "headline": "test1", "priority": 3}
          """
+
+    @auth
+    Scenario: Hide version 0 items from lists
+        When we post to "/archive"
+        """
+        {"version": 0, "type": "text"}
+        """
+
+        When we get "/archive"
+        Then we get list with 0 items
