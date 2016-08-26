@@ -576,3 +576,50 @@ Feature: Content Profile
         """
         {"byline": "By Foo", "place": [{"name": "Prague"}]}
         """
+
+    @auth
+    Scenario: Validate using content profile when publishing
+        Given "content_types"
+        """
+        [{
+            "_id": "foo",
+            "schema" : {
+                "body_html" : {
+                    "required" : true,
+                    "type" : "string"
+                },
+                "headline" : {
+                    "required" : true,
+                    "maxlength" : 42,
+                    "type" : "string"
+                },
+                "body_footer" : {
+                    "type" : "string",
+                    "default" : "test"
+                },
+                "slugline" : {
+                    "required" : true,
+                    "maxlength" : 24,
+                    "type" : "string"
+                }
+            }
+        }]
+        """
+
+        And "desks"
+        """
+        [{"name": "sports"}]
+        """
+
+        When we post to "/archive"
+        """
+        {"type": "text", "profile": "foo", "task": {"desk": "#desks._id#"}}
+        """
+
+        When we patch "/archive/#archive._id#"
+        """
+        {"body_html": "body", "headline": "head", "slugline": "slug"}
+        """
+
+        And we publish "#archive._id#" with "publish" type and "published" state
+        Then we get OK response
