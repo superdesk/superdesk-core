@@ -12,7 +12,8 @@
         <meta name="aap-selectors" content="pxx pxd pnd 0ah 0fh 0hw 0nl 0px rxx rxd rnd bxx bxd bnd 11z" />
         <tobject tobject.type="News">
             <tobject.property tobject.property.type="Current" />
-            <tobject.subject tobject.subject.refnum="02003000" tobject.subject.type="Justice" tobject.subject.matter="Police" />
+            <tobject.subject tobject.subject.refnum="02003001" tobject.subject.type="Justice" tobject.subject.matter="Police" tobject.subject.detail="law enforcement" />
+            <tobject.subject tobject.subject.refnum="02003002" tobject.subject.type="Justice" tobject.subject.matter="Police" tobject.subject.detail="investigation"/>
         </tobject>
         <docdata>
             <doc-id id-string="AAP.115314987.5417374" />
