@@ -9,8 +9,9 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
-import cerberus
 import superdesk
+
+from eve.io.mongo import Validator
 from bs4 import BeautifulSoup
 from superdesk.metadata.item import ITEM_TYPE
 
@@ -46,7 +47,7 @@ def set_schema_defaults(schema):
     return schema
 
 
-class SchemaValidator(cerberus.Validator):
+class SchemaValidator(Validator):
     def _validate_type_picture(self, field, value):
         """Allow type picture in schema."""
         pass
