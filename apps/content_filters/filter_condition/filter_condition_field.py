@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 from enum import Enum
+from bs4 import BeautifulSoup
 
 
 class FilterConditionFieldsEnum(Enum):
@@ -64,7 +65,11 @@ class FilterConditionField:
         return self.field.name in article and article.get(self.field.name) is not None
 
     def get_value(self, article):
-        return article[self.field.name]
+        try:
+            soup = BeautifulSoup(article[self.field.name], "html.parser")
+            return soup.get_text().replace('\n', ' ')
+        except:
+            return article[self.field.name]
 
 
 class FilterConditionDeskField(FilterConditionField):
