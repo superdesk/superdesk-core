@@ -44,9 +44,11 @@ class AAPTestCase(NITFTestCase):
         self.assertEqual(self.item.get('slugline'), 'Monitor 1900 ABC News')
 
     def test_subjects(self):
-        self.assertEqual(len(self.item.get('subject')), 2)
+        self.assertEqual(len(self.item.get('subject')), 4)
         self.assertIn({'qcode': '02000000', 'name': 'Justice'}, self.item.get('subject'))
         self.assertIn({'qcode': '02003000', 'name': 'Police'}, self.item.get('subject'))
+        self.assertIn({'qcode': '02003001', 'name': 'law enforcement'}, self.item.get('subject'))
+        self.assertIn({'qcode': '02003002', 'name': 'investigation'}, self.item.get('subject'))
 
     def test_guid(self):
         self.assertEqual(self.item.get('guid'), 'AAP.115314987.5417374')
