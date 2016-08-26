@@ -35,16 +35,20 @@ def check_json(doc, field, value):
         return False
 
 
-def set_schema_defaults(schema):
-    """Set default values for field schema.
+def get_validator_schema(schema):
+    """Get schema for given data that will work with validator.
 
     - if field is required without minlength set make sure it's not empty
+    - if there are keys with None value - remove them
 
     :param schema
     """
-    if schema.get('required') and not schema.get('minlength'):
-        schema.setdefault('empty', False)
-    return schema
+    validator_schema = {key: val for key, val in schema.items() if val is not None}
+
+    if validator_schema.get('required') and not validator_schema.get('minlength'):
+        validator_schema.setdefault('empty', False)
+
+    return validator_schema
 
 
 class SchemaValidator(Validator):
@@ -130,7 +134,7 @@ class ValidateService(superdesk.Service):
 
         And make sure there is no `None` value which would raise an exception.
         """
-        return {field: set_schema_defaults(schema) for field, schema in validator['schema'].items() if schema}
+        return {field: get_validator_schema(schema) for field, schema in validator['schema'].items() if schema}
 
     def _validate(self, doc, **kwargs):
         use_headline = kwargs and 'headline' in kwargs
