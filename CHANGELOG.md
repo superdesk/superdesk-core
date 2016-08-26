@@ -16,6 +16,9 @@
 - Fix error when setting default value for cv field.
 - Fix publishing of stories with feature image.
 - Fix `LDAP_SERVER_PORT` setting not being integer.
+- Fix duplicate subject codes parsing for nitf.
+- Strip markup while matching content filters
+- Make newly created items invisible, show it only after saving.
 
 
 ## [1.0] 2016-08-17
