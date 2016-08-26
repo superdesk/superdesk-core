@@ -303,11 +303,14 @@ class NITFFeedParser(XMLFeedParser):
                     else:
                         field_qcode = qcode
 
-                    if subject_codes.get(field_qcode):
+                    if subject_codes.get(field_qcode) and \
+                            not any(c['qcode'] == field_qcode for c in subjects):
                         subjects.append({
                             'name': elem.get(field),
                             'qcode': field_qcode
                         })
+
+            # if the subject_fields are not specified.
             if not any(c['qcode'] == qcode for c in subjects) and subject_codes.get(qcode):
                 subjects.append({'name': subject_codes[qcode], 'qcode': qcode})
         return subjects
