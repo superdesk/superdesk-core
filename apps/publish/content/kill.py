@@ -109,6 +109,7 @@ class KillPublishService(BasePublishService):
         """
         # Get all subscribers
         subscribers = list(get_resource_service('subscribers').get(req=None, lookup=None))
+
         recipients = [s.get('email').split(',') for s in subscribers if s.get('email')]
         recipients = list(set(chain(*recipients)))
         # send kill email.

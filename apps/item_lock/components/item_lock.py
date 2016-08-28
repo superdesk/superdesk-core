@@ -7,7 +7,7 @@
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
-from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
+from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTENT_TYPE
 import superdesk
 import logging
 from superdesk.errors import SuperdeskApiError
@@ -20,6 +20,7 @@ from eve.utils import config
 from apps.common.components.base_component import BaseComponent
 from apps.common.models.utils import get_model
 from apps.content import push_content_notification
+from apps.packages.package_service import PackageService
 from ..models.item import ItemModel
 
 
@@ -102,6 +103,10 @@ class ItemLock(BaseComponent):
             # delete the item if nothing is saved so far
             # version 0 created on lock item
             if item.get(config.VERSION, 0) == 0 and item[ITEM_STATE] == CONTENT_STATE.DRAFT:
+                if item.get(ITEM_TYPE) == CONTENT_TYPE.COMPOSITE:
+                    # if item is composite then update referenced items in package.
+                    PackageService().update_groups({}, item)
+
                 superdesk.get_resource_service('archive').delete_action(lookup={'_id': item['_id']})
                 push_content_notification([item])
             else:

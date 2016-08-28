@@ -29,7 +29,7 @@ class TakesPackageService():
     fields_for_creating_take = ['headline', 'anpa_category', 'pubstatus', 'slugline', 'urgency', 'subject',
                                 'dateline', 'place', 'priority', 'ednote', 'source', 'body_footer', 'profile',
                                 'operation', 'flags', 'genre', 'company_codes', 'keywords', 'published_in_package',
-                                'target_regions', 'target_types', 'target_subscribers']
+                                'target_regions', 'target_types', 'target_subscribers', 'rewrite_sequence']
 
     # fields that shouldn't be copied if the original (target) is corrected
     excluded_fields_after_correction = ['ednote', 'operation']
@@ -94,7 +94,7 @@ class TakesPackageService():
         take_key = self.__strip_take_info__(target.get('anpa_take_key') or '')
         to['event_id'] = target.get('event_id')
         to['anpa_take_key'] = '{}={}'.format(take_key, sequence)
-        if target.get(ITEM_STATE) in PUBLISH_STATES:
+        if target.get(ITEM_STATE) in PUBLISH_STATES and not RE_OPENS.lower() in take_key.lower():
             to['anpa_take_key'] = '{} ({})={}'.format(take_key, RE_OPENS, sequence).strip()
 
         if set_state:

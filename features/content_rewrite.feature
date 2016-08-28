@@ -103,7 +103,7 @@ Feature: Rewrite content
       """
       {"_items" : [{"_id": "#REWRITE_ID#", "anpa_take_key": "update", "rewrite_of": "#archive.123.take_package#",
         "task": {"desk": "#desks._id#", "stage": "#desks.working_stage#"}, "genre": [{"name": "Article", "qcode": "Article"}],
-        "flags": {"marked_for_legal": true}, "priority": 2, "urgency": 2,
+        "flags": {"marked_for_legal": true}, "priority": 2, "urgency": 2, "rewrite_sequence": 1,
         "body_footer": "Suicide Call Back Service 1300 659 467",
         "body_html": "Test Document body",
         "company_codes" : [{"qcode" : "1PG", "security_exchange" : "ASX", "name" : "1-PAGE LIMITED"}],
@@ -120,7 +120,19 @@ Feature: Rewrite content
       When we get "/archive/#archive.take_package#"
       Then we get existing resource
       """
-      {"_id": "#archive.take_package#", "rewrite_of": "#archive.123.take_package#"}
+      {"_id": "#archive.take_package#", "rewrite_of": "#archive.123.take_package#", "rewrite_sequence": 1}
+      """
+      When we rewrite "#REWRITE_ID#"
+      """
+      {"desk_id": "#desks._id#"}
+      """
+      Then we get OK response
+      When we get "/archive/#REWRITE_ID#"
+      Then we get OK response
+      And we get existing resource
+      """
+      {"_id": "#REWRITE_ID#", "rewrite_of": "#archive.take_package#",
+      "rewrite_sequence": 2, "anpa_take_key": "2nd update"}
       """
 
     @auth
@@ -182,7 +194,8 @@ Feature: Rewrite content
       {
         "_id": "#REWRITE_ID#",
         "rewrite_of": "123",
-        "headline": "test"
+        "headline": "test",
+        "rewrite_sequence": 1
       }
       """
       When we get "/archive/123"
@@ -201,13 +214,15 @@ Feature: Rewrite content
       Then we get OK response
       And we get existing resource
       """
-      {"_id": "#REWRITE_ID#", "state": "published"}
+      {"_id": "#REWRITE_ID#", "state": "published",
+        "rewrite_sequence": 1}
       """
       When we get "/archive/#archive.take_package#"
       Then we get OK response
       And we get existing resource
       """
-      {"state": "published", "rewrite_of": "#archive.123.take_package#"}
+      {"state": "published", "rewrite_of": "#archive.123.take_package#",
+        "rewrite_sequence": 1}
       """
 
 
@@ -429,7 +444,7 @@ Feature: Rewrite content
         Then we get existing resource
         """
         {"_items" : [{"_id": "#REWRITE_ID#", "anpa_take_key": "update", "rewrite_of": "#archive.123.take_package#",
-          "task": {"desk": "#desks._id#"}}]}
+          "task": {"desk": "#desks._id#"}, "rewrite_sequence": 1}]}
         """
 
     @auth
@@ -491,7 +506,7 @@ Feature: Rewrite content
         """
         {"_items" : [{"_id": "123", "rewritten_by": "#REWRITE_ID#"},
                      {"package_type": "takes", "rewritten_by": "#REWRITE_ID#"},
-                     {"_id": "#REWRITE_ID#", "anpa_take_key": "update"}]}
+                     {"_id": "#REWRITE_ID#", "anpa_take_key": "update", "rewrite_sequence": 1}]}
         """
         When we rewrite "#REWRITE_ID#"
         """
@@ -500,7 +515,7 @@ Feature: Rewrite content
         When we get "/archive"
         Then we get existing resource
         """
-        {"_items" : [{"_id": "#REWRITE_ID#", "anpa_take_key": "2nd update",
+        {"_items" : [{"_id": "#REWRITE_ID#", "anpa_take_key": "2nd update", "rewrite_sequence": 2,
           "task": {"desk": "#desks._id#"}}]}
         """
 
@@ -574,7 +589,7 @@ Feature: Rewrite content
       Then we get existing resource
       """
       {"_items" : [{"_id": "#REWRITE_ID#", "anpa_take_key": "update", "rewrite_of": "#archive.123.take_package#",
-        "task": {"desk": "#desks._id#"}}]}
+        "task": {"desk": "#desks._id#"}, "rewrite_sequence": 1}]}
       """
       When we spike "#REWRITE_ID#"
       Then we get OK response
@@ -644,7 +659,7 @@ Feature: Rewrite content
       """
       {"_items" : [{"_id": "123", "rewritten_by": "#REWRITE_ID#"},
                    {"package_type": "takes", "rewritten_by": "#REWRITE_ID#"},
-                   {"_id": "#REWRITE_ID#", "anpa_take_key": "update"}]}
+                   {"_id": "#REWRITE_ID#", "anpa_take_key": "update", "rewrite_sequence": 1}]}
       """
       When we rewrite "#REWRITE_ID#"
       """
@@ -653,7 +668,7 @@ Feature: Rewrite content
       When we get "/archive"
       Then we get existing resource
       """
-      {"_items" : [{"_id": "#REWRITE_ID#", "anpa_take_key": "2nd update",
+      {"_items" : [{"_id": "#REWRITE_ID#", "anpa_take_key": "2nd update", "rewrite_sequence": 2,
         "task": {"desk": "#desks._id#"}}]}
       """
       When we spike "#REWRITE_ID#"
@@ -916,7 +931,7 @@ Feature: Rewrite content
       Then we get existing resource
       """
       {"_id": "456", "anpa_take_key": "update", "priority": 2,
-       "rewrite_of": "#archive.123.take_package#",
+       "rewrite_of": "#archive.123.take_package#", "rewrite_sequence": 1,
        "subject":[{"qcode": "17004000", "name": "Statistics"},
        {"qcode": "01000000", "name": "arts, culture and entertainment"}]}
       """

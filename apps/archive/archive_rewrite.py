@@ -161,8 +161,10 @@ class ArchiveRewriteService(Service):
 
         if digital:  # check if there's digital
             rewrite['rewrite_of'] = digital[config.ID_FIELD]
+            rewrite['rewrite_sequence'] = (digital.get('rewrite_sequence') or 0) + 1
         else:  # if not use original's id
             rewrite['rewrite_of'] = original[config.ID_FIELD]
+            rewrite['rewrite_sequence'] = (original.get('rewrite_sequence') or 0) + 1
 
         if not existing_item:
             # send the document to the desk only if a new rewrite is created
@@ -227,12 +229,9 @@ class ArchiveRewriteService(Service):
         :param rewrite: rewrite story
         :param event_id: event id
         """
-        published_digital_stories = get_resource_service('published'). \
-            get_rewritten_take_packages_per_event(event_id)
-
-        digital_count = published_digital_stories.count()
-        if digital_count > 0:
-            ordinal = self._get_ordinal(digital_count + 1)
+        rewrite_sequence = rewrite.get('rewrite_sequence') or 0
+        if rewrite_sequence > 1:
+            ordinal = self._get_ordinal(rewrite_sequence)
             rewrite['anpa_take_key'] = '{} update'.format(ordinal)
         else:
             rewrite['anpa_take_key'] = 'update'

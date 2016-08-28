@@ -2119,3 +2119,13 @@ def we_run_import_legal_archive_command(context):
     with context.app.test_request_context(context.app.config['URL_PREFIX']):
         from apps.legal_archive.commands import ImportLegalArchiveCommand
         ImportLegalArchiveCommand().run()
+
+
+@then('we find no reference of package "{reference}" in item')
+def we_find_no_reference_of_package_in_item(context, reference):
+    with context.app.test_request_context(context.app.config['URL_PREFIX']):
+        reference = apply_placeholders(context, reference)
+        resp = parse_json_response(context.response)
+        linked_in_packages = resp.get('linked_in_packages', [])
+        assert reference not in [p.get('package') for p in linked_in_packages], \
+            'Package reference {} found in item'.format(reference)

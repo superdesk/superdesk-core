@@ -213,6 +213,10 @@ metadata_schema = {
         'type': 'integer',
         'mapping': not_analyzed
     },
+    'rewrite_sequence': {
+        'type': 'integer',
+        'mapping': not_analyzed
+    },
     'keywords': {
         'type': 'list',
         'mapping': {

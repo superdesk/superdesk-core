@@ -352,6 +352,7 @@ Feature: Content Locking
         """
         {"_id": "item-1", "linked_in_packages": [{"package": "package-2"}]}
         """
+        And we find no reference of package "package-1" in item
 
     @auth
     Scenario: Unlocking an item that expired in mongo (bug)

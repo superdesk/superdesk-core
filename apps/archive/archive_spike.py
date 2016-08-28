@@ -17,12 +17,11 @@ import superdesk
 from superdesk import get_resource_service, config
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from superdesk.metadata.item import ITEM_STATE, CONTENT_TYPE, ITEM_TYPE, PUBLISH_STATES
-from superdesk.metadata.packages import SEQUENCE
+from superdesk.metadata.packages import SEQUENCE, PACKAGE_TYPE
 from superdesk.notification import push_notification
 from superdesk.services import BaseService
 from superdesk.metadata.utils import item_url
-from .common import get_user, get_expiry, item_operations, ITEM_OPERATION, \
-    is_item_in_package, set_sign_off
+from .common import get_user, get_expiry, item_operations, ITEM_OPERATION, set_sign_off
 from superdesk.workflow import is_workflow_state_transition_valid
 from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
 from apps.packages import PackageService, TakesPackageService
@@ -82,10 +81,14 @@ class ArchiveSpikeService(BaseService):
         :param original:
         :raise: An exception or nothing
         """
-        if is_item_in_package(original):
-            raise SuperdeskApiError.badRequestError(
-                message="The item \"{}\" is in a package".format(original.get('slugline', '')) +
-                        " it needs to be removed before the item can be spiked")
+        packages = [x.get(PACKAGE) for x in original.get(LINKED_IN_PACKAGES, []) if not x.get(PACKAGE_TYPE)]
+        if packages:
+            query = {'$and': [{config.ID_FIELD: {'$in': packages}}]}
+            cursor = get_resource_service(ARCHIVE).get_from_mongo(req=None, lookup=query)
+            if cursor.count() > 0:
+                raise SuperdeskApiError.badRequestError(
+                    message="The item \"{}\" is in a package".format(original.get('slugline', '')) +
+                            " it needs to be removed before the item can be spiked")
 
     def _validate_take(self, original):
         takes_service = TakesPackageService()
@@ -104,10 +107,10 @@ class ArchiveSpikeService(BaseService):
         published_service = get_resource_service('published')
         takes_service = TakesPackageService()
         takes_package = takes_service.get_take_package(original)
+
         if takes_package and takes_package.get(SEQUENCE, 0) > 1 and original.get('rewritten_by'):
             # get the rewritten by
             rewritten_by = archive_service.find_one(req=None, _id=original.get('rewritten_by'))
-
             # get the take
             take_id = takes_service.get_take_by_take_no(original,
                                                         take_no=takes_package.get(SEQUENCE) - 1,
@@ -134,6 +137,12 @@ class ArchiveSpikeService(BaseService):
                 archive_service.system_update(rewritten_by[config.ID_FIELD],
                                               {'rewrite_of': takes_package.get(config.ID_FIELD)},
                                               rewritten_by)
+        elif original.get('rewritten_by') or (takes_package and takes_package.get('rewritten_by')):
+            # you are spike the story from which the rewrite was triggered.
+            # in this case both rewrite_of and rewritten_by are published.
+            rewrite_id = original.get('rewritten_by') or takes_package.get('rewritten_by')
+            rewritten_by = archive_service.find_one(req=None, _id=rewrite_id)
+            archive_service.system_update(rewrite_id, {'rewrite_of': None, 'rewrite_sequence': 0}, rewritten_by)
 
     def _removed_refs_from_package(self, item):
         """
@@ -162,6 +171,9 @@ class ArchiveSpikeService(BaseService):
 
         if original.get('broadcast'):
             updates['broadcast'] = None
+
+        if original.get('rewrite_sequence'):
+            updates['rewrite_sequence'] = None
 
         if original[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
             # remove links from items in the package
