@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.1] 2016-08-29
+
 ### Added
 
 - Add destination picker for unspike action.
