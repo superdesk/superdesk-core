@@ -595,7 +595,8 @@ Feature: Content Profile
                 },
                 "body_footer" : {
                     "type" : "string",
-                    "default" : "test"
+                    "default" : "test",
+                    "maxlength": null
                 },
                 "slugline" : {
                     "required" : true,
