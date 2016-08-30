@@ -602,14 +602,15 @@ class BasePublishService(BaseService):
                 self._validate_associated_items(doc, digital, validation_errors)
 
             # make sure no items are killed or spiked or scheduled
-            if doc[ITEM_STATE] in (CONTENT_STATE.KILLED, CONTENT_STATE.SPIKED, CONTENT_STATE.SCHEDULED):
+            doc_item_state = doc.get(ITEM_STATE, CONTENT_STATE.PUBLISHED)
+            if doc_item_state in (CONTENT_STATE.KILLED, CONTENT_STATE.SPIKED, CONTENT_STATE.SCHEDULED):
                 validation_errors.append('Item cannot contain associated {} item'.format(doc[ITEM_STATE]))
 
             if doc.get(EMBARGO):
                 validation_errors.append('Item cannot have associated items with Embargo')
 
             # don't validate items that already have published
-            if doc[ITEM_STATE] not in [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]:
+            if doc_item_state not in [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]:
                 validate_item = {'act': self.publish_type, 'type': doc[ITEM_TYPE], 'validate': doc}
                 if type(item) == dict:
                     validate_item['embedded'] = True
