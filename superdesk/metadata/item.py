@@ -31,6 +31,8 @@ CONTENT_TYPE = namedtuple('CONTENT_TYPE',
                           ['TEXT', 'PREFORMATTED', 'AUDIO', 'VIDEO',
                            'PICTURE', 'GRAPHIC', 'COMPOSITE'])(*content_type)
 
+MEDIA_TYPES = ('audio', 'video', 'picture', 'graphic')
+
 ITEM_STATE = 'state'
 ITEM_PRIORITY = 'priority'
 ITEM_URGENCY = 'urgency'
