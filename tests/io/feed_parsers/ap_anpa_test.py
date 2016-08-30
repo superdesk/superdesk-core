@@ -45,3 +45,7 @@ class ANPATestCase(TestCase):
         self.assertEqual(item['slugline'], 'BBO--BaseballExpanded')
         self.assertEqual(item['format'], 'preserved')
         self.assertGreater(item['body_html'].find('%08Baltimore;23;13;.639;_;_;8-2;L-1;16-6;7-7'), 0)
+
+    def test_unknown_category_defaults_to_i(self):
+        item = self.open('ap_anpa-3.tst')
+        self.assertEqual(item['anpa_category'][0]['qcode'], 'i')

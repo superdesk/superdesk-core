@@ -41,7 +41,6 @@ LAST_UPDATED = 'last_updated'
 LAST_ITEM_UPDATE = 'last_item_update'
 IDLE_TIME_DEFAULT = {'hours': 0, 'minutes': 0}
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -55,8 +54,8 @@ def is_service_and_parser_registered(provider):
     :rtype: bool
     """
 
-    return provider.get('feeding_service') in registered_feeding_services and \
-        provider.get('feed_parser') is None or provider.get('feed_parser') in registered_feed_parsers
+    return provider.get('feeding_service') in registered_feeding_services and provider.get(
+        'feed_parser') is None or provider.get('feed_parser') in registered_feed_parsers
 
 
 def is_scheduled(provider):
@@ -259,13 +258,15 @@ def process_anpa_category(item, provider):
         anpa_categories = superdesk.get_resource_service('vocabularies').find_one(req=None, _id='categories')
         if anpa_categories:
             for item_category in item['anpa_category']:
-                for anpa_category in anpa_categories['items']:
-                    if anpa_category['is_active'] is True \
-                            and item_category['qcode'].lower() == anpa_category['qcode'].lower():
-                        item_category['name'] = anpa_category['name']
-                        # make the case of the qcode match what we hold in our dictionary
-                        item_category['qcode'] = anpa_category['qcode']
-                        break
+                mapped_category = [c for c in anpa_categories['items'] if
+                                   c['is_active'] is True and item_category['qcode'].lower() == c['qcode'].lower()]
+                # if the category is not known to the system remove it from the item
+                if len(mapped_category) == 0:
+                    item['anpa_category'].remove(item_category)
+                else:
+                    item_category['name'] = mapped_category[0]['name']
+                    # make the case of the qcode match what we hold in our dictionary
+                    item_category['qcode'] = mapped_category[0]['qcode']
     except Exception as ex:
         raise ProviderError.anpaError(ex, provider)
 
@@ -283,8 +284,8 @@ def derive_category(item, provider):
             for entry in (map_entry for map_entry in subject_map['items'] if map_entry['is_active']):
                 for subject in item.get('subject', []):
                     if subject['qcode'] == entry['qcode']:
-                            if not any(c['qcode'] == entry['category'] for c in categories):
-                                categories.append({'qcode': entry['category']})
+                        if not any(c['qcode'] == entry['category'] for c in categories):
+                            categories.append({'qcode': entry['category']})
             if len(categories):
                 item['anpa_category'] = categories
                 process_anpa_category(item, provider)

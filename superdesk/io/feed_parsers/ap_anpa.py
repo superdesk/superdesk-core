@@ -78,6 +78,8 @@ class AP_ANPAFeedParser(ANPAFeedParser):
                 category['qcode'] = 'v'
             elif category.get('qcode').lower() == 'z':
                 category['qcode'] = 's'
+            else:
+                category['qcode'] = 'i'
 
     def map_sluglines_to_subjects(self, item):
         """
