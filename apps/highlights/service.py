@@ -32,7 +32,8 @@ def get_highlighted_items(highlights_id):
         },
         'sort': [
             {'versioncreated': 'desc'},
-        ]
+        ],
+        'size': 200
     }
     request = ParsedRequest()
     request.args = {'source': json.dumps(query), 'repo': 'archive,published'}
