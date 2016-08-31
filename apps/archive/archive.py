@@ -402,6 +402,7 @@ class ArchiveService(BaseService):
         copied_item.pop(SIGN_OFF, None)
         copied_item.pop('rewritten_by', None)
         copied_item.pop('rewrite_of', None)
+        copied_item.pop('rewrite_sequence', None)
         copied_item.pop('highlights', None)
 
         task = copied_item.get('task', {})
