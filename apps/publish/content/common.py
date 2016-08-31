@@ -8,18 +8,20 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import json
+import html
+import logging
+import superdesk
+
 from copy import copy
 from copy import deepcopy
 from functools import partial
-import logging
-import json
-import html
 from flask import current_app as app, render_template
 
 from apps.templates.content_templates import render_content_template_by_name
 from superdesk import get_resource_service
 from apps.content import push_content_notification
-import superdesk
+from apps.content_types.content_types import DEFAULT_SCHEMA
 from superdesk.errors import InvalidStateTransitionError, SuperdeskApiError, PublishQueueError
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, GUID_FIELD, ITEM_STATE, CONTENT_STATE, \
     PUBLISH_STATES, EMBARGO, PUB_STATUS, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS
@@ -97,6 +99,7 @@ class BasePublishService(BaseService):
     package_service = PackageService()
 
     def on_update(self, updates, original):
+        self._refresh_associated_items(original)
         self._validate(original, updates)
         self._set_updates(original, updates, updates.get(config.LAST_UPDATED, utcnow()))
         convert_task_attributes_to_objectId(updates)  # ???
@@ -126,9 +129,13 @@ class BasePublishService(BaseService):
                 self._publish_package_items(original, updates)
                 self._update_archive(original, updates, should_insert_into_versions=auto_publish)
             else:
+                self._refresh_associated_items(original)
                 self._publish_associations(original, id)
                 updated = deepcopy(original)
                 updated.update(updates)
+
+                if updates.get('associations'):
+                    self._refresh_associated_items(updated)  # updates got lost with update
 
                 if self.published_state != CONTENT_STATE.KILLED:
                     self._process_takes_package(original, updated, updates)
@@ -705,10 +712,29 @@ class BasePublishService(BaseService):
         except:
             logger.exception('Failed to apply kill header template to item {}.'.format(item))
 
+    def _refresh_associated_items(self, original):
+        """Refresh associated items before publishing, so any further updates made
+        to basic metadata done after item was associated will be carried on and used
+        when validating those items.
+        """
+        associations = original.get('associations', {}) or {}
+        for _, item in associations.items():
+            if type(item) == dict and item.get('_id'):
+                updates = super().find_one(req=None, _id=item['_id']) or {}
+                update_item_data(item, updates)
+
 
 def get_crop(rendition):
     fields = ('CropLeft', 'CropTop', 'CropRight', 'CropBottom')
     return {field: rendition[field] for field in fields if field in rendition}
+
+
+def update_item_data(item, data):
+    """Update main item data, so only keys from default schema.
+    """
+    for key in DEFAULT_SCHEMA:
+        if data.get(key):
+            item[key] = data[key]
 
 
 @celery.task
