@@ -43,6 +43,8 @@ def setup_providers(context):
             {'name': 'teletype', 'source': 'AAP Teletype', 'feeding_service': 'file', 'feed_parser': 'zczc',
              'is_closed': False, 'config': {'path': path_to_fixtures}},
             {'name': 'DPA', 'source': 'DPA', 'feeding_service': 'file', 'feed_parser': 'dpa_iptc7901',
+             'is_closed': False, 'config': {'path': path_to_fixtures}},
+            {'name': 'AP', 'source': 'AP', 'feeding_service': 'file', 'feed_parser': 'ap_anpa1312',
              'is_closed': False, 'config': {'path': path_to_fixtures}}
         ]
 
@@ -51,6 +53,7 @@ def setup_providers(context):
         context.providers['aap'] = result[1]
         context.providers['teletype'] = result[2]
         context.providers['dpa'] = result[3]
+        context.providers['ap'] = result[4]
 
 
 def teardown_providers(context):
