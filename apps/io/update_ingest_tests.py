@@ -521,7 +521,7 @@ class UpdateIngestTest(SuperdeskTestCase):
         provider = get_resource_service('ingest_providers').find_one(name=provider_name, req=None)
         self.assertEqual(provider['tokens']['poll_tokens']['channel1'], 'ExwaY31kfnR2Z2J1cWZ2YnxoYH9kfw==')
 
-    def test_unkonwn_category_ingested_is_removed(self):
+    def test_unknown_category_ingested_is_removed(self):
         vocab = [
             {'_id': 'categories',
              'items': [{'is_active': True, 'name': 'Australian Weather', 'qcode': 'b', 'subject': '17000000'},
@@ -538,5 +538,6 @@ class UpdateIngestTest(SuperdeskTestCase):
         items = [feeding_parser.parse(file_path, provider)]
 
         # ingest the items and check the subject code has been derived
+        items[0]['versioncreated'] = utcnow()
         self.ingest_items(items, provider, provider_service)
         self.assertTrue(len(items[0]['anpa_category']) == 0)
