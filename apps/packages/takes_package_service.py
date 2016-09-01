@@ -29,7 +29,7 @@ class TakesPackageService():
     fields_for_creating_take = ['headline', 'anpa_category', 'pubstatus', 'slugline', 'urgency', 'subject',
                                 'dateline', 'place', 'priority', 'ednote', 'source', 'body_footer', 'profile',
                                 'operation', 'flags', 'genre', 'company_codes', 'keywords', 'published_in_package',
-                                'target_regions', 'target_types', 'target_subscribers', 'rewrite_sequence']
+                                'target_regions', 'target_types', 'target_subscribers', 'rewrite_sequence', 'sign_off']
 
     # fields that shouldn't be copied if the original (target) is corrected
     excluded_fields_after_correction = ['ednote', 'operation']
