@@ -38,13 +38,17 @@ def transmit():
 
 
 # must be imported for registration
-import superdesk.publish.transmitters  # NOQA
-import superdesk.publish.formatters  # NOQA
 from superdesk.publish.subscribers import SubscribersResource, SubscribersService  # NOQA
 from superdesk.publish.publish_queue import PublishQueueResource, PublishQueueService  # NOQA
 
 
 def init_app(app):
+    # XXX: we need to do imports for transmitters and formatters here
+    #      so classes creation is done after PublishService is set
+    #      this is a temporary workaround until a proper plugin system
+    #      is implemented in Superdesk
+    import superdesk.publish.transmitters  # NOQA
+    import superdesk.publish.formatters  # NOQA
     endpoint_name = 'subscribers'
     service = SubscribersService(endpoint_name, backend=get_backend())
     SubscribersResource(endpoint_name, app=app, service=service)

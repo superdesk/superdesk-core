@@ -26,8 +26,9 @@ extensions = {
     'NINJS': 'json'}
 
 
-class PublishService():
+class PublishServiceBase():
     """Base publish service class."""
+    DEFAULT_EXT = "txt"
 
     def _transmit(self, queue_item, subscriber):
         """Performs the publishing of the queued item. Implement in subclass
@@ -98,29 +99,51 @@ class PublishService():
         except Exception as ex:
             raise PublishQueueError.item_update_error(ex)
 
-
-def get_file_extension(queue_item):
-    try:
-        format_ = queue_item['destination']['format'].upper()
-        # "in" is used in addition of equality, so subclass can inherit extensions
-        # e.g.: "NITF" will work for "NTB NITF"
+    @classmethod
+    def get_file_extension(cls, queue_item):
         try:
-            return extensions[format_]
+            format_ = queue_item['destination']['format'].upper()
         except KeyError:
-            for f, ext in extensions.items():
-                if f in format_:
-                    return ext
-            return 'txt'  # default extension
-    except Exception as ex:
-        raise PublishQueueError.item_update_error(ex)
+            pass
+        else:
+            # "in" is used in addition of equality, so subclass can inherit extensions
+            # e.g.: "NITF" will work for "NTB NITF"
+            try:
+                return extensions[format_]
+            except KeyError:
+                for f, ext in extensions.items():
+                    if f in format_:
+                        return ext
+        # nothing found, we return default extension
+        return cls.DEFAULT_EXT
+
+    @classmethod
+    def get_filename(cls, queue_item):
+        config = queue_item.get('destination', {}).get('config', {})
+        # use the file extension from config if it is set otherwise use extension for the format
+        extension = config.get('file_extension') or cls.get_file_extension(queue_item)
+
+        return '{}-{}-{}.{}'.format(
+            queue_item['item_id'],
+            str(queue_item.get('item_version', '')),
+            str(queue_item.get('published_seq_num', '')),
+            extension).replace(':', '-')
+
+    @staticmethod
+    def register_file_extension(format_, ext):
+        """register new file extension
+
+        :param format_: item format
+        :param ext: extension to use
+        """
+        if format_ in extensions:
+            logger.warning("overriding existing extension for {}".format(format_))
+        extensions[format_.upper()] = ext
 
 
-def register_file_extension(format_, ext):
-    """register new file extension
+PublishService = PublishServiceBase
 
-    :param format_: item format
-    :param ext: extension to use
-    """
-    if format_ in extensions:
-        logger.warning("overriding existing extension for {}".format(format_))
-    extensions[format_.upper()] = ext
+
+def set_publish_service(publish_service_class):
+    global PublishService
+    PublishService = publish_service_class
