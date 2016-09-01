@@ -371,6 +371,9 @@ metadata_schema = {
         'type': 'list',
         'schema': Resource.rel('highlights', True)
     },
+
+    'more_coming': {'type': 'boolean'},  # deprecated
+
     # Field which contains all the sign-offs done on this article, eg. twd/jwt/ets
     SIGN_OFF: {
         'type': 'string',
