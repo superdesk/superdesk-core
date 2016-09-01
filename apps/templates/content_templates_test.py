@@ -81,7 +81,7 @@ class RenderTemplateTestCase(SuperdeskTestCase):
                 'headline': 'Foo Template: {{item.headline}}',
                 'body_html': 'This article has slugline: {{item.slugline}} and dateline: {{item.dateline["text"]}} '
                              'at {{item.versioncreated | format_datetime("Australia/Sydney", "%d %b %Y %H:%S %Z")}}',
-                'more_coming': False, 'urgency': 1, 'priority': 3,
+                'urgency': 1, 'priority': 3,
                 'dateline': {},
                 'anpa_take_key': 'this is test',
                 'place': ['Australia']
@@ -103,7 +103,6 @@ class RenderTemplateTestCase(SuperdeskTestCase):
         self.assertEqual(updates['headline'], 'Foo Template: Test Template')
         self.assertEqual(updates['urgency'], 1)
         self.assertEqual(updates['priority'], 3)
-        self.assertEqual(updates['more_coming'], False)
         self.assertEqual(updates['body_html'], 'This article has slugline: Testing and dateline: '
                                                'hello world at 02 Jun 2015 08:53 AEST')
         self.assertListEqual(updates['place'], ['Australia'])

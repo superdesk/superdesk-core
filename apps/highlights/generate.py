@@ -6,7 +6,7 @@ from superdesk.errors import SuperdeskApiError
 from eve.utils import config
 
 PACKAGE_FIELDS = {
-    'type', 'state', 'groups', 'unique_name', 'more_coming', 'pubstatus', 'origina_creator', 'flags', 'guid',
+    'type', 'state', 'groups', 'unique_name', 'pubstatus', 'origina_creator', 'flags', 'guid',
     'schedule_settings', 'expiry', 'format', 'lock_time', 'lock_user', 'lock_session', config.ID_FIELD,
     config.LAST_UPDATED, config.DATE_CREATED, config.ETAG, 'version', '_current_version', 'version_creator',
     'operation', 'unique_id', 'version_created'

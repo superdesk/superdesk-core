@@ -163,7 +163,6 @@ Feature: Publish content to the public API
                 "description_text" : "The most amazing picture you will ever see",
                 "guid" : "20150723001158606583",
                 "expiry" : "2015-09-02T16:15:01.000Z",
-                "more_coming" : false,
                 "_etag" : "05b475af5ed0d752c618636da89baf0eaf245cb1",
                 "lock_time" : null,
                 "lock_user" : null,
