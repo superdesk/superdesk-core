@@ -1,6 +1,7 @@
 
 import superdesk
 
+from superdesk.errors import SuperdeskApiError
 from apps.auth import get_user_id
 from superdesk import get_resource_service
 from copy import deepcopy
@@ -107,6 +108,10 @@ class ContentTypesResource(superdesk.Resource):
             'type': 'boolean',
             'default': False,
         },
+        'is_used': {
+            'type': 'boolean',
+            'default': False,
+        },
         'created_by': superdesk.Resource.rel('users', nullable=True),
         'updated_by': superdesk.Resource.rel('users', nullable=True),
     }
@@ -182,6 +187,10 @@ class ContentTypesService(superdesk.Service):
             self._set_updated_by(doc)
             self._set_created_by(doc)
 
+    def on_delete(self, doc):
+        if doc.get('is_used'):
+            raise SuperdeskApiError(status_code=202, payload={"is_used": True})
+
     def on_update(self, updates, original):
         self._set_updated_by(updates)
 
@@ -190,3 +199,12 @@ class ContentTypesService(superdesk.Service):
         if doc and req and 'edit' in req.args:
             self.extend_content_type(doc)
         return doc
+
+    def set_used(self, profile_ids):
+        """Set `is_used` flag for content profiles.
+
+        :param profile_ids
+        """
+        query = {'_id': {'$in': list(profile_ids)}, 'is_used': {'$ne': True}}
+        update = {'$set': {'is_used': True}}
+        self.find_and_modify(query=query, update=update)

@@ -48,7 +48,6 @@ Feature: Content Profile
         """
         Then we get error 400
 
-
     @auth
     Scenario: User can get extended profile with default values
 
@@ -624,3 +623,54 @@ Feature: Content Profile
 
         And we publish "#archive._id#" with "publish" type and "published" state
         Then we get OK response
+    
+    @auth
+    Scenario: Mark profile when used and prevent delete
+        Given "content_types"
+        """
+        [{"_id": "foo"}, {"_id": "bar"}]
+        """
+        When we get "content_types/foo"
+        Then we get existing resource
+        """
+        {"is_used": false}
+        """
+        When we post to "archive"
+        """
+        {"type": "text", "profile": "foo"}
+        """
+        And we get "content_types/foo"
+        Then we get existing resource
+        """
+        {"is_used": true}
+        """
+
+        When we delete "content_types/foo"
+        Then we get response code 202
+        """
+        {"is_used": true}
+        """
+
+        When we patch "archive/#archive._id#"
+        """
+        {"profile": "bar"}
+        """
+        And we delete "content_types/bar"
+        Then we get response code 202
+
+    @auth
+    Scenario: When removing content profile keep associated templates
+        Given "content_types"
+        """
+        [{"_id": "foo"}]
+        """
+        And "content_templates"
+        """
+        [{"template_name": "foo", "data": {"profile": "foo"}}, {"template_name": "bar"}]
+        """
+        When we get "content_templates/foo"
+        Then we get response code 200
+
+        When we delete "content_types/foo"
+        And we get "content_templates/foo"
+        Then we get response code 200
