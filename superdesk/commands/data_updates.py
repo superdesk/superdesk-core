@@ -76,7 +76,7 @@ def get_data_updates_files(strip_file_extension=False):
     # create folder if doens't exist
     for folder in get_dirs():
         if not os.path.exists(folder):
-            os.makedirs(folder)
+            continue
         # list all files from data updates directory
         if os.path.exists(folder):
             files += [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f))]
@@ -242,6 +242,8 @@ class GenerateUpdate(superdesk.Command):
             update_dir = MAIN_DATA_UPDATES_DIR
         else:
             update_dir = get_dirs(only_relative_folder=True)[0]
+        if not os.path.exists(update_dir):
+            os.makedirs(update_dir)
         data_update_filename = os.path.join(update_dir, '{:05d}_{}_{}.py'.format(name_id, timestamp, resource_name))
         if os.path.exists(data_update_filename):
             raise Exception('The file "%s" already exists' % (data_update_filename))
