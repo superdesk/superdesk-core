@@ -72,6 +72,7 @@ class NITFFormatter(Formatter):
     def _format_docdata(self, article, docdata):
         SubElement(docdata, 'urgency', {'ed-urg': str(article.get('urgency', ''))})
         self._format_docdata_dateissue(article, docdata)
+        self._format_docdata_doc_id(article, docdata)
 
         if article.get('ednote'):
             SubElement(docdata, 'ed-msg', {'info': article.get('ednote', '')})
