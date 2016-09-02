@@ -422,6 +422,7 @@ def ingest_items(items, provider, feeding_service, rule_set=None, routing_scheme
 
     app.data._search_backend('ingest').bulk_insert('ingest', [item for item in all_items
                                                               if item[GUID_FIELD] not in failed_items])
+
     if failed_items:
         logger.error('Failed to ingest the following items: %s', failed_items)
     return failed_items
@@ -487,6 +488,10 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
         if routing_scheme and new_version:
             routed = ingest_service.find_one(_id=item[superdesk.config.ID_FIELD], req=None)
             superdesk.get_resource_service('routing_schemes').apply_routing_scheme(routed, provider, routing_scheme)
+            # sync updates for bulk elastic insert
+            updates = ingest_service.find_one(_id=item[superdesk.config.ID_FIELD], req=None)
+            item.update(updates)
+
     except Exception as ex:
         logger.exception(ex)
         try:
