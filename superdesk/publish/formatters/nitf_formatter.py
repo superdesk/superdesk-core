@@ -117,6 +117,9 @@ class NITFFormatter(Formatter):
             abstract = SubElement(body_head, 'abstract')
             self.map_html_to_xml(abstract, article.get('abstract'))
 
+    def _format_body_head_distributor(self, article, body_head):
+        pass
+
     def _format_body_head_dateline(self, article, body_head):
         if article.get('dateline', {}).get('text'):
             dateline = SubElement(body_head, 'dateline')
@@ -131,8 +134,8 @@ class NITFFormatter(Formatter):
             byline = SubElement(body_head, 'byline')
             byline.text = "By " + article['byline']
 
+        self._format_body_head_distributor(article, body_head)
         self._format_body_head_dateline(article, body_head)
-
         self._format_body_head_abstract(article, body_head)
 
         for company in article.get('company_codes', []):
