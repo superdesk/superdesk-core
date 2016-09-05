@@ -4,3 +4,5 @@ pep8
 pyflakes<=1.1
 httmock
 wooper
+sphinx
+sphinx-autobuild

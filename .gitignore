@@ -32,3 +32,5 @@ include/
 /server/.settings/org.eclipse.core.resources.prefs
 /results/
 /.settings/
+_build
+_build_html
