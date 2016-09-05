@@ -25,11 +25,12 @@ class PAFeedParser(NITFFeedParser):
         :param elem:
         :return: anpa category list qcode
         """
-        category = elem.get('content')[:1].upper()
-        if category in ('S', 'R', 'F'):
-            return [{'qcode': 'S'}]
-        if category == 'Z':
-            return [{'qcode': 'V'}]
+        if elem.get('content') is not None:
+            category = elem.get('content')[:1].upper()
+            if category in {'S', 'R', 'F'}:
+                return [{'qcode': 'S'}]
+            if category == 'Z':
+                return [{'qcode': 'V'}]
         return [{'qcode': 'I'}]
 
     def __init__(self):
