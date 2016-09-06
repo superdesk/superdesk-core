@@ -377,3 +377,6 @@ MAX_TRANSMIT_QUERY_LIMIT = int(env('MAX_TRANSMIT_QUERY_LIMIT', 500))
 
 # customer repo specific templates path
 CUSTOM_TEMPLATE_PATH = []
+
+# This setting is used to overide the desk/stage expiry for items to expire from the spike
+SPIKE_EXPIRY_MINUTES = None
