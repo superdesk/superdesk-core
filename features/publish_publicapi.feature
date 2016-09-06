@@ -448,6 +448,10 @@ Feature: Publish content to the public API
   @auth
   @notification
   Scenario: Publish a composite item with embedded items
+    Given config update
+    """
+    {"NO_TAKES": true}
+    """
     Given empty "archive"
     Given "desks"
         """
@@ -479,7 +483,7 @@ Feature: Publish content to the public API
                 "renditions": {}
             },
             {
-                "headline" : "WA:Navy steps in with WA asylum-seeker boat",
+                "headline" : "text item with embedded pic",
                 "guid" : "item1",
                 "state" : "submitted",
                 "type" : "text",
@@ -668,23 +672,21 @@ Feature: Publish content to the public API
         """
     And we publish "compositeitem" with "publish" type and "published" state
     Then we get OK response
-    And we get notifications
-        """
-        [{"event": "item:publish", "extra": {"item": "compositeitem"}}]
-        """
     And we get existing resource
         """
         {"_current_version": 2, "state": "published", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
         """
+    And we get notifications
+        """
+        [{"event": "item:publish", "extra": {"item": "compositeitem"}}]
+        """
     When we enqueue published
     When we get "/publish_queue"
-    Then we get existing resource
+    Then we get list with 1 items
         """
         {"_items":
         	[
-        		{"item_id" : "compositeitem", "state": "pending", "content_type": "composite"},
-        		{"state": "pending", "content_type": "composite", "published_in_package": "compositeitem"},
-        		{"item_id" : "item2", "state": "pending", "content_type": "picture", "published_in_package": "compositeitem"}
+        		{"item_id" : "compositeitem", "state": "pending", "content_type": "composite"}
         	]
         }
         """
@@ -702,8 +704,8 @@ Feature: Publish content to the public API
     		"associations": {
     			"main": {
                     "body_html": "item content",
-					"headline": "WA:Navy steps in with WA asylum-seeker boat",
-					"type": "composite",
+					"headline": "text item with embedded pic",
+					"type": "text",
                     "associations": {
                         "embedded1": {
                             "type": "picture",

@@ -14,10 +14,10 @@ import time
 import arrow
 from datetime import datetime, timedelta
 
+import superdesk.tests as tests
 from superdesk.io import registered_feeding_services
 from superdesk.io.commands.update_ingest import LAST_ITEM_UPDATE
 import superdesk
-import superdesk.tests as tests
 from behave import given, when, then  # @UnresolvedImport
 from flask import json
 from eve.methods.common import parse
@@ -278,6 +278,15 @@ def get_resource_name(url):
     return basename(parsed_url.path)
 
 
+def format_items(items):
+    output = ['']  # insert empty line
+    for item in items:
+        if item.get('formatted_item'):
+            item['formatted_item'] = json.loads(item['formatted_item'])
+        output.append(json.dumps(item, indent=4, sort_keys=True))
+    return ',\n'.join(output)
+
+
 @given('empty "{resource}"')
 def step_impl_given_empty(context, resource):
     if not is_user_resource(resource):
@@ -342,6 +351,11 @@ def step_impl_given_resource_with_provider(context, provider):
         get_resource_service(resource).post(items)
         context.data = items
         context.resource = resource
+
+
+@given('config update')
+def given_config_update(context):
+    context.app.config.update(json.loads(context.text))
 
 
 @given('config')
@@ -829,7 +843,8 @@ def step_impl_then_get_list(context, total_count):
     if '+' in total_count:
         assert int_count <= data['_meta']['total'], '%d items is not enough' % data['_meta']['total']
     else:
-        assert int_count == data['_meta']['total'], 'got %d' % (data['_meta']['total'])
+        assert int_count == data['_meta']['total'], 'got %d: %s' % (data['_meta']['total'],
+                                                                    format_items(data['_items']))
     if context.text:
         test_json(context)
 
@@ -1423,6 +1438,7 @@ def step_when_we_reset_notifications(context):
 
 @then('we get notifications')
 def then_we_get_notifications(context):
+    assert hasattr(context.app.notification_client, 'messages'), 'no messages'
     notifications = context.app.notification_client.messages
     notifications_data = [json.loads(notification) for notification in notifications]
     context_data = json.loads(apply_placeholders(context, context.text))

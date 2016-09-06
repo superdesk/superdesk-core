@@ -137,7 +137,7 @@ class BasePublishService(BaseService):
                 if updates.get('associations'):
                     self._refresh_associated_items(updated)  # updates got lost with update
 
-                if self.published_state != CONTENT_STATE.KILLED and app.config.get('USE_TAKES', True):
+                if self.published_state != CONTENT_STATE.KILLED and not app.config.get('NO_TAKES', False):
                     self._process_takes_package(original, updated, updates)
 
                 self._update_archive(original, updates, should_insert_into_versions=auto_publish)
@@ -452,6 +452,9 @@ class BasePublishService(BaseService):
                 raise SuperdeskApiError.badRequestError("Corrected package cannot be empty!")
             items.extend(added_items)
 
+        if not updates.get('groups') and package.get('groups'):  # this saves some typing in tests
+            updates['groups'] = package.get('groups')
+
         if items:
             archive_publish = get_resource_service('archive_publish')
             for guid in items:
@@ -486,6 +489,7 @@ class BasePublishService(BaseService):
 
                 self.package_service.update_field_in_package(updates, package_item[config.ID_FIELD],
                                                              config.VERSION, package_item[config.VERSION])
+
                 if package_item.get('associations'):
                     self.package_service.update_field_in_package(
                         updates,

@@ -1,12 +1,11 @@
-@wip
 Feature: HTTP Push publishing
 
     @auth
     @http_mock_adapter
     Scenario: Publish a text item without takes package
-        Given config
+        Given config update
         """
-        {"USE_TAKES": false}
+        {"NO_TAKES": true}
         """
         Given "products"
         """
