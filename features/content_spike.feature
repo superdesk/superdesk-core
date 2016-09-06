@@ -213,3 +213,28 @@ Feature: Content Spiking
         """
         When we spike "item-1"
         Then we get OK response
+
+    @auth
+    Scenario: Spike a desk content with configured spike expiry
+        Given empty "desks"
+        Given empty "archive"
+        Given empty "stages"
+        Given "desks"
+        """
+        [{"name": "Sports Desk", "content_expiry": 60}]
+        """
+        Given "archive"
+        """
+        [{"_id": "item-1", "guid": "item-1", "_current_version": 1, "headline": "test", "task":{"desk":"#desks._id#", "stage" :"#desks.incoming_stage#"}}]
+        """
+        Then we set spike exipry "70"
+        When we spike "item-1"
+        Then we get OK response
+        And we get spiked content "item-1"
+        And we get version 2
+        And we get desk spike expiry after "70"
+        When we get "/archive/item-1"
+        Then we get existing resource
+        """
+        {"_id": "item-1", "state": "spiked", "sign_off": "abc"}
+        """

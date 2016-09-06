@@ -2129,3 +2129,8 @@ def we_find_no_reference_of_package_in_item(context, reference):
         linked_in_packages = resp.get('linked_in_packages', [])
         assert reference not in [p.get('package') for p in linked_in_packages], \
             'Package reference {} found in item'.format(reference)
+
+
+@then('we set spike exipry "{expiry}"')
+def we_set_spike_exipry(context, expiry):
+    context.app.settings['SPIKE_EXPIRY_MINUTES'] = int(expiry)
