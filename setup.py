@@ -32,6 +32,7 @@ install_requires = [
     'python-magic>=0.4',
     'python3-ldap>=0.9.8',
     'pytz>=2015.4',
+    'tzlocal>=1.2.2',
     'raven[flask]>=5.10.0,<5.11',
     'requests>=2.7.0',
     'statsd>=3.1',
