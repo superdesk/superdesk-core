@@ -137,7 +137,7 @@ class BasePublishService(BaseService):
                 if updates.get('associations'):
                     self._refresh_associated_items(updated)  # updates got lost with update
 
-                if self.published_state != CONTENT_STATE.KILLED:
+                if self.published_state != CONTENT_STATE.KILLED and app.config.get('USE_TAKES', True):
                     self._process_takes_package(original, updated, updates)
 
                 self._update_archive(original, updates, should_insert_into_versions=auto_publish)

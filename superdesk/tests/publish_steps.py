@@ -9,12 +9,14 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
+import requests_mock
 from flask import json
 from behave import when, then  # @UnresolvedImport
 from apps.publish.enqueue import enqueue_published
 from superdesk.tests.steps import assert_200, apply_placeholders, json_match
 from wooper.general import fail_and_print_body
 from wooper.assertions import assert_equal
+from superdesk.publish import transmit
 
 
 @when('we enqueue published')
@@ -33,3 +35,29 @@ def then_we_get_formatted_item(context):
     context_data = json.loads(apply_placeholders(context, context.text))
     assert_equal(json_match(context_data, formatted_item), True,
                  msg=str(context_data) + '\n != \n' + str(formatted_item))
+
+
+@then('we pushed 1 item')
+def then_we_pushed_1_item(context):
+    return then_we_pushed_x_items(context, 1)
+
+
+@then('we pushed {count} items')
+def then_we_pushed_x_items(context, count):
+    history = context.http_mock.request_history
+    assert count == len(history), 'there were %d calls' % (len(history), )
+    if context.text:
+        context_data = json.loads(apply_placeholders(context, context.text))
+        for i, _ in enumerate(context_data):
+            assert_equal(json_match(context_data[i], history[i].json()), True,
+                         msg='item[%d]: %s' % (i, history[i]))
+
+
+@when('we transmit published')
+def when_we_transmit_published(context):
+    with requests_mock.Mocker() as m:
+        context.http_mock = m
+        m.post('mock://publish', text=json.dumps({}))
+        m.post('mock://assets', text=json.dumps({}))
+        transmit.apply_async()
+        transmit.apply_async()
