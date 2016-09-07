@@ -10,17 +10,17 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import os
-from test_factory import SuperdeskTestCase
+from superdesk.tests import TestCase
 from superdesk.io.feed_parsers.pa_nitf import PAFeedParser
 from superdesk.etree import etree
 
 
-class PANITFFileTestCase(SuperdeskTestCase):
+class PANITFFileTestCase(TestCase):
 
     vocab = [{'_id': 'genre', 'items': [{'name': 'Current'}]}]
 
-    def setUp(self):
-        super().setUp()
+    def setUpForChildren(self):
+        super().setUpForChildren()
         with self.app.app_context():
             self.app.data.insert('vocabularies', self.vocab)
         dirname = os.path.dirname(os.path.realpath(__file__))
