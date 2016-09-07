@@ -77,6 +77,9 @@ class NITFFormatter(Formatter):
         if article.get('ednote'):
             SubElement(docdata, 'ed-msg', {'info': article.get('ednote', '')})
 
+    def _format_pubdata(self, article, head):
+        pass
+
     def _format_title(self, article, head):
         title = SubElement(head, 'title')
         title.text = article.get('headline', '')
@@ -99,6 +102,7 @@ class NITFFormatter(Formatter):
         docdata = SubElement(head, 'docdata')
         self._format_date_expire(article, docdata)
         self._format_docdata(article, docdata)
+        self._format_pubdata(article, head)
         self._format_keywords(article, head)
 
     def _format_subjects(self, article, tobject):
