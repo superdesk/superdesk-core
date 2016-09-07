@@ -26,9 +26,10 @@ cache:
 install:
     - pip install .
     - pip install -r requirements.txt
+    - pip install nose-timer
 
 script:
     - flake8
-    - nosetests -v
+    - nosetests -v --with-timer
     - behave --format progress3 --logging-level ERROR
 
