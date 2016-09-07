@@ -40,7 +40,7 @@ BANDWIDTH_SAVER = False
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%S+0000'
 PAGINATION_LIMIT = 200
 
-LOG_CONFIG_FILE = env('LOG_CONFIG_FILE', 'logging_config.yml')
+LOG_CONFIG_FILE = env('LOG_CONFIG_FILE')
 
 APPLICATION_NAME = env('APP_NAME', 'Superdesk')
 server_url = urlparse(env('SUPERDESK_URL', 'http://localhost:5000/api'))
