@@ -10,12 +10,13 @@
 
 from unittest import mock
 from unittest.mock import MagicMock
+
+from .commands import ImportUserProfileFromADCommand
 from apps.auth.errors import CredentialsAuthError
 from superdesk.tests.test_settings import LDAP_SERVER
 from superdesk.errors import SuperdeskApiError
-from test_factory import SuperdeskTestCase
+from superdesk.tests import TestCase
 from superdesk import get_resource_service
-from .commands import ImportUserProfileFromADCommand
 
 
 if LDAP_SERVER:
@@ -42,7 +43,7 @@ if LDAP_SERVER:
         return connection
 
     @mock.patch('apps.ldap.ldap.Connection', return_value=get_mock_connection())
-    class ImportUsersTestCase(SuperdeskTestCase):
+    class ImportUsersTestCase(TestCase):
         """
         for testing import user using ldap.
         """

@@ -1,14 +1,15 @@
 
 import os
 from flask import current_app as app
-from test_factory import SuperdeskTestCase
+
 from .app_initialize import AppInitializeWithDataCommand
 from .app_scaffold_data import AppScaffoldDataCommand
-from superdesk import get_resource_service
 from apps.prepopulate.app_initialize import fillEnvironmentVariables
+from superdesk import get_resource_service
+from superdesk.tests import TestCase
 
 
-class AppInitializeWithDataCommandTestCase(SuperdeskTestCase):
+class AppInitializeWithDataCommandTestCase(TestCase):
 
     def test_app_initialization(self):
         command = AppInitializeWithDataCommand()

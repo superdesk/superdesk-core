@@ -9,17 +9,17 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from unittest import mock
-
-from test_factory import SuperdeskTestCase
-from superdesk.utc import utcnow
 from datetime import timedelta
-from superdesk.publish.publish_content import get_queue_items
+
 from apps.publish import init_app
-from superdesk import config
 from apps.publish.enqueue import enqueue_items
+from superdesk import config
+from superdesk.publish.publish_content import get_queue_items
+from superdesk.tests import TestCase
+from superdesk.utc import utcnow
 
 
-class PublishContentTests(SuperdeskTestCase):
+class PublishContentTests(TestCase):
     queue_items = [{"_id": 1,
                     "destination": {
                         "delivery_type": "ftp",
@@ -76,7 +76,6 @@ class PublishContentTests(SuperdeskTestCase):
                        "item_id": '2'}]
 
     def setUp(self):
-        super().setUp()
         with self.app.app_context():
             init_app(self.app)
 

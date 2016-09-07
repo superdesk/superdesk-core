@@ -19,7 +19,6 @@ from superdesk.errors import PublishFileError
 
 class FileOutputTest(TestCase):
     def setUp(self):
-        super().setUp()
         self.fixtures = os.path.join(os.path.abspath(os.path.dirname(__file__)))
         self.subscribers = [{"_id": "1", "name": "Test", "media_type": "media",
                              "subscriber_type": SUBSCRIBER_TYPES.WIRE, "is_active": True,

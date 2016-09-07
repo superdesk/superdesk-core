@@ -8,25 +8,25 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from test_factory import SuperdeskTestCase
-from apps.content_filters.content_filter.content_filter_service import ContentFilterService
-from superdesk.publish import SubscribersService
 from eve.utils import ParsedRequest
 import json
 import os
-import superdesk
+
+from apps.content_filters.content_filter.content_filter_service import ContentFilterService
+from superdesk import get_backend, get_resource_service
 from superdesk.errors import SuperdeskApiError
+from superdesk.publish import SubscribersService
+from superdesk.tests import TestCase
 from superdesk.vocabularies.command import VocabulariesPopulateCommand
 
 
-class ContentFilterTests(SuperdeskTestCase):
+class ContentFilterTests(TestCase):
 
     def setUp(self):
-        super().setUp()
         self.req = ParsedRequest()
         with self.app.test_request_context(self.app.config.get('URL_PREFIX')):
-            self.f = ContentFilterService(datasource='content_filters', backend=superdesk.get_backend())
-            self.s = SubscribersService(datasource='subscribers', backend=superdesk.get_backend())
+            self.f = ContentFilterService(datasource='content_filters', backend=get_backend())
+            self.s = SubscribersService(datasource='subscribers', backend=get_backend())
 
             self.articles = [{'_id': '1', 'urgency': 1, 'headline': 'story', 'state': 'fetched'},
                              {'_id': '2', 'headline': 'prtorque', 'state': 'fetched'},
@@ -134,7 +134,7 @@ class RetrievingDataTests(ContentFilterTests):
         doc = {'content_filter': [{"expression": {"fc": [1]}}], 'name': 'pf-1'}
         with self.app.app_context():
             query = self.f.build_mongo_query(doc)
-            docs = superdesk.get_resource_service('archive').\
+            docs = get_resource_service('archive').\
                 get_from_mongo(req=self.req, lookup=query)
             doc_ids = [d['_id'] for d in docs]
             self.assertEqual(3, docs.count())
@@ -146,7 +146,7 @@ class RetrievingDataTests(ContentFilterTests):
         doc = {'content_filter': [{"expression": {"pf": [1]}}], 'name': 'pf-1'}
         with self.app.app_context():
             query = self.f.build_mongo_query(doc)
-            docs = superdesk.get_resource_service('archive').\
+            docs = get_resource_service('archive').\
                 get_from_mongo(req=self.req, lookup=query)
             doc_ids = [d['_id'] for d in docs]
             self.assertEqual(3, docs.count())
@@ -158,7 +158,7 @@ class RetrievingDataTests(ContentFilterTests):
         doc = {'content_filter': [{"expression": {"fc": [1]}}, {"expression": {"fc": [2]}}], 'name': 'pf-1'}
         with self.app.app_context():
             query = self.f.build_mongo_query(doc)
-            docs = superdesk.get_resource_service('archive').\
+            docs = get_resource_service('archive').\
                 get_from_mongo(req=self.req, lookup=query)
             doc_ids = [d['_id'] for d in docs]
             self.assertEqual(4, docs.count())
@@ -170,7 +170,7 @@ class RetrievingDataTests(ContentFilterTests):
         doc = {'content_filter': [{"expression": {"pf": [1]}}, {"expression": {"fc": [2]}}], 'name': 'pf-1'}
         with self.app.app_context():
             query = self.f.build_mongo_query(doc)
-            docs = superdesk.get_resource_service('archive').\
+            docs = get_resource_service('archive').\
                 get_from_mongo(req=self.req, lookup=query)
             doc_ids = [d['_id'] for d in docs]
             self.assertEqual(4, docs.count())
@@ -182,7 +182,7 @@ class RetrievingDataTests(ContentFilterTests):
         doc = {'content_filter': [{"expression": {"fc": [3, 4]}}], 'name': 'pf-1'}
         with self.app.app_context():
             query = self.f.build_mongo_query(doc)
-            docs = superdesk.get_resource_service('archive').\
+            docs = get_resource_service('archive').\
                 get_from_mongo(req=self.req, lookup=query)
             doc_ids = [d['_id'] for d in docs]
             self.assertEqual(1, docs.count())
@@ -192,7 +192,7 @@ class RetrievingDataTests(ContentFilterTests):
         doc = {'content_filter': [{"expression": {"pf": [2]}}], 'name': 'pf-1'}
         with self.app.app_context():
             query = self.f.build_mongo_query(doc)
-            docs = superdesk.get_resource_service('archive').\
+            docs = get_resource_service('archive').\
                 get_from_mongo(req=self.req, lookup=query)
             doc_ids = [d['_id'] for d in docs]
             self.assertEqual(1, docs.count())
@@ -202,7 +202,7 @@ class RetrievingDataTests(ContentFilterTests):
         doc = {'content_filter': [{"expression": {"fc": [3, 4]}}, {"expression": {"fc": [1, 2]}}], 'name': 'pf-1'}
         with self.app.app_context():
             query = self.f.build_mongo_query(doc)
-            docs = superdesk.get_resource_service('archive').\
+            docs = get_resource_service('archive').\
                 get_from_mongo(req=self.req, lookup=query)
             doc_ids = [d['_id'] for d in docs]
             self.assertEqual(1, docs.count())
@@ -212,7 +212,7 @@ class RetrievingDataTests(ContentFilterTests):
         doc = {'content_filter': [{"expression": {"pf": [2]}}, {"expression": {"pf": [1], "fc": [2]}}], 'name': 'pf-1'}
         with self.app.app_context():
             query = self.f.build_mongo_query(doc)
-            docs = superdesk.get_resource_service('archive').\
+            docs = get_resource_service('archive').\
                 get_from_mongo(req=self.req, lookup=query)
             doc_ids = [d['_id'] for d in docs]
             self.assertEqual(1, docs.count())
@@ -223,7 +223,7 @@ class RetrievingDataTests(ContentFilterTests):
         with self.app.app_context():
             query = {'query': {'filtered': {'query': self.f._get_elastic_query(doc)}}}
             self.req.args = {'source': json.dumps(query)}
-            docs = superdesk.get_resource_service('archive').get(req=self.req, lookup=None)
+            docs = get_resource_service('archive').get(req=self.req, lookup=None)
             doc_ids = [d['_id'] for d in docs]
             self.assertEqual(3, docs.count())
             self.assertTrue('1' in doc_ids)
@@ -235,7 +235,7 @@ class RetrievingDataTests(ContentFilterTests):
         with self.app.app_context():
             query = {'query': {'filtered': {'query': self.f._get_elastic_query(doc)}}}
             self.req.args = {'source': json.dumps(query)}
-            docs = superdesk.get_resource_service('archive').get(req=self.req, lookup=None)
+            docs = get_resource_service('archive').get(req=self.req, lookup=None)
             doc_ids = [d['_id'] for d in docs]
             self.assertEqual(3, docs.count())
             self.assertTrue('1' in doc_ids)
@@ -247,7 +247,7 @@ class RetrievingDataTests(ContentFilterTests):
         with self.app.app_context():
             query = {'query': {'filtered': {'query': self.f._get_elastic_query(doc)}}}
             self.req.args = {'source': json.dumps(query)}
-            docs = superdesk.get_resource_service('archive').get(req=self.req, lookup=None)
+            docs = get_resource_service('archive').get(req=self.req, lookup=None)
             doc_ids = [d['_id'] for d in docs]
             self.assertEqual(4, docs.count())
             self.assertTrue('1' in doc_ids)
@@ -260,7 +260,7 @@ class RetrievingDataTests(ContentFilterTests):
         with self.app.app_context():
             query = {'query': {'filtered': {'query': self.f._get_elastic_query(doc)}}}
             self.req.args = {'source': json.dumps(query)}
-            docs = superdesk.get_resource_service('archive').get(req=self.req, lookup=None)
+            docs = get_resource_service('archive').get(req=self.req, lookup=None)
             doc_ids = [d['_id'] for d in docs]
             self.assertEqual(4, docs.count())
             self.assertTrue('1' in doc_ids)
@@ -273,7 +273,7 @@ class RetrievingDataTests(ContentFilterTests):
         with self.app.app_context():
             query = {'query': {'filtered': {'query': self.f._get_elastic_query(doc)}}}
             self.req.args = {'source': json.dumps(query)}
-            docs = superdesk.get_resource_service('archive').get(req=self.req, lookup=None)
+            docs = get_resource_service('archive').get(req=self.req, lookup=None)
             doc_ids = [d['_id'] for d in docs]
             self.assertEqual(1, docs.count())
             self.assertTrue('3' in doc_ids)
@@ -284,7 +284,7 @@ class RetrievingDataTests(ContentFilterTests):
         with self.app.app_context():
             query = {'query': {'filtered': {'query': self.f._get_elastic_query(doc)}}}
             self.req.args = {'source': json.dumps(query)}
-            docs = superdesk.get_resource_service('archive').get(req=self.req, lookup=None)
+            docs = get_resource_service('archive').get(req=self.req, lookup=None)
             doc_ids = [d['_id'] for d in docs]
             self.assertEqual(1, docs.count())
             self.assertTrue('3' in doc_ids)
@@ -294,7 +294,7 @@ class RetrievingDataTests(ContentFilterTests):
         with self.app.app_context():
             query = {'query': {'filtered': {'query': self.f._get_elastic_query(doc)}}}
             self.req.args = {'source': json.dumps(query)}
-            docs = superdesk.get_resource_service('archive').get(req=self.req, lookup=None)
+            docs = get_resource_service('archive').get(req=self.req, lookup=None)
             doc_ids = [d['_id'] for d in docs]
             self.assertEqual(1, docs.count())
             self.assertTrue('3' in doc_ids)
@@ -304,7 +304,7 @@ class RetrievingDataTests(ContentFilterTests):
         with self.app.app_context():
             query = {'query': {'filtered': {'query': self.f._get_elastic_query(doc)}}}
             self.req.args = {'source': json.dumps(query)}
-            docs = superdesk.get_resource_service('archive').get(req=self.req, lookup=None)
+            docs = get_resource_service('archive').get(req=self.req, lookup=None)
             doc_ids = [d['_id'] for d in docs]
             self.assertEqual(1, docs.count())
             self.assertTrue('3' in doc_ids)
@@ -314,7 +314,7 @@ class RetrievingDataTests(ContentFilterTests):
         with self.app.app_context():
             query = {'query': {'filtered': {'query': self.f._get_elastic_query(doc)}}}
             self.req.args = {'source': json.dumps(query)}
-            docs = superdesk.get_resource_service('archive').get(req=self.req, lookup=None)
+            docs = get_resource_service('archive').get(req=self.req, lookup=None)
             doc_ids = [d['_id'] for d in docs]
             self.assertEqual(1, docs.count())
             self.assertTrue('3' in doc_ids)

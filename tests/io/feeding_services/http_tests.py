@@ -56,10 +56,6 @@ class ErrorResponseSession(MagicMock):
 
 
 class GetTokenTestCase(TestCase):
-
-    def setUp(self):
-        super().setUp()
-
     def test_get_null_token(self):
         provider = {}
         self.assertEquals('', TestFeedingService()._get_auth_token(provider))

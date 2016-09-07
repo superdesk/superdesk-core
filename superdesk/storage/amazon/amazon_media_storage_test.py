@@ -17,7 +17,6 @@ from unittest.mock import MagicMock
 class AmazonMediaStorageTestCase(unittest.TestCase):
 
     def setUp(self):
-        super().setUp()
         self.config = {
             'AMAZON_CONTAINER_NAME': 'test_container',
             'AMAZON_REGION': 'test_region',

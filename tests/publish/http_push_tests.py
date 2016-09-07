@@ -29,8 +29,6 @@ class ItemNotFound(Exception):
 class HTTPPushPublishTestCase(unittest.TestCase):
 
     def setUp(self):
-        super().setUp()
-
         if 'HTTP_PUSH_RESOURCE_URL' not in os.environ:
             self.resource_url = ''
         else:

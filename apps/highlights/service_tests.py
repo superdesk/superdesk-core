@@ -8,18 +8,18 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from test_factory import SuperdeskTestCase
-
 from unittest import mock
 from unittest.mock import MagicMock
 
+from superdesk.tests import TestCase
 
-class MarkedForHighlightsServiceTest(SuperdeskTestCase):
+class MarkedForHighlightsServiceTest(TestCase):
     """Base class for MarkedForHighlightsService tests."""
 
-    def setUp(self):
+    def setUpForChildren(self):
+        super().setUpForChildren()
+
         from apps.highlights import init_app
-        super().setUp()
         # with self.app.app_context():
         init_app(self.app)
 
@@ -39,8 +39,6 @@ class CreateMethodTestCase(MarkedForHighlightsServiceTest):
     """Tests for the create() method."""
 
     def setUp(self):
-        super().setUp()
-
         db_item_1 = {
             '_id': 'tag:item_1',
             'highlights': [],

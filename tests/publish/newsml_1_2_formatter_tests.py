@@ -654,7 +654,6 @@ class Newsml12FormatterTest(TestCase):
     now = datetime.datetime(2015, 6, 13, 11, 45, 19, 0)
 
     def setUp(self):
-        super().setUp()
         self.article['state'] = 'published'
         self._setup_dates([self.article, self.video, self.picture,
                            self.package, self.picture_package,

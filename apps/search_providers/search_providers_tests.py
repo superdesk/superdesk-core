@@ -19,7 +19,6 @@ from superdesk.errors import AlreadyExistsError
 class SearchProviderTestCase(TestCase):
 
     def setUp(self):
-        super().setUp()
         with self.app.app_context():
             self.service = SearchProviderService('search_providers', backend=superdesk.get_backend())
             try:

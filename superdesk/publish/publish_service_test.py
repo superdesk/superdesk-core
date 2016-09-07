@@ -14,8 +14,9 @@ from importlib import reload
 
 
 class Base(TestCase):
-    def setUp(self):
-        super().setUp()
+    def setUpForChildren(self):
+        super().setUpForChildren()
+
         reload(publish_service)
         self.service = publish_service.PublishService()
         self.fake_item = {
@@ -58,7 +59,6 @@ class FilenameTest(Base):
 
 class FilenameCustomizedExtTest(Base):
     def setUp(self):
-        super().setUp()
         self.service.register_file_extension("custom_format", "custom_ext")
 
     def test_get_extension(self):
@@ -87,7 +87,6 @@ class CustomizedService(publish_service.PublishServiceBase):
 
 class FilenameCustomizedServiceTest(Base):
     def setUp(self):
-        super().setUp()
         publish_service.set_publish_service(CustomizedService)
         self.service = publish_service.PublishService()
 

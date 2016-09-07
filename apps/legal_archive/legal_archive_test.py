@@ -11,16 +11,18 @@
 import json
 from unittest.mock import MagicMock
 from datetime import timedelta
-from .commands import LegalArchiveImport
-from test_factory import SuperdeskTestCase
-from superdesk.utc import utcnow
-from superdesk import get_resource_service
+
 from eve.versioning import resolve_document_version
-from apps.archive.common import insert_into_versions, ARCHIVE
 from eve.utils import ParsedRequest
 
+from .commands import LegalArchiveImport
+from apps.archive.common import insert_into_versions, ARCHIVE
+from superdesk import get_resource_service
+from superdesk.tests import TestCase
+from superdesk.utc import utcnow
 
-class LegalArchiveTestCase(SuperdeskTestCase):
+
+class LegalArchiveTestCase(TestCase):
 
     desks = [{'_id': '123', 'name': 'Sports'}]
     users = [{'_id': '123', 'username': 'test1', 'first_name': 'test', 'last_name': 'user', 'email': 'a@a.com'}]
@@ -38,7 +40,6 @@ class LegalArchiveTestCase(SuperdeskTestCase):
     ]
 
     def setUp(self):
-        super().setUp()
         self.app.data.insert('desks', self.desks)
         self.app.data.insert('users', self.users)
         self.app.data.insert('stages', self.stages)
@@ -65,12 +66,11 @@ class LegalArchiveTestCase(SuperdeskTestCase):
         self.assertEqual(task.get('user'), '')
 
 
-class ImportLegalArchiveCommandTestCase(SuperdeskTestCase):
+class ImportLegalArchiveCommandTestCase(TestCase):
     desks = [{'name': 'Sports'}]
     users = [{'username': 'test1', 'first_name': 'test', 'last_name': 'user', 'email': 'a@a.com'}]
 
     def setUp(self):
-        super().setUp()
         try:
             from apps.legal_archive.commands import ImportLegalArchiveCommand
         except ImportError:

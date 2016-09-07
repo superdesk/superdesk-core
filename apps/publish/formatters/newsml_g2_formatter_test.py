@@ -8,17 +8,19 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from superdesk.utc import utcnow
-from test_factory import SuperdeskTestCase
-from apps.publish.formatters.newsml_g2_formatter import NewsMLG2Formatter
-import xml.etree.ElementTree as etree
 import datetime
-from apps.publish import init_app
 from unittest import mock
+
+import xml.etree.ElementTree as etree
+
+from apps.publish import init_app
+from apps.publish.formatters.newsml_g2_formatter import NewsMLG2Formatter
+from superdesk.tests import TestCase
+from superdesk.utc import utcnow
 
 
 @mock.patch('superdesk.publish.subscribers.SubscribersService.generate_sequence_number', lambda self, subscriber: 1)
-class NewsMLG2FormatterTest(SuperdeskTestCase):
+class NewsMLG2FormatterTest(TestCase):
     embargo_ts = (utcnow() + datetime.timedelta(days=2))
     article = {
         'guid': 'tag:aap.com.au:20150613:12345',
@@ -623,7 +625,6 @@ class NewsMLG2FormatterTest(SuperdeskTestCase):
     now = datetime.datetime(2015, 6, 13, 11, 45, 19, 0)
 
     def setUp(self):
-        super().setUp()
         self.article['state'] = 'published'
         self.article['firstcreated'] = self.now
         self.article['versioncreated'] = self.now

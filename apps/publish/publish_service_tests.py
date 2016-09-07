@@ -8,17 +8,17 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from superdesk.publish import SUBSCRIBER_TYPES
-
-from test_factory import SuperdeskTestCase
-from nose.tools import assert_raises
-from superdesk.errors import PublishQueueError
-from apps.publish import init_app
-from superdesk.publish.publish_service import PublishService
 from bson import ObjectId
+from nose.tools import assert_raises
+
+from apps.publish import init_app
+from superdesk.errors import PublishQueueError
+from superdesk.publish import SUBSCRIBER_TYPES
+from superdesk.publish.publish_service import PublishService
+from superdesk.tests import TestCase
 
 
-class PublishServiceTests(SuperdeskTestCase):
+class PublishServiceTests(TestCase):
     queue_items = [{"_id": "571075791d41c81e204c5c8c",
                     "destination": {"name": "NITF", "delivery_type": "ftp", "format": "nitf", "config": {}},
                     "subscriber_id": "1",
@@ -34,7 +34,6 @@ class PublishServiceTests(SuperdeskTestCase):
                     }]
 
     def setUp(self):
-        super().setUp()
         with self.app.app_context():
             self.app.data.insert('subscribers', self.subscribers)
             self.queue_items[0]['_id'] = ObjectId(self.queue_items[0]['_id'])

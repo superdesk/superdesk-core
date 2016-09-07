@@ -9,19 +9,18 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import os
-from superdesk import tests
-from superdesk.vocabularies.command import VocabulariesPopulateCommand
-
 from flask import json
 
-from superdesk.factory.app import get_app
-from apps.io.tests import setup_providers, teardown_providers
-from features.steps.steps import get_macro_path
 from .test_settings import LDAP_SERVER, AMAZON_CONTAINER_NAME, \
     AMAZON_ACCESS_KEY_ID, AMAZON_SECRET_ACCESS_KEY, AMAZON_REGION, \
     AMAZON_SERVE_DIRECT_LINKS, AMAZON_S3_USE_HTTPS, AMAZON_SERVER, \
     AMAZON_PROXY_SERVER, AMAZON_URL_GENERATOR
-from test_factory import setup_auth_user
+from apps.io.tests import setup_providers, teardown_providers
+from features.steps.steps import get_macro_path
+from superdesk import tests
+from superdesk.factory.app import get_app
+from superdesk.tests import setup_auth_user
+from superdesk.vocabularies.command import VocabulariesPopulateCommand
 
 
 readonly_fields = ['display_name', 'password', 'phone', 'first_name', 'last_name']

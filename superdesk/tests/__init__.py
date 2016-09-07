@@ -9,17 +9,19 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
+import logging
 import os
 import unittest
-import elasticsearch
-import logging
-
 from base64 import b64encode
+from unittest.mock import patch
+
+import elasticsearch
+from eve_elastic import get_es
 from flask import json, Config
-from superdesk.notification_mock import setup_notification_mock, teardown_notification_mock
+
+from apps.ldap import ADAuth
 from superdesk import get_resource_service
 from superdesk.factory import get_app
-from eve_elastic import get_es
 
 test_user = {
     'username': 'test_user',
@@ -188,24 +190,121 @@ def setup_db_user(context, user):
         add_to_context(context, token, user, auth_id)
 
 
+def setup_ad_user(context, user):
+    """
+    Setup the AD user for the LDAP authentication.
+    The method patches the authenticate_and_fetch_profile method of the ADAuth class
+    :param context: test context
+    :param dict user: user
+    """
+    ad_user = user or test_user
+
+    '''
+    This is necessary as test_user is in Global scope and del doc['password'] removes the key from test_user and
+    for the next scenario, auth_data = json.dumps({'username': ad_user['username'], 'password': ad_user['password']})
+    will fail as password key is removed by del doc['password']
+    '''
+    ad_user = ad_user.copy()
+    ad_user['email'] = 'mock@mail.com.au'
+
+    ad_user.setdefault('user_type', 'administrator')
+
+    # ad profile to be return from the patch object
+    ad_profile = {
+        'email': ad_user['email'],
+        'username': ad_user['username'],
+        # so that test run under the administrator context.
+        'user_type': ad_user.get('user_type'),
+        'sign_off': ad_user.get('sign_off', 'abc'),
+        'preferences': {
+            'email:notification': {
+                'label': 'Send notifications via email',
+                'type': 'bool',
+                'default': True,
+                'category': 'notifications',
+                'enabled': True}
+        }
+    }
+
+    with patch.object(ADAuth, 'authenticate_and_fetch_profile', return_value=ad_profile):
+        auth_data = json.dumps({'username': ad_user['username'], 'password': ad_user['password']})
+        auth_response = context.client.post(get_prefixed_url(context.app, '/auth'),
+                                            data=auth_data, headers=context.headers)
+        auth_response_as_json = json.loads(auth_response.get_data())
+        token = auth_response_as_json.get('token').encode('ascii')
+        ad_user['_id'] = auth_response_as_json['user']
+
+        add_to_context(context, token, ad_user)
+
+
+class NotificationMock:
+    def __init__(self):
+        self.messages = []
+        self.client = None
+        self.open = True
+
+    def send(self, message):
+        self.messages.append(message)
+
+    def reset(self):
+        self.messages = []
+
+
 def setup_notification(context):
-    setup_notification_mock(context)
+    mock = NotificationMock()
+    if context.app.notification_client:
+        mock.client = context.app.notification_client
+    context.app.notification_client = mock
 
 
 def teardown_notification(context):
-    teardown_notification_mock(context)
+    context.app.notification_client = context.app.notification_client.client
 
 
 class TestCase(unittest.TestCase):
+    def __init__(self, *a, **kw):
+        super().__init__(*a, **kw)
 
-    def setUp(self):
+        self.app = None
+        self.client = None
+        self.ctx = None
+
+    @classmethod
+    def setUpClass(cls):
+        """
+        Wrap `setUp` and `tearDown` methods to run
+        `setUpForChildren` and `tearDownForChildren`
+        """
+        # setUp
+        def wrapper(self, *args, **kwargs):
+            """Combine `setUp` with `setUpForChildren`"""
+            self.setUpForChildren()
+            return orig_setup(self, *args, **kwargs)
+        orig_setup = cls.setUp
+        cls.setUp = wrapper
+
+        # tearDown
+        def wrapper(self, *args, **kwargs):
+            """Combine `tearDown` with `tearDownForChildren`"""
+            self.tearDownForChildren()
+            return orig_teardown(self, *args, **kwargs)
+        orig_teardown = cls.tearDown
+        cls.tearDown = wrapper
+
+    def setUpForChildren(self):
+        """
+        Run this `setUp` stuff for each children
+        """
         setup(self, app_factory=get_app)
         self.ctx = self.app.app_context()
         self.ctx.push()
 
-    def tearDown(self):
+    def tearDownForChildren(self):
+        """
+        Run this `tearDown` stuff for each children
+        """
         self.app.locators = None
-        if hasattr(self, 'ctx'):
+        if self.ctx:
             self.ctx.pop()
         with self.app.app_context():
             self.app.celery.pool.force_close_all()

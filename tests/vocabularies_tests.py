@@ -20,7 +20,6 @@ from superdesk.errors import SuperdeskApiError
 class VocabulariesPopulateTest(TestCase):
 
     def setUp(self):
-        super().setUp()
         self.filename = os.path.join(os.path.abspath(os.path.dirname(__file__)), "vocabularies.json")
         self.json_data = [
             {"_id": "categories",
@@ -69,4 +68,3 @@ class VocabulariesPopulateTest(TestCase):
 
     def tearDown(self):
         os.remove(self.filename)
-        super().tearDown()

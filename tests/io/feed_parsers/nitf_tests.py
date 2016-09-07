@@ -22,7 +22,6 @@ class NITFTestCase(TestCase):
     vocab = [{'_id': 'genre', 'items': [{'name': 'Current'}]}]
 
     def setUp(self):
-        super().setUp()
         with self.app.app_context():
             self.app.data.insert('vocabularies', self.vocab)
         dirname = os.path.dirname(os.path.realpath(__file__))
@@ -228,15 +227,17 @@ class MappingTestCase(TestCase):
 
     filename = 'mapping_test.xml'
     mapping = {
-        'subject': {'update': True,
-                    'key_hook': lambda item, value: item.setdefault('subject', []).extend(value)
-                    },
-        'subject_test': {'callback': lambda _: ['TEST OK'],
-                         'key_hook': lambda item, value: item.setdefault('subject', []).extend(value)
-                         }, }
+        'subject': {
+            'update': True,
+            'key_hook': lambda item, value: item.setdefault('subject', []).extend(value)
+        },
+        'subject_test': {
+            'callback': lambda _: ['TEST OK'],
+            'key_hook': lambda item, value: item.setdefault('subject', []).extend(value)
+        },
+    }
 
     def setUp(self):
-        super().setUp()
         config.NITF_MAPPING = self.mapping
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.normpath(os.path.join(dirname, '../fixtures', self.filename))
@@ -255,5 +256,4 @@ class MappingTestCase(TestCase):
         self.assertIn('TEST OK', subjects)
 
     def tearDown(self):
-        super().tearDown()
         del config.NITF_MAPPING

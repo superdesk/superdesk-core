@@ -8,16 +8,19 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from test_factory import SuperdeskTestCase
-from apps.archive.common import get_item_expiry
-from superdesk.utc import get_expiry_date
-from apps.tasks import apply_stage_rule, apply_onstage_rule, compare_dictionaries, MACRO_INCOMING, MACRO_OUTGOING, \
-    MACRO_ONSTAGE
 from nose.tools import assert_raises
+
+from apps.archive.common import get_item_expiry
+from apps.tasks import (
+    apply_stage_rule, apply_onstage_rule, compare_dictionaries,
+    MACRO_INCOMING, MACRO_OUTGOING, MACRO_ONSTAGE
+)
 from superdesk.errors import SuperdeskApiError
+from superdesk.utc import get_expiry_date
+from superdesk.tests import TestCase
 
 
-class TasksTestCase(SuperdeskTestCase):
+class TasksTestCase(TestCase):
 
     def test_get_global_content_expiry(self):
         calculated_minutes = get_item_expiry(desk=None, stage=None)

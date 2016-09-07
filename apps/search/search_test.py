@@ -7,11 +7,11 @@
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
-from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
-
-from test_factory import SuperdeskTestCase
 from eve.utils import ParsedRequest
+
 from . import init_app
+from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
+from superdesk.tests import TestCase
 
 
 def resource_listener(resource, docs):
@@ -24,10 +24,9 @@ def ingest_listener(docs):
         doc['_ingest_listener'] = 1
 
 
-class SearchServiceTestCase(SuperdeskTestCase):
+class SearchServiceTestCase(TestCase):
 
     def setUp(self):
-        super().setUp()
         with self.app.app_context():
             self.app.data.insert('ingest', [{}])
             self.app.data.insert('archive', [{'_id': '456', 'task': {'desk': 1}, ITEM_STATE: CONTENT_STATE.PROGRESS},

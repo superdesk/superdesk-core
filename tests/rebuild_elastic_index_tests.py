@@ -19,7 +19,6 @@ from time import sleep
 class RebuildIndexTestCase(TestCase):
 
     def setUp(self):
-        super().setUp()
         data = [{'headline': 'test {}'.format(i), 'slugline': 'rebuild {}'.format(i),
                  'type': 'text' if (i % 2 == 0) else 'picture'} for i in range(11, 21)]
         get_resource_service('ingest').post(data)

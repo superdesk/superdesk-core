@@ -10,23 +10,26 @@
 
 
 import unittest
+from datetime import timedelta, datetime
+from unittest.mock import MagicMock
 
 from bson import ObjectId
-from unittest.mock import MagicMock
-from superdesk import get_resource_service
-from test_factory import SuperdeskTestCase
-from superdesk.utc import get_expiry_date, utcnow
-from apps.archive.archive import SOURCE as ARCHIVE
-from superdesk.errors import SuperdeskApiError
-from datetime import timedelta, datetime
 from pytz import timezone
-from apps.archive.common import validate_schedule, remove_media_files, \
-    format_dateline_to_locmmmddsrc, convert_task_attributes_to_objectId, \
-    is_genre, BROADCAST_GENRE, get_default_source, set_default_source, \
+
+from apps.archive.archive import SOURCE as ARCHIVE
+from apps.archive.common import (
+    validate_schedule, remove_media_files,
+    format_dateline_to_locmmmddsrc, convert_task_attributes_to_objectId,
+    is_genre, BROADCAST_GENRE, get_default_source, set_default_source,
     get_utc_schedule, get_dateline_city
+)
+from superdesk import get_resource_service
+from superdesk.errors import SuperdeskApiError
+from superdesk.tests import TestCase
+from superdesk.utc import get_expiry_date, utcnow
 
 
-class RemoveSpikedContentTestCase(SuperdeskTestCase):
+class RemoveSpikedContentTestCase(TestCase):
 
     articles = [{'guid': 'tag:localhost:2015:69b961ab-2816-4b8a-a584-a7b402fed4f9',
                  '_id': '1',
@@ -170,9 +173,6 @@ class RemoveSpikedContentTestCase(SuperdeskTestCase):
         }
     }
 
-    def setUp(self):
-        super().setUp()
-
     def test_query_getting_expired_content(self):
         self.app.data.insert(ARCHIVE, [{'expiry': get_expiry_date(-10), 'state': 'spiked'}])
         self.app.data.insert(ARCHIVE, [{'expiry': get_expiry_date(0), 'state': 'spiked'}])
@@ -212,7 +212,7 @@ class RemoveSpikedContentTestCase(SuperdeskTestCase):
         self.assertEqual(len(self.articles), archive_service.on_delete.call_count)
 
 
-class ArchiveTestCase(SuperdeskTestCase):
+class ArchiveTestCase(TestCase):
     def test_validate_schedule(self):
         validate_schedule(utcnow() + timedelta(hours=2))
 
@@ -395,10 +395,9 @@ class ArchiveCommonTestCase(unittest.TestCase):
         self.assertEqual(utc_schedule, embargo_date)
 
 
-class ExpiredArchiveContentTestCase(SuperdeskTestCase):
+class ExpiredArchiveContentTestCase(TestCase):
 
     def setUp(self):
-        super().setUp()
         try:
             from apps.archive.commands import RemoveExpiredContent
         except ImportError:

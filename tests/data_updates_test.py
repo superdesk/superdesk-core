@@ -13,7 +13,6 @@ MAIN_DATA_UPDATES_DIR = '/tmp/global_data_updates'
 class DataUpdatesTestCase(TestCase):
 
     def setUp(self):
-        super().setUp()
         for folder in (DEFAULT_DATA_UPDATE_DIR_NAME, MAIN_DATA_UPDATES_DIR):
             # if folder exists, removes
             if os.path.exists(folder):

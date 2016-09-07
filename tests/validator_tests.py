@@ -33,7 +33,6 @@ class ValidateIuniqueMethodTestCase(SuperdeskValidatorTest):
     """Tests for the _validate_iunique() method."""
 
     def setUp(self):
-        super().setUp()
         klass = self._get_target_class()
         self.validator = klass(schema={})
 
@@ -54,7 +53,6 @@ class ValidateIuniquePerParentMethodTestCase(SuperdeskValidatorTest):
     """Tests for the _validate_iunique_per_parent() method."""
 
     def setUp(self):
-        super().setUp()
         klass = self._get_target_class()
         self.validator = klass(schema={})
         self.validator.document = {}
@@ -78,7 +76,6 @@ class ValidateMultipleEmailsTestCase(SuperdeskValidatorTest):
     """Tests for the _validate_mulitple_emails() method."""
 
     def setUp(self):
-        super().setUp()
         klass = self._get_target_class()
         self.validator = klass(schema={})
         self.validator.document = {}

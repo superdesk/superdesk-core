@@ -7,20 +7,19 @@
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
-
-from test_factory import SuperdeskTestCase
-from superdesk.publish.formatters.email_formatter import EmailFormatter
-from superdesk.publish import init_app
-from superdesk.utc import utc
-from unittest import mock
 import json
 import datetime
+from unittest import mock
+
+from superdesk.publish import init_app
+from superdesk.publish.formatters.email_formatter import EmailFormatter
+from superdesk.tests import TestCase
+from superdesk.utc import utc
 
 
 @mock.patch('superdesk.publish.subscribers.SubscribersService.generate_sequence_number', lambda self, subscriber: 1)
-class EmailFormatterTest(SuperdeskTestCase):
+class EmailFormatterTest(TestCase):
     def setUp(self):
-        super().setUp()
         self.formatter = EmailFormatter()
         # self.base_formatter = Formatter()
         init_app(self.app)

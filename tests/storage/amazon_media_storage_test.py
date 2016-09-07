@@ -7,7 +7,6 @@ from superdesk.storage.amazon.amazon_media_storage import AmazonMediaStorage
 class AmazonMediaStorageTestCase(TestCase):
 
     def setUp(self):
-        super().setUp()
         self.app.config['AMAZON_CONTAINER_NAME'] = 'AMAZON_CONTAINER_NAME'
         self.app.config['AMAZON_REGION'] = 'us-east-1'
         self.app.config['AMAZON_S3_USE_HTTPS'] = True
@@ -37,7 +36,6 @@ class AmazonMediaStorageTestCase(TestCase):
 
 class AmazonMediaStoragePutAndDeleteTest(TestCase):
     def setUp(self):
-        super().setUp()
         self.amazon = AmazonMediaStorage(self.app)
 
     def test_put_and_delete(self):

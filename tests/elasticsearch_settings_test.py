@@ -36,7 +36,6 @@ class ElasticSearchSettingsTest(TestCase):
     ]
 
     def setUp(self):
-        super().setUp()
         get_resource_service('ingest').post(self.items)
 
     def test_query_prefix_soccer(self):
