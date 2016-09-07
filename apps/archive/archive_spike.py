@@ -27,6 +27,7 @@ from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
 from apps.packages import PackageService, TakesPackageService
 from apps.archive.archive_rewrite import ArchiveRewriteService
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE
+from superdesk.utc import get_expiry_date
 
 logger = logging.getLogger(__name__)
 
@@ -151,6 +152,20 @@ class ArchiveSpikeService(BaseService):
         """
         PackageService().remove_spiked_refs_from_package(item)
 
+    def _get_spike_expiry(self, desk_id, stage_id):
+        """
+        If there is a SPIKE_EXPIRY_MINUTES setting then that is used to set the spike expiry.
+        If a None value is configured then the desk/stage value is returned.
+        :param desk_id:
+        :param stage_id:
+        :return:
+        """
+        # If no maximum spike expiry is set then return the desk/stage values
+        if app.settings['SPIKE_EXPIRY_MINUTES'] is None:
+            return get_expiry(desk_id=desk_id, stage_id=stage_id)
+        else:
+            return get_expiry_date(app.settings['SPIKE_EXPIRY_MINUTES'])
+
     def update(self, id, updates, original):
         original_state = original[ITEM_STATE]
         if not is_workflow_state_transition_valid('spike', original_state):
@@ -160,7 +175,7 @@ class ArchiveSpikeService(BaseService):
         item = get_resource_service(ARCHIVE).find_one(req=None, _id=id)
         task = item.get('task', {})
 
-        updates[EXPIRY] = get_expiry(desk_id=task.get('desk'), stage_id=task.get('stage'))
+        updates[EXPIRY] = self._get_spike_expiry(desk_id=task.get('desk'), stage_id=task.get('stage'))
         updates[REVERT_STATE] = item.get(ITEM_STATE, None)
 
         if original.get('rewrite_of'):

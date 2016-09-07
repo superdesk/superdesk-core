@@ -1,9 +1,11 @@
+import os
+import shutil
+import tempfile
+
 from superdesk.tests import TestCase
 import superdesk.commands.data_updates
 import superdesk
 from superdesk.commands.data_updates import get_data_updates_files, GenerateUpdate, Upgrade, Downgrade
-import shutil
-import os
 
 # change the folder where to store updates for test purpose
 DEFAULT_DATA_UPDATE_DIR_NAME = '/tmp/data_updates'
@@ -32,6 +34,16 @@ class DataUpdatesTestCase(TestCase):
         assert len(get_data_updates_files()) is 1, get_data_updates_files()
         GenerateUpdate().run(resource_name='RESOURNCE_NAME')
         assert len(get_data_updates_files()) is 2, get_data_updates_files()
+
+    def test_data_update_generation_create_updates_dir(self):
+        updates_dir = tempfile.mkdtemp()
+        shutil.rmtree(updates_dir)
+        self.assertFalse(os.path.exists(updates_dir))
+        self.app.config['DATA_UPDATES_PATH'] = updates_dir
+        GenerateUpdate().run('tmp')
+        print(updates_dir)
+        self.assertTrue(os.path.exists(updates_dir))
+        shutil.rmtree(updates_dir)
 
     def number_of_data_updates_applied(self):
         return superdesk.get_resource_service('data_updates').find({}).count()

@@ -40,7 +40,6 @@ class CeleryTaskRaceTest(TestCase):
         provider = {'_id': 'abc', 'name': 'test provider', 'update_schedule': {'minutes': 1}}
         removed = mark_task_as_not_running(provider['name'], provider['_id'])
         self.assertFalse(removed)
-
         failed_to_mark_as_running = is_task_running(provider['name'], provider['_id'], {'minutes': 1})
         self.assertFalse(failed_to_mark_as_running, 'Failed to mark ingest update as running')
 
@@ -49,6 +48,9 @@ class CeleryTaskRaceTest(TestCase):
 
         removed = mark_task_as_not_running(provider['name'], provider['_id'])
         self.assertTrue(removed, 'Failed to mark ingest update as not running.')
+
+
+reuters_guid = 'tag_reuters.com_2014_newsml_KBN0FL0NM:10'
 
 
 class UpdateIngestTest(TestCase):
@@ -67,38 +69,23 @@ class UpdateIngestTest(TestCase):
         return provider_service.__class__()
 
     def test_ingest_items(self):
-        provider_name = 'reuters'
-        guid = 'tag_reuters.com_2014_newsml_KBN0FL0NM:10'
-        provider = self._get_provider(provider_name)
-        provider_service = self._get_provider_service(provider)
-        provider_service.provider = provider
-        provider_service.URL = provider.get('config', {}).get('url')
-        items = provider_service.fetch_ingest(guid)
-        items.extend(provider_service.fetch_ingest(guid))
+        provider, provider_service = self.setup_reuters_provider()
+        items = provider_service.fetch_ingest(reuters_guid)
+        items.extend(provider_service.fetch_ingest(reuters_guid))
         self.assertEqual(12, len(items))
         self.ingest_items(items, provider, provider_service)
 
     def test_ingest_item_expiry(self):
-        provider_name = 'reuters'
-        guid = 'tag_reuters.com_2014_newsml_KBN0FL0NM:10'
-        provider = self._get_provider(provider_name)
-        provider_service = self._get_provider_service(provider)
-        provider_service.provider = provider
-        provider_service.URL = provider.get('config', {}).get('url')
-        items = provider_service.fetch_ingest(guid)
+        provider, provider_service = self.setup_reuters_provider()
+        items = provider_service.fetch_ingest(reuters_guid)
         self.assertIsNone(items[1].get('expiry'))
         items[1]['versioncreated'] = utcnow()
         self.ingest_items([items[1]], provider, provider_service)
         self.assertIsNotNone(items[1].get('expiry'))
 
     def test_ingest_item_sync_if_missing_from_elastic(self):
-        provider_name = 'reuters'
-        guid = 'tag_reuters.com_2014_newsml_KBN0FL0NM:10'
-        provider = self._get_provider(provider_name)
-        provider_service = self._get_provider_service(provider)
-        provider_service.provider = provider
-        provider_service.URL = provider.get('config', {}).get('url')
-        item = provider_service.fetch_ingest(guid)[0]
+        provider, provider_service = self.setup_reuters_provider()
+        item = provider_service.fetch_ingest(reuters_guid)[0]
         # insert in mongo
         ids = self.app.data._backend('ingest').insert('ingest', [item])
         # check that item is not in elastic
@@ -176,35 +163,20 @@ class UpdateIngestTest(TestCase):
         self.assertEqual('test', provider.get('_etag'))
 
     def test_filter_expired_items(self):
-        provider_name = 'reuters'
-        guid = 'tag_reuters.com_2014_newsml_KBN0FL0NM:10'
-        provider = get_resource_service('ingest_providers').find_one(name=provider_name, req=None)
-        provider_service = self._get_provider_service(provider)
-        provider_service.provider = provider
-        provider_service.URL = provider.get('config', {}).get('url')
-        items = provider_service.fetch_ingest(guid)
+        provider, provider_service = self.setup_reuters_provider()
+        items = provider_service.fetch_ingest(reuters_guid)
         for item in items[:4]:
             item['expiry'] = utcnow() + timedelta(minutes=11)
         self.assertEqual(4, len(ingest.filter_expired_items(provider, items)))
 
     def test_filter_expired_items_with_no_expiry(self):
-        provider_name = 'reuters'
-        guid = 'tag_reuters.com_2014_newsml_KBN0FL0NM:10'
-        provider = get_resource_service('ingest_providers').find_one(name=provider_name, req=None)
-        provider_service = self._get_provider_service(provider)
-        provider_service.provider = provider
-        provider_service.URL = provider.get('config', {}).get('url')
-        items = provider_service.fetch_ingest(guid)
+        provider, provider_service = self.setup_reuters_provider()
+        items = provider_service.fetch_ingest(reuters_guid)
         self.assertEqual(0, len(ingest.filter_expired_items(provider, items)))
 
     def test_query_getting_expired_content(self):
-        provider_name = 'reuters'
-        guid = 'tag_reuters.com_2014_newsml_KBN0FL0NM:10'
-        provider = get_resource_service('ingest_providers').find_one(name=provider_name, req=None)
-        provider_service = self._get_provider_service(provider)
-        provider_service.provider = provider
-        provider_service.URL = provider.get('config', {}).get('url')
-        items = provider_service.fetch_ingest(guid)
+        provider, provider_service = self.setup_reuters_provider()
+        items = provider_service.fetch_ingest(reuters_guid)
         now = utcnow()
         for i, item in enumerate(items):
             item['ingest_provider'] = provider['_id']
@@ -220,13 +192,8 @@ class UpdateIngestTest(TestCase):
         self.assertEqual(5, expiredItems.count())
 
     def test_expiring_with_content(self):
-        provider_name = 'reuters'
-        guid = 'tag_reuters.com_2014_newsml_KBN0FL0NM:10'
-        provider = get_resource_service('ingest_providers').find_one(name=provider_name, req=None)
-        provider_service = self._get_provider_service(provider)
-        provider_service.provider = provider
-        provider_service.URL = provider.get('config', {}).get('url')
-        items = provider_service.fetch_ingest(guid)
+        provider, provider_service = self.setup_reuters_provider()
+        items = provider_service.fetch_ingest(reuters_guid)
         now = utcnow()
         for i, item in enumerate(items):
             item['ingest_provider'] = provider['_id']
@@ -265,13 +232,8 @@ class UpdateIngestTest(TestCase):
         self.assertEqual(1, self.app.data.elastic.find('ingest', ParsedRequest(), {}).count())
 
     def test_expiring_content_with_files(self):
-        provider_name = 'reuters'
-        guid = 'tag_reuters.com_2014_newsml_KBN0FL0NM:10'
-        provider = get_resource_service('ingest_providers').find_one(name=provider_name, req=None)
-        provider_service = self._get_provider_service(provider)
-        provider_service.provider = provider
-        provider_service.URL = provider.get('config', {}).get('url')
-        items = provider_service.fetch_ingest(guid)
+        provider, provider_service = self.setup_reuters_provider()
+        items = provider_service.fetch_ingest(reuters_guid)
         for item in items:
             item['ingest_provider'] = provider['_id']
 
@@ -308,12 +270,8 @@ class UpdateIngestTest(TestCase):
         self.assertEqual('@@body@@', ingest.apply_rule_set(item, provider)['body_html'])
 
     def test_all_ingested_items_have_sequence(self):
-        provider_name = 'reuters'
+        provider, provider_service = self.setup_reuters_provider()
         guid = 'tag_reuters.com_2014_newsml_KBN0FL0NM:10'
-        provider = self._get_provider(provider_name)
-        provider_service = self._get_provider_service(provider)
-        provider_service.provider = provider
-        provider_service.URL = provider.get('config', {}).get('url')
         item = provider_service.fetch_ingest(guid)[0]
         get_resource_service("ingest").set_ingest_provider_sequence(item, provider)
         self.assertIsNotNone(item['ingest_provider_sequence'])
@@ -340,13 +298,8 @@ class UpdateIngestTest(TestCase):
         self.assertEqual(ingest.get_is_idle(provider), False)
 
     def test_files_dont_duplicate_ingest(self):
-        provider_name = 'reuters'
-        guid = 'tag_reuters.com_2014_newsml_KBN0FL0NM:10'
-        provider = get_resource_service('ingest_providers').find_one(name=provider_name, req=None)
-        provider_service = self._get_provider_service(provider)
-        provider_service.provider = provider
-        provider_service.URL = provider.get('config', {}).get('url')
-        items = provider_service.fetch_ingest(guid)
+        provider, provider_service = self.setup_reuters_provider()
+        items = provider_service.fetch_ingest(reuters_guid)
 
         for item in items:
             item['ingest_provider'] = provider['_id']
@@ -355,7 +308,7 @@ class UpdateIngestTest(TestCase):
         # ingest the items
         self.ingest_items(items, provider, provider_service)
 
-        items = provider_service.fetch_ingest(guid)
+        items = provider_service.fetch_ingest(reuters_guid)
         for item in items:
             item['ingest_provider'] = provider['_id']
             item['expiry'] = utcnow() + timedelta(hours=11)
@@ -451,12 +404,8 @@ class UpdateIngestTest(TestCase):
             self.assertNotIn('anpa_category', items[0])
 
     def test_ingest_cancellation(self):
-        provider_name = 'reuters'
+        provider, provider_service = self.setup_reuters_provider()
         guid = 'tag_reuters.com_2016_newsml_L1N14N0FF:978556838'
-        provider = get_resource_service('ingest_providers').find_one(name=provider_name, req=None)
-        provider_service = self._get_provider_service(provider)
-        provider_service.provider = provider
-        provider_service.URL = provider.get('config', {}).get('url')
         items = provider_service.fetch_ingest(guid)
         for item in items:
             item['ingest_provider'] = provider['_id']
@@ -477,13 +426,8 @@ class UpdateIngestTest(TestCase):
             self.assertEqual(relative['state'], 'killed')
 
     def test_ingest_update(self):
-        provider_name = 'reuters'
-        guid = 'tag_reuters.com_2014_newsml_KBN0FL0NN:5'
-        provider = get_resource_service('ingest_providers').find_one(name=provider_name, req=None)
-        provider_service = self._get_provider_service(provider)
-        provider_service.provider = provider
-        provider_service.URL = provider.get('config', {}).get('url')
-        items = provider_service.fetch_ingest(guid)
+        provider, provider_service = self.setup_reuters_provider()
+        items = provider_service.fetch_ingest(reuters_guid)
         items[0]['ingest_provider'] = provider['_id']
         items[0]['expiry'] = utcnow() + timedelta(hours=11)
 
@@ -492,7 +436,7 @@ class UpdateIngestTest(TestCase):
         self.assertEqual(items[0]['unique_id'], 1)
         original_id = items[0]['_id']
 
-        items = provider_service.fetch_ingest(guid)
+        items = provider_service.fetch_ingest(reuters_guid)
         items[0]['ingest_provider'] = provider['_id']
         items[0]['expiry'] = utcnow() + timedelta(hours=11)
         # change the headline
@@ -509,10 +453,7 @@ class UpdateIngestTest(TestCase):
 
     def test_get_article_ids(self):
         provider_name = 'reuters'
-        provider = self._get_provider(provider_name)
-        provider_service = self._get_provider_service(provider)
-        provider_service.provider = provider
-        provider_service.URL = provider.get('config', {}).get('url')
+        provider, provider_service = self.setup_reuters_provider()
         ids = provider_service._get_article_ids('channel1', utcnow(), utcnow() + timedelta(minutes=-10))
         self.assertEqual(len(ids), 3)
         provider = get_resource_service('ingest_providers').find_one(name=provider_name, req=None)
@@ -538,3 +479,64 @@ class UpdateIngestTest(TestCase):
         items[0]['versioncreated'] = utcnow()
         self.ingest_items(items, provider, provider_service)
         self.assertTrue(len(items[0]['anpa_category']) == 0)
+
+    def setup_reuters_provider(self):
+        provider_name = 'reuters'
+        provider = get_resource_service('ingest_providers').find_one(name=provider_name, req=None)
+        provider_service = self._get_provider_service(provider)
+        provider_service.provider = provider
+        provider_service.URL = provider.get('config', {}).get('url')
+        return provider, provider_service
+
+    def test_ingest_with_routing_keeps_elastic_in_sync(self):
+        provider, provider_service = self.setup_reuters_provider()
+        items = provider_service.fetch_ingest(reuters_guid)
+        items[0]['ingest_provider'] = provider['_id']
+        items[0]['expiry'] = utcnow() + timedelta(hours=11)
+
+        desk = {'name': 'foo'}
+        self.app.data.insert('desks', [desk])
+        self.assertIsNotNone(desk['_id'])
+        self.assertIsNotNone(desk['incoming_stage'])
+
+        routing_scheme = {
+            "name": "autofetch",
+            "rules": [
+                {
+                    "filter": None,
+                    "actions": {
+                        "exit": False,
+                        "publish": [],
+                        "fetch": [
+                            {
+                                "stage": desk['incoming_stage'],
+                                "desk": desk['_id']
+                            }
+                        ]
+                    },
+                    "schedule": {
+                        "day_of_week": [
+                            "MON",
+                            "TUE",
+                            "WED",
+                            "THU",
+                            "FRI",
+                            "SAT",
+                            "SUN"
+                        ],
+                        "hour_of_day_from": "00:00:00",
+                        "hour_of_day_to": "23:55:00",
+                        "time_zone": "Europe/Prague"
+                    },
+                    "name": "fetch"
+                }
+            ]
+        }
+
+        self.ingest_items(items, provider, provider_service, routing_scheme=routing_scheme)
+
+        ingest_service = get_resource_service('ingest')
+        lookup = {'guid': items[0]['guid']}
+        mongo_item = ingest_service.get_from_mongo(None, lookup)[0]
+        elastic_item = ingest_service.get(None, lookup)[0]
+        self.assertEqual(mongo_item['_etag'], elastic_item['_etag'])

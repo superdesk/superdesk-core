@@ -6,3 +6,4 @@ httmock
 wooper
 sphinx
 sphinx-autobuild
+requests-mock

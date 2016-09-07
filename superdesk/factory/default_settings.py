@@ -15,6 +15,7 @@ import json
 from datetime import timedelta
 from celery.schedules import crontab
 from kombu import Queue, Exchange
+import tzlocal
 
 try:
     from urllib.parse import urlparse
@@ -359,7 +360,13 @@ ADMINS = [MAIL_FROM]
 SUPERDESK_TESTING = (env('SUPERDESK_TESTING', 'false').lower() == 'true')
 
 # Default TimeZone
-DEFAULT_TIMEZONE = env('DEFAULT_TIMEZONE', 'Europe/Prague')
+DEFAULT_TIMEZONE = env('DEFAULT_TIMEZONE')
+
+if DEFAULT_TIMEZONE is None:
+    DEFAULT_TIMEZONE = tzlocal.get_localzone().zone
+
+if not DEFAULT_TIMEZONE:
+    raise ValueError("DEFAULT_TIMEZONE is empty")
 
 # The number of minutes since the last update of the Mongo auth object after which it will be deleted
 SESSION_EXPIRY_MINUTES = int(env('SESSION_EXPIRY_MINUTES', 240))
@@ -442,3 +449,6 @@ ENABLE_PROFILING = False
 
 # default timeout for ftp connections
 FTP_TIMEOUT = 300
+
+# This setting is used to overide the desk/stage expiry for items to expire from the spike
+SPIKE_EXPIRY_MINUTES = None
