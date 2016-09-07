@@ -13,6 +13,7 @@ from unittest.mock import MagicMock
 
 from superdesk.tests import TestCase
 
+
 class MarkedForHighlightsServiceTest(TestCase):
     """Base class for MarkedForHighlightsService tests."""
 
