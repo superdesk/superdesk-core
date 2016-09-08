@@ -125,15 +125,18 @@ def setup(context=None, config=None, app_factory=get_app):
     logging.getLogger('elasticsearch').setLevel(logging.WARNING)
     logging.getLogger('urllib3').setLevel(logging.WARNING)
 
-    drop_elastic(app)
-    drop_mongo(app)
+    def set_context(obj):
+        drop_elastic(app)
+        drop_mongo(app)
 
-    # create index again after dropping it
-    app.data.init_elastic(app)
+        # create index again after dropping it
+        app.data.init_elastic(app)
 
-    def set_context(ctx):
-        ctx.app = app
-        ctx.client = app.test_client()
+        obj.app = app
+        obj.client = app.test_client()
+        obj.ctx = app.app_context()
+        obj.ctx.push()
+
     setup.set_context = set_context
 
     if context:
@@ -305,9 +308,6 @@ class TestCase(unittest.TestCase):
             setup()
 
         setup.set_context(self)
-        drop_mongo(self.app)
-        self.ctx = self.app.app_context()
-        self.ctx.push()
 
     def tearDownForChildren(self):
         """
