@@ -20,8 +20,7 @@ addons:
     - elasticsearch
 
 cache:
-  directories:
-    - $HOME/.cache/pip
+  - pip
 
 install:
     - pip install .
@@ -32,4 +31,3 @@ script:
     - flake8
     - time nosetests -v --with-timer
     - time behave --format progress3 --logging-level ERROR
-
