@@ -110,7 +110,6 @@ def clean_dbs(app):
 
 
 def clean_es(app):
-    import time
     import requests
 
     if not hasattr(clean_es, 'run'):
@@ -137,7 +136,6 @@ def clean_es(app):
                 """
                 s = requests.Session()
                 s.post('http://localhost:9200/sptest_*/_close?wait_for_completion=true')
-                time.sleep(0.1)
                 s.post('http://localhost:9200/_snapshot/backups/snapshot_1/_restore?wait_for_completion=true')
 
         clean_es.run = run
@@ -146,7 +144,7 @@ def clean_es(app):
 
 
 def setup(case=None, config=None, app_factory=get_app):
-    if not hasattr(setup, 'app'):
+    if not hasattr(setup, 'app_config'):
         app_abspath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
         app_config = Config(app_abspath)
         app_config.from_object('superdesk.tests.test_settings')
@@ -160,14 +158,14 @@ def setup(case=None, config=None, app_factory=get_app):
             'TESTING': True,
         })
 
-        setup.app = app_factory(app_config)
+        setup.app_config = app_config
 
         logging.getLogger('superdesk').setLevel(logging.WARNING)
         logging.getLogger('elastic').setLevel(logging.WARNING)  # elastic datalayer
         logging.getLogger('elasticsearch').setLevel(logging.WARNING)
         logging.getLogger('urllib3').setLevel(logging.WARNING)
 
-    app = setup.app
+    app = app_factory(setup.app_config)
     if case:
         case.app = app
         case.client = app.test_client()
