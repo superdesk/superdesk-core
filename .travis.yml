@@ -28,13 +28,13 @@ before_script: >
     && echo "index.store.type: memory" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
     && tail -n10 /etc/elasticsearch/elasticsearch.yml
     && sudo service elasticsearch restart
-    && echo "tune mongodb"
-    && mkdir /tmp/ramdata
-    && sudo chown mongodb:mongodb /tmp/ramdata
-    && sudo mount -t tmpfs -o size=512M tmpfs /tmp/ramdata
-    && sudo sed -i 's\dbPath: /var/lib/mongodb\dbPath: /tmp/ramdata\' /etc/mongod.conf
-    && cat /etc/mongod.conf
-    && sudo service mongodb restart
+    #&& echo "tune mongodb"
+    #&& mkdir /tmp/ramdata
+    #&& sudo chown mongodb:mongodb /tmp/ramdata
+    #&& sudo mount -t tmpfs -o size=512M tmpfs /tmp/ramdata
+    #&& sudo sed -i 's\dbPath: /var/lib/mongodb\dbPath: /tmp/ramdata\' /etc/mongod.conf
+    #&& cat /etc/mongod.conf
+    #&& sudo service mongodb restart
 
 
 cache:
@@ -47,6 +47,7 @@ install:
 
 script:
     - flake8
+    - nosetests -v apps/archive/archive_test.py --with-timer # todo remove
     - time nosetests -v --with-timer
     - time behave --format progress3 --logging-level ERROR
 
