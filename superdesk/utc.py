@@ -87,3 +87,16 @@ def set_time(current_datetime, timestr):
     time = datetime.datetime.strptime(timestr, '%H:%M:%S')
     return current_datetime.replace(hour=time.hour, minute=time.minute, second=time.second)
 
+
+def get_timezone_offset(local_tz_name, utc_datetime):
+    """
+    Get the timezone offset
+    :param string local_tz_name:
+    :param datetime utc_datetime:
+    :return string utc offset
+    """
+    try:
+        local_dt = utc_to_local(local_tz_name, utc_datetime)
+        return local_dt.strftime('%z')
+    except:
+        return utcnow().strftime('%z')

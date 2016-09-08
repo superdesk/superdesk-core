@@ -12,7 +12,7 @@
 import pytz
 import unittest
 from datetime import datetime, timedelta
-from superdesk.utc import get_date, utcnow, get_expiry_date, local_to_utc, utc_to_local, set_time
+from superdesk.utc import get_date, utcnow, get_expiry_date, local_to_utc, utc_to_local, get_timezone_offset
 from pytz import utc, timezone # flake8: noqa
 from nose.tools import assert_raises
 
@@ -88,3 +88,30 @@ class UTCTestCase(unittest.TestCase):
     def test_local_to_utc_europe(self):
         utc_dt = local_to_utc('Europe/Prague', datetime(2016, 4, 19, 15, 8, 0))
         self.assertEqual('2016-04-19T13:08:00+00:00', utc_dt.isoformat())
+
+    def test_get_timezone_offset_sydney(self):
+        utc_dt = datetime(2015, 2, 8, 23, 0, 0, 0, pytz.UTC)
+        offset = get_timezone_offset('Australia/Sydney', utc_dt)
+        self.assertEqual(offset, '+1100')
+
+        utc_dt = datetime(2015, 9, 8, 23, 0, 0, 0, pytz.UTC)
+        offset = get_timezone_offset('Australia/Sydney', utc_dt)
+        self.assertEqual(offset, '+1000')
+
+    def test_get_timezone_offset_prague(self):
+        utc_dt = datetime(2015, 2, 8, 23, 0, 0, 0, pytz.UTC)
+        offset = get_timezone_offset('Europe/Prague', utc_dt)
+        self.assertEqual(offset, '+0100')
+
+        utc_dt = datetime(2015, 9, 8, 23, 0, 0, 0, pytz.UTC)
+        offset = get_timezone_offset('Europe/Prague', utc_dt)
+        self.assertEqual(offset, '+0200')
+
+    def test_get_timezone_offset_wrong_input(self):
+        utc_dt = 'test'
+        offset = get_timezone_offset('Europe/Prague', utc_dt)
+        self.assertEqual(offset, '+0000')
+
+        utc_dt = datetime(2015, 9, 8, 23, 0, 0, 0, pytz.UTC)
+        offset = get_timezone_offset('Europe/Sydney', utc_dt)
+        self.assertEqual(offset, '+0000')
