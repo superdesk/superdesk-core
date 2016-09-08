@@ -28,13 +28,13 @@ before_script: >
     path.repo: [\"/tmp/es-backups\"]
     ' | sudo tee -a /etc/elasticsearch/elasticsearch.yml
     && cat /etc/elasticsearch/elasticsearch.yml
-    && service elasticsearch restart
+    && sudo service elasticsearch restart
     && echo "tune mongodb"
     && mkdir /tmp/ramdata/
     && mount -t tmpfs -o size=512M tmpfs /tmp/ramdata/
     && sudo sed -i 's\dbPath: /var/lib/mongodb\dbPath: /tmp/ramdata/\' /etc/mongod.conf
     && cat /etc/mongod.conf
-    && service mongod restart
+    && sudo service mongod restart
 
 
 cache:
