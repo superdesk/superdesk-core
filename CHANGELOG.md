@@ -4,7 +4,7 @@
 
 ### Added
 
-- Add `USE_TAKES` (default: `True`) config to be able to turn off takes packages.
+- Add `NO_TAKES` (default: `False`) config to be able to turn off takes packages.
 
 ## [1.1] 2016-08-29
 

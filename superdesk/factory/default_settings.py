@@ -452,3 +452,6 @@ FTP_TIMEOUT = 300
 
 # This setting is used to overide the desk/stage expiry for items to expire from the spike
 SPIKE_EXPIRY_MINUTES = None
+
+# toggle on/off takes packages creation
+NO_TAKES = False
