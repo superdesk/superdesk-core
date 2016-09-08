@@ -143,7 +143,6 @@ def setup(context=None, config=None, app_factory=get_app):
         set_context(context)
 
 
-
 def setup_auth_user(context, user=None):
     setup_db_user(context, user)
 
@@ -309,13 +308,15 @@ class TestCase(unittest.TestCase):
 
         setup.set_context(self)
 
+        def clean_ctx():
+            if self.ctx:
+                self.ctx.pop()
+        self.addCleanup(clean_ctx)
+
     def tearDownForChildren(self):
         """
         Run this `tearDown` stuff for each children
         """
-        self.app.locators = None
-        if self.ctx:
-            self.ctx.pop()
 
     def get_fixture_path(self, filename):
         rootpath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
