@@ -19,7 +19,7 @@ addons:
     - mongodb-org-server
     - elasticsearch
 
-before_script: >
+before_script: >+
     df -h
     # tune elasticsearch
     && mkdir /tmp/es-backups
