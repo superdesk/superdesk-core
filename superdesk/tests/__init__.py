@@ -110,6 +110,7 @@ def clean_dbs(app):
 
 
 def clean_es(app):
+    import time
     import requests
 
     if not hasattr(clean_es, 'run'):
@@ -136,6 +137,7 @@ def clean_es(app):
                 """
                 s = requests.Session()
                 s.post('http://localhost:9200/sptest_*/_close?wait_for_completion=true')
+                time.sleep(0.1)
                 s.post('http://localhost:9200/_snapshot/backups/snapshot_1/_restore?wait_for_completion=true')
 
         clean_es.run = run
@@ -166,8 +168,6 @@ def setup(case=None, config=None, app_factory=get_app):
         logging.getLogger('urllib3').setLevel(logging.WARNING)
 
     app = setup.app
-    clean_dbs(app)
-
     if case:
         case.app = app
         case.client = app.test_client()
@@ -178,6 +178,8 @@ def setup(case=None, config=None, app_factory=get_app):
             if case.ctx:
                 case.ctx.pop()
         case.addCleanup(clean_ctx)
+
+    clean_dbs(app)
 
 
 def setup_auth_user(context, user=None):
