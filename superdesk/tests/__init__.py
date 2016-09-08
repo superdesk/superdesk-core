@@ -104,6 +104,45 @@ def drop_mongo_db(app, db_prefix, dbname):
         db.close()
 
 
+def clean_dbs(app):
+    clean_es(app)
+    drop_mongo(app)
+
+
+def clean_es(app):
+    import requests
+
+    if not hasattr(clean_es, 'run'):
+        def run():
+            """
+            Drop and init elasticsearch indices if backups directory doesn't exist
+            """
+            drop_elastic(app)
+            app.data.init_elastic(app)
+
+        path = app.config['ELASTICSEARCH_BACKUPS_PATH']
+        if path and os.path.exists(path):
+            run()  # drop and init ones
+
+            s = requests.Session()
+            s.delete('http://localhost:9200/_snapshot/backups/snapshot_1/?wait_for_completion=true')
+            r = s.put('http://localhost:9200/_snapshot/backups/snapshot_1?wait_for_completion=true', params={
+                "indices": "sptest_*", "allow_no_indices": False
+            })
+
+            def run():
+                """
+                Just restore elasticsearch indices if backups directory exists
+                """
+                s = requests.Session()
+                r = s.post('http://localhost:9200/sptest_*/_close?wait_for_completion=true')
+                r = s.post('http://localhost:9200/_snapshot/backups/snapshot_1/_restore?wait_for_completion=true')
+
+        clean_es.run = run
+
+    clean_es.run()
+
+
 def setup(case=None, config=None, app_factory=get_app):
     if not hasattr(setup, 'app'):
         app_abspath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
@@ -126,13 +165,8 @@ def setup(case=None, config=None, app_factory=get_app):
         logging.getLogger('elasticsearch').setLevel(logging.WARNING)
         logging.getLogger('urllib3').setLevel(logging.WARNING)
 
-
     app = setup.app
-    drop_elastic(app)
-    drop_mongo(app)
-
-    # create index again after dropping it
-    app.data.init_elastic(app)
+    clean_dbs(app)
 
     if case:
         case.app = app
@@ -307,7 +341,6 @@ class TestCase(unittest.TestCase):
         Run this `setUp` stuff for each children
         """
         setup(self)
-
 
     def tearDownForChildren(self):
         """
