@@ -104,43 +104,46 @@ def drop_mongo_db(app, db_prefix, dbname):
         db.close()
 
 
-def setup(context=None, config=None, app_factory=get_app):
-    app_abspath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-    app_config = Config(app_abspath)
-    app_config.from_object('superdesk.tests.test_settings')
-    app_config['APP_ABSPATH'] = app_abspath
+def setup(case=None, config=None, app_factory=get_app):
+    if not hasattr(setup, 'app'):
+        app_abspath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+        app_config = Config(app_abspath)
+        app_config.from_object('superdesk.tests.test_settings')
+        app_config['APP_ABSPATH'] = app_abspath
 
-    app_config.update(get_test_settings())
-    app_config.update(config or {})
+        app_config.update(get_test_settings())
+        app_config.update(config or {})
 
-    app_config.update({
-        'DEBUG': True,
-        'TESTING': True,
-    })
+        app_config.update({
+            'DEBUG': True,
+            'TESTING': True,
+        })
 
-    app = app_factory(app_config)
+        setup.app = app_factory(app_config)
 
-    logging.getLogger('superdesk').setLevel(logging.WARNING)
-    logging.getLogger('elastic').setLevel(logging.WARNING)  # elastic datalayer
-    logging.getLogger('elasticsearch').setLevel(logging.WARNING)
-    logging.getLogger('urllib3').setLevel(logging.WARNING)
+        logging.getLogger('superdesk').setLevel(logging.WARNING)
+        logging.getLogger('elastic').setLevel(logging.WARNING)  # elastic datalayer
+        logging.getLogger('elasticsearch').setLevel(logging.WARNING)
+        logging.getLogger('urllib3').setLevel(logging.WARNING)
 
-    def set_context(obj):
-        drop_elastic(app)
-        drop_mongo(app)
 
-        # create index again after dropping it
-        app.data.init_elastic(app)
+    app = setup.app
+    drop_elastic(app)
+    drop_mongo(app)
 
-        obj.app = app
-        obj.client = app.test_client()
-        obj.ctx = app.app_context()
-        obj.ctx.push()
+    # create index again after dropping it
+    app.data.init_elastic(app)
 
-    setup.set_context = set_context
+    if case:
+        case.app = app
+        case.client = app.test_client()
+        case.ctx = app.app_context()
+        case.ctx.push()
 
-    if context:
-        set_context(context)
+        def clean_ctx():
+            if case.ctx:
+                case.ctx.pop()
+        case.addCleanup(clean_ctx)
 
 
 def setup_auth_user(context, user=None):
@@ -303,15 +306,8 @@ class TestCase(unittest.TestCase):
         """
         Run this `setUp` stuff for each children
         """
-        if not hasattr(setup, 'set_context'):
-            setup()
+        setup(self)
 
-        setup.set_context(self)
-
-        def clean_ctx():
-            if self.ctx:
-                self.ctx.pop()
-        self.addCleanup(clean_ctx)
 
     def tearDownForChildren(self):
         """
