@@ -53,6 +53,12 @@ class EnqueueService:
     def _enqueue_item(self, item):
         if item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and item.get(PACKAGE_TYPE):
             return self.publish(doc=item, target_media_type=SUBSCRIBER_TYPES.DIGITAL)
+        elif item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and app.config.get('NO_TAKES'):
+            queued = self._publish_package_items(item)
+            if not queued:  # this was only published to subscribers with config.packaged on
+                return self.publish(doc=item, target_media_type=SUBSCRIBER_TYPES.DIGITAL)
+            else:
+                return queued
         elif item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
             return self._publish_package_items(item)
         elif item[ITEM_TYPE] not in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
@@ -295,7 +301,6 @@ class EnqueueService:
         :param list subscribers: List of subscriber dict.
         :return : (list, bool) tuple of list of missing formatters and boolean flag. True if queued else False
         """
-
         try:
             queued = False
             no_formatters = []
@@ -311,6 +316,11 @@ class EnqueueService:
                             PACKAGE_TYPE not in doc and destination['config'].get('packaged', False)
                         if embed_package_items:
                             doc = self._embed_package_items(doc)
+
+                        if doc.get(PUBLISHED_IN_PACKAGE) and destination['config'].get('packaged', False) and \
+                                app.config.get('NO_TAKES'):
+                            continue
+
                         # Step 2(a)
                         formatter = get_formatter(destination['format'], doc)
 

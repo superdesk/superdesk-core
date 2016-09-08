@@ -120,10 +120,12 @@ def setup(context=None, config=None, app_factory=get_app):
     })
 
     app = app_factory(app_config)
+
     logging.getLogger('superdesk').setLevel(logging.WARNING)
     logging.getLogger('elastic').setLevel(logging.WARNING)  # elastic datalayer
     logging.getLogger('elasticsearch').setLevel(logging.WARNING)
     logging.getLogger('urllib3').setLevel(logging.WARNING)
+
     drop_elastic(app)
     drop_mongo(app)
 
