@@ -30,6 +30,6 @@ install:
 
 script:
     - flake8
-    - nosetests -v --with-timer
-    - behave --format progress3 --logging-level ERROR
+    - time nosetests -v --with-timer
+    - time behave --format progress3 --logging-level ERROR
 

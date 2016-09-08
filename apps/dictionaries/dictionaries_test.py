@@ -1,20 +1,18 @@
-
 import json
 import string
 import random
-import superdesk
 
 from eve.utils import ParsedRequest
 from eve.io.mongo import MongoJSONEncoder
-from test_factory import SuperdeskTestCase
 
 from apps.dictionaries.service import words, DictionaryService, store_dict, fetch_dict, FILE_ID
+from superdesk import get_resource_service
+from superdesk.tests import TestCase
 
 
-class WordsTestCase(SuperdeskTestCase):
+class WordsTestCase(TestCase):
 
     def setUp(self):
-        super().setUp()
         self.req = ParsedRequest()
         with self.app.test_request_context(self.app.config.get('URL_PREFIX')):
             self.dictionaries = [{'_id': '1', 'name': 'Eng', 'language_id': 'en'},
@@ -35,10 +33,10 @@ class WordsTestCase(SuperdeskTestCase):
 
     def test_get_dictionary(self):
         with self.app.app_context():
-            dicts = superdesk.get_resource_service('dictionaries').get_dictionaries('en')
+            dicts = get_resource_service('dictionaries').get_dictionaries('en')
             self.assertEqual(len(dicts), 1)
             self.assertEqual(dicts[0]['language_id'], 'en')
-            dicts = superdesk.get_resource_service('dictionaries').get_dictionaries('en-AU')
+            dicts = get_resource_service('dictionaries').get_dictionaries('en-AU')
             self.assertEqual(len(dicts), 1)
             self.assertEqual(dicts[0]['language_id'], 'en-AU')
 

@@ -9,21 +9,20 @@
 # at https://www.sourcefabric.org/superdesk/license
 import os
 
-import superdesk.io.commands.update_ingest as ingest
 from datetime import timedelta
 from nose.tools import assert_raises
 from eve.utils import ParsedRequest
 
-from superdesk import etree
-from superdesk import get_resource_service
-from superdesk.utc import utcnow
+import superdesk.io.commands.update_ingest as ingest
+from .tests import setup_providers, teardown_providers
+from superdesk import etree, get_resource_service
+from superdesk.celery_task_utils import mark_task_as_not_running, is_task_running
 from superdesk.errors import SuperdeskApiError, ProviderError
 from superdesk.io import register_feeding_service, registered_feeding_services
-from .tests import setup_providers, teardown_providers
-from superdesk.io.feeding_services import FeedingService
 from superdesk.io.commands.remove_expired_content import get_expired_items, RemoveExpiredContent
-from superdesk.celery_task_utils import mark_task_as_not_running, is_task_running
-from test_factory import SuperdeskTestCase
+from superdesk.io.feeding_services import FeedingService
+from superdesk.tests import TestCase
+from superdesk.utc import utcnow
 
 
 class TestProviderService(FeedingService):
@@ -35,7 +34,7 @@ class TestProviderService(FeedingService):
 register_feeding_service('test', TestProviderService(), [ProviderError.anpaError(None, None).get_error_description()])
 
 
-class CeleryTaskRaceTest(SuperdeskTestCase):
+class CeleryTaskRaceTest(TestCase):
 
     def test_the_second_update_fails_if_already_running(self):
         provider = {'_id': 'abc', 'name': 'test provider', 'update_schedule': {'minutes': 1}}
@@ -54,14 +53,12 @@ class CeleryTaskRaceTest(SuperdeskTestCase):
 reuters_guid = 'tag_reuters.com_2014_newsml_KBN0FL0NM:10'
 
 
-class UpdateIngestTest(SuperdeskTestCase):
+class UpdateIngestTest(TestCase):
 
     def setUp(self):
-        super().setUp()
         setup_providers(self)
 
     def tearDown(self):
-        super().tearDown()
         teardown_providers(self)
 
     def _get_provider(self, provider_name):

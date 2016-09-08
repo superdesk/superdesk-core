@@ -29,7 +29,6 @@ class CropTestCase(TestCase):
     }
 
     def setUp(self):
-        super().setUp()
         self.service = CropService()
         populate_table_json('vocabularies', [self.crop_sizes])
 

@@ -8,13 +8,12 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from test_factory import SuperdeskTestCase
 from apps.preferences import PreferencesService
+from superdesk.tests import TestCase
 
 
-class Preference_Tests(SuperdeskTestCase):
+class Preference_Tests(TestCase):
     def setUp(self):
-        super().setUp()
         self._default_user_settings = {
             "archive:view": {
                 "default": "mgrid",

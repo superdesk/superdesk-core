@@ -13,17 +13,16 @@ import os
 
 from superdesk.errors import IngestEmailError
 from superdesk.io.feed_parsers.rfc822 import EMailRFC822FeedParser
-from test_factory import SuperdeskTestCase
+from superdesk.tests import TestCase
 
 
-class RFC822JsonFormatter(SuperdeskTestCase):
+class RFC822JsonFormatter(TestCase):
 
     vocab = [{'_id': 'categories', 'items': [{'is_active': True, 'name': 'Domestic Sport', 'qcode': 's'}]}]
     desk = [{'_id': 1, 'name': 'Brisbane'}]
     user = [{'_id': 1, 'email': 'mock@mail.com.au', 'display_name': 'A Mock Up', 'sign_off': 'TA'}]
 
     def setUp(self):
-        super().setUp()
         self.app.data.insert('vocabularies', self.vocab)
         self.app.data.insert('desks', self.desk)
         self.app.data.insert('users', self.user)

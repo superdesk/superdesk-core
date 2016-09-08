@@ -20,7 +20,6 @@ class RolesTestCase(TestCase):
               'user_type': 'user', 'display_name': 'Foo Bar', 'is_enabled': True}]
 
     def setUp(self):
-        super().setUp()
         self.app.data.insert('roles', self.roles)
         self.users[0]['role'] = self.roles[0]['_id']
         self.app.data.insert('users', self.users)

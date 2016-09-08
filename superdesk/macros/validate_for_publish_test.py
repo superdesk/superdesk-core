@@ -8,12 +8,13 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from .validate_for_publish import validate_for_publish, ValidationError
 from nose.tools import assert_raises
-from test_factory import SuperdeskTestCase
+
+from .validate_for_publish import validate_for_publish, ValidationError
+from superdesk.tests import TestCase
 
 
-class ValidateForPublishTests(SuperdeskTestCase):
+class ValidateForPublishTests(TestCase):
     validator = {'_id': 'publish_text',
                  'act': 'publish',
                  'type': 'text',

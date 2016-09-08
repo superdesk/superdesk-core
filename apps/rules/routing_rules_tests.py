@@ -158,7 +158,6 @@ class ValidateScheduleMethodTestCase(RoutingRuleSchemeServiceTest):
 
     def setUp(self):
         super().setUp()
-
         self.schedule = {
             'day_of_week': ['WED', 'FRI']
         }

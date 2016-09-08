@@ -8,15 +8,13 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-
-from test_factory import SuperdeskTestCase
 from .package_service import PackageService
+from superdesk.tests import TestCase
 
 
-class PackageServiceTestCase(SuperdeskTestCase):
+class PackageServiceTestCase(TestCase):
 
     def setUp(self):
-        super().setUp()
         self.package1 = {"groups": [{"id": "root",
                                      "refs": [
                                          {

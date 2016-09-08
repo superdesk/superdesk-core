@@ -8,11 +8,12 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from test_factory import SuperdeskTestCase
 from flask import render_template_string
 
+from superdesk.tests import TestCase
 
-class ConvertDatetimeFiltersTest(SuperdeskTestCase):
+
+class ConvertDatetimeFiltersTest(TestCase):
 
     def test_convert_datetime_utc_no_format(self):
         template_string = '{{ item.versioncreated | format_datetime("Australia/Sydney")}}'

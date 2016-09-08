@@ -8,11 +8,11 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from test_factory import SuperdeskTestCase
 from apps.validate.validate import SchemaValidator, ValidateService
+from superdesk.tests import TestCase
 
 
-class ValidateMandatoryInListTest(SuperdeskTestCase):
+class ValidateMandatoryInListTest(TestCase):
 
     def test_fail_validate_mandatory_in_list_for_subject(self):
         validator = SchemaValidator()

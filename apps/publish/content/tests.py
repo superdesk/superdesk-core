@@ -8,35 +8,34 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from bson.objectid import ObjectId
-from copy import copy
-from datetime import timedelta
 import os
 import json
+from copy import copy
+from datetime import timedelta
+from unittest import mock
+from unittest.mock import MagicMock, patch
 
+from bson.objectid import ObjectId
 from eve.utils import config, ParsedRequest
 from eve.versioning import versioned_id_field
 
-from apps.packages.package_service import PackageService
-from apps.publish.content.publish import ArchivePublishService
-from superdesk.publish.subscribers import SUBSCRIBER_TYPES
-from apps.validators import ValidatorsPopulateCommand
-from superdesk.metadata.packages import RESIDREF
-from test_factory import SuperdeskTestCase
-from superdesk.publish import init_app, publish_queue
-from apps.publish.content.common import BasePublishService
-from superdesk.utc import utcnow
-from superdesk import get_resource_service
-import superdesk
 from apps.archive.archive import SOURCE as ARCHIVE
-from superdesk.metadata.item import TAKES_PACKAGE, PACKAGE_TYPE, ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTENT_TYPE
-from apps.publish.published_item import LAST_PUBLISHED_VERSION
-from unittest import mock
-from unittest.mock import MagicMock, patch
-from apps.publish.enqueue.enqueue_service import EnqueueService
-from apps.publish.enqueue.enqueue_published import EnqueuePublishedService
+from apps.packages.package_service import PackageService
+from apps.publish.content.common import BasePublishService
+from apps.publish.content.publish import ArchivePublishService
 from apps.publish.enqueue import enqueue_published
+from apps.publish.enqueue.enqueue_published import EnqueuePublishedService
+from apps.publish.enqueue.enqueue_service import EnqueueService
+from apps.publish.published_item import LAST_PUBLISHED_VERSION
+from apps.validators import ValidatorsPopulateCommand
+from superdesk import get_resource_service, get_backend
 from superdesk.media.crop import CropService
+from superdesk.metadata.item import TAKES_PACKAGE, PACKAGE_TYPE, ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTENT_TYPE
+from superdesk.metadata.packages import RESIDREF
+from superdesk.publish import init_app, publish_queue
+from superdesk.publish.subscribers import SUBSCRIBER_TYPES
+from superdesk.tests import TestCase
+from superdesk.utc import utcnow
 
 ARCHIVE_PUBLISH = 'archive_publish'
 ARCHIVE_CORRECT = 'archive_correct'
@@ -47,7 +46,7 @@ PUBLISHED = 'published'
 
 
 @mock.patch('superdesk.publish.subscribers.SubscribersService.generate_sequence_number', lambda self, subscriber: 1)
-class ArchivePublishTestCase(SuperdeskTestCase):
+class ArchivePublishTestCase(TestCase):
     def init_data(self):
         self.users = [{'_id': '1', 'username': 'admin'}]
         self.desks = [{'_id': ObjectId('123456789ABCDEF123456789'), 'name': 'desk1'}]
@@ -343,7 +342,6 @@ class ArchivePublishTestCase(SuperdeskTestCase):
                           ITEM_STATE: CONTENT_STATE.PROGRESS}]
 
     def setUp(self):
-        super().setUp()
         self.init_data()
 
         self.app.data.insert('users', self.users)
@@ -370,7 +368,6 @@ class ArchivePublishTestCase(SuperdeskTestCase):
         self.app.media.put = MagicMock(return_value='media_id')
 
     def tearDown(self):
-        super().tearDown()
         if self.filename and os.path.exists(self.filename):
             os.remove(self.filename)
 
@@ -655,7 +652,7 @@ class ArchivePublishTestCase(SuperdeskTestCase):
         self.assertEqual(7, queue_items.count())
 
         # this will delete queue transmission for the wire article not the takes package.
-        publish_queue.PublishQueueService(PUBLISH_QUEUE, superdesk.get_backend()).delete_by_article_id(doc['_id'])
+        publish_queue.PublishQueueService(PUBLISH_QUEUE, get_backend()).delete_by_article_id(doc['_id'])
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(2, queue_items.count())
 

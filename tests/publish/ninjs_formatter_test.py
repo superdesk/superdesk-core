@@ -20,7 +20,6 @@ from superdesk.publish import init_app
 @mock.patch('superdesk.publish.subscribers.SubscribersService.generate_sequence_number', lambda self, subscriber: 1)
 class NinjsFormatterTest(TestCase):
     def setUp(self):
-        super().setUp()
         self.formatter = NINJSFormatter()
         init_app(self.app)
         self.maxDiff = None

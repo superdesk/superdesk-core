@@ -26,7 +26,6 @@ class TransmitItemsTestCase(TestCase):
     """Tests for the transmit_items() function."""
 
     def setUp(self):
-        super().setUp()
         try:
             from superdesk.publish.publish_content import transmit_items
         except ImportError:
@@ -229,7 +228,6 @@ class QueueItemsTestCase(TestCase):
     """Tests for the transmit_items() function."""
 
     def setUp(self):
-        super().setUp()
         try:
             from superdesk.publish.publish_content import get_queue_items
         except ImportError:

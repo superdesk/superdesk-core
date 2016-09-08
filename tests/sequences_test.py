@@ -17,7 +17,6 @@ from nose.tools import assert_raises
 class SequencesTestCase(TestCase):
 
     def setUp(self):
-        super().setUp()
         with self.app.app_context():
             self.service = get_resource_service('sequences')
         self.min_seq_number = 1

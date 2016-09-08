@@ -9,10 +9,10 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from .macro_register import macros
-from test_factory import SuperdeskTestCase
+from superdesk.tests import TestCase
 
 
-class MacrosTestCase(SuperdeskTestCase):
+class MacrosTestCase(TestCase):
 
     def test_register(self):
         with self.app.app_context():

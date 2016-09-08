@@ -28,7 +28,6 @@ class MockPreferenceService:
 
 class ActivityTestCase(TestCase):
     def setUp(self):
-        super().setUp()
         init_app(self.app)
 
     def test_if_user_is_in_recipients(self):

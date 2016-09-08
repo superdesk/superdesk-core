@@ -2,10 +2,11 @@
 import flask
 import unittest
 from datetime import datetime
-from superdesk.utc import utcnow
-from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
+
 from .content_templates import get_next_run, Weekdays, get_item_from_template, render_content_template
-from test_factory import SuperdeskTestCase
+from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
+from superdesk.tests import TestCase
+from superdesk.utc import utcnow
 
 
 class TemplatesTestCase(unittest.TestCase):
@@ -70,7 +71,7 @@ class TemplatesTestCase(unittest.TestCase):
         self.assertIn('SYDNEY', dateline.get('text'))
 
 
-class RenderTemplateTestCase(SuperdeskTestCase):
+class RenderTemplateTestCase(TestCase):
 
     def test_render_content_template(self):
         template = {

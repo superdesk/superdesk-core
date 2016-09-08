@@ -8,12 +8,12 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from test_factory import SuperdeskTestCase
-from superdesk import get_resource_service
 from .commands import CreateUserCommand
+from superdesk import get_resource_service
+from superdesk.tests import TestCase
 
 
-class UsersTestCase(SuperdeskTestCase):
+class UsersTestCase(TestCase):
 
     def test_create_user_command(self):
         if not self.app.config.get('LDAP_SERVER'):

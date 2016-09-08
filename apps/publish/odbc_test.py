@@ -8,15 +8,13 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from superdesk.publish import SUBSCRIBER_TYPES
-
-from test_factory import SuperdeskTestCase
 import superdesk
-from superdesk.publish import init_app
+from superdesk.tests import TestCase
+from superdesk.publish import init_app, SUBSCRIBER_TYPES
 from superdesk.publish.transmitters.odbc import ODBCPublishService
 
 
-class ODBCTests(SuperdeskTestCase):
+class ODBCTests(TestCase):
     subscribers = [{"_id": "1", "name": "Test", "subscriber_type": SUBSCRIBER_TYPES.WIRE, "media_type": "media",
                     "is_active": True, "sequence_num_settings": {"max": 10, "min": 1},
                     "critical_errors": {"9004": True},
@@ -58,8 +56,6 @@ class ODBCTests(SuperdeskTestCase):
                     }]
 
     def setUp(self):
-        super().setUp()
-
         self.subscribers[0]['destinations'][0]['config']['connection_string'] = \
             superdesk.app.config["ODBC_TEST_CONNECTION_STRING"]
         self.app.data.insert('subscribers', self.subscribers)

@@ -18,7 +18,6 @@ from superdesk.users.services import UsersService, compare_preferences
 class PrivilegesTestCase(TestCase):
 
     def setUp(self):
-        super().setUp()
         with self.app.app_context():
             self.service = UsersService('users', backend=superdesk.get_backend())
 

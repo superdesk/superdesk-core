@@ -11,40 +11,43 @@
 
 import os
 import time
-import arrow
-from datetime import datetime, timedelta
-
-import superdesk.tests as tests
-from superdesk.io import registered_feeding_services
-from superdesk.io.commands.update_ingest import LAST_ITEM_UPDATE
-import superdesk
-from behave import given, when, then  # @UnresolvedImport
-from flask import json
-from eve.methods.common import parse
-from superdesk import default_user_preferences, get_resource_service, utc, etree
-from superdesk.io.feed_parsers import XMLFeedParser
-from superdesk.utc import utcnow, get_expiry_date
-from eve.io.mongo import MongoJSONEncoder
+import shutil
 from base64 import b64encode
-from wooper.general import fail_and_print_body, apply_path, \
-    parse_json_response, WooperAssertionError
+from datetime import datetime, timedelta
+from os.path import basename
+from re import findall
+from urllib.parse import urlparse
+
+import arrow
+from behave import given, when, then  # @UnresolvedImport
+from bson import ObjectId
+from eve.io.mongo import MongoJSONEncoder
+from eve.methods.common import parse
+from eve.utils import ParsedRequest
+from flask import json
+from wooper.assertions import (
+    assert_in, assert_equal, assertions
+)
+from wooper.general import (
+    fail_and_print_body, apply_path, parse_json_response,
+    WooperAssertionError
+)
 from wooper.expect import (
     expect_status, expect_status_in,
     expect_json, expect_json_length,
     expect_json_contains, expect_json_not_contains,
     expect_headers_contain,
 )
-from wooper.assertions import (
-    assert_in, assert_equal, assertions)
-from urllib.parse import urlparse
-from os.path import basename
-from superdesk.tests import test_user, get_prefixed_url, set_placeholder
-from re import findall
-from eve.utils import ParsedRequest
-import shutil
+
+import superdesk
+from superdesk import tests
+from superdesk.io import registered_feeding_services
+from superdesk.io.commands.update_ingest import LAST_ITEM_UPDATE
+from superdesk import default_user_preferences, get_resource_service, utc, etree
+from superdesk.io.feed_parsers import XMLFeedParser
+from superdesk.utc import utcnow, get_expiry_date
+from superdesk.tests import get_prefixed_url, set_placeholder
 from apps.dictionaries.resource import DICTIONARY_FILE
-from test_factory import setup_auth_user
-from bson import ObjectId
 from superdesk.filemeta import get_filemeta
 
 external_url = 'http://thumbs.dreamstime.com/z/digital-nature-10485007.jpg'
@@ -361,7 +364,7 @@ def given_config_update(context):
 @given('config')
 def step_impl_given_config(context):
     tests.setup(context, json.loads(context.text))
-    setup_auth_user(context)
+    tests.setup_auth_user(context)
 
 
 @given('we have "{role_name}" role')
@@ -1398,13 +1401,13 @@ def we_reset_password_for_user(context):
 def when_we_switch_user(context):
     user = {'username': 'test-user-2', 'password': 'pwd', 'is_active': True,
             'needs_activation': False, 'sign_off': 'foo'}
-    setup_auth_user(context, user)
+    tests.setup_auth_user(context, user)
     set_placeholder(context, 'USERS_ID', str(context.user['_id']))
 
 
 @when('we setup test user')
 def when_we_setup_test_user(context):
-    setup_auth_user(context, test_user)
+    tests.setup_auth_user(context, tests.test_user)
 
 
 @when('we get my "{url}"')
@@ -1670,7 +1673,7 @@ def login_as(context, username, password, user_type):
     if context.text:
         user.update(json.loads(context.text))
 
-    setup_auth_user(context, user)
+    tests.setup_auth_user(context, user)
 
 
 @given('we login as user "{username}" with password "{password}" and user type "{user_type}"')
