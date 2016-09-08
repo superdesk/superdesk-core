@@ -19,6 +19,11 @@ addons:
     - mongodb-org-server
     - elasticsearch
 
+before_script:
+    - sudo cat /etc/elasticsearch/elasticsearch.yml
+    - sudo cat /etc/mongod.conf
+    - sudo df
+
 cache:
   directories:
     - $HOME/.cache/pip
