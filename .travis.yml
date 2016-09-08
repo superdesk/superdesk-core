@@ -21,7 +21,7 @@ addons:
 
 before_script:
     - df -h
-    - mkdir /tmp/es-backups && echo 'index.store.type: memory\npath.repo: ["/tmp/es-backups"]' | tee -a /etc/elasticsearch/elasticsearch.yml
+    - "mkdir /tmp/es-backups && echo 'index.store.type: memory\npath.repo: [\"/tmp/es-backups\"]' | tee -a /etc/elasticsearch/elasticsearch.yml"
     - cat /etc/elasticsearch/elasticsearch.yml
     - cat /etc/mongod.conf
 
