@@ -126,7 +126,7 @@ def clean_es(app):
 
             s = requests.Session()
             s.delete('http://localhost:9200/_snapshot/backups/snapshot_1/?wait_for_completion=true')
-            r = s.put('http://localhost:9200/_snapshot/backups/snapshot_1?wait_for_completion=true', params={
+            s.put('http://localhost:9200/_snapshot/backups/snapshot_1?wait_for_completion=true', params={
                 "indices": "sptest_*", "allow_no_indices": False
             })
 
@@ -135,8 +135,8 @@ def clean_es(app):
                 Just restore elasticsearch indices if backups directory exists
                 """
                 s = requests.Session()
-                r = s.post('http://localhost:9200/sptest_*/_close?wait_for_completion=true')
-                r = s.post('http://localhost:9200/_snapshot/backups/snapshot_1/_restore?wait_for_completion=true')
+                s.post('http://localhost:9200/sptest_*/_close?wait_for_completion=true')
+                s.post('http://localhost:9200/_snapshot/backups/snapshot_1/_restore?wait_for_completion=true')
 
         clean_es.run = run
 
