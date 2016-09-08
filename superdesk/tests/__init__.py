@@ -105,7 +105,6 @@ def drop_mongo_db(app, db_prefix, dbname):
 
 
 def setup(context=None, config=None, app_factory=get_app):
-
     app_abspath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     app_config = Config(app_abspath)
     app_config.from_object('superdesk.tests.test_settings')
@@ -132,9 +131,14 @@ def setup(context=None, config=None, app_factory=get_app):
     # create index again after dropping it
     app.data.init_elastic(app)
 
+    def set_context(ctx):
+        ctx.app = app
+        ctx.client = app.test_client()
+    setup.set_context = set_context
+
     if context:
-        context.app = app
-        context.client = app.test_client()
+        set_context(context)
+
 
 
 def setup_auth_user(context, user=None):
@@ -297,7 +301,11 @@ class TestCase(unittest.TestCase):
         """
         Run this `setUp` stuff for each children
         """
-        setup(self, app_factory=get_app)
+        if not hasattr(setup, 'set_context'):
+            setup()
+
+        setup.set_context(self)
+        drop_mongo(self.app)
         self.ctx = self.app.app_context()
         self.ctx.push()
 
@@ -308,13 +316,6 @@ class TestCase(unittest.TestCase):
         self.app.locators = None
         if self.ctx:
             self.ctx.pop()
-        with self.app.app_context():
-            self.app.celery.pool.force_close_all()
-            self.app.data.mongo.pymongo().cx.close()
-            self.app.redis.connection_pool.disconnect()
-            for connection in self.app.data.elastic.es.transport.connection_pool.connections:
-                connection.pool.close()
-        del self.app
 
     def get_fixture_path(self, filename):
         rootpath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
