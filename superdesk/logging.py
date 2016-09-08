@@ -27,12 +27,17 @@ def item_msg(msg, item):
 
 def configure_logging(file_path):
     """
-    configure logging.
+    Configure logging.
+
     :param str file_path:
     """
+    if not file_path:
+        return
+
     try:
-        logging_conf = open(file_path, 'r')
-        logging_dict = yaml.load(logging_conf)
+        with open(file_path, 'r') as f:
+            logging_dict = yaml.load(f)
+
         logging.config.dictConfig(logging_dict)
     except:
-        logger.error('Cannot load logging config. File: {}'.format(file_path))
+        logger.warn('Cannot load logging config. File: %s', file_path)
