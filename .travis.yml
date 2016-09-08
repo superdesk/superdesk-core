@@ -23,11 +23,10 @@ before_script: >
     df -h
     && echo "tune elasticsearch"
     && mkdir /tmp/es-backups
-    && echo "
-    index.store.type: memory\n
-    path.repo: ['/tmp/es-backups']
-    " | sudo tee -a /etc/elasticsearch/elasticsearch.yml
-    && cat /etc/elasticsearch/elasticsearch.yml
+    &&
+      echo "index.store.type: memory\npath.repo: ['/tmp/es-backups']"
+      | sudo tee -a /etc/elasticsearch/elasticsearch.yml
+    && tail -n10 /etc/elasticsearch/elasticsearch.yml
     && sudo service elasticsearch restart
     && echo "tune mongodb"
     && mkdir /tmp/ramdata/
