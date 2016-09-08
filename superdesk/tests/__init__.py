@@ -144,7 +144,7 @@ def clean_es(app):
 
 
 def setup(case=None, config=None, app_factory=get_app):
-    if not hasattr(setup, 'app_config'):
+    if not hasattr(setup, 'app'):
         app_abspath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
         app_config = Config(app_abspath)
         app_config.from_object('superdesk.tests.test_settings')
@@ -158,14 +158,14 @@ def setup(case=None, config=None, app_factory=get_app):
             'TESTING': True,
         })
 
-        setup.app_config = app_config
+        setup.app = app_factory(app_config)
 
         logging.getLogger('superdesk').setLevel(logging.WARNING)
         logging.getLogger('elastic').setLevel(logging.WARNING)  # elastic datalayer
         logging.getLogger('elasticsearch').setLevel(logging.WARNING)
         logging.getLogger('urllib3').setLevel(logging.WARNING)
 
-    app = app_factory(setup.app_config)
+    app = setup.app
     if case:
         case.app = app
         case.client = app.test_client()
