@@ -20,9 +20,9 @@ addons:
     - elasticsearch
 
 before_script:
-    - sudo cat /etc/elasticsearch/elasticsearch.yml
-    - sudo cat /etc/mongod.conf
-    - sudo df
+    - cat /etc/elasticsearch/elasticsearch.yml
+    - cat /etc/mongod.conf
+    - df -h
 
 cache:
   directories:
