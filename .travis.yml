@@ -1,6 +1,6 @@
 language: python
 
-sudo: false
+sudo: required
 
 python:
     - "3.4"
@@ -19,9 +19,26 @@ addons:
     - mongodb-org-server
     - elasticsearch
 
+before_script: >
+    df -h
+    && echo "tune elasticsearch"
+    && mkdir /tmp/es-backups
+    && sudo chown elasticsearch:elasticsearch /tmp/es-backups
+    && echo "path.repo: ['/tmp/es-backups']" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
+    && echo "index.store.type: memory" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
+    && tail -n10 /etc/elasticsearch/elasticsearch.yml
+    && sudo service elasticsearch restart
+    #&& echo "tune mongodb"
+    #&& mkdir /tmp/ramdata
+    #&& sudo chown mongodb:mongodb /tmp/ramdata
+    #&& sudo mount -t tmpfs -o size=512M tmpfs /tmp/ramdata
+    #&& sudo sed -i 's\dbPath: /var/lib/mongodb\dbPath: /tmp/ramdata\' /etc/mongod.conf
+    #&& cat /etc/mongod.conf
+    #&& sudo service mongodb restart
+
+
 cache:
-  directories:
-    - $HOME/.cache/pip
+  - pip
 
 install:
     - pip install .
@@ -30,6 +47,7 @@ install:
 
 script:
     - flake8
+    - nosetests -v apps/archive/archive_test.py --with-timer # todo remove
     - time nosetests -v --with-timer
     - time behave --format progress3 --logging-level ERROR
 

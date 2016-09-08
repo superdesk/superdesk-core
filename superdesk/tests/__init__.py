@@ -104,37 +104,80 @@ def drop_mongo_db(app, db_prefix, dbname):
         db.close()
 
 
-def setup(context=None, config=None, app_factory=get_app):
-
-    app_abspath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-    app_config = Config(app_abspath)
-    app_config.from_object('superdesk.tests.test_settings')
-    app_config['APP_ABSPATH'] = app_abspath
-
-    app_config.update(get_test_settings())
-    app_config.update(config or {})
-
-    app_config.update({
-        'DEBUG': True,
-        'TESTING': True,
-    })
-
-    app = app_factory(app_config)
-
-    logging.getLogger('superdesk').setLevel(logging.WARNING)
-    logging.getLogger('elastic').setLevel(logging.WARNING)  # elastic datalayer
-    logging.getLogger('elasticsearch').setLevel(logging.WARNING)
-    logging.getLogger('urllib3').setLevel(logging.WARNING)
-
-    drop_elastic(app)
+def clean_dbs(app):
+    clean_es(app)
     drop_mongo(app)
 
-    # create index again after dropping it
-    app.data.init_elastic(app)
 
-    if context:
-        context.app = app
-        context.client = app.test_client()
+def clean_es(app):
+    import requests
+
+    if not hasattr(clean_es, 'run'):
+        def run():
+            """
+            Drop and init elasticsearch indices if backups directory doesn't exist
+            """
+            drop_elastic(app)
+            app.data.init_elastic(app)
+
+        path = app.config['ELASTICSEARCH_BACKUPS_PATH']
+        if path and os.path.exists(path):
+            run()  # drop and init ones
+
+            s = requests.Session()
+            s.delete('http://localhost:9200/_snapshot/backups/snapshot_1/?wait_for_completion=true')
+            s.put('http://localhost:9200/_snapshot/backups/snapshot_1?wait_for_completion=true', params={
+                "indices": "sptest_*", "allow_no_indices": False
+            })
+
+            def run():
+                """
+                Just restore elasticsearch indices if backups directory exists
+                """
+                s = requests.Session()
+                s.post('http://localhost:9200/sptest_*/_close?wait_for_completion=true')
+                s.post('http://localhost:9200/_snapshot/backups/snapshot_1/_restore?wait_for_completion=true')
+
+        clean_es.run = run
+
+    clean_es.run()
+
+
+def setup(case=None, config=None, app_factory=get_app):
+    if not hasattr(setup, 'app'):
+        app_abspath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+        app_config = Config(app_abspath)
+        app_config.from_object('superdesk.tests.test_settings')
+        app_config['APP_ABSPATH'] = app_abspath
+
+        app_config.update(get_test_settings())
+        app_config.update(config or {})
+
+        app_config.update({
+            'DEBUG': True,
+            'TESTING': True,
+        })
+
+        setup.app = app_factory(app_config)
+
+        logging.getLogger('superdesk').setLevel(logging.WARNING)
+        logging.getLogger('elastic').setLevel(logging.WARNING)  # elastic datalayer
+        logging.getLogger('elasticsearch').setLevel(logging.WARNING)
+        logging.getLogger('urllib3').setLevel(logging.WARNING)
+
+    app = setup.app
+    if case:
+        case.app = app
+        case.client = app.test_client()
+        case.ctx = app.app_context()
+        case.ctx.push()
+
+        def clean_ctx():
+            if case.ctx:
+                case.ctx.pop()
+        case.addCleanup(clean_ctx)
+
+    clean_dbs(app)
 
 
 def setup_auth_user(context, user=None):
@@ -297,24 +340,12 @@ class TestCase(unittest.TestCase):
         """
         Run this `setUp` stuff for each children
         """
-        setup(self, app_factory=get_app)
-        self.ctx = self.app.app_context()
-        self.ctx.push()
+        setup(self)
 
     def tearDownForChildren(self):
         """
         Run this `tearDown` stuff for each children
         """
-        self.app.locators = None
-        if self.ctx:
-            self.ctx.pop()
-        with self.app.app_context():
-            self.app.celery.pool.force_close_all()
-            self.app.data.mongo.pymongo().cx.close()
-            self.app.redis.connection_pool.disconnect()
-            for connection in self.app.data.elastic.es.transport.connection_pool.connections:
-                connection.pool.close()
-        del self.app
 
     def get_fixture_path(self, filename):
         rootpath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
