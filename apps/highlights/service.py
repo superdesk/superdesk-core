@@ -12,6 +12,8 @@ from superdesk import get_resource_service
 from superdesk.services import BaseService
 from eve.utils import ParsedRequest
 from superdesk.notification import push_notification
+from superdesk.utc import get_timezone_offset, utcnow
+from eve.utils import config
 
 
 def init_parsed_request(elastic_query):
@@ -26,7 +28,9 @@ def get_highlighted_items(highlights_id):
     query = {
         'query': {
             'filtered': {'filter': {'and': [
-                {'range': {'versioncreated': {'gte': highlight.get('auto_insert', 'now/d')}}},
+                {'range': {'versioncreated': {'gte': highlight.get('auto_insert', 'now/d'),
+                                              'time_zone': get_timezone_offset(config.DEFAULT_TIMEZONE,
+                                                                               utcnow())}}},
                 {'term': {'highlights': str(highlights_id)}},
             ]}}
         },
