@@ -19,17 +19,17 @@ addons:
     - mongodb-org-server
     - elasticsearch
 
-before_script: |
+before_script: >
     df -h
-    # tune elasticsearch
+    && echo "tune elasticsearch"
     && mkdir /tmp/es-backups
     && echo '
-    index.store.type: memory
+    index.store.type: memory\n
     path.repo: ["/tmp/es-backups"]
     ' | sudo tee -a /etc/elasticsearch/elasticsearch.yml
     && cat /etc/elasticsearch/elasticsearch.yml
     && sudo service elasticsearch restart
-    # tune mongodb
+    && echo "tune mongodb"
     && mkdir /tmp/ramdata/
     && sudo mount -t tmpfs -o size=512M tmpfs /tmp/ramdata/
     && sudo sed -i 's\dbPath: /var/lib/mongodb\dbPath: /tmp/ramdata/\' /etc/mongod.conf
