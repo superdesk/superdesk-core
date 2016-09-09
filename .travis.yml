@@ -29,5 +29,5 @@ install:
 
 script:
     - flake8
-    - nosetests -v --with-timer --with-id || nosetests -v --with-timer --with-id --failed
+    - time nosetests -v --with-timer --with-id || nosetests -v --with-timer --with-id --failed
     - time behave --format progress3 --logging-level ERROR
