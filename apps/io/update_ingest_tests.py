@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 import os
 
-from datetime import timedelta
+from datetime import timedelta, datetime
 from nose.tools import assert_raises
 from eve.utils import ParsedRequest
 
@@ -490,14 +490,59 @@ class UpdateIngestTest(TestCase):
 
     def test_ingest_with_routing_keeps_elastic_in_sync(self):
         provider, provider_service = self.setup_reuters_provider()
-        items = provider_service.fetch_ingest(reuters_guid)
-        items[0]['ingest_provider'] = provider['_id']
-        items[0]['expiry'] = utcnow() + timedelta(hours=11)
 
         desk = {'name': 'foo'}
         self.app.data.insert('desks', [desk])
         self.assertIsNotNone(desk['_id'])
         self.assertIsNotNone(desk['incoming_stage'])
+
+        now = datetime.now()
+
+        items = [
+            {
+                'guid': 'main_text',
+                'versioncreated': now,
+                'headline': 'Headline of the text item',
+            },
+            {'guid': 'image_1', 'type': 'picture', 'versioncreated': now},
+            {'guid': 'image_2', 'type': 'picture', 'versioncreated': now},
+            {
+                'type': 'composite',
+                'guid': 'package:guid:abcd123',
+                'versioncreated': now,
+                'headline': 'Headline of the text item',
+                'groups': [
+                    {
+                        'id': 'root',
+                        'role': 'grpRole:NEP',
+                        'refs': [{'idRef': 'main'}],
+                    }, {
+                        'id': 'main',
+                        'role': 'main',
+                        'refs': [
+                            {'residRef': 'main_text'},
+                            {'residRef': 'image_1'},
+                            {'residRef': 'image_2'},
+                        ],
+                    }
+                ]
+            }
+        ]
+
+        all_week_schedule = {
+            "day_of_week": [
+                "MON",
+                "TUE",
+                "WED",
+                "THU",
+                "FRI",
+                "SAT",
+                "SUN"
+            ],
+            "hour_of_day_from": "00:00:00",
+            "hour_of_day_to": "23:55:00",
+            "time_zone": "Europe/Prague"
+        }
 
         routing_scheme = {
             "name": "autofetch",
@@ -514,29 +559,30 @@ class UpdateIngestTest(TestCase):
                             }
                         ]
                     },
-                    "schedule": {
-                        "day_of_week": [
-                            "MON",
-                            "TUE",
-                            "WED",
-                            "THU",
-                            "FRI",
-                            "SAT",
-                            "SUN"
-                        ],
-                        "hour_of_day_from": "00:00:00",
-                        "hour_of_day_to": "23:55:00",
-                        "time_zone": "Europe/Prague"
-                    },
+                    "schedule": all_week_schedule,
                     "name": "fetch"
-                }
+                },
+                {
+                    "filter": None,
+                    "actions": {
+                        "exit": False,
+                        "publish": [],
+                        "fetch": []
+                    },
+                    "schedule": all_week_schedule,
+                    "name": "empty"
+                },
             ]
         }
 
+        ingest_service = get_resource_service('ingest')
         self.ingest_items(items, provider, provider_service, routing_scheme=routing_scheme)
 
-        ingest_service = get_resource_service('ingest')
-        lookup = {'guid': items[0]['guid']}
-        mongo_item = ingest_service.get_from_mongo(None, lookup)[0]
-        elastic_item = ingest_service.get(None, lookup)[0]
-        self.assertEqual(mongo_item['_etag'], elastic_item['_etag'])
+        self.assertEqual(4, ingest_service.get_from_mongo(None, {}).count())
+        self.assertEqual(4, ingest_service.get(None, {}).count())
+
+        for item in items:
+            lookup = {'guid': item['guid']}
+            mongo_item = ingest_service.get_from_mongo(None, lookup)[0]
+            elastic_item = ingest_service.get(None, lookup)[0]
+            self.assertEqual(mongo_item['_etag'], elastic_item['_etag'], mongo_item['guid'])
