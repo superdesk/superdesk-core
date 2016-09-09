@@ -10,16 +10,12 @@
 
 import superdesk
 from eve.io.base import DataLayer
-from eve.io.mongo import Mongo, MongoJSONEncoder
+from eve.io.mongo import Mongo
 from eve.utils import config, ParsedRequest
-from eve_elastic import Elastic, ElasticJSONSerializer, InvalidSearchString  # noqa
+from eve_elastic import Elastic, InvalidSearchString  # noqa
 from flask import current_app
 from superdesk.lock import lock, unlock
-
-
-class SuperdeskJSONEncoder(MongoJSONEncoder, ElasticJSONSerializer):
-    """Custom JSON encoder for elastic that can handle `bson.ObjectId`s."""
-    pass
+from superdesk.json_utils import SuperdeskJSONEncoder
 
 
 class SuperdeskDataLayer(DataLayer):

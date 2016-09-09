@@ -29,6 +29,7 @@ install_requires = [
     'celery[redis]>=3.1.18',
     'feedparser>=5.2',
     'hachoir3-superdesk>=3.0a1',
+    'HermesCache>=0.6.0,<0.7.0',
     'python-magic>=0.4',
     'python3-ldap>=0.9.8',
     'pytz>=2015.4',
@@ -40,7 +41,7 @@ install_requires = [
     'boto3>=1.1.4',
     'websockets>=2.6',
     'mongolock>=1.3.4',
-    'PyYAML>=3.11'
+    'PyYAML>=3.11',
 ]
 
 package_data = {
