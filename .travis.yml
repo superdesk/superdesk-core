@@ -1,6 +1,6 @@
 language: python
 
-sudo: false
+sudo: required
 
 python:
     - "3.4"
@@ -27,9 +27,15 @@ install:
     - pip install -r requirements.txt
     - pip install nose-timer
 
+before_script: >
+    df -h
+    && echo "index.store.type: memory" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
+    && tail -n10 /etc/elasticsearch/elasticsearch.yml
+    && sudo service elasticsearch restart
+
 script:
     - flake8
-    - time nosetests -v apps/archive/archive_test.py --with-timer --with-id
-    - time behave features/package_publish.feature
+    - time nosetests -v --with-timer --with-id apps/archive/archive_test.py
+    - time behave --format progress3 --logging-level ERROR features/package_publish.feature
     #- time (nosetests -v --with-timer --with-id || nosetests -v --with-timer --with-id --failed)
     #- time behave --format progress3 --logging-level ERROR
