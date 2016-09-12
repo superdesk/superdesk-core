@@ -168,3 +168,32 @@ Feature: Content Filter Tests
       "match_results": false
     }
     """
+
+  @auth
+  @vocabulary
+  Scenario: Test single article from ingest
+    Given "ingest"
+    """
+    [{"guid": 1, "_id": 1, "urgency": 1}]
+    """
+    Given empty "filter_conditions"
+    When we post to "/filter_conditions" with success
+    """
+    [{"name": "sport", "field": "urgency", "operator": "in", "value": "1,2,3"}]
+    """
+    Then we get latest
+    Given empty "content_filters"
+    When we post to "/content_filters" with success
+    """
+    [{"content_filter": [{"expression": {"fc": ["#filter_conditions._id#"]}}], "name": "soccer-only"}]
+    """
+    When we post to "/content_filters/test"
+    """
+    [{"filter_id": "#content_filters._id#", "article_id":"1"}]
+    """
+    Then we get existing resource
+    """
+    {
+      "match_results": true
+    }
+    """
