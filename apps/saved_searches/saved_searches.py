@@ -19,7 +19,6 @@ from apps.archive.common import get_user
 from superdesk import Resource, get_resource_service
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
-from superdesk.utils import ListCursor
 from superdesk.notification import push_notification
 
 
@@ -43,6 +42,15 @@ def encode_filter(data):
     :param data
     """
     return json.dumps(data) if isinstance(data, dict) else data
+
+
+def enhance_savedsearch(doc):
+    """
+    Decode the filter
+    :param dict doc: saved search
+    :return None:
+    """
+    doc['filter'] = decode_filter(doc.get('filter'))
 
 
 class SavedSearchesResource(Resource):
@@ -83,12 +91,12 @@ class AllSavedSearchesResource(Resource):
 
 
 class AllSavedSearchesService(BaseService):
-    def get(self, req, lookup):
-        items = list(super().get(req, lookup))
-        for item in items:
-            item['filter'] = decode_filter(item.get('filter'))
+    def on_fetched_item(self, doc):
+        enhance_savedsearch(doc)
 
-        return ListCursor(items)
+    def on_fetched(self, docs):
+        for doc in docs.get('_items', []):
+            enhance_savedsearch(doc)
 
 
 class SavedSearchesService(BaseService):
@@ -128,14 +136,11 @@ class SavedSearchesService(BaseService):
         """
         Overriding because of a different resource URL and user_id is part of the URL
         """
+        if not req:
+            req = ParsedRequest()
 
-        req = ParsedRequest()
         req.where = json.dumps({'$or': [lookup, {'is_global': True}]})
-        items = list(super().get(req, lookup=None))
-        for item in items:
-            item['filter'] = decode_filter(item.get('filter'))
-
-        return ListCursor(items)
+        return super().get(req, lookup=None)
 
     def init_request(self, elastic_query):
         """
@@ -182,6 +187,13 @@ class SavedSearchesService(BaseService):
         except Exception as e:
             logger.exception(e)
             raise SuperdeskApiError.badRequestError('Fail to validate the filter against %s.' % index)
+
+    def on_fetched_item(self, doc):
+        enhance_savedsearch(doc)
+
+    def on_fetched(self, docs):
+        for doc in docs.get('_items', []):
+            enhance_savedsearch(doc)
 
 
 class SavedSearchItemsResource(Resource):
