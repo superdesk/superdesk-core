@@ -35,6 +35,9 @@ def lock(task, host=None, expire=300, timeout=None):
     :param expire: lock ttl in seconds
     :param timeout: how long should it wait if task is locked
     """
+    if app.config['TESTING']:
+        return True
+
     if not host:
         host = get_host()
     got_lock = _lock.lock(task, host, expire=expire, timeout=timeout)
@@ -53,6 +56,9 @@ def unlock(task, host=None):
     :param task: task name
     :param host: current host id
     """
+    if app.config['TESTING']:
+        return True
+
     if not host:
         host = get_host()
     logger.info('releasing lock task=%s host=%s' % (task, host))
