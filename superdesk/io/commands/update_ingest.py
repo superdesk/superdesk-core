@@ -95,12 +95,14 @@ def filter_expired_items(provider, items):
             expiry = item.get('expiry', item['versioncreated'] + delta)
             if expiry.tzinfo:
                 return expiry > utcnow()
+            else:
+                return expiry > datetime.now()
         return False
 
     try:
         delta = timedelta(minutes=provider.get('content_expiry', app.config['INGEST_EXPIRY_MINUTES']))
         filtered_items = [item for item in items if is_not_expired(item) and
-                          item[ITEM_TYPE] in provider.get('content_types', [])]
+                          item.get(ITEM_TYPE, 'text') in provider.get('content_types', [])]
 
         if len(items) != len(filtered_items):
             logger.debug('Received {0} articles from provider {1}, but only {2} are eligible to be saved in ingest'
@@ -420,8 +422,11 @@ def ingest_items(items, provider, feeding_service, rule_set=None, routing_scheme
         if not ingested:
             failed_items.add(item[GUID_FIELD])
 
-    app.data._search_backend('ingest').bulk_insert('ingest', [item for item in all_items
-                                                              if item[GUID_FIELD] not in failed_items])
+    # sync mongo with ingest after all changes
+    ingest_service = superdesk.get_resource_service('ingest')
+    updated_items_ids = [item['_id'] for item in all_items if item[GUID_FIELD] not in failed_items]
+    updated_items = ingest_service.find({'_id': {'$in': updated_items_ids}}, max_results=len(updated_items_ids))
+    app.data._search_backend('ingest').bulk_insert('ingest', [item for item in updated_items])
 
     if failed_items:
         logger.error('Failed to ingest the following items: %s', failed_items)
@@ -488,9 +493,6 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
         if routing_scheme and new_version:
             routed = ingest_service.find_one(_id=item[superdesk.config.ID_FIELD], req=None)
             superdesk.get_resource_service('routing_schemes').apply_routing_scheme(routed, provider, routing_scheme)
-            # sync updates for bulk elastic insert
-            updates = ingest_service.find_one(_id=item[superdesk.config.ID_FIELD], req=None)
-            item.update(updates)
 
     except Exception as ex:
         logger.exception(ex)
