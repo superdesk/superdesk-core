@@ -29,5 +29,7 @@ install:
 
 script:
     - flake8
-    - time (nosetests -v --with-timer --with-id || nosetests -v --with-timer --with-id --failed)
-    - time behave --format progress3 --logging-level ERROR
+    - time nosetests -v apps/archive/archive_test.py --with-timer --with-id
+    - time behave features/package_publish.feature
+    #- time (nosetests -v --with-timer --with-id || nosetests -v --with-timer --with-id --failed)
+    #- time behave --format progress3 --logging-level ERROR
