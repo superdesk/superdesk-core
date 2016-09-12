@@ -35,7 +35,7 @@ before_script: >
     && echo "index.store.type: memory" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
     && sudo service elasticsearch restart
     && tail -n1 /etc/elasticsearch/elasticsearch.yml
-    && sleep 5
+    && sleep 10
     && curl -XPUT 'http://localhost:9200/_snapshot/backups' -d '{"type": "fs", "settings": {"location": "/tmp/es-backups"}}'
 
 script:
