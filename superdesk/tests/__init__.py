@@ -68,6 +68,7 @@ def get_test_settings():
     test_settings['CELERY_ALWAYS_EAGER'] = 'True'
     test_settings['CONTENT_EXPIRY_MINUTES'] = 99
     test_settings['VERSION'] = '_current_version'
+    test_settings['ELASTICSEARCH_BACKUPS_PATH'] = '/tmp/es-backups'
 
     # limit mongodb connections
     test_settings['MONGO_CONNECT'] = False
@@ -123,6 +124,49 @@ def setup_config(config):
     logging.getLogger('elasticsearch').setLevel(logging.WARNING)
     logging.getLogger('urllib3').setLevel(logging.WARNING)
     return app_config
+
+
+def clean_dbs(app):
+    clean_es(app)
+    drop_mongo(app)
+
+
+def clean_es(app):
+    import requests
+
+    if not hasattr(clean_es, 'run'):
+        def run():
+            """
+            Drop and init elasticsearch indices if backups directory doesn't exist
+            """
+            drop_elastic(app)
+            app.data.init_elastic(app)
+
+        path = app.config['ELASTICSEARCH_BACKUPS_PATH']
+        if path and os.path.exists(path):
+            run()  # drop and init ones
+
+            s = requests.Session()
+            s.delete('http://localhost:9200/_snapshot/backups/snapshot_1/?wait_for_completion=true')
+            s.put('http://localhost:9200/_snapshot/backups/snapshot_1?wait_for_completion=true', params={
+                "indices": "sptest_*", "allow_no_indices": False
+            })
+
+            def run():
+                """
+                Just restore elasticsearch indices if backups directory exists
+                """
+                #app.data.elastic.es.indices.close('sptest_*')
+                #app.data.elastic.es.snapshot.restore('backups', 'snapshot_1')
+                s = requests.Session()
+                r = s.post('http://localhost:9200/sptest_*/_close?wait_for_completion=true')
+                print(r.text)
+                r = s.post('http://localhost:9200/_snapshot/backups/snapshot_1/_restore?wait_for_completion=true')
+                print(r.text)
+
+        clean_es.run = run
+
+    clean_es.run()
 
 
 def setup(context=None, config=None, app_factory=get_app):
