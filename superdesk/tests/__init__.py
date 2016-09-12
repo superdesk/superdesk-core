@@ -172,11 +172,9 @@ def clean_es(app):
 
 
 def setup(context=None, config=None, app_factory=get_app):
-    if not hasattr(setup, 'app') or config:
-        cfg = setup_config(config)
-        setup.app = app_factory(cfg)
+    cfg = setup_config(config)
+    app = app_factory(cfg)
 
-    app = setup.app
     if context:
         context.app = app
         context.client = app.test_client()
