@@ -68,6 +68,7 @@ def get_test_settings():
     test_settings['CELERY_ALWAYS_EAGER'] = 'True'
     test_settings['CONTENT_EXPIRY_MINUTES'] = 99
     test_settings['VERSION'] = '_current_version'
+    test_settings['ELASTICSEARCH_BACKUPS_PATH'] = '/tmp/es-backups'
 
     # limit mongodb connections
     test_settings['MONGO_CONNECT'] = False
@@ -125,6 +126,53 @@ def setup_config(config):
     return app_config
 
 
+def clean_dbs(app):
+    clean_es(app)
+    drop_mongo(app)
+
+
+def clean_es(app):
+    if not hasattr(clean_es, 'run'):
+        def run():
+            """
+            Drop and init elasticsearch indices if backups directory doesn't exist
+            """
+            drop_elastic(app)
+            app.data.init_elastic(app)
+
+        path = app.config['ELASTICSEARCH_BACKUPS_PATH']
+        if path and os.path.exists(path):
+            run()  # drop and init ones
+
+            elastic = app.data.elastic
+            params = ('backups', 'snapshot_1')
+            try:
+                elastic.es.snapshot.delete(*params)
+            except Exception:
+                pass
+            #elastic.init_app(app)
+            elastic.es.snapshot.create(*params, wait_for_completion=True, body={
+                'indices': 'sptest_*',
+                'allow_no_indices': False,
+            })
+
+            def run():
+                """
+                Just restore elasticsearch indices if backups directory exists
+                """
+                elastic = app.data.elastic
+                elastic.es.indices.close('sptest_*', allow_no_indices=False)
+                #elastic.init_app(app)
+                elastic.es.snapshot.restore('backups', 'snapshot_1', {
+                    'indices': 'sptest_*',
+                    'allow_no_indices': False
+                }, wait_for_completion=True)
+
+        clean_es.run = run
+
+    clean_es.run()
+
+
 def setup(context=None, config=None, app_factory=get_app):
     if not hasattr(setup, 'app'):
         # It is ok to use the same app instance for all test cases.
@@ -137,9 +185,7 @@ def setup(context=None, config=None, app_factory=get_app):
         context.app = app
         context.client = app.test_client()
 
-    drop_mongo(app)
-    drop_elastic(app)
-    app.data.init_elastic(app)
+    clean_dbs(app)
 
 
 def setup_auth_user(context, user=None):
