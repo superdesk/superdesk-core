@@ -150,7 +150,6 @@ def clean_es(app):
                 elastic.es.snapshot.delete(*params)
             except Exception:
                 pass
-            #elastic.init_app(app)
             elastic.es.snapshot.create(*params, wait_for_completion=True, body={
                 'indices': 'sptest_*',
                 'allow_no_indices': False,
@@ -162,7 +161,6 @@ def clean_es(app):
                 """
                 elastic = app.data.elastic
                 elastic.es.indices.close('sptest_*', allow_no_indices=False)
-                #elastic.init_app(app)
                 elastic.es.snapshot.restore('backups', 'snapshot_1', {
                     'indices': 'sptest_*',
                     'allow_no_indices': False
