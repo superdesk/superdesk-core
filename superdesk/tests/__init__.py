@@ -172,9 +172,7 @@ def clean_es(app):
 
 
 def setup(context=None, config=None, app_factory=get_app):
-    if not hasattr(setup, 'app'):
-        # It is ok to use the same app instance for all test cases.
-        # So let's load config and init it ones.
+    if not hasattr(setup, 'app') or config:
         cfg = setup_config(config)
         setup.app = app_factory(cfg)
 
