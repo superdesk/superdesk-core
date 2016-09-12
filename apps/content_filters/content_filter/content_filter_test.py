@@ -48,7 +48,9 @@ class ContentFilterTestService(BaseService):
                 article_id = doc.get('article_id')
                 article = get_resource_service('archive').find_one(req=None, _id=article_id)
                 if not article:
-                    raise SuperdeskApiError.badRequestError('Article not found!')
+                    article = get_resource_service('ingest').find_one(req=None, _id=article_id)
+                    if not article:
+                        raise SuperdeskApiError.badRequestError('Article not found!')
                 try:
                     doc['match_results'] = service.does_match(content_filter, article)
                 except Exception as ex:
