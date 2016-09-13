@@ -15,8 +15,6 @@ import unittest
 from base64 import b64encode
 from unittest.mock import patch
 
-import elasticsearch
-from eve_elastic import get_es
 from flask import json, Config
 
 from apps.ldap import ADAuth
@@ -82,7 +80,7 @@ def get_test_settings():
 
 def drop_elastic(app):
     with app.app_context():
-        es = get_es(app.config['ELASTICSEARCH_URL'])
+        es = app.data.elastic.es
         indexes = [app.config['ELASTICSEARCH_INDEX']] + list(app.config['ELASTICSEARCH_INDEXES'].values())
         for index in indexes:
             es.indices.delete(index, ignore=[404])
@@ -134,18 +132,20 @@ def clean_es(app):
             """
             Drop and init elasticsearch indices if backups directory doesn't exist
             """
-            elastic.es.indices.delete('sptest_*')
+            drop_elastic(app)
             app.data.init_elastic(app)
 
-        elastic = app.data.elastic
         path = app.config['ELASTICSEARCH_BACKUPS_PATH']
         if path and os.path.exists(path):
             run()  # drop and init ones
 
-            params = ('backups', 'snapshot_1')
-            elastic.es.snapshot.delete(*params, ignore=[404])
-            elastic.es.snapshot.create(*params, wait_for_completion=True, body={
-                'indices': 'sptest_*',
+            backup = ('backups', 'snapshot_1')
+            indices = 'sptest_*'
+
+            elastic = app.data.elastic
+            elastic.es.snapshot.delete(*backup, ignore=[404])
+            elastic.es.snapshot.create(*backup, wait_for_completion=True, body={
+                'indices': indices,
                 'allow_no_indices': False,
             })
 
@@ -155,8 +155,8 @@ def clean_es(app):
                 """
                 elastic = app.data.elastic
                 elastic.es.indices.close('sptest_*', allow_no_indices=False)
-                elastic.es.snapshot.restore('backups', 'snapshot_1', {
-                    'indices': 'sptest_*',
+                elastic.es.snapshot.restore(*backup, body={
+                    'indices': indices,
                     'allow_no_indices': False
                 }, wait_for_completion=True)
 
