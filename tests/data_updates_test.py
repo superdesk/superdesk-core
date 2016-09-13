@@ -1,11 +1,13 @@
 import os
 import shutil
-import tempfile
+from unittest import mock
 
-from superdesk.tests import TestCase
 import superdesk.commands.data_updates
-import superdesk
-from superdesk.commands.data_updates import get_data_updates_files, GenerateUpdate, Upgrade, Downgrade
+from superdesk import get_resource_service
+from superdesk.commands.data_updates import (
+    get_data_updates_files, GenerateUpdate, Upgrade, Downgrade
+)
+from superdesk.tests import TestCase
 
 # change the folder where to store updates for test purpose
 DEFAULT_DATA_UPDATE_DIR_NAME = '/tmp/data_updates'
@@ -15,18 +17,34 @@ MAIN_DATA_UPDATES_DIR = '/tmp/global_data_updates'
 class DataUpdatesTestCase(TestCase):
 
     def setUp(self):
-        for folder in (DEFAULT_DATA_UPDATE_DIR_NAME, MAIN_DATA_UPDATES_DIR):
+
+        dirs = (
+            ('DEFAULT_DATA_UPDATE_DIR_NAME', '/tmp/data_updates'),
+            ('MAIN_DATA_UPDATES_DIR', '/tmp/global_data_updates'),
+        )
+        for name, path in dirs:
             # if folder exists, removes
-            if os.path.exists(folder):
-                shutil.rmtree(folder)
+            shutil.rmtree(path, True)
             # create new folder for tests
-            os.mkdir(folder)
-        # update the folder in data_updates module
-        superdesk.commands.data_updates.DEFAULT_DATA_UPDATE_DIR_NAME = DEFAULT_DATA_UPDATE_DIR_NAME
-        superdesk.commands.data_updates.MAIN_DATA_UPDATES_DIR = MAIN_DATA_UPDATES_DIR
+            os.mkdir(path)
+
+            def rm(path=path):
+                shutil.rmtree(path)
+            self.addCleanup(rm)
+
+            patcher = mock.patch.object(superdesk.commands.data_updates, name, path)
+            self.addCleanup(patcher.stop)
+            patcher.start()
+
         # update the default implementation for `forwards` and `backwards` function
-        superdesk.commands.data_updates.DEFAULT_DATA_UPDATE_FW_IMPLEMENTATION = 'pass'
-        superdesk.commands.data_updates.DEFAULT_DATA_UPDATE_BW_IMPLEMENTATION = 'pass'
+        dirs = (
+            ('DEFAULT_DATA_UPDATE_FW_IMPLEMENTATION', 'fw'),
+            ('DEFAULT_DATA_UPDATE_BW_IMPLEMENTATION', 'bw'),
+        )
+        for m, p in dirs:
+            patcher = mock.patch('superdesk.commands.data_updates.%s' % m, 'pass')
+            self.addCleanup(patcher.stop)
+            patcher.start()
 
     def test_data_update_generation(self):
         assert len(get_data_updates_files()) is 0, get_data_updates_files()
@@ -36,36 +54,36 @@ class DataUpdatesTestCase(TestCase):
         assert len(get_data_updates_files()) is 2, get_data_updates_files()
 
     def test_data_update_generation_create_updates_dir(self):
-        updates_dir = tempfile.mkdtemp()
-        shutil.rmtree(updates_dir)
+        updates_dir = DEFAULT_DATA_UPDATE_DIR_NAME
+        shutil.rmtree(DEFAULT_DATA_UPDATE_DIR_NAME)
         self.assertFalse(os.path.exists(updates_dir))
         self.app.config['DATA_UPDATES_PATH'] = updates_dir
         GenerateUpdate().run('tmp')
-        print(updates_dir)
         self.assertTrue(os.path.exists(updates_dir))
-        shutil.rmtree(updates_dir)
 
     def number_of_data_updates_applied(self):
-        return superdesk.get_resource_service('data_updates').find({}).count()
+        return get_resource_service('data_updates').find({}).count()
 
     def test_dry_data_update(self):
         superdesk.commands.data_updates.DEFAULT_DATA_UPDATE_FW_IMPLEMENTATION = '''
             count = mongodb_collection.find({}).count()
             assert count is 0, count
         '''
-        assert(self.number_of_data_updates_applied() is 0)
+        self.assertEqual(self.number_of_data_updates_applied(), 0)
         GenerateUpdate().run(resource_name='data_updates')
         Upgrade().run(dry=True)
-        assert(self.number_of_data_updates_applied() is 0)
+        self.assertEqual(self.number_of_data_updates_applied(), 0)
 
     def test_fake_data_update(self):
+        self.assertEqual(self.number_of_data_updates_applied(), 0)
         superdesk.commands.data_updates.DEFAULT_DATA_UPDATE_FW_IMPLEMENTATION = 'raise Exception()'
         superdesk.commands.data_updates.DEFAULT_DATA_UPDATE_BW_IMPLEMENTATION = 'raise Exception()'
         GenerateUpdate().run(resource_name='data_updates')
+        self.assertEqual(self.number_of_data_updates_applied(), 0)
         Upgrade().run(fake=True)
-        assert(self.number_of_data_updates_applied() is 1)
+        self.assertEqual(self.number_of_data_updates_applied(), 1)
         Downgrade().run(fake=True)
-        assert(self.number_of_data_updates_applied() is 0)
+        self.assertEqual(self.number_of_data_updates_applied(), 0)
 
     def test_data_update(self):
         # create migrations

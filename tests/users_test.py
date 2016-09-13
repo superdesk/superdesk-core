@@ -10,7 +10,7 @@
 
 
 import flask
-import superdesk
+from superdesk import get_backend
 from superdesk.tests import TestCase
 from superdesk.users.services import UsersService, compare_preferences
 
@@ -19,7 +19,7 @@ class PrivilegesTestCase(TestCase):
 
     def setUp(self):
         with self.app.app_context():
-            self.service = UsersService('users', backend=superdesk.get_backend())
+            self.service = UsersService('users', backend=get_backend())
 
     def test_admin_has_all_privileges(self):
         with self.app.app_context():
