@@ -74,8 +74,9 @@ class NITFFormatter(Formatter):
         self._format_docdata_dateissue(article, docdata)
         self._format_docdata_doc_id(article, docdata)
 
-        if article.get('ednote'):
-            SubElement(docdata, 'ed-msg', {'info': article.get('ednote', '')})
+        # ednote can exist and be set to None, that why we can't use default
+        # value for article.get
+        SubElement(docdata, 'ed-msg', {'info': article.get('ednote') or ''})
 
     def _format_pubdata(self, article, head):
         pass
