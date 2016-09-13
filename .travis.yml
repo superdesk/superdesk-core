@@ -42,5 +42,6 @@ script:
     - flake8
     - time nosetests -v --with-timer --with-id apps/archive/archive_test.py
     - time behave --format progress3 --logging-level ERROR features/package_publish.feature
-    - time (nosetests -v --with-timer --with-id || nosetests -v --with-timer --with-id --failed)
+    #- time (nosetests -v --with-timer --with-id || nosetests -v --with-timer --with-id --failed)
+    - time nosetests -v --with-timer --with-id
     - time behave --format progress3 --logging-level ERROR
