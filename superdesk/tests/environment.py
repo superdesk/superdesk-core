@@ -41,8 +41,7 @@ def setup_before_all(context, config, app_factory):
     # set the MAX_TRANSMIT_RETRY_ATTEMPT to zero so that transmit does not retry
     config['MAX_TRANSMIT_RETRY_ATTEMPT'] = 0
     os.environ['BEHAVE_TESTING'] = '1'
-    os.environ['ELASTICSEARCH_BACKUPS_PATH'] = ''
-    tests.setup(context=context, config=config, app_factory=app_factory)
+    #os.environ['ELASTICSEARCH_BACKUPS_PATH'] = ''
 
 
 def setup_before_scenario(context, scenario, config, app_factory):
@@ -89,6 +88,11 @@ def setup_before_scenario(context, scenario, config, app_factory):
 
     if scenario.status != 'skipped' and 'notification' in scenario.tags:
         tests.setup_notification(context)
+
+
+def before_all(context):
+    # https://pythonhosted.org/behave/api.html#logging-setup
+    context.config.setup_logging()
 
 
 def before_feature(context, feature):
