@@ -254,10 +254,11 @@ Feature: Saved Searches
         "filter": {"query": {"q": "volley ball", "repo": "ingest"}}
         }
         """
+        When we get "/users/#users._id#/saved_searches/#saved_searches._id#"
         Then we get existing saved search
         """
         {
-        "name": "volleyball",
-        "filter": {"query": {"q": "volley ball", "repo": "ingest"}}
+            "name": "volleyball",
+            "filter": {"query": {"q": "volley ball", "repo": "ingest"}}
         }
         """
