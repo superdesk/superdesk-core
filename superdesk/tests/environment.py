@@ -41,6 +41,7 @@ def setup_before_all(context, config, app_factory):
     # set the MAX_TRANSMIT_RETRY_ATTEMPT to zero so that transmit does not retry
     config['MAX_TRANSMIT_RETRY_ATTEMPT'] = 0
     os.environ['BEHAVE_TESTING'] = '1'
+    os.environ['ELASTICSEARCH_BACKUPS_PATH'] = ''
     tests.setup(context=context, config=config, app_factory=app_factory)
 
 
