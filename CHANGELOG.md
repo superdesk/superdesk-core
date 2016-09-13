@@ -4,6 +4,10 @@
 
 ### Added
 
+- Add `superdesk.cache` module.
+
+### Added
+
 - Add `NO_TAKES` (default: `False`) config to be able to turn off takes packages.
 
 ## [1.1] 2016-08-29

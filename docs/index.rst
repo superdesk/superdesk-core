@@ -6,12 +6,13 @@
 Welcome to Superdesk documentation!
 ===================================
 
-This documentation is technical, by developers for developers. It focuses on Superdesk backend (server part), without much info about `Superdesk client<https://github.com/superdesk/superdesk-client-core>`.
+This documentation is technical, by developers for developers. It focuses on Superdesk backend (server part), without much info about `Superdesk client <https://github.com/superdesk/superdesk-client-core>`_.
 
 Contents:
 
 .. toctree::
     :maxdepth: 2
 
+    cache
     publish
 
