@@ -124,7 +124,7 @@ def get_app(config=None, media_storage=None, config_object=None):
     for name, jinja_filter in superdesk.JINJA_FILTERS.items():
         app.jinja_env.filters[name] = jinja_filter
 
-    if not app_config['TESTING']:
+    if not app_config.get('TESTING', False):
         # we can only put mapping when all resources are registered
         app.data.init_elastic(app)
 

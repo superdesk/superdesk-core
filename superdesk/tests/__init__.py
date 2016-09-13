@@ -85,10 +85,7 @@ def drop_elastic(app):
         es = get_es(app.config['ELASTICSEARCH_URL'])
         indexes = [app.config['ELASTICSEARCH_INDEX']] + list(app.config['ELASTICSEARCH_INDEXES'].values())
         for index in indexes:
-            try:
-                es.indices.delete(index)
-            except elasticsearch.exceptions.NotFoundError:
-                pass
+            es.indices.delete(index, ignore=[404])
 
 
 def drop_mongo(app):
@@ -137,19 +134,16 @@ def clean_es(app):
             """
             Drop and init elasticsearch indices if backups directory doesn't exist
             """
-            drop_elastic(app)
+            elastic.es.indices.delete('sptest_*')
             app.data.init_elastic(app)
 
+        elastic = app.data.elastic
         path = app.config['ELASTICSEARCH_BACKUPS_PATH']
         if path and os.path.exists(path):
             run()  # drop and init ones
 
-            elastic = app.data.elastic
             params = ('backups', 'snapshot_1')
-            try:
-                elastic.es.snapshot.delete(*params)
-            except Exception:
-                pass
+            elastic.es.snapshot.delete(*params, ignore=[404])
             elastic.es.snapshot.create(*params, wait_for_completion=True, body={
                 'indices': 'sptest_*',
                 'allow_no_indices': False,
@@ -172,8 +166,10 @@ def clean_es(app):
 
 
 def setup(context=None, config=None, app_factory=get_app):
-    cfg = setup_config(config)
-    app = app_factory(cfg)
+    if not hasattr(setup, 'app') or config:
+        cfg = setup_config(config)
+        setup.app = app_factory(cfg)
+    app = setup.app
 
     if context:
         context.app = app
