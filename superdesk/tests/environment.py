@@ -91,7 +91,6 @@ def setup_before_scenario(context, scenario, config, app_factory):
         tests.setup_notification(context)
 
 
-
 def before_feature(context, feature):
     config = {'BEHAVE_TESTING': 1}
     setup_before_all(context, config, app_factory=get_app)
