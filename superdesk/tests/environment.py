@@ -40,8 +40,8 @@ def setup_before_all(context, config, app_factory):
 
     # set the MAX_TRANSMIT_RETRY_ATTEMPT to zero so that transmit does not retry
     config['MAX_TRANSMIT_RETRY_ATTEMPT'] = 0
-    tests.setup(context=context, config=config, app_factory=app_factory)
     os.environ['BEHAVE_TESTING'] = '1'
+    tests.setup(context=context, config=config, app_factory=app_factory)
 
 
 def setup_before_scenario(context, scenario, config, app_factory):
@@ -90,12 +90,10 @@ def setup_before_scenario(context, scenario, config, app_factory):
         tests.setup_notification(context)
 
 
-def before_all(context):
-    config = {}
-    setup_before_all(context, config, app_factory=get_app)
-
 
 def before_feature(context, feature):
+    config = {'BEHAVE_TESTING': 1}
+    setup_before_all(context, config, app_factory=get_app)
     if 'tobefixed' in feature.tags:
         feature.mark_skipped()
 
