@@ -72,7 +72,7 @@ def test_json_with_string_field_value(context, field):
         fail_and_print_body(context.response, 'response is not valid json')
     context_data = json.loads(apply_placeholders(context, context.text))
 
-    assert_equal(json_match(context_data[field], json.loads(response_data[field])), True,
+    assert_equal(json_match(context_data[field], response_data[field]), True,
                  msg=str(context_data) + '\n != \n' + str(response_data))
     return response_data
 
