@@ -13,6 +13,7 @@
 /data
 static/*
 upload/*
+.noseids
 .coverage
 cover
 celerybeatschedule.db*

@@ -104,8 +104,7 @@ def drop_mongo_db(app, db_prefix, dbname):
         db.close()
 
 
-def setup(context=None, config=None, app_factory=get_app):
-
+def setup_config(config):
     app_abspath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     app_config = Config(app_abspath)
     app_config.from_object('superdesk.tests.test_settings')
@@ -119,22 +118,28 @@ def setup(context=None, config=None, app_factory=get_app):
         'TESTING': True,
     })
 
-    app = app_factory(app_config)
-
     logging.getLogger('superdesk').setLevel(logging.WARNING)
     logging.getLogger('elastic').setLevel(logging.WARNING)  # elastic datalayer
     logging.getLogger('elasticsearch').setLevel(logging.WARNING)
     logging.getLogger('urllib3').setLevel(logging.WARNING)
+    return app_config
 
-    drop_elastic(app)
-    drop_mongo(app)
 
-    # create index again after dropping it
-    app.data.init_elastic(app)
+def setup(context=None, config=None, app_factory=get_app):
+    if not hasattr(setup, 'app'):
+        # It is ok to use the same app instance for all test cases.
+        # So let's load config and init it ones.
+        cfg = setup_config(config)
+        setup.app = app_factory(cfg)
 
+    app = setup.app
     if context:
         context.app = app
         context.client = app.test_client()
+
+    drop_mongo(app)
+    drop_elastic(app)
+    app.data.init_elastic(app)
 
 
 def setup_auth_user(context, user=None):
@@ -297,24 +302,20 @@ class TestCase(unittest.TestCase):
         """
         Run this `setUp` stuff for each children
         """
-        setup(self, app_factory=get_app)
+        setup(self)
+
         self.ctx = self.app.app_context()
         self.ctx.push()
+
+        def clean_ctx():
+            if self.ctx:
+                self.ctx.pop()
+        self.addCleanup(clean_ctx)
 
     def tearDownForChildren(self):
         """
         Run this `tearDown` stuff for each children
         """
-        self.app.locators = None
-        if self.ctx:
-            self.ctx.pop()
-        with self.app.app_context():
-            self.app.celery.pool.force_close_all()
-            self.app.data.mongo.pymongo().cx.close()
-            self.app.redis.connection_pool.disconnect()
-            for connection in self.app.data.elastic.es.transport.connection_pool.connections:
-                connection.pool.close()
-        del self.app
 
     def get_fixture_path(self, filename):
         rootpath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
