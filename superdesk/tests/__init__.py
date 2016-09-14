@@ -22,6 +22,7 @@ from apps.ldap import ADAuth
 from superdesk import get_resource_service
 from superdesk.factory import get_app
 
+logger = logging.getLogger(__name__)
 test_user = {
     'username': 'test_user',
     'password': 'test_password',
@@ -165,7 +166,8 @@ def clean_es(app):
 
     try:
         clean_es.run()
-    except socket.timeout:
+    except socket.timeout as e:
+        logging.exception()
         # Trying to get less failures by ES timeouts
         count = getattr(clean_es, 'count_calls', 0)
         if count < 3:
