@@ -175,10 +175,11 @@ def clean_es(app, force=False):
             clean_es(app, force)
 
 
-def setup(context=None, config=None, app_factory=get_app):
-    if not hasattr(setup, 'app') or config:
+def setup(context=None, config=None, app_factory=get_app, reset=False):
+    if not hasattr(setup, 'app') or setup.reset or config:
         cfg = setup_config(config)
         setup.app = app_factory(cfg)
+        setup.reset = reset
     app = setup.app
 
     if context:

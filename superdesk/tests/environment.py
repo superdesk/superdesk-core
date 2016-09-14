@@ -29,8 +29,8 @@ readonly_fields = ['display_name', 'password', 'phone', 'first_name', 'last_name
 def setup_before_scenario(context, scenario, config, app_factory):
     if scenario.status != 'skipped' and 'notesting' in scenario.tags:
         config['SUPERDESK_TESTING'] = False
+    tests.setup(context, config, app_factory, bool(config))
 
-    tests.setup(context=context, config=config, app_factory=app_factory)
     context.headers = [
         ('Content-Type', 'application/json'),
         ('Origin', 'localhost')
@@ -93,7 +93,7 @@ def before_feature(context, feature):
     # set the MAX_TRANSMIT_RETRY_ATTEMPT to zero so that transmit does not retry
     config['MAX_TRANSMIT_RETRY_ATTEMPT'] = 0
     os.environ['BEHAVE_TESTING'] = '1'
-    tests.setup(context=context, config=config)
+    tests.setup(context, config)
 
     if 'tobefixed' in feature.tags:
         feature.mark_skipped()
