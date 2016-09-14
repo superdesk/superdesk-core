@@ -11,6 +11,7 @@
 
 import logging
 import os
+import socket
 import unittest
 from base64 import b64encode
 from unittest.mock import patch
@@ -162,7 +163,14 @@ def clean_es(app):
 
         clean_es.run = run
 
-    clean_es.run()
+    try:
+        clean_es.run()
+    except socket.timeout:
+        # Trying to get less failures by ES timeouts
+        count = getattr(clean_es, 'count_calls', 0)
+        if count < 3:
+            clean_es.count_calls = count + 1
+            clean_es()
 
 
 def setup(context=None, config=None, app_factory=get_app):
