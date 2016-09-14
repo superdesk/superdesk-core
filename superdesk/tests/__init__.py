@@ -123,13 +123,13 @@ def setup_config(config):
     return app_config
 
 
-def clean_dbs(app):
-    clean_es(app)
+def clean_dbs(app, force=False):
+    clean_es(app, force)
     drop_mongo(app)
 
 
-def clean_es(app):
-    if not hasattr(clean_es, 'run'):
+def clean_es(app, force=False):
+    if not hasattr(clean_es, 'run') or force:
         def run():
             """
             Drop and init elasticsearch indices if backups directory doesn't exist
@@ -167,12 +167,12 @@ def clean_es(app):
     try:
         clean_es.run()
     except socket.timeout as e:
-        logging.exception()
+        logging.exception(e)
         # Trying to get less failures by ES timeouts
         count = getattr(clean_es, 'count_calls', 0)
         if count < 3:
             clean_es.count_calls = count + 1
-            clean_es()
+            clean_es(app, force)
 
 
 def setup(context=None, config=None, app_factory=get_app):
@@ -185,7 +185,7 @@ def setup(context=None, config=None, app_factory=get_app):
         context.app = app
         context.client = app.test_client()
 
-    clean_dbs(app)
+    clean_dbs(app, force=bool(config))
 
 
 def setup_auth_user(context, user=None):
