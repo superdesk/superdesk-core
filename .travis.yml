@@ -40,5 +40,5 @@ before_script: >
 
 script:
     - flake8
-    - time behave --format progress2 --logging-clear-handlers --logcapture
     - time nosetests -v --with-timer --with-id
+    - time behave --format progress2 --logging-clear-handlers --logcapture
