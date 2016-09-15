@@ -143,7 +143,10 @@ class ValidateService(superdesk.Service):
             self._sanitize_fields(doc['validate'], validator)
             v = SchemaValidator()
             v.allow_unknown = True
-            v.validate(doc['validate'], self._get_validator_schema(validator))
+            try:
+                v.validate(doc['validate'], self._get_validator_schema(validator))
+            except TypeError as e:
+                logger.exception('Invalid validator schema value "%s" for ' % str(e))
             error_list = v.errors
             response = []
             for e in error_list:
