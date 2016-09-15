@@ -156,7 +156,7 @@ def clean_es(app, force=False):
                 Just restore elasticsearch indices if backups directory exists
                 """
                 elastic = app.data.elastic
-                elastic.es.indices.close('sptest_*', allow_no_indices=False)
+                elastic.es.indices.close('sptest_*', expand_wildcards='open')
                 elastic.es.snapshot.restore(*backup, body={
                     'indices': indices,
                     'allow_no_indices': False
