@@ -253,11 +253,10 @@ def setup_ad_user(context, user):
     """
     ad_user = user or test_user
 
-    '''
-    This is necessary as test_user is in Global scope and del doc['password'] removes the key from test_user and
-    for the next scenario, auth_data = json.dumps({'username': ad_user['username'], 'password': ad_user['password']})
-    will fail as password key is removed by del doc['password']
-    '''
+    # This is necessary as test_user is in Global scope and del doc['password']
+    # removes the key from test_user and for the next scenario,
+    # auth_data = json.dumps({'username': ad_user['username'], 'password': ad_user['password']})
+    # will fail as password key is removed by del doc['password']
     ad_user = ad_user.copy()
     ad_user['email'] = 'mock@mail.com.au'
 
