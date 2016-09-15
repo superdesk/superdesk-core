@@ -665,3 +665,13 @@ Feature: News Items Archive
 
         When we get "/archive"
         Then we get list with 0 items
+
+    @auth
+    Scenario: Upload image with custom crops
+        Given "vocabularies"
+        """
+        [{"_id": "crop_sizes", "items": [{"is_active": true, "name": "3:2", "width": "3", "height": "2"}]}]
+        """
+
+        When we upload a file "bike.jpg" to "archive"
+        Then we get new resource
