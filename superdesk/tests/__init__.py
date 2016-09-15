@@ -11,18 +11,18 @@
 
 import logging
 import os
+import socket
 import unittest
 from base64 import b64encode
 from unittest.mock import patch
 
-import elasticsearch
-from eve_elastic import get_es
 from flask import json, Config
 
 from apps.ldap import ADAuth
 from superdesk import get_resource_service
 from superdesk.factory import get_app
 
+logger = logging.getLogger(__name__)
 test_user = {
     'username': 'test_user',
     'password': 'test_password',
@@ -68,6 +68,7 @@ def get_test_settings():
     test_settings['CELERY_ALWAYS_EAGER'] = 'True'
     test_settings['CONTENT_EXPIRY_MINUTES'] = 99
     test_settings['VERSION'] = '_current_version'
+    test_settings['ELASTICSEARCH_BACKUPS_PATH'] = '/tmp/es-backups'
 
     # limit mongodb connections
     test_settings['MONGO_CONNECT'] = False
@@ -81,13 +82,10 @@ def get_test_settings():
 
 def drop_elastic(app):
     with app.app_context():
-        es = get_es(app.config['ELASTICSEARCH_URL'])
+        es = app.data.elastic.es
         indexes = [app.config['ELASTICSEARCH_INDEX']] + list(app.config['ELASTICSEARCH_INDEXES'].values())
         for index in indexes:
-            try:
-                es.indices.delete(index)
-            except elasticsearch.exceptions.NotFoundError:
-                pass
+            es.indices.delete(index, ignore=[404])
 
 
 def drop_mongo(app):
@@ -104,8 +102,7 @@ def drop_mongo_db(app, db_prefix, dbname):
         db.close()
 
 
-def setup(context=None, config=None, app_factory=get_app):
-
+def setup_config(config):
     app_abspath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     app_config = Config(app_abspath)
     app_config.from_object('superdesk.tests.test_settings')
@@ -119,22 +116,77 @@ def setup(context=None, config=None, app_factory=get_app):
         'TESTING': True,
     })
 
-    app = app_factory(app_config)
-
     logging.getLogger('superdesk').setLevel(logging.WARNING)
     logging.getLogger('elastic').setLevel(logging.WARNING)  # elastic datalayer
     logging.getLogger('elasticsearch').setLevel(logging.WARNING)
     logging.getLogger('urllib3').setLevel(logging.WARNING)
+    return app_config
 
-    drop_elastic(app)
+
+def clean_dbs(app, force=False):
+    clean_es(app, force)
     drop_mongo(app)
 
-    # create index again after dropping it
-    app.data.init_elastic(app)
+
+def clean_es(app, force=False):
+    if not hasattr(clean_es, 'run') or force:
+        def run():
+            """
+            Drop and init elasticsearch indices if backups directory doesn't exist
+            """
+            drop_elastic(app)
+            app.data.init_elastic(app)
+
+        path = app.config['ELASTICSEARCH_BACKUPS_PATH']
+        if path and os.path.exists(path):
+            run()  # drop and init ones
+
+            backup = ('backups', 'snapshot_1')
+            indices = 'sptest_*'
+
+            elastic = app.data.elastic
+            elastic.es.snapshot.delete(*backup, ignore=[404])
+            elastic.es.snapshot.create(*backup, wait_for_completion=True, body={
+                'indices': indices,
+                'allow_no_indices': False,
+            })
+
+            def run():
+                """
+                Just restore elasticsearch indices if backups directory exists
+                """
+                elastic = app.data.elastic
+                elastic.es.indices.close('sptest_*', allow_no_indices=False)
+                elastic.es.snapshot.restore(*backup, body={
+                    'indices': indices,
+                    'allow_no_indices': False
+                }, wait_for_completion=True)
+
+        clean_es.run = run
+
+    try:
+        clean_es.run()
+    except socket.timeout as e:
+        logging.exception(e)
+        # Trying to get less failures by ES timeouts
+        count = getattr(clean_es, 'count_calls', 0)
+        if count < 3:
+            clean_es.count_calls = count + 1
+            clean_es(app, force)
+
+
+def setup(context=None, config=None, app_factory=get_app, reset=False):
+    if not hasattr(setup, 'app') or setup.reset or config:
+        cfg = setup_config(config)
+        setup.app = app_factory(cfg)
+        setup.reset = reset
+    app = setup.app
 
     if context:
         context.app = app
         context.client = app.test_client()
+
+    clean_dbs(app, force=bool(config))
 
 
 def setup_auth_user(context, user=None):
@@ -297,24 +349,20 @@ class TestCase(unittest.TestCase):
         """
         Run this `setUp` stuff for each children
         """
-        setup(self, app_factory=get_app)
+        setup(self)
+
         self.ctx = self.app.app_context()
         self.ctx.push()
+
+        def clean_ctx():
+            if self.ctx:
+                self.ctx.pop()
+        self.addCleanup(clean_ctx)
 
     def tearDownForChildren(self):
         """
         Run this `tearDown` stuff for each children
         """
-        self.app.locators = None
-        if self.ctx:
-            self.ctx.pop()
-        with self.app.app_context():
-            self.app.celery.pool.force_close_all()
-            self.app.data.mongo.pymongo().cx.close()
-            self.app.redis.connection_pool.disconnect()
-            for connection in self.app.data.elastic.es.transport.connection_pool.connections:
-                connection.pool.close()
-        del self.app
 
     def get_fixture_path(self, filename):
         rootpath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))

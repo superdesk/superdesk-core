@@ -26,29 +26,11 @@ from superdesk.vocabularies.command import VocabulariesPopulateCommand
 readonly_fields = ['display_name', 'password', 'phone', 'first_name', 'last_name']
 
 
-def setup_before_all(context, config, app_factory):
-    if AMAZON_CONTAINER_NAME:
-        config['AMAZON_CONTAINER_NAME'] = AMAZON_CONTAINER_NAME
-        config['AMAZON_ACCESS_KEY_ID'] = AMAZON_ACCESS_KEY_ID
-        config['AMAZON_SECRET_ACCESS_KEY'] = AMAZON_SECRET_ACCESS_KEY
-        config['AMAZON_REGION'] = AMAZON_REGION
-        config['AMAZON_SERVE_DIRECT_LINKS'] = AMAZON_SERVE_DIRECT_LINKS
-        config['AMAZON_S3_USE_HTTPS'] = AMAZON_S3_USE_HTTPS
-        config['AMAZON_SERVER'] = AMAZON_SERVER
-        config['AMAZON_PROXY_SERVER'] = AMAZON_PROXY_SERVER
-        config['AMAZON_URL_GENERATOR'] = AMAZON_URL_GENERATOR
-
-    # set the MAX_TRANSMIT_RETRY_ATTEMPT to zero so that transmit does not retry
-    config['MAX_TRANSMIT_RETRY_ATTEMPT'] = 0
-    tests.setup(context=context, config=config, app_factory=app_factory)
-    os.environ['BEHAVE_TESTING'] = '1'
-
-
 def setup_before_scenario(context, scenario, config, app_factory):
     if scenario.status != 'skipped' and 'notesting' in scenario.tags:
         config['SUPERDESK_TESTING'] = False
+    tests.setup(context, config, app_factory, bool(config))
 
-    tests.setup(context=context, config=config, app_factory=app_factory)
     context.headers = [
         ('Content-Type', 'application/json'),
         ('Origin', 'localhost')
@@ -91,11 +73,28 @@ def setup_before_scenario(context, scenario, config, app_factory):
 
 
 def before_all(context):
-    config = {}
-    setup_before_all(context, config, app_factory=get_app)
+    # https://pythonhosted.org/behave/api.html#logging-setup
+    context.config.setup_logging()
 
 
 def before_feature(context, feature):
+    config = {}
+    if AMAZON_CONTAINER_NAME:
+        config['AMAZON_CONTAINER_NAME'] = AMAZON_CONTAINER_NAME
+        config['AMAZON_ACCESS_KEY_ID'] = AMAZON_ACCESS_KEY_ID
+        config['AMAZON_SECRET_ACCESS_KEY'] = AMAZON_SECRET_ACCESS_KEY
+        config['AMAZON_REGION'] = AMAZON_REGION
+        config['AMAZON_SERVE_DIRECT_LINKS'] = AMAZON_SERVE_DIRECT_LINKS
+        config['AMAZON_S3_USE_HTTPS'] = AMAZON_S3_USE_HTTPS
+        config['AMAZON_SERVER'] = AMAZON_SERVER
+        config['AMAZON_PROXY_SERVER'] = AMAZON_PROXY_SERVER
+        config['AMAZON_URL_GENERATOR'] = AMAZON_URL_GENERATOR
+
+    # set the MAX_TRANSMIT_RETRY_ATTEMPT to zero so that transmit does not retry
+    config['MAX_TRANSMIT_RETRY_ATTEMPT'] = 0
+    os.environ['BEHAVE_TESTING'] = '1'
+    tests.setup(context, config)
+
     if 'tobefixed' in feature.tags:
         feature.mark_skipped()
 

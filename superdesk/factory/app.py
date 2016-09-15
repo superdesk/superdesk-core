@@ -124,8 +124,9 @@ def get_app(config=None, media_storage=None, config_object=None):
     for name, jinja_filter in superdesk.JINJA_FILTERS.items():
         app.jinja_env.filters[name] = jinja_filter
 
-    # we can only put mapping when all resources are registered
-    app.data.init_elastic(app)
+    if not app_config.get('TESTING', False):
+        # we can only put mapping when all resources are registered
+        app.data.init_elastic(app)
 
     # instantiate registered provider classes (leave non-classes intact)
     for key, provider in registered_feeding_services.items():

@@ -8,13 +8,20 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-
 from nose.tools import raises
 from superdesk.tests import TestCase
 from superdesk.privilege import privilege, get_privilege_list, _privileges
 
 
 class PrivilegeTestCase(TestCase):
+    def setUp(self):
+        _privileges_saved = _privileges.copy()
+        _privileges.clear()
+
+        def revert():
+            _privileges.clear()
+            _privileges.update(_privileges_saved)
+        self.addCleanup(revert)
 
     def test_privilege_registration(self):
         _privileges.clear()
