@@ -59,6 +59,19 @@ class NitfFormatterTest(TestCase):
         self.assertEqual(nitf_xml.find('body/body.content/p').text, 'test body')
         self.assertEqual(nitf_xml.find('head/docdata/urgency').get('ed-urg'), '2')
 
+    def test_html2nitf(self):
+        html = etree.fromstring(
+            '<p><strong>this text should be <i>modified</i></strong> so '
+            '<span>[this should not be removed]</span> unkown <em unknown_attribute="toto">'
+            'elements</em> and <a bad_attribute="to_remove">attributes</a> are <h6>'
+            'removed</h6></p>')
+
+        nitf = self.formatter.html2nitf(html)
+        expected = ('<p><em class="bold">this text should be <em class="italic">modified</em>'
+                    '</em> so [this should not be removed] unkown <em class="italic">elements</em>'
+                    ' and <a>attributes</a> are <hl2>removed</hl2></p>')
+        self.assertEqual(etree.tostring(nitf, 'unicode'), expected)
+
     def test_company_codes(self):
         article = {
             'guid': 'tag:aap.com.au:20150613:12345',
