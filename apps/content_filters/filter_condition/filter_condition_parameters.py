@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import json
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.utils import ListCursor
@@ -94,8 +95,10 @@ class FilterConditionParametersService(BaseService):
         vocabularies_resource = get_resource_service('vocabularies')
         values['anpa_category'] = vocabularies_resource.find_one(req=None, _id='categories')['items']
         req = ParsedRequest()
-        req.where = {'$or': [{"schema_field": "genre"}, {"_id": "genre"}]}
-        values['genre'] = vocabularies_resource.find_one(req=req)['items']
+        req.where = json.dumps({'$or': [{"schema_field": "genre"}, {"_id": "genre"}]})
+        genre = vocabularies_resource.get(req=req, lookup=None)
+        if genre.count():
+            values['genre'] = genre[0]['items']
         values['urgency'] = vocabularies_resource.find_one(req=None, _id='urgency')['items']
         values['priority'] = vocabularies_resource.find_one(req=None, _id='priority')['items']
         values['type'] = vocabularies_resource.find_one(req=None, _id='type')['items']
