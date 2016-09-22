@@ -36,7 +36,30 @@ class PAFileWithNoSubjects(PANITFFileTestCase):
     filename = 'pa2.xml'
 
     def test_headline(self):
-        self.assertEqual(self.item.get('headline'), '1 SOCCER INT-Teams')
+        self.assertEqual(self.item.get('headline'), 'Soccer INT-Teams')
 
     def test_anpa_category(self):
         self.assertEqual(self.item.get('anpa_category'), [{'qcode': 'S'}])
+
+
+class PATestCase(PANITFFileTestCase):
+
+    filename = 'pa1.xml'
+
+    def test_slugline(self):
+        self.assertEqual(self.item.get('slugline'), 'Sport Trivia (Oct 14)')
+        self.assertEqual(self.item.get('headline'), 'PA SPORT TRIVIA (OCTOBER 14)')
+        self.assertEqual('usable', self.item.get('pubstatus'))
+        self.assertEqual('af1f7ad5-5619-49de-84cc-2e608538c77fSSS-3-1', self.item.get('guid'))
+        self.assertEqual(self.item.get('format'), 'HTML')
+        self.assertEqual(4, len(self.item.get('subject')))
+        self.assertIn('Trivia (Oct 14)', self.item.get('keywords'))
+        self.assertEqual(665, self.item.get('word_count'))
+
+
+class PAEmbargoTestCase(PANITFFileTestCase):
+
+    filename = 'pa3.xml'
+
+    def test_slugline(self):
+        self.assertEqual(self.item.get('pubstatus'), 'usable')
