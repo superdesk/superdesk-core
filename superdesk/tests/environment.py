@@ -95,6 +95,8 @@ def before_feature(context, feature):
         # superdesk-aap don't use "setup_before_all" already
         config = getattr(setup_before_scenario, 'config', None)
         app_factory = getattr(setup_before_scenario, 'app_factory', None)
+    config = config or {}
+    app_factory = app_factory or get_app
 
     if AMAZON_CONTAINER_NAME:
         config['AMAZON_CONTAINER_NAME'] = AMAZON_CONTAINER_NAME
