@@ -9,8 +9,9 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from superdesk.io.feed_parsers.nitf import NITFFeedParser
+from superdesk.io.feed_parsers.nitf import NITFFeedParser, SkipValue
 from superdesk.io import register_feed_parser
+import re
 
 
 class PAFeedParser(NITFFeedParser):
@@ -33,8 +34,44 @@ class PAFeedParser(NITFFeedParser):
                 return [{'qcode': 'V'}]
         return [{'qcode': 'I'}]
 
+    def get_headline(self, xml):
+        """
+        Return the headline if available if not then return the slugline (title)
+        :param xml:
+        :return:
+        """
+        if xml.find('body/body.head/hedline/hl1') is not None:
+            return xml.find('body/body.head/hedline/hl1').text
+        else:
+            if xml.find('head/title') is not None:
+                return self._get_slugline(xml.find('head/title'))
+        raise SkipValue()
+
+    def _get_slugline(self, elem):
+        """
+        Capitalize the first word of the slugline (Removing any leading digits's).
+        :param elem:
+        :return:
+        """
+        # Remove any leading numbers and split to list of words
+        sluglineList = re.sub('^[\d.]+\W+', '', elem.text).split(' ')
+        slugline = sluglineList[0].capitalize()
+        if len(sluglineList) > 1:
+            slugline = '{} {}'.format(slugline, ' '.join(sluglineList[1:]))
+        return slugline
+
+    def _get_pubstatus(self, elem):
+        """
+        Mark anything that is embargoed as usable, the editorial note still describes the embargo
+        :param elem:
+        :return:
+        """
+        return 'usable' if elem.attrib['management-status'] == 'embargoed' else elem.attrib['management-status']
+
     def __init__(self):
-        self.MAPPING = {'anpa_category': {'xpath': "head/meta/[@name='category']", 'filter': self._category_mapping}}
+        self.MAPPING = {'anpa_category': {'xpath': "head/meta/[@name='category']", 'filter': self._category_mapping},
+                        'slugline': {'xpath': 'head/title', 'filter': self._get_slugline},
+                        'pubstatus': {'xpath': 'head/docdata', 'filter': self._get_pubstatus}}
         super().__init__()
 
 register_feed_parser(PAFeedParser.NAME, PAFeedParser())
