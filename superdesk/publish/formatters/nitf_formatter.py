@@ -147,21 +147,25 @@ class NITFFormatter(Formatter):
         """convert HTML elements to NITF compatible elements
 
         :param ET.Element: HTML to clean/transform
-        :param bool: True if its the main element (i.e. must no be deleted)
-        :return ET.Element: NITF compliant element
+        :param bool: True if its the main element (must be a <div>)
+        :return ET.Element: <div> element with NITF compliant children
         """
-        if html_elem.tag not in self.HTML2NITF:
-            if root_elem:
-                html_elem.tag = 'p'
-            else:
-                raise ValueError("Unhandled HTML element")
-        else:
+        if root_elem:
+            assert html_elem.tag == 'div'
+            # we change children of root element in place
+            for c in html_elem:
+                self.html2nitf(c, root_elem=False)
+            return html_elem
+
+        try:
             nitf_map = self.HTML2NITF[html_elem.tag]
-            nitf_elem = nitf_map.get('nitf')
-            if nitf_elem is not None:
-                if nitf_elem == '':
-                    raise ValueError("Element need to be removed")
-                html_elem.tag = nitf_elem
+        except KeyError:
+            raise ValueError("Unhandled HTML element")
+        nitf_elem = nitf_map.get('nitf')
+        if nitf_elem is not None:
+            if nitf_elem == '':
+                raise ValueError("Element need to be removed")
+            html_elem.tag = nitf_elem
 
         html_elem.attrib.update(nitf_map.get('attrib', {}))
 

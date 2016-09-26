@@ -61,15 +61,15 @@ class NitfFormatterTest(TestCase):
 
     def test_html2nitf(self):
         html = etree.fromstring(
-            '<p><strong>this text should be <i>modified</i></strong> so '
+            '<div><p><strong>this text should be <i>modified</i></strong> so '
             '<span>[this should not be removed]</span> unkown <em unknown_attribute="toto">'
             'elements</em> and <a bad_attribute="to_remove">attributes</a> are <h6>'
-            'removed</h6></p>')
+            'removed</h6></p></div>')
 
         nitf = self.formatter.html2nitf(html)
-        expected = ('<p><em class="bold">this text should be <em class="italic">modified</em>'
+        expected = ('<div><p><em class="bold">this text should be <em class="italic">modified</em>'
                     '</em> so [this should not be removed] unkown <em class="italic">elements</em>'
-                    ' and <a>attributes</a> are <hl2>removed</hl2></p>')
+                    ' and <a>attributes</a> are <hl2>removed</hl2></p></div>')
         self.assertEqual(etree.tostring(nitf, 'unicode'), expected)
 
     def test_company_codes(self):
