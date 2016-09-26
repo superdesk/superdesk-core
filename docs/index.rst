@@ -13,6 +13,8 @@ Contents:
 .. toctree::
     :maxdepth: 2
 
+    superdesk
+    apps
     cache
     publish
 
