@@ -24,6 +24,11 @@ class ANPATestCase(TestCase):
 
     parser = AP_ANPAFeedParser()
 
+    def setUp(self):
+        with self.app.app_context():
+            vocab = [{'_id': 'categories', 'items': [{'is_active': True, 'name': 'Domestic Sport', 'qcode': 's'}]}]
+            self.app.data.insert('vocabularies', vocab)
+
     def open(self, filename):
         provider = {'name': 'Test'}
         return self.parser.parse(fixture(filename), provider)
