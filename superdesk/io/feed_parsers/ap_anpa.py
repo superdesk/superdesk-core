@@ -15,6 +15,7 @@ from flask import current_app as app
 from apps.archive.common import format_dateline_to_locmmmddsrc
 from superdesk.utc import get_date
 from bs4 import BeautifulSoup
+from superdesk import get_resource_service
 import logging
 
 logger = logging.getLogger("AP_ANPAFeedParser")
@@ -79,7 +80,14 @@ class AP_ANPAFeedParser(ANPAFeedParser):
             elif category.get('qcode').lower() == 'z':
                 category['qcode'] = 's'
             else:
-                category['qcode'] = 'i'
+                # check if the category is defined in the system
+                category_map = get_resource_service('vocabularies').find_one(req=None, _id='categories')
+                if category_map:
+                    if not next((code for code in category_map['items'] if
+                                 code['qcode'].lower() == category['qcode'].lower() and code['is_active']), None):
+                        category['qcode'] = 'i'
+                else:
+                    category['qcode'] = 'i'
 
     def map_sluglines_to_subjects(self, item):
         """
