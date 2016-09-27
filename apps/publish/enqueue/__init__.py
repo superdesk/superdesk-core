@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from apps.archive.common import ITEM_OPERATION, ARCHIVE, get_utc_schedule, insert_into_versions
+from apps.archive.common import ITEM_OPERATION, ARCHIVE, insert_into_versions
 from apps.legal_archive.commands import import_into_legal_archive
 from apps.publish.enqueue.enqueue_published import EnqueuePublishedService
 import cProfile
@@ -17,7 +17,7 @@ from superdesk import get_resource_service
 import superdesk
 from superdesk.celery_task_utils import get_lock_id
 from superdesk.lock import lock, unlock
-from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, PUBLISH_SCHEDULE
+from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS
 
 from apps.publish.enqueue.enqueue_corrected import EnqueueCorrectedService
 from apps.publish.enqueue.enqueue_killed import EnqueueKilledService
@@ -132,12 +132,23 @@ def enqueue_item(published_item):
 
 def get_published_items():
     """
-    Returns a list of items marked for publishing.
+    Get all items with queue state: "pending" that are not scheduled or scheduled time has lapsed.
     """
-    query = {QUEUE_STATE: PUBLISH_STATE.PENDING}
+    query = {
+        QUEUE_STATE: PUBLISH_STATE.PENDING,
+        '$or': [
+            {
+                ITEM_STATE: {'$ne': CONTENT_STATE.SCHEDULED}
+            },
+            {
+                ITEM_STATE: CONTENT_STATE.SCHEDULED,
+                '{}.utc_{}'.format(SCHEDULE_SETTINGS, PUBLISH_SCHEDULE): {'$lte': utcnow()}
+            }
+        ]
+    }
     request = ParsedRequest()
     request.sort = 'publish_sequence_no'
-    request.max_results = 100
+    request.max_results = 200
     return list(get_resource_service(PUBLISHED).get_from_mongo(req=request, lookup=query))
 
 
@@ -147,13 +158,10 @@ def enqueue_items(published_items):
     :param list published_items: the list of items marked for publishing
     """
     failed_items = {}
-    current_utc = utcnow()
 
     for queue_item in published_items:
         try:
-            schedule_utc_datetime = get_utc_schedule(queue_item, PUBLISH_SCHEDULE)
-            if not schedule_utc_datetime or schedule_utc_datetime < current_utc:
-                enqueue_item(queue_item)
+            enqueue_item(queue_item)
         except:
             logger.exception('Failed to queue item {}'.format(queue_item.get('_id')))
             failed_items[str(queue_item.get('_id'))] = queue_item
