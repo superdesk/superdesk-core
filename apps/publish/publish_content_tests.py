@@ -12,7 +12,7 @@ from unittest import mock
 from datetime import timedelta
 
 from apps.publish import init_app
-from apps.publish.enqueue import enqueue_items
+from apps.publish.enqueue import enqueue_items, get_published_items
 from superdesk import config
 from superdesk.publish.publish_content import get_queue_items
 from superdesk.tests import TestCase
@@ -75,6 +75,46 @@ class PublishContentTests(TestCase):
                        "_updated": "2015-04-20T05:04:25.000Z",
                        "item_id": '2'}]
 
+    published_items = [
+        {
+            "_id": 1,
+            "item_id": "1",
+            "_created": utcnow(),
+            "_updated": utcnow(),
+            "queue_state": "pending",
+            "state": "published"
+        },
+        {
+            "_id": 2,
+            "item_id": "2",
+            "_created": utcnow(),
+            "_updated": utcnow(),
+            "queue_state": "pending",
+            "state": "scheduled",
+            "publish_schedule": utcnow() - timedelta(minutes=5),
+            "schedule_settings": {
+                "utc_publish_schedule": utcnow() - timedelta(minutes=5),
+                "timezone": "UTC",
+                "utc_embargo": None
+            }
+        },
+        {
+            "_id": 3,
+            "item_id": "3",
+            "_created": utcnow(),
+            "_updated": utcnow(),
+            "queue_state": "pending",
+            "state": "scheduled",
+            "publish_schedule": utcnow() + timedelta(minutes=5),
+            "schedule_settings": {
+                "utc_publish_schedule": utcnow() + timedelta(minutes=5),
+                "timezone": "UTC",
+                "utc_embargo": None
+            }
+        }
+
+    ]
+
     def setUp(self):
         with self.app.app_context():
             init_app(self.app)
@@ -97,36 +137,9 @@ class PublishContentTests(TestCase):
         enqueue_items(queue_items)
         fake_enqueue_item.assert_called_with(queue_items[0])
 
-    @mock.patch('apps.publish.enqueue.enqueue_item')
-    def test_enqueue_item_scheduled_in_future(self, *mocks):
-        fake_enqueue_item = mocks[0]
-        queue_items = [
-            {
-                '_id': '1', 'item_id': 'item_1', 'queue_state': 'pending',
-                'state': 'scheduled',
-                'publish_schedule': utcnow() + timedelta(minutes=20),
-                'schedule_settings': {
-                    'utc_publish_schedule': utcnow() + timedelta(minutes=20),
-                    'time_zone': None
-                }
-            }
-        ]
-        enqueue_items(queue_items)
-        assert not fake_enqueue_item.called, 'method should not have been called'
-
-    @mock.patch('apps.publish.enqueue.enqueue_item')
-    def test_enqueue_item_scheduled_elapsed(self, *mocks):
-        fake_enqueue_item = mocks[0]
-        queue_items = [
-            {
-                '_id': '1', 'item_id': 'item_1', 'queue_state': 'pending',
-                'state': 'scheduled',
-                'publish_schedule': utcnow() + timedelta(minutes=-2),
-                'schedule_settings': {
-                    'utc_publish_schedule': utcnow() + timedelta(minutes=-2),
-                    'time_zone': None
-                }
-            }
-        ]
-        enqueue_items(queue_items)
-        fake_enqueue_item.assert_called_with(queue_items[0])
+    def test_get_enqueue_items(self):
+        self.app.data.insert('published', self.published_items)
+        items = get_published_items()
+        self.assertEqual(2, len(items))
+        ids = [item[config.ID_FIELD] for item in items]
+        self.assertNotIn(3, ids)
