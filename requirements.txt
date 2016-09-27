@@ -7,3 +7,4 @@ wooper
 sphinx
 sphinx-autobuild
 requests-mock
+./
