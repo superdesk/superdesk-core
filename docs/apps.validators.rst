@@ -1,36 +1,13 @@
 apps.validators package
 =======================
 
-Submodules
-----------
 
-apps.validators.command module
-------------------------------
+.. toctree::
 
-.. automodule:: apps.validators.command
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   apps.validators.command
+   apps.validators.tests
+   apps.validators.validators
 
-apps.validators.tests module
-----------------------------
-
-.. automodule:: apps.validators.tests
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-apps.validators.validators module
----------------------------------
-
-.. automodule:: apps.validators.validators
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-Module contents
----------------
 
 .. automodule:: apps.validators
     :members:

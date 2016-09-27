@@ -1,20 +1,11 @@
 apps.item_lock.models package
 =============================
 
-Submodules
-----------
 
-apps.item_lock.models.item module
----------------------------------
+.. toctree::
 
-.. automodule:: apps.item_lock.models.item
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   apps.item_lock.models.item
 
-
-Module contents
----------------
 
 .. automodule:: apps.item_lock.models
     :members:

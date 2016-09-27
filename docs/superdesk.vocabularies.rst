@@ -1,28 +1,12 @@
 superdesk.vocabularies package
 ==============================
 
-Submodules
-----------
 
-superdesk.vocabularies.command module
--------------------------------------
+.. toctree::
 
-.. automodule:: superdesk.vocabularies.command
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   superdesk.vocabularies.command
+   superdesk.vocabularies.vocabularies
 
-superdesk.vocabularies.vocabularies module
-------------------------------------------
-
-.. automodule:: superdesk.vocabularies.vocabularies
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-Module contents
----------------
 
 .. automodule:: superdesk.vocabularies
     :members:

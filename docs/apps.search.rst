@@ -1,20 +1,11 @@
 apps.search package
 ===================
 
-Submodules
-----------
 
-apps.search.search_test module
-------------------------------
+.. toctree::
 
-.. automodule:: apps.search.search_test
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   apps.search.search_test
 
-
-Module contents
----------------
 
 .. automodule:: apps.search
     :members:

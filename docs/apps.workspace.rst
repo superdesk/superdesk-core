@@ -1,20 +1,11 @@
 apps.workspace package
 ======================
 
-Submodules
-----------
 
-apps.workspace.workspace module
--------------------------------
+.. toctree::
 
-.. automodule:: apps.workspace.workspace
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   apps.workspace.workspace
 
-
-Module contents
----------------
 
 .. automodule:: apps.workspace
     :members:

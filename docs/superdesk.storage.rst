@@ -8,20 +8,11 @@ Subpackages
 
     superdesk.storage.amazon
 
-Submodules
-----------
 
-superdesk.storage.desk_media_storage module
--------------------------------------------
+.. toctree::
 
-.. automodule:: superdesk.storage.desk_media_storage
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   superdesk.storage.desk_media_storage
 
-
-Module contents
----------------
 
 .. automodule:: superdesk.storage
     :members:

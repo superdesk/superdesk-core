@@ -1,20 +1,11 @@
 apps.content package
 ====================
 
-Submodules
-----------
 
-apps.content.content_tests module
----------------------------------
+.. toctree::
 
-.. automodule:: apps.content.content_tests
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   apps.content.content_tests
 
-
-Module contents
----------------
 
 .. automodule:: apps.content
     :members:

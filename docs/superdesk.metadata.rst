@@ -1,36 +1,13 @@
 superdesk.metadata package
 ==========================
 
-Submodules
-----------
 
-superdesk.metadata.item module
-------------------------------
+.. toctree::
 
-.. automodule:: superdesk.metadata.item
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   superdesk.metadata.item
+   superdesk.metadata.packages
+   superdesk.metadata.utils
 
-superdesk.metadata.packages module
-----------------------------------
-
-.. automodule:: superdesk.metadata.packages
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-superdesk.metadata.utils module
--------------------------------
-
-.. automodule:: superdesk.metadata.utils
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-Module contents
----------------
 
 .. automodule:: superdesk.metadata
     :members:

@@ -1,20 +1,11 @@
 apps.archive_broadcast package
 ==============================
 
-Submodules
-----------
 
-apps.archive_broadcast.broadcast module
----------------------------------------
+.. toctree::
 
-.. automodule:: apps.archive_broadcast.broadcast
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   apps.archive_broadcast.broadcast
 
-
-Module contents
----------------
 
 .. automodule:: apps.archive_broadcast
     :members:

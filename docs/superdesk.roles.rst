@@ -1,20 +1,11 @@
 superdesk.roles package
 =======================
 
-Submodules
-----------
 
-superdesk.roles.roles module
-----------------------------
+.. toctree::
 
-.. automodule:: superdesk.roles.roles
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   superdesk.roles.roles
 
-
-Module contents
----------------
 
 .. automodule:: superdesk.roles
     :members:

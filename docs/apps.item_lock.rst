@@ -9,8 +9,6 @@ Subpackages
     apps.item_lock.components
     apps.item_lock.models
 
-Module contents
----------------
 
 .. automodule:: apps.item_lock
     :members:

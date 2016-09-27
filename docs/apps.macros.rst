@@ -1,36 +1,13 @@
 apps.macros package
 ===================
 
-Submodules
-----------
 
-apps.macros.macro_register module
----------------------------------
+.. toctree::
 
-.. automodule:: apps.macros.macro_register
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   apps.macros.macro_register
+   apps.macros.macro_register_tests
+   apps.macros.macros
 
-apps.macros.macro_register_tests module
----------------------------------------
-
-.. automodule:: apps.macros.macro_register_tests
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-apps.macros.macros module
--------------------------
-
-.. automodule:: apps.macros.macros
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-Module contents
----------------
 
 .. automodule:: apps.macros
     :members:

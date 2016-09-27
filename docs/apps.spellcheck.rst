@@ -1,28 +1,12 @@
 apps.spellcheck package
 =======================
 
-Submodules
-----------
 
-apps.spellcheck.spellcheck module
----------------------------------
+.. toctree::
 
-.. automodule:: apps.spellcheck.spellcheck
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   apps.spellcheck.spellcheck
+   apps.spellcheck.spellcheck_test
 
-apps.spellcheck.spellcheck_test module
---------------------------------------
-
-.. automodule:: apps.spellcheck.spellcheck_test
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-Module contents
----------------
 
 .. automodule:: apps.spellcheck
     :members:

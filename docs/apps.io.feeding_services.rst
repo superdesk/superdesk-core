@@ -1,20 +1,11 @@
 apps.io.feeding_services package
 ================================
 
-Submodules
-----------
 
-apps.io.feeding_services.reuters module
----------------------------------------
+.. toctree::
 
-.. automodule:: apps.io.feeding_services.reuters
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   apps.io.feeding_services.reuters
 
-
-Module contents
----------------
 
 .. automodule:: apps.io.feeding_services
     :members:

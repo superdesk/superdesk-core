@@ -9,8 +9,6 @@ Subpackages
     apps.content_filters.content_filter
     apps.content_filters.filter_condition
 
-Module contents
----------------
 
 .. automodule:: apps.content_filters
     :members:

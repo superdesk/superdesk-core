@@ -1,20 +1,11 @@
 apps.saved_searches package
 ===========================
 
-Submodules
-----------
 
-apps.saved_searches.saved_searches module
------------------------------------------
+.. toctree::
 
-.. automodule:: apps.saved_searches.saved_searches
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   apps.saved_searches.saved_searches
 
-
-Module contents
----------------
 
 .. automodule:: apps.saved_searches
     :members:

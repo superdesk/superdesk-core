@@ -1,28 +1,12 @@
 apps.validate package
 =====================
 
-Submodules
-----------
 
-apps.validate.tests module
---------------------------
+.. toctree::
 
-.. automodule:: apps.validate.tests
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   apps.validate.tests
+   apps.validate.validate
 
-apps.validate.validate module
------------------------------
-
-.. automodule:: apps.validate.validate
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-Module contents
----------------
 
 .. automodule:: apps.validate
     :members:

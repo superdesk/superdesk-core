@@ -1,20 +1,11 @@
 apps.item_autosave.components package
 =====================================
 
-Submodules
-----------
 
-apps.item_autosave.components.item_autosave module
---------------------------------------------------
+.. toctree::
 
-.. automodule:: apps.item_autosave.components.item_autosave
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   apps.item_autosave.components.item_autosave
 
-
-Module contents
----------------
 
 .. automodule:: apps.item_autosave.components
     :members:

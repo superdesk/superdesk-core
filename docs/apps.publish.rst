@@ -10,44 +10,14 @@ Subpackages
     apps.publish.enqueue
     apps.publish.formatters
 
-Submodules
-----------
 
-apps.publish.odbc_test module
------------------------------
+.. toctree::
 
-.. automodule:: apps.publish.odbc_test
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   apps.publish.odbc_test
+   apps.publish.publish_content_tests
+   apps.publish.publish_service_tests
+   apps.publish.published_item
 
-apps.publish.publish_content_tests module
------------------------------------------
-
-.. automodule:: apps.publish.publish_content_tests
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-apps.publish.publish_service_tests module
------------------------------------------
-
-.. automodule:: apps.publish.publish_service_tests
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-apps.publish.published_item module
-----------------------------------
-
-.. automodule:: apps.publish.published_item
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-Module contents
----------------
 
 .. automodule:: apps.publish
     :members:

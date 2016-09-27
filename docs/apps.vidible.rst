@@ -1,28 +1,12 @@
 apps.vidible package
 ====================
 
-Submodules
-----------
 
-apps.vidible.vidible module
----------------------------
+.. toctree::
 
-.. automodule:: apps.vidible.vidible
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   apps.vidible.vidible
+   apps.vidible.vidible_test
 
-apps.vidible.vidible_test module
---------------------------------
-
-.. automodule:: apps.vidible.vidible_test
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-Module contents
----------------
 
 .. automodule:: apps.vidible
     :members:

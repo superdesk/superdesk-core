@@ -1,20 +1,11 @@
 superdesk.backend_meta package
 ==============================
 
-Submodules
-----------
 
-superdesk.backend_meta.backend_meta module
-------------------------------------------
+.. toctree::
 
-.. automodule:: superdesk.backend_meta.backend_meta
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   superdesk.backend_meta.backend_meta
 
-
-Module contents
----------------
 
 .. automodule:: superdesk.backend_meta
     :members:

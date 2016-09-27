@@ -1,20 +1,11 @@
 superdesk.locators package
 ==========================
 
-Submodules
-----------
 
-superdesk.locators.locators module
-----------------------------------
+.. toctree::
 
-.. automodule:: superdesk.locators.locators
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   superdesk.locators.locators
 
-
-Module contents
----------------
 
 .. automodule:: superdesk.locators
     :members:

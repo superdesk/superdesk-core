@@ -1,20 +1,11 @@
 apps.archived package
 =====================
 
-Submodules
-----------
 
-apps.archived.archived module
------------------------------
+.. toctree::
 
-.. automodule:: apps.archived.archived
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   apps.archived.archived
 
-
-Module contents
----------------
 
 .. automodule:: apps.archived
     :members:

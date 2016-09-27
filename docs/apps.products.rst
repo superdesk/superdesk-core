@@ -1,36 +1,13 @@
 apps.products package
 =====================
 
-Submodules
-----------
 
-apps.products.product_test module
----------------------------------
+.. toctree::
 
-.. automodule:: apps.products.product_test
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   apps.products.product_test
+   apps.products.resource
+   apps.products.service
 
-apps.products.resource module
------------------------------
-
-.. automodule:: apps.products.resource
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-apps.products.service module
-----------------------------
-
-.. automodule:: apps.products.service
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-Module contents
----------------
 
 .. automodule:: apps.products
     :members:

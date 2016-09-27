@@ -4,6 +4,7 @@
 # You can set these variables from the command line.
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
+SPHINXAPIDOC  = sphinx-apidoc
 PAPER         =
 BUILDDIR      = _build
 
@@ -44,6 +45,7 @@ help:
 	@echo "  coverage   to run coverage check of the documentation (if enabled)"
 	@echo "  dummy      to check syntax errors of document sources"
 	@echo "  livehtml   to autobuild html docs on change and server it on port 8000"
+	@echo "  apidoc     to generate rst files using sphinx-apidoc and custom formating (see clean_autodoc.py for details)"
 
 .PHONY: clean
 clean:
@@ -227,3 +229,14 @@ dummy:
 
 livehtml:
 	sphinx-autobuild -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
+
+.PHONY: apidoc
+apidoc:
+	# generate docs for apps
+	$(SPHINXAPIDOC) -f -e -o $(CURDIR) $(CURDIR)/../apps/
+	for file in apps*.rst; do $(CURDIR)/clean_autodoc.sh $$file; done
+	# generate docs for superdesk
+	$(SPHINXAPIDOC) -f -e -o $(CURDIR) $(CURDIR)/../superdesk/
+	for file in superdesk*.rst; do $(CURDIR)/clean_autodoc.sh $$file; done
+	@echo
+	@echo "apidoc build finished."

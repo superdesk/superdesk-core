@@ -1,28 +1,12 @@
 apps.comments package
 =====================
 
-Submodules
-----------
 
-apps.comments.comments module
------------------------------
+.. toctree::
 
-.. automodule:: apps.comments.comments
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   apps.comments.comments
+   apps.comments.user_mentions
 
-apps.comments.user_mentions module
-----------------------------------
-
-.. automodule:: apps.comments.user_mentions
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-Module contents
----------------
 
 .. automodule:: apps.comments
     :members:

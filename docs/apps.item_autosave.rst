@@ -9,8 +9,6 @@ Subpackages
     apps.item_autosave.components
     apps.item_autosave.models
 
-Module contents
----------------
 
 .. automodule:: apps.item_autosave
     :members:
