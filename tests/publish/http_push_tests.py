@@ -63,6 +63,7 @@ class HTTPPushPublishTestCase(unittest.TestCase):
 
     def is_item_published(self, item_id):
         """Return True if the item was published, False otherwise.
+
         Raises Exception in case of server/communication error.
         """
         if not getattr(self, 'resource_url', None):

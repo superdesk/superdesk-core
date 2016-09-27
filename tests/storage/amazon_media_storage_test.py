@@ -39,9 +39,11 @@ class AmazonMediaStoragePutAndDeleteTest(TestCase):
         self.amazon = AmazonMediaStorage(self.app)
 
     def test_put_and_delete(self):
-        """
-        If the environment variables have a Amazon secret key set then assume that we can attempt to put and delete
-        into s3
+        """Test amazon if configured.
+
+        If the environment variables have a Amazon secret key set then assume
+        that we can attempt to put and delete into s3
+
         :return:
         """
         if self.app.config['AMAZON_SECRET_ACCESS_KEY']:
