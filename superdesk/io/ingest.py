@@ -57,8 +57,8 @@ class IngestService(BaseService):
         return res
 
     def set_ingest_provider_sequence(self, item, provider):
-        """
-        Sets the value of ingest_provider_sequence in item.
+        """Sets the value of ingest_provider_sequence in item.
+
         :param item: object to which ingest_provider_sequence to be set
         :param provider: ingest_provider object, used to build the key name of sequence
         """

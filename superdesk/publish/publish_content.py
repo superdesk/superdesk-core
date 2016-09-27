@@ -45,10 +45,7 @@ class PublishContent(superdesk.Command):
 
 @celery.task(soft_time_limit=1800)
 def publish():
-    """
-    Fetches items from publish queue as per the configuration,
-    calls the transmit function.
-    """
+    """Fetch items from publish queue as per the configuration, call the transmit function."""
     with ProfileManager('publish:transmit'):
         lock_name = get_lock_id("Transmit", "Articles")
         if not lock(lock_name, expire=1810):

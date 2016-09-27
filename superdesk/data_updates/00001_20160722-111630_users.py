@@ -13,10 +13,11 @@ from eve.utils import config
 
 
 class DataUpdate(DataUpdate):
-    """
-    Updates the user collection with invisible stages.
+    """Updates the user collection with invisible stages.
+
     Refer to https://dev.sourcefabric.org/browse/SD-5077 for more information
     """
+
     resource = 'users'
 
     def forwards(self, mongodb_collection, mongodb_database):

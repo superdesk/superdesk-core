@@ -25,6 +25,7 @@ class Cursor:
     """
     Simulate pymongo Cursor for retuned results
     """
+
     def __init__(self, iterable):
         self.iterable = iterable
 

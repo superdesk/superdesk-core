@@ -23,6 +23,7 @@ class NITFFormatter(Formatter):
     """
     NITF Formatter
     """
+
     XML_ROOT = '<?xml version="1.0"?>'
 
     _message_attrib = {'version': "-//IPTC//DTD NITF 3.6//EN"}
@@ -131,7 +132,7 @@ class NITFFormatter(Formatter):
         return nitf
 
     def _textToParent(self, parent, children, idx, text):
-        """copy Element.text to parent or sibling element
+        """Copy Element.text to parent or sibling element
 
         for internal use only
         """
@@ -144,7 +145,7 @@ class NITFFormatter(Formatter):
             parent.text = (parent.text or '') + text
 
     def html2nitf(self, html_elem, root_elem=True):
-        """convert HTML elements to NITF compatible elements
+        """Convert HTML elements to NITF compatible elements
 
         :param ET.Element: HTML to clean/transform
         :param bool: True if its the main element (must be a <div>)

@@ -8,9 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-'''
-Utilities for extractid metadata from image files.
-'''
+"""Utilities for extractid metadata from image files."""
 
 from PIL import Image, ExifTags
 from flask import json
@@ -29,11 +27,10 @@ EXIF_ORIENTATION_TAG = 274
 
 
 def fix_orientation(file_stream):
-    '''
-    Returns the image fixed accordingly to the orientation.
-​
+    """Returns the image fixed accordingly to the orientation.
+
     @param file_stream: stream
-    '''
+    """
     file_stream.seek(0)
     img = Image.open(file_stream)
     if not hasattr(img, '_getexif'):
@@ -54,11 +51,10 @@ def fix_orientation(file_stream):
 
 
 def get_meta(file_stream):
-    '''
-    Returns the image metadata in a dictionary of tag:value pairs.
+    """Returns the image metadata in a dictionary of tag:value pairs.
 
     @param file_stream: stream
-    '''
+    """
     current = file_stream.tell()
     file_stream.seek(0)
     img = Image.open(file_stream)

@@ -16,10 +16,11 @@ from superdesk import config
 
 
 class IndexFromMongo(superdesk.Command):
-    """
-    Index the specified mongo collection in the specified elastic collection/type.
+    """Index the specified mongo collection in the specified elastic collection/type.
+
     This will use the default APP mongo DB to read the data and the default Elastic APP index.
     """
+
     option_list = [
         superdesk.Option('--from', '-f', dest='mongo_collection_name', required=True),
         superdesk.Option('--page-size', '-p', dest='page_size')
@@ -50,8 +51,8 @@ class IndexFromMongo(superdesk.Command):
         return 'Finished indexing collection {}'.format(mongo_collection_name)
 
     def get_mongo_items(self, mongo_collection_name, page_size):
-        """
-        Generates list of items from given mongo collection per page size
+        """Generate list of items from given mongo collection per page size.
+
         :param mongo_collection_name: Name of the collection to get the items
         :param page_size: Size of every list in each iteration
         :return: list of items

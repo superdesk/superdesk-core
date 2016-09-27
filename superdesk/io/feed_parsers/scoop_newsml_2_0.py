@@ -55,8 +55,8 @@ class ScoopNewsMLTwoFeedParser(NewsMLTwoFeedParser):
             raise ParserError.newsmlTwoParserError(ex, provider)
 
     def parse_header(self, tree):
-        """
-        Parse header element, it seems that the header tag is in camel case
+        """Parse header element, it seems that the header tag is in camel case
+
         :param tree:
         :return: dict
         """
@@ -77,9 +77,8 @@ class ScoopNewsMLTwoFeedParser(NewsMLTwoFeedParser):
         item['ednote'] = meta.find(self.qname('edNote')).text if meta.find(self.qname('edNote')) is not None else ''
 
     def datetime(self, string):
-        """
-        Convert the date string parsed from the source file to a datetime, assumes that the
-        time is local to NZ
+        """Convert the date string parsed from the source file to a datetime, assumes that the time is local to NZ
+
         :param string:
         :return:
         """
@@ -89,8 +88,8 @@ class ScoopNewsMLTwoFeedParser(NewsMLTwoFeedParser):
         return nz_dt.astimezone(pytz.utc)
 
     def parse_content_set(self, tree, item):
-        """
-        Parse out the nitf like content.
+        """Parse out the nitf like content.
+
         :param tree:
         :param item:
         :return: item populated with a headline and body_html

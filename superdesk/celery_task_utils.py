@@ -38,9 +38,8 @@ def __get_running_key(name, id):
 
 
 def is_task_running(name, id, update_schedule):
-    """
-    Returns False if the instance was never run before or is not currently running.
-    True otherwise.
+    """Test if the instance was never run before or is not currently running.
+
     If the instance is not already running, we set it as running using locking.
     """
     def set_if_not_running(pipe):
@@ -85,8 +84,8 @@ def mark_task_as_not_running(name, id):
 
 
 def __redis_transaction(func, key):
-    """
-    Modified version of the transaction class from the Redis library.
+    """Modified version of the transaction class from the Redis library.
+
     We want to exit if someone else is modifying the value.
     Convenience method for executing the callable `func` as a transaction
     while watching all keys specified in `watches`. The 'func' callable

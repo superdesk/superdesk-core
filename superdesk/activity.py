@@ -155,8 +155,7 @@ class ActivityResource(Resource):
 class ActivityService(BaseService):
 
     def get(self, req, lookup):
-        """ Filter out personal activity on personal items if inquired by another user.
-        """
+        """Filter out personal activity on personal items if inquired by another user."""
         if req is None:
             req = ParsedRequest()
         user = getattr(g, 'user', None)
@@ -177,8 +176,8 @@ class ActivityService(BaseService):
         return self.backend.get(self.datasource, req=req, lookup=lookup)
 
     def on_update(self, updates, original):
-        """ Called on the patch request to mark a activity/notification/comment as having been read and
-        nothing else
+        """Called on the patch request to mark a activity/notification/comment as read and nothing else
+
         :param updates:
         :param original:
         :return:
@@ -230,6 +229,7 @@ def add_activity(activity_name, msg, resource=None, item=None, notify=None, noti
                  can_push_notification=True, **data):
     """
     Adds an activity into activity log.
+
     This will became part of current user activity log.
     If there is someone set to be notified it will make it into his notifications box.
 

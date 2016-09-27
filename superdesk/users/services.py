@@ -121,8 +121,8 @@ def get_sign_off(user):
 class UsersService(BaseService):
 
     def __is_invalid_operation(self, user, updates, method):
-        """
-        Checks if the requested 'PATCH' or 'DELETE' operation is Invalid.
+        """Checks if the requested 'PATCH' or 'DELETE' operation is Invalid.
+
         Operation is invalid if one of the below is True:
             1. Check if the user is updating his/her own status.
             2. Check if the user is changing the role/user_type/privileges of other logged-in users.
@@ -222,13 +222,13 @@ class UsersService(BaseService):
             self.update_stage_visibility_for_user(user_doc)
 
     def on_update(self, updates, original):
-        """
-        Overriding the method to
-            1. Prevent user from the below:
-                a. Check if the user is updating his/her own status.
-                b. Check if the user is changing the status of other logged-in users.
-                c. A user without 'User Management' privilege is changing role/user_type/privileges
-            2. Set Sign Off property if it's not been set already
+        """Overriding the method to:
+
+        1. Prevent user from the below:
+            a. Check if the user is updating his/her own status.
+            b. Check if the user is changing the status of other logged-in users.
+            c. A user without 'User Management' privilege is changing role/user_type/privileges
+        2. Set Sign Off property if it's not been set already
         """
         error_message = self.__is_invalid_operation(original, updates, 'PATCH')
         if error_message:
@@ -250,13 +250,12 @@ class UsersService(BaseService):
         self.__send_notification(updates, user)
 
     def on_delete(self, user):
-        """
-        Overriding the method to prevent user from the below:
-            1. Check if the user is updating his/her own status.
-            2. Check if the user is changing the status of other logged-in users.
-            3. A user without 'User Management' privilege is changing role/user_type/privileges
-        """
+        """Overriding the method to prevent user from the below:
 
+        1. Check if the user is updating his/her own status.
+        2. Check if the user is changing the status of other logged-in users.
+        3. A user without 'User Management' privilege is changing role/user_type/privileges
+        """
         updates = {'is_enabled': False, 'is_active': False}
         error_message = self.__is_invalid_operation(user, updates, 'DELETE')
         if error_message:
@@ -293,11 +292,11 @@ class UsersService(BaseService):
                     archive_autosave_service.delete(lookup={'_id': item['_id']})
 
     def on_deleted(self, doc):
-        """
-        Overriding to add to activity stream and handle user clean up:
-            1. Authenticated Sessions
-            2. Locked Articles
-            3. Reset Password Tokens
+        """Overriding to add to activity stream and handle user clean up.
+
+        1. Authenticated Sessions
+        2. Locked Articles
+        3. Reset Password Tokens
         """
 
         add_activity(ACTIVITY_UPDATE, 'disabled user {{user}}', self.datasource,
@@ -350,8 +349,10 @@ class UsersService(BaseService):
         return [str(stage['_id']) for stage in self.get_invisible_stages(user_id)]
 
     def get_user_by_email(self, email_address):
-        """
-        Finds a user by the given email_address. Does a exact match.
+        """Finds a user by the given email_address.
+
+        Does a exact match.
+
         :param email_address:
         :type email_address: str with valid email format
         :return: user object if found.
@@ -422,8 +423,8 @@ class DBUsersService(UsersService):
             updates['display_name'] = get_display_name(updated_user)
 
     def update_password(self, user_id, password):
-        """
-        Update the user password.
+        """Update the user password.
+
         Returns true if successful.
         """
         user = self.find_one(req=None, _id=user_id)

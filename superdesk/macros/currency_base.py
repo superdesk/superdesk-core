@@ -73,7 +73,7 @@ def get_rate(from_currency, to_currency):
 
 
 def format_output(original, converted):
-    """ Returns the replacement string for the given original value """
+    """Return the replacement string for the given original value."""
     if original[-1:].isalpha():
         # If there's 'm' or 'b' at the end of the original carry that across
         converted += original[-1:]
@@ -81,8 +81,8 @@ def format_output(original, converted):
 
 
 def do_conversion(item, rate, currency, search_param, match_index, value_index):
-    """
-    Performs the conversion
+    """Perform the conversion.
+
     :param item: story
     :param rate: exchange rate
     :param currency: currency symbol or prefix to be used in the results

@@ -15,9 +15,9 @@ states = []
 actions = []
 allowed_workflow_states = []
 
-__all__ = ['workflow_state', 'get_workflow_states', 'allowed_workflow_states',
+__all__ = ('workflow_state', 'get_workflow_states', 'allowed_workflow_states',
            'workflow_action', 'get_workflow_actions', 'is_workflow_state_transition_valid',
-           'set_default_state']
+           'set_default_state')
 
 
 def workflow_action(name, include_states=None, exclude_states=None, privileges=None):
@@ -59,7 +59,8 @@ def get_workflow_actions(state=None):
 
 
 def get_privileged_actions(privileges):
-    """ Get the actions that are within the privileged list
+    """Get the actions that are within the privileged list
+
     :param privileges:
     :return: list of allowed actions
     """

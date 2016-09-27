@@ -133,6 +133,7 @@ class SubscribersService(BaseService):
     def _get_subscribers_by_filter_condition(self, filter_condition):
         """
         Searches all subscribers that has a content filter with the given filter condition
+
         If filter condition is used in a global filter then it returns all
         subscribers that not disabled the global filter.
         :param filter_condition: Filter condition to test
@@ -180,7 +181,9 @@ class SubscribersService(BaseService):
 
     def _validate_seq_num_settings(self, subscriber):
         """
-        Validates the 'sequence_num_settings' property if present in subscriber. Below are the validation rules:
+        Validates the 'sequence_num_settings' property if present in subscriber.
+
+        Below are the validation rules:
             1.  If min value is present then it should be greater than 0
             2.  If min is present and max value isn't available then it's defaulted to MAX_VALUE_OF_PUBLISH_SEQUENCE
 

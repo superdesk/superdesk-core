@@ -67,8 +67,8 @@ class NewsMLTwoFeedParser(XMLFeedParser):
         return item
 
     def parse_header(self, tree):
-        """
-        Parse header element
+        """Parse header element.
+
         :param tree:
         :return: dict
         """

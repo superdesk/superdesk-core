@@ -72,6 +72,7 @@ class Formatter(metaclass=FormatterRegistry):
     def append_legal(self, article, truncate=False):
         """
         Checks if the article has the legal flag on and adds 'Legal:' to the slugline
+
         :param article: article having the slugline
         :param truncate: truncates the slugline to 24 characters
         :return: updated slugline
@@ -88,6 +89,7 @@ class Formatter(metaclass=FormatterRegistry):
     def map_html_to_xml(self, element, html):
         """
         Map the html text tags to xml
+
         :param element: The xml element to populate
         :param html: the html to parse the text from
         :return:
@@ -122,7 +124,7 @@ def get_formatter(format_type, article):
 
 
 def get_all_formatters():
-    ''' Returns all formatters registered '''
+    """Return all formatters registered."""
     return formatters
 
 

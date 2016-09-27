@@ -33,7 +33,7 @@ class SuperdeskDataLayer(DataLayer):
         self.elastic = Elastic(app, serializer=SuperdeskJSONEncoder(), skip_index_init=True, retry_on_timeout=True)
 
     def init_elastic(self, app):
-        """ Init elastic index.
+        """Init elastic index.
 
         It will create index and put mapping. It should run only once so locks are in place.
         Thus mongo must be already setup on an up before running this.

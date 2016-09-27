@@ -410,8 +410,7 @@ def step_impl_fetch_from_provider_ingest(context, provider_name, guid):
 
 
 def embed_routing_scheme_rules(scheme):
-    """Fetch all content filters referenced by the given routing scheme and
-    embed them into the latter (replacing the plain references to filters).
+    """Fetch all content filters referenced by the given routing scheme and embed those into scheme.
 
     :param dict scheme: routing scheme configuration
     """

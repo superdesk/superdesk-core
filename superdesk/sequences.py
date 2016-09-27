@@ -43,6 +43,7 @@ class SequencesService(BaseService):
     ):
         """
         Generates Sequence Number
+
         :param key: key to identify the sequence
         :param max_seq_num: default None, maximal possible value, None means no upper limit
         :param min_seq_num: default 1, init value, sequence will start from the NEXT one

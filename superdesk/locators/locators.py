@@ -18,6 +18,7 @@ bp = Blueprint('locators', __name__)
 
 class LocatorIndex():
     """Locator index."""
+
     def __init__(self):
         self.locators = []
 

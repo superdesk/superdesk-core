@@ -140,8 +140,8 @@ def finish_task_for_progress(task_id):
 
 
 def __get_redis(app_ctx):
-    """
-    Constructs Redis Client object.
+    """Constructs Redis Client object.
+
     :return: Redis Client object
     """
 

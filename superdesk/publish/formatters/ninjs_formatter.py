@@ -42,6 +42,7 @@ class NINJSFormatter(Formatter):
     """
     NINJS Formatter
     """
+
     direct_copy_properties = ('versioncreated', 'usageterms', 'language', 'headline', 'copyrightnotice',
                               'urgency', 'pubstatus', 'mimetype', 'place', 'copyrightholder',
                               'body_text', 'body_html', 'profile', 'slugline', 'keywords')
@@ -145,8 +146,7 @@ class NINJSFormatter(Formatter):
 
     def _generate_renditions(self, article):
         """
-        For associated items that have custom structure generate renditions based on the item
-        custom properties.
+        For associated items that have custom structure generate renditions based on the item `custom properties.
         """
         renditions = {'original': {}}
         for orig_field, dest_field in self.vidible_fields.items():

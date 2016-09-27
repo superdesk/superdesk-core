@@ -8,6 +8,6 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-'''Module for Amazon integration'''
+"""Amazon integration module."""
 
 from .amazon_media_storage import AmazonMediaStorage  # NOQA

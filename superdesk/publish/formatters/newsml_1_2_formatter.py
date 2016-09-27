@@ -33,6 +33,7 @@ class NewsML12Formatter(Formatter):
     """
     NewsML 1.2 Formatter
     """
+
     XML_ROOT = '<?xml version="1.0"?><!DOCTYPE NewsML SYSTEM "http://www.provider.com/dtd/NewsML_1.2.dtd">'
     now = utcnow()
     string_now = now.strftime('%Y%m%dT%H%M%S+0000')
@@ -49,6 +50,7 @@ class NewsML12Formatter(Formatter):
     def format(self, article, subscriber, codes=None):
         """
         Create article in NewsML1.2 format
+
         :param dict article:
         :param dict subscriber:
         :param list codes:
@@ -76,6 +78,7 @@ class NewsML12Formatter(Formatter):
     def _format_news_envelope(self, article, news_envelope, pub_seq_num):
         """
         Create a NewsEnvelope element
+
         :param dict article:
         :param element news_envelope:
         :param int pub_seq_num:
@@ -87,6 +90,7 @@ class NewsML12Formatter(Formatter):
     def _format_identification(self, article, news_item):
         """
         Creates the Identification element
+
         :param dict article:
         :param Element news_item:
         """
@@ -106,6 +110,7 @@ class NewsML12Formatter(Formatter):
     def _generate_public_identifier(self, item_id, version, update):
         """
         Create the NewsML public identifier
+
         :param str item_id: Article Id
         :param str version: Article Version
         :param str update: update
@@ -116,6 +121,7 @@ class NewsML12Formatter(Formatter):
     def _process_revision(self, article):
         """
         Get attributes of RevisionId element.
+
         :param dict article:
         :return: dict
         """
@@ -127,6 +133,7 @@ class NewsML12Formatter(Formatter):
     def _format_news_management(self, article, news_item):
         """
         Create a NewsManagement element
+
         :param dict article:
         :param Element news_item:
         """
@@ -157,6 +164,7 @@ class NewsML12Formatter(Formatter):
     def _format_news_component(self, article, news_item):
         """
         Create a main NewsComponent element
+
         :param dict article:
         :param Element news_item:
         """
@@ -186,6 +194,7 @@ class NewsML12Formatter(Formatter):
     def _format_news_lines(self, article, main_news_component):
         """
         Create a NewsLines element
+
         :param dict article:
         :param Element main_news_component:
         """
@@ -208,6 +217,7 @@ class NewsML12Formatter(Formatter):
     def _format_rights_metadata(self, article, main_news_component):
         """
         Create a RightsMetadata element
+
         :param dict article:
         :param Element main_news_component:
         """
@@ -232,6 +242,7 @@ class NewsML12Formatter(Formatter):
     def _format_descriptive_metadata(self, article, main_news_component):
         """
         Create a Descriptive_metadata element
+
         :param dict article:
         :param Element main_news_component:
         """
@@ -252,6 +263,7 @@ class NewsML12Formatter(Formatter):
     def _format_place(self, article, descriptive_metadata):
         """
         Create Place specific element in the descriptive metadata
+
         :param dict article:
         :param Element descriptive_metadata:
         """
@@ -275,6 +287,7 @@ class NewsML12Formatter(Formatter):
     def _format_dateline(self, article, descriptive_metadata):
         """
         Create the DateLineDate and Location in the descriptive metadata
+
         :param dict article:
         :param Element news_lines:
         """
@@ -294,6 +307,7 @@ class NewsML12Formatter(Formatter):
     def _format_abstract(self, article, main_news_component):
         """
         Create an abstract NewsComponent element
+
         :param dict article:
         :param Element main_news_component:
         """
@@ -308,6 +322,7 @@ class NewsML12Formatter(Formatter):
     def _format_body(self, article, main_news_component):
         """
         Create an body text NewsComponent element
+
         :param dict article:
         :param Element main_news_component:
         """
@@ -325,6 +340,7 @@ class NewsML12Formatter(Formatter):
     def _format_description(self, article, main_news_component):
         """
         Create an description NewsComponent element
+
         :param dict article:
         :param Element main_news_component:
         """
@@ -338,6 +354,7 @@ class NewsML12Formatter(Formatter):
     def _format_media(self, article, main_news_component, media_type):
         """
         Create an NewsComponent element related to media
+
         :param dict article:
         :param Element main_news_component:
         """
@@ -378,6 +395,7 @@ class NewsML12Formatter(Formatter):
     def _format_package(self, article, main_news_component):
         """
         Constructs the NewsItemRef for packages.
+
         :param dict article:
         :param Element main_news_component:
         """
@@ -396,6 +414,7 @@ class NewsML12Formatter(Formatter):
     def _get_total_duration(self, duration):
         """
         Get the duration in seconds.
+
         :param str duration: Format required is '%H:%M:%S.%f'. For example, 1:01:12.0000 or 1:1:12.0000
         :return int:
         """
@@ -410,6 +429,7 @@ class NewsML12Formatter(Formatter):
     def can_format(self, format_type, article):
         """
         Method check if the article can be formatted to NewsML 1.2 or not.
+
         :param str format_type:
         :param dict article:
         :return: True if article can formatted else False

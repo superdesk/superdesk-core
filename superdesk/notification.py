@@ -25,9 +25,8 @@ exchange_name = 'socket_notification'
 
 
 class ClosedSocket():
-    """Mimic closed socket to simplify logic when connection
-    can't be established at first place.
-    """
+    """Mimic closed socket to simplify logic when connection can't be established at first place."""
+
     def __init__(self):
         self.open = False
 
@@ -52,7 +51,9 @@ def _create_socket_message(**kwargs):
 
 def push_notification(name, **kwargs):
     """Push notification to broker.
+
     In case connection is closed it will try to reconnect.
+
     :param name: event name
     """
     logger.info('pushing event {0} ({1})'.format(name, json.dumps(kwargs, default=json_serialize_datetime_objectId)))

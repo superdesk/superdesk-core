@@ -42,13 +42,13 @@ class SuperdeskError(ValidationError):
     system_exception = None
 
     def __init__(self, code, desc=None):
-        """
-        :param int code: numeric error code
-        :param desc: optional detailed error description, defaults to None
-        """
+        #: numeric error code
         self.code = code
-        self.message = self._codes.get(code, 'Unknown error')
+
+        #: optional detailed error description, defaults to None
         self.desc = desc
+
+        self.message = self._codes.get(code, 'Unknown error')
 
     def __str__(self):
         desc_text = '' if not self.desc else (' Details: ' + self.desc)
@@ -66,16 +66,13 @@ class SuperdeskError(ValidationError):
 class SuperdeskApiError(SuperdeskError):
     """Base class for superdesk API."""
 
-    # default error status code
+    #: error status code
     status_code = 400
 
     def __init__(self, message=None, status_code=None, payload=None):
-        """
-        :param message: a human readable error description
-        :param status_code: response status code
-        :param payload: a dict with request issues
-        """
         Exception.__init__(self)
+
+        #: a human readable error description
         self.message = message
 
         if status_code:

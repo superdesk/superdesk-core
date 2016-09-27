@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 def create_server(config):
     """Create websocket server and run it until it gets Ctrl+C or SIGTERM.
+
     :param config: config dictionary
     """
     try:

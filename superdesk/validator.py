@@ -34,17 +34,19 @@ class SuperdeskValidator(Validator):
         pass
 
     def _validate_type_phone_number(self, field, value):
-        """ Enables validation for `phone_number` schema attribute.
-            :param field: field name.
-            :param value: field value.
+        """Enables validation for `phone_number` schema attribute.
+
+        :param field: field name.
+        :param value: field value.
         """
         if not re.match("^(?:(?:0?[1-9][0-9]{8})|(?:(?:\+|00)[1-9][0-9]{9,11}))$", value):
             self._error(field, ERROR_PATTERN)
 
     def _validate_type_email(self, field, value):
-        """ Enables validation for `email` schema attribute.
-            :param field: field name.
-            :param value: field value.
+        """Enables validation for `email` schema attribute.
+
+        :param field: field name.
+        :param value: field value.
         """
         regex = "^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@" \
                 "(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+(?:\.[a-z0-9](?:[a-z0-9-]{0,4}[a-z0-9])?)*$"
@@ -58,7 +60,8 @@ class SuperdeskValidator(Validator):
 
     def _validate_multiple_emails(self, multiple, field, value):
         """
-        validates comma separated list of emails.
+        Validates comma separated list of emails.
+
         :param field: field name.
         :param value: field value.
         """

@@ -1,4 +1,5 @@
 flake8
+flake8-docstrings
 nose
 pep8
 pyflakes<=1.1
@@ -7,4 +8,4 @@ wooper
 sphinx
 sphinx-autobuild
 requests-mock
-./
+.

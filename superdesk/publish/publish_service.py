@@ -28,6 +28,7 @@ extensions = {
 
 class PublishServiceBase():
     """Base publish service class."""
+
     DEFAULT_EXT = "txt"
 
     def _transmit(self, queue_item, subscriber):
@@ -131,7 +132,7 @@ class PublishServiceBase():
 
     @staticmethod
     def register_file_extension(format_, ext):
-        """register new file extension
+        """Register new file extension
 
         :param format_: item format
         :param ext: extension to use

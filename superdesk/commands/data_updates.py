@@ -66,12 +66,10 @@ def get_dirs(only_relative_folder=False):
 
 
 def get_data_updates_files(strip_file_extension=False):
-    '''
+    """Return the list of data updates filenames.
 
-    Returns the list of data updates filenames.
     .py extension can be removed with `strip_file_extension` parameter.
-
-    '''
+    """
     files = []
     # create folder if doens't exist
     for folder in get_dirs():
@@ -91,12 +89,11 @@ def get_data_updates_files(strip_file_extension=False):
 
 
 class DataUpdateCommand(superdesk.Command):
-    '''
+    """Parent class for Upgrade and Downgrade commands.
 
-    Parent class for Upgrade and Downgrade commands.
     It defines options and initialize some variables in `run` method.
+    """
 
-    '''
     option_list = [
         superdesk.Option('--id', '-i', dest='data_update_id', required=False,
                          choices=get_data_updates_files(strip_file_extension=True),
@@ -144,12 +141,11 @@ class DataUpdateCommand(superdesk.Command):
 
 
 class Upgrade(DataUpdateCommand):
-    '''
+    """Runs all the new data updates available.
 
-    Runs all the new data updates available.
     If `data_update_id` is given, runs new data updates until the given one.
+    """
 
-    '''
     def run(self, data_update_id=None, fake=False, dry=False):
         super().run(data_update_id, fake, dry)
         data_updates_files = self.data_updates_files
@@ -176,12 +172,11 @@ class Upgrade(DataUpdateCommand):
 
 
 class Downgrade(DataUpdateCommand):
-    '''
+    """Runs the latest data update backward.
 
-    Runs the latest data update backward.
     If `data_update_id` is given, runs all the data updates backward until the given one.
+    """
 
-    '''
     def run(self, data_update_id=None, fake=False, dry=False):
         super().run(data_update_id, fake, dry)
         data_updates_files = self.data_updates_files
@@ -218,11 +213,8 @@ class Downgrade(DataUpdateCommand):
 
 
 class GenerateUpdate(superdesk.Command):
-    '''
+    """Generate a file where to define a new data update."""
 
-    Generate a file where to define a new data update
-
-    '''
     option_list = [
         superdesk.Option('--resource', '-r', dest='resource_name', required=True,
                          help='Resource to update'),

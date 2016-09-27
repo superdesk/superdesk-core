@@ -18,10 +18,12 @@ from apps.search import SearchService
 
 
 class RebuildElasticIndex(superdesk.Command):
+    """Rebuild the elastic index from existing data.
+
+    It is creating a new index with the same alias as the configured index,
+    puts the new mapping and delete the old index.
     """
-    Rebuild the elastic index from existing data by creating a new index with
-    the same alias as the configured index, puts the new mapping and delete the old index.
-    """
+
     option_list = [
         superdesk.Option('--index', '-i', dest='index_name')
     ]

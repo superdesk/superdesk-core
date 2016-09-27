@@ -8,8 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 #
 
-"""Schema utils.
-"""
+"""Schema utils."""
 
 import superdesk
 
@@ -27,8 +26,7 @@ def _get_version_db():
 
 
 def get_schema_version():
-    """Read app schema version from db.
-    """
+    """Read app schema version from db."""
     db = _get_version_db()
     version = db.find_one({'_id': VERSION_ID})
     return version.get('version') if version else 0

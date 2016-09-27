@@ -297,9 +297,10 @@ class EMailRFC822FeedParser(EmailFeedParser):
         return css
 
     def _expand_category(self, item, mail_item):
-        """
-        Given a list of category names in the incoming email try to look them up to match category codes.
+        """Given a list of category names in the incoming email try to look them up to match category codes.
+
         If there is a subject associated with the category it will insert that into the item as well
+
         :param item:
         :param mail_item:
         :return: An item populated with category codes
@@ -323,9 +324,10 @@ class EMailRFC822FeedParser(EmailFeedParser):
                         break
 
     def _parse_formatted_email(self, data, provider):
-        """
-        Passed an email that was constructed as a notification from a google form submission it constructs an item.
+        """Construct an item from an email that was constructed as a notification from a google form submission.
+
         The google form submits to a google sheet, this sheet creates the email as a notification
+
         :param data:
         :param provider:
         :return: A list of 1 item

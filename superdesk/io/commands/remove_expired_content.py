@@ -99,8 +99,8 @@ def get_expired_items(provider_id):
 
 
 def get_query_for_expired_items(provider):
-    """
-    Find all ingest items with given provider id and expiry is past
+    """Find all ingest items with given provider id and expiry is past
+
     :param dict provider: ingest provider
     :return str: mongo query
     """

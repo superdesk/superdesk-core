@@ -27,6 +27,7 @@ class FileSortAttributes(Enum):
     """
     Enum defining the File Story Attributes.
     """
+
     name = 1
     created = 2
     modified = 3
@@ -36,6 +37,7 @@ class SortOrder(Enum):
     """
     Enum defining the sort order.
     """
+
     asc = 1
     desc = 2
 
@@ -44,10 +46,12 @@ class SuperdeskBaseEnum(Enum):
     """
     Base enum
     """
+
     @classmethod
     def from_value(cls, value):
         """
         Returns the valid enum if value found else none
+
         :param value: enum value
         :return: return valid
         """
@@ -60,6 +64,7 @@ class SuperdeskBaseEnum(Enum):
     def values(cls):
         """
         Returns list of values for an enum
+
         :return: list of values for an enum
         """
         return [enum_member.value for enum_member in cls]
@@ -83,7 +88,9 @@ def get_hash(input_str, salt):
 def get_sorted_files(path, sort_by=FileSortAttributes.name, sort_order=SortOrder.asc):
     """
     Get the list of files based on the sort order.
+
     Sort is allowed on name, created and modified datetime
+
     :param path: directory path
     :param sort_by: "name", "created", "modified"
     :param sort_order: "asc" - ascending, "desc" - descending
@@ -109,10 +116,9 @@ def is_hashed(input_str):
 
 
 def merge_dicts(dict_args):
-    '''
-    Given any number of dicts, shallow copy and merge into a new dict,
-    precedence goes to key value pairs in latter dicts.
-    '''
+    """
+    Given any number of dicts, shallow copy and merge into a new dict, precedence goes to latter dicts.
+    """
     result = {}
     for dictionary in dict_args:
         result.update(dictionary)
@@ -142,7 +148,7 @@ class ListCursor(object):
 
 def json_serialize_datetime_objectId(obj):
     """
-    serialize so that objectid and date are converted to appropriate format.
+    Serialize so that objectid and date are converted to appropriate format.
     """
     if isinstance(obj, datetime):
         return str(datetime.strftime(obj, config.DATE_FORMAT))

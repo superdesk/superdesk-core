@@ -200,6 +200,7 @@ class EveBackend():
     def delete(self, endpoint_name, lookup):
         """
         Delete method to delete by using mongo query syntax
+
         :param endpoint_name: Name of the endpoint
         :param lookup: User mongo query syntax. example 1. {'_id':123}, 2. {'item_id': {'$in': [123, 234]}}
         :returns:
