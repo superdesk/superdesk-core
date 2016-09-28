@@ -159,7 +159,7 @@ def clean_es(app, force=False):
 
 
 def snapshot_es(app, name):
-    indices = 'sptest_*'
+    indices = 'sptest*'
     backup = ('backups', '%s%s' % (indices[:-1], name))
     es = app.data.elastic.es
 
@@ -186,7 +186,7 @@ def snapshot_mongo(app, name):
     mongo = app.data.mongo.pymongo(prefix='MONGO').cx
 
     def create():
-        mongo.drop_database(name)
+        mongo.drop_database(snapshot)
         mongo.admin.command('copydb', fromdb=db, todb=snapshot)
 
     def restore():
@@ -208,22 +208,27 @@ def use_snapshot(app, name, funcs=(snapshot_es, snapshot_mongo), force=False):
 
     def wrapper(fn):
         path = app.config['ELASTICSEARCH_BACKUPS_PATH']
-        enabled = not force and path and os.path.exists(path)
+        enabled = path and os.path.exists(path)
 
         @functools.wraps(fn)
         def inner(*a, **kw):
-            if not enabled:
-                return fn(*a, **kw)
+            if not enabled or force:
+                inner.res = fn(*a, **kw)
+                logger.debug(
+                    'Don\'t use snapshot for %s; enabled=%s; force=%s',
+                    fn, enabled, force
+                )
+                return inner.res
 
             create, restore = snapshot()
-            if hasattr(fn, 'res'):
+            if hasattr(inner, 'res'):
                 restore()
                 logger.debug('Restore snapshot for %s', fn)
             else:
-                fn.res = fn(*a, **kw)
+                inner.res = fn(*a, **kw)
                 create()
                 logger.debug('Create snapshot for %s', fn)
-            return fn.res
+            return inner.res
         return inner
     return wrapper
 
