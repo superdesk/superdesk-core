@@ -317,6 +317,7 @@ CORE_APPS.extend([
     'apps.legal_archive',
     'apps.search',
     'apps.saved_searches',
+    'apps.suggestions',
     'apps.privilege',
     'apps.rules',
     'apps.highlights',
