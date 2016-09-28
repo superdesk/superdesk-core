@@ -149,7 +149,7 @@ def retry(exc, count=1):
 
 def _clean_es(app):
     es = app.data.elastic.es
-    es.indices.delete('sptest_*', ignore=[404])
+    es.indices.delete('sptest*', ignore=[404])
     app.data.init_elastic(app)
 
 
@@ -213,24 +213,25 @@ def use_snapshot(app, name, funcs=(snapshot_es, snapshot_mongo), force=False):
         @functools.wraps(fn)
         def inner(*a, **kw):
             if not enabled or force:
-                inner.res = fn(*a, **kw)
                 logger.debug(
                     'Don\'t use snapshot for %s; enabled=%s; force=%s',
                     fn, enabled, force
                 )
-                return inner.res
+                use_snapshot.pop(fn, None)
+                return fn(*a, **kw)
 
             create, restore = snapshot()
-            if hasattr(inner, 'res'):
+            if fn in use_snapshot.cache:
                 restore()
                 logger.debug('Restore snapshot for %s', fn)
             else:
-                inner.res = fn(*a, **kw)
+                use_snapshot.cache[fn] = fn(*a, **kw)
                 create()
                 logger.debug('Create snapshot for %s', fn)
-            return inner.res
+            return use_snapshot.cache[fn]
         return inner
     return wrapper
+use_snapshot.cache = {}
 
 
 def setup(context=None, config=None, app_factory=get_app, reset=False):
