@@ -123,8 +123,8 @@ def setup_config(config):
     return app_config
 
 
-def clean_dbs(app):
-    clean_es(app)
+def clean_dbs(app, force=False):
+    clean_es(app, force)
     drop_mongo(app)
 
 
@@ -154,7 +154,7 @@ def _clean_es(app):
 
 
 @retry(socket.timeout, 2)
-def clean_es(app):
+def clean_es(app, force=False):
     use_snapshot(app, 'clean', [snapshot_es])(_clean_es)(app)
 
 
@@ -183,20 +183,19 @@ def snapshot_es(app, name):
 def snapshot_mongo(app, name):
     db = 'sptest'
     snapshot = '%s_%s' % (db, name)
-    with app.app_context():
-        mongo = app.data.mongo.pymongo(prefix='MONGO').cx
+    mongo = app.data.mongo.pymongo(prefix='MONGO').cx
 
-        def create():
-            mongo.drop_database(name)
-            mongo.admin.command('copydb', fromdb=db, todb=snapshot)
+    def create():
+        mongo.drop_database(name)
+        mongo.admin.command('copydb', fromdb=db, todb=snapshot)
 
-        def restore():
-            mongo.drop_database(db)
-            mongo.admin.command('copydb', fromdb=snapshot, todb=db)
-        return create, restore
+    def restore():
+        mongo.drop_database(db)
+        mongo.admin.command('copydb', fromdb=snapshot, todb=db)
+    return create, restore
 
 
-def use_snapshot(app, name, funcs=(snapshot_es, snapshot_mongo)):
+def use_snapshot(app, name, funcs=(snapshot_es, snapshot_mongo), force=False):
     def snapshot():
         create = []
         restore = []
@@ -209,7 +208,7 @@ def use_snapshot(app, name, funcs=(snapshot_es, snapshot_mongo)):
 
     def wrapper(fn):
         path = app.config['ELASTICSEARCH_BACKUPS_PATH']
-        enabled = path and os.path.exists(path)
+        enabled = not force and path and os.path.exists(path)
 
         @functools.wraps(fn)
         def inner(*a, **kw):
@@ -240,7 +239,7 @@ def setup(context=None, config=None, app_factory=get_app, reset=False):
         context.app = app
         context.client = app.test_client()
 
-    clean_dbs(app)
+    clean_dbs(app, force=bool(config))
 
 
 def setup_auth_user(context, user=None):
