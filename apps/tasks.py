@@ -162,7 +162,6 @@ class TaskResource(Resource):
         'slugline': metadata_schema['slugline'],
         'description_text': metadata_schema['description_text'],
         'type': metadata_schema['type'],
-        'planning_item': Resource.rel('planning', True, type='string'),
         'task': {
             'type': 'dict',
             'schema': {
