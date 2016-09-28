@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-
+import functools
 import logging
 import os
 import socket
@@ -123,56 +123,110 @@ def setup_config(config):
     return app_config
 
 
-def clean_dbs(app, force=False):
-    clean_es(app, force)
+def clean_dbs(app):
+    clean_es(app)
     drop_mongo(app)
 
 
-def clean_es(app, force=False):
-    if not hasattr(clean_es, 'run') or force:
-        def run():
-            """
-            Drop and init elasticsearch indices if backups directory doesn't exist
-            """
-            drop_elastic(app)
-            app.data.init_elastic(app)
+def retry(exc, count=1):
+    def wrapper(fn):
+        num = 0
 
+        @functools.wraps(fn)
+        def inner(*a, **kw):
+            global num
+
+            try:
+                return fn(*a, **kw)
+            except exc as e:
+                logging.exception(e)
+                if num < count:
+                    num += 1
+                    return inner(*a, **kw)
+        return inner
+    return wrapper
+
+
+def _clean_es(app):
+    es = app.data.elastic.es
+    es.indices.delete('sptest_*', ignore=[404])
+    app.data.init_elastic(app)
+
+
+@retry(socket.timeout, 2)
+def clean_es(app):
+    use_snapshot(app, 'clean', [snapshot_es])(_clean_es)(app)
+
+
+def snapshot_es(app, name):
+    indices = 'sptest_*'
+    backup = ('backups', '%s%s' % (indices[:-1], name))
+    es = app.data.elastic.es
+
+    def create():
+        es.snapshot.delete(*backup, ignore=[404])
+        es.indices.open(indices, expand_wildcards='closed')
+        es.snapshot.create(*backup, wait_for_completion=True, body={
+            'indices': indices,
+            'allow_no_indices': False,
+        })
+
+    def restore():
+        es.indices.close(indices, expand_wildcards='open')
+        es.snapshot.restore(*backup, body={
+            'indices': indices,
+            'allow_no_indices': False
+        }, wait_for_completion=True)
+    return create, restore
+
+
+def snapshot_mongo(app, name):
+    db = 'sptest'
+    snapshot = '%s_%s' % (db, name)
+    with app.app_context():
+        mongo = app.data.mongo.pymongo(prefix='MONGO').cx
+
+        def create():
+            mongo.drop_database(name)
+            mongo.admin.command('copydb', fromdb=db, todb=snapshot)
+
+        def restore():
+            mongo.drop_database(db)
+            mongo.admin.command('copydb', fromdb=snapshot, todb=db)
+        return create, restore
+
+
+def use_snapshot(app, name, funcs=(snapshot_es, snapshot_mongo)):
+    def snapshot():
+        create = []
+        restore = []
+
+        for f in funcs:
+            c, r = f(app, name)
+            create.append(c)
+            restore.append(r)
+        return lambda: [c() for c in create], lambda: [r() for r in restore]
+
+    def wrapper(fn):
         path = app.config['ELASTICSEARCH_BACKUPS_PATH']
-        if path and os.path.exists(path):
-            run()  # drop and init ones
+        enabled = path and os.path.exists(path)
 
-            backup = ('backups', 'snapshot_1')
-            indices = 'sptest_*'
+        @functools.wraps(fn)
+        def inner(*a, **kw):
+            if not enabled:
+                return fn(*a, **kw)
 
-            elastic = app.data.elastic
-            elastic.es.snapshot.delete(*backup, ignore=[404])
-            elastic.es.snapshot.create(*backup, wait_for_completion=True, body={
-                'indices': indices,
-                'allow_no_indices': False,
-            })
-
-            def run():
-                """
-                Just restore elasticsearch indices if backups directory exists
-                """
-                elastic = app.data.elastic
-                elastic.es.indices.close('sptest_*', expand_wildcards='open')
-                elastic.es.snapshot.restore(*backup, body={
-                    'indices': indices,
-                    'allow_no_indices': False
-                }, wait_for_completion=True)
-
-        clean_es.run = run
-
-    try:
-        clean_es.run()
-    except socket.timeout as e:
-        logging.exception(e)
-        # Trying to get less failures by ES timeouts
-        count = getattr(clean_es, 'count_calls', 0)
-        if count < 3:
-            clean_es.count_calls = count + 1
-            clean_es(app, force)
+            create, restore = snapshot()
+            if hasattr(fn, 'res'):
+                restore()
+                logger.debug('Restore snapshot for %s', fn)
+            else:
+                fn.res = fn(*a, **kw)
+                create()
+                logger.debug('Create snapshot for %s', fn)
+            return fn.res
+        return inner
+    return wrapper
 
 
 def setup(context=None, config=None, app_factory=get_app, reset=False):
@@ -186,7 +240,7 @@ def setup(context=None, config=None, app_factory=get_app, reset=False):
         context.app = app
         context.client = app.test_client()
 
-    clean_dbs(app, force=bool(config))
+    clean_dbs(app)
 
 
 def setup_auth_user(context, user=None):
