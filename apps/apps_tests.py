@@ -1,3 +1,4 @@
+"""Preference_Tests Class"""
 # -*- coding: utf-8; -*-
 #
 # This file is part of Superdesk.
@@ -13,7 +14,16 @@ from superdesk.tests import TestCase
 
 
 class Preference_Tests(TestCase):
+    """Unit Test Class related to Preference routines.
+
+    :param TestCase: test case to use
+    """
+
     def setUp(self):
+        """Setup for test
+
+        :param self: self
+        """
         self._default_user_settings = {
             "archive:view": {
                 "default": "mgrid",
@@ -64,6 +74,10 @@ class Preference_Tests(TestCase):
         }
 
     def test_setting_partial_session_preferences_with_empty_existing(self):
+        """Test case for setting partial session perferences with empty existing
+
+        :param self: self
+        """
         update = self._session_update
         existing_session_settings = {"1234": {}}
 
@@ -71,6 +85,10 @@ class Preference_Tests(TestCase):
         self.assertListEqual(update["session_preferences"]["1234"]["scratchpad:items"], [123])
 
     def test_setting_partial_session_preferences_with_existing(self):
+        """Test case for setting partial session perferences with exiting
+
+        :param self: self
+        """
         existing_session_settings = {"1234":
                                      {
                                          "desk:items": [],
@@ -85,11 +103,19 @@ class Preference_Tests(TestCase):
         self.assertListEqual(update["session_preferences"]["1234"]["scratchpad:items"], [123])
 
     def test_setting_partial_user_preferences_with_existing(self):
+        """Test case for setting partial user preferences with existing
+
+        :param self: self
+        """
         update = self._user_update
         PreferencesService.update_user_prefs(self, update, {})
         self.assertEqual(update["user_preferences"]["archive:view"]["label"], "Testing user preferences")
 
     def test_setting_partial_user_preferences_with_empty_existing(self):
+        """Test case for setting partial user preferences with empty existing
+
+        :param self: self
+        """
         update = self._user_update
         existing_user_settings = {
             "archive:view": {
