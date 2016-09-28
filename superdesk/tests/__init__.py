@@ -155,7 +155,7 @@ def _clean_es(app):
 
 @retry(socket.timeout, 2)
 def clean_es(app, force=False):
-    use_snapshot(app, 'clean', [snapshot_es])(_clean_es)(app)
+    use_snapshot(app, 'clean', [snapshot_es], force)(_clean_es)(app)
 
 
 def snapshot_es(app, name):
