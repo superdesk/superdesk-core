@@ -46,12 +46,10 @@ Subpackages
 .. toctree::
 
    apps.apps_tests
-   apps.coverages
    apps.desks
    apps.feature_preview
    apps.groups
    apps.picture_renditions
-   apps.planning
    apps.preferences
    apps.preferences_test
    apps.privilege
