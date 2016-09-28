@@ -26,6 +26,16 @@ from superdesk.vocabularies.command import VocabulariesPopulateCommand
 readonly_fields = ['display_name', 'password', 'phone', 'first_name', 'last_name']
 
 
+def setup_before_all(context, config, app_factory):
+    """
+    Keep it for backwards compatibility.
+
+    TODO: it needs to be cleaned on each superdesk repo.
+    """
+    setup_before_all.config = config
+    setup_before_all.app_factory = app_factory
+
+
 def setup_before_scenario(context, scenario, config, app_factory):
     if scenario.status != 'skipped' and 'notesting' in scenario.tags:
         config['SUPERDESK_TESTING'] = False
@@ -78,7 +88,16 @@ def before_all(context):
 
 
 def before_feature(context, feature):
-    config = {}
+    config = getattr(setup_before_all, 'config', None)
+    if config is not None:
+        app_factory = setup_before_all.app_factory
+    else:
+        # superdesk-aap don't use "setup_before_all" already
+        config = getattr(setup_before_scenario, 'config', None)
+        app_factory = getattr(setup_before_scenario, 'app_factory', None)
+    config = config or {}
+    app_factory = app_factory or get_app
+
     if AMAZON_CONTAINER_NAME:
         config['AMAZON_CONTAINER_NAME'] = AMAZON_CONTAINER_NAME
         config['AMAZON_ACCESS_KEY_ID'] = AMAZON_ACCESS_KEY_ID
@@ -93,7 +112,7 @@ def before_feature(context, feature):
     # set the MAX_TRANSMIT_RETRY_ATTEMPT to zero so that transmit does not retry
     config['MAX_TRANSMIT_RETRY_ATTEMPT'] = 0
     os.environ['BEHAVE_TESTING'] = '1'
-    tests.setup(context, config)
+    tests.setup(context, config, app_factory=app_factory)
 
     if 'tobefixed' in feature.tags:
         feature.mark_skipped()

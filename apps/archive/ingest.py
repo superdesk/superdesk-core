@@ -15,6 +15,7 @@ from .archive import update_word_count
 from eve.utils import config
 
 from superdesk.io.ingest import IngestResource, IngestService  # NOQA
+from flask import current_app as app
 
 
 class AppIngestService(IngestService):
@@ -30,8 +31,9 @@ class AppIngestService(IngestService):
     def on_create(self, docs):
         for doc in docs:
             set_default_state(doc, CONTENT_STATE.INGESTED)
-            doc.setdefault(ITEM_PRIORITY, int(config.DEFAULT_PRIORITY_VALUE_FOR_INGESTED_ARTICLES))
-            doc.setdefault(ITEM_URGENCY, int(config.DEFAULT_URGENCY_VALUE_FOR_INGESTED_ARTICLES))
+            if not app.config.get('DEFAULT_CONTENT_TYPE', None):
+                doc.setdefault(ITEM_PRIORITY, int(config.DEFAULT_PRIORITY_VALUE_FOR_INGESTED_ARTICLES))
+                doc.setdefault(ITEM_URGENCY, int(config.DEFAULT_URGENCY_VALUE_FOR_INGESTED_ARTICLES))
             handle_existing_data(doc, doc_type='ingest')
             update_word_count(doc)
 

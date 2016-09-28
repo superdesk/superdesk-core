@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<nitf version="-//IPTC//DTD NITF 3.1//EN">
+	<head>
+<meta name="service" content="Comprehensive"/>
+		<title>1 POLITICS UnitedKingdom</title>
+		<meta name="category" content="HHH"/>
+		<meta name="optInfo" content=""/>
+<tobject>
+  <tobject.subject tobject.subject.refnum="04015000"/>
+</tobject>
+		<docdata management-status="embargoed">
+			<du-key key="PA-HHH-POLITICS-UnitedKingdom"/>
+			<doc-id id-string="4a82e12e-6b39-47eb-8e59-2c616a7e32a4HHH-13-1"/>
+			<urgency ed-urg="4"/>
+        <doc-scope scope="POLITICS"/>
+			<series series.part="1"/>
+			<key-list>
+				<keyword key="UnitedKingdom"/>
+			</key-list>
+			<del-list>
+				<from-src src-name="PA" level-number="1"/>
+			</del-list>
+        	<date.issue norm="20160908T132446+0100"/>
+			<date.release norm="20160909T000100+0100"/>
+			<ed-msg info="(see also POLITICS EU)
+Embargoed to 0001 Friday September 9"/>
+			<doc.copyright holder="Press Association" year="2016"/>
+		</docdata>
+	</head>
+	<body>
+		<body.head>
+			<hedline><hl1>UK BREAK-UP 'NOT INCONCEIVABLE', FIRST MINISTER WARNS AHEAD OF BREXIT TALKS</hl1></hedline>
+			<byline>By Benjamin Wright, Press Association</byline>
+			<abstract>
+				<p>The UK risks breaking</p>
+			</abstract>
+		</body.head>
+		<body.content>
+<p>The UK risks breaking up unless all home nations play a hands-on role in the Brexit negotiations</p></body.content>
+	</body>
+</nitf>
+
