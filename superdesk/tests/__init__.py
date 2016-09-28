@@ -68,7 +68,6 @@ def get_test_settings():
     test_settings['CELERY_ALWAYS_EAGER'] = 'True'
     test_settings['CONTENT_EXPIRY_MINUTES'] = 99
     test_settings['VERSION'] = '_current_version'
-    test_settings['ELASTICSEARCH_BACKUPS_PATH'] = '/tmp/es-backups'
 
     # limit mongodb connections
     test_settings['MONGO_CONNECT'] = False
@@ -207,7 +206,7 @@ def use_snapshot(app, name, funcs=(snapshot_es, snapshot_mongo), force=False):
         return lambda: [c() for c in create], lambda: [r() for r in restore]
 
     def wrapper(fn):
-        path = app.config['ELASTICSEARCH_BACKUPS_PATH']
+        path = app.config.get('ELASTICSEARCH_BACKUPS_PATH')
         enabled = path and os.path.exists(path)
 
         @functools.wraps(fn)
@@ -217,7 +216,7 @@ def use_snapshot(app, name, funcs=(snapshot_es, snapshot_mongo), force=False):
                     'Don\'t use snapshot for %s; enabled=%s; force=%s',
                     fn, enabled, force
                 )
-                use_snapshot.pop(fn, None)
+                use_snapshot.cache.pop(fn, None)
                 return fn(*a, **kw)
 
             create, restore = snapshot()
