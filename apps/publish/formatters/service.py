@@ -27,7 +27,7 @@ class FormattersService(BaseService):
         return next((f for f in formatters if type(f).__name__ == name), None)
 
     def _validate(self, doc):
-        ''' Validates the given story for publish action '''
+        """Validates the given story for publish action"""
         validate_item = {'act': ITEM_PUBLISH, 'type': doc['type'], 'validate': doc}
         validation_errors = get_resource_service('validate').post([validate_item])
         if validation_errors[0]:

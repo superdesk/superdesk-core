@@ -31,7 +31,7 @@ class ArchiveMediaService():
     type_av = {'image': CONTENT_TYPE.PICTURE, 'audio': CONTENT_TYPE.AUDIO, 'video': CONTENT_TYPE.VIDEO}
 
     def on_create(self, docs):
-        """ Create corresponding item on file upload """
+        """Create corresponding item on file upload."""
 
         for doc in docs:
             if 'media' not in doc or doc['media'] is None:

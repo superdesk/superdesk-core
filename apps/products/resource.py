@@ -12,9 +12,8 @@ from superdesk.resource import Resource
 
 
 class ProductsResource(Resource):
-    '''
-    Products schema
-    '''
+    """Products schema"""
+
     schema = {
         'name': {
             'type': 'string',

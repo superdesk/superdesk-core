@@ -15,17 +15,19 @@ DICTIONARY_FILE = 'file'
 
 
 class DictionaryType(SuperdeskBaseEnum):
+    """Defines Dictionary Type
+
     """
-    Defines Dictionary Type
-    """
+
     DICTIONARY = 'dictionary'
     ABBREVIATIONS = 'abbreviations'
 
 
 class DictionariesResource(Resource):
+    """Dictionaries schema
+
     """
-    Dictionaries schema
-    """
+
     schema = {
         'name': {
             'type': 'string',

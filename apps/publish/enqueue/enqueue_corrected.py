@@ -23,8 +23,8 @@ class EnqueueCorrectedService(EnqueueService):
     published_state = 'corrected'
 
     def get_subscribers(self, doc, target_media_type):
-        """
-        Get the subscribers for this document based on the target_media_type for article Correction.
+        """Get the subscribers for this document based on the target_media_type for article Correction.
+
         1. The article is sent to Subscribers (digital and wire) who has received the article previously.
         2. For subsequent takes, only published to previously published wire clients. Digital clients don't get
            individual takes but digital client takes package.
@@ -34,6 +34,7 @@ class EnqueueCorrectedService(EnqueueService):
         4. If article has 'targeted_for' property then exclude subscribers of type Internet from Subscribers list.
         5. Filter the subscriber that have not received the article previously against publish filters
         and global filters for this document.
+
         :param doc: Document to correct
         :param target_media_type: dictate if the doc being queued is a Takes Package or an Individual Article.
                 Valid values are - Wire, Digital. If Digital then the doc being queued is a Takes Package and if Wire

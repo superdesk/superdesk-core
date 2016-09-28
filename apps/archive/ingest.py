@@ -20,8 +20,8 @@ from flask import current_app as app
 
 class AppIngestService(IngestService):
     def on_fetched(self, docs):
-        """
-        Items when ingested have different case for pubstatus.
+        """Items when ingested have different case for pubstatus.
+
         Overriding this to handle existing data in Mongo & Elastic
         """
 

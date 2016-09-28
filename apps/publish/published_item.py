@@ -86,8 +86,8 @@ published_item_fields = {
 
 
 def get_content_filter():
-    """
-    filter out content of stages not visible to current user (if any).
+    """Filter out content of stages not visible to current user (if any).
+
     :return:
     """
     user = getattr(flask.g, 'user', None)
@@ -129,6 +129,7 @@ class PublishedItemService(BaseService):
     """
     PublishedItemService class is the base class for ArchivedService.
     """
+
     SEQ_KEY_NAME = 'published_item_sequence_no'
 
     def on_fetched(self, docs):
@@ -146,7 +147,8 @@ class PublishedItemService(BaseService):
         self.enhance_with_archive_items([doc])
 
     def on_create(self, docs):
-        """
+        """Runs on create.
+
         An article can be published multiple times in its lifetime. So, it's necessary to preserve the _id which comes
         from archive collection. Also, sets the expiry on the published item and removes the lock information.
         """
@@ -213,8 +215,8 @@ class PublishedItemService(BaseService):
                 handle_existing_data(item)
 
     def on_delete(self, doc):
-        """
-        Deleting a published item has a workflow which is implemented in remove_expired().
+        """Deleting a published item has a workflow which is implemented in remove_expired().
+
         Overriding to avoid other services from invoking this method accidentally.
         """
 
@@ -225,8 +227,8 @@ class PublishedItemService(BaseService):
                                       "implemented in remove_expired().")
 
     def delete_action(self, lookup=None):
-        """
-        Deleting a published item has a workflow which is implemented in remove_expired().
+        """Deleting a published item has a workflow which is implemented in remove_expired().
+
         Overriding to avoid other services from invoking this method accidentally.
         """
 
@@ -237,8 +239,8 @@ class PublishedItemService(BaseService):
                                       "implemented in remove_expired().")
 
     def on_deleted(self, doc):
-        """
-        Deleting a published item has a workflow which is implemented in remove_expired().
+        """Deleting a published item has a workflow which is implemented in remove_expired().
+
         Overriding to avoid other services from invoking this method accidentally.
         """
 
@@ -258,7 +260,7 @@ class PublishedItemService(BaseService):
             return []
 
     def get_rewritten_take_packages_per_event(self, event_id):
-        """ Returns all the published and rewritten take stories for the same event """
+        """Returns all the published and rewritten take stories for the same event"""
         try:
             query = {'query':
                      {'filtered':
@@ -277,9 +279,8 @@ class PublishedItemService(BaseService):
             return []
 
     def get_rewritten_items_by_event_story(self, event_id, rewrite_id, rewrite_field):
-        """
-        Returns all the rewritten stories from published and archive collection
-        for the given event and rewrite_id.
+        """Returns all the rewritten stories from published and archive for a given event and rewrite_id.
+
         :param str event_id: event id of the document
         :param str rewrite_id: rewrite id of the document
         :param str rewrite_field: field name 'rewrite_of' or 'rewritten_by'
@@ -301,7 +302,8 @@ class PublishedItemService(BaseService):
             return []
 
     def is_rewritten_before(self, item_id):
-        """ Checks if the published item is rewritten before
+        """Checks if the published item is rewritten before.
+
         :param _id: item_id of the published item
         :return: True is it is rewritten before
         """
@@ -318,9 +320,10 @@ class PublishedItemService(BaseService):
                 super().system_update(item[config.ID_FIELD], {field: state}, item)
 
     def delete_by_article_id(self, _id):
-        """
-        Removes the article from the published collection.
+        """Removes the article from the published collection.
+
         Removes published queue entries and media files.
+
         :param str _id: id of the document to be deleted. In mongo, it is the item_id
         """
         lookup = {'item_id': _id}
@@ -337,8 +340,8 @@ class PublishedItemService(BaseService):
         return item
 
     def __set_published_item_expiry(self, doc):
-        """
-        Set the expiry for the published item
+        """Set the expiry for the published item.
+
         :param dict doc: doc on which publishing action is performed
         """
         desk_id = doc.get('task', {}).get('desk', None)
@@ -354,8 +357,8 @@ class PublishedItemService(BaseService):
         self.delete_by_article_id(_id)
 
     def set_moved_to_legal(self, item_id, version, status):
-        """
-        Update the legal flag
+        """Update the legal flag.
+
         :param str item_id: id of the document
         :param int version: version of the document
         :param boolean status: True if the item is moved to legal else false
@@ -371,8 +374,8 @@ class PublishedItemService(BaseService):
                                  'for item {} and version {}'.format(item_id, version))
 
     def get_published_items_by_moved_to_legal(self, item_ids, move_to_legal):
-        """
-        Get the pulished items where flag is moved
+        """Get the pulished items where flag is moved.
+
         :param list item_ids: List of item
         :param bool move_to_legal: move_to_legal boolean flag
         :return: list of published items

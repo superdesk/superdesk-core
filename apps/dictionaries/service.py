@@ -129,8 +129,8 @@ def is_big(json_data):
 
 
 def read_from_file(doc):
-    """
-    Plain text file
+    """Read from plain text file
+
     One word per line
     UTF-8 encoding
     """
@@ -177,9 +177,11 @@ class DictionaryService(BaseService):
             return lang.split('-')[0]
 
     def get_dictionaries(self, lang):
-        """
-        Returns all the active dictionaries. If both the language (en-AU)
+        """Returns all the active dictionaries.
+
+        If both the language (en-AU)
         and the base language (en) available, it will return the dict with language
+
         :param lang:
         :return:
         """

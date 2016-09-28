@@ -82,8 +82,8 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
         return channels
 
     def _get_tree(self, endpoint, payload=None):
-        """
-        Get xml response for given API endpoint and payload.
+        """Get xml response for given API endpoint and payload.
+
         :param: endpoint
         :type endpoint: str
         :param: payload
@@ -189,8 +189,8 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
         return ids
 
     def _save_poll_token(self, channel, poll_token):
-        """
-        Saves the poll token for the passed channel in the config section of the
+        """Saves the poll token for the passed channel in the config section of the
+
         :param channel:
         :param poll_token:
         :return:
@@ -207,8 +207,8 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
         ingest_provider_service.system_update(self.provider[superdesk.config.ID_FIELD], upd_provider, self.provider)
 
     def _get_poll_token(self, channel):
-        """
-        Get the poll token from provider config if it is available.
+        """Get the poll token from provider config if it is available.
+
         :param channel:
         :return: token
         """

@@ -144,6 +144,7 @@ prepopulate_schema = {
 
 class PrepopulateResource(Resource):
     """Prepopulate application data."""
+
     schema = prepopulate_schema
     resource_methods = ['POST']
     public_methods = ['POST']

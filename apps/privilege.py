@@ -30,6 +30,7 @@ class PrivilegeService(superdesk.Service):
 
 class PrivilegeResource(superdesk.Resource):
     """Read-only resource with all privileges."""
+
     resource_methods = ['GET']
     item_methods = []
 

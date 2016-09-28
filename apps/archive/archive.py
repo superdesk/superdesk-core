@@ -201,7 +201,8 @@ class ArchiveService(BaseService):
         push_content_notification(docs)
 
     def on_update(self, updates, original):
-        """
+        """Runs on archive update.
+
         Overridden to validate the updates to the article and take necessary actions depending on the updates. In brief,
         it does the following:
             1. Sets state, item operation, version created, version creator, sign off and word count.
@@ -373,7 +374,8 @@ class ArchiveService(BaseService):
         return self._duplicate_item(original_doc)
 
     def _duplicate_item(self, original_doc):
-        """
+        """Duplicates an item.
+
         Duplicates the 'original_doc' including it's version history. If the article being duplicated is contained
         in a desk then the article state is changed to Submitted.
 
@@ -395,8 +397,7 @@ class ArchiveService(BaseService):
         return new_doc['guid']
 
     def _remove_after_copy(self, copied_item):
-        """
-        Removes the properties which doesn't make sense to have for an item after copy.
+        """Removes the properties which doesn't make sense to have for an item after copy.
         """
 
         del copied_item[config.ID_FIELD]
@@ -419,7 +420,8 @@ class ArchiveService(BaseService):
         task.pop(LAST_AUTHORING_DESK, None)
 
     def _duplicate_versions(self, old_id, new_doc):
-        """
+        """Duplicates version history for an item.
+
         Duplicates the version history of the article identified by old_id. Each version identifiers are changed
         to have the identifiers of new_doc.
 
@@ -457,8 +459,9 @@ class ArchiveService(BaseService):
         return super().update(id, updates, original)
 
     def deschedule_item(self, updates, original):
-        """
-        Deschedule an item. This operation removed the item from publish queue and published collection.
+        """Deschedule an item.
+
+        This operation removed the item from publish queue and published collection.
         :param dict updates: updates for the document
         :param original: original is document.
         """
@@ -492,8 +495,8 @@ class ArchiveService(BaseService):
         return True, ''
 
     def delete_by_article_ids(self, ids):
-        """
-        remove the content
+        """Remove the content
+
         :param list ids: list of ids to be removed
         """
         version_field = versioned_id_field(app.config['DOMAIN']['archive_versions'])
@@ -501,9 +504,12 @@ class ArchiveService(BaseService):
         super().delete_action({config.ID_FIELD: {'$in': ids}})
 
     def __is_req_for_save(self, doc):
-        """
+        """Checks if doc contains req_for_save key.
+
         Patch of /api/archive is being used in multiple places. This method differentiates from the patch
         triggered by user or not.
+
+        :param dictionary doc: doc to test
         """
 
         if 'req_for_save' in doc:
@@ -515,8 +521,9 @@ class ArchiveService(BaseService):
         return True
 
     def validate_embargo(self, item):
-        """
-        Validates the embargo of the item. Following are checked:
+        """Validates the embargo of the item.
+
+        Following are checked:
             1. Item can't be a package or a take or a re-write of another story
             2. Publish Schedule and Embargo are mutually exclusive
             3. Always a future date except in case of Corrected and Killed.
@@ -551,8 +558,9 @@ class ArchiveService(BaseService):
             self.packageService.check_if_any_item_in_package_has_embargo(item)
 
     def _validate_updates(self, original, updates, user):
-        """
-        Validates updates to the article for the below conditions, if any of them then exception is raised:
+        """Validates updates to the article for the below conditions.
+
+        If any of these conditions are met then exception is raised:
             1.  Is article locked by another user other than the user requesting for update
             2.  Is state of the article is Killed?
             3.  Is user trying to update the package with Public Service Announcements?
@@ -636,7 +644,8 @@ class ArchiveService(BaseService):
             raise SuperdeskApiError.badRequestError("Duplicate subjects are not allowed")
 
     def _add_system_updates(self, original, updates, user):
-        """
+        """Adds system updates to item.
+
         As the name suggests, this method adds properties which are derived based on updates sent in the request.
             1. Sets item operation, version created, version creator, sign off and word count.
             2. Resets Item Expiry
@@ -665,9 +674,10 @@ class ArchiveService(BaseService):
             del updates['force_unlock']
 
     def get_expired_items(self, expiry_datetime, invalid_only=False):
-        """
-        Get the expired items where content state is not scheduled
-        and
+        """Get the expired items.
+
+        Where content state is not scheduled and the item matches given parameters
+
         :param datetime expiry_datetime: expiry datetime
         :param bool invalid_only: True only invalid items
         :return pymongo.cursor: expired non published items.

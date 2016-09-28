@@ -43,8 +43,8 @@ class ArchivePublishService(BasePublishService):
         set_sign_off(updates, original)
 
     def set_state(self, original, updates):
-        """
-        Set the state of the document to schedule if the publish_schedule is specified.
+        """Set the state of the document to schedule if the publish_schedule is specified.
+
         :param dict original: original document
         :param dict updates: updates related to original document
         """

@@ -69,8 +69,8 @@ class ArchiveRewriteService(Service):
         return [rewrite]
 
     def _validate_rewrite(self, original, update):
-        """
-        Validates the article to be rewritten
+        """Validates the article to be rewritten.
+
         :param original: article to be rewritten
         :param update: article as the rewrite
         :raises: SuperdeskApiError
@@ -116,8 +116,8 @@ class ArchiveRewriteService(Service):
                 raise SuperdeskApiError.badRequestError("Broadcast cannot be a update story !")
 
     def _create_rewrite_article(self, original, digital, existing_item=None, desk_id=None):
-        """
-        Creates a new story and sets the metadata from original and digital
+        """Creates a new story and sets the metadata from original and digital.
+
         :param dict original: original story
         :param dict digital: digital version of the story
         :param dict existing_item: existing story that is being re-written
@@ -182,8 +182,8 @@ class ArchiveRewriteService(Service):
         return rewrite
 
     def _add_rewritten_flag(self, original, digital, rewrite):
-        """
-        Adds rewritten_by field to the existing published items.
+        """Adds rewritten_by field to the existing published items.
+
         :param dict original: item on which rewrite is triggered
         :param dict digital: digital item
         :param dict rewrite: rewritten document
@@ -202,8 +202,8 @@ class ArchiveRewriteService(Service):
                                                     {'rewritten_by': rewrite[config.ID_FIELD]}, original)
 
     def _clear_rewritten_flag(self, event_id, rewrite_id, rewrite_field):
-        """
-        Clears rewritten_by or rewrite_of field from the existing published and archive items
+        """Clears rewritten_by or rewrite_of field from the existing published and archive items.
+
         :param str event_id: event id of the document
         :param str rewrite_id: rewrite id of the document
         :param str rewrite_field: field name 'rewrite_of' or 'rewritten_by'
@@ -224,8 +224,8 @@ class ArchiveRewriteService(Service):
                 processed_items.add(doc_id)
 
     def _set_take_key(self, rewrite, event_id):
-        """
-        Sets the anpa take key of the rewrite with ordinal
+        """Sets the anpa take key of the rewrite with ordinal.
+
         :param rewrite: rewrite story
         :param event_id: event id
         """
@@ -237,7 +237,7 @@ class ArchiveRewriteService(Service):
             rewrite['anpa_take_key'] = 'update'
 
     def _get_ordinal(self, n):
-        """ Returns the ordinal value of the given int """
+        """Returns the ordinal value of the given int."""
         if 10 <= n % 100 < 20:
             return str(n) + 'th'
         else:

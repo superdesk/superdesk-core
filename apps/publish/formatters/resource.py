@@ -12,9 +12,8 @@ from superdesk.resource import Resource
 
 
 class FormattersResource(Resource):
-    '''
-    Formatters schema
-    '''
+    """Formatters schema"""
+
     endpoint_name = 'formatters'
     resource_methods = ['GET', 'POST']
     item_methods = []

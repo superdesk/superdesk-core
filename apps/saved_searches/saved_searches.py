@@ -45,8 +45,8 @@ def encode_filter(data):
 
 
 def enhance_savedsearch(doc):
-    """
-    Decode the filter
+    """Decode the filter.
+
     :param dict doc: saved search
     :return None:
     """
@@ -118,7 +118,8 @@ class SavedSearchesService(BaseService):
         doc['filter'] = encode_filter(doc.get('filter'))
 
     def on_update(self, updates, original):
-        """
+        """Runs on update.
+
         Checks if the request owner and the saved search owner are the same person
         If not then the request owner should have global saved search privilege
         """
@@ -153,8 +154,8 @@ class SavedSearchesService(BaseService):
         return parsed_request
 
     def get_location(self, doc):
-        """
-        Returns location from the doc object and deletes it so that it's not passed to elastic query
+        """Returns location from the doc object and deletes it so that it's not passed to elastic query
+
         :param doc:
         :return: location
         """
@@ -197,7 +198,8 @@ class SavedSearchesService(BaseService):
 
 
 class SavedSearchItemsResource(Resource):
-    """
+    """Saved search items
+
     Since Eve doesn't support more than one URL for a resource, this resource is being created to fetch items based on
     the search string in the Saved Search document.
     """

@@ -286,8 +286,10 @@ class PreferencesService(BaseService):
         return str(kwargs.get('user_id')) == str(session.get('user'))
 
     def on_role_privileges_revoked(self, role, role_users):
-        """
+        """Runs when user privilage has been revoked.
+
         Update the session for active user so that preferences can be reloaded.
+
         :param dict role: role getting updated
         :param list role_users: list of user belonging to the role.
         """

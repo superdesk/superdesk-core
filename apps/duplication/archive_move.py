@@ -125,8 +125,8 @@ class MoveService(BaseService):
         push_item_move_notification(original, archived_doc)
 
     def _validate(self, archived_doc, doc):
-        """
-        Validate that the item can be move
+        """Validate that the item can be move.
+
         :param dict archived_doc: item to be moved
         :param dict doc: new location details
         """
@@ -137,9 +137,10 @@ class MoveService(BaseService):
             raise InvalidStateTransitionError()
 
     def set_change_in_desk_type(self, updated, original):
-        """
-        Detects if the change in the desk is between authoring to production (and vice versa).
-        And sets the field 'last_production_desk' and 'last_authoring_desk'.
+        """Detects if the change in the desk is between authoring to production (and vice versa).
+
+        Sets the field 'last_production_desk' and 'last_authoring_desk'.
+
         :param dict updated: document to be saved
         :param dict original: original document
         """

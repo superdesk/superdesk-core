@@ -47,8 +47,8 @@ class RemoveExpiredContent(superdesk.Command):
         logger.info('{} Completed remove expired content.'.format(self.log_msg))
 
     def _remove_expired_items(self, expiry_datetime):
-        """
-        Remove the expired items.
+        """Remove the expired items.
+
         :param datetime expiry_datetime: expiry datetime
         :param str log_msg: log message to be prefixed
         """
@@ -169,8 +169,8 @@ class RemoveExpiredContent(superdesk.Command):
         logger.info('{} Deleting killed from archive.'.format(self.log_msg))
 
     def _can_remove_item(self, item, processed_item=None):
-        """
-        Recursively checks if the item can be removed.
+        """Recursively checks if the item can be removed.
+
         :param dict item: item to be remove
         :param set processed_item: processed items
         :return: True if item can be removed, False otherwise.
@@ -222,9 +222,10 @@ class RemoveExpiredContent(superdesk.Command):
         return is_expired
 
     def _move_to_archived(self, item, filter_conditions):
-        """
-        Moves all the published version of an article to archived.
+        """Moves all the published version of an article to archived.
+
         Deletes all published version of an article in the published collection
+
         :param str item_id: item_id of the document
         :param list filter_conditions: list of filter conditions
         """
@@ -257,8 +258,8 @@ class RemoveExpiredContent(superdesk.Command):
             logger.exception('{} Failed to move to archived. {}'.format(self.log_msg, failed_items))
 
     def _conforms_to_archived_filter(self, item, filter_conditions):
-        """
-        Check if the item can be moved the archived collection or not
+        """Check if the item can be moved the archived collection or not.
+
         :param dict item: item to be moved
         :param list filter_conditions: list of filter conditions
         :return bool: True to archive the item else False
@@ -280,8 +281,8 @@ class RemoveExpiredContent(superdesk.Command):
         return True
 
     def delete_spiked_items(self, items):
-        """
-        delete spiked items.
+        """Delete spiked items
+
         :param list items:
         """
         try:
@@ -296,8 +297,8 @@ class RemoveExpiredContent(superdesk.Command):
             logger.exception('{} Failed to delete spiked items.'.format(self.log_msg))
 
     def check_if_items_imported_to_legal_archive(self, items_to_expire):
-        """
-        Checks if all items are moved to legal or not
+        """Checks if all items are moved to legal or not.
+
         :param dict items_to_expire:
         :return dict: dict of items having issues.
         """

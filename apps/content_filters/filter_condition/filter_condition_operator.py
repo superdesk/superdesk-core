@@ -89,6 +89,7 @@ class RegexOperator(FilterConditionOperator):
     """
     Represents In, StartsWith and EndsWith operators
     """
+
     def __init__(self, operator):
         self.operator = FilterConditionOperatorsEnum[operator]
         self.mongo_operator = '$regex'

@@ -25,9 +25,10 @@ def load_macros(app=None):
 
 
 def load_module(module):
-    """
-    It will load the given module
+    """Loads the given module
+
     If the module is loaded before it will reload it
+
     :param module: name of he module
     """
     try:

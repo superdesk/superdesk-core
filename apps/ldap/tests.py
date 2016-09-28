@@ -22,8 +22,8 @@ from superdesk import get_resource_service
 if LDAP_SERVER:
 
     def get_mock_connection():
-        """
-        Create a mock ldap connection object.
+        """Create a mock ldap connection object.
+
         :return {object}: mock ldap connection object.
         """
         connection = MagicMock()
@@ -44,9 +44,8 @@ if LDAP_SERVER:
 
     @mock.patch('apps.ldap.ldap.Connection', return_value=get_mock_connection())
     class ImportUsersTestCase(TestCase):
-        """
-        for testing import user using ldap.
-        """
+        """for testing import user using ldap."""
+
         def test_import_user_using_command(self, mock_ldap_connection):
             user = {'username': 'user', 'password': 'pwd', 'user_to_import': 'barf'}
             cmd = ImportUserProfileFromADCommand()

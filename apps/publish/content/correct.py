@@ -58,9 +58,11 @@ class CorrectPublishService(BasePublishService):
         set_sign_off(updates, original)
 
     def on_updated(self, updates, original):
-        """
+        """Runs on update
+
         Locates the published or corrected non-take packages containing the corrected item
         and corrects them
+
         :param updates: correction
         :param original: original story
         """

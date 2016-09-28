@@ -198,9 +198,11 @@ class BasePublishService(BaseService):
             self._import_into_legal_archive(package)
 
     def is_targeted(self, article, target=None):
-        """
+        """Checks if article is targeted.
+
         Returns True if the given article has been targeted by region or
-        subscriber type or specific subscribers
+        subscriber type or specific subscribers.
+
         :param article: Article to check
         :param target: Optional specific target to check if exists
         :return:
@@ -291,8 +293,8 @@ class BasePublishService(BaseService):
             raise InvalidStateTransitionError(error_message.format(self.publish_type, original[ITEM_STATE]))
 
     def get_digital_id_for_package_item(self, package_item):
-        """
-        Finds the digital item id for a given item in a package
+        """Finds the digital item id for a given item in a package.
+
         :param package_item: item in a package
         :return string: Digital item id if there's one otherwise id of package_item
         """
@@ -305,7 +307,7 @@ class BasePublishService(BaseService):
             return package_item_takes_package_id
 
     def _process_publish_updates(self, original, updates):
-        """ Common updates for published items """
+        """Common updates for published items."""
         desk = None
         if original.get('task', {}).get('desk'):
             desk = get_resource_service('desks').find_one(req=None, _id=original['task']['desk'])
@@ -316,8 +318,8 @@ class BasePublishService(BaseService):
         self._set_item_expiry(updates, original)
 
     def _set_item_expiry(self, updates, original):
-        """
-        Set the expiry for the item
+        """Set the expiry for the item.
+
         :param dict updates: doc on which publishing action is performed
         """
         desk_id = original.get('task', {}).get('desk')
@@ -331,13 +333,13 @@ class BasePublishService(BaseService):
         updates['expiry'] = get_expiry(desk_id, stage_id, offset=offset)
 
     def _is_take_item(self, item):
-        """ Returns True if the item was a take
-        """
+        """Returns True if the item was a take."""
         return item[ITEM_TYPE] != CONTENT_TYPE.COMPOSITE and \
             (not (self.is_targeted(item) or is_genre(item, BROADCAST_GENRE)))
 
     def process_takes(self, updates_of_take_to_be_published, package, original_of_take_to_be_published=None):
-        """
+        """Process takes for publishing
+
         Primary rule for publishing a Take in Takes Package is: all previous takes must be published before a take
         can be published.
 
@@ -434,8 +436,8 @@ class BasePublishService(BaseService):
         return package_updates
 
     def _publish_package_items(self, package, updates):
-        """
-        Publishes all items of a package recursively then publishes the package itself
+        """Publishes all items of a package recursively then publishes the package itself.
+
         :param package: package to publish
         :param updates: payload
         """
@@ -503,9 +505,10 @@ class BasePublishService(BaseService):
         self.update_published_collection(published_item_id=package[config.ID_FIELD], updated=updated)
 
     def update_published_collection(self, published_item_id, updated=None):
-        """
-        Updates the published collection with the published item.
+        """Updates the published collection with the published item.
+
         Set the last_published_version to false for previous versions of the published items.
+
         :param: str published_item_id: _id of the document.
         """
         published_item = super().find_one(req=None, _id=published_item_id)
@@ -519,8 +522,8 @@ class BasePublishService(BaseService):
         return get_resource_service(PUBLISHED).post([published_item])
 
     def set_state(self, original, updates):
-        """
-        Set the state of the document based on the action (publish, correction, kill)
+        """Set the state of the document based on the action (publish, correction, kill)
+
         :param dict original: original document
         :param dict updates: updates related to document
         """
@@ -529,8 +532,8 @@ class BasePublishService(BaseService):
         updates[ITEM_STATE] = self.published_state
 
     def _set_updates(self, original, updates, last_updated, preserve_state=False):
-        """
-        Sets config.VERSION, config.LAST_UPDATED, ITEM_STATE in updates document.
+        """Sets config.VERSION, config.LAST_UPDATED, ITEM_STATE in updates document.
+
         If item is being published and embargo is available then append Editorial Note with 'Embargoed'.
 
         :param dict original: original document
@@ -553,9 +556,10 @@ class BasePublishService(BaseService):
             updates['version_creator'] = user[config.ID_FIELD]
 
     def _update_archive(self, original, updates, versioned_doc=None, should_insert_into_versions=True):
-        """
-        Updates the articles into archive collection and inserts the latest into archive_versions.
+        """Updates the articles into archive collection and inserts the latest into archive_versions.
+
         Also clears autosaved versions if any.
+
         :param: versioned_doc: doc which can be inserted into archive_versions
         :param: should_insert_into_versions if True inserts the latest document into versions collection
         """
@@ -571,8 +575,8 @@ class BasePublishService(BaseService):
         get_component(ItemAutosave).clear(original[config.ID_FIELD])
 
     def _get_changed_items(self, existing_items, updates):
-        """
-        Returns the added and removed items from existing_items
+        """Returns the added and removed items from existing_items.
+
         :param existing_items: Existing list
         :param updates: Changes
         :return: list of removed items and list of added items
@@ -586,7 +590,8 @@ class BasePublishService(BaseService):
             return [], []
 
     def _validate_associated_items(self, original_item, takes_package, validation_errors=[]):
-        """
+        """Validates associated items.
+
         This function will ensure that the unpublished content validates and none of
         the content is locked by other than the publishing session, also do not allow
         any killed or spiked content.
@@ -635,8 +640,8 @@ class BasePublishService(BaseService):
                 validation_errors.extend(['{}: packaged item cannot be locked'.format(doc['headline'])])
 
     def _import_into_legal_archive(self, doc):
-        """
-        Import into legal archive async
+        """Import into legal archive async
+
         :param {dict} doc: document to be imported
         """
 
@@ -691,9 +696,11 @@ class BasePublishService(BaseService):
         return updates
 
     def apply_kill_override(self, item, updates):
-        """
-        Kill requires content to be generate based on the item that getting killed (and not the
+        """Applies kill override.
+
+        Kill requires content to be generate based on the item getting killed (and not the
         item that is being actioned on).
+
         :param dict item: item to kill
         :param dict updates: updates that needs to be modified based on the template
         :return:
@@ -717,9 +724,10 @@ class BasePublishService(BaseService):
             logger.exception('Failed to apply kill header template to item {}.'.format(item))
 
     def _refresh_associated_items(self, original):
-        """Refresh associated items before publishing, so any further updates made
-        to basic metadata done after item was associated will be carried on and used
-        when validating those items.
+        """Refresh associated items before publishing
+
+        Any further updates made to basic metadata done after item was associated will be carried on and
+        used when validating those items.
         """
         associations = original.get('associations', {}) or {}
         for _, item in associations.items():

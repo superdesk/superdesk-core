@@ -63,8 +63,9 @@ class DuplicateService(BaseService):
         return guid_of_duplicated_items
 
     def _validate(self, doc_in_archive, doc, guid_to_duplicate):
-        """
-        Validates if the given archived_doc is still eligible to be duplicated. Rules:
+        """Validates if the given archived_doc is still eligible to be duplicated.
+
+        Rules:
             1. Is the item requested found in archive collection?
             2. Is item still in the same desk?
             3. Is workflow transition valid?

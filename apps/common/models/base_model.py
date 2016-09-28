@@ -34,21 +34,19 @@ class ValidationError():
 
 
 class BaseModel():
-    """
-    This is a basic interface for defining models. The only requirement is
+    """This is a basic interface for defining models.
+
+    The only requirement is
     to implement the name method that uniquely identifies a model.
     """
 
     def __init__(self, resource, data_layer, schema, validator):
-        """
-        @param resource: str
-            The resource name
-        @param data_layer: object
-            The object that implements the database operations.
-        @param schema: dict
-            The model schema definition
-        @param validator: object
-            The object that validates the model data.
+        """Runs on baseModel init
+
+        :param resource: str The resource name
+        :param data_layer: object The object that implements the database operations.
+        :param schema: dict The model schema definition
+        :param validator: object The object that validates the model data.
         """
         self.resource = resource
         self.data_layer = data_layer
@@ -60,41 +58,41 @@ class BaseModel():
         raise NotImplementedError()
 
     def on_create(self, docs):
-        """
-        Method called before the create operation.
-        @param docs: list of docs to be inserted
+        """Method called before the create operation.
+
+        :param docs: list of docs to be inserted
         """
 
     def on_created(self, docs):
-        """
-        Method called after the create operation.
-        @param docs: list of inserted docs
+        """Method called after the create operation.
+
+        :param docs: list of inserted docs
         """
 
     def on_update(self, doc, orig):
-        """
-        Method called before the update/replace operations.
-        @param doc: the document updates
-        @param orig: the original document before the update
+        """Method called before the update/replace operations.
+
+        :param doc: the document updates
+        :param orig: the original document before the update
         """
 
     def on_updated(self, doc, orig):
-        """
-        Method called after the update/replace operations.
-        @param doc: the document updates
-        @param orig: the original document before the update
+        """Method called after the update/replace operations.
+
+        :param doc: the document updates
+        :param orig: the original document before the update
         """
 
     def on_delete(self, docs):
-        """
-        Method called before the delete operation.
-        @param docs: list of docs to be deleted
+        """Method called before the delete operation.
+
+        :param docs: list of docs to be deleted
         """
 
     def on_deleted(self, docs):
-        """
-        Method called after the delete operation.
-        @param docs: list of deleted docs
+        """Method called after the delete operation.
+
+        :param docs: list of deleted docs
         """
 
     def etag(self, doc):
@@ -104,34 +102,34 @@ class BaseModel():
         return self.data_layer.etag(doc)
 
     def validate_etag(self, doc, etag):
-        """
-        Validates the given etag for the given document.
+        """Validates the given etag for the given document.
+
         Raises InvalidEtag if they don't match.
         """
         if self.etag(doc) != etag:
             raise InvalidEtag()
 
     def find_one(self, filter, projection=None):
-        """
-        Return one document selected based on the given filter.
-        @param filter: dict
-        @param projection: dict
+        """Return one document selected based on the given filter.
+
+        :param filter: dict
+        :param projection: dict
         """
         return self.data_layer.find_one(self.resource, filter, projection)
 
     def find(self, filter, projection=None, **options):
-        """
-        Return a list of documents selected based on the given filter.
-        @param filter: dict
-        @param projection: dict
-        @param options: dict
+        """Return a list of documents selected based on the given filter.
+
+        :param filter: dict
+        :param projection: dict
+        :param options: dict
         """
         return self.data_layer.find(self.resource, filter, projection, **options)
 
     def create(self, docs):
-        """
-        Insert a list of documents
-        @param docs: list
+        """Insert a list of documents.
+
+        :param docs: list
         """
         self.validate(docs)
         self.on_create(docs)
@@ -140,10 +138,10 @@ class BaseModel():
         return res
 
     def update(self, filter, doc, etag=None):
-        """
-        Update one document selected based on the given filter.
-        @param filter: dict
-        @param doc: dict
+        """Update one document selected based on the given filter.
+
+        :param filter: dict
+        :param doc: dict
         """
         self.validate(doc)
         orig = self.find_one(filter)
@@ -157,10 +155,10 @@ class BaseModel():
         return res
 
     def replace(self, filter, doc, etag=None):
-        """
-        Replace the content of one document selected based on the given filter.
-        @param filter: dict
-        @param doc: dict
+        """Replace the content of one document selected based on the given filter.
+
+        :param filter: dict
+        :param doc: dict
         """
         self.validate(doc)
         orig = self.find(filter)
@@ -177,9 +175,9 @@ class BaseModel():
         return res
 
     def delete(self, filter):
-        """
-        Delete one document selected based on the given filter.
-        @param filter: dict
+        """Delete one document selected based on the given filter.
+
+        :param filter: dict
         """
         orig = self.find_one(filter)
         if not orig:
@@ -190,10 +188,11 @@ class BaseModel():
         return res
 
     def validate(self, docs):
-        """
-        Validate a document or a list of documents.
+        """Validate a document or a list of documents.
+
         Raise ValidationError on errors
-        @param docs: list of documents
+
+        :param docs: list of documents
         """
         errs = []
         if not isinstance(docs, list):

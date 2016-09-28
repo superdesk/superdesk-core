@@ -191,8 +191,8 @@ class ContentTemplatesService(Service):
             raise SuperdeskApiError.badRequestError('Kill templates can not be deleted.')
 
     def get_scheduled_templates(self, now):
-        """
-        Get the template by schedule
+        """Get the template by schedule
+
         :param datetime now:
         :return MongoCursor:
         """
@@ -200,8 +200,8 @@ class ContentTemplatesService(Service):
         return self.find(query)
 
     def get_template_by_name(self, template_name):
-        """
-        Get the template by name
+        """Get the template by name
+
         :param str template_name: template name
         :return dict: template
         """
@@ -294,8 +294,8 @@ class ContentTemplatesApplyService(Service):
 
 
 def render_content_template_by_name(item, template_name):
-    """
-    Apply template by name
+    """Apply template by name.
+
     :param dict item: item on which template is applied
     :param str template_name: template name
     :return dict: updates to the item
@@ -310,8 +310,8 @@ def render_content_template_by_name(item, template_name):
 
 
 def render_content_template_by_id(item, template_id):
-    """
-    Apply template by name
+    """Apply template by name.
+
     :param dict item: item on which template is applied
     :param str template_id: template _id
     :return dict: updates to the item
@@ -325,8 +325,8 @@ def render_content_template_by_id(item, template_id):
 
 
 def render_content_template(item, template):
-    """
-    Render the template.
+    """Render the template.
+
     :param dict item: item on which template is applied
     :param dict template: template
     :return dict: updates to the item

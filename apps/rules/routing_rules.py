@@ -161,8 +161,8 @@ class RoutingRuleSchemeService(BaseService):
     """
 
     def on_create(self, docs):
-        """
-        Overriding to check the below pre-conditions:
+        """Overriding to check the below pre-conditions:
+
             1. A routing scheme must have at least one rule.
             2. Every rule in the routing scheme must have name, filter and at least one action
 
@@ -174,8 +174,8 @@ class RoutingRuleSchemeService(BaseService):
             self._check_if_rule_name_is_unique(routing_scheme)
 
     def on_update(self, updates, original):
-        """
-        Overriding to check the below pre-conditions:
+        """Overriding to check the below pre-conditions:
+
             1. A routing scheme must have at least one rule.
             2. Every rule in the routing scheme must have name, filter and at least one action
 
@@ -186,8 +186,8 @@ class RoutingRuleSchemeService(BaseService):
         self._check_if_rule_name_is_unique(updates)
 
     def on_delete(self, doc):
-        """
-        Overriding to check the below pre-conditions:
+        """Overriding to check the below pre-conditions:
+
             1. A routing scheme shouldn't be associated with an Ingest Provider.
 
         Will throw BadRequestError if any of the pre-conditions fail.
@@ -197,8 +197,8 @@ class RoutingRuleSchemeService(BaseService):
             raise SuperdeskApiError.forbiddenError('Routing scheme is applied to channel(s). It cannot be deleted.')
 
     def apply_routing_scheme(self, ingest_item, provider, routing_scheme):
-        """
-        applies routing scheme and applies appropriate action (fetch, publish) to the item
+        """Applies routing scheme and applies appropriate action (fetch, publish) to the item
+
         :param item: ingest item to which routing scheme needs to applied.
         :param provider: provider for which the routing scheme is applied.
         :param routing_scheme: routing scheme.
@@ -238,7 +238,9 @@ class RoutingRuleSchemeService(BaseService):
                              provider.get('name'), ingest_item[config.ID_FIELD]))
 
     def _adjust_for_empty_schedules(self, routing_scheme):
-        """For all routing scheme's rules, set their non-empty schedules to
+        """Adjust for empty schedules.
+
+        For all routing scheme's rules, set their non-empty schedules to
         None if they are effectively not defined.
 
         A schedule is recognized as "not defined" if it only contains time zone
@@ -264,8 +266,8 @@ class RoutingRuleSchemeService(BaseService):
                     schedule['time_zone'] = 'UTC'
 
     def _validate_routing_scheme(self, routing_scheme):
-        """
-        Validates routing scheme for the below:
+        """Validates routing scheme for the below:
+
             1. A routing scheme must have at least one rule.
             2. Every rule in the routing scheme must have name, filter and at least one action
 
@@ -297,7 +299,9 @@ class RoutingRuleSchemeService(BaseService):
                 self._validate_schedule(schedule)
 
     def _validate_schedule(self, schedule):
-        """Check if the given routing schedule configuration is valid and raise
+        """Validate schedule.
+
+        Check if the given routing schedule configuration is valid and raise
         an error if this is not the case.
 
         :param dict schedule: the routing schedule configuration to validate
@@ -406,8 +410,8 @@ class RoutingRuleSchemeService(BaseService):
         return scheduled_rules
 
     def __fetch(self, ingest_item, destinations):
-        """
-        Fetch to item to the destinations
+        """Fetch to item to the destinations
+
         :param item: item to be fetched
         :param destinations: list of desk and stage
         """
@@ -430,8 +434,8 @@ class RoutingRuleSchemeService(BaseService):
         return archive_items
 
     def __getTarget(self, destination):
-        """
-        Get the target for destination
+        """Get the target for destination
+
         :param dict destination: routing destination
         :return dict: returns target information
         """
@@ -445,8 +449,8 @@ class RoutingRuleSchemeService(BaseService):
         return target
 
     def __publish(self, ingest_item, destinations):
-        """
-        Fetches the item to the desk and then publishes the item.
+        """Fetches the item to the desk and then publishes the item.
+
         :param item: item to be published
         :param destinations: list of desk and stage
         """
@@ -459,7 +463,8 @@ class RoutingRuleSchemeService(BaseService):
                 logger.exception("Failed to publish item %s." % item)
 
     def _set_default_values(self, item):
-        ''' Assigns the default values to the item that about to be auto published '''
+        """Assigns the default values to the item that about to be auto published"""
+
         archive_item = get_resource_service('archive').find_one(req=None, _id=item)
         default_values = {}
         default_values['headline'] = archive_item.get('headline') or ' '

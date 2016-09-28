@@ -21,11 +21,11 @@ from superdesk.resource import build_custom_hateoas
 
 
 class SearchService(superdesk.Service):
-    """
-    Federated search service.
+    """Federated search service.
 
     It can search against different collections like Ingest, Production, Archived etc.. at the same time.
     """
+
     repos = ['ingest', 'archive', 'published', 'archived']
 
     @property
@@ -165,8 +165,8 @@ class SearchService(superdesk.Service):
         return ','.join(indexes)
 
     def get_available_indexes(self):
-        """
-        Returns a set of the configured indexes
+        """Returns a set of the configured indexes
+
         :return:
         """
         return set(self._get_index().split(','))

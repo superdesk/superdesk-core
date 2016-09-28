@@ -21,8 +21,8 @@ logger = logging.getLogger(__name__)
 
 
 class AppScaffoldDataCommand(superdesk.Command):
-    """
-    Initialize the application with some random data fetched from archived.
+    """Initialize the application with some random data fetched from archived.
+
     Text archive dump must be restored before running this command as well as 'app:initialize_data'
     command to bootstrap the system with desks/users.
     """

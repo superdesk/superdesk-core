@@ -30,9 +30,10 @@ def populate_validators(json_data):
 
 
 def process_validators(filepath):
-    """
-    This function upserts the validators into the validators collections.
+    """This function upserts the validators into the validators collections.
+
     The format of the file used is JSON.
+
     :param filepath: absolute filepath
     :return: nothing
     """
@@ -48,6 +49,7 @@ class ValidatorsPopulateCommand(superdesk.Command):
     """
     Class defining the populate validators command.
     """
+
     option_list = (
         superdesk.Option('--filepath', '-f', dest='filepath', required=True),
     )

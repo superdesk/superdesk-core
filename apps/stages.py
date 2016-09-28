@@ -95,7 +95,8 @@ class StagesService(BaseService):
     notification_key = 'stage'
 
     def on_create(self, docs):
-        """
+        """Runs on stage create.
+
         Overriding this to set desk_order and expiry settings. Also, if this stage is defined as either working or
         incoming stage or both then removes the old incoming and working stages.
         """
@@ -222,8 +223,8 @@ class StagesService(BaseService):
                               desk_id=str(original.get('desk')))
 
     def _get_unspiked_stage_documents(self, stage_id):
-        """
-        Returns the documents that are on the stage and not spiked
+        """Returns the documents that are on the stage and not spiked.
+
         :param stage_id:
         :return:
         """
@@ -243,8 +244,8 @@ class StagesService(BaseService):
         return superdesk.get_resource_service(ARCHIVE).get(req, None)
 
     def _stage_in_rule(self, stage_id):
-        """
-        Returns the ingest routing rules that refer to the passed stage
+        """Returns the ingest routing rules that refer to the passed stage.
+
         :param stage_id:
         :return: routing scheme rules that refer to the passed stage
         """
@@ -253,8 +254,8 @@ class StagesService(BaseService):
         return superdesk.get_resource_service('routing_schemes').get(req=None, lookup=query_filter)
 
     def get_stages_by_visibility(self, is_visible=False, user_desk_ids=[]):
-        """
-        returns a list of stages for a user.
+        """Returns a list of stages for a user.
+
         """
         if is_visible:
             lookup = {'$or': [{'is_visible': True}]}
@@ -284,8 +285,8 @@ class StagesService(BaseService):
             get_resource_service('stages').update(stage.get('_id'), {field: False}, stage)
 
     def create_working_stage(self):
-        """
-        Creates a Working stage and returns it's identifier
+        """Creates a Working stage and returns it's identifier
+
         :return: identifier of Working Stage
         """
 
@@ -294,8 +295,8 @@ class StagesService(BaseService):
         return self.create([stage])
 
     def create_incoming_stage(self):
-        """
-        Creates a Incoming stage and returns it's identifier
+        """Creates a Incoming stage and returns it's identifier
+
         :return: identifier of Incoming Stage
         """
         stage = {'name': 'Incoming Stage', 'default_incoming': True, 'desk_order': 2, 'content_expiry': None}

@@ -20,9 +20,8 @@ logger = logging.getLogger(__name__)
 
 
 class AlchemyKeywordsProvider():
-    """
-    Keyword provider that user the Alchemy API(http://www.alchemyapi.com/api)
-    """
+    """Keyword provider that user the Alchemy API(http://www.alchemyapi.com/api)"""
+
     def __init__(self):
         self._http = requests.Session()
 

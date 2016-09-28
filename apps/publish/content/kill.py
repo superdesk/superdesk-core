@@ -59,8 +59,8 @@ class KillPublishService(BasePublishService):
         get_resource_service('archive_broadcast').spike_item(original)
 
     def update(self, id, updates, original):
-        """
-        Kill will broadcast kill email notice to all subscriber in the system and then kill the item.
+        """Kill will broadcast kill email notice to all subscriber in the system and then kill the item.
+
         Kill for multiple items is triggered
         - for all takes and takes_package if one of the take is killed.
         - for broadcast items if master item is killed.
@@ -102,8 +102,8 @@ class KillPublishService(BasePublishService):
         get_resource_service('archive_broadcast').kill_broadcast(updates_copy, original_copy)
 
     def broadcast_kill_email(self, original, updates):
-        """
-        Sends the broadcast email to all subscribers (including in-active subscribers)
+        """Sends the broadcast email to all subscribers (including in-active subscribers)
+
         :param dict original: Document to kill
         :param dict updates: kill updates
         """
@@ -121,8 +121,8 @@ class KillPublishService(BasePublishService):
         send_article_killed_email(kill_article, recipients, utcnow())
 
     def _publish_kill_for_takes(self, updates, original):
-        """
-        Kill all the takes in a takes package.
+        """Kill all the takes in a takes package.
+
         :param updates: Updates of the original document
         :param original: Document to kill
         """
@@ -147,8 +147,8 @@ class KillPublishService(BasePublishService):
                     self.update_published_collection(published_item_id=original_data['_id'])
 
     def kill_item(self, updates, original):
-        """
-        Kill the item after applying the template.
+        """Kill the item after applying the template.
+
         :param dict item: Item
         :param str body_html: body_html of the original item that triggered the kill.
         """

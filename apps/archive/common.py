@@ -227,9 +227,10 @@ def format_dateline_to_locmmmddsrc(located, current_timestamp, source=None):
 
 
 def set_default_source(doc):
-    """
-    Set the source for the item.
+    """Set the source for the item.
+
     If desk level source is specified then use that source else default from global settings.
+
     :param {dict} doc: doc where source is defined
     """
 
@@ -288,8 +289,9 @@ def set_original_creator(doc):
 
 
 def set_sign_off(updates, original=None, repo_type=ARCHIVE, user=None):
-    """
-    Set sign_off on updates object. Rules:
+    """Set sign_off on updates object.
+
+    Rules:
         1. updates['sign_off'] = original['sign_off'] + sign_off of the user performing operation.
         2. If the last modified user and the user performing operation are same then sign_off shouldn't change
         3. If sign_off is received on updates, this value will be preserved
@@ -319,8 +321,8 @@ def set_sign_off(updates, original=None, repo_type=ARCHIVE, user=None):
 
 
 def generate_unique_id_and_name(item, repo_type=ARCHIVE):
-    """
-    Generates and appends unique_id and unique_name to item.
+    """Generates and appends unique_id and unique_name to item.
+
     :throws IdentifierGenerationError: if unable to generate unique_id
     """
 
@@ -335,14 +337,15 @@ def generate_unique_id_and_name(item, repo_type=ARCHIVE):
 
 
 def insert_into_versions(id_=None, doc=None):
-    """
+    """Insert version document.
+
     There are some scenarios where the requests are not handled by eve. In those scenarios superdesk should be able to
     manually manage versions. Below are some scenarios:
 
-    1.  When user fetches a content from ingest collection the request is handled by fetch API which doesn't
+    1.  When a user fetches content from ingest collection the request is handled by fetch API which doesn't
         extend from ArchiveResource.
-    2.  When user submits content to a desk the request is handled by /tasks API.
-    3.  When user publishes a package the items of the package also needs to be published. The publishing of items
+    2.  When a user submits content to a desk the request is handled by /tasks API.
+    3.  When a user publishes a package the items of the package also needs to be published. The publishing of items
         in the package is not handled by eve.
     """
 
@@ -360,7 +363,8 @@ def insert_into_versions(id_=None, doc=None):
 
 
 def remove_unwanted(doc):
-    """
+    """Remove attributes unecessary to superdesk from documents.
+
     As the name suggests this function removes unwanted attributes from doc to make an entry in Mongo and Elastic.
     """
 
@@ -371,8 +375,9 @@ def remove_unwanted(doc):
 
 
 def remove_media_files(doc):
-        """
-        Removes the media files of the given doc if they are not references by any other
+        """Removes the media files of the given doc.
+
+        If media files  are not references by any other
         story across all repos. Returns true if the medis files are removed.
         """
         print('Removing Media Files...')
@@ -409,8 +414,7 @@ def remove_media_files(doc):
 
 
 def is_assigned_to_a_desk(doc):
-    """
-    Returns True if the 'doc' is being submitted to a desk. False otherwise.
+    """Returns True if the 'doc' is being submitted to a desk. False otherwise.
 
     :param doc: doc must be from archive collection
     :return: True if the 'doc' is being submitted to a desk, else False.
@@ -420,12 +424,13 @@ def is_assigned_to_a_desk(doc):
 
 
 def get_item_expiry(desk, stage, offset=None):
-    """
-    Calculate expiry date of the item.
+    """Calculate expiry date of the item.
+
     Order of precedence is:
     1. Stage Content Expiry
     2. Desk Content Expiry
     3. Default Content expiry in Settings ('CONTENT_EXPIRY_MINUTES').
+
     :param dict desk: desk where the item is located
     :param dict stage: stage where the item is located
     :param datetime offset: datetime passed in case of embargo.
@@ -441,10 +446,12 @@ def get_item_expiry(desk, stage, offset=None):
 
 
 def get_expiry(desk_id, stage_id, offset=None):
-    """
-    Calculates the expiry for a content from fetching the expiry duration from one of the below
+    """Calculates the expiry for an item.
+
+    Fetches the expiry duration from one of the below
         1. desk identified by desk_id
         2. stage identified by stage_id
+
     :param desk_id: desk identifier
     :param stage_id: stage identifier
     :return: when the doc will expire
@@ -482,8 +489,9 @@ def set_item_expiry(update, original):
 
 
 def update_state(original, updates):
-    """
-    Updates the 'updates' with a valid state if the state transition valid. If the content is in user's workspace and
+    """Updates the 'updates' with a valid state
+
+    If the state transition valid, the content is in user's workspace and
     original['state'] is not draft then updates['state'] is set to 'draft'. If the content is in a desk then the state
     is changed to 'in-progress'.
     """
@@ -503,8 +511,9 @@ def update_state(original, updates):
 
 
 def handle_existing_data(doc, pub_status_value='usable', doc_type='archive'):
-    """
-    Handles existing data. For now the below are handled:
+    """Handles existing data.
+
+    For now the below are handled:
         1. Sets the value of pubstatus property in metadata of doc in either ingest or archive repo
         2. Sets the value of marked_for_not_publication
     """
@@ -531,8 +540,8 @@ def get_flag(doc, flag_name):
 
 
 def validate_schedule(schedule, package_sequence=1):
-    """
-    Validates the publish schedule.
+    """Validates the publish schedule.
+
     :param datetime schedule: schedule datetime
     :param int package_sequence: takes package sequence.
     :raises: SuperdeskApiError.badRequestError if following cases
@@ -552,8 +561,8 @@ def validate_schedule(schedule, package_sequence=1):
 
 
 def update_schedule_settings(updates, field_name, value):
-    """
-    Calculates and sets the utc schedule for the given field
+    """Calculates and sets the utc schedule for the given field.
+
     :param updates: Where the time_zone information will be read and the updated
     schedule_settings will be recorded
     :param field_name: Name of he field: either publish_schedule or embargo
@@ -574,8 +583,8 @@ def update_schedule_settings(updates, field_name, value):
 
 
 def get_utc_schedule(doc, field_name):
-    """
-    Gets the utc value of the given field.
+    """Gets the utc value of the given field.
+
     :param doc: Article
     :param field_name: Name of he field: either publish_schedule or embargo
     :return: the utc value of the field
@@ -602,8 +611,8 @@ def item_schema(extra=None):
 
 
 def is_item_in_package(item):
-    """
-    Checks if the passed item is a member of a non-takes package
+    """Checks if the passed item is a member of a non-takes package.
+
     :param item:
     :return: True if the item belongs to a non-takes package
     """
@@ -612,10 +621,9 @@ def is_item_in_package(item):
 
 
 def convert_task_attributes_to_objectId(doc):
-    """
-    set the task attributes desk, stage, user as object id
-    :param doc:
+    """Set the task attributes desk, stage, user as object id
 
+    :param doc:
     """
     task = doc.get('task', {})
 
@@ -637,8 +645,7 @@ def convert_task_attributes_to_objectId(doc):
 
 
 def copy_metadata_from_profile(doc):
-    """
-    Set the default values defined on document profile
+    """Set the default values defined on document profile.
 
     :param doc
     """
@@ -658,8 +665,9 @@ def copy_metadata_from_profile(doc):
 
 
 def copy_metadata_from_user_preferences(doc, repo_type=ARCHIVE):
-    """
-    Copies following properties: byline, dateline.located,
+    """Copies following properties:
+
+    byline, dateline.located,
     place from user preferences to doc if the repo_type is Archive and
     if the story is not fetched.
 
@@ -700,8 +708,8 @@ def copy_metadata_from_user_preferences(doc, repo_type=ARCHIVE):
 
 
 def is_genre(item, genre_value):
-    """
-    Item to check specific genre exists or not
+    """Item to check specific genre exists or not.
+
     :param dict item: item on which the check is performed.
     :param str genre_value: genre_value as string
     :return: If exists then true else false
@@ -711,8 +719,8 @@ def is_genre(item, genre_value):
 
 
 def get_dateline_city(dateline):
-    """
-    Get the dateline city
+    """Get the dateline city.
+
     :param dict dateline:
     :return str:
     """

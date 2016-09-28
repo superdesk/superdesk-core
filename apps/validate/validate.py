@@ -112,13 +112,12 @@ class ValidateService(superdesk.Service):
         return superdesk.get_resource_service('validators').get(req=None, lookup=lookup)
 
     def _sanitize_fields(self, doc, validator):
-        '''
-        If maxlength or minlength is specified in the validator then
-        remove any markups from that field
+        """If maxlength or minlength is specified in the validator then remove any markups from that field
+
         :param doc: Article to be validated
         :param validator: Validation rule
         :return: updated article
-        '''
+        """
         fields_to_check = ['minlength', 'maxlength']
         schema = validator.get('schema', {})
         for field in schema:

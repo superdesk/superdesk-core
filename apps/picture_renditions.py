@@ -12,6 +12,7 @@ class PictureRenditionsService(superdesk.Service):
     Create the renditions for the given `original` picture.
 
     """
+
     def create(self, docs, **kwargs):
         ids = []
         for doc in docs:

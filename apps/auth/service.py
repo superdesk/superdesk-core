@@ -32,7 +32,8 @@ class AuthService(BaseService):
             get_resource_service('preferences').set_session_based_prefs(doc['_id'], doc['user'])
 
     def on_deleted(self, doc):
-        """
+        """Runs on delete of a session
+
         :param doc: A deleted auth doc AKA a session
         :return:
         """
@@ -48,7 +49,8 @@ class AuthService(BaseService):
 class UserSessionClearService(BaseService):
 
     def delete(self, lookup):
-        """
+        """Delete user session.
+
         Deletes all the records from auth and corresponding
         session_preferences from user collections
         If there are any orphan session_preferences exist they get deleted as well
@@ -74,11 +76,12 @@ class UserSessionClearService(BaseService):
         return [{'complete': True}]
 
     def __can_clear_sessions(self, user):
-        """
-        Checks if the session clear request is Invalid.
+        """Checks if the session clear request is Invalid.
+
         Operation is invalid if one of the below is True:
             1. Check if the user exists.
             2. Check if the user is clearing his/her own sessions.
+
         :return: error message if invalid.
         """
 
