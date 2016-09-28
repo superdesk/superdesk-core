@@ -103,7 +103,7 @@ Feature: Prepopulate
 
 
     @auth
-    @dbauth
+    @dbauth @clean_snapshots
     Scenario: Prepopulate with custom profile
         Given empty "roles"
         Given empty "desks"

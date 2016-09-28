@@ -58,6 +58,9 @@ def setup_before_scenario(context, scenario, config, app_factory):
     if 'alchemy' in scenario.tags and not context.app.config.get('KEYWORDS_KEY_API'):
         scenario.mark_skipped()
 
+    if 'clean_snapshots' in scenario.tags:
+        tests.use_snapshot.cache.clear()
+
     setup_search_provider(context.app)
 
     if scenario.status != 'skipped' and 'auth' in scenario.tags:
