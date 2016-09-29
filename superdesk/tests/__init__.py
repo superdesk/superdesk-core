@@ -87,18 +87,34 @@ def drop_elastic(app):
             es.indices.delete(index, ignore=[404])
 
 
-def drop_mongo(app):
-    with app.app_context():
-        drop_mongo_db(app, 'MONGO', 'MONGO_DBNAME')
-        drop_mongo_db(app, 'ARCHIVED', 'ARCHIVED_DBNAME')
-        drop_mongo_db(app, 'LEGAL_ARCHIVE', 'LEGAL_ARCHIVE_DBNAME')
+def foreach_mongo(fn):
+    """
+    Run the same actions on all mongo databases
+
+    This decorator adds two additional parameters to called function
+    `dbconn` and `dbname` for using proper connection and database name
+    """
+    @functools.wraps(fn)
+    def inner(app, *a, **kw):
+        pairs = (
+            ('MONGO', 'MONGO_DBNAME'),
+            ('ARCHIVED', 'ARCHIVED_DBNAME'),
+            ('LEGAL_ARCHIVE', 'LEGAL_ARCHIVE_DBNAME'),
+        )
+        with app.app_context():
+            for prefix, name in pairs:
+                if not app.config.get(name):
+                    continue
+                kw['dbname'] = app.config[name]
+                kw['dbconn'] = app.data.mongo.pymongo(prefix=prefix).cx
+                fn(app, *a, **kw)
+    return inner
 
 
-def drop_mongo_db(app, db_prefix, dbname):
-    if app.config.get(dbname):
-        db = app.data.mongo.pymongo(prefix=db_prefix).cx
-        db.drop_database(app.config[dbname])
-        db.close()
+@foreach_mongo
+def drop_mongo(app, dbconn, dbname):
+    dbconn.drop_database(dbname)
+    dbconn.close()
 
 
 def setup_config(config):
@@ -158,6 +174,19 @@ def clean_es(app, force=False):
     use_snapshot(app, 'clean', [snapshot_es], force)(_clean_es)(app)
 
 
+def snapshot(fn):
+    """
+    Call create or restore snapshot function
+    """
+    @functools.wraps(fn)
+    def inner(app, name, action, **kw):
+        assert action in ['create', 'restore']
+        create, restore = fn(app, name, **kw)
+        {'create': create, 'restore': restore}[action]()
+    return inner
+
+
+@snapshot
 def snapshot_es(app, name):
     indices = '%s*' % app.config['ELASTICSEARCH_INDEX']
     backup = ('backups', '%s%s' % (indices[:-1], name))
@@ -180,31 +209,25 @@ def snapshot_es(app, name):
     return create, restore
 
 
-def snapshot_mongo(app, name):
-    db = app.config['MONGO_DBNAME']
-    snapshot = '%s_%s' % (db, name)
-    mongo = app.data.mongo.pymongo(prefix='MONGO').cx
+@foreach_mongo
+@snapshot
+def snapshot_mongo(app, name, dbconn, dbname):
+    snapshot = '%s_%s' % (dbname, name)
 
     def create():
-        mongo.drop_database(snapshot)
-        mongo.admin.command('copydb', fromdb=db, todb=snapshot)
+        dbconn.drop_database(snapshot)
+        dbconn.admin.command('copydb', fromdb=dbname, todb=snapshot)
 
     def restore():
-        mongo.drop_database(db)
-        mongo.admin.command('copydb', fromdb=snapshot, todb=db)
+        dbconn.drop_database(dbname)
+        dbconn.admin.command('copydb', fromdb=snapshot, todb=dbname)
     return create, restore
 
 
 def use_snapshot(app, name, funcs=(snapshot_es, snapshot_mongo), force=False):
-    def snapshot():
-        create = []
-        restore = []
-
+    def snapshot(action):
         for f in funcs:
-            c, r = f(app, name)
-            create.append(c)
-            restore.append(r)
-        return lambda: [c() for c in create], lambda: [r() for r in restore]
+            f(app, name, action=action)
 
     def wrapper(fn):
         path = app.config.get('ELASTICSEARCH_BACKUPS_PATH')
@@ -220,13 +243,12 @@ def use_snapshot(app, name, funcs=(snapshot_es, snapshot_mongo), force=False):
                 use_snapshot.cache.pop(fn, None)
                 return fn(*a, **kw)
 
-            create, restore = snapshot()
             if fn in use_snapshot.cache:
-                restore()
+                snapshot('restore')
                 logger.debug('Restore snapshot for %s', fn)
             else:
                 use_snapshot.cache[fn] = fn(*a, **kw)
-                create()
+                snapshot('create')
                 logger.debug('Create snapshot for %s', fn)
             return use_snapshot.cache[fn]
         return inner
