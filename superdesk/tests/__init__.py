@@ -147,8 +147,9 @@ def retry(exc, count=1):
 
 
 def _clean_es(app):
+    indices = '%s*' % app.config['ELASTICSEARCH_INDEX']
     es = app.data.elastic.es
-    es.indices.delete('sptest*', ignore=[404])
+    es.indices.delete(indices, ignore=[404])
     app.data.init_elastic(app)
 
 
@@ -158,7 +159,7 @@ def clean_es(app, force=False):
 
 
 def snapshot_es(app, name):
-    indices = 'sptest*'
+    indices = '%s*' % app.config['ELASTICSEARCH_INDEX']
     backup = ('backups', '%s%s' % (indices[:-1], name))
     es = app.data.elastic.es
 
@@ -180,7 +181,7 @@ def snapshot_es(app, name):
 
 
 def snapshot_mongo(app, name):
-    db = 'sptest'
+    db = app.config['MONGO_DBNAME']
     snapshot = '%s_%s' % (db, name)
     mongo = app.data.mongo.pymongo(prefix='MONGO').cx
 
