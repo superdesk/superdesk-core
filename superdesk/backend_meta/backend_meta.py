@@ -83,7 +83,7 @@ class BackendMetaService(BaseService):
                 pass
         return ''
 
-    def on_fetched(self, doc):
+    def _on_fetched(self, doc):
         doc['meta_rev'] = self.get_superdesk_rev()
         doc['meta_rev_core'] = self.get_core_rev()
         doc['meta_rev_client'] = self.get_client_rev()

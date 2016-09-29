@@ -68,7 +68,7 @@ class ArchiveUnspikeResource(ArchiveResource):
 
 class ArchiveSpikeService(BaseService):
 
-    def on_update(self, updates, original):
+    def _on_update(self, updates, original):
         updates[ITEM_OPERATION] = ITEM_SPIKE
         self._validate_item(original)
         self._validate_take(original)
@@ -214,7 +214,7 @@ class ArchiveSpikeService(BaseService):
         self._removed_refs_from_package(id)
         return item
 
-    def on_updated(self, updates, original):
+    def _on_updated(self, updates, original):
         get_resource_service('archive_broadcast').spike_item(original)
 
 
@@ -253,7 +253,7 @@ class ArchiveUnspikeService(BaseService):
 
         updates[EXPIRY] = get_expiry(desk_id=desk_id, stage_id=stage_id)
 
-    def on_update(self, updates, original):
+    def _on_update(self, updates, original):
         updates[ITEM_OPERATION] = ITEM_UNSPIKE
         set_sign_off(updates, original=original)
 

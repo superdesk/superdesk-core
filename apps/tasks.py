@@ -228,7 +228,7 @@ class TasksService(BaseService):
         stage_id = task.get('stage', None)
         send_to(doc=doc, desk_id=desk_id, stage_id=stage_id)
 
-    def on_create(self, docs):
+    def _on_create(self, docs):
         on_create_item(docs)
         for doc in docs:
             resolve_document_version(doc, ARCHIVE, 'POST')
@@ -236,7 +236,7 @@ class TasksService(BaseService):
             self.update_stage(doc)
             convert_task_attributes_to_objectId(doc)
 
-    def on_created(self, docs):
+    def _on_created(self, docs):
         push_notification(self.datasource, created=1)
         push_notification('task:new')
         for doc in docs:
@@ -246,7 +246,7 @@ class TasksService(BaseService):
                              self.datasource, item=doc,
                              subject=get_subject(doc), type=doc[ITEM_TYPE])
 
-    def on_update(self, updates, original):
+    def _on_update(self, updates, original):
         self.update_times(updates)
         if is_assigned_to_a_desk(updates):
             self.__update_state(updates, original)
@@ -260,7 +260,7 @@ class TasksService(BaseService):
         convert_task_attributes_to_objectId(updates)
         update_version(updates, original)
 
-    def on_updated(self, updates, original):
+    def _on_updated(self, updates, original):
         updated = copy(original)
         updated.update(updates)
         if self._stage_changed(updates, original):
@@ -284,7 +284,7 @@ class TasksService(BaseService):
             add_activity(ACTIVITY_UPDATE, 'updated task {{ subject }} for item {{ type }}',
                          self.datasource, item=updated, subject=get_subject(updated), type=updated['type'])
 
-    def on_deleted(self, doc):
+    def _on_deleted(self, doc):
         push_notification(self.datasource, deleted=1)
 
     def assign_user(self, item_id, user):

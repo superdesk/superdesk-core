@@ -141,7 +141,7 @@ def read_from_file(doc):
 
 
 class DictionaryService(BaseService):
-    def on_create(self, docs):
+    def _on_create(self, docs):
         for doc in docs:
             if self.find_one(req=None, name=doc['name'],
                              language_id=doc['language_id'],
@@ -217,7 +217,7 @@ class DictionaryService(BaseService):
                 add_word(model, word, count)
         return model
 
-    def on_update(self, updates, original):
+    def _on_update(self, updates, original):
         # parse json list
         if updates.get('content_list'):
             updates['content'] = json.loads(updates.pop('content_list'))
@@ -249,10 +249,10 @@ class DictionaryService(BaseService):
         if 'type' not in doc:
             doc['type'] = DictionaryType.DICTIONARY.value
 
-    def on_fetched_item(self, doc):
+    def _on_fetched_item(self, doc):
         self.__enhance_items([doc])
 
-    def on_fetched(self, docs):
+    def _on_fetched(self, docs):
         self.__enhance_items(docs[config.ITEMS])
 
     def __enhance_items(self, docs):

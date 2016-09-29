@@ -132,21 +132,21 @@ class PublishedItemService(BaseService):
 
     SEQ_KEY_NAME = 'published_item_sequence_no'
 
-    def on_fetched(self, docs):
+    def _on_fetched(self, docs):
         """
         Overriding this to enhance the published article with the one in archive collection
         """
 
         self.enhance_with_archive_items(docs[config.ITEMS])
 
-    def on_fetched_item(self, doc):
+    def _on_fetched_item(self, doc):
         """
         Overriding this to enhance the published article with the one in archive collection
         """
 
         self.enhance_with_archive_items([doc])
 
-    def on_create(self, docs):
+    def _on_create(self, docs):
         """Runs on create.
 
         An article can be published multiple times in its lifetime. So, it's necessary to preserve the _id which comes
@@ -158,7 +158,7 @@ class PublishedItemService(BaseService):
             doc[config.LAST_UPDATED] = doc[config.DATE_CREATED] = utcnow()
             self.set_defaults(doc)
 
-    def on_update(self, updates, original):
+    def _on_update(self, updates, original):
         if ITEM_STATE in updates:
             self.raise_if_not_marked_for_publication(updates)
 
@@ -214,14 +214,14 @@ class PublishedItemService(BaseService):
                 item.update(updates)
                 handle_existing_data(item)
 
-    def on_delete(self, doc):
+    def _on_delete(self, doc):
         """Deleting a published item has a workflow which is implemented in remove_expired().
 
         Overriding to avoid other services from invoking this method accidentally.
         """
 
         if app.testing:
-            super().on_delete(doc)
+            super()._on_delete(doc)
         else:
             raise NotImplementedError("Deleting a published item has a workflow which is "
                                       "implemented in remove_expired().")
@@ -238,14 +238,14 @@ class PublishedItemService(BaseService):
             raise NotImplementedError("Deleting a published item has a workflow which is "
                                       "implemented in remove_expired().")
 
-    def on_deleted(self, doc):
+    def _on_deleted(self, doc):
         """Deleting a published item has a workflow which is implemented in remove_expired().
 
         Overriding to avoid other services from invoking this method accidentally.
         """
 
         if app.testing:
-            super().on_deleted(doc)
+            super()._on_deleted(doc)
         else:
             raise NotImplementedError("Deleting a published item has a workflow which is "
                                       "implemented in remove_expired().")

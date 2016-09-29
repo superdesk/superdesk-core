@@ -75,7 +75,7 @@ class ArchivedResource(Resource):
 
 class ArchivedService(BaseService):
 
-    def on_create(self, docs):
+    def _on_create(self, docs):
         package_service = PackageService()
 
         for doc in docs:
@@ -96,7 +96,7 @@ class ArchivedService(BaseService):
                 if is_takes_package:
                     doc[SEQUENCE] = len(package_service.get_item_refs(doc))
 
-    def on_delete(self, doc):
+    def _on_delete(self, doc):
         """Runs on delete of archive item.
 
         Overriding to validate the item being killed is actually eligible for kill. Validates the following:
@@ -255,12 +255,12 @@ class ArchivedService(BaseService):
             kill_service.broadcast_kill_email(article, updates)
             logger.info('Broadcast kill email for article: {}'.format(article[config.ID_FIELD]))
 
-    def on_updated(self, updates, original):
+    def _on_updated(self, updates, original):
         user = get_user()
         push_notification('item:deleted:archived', item=str(original[config.ID_FIELD]),
                           user=str(user.get(config.ID_FIELD)))
 
-    def on_fetched_item(self, doc):
+    def _on_fetched_item(self, doc):
         doc['_type'] = 'archived'
 
     def _get_archived_id(self, item_id, version):

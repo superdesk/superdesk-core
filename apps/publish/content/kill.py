@@ -38,7 +38,7 @@ class KillPublishService(BasePublishService):
     def __init__(self, datasource=None, backend=None):
         super().__init__(datasource=datasource, backend=backend)
 
-    def on_update(self, updates, original):
+    def _on_update(self, updates, original):
         # check if we are trying to kill and item that is contained in normal non takes package
         # and the package itself is not killed.
 
@@ -53,7 +53,7 @@ class KillPublishService(BasePublishService):
         updates['pubstatus'] = PUB_STATUS.CANCELED
         updates['versioncreated'] = utcnow()
 
-        super().on_update(updates, original)
+        super()._on_update(updates, original)
         updates[ITEM_OPERATION] = ITEM_KILL
         self.takes_package_service.process_killed_takes_package(original)
         get_resource_service('archive_broadcast').spike_item(original)

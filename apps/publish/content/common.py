@@ -98,14 +98,14 @@ class BasePublishService(BaseService):
     takes_package_service = TakesPackageService()
     package_service = PackageService()
 
-    def on_update(self, updates, original):
+    def _on_update(self, updates, original):
         self._refresh_associated_items(original)
         self._validate(original, updates)
         self._set_updates(original, updates, updates.get(config.LAST_UPDATED, utcnow()))
         convert_task_attributes_to_objectId(updates)  # ???
         self._process_publish_updates(original, updates)
 
-    def on_updated(self, updates, original):
+    def _on_updated(self, updates, original):
         original = get_resource_service(ARCHIVE).find_one(req=None, _id=original[config.ID_FIELD])
         updates.update(original)
 

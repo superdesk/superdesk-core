@@ -118,14 +118,14 @@ class SubscribersService(BaseService):
             return ListCursor(self._get_subscribers_by_filter_condition(filter_condition))
         return super().get(req=req, lookup=lookup)
 
-    def on_create(self, docs):
+    def _on_create(self, docs):
         for doc in docs:
             self._validate_seq_num_settings(doc)
 
-    def on_update(self, updates, original):
+    def _on_update(self, updates, original):
         self._validate_seq_num_settings(updates)
 
-    def on_deleted(self, doc):
+    def _on_deleted(self, doc):
         get_resource_service('sequences').delete(lookup={
             'key': 'ingest_providers_{_id}'.format(_id=doc[config.ID_FIELD])
         })

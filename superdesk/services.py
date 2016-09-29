@@ -29,34 +29,34 @@ class BaseService():
         self.backend = backend
         self.datasource = datasource
 
-    def on_create(self, docs):
+    def _on_create(self, docs):
         pass
 
-    def on_created(self, docs):
+    def _on_created(self, docs):
         pass
 
-    def on_update(self, updates, original):
+    def _on_update(self, updates, original):
         pass
 
-    def on_updated(self, updates, original):
+    def _on_updated(self, updates, original):
         pass
 
-    def on_replace(self, document, original):
+    def _on_replace(self, document, original):
         pass
 
-    def on_replaced(self, document, original):
+    def _on_replaced(self, document, original):
         pass
 
-    def on_delete(self, doc):
+    def _on_delete(self, doc):
         pass
 
-    def on_deleted(self, doc):
+    def _on_deleted(self, doc):
         pass
 
-    def on_fetched(self, doc):
+    def _on_fetched(self, doc):
         pass
 
-    def on_fetched_item(self, doc):
+    def _on_fetched_item(self, doc):
         pass
 
     def create(self, docs, **kwargs):
@@ -105,31 +105,31 @@ class BaseService():
     def post(self, docs, **kwargs):
         for doc in docs:
             resolve_default_values(doc, app.config['DOMAIN'][self.datasource]['defaults'])
-        self.on_create(docs)
+        self._on_create(docs)
         resolve_document_etag(docs, self.datasource)
         ids = self.create(docs, **kwargs)
-        self.on_created(docs)
+        self._on_created(docs)
         return ids
 
     def patch(self, id, updates):
         original = self.find_one(req=None, _id=id)
         updated = original.copy()
-        self.on_update(updates, original)
+        self._on_update(updates, original)
         updated.update(updates)
         if config.IF_MATCH:
             resolve_document_etag(updated, self.datasource)
             updates[config.ETAG] = updated[config.ETAG]
         res = self.update(id, updates, original)
-        self.on_updated(updates, original)
+        self._on_updated(updates, original)
         return res
 
     def put(self, id, document):
         resolve_default_values(document, app.config['DOMAIN'][self.datasource]['defaults'])
         original = self.find_one(req=None, _id=id)
-        self.on_replace(document, original)
+        self._on_replace(document, original)
         resolve_document_etag(document, self.datasource)
         res = self.replace(id, document, original)
-        self.on_replaced(document, original)
+        self._on_replaced(document, original)
         return res
 
     def delete_action(self, lookup=None):
@@ -139,10 +139,10 @@ class BaseService():
         else:
             docs = self.get_from_mongo(None, lookup)
         for doc in docs:
-            self.on_delete(doc)
+            self._on_delete(doc)
         res = self.delete(lookup)
         for doc in docs:
-            self.on_deleted(doc)
+            self._on_deleted(doc)
         return res
 
     def is_authorized(self, **kwargs):

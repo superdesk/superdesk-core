@@ -51,7 +51,7 @@ DEFAULT_DATA_UPDATE_FW_IMPLEMENTATION = 'raise NotImplementedError()'
 DEFAULT_DATA_UPDATE_BW_IMPLEMENTATION = 'raise NotImplementedError()'
 
 
-def get_dirs(only_relative_folder=False):
+def _get_dirs(only_relative_folder=False):
     dirs = []
     try:
         with superdesk.app.app_context():
@@ -72,7 +72,7 @@ def get_data_updates_files(strip_file_extension=False):
     """
     files = []
     # create folder if doens't exist
-    for folder in get_dirs():
+    for folder in _get_dirs():
         if not os.path.exists(folder):
             continue
         # list all files from data updates directory
@@ -104,25 +104,26 @@ class DataUpdateCommand(superdesk.Command):
                          help='Does not mark data updates as done. This can be useful for development.'),
     ]
 
-    def get_applied_updates(self):
+    def _get_applied_updates(self):
         req = ParsedRequest()
         req.sort = '-name'
         return tuple(self.data_updates_service.get(req=req, lookup={}))
 
     def run(self, data_update_id=None, fake=False, dry=False):
+        """Check applied updates."""
         self.data_updates_service = superdesk.get_resource_service('data_updates')
         self.data_updates_files = get_data_updates_files(strip_file_extension=True)
         # retrieve existing data updates in database
-        data_updates_applied = self.get_applied_updates()
+        data_updates_applied = self._get_applied_updates()
         self.last_data_update = data_updates_applied and data_updates_applied[-1] or None
         if self.last_data_update:
             if self.last_data_update['name'] not in self.data_updates_files:
                 print('A data update previously applied to this database (%s) can\'t be found in %s' % (
-                      self.last_data_update['name'], ', '.join(get_dirs())))
+                      self.last_data_update['name'], ', '.join(_get_dirs())))
 
-    def compile_update_in_module(self, data_update_name):
+    def _compile_update_in_module(self, data_update_name):
         date_update_script_file = None
-        for folder in get_dirs():
+        for folder in _get_dirs():
             date_update_script_file = os.path.join(folder, '%s.py' % (data_update_name))
             if os.path.exists(date_update_script_file):
                 break
@@ -136,21 +137,22 @@ class DataUpdateCommand(superdesk.Command):
             exec(script, module.__dict__)
         return module
 
-    def in_db(self, update):
-        return update in map(lambda _: _['name'], self.get_applied_updates())
+    def _in_db(self, update):
+        return update in map(lambda _: _['name'], self._get_applied_updates())
 
 
 class Upgrade(DataUpdateCommand):
-    """Runs all the new data updates available.
-
-    If `data_update_id` is given, runs new data updates until the given one.
-    """
+    """Upgrade command."""
 
     def run(self, data_update_id=None, fake=False, dry=False):
+        """Runs all the new data updates available.
+
+        If `data_update_id` is given, runs new data updates until the given one.
+        """
         super().run(data_update_id, fake, dry)
         data_updates_files = self.data_updates_files
         # drops updates that already have been applied
-        data_updates_files = [update for update in data_updates_files if not self.in_db(update)]
+        data_updates_files = [update for update in data_updates_files if not self._in_db(update)]
         # drop versions after given one
         if data_update_id:
             if data_update_id not in data_updates_files:
@@ -160,7 +162,7 @@ class Upgrade(DataUpdateCommand):
         # apply data updates
         for data_update_name in data_updates_files:
             print('data update %s running forward...' % (data_update_name))
-            module_scope = self.compile_update_in_module(data_update_name)
+            module_scope = self._compile_update_in_module(data_update_name)
             # run the data update forward
             if not fake:
                 module_scope.DataUpdate().apply('forwards')
@@ -172,12 +174,13 @@ class Upgrade(DataUpdateCommand):
 
 
 class Downgrade(DataUpdateCommand):
-    """Runs the latest data update backward.
-
-    If `data_update_id` is given, runs all the data updates backward until the given one.
-    """
+    """Downgrade command."""
 
     def run(self, data_update_id=None, fake=False, dry=False):
+        """Run the latest data update backward.
+
+        If `data_update_id` is given, runs all the data updates backward until the given one.
+        """
         super().run(data_update_id, fake, dry)
         data_updates_files = self.data_updates_files
         # check if there is something to downgrade
@@ -185,7 +188,7 @@ class Downgrade(DataUpdateCommand):
             print('No data update has been already applied')
             return False
         # drops updates which have not been already made (this is rollback mode)
-        data_updates_files = [update for update in data_updates_files if self.in_db(update)]
+        data_updates_files = [update for update in data_updates_files if self._in_db(update)]
 
         # if data_update_id is given, go until this update (drop previous updates)
         if data_update_id:
@@ -201,7 +204,7 @@ class Downgrade(DataUpdateCommand):
         # apply data updates, in the opposite direction
         for data_update_name in reversed(data_updates_files):
             print('data update %s running backward...' % (data_update_name))
-            module_scope = self.compile_update_in_module(data_update_name)
+            module_scope = self._compile_update_in_module(data_update_name)
             # run the data update backward
             if not fake:
                 module_scope.DataUpdate().apply('backwards')
@@ -223,6 +226,7 @@ class GenerateUpdate(superdesk.Command):
     ]
 
     def run(self, resource_name, global_update=False):
+        """Generate new data update file."""
         timestamp = time.strftime('%Y%m%d-%H%M%S')
         # create a data update file
         try:
@@ -233,7 +237,7 @@ class GenerateUpdate(superdesk.Command):
         if global_update:
             update_dir = MAIN_DATA_UPDATES_DIR
         else:
-            update_dir = get_dirs(only_relative_folder=True)[0]
+            update_dir = _get_dirs(only_relative_folder=True)[0]
         if not os.path.exists(update_dir):
             os.makedirs(update_dir)
         data_update_filename = os.path.join(update_dir, '{:05d}_{}_{}.py'.format(name_id, timestamp, resource_name))
@@ -257,8 +261,10 @@ superdesk.command('data:downgrade', Downgrade())
 
 
 class DataUpdate:
+    """Base for single data update."""
 
     def apply(self, direction):
+        """Apply this update, in given *direction*."""
         assert(direction in ['forwards', 'backwards'])
         collection = current_app.data.get_mongo_collection(self.resource)
         db = current_app.data.driver.db

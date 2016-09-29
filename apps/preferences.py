@@ -195,7 +195,7 @@ class PreferencesService(BaseService):
             doc['_id'] = session['_id'] if session else _id
         return doc
 
-    def on_fetched_item(self, doc):
+    def _on_fetched_item(self, doc):
         session_id = request.view_args['_id']
         session_prefs = doc.get(_session_preferences_key, {}).get(session_id, {})
         doc[_session_preferences_key] = session_prefs
@@ -203,7 +203,7 @@ class PreferencesService(BaseService):
         enhance_document_with_default_prefs(doc)
         self._filter_preferences_by_privileges(doc)
 
-    def on_update(self, updates, original):
+    def _on_update(self, updates, original):
         existing_user_preferences = original.get(_user_preferences_key, {}).copy()
         existing_session_preferences = original.get(_session_preferences_key, {}).copy()
 

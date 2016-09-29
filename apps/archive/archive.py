@@ -134,13 +134,13 @@ class ArchiveService(BaseService):
     takesService = TakesPackageService()
     mediaService = ArchiveMediaService()
 
-    def on_fetched(self, docs):
+    def _on_fetched(self, docs):
         """
         Overriding this to handle existing data in Mongo & Elastic
         """
         self.__enhance_items(docs[config.ITEMS])
 
-    def on_fetched_item(self, doc):
+    def _on_fetched_item(self, doc):
         self.__enhance_items([doc])
 
     def __enhance_items(self, items):
@@ -149,7 +149,7 @@ class ArchiveService(BaseService):
 
         self.takesService.enhance_items_with_takes_packages(items)
 
-    def on_create(self, docs):
+    def _on_create(self, docs):
         on_create_item(docs)
 
         for doc in docs:
@@ -179,7 +179,7 @@ class ArchiveService(BaseService):
 
             convert_task_attributes_to_objectId(doc)
 
-    def on_created(self, docs):
+    def _on_created(self, docs):
         packages = [doc for doc in docs if doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE]
         if packages:
             self.packageService.on_created(packages)
@@ -200,7 +200,7 @@ class ArchiveService(BaseService):
         get_resource_service('content_types').set_used(profiles)
         push_content_notification(docs)
 
-    def on_update(self, updates, original):
+    def _on_update(self, updates, original):
         """Runs on archive update.
 
         Overridden to validate the updates to the article and take necessary actions depending on the updates. In brief,
@@ -248,7 +248,7 @@ class ArchiveService(BaseService):
                         stored_item.update(item_obj)
                         updates['associations'][item_name] = stored_item
 
-    def on_updated(self, updates, original):
+    def _on_updated(self, updates, original):
         get_component(ItemAutosave).clear(original['_id'])
 
         if original[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
@@ -271,7 +271,7 @@ class ArchiveService(BaseService):
         if updates.get('profile'):
             get_resource_service('content_types').set_used([updates.get('profile')])
 
-    def on_replace(self, document, original):
+    def _on_replace(self, document, original):
         document[ITEM_OPERATION] = ITEM_UPDATE
         remove_unwanted(document)
         user = get_user()
@@ -286,14 +286,14 @@ class ArchiveService(BaseService):
         if force_unlock:
             del document['force_unlock']
 
-    def on_replaced(self, document, original):
+    def _on_replaced(self, document, original):
         get_component(ItemAutosave).clear(original['_id'])
         add_activity(ACTIVITY_UPDATE, 'replaced item {{ type }} about {{ subject }}',
                      self.datasource, item=original,
                      type=original['type'], subject=get_subject(original))
         push_content_notification([document, original])
 
-    def on_deleted(self, doc):
+    def _on_deleted(self, doc):
         if doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
             self.packageService.on_deleted(doc)
 

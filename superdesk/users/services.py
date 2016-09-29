@@ -204,7 +204,7 @@ class UsersService(BaseService):
         renditions = get_resource_service('upload').find_one(req=None, _id=doc)
         return renditions.get('renditions') if renditions is not None else None
 
-    def on_create(self, docs):
+    def _on_create(self, docs):
         for user_doc in docs:
             user_doc.setdefault('display_name', get_display_name(user_doc))
             user_doc.setdefault(SIGN_OFF, set_sign_off(user_doc))
@@ -214,14 +214,14 @@ class UsersService(BaseService):
 
             get_resource_service('preferences').set_user_initial_prefs(user_doc)
 
-    def on_created(self, docs):
+    def _on_created(self, docs):
         for user_doc in docs:
             self.__update_user_defaults(user_doc)
             add_activity(ACTIVITY_CREATE, 'created user {{user}}', self.datasource,
                          user=user_doc.get('display_name', user_doc.get('username')))
             self.update_stage_visibility_for_user(user_doc)
 
-    def on_update(self, updates, original):
+    def _on_update(self, updates, original):
         """Overriding the method to:
 
         1. Prevent user from the below:
@@ -243,13 +243,13 @@ class UsersService(BaseService):
         if updates.get('avatar'):
             updates['avatar_renditions'] = self.get_avatar_renditions(updates['avatar'])
 
-    def on_updated(self, updates, user):
+    def _on_updated(self, updates, user):
         if 'role' in updates or 'privileges' in updates:
-            get_resource_service('preferences').on_update(updates, user)
+            get_resource_service('preferences')._on_update(updates, user)
         self.__handle_status_changed(updates, user)
         self.__send_notification(updates, user)
 
-    def on_delete(self, user):
+    def _on_delete(self, user):
         """Overriding the method to prevent user from the below:
 
         1. Check if the user is updating his/her own status.
@@ -291,7 +291,7 @@ class UsersService(BaseService):
                     archive_service.update(item['_id'], doc_to_unlock, item)
                     archive_autosave_service.delete(lookup={'_id': item['_id']})
 
-    def on_deleted(self, doc):
+    def _on_deleted(self, doc):
         """Overriding to add to activity stream and handle user clean up.
 
         1. Authenticated Sessions
@@ -304,11 +304,11 @@ class UsersService(BaseService):
         self.__clear_locked_items(str(doc['_id']))
         self.__handle_status_changed(updates={'is_enabled': False, 'is_active': False}, user=doc)
 
-    def on_fetched(self, document):
+    def _on_fetched(self, document):
         for doc in document['_items']:
             self.__update_user_defaults(doc)
 
-    def on_fetched_item(self, doc):
+    def _on_fetched_item(self, doc):
         self.__update_user_defaults(doc)
 
     def __update_user_defaults(self, doc):
@@ -390,15 +390,15 @@ class DBUsersService(UsersService):
     Service class for UsersResource and should be used when AD is inactive.
     """
 
-    def on_create(self, docs):
-        super().on_create(docs)
+    def _on_create(self, docs):
+        super()._on_create(docs)
         for doc in docs:
             if doc.get('password', None) and not is_hashed(doc.get('password')):
                 doc['password'] = get_hash(doc.get('password'), app.config.get('BCRYPT_GENSALT_WORK_FACTOR', 12))
 
-    def on_created(self, docs):
+    def _on_created(self, docs):
         """Send email to user with reset password token."""
-        super().on_created(docs)
+        super()._on_created(docs)
         resetService = get_resource_service('reset_user_password')
         activate_ttl = app.config['ACTIVATE_ACCOUNT_TOKEN_TIME_TO_LIVE']
         for doc in docs:
@@ -410,8 +410,8 @@ class DBUsersService(UsersService):
                 tokenDoc.update({'username': doc['username']})
                 send_activate_account_email(tokenDoc)
 
-    def on_update(self, updates, user):
-        super().on_update(updates, user)
+    def _on_update(self, updates, user):
+        super()._on_update(updates, user)
         if updates.get('first_name') or updates.get('last_name'):
             updated_user = {'first_name': user.get('first_name', ''),
                             'last_name': user.get('last_name', ''),
@@ -443,10 +443,10 @@ class DBUsersService(UsersService):
 
         self.patch(user_id, updates=updates)
 
-    def on_deleted(self, doc):
+    def _on_deleted(self, doc):
         """
         Overriding clean up reset password tokens:
         """
 
-        super().on_deleted(doc)
+        super()._on_deleted(doc)
         get_resource_service('reset_user_password').remove_all_tokens_for_email(doc.get('email'))

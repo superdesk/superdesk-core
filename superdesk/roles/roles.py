@@ -49,20 +49,20 @@ class RolesResource(Resource):
 
 class RolesService(BaseService):
 
-    def on_update(self, updates, original):
+    def _on_update(self, updates, original):
         if updates.get('is_default'):
             # if we are updating the role that is already default that is OK
             if original.get('is_default'):
                 return
             self.remove_old_default()
 
-    def on_create(self, docs):
+    def _on_create(self, docs):
         for doc in docs:
             # if this new one is default need to remove the old default
             if doc.get('is_default'):
                 self.remove_old_default()
 
-    def on_delete(self, docs):
+    def _on_delete(self, docs):
         if docs.get('is_default'):
             raise SuperdeskApiError.forbiddenError('Cannot delete the default role')
         # check if there are any users in the role
@@ -82,7 +82,7 @@ class RolesService(BaseService):
         role = self.find_one(req=None, is_default=True)
         return role.get('_id') if role is not None else None
 
-    def on_updated(self, updates, role):
+    def _on_updated(self, updates, role):
         self.__send_notification(updates, role)
 
     def __send_notification(self, updates, role):

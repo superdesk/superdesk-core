@@ -47,7 +47,7 @@ class ProfilingService(BaseService):
     Allows reading of the profiling data
     """
 
-    def on_create(self, docs):
+    def _on_create(self, docs):
         for doc in docs:
             doc[config.ID_FIELD] = doc['name']
 

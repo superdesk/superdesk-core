@@ -45,7 +45,7 @@ class CommentsResource(Resource):
 class CommentsService(BaseService):
     notification_key = 'comments'
 
-    def on_create(self, docs):
+    def _on_create(self, docs):
         for doc in docs:
             sent_user = doc.get('user', None)
             user = g.user
@@ -57,15 +57,15 @@ class CommentsService(BaseService):
             doc['mentioned_users'] = get_users(user_names)
             doc['mentioned_desks'] = get_desks(desk_names)
 
-    def on_created(self, docs):
+    def _on_created(self, docs):
         for doc in docs:
             push_notification(self.notification_key, item=str(doc.get('item')))
 
         notify_mentioned_users(docs, app.config.get('CLIENT_URL', ''))
         notify_mentioned_desks(docs)
 
-    def on_updated(self, updates, original):
+    def _on_updated(self, updates, original):
         push_notification(self.notification_key, updated=1)
 
-    def on_deleted(self, doc):
+    def _on_deleted(self, doc):
         push_notification(self.notification_key, deleted=1)

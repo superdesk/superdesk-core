@@ -17,11 +17,11 @@ logger = logging.getLogger(__name__)
 
 
 class FilterConditionService(BaseService):
-    def on_create(self, docs):
+    def _on_create(self, docs):
         self._check_equals(docs)
         self._check_parameters(docs)
 
-    def on_update(self, updates, original):
+    def _on_update(self, updates, original):
         doc = dict(original)
         doc.update(updates)
         self._check_equals([doc])

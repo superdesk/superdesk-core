@@ -49,15 +49,15 @@ class CorrectPublishService(BasePublishService):
         else:
             super().set_state(original, updates)
 
-    def on_update(self, updates, original):
+    def _on_update(self, updates, original):
         CropService().validate_multiple_crops(updates, original)
-        super().on_update(updates, original)
+        super()._on_update(updates, original)
         updates[ITEM_OPERATION] = ITEM_CORRECT
         updates['versioncreated'] = utcnow()
         updates['correction_sequence'] = original.get('correction_sequence', 1) + 1
         set_sign_off(updates, original)
 
-    def on_updated(self, updates, original):
+    def _on_updated(self, updates, original):
         """Runs on update
 
         Locates the published or corrected non-take packages containing the corrected item
@@ -69,7 +69,7 @@ class CorrectPublishService(BasePublishService):
         original_updates = dict()
         original_updates['operation'] = updates['operation']
         original_updates[ITEM_STATE] = updates[ITEM_STATE]
-        super().on_updated(updates, original)
+        super()._on_updated(updates, original)
         CropService().delete_replaced_crop_files(updates, original)
         packages = self.package_service.get_packages(original[config.ID_FIELD])
         if packages and packages.count() > 0:

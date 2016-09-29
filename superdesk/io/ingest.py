@@ -46,10 +46,10 @@ class IngestService(BaseService):
     def post_in_mongo(self, docs, **kwargs):
         for doc in docs:
             resolve_default_values(doc, app.config['DOMAIN'][self.datasource]['defaults'])
-        self.on_create(docs)
+        self._on_create(docs)
         resolve_document_etag(docs, self.datasource)
         ids = self.backend.create_in_mongo(self.datasource, docs, **kwargs)
-        self.on_created(docs)
+        self._on_created(docs)
         return ids
 
     def patch_in_mongo(self, id, document, original):
@@ -68,7 +68,7 @@ class IngestService(BaseService):
         )
         item['ingest_provider_sequence'] = str(sequence_number)
 
-    def on_deleted(self, docs):
+    def _on_deleted(self, docs):
         docs = docs if isinstance(docs, list) else [docs]
         file_ids = [rend.get('media')
                     for doc in docs

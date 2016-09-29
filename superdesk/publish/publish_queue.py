@@ -118,7 +118,7 @@ class PublishQueueResource(Resource):
 
 class PublishQueueService(BaseService):
 
-    def on_create(self, docs):
+    def _on_create(self, docs):
         subscriber_service = get_resource_service('subscribers')
 
         for doc in docs:
@@ -129,7 +129,7 @@ class PublishQueueService(BaseService):
                 subscriber = subscriber_service.find_one(req=None, _id=doc['subscriber_id'])
                 doc['published_seq_num'] = subscriber_service.generate_sequence_number(subscriber)
 
-    def on_updated(self, updates, original):
+    def _on_updated(self, updates, original):
         if updates.get('state', '') != original.get('state', ''):
             push_notification('publish_queue:update',
                               queue_id=str(original['_id']),

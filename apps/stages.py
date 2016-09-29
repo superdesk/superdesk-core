@@ -94,7 +94,7 @@ class StagesResource(Resource):
 class StagesService(BaseService):
     notification_key = 'stage'
 
-    def on_create(self, docs):
+    def _on_create(self, docs):
         """Runs on stage create.
 
         Overriding this to set desk_order and expiry settings. Also, if this stage is defined as either working or
@@ -128,7 +128,7 @@ class StagesService(BaseService):
             if doc.get('default_incoming', False):
                 self.remove_old_default(desk, 'default_incoming')
 
-    def on_created(self, docs):
+    def _on_created(self, docs):
         for doc in docs:
             if 'desk' in doc:
                 push_notification(self.notification_key,
@@ -146,7 +146,7 @@ class StagesService(BaseService):
             if not doc.get('is_visible', True):
                 get_resource_service('users').update_stage_visibility_for_users()
 
-    def on_delete(self, doc):
+    def _on_delete(self, doc):
         """
         Checks if deleting the stage would not violate data integrity, raises an exception if it does.
 
@@ -180,17 +180,17 @@ class StagesService(BaseService):
             raise SuperdeskApiError.preconditionFailedError(
                 message='Stage is referred by Ingest Routing Schemes : {}'.format(rule_names))
 
-    def on_deleted(self, doc):
+    def _on_deleted(self, doc):
         push_notification(self.notification_key,
                           deleted=1,
                           stage_id=str(doc.get(config.ID_FIELD)),
                           desk_id=str(doc.get('desk')))
 
-    def on_update(self, updates, original):
+    def _on_update(self, updates, original):
         if updates.get('content_expiry') == 0:
             updates['content_expiry'] = None
 
-        super().on_update(updates, original)
+        super()._on_update(updates, original)
 
         if updates.get('working_stage', False):
             if not original.get('working_stage'):
@@ -208,7 +208,7 @@ class StagesService(BaseService):
             if original.get('default_incoming') and 'default_incoming' in updates:
                 raise SuperdeskApiError.forbiddenError(message='Must have one incoming stage in a desk')
 
-    def on_updated(self, updates, original):
+    def _on_updated(self, updates, original):
         if 'is_visible' in updates and updates['is_visible'] != original.get('is_visible', True):
             push_notification('stage_visibility_updated',
                               updated=1,

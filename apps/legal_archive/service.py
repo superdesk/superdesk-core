@@ -34,7 +34,7 @@ class LegalService(Service):
         if doc is a package.
         """
 
-        super().on_create(docs)
+        super()._on_create(docs)
         for doc in docs:
             if ITEM_TYPE in doc:
                 doc.setdefault(config.ID_FIELD, doc[GUID_FIELD])
@@ -48,7 +48,7 @@ class LegalService(Service):
         if doc is a package.
         """
 
-        super().on_replace(document, original)
+        super()._on_replace(document, original)
         if document.get(ITEM_TYPE) == CONTENT_TYPE.COMPOSITE:
             self._change_location_of_items_in_package(document)
 

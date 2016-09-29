@@ -19,7 +19,7 @@ from flask import current_app as app
 
 
 class AppIngestService(IngestService):
-    def on_fetched(self, docs):
+    def _on_fetched(self, docs):
         """Items when ingested have different case for pubstatus.
 
         Overriding this to handle existing data in Mongo & Elastic
@@ -28,7 +28,7 @@ class AppIngestService(IngestService):
         for item in docs[config.ITEMS]:
             handle_existing_data(item, doc_type='ingest')
 
-    def on_create(self, docs):
+    def _on_create(self, docs):
         for doc in docs:
             set_default_state(doc, CONTENT_STATE.INGESTED)
             if not app.config.get('DEFAULT_CONTENT_TYPE', None):

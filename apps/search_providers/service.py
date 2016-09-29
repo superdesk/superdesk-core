@@ -43,7 +43,7 @@ class SearchProviderService(BaseService):
         provider = super().find_one(req, **lookup)
         return provider if provider and provider['search_provider'] in allowed_search_providers else None
 
-    def on_created(self, docs):
+    def _on_created(self, docs):
         for doc in docs:
             if doc.get('is_default'):
                 self.find_and_modify(
@@ -52,7 +52,7 @@ class SearchProviderService(BaseService):
                     upsert=False
                 )
 
-    def on_updated(self, updates, original):
+    def _on_updated(self, updates, original):
         if updates.get('is_default'):
             self.find_and_modify(
                 query={'$and': [{'_id': {'$ne': original[config.ID_FIELD]}}, {'is_default': True}]},
@@ -60,7 +60,7 @@ class SearchProviderService(BaseService):
                 upsert=False
             )
 
-    def on_delete(self, doc):
+    def _on_delete(self, doc):
         """
         Overriding to check if the search provider being requested to delete has been used to fetch items.
         """

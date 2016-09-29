@@ -91,16 +91,16 @@ class AllSavedSearchesResource(Resource):
 
 
 class AllSavedSearchesService(BaseService):
-    def on_fetched_item(self, doc):
+    def _on_fetched_item(self, doc):
         enhance_savedsearch(doc)
 
-    def on_fetched(self, docs):
+    def _on_fetched(self, docs):
         for doc in docs.get('_items', []):
             enhance_savedsearch(doc)
 
 
 class SavedSearchesService(BaseService):
-    def on_create(self, docs):
+    def _on_create(self, docs):
         for doc in docs:
             if 'user' not in doc and request:
                 doc['user'] = request.view_args.get('user')
@@ -117,7 +117,7 @@ class SavedSearchesService(BaseService):
         self.validate_and_run_elastic_query(query, repo)
         doc['filter'] = encode_filter(doc.get('filter'))
 
-    def on_update(self, updates, original):
+    def _on_update(self, updates, original):
         """Runs on update.
 
         Checks if the request owner and the saved search owner are the same person
@@ -128,7 +128,7 @@ class SavedSearchesService(BaseService):
         if str(user['_id']) == request_user or user['active_privileges'].get('global_saved_search', 0) == 0:
             if 'filter' in updates:
                 self.process(updates)
-            super().on_update(updates, original)
+            super()._on_update(updates, original)
             push_notification('savedsearch:update')
         else:
             raise SuperdeskApiError.forbiddenError("Unauthorized to modify global search")
@@ -189,10 +189,10 @@ class SavedSearchesService(BaseService):
             logger.exception(e)
             raise SuperdeskApiError.badRequestError('Fail to validate the filter against %s.' % index)
 
-    def on_fetched_item(self, doc):
+    def _on_fetched_item(self, doc):
         enhance_savedsearch(doc)
 
-    def on_fetched(self, docs):
+    def _on_fetched(self, docs):
         for doc in docs.get('_items', []):
             enhance_savedsearch(doc)
 

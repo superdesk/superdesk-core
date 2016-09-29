@@ -23,13 +23,13 @@ class ADUsersService(UsersService):
 
     readonly_fields = ['email', 'first_name', 'last_name']
 
-    def on_fetched(self, doc):
-        super().on_fetched(doc)
+    def _on_fetched(self, doc):
+        super()._on_fetched(doc)
         for document in doc['_items']:
             self.set_defaults(document)
 
-    def on_fetched_item(self, doc):
-        super().on_fetched_item(doc)
+    def _on_fetched_item(self, doc):
+        super()._on_fetched_item(doc)
         self.set_defaults(doc)
 
     def set_defaults(self, doc):

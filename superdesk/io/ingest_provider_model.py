@@ -158,13 +158,13 @@ class IngestProviderService(BaseService):
     def user_service(self):
         return get_resource_service('users')
 
-    def on_create(self, docs):
+    def _on_create(self, docs):
         for doc in docs:
             if doc.get('content_expiry', 0) == 0:
                 doc['content_expiry'] = app.config['INGEST_EXPIRY_MINUTES']
                 self._set_provider_status(doc, doc.get('last_closed', {}).get('message', ''))
 
-    def on_created(self, docs):
+    def _on_created(self, docs):
         for doc in docs:
             notify_and_add_activity(ACTIVITY_CREATE, 'Created Ingest Channel {{name}}',
                                     self.datasource, item=None,
@@ -173,13 +173,13 @@ class IngestProviderService(BaseService):
             push_notification('ingest_provider:create', provider_id=str(doc.get('_id')))
         logger.info("Created Ingest Channel. Data:{}".format(docs))
 
-    def on_update(self, updates, original):
+    def _on_update(self, updates, original):
         if updates.get('content_expiry') == 0:
             updates['content_expiry'] = app.config['INGEST_EXPIRY_MINUTES']
         if 'is_closed' in updates and original.get('is_closed', False) != updates.get('is_closed'):
             self._set_provider_status(updates, updates.get('last_closed', {}).get('message', ''))
 
-    def on_updated(self, updates, original):
+    def _on_updated(self, updates, original):
         do_notification = updates.get('notifications', {})\
             .get('on_update', original.get('notifications', {}).get('on_update', True))
         notify_and_add_activity(ACTIVITY_UPDATE, 'updated Ingest Channel {{name}}',
@@ -212,7 +212,7 @@ class IngestProviderService(BaseService):
         push_notification('ingest_provider:update', provider_id=str(original.get('_id')))
         logger.info("Updated Ingest Channel. Data: {}".format(updates))
 
-    def on_delete(self, doc):
+    def _on_delete(self, doc):
         """
         Overriding to check if the Ingest Source which has received item being deleted.
         """
@@ -220,7 +220,7 @@ class IngestProviderService(BaseService):
         if doc.get('last_item_update'):
             raise SuperdeskApiError.forbiddenError("Deleting an Ingest Source after receiving items is prohibited.")
 
-    def on_deleted(self, doc):
+    def _on_deleted(self, doc):
         """
         Overriding to send notification and record activity about channel deletion.
         """
