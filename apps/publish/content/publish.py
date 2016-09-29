@@ -37,9 +37,9 @@ class ArchivePublishService(BasePublishService):
             if len(items) == 0 and self.publish_type == ITEM_PUBLISH:
                 raise SuperdeskApiError.badRequestError("Empty package cannot be published!")
 
-    def _on_update(self, updates, original):
+    def on_update(self, updates, original):
         updates[ITEM_OPERATION] = ITEM_PUBLISH
-        super()._on_update(updates, original)
+        super().on_update(updates, original)
         set_sign_off(updates, original)
 
     def set_state(self, original, updates):

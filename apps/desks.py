@@ -154,12 +154,12 @@ class DesksService(BaseService):
 
         return [doc[config.ID_FIELD] for doc in docs]
 
-    def _on_created(self, docs):
+    def on_created(self, docs):
         for doc in docs:
             push_notification(self.notification_key, created=1, desk_id=str(doc.get(config.ID_FIELD)))
             get_resource_service('users').update_stage_visibility_for_users()
 
-    def _on_update(self, updates, original):
+    def on_update(self, updates, original):
         if updates.get('content_expiry') == 0:
             updates['content_expiry'] = None
 
@@ -176,10 +176,10 @@ class DesksService(BaseService):
                 raise SuperdeskApiError.badRequestError(
                     message='Cannot update Desk Type as there are article(s) referenced by the Desk.')
 
-    def _on_updated(self, updates, original):
+    def on_updated(self, updates, original):
         self.__send_notification(updates, original)
 
-    def _on_delete(self, desk):
+    def on_delete(self, desk):
         """Runs on desk delete.
 
         Overriding to prevent deletion of a desk if the desk meets one of the below conditions:
@@ -225,7 +225,7 @@ class DesksService(BaseService):
         superdesk.get_resource_service('stages').delete(lookup={'desk': lookup.get(config.ID_FIELD)})
         super().delete(lookup)
 
-    def _on_deleted(self, doc):
+    def on_deleted(self, doc):
         desk_user_ids = [str(member['user']) for member in doc.get('members', [])]
         push_notification(self.notification_key,
                           deleted=1,

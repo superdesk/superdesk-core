@@ -49,6 +49,6 @@ class RuleSetsService(BaseService):
 
         return super().update(id, updates, original)
 
-    def _on_delete(self, doc):
+    def on_delete(self, doc):
         if self.backend.find_one('ingest_providers', req=None, rule_set=doc['_id']):
             raise SuperdeskApiError.forbiddenError("Cannot delete Rule set as it's associated with channel(s).")

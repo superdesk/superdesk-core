@@ -96,7 +96,7 @@ class UploadResource(Resource):
 
 class UploadService(BaseService):
 
-    def _on_create(self, docs):
+    def on_create(self, docs):
         for doc in docs:
             if doc.get('URL') and doc.get('media'):
                 message = 'Uploading file by URL and file stream in the same time is not supported.'

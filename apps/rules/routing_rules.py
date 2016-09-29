@@ -160,7 +160,7 @@ class RoutingRuleSchemeService(BaseService):
     Service class for 'routing_schemes' endpoint.
     """
 
-    def _on_create(self, docs):
+    def on_create(self, docs):
         """Overriding to check the below pre-conditions:
 
             1. A routing scheme must have at least one rule.
@@ -173,7 +173,7 @@ class RoutingRuleSchemeService(BaseService):
             self._validate_routing_scheme(routing_scheme)
             self._check_if_rule_name_is_unique(routing_scheme)
 
-    def _on_update(self, updates, original):
+    def on_update(self, updates, original):
         """Overriding to check the below pre-conditions:
 
             1. A routing scheme must have at least one rule.
@@ -185,7 +185,7 @@ class RoutingRuleSchemeService(BaseService):
         self._validate_routing_scheme(updates)
         self._check_if_rule_name_is_unique(updates)
 
-    def _on_delete(self, doc):
+    def on_delete(self, doc):
         """Overriding to check the below pre-conditions:
 
             1. A routing scheme shouldn't be associated with an Ingest Provider.

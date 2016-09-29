@@ -81,12 +81,12 @@ class VocabulariesResource(Resource):
 
 
 class VocabulariesService(BaseService):
-    def _on_replace(self, document, original):
+    def on_replace(self, document, original):
         document[app.config['LAST_UPDATED']] = utcnow()
         document[app.config['DATE_CREATED']] = original[app.config['DATE_CREATED']] if original else utcnow()
         logger.info("updating vocabulary item: %s", document["_id"])
 
-    def _on_fetched(self, doc):
+    def on_fetched(self, doc):
         """Overriding to filter out inactive vocabularies and pops out 'is_active' property from the response.
 
         It keeps it when requested for manageable vocabularies.
@@ -100,26 +100,26 @@ class VocabulariesService(BaseService):
         for item in doc[config.ITEMS]:
             self._filter_inactive_vocabularies(item)
 
-    def _on_fetched_item(self, doc):
+    def on_fetched_item(self, doc):
         """
         Overriding to filter out inactive vocabularies and pops out 'is_active' property from the response.
         """
 
         self._filter_inactive_vocabularies(doc)
 
-    def _on_update(self, updates, original):
+    def on_update(self, updates, original):
         """Checks the duplicates if a unique field is defined"""
         unique_field = original.get('unique_field')
         if unique_field:
             self._check_uniqueness(updates.get('items', []), unique_field)
 
-    def _on_updated(self, updates, original):
+    def on_updated(self, updates, original):
         """
         Overriding this to send notification about the replacement
         """
         self._send_notification(original)
 
-    def _on_replaced(self, document, original):
+    def on_replaced(self, document, original):
         """
         Overriding this to send notification about the replacement
         """

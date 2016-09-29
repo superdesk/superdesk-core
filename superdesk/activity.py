@@ -38,7 +38,7 @@ def init_app(app):
     AuditResource(endpoint_name, app=app, service=service)
 
     app.on_inserted += service.on_generic_inserted
-    app._on_updated += service.on_generic_updated
+    app.on_updated += service.on_generic_updated
     app.on_deleted_item += service.on_generic_deleted
 
     # Registering with intrinsic privileges because: A user should be able to mark as read their own notifications.
@@ -175,7 +175,7 @@ class ActivityService(BaseService):
 
         return self.backend.get(self.datasource, req=req, lookup=lookup)
 
-    def _on_update(self, updates, original):
+    def on_update(self, updates, original):
         """Called on the patch request to mark a activity/notification/comment as read and nothing else
 
         :param updates:

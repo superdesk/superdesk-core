@@ -21,17 +21,17 @@ class AuthService(BaseService):
     def authenticate(self, document):
         raise NotImplementedError()
 
-    def _on_create(self, docs):
+    def on_create(self, docs):
         for doc in docs:
             user = self.authenticate(doc)
 
             self.set_auth_default(doc, user['_id'])
 
-    def _on_created(self, docs):
+    def on_created(self, docs):
         for doc in docs:
             get_resource_service('preferences').set_session_based_prefs(doc['_id'], doc['user'])
 
-    def _on_deleted(self, doc):
+    def on_deleted(self, doc):
         """Runs on delete of a session
 
         :param doc: A deleted auth doc AKA a session

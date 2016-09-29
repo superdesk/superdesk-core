@@ -63,7 +63,7 @@ def on_create_package(sender, docs):
 
 
 class HighlightsService(BaseService):
-    def _on_delete(self, doc):
+    def on_delete(self, doc):
         service = get_resource_service('archive')
         highlights_id = str(doc['_id'])
         query = {'query': {'filtered': {'filter': {'term': {'highlights': highlights_id}}}}}

@@ -143,7 +143,7 @@ class ADAuth:
 
 class ADAuthService(AuthService):
 
-    def _on_create(self, docs):
+    def on_create(self, docs):
 
         user_service = get_resource_service('users')
         for doc in docs:
@@ -199,7 +199,7 @@ class ADAuthService(AuthService):
 class ImportUserProfileService(UsersService):
     """Service Class for endpoint /import_profile"""
 
-    def _on_create(self, docs):
+    def on_create(self, docs):
 
         logged_in_user = get_user().get('username')
         for index, doc in enumerate(docs):
@@ -220,7 +220,7 @@ class ImportUserProfileService(UsersService):
 
             docs[index] = user
 
-        super()._on_create(docs)
+        super().on_create(docs)
 
 
 def add_default_values(doc, user_name, user_type, **kwargs):

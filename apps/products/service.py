@@ -15,7 +15,7 @@ from superdesk.errors import SuperdeskApiError
 
 
 class ProductsService(BaseService):
-    def _on_delete(self, doc):
+    def on_delete(self, doc):
         # Check if any subscriber is using the product
         req = ParsedRequest()
         lookup = {'products': {'$in': [doc['_id']]}}

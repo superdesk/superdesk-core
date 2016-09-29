@@ -31,7 +31,7 @@ class DataUpdatesResource(Resource):
 
 
 class DataUpdatesService(BaseService):
-    def _on_create(self, docs):
+    def on_create(self, docs):
         for doc in docs:
             doc['applied'] = datetime.datetime.now()
 

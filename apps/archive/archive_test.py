@@ -205,11 +205,11 @@ class RemoveSpikedContentTestCase(TestCase):
     def test_delete_by_ids(self):
         ids = self.app.data.insert(ARCHIVE, self.articles)
         archive_service = get_resource_service(ARCHIVE)
-        archive_service._on_delete = MagicMock()
+        archive_service.on_delete = MagicMock()
         archive_service.delete_by_article_ids(ids)
         self.assertTrue(self.app.data.mongo.is_empty(ARCHIVE))
         self.assertTrue(self.app.data.elastic.is_empty(ARCHIVE))
-        self.assertEqual(len(self.articles), archive_service._on_delete.call_count)
+        self.assertEqual(len(self.articles), archive_service.on_delete.call_count)
 
 
 class ArchiveTestCase(TestCase):

@@ -66,7 +66,7 @@ class OnCreateMethodTestCase(RoutingRuleSchemeServiceTest):
             }]
         }]
         original_scheme = deepcopy(routing_schemes[0])
-        self.instance._on_create(routing_schemes)
+        self.instance.on_create(routing_schemes)
         self.assertEqual(routing_schemes[0], original_scheme)
 
     def test_does_not_modify_empty_schedules(self, *mocks):
@@ -78,7 +78,7 @@ class OnCreateMethodTestCase(RoutingRuleSchemeServiceTest):
             }]
         }]
         original_scheme = deepcopy(routing_schemes[0])
-        self.instance._on_create(routing_schemes)
+        self.instance.on_create(routing_schemes)
         self.assertEqual(routing_schemes[0], original_scheme)
 
     def test_sets_semantically_empty_schedules_to_none(self, *mocks):
@@ -93,7 +93,7 @@ class OnCreateMethodTestCase(RoutingRuleSchemeServiceTest):
         expected_scheme = deepcopy(routing_schemes[0])
         expected_scheme['rules'][0]['schedule'] = None
 
-        self.instance._on_create(routing_schemes)
+        self.instance.on_create(routing_schemes)
 
         self.assertEqual(routing_schemes[0], expected_scheme)
 
@@ -121,7 +121,7 @@ class OnUpdateMethodTestCase(RoutingRuleSchemeServiceTest):
             }]
         }
         original_scheme = deepcopy(routing_scheme)
-        self.instance._on_update(routing_scheme, {})
+        self.instance.on_update(routing_scheme, {})
         self.assertEqual(routing_scheme, original_scheme)
 
     def test_does_not_modify_empty_schedules(self, *mocks):
@@ -133,7 +133,7 @@ class OnUpdateMethodTestCase(RoutingRuleSchemeServiceTest):
             }]
         }
         original_scheme = deepcopy(routing_scheme)
-        self.instance._on_update(routing_scheme, {})
+        self.instance.on_update(routing_scheme, {})
         self.assertEqual(routing_scheme, original_scheme)
 
     def test_sets_semantically_empty_schedules_to_none(self, *mocks):
@@ -148,7 +148,7 @@ class OnUpdateMethodTestCase(RoutingRuleSchemeServiceTest):
         expected_scheme = deepcopy(routing_scheme)
         expected_scheme['rules'][0]['schedule'] = None
 
-        self.instance._on_update(routing_scheme, {})
+        self.instance.on_update(routing_scheme, {})
 
         self.assertEqual(routing_scheme, expected_scheme)
 
