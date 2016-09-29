@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-
+import functools
 import logging
 import os
 import socket
@@ -68,7 +68,6 @@ def get_test_settings():
     test_settings['CELERY_ALWAYS_EAGER'] = 'True'
     test_settings['CONTENT_EXPIRY_MINUTES'] = 99
     test_settings['VERSION'] = '_current_version'
-    test_settings['ELASTICSEARCH_BACKUPS_PATH'] = '/tmp/es-backups'
 
     # limit mongodb connections
     test_settings['MONGO_CONNECT'] = False
@@ -88,18 +87,34 @@ def drop_elastic(app):
             es.indices.delete(index, ignore=[404])
 
 
-def drop_mongo(app):
-    with app.app_context():
-        drop_mongo_db(app, 'MONGO', 'MONGO_DBNAME')
-        drop_mongo_db(app, 'ARCHIVED', 'ARCHIVED_DBNAME')
-        drop_mongo_db(app, 'LEGAL_ARCHIVE', 'LEGAL_ARCHIVE_DBNAME')
+def foreach_mongo(fn):
+    """
+    Run the same actions on all mongo databases
+
+    This decorator adds two additional parameters to called function
+    `dbconn` and `dbname` for using proper connection and database name
+    """
+    @functools.wraps(fn)
+    def inner(app, *a, **kw):
+        pairs = (
+            ('MONGO', 'MONGO_DBNAME'),
+            ('ARCHIVED', 'ARCHIVED_DBNAME'),
+            ('LEGAL_ARCHIVE', 'LEGAL_ARCHIVE_DBNAME'),
+        )
+        with app.app_context():
+            for prefix, name in pairs:
+                if not app.config.get(name):
+                    continue
+                kw['dbname'] = app.config[name]
+                kw['dbconn'] = app.data.mongo.pymongo(prefix=prefix).cx
+                fn(app, *a, **kw)
+    return inner
 
 
-def drop_mongo_db(app, db_prefix, dbname):
-    if app.config.get(dbname):
-        db = app.data.mongo.pymongo(prefix=db_prefix).cx
-        db.drop_database(app.config[dbname])
-        db.close()
+@foreach_mongo
+def drop_mongo(app, dbconn, dbname):
+    dbconn.drop_database(dbname)
+    dbconn.close()
 
 
 def setup_config(config):
@@ -128,51 +143,117 @@ def clean_dbs(app, force=False):
     drop_mongo(app)
 
 
+def retry(exc, count=1):
+    def wrapper(fn):
+        num = 0
+
+        @functools.wraps(fn)
+        def inner(*a, **kw):
+            global num
+
+            try:
+                return fn(*a, **kw)
+            except exc as e:
+                logging.exception(e)
+                if num < count:
+                    num += 1
+                    return inner(*a, **kw)
+        return inner
+    return wrapper
+
+
+def _clean_es(app):
+    indices = '%s*' % app.config['ELASTICSEARCH_INDEX']
+    es = app.data.elastic.es
+    es.indices.delete(indices, ignore=[404])
+    app.data.init_elastic(app)
+
+
+@retry(socket.timeout, 2)
 def clean_es(app, force=False):
-    if not hasattr(clean_es, 'run') or force:
-        def run():
-            """
-            Drop and init elasticsearch indices if backups directory doesn't exist
-            """
-            drop_elastic(app)
-            app.data.init_elastic(app)
+    use_snapshot(app, 'clean', [snapshot_es], force)(_clean_es)(app)
 
-        path = app.config['ELASTICSEARCH_BACKUPS_PATH']
-        if path and os.path.exists(path):
-            run()  # drop and init ones
 
-            backup = ('backups', 'snapshot_1')
-            indices = 'sptest_*'
+def snapshot(fn):
+    """
+    Call create or restore snapshot function
+    """
+    @functools.wraps(fn)
+    def inner(app, name, action, **kw):
+        assert action in ['create', 'restore']
+        create, restore = fn(app, name, **kw)
+        {'create': create, 'restore': restore}[action]()
+    return inner
 
-            elastic = app.data.elastic
-            elastic.es.snapshot.delete(*backup, ignore=[404])
-            elastic.es.snapshot.create(*backup, wait_for_completion=True, body={
-                'indices': indices,
-                'allow_no_indices': False,
-            })
 
-            def run():
-                """
-                Just restore elasticsearch indices if backups directory exists
-                """
-                elastic = app.data.elastic
-                elastic.es.indices.close('sptest_*', allow_no_indices=False)
-                elastic.es.snapshot.restore(*backup, body={
-                    'indices': indices,
-                    'allow_no_indices': False
-                }, wait_for_completion=True)
+@snapshot
+def snapshot_es(app, name):
+    indices = '%s*' % app.config['ELASTICSEARCH_INDEX']
+    backup = ('backups', '%s%s' % (indices[:-1], name))
+    es = app.data.elastic.es
 
-        clean_es.run = run
+    def create():
+        es.snapshot.delete(*backup, ignore=[404])
+        es.indices.open(indices, expand_wildcards='closed')
+        es.snapshot.create(*backup, wait_for_completion=True, body={
+            'indices': indices,
+            'allow_no_indices': False,
+        })
 
-    try:
-        clean_es.run()
-    except socket.timeout as e:
-        logging.exception(e)
-        # Trying to get less failures by ES timeouts
-        count = getattr(clean_es, 'count_calls', 0)
-        if count < 3:
-            clean_es.count_calls = count + 1
-            clean_es(app, force)
+    def restore():
+        es.indices.close(indices, expand_wildcards='open')
+        es.snapshot.restore(*backup, body={
+            'indices': indices,
+            'allow_no_indices': False
+        }, wait_for_completion=True)
+    return create, restore
+
+
+@foreach_mongo
+@snapshot
+def snapshot_mongo(app, name, dbconn, dbname):
+    snapshot = '%s_%s' % (dbname, name)
+
+    def create():
+        dbconn.drop_database(snapshot)
+        dbconn.admin.command('copydb', fromdb=dbname, todb=snapshot)
+
+    def restore():
+        dbconn.drop_database(dbname)
+        dbconn.admin.command('copydb', fromdb=snapshot, todb=dbname)
+    return create, restore
+
+
+def use_snapshot(app, name, funcs=(snapshot_es, snapshot_mongo), force=False):
+    def snapshot(action):
+        for f in funcs:
+            f(app, name, action=action)
+
+    def wrapper(fn):
+        path = app.config.get('ELASTICSEARCH_BACKUPS_PATH')
+        enabled = path and os.path.exists(path)
+
+        @functools.wraps(fn)
+        def inner(*a, **kw):
+            if not enabled or force:
+                logger.debug(
+                    'Don\'t use snapshot for %s; enabled=%s; force=%s',
+                    fn, enabled, force
+                )
+                use_snapshot.cache.pop(fn, None)
+                return fn(*a, **kw)
+
+            if fn in use_snapshot.cache:
+                snapshot('restore')
+                logger.debug('Restore snapshot for %s', fn)
+            else:
+                use_snapshot.cache[fn] = fn(*a, **kw)
+                snapshot('create')
+                logger.debug('Create snapshot for %s', fn)
+            return use_snapshot.cache[fn]
+        return inner
+    return wrapper
+use_snapshot.cache = {}
 
 
 def setup(context=None, config=None, app_factory=get_app, reset=False):
@@ -253,11 +334,10 @@ def setup_ad_user(context, user):
     """
     ad_user = user or test_user
 
-    '''
-    This is necessary as test_user is in Global scope and del doc['password'] removes the key from test_user and
-    for the next scenario, auth_data = json.dumps({'username': ad_user['username'], 'password': ad_user['password']})
-    will fail as password key is removed by del doc['password']
-    '''
+    # This is necessary as test_user is in Global scope and del doc['password']
+    # removes the key from test_user and for the next scenario,
+    # auth_data = json.dumps({'username': ad_user['username'], 'password': ad_user['password']})
+    # will fail as password key is removed by del doc['password']
     ad_user = ad_user.copy()
     ad_user['email'] = 'mock@mail.com.au'
 

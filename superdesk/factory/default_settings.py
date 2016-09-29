@@ -78,7 +78,7 @@ ELASTICSEARCH_URL = env('ELASTICSEARCH_URL', 'http://localhost:9200')
 ELASTICSEARCH_INDEX = env('ELASTICSEARCH_INDEX', 'superdesk')
 if env('ELASTIC_PORT'):
     ELASTICSEARCH_URL = env('ELASTIC_PORT').replace('tcp:', 'http:')
-
+ELASTICSEARCH_BACKUPS_PATH = env('ELASTICSEARCH_BACKUPS_PATH', '')
 ELASTICSEARCH_SETTINGS = {
     'settings': {
         'analysis': {

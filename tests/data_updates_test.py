@@ -23,26 +23,18 @@ class DataUpdatesTestCase(TestCase):
             ('MAIN_DATA_UPDATES_DIR', '/tmp/global_data_updates'),
         )
         for name, path in dirs:
-            # if folder exists, removes
             shutil.rmtree(path, True)
-            # create new folder for tests
             os.mkdir(path)
+            self.addCleanup(lambda path=path: shutil.rmtree(path))
 
-            def rm(path=path):
-                shutil.rmtree(path)
-            self.addCleanup(rm)
-
-            patcher = mock.patch.object(superdesk.commands.data_updates, name, path)
+            patcher = mock.patch('superdesk.commands.data_updates.%s' % name, path)
             self.addCleanup(patcher.stop)
             patcher.start()
 
         # update the default implementation for `forwards` and `backwards` function
-        dirs = (
-            ('DEFAULT_DATA_UPDATE_FW_IMPLEMENTATION', 'fw'),
-            ('DEFAULT_DATA_UPDATE_BW_IMPLEMENTATION', 'bw'),
-        )
-        for m, p in dirs:
-            patcher = mock.patch('superdesk.commands.data_updates.%s' % m, 'pass')
+        for n in ('FW', 'BW'):
+            name = 'DEFAULT_DATA_UPDATE_%s_IMPLEMENTATION' % n
+            patcher = mock.patch('superdesk.commands.data_updates.%s' % name, 'pass')
             self.addCleanup(patcher.stop)
             patcher.start()
 
