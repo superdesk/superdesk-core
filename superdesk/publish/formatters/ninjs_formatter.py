@@ -8,6 +8,11 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+"""NINJS formatter for Superdesk
+
+"""
+
+
 import json
 import logging
 import superdesk
