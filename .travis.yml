@@ -29,6 +29,8 @@ install:
 
 before_script: >
     df -h
+    && sudo sed -i 's\enabled: true\enabled: false\' /etc/mongod.conf
+    && sudo service mongod restart
     && mkdir /tmp/es-backups
     && sudo chown elasticsearch:elasticsearch /tmp/es-backups
     && echo "path.repo: ['/tmp/es-backups']" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
