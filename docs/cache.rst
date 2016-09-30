@@ -23,23 +23,27 @@ Basic usage is::
 Cache providers
 ---------------
 
-- **Redis**
-    This one is enabled by default, using ``REDIS_URL`` for config.
+Redis
+^^^^^
 
-- **Memcached**
-    In order to use memcached:
-        - install ``python3-memcached`` library
-        - set ``SUPERDESK_CACHE_URL`` env var to your memcached instance,
-          or set it via ``CACHE_URL`` in settings.
+This one is enabled by default, using ``REDIS_URL`` for config.
+
+Memcached
+^^^^^^^^^
+
+In order to use memcached:
+  - install ``python3-memcached`` library
+  - set ``SUPERDESK_CACHE_URL`` env var to your memcached instance,
+    or set it via ``CACHE_URL`` in settings.
 
 App Context
-^^^^^^^^^^^
+"""""""""""
 
 It requires ``flask.app`` for the config, you can still anotate methods/functions before the app is created,
 but you can not call these methods before there is an app context in place.
 
 Serialization
-^^^^^^^^^^^^^
+"""""""""""""
 
 Cache handles superdesk data encoding/decoding so you will get ``datetime`` and ``ObjectId`` instances.
 However, it doesn't handle yet more complex types - like ``Cursor`` objects returned after mongo/elastic queries::

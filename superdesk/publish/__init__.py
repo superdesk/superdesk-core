@@ -34,6 +34,7 @@ def register_transmitter(transmitter_type, transmitter, errors):
 
 @celery.task()
 def transmit():
+    """Transmit items from ``publish_queue`` collection."""
     PublishContent().run()
 
 

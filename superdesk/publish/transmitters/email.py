@@ -8,6 +8,11 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+"""Superdesk Email transmitter.
+
+Works only with :doc:`../formatters/email` formatter.
+"""
+
 from superdesk.emails import send_email
 from flask import current_app as app
 from superdesk.publish import register_transmitter
