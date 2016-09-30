@@ -262,3 +262,18 @@ Feature: Saved Searches
             "filter": {"query": {"q": "volley ball", "repo": "ingest"}}
         }
         """
+
+    @auth
+    @notification
+    Scenario: Push notification on delete
+        When we post to "users/#CONTEXT_USER_ID#/saved_searches"
+        """
+        {"name": "test", "filter": {"query": {"q": "test"}}}
+        """
+        When we reset notifications
+        And we delete "users/#CONTEXT_USER_ID#/saved_searches/#saved_searches._id#"
+        Then we get OK response
+        And we get notifications
+        """
+        [{"event": "savedsearch:update"}]
+        """

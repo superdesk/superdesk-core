@@ -10,7 +10,6 @@
 
 
 import json
-import logging
 
 from flask import request
 from eve.utils import ParsedRequest
@@ -20,9 +19,10 @@ from superdesk import Resource, get_resource_service
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification
+from superdesk.logging import logger
 
 
-logger = logging.getLogger(__name__)
+UPDATE_NOTIFICATION = 'savedsearch:update'
 
 
 def decode_filter(data):
@@ -105,7 +105,7 @@ class SavedSearchesService(BaseService):
             if 'user' not in doc and request:
                 doc['user'] = request.view_args.get('user')
             self.process(doc)
-        push_notification('savedsearch:update')
+        push_notification(UPDATE_NOTIFICATION)
 
     def process(self, doc):
         """
@@ -128,7 +128,7 @@ class SavedSearchesService(BaseService):
             if 'filter' in updates:
                 self.process(updates)
             super().on_update(updates, original)
-            push_notification('savedsearch:update')
+            push_notification(UPDATE_NOTIFICATION)
         else:
             raise SuperdeskApiError.forbiddenError("Unauthorized to modify global search")
 
@@ -194,6 +194,9 @@ class SavedSearchesService(BaseService):
     def on_fetched(self, docs):
         for doc in docs.get('_items', []):
             enhance_savedsearch(doc)
+
+    def on_deleted(self, doc):
+        push_notification(UPDATE_NOTIFICATION)
 
 
 class SavedSearchItemsResource(Resource):
