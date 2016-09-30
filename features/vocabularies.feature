@@ -151,3 +151,28 @@ Feature: Vocabularies
      ]}
     """
     Then we get updated response
+
+  @auth
+  Scenario: Cast crop image width/height to int
+    Given "vocabularies"
+    """
+    [{"_id": "crop_sizes", "items": [
+      {
+        "is_active" : true,
+        "width" : "300",
+        "name" : "foo",
+        "height" : "200"
+      }
+    ]}]
+    """
+    When we get "/vocabularies"
+    Then we get list with 1 items
+    """
+    {"_items": [{"items": [{"width": 300, "height": 200}]}]}
+    """
+
+    When we get "/vocabularies/crop_sizes"
+    Then we get existing resource
+    """
+    {"items": [{"width": 300, "height": 200}]}
+    """

@@ -407,7 +407,7 @@ class FormatterError(SuperdeskPublishError):
         7006: 'Article couldn"t be converted to NewsML G2 format',
         7008: 'Article couldn"t be converted to AAP SMS format',
         7009: 'Article couldn"t be converted to AAP Newscentre',
-        7008: 'Article couldn"t be converted to Email'
+        7010: 'Article couldn"t be converted to Email'
     }
 
     @classmethod

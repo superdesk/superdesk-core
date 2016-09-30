@@ -14,6 +14,7 @@ import json
 
 from flask import request, current_app as app
 from eve.utils import config
+from eve.methods.common import serialize_value
 
 from superdesk import privilege
 from superdesk.notification import push_notification
@@ -28,6 +29,15 @@ logger = logging.getLogger(__name__)
 
 privilege(name="vocabularies", label="Vocabularies Management",
           description="User can manage vocabularies' contents.")
+
+
+# TODO(petr): add api to specify vocabulary schema
+vocab_schema = {
+    'crop_sizes': {
+        'width': {'type': 'integer'},
+        'height': {'type': 'integer'},
+    }
+}
 
 
 class VocabulariesResource(Resource):
@@ -99,13 +109,14 @@ class VocabulariesService(BaseService):
 
         for item in doc[config.ITEMS]:
             self._filter_inactive_vocabularies(item)
+            self._cast_items(item)
 
     def on_fetched_item(self, doc):
         """
         Overriding to filter out inactive vocabularies and pops out 'is_active' property from the response.
         """
-
         self._filter_inactive_vocabularies(doc)
+        self._cast_items(doc)
 
     def on_update(self, updates, original):
         """Checks the duplicates if a unique field is defined"""
@@ -154,6 +165,17 @@ class VocabulariesService(BaseService):
                        for voc in vocs if voc.get('is_active', True))
 
         item['items'] = list(active_vocs)
+
+    def _cast_items(self, vocab):
+        """Cast values in vocabulary items using predefined schema.
+
+        :param vocab
+        """
+        schema = vocab_schema.get(vocab.get('_id'), {})
+        for item in vocab.get('items', []):
+            for field, field_schema in schema.items():
+                if field in item:
+                    item[field] = serialize_value(field_schema['type'], item[field])
 
     def _send_notification(self, updated_vocabulary):
         """
