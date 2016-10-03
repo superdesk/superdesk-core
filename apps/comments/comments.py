@@ -35,6 +35,7 @@ comments_schema = {
 
 class CommentsResource(Resource):
     """Reusable implementation for comments."""
+
     schema = comments_schema
     resource_methods = ['GET', 'POST', 'DELETE']
     datasource = {'default_sort': [('_created', -1)]}

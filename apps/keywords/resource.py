@@ -15,9 +15,8 @@ DICTIONARY_FILE = 'file'
 
 
 class KeywordsResource(Resource):
-    '''
-    Keywords schema
-    '''
+    """Keywords schema"""
+
     schema = {
         'text': {
             'type': 'string',

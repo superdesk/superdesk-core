@@ -31,8 +31,9 @@ class ODBCPublishService(PublishService):
 
     def _transmit(self, queue_item, subscriber):
         """
-        Transmit the given formatted item to the configured ODBC output. Configuration must have connection string
-        and the name of a stored procedure.
+        Transmit the given formatted item to the configured ODBC output.
+
+        Configuration must have connection string and the name of a stored procedure.
         """
 
         if not superdesk.app.config['ODBC_PUBLISH'] or not pyodbc_available:

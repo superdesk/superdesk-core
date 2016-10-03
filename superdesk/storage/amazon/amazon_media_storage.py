@@ -7,7 +7,8 @@
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
-''' Amazon media storage module'''
+
+"""Amazon media storage module."""
 
 from io import BytesIO
 import json
@@ -100,12 +101,13 @@ class AmazonMediaStorage(MediaStorage):
         return url_generator(self.app, media_id)
 
     def media_id(self, filename, content_type=None, version=True):
-        """ Gets the media_id path for the `filename` given.
-            if filename doesn't have an extension one is guessed,
-            and additional `version` option to have automatic version or not to have,
-                or to send a `string` one.
-            `AMAZON_S3_SUBFOLDER` configuration is used for
-                easement deploying multiple instance on the same bucket.
+        """Get the `media_id` path for the `filename` given.
+
+        if filename doesn't have an extension one is guessed,
+        and additional `version` option to have automatic version or not to have,
+            or to send a `string` one.
+        `AMAZON_S3_SUBFOLDER` configuration is used for
+            easement deploying multiple instance on the same bucket.
         """
         if not self.app.config.get('AMAZON_SERVE_DIRECT_LINKS', False):
             return str(bson.ObjectId())
@@ -148,9 +150,10 @@ class AmazonMediaStorage(MediaStorage):
         return username, api_key
 
     def get(self, id_or_filename, resource=None):
-        """ Opens the file given by name or unique id. Note that although the
-        returned file is guaranteed to be a File object, it might actually be
-        some subclass. Returns None if no file was found.
+        """Open the file given by name or unique id.
+
+        Note that although the returned file is guaranteed to be a File object,
+        it might actually be some subclass. Returns None if no file was found.
         """
         id_or_filename = str(id_or_filename)
         try:
@@ -163,7 +166,7 @@ class AmazonMediaStorage(MediaStorage):
         return None
 
     def get_all_keys(self):
-        """ Returns the list of all keys from the bucket """
+        """Return the list of all keys from the bucket."""
         all_keys = []
         try:
             for objects in self._get_all_keys_in_batches():
@@ -174,7 +177,7 @@ class AmazonMediaStorage(MediaStorage):
             return all_keys
 
     def _get_all_keys_in_batches(self):
-        """ Returns the list of all keys from the bucket in batches """
+        """Return the list of all keys from the bucket in batches."""
         NextMarker = ''
         while True:
             objects = self.client.list_objects(Bucket=self.container_name, Marker=NextMarker, MaxKeys=MAX_KEYS)
@@ -199,8 +202,9 @@ class AmazonMediaStorage(MediaStorage):
         return headers
 
     def put(self, content, filename=None, content_type=None, resource=None, metadata=None, _id=None, version=True):
-        """ Saves a new file using the storage system, preferably with the name
-        specified. If there already exists a file with this name name, the
+        """Save a new file using the storage system, preferably with the name specified.
+
+        If there already exists a file with this name name, the
         storage system may modify the filename as necessary to get a unique
         name. Depending on the storage system, a unique id or the actual name
         of the stored file will be returned. The content type argument is used
@@ -228,7 +232,7 @@ class AmazonMediaStorage(MediaStorage):
         logger.debug('Amazon S3 file deleted %s with status' % id_or_filename, del_res)
 
     def delete_objects(self, ids):
-        """ Deletes the objects with given list of ids"""
+        """Delete the objects with given list of ids."""
         try:
             delete_parameters = {'Objects': [{'Key': id} for id in ids], 'Quiet': True}
             response = self.client.delete_objects(Bucket=self.container_name, Delete=delete_parameters)
@@ -242,10 +246,7 @@ class AmazonMediaStorage(MediaStorage):
             raise
 
     def exists(self, id_or_filename, resource=None):
-        """ Returns True if a file referenced by the given name or unique id
-        already exists in the storage system, or False if the name is available
-        for a new file.
-        """
+        """Test if given name or unique id already exists in storage system."""
         id_or_filename = str(id_or_filename)
         found = self._check_exists(id_or_filename)
         return found
@@ -259,7 +260,7 @@ class AmazonMediaStorage(MediaStorage):
             return False
 
     def remove_unreferenced_files(self, existing_files):
-        """ Gets the files from S3 and compares against existing and deletes the orphans """
+        """Get the files from S3 and compare against existing and delete the orphans."""
         bucket_files = self.get_all_keys()
         orphan_files = list(set(bucket_files) - existing_files)
         print('There are {} orphan files...'.format(len(orphan_files)))

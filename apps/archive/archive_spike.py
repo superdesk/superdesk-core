@@ -76,9 +76,11 @@ class ArchiveSpikeService(BaseService):
         set_sign_off(updates, original=original)
 
     def _validate_item(self, original):
-        """
+        """Validates that an item can be deleted.
+
         Raises an exception if the item is linked in a non-take package, the idea being that you don't whant to
         inadvertently remove the item from the packages, this force that to be done as a conscious action.
+
         :param original:
         :raise: An exception or nothing
         """
@@ -97,7 +99,7 @@ class ArchiveSpikeService(BaseService):
             raise SuperdeskApiError.badRequestError(message="Only last take of the package can be spiked.")
 
     def _update_rewrite(self, original):
-        """ Removes the reference from the rewritten story in published collection """
+        """Removes the reference from the rewritten story in published collection."""
         rewrite_service = ArchiveRewriteService()
         if original.get('rewrite_of') and original.get('event_id'):
             rewrite_service._clear_rewritten_flag(original.get('event_id'),
@@ -146,14 +148,15 @@ class ArchiveSpikeService(BaseService):
             archive_service.system_update(rewrite_id, {'rewrite_of': None, 'rewrite_sequence': 0}, rewritten_by)
 
     def _removed_refs_from_package(self, item):
-        """
-        Remove reference from the package of the spiked item
+        """Remove reference from the package of the spiked item.
+
         :param item:
         """
         PackageService().remove_spiked_refs_from_package(item)
 
     def _get_spike_expiry(self, desk_id, stage_id):
-        """
+        """Get spike expiry.
+
         If there is a SPIKE_EXPIRY_MINUTES setting then that is used to set the spike expiry.
         If a None value is configured then the desk/stage value is returned.
         :param desk_id:

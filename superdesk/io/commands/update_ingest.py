@@ -45,15 +45,13 @@ logger = logging.getLogger(__name__)
 
 
 def is_service_and_parser_registered(provider):
-    """
-    Tests if the Feed Service and Feed Parser associated with are registered with application.
+    """Tests if the Feed Service and Feed Parser associated with are registered with application.
 
     :param provider:
     :type provider: dict :py:class:`superdesk.io.ingest_provider_model.IngestProviderResource`
     :return: True if both Feed Service and Feed Parser are registered. False otherwise.
     :rtype: bool
     """
-
     return provider.get('feeding_service') in registered_feeding_services and provider.get(
         'feed_parser') is None or provider.get('feed_parser') in registered_feed_parsers
 
@@ -78,9 +76,9 @@ def is_closed(provider):
 
 
 def filter_expired_items(provider, items):
-    """
-    Filters out the item from the list of articles to be ingested
-    if they are expired and item['type'] not in provider['content_types'].
+    """Filter out expired items from the list of articles to be ingested.
+
+    Filte both expired and `item['type'] not in provider['content_types']`.
 
     :param provider: Ingest Provider Details.
     :type provider: dict :py:class: `superdesk.io.ingest_provider_model.IngestProviderResource`
@@ -89,7 +87,6 @@ def filter_expired_items(provider, items):
     :return: list of items which can be saved into ingest collection
     :rtype: list
     """
-
     def is_not_expired(item):
         if item.get('expiry') or item.get('versioncreated'):
             expiry = item.get('expiry', item['versioncreated'] + delta)
@@ -133,7 +130,6 @@ def get_provider_routing_scheme(provider):
     :return: fetched provider's routing scheme configuration (if any)
     :rtype: dict or None
     """
-
     if not provider.get('routing_scheme'):
         return None
 
@@ -202,9 +198,7 @@ class UpdateIngest(superdesk.Command):
 
 @celery.task(soft_time_limit=1800, bind=True)
 def update_provider(self, provider, rule_set=None, routing_scheme=None):
-    """
-    Fetches items from ingest provider as per the configuration, ingests them into Superdesk and
-    updates the provider.
+    """Fetch items from ingest provider, ingest them into Superdesk and update the provider.
 
     :param self:
     :type self:
@@ -215,7 +209,6 @@ def update_provider(self, provider, rule_set=None, routing_scheme=None):
     :param routing_scheme: Routing Scheme if one is associated with Ingest Provider.
     :type routing_scheme: dict :py:class:`apps.rules.routing_rules.RoutingRuleSchemeResource`
     """
-
     lock_name = get_lock_id('ingest', provider['name'], provider[superdesk.config.ID_FIELD])
 
     if not lock(lock_name, expire=1810):
@@ -274,8 +267,8 @@ def process_anpa_category(item, provider):
 
 
 def derive_category(item, provider):
-    """
-    Assuming that the item has at least one itpc subject use the vocabulary map to derive an anpa category
+    """Assuming that the item has at least one itpc subject use the vocabulary map to derive an anpa category.
+
     :param item:
     :return: An item with a category if possible
     """
@@ -296,9 +289,10 @@ def derive_category(item, provider):
 
 
 def process_iptc_codes(item, provider):
-    """
-    Ensures that the higher level IPTC codes are present by inserting them if missing, for example
-    if given 15039001 (Formula One) make sure that 15039000 (motor racing) and 15000000 (sport) are there as well
+    """Ensures that the higher level IPTC codes are present by inserting them if missing.
+
+    For example if given 15039001 (Formula One) make sure that 15039000 (motor racing) and 15000000 (sport)
+    are there as well.
 
     :param item: A story item
     :return: A story item with possible expanded subjects
@@ -324,8 +318,8 @@ def process_iptc_codes(item, provider):
 
 
 def derive_subject(item):
-    """
-    Assuming that the item has an anpa category try to derive a subject using the anpa category vocabulary
+    """Try to derive a subject using the anpa category vocabulary.
+
     :param item:
     :return:
     """
@@ -344,8 +338,9 @@ def derive_subject(item):
 
 
 def apply_rule_set(item, provider, rule_set=None):
-    """
-    Applies rules set on the item to be ingested into the system. If there's no rule set then the item will
+    """Applies rules set on the item to be ingested into the system.
+
+    If there's no rule set then the item will
     be returned without any change.
 
     :param item: Item to be ingested
@@ -370,8 +365,8 @@ def apply_rule_set(item, provider, rule_set=None):
 
 
 def ingest_cancel(item):
-    """
-    Given an item that has a pubstatus of canceled finds all versions of this item and mark them as canceled as well.
+    """Given an item that has a pubstatus of canceled finds all versions of this item and mark them as canceled as well.
+
     Uses the URI to identify those items in ingest that are related to this cancellation.
 
     :param item:
@@ -505,7 +500,8 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
 
 
 def update_renditions(item, href, old_item):
-    """
+    """Update renditions for an item.
+
     If the old_item has renditions uploaded in to media then the old rendition details are
     assigned to the item, this avoids repeatedly downloading the same image and leaving the media entries orphaned.
     If there is no old_item the original is downloaded and renditions are

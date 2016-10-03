@@ -53,9 +53,8 @@ class FilterConditionService(BaseService):
                     .format(doc['name'], doc['operator']))
 
     def _check_equals(self, docs):
-        """
-        Checks if any of the filter conditions in the docs
-        already exists
+        """Checks if any of the filter conditions in the docs already exists
+
         :param docs: List of filter conditions to be tested
         :raises SuperdeskApiError: if any of the filter conditions in the docs
         already exists
@@ -70,12 +69,14 @@ class FilterConditionService(BaseService):
                         'Filter condition:{} has identical settings'.format(existing_doc['name']))
 
     def check_similar(self, filter_condition):
-        """
+        """Checks for similar items
+
         Checks if the given filter condition already exists (for text fields like headline) or
         if there's any other filter condition that contains the given filter
         condition (for controlled vocabulary fields like urgency).
         For example: if filter_condition ['urgency' in 3,4] exists and if
         filter condition ['urgency' in 3] is searched we'll have a match
+
         :param filter_condition: Filter conditions to be tested
         :return: Returns the list of matching filter conditions
         """

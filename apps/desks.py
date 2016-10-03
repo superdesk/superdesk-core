@@ -121,7 +121,8 @@ class DesksService(BaseService):
     notification_key = 'desk'
 
     def create(self, docs, **kwargs):
-        """
+        """Creates new desk.
+
         Overriding to check if the desk being created has Working and Incoming Stages. If not then Working and Incoming
         Stages would be created and associates them with the desk and desk with the Working and Incoming Stages.
         Also sets desk_type.
@@ -179,7 +180,8 @@ class DesksService(BaseService):
         self.__send_notification(updates, original)
 
     def on_delete(self, desk):
-        """
+        """Runs on desk delete.
+
         Overriding to prevent deletion of a desk if the desk meets one of the below conditions:
             1. The desk isn't assigned as a default desk to user(s)
             2. The desk has no content
@@ -277,8 +279,8 @@ class DesksService(BaseService):
                 updates[key] = val
 
     def get_desk_name(self, desk_id):
-        """
-        Return the item desk
+        """Return the item desk.
+
         :param desk_id:
         :return dict: desk document
         """
@@ -335,8 +337,8 @@ class SluglineDeskService(BaseService):
     GROUP = 'group'
 
     def _get_slugline_with_legal(self, article):
-        """
-        If the article is set to be legal adds 'Legal:' prefix for slugline
+        """If the article is set to be legal adds 'Legal:' prefix for slugline.
+
         :param article:
         :return:
         """
@@ -347,10 +349,12 @@ class SluglineDeskService(BaseService):
             return article.get(self.SLUGLINE, '')
 
     def get(self, req, lookup):
-        """
+        """Return desk item summary.
+
         Given the desk the function will return a summary of the sluglines and headlines published from that
         desk in the last 24 hours. Domestic items are grouped together, rest of the world items are group
         by their place names.
+
         :param req:
         :param lookup:
         :return:
@@ -400,9 +404,11 @@ class SluglineDeskService(BaseService):
         return desk_items
 
     def _add_slugline_to_places(self, places, placename, slugline, headline, old_sluglines, versioncreated):
-        """
+        """Add slugline to places.
+
         Append a dictionary to the list, with place holders for the place name and slugline if they are already
-        present
+        present.
+
         :param places:
         :param placename:
         :param slugline:
@@ -420,10 +426,12 @@ class SluglineDeskService(BaseService):
                        self.VERSION_CREATED: versioncreated})
 
     def _find_other_sluglines(self, family_id, slugline, versioncreated, desk_id):
-        """
+        """Find other sluglines.
+
         This function given a family_id will return a tuple with the first value true if there is
          a more recent story in the family, the second value in the tuple will be a list of any sluglines
          that might exist for the family that are different to the one passed.
+
         :param family_id:
         :param slugline:
         :param versioncreated:

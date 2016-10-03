@@ -82,9 +82,10 @@ class FileFeedingService(FeedingService):
         push_notification('ingest:update')
 
     def after_extracting(self, article, provider):
-        """
-        Sub-classes should override this method if something needs to be done to the given article. For example, if the
-        article comes from DPA provider the system needs to derive dateline from the properties in the article.
+        """Sub-classes should override this method if something needs to be done to the given article.
+
+        For example, if the article comes from DPA provider the system needs to derive dateline
+        from the properties in the article.
 
         Invoked after parser parses the article received from the provider.
 
@@ -96,8 +97,8 @@ class FileFeedingService(FeedingService):
         pass
 
     def move_file(self, file_path, filename, provider, success=True):
-        """
-        Move the files from the current directory to the _Processed if successful, else _Error if unsuccessful.
+        """Move the files from the current directory to the _Processed if successful, else _Error if unsuccessful.
+
         Creates _Processed and _Error directories within current directory if they don't exist.
 
         :param file_path: str - current directory location

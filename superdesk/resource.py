@@ -32,10 +32,10 @@ def build_custom_hateoas(hateoas, doc, **values):
 
 
 class Resource():
-    '''
-    Base model for all endpoints, defines the basic implementation
-    for CRUD datalayer functionality.
-    '''
+    """
+    Base model for all endpoints, defines the basic implementation for CRUD datalayer functionality.
+    """
+
     endpoint_name = None
     url = None
     item_url = None

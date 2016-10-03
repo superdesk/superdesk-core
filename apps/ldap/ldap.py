@@ -77,8 +77,8 @@ class ADAuth:
     """
 
     def __init__(self, host, port, base_filter, user_filter, profile_attributes, fqdn):
-        """
-        Initializes the AD Server
+        """Initializes the AD Server
+
         :param host: ldap server. for example ldap://aap.com.au
         :param port: default port is 389
         :param base_filter:
@@ -93,9 +93,11 @@ class ADAuth:
         self.profile_attrs = profile_attributes
 
     def authenticate_and_fetch_profile(self, username, password, username_for_profile=None):
-        """
-        Authenticates a user with credentials username and password against AD. If authentication is successful then it
+        """Authenticates a user with credentials username and password against AD.
+
+        If authentication is successful then it
         fetches a profile of a user identified by username_for_profile and if found the profile is returned.
+
         :param username: LDAP username
         :param password: LDAP password
         :param username_for_profile: Username of the profile to be fetched
@@ -153,8 +155,8 @@ class ADAuthService(AuthService):
             self.set_auth_default(doc, user['_id'])
 
     def authenticate(self, credentials):
-        """
-        Authenticates the user against Active Directory
+        """Authenticates the user against Active Directory
+
         :param credentials: an object having "username" and "password" attributes
         :return: if success returns User object, otherwise throws Error
         """
@@ -195,9 +197,8 @@ class ADAuthService(AuthService):
 
 
 class ImportUserProfileService(UsersService):
-    """
-    Service Class for endpoint /import_profile
-    """
+    """Service Class for endpoint /import_profile"""
+
     def on_create(self, docs):
 
         logged_in_user = get_user().get('username')
@@ -236,8 +237,8 @@ def add_default_values(doc, user_name, user_type, **kwargs):
 
 
 def get_user_query(username):
-    """
-    Get the user query.
+    """Get the user query.
+
     :param str username:
     :return dict: query
     """

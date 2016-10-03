@@ -86,9 +86,9 @@ class RSSFeedingService(FeedingService):
         self.auth_info = None
 
     def prepare_href(self, url, mimetype=None):
-        """
-        Prepare a link to an external resource (e.g. an image file) so
-        that it can be directly used by the ingest machinery for fetching it.
+        """Prepare a link to an external resource (e.g. an image file).
+
+        It can be directly used by the ingest machinery for fetching it.
 
         If provider requires authentication, basic HTTP authentication info is
         added to the given url, otherwise it is returned unmodified.
@@ -301,8 +301,7 @@ class RSSFeedingService(FeedingService):
         return item
 
     def _create_image_items(self, image_links, text_item):
-        """Create a list of picture items that represent the external images
-        located on given URLs.
+        """Create a list of picture items that represent the external images located on given URLs.
 
         Each created item's `firstcreated` and `versioncreated` fields are set
         to the same value as the values of these fields in `text_item`.

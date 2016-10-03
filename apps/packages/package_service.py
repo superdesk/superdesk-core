@@ -171,7 +171,8 @@ class PackageService():
                 self.extract_default_association_data(group, assoc)
 
     def check_not_in_personal_space(self, docs):
-        """ Verify that the package is not in the user personal space.
+        """Verify that the package is not in the user personal space.
+
         Retrieving details for the list of packages an item was linked in does not
         contain packages that were in other users' personal space. One can't spike
         items if it can't remove it from the packages it belongs to.
@@ -284,10 +285,12 @@ class PackageService():
         return get_resource_service(ARCHIVE).get_from_mongo(req=request, lookup=query)
 
     def remove_ref_from_inmem_package(self, package, ref_id):
-        """
-        Removes the reference with ref_id from non-root groups. If there is nothing left
+        """Removes the reference with ref_id from non-root groups.
+
+        If there is nothing left
         in that group then the group and its reference in root group is also removed.
         If the removed item was the last item then returns
+
         :param package: Package
         :param ref_id: Id of the reference to be removed
         :return: True if there are still references in the package, False otherwise
@@ -315,8 +318,8 @@ class PackageService():
         return True
 
     def replace_ref_in_package(self, package, old_ref_id, new_ref_id):
-        """
-        Locates the reference with the old_ref_id and replaces with the new_ref_id
+        """Locates the reference with the old_ref_id and replaces with the new_ref_id
+
         :param package: Package
         :param old_ref_id: Old reference id
         :param new_ref_id: New reference id
@@ -330,8 +333,8 @@ class PackageService():
                 g[VERSION] = new_item[VERSION]
 
     def update_field_in_package(self, package, ref_id, field, field_value):
-        """
-        Locates the reference with the ref_id and replaces field value
+        """Locates the reference with the ref_id and replaces field value
+
         :param package: Package
         :param ref_id: reference id
         :param field: field to be replaced
@@ -357,11 +360,12 @@ class PackageService():
         return new_groups
 
     def remove_refs_in_package(self, package, ref_id_to_remove, processed_packages=None):
-        """
-        Removes residRef referenced by ref_id_to_remove from the package associations and returns the package id.
+        """Removes residRef referenced by ref_id_to_remove from the package associations and returns the package id.
+
         Before removing checks if the package has been processed. If processed the package is skipped.
         In case of takes package, sequence is decremented and last_take field is updated.
         If sequence is zero then the takes package is deleted.
+
         :return: package[config.ID_FIELD]
         """
         groups = package[GROUPS]
@@ -434,8 +438,8 @@ class PackageService():
                 for ref in group.get(REFS, []) if RESIDREF in ref]
 
     def check_if_any_item_in_package_has_embargo(self, package):
-        """
-        Recursively checks if any item in the package has embargo.
+        """Recursively checks if any item in the package has embargo.
+
         :raises: SuperdeskApiError.badRequestError() if any item in the package has embargo.
         """
 
@@ -453,8 +457,7 @@ class PackageService():
                 self.check_if_any_item_in_package_has_embargo(doc)
 
     def get_item_refs(self, package):
-        """
-        Returns all item references in the package.
+        """Returns all item references in the package.
 
         :param package:
         :return: list of item references
@@ -463,16 +466,16 @@ class PackageService():
         return [ref for group in package.get(GROUPS, []) for ref in group.get(REFS, []) if RESIDREF in ref]
 
     def get_linked_in_package_ids(self, item):
-        """
-        Returns all linked in package ids for an item (including takes package)
+        """Returns all linked in package ids for an item (including takes package)
+
         :param dict item:
         :return list: list of package ids
         """
         return [package_link.get(PACKAGE) for package_link in item.get(LINKED_IN_PACKAGES, []) or []]
 
     def get_linked_in_packages(self, item):
-        """
-        Returns all linked in packages for an item (including takes package)
+        """Returns all linked in packages for an item (including takes package)
+
         :param dict item:
         :return list: list of package ids
         """

@@ -97,9 +97,9 @@ class VocabulariesService(BaseService):
         logger.info("updating vocabulary item: %s", document["_id"])
 
     def on_fetched(self, doc):
-        """
-        Overriding to filter out inactive vocabularies and pops out 'is_active' property from the response if the
-        request wasn't for manageable vocabularies.
+        """Overriding to filter out inactive vocabularies and pops out 'is_active' property from the response.
+
+        It keeps it when requested for manageable vocabularies.
         """
 
         if request and hasattr(request, 'args') and request.args.get('where'):
@@ -119,7 +119,7 @@ class VocabulariesService(BaseService):
         self._cast_items(doc)
 
     def on_update(self, updates, original):
-        """ Checks the duplicates if a unique field is defined """
+        """Checks the duplicates if a unique field is defined"""
         unique_field = original.get('unique_field')
         if unique_field:
             self._check_uniqueness(updates.get('items', []), unique_field)
@@ -137,8 +137,8 @@ class VocabulariesService(BaseService):
         self._send_notification(document)
 
     def _check_uniqueness(self, items, unique_field):
-        """
-        Checks the uniqueness if a unique field is defined
+        """Checks the uniqueness if a unique field is defined
+
         :param items: list of items to check for uniqueness
         :param unique_field: name of the unique field
         """

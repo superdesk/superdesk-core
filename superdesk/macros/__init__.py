@@ -12,8 +12,8 @@ import importlib
 
 
 def load_macros(path, package_prefix='superdesk.macros'):
-    """
-    load macros
+    """Load macros from given path
+
     :param str path:
     :param str package_prefix:
     """

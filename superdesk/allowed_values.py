@@ -16,6 +16,7 @@ from flask import current_app as app
 
 class AllowedValuesResource(superdesk.Resource):
     """Resource allowing apps to set allowed values which can be used by client to filter certain options."""
+
     resource_methods = ['GET']
     item_methods = []
 

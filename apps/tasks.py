@@ -59,6 +59,7 @@ def compare_dictionaries(original, updates):
 
 def send_to(doc, update=None, desk_id=None, stage_id=None, user_id=None, default_stage='incoming_stage'):
     """Send item to given desk and stage.
+
     Applies the outgoing and incoming macros of current and destination stages
 
     :param doc: original document to be sent
@@ -134,8 +135,8 @@ def apply_stage_rule(doc, update, stage, rule_type):
 
 
 def apply_onstage_rule(doc, id):
-    """
-    Apply any on stage macro/rule that may be defined for the stage
+    """Apply any on stage macro/rule that may be defined for the stage.
+
     :param doc:
     :return:
     """
@@ -161,7 +162,6 @@ class TaskResource(Resource):
         'slugline': metadata_schema['slugline'],
         'description_text': metadata_schema['description_text'],
         'type': metadata_schema['type'],
-        'planning_item': Resource.rel('planning', True, type='string'),
         'task': {
             'type': 'dict',
             'schema': {
@@ -205,8 +205,8 @@ class TasksService(BaseService):
         return doc.get('task', {}).get('desk', None) is None
 
     def __is_content_assigned_to_new_desk(self, original, updates):
-        """
-        Checks if the content is assigned to a new desk.
+        """Checks if the content is assigned to a new desk.
+
         :return: True if the content is being moved to a new desk. False otherwise.
         """
         return str(original.get('task', {}).get('desk', '')) != str(updates.get('task', {}).get('desk', ''))

@@ -17,9 +17,8 @@ logger = logging.getLogger(__name__)
 
 
 class KeywordsService(BaseService):
-    """
-    Analyze the text and extract the keywords
-    """
+    """Analyze the text and extract the keywords"""
+
     def __init__(self, datasource=None, backend=None):
         super().__init__(datasource, backend)
         self.provider = None

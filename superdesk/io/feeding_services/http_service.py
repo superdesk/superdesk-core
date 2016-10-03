@@ -90,9 +90,9 @@ class HTTPFeedingService(FeedingService, metaclass=ABCMeta):
         return tree.text
 
     def _is_valid_token(self, token):
-        """
+        """Check if the given token is still valid.
+
         Most of authentication tokens issued by Ingest Providers are valid for 12 hours.
-        This method checks if the given token is still valid.
 
         :param token: Token information
         :type token: dict

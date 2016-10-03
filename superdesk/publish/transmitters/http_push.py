@@ -23,6 +23,7 @@ errors = [PublishHTTPPushError.httpPushError().get_error_description()]
 
 class HTTPPushService(PublishService):
     """HTTP Publish Service."""
+
     headers = {"Content-type": "application/json", "Accept": "application/json"}
 
     def _transmit(self, queue_item, subscriber):
@@ -87,6 +88,7 @@ class HTTPPushService(PublishService):
 
     def _media_exists(self, media_id, destination):
         """Returns true if the media with the given id exists at the service identified by assets_url.
+
         Returns false otherwise. Raises Exception if the error code was not 200 or 404
 
         @param media_id: the media identifier

@@ -15,9 +15,10 @@ from pytz import utc
 
 
 class AFPNewsMLOneFeedParser(NewsMLOneFeedParser):
-    """
-    Feed Parser which can parse the AFP feed basicaly it is in NewsML 1.2 format, but the firstcreated and versoincreted
-    times are localised.
+    """AFP specific NewsML parser.
+
+    Feed Parser which can parse the AFP feed basicaly it is in NewsML 1.2 format,
+    but the firstcreated and versioncreated times are localised.
     """
 
     NAME = 'afpnewsml12'

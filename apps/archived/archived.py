@@ -97,7 +97,8 @@ class ArchivedService(BaseService):
                     doc[SEQUENCE] = len(package_service.get_item_refs(doc))
 
     def on_delete(self, doc):
-        """
+        """Runs on delete of archive item.
+
         Overriding to validate the item being killed is actually eligible for kill. Validates the following:
             1. Is item of type Text?
             2. Is item a Broadcast Script?
@@ -105,6 +106,7 @@ class ArchivedService(BaseService):
             4. Is item available in production or part of a normal package?
             5. Is the associated Digital Story is available in production or part of normal package?
             6. If item is a Take then is any take available in production or part of normal package?
+
         :param doc: represents the article in archived collection
         :type doc: dict
         :raises SuperdeskApiError.badRequestError() if any of the above validation conditions fail.
@@ -170,7 +172,8 @@ class ArchivedService(BaseService):
             return
 
     def update(self, id, updates, original):
-        """
+        """Runs on update of archive item.
+
         Overriding to handle with Kill workflow in the Archived repo:
             1. Check if Article has an associated Digital Story and if Digital Story has more Takes.
                If both Digital Story and more Takes exists then all of them would be killed along with the one requested
@@ -264,8 +267,9 @@ class ArchivedService(BaseService):
         return '{}:{}'.format(item_id, version)
 
     def _find_articles_to_kill(self, lookup):
-        """
-        Finds the article to kill. If the article is associated with Digital Story then Digital Story will
+        """Finds the article to kill.
+
+        If the article is associated with Digital Story then Digital Story will
         also be fetched. If the Digital Story has more takes then all of them would be fetched.
 
         :param lookup: query to find the main article to be killed
@@ -294,8 +298,7 @@ class ArchivedService(BaseService):
         return articles_to_kill
 
     def _remove_and_set_kill_properties(self, article, articles_to_kill, updates):
-        """
-        Removes the irrelevant properties from the given article and sets the properties for kill operation.
+        """Removes the irrelevant properties from the given article and sets the properties for kill operation.
 
         :param article: article from the archived repo
         :type article: dict

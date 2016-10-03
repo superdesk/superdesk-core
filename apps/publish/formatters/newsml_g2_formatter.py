@@ -40,8 +40,8 @@ class NewsMLG2Formatter(Formatter):
     http://www.iptc.org/std/NewsML-G2/2.18/specification/NewsML-G2_2.18-spec-All-Power.xsd'}
 
     def format(self, article, subscriber, codes=None):
-        """
-        Create article in NewsML G2 format
+        """Create article in NewsML G2 format
+
         :param dict article:
         :param dict subscriber:
         :param list codes: selector codes
@@ -73,16 +73,16 @@ class NewsMLG2Formatter(Formatter):
             raise FormatterError.newmsmlG2FormatterError(ex, subscriber)
 
     def _is_package(self, article):
-        """
-        Given an article returns if it is a none takes package or not
+        """Given an article returns if it is a none takes package or not
+
         :param artcile:
         :return: True is package
         """
         return article[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and article.get(PACKAGE_TYPE, '') == ''
 
     def _format_header(self, article, news_message, pub_seq_num):
-        """
-        Creates the header element of the newsMessage.
+        """Creates the header element of the newsMessage.
+
         :param dict article:
         :param Element news_message:
         :param int pub_seq_num:
@@ -98,8 +98,8 @@ class NewsMLG2Formatter(Formatter):
         return SubElement(news_message, 'itemSet')
 
     def _format_item_set(self, article, item_set, item_type):
-        """
-        Construct the item element (newsItem or packageItem) and append the item_meta and contentMeta entities
+        """Construct the item element (newsItem or packageItem) and append the item_meta and contentMeta entities
+
         :param dict article:
         :param element item_set:
         :param str item_type:
@@ -146,8 +146,8 @@ class NewsMLG2Formatter(Formatter):
         return item
 
     def _format_content(self, article, news_item, nitf):
-        """
-        Adds the content set to the xml
+        """Adds the content set to the xml
+
         :param dict article:
         :param Element newsItem:
         :param Element nitf:
@@ -163,8 +163,8 @@ class NewsMLG2Formatter(Formatter):
             inline.append(nitf)
 
     def _format_rights(self, newsItem, article):
-        """
-        Adds the rightsholder section to the newsItem
+        """Adds the rightsholder section to the newsItem
+
         :param Element newsItem:
         :param dict article:
         """
@@ -180,8 +180,8 @@ class NewsMLG2Formatter(Formatter):
 
     # itemClass elements
     def _format_itemClass(self, article, item_meta):
-        """
-        Append the item class to the item_meta data element
+        """Append the item class to the item_meta data element
+
         :param dict article:
         :param Element item_meta:
         """
@@ -194,8 +194,8 @@ class NewsMLG2Formatter(Formatter):
             SubElement(item_meta, 'itemClass', attrib={'qcode': 'ninat:%s' % article[ITEM_TYPE].lower()})
 
     def _format_provider(self, item_meta):
-        """
-        Appends the provider element to the item_meta element
+        """Appends the provider element to the item_meta element
+
         :param dict article:
         :param Element item_meta:
         """
@@ -203,32 +203,32 @@ class NewsMLG2Formatter(Formatter):
         SubElement(provider, 'name').text = get_newsml_provider_id()
 
     def _format_versioncreated(self, article, item_meta):
-        """
-        Appends the versionCreated element to the item_meta element
+        """Appends the versionCreated element to the item_meta element.
+
         :param dict article:
         :param Element item_meta:
         """
         SubElement(item_meta, 'versionCreated').text = article['versioncreated'].strftime('%Y-%m-%dT%H:%M:%S+00:00')
 
     def _format_firstcreated(self, article, item_meta):
-        """
-        Appends the firstCreated element to the item_meta element
+        """Appends the firstCreated element to the item_meta element.
+
         :param dict article:
         :param Element item_meta:
         """
         SubElement(item_meta, 'firstCreated').text = article['firstcreated'].strftime('%Y-%m-%dT%H:%M:%S+00:00')
 
     def _format_pubstatus(self, article, item_meta):
-        """
-        Appends the pubStatus element to the item_meta element
+        """Appends the pubStatus element to the item_meta element.
+
         :param dict article:
         :param Element item_meta:
         """
         SubElement(item_meta, 'pubStatus', attrib={'qcode': 'stat:' + article.get('pubstatus', 'usable')})
 
     def _format_signal(self, article, item_meta):
-        """
-        Appends the signal element to the item_meta element
+        """Appends the signal element to the item_meta element.
+
         :param dict article:
         :param Element item_meta:
         """
@@ -238,8 +238,8 @@ class NewsMLG2Formatter(Formatter):
             SubElement(item_meta, 'signal', attrib={'qcode': 'sig:update'})
 
     def _format_ednote(self, article, item_meta):
-        """
-        Appends the edNote element to the item_meta element
+        """Appends the edNote element to the item_meta element.
+
         :param dict article:
         :param Element item_meta:
         """
@@ -248,8 +248,8 @@ class NewsMLG2Formatter(Formatter):
 
     # contentMeta elements
     def _format_timestamps(self, article, content_meta):
-        """
-        Appends the contentCreated and contentModified element to the contentMeta element
+        """Appends the contentCreated and contentModified element to the contentMeta element.
+
         :param dict article:
         :param Element content_meta:
         """
@@ -257,8 +257,8 @@ class NewsMLG2Formatter(Formatter):
         SubElement(content_meta, 'contentModified').text = article['versioncreated'].strftime('%Y-%m-%dT%H:%M:%S+00:00')
 
     def _format_creator(self, article, content_meta):
-        """
-        Appends the creator element to the contentMeta element
+        """Appends the creator element to the contentMeta element
+
         :param dict article:
         :param Element content_meta:
         """
@@ -267,8 +267,8 @@ class NewsMLG2Formatter(Formatter):
             SubElement(creator, 'name').text = article.get('byline', '') or ''
 
     def _format_subject(self, article, content_meta):
-        """
-        Appends the subject element to the contentMeta element
+        """Appends the subject element to the contentMeta element
+
         :param dict article:
         :param Element content_meta:
         """
@@ -280,8 +280,8 @@ class NewsMLG2Formatter(Formatter):
                     SubElement(subj, 'name', attrib={'xml:lang': 'en'}).text = s['name']
 
     def _format_genre(self, article, content_meta):
-        """
-        Appends the genre element to the contentMeta element
+        """Appends the genre element to the contentMeta element
+
         :param dict article:
         :param Element content_meta:
         """
@@ -291,8 +291,8 @@ class NewsMLG2Formatter(Formatter):
                 SubElement(genre, 'name', attrib={'xml:lang': 'en'}).text = g.get('name', '')
 
     def _format_category(self, article, content_meta):
-        """
-        Appends the subject element to the contentMeta element
+        """Appends the subject element to the contentMeta element
+
         :param dict article:
         :param Element content_meta:
         """
@@ -302,24 +302,24 @@ class NewsMLG2Formatter(Formatter):
             SubElement(subject, 'name', attrib={'xml:lang': 'en'}).text = category.get('name', '')
 
     def _format_slugline(self, article, content_meta):
-        """
-        Appends the slugline element to the contentMeta element
+        """Appends the slugline element to the contentMeta element
+
         :param dict article:
         :param Element content_meta:
         """
         SubElement(content_meta, 'slugline').text = article.get('slugline', '')
 
     def _format_headline(self, article, content_meta):
-        """
-        Appends the headline element to the contentMeta element
+        """Appends the headline element to the contentMeta element
+
         :param dict article:
         :param Element content_meta:
         """
         SubElement(content_meta, 'headline').text = article.get('headline', '')
 
     def _format_place(self, article, content_meta):
-        """
-        Appends the subject (of type geoArea) element to the contentMeta element
+        """Appends the subject (of type geoArea) element to the contentMeta element
+
         :param dict article:
         :param Element content_meta:
         """
@@ -338,8 +338,8 @@ class NewsMLG2Formatter(Formatter):
                 self._create_subject_element(content_meta, place.get('world_region'), 'loctyp:WorldArea')
 
     def _create_broader_element(self, parent, broader_name, qcode, concept_type='cpnat:abstract'):
-        """
-        Create broader element.
+        """Create broader element.
+
         :param element parent: parent element under which the broader element is created
         :param str broader_name: value for the name element
         :param str qcode:
@@ -351,8 +351,8 @@ class NewsMLG2Formatter(Formatter):
             SubElement(broader_elm, 'name').text = broader_name
 
     def _create_subject_element(self, parent, subject_name, qcode, concept_type='cpnat:abstract'):
-        """
-        Create a subject element
+        """Create a subject element
+
         :param element parent:
         :param str subject_name: value for the name element
         :param str qcode:
@@ -365,8 +365,8 @@ class NewsMLG2Formatter(Formatter):
         return subject_elm
 
     def _format_located(self, article, content_meta):
-        """
-        Appends the located element to the contentMeta element
+        """Appends the located element to the contentMeta element
+
         :param dict article:
         :param Element content_meta:
         """
@@ -382,24 +382,24 @@ class NewsMLG2Formatter(Formatter):
             SubElement(content_meta, 'dateline').text = article.get('dateline', {}).get('text', {})
 
     def _format_description(self, article, content_meta):
-        """
-        Appends the image description to the contentMeta element
+        """Appends the image description to the contentMeta element
+
         :param article:
         :param content_meta:
         """
         SubElement(content_meta, 'description', attrib={'role': 'drol:caption'}).text = article.get('description', '')
 
     def _format_creditline(self, article, content_meta):
-        """
-        Append the creditLine to the contentMeta for a picture
+        """Append the creditLine to the contentMeta for a picture
+
         :param article:
         :param content_meta:
         """
         SubElement(content_meta, 'creditline').text = article.get('original_source', article.get('source', ''))
 
     def _format_groupset(self, article, item):
-        """
-        Constructs the groupSet element of a packageItem
+        """Constructs the groupSet element of a packageItem
+
         :param article:
         :param item:
         :return: groupSet appended to the item
@@ -426,8 +426,8 @@ class NewsMLG2Formatter(Formatter):
                             self._format_slugline(archive_item, itemRef)
 
     def _format_contentset(self, article, item):
-        """
-        Constructs the contentSet element in a picture, video and audio newsItem.
+        """Constructs the contentSet element in a picture, video and audio newsItem.
+
         :param article:
         :param item:
         :return: contentSet Element added to the item
@@ -457,7 +457,8 @@ class NewsMLG2Formatter(Formatter):
             SubElement(content_set, 'remoteContent', attrib=attrib)
 
     def _format_company_codes(self, article, content_meta, item):
-        """
+        """Format copy codes.
+
         For each company in the article, appends the subject element to the contentMeta element
         and assert element to item
 
@@ -481,8 +482,8 @@ class NewsMLG2Formatter(Formatter):
                        attrib={'symbol': company.get('qcode', ''), 'marketlabel': company.get('security_exchange', '')})
 
     def can_format(self, format_type, article):
-        """
-        Method check if the article can be formatted to NewsML G2 or not.
+        """Method check if the article can be formatted to NewsML G2 or not.
+
         :param str format_type:
         :param dict article:
         :return: True if article can formatted else False

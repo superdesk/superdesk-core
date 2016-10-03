@@ -12,6 +12,7 @@ from eve_elastic import ElasticJSONSerializer
 
 class SuperdeskJSONEncoder(MongoJSONEncoder, ElasticJSONSerializer):
     """Custom JSON encoder for elastic that can handle `bson.ObjectId`s."""
+
     pass
 
 

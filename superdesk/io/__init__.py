@@ -50,6 +50,7 @@ superdesk.privilege(name='ingest_providers', label='Ingest Channels', descriptio
 def register_feeding_service(service_name, service_class, errors):
     """
     Registers the Feeding Service with the application.
+
     :class: `superdesk.io.feeding_services.RegisterFeedingService` uses this function to register the feeding service.
 
     :param service_name: unique name to identify the Feeding Service class
@@ -73,6 +74,7 @@ def register_feeding_service(service_name, service_class, errors):
 def register_feeding_service_error(service_name, error):
     """
     Registers an error with the service named
+
     :param service_name: unique name to identify the Feeding Service class
     :param error: tuple representing the error, the tuple contains the error_code and the error message
     :return:
@@ -83,6 +85,7 @@ def register_feeding_service_error(service_name, error):
 def register_feed_parser(parser_name, parser_class):
     """
     Registers the Feed Parser with the application.
+
     :class: `superdesk.io.feed_parsers.RegisterFeedParser` uses this function to register the feed parser.
 
     :param parser_name: unique name to identify the Feed Parser class

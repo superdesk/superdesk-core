@@ -13,6 +13,7 @@ from superdesk.errors import SuperdeskApiError
 
 class UserInactiveError(SuperdeskApiError):
     """User is inactive, access restricted"""
+
     status_code = 403
     payload = {'is_active': False}
     message = 'Account is inactive, access restricted.'

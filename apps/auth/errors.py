@@ -17,14 +17,19 @@ logger = logging.getLogger(__name__)
 
 
 class UserDisabledError(SuperdeskApiError):
-    """User is disabled, access restricted"""
+    """User is disabled, access restricted
+
+    """
+
     status_code = 403
     payload = {'is_enabled': False}
     message = 'Account is disabled, access restricted.'
 
 
 class CredentialsAuthError(SuperdeskApiError):
-    """Credentials Not Match Auth Exception"""
+    """Credentials Not Match Auth Exception
+
+    """
 
     def __init__(self, credentials, message=None, error=None):
         super().__init__(status_code=401, message=message, payload={'credentials': 1})

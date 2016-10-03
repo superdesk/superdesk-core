@@ -67,8 +67,8 @@ class AP_ANPAFeedParser(ANPAFeedParser):
         return item
 
     def map_category_codes(self, item):
-        """
-        Map  the category code that has been received to a more palatable value
+        """Map the category code that has been received to a more palatable value
+
         :param item:
         :return:
         """
@@ -90,9 +90,8 @@ class AP_ANPAFeedParser(ANPAFeedParser):
                     category['qcode'] = 'i'
 
     def map_sluglines_to_subjects(self, item):
-        """
-        The first few characters of the slugline may match AP supplimetal categories
-        this is used to set the subject code.
+        """The first few characters of the slugline may match AP supplimetal categories this is used to set the subject code.
+
         :param item:
         :return:
         """
@@ -106,8 +105,8 @@ class AP_ANPAFeedParser(ANPAFeedParser):
                     logger.debug("Subject code '%s' not found" % qcode)
 
     def ap_derive_dateline(self, item):
-        """
-        This function looks for a dateline in the article body an uses that.
+        """This function looks for a dateline in the article body an uses that.
+
         :param item:
         :return: item populated with a dateline
         """

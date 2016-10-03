@@ -19,10 +19,10 @@ log = logging.getLogger(__name__)
 
 
 class BaseService():
-    '''
-    Base service for all endpoints, defines the basic implementation
-    for CRUD datalayer functionality.
-    '''
+    """
+    Base service for all endpoints, defines the basic implementation for CRUD datalayer functionality.
+    """
+
     datasource = None
 
     def __init__(self, datasource=None, backend=None):
@@ -146,8 +146,8 @@ class BaseService():
         return res
 
     def is_authorized(self, **kwargs):
-        """
-        Subclass should override if the resource handled by the service has intrinsic privileges.
+        """Subclass should override if the resource handled by the service has intrinsic privileges.
+
         :param kwargs: should have properties which help in authorizing the request
         :return: False if unauthorized and True if authorized
         """

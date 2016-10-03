@@ -19,8 +19,8 @@ logger = logging.getLogger(__name__)
 
 
 class ImportUserProfileFromADCommand(superdesk.Command):
-    """
-    Responsible for importing a user profile from Active Directory (AD) to Mongo.
+    """Responsible for importing a user profile from Active Directory (AD) to Mongo.
+
     This command runs on assumption that the user executing this command and
     the user whose profile need to be imported need not to be the same. Uses ad_username and ad_password to bind to AD
     and then searches for a user identified by username_to_import and if found imports into Mongo.
@@ -34,8 +34,8 @@ class ImportUserProfileFromADCommand(superdesk.Command):
     )
 
     def run(self, ad_username, ad_password, username, admin='false'):
-        """
-        Imports or Updates a User Profile from AD to Mongo.
+        """Imports or Updates a User Profile from AD to Mongo.
+
         :param ad_username: Active Directory Username
         :param ad_password: Password of Active Directory Username
         :param username: Username as in Active Directory whose profile needs to be imported to Superdesk.

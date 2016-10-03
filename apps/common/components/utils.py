@@ -13,8 +13,8 @@ from .base_component import BaseComponent
 
 
 def register_component(component):
-    """
-    Register a component - to be used in bootstrap.
+    """Register a component - to be used in bootstrap.
+
     @param component: object
         The component object.
     """
@@ -23,9 +23,7 @@ def register_component(component):
 
 
 def get_component(name):
-    """
-    Return an instance of the component identified by given name.
-    """
+    """Return an instance of the component identified by given name."""
     if isinstance(name, BaseComponent) or (type(name) is type and issubclass(name, BaseComponent)):
         name = name.name()
     return app_components[name]

@@ -64,11 +64,9 @@ class ContentFilterService(BaseService):
         return content_filters
 
     def _get_referencing_subscribers(self, filter_id):
-        """Fetch all subscribers from database that contain a reference to the
-        given filter.
+        """Fetch all subscribers that contain a reference to the given filter.
 
         :param str filter_id: the referenced filter's ID
-
         :return: DB cursor over the results
         :rtype: :py:class:`pymongo.cursor.Cursor`
         """
@@ -89,11 +87,9 @@ class ContentFilterService(BaseService):
         return subscribers
 
     def _get_referencing_routing_schemes(self, filter_id):
-        """Fetch all routing schemes from database that contain a reference to
-        the given filter.
+        """Fetch all routing schemes that contain a reference to the given filter.
 
         :param str filter_id: the referenced filter's ID
-
         :return: DB cursor over the results
         :rtype: :py:class:`pymongo.cursor.Cursor`
         """

@@ -56,9 +56,7 @@ class EnqueueContent(superdesk.Command):
     """Runs deliveries"""
 
     def run(self):
-        """
-        Fetches items from publish queue as per the configuration,
-        calls the transmit function.
+        """Fetches items from publish queue as per the configuration, calls the transmit function.
         """
         lock_name = get_lock_id('publish', 'enqueue_published')
         if not lock(lock_name, expire=310):
@@ -153,8 +151,8 @@ def get_published_items():
 
 
 def enqueue_items(published_items):
-    """
-    Creates the corresponding entries in the publish queue for each item
+    """Creates the corresponding entries in the publish queue for each item
+
     :param list published_items: the list of items marked for publishing
     """
     failed_items = {}

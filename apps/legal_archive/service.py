@@ -28,7 +28,8 @@ class LegalService(Service):
     """
 
     def on_create(self, docs):
-        """
+        """Runs on create of legal item.
+
         Overriding to replace the location of each item in the package to legal archive instead of archive,
         if doc is a package.
         """
@@ -41,7 +42,8 @@ class LegalService(Service):
                     self._change_location_of_items_in_package(doc)
 
     def on_replace(self, document, original):
-        """
+        """Runs on replace of legal item.
+
         Overriding to replace the location of each item in the package to legal archive instead of archive,
         if doc is a package.
         """
@@ -51,7 +53,8 @@ class LegalService(Service):
             self._change_location_of_items_in_package(document)
 
     def get(self, req, lookup):
-        """
+        """Runs on get of legal item.
+
         Overriding to check if user is authorized to perform get operation on Legal Archive resources. If authorized
         then request is forwarded otherwise throws forbidden error.
 
@@ -63,7 +66,8 @@ class LegalService(Service):
         return super().get(req, lookup)
 
     def find_one(self, req, **lookup):
-        """
+        """Runs on find_one
+
         Overriding to check if user is authorized to perform get operation on Legal Archive resources. If authorized
         then request is forwarded otherwise throws forbidden error.
 
@@ -75,8 +79,9 @@ class LegalService(Service):
         return super().find_one(req, **lookup)
 
     def check_get_access_privilege(self):
-        """
-        Checks if user is authorized to perform get operation on Legal Archive resources. If authorized then request is
+        """Checks if user is authorized to perform get operation on Legal Archive resources.
+
+        If authorized then request is
         forwarded otherwise throws forbidden error.
 
         :raises: SuperdeskApiError.forbiddenError() if user is unauthorized to access the Legal Archive resources.
@@ -91,8 +96,8 @@ class LegalService(Service):
             raise SuperdeskApiError.forbiddenError()
 
     def enhance(self, legal_archive_docs):
-        """
-        Enhances the item in Legal Archive Service
+        """Enhances the item in Legal Archive Service
+
         :param legal_archive_docs:
         """
 
@@ -131,7 +136,8 @@ class LegalArchiveService(LegalService):
 
 class LegalPublishQueueService(LegalService):
     def create(self, docs, **kwargs):
-        """
+        """Runs on create of legal publish queue.
+
         Overriding this from preventing the transmission details again. This happens when an item in a package expires
         at later point of time. In this case, the call to insert transmission details happens twice once when the
         package expires and once when the item expires.

@@ -14,7 +14,7 @@ PACKAGE_FIELDS = {
 
 
 def get_template(highlightId):
-    """Return the string template associated with highlightId or none """
+    """Return the string template associated with highlightId or none"""
     if not highlightId:
         return None
     highlightService = superdesk.get_resource_service('highlights')

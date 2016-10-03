@@ -29,8 +29,9 @@ def init_app(app):
 
 
 def register_search_provider(name, fetch_endpoint):
-    """
-    Registers a Search Provider with the given name and fetch_endpoint. Both have to be unique and if not raises
+    """Registers a Search Provider with the given name and fetch_endpoint.
+
+    Both have to be unique and if not raises
     AlreadyExistsError. The fetch_endpoint is used by clients to fetch the article from the Search Provider.
 
     :param name: Search Provider Name

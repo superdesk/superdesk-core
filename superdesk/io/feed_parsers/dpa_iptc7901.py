@@ -28,10 +28,12 @@ class DPAIPTC7901FeedParser(IPTC7901FeedParser):
         return item
 
     def dpa_derive_dateline(self, item):
-        """
+        """Parse dateline from item body.
+
         This function attempts to parse a dateline from the first few lines of
         the item body and populate the dataline location, it also populates the dateline source.
         If a dateline is matched the coresponding string is removed from the article text.
+
         :param item:
         :return:
         """

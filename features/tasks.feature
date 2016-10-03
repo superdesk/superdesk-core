@@ -84,29 +84,6 @@ Feature: Tasks
         Then we get updated response
 
     @auth
-    Scenario: Update task-planning item assignment
-        Given empty "planning"
-        Given empty "tasks"
-        When we post to "users"
-        """
-        {"username": "foo", "email": "foo@bar.com", "sign_off": "abc"}
-        """
-        When we post to "planning"
-        """
-        {"slugline": "test planning item"}
-        """
-        When we post to "tasks"
-	    """
-        [{"slugline": "first task", "type": "text", "task": {"user": "#users._id#"}}]
-	    """
-        And we patch latest
-        """
-        {"description_text": "second task modified", "planning_item":"#planning._id#"}
-        """
-        Then we get updated response
-
-
-    @auth
     Scenario: Update task status on stage change
         Given empty "tasks"
         Given empty "stages"

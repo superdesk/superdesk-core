@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 
 
 def format_datetime_filter(date_or_string, timezone_string=None, date_format=None):
-    """
-    Convert date or string to another timezone
+    """Convert date or string to another timezone
+
     :param str date_or_string:
     :param str timezone_string:
     :param str date_format:

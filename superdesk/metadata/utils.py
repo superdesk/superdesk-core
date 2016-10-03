@@ -45,8 +45,8 @@ elastic_highlight_query = {
 
 
 def generate_guid(**hints):
-    """
-    Generate a GUID based on given hints
+    """Generate a GUID based on given hints
+
     param: hints: hints used for generating the guid
     """
     newsml_guid_format = 'urn:newsml:%(domain)s:%(timestamp)s:%(identifier)s'

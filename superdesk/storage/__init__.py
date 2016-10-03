@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-'''Superdesk storage module'''
+"""Superdesk storage module."""
 
 from eve.io.mongo.media import GridFSMediaStorage, GridFS
 

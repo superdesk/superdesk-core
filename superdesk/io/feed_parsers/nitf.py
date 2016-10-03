@@ -40,6 +40,7 @@ class NITFFeedParser(XMLFeedParser):
     """
     Feed Parser which can parse if the feed is in NITF format.
     """
+
     # FIXME: some behaviour here are specific to AAP (e.g. getPlace)
     #        they have been kept to avoid breaking AAP, but they can
     #        now be moved to Superdesk's settings in aap branch
@@ -105,7 +106,7 @@ class NITFFeedParser(XMLFeedParser):
         self.metadata_mapping = None
 
     def _parse_xpath(self, xpath):
-        """parse xpath and handle final attribute"""
+        """Parse xpath and handle final attribute."""
         last_idx = xpath.rfind('/')
         if last_idx == -1:
             msg = "No path separator found in xpath {}, ignoring it".format(xpath)
@@ -152,7 +153,7 @@ class NITFFeedParser(XMLFeedParser):
             return {}
 
     def _generate_mapping(self):
-        """generate self.metadata_mapping according to available mappings
+        """Generate self.metadata_mapping according to available mappings.
 
         The following mappings are used in this order (last is more important):
             - self.default_mapping
@@ -279,9 +280,10 @@ class NITFFeedParser(XMLFeedParser):
         return utc.normalize(value) if value.tzinfo else value
 
     def get_subjects(self, tree):
-        """
-        Finds all the subject tags in the passed tree and returns the parsed subjects. All entries will have both the
-        name and qcode populated.
+        """Finds all the subject tags in the passed tree and returns the parsed subjects.
+
+        All entries will have both the name and qcode populated.
+
         :param tree:
         :return: a list of subject dictionaries
         """
@@ -322,8 +324,8 @@ class NITFFeedParser(XMLFeedParser):
             return content.lower() if content is not None else 'x'
 
     def parse_to_preformatted(self, element):
-        """
-        Extract the contnt of the element as a plain string with line enders
+        """Extract the content of the element as a plain string with line enders
+
         :param element:
         :return:
         """

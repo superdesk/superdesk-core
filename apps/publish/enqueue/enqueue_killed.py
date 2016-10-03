@@ -18,9 +18,10 @@ class EnqueueKilledService(EnqueueService):
     published_state = 'killed'
 
     def get_subscribers(self, doc, target_media_type):
-        """
-        Get the subscribers for this document based on the target_media_type for kill.
+        """Get the subscribers for this document based on the target_media_type for kill.
+
         Kill is sent to all subscribers that have received the item previously (published or corrected)
+
         :param doc: Document to kill
         :param target_media_type: dictate if the doc being queued is a Takes Package or an Individual Article.
                 Valid values are - Wire, Digital. If Digital then the doc being queued is a Takes Package and if Wire

@@ -22,8 +22,8 @@ from apps.publish.enqueue.enqueue_service import EnqueueService
 
 class EnqueuePublishedService(EnqueueService):
     def get_subscribers(self, doc, target_media_type):
-        """
-        Get the subscribers for this document based on the target_media_type for publishing.
+        """Get the subscribers for this document based on the target_media_type for publishing.
+
         1. If the item has embargo and is a future date then fetch active Wire Subscribers.
            Otherwise get all active subscribers.
             a. Get the list of takes subscribers if Takes Package
@@ -31,6 +31,7 @@ class EnqueuePublishedService(EnqueueService):
         3. Filter the subscriber list based on the publish filter and global filters (if configured).
             a. Publish to takes package subscribers if the takes package is received by the subscriber.
             b. Rewrites are sent to subscribers that received the original item or the previous rewrite.
+
         :param dict doc: Document to publish/correct/kill
         :param str target_media_type: dictate if the doc being queued is a Takes Package or an Individual Article.
                 Valid values are - Wire, Digital. If Digital then the doc being queued is a Takes Package and if Wire

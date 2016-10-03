@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 class CreateUserCommand(superdesk.Command):
     """Create a user with given username, password and email.
+
     If user with given username exists, reset password.
     """
 
@@ -62,9 +63,10 @@ class CreateUserCommand(superdesk.Command):
 
 
 class HashUserPasswordsCommand(superdesk.Command):
+    """Hash all the user passwords which are not hashed yet.
+
     """
-    Hash all the user passwords which are not hashed yet.
-    """
+
     def run(self):
         users = superdesk.get_resource_service('auth_users').get(req=None, lookup={})
         for user in users:
@@ -78,7 +80,8 @@ class HashUserPasswordsCommand(superdesk.Command):
 
 
 class GetAuthTokenCommand(superdesk.Command):
-    """
+    """Gets auth token.
+
     Generate an authorization token to be able to authenticate against the REST api without
     starting the client the copy the authorization header.
     """

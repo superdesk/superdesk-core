@@ -14,10 +14,11 @@ from eve import ID_FIELD
 
 
 class BaseProxy(DataLayer):
-    """
-    Data layer implementation used to connect the models to the data layer.
+    """Data layer implementation used to connect the models to the data layer.
+
     Transforms the model data layer API into Eve data layer calls.
     """
+
     def __init__(self, data_layer):
         self.data_layer = data_layer
 

@@ -72,8 +72,8 @@ class ArchiveLinkService(Service):
         return [linked_item['_id']]
 
     def _validate_link(self, target, target_id):
-        """
-        Validates the article to be linked
+        """Validates the article to be linked.
+
         :param target: article to be linked
         :param target_id: id of the article to be linked
         :raises: SuperdeskApiError

@@ -30,8 +30,8 @@ def populate_table_json(service_name, json_data):
 
 
 def process_vocabularies(filepath):
-    """
-    This function upserts the vocabularies into the vocabularies collections.
+    """Upsert the vocabularies into the vocabularies collections.
+
     The format of the file used is JSON.
     :param filepath: absolute filepath
     :return: nothing
@@ -50,6 +50,7 @@ class VocabulariesPopulateCommand(superdesk.Command):
     """
     Class defining the populate vocabularies command.
     """
+
     option_list = (
         superdesk.Option('--filepath', '-f', dest='filepath', required=True),
     )

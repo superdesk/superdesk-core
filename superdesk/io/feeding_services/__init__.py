@@ -72,8 +72,8 @@ class FeedingService(metaclass=ABCMeta):
                 raise error
 
     def close_provider(self, provider, error):
-        """
-        Closes the provider and uses error as reason for closing.
+        """Closes the provider and uses error as reason for closing.
+
         :param provider: Ingest Provider Details.
                 .. seealso:: :class: `superdesk.io.ingest_provider_model.IngestProviderResource`
         :type provider: dict
@@ -113,9 +113,9 @@ class FeedingService(metaclass=ABCMeta):
         ))
 
     def prepare_href(self, href, mimetype=None):
-        """
-        Prepare a link to an external resource (e.g. an image file) so that it can be directly used by the ingest
-        machinery for fetching it.
+        """Prepare a link to an external resource (e.g. an image file).
+
+        It can be directly used by the ingest machinery for fetching it.
 
         Sub-classes can override this method if properties like HTTP Authentication need to be added to the href.
 

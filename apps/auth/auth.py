@@ -22,10 +22,11 @@ logger = logging.getLogger(__name__)
 
 
 class AuthUsersResource(Resource):
-    """ This resource is for authentication only.
+    """This resource is for authentication only.
 
     On users `find_one` never returns a password due to the projection.
     """
+
     datasource = {'source': 'users'}
     schema = {
         'username': {
@@ -71,10 +72,13 @@ superdesk.intrinsic_privilege('auth', method=['DELETE'])
 
 
 class SuperdeskTokenAuth(TokenAuth):
-    """Superdesk Token Auth"""
+    """Superdesk Token Auth
+
+    """
 
     def check_permissions(self, resource, method, user):
-        """
+        """Checks user permissions.
+
         1. If there's no user associated with the request or HTTP Method is GET then return True.
         2. Get User's Privileges
         3. Intrinsic Privileges:
@@ -138,5 +142,5 @@ class SuperdeskTokenAuth(TokenAuth):
         return super(SuperdeskTokenAuth, self).authorized(allowed_roles, resource, method)
 
     def authenticate(self):
-        """ Returns 401 response with CORS headers."""
+        """Returns 401 response with CORS headers."""
         raise SuperdeskApiError.unauthorizedError()

@@ -95,8 +95,8 @@ def decode_val(string_val):
 
 
 def process_file(content, type):
-    """
-    Retrieves the media file metadata
+    """Retrieves the media file metadata
+
     :param BytesIO content: content stream
     :param str type: type of media file
     :return: dict metadata related to media file.
@@ -109,8 +109,8 @@ def process_file(content, type):
 
 
 def process_video(content):
-    """
-    Retrieves the video/audio metadata
+    """Retrieves the video/audio metadata
+
     :param BytesIO content: content stream
     :return: dict video/audio metadata
     """
@@ -121,8 +121,8 @@ def process_video(content):
 
 
 def process_image(content):
-    """
-    Retrieves the image metadata
+    """Retrieves the image metadata
+
     :param BytesIO content: content stream
     :return: dict image metadata
     """

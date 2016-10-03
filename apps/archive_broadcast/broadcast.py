@@ -103,9 +103,11 @@ class ArchiveBroadcastService(BaseService):
         return [doc[config.ID_FIELD]]
 
     def _valid_broadcast_item(self, item):
-        """
+        """Validates item for broadcast.
+
         Broadcast item can only be created for Text or Pre-formatted item.
         Item state needs to be Published or Corrected
+
         :param dict item: Item from which the broadcast item will be created
         """
         if not item:
@@ -119,8 +121,10 @@ class ArchiveBroadcastService(BaseService):
             raise SuperdeskApiError.badRequestError(message="Invalid content state.")
 
     def _get_broadcast_items(self, ids, include_archived_repo=False):
-        """
+        """Returns list of broadcast items.
+
         Get the broadcast items for the master_id and takes_package_id
+
         :param list ids: list of item ids
         :param include_archived_repo True if archived repo needs to be included in search, default is False
         :return list: list of broadcast items
@@ -150,8 +154,8 @@ class ArchiveBroadcastService(BaseService):
         return get_resource_service('search').get(req=req, lookup=None)
 
     def get_broadcast_items_from_master_story(self, item, include_archived_repo=False):
-        """
-        Get the broadcast items from the master story.
+        """Get the broadcast items from the master story.
+
         :param dict item: master story item
         :param include_archived_repo True if archived repo needs to be included in search, default is False
         :return list: returns list of broadcast items
@@ -167,8 +171,10 @@ class ArchiveBroadcastService(BaseService):
 
     def on_broadcast_master_updated(self, item_event, item,
                                     takes_package_id=None, rewrite_id=None):
-        """
+        """Runs when master item is updated.
+
         This event is called when the master story is corrected, published, re-written, new take/re-opened
+
         :param str item_event: Item operations
         :param dict item: item on which operation performed.
         :param str takes_package_id: takes_package_id.
@@ -225,8 +231,8 @@ class ArchiveBroadcastService(BaseService):
                                  format(broadcast_item.get(config.ID_FIELD)))
 
     def _update_broadcast_status(self, item, updates):
-        """
-        Update the status of the broadcast item
+        """Update the status of the broadcast item.
+
         :param dict item: broadcast item to be updated
         :param dict updates: broadcast updates
         """
@@ -239,8 +245,8 @@ class ArchiveBroadcastService(BaseService):
         get_resource_service(SOURCE).system_update(archive_item.get(config.ID_FIELD), updates, archive_item)
 
     def remove_rewrite_refs(self, item):
-        """
-        Remove the rewrite references from the broadcast item if the re-write is spiked.
+        """Remove the rewrite references from the broadcast item if the re-write is spiked.
+
         :param dict item: Re-written article of the original story
         """
         if is_genre(item, BROADCAST_GENRE):
@@ -280,8 +286,8 @@ class ArchiveBroadcastService(BaseService):
                                  format(broadcast_item.get(config.ID_FIELD)))
 
     def reset_broadcast_status(self, updates, original):
-        """
-        Reset the broadcast status if the broadcast item is updated.
+        """Reset the broadcast status if the broadcast item is updated.
+
         :param dict updates: updates to the original document
         :param dict original: original document
         """
@@ -295,8 +301,8 @@ class ArchiveBroadcastService(BaseService):
             updates.update(broadcast_updates)
 
     def spike_item(self, original):
-        """
-        If Original item is re-write then it will remove the reference from the broadcast item.
+        """If Original item is re-write then it will remove the reference from the broadcast item.
+
         :param: dict original: original document
         """
         broadcast_items = [item for item in self.get_broadcast_items_from_master_story(original)
@@ -318,8 +324,8 @@ class ArchiveBroadcastService(BaseService):
             self.remove_rewrite_refs(original)
 
     def kill_broadcast(self, updates, original):
-        """
-        "Kill the broadcast items
+        """Kill the broadcast items
+
         :param dict updates:
         :param dict original:
         :return:

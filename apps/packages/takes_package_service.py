@@ -35,8 +35,8 @@ class TakesPackageService():
     excluded_fields_after_correction = ['ednote', 'operation']
 
     def get_take_package_id(self, item):
-        """
-        Checks if the item is in a 'takes' package and returns the package id
+        """Checks if the item is in a 'takes' package and returns the package id
+
         :return: _id of the package or None
         """
         takes_package = [package.get(PACKAGE) for package in item.get(LINKED_IN_PACKAGES, [])
@@ -112,10 +112,12 @@ class TakesPackageService():
                 to[field] = copy_from.get(field)
 
     def package_story_as_a_take(self, target, takes_package, link):
-        """
+        """Makes a take from an item.
+
         This function create the takes package using the target item metadata and links the
         target and link together in the takes package as target as take1 and link as take2.
         If the link is not provided then only target is added to the takes package.
+
         :param dict target: Target item to be added to the takes package.
         :param dict takes_package: takes package.
         :param dict link: item to be linked.
@@ -156,7 +158,8 @@ class TakesPackageService():
         return ids[0]
 
     def link_as_next_take(self, target, link):
-        """
+        """Makes next take to target from given link.
+
         Check if target has an associated takes package. If not, create it and add target as a take.
         Check if the target is the last take, if not, resolve the last take. Copy metadata from the target and add it
         as the next take and return the update link item
@@ -211,9 +214,10 @@ class TakesPackageService():
         return link
 
     def is_last_takes_package_item(self, doc):
-        """
-        checks whether if the item is the last item of the takes package.
-        if the item is not the last item then raise exception
+        """Checks whether if the item is the last item of the takes package.
+
+        If the item is not the last item then raise exception
+
         :param dict doc: take of a package
         """
         takes_package = self.get_take_package(doc)
@@ -225,8 +229,8 @@ class TakesPackageService():
         return True
 
     def process_killed_takes_package(self, doc):
-        """
-        If the takes packages is killed then spike the unpublished item
+        """If the takes packages is killed then spike the unpublished item
+
         :param dict doc: killed item
         """
         takes_package = self.get_take_package(doc)
@@ -252,8 +256,8 @@ class TakesPackageService():
                         break
 
     def get_take_by_take_no(self, item, take_no=1, package=None):
-        """
-        Returns the id of the take in the takes package by take number.
+        """Returns the id of the take in the takes package by take number.
+
         :param dict item: document
         :param int take_no: take number in the takes package
         :param dict package: takes package
@@ -274,8 +278,8 @@ class TakesPackageService():
         return None
 
     def get_package_refs(self, package):
-        """
-        Get refs from the takes package
+        """Get refs from the takes package
+
         :param dict package: takes package
         :return: return refs from the takes package. If not takes package or no refs found then None
         """
@@ -287,9 +291,11 @@ class TakesPackageService():
         return refs
 
     def can_publish_take(self, package, sequence):
-        """
+        """Check if a take can be published.
+
         Takes can be published only in ascending order. This function check that if there are any
         unpublished takes before the current take.
+
         :param dict package: takes packages
         :param int sequence: take sequence of the published take
         :return: True if takes are published in correct order else false.
@@ -304,8 +310,8 @@ class TakesPackageService():
         return True
 
     def get_published_takes(self, takes_package):
-        """
-        Get all the published takes in the takes packages.
+        """Get all the published takes in the takes packages.
+
         :param takes_package: takes package
         :return: List of publishes takes.
         """
@@ -332,8 +338,8 @@ class TakesPackageService():
         ]}
 
     def enhance_items_with_takes_packages(self, items):
-        """
-        Get the takes packages for items
+        """Get the takes packages for items
+
         :param items:
         """
         packages = []

@@ -158,8 +158,8 @@ class NewsMLOneFeedParser(XMLFeedParser):
         return True
 
     def format_subjects(self, subjects):
-        """
-        Maps the ingested Subject Codes to their corresponding names as per IPTC Specification.
+        """Map the ingested Subject Codes to their corresponding names as per IPTC Specification.
+
         :param subjects: list of dicts where each dict gives the category the article is mapped to.
         :type subjects: list
         :returns [{"qcode": "01001000", "name": "archaeology"}, {"qcode": "01002000", "name": "architecture"}]

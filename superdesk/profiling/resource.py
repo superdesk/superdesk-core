@@ -15,6 +15,7 @@ class ProfilingResource(Resource):
     """
     Profiling schema
     """
+
     schema = {
         'name': {'type': 'string', 'required': True, 'unique': True},
         'profiling_data': {'type': 'list', 'required': True}

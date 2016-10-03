@@ -51,8 +51,8 @@ class ProfileManager():
 
 
 def dump_stats(profile, name):
-    """
-    Dump the profiling stats
+    """Dump the profiling stats
+
     :param cProfile.Profile profile: the profile object
     :param string name: the name that identifies the profile
     """

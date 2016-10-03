@@ -25,8 +25,8 @@ logger = logging.getLogger(__name__)
 
 def generate_renditions(original, media_id, inserted, file_type, content_type,
                         rendition_config, url_for_media, insert_metadata=True):
-    """
-    Generate system renditions for given media file id.
+    """Generate system renditions for given media file id.
+
     :param BytesIO original: original image byte stream
     :param str media_id: media id
     :param list inserted: list of media ids inserted
@@ -85,8 +85,7 @@ def delete_file_on_error(doc, file_id):
 
 
 def _crop_image(content, format, ratio):
-    '''
-    Crop the image given as a binary stream
+    """Crop the image given as a binary stream
 
     @param content: stream
         The binary stream containing the image
@@ -96,7 +95,7 @@ def _crop_image(content, format, ratio):
         Ratio to apply. '16:9', '1:1' etc...
     @return: stream
         Returns the resized image as a binary stream.
-    '''
+    """
     img = Image.open(content)
     width, height = img.size
     if type(ratio) not in [float, int]:
@@ -125,8 +124,7 @@ def _crop_image(content, format, ratio):
 
 
 def _resize_image(content, size, format='png', keepProportions=True):
-    '''
-    Resize the image given as a binary stream
+    """Resize the image given as a binary stream
 
     @param content: stream
         The binary stream containing the image
@@ -139,7 +137,7 @@ def _resize_image(content, size, format='png', keepProportions=True):
         image size.
     @return: stream
         Returns the resized image as a binary stream.
-    '''
+    """
     assert isinstance(size, tuple)
     img = Image.open(content)
     if keepProportions:
@@ -171,13 +169,14 @@ def _resize_image(content, size, format='png', keepProportions=True):
 
 
 def get_renditions_spec(without_internal_renditions=False):
-    '''
-    Return the list of the needed renditions. It contains the ones defined in
-    settings in `RENDITIONS.picture` and the ones defined in vocabularies in `crop_sizes`
+    """Return the list of the needed renditions.
+
+    It contains the ones defined in settings in `RENDITIONS.picture`
+    and the ones defined in vocabularies in `crop_sizes`
 
     @return: list
         Returns the list of renditions specification.
-    '''
+    """
     rendition_spec = {}
     # renditions required by superdesk
     if not without_internal_renditions:

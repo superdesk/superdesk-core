@@ -10,9 +10,8 @@ allowed_times.append(WEEK_DATE)
 
 
 class HighlightsResource(Resource):
-    '''
-    Highlights schema
-    '''
+    """Highlights schema"""
+
     schema = {
         'name': {
             'type': 'string',
@@ -40,9 +39,8 @@ class HighlightsResource(Resource):
 
 
 class MarkedForHighlightsResource(Resource):
-    '''
-    Marked for highlights Schema
-    '''
+    """Marked for highlights Schema"""
+
     schema = {
         'highlights': {
             'type': 'string',

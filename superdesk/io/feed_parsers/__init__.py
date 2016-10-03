@@ -25,8 +25,7 @@ class FeedParser(metaclass=ABCMeta):
 
     @abstractmethod
     def can_parse(self, article):
-        """
-        Sub-classes must override this method and tell whether it can parse the given article.
+        """Sub-classes must override this method and tell whether it can parse the given article.
 
         :param article: article
         :return: True if the feed parser can parse, False otherwise.
@@ -36,8 +35,7 @@ class FeedParser(metaclass=ABCMeta):
 
     @abstractmethod
     def parse(self, article, provider=None):
-        """
-        Parse the given article and extracts the relevant elements/attributes values from the given article.
+        """Parse the given article and extracts the relevant elements/attributes values from the given article.
 
         :param article: XML String to parse
         :type article: str
@@ -50,10 +48,10 @@ class FeedParser(metaclass=ABCMeta):
         raise NotImplementedError()
 
     def set_dateline(self, item, city=None, text=None):
-        """
-        Sets the 'dateline' to the article identified by item. If city is passed then the system checks if city is
-        available in Cities collection. If city is not found in Cities collection then dateline's located is set with
-        default values.
+        """Sets the 'dateline' to the article identified by item.
+
+        If city is passed then the system checks if city is available in Cities collection.
+        If city is not found in Cities collection then dateline's located is set with default values.
 
         :param item: article.
         :type item: dict
@@ -123,6 +121,7 @@ class FileFeedParser(FeedParser, metaclass=ABCMeta):
     """
     Base class for Feed Parsers which can parse the content in a file.
     """
+
     pass
 
 
@@ -130,6 +129,7 @@ class EmailFeedParser(FeedParser, metaclass=ABCMeta):
     """
     Base class for Feed Parsers which can parse email message.
     """
+
     pass
 
 

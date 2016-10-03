@@ -33,8 +33,8 @@ exchange_name = 'socket_notification'
 class SocketBrokerClient:
     """
     Base class for web socket notification using broker (redis or rabbitmq)
-
     """
+
     connection = None
 
     def __init__(self, url):
@@ -45,8 +45,10 @@ class SocketBrokerClient:
         self.socket_exchange.declare()
 
     def open(self):
-        """
+        """Test if connection is open.
+
         True if connected else false
+
         :return bool:
         """
         return self.connection and self.connection.connected
@@ -73,12 +75,14 @@ class SocketMessageProducer(SocketBrokerClient):
     """
     Publishes messages to a exchange (fanout).
     """
+
     def __init__(self, url):
         super().__init__(url)
 
     def send(self, message):
         """
         Publishes the message to an exchange
+
         :param string message: message to publish
         """
         try:
@@ -93,8 +97,10 @@ class SocketMessageConsumer(SocketBrokerClient, ConsumerMixin):
     """
     Consumer of the message.
     """
+
     def __init__(self, url, callback):
-        """
+        """Create consumer.
+
         :param string url: Broker URL
         :param string host: host name running the websocket server
         :param callback: callback function to call on message arrival
@@ -113,6 +119,7 @@ class SocketMessageConsumer(SocketBrokerClient, ConsumerMixin):
     def on_message(self, body, message):
         """
         Event fired when message is received by the queue
+
         :param str body:
         :param kombu.Message message: Message object
         """
@@ -134,6 +141,7 @@ class SocketMessageConsumer(SocketBrokerClient, ConsumerMixin):
     def close(self):
         """
         Closing the consumer.
+
         :return:
         """
         logger.info('closing consumer')
@@ -146,6 +154,7 @@ class SocketCommunication:
     """
     Responsible for websocket comms.
     """
+
     clients = set()
 
     def __init__(self, host, port, broker_url):
@@ -255,6 +264,7 @@ class SocketCommunication:
 
     def run_server(self):
         """Create websocket server and run it until it gets Ctrl+C or SIGTERM.
+
         :param config: config dictionary
         """
         try:

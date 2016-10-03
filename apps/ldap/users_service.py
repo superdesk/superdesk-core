@@ -33,8 +33,8 @@ class ADUsersService(UsersService):
         self.set_defaults(doc)
 
     def set_defaults(self, doc):
-        """
-        Set the readonly fields for LDAP user.
+        """Set the readonly fields for LDAP user.
+
         :param dict doc: user
         """
         readonly = {}

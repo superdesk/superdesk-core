@@ -300,8 +300,8 @@ def get_prefixed_url(current_app, endpoint):
 
 
 def setup_db_user(context, user):
-    """
-    Setup the user for the DB authentication.
+    """Setup the user for the DB authentication.
+
     :param context: test context
     :param dict user: user
     """
@@ -326,9 +326,10 @@ def setup_db_user(context, user):
 
 
 def setup_ad_user(context, user):
-    """
-    Setup the AD user for the LDAP authentication.
+    """Setup the AD user for the LDAP authentication.
+
     The method patches the authenticate_and_fetch_profile method of the ADAuth class
+
     :param context: test context
     :param dict user: user
     """
@@ -405,13 +406,10 @@ class TestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        """
-        Wrap `setUp` and `tearDown` methods to run
-        `setUpForChildren` and `tearDownForChildren`
-        """
+        """Wrap `setUp` and `tearDown` methods to run `setUpForChildren` and `tearDownForChildren`."""
         # setUp
         def wrapper(self, *args, **kwargs):
-            """Combine `setUp` with `setUpForChildren`"""
+            """Combine `setUp` with `setUpForChildren`."""
             self.setUpForChildren()
             return orig_setup(self, *args, **kwargs)
         orig_setup = cls.setUp
@@ -419,16 +417,14 @@ class TestCase(unittest.TestCase):
 
         # tearDown
         def wrapper(self, *args, **kwargs):
-            """Combine `tearDown` with `tearDownForChildren`"""
+            """Combine `tearDown` with `tearDownForChildren`."""
             self.tearDownForChildren()
             return orig_teardown(self, *args, **kwargs)
         orig_teardown = cls.tearDown
         cls.tearDown = wrapper
 
     def setUpForChildren(self):
-        """
-        Run this `setUp` stuff for each children
-        """
+        """Run this `setUp` stuff for each children."""
         setup(self)
 
         self.ctx = self.app.app_context()
@@ -440,9 +436,7 @@ class TestCase(unittest.TestCase):
         self.addCleanup(clean_ctx)
 
     def tearDownForChildren(self):
-        """
-        Run this `tearDown` stuff for each children
-        """
+        """Run this `tearDown` stuff for each children."""
 
     def get_fixture_path(self, filename):
         rootpath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))

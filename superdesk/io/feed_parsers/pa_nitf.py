@@ -18,11 +18,12 @@ class PAFeedParser(NITFFeedParser):
     """
     NITF Parser extension for Press Association, it maps the category meta tag to an anpa category
     """
+
     NAME = 'pa_nitf'
 
     def _category_mapping(self, elem):
-        """
-        Map the category supplied by PA to a best guess anpa_category in the system
+        """Map the category supplied by PA to a best guess anpa_category in the system
+
         :param elem:
         :return: anpa category list qcode
         """
@@ -35,8 +36,8 @@ class PAFeedParser(NITFFeedParser):
         return [{'qcode': 'I'}]
 
     def get_headline(self, xml):
-        """
-        Return the headline if available if not then return the slugline (title)
+        """Return the headline if available if not then return the slugline (title)
+
         :param xml:
         :return:
         """
@@ -48,8 +49,8 @@ class PAFeedParser(NITFFeedParser):
         raise SkipValue()
 
     def _get_slugline(self, elem):
-        """
-        Capitalize the first word of the slugline (Removing any leading digits's).
+        """Capitalize the first word of the slugline (Removing any leading digits's).
+
         :param elem:
         :return:
         """
@@ -61,8 +62,8 @@ class PAFeedParser(NITFFeedParser):
         return slugline
 
     def _get_pubstatus(self, elem):
-        """
-        Mark anything that is embargoed as usable, the editorial note still describes the embargo
+        """Mark anything that is embargoed as usable, the editorial note still describes the embargo.
+
         :param elem:
         :return:
         """

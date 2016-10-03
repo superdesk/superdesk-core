@@ -187,8 +187,8 @@ def get_filepath(filename, path=None):
 
 
 class AppInitializeWithDataCommand(superdesk.Command):
-    """
-    Initialize application with predefined data for various entities.
+    """Initialize application with predefined data for various entities.
+
     Entities supported: [roles, users, desks, stages, groups, vocabularies, validators, content_templates].
     If no --entity-name parameter is supplied, all the entities are inserted.
     The entities [vocabularies, validators] will be updated with the predefined data if it already exists,
@@ -218,9 +218,10 @@ class AppInitializeWithDataCommand(superdesk.Command):
         return 0
 
     def import_file(self, entity_name, path, file_name, index_params, do_patch=False):
-        """
-        imports seed data based on the entity_name (resource name) from the file_name specified.
+        """Imports seed data based on the entity_name (resource name) from the file_name specified.
+
         index_params use to create index for that entity/resource
+
         :param str entity_name: name of the resource
         :param str file_name: file name that contains seed data
         :param list index_params: list of indexes that is created on that entity.

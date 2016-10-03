@@ -18,7 +18,8 @@ from superdesk.notification import push_notification
 
 
 def get_mentions(text):
-    """
+    """Returns desk and user mentions.
+
     Returns the names of desks and users from a given text
     User names starts with '@' and desk names starts with '#'
     """

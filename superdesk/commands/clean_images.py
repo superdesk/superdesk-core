@@ -13,8 +13,8 @@ import superdesk
 
 
 class CleanImages(superdesk.Command):
-    """
-    This command will remove all the images from the system which are not referenced by content.
+    """This command will remove all the images from the system which are not referenced by content.
+
     It checks the media type and calls the correspoinding function as s3 and mongo
     requires different approaches for handling multiple files.
     Probably running db.repairDatabase() is needed in Mongo to shring the DB size.

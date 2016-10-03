@@ -26,7 +26,7 @@ class Base(TestCase):
             "published_seq_num": "5", }
 
     def fake_item_ext(self, format_):
-        """return a copy of self.fake_item with given destination/format"""
+        """Return a copy of self.fake_item with given destination/format"""
         item = self.fake_item.copy()
         item['destination'] = {'format': format_}
         return item

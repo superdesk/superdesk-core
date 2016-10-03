@@ -45,7 +45,8 @@ logger = logging_lib.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    """
+    """Superdesk Command.
+
     The Eve framework changes introduced with https://github.com/nicolaiarocci/eve/issues/213 make the commands fail.
     Reason being the flask-script's run the commands using test_request_context() which is invalid.
     That's the reason we are inheriting the Flask-Script's Command to overcome this issue.
@@ -135,8 +136,8 @@ def register_resource(name, resource, service=None, backend=None, privilege=None
 
 
 def register_jinja_filter(name, jinja_filter):
-    """
-    Register jinja filter
+    """Register jinja filter
+
     :param str name: name of the filter
     :param jinja_filter: jinja filter function
     """

@@ -27,7 +27,8 @@ class CropService():
     crop_sizes = []
 
     def validate_crop(self, original, updates, crop_name):
-        """
+        """Validate crop info on media item.
+
         :param dict original: original item
         :param dict updates: updated renditions
         :param str crop_name: name of the crop
@@ -68,8 +69,8 @@ class CropService():
                 raise SuperdeskApiError.badRequestError('Invalid value for %s in renditions' % field)
 
     def _validate_poi(self, original, updates, crop_name):
-        """
-        Validate the crop point of interest in the renditions dictionary for the given crop
+        """Validate the crop point of interest in the renditions dictionary for the given crop
+
         :param dict original: original item
         :param dict updates: updated renditions
         """
@@ -100,8 +101,8 @@ class CropService():
             raise SuperdeskApiError('Point of interest outside the crop %s limits' % crop_name)
 
     def _validate_aspect_ratio(self, crop, doc):
-        """
-        Checks if the aspect ratio is consistent with one in defined in spec
+        """Checks if the aspect ratio is consistent with one in defined in spec
+
         :param crop: Spec parameters
         :param doc: Posted parameters
         :raises SuperdeskApiError.badRequestError:
@@ -134,8 +135,8 @@ class CropService():
                     message='Ratio %s is not respected. We got %f' % (crop.get('ratio'), abs((width / height))))
 
     def get_crop_by_name(self, crop_name):
-        """
-        Finds the crop in the list of crops by name
+        """Finds the crop in the list of crops by name
+
         :param crop_name: Crop name
         :return: Matching crop or None
         """
@@ -148,8 +149,8 @@ class CropService():
         return next((c for c in self.crop_sizes if c.get('name', '').lower() == crop_name.lower()), None)
 
     def create_crop(self, original_image, crop_name, crop_data):
-        """
-        Create a new crop based on the crop co-ordinates
+        """Create a new crop based on the crop co-ordinates
+
         :param original: Article to add the crop
         :param crop_name: Name of the crop
         :param doc: Crop details
@@ -177,8 +178,8 @@ class CropService():
             raise SuperdeskApiError.badRequestError('Generating crop failed: {}'.format(str(ex)))
 
     def _save_cropped_image(self, file_stream, original, doc):
-        """
-        Saves the cropped image and returns the crop dictionary
+        """Saves the cropped image and returns the crop dictionary
+
         :param file_stream: cropped image stream
         :param original: original rendition
         :param doc: crop data
@@ -210,8 +211,8 @@ class CropService():
             raise SuperdeskApiError.internalError('Generating crop failed: {}'.format(str(ex)))
 
     def _delete_crop_file(self, file_id):
-        """
-        Delete the crop file
+        """Delete the crop file
+
         :param Object_id file_id: Object_Id of the file.
         """
         try:
@@ -220,8 +221,8 @@ class CropService():
             logger.exception("Crop File cannot be deleted. File_Id {}".format(file_id))
 
     def create_multiple_crops(self, updates, original):
-        """
-        Create multiple crops based on the renditions.
+        """Create multiple crops based on the renditions.
+
         :param dict updates: update item
         :param dict original: original of the updated item
         """
@@ -249,8 +250,8 @@ class CropService():
             updates['renditions'] = renditions
 
     def _set_crop_poi(self, renditions, crop_name, poi):
-        """
-        Set the crop point of interest in the renditions dictionary for the given crop
+        """Set the crop point of interest in the renditions dictionary for the given crop
+
         :param dict renditions: updated renditions
         :param string crop_name: the crop for which to set the poi
         :param dict poi: the point of interest dictionary
@@ -271,8 +272,8 @@ class CropService():
             renditions[crop_name]['poi'] = {'x': crop_poi_x, 'y': crop_poi_y}
 
     def validate_multiple_crops(self, updates, original):
-        """
-        Validate crops for the image
+        """Validate crops for the image
+
         :param dict updates: update item
         :param dict original: original of the updated item
         """
@@ -282,8 +283,8 @@ class CropService():
                 self.validate_crop(original, updates, key)
 
     def delete_replaced_crop_files(self, updates, original):
-        """
-        Delete the replaced crop files.
+        """Delete the replaced crop files.
+
         :param dict updates: update item
         :param dict original: original of the updated item
         """

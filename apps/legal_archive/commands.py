@@ -39,12 +39,13 @@ class LegalArchiveImport:
                      "'expired_on': {expiry}}}."
 
     def upsert_into_legal_archive(self, item_id):
-        """
-        Once publish actions are performed on the article do the below:
+        """Once publish actions are performed on the article do the below:
+
             1.  Get legal archive article.
             2.  De-normalize the expired article
             3.  Upserting Legal Archive.
             4.  Get Version History and De-normalize and Inserting Legal Archive Versions
+
         :param dict item_id: id of the document from 'archive' collection.
         """
         try:
@@ -201,8 +202,8 @@ class LegalArchiveImport:
         return get_display_name(user)
 
     def _set_moved_to_legal(self, doc):
-        """
-        set the moved to legal flag.
+        """Set the moved to legal flag.
+
         :param dict doc: document
         """
         get_resource_service('published').set_moved_to_legal(doc.get(config.ID_FIELD),
@@ -210,8 +211,8 @@ class LegalArchiveImport:
                                                              True)
 
     def import_legal_publish_queue(self, force_move=False, page_size=500):
-        """
-        Import legal publish queue.
+        """Import legal publish queue.
+
         :param bool force_move: True force move to legal as else false.
         :param int page_size: page_size.
         """
@@ -228,8 +229,8 @@ class LegalArchiveImport:
         logger.info('Completed importing of publish queue items.')
 
     def process_queue_items(self, queue_items, force_move=False):
-        """
-        Process queue items.
+        """Process queue items.
+
         :param list queue_items: list of queue item to be
         :param bool force_move:
         """
@@ -247,8 +248,8 @@ class LegalArchiveImport:
                 logger.exception("Failed to import publish queue item. {}".format(queue_item.get(config.ID_FIELD)))
 
     def _upsert_into_legal_archive_publish_queue(self, queue_item, subscribers, force_move):
-        """
-        Upsert into legal publish queue.
+        """Upsert into legal publish queue.
+
         :param dict queue_item: publish_queue collection item
         :param dict subscribers: subscribers information
         :param bool force_move: true set the flag to move to legal.
@@ -297,8 +298,8 @@ class LegalArchiveImport:
         logger.info('Processed queue item: {}'.format(log_msg))
 
     def get_publish_queue_items(self, page_size, expired_items=[]):
-        """
-        Get publish queue items that are not moved to legal
+        """Get publish queue items that are not moved to legal
+
         :param int page_size: batch size
         :param list expired_items:
         :return list: publish queue items
@@ -343,8 +344,8 @@ class LegalArchiveImport:
 
 @celery.task(bind=True, default_retry_delay=180)
 def import_into_legal_archive(self, item_id):
-    """
-    Called async to import into legal archive.
+    """Called async to import into legal archive.
+
     :param self: celery task
     :param str item_id: document id to import into legal_archive
     """
@@ -360,6 +361,7 @@ class ImportLegalPublishQueueCommand(superdesk.Command):
     """
     This command import publish queue records into legal publish queue.
     """
+
     default_page_size = 500
 
     option_list = [
@@ -379,8 +381,8 @@ class ImportLegalPublishQueueCommand(superdesk.Command):
 
 
 class ImportLegalArchiveCommand(superdesk.Command):
-    """
-    This command import archive into legal archive.
+    """This command import archive into legal archive.
+
     As per the publishing logic the import to legal archive is done asynchronously. If this fails
     then you are missing records in legal archive. Use this command to manually import archive
     items into legal archive.
@@ -445,8 +447,8 @@ class ImportLegalArchiveCommand(superdesk.Command):
             logger.exception('Failed to import into legal archive via command {}.'.format(item_id))
 
     def get_expired_items(self, page_size):
-        """
-        Get expired item that are not moved to legal
+        """Get expired item that are not moved to legal
+
         :return:
         """
         query = {
