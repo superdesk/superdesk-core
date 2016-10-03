@@ -8,6 +8,8 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+"""NewsML G2 Superdesk formatter"""
+
 import xml.etree.ElementTree as etree
 from xml.etree.ElementTree import SubElement
 
@@ -29,6 +31,8 @@ def get_newsml_provider_id():
 
 
 class NewsMLG2Formatter(Formatter):
+    """NewsML G2 Formatter"""
+
     XML_ROOT = '<?xml version="1.0" encoding="UTF-8"?>'
     now = utcnow()
     string_now = now.strftime('%Y-%m-%dT%H:%M:%S.0000Z')

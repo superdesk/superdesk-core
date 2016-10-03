@@ -174,5 +174,6 @@ superdesk.command('publish:enqueue', EnqueueContent())
 
 @celery.task(soft_time_limit=300)
 def enqueue_published():
+    """Pick new items from ``published`` collection and enqueu it."""
     with ProfileManager('publish:enqueue'):
         EnqueueContent().run()

@@ -85,9 +85,7 @@ class BasePublishResource(ArchiveResource):
 
 
 class BasePublishService(BaseService):
-    """
-    Base service class for "publish" endpoint
-    """
+    """Base service for different "publish" services."""
 
     publish_type = 'publish'
     published_state = 'published'
