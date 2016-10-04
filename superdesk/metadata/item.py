@@ -438,6 +438,11 @@ metadata_schema = {
         'type': 'string',
         'mapping': not_analyzed,
         'default': FORMATS.HTML
+    },
+
+    # True indicates that the item has been or is to be published as a result of a routing rule
+    'auto_publish': {
+        'type': 'boolean'
     }
 }
 

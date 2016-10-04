@@ -123,7 +123,7 @@ class BasePublishService(BaseService):
         """
         try:
             user = get_user()
-            auto_publish = updates.pop('auto_publish', False)
+            auto_publish = updates.get('auto_publish', False)
 
             if original[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
                 self._publish_package_items(original, updates)
