@@ -129,7 +129,8 @@ class RFC822FormattedEmail(TestCase):
                 '_id': 123,
                 'name': 'user',
                 'user_type': 'administrator',
-                'email': 'eharvey@aap.com.au'
+                'email': 'eharvey@aap.com.au',
+                'byline': 'E Harvey'
             }])
             self.app.data.insert('desks', [{'_id': 1, 'name': 'new zealand'}])
             self.app.data.insert('vocabularies', [{'_id': 'locators',
@@ -155,3 +156,4 @@ class RFC822FormattedEmail(TestCase):
         self.assertEqual(self.items[0]['place'][0]['qcode'], 'ADV')
         self.assertEqual(self.items[0]['flags']['marked_for_legal'], True)
         self.assertEqual(self.items[0]['priority'], 3)
+        self.assertEqual(self.items[0]['byline'], 'E Harvey')
