@@ -124,13 +124,13 @@ Feature: Templates
          "template_desks": ["#desks._id#"], "schedule_desk": "#desks._id#", "schedule_stage": "#stages._id#"}
         """
         Then we get new resource
-        And next run is on monday "22:15:00"
+        And next run is on monday "08:15:00"
 
         When we patch latest
         """
         {"schedule": {"day_of_week": ["MON"], "create_at": "09:15:00", "is_active": true}}
         """
-        Then next run is on monday "23:15:00"
+        Then next run is on monday "09:15:00"
 
         When we run create content task
         And we get "/archive"
