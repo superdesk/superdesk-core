@@ -171,6 +171,9 @@ class ArchivedService(BaseService):
             super().delete(lookup)
             return
 
+    def command_delete(self, lookup):
+        super().delete(lookup)
+
     def update(self, id, updates, original):
         """Runs on update of archive item.
 
