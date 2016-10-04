@@ -67,6 +67,10 @@ class NITFFormatter(Formatter):
         'hr': NITF_COMMON_ATTR,
     }
 
+    # in elements' dicts, following key can be used:
+    # - 'nitf': new NITF compatible element to use (empty string to remove)
+    # - 'attrib': new attribute to use (replace existing one if set)
+    # - 'filter': callback to use for complex changes (root_elment and element as arguments)
     HTML2NITF = {
         'p': {},
         'b': {
@@ -144,18 +148,19 @@ class NITFFormatter(Formatter):
         else:
             parent.text = (parent.text or '') + text
 
-    def html2nitf(self, html_elem, root_elem=True):
+    def html2nitf(self, html_elem, root_elem=None):
         """Convert HTML elements to NITF compatible elements
 
         :param ET.Element: HTML to clean/transform
-        :param bool: True if its the main element (must be a <div>)
+        :param ET.Element: None if its the root element (must be a <div>)
         :return ET.Element: <div> element with NITF compliant children
         """
-        if root_elem:
+        if root_elem is None:
+            root_elem = html_elem
             assert html_elem.tag == 'div'
             # we change children of root element in place
             for c in html_elem:
-                self.html2nitf(c, root_elem=False)
+                self.html2nitf(c, root_elem=root_elem)
             return html_elem
 
         try:
@@ -170,6 +175,9 @@ class NITFFormatter(Formatter):
 
         html_elem.attrib.update(nitf_map.get('attrib', {}))
 
+        if 'filter' in nitf_map:
+            nitf_map['filter'](root_elem, html_elem)
+
         attr_allowed = self.NITF_ALLOWED_ATTR.get(html_elem.tag, ())
 
         for attr in list(html_elem.attrib):
@@ -181,7 +189,7 @@ class NITFFormatter(Formatter):
         while idx < len(children):
             child = children[idx]
             try:
-                self.html2nitf(child, root_elem=False)
+                self.html2nitf(child, root_elem=root_elem)
             except ValueError:
                 # the element is unknown
                 # we need to save its text and tail,
