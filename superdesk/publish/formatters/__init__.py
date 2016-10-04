@@ -112,6 +112,23 @@ class Formatter(metaclass=FormatterRegistry):
         if len(list(element)) == 0:
             SubElement(element, 'p').text = soup.get_text()
 
+    def pass_through(self, article):
+        """
+        Returns True if the article is auto published and the ingest providers that is set to pass through
+
+        :param article:
+        :param subscriber:
+        :return:
+        """
+        if not article.get('auto_publish', False):
+            return False
+
+        provider = superdesk.get_resource_service('ingest_providers').find_one(req=None,
+                                                                               _id=article.get('ingest_provider'))
+        if provider and provider.get('pass_through', False):
+            return True
+        return False
+
 
 def get_formatter(format_type, article):
     """Get parser for given xml.
