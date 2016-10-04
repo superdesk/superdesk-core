@@ -8,7 +8,6 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import apps.publish.formatters.newsml_g2_formatter  # NOQA
 from superdesk import get_backend
 from apps.publish.formatters.service import FormattersService
 from apps.publish.formatters.resource import FormattersResource

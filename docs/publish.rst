@@ -78,17 +78,22 @@ Enqueueing is done via:
 
 There it finds all subscribers that should recieve the item and if any it will format the item and queue transmission.
 
-Supported output formats are:
+Output Formats
+--------------
 
-.. toctree::
-    :maxdepth: 1
+.. module:: superdesk.publish.formatters
 
-    formatters/ninjs
-    formatters/nitf
-    formatters/newsml
-    formatters/newsmlg2
-    formatters/email
+.. autoclass:: NINJSFormatter
 
+Superdesk NINJS Schema in :download:`JSON <superdesk-ninjs-schema.json>`.
+
+.. autoclass:: NITFFormatter
+
+.. autoclass:: NewsML12Formatter
+
+.. autoclass:: NewsMLG2Formatter
+
+.. autoclass:: EmailFormatter
 
 Transmission
 ------------
@@ -99,13 +104,17 @@ Last task is to send items to subscribers, that's handled via another async task
 
 This task runs every 10s.
 
-There are different means of transport:
+Content Transmitters
+--------------------
 
-.. toctree::
-    :maxdepth: 1
+.. module:: superdesk.publish.transmitters
 
-    transmitters/http-push
-    transmitters/ftp
-    transmitters/file
-    transmitters/email
-    transmitters/odbc
+.. autoclass:: HTTPPushService
+
+.. autoclass:: FTPPublishService
+
+.. autoclass:: FilePublishService
+
+.. autoclass:: EmailPublishService
+
+.. autoclass:: ODBCPublishService

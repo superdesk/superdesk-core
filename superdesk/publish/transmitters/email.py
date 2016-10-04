@@ -8,11 +8,6 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-"""Superdesk Email transmitter.
-
-Works only with :doc:`../formatters/email` formatter.
-"""
-
 from superdesk.emails import send_email
 from flask import current_app as app
 from superdesk.publish import register_transmitter
@@ -23,7 +18,12 @@ errors = [PublishEmailError.emailError().get_error_description()]
 
 
 class EmailPublishService(PublishService):
-    """Email Publish Service."""
+    """Email Transmitter
+
+    Works only with email formatter.
+
+    :param recipients: email addresses separated by ``;``
+    """
 
     def _transmit(self, queue_item, subscriber):
         config = queue_item.get('destination', {}).get('config', {})

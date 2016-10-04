@@ -8,15 +8,6 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-"""Superdesk ODBC transmitter.
-
-Calls a stored procedure with item data.
-
-*Config*:
-
-- ``connection_string``
-- ``stored_procedure``
-"""
 
 from superdesk.publish import register_transmitter
 from superdesk.publish.publish_service import PublishService
@@ -35,8 +26,12 @@ errors = [PublishODBCError.odbcError().get_error_description()]
 
 
 class ODBCPublishService(PublishService):
-    """
-    ODBCPublishService
+    """Superdesk ODBC transmitter.
+
+    Calls a stored procedure with item data.
+
+    :param string connection_string:
+    :param string stored_procedure:
     """
 
     def _transmit(self, queue_item, subscriber):

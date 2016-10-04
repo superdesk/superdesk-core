@@ -10,20 +10,21 @@
 
 """NewsML G2 Superdesk formatter"""
 
+import superdesk
 import xml.etree.ElementTree as etree
-from xml.etree.ElementTree import SubElement
 
+from bs4 import BeautifulSoup
+from xml.etree.ElementTree import SubElement
 from flask import current_app as app
+
 from superdesk.publish.formatters import Formatter
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, FORMATS, FORMAT
 from superdesk.utc import utcnow
-import superdesk
 from superdesk.errors import FormatterError
 from superdesk.publish.formatters.nitf_formatter import NITFFormatter
-from apps.archive.common import ARCHIVE, get_utc_schedule
 from superdesk.metadata.packages import PACKAGE_TYPE, REFS, RESIDREF, ROLE, GROUPS, GROUP_ID, ID_REF
-from bs4 import BeautifulSoup
 from superdesk.filemeta import get_filemeta
+from apps.archive.common import ARCHIVE, get_utc_schedule
 
 
 def get_newsml_provider_id():

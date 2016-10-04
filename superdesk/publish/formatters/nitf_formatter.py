@@ -8,11 +8,6 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-"""NITF Formatter for Superdesk
-
-Format items to `NITF <https://iptc.org/standards/nitf/>`_ version *3.6*.
-"""
-
 import xml.etree.ElementTree as etree
 from xml.etree.ElementTree import SubElement
 from flask import current_app as app
@@ -25,8 +20,9 @@ from bs4 import BeautifulSoup
 
 
 class NITFFormatter(Formatter):
-    """
-    NITF Formatter
+    """NITF Formatter for Superdesk
+
+    Format items to `NITF <https://iptc.org/standards/nitf/>`_ version *3.6*.
     """
 
     XML_ROOT = '<?xml version="1.0"?>'

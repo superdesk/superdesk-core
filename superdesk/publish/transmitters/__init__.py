@@ -8,8 +8,8 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import superdesk.publish.transmitters.ftp  # NOQA
-import superdesk.publish.transmitters.email  # NOQA
-import superdesk.publish.transmitters.odbc  # NOQA
-import superdesk.publish.transmitters.file_output  # NOQA
-import superdesk.publish.transmitters.http_push  # NOQA
+from .ftp import FTPPublishService  # NOQA
+from .email import EmailPublishService  # NOQA
+from .odbc import ODBCPublishService  # NOQA
+from .file_output import FilePublishService  # NOQA
+from .http_push import HTTPPushService  # NOQA

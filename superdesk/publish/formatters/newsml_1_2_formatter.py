@@ -8,10 +8,6 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-"""NewsML 1.2 Superdesk Formatter
-
-"""
-
 import time
 import logging
 import xml.etree.ElementTree as etree

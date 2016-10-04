@@ -8,11 +8,6 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-"""Superdesk file transmitter.
-
-It creates files on superdesk server in configured folder.
-"""
-
 from superdesk.publish.publish_service import PublishService
 from superdesk.publish import register_transmitter
 from superdesk.errors import PublishFileError
@@ -22,6 +17,11 @@ errors = [PublishFileError.fileSaveError().get_error_description()]
 
 
 class FilePublishService(PublishService):
+    """Superdesk file transmitter.
+
+    It creates files on superdesk server in configured folder.
+    """
+
     def _transmit(self, queue_item, subscriber):
         try:
             config = queue_item['destination']['config']

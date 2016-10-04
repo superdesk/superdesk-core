@@ -8,27 +8,6 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-"""Superdesk Email formatter.
-
-- Does not support any media output, it's for text items only.
-
-It uses templates to render items, those can be overriden to customize the output:
-
-- ``email_article_subject.txt``
-    email subject
-
-- ``email_article_body.txt``
-    email text content
-
-- ``email_article_body.html``
-    email html content
-
-It gets ``article`` with item data, can be used in templates like::
-
-   <strong>{{ article.headline }}</strong>
-
-"""
-
 from superdesk.publish.formatters import Formatter
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, FORMAT, FORMATS
 from flask import render_template
@@ -40,6 +19,27 @@ import json
 
 
 class EmailFormatter(Formatter):
+    """Superdesk Email formatter.
+
+    - Does not support any media output, it's for text items only.
+
+    It uses templates to render items, those can be overriden to customize the output:
+
+    - ``email_article_subject.txt``
+        email subject
+
+    - ``email_article_body.txt``
+        email text content
+
+    - ``email_article_body.html``
+        email html content
+
+    It gets ``article`` with item data, can be used in templates like::
+
+       <strong>{{ article.headline }}</strong>
+
+    """
+
     def format(self, article, subscriber, codes=None):
         formatted_article = deepcopy(article)
         pub_seq_num = superdesk.get_resource_service('subscribers').generate_sequence_number(subscriber)

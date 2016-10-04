@@ -128,7 +128,8 @@ def get_all_formatters():
     return formatters
 
 
-import superdesk.publish.formatters.nitf_formatter  # NOQA
-import superdesk.publish.formatters.ninjs_formatter  # NOQA
-import superdesk.publish.formatters.newsml_1_2_formatter  # NOQA
-import superdesk.publish.formatters.email_formatter  # NOQA
+from .nitf_formatter import NITFFormatter  # NOQA
+from .ninjs_formatter import NINJSFormatter  # NOQA
+from .newsml_1_2_formatter import NewsML12Formatter  # NOQA
+from .newsml_g2_formatter import NewsMLG2Formatter  # NOQA
+from .email_formatter import EmailFormatter  # NOQA

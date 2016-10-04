@@ -22,7 +22,15 @@ except ImportError:
 
 
 class FTPPublishService(PublishService):
-    """FTP Publish Service."""
+    """FTP Publish Service.
+
+    It creates files on configured FTP server.
+
+    :param string username: auth username
+    :param string password: auth password
+    :param path: server path
+    :param passive: use passive mode (on by default)
+    """
 
     def config_from_url(self, url):
         """Parse given url into ftp config. Used for tests.
