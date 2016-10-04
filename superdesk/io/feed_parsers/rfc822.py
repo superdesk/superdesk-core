@@ -407,7 +407,8 @@ class EMailRFC822FeedParser(EmailFeedParser):
                                 logger.error('Failed to find user for email {}'.format(mail_item.get('Username')))
                                 raise UserNotRegisteredException()
                             item['original_creator'] = user.get('_id')
-                            item['byline'] = user.get(BYLINE, user.get('display_name'))
+                            if BYLINE in user and user.get(BYLINE, ''):
+                                item['byline'] = user.get(BYLINE)
                             item[SIGN_OFF] = user.get(SIGN_OFF)
 
                             # attempt to match the given desk name against the defined desks

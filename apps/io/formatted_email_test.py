@@ -20,7 +20,7 @@ class RFC822JsonFormatter(TestCase):
 
     vocab = [{'_id': 'categories', 'items': [{'is_active': True, 'name': 'Domestic Sport', 'qcode': 's'}]}]
     desk = [{'_id': 1, 'name': 'Brisbane'}]
-    user = [{'_id': 1, 'email': 'mock@mail.com.au', 'display_name': 'A Mock Up', 'sign_off': 'TA'}]
+    user = [{'_id': 1, 'email': 'mock@mail.com.au', 'byline': 'A Mock Up', 'sign_off': 'TA'}]
 
     def setUp(self):
         self.app.data.insert('vocabularies', self.vocab)
