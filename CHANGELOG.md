@@ -6,9 +6,28 @@
 
 - Add `superdesk.cache` module.
 
+## [1.2] 2016-10-04
+
 ### Added
 
+- Add spike expiry config setting
+- Implement removing of content profiles
 - Add `NO_TAKES` (default: `False`) config to be able to turn off takes packages.
+
+### Fixed
+
+- Fix scheduled items should not block publishing of normal items.
+- Fix the query for genre in content filters
+- Fix upload after changes to crop sizes vocabulary
+- Fix saved search endpoint to return proper hateoas links
+- Fix deleting of routed ingest items
+- Use timezone for highlights queries
+- Fix publishing of package items when those should be just included
+- Fix only showing 25 desks
+- Fixes for NITF formatter
+- Fix fetching of media items - should not use content profiles
+- Fix associated items validation - refresh before validation
+- Fix query to return items for generating highlights
 
 ## [1.1] 2016-08-29
 
