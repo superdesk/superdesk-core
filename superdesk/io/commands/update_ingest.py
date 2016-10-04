@@ -196,18 +196,13 @@ class UpdateIngest(superdesk.Command):
                 update_provider.apply_async(expires=get_task_ttl(provider), kwargs=kwargs)
 
 
-@celery.task(soft_time_limit=1800, bind=True)
-def update_provider(self, provider, rule_set=None, routing_scheme=None):
+@celery.task(soft_time_limit=1800)
+def update_provider(provider, rule_set=None, routing_scheme=None):
     """Fetch items from ingest provider, ingest them into Superdesk and update the provider.
 
-    :param self:
-    :type self:
-    :param provider: Ingest Provider Details
-    :type provider: dict :py:class:`superdesk.io.ingest_provider_model.IngestProviderResource`
+    :param provider: Ingest Provider data
     :param rule_set: Translation Rule Set if one is associated with Ingest Provider.
-    :type rule_set: dict :py:class:`apps.rules.rule_sets.RuleSetsResource`
     :param routing_scheme: Routing Scheme if one is associated with Ingest Provider.
-    :type routing_scheme: dict :py:class:`apps.rules.routing_rules.RoutingRuleSchemeResource`
     """
     lock_name = get_lock_id('ingest', provider['name'], provider[superdesk.config.ID_FIELD])
 
