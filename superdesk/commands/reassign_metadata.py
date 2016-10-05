@@ -3,8 +3,7 @@ import superdesk
 
 
 class ReassignMetadataCommand(superdesk.Command):
-    '''
-
+    """
     Update metadata for a document in both Mongodb and ElasticSearch by supplying a GUID
 
     manage.py app:update:metadata
@@ -14,8 +13,8 @@ class ReassignMetadataCommand(superdesk.Command):
 
     -m source -v AAP (value is a string name value)
     -m anpa_category -v x (value is a qcode from vocabularies.json id=categories)
+    """
 
-    '''
     option_list = [
         superdesk.Option('--guid', '-i', dest='guids', required=True, action='append',
                          help='pass guids of articles to update a metadata item'),
