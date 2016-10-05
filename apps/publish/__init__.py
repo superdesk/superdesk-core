@@ -50,6 +50,7 @@ def init_app(app):
     superdesk.privilege(name='correct', label='Correction', description='Correction to a published content')
     superdesk.privilege(name='publish_queue', label='Publish Queue', description='User can update publish queue')
     superdesk.privilege(name='resend', label='Resending Stories', description='User can resend published stories')
+    superdesk.privilege(name='embargo', label='Embargo', description='User can set embargo date')
 
 
 def enqueue_content():
