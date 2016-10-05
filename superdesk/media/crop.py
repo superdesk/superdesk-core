@@ -65,8 +65,11 @@ class CropService():
     def _validate_values(self, crop):
         int_fields = ('CropLeft', 'CropTop', 'CropRight', 'CropBottom', 'width', 'height')
         for field in int_fields:
-            if field in crop and type(crop[field]) != int:
-                raise SuperdeskApiError.badRequestError('Invalid value for %s in renditions' % field)
+            if field in crop:
+                try:
+                    crop[field] = int(crop[field])
+                except (TypeError, ValueError):
+                    raise SuperdeskApiError.badRequestError('Invalid value for %s in renditions' % field)
 
     def _validate_poi(self, original, updates, crop_name):
         """Validate the crop point of interest in the renditions dictionary for the given crop
