@@ -3,14 +3,13 @@ import json
 
 
 class DeleteDocCommand(superdesk.Command):
-    '''
-
+    """
     Delete a Text Archive document from both Mongodb and ElasticSearch by supplying a GUID
 
     manage.py app:deletedoc
         -i urn:newsml:localhost:2016-09-05T11:54:49.869091:6bdbd02b-f6c5-46d3-bc53-4c1fc74252af
+    """
 
-    '''
     option_list = [
         superdesk.Option('--guid', '-i', dest='guids', action='append',
                          help='pass guids for articles to delete'),
