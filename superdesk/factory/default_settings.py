@@ -310,6 +310,7 @@ INSTALLED_APPS.extend([
     'apps.search_providers',
     'apps.feature_preview',
     'apps.workqueue',
+    'apps.activityreports'
 ])
 
 RESOURCE_METHODS = ['GET', 'POST']
