@@ -148,42 +148,7 @@ class NITFFormatter(Formatter):
         else:
             parent.text = (parent.text or '') + text
 
-    def html2nitf(self, html_elem, root_elem=None):
-        """Convert HTML elements to NITF compatible elements
-
-        :param ET.Element: HTML to clean/transform
-        :param ET.Element: None if its the root element (must be a <div>)
-        :return ET.Element: <div> element with NITF compliant children
-        """
-        if root_elem is None:
-            root_elem = html_elem
-            assert html_elem.tag == 'div'
-            # we change children of root element in place
-            for c in html_elem:
-                self.html2nitf(c, root_elem=root_elem)
-            return html_elem
-
-        try:
-            nitf_map = self.HTML2NITF[html_elem.tag]
-        except KeyError:
-            raise ValueError("Unhandled HTML element")
-        nitf_elem = nitf_map.get('nitf')
-        if nitf_elem is not None:
-            if nitf_elem == '':
-                raise ValueError("Element need to be removed")
-            html_elem.tag = nitf_elem
-
-        html_elem.attrib.update(nitf_map.get('attrib', {}))
-
-        if 'filter' in nitf_map:
-            nitf_map['filter'](root_elem, html_elem)
-
-        attr_allowed = self.NITF_ALLOWED_ATTR.get(html_elem.tag, ())
-
-        for attr in list(html_elem.attrib):
-            if attr not in attr_allowed:
-                del html_elem.attrib[attr]
-
+    def _parse_children(self, html_elem, root_elem):
         children = list(html_elem)
         idx = 0
         while idx < len(children):
@@ -209,7 +174,7 @@ class NITFFormatter(Formatter):
                         self._textToParent(html_elem, children, idx, child.tail)
 
                 # we move elem children to parent
-                for grandchild_idx, grandchild in grandchildren:
+                for grandchild_idx, grandchild in enumerate(grandchildren):
                     insert_idx = idx + grandchild_idx
                     html_elem.insert(insert_idx, grandchild)
                     children.insert(insert_idx, grandchild)
@@ -223,6 +188,42 @@ class NITFFormatter(Formatter):
             idx += 1
 
         return html_elem
+
+    def html2nitf(self, html_elem, root_elem=None):
+        """Convert HTML elements to NITF compatible elements
+
+        :param ET.Element: HTML to clean/transform
+        :param ET.Element: None if its the root element (must be a <div>)
+        :return ET.Element: <div> element with NITF compliant children
+        """
+        if root_elem is None:
+            root_elem = html_elem
+            assert html_elem.tag == 'div'
+            # we change children of root element in place
+            return self._parse_children(html_elem, root_elem)
+
+        try:
+            nitf_map = self.HTML2NITF[html_elem.tag]
+        except KeyError:
+            raise ValueError("Unhandled HTML element")
+        nitf_elem = nitf_map.get('nitf')
+        if nitf_elem is not None:
+            if nitf_elem == '':
+                raise ValueError("Element need to be removed")
+            html_elem.tag = nitf_elem
+
+        html_elem.attrib.update(nitf_map.get('attrib', {}))
+
+        if 'filter' in nitf_map:
+            nitf_map['filter'](root_elem, html_elem)
+
+        attr_allowed = self.NITF_ALLOWED_ATTR.get(html_elem.tag, ())
+
+        for attr in list(html_elem.attrib):
+            if attr not in attr_allowed:
+                del html_elem.attrib[attr]
+
+        return self._parse_children(html_elem, root_elem)
 
     def _format_tobject(self, article, head):
         return SubElement(head, 'tobject', {'tobject.type': 'news'})
