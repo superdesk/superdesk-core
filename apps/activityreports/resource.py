@@ -1,5 +1,6 @@
 from superdesk.resource import Resource
 
+
 class ActivityReportResource(Resource):
     """Activity Report schema
 
