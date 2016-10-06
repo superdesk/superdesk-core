@@ -7,12 +7,12 @@ class ActivityReportResource(Resource):
 
     schema = {
         'operation': {
-            'type': 'list',
+            'type': 'string',
             'required': True,
             'allowed': ['publish', 'correct']
         },
         'date': {
-            'type': 'date',
+            'type': 'datetime',
             'required': True
         },
         'desk': Resource.rel('desks', nullable=True),
