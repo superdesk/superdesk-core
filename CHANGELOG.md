@@ -6,6 +6,10 @@
 
 - Add `superdesk.cache` module.
 
+### Changed
+
+- Moved module `superdesk.factory.default_settings` to `superdesk.default_settings`
+
 ## [1.2] 2016-10-04
 
 ### Added

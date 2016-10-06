@@ -23,7 +23,7 @@ from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE_TYPE, TAKES_
 from apps.archive.common import insert_into_versions
 from apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.utc import utcnow
-from superdesk.factory.default_settings import VERSION
+from superdesk.default_settings import VERSION
 from apps.templates.content_templates import render_content_template_by_id
 
 logger = logging.getLogger(__name__)
