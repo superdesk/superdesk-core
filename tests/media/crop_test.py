@@ -119,6 +119,16 @@ class CropTestCase(TestCase):
         self.assertEqual(ex.message, 'Original file couldn\'t be found')
         self.assertEqual(ex.status_code, 400)
 
+    def test_validate_crop_converts_to_int(self):
+        crop = {'width': '300', 'height': 200}
+        self.service._validate_values(crop)
+        self.assertEqual(300, crop['width'])
+        self.assertEqual(200, crop['height'])
+
+        with self.assertRaises(SuperdeskApiError) as context:
+            self.service._validate_values({'width': 'foo'})
+            self.assertEqual(context.exception.message, 'Invalid value for width in renditions')
+
     @mock.patch('superdesk.media.crop.crop_image', return_value=(False, 'test'))
     def test_add_crop_raises_error(self, crop_name):
         original = {
