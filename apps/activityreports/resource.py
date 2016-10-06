@@ -12,7 +12,7 @@ class ActivityReportResource(Resource):
             'allowed': ['publish', 'correct']
         },
         'date': {
-            'type': 'datetime',
+            'type': 'date',
             'required': True
         },
         'desk': Resource.rel('desks', nullable=True),
