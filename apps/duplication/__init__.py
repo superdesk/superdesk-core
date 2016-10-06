@@ -10,11 +10,14 @@
 
 
 import logging
+
+import superdesk
+
 from .archive_copy import CopyService, CopyResource
 from .archive_duplication import DuplicateService, DuplicateResource
 from .archive_fetch import FetchResource, FetchService
 from .archive_move import MoveResource, MoveService
-import superdesk
+from .archive_translate import TranslateService, TranslateResource
 
 
 logger = logging.getLogger(__name__)
@@ -29,6 +32,10 @@ def init_app(app):
     service = DuplicateService(endpoint_name, backend=superdesk.get_backend())
     DuplicateResource(endpoint_name, app=app, service=service)
 
+    endpoint_name = 'translate'
+    service = TranslateService(endpoint_name, backend=superdesk.get_backend())
+    TranslateResource(endpoint_name, app=app, service=service)
+
     endpoint_name = 'copy'
     service = CopyService(endpoint_name, backend=superdesk.get_backend())
     CopyResource(endpoint_name, app=app, service=service)
@@ -41,5 +48,7 @@ def init_app(app):
     superdesk.privilege(name='move', label='Move Content to another desk', description='Move Content to another desk')
     superdesk.privilege(name='duplicate', label='Duplicate Content within a Desk',
                         description='Duplicate Content within a Desk')
+    superdesk.privilege(name='translate', label='Translate Content within a Desk',
+                        description='Translate Content within a Desk')
 
     superdesk.intrinsic_privilege('copy', method=['POST'])
