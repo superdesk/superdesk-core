@@ -1,6 +1,6 @@
 import superdesk
-from apps.reports.resource import ActivityReportResource
-from apps.reports.service import ActivityReportService
+from .resource import ActivityReportResource
+from .service import ActivityReportService
 
 
 def init_app(app):
