@@ -13,6 +13,7 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, CONTENT_STATE, PUBLISH_SCHEDULE, EMBARGO
 
 from apps.archive.common import set_sign_off, ITEM_OPERATION
+from apps.archive.archive import update_word_count
 
 from .common import BasePublishService, BasePublishResource, ITEM_PUBLISH
 
@@ -41,6 +42,7 @@ class ArchivePublishService(BasePublishService):
         updates[ITEM_OPERATION] = ITEM_PUBLISH
         super().on_update(updates, original)
         set_sign_off(updates, original)
+        update_word_count(updates)
 
     def set_state(self, original, updates):
         """Set the state of the document to schedule if the publish_schedule is specified.
