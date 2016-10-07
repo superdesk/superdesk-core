@@ -14,6 +14,7 @@ from superdesk.publish.formatters.nitf_formatter import NITFFormatter
 from superdesk.publish.formatters import Formatter
 from superdesk.publish import init_app
 import xml.etree.ElementTree as etree
+from textwrap import dedent
 
 
 @mock.patch('superdesk.publish.subscribers.SubscribersService.generate_sequence_number', lambda self, subscriber: 1)
@@ -60,17 +61,49 @@ class NitfFormatterTest(TestCase):
         self.assertEqual(nitf_xml.find('head/docdata/urgency').get('ed-urg'), '2')
 
     def test_html2nitf(self):
-        html = etree.fromstring(
-            '<div><p><strong>this text should be <i>modified</i></strong> so '
-            '<span>[this should not be removed]</span> unkown <em unknown_attribute="toto">'
-            'elements</em> and <a bad_attribute="to_remove">attributes</a> are <h6>'
-            'removed</h6></p></div>')
+        html = etree.fromstring(dedent("""\
+            <div>
+                <unknown>
+                    <p>
+                        this should be still here
+                    </p>
+                </unknown>
+                <p>
+                    <strong>this text should be
+                        <i>modified</i>
+                    </strong>
+                    so
+                    <span>[this should not be removed]</span>
+                    unkown
+                    <em unknown_attribute="toto">elements</em>
+                    and
+                    <a bad_attribute="to_remove">attributes</a>
+                    are
+                    <h6>removed</h6>
+                </p>
+            </div>
+            """))
 
         nitf = self.formatter.html2nitf(html)
-        expected = ('<div><p><em class="bold">this text should be <em class="italic">modified</em>'
-                    '</em> so [this should not be removed] unkown <em class="italic">elements</em>'
-                    ' and <a>attributes</a> are <hl2>removed</hl2></p></div>')
-        self.assertEqual(etree.tostring(nitf, 'unicode'), expected)
+
+        expected = dedent("""\
+            <div>
+                    <p>
+                        this should be still here
+                    </p>
+                <p>
+                    <em class="bold">this text should be
+                        <em class="italic">modified</em>
+                    </em>
+                    so [this should not be removed] unkown
+                    <em class="italic">elements</em>
+                    and
+                    <a>attributes</a>
+                    are
+                    <hl2>removed</hl2>
+                </p>
+            </div>""").replace('\n', '').replace(' ', '')
+        self.assertEqual(etree.tostring(nitf, 'unicode').replace('\n', '').replace(' ', ''), expected)
 
     def test_company_codes(self):
         article = {
