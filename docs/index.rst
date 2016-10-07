@@ -16,6 +16,7 @@ Contents:
     ingest
     publish
     settings
+    schema
     cache
 
 .. toctree::
