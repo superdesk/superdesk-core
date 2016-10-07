@@ -129,12 +129,6 @@ class IngestProviderResource(Resource):
                     'type': 'boolean'
                 }
             },
-            # pass through indicates that he content ingested by this ingest provider is not curated in the system, it
-            # will be auto published without change.
-            'pass_through': {
-                'type': 'boolean',
-                'default': False
-            },
         }
 
         self.item_methods = ['GET', 'PATCH', 'DELETE']
