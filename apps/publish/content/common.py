@@ -383,6 +383,8 @@ class BasePublishService(BaseService):
 
             metadata_tobe_copied = self.takes_package_service.fields_for_creating_take.copy()
             metadata_tobe_copied.extend([PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, 'byline', EMBARGO])
+            if 'auto_publish' in updates_of_take_to_be_published:
+                metadata_tobe_copied.extend(['auto_publish'])
             updated_take = original_of_take_to_be_published.copy()
             updated_take.update(updates_of_take_to_be_published)
             metadata_from = updated_take
