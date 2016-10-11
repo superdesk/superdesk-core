@@ -98,8 +98,10 @@ def enqueue_item(published_item):
             resolve_document_version(document=item_updates, resource=ARCHIVE,
                                      method='PATCH',
                                      latest_doc={config.VERSION: published_item[config.VERSION]})
+
             # update the archive collection
-            archive_service.patch(published_item['item_id'], item_updates)
+            archive_item = archive_service.find_one(req=None, _id=published_item['item_id'])
+            archive_service.system_update(published_item['item_id'], item_updates, archive_item)
             # insert into version.
             insert_into_versions(published_item['item_id'], doc=None)
             # import to legal archive

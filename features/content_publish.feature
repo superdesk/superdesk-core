@@ -554,7 +554,7 @@ Feature: Content Publishing
       {"_issues": {"validator exception": "500: Failed to publish the item: PublishQueueError Error 9009 - Item could not be queued"}}
       """
 
-    @auth @test
+    @auth
     Scenario: Schedule a user content publish
       Given empty "subscribers"
       And "desks"
@@ -595,6 +595,23 @@ Feature: Content Publishing
       {"_current_version": 2, "state": "scheduled", "operation": "publish"}
       """
       And we get expiry for schedule and embargo content 60 minutes after "#archive_publish.publish_schedule#"
+      When we get "/published"
+      Then we get list with 2 items
+      """
+      {
+        "_items": [
+          {
+            "_id": "123", "type": "text", "state": "scheduled",
+            "_current_version": 2, "operation": "publish", "queue_state": "pending"
+          },
+          {
+            "_id": "#archive.123.take_package#", "type": "composite",
+            "state": "scheduled", "_current_version": 2, "operation": "publish",
+            "queue_state": "pending"
+          }
+        ]
+      }
+      """
       When we enqueue published
       When we get "/publish_queue"
       Then we get list with 0 items
@@ -611,10 +628,13 @@ Feature: Content Publishing
       {
         "_items": [
           {
-            "_id": "123", "type": "text", "state": "published", "_current_version": 3
+            "_id": "123", "type": "text", "state": "published",
+            "_current_version": 3, "operation": "publish", "queue_state": "queued_not_transmitted"
           },
           {
-            "_id": "#archive.123.take_package#", "type": "composite", "state": "published", "_current_version": 3
+            "_id": "#archive.123.take_package#", "type": "composite",
+            "state": "published", "_current_version": 3, "operation": "publish",
+            "queue_state": "queued"
           }
         ]
       }
