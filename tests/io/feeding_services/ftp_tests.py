@@ -36,11 +36,11 @@ class FTPTestCase(unittest.TestCase):
         config['dest_path'] = tempfile.mkdtemp(prefix=PREFIX)
         provider = {'config': config}
 
-        items = service._update(provider)
+        items = service._update(provider, {})
         self.assertEqual(266, len(items))
 
         provider['last_updated'] = utcnow()
-        self.assertEqual(0, len(service._update(provider)))
+        self.assertEqual(0, len(service._update(provider, {})))
 
         self.assertTrue(os.path.isdir(provider['config']['dest_path']))
         self.assertEqual(266, len(os.listdir(provider['config']['dest_path'])))

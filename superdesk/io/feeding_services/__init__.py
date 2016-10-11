@@ -34,24 +34,28 @@ class FeedingService(metaclass=ABCMeta):
     """
 
     @abstractmethod
-    def _update(self, provider):
+    def _update(self, provider, update):
         """
         Subclasses must override this method and get items from the provider as per the configuration.
 
         :param provider: Ingest Provider Details.
                 .. seealso:: :class: `superdesk.io.ingest_provider_model.IngestProviderResource`
         :type provider: dict
+        :param update: Any update that is required on provider.
+        :type update: dict
         :return: a list of articles which can be saved in Ingest Collection.
         """
 
         raise NotImplementedError()
 
-    def update(self, provider):
+    def update(self, provider, update):
         """
         Clients consuming Ingest Services should invoke this to get items from the provider.
 
         :param provider: Ingest Provider Details.
         :type provider: dict :py:class: `superdesk.io.ingest_provider_model.IngestProviderResource`
+        :param update: Any update that is required on provider.
+        :type update: dict
         :return: a list of articles which can be saved in Ingest Collection.
         :raises SuperdeskApiError.internalError if Provider is closed
         :raises SuperdeskIngestError if failed to get items from provider
@@ -66,7 +70,7 @@ class FeedingService(metaclass=ABCMeta):
             raise SuperdeskApiError.internalError('Ingest Provider is closed')
         else:
             try:
-                return self._update(provider) or []
+                return self._update(provider, update) or []
             except SuperdeskIngestError as error:
                 self.close_provider(provider, error)
                 raise error

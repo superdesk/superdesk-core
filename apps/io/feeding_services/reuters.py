@@ -42,7 +42,7 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
 
     DATE_FORMAT = '%Y.%m.%d.%H.%M'
 
-    def _update(self, provider):
+    def _update(self, provider, update):
         updated = utcnow()
 
         last_updated = provider.get('last_updated')

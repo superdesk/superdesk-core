@@ -128,7 +128,7 @@ class UpdateMethodTestCase(RssIngestServiceTest):
             }
         }
 
-        self.instance._update(fake_provider)
+        self.instance._update(fake_provider, {})
 
         self.assertEqual(
             self.instance.auth_info,
@@ -139,7 +139,7 @@ class UpdateMethodTestCase(RssIngestServiceTest):
         self.instance._fetch_data.side_effect = FakeIngestApiError
         try:
             with self.assertRaises(FakeIngestApiError):
-                self.instance._update({})
+                self.instance._update({}, {})
         except:
             self.fail('Expected exception type was not raised.')
 
@@ -147,7 +147,7 @@ class UpdateMethodTestCase(RssIngestServiceTest):
         feed_parse.side_effect = Exception("Parse error!")
         try:
             with self.assertRaises(FakeParseError):
-                self.instance._update({})
+                self.instance._update({}, {})
         except:
             self.fail('Expected exception type was not raised.')
 
@@ -178,7 +178,7 @@ class UpdateMethodTestCase(RssIngestServiceTest):
         self.instance._create_item.side_effect = [item_1, item_2]
 
         returned = self.instance._update(
-            {'last_updated': datetime(2015, 2, 25, 14, 0, 0)}
+            {'last_updated': datetime(2015, 2, 25, 14, 0, 0)}, {}
         )
 
         self.assertEqual(len(returned), 1)
@@ -203,7 +203,7 @@ class UpdateMethodTestCase(RssIngestServiceTest):
         self.instance._create_item.return_value = item
 
         returned = self.instance._update(
-            {'last_updated': datetime(2015, 2, 25, 15, 0, 0)}
+            {'last_updated': datetime(2015, 2, 25, 15, 0, 0)}, {}
         )
 
         self.assertEqual(len(returned), 1)
@@ -239,7 +239,7 @@ class UpdateMethodTestCase(RssIngestServiceTest):
         self.instance._create_package = MagicMock(return_value=fake_package)
 
         returned = self.instance._update(
-            {'last_updated': datetime(1965, 2, 24)}
+            {'last_updated': datetime(1965, 2, 24)}, {}
         )
 
         self.instance._create_package.assert_called_with(
