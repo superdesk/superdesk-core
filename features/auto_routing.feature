@@ -970,10 +970,12 @@ Feature: Auto Routing
         """
         {"_items": [
           {
-              "headline": "ASIA:Samsung sells defence, petrochemical units", "type": "text"
+              "headline": "ASIA:Samsung sells defence, petrochemical units", "type": "text",
+              "auto_publish": true
           },
           {
-              "headline": "ASIA:Samsung sells defence, petrochemical units", "type": "composite"
+              "headline": "ASIA:Samsung sells defence, petrochemical units", "type": "composite",
+              "auto_publish": true
           }
         ]}
         """
