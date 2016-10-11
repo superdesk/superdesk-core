@@ -40,7 +40,7 @@ class TestFeedingService(HTTPFeedingService):
     NAME = 'test'
     ERRORS = []
 
-    def _update(self, provider):
+    def _update(self, provider, update):
         pass
 
 

@@ -220,7 +220,7 @@ def update_provider(self, provider, rule_set=None, routing_scheme=None):
 
         update = {LAST_UPDATED: utcnow()}
 
-        for items in feeding_service.update(provider):
+        for items in feeding_service.update(provider, update):
             ingest_items(items, provider, feeding_service, rule_set, routing_scheme)
             stats.incr('ingest.ingested_items', len(items))
             if items:

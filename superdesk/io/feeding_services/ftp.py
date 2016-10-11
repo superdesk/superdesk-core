@@ -23,6 +23,7 @@ from superdesk.etree import etree
 from superdesk.io.feeding_services import FeedingService
 from superdesk.errors import IngestFtpError
 from superdesk.ftp import ftp_connect
+from superdesk.io.commands.update_ingest import LAST_UPDATED
 
 try:
     from urllib.parse import urlparse
@@ -58,9 +59,10 @@ class FTPFeedingService(FeedingService):
             'path': url_parts.path.lstrip('/'),
         }
 
-    def _update(self, provider):
+    def _update(self, provider, update):
         config = provider.get('config', {})
         last_updated = provider.get('last_updated')
+        crt_last_updated = None
 
         if 'dest_path' not in config:
             config['dest_path'] = tempfile.mkdtemp(prefix='superdesk_ingest_')
@@ -79,6 +81,8 @@ class FTPFeedingService(FeedingService):
                         item_last_updated = datetime.strptime(facts['modify'], self.DATE_FORMAT).replace(tzinfo=utc)
                         if item_last_updated < last_updated:
                             continue
+                        elif not crt_last_updated or item_last_updated > crt_last_updated:
+                            crt_last_updated = item_last_updated
 
                     local_file_path = os.path.join(config['dest_path'], filename)
                     try:
@@ -90,6 +94,7 @@ class FTPFeedingService(FeedingService):
                                 logger.exception('Exception retrieving from FTP server')
                                 continue
                     except FileExistsError:
+                        logger.exception('Exception retrieving from FTP server, file already exists')
                         continue
 
                     registered_parser = self.get_feed_parser(provider)
@@ -105,6 +110,8 @@ class FTPFeedingService(FeedingService):
                         parsed = [parsed]
 
                     items.append(parsed)
+            if crt_last_updated:
+                update[LAST_UPDATED] = crt_last_updated
             return items
         except IngestFtpError:
             raise

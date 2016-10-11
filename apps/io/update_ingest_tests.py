@@ -27,7 +27,7 @@ from superdesk.utc import utcnow
 
 class TestProviderService(FeedingService):
 
-    def _update(self, provider):
+    def _update(self, provider, update):
         return []
 
 
@@ -111,7 +111,7 @@ class UpdateIngestTest(TestCase):
 
         with assert_raises(SuperdeskApiError) as error_context:
             aap = self._get_provider_service(provider)
-            aap.update(provider)
+            aap.update(provider, {})
         ex = error_context.exception
         self.assertTrue(ex.status_code == 500)
 
@@ -126,7 +126,7 @@ class UpdateIngestTest(TestCase):
         self.assertTrue(provider.get('is_closed'))
 
     def test_ingest_provider_calls_close_provider(self):
-        def mock_update(provider):
+        def mock_update(provider, update):
             raise ProviderError.anpaError()
 
         provider_name = 'AAP'
@@ -136,7 +136,7 @@ class UpdateIngestTest(TestCase):
         provider_service.provider = provider
         provider_service._update = mock_update
         with assert_raises(ProviderError):
-            provider_service.update(provider)
+            provider_service.update(provider, {})
         provider = self._get_provider(provider_name)
         self.assertTrue(provider.get('is_closed'))
 

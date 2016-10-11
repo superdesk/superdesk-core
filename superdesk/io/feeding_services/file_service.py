@@ -39,7 +39,7 @@ class FileFeedingService(FeedingService):
         ParserError.parseFileError().get_error_description()
     ]
 
-    def _update(self, provider):
+    def _update(self, provider, update):
         self.provider = provider
         self.path = provider.get('config', {}).get('path', None)
 

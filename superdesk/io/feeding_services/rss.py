@@ -109,7 +109,7 @@ class RSSFeedingService(FeedingService):
 
         return url
 
-    def _update(self, provider):
+    def _update(self, provider, update):
         """
         Check data provider for data updates and returns new items (if any).
 
