@@ -149,13 +149,13 @@ class NITFFormatter(Formatter):
         else:
             parent.text = (parent.text or '') + text
 
-    def _parse_children(self, html_elem, root_elem):
+    def _parse_children(self, html_elem, root_elem, attr_remove):
         children = list(html_elem)
         idx = 0
         while idx < len(children):
             child = children[idx]
             try:
-                self.html2nitf(child, root_elem=root_elem)
+                self.html2nitf(child, root_elem=root_elem, attr_remove=attr_remove)
             except ValueError:
                 # the element is unknown
                 # we need to save its text and tail,
@@ -190,18 +190,19 @@ class NITFFormatter(Formatter):
 
         return html_elem
 
-    def html2nitf(self, html_elem, root_elem=None):
+    def html2nitf(self, html_elem, root_elem=None, attr_remove=None):
         """Convert HTML elements to NITF compatible elements
 
         :param ET.Element: HTML to clean/transform
         :param ET.Element: None if its the root element (must be a <div>)
+        :param list attr_remove: attributes to remove if present
         :return ET.Element: <div> element with NITF compliant children
         """
         if root_elem is None:
             root_elem = html_elem
             assert html_elem.tag == 'div'
             # we change children of root element in place
-            return self._parse_children(html_elem, root_elem)
+            return self._parse_children(html_elem, root_elem, attr_remove)
 
         try:
             nitf_map = self.HTML2NITF[html_elem.tag]
@@ -212,6 +213,11 @@ class NITFFormatter(Formatter):
             if nitf_elem == '':
                 raise ValueError("Element need to be removed")
             html_elem.tag = nitf_elem
+
+        if attr_remove is not None:
+            for attr in attr_remove:
+                if attr in html_elem.attrib:
+                    del html_elem.attrib[attr]
 
         html_elem.attrib.update(nitf_map.get('attrib', {}))
 
@@ -224,7 +230,7 @@ class NITFFormatter(Formatter):
             if attr not in attr_allowed:
                 del html_elem.attrib[attr]
 
-        return self._parse_children(html_elem, root_elem)
+        return self._parse_children(html_elem, root_elem, attr_remove)
 
     def _format_tobject(self, article, head):
         return SubElement(head, 'tobject', {'tobject.type': 'news'})
