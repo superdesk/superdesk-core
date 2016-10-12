@@ -13,8 +13,9 @@ Contents:
 .. toctree::
     :maxdepth: 3
 
-    ingest
+    architecture
     publish
+    ingest
     settings
     schema
     cache

@@ -47,8 +47,7 @@ class HTTPPushService(PublishService):
     * Publish package items
     * Publish the package item
 
-    Publishing assets
-    ^^^^^^^^^^^^^^^^^
+    **Publishing assets**
 
     The ``POST`` request to the assets ``URL`` has the ``multipart/data-form`` content type and should
     contain the following fields:
