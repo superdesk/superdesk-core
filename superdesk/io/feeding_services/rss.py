@@ -147,10 +147,13 @@ class RSSFeedingService(FeedingService):
         field_aliases = config.get('field_aliases')
 
         for entry in data.entries:
-            t_entry_updated = utcfromtimestamp(timegm(entry.updated_parsed))
-
-            if t_entry_updated <= t_provider_updated:
-                continue
+            try:
+                t_entry_updated = utcfromtimestamp(timegm(entry.updated_parsed))
+                if t_entry_updated <= t_provider_updated:
+                    continue
+            except AttributeError:
+                # missing updated info, so better ingest it
+                pass
 
             item = self._create_item(entry, field_aliases, provider.get('source', None))
             self.add_timestamps(item)
