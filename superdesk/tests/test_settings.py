@@ -256,6 +256,7 @@ INSTALLED_APPS.extend([
 
     'apps.content_types',
     'apps.keywords',
+    'apps.activityreports'
 ])
 
 RESOURCE_METHODS = ['GET', 'POST']
