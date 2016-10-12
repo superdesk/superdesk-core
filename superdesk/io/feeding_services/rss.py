@@ -271,6 +271,7 @@ class RSSFeedingService(FeedingService):
                 f.name_in_data in field_aliases)
         )
 
+        utc_now = datetime.utcnow()
         for field in fields_to_consider:
             data_field_name = field_aliases.get(
                 field.name_in_data, field.name_in_data
@@ -279,6 +280,7 @@ class RSSFeedingService(FeedingService):
 
             if (field.type is datetime) and field_value:
                 field_value = utcfromtimestamp(timegm(field_value))
+                field_value = utc_now if field_value > utc_now else field_value
 
             item[field.name] = field_value
 
