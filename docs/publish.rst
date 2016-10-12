@@ -1,65 +1,120 @@
 Publishing
 ==========
 
-NINJS Format
-------------
+Publish types
+-------------
 
-The schema we use for the ninjs format is an extension of `the standard ninjs schema <http://www.iptc.org/std/ninjs/ninjs-schema_1.1.json>`_.
+There are multiple types of publishing, which correcponds with item life cycle:
 
-Changes from ninjs schema:
+- *publish*
+- *correct*
+- *kill*
 
-* ``uri`` was replaced by ``guid``: ``uri`` should be the resource identifier on the web but since the item was not published yet it can't be determined at this point
-* added ``priority`` field
-* added ``service`` field
-* added ``slugline`` field
-* added ``keywords`` field
+For each there is specific resource and service:
 
-Associations dictionary may contain entire items like in this ninjs example: http://dev.iptc.org/ninjs-Examples-3
-or just the item ``guid`` and ``type``. In the latest case the items are sent separately before the package item.
+.. module:: apps.publish.content
 
-Superdesk Schema in :download:`JSON <./superdesk-ninjs-schema.json>`.
+.. class:: apps.publish.content.publish.ArchivePublishService
 
-HTTP Push
+.. class:: apps.publish.content.correct.CorrectPublishService
+
+.. class:: apps.publish.content.kill.KillPublishService
+
+all inheriting from base publish service:
+
+.. class:: apps.publish.content.common.BasePublishService
+
+These in general handle validation and update item metadata.
+
+Validation
+----------
+
+When publishing starts, it first validates the item based on its content profile definition
+or in case content profile is missing it will get validators from db.
+There are different validators for different content types (text, package, picture, etc)
+and publish type.
+
+Items in packages are also validated if were not published before. Package is considered not
+valid if any of its item is not valid.
+
+Schema definition
+^^^^^^^^^^^^^^^^^
+
+When using content profiles or validators, you specify a schema for each field like::
+
+    "headline": {
+        "type": "string",
+        "required": true,
+        "maxlength": 140,
+        "minlength": 10
+    }
+
+More info about validation rules in `Eve docs <http://python-eve.org/config.html#schema-definition>`_.
+
+Published
 ---------
 
-The HTTP push service publishes items to the resource service by ``POST`` request. For media items it first publishes the media files to the assets service.
+When item is valid, it gets some metadata updates:
 
-For text items the publish sequence is like this:
+- ``state`` is set based on action
+- ``_current_version`` is incremented
+- ``version_creator`` is set to current user
 
-* POST to resource service the text item
+These changes are saved to ``archive`` collection and ``published`` collection.
+On client those items are not visible anymore in monitoring, only in desk output.
 
-For media items the publish sequence is like this:
+Publish queue
+-------------
 
-* Publish media files: for each file from renditions perform the following steps:
+New items from ``published`` collection are further processed via async task:
 
-    * Verify if the rendition media file exists in the assets service (``GET assets/{media_id}``)
-    * If not, upload the rendition media file to the assets service via ``POST`` request
+.. autofunction:: apps.publish.enqueue.enqueue_published
 
-* Publish the item
+Enqueueing is done via:
 
-For package items with embedded items config on there is only one publish request to the resource service.
+.. autoclass:: apps.publish.enqueue.enqueue_service.EnqueueService
 
-For package items without embedded items the publish sequence is like this:
+    .. automethod:: enqueue_item
 
-* Publish package items
-* Publish the package item
+There it finds all subscribers that should recieve the item and if any it will format the item and queue transmission.
 
+Output Formats
+--------------
 
-Publishing of an asset
-----------------------
+.. module:: superdesk.publish.formatters
 
-The ``POST`` request to the assets ``URL`` has the ``multipart/data-form`` content type and should contain the following fields:
+.. autoclass:: NINJSFormatter
 
-``media_id``
-    URI string identifing the rendition.
+Superdesk NINJS Schema in :download:`JSON <superdesk-ninjs-schema.json>`.
 
-``media``
-    ``base64`` encoded file content. See `Eve documentation <http://python-eve.org/features.html#file-storage>`_.
+.. autoclass:: NITFFormatter
 
-``mime_type``
-    mime type, eg. ``image/jpeg``.
+.. autoclass:: NewsML12Formatter
 
-``filemeta``
-    metadata extracted from binary. Differs based on binary type, eg. could be exif for pictures.
+.. autoclass:: NewsMLG2Formatter
 
-The response status code is checked - on success it should be ``201 Created``.
+.. autoclass:: EmailFormatter
+
+Transmission
+------------
+
+Last task is to send items to subscribers, that's handled via another async task:
+
+.. autofunction:: superdesk.publish.transmit
+
+This task runs every 10s.
+
+Content Transmitters
+--------------------
+
+.. module:: superdesk.publish.transmitters
+
+.. autoclass:: HTTPPushService
+
+.. autoclass:: FTPPublishService
+
+.. autoclass:: FilePublishService
+
+.. autoclass:: EmailPublishService
+
+.. autoclass:: ODBCPublishService

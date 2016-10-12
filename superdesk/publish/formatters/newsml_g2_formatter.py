@@ -8,20 +8,23 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import xml.etree.ElementTree as etree
-from xml.etree.ElementTree import SubElement
+"""NewsML G2 Superdesk formatter"""
 
+import superdesk
+import xml.etree.ElementTree as etree
+
+from bs4 import BeautifulSoup
+from xml.etree.ElementTree import SubElement
 from flask import current_app as app
+
 from superdesk.publish.formatters import Formatter
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, FORMATS, FORMAT
 from superdesk.utc import utcnow
-import superdesk
 from superdesk.errors import FormatterError
 from superdesk.publish.formatters.nitf_formatter import NITFFormatter
-from apps.archive.common import ARCHIVE, get_utc_schedule
 from superdesk.metadata.packages import PACKAGE_TYPE, REFS, RESIDREF, ROLE, GROUPS, GROUP_ID, ID_REF
-from bs4 import BeautifulSoup
 from superdesk.filemeta import get_filemeta
+from apps.archive.common import ARCHIVE, get_utc_schedule
 
 
 def get_newsml_provider_id():
@@ -29,6 +32,8 @@ def get_newsml_provider_id():
 
 
 class NewsMLG2Formatter(Formatter):
+    """NewsML G2 Formatter"""
+
     XML_ROOT = '<?xml version="1.0" encoding="UTF-8"?>'
     now = utcnow()
     string_now = now.strftime('%Y-%m-%dT%H:%M:%S.0000Z')

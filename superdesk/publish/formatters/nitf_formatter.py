@@ -20,8 +20,9 @@ from bs4 import BeautifulSoup
 
 
 class NITFFormatter(Formatter):
-    """
-    NITF Formatter
+    """NITF Formatter for Superdesk
+
+    Format items to `NITF <https://iptc.org/standards/nitf/>`_ version *3.6*.
     """
 
     XML_ROOT = '<?xml version="1.0"?>'

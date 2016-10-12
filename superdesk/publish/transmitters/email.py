@@ -18,7 +18,12 @@ errors = [PublishEmailError.emailError().get_error_description()]
 
 
 class EmailPublishService(PublishService):
-    """Email Publish Service."""
+    """Email Transmitter
+
+    Works only with email formatter.
+
+    :param recipients: email addresses separated by ``;``
+    """
 
     def _transmit(self, queue_item, subscriber):
         config = queue_item.get('destination', {}).get('config', {})

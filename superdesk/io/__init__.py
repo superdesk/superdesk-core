@@ -21,15 +21,15 @@ from superdesk.io.register import registered_feeding_services, allowed_feeding_s
 from superdesk.io.register import feeding_service_errors, publish_errors  # noqa
 
 from superdesk.io.commands.add_provider import AddProvider  # noqa
-from superdesk.io.commands.update_ingest import UpdateIngest
+from superdesk.io.commands.update_ingest import UpdateIngest, update_provider  # noqa
 from superdesk.io.commands.remove_expired_content import RemoveExpiredContent
+from superdesk.io.ingest_provider_model import IngestProviderResource, IngestProviderService
 
 
 logger = logging.getLogger(__name__)
 
 
 def init_app(app):
-    from .ingest_provider_model import IngestProviderResource, IngestProviderService
     endpoint_name = 'ingest_providers'
     service = IngestProviderService(endpoint_name, backend=superdesk.get_backend())
     IngestProviderResource(endpoint_name, app=app, service=service)
@@ -103,6 +103,7 @@ def register_feed_parser(parser_name, parser_class):
 
 @celery.task(soft_time_limit=15)
 def update_ingest():
+    """Check ingest providers and trigger an update when appropriate."""
     UpdateIngest().run()
 
 

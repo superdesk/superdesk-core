@@ -14,9 +14,9 @@ from unittest import mock
 import xml.etree.ElementTree as etree
 
 from apps.publish import init_app
-from apps.publish.formatters.newsml_g2_formatter import NewsMLG2Formatter
 from superdesk.tests import TestCase
 from superdesk.utc import utcnow
+from superdesk.publish.formatters import NewsMLG2Formatter
 
 
 @mock.patch('superdesk.publish.subscribers.SubscribersService.generate_sequence_number', lambda self, subscriber: 1)

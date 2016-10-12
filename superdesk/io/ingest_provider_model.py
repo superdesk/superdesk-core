@@ -30,6 +30,29 @@ logger = logging.getLogger(__name__)
 
 
 class IngestProviderResource(Resource):
+    """Ingest provider model
+
+    :param name: provider name
+    :param source: populates item source field
+    :param feeding_service: feeding service name
+    :param feed_parser: feed parser name
+    :param content_types: list of content types of items to ingest from provider
+    :param allow_remove_ingested: allow deleting of items from ingest
+    :param content_expiry: ttl for ingested items in minutes
+    :param config: provider specific config
+    :param ingested_count: number of items ingested so far
+    :param tokens: auth tokens used by provider
+    :param is_closed: provider closed status
+    :param update_schedule: update schedule, will run every x hours x minutes x seconds
+    :param idle_time: usual idle time for provider, if there is no item after that it will warn
+    :param last_updated: last update timestamp
+    :param rule_set: rule sets used when ingesting
+    :param routing_scheme: routing scheme used when ingesting
+    :param notifications: set when notification should be sent for this provider
+    :param last_closed: info when and by whom provider was closed last time
+    :param last_opened: info when and by whom provider was opened last time
+    :param critical_errors: error codes which are considered critical and should close provider
+    """
 
     def __init__(self, endpoint_name, app, service, endpoint_schema=None):
         self.schema = {
@@ -98,6 +121,7 @@ class IngestProviderResource(Resource):
             'last_updated': {'type': 'datetime'},
             'last_item_update': {'type': 'datetime'},
             'rule_set': Resource.rel('rule_sets', nullable=True),
+            'routing_scheme': Resource.rel('routing_schemes', nullable=True),
             'notifications': {
                 'type': 'dict',
                 'schema': {
@@ -107,7 +131,6 @@ class IngestProviderResource(Resource):
                     'on_error': {'type': 'boolean', 'default': True}
                 }
             },
-            'routing_scheme': Resource.rel('routing_schemes', nullable=True),
             'last_closed': {
                 'type': 'dict',
                 'schema': {

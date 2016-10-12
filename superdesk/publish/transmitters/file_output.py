@@ -17,6 +17,11 @@ errors = [PublishFileError.fileSaveError().get_error_description()]
 
 
 class FilePublishService(PublishService):
+    """Superdesk file transmitter.
+
+    It creates files on superdesk server in configured folder.
+    """
+
     def _transmit(self, queue_item, subscriber):
         try:
             config = queue_item['destination']['config']

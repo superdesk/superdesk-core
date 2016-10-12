@@ -8,7 +8,6 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-
 import time
 import logging
 import xml.etree.ElementTree as etree
@@ -428,7 +427,7 @@ class NewsML12Formatter(Formatter):
 
     def can_format(self, format_type, article):
         """
-        Method check if the article can be formatted to NewsML 1.2 or not.
+        Test if the article can be formatted to NewsML 1.2 or not.
 
         :param str format_type:
         :param dict article:

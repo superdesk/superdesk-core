@@ -134,15 +134,15 @@ class EmailFeedParser(FeedParser, metaclass=ABCMeta):
 
 
 # must be imported for registration
-import superdesk.io.feed_parsers.anpa  # NOQA
-import superdesk.io.feed_parsers.iptc7901  # NOQA
-import superdesk.io.feed_parsers.newsml_1_2  # NOQA
-import superdesk.io.feed_parsers.newsml_2_0  # NOQA
-import superdesk.io.feed_parsers.nitf  # NOQA
-import superdesk.io.feed_parsers.rfc822  # NOQA
-import superdesk.io.feed_parsers.wenn_parser  # NOQA
-import superdesk.io.feed_parsers.dpa_iptc7901  # NOQA
-import superdesk.io.feed_parsers.afp_newsml_1_2  # NOQA
-import superdesk.io.feed_parsers.scoop_newsml_2_0  # NOQA
-import superdesk.io.feed_parsers.ap_anpa  # NOQA
-import superdesk.io.feed_parsers.pa_nitf  # NOQA
+from superdesk.io.feed_parsers.anpa import ANPAFeedParser  # NOQA
+from superdesk.io.feed_parsers.iptc7901 import IPTC7901FeedParser  # NOQA
+from superdesk.io.feed_parsers.newsml_1_2 import NewsMLOneFeedParser  # NOQA
+from superdesk.io.feed_parsers.newsml_2_0 import NewsMLTwoFeedParser  # NOQA
+from superdesk.io.feed_parsers.nitf import NITFFeedParser  # NOQA
+from superdesk.io.feed_parsers.rfc822 import EMailRFC822FeedParser  # NOQA
+from superdesk.io.feed_parsers.wenn_parser import WENNFeedParser  # NOQA
+from superdesk.io.feed_parsers.dpa_iptc7901 import DPAIPTC7901FeedParser  # NOQA
+from superdesk.io.feed_parsers.afp_newsml_1_2 import AFPNewsMLOneFeedParser  # NOQA
+from superdesk.io.feed_parsers.scoop_newsml_2_0 import ScoopNewsMLTwoFeedParser  # NOQA
+from superdesk.io.feed_parsers.ap_anpa import AP_ANPAFeedParser  # NOQA
+from superdesk.io.feed_parsers.pa_nitf import PAFeedParser  # NOQA

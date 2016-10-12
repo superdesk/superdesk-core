@@ -41,7 +41,7 @@ def get_app(config=None, media_storage=None, config_object=None):
 
     abs_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     app_config = flask.Config(abs_path)
-    app_config.from_object('superdesk.factory.default_settings')
+    app_config.from_object('superdesk.default_settings')
     app_config.setdefault('APP_ABSPATH', abs_path)
     app_config.setdefault('DOMAIN', {})
     app_config.setdefault('SOURCES', {})

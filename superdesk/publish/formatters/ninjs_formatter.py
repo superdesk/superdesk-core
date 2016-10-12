@@ -8,6 +8,11 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+"""NINJS formatter for Superdesk
+
+"""
+
+
 import json
 import logging
 import superdesk
@@ -40,7 +45,21 @@ def format_cv_item(item):
 
 class NINJSFormatter(Formatter):
     """
-    NINJS Formatter
+    The schema we use for the ninjs format is an extension
+    of `the standard ninjs schema <http://www.iptc.org/std/ninjs/ninjs-schema_1.1.json>`_.
+
+    *Changes from ninjs schema*:
+
+    * ``uri`` was replaced by ``guid``: ``uri`` should be the resource identifier on the web
+        but since the item was not published yet it can't be determined at this point
+    * added ``priority`` field
+    * added ``service`` field
+    * added ``slugline`` field
+    * added ``keywords`` field
+
+    Associations dictionary may contain entire items like
+    in `ninjs example <http://dev.iptc.org/ninjs-Examples-3>`_ or just the item ``guid``
+    and ``type``. In the latest case the items are sent separately before the package item.
     """
 
     direct_copy_properties = ('versioncreated', 'usageterms', 'language', 'headline', 'copyrightnotice',

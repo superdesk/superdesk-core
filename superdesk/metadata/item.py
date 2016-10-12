@@ -22,6 +22,7 @@ GUID_NEWSML = 'newsml'
 INGEST_ID = 'ingest_id'
 FAMILY_ID = 'family_id'
 
+#: item public states
 pub_status = ['usable', 'withhold', 'canceled']
 PUB_STATUS = namedtuple('PUBSTATUS', ['USABLE', 'HOLD', 'CANCELED'])(*pub_status)
 
@@ -36,6 +37,8 @@ MEDIA_TYPES = ('audio', 'video', 'picture', 'graphic')
 ITEM_STATE = 'state'
 ITEM_PRIORITY = 'priority'
 ITEM_URGENCY = 'urgency'
+
+#: item internal states
 content_state = ['draft', 'ingested', 'routed', 'fetched', 'submitted', 'in_progress', 'spiked',
                  'published', 'killed', 'corrected', 'scheduled', 'on_hold']
 CONTENT_STATE = namedtuple('CONTENT_STATE', ['DRAFT', 'INGESTED', 'ROUTED', 'FETCHED', 'SUBMITTED', 'PROGRESS',
@@ -58,7 +61,7 @@ metadata_schema = {
         'type': 'string',
         'unique': True
     },
-    # Identifiers
+    #: Identifiers
     'guid': {
         'type': 'string',
         'unique': True,
@@ -171,7 +174,7 @@ metadata_schema = {
         }
     },
 
-    # Story Metadata
+    # Item Metadata
     ITEM_TYPE: {
         'type': 'string',
         'allowed': content_type,
@@ -458,6 +461,8 @@ crop_schema = {
 
 
 class Priority(SuperdeskBaseEnum):
+    """Priority values."""
+
     Flash = 1
     Urgent = 2
     Three_Paragraph = 3

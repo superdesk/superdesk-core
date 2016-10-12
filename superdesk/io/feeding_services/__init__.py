@@ -158,8 +158,8 @@ class FeedingService(metaclass=ABCMeta):
 
 
 # must be imported for registration
-import superdesk.io.feeding_services.email  # NOQA
-import superdesk.io.feeding_services.file_service  # NOQA
-import superdesk.io.feeding_services.ftp  # NOQA
-import superdesk.io.feeding_services.http_service  # NOQA
-import superdesk.io.feeding_services.rss  # NOQA
+from superdesk.io.feeding_services.email import EmailFeedingService  # NOQA
+from superdesk.io.feeding_services.file_service import FileFeedingService  # NOQA
+from superdesk.io.feeding_services.ftp import FTPFeedingService  # NOQA
+from superdesk.io.feeding_services.http_service import HTTPFeedingService  # NOQA
+from superdesk.io.feeding_services.rss import RSSFeedingService  # NOQA

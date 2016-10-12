@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+
 from superdesk.publish import register_transmitter
 from superdesk.publish.publish_service import PublishService
 from superdesk.errors import PublishODBCError
@@ -25,8 +26,12 @@ errors = [PublishODBCError.odbcError().get_error_description()]
 
 
 class ODBCPublishService(PublishService):
-    """
-    ODBCPublishService
+    """Superdesk ODBC transmitter.
+
+    Calls a stored procedure with item data.
+
+    :param string connection_string:
+    :param string stored_procedure:
     """
 
     def _transmit(self, queue_item, subscriber):
