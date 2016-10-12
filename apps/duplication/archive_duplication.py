@@ -67,9 +67,8 @@ class DuplicateService(BaseService):
 
         Rules:
             1. Is the item requested found in archive collection?
-            2. Is item still in the same desk?
-            3. Is workflow transition valid?
-            4. Is item locked by another user?
+            2. Is workflow transition valid?
+            3. Is item locked by another user?
 
         :param doc_in_archive: object representing the doc in archive collection
         :type doc_in_archive: dict
@@ -79,17 +78,12 @@ class DuplicateService(BaseService):
         :type guid_to_duplicate: str
         :raises
             SuperdeskApiError.notFoundError: If doc_in_archive is None
-            SuperdeskApiError.preconditionFailedError: if item is moved to a different desk
             SuperdeskApiError.forbiddenError: if item is locked
             InvalidStateTransitionError: if workflow transition is invalid
         """
 
         if not doc_in_archive:
             raise SuperdeskApiError.notFoundError('Fail to found item with guid: %s' % guid_to_duplicate)
-
-        current_desk_of_item = doc_in_archive.get('task', {}).get('desk')
-        if current_desk_of_item is None or str(current_desk_of_item) != str(doc.get('desk')):
-            raise SuperdeskApiError.preconditionFailedError(message='Duplicate is allowed within the same desk.')
 
         if not is_workflow_state_transition_valid('duplicate', doc_in_archive[ITEM_STATE]):
             raise InvalidStateTransitionError()
