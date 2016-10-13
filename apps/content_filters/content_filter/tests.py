@@ -426,7 +426,7 @@ class FilteringDataTests(ContentFilterTests):
         with self.app.app_context():
             cmd = VocabulariesPopulateCommand()
             filename = os.path.join(os.path.abspath(
-                os.path.dirname("apps/prepopulate/data_initialization/vocabularies.json")), "vocabularies.json")
+                os.path.dirname("apps/prepopulate/data_init/vocabularies.json")), "vocabularies.json")
             cmd.run(filename)
             r1 = self.s._get_subscribers_by_filter_condition(filter_condition1)
             r2 = self.s._get_subscribers_by_filter_condition(filter_condition2)

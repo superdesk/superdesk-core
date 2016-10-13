@@ -53,7 +53,7 @@ package_data = {
     ],
     'apps': [
         'prepopulate/*.json',
-        'prepopulate/data_initialization/*.json',
+        'prepopulate/data_init/*.json',
         'io/data/*.json',
     ]
 }
