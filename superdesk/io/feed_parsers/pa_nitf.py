@@ -12,6 +12,9 @@
 from superdesk.io.feed_parsers.nitf import NITFFeedParser, SkipValue
 from superdesk.io import register_feed_parser
 import re
+from bs4 import BeautifulSoup
+import xml.etree.ElementTree as etree
+import html
 
 
 class PAFeedParser(NITFFeedParser):
@@ -22,7 +25,10 @@ class PAFeedParser(NITFFeedParser):
     NAME = 'pa_nitf'
 
     def _category_mapping(self, elem):
-        """Map the category supplied by PA to a best guess anpa_category in the system
+        """Map the category supplied by PA to a best guess anpa_category in the system.
+
+        There is a special case for the incomming category 'HHH' is to check the doc-scope for SHOWBIZ, if present the
+        category is set to Entertainment
 
         :param elem:
         :return: anpa category list qcode
@@ -33,7 +39,34 @@ class PAFeedParser(NITFFeedParser):
                 return [{'qcode': 'S'}]
             if category == 'Z':
                 return [{'qcode': 'V'}]
+            if category == 'H':
+                if self.xml.find("head/docdata/doc-scope[@scope='SHOWBIZ']") is not None:
+                    return [{'qcode': 'E'}]
         return [{'qcode': 'I'}]
+
+    def get_content(self, xml):
+        """Get the body content of the item.
+
+        Remove the child tags of the p tags such as location, person etc. These have no meaning in the editor at the
+        moment. Also handle the encoding, for example the £ symbol in the body text.
+
+        :param xml:
+        :return:
+        """
+        elements = []
+        for elem in xml.find('body/body.content'):
+            soup = BeautifulSoup(etree.tostring(elem), 'html.parser')
+            for top_level_tag in soup.find_all(recursive=False):
+                elements.append(
+                    '<p>{}</p>\n'.format(html.escape(top_level_tag.get_text().encode('iso-8859-1').decode('utf-8'))))
+        content = ''.join(elements)
+        if self.get_anpa_format(xml) == 't':
+            if not content.startswith('<pre>'):
+                # convert content to text in a pre tag
+                content = '<pre>{}</pre>'.format(self.parse_to_preformatted(content))
+            else:
+                content = self.parse_to_preformatted(content)
+        return content
 
     def get_headline(self, xml):
         """Return the headline if available if not then return the slugline (title)
@@ -74,5 +107,9 @@ class PAFeedParser(NITFFeedParser):
                         'slugline': {'xpath': 'head/title', 'filter': self._get_slugline},
                         'pubstatus': {'xpath': 'head/docdata', 'filter': self._get_pubstatus}}
         super().__init__()
+
+    def parse(self, xml, provider=None):
+        self.xml = xml
+        return super().parse(xml, provider=provider)
 
 register_feed_parser(PAFeedParser.NAME, PAFeedParser())
