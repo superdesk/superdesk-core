@@ -68,7 +68,7 @@ class NitfFormatterTest(TestCase):
                         this should be still here
                     </p>
                 </unknown>
-                <p>
+                <p style="this='is';some='style'">
                     <strong>this text should be
                         <i>modified</i>
                     </strong>
@@ -84,7 +84,7 @@ class NitfFormatterTest(TestCase):
             </div>
             """))
 
-        nitf = self.formatter.html2nitf(html)
+        nitf = self.formatter.html2nitf(html, attr_remove=['style'])
 
         expected = dedent("""\
             <div>
