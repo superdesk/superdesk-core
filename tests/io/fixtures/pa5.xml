@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<nitf version="-//IPTC//DTD NITF 3.1//EN">
+	<head>
+<meta name="service" content="Comprehensive"/>
+		<title>1 POLITICS Brexit</title>
+		<meta name="category" content="HHH"/>
+		<meta name="optInfo" content=""/>
+		<docdata management-status="usable">
+			<du-key key="PA-HHH-POLITICS-Brexit"/>
+			<doc-id id-string="17b7b4c3-6e05-4690-b7cb-37b5c99c9a86HHH-5-1"/>
+			<urgency ed-urg="4"/>
+        <doc-scope scope="POLITICS"/>
+        <doc-scope scope="CITY"/>
+			<series series.part="1"/>
+			<key-list>
+				<keyword key="Brexit"/>
+			</key-list>
+			<del-list>
+				<from-src src-name="PA" level-number="1"/>
+			</del-list>
+        	<date.issue norm="20161011T001327+0100"/>
+			<ed-msg info=""/>
+			<doc.copyright holder="Press Association" year="2016"/>
+		</docdata>
+	</head>
+	<body>
+		<body.head>
+			<hedline><hl1>HARD BREXIT TO COST UK UP TO &#163;66BN A YEAR, SAYS TREASURY</hl1></hedline>
+			<byline>By Sam Lister, Press Association Political Correspondent</byline>
+			<abstract>
+				<p>Treasury coffers will take a &#163;66 billion annual hit if Britain goes for a so-called hard Brexit, Cabinet ministers have been warned.</p>
+			</abstract>
+		</body.head>
+		<body.content>
+<p>Treasury coffers will take a £66 billion annual hit if <location>Britain</location> goes for a so-called hard Brexit, Cabinet ministers have been warned.</p>
+          <p>Leaked Government papers suggest leaving the single market and switching to <org>World Trade Organisation</org> (WTO) rules would cause GDP to fall by up to 9.5% compared with if the country remained in the <org>European Union</org>.</p>
+          <p>The draft Cabinet committee paper seen by The Times is based on forecasts from the controversial study into the predicted impact of quitting the EU published by <person>George Osborne</person> in April during the referendum campaign.</p>
+          <p>Although the then chancellor faced widespread criticism over the report, the Treasury stands by its calculations, according to The Times.</p>
+          <p>The documents says: &quot;The Treasury estimates that UK GDP would be between 5.4% and 9.5% of GDP lower after 15 years if we left the EU with no successor arrangement, with a central estimate of 7.5%.&quot;</p>
+          <p>It adds: &quot;The net impact on public sector receipts - assuming no contributions to the EU and current receipts from the EU are replicated in full - would be a loss of between £38 billion and £66 billion per year after 15 years, driven by the smaller size of the economy.&quot;</p>
+          <p>Brexit backers who have seen the documents told the newspaper the figures were unrealistic and claimed there was a push to &quot;make leaving the single market look bad&quot;.</p>
+          <p>But prominent Remain campaigners pushing for a &quot;soft&quot; Brexit that would keep <location>Britain</location> in the single market said the documents showed the &quot;horrific damage&quot; of leaving the trading bloc.</p>
+          <p>Conservative former minister <person>Anna Soubry</person>, a supporter of the Open Britain campaign, said: &quot;The horrific damage of a hard Brexit is clear. Less tax revenue means less to invest in schools and hospitals, lower trade and investment means businesses and jobs at risk.</p>
+          <p>&quot;This danger is precisely why Parliament must be involved in the principles to guide the Brexit negotiations.</p>
+          <p>&quot;<location>Britain</location> will leave the EU, but we must do so in a way the protects our prosperity and reduces risk. The Government should now make clear the 'WTO option' isn't on the table.&quot;</p>
+          <p>Prime Minister <person>Theresa May</person> is facing growing pressure to allow MPs a vote on Brexit and the Government is also fighting a legal challenge over the use of royal prerogative to invoke Article 50, the process for leaving the EU.</p>
+          <p>Brexit Secretary <person>David Davis</person> told MPs the Government will &quot;observe the constitutional and legal precedents&quot; on giving MPs a vote on any treaty setting out <location>Britain's</location> new relationship with the <org>European Union</org>.</p>
+          <p>Liberal Democrat leader <person>Tim Farron</person> said the leaked documents showed quitting the single market would wreck the economy.</p>
+          <p>&quot;This is yet more proof that hard Brexit would be an act of sheer economic vandalism,&quot; he said.</p>
+          <p>&quot;The Liberal Democrats will stand up for <location>Britain's</location> membership of the single market.</p>
+          <p>&quot;We cannot stand by while this reckless, divisive and uncaring Conservative Government wrecks the UK economy.&quot;</p>
+          <p>A Government spokesman said: &quot;We want the best outcome for <location>Britain</location>. That means pursuing a bespoke arrangement which gives British companies the maximum freedom to trade with and operate in the single market, and enables us to decide for ourselves how we control immigration.&quot;</p>
+          <p>ends</p></body.content>
+	</body>
+</nitf>
+
