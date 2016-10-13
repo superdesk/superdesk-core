@@ -1,4 +1,4 @@
-Feature: Duplication of Content within Desk
+Feature: Duplication of Content
 
     Background: Setup data required to test Duplication feature
       Given empty "ingest"
@@ -129,7 +129,7 @@ Feature: Duplication of Content within Desk
       """
 
     @auth
-    Scenario: Duplicate should fail if the source and destination desks are not same
+    Scenario: Item can be duplicated to a different desk
       When we post to "/desks"
       """
       [{"name": "Finance"}]
@@ -138,9 +138,11 @@ Feature: Duplication of Content within Desk
       """
       {"desk": "#desks._id#"}
       """
-      Then we get error 412
+      Then we get OK response
+      When we get "/archive/#duplicate._id#"
+      Then we get existing resource
       """
-      {"_message": "Duplicate is allowed within the same desk.", "_status": "ERR"}
+      { "task": {"desk": "#desks._id#", "stage": "#desks.working_stage#", "user": "#CONTEXT_USER_ID#"}}
       """
 
     @auth
