@@ -1,0 +1,15 @@
+[
+    {
+        "template_name": "kill",
+        "template_type": "kill",
+        "is_public": true,
+         "data": {
+            "body_html": "FIXME",
+            "type": "text",
+            "ednote": "",
+            "abstract": "",
+            "headline": "Kill\/Takedown notice",
+            "anpa_take_key": "KILL\/TAKEDOWN"
+        }
+    }
+]

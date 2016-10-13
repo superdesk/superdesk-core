@@ -1,0 +1,164 @@
+[
+    {
+        "_id": "categories",
+        "display_name": "Categories",
+        "type": "manageable",
+        "unique_field": "qcode",
+        "items": [
+            {"is_active": true, "name": "FIXME", "qcode": "f", "subject": ""}
+        ]
+    },
+    {
+        "_id": "default_categories",
+        "display_name": "Default Categories",
+        "type": "manageable",
+        "unique_field": "qcode",
+        "items": [
+            {"is_active": true, "qcode": "a"},
+            {"is_active": true, "qcode": "e"},
+            {"is_active": true, "qcode": "f"},
+            {"is_active": true, "qcode": "i"},
+            {"is_active": true, "qcode": "s"},
+            {"is_active": true, "qcode": "t"},
+            {"is_active": true, "qcode": "v"}
+        ]
+    },
+    {
+        "_id": "genre",
+        "display_name": "Genre",
+        "type": "manageable",
+        "items": [
+            {"is_active": true, "name": "Article (news)", "qcode": "Article"},
+            {"is_active": true, "name": "Sidebar", "qcode": "Sidebar"},
+            {"is_active": true, "name": "Factbox", "qcode": "Factbox"},
+            {"is_active": true, "name": "Feature", "qcode": "Feature"},
+            {"is_active": true, "name": "Newsfeature", "qcode": "Newsfeature"},
+            {"is_active": true, "name": "Backgrounder", "qcode": "Backgrounder"},
+            {"is_active": true, "name": "Opinion", "qcode": "Opinion"},
+            {"is_active": true, "name": "View (incl parly sketch)", "qcode": "View"},
+            {"is_active": true, "name": "Modular", "qcode": "Modular"},
+            {"is_active": true, "name": "Broadcast Script", "qcode": "Broadcast Script"},
+            {"is_active": true, "name": "Briefs", "qcode": "Briefs"},
+            {"is_active": true, "name": "Colour piece", "qcode": "Colour piece"},
+            {"is_active": true, "name": "Obituary", "qcode": "Obituary"},
+            {"is_active": true, "name": "Analysis", "qcode": "Analysis"},
+            {"is_active": true, "name": "Timeline", "qcode": "Timeline"},
+            {"is_active": true, "name": "Chronology", "qcode": "Chronology"},
+            {"is_active": true, "name": "Interview", "qcode": "Interview"},
+            {"is_active": true, "name": "Results (sport)", "qcode": "Results (sport)"},
+            {"is_active": true, "name": "Market Open", "qcode": "Market Open"},
+            {"is_active": true, "name": "Market Close", "qcode": "Market Close"},
+            {"is_active": true, "name": "Market Report", "qcode": "Market Report"},
+            {"is_active": true, "name": "Review", "qcode": "Review"},
+            {"is_active": true, "name": "Preview", "qcode": "Preview"}
+        ]
+    },
+    {
+        "_id": "urgency",
+        "display_name": "Urgency",
+        "type": "manageable",
+        "unique_field": "qcode",
+        "items": [
+            {"is_active": true, "name": "1", "qcode": 1},
+            {"is_active": true, "name": "2", "qcode": 2},
+            {"is_active": true, "name": "3", "qcode": 3},
+            {"is_active": true, "name": "4", "qcode": 4},
+            {"is_active": true, "name": "5", "qcode": 5}
+        ]
+    },
+    {
+        "_id": "priority",
+        "display_name": "Priority",
+        "type": "manageable",
+        "items": [
+            {"is_active": true, "name": "1", "qcode": 1},
+            {"is_active": true, "name": "2", "qcode": 2},
+            {"is_active": true, "name": "3", "qcode": 3},
+            {"is_active": true, "name": "4", "qcode": 4},
+            {"is_active": true, "name": "5", "qcode": 5},
+            {"is_active": true, "name": "6", "qcode": 6},
+            {"is_active": false, "name": "7", "qcode": 7},
+            {"is_active": false, "name": "8", "qcode": 8},
+            {"is_active": false, "name": "9", "qcode": 9}
+        ]
+    },
+    {
+        "_id": "type",
+        "display_name": "Article Type",
+        "type": "unmanageable",
+        "items": [
+            {"is_active": true, "name": "text", "qcode": "text"},
+            {"is_active": true, "name": "preformatted", "qcode": "preformatted"},
+            {"is_active": true, "name": "audio", "qcode": "audio"},
+            {"is_active": true, "name": "video", "qcode": "video"},
+            {"is_active": true, "name": "picture", "qcode": "picture"},
+            {"is_active": true, "name": "graphic", "qcode": "graphic"},
+            {"is_active": true, "name": "composite", "qcode": "composite"}
+        ]
+    },
+    {
+        "_id": "signal",
+        "display_name": "Signal",
+        "type": "unmanageable",
+        "items": [
+            {"is_active": true, "name": "Correction", "qcode": "Correction"},
+            {"is_active": true, "name": "Update", "qcode": "Update"},
+            {"is_active": true, "name": "Add", "qcode": "Add"},
+            {"is_active": true, "name": "Repeat", "qcode": "Repeat"},
+            {"is_active": true, "name": "Content Warning", "qcode": "Content Warning"}
+        ]
+    },
+    {
+        "_id": "rightsinfo",
+        "display_name": "Copyrights",
+        "type": "manageable",
+        "items": [
+            {
+                "is_active": true,
+                "name": "FIXME",
+                "copyrightHolder": "",
+                "copyrightNotice": "",
+                "usageTerms": ""
+            }
+        ]
+    },
+    {
+        "_id": "subscriber_types",
+        "display_name": "Subscriber Types",
+        "type": "unmanageable",
+        "items": [
+            {"is_active": true, "name": "All", "qcode": "all",
+                "formats": [{"name": "NINJS", "qcode": "ninjs"}, {"name": "NewsML G2", "qcode": "newsmlg2"}]},
+            {"is_active": true, "name": "Digital/Internet", "qcode": "digital",
+                "formats": [{"name": "NINJS", "qcode": "ninjs"}, {"name": "NewsML G2", "qcode": "newsmlg2"}]},
+            {"is_active": true, "name": "Wire/Paper", "qcode": "wire",
+                "formats": [{"name": "NITF", "qcode": "nitf"}]}
+        ]
+    },
+    {
+        "_id": "crop_sizes",
+        "display_name": "Image Crop Sizes",
+        "type": "manageable",
+        "unique_field": "name",
+        "items": [
+            {"is_active": true, "name": "FIXME", "width": 800, "height": 600}
+        ]
+    },
+    {
+        "_id": "desk_types",
+        "display_name": "Desk Types",
+        "type": "unmanageable",
+        "items": [
+            {"is_active": true, "name": "authoring", "qcode": "authoring"},
+            {"is_active": true, "name": "production", "qcode": "production"}
+        ]
+    },
+    {
+        "_id": "replace_words",
+        "display_name": "Replacement Words",
+        "type": "manageable",
+        "items": [
+            {"is_active": true, "existing": "FIXME", "replacement": ""}
+        ]
+    }
+]
