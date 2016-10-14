@@ -1,10 +1,23 @@
 # Superdesk Server Changelog
 
-## [Unreleased]
+## [1.3] 2016-10-14
 
 ### Added
 
 - Add `superdesk.cache` module.
+- Add htm2nitf method to NITF formatter
+- Add basic curation function for text archive
+- Add embargo privilege
+
+### Fixed
+
+- PA NITF ingest fixes
+- Set ingest default values only of not set via profile
+- Fix image cropping after updating image crop size vocabulary
+- Preserve language on update/rewrite actions
+- Update word count on save and publish action
+- Allow duplicating items to different desks
+- Update `versioncreated` of duplicated item
 
 ## [1.2] 2016-10-04
 
