@@ -57,14 +57,10 @@ def register_macros():
                   'access_type': macro_module.access_type,
                   'action_type': macro_module.action_type}
 
-        if hasattr(macro_module, 'label'):
-            kwargs['label'] = macro_module.label
-
-        if hasattr(macro_module, 'order'):
-            kwargs['order'] = macro_module.order
-
-        if hasattr(macro_module, 'shortcut'):
-            kwargs['shortcut'] = macro_module.shortcut
+        options = ['label', 'order', 'shortcut', 'from_languages', 'to_languages']
+        for field in options:
+            if hasattr(macro_module, field):
+                kwargs[field] = getattr(macro_module, field)
 
         register(**kwargs)
 

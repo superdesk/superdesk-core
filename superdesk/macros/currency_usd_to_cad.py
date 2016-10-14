@@ -39,3 +39,5 @@ shortcut = 'd'
 callback = usd_to_cad
 access_type = 'frontend'
 action_type = 'interactive'
+from_languages = ['en-CA']
+to_languages = ['en-AU']
