@@ -23,6 +23,7 @@ from superdesk.metadata.utils import item_url
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.workflow import is_workflow_state_transition_valid
+from superdesk.utc import utcnow
 
 
 class DuplicateResource(Resource):
@@ -53,6 +54,7 @@ class DuplicateService(BaseService):
             archived_doc = archive_service.find_one(req=None, _id=guid_of_item_to_be_duplicated)
             self._validate(archived_doc, doc, guid_of_item_to_be_duplicated)
 
+            archived_doc['versioncreated'] = utcnow()
             send_to(doc=archived_doc, desk_id=doc.get('desk'), default_stage='working_stage')
             new_guid = archive_service.duplicate_content(archived_doc)
             guid_of_duplicated_items.append(new_guid)
