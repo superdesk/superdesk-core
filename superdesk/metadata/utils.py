@@ -55,6 +55,9 @@ def generate_guid(**hints):
     if not hints.get('id'):
         hints['id'] = str(uuid4())
 
+    if app.config.get('GENERATE_SHORT_GUID', False):
+        return hints['id']
+
     t = datetime.today()
 
     if hints['type'].lower() == GUID_TAG:
