@@ -7,6 +7,7 @@ class SuperdeskSentry():
 
     def __init__(self, app):
         if app.config.get('SENTRY_DSN'):
+            app.config.setdefault('SENTRY_NAME', app.config.get('SERVER_NAME'))
             self.sentry = Sentry(app, register_signal=False, wrap_wsgi=False)
         else:
             self.sentry = None
