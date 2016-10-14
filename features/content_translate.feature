@@ -4,16 +4,16 @@ Feature: Translate Content
     Scenario: Translate content item
       Given "archive"
       """
-      [{"type":"text", "headline": "test1", "guid": "123", "original_creator": "abc", "state": "draft"}]
+      [{"type":"text", "headline": "test1", "guid": "123", "original_creator": "abc", "state": "draft",  "language": "en-CA", "body_html": "$10"}]
       """
       When we post to "/archive/translate"
       """
-      {"guid": "123", "language": "de"}
+      {"guid": "123", "language": "en-AU"}
       """
       When we get "/archive/#translate._id#"
       Then we get existing resource
       """
-      {"type":"text", "headline": "test1", "state": "draft", "sign_off": "abc", "language": "de"}
+      {"type":"text", "headline": "test1", "state": "draft", "sign_off": "abc", "language": "en-AU", "body_html": "$10 (CAD 20)"}
       """
 
     @auth

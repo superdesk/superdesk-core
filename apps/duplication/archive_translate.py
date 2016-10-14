@@ -59,6 +59,8 @@ class TranslateService(BaseService):
             if not is_workflow_state_transition_valid('translate', archived_doc[ITEM_STATE]):
                 raise InvalidStateTransitionError()
 
+            get_resource_service('macros').execute_translation_macro(
+                archived_doc, archived_doc.get('language', None), doc.get('language'))
             archived_doc['language'] = doc.get('language')
             new_guid = archive_service.duplicate_content(archived_doc)
             guid_of_translated_items.append(new_guid)

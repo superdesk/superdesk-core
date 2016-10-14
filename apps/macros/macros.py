@@ -66,6 +66,16 @@ class MacrosService(superdesk.Service):
         else:
             return [m for m in macros if m.get('access_type') == 'frontend']
 
+    def execute_translation_macro(self, doc, from_language, to_language):
+        """
+        Apply to doc all macros that are related to current translation defined by from_language and to_language
+        Macros can have optionally defined translation related settings: from_languages, to_languages.
+        """
+        for m in macros:
+            if (not m.get('from_languages', None) or from_language in m['from_languages']) \
+                    and to_language in m.get('to_languages', []):
+                m['callback'](doc)
+
 
 class MacrosResource(superdesk.Resource):
     resource_methods = ['GET', 'POST']
