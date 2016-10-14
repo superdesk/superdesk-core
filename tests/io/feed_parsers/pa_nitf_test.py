@@ -12,7 +12,7 @@
 import os
 from superdesk.tests import TestCase
 from superdesk.io.feed_parsers.pa_nitf import PAFeedParser
-from superdesk.etree import etree
+from xml.etree import ElementTree
 
 
 class PANITFFileTestCase(TestCase):
@@ -26,9 +26,9 @@ class PANITFFileTestCase(TestCase):
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.normpath(os.path.join(dirname, '../fixtures', self.filename))
         provider = {'name': 'Test'}
-        with open(fixture) as f:
-            self.nitf = f.read()
-            self.item = PAFeedParser().parse(etree.fromstring(self.nitf), provider)
+        with open(fixture, 'rt') as f:
+            xml = ElementTree.parse(f)
+            self.item = PAFeedParser().parse(xml.getroot(), provider)
 
 
 class PAFileWithNoSubjects(PANITFFileTestCase):
@@ -63,3 +63,21 @@ class PAEmbargoTestCase(PANITFFileTestCase):
 
     def test_slugline(self):
         self.assertEqual(self.item.get('pubstatus'), 'usable')
+
+
+class PAEntertainmentTest(PANITFFileTestCase):
+
+    filename = 'pa4.xml'
+
+    def test_entertainment_category(self):
+        self.assertEqual(self.item.get('anpa_category'), [{'qcode': 'E'}])
+
+
+class PACharsetConversionTest(PANITFFileTestCase):
+
+    filename = 'pa5.xml'
+
+    def test_charset(self):
+        self.assertTrue(self.item['body_html'].startswith('<p>Treasury coffers will take a £66 billion annual hit '
+                                                          'if Britain goes for a so-called hard Brexit'))
+        self.assertEqual(self.item['headline'], 'HARD BREXIT TO COST UK UP TO £66BN A YEAR, SAYS TREASURY')

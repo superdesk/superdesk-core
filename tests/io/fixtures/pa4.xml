@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<nitf version="-//IPTC//DTD NITF 3.1//EN">
+	<head>
+<meta name="service" content="Comprehensive"/>
+		<title>1 SHOWBIZ BakeOff</title>
+		<meta name="category" content="HHH"/>
+		<meta name="optInfo" content=""/>
+<tobject>
+  <tobject.subject tobject.subject.refnum="01014000"/>
+  <tobject.subject tobject.subject.refnum="01016000"/>
+  <tobject.subject tobject.subject.refnum="01021000"/>
+  <tobject.subject tobject.subject.refnum="04010000"/>
+  <tobject.subject tobject.subject.refnum="04010008"/>
+  <tobject.subject tobject.subject.refnum="04010010"/>
+</tobject>
+		<docdata management-status="usable">
+			<du-key key="PA-HHH-SHOWBIZ-BakeOff"/>
+			<doc-id id-string="255dd17c-cecd-4e56-a555-24fcaf1ef394HHH-8-1"/>
+			<urgency ed-urg="4"/>
+        <doc-scope scope="SHOWBIZ"/>
+        <doc-scope scope="TV"/>
+			<series series.part="1"/>
+			<key-list>
+				<keyword key="BakeOff"/>
+			</key-list>
+			<del-list>
+				<from-src src-name="PA" level-number="1"/>
+			</del-list>
+        	<date.issue norm="20161003T152257+0100"/>
+			<ed-msg info=""/>
+			<doc.copyright holder="Press Association" year="2016"/>
+		</docdata>
+	</head>
+	<body>
+		<body.head>
+			<hedline><hl1>GREAT BRITISH BAKE OFF COOKS UP TOP FIVE MOST-WATCHED SHOWS OF 2016</hl1></hedline>
+			<byline>By Ian Jones, Press Association</byline>
+			<abstract>
+				<p>The Great British Bake Off has made a clean sweep of the top five most-watched programmes of the year so far.</p>
+			</abstract>
+		</body.head>
+		<body.content>
+<p>The Great British Bake Off has made a clean sweep of the top five most-watched programmes of the year so far.</p>
+          <p>An average of almost 13-and-a-half million people have tuned in to each episode of the hit BBC One cookery competition, new figures reveal.</p>
+          <p>It is the largest number of viewers the show has ever attracted in its seven-year history.</p>
+          <p>Should Bake Off continue to pull in such an audience, it is likely all 10 episodes of this year's series will end up in the top 10 most-watched programmes of 2016.</p>
+          <p>The ratings, which have been published by the research body Barb, include people who recorded the show then watched it up to seven days after transmission.</p>
+          <p>They cover only the first five episodes, and do not include the sixth instalment which aired on <chron>September 28</chron>.</p>
+          <p>The one programme that has come close to equalling Bake Off's ratings this year is <location>Britain's</location> Got Talent, an episode of which had almost 12.5 million viewers in April.</p>
+          <p>Last year's Bake Off final was watched by 15.1 million people - a figure that could well be exceeded this year.</p>
+          <p>Such a feat would set the bar extremely high for Bake Off's next series, which is due to air on Channel 4 after the BBC refused to pay a reported £25 million a year to keep the broadcasting rights.</p>
+          <p>Here are the 10 most-watched programmes of 2016 so far:</p>
+          <p>1. The Great British Bake Off (BBC One), <chron>August 24</chron>: 13.58 million</p>
+          <p>2. The Great British Bake Off (BBC One), <chron>August 31</chron>: 13.45 million</p>
+          <p>3. The Great British Bake Off (BBC One), <chron>September 14</chron>: 13.29 million</p>
+          <p>4. The Great British Bake Off (BBC One), <chron>September 21</chron>: 13.12 million</p>
+          <p>5. The Great British Bake Off (BBC One), <chron>September 7</chron>: 13.08 million</p>
+          <p>6. <location>Britain's</location> Got Talent (ITV), <chron>April 16</chron>: 12.46 million</p>
+          <p>7. <location>Britain's</location> Got Talent (ITV), <chron>April 23</chron>: 12.32 million</p>
+          <p>8. <money>Euro 2016</money>: <location>Portugal</location> v <location>France</location> (BBC One), <chron>July 10</chron>: 12.27 million</p>
+          <p>9. <money>Euro 2016</money>: Wales v Belgium analysis (BBC One), <chron>July 1</chron>: 11.89 million</p>
+          <p>10. <location>Britain's</location> Got Talent (ITV) <chron>April 30</chron>: 11.87 million</p>
+          <p>ends</p></body.content>
+	</body>
+</nitf>
+
