@@ -33,7 +33,7 @@ from superdesk.logging import configure_logging
 def get_app(config=None, media_storage=None, config_object=None):
     """App factory.
 
-    :param config: configuration that can override config from `default_settings.py`
+    :param config: configuration that can override config from ``default_settings.py``
     :param media_storage: media storage class to use
     :param config_object: config object to load (can be module name, module or an object)
     :return: a new SuperdeskEve app instance

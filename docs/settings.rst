@@ -59,7 +59,7 @@ Publish settings
 ^^^^^^^^^^^^^^^^
 
 .. autodata:: MAX_TRANSMIT_RETRY_ATTEMPT
-.. autodata:: RANSMIT_RETRY_ATTEMPT_DELAY_MINUTES
+.. autodata:: TRANSMIT_RETRY_ATTEMPT_DELAY_MINUTES
 .. autodata:: MAX_TRANSMIT_QUERY_LIMIT
 
 .. autodata:: ODBC_PUBLISH
@@ -148,5 +148,4 @@ Email settings
 .. autodata:: MAIL_USERNAME
 .. autodata:: MAIL_PASSWORD
 .. autodata:: MAIL_DEFAULT_SENDER
-.. autodata:: MAIL_FROM
 .. autodata:: ADMINS
