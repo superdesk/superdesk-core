@@ -151,7 +151,7 @@ class RSSFeedingService(FeedingService):
                 t_entry_updated = utcfromtimestamp(timegm(entry.updated_parsed))
                 if t_entry_updated <= t_provider_updated:
                     continue
-            except AttributeError:
+            except (AttributeError, TypeError):
                 # missing updated info, so better ingest it
                 pass
 
