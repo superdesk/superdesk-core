@@ -38,11 +38,27 @@ Tasks that involve communication with external services (ingest update, publishi
 
 It uses same app factory like API server.
 
-Data Storage
-------------
-Main data storage is `mongoDB <https://www.mongodb.com/>`_, content items are also indexed using `elastic <https://www.elastic.co/products/elasticsearch>`_.
+Data Layer
+----------
+In short - main data storage is `mongoDB <https://www.mongodb.com/>`_, content items are also indexed using `elastic <https://www.elastic.co/products/elasticsearch>`_. This logic is implemented via custom eve data layer, superdesk service layer and data backend.
+
+.. autoclass:: superdesk.datalayer.SuperdeskDataLayer
+    :members:
+
+.. autoclass:: superdesk.services.BaseService
+    :members:
+
+.. autoclass:: superdesk.eve_backend.EveBackend
+    :members:
 
 Media Storage
 --------------
-By default uploaded/ingested files are stored in `mongoDB GridFS <https://docs.mongodb.com/manual/core/gridfs/>`_,
-but there are also other implementations, like Amazon S3 backend.
+By default uploaded/ingested files are stored in `mongoDB GridFS <https://docs.mongodb.com/manual/core/gridfs/>`_.
+
+.. autoclass:: superdesk.storage.desk_media_storage.SuperdeskGridFSMediaStorage
+    :members:
+
+There is also Amazon S3 implementation, which is used when Amazon is configured via settings.
+
+.. autoclass:: superdesk.storage.amazon.amazon_media_storage.AmazonMediaStorage
+    :members:

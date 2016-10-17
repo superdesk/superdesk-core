@@ -19,7 +19,11 @@ from superdesk.json_utils import SuperdeskJSONEncoder
 
 
 class SuperdeskDataLayer(DataLayer):
-    """Superdesk Data Layer"""
+    """Superdesk Data Layer.
+
+    Implements eve data layer interface, is used to make eve work with superdesk service layer.
+    It handles app initialization and later it forwards eve calls to respective service.
+    """
 
     serializers = {}
     serializers.update(Mongo.serializers)
