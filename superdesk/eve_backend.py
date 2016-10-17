@@ -22,7 +22,15 @@ from superdesk.errors import SuperdeskApiError
 
 
 class EveBackend():
+    """Superdesk data backend, handles mongodb/elastic data storage."""
+
     def find_one(self, endpoint_name, req, **lookup):
+        """Find single item.
+
+        :param endpoint_name: resource name
+        :param req: parsed request
+        :param lookup: additional filter
+        """
         backend = self._backend(endpoint_name)
         item = backend.find_one(endpoint_name, req=req, **lookup)
         search_backend = self._lookup_backend(endpoint_name, fallback=True)
@@ -69,6 +77,12 @@ class EveBackend():
             logger.warn('there is no search backend for %s' % endpoint_name)
 
     def get(self, endpoint_name, req, lookup):
+        """Get list of items.
+
+        :param endpoint_name: resource name
+        :param req: parsed request
+        :param lookup: additional filter
+        """
         backend = self._lookup_backend(endpoint_name, fallback=True)
         cursor = backend.find(endpoint_name, req, lookup)
         if not cursor.count():
@@ -79,11 +93,24 @@ class EveBackend():
             return backend.find(endpoint_name, req, lookup)
 
     def get_from_mongo(self, endpoint_name, req, lookup):
+        """Get list of items from mongo.
+
+        No matter if there is elastic configured, this will use mongo.
+
+        :param endpoint_name: resource name
+        :param req: parsed request
+        :param lookup: additional filter
+        """
         req.if_modified_since = None
         backend = self._backend(endpoint_name)
         return backend.find(endpoint_name, req, lookup)
 
     def find_and_modify(self, endpoint_name, **kwargs):
+        """Find and modify in mongo.
+
+        :param endpoint_name: resource name
+        :param kwargs: kwargs for pymongo ``find_and_modify``
+        """
         backend = self._backend(endpoint_name)
 
         if kwargs.get('query'):
@@ -102,6 +129,11 @@ class EveBackend():
         return ids
 
     def create_in_mongo(self, endpoint_name, docs, **kwargs):
+        """Create items in mongo.
+
+        :param endpoint_name: resource name
+        :param docs: list of docs to create
+        """
         for doc in docs:
             doc.setdefault(config.ETAG, document_etag(doc))
             self.set_default_dates(doc)
@@ -111,6 +143,11 @@ class EveBackend():
         return ids
 
     def create_in_search(self, endpoint_name, docs, **kwargs):
+        """Create items in elastic.
+
+        :param endpoint_name: resource name
+        :param docs: list of docs
+        """
         search_backend = self._lookup_backend(endpoint_name)
         if search_backend:
             search_backend.insert(endpoint_name, docs, **kwargs)
@@ -172,11 +209,27 @@ class EveBackend():
         return updates
 
     def replace(self, endpoint_name, id, document, original):
+        """Replace an item.
+
+        :param endpoint_name: resource name
+        :param id: item id
+        :param document: next version of item
+        :param original: current version of document
+        """
         res = self.replace_in_mongo(endpoint_name, id, document, original)
         self.replace_in_search(endpoint_name, id, document, original)
         return res
 
     def update_in_mongo(self, endpoint_name, id, updates, original):
+        """Update item in mongo.
+
+        Modifies ``_updated`` timestamp and ``_etag``.
+
+        :param endpoint_name: resource name
+        :param id: item id
+        :param updates: updates to item to be saved
+        :param original: current version of the item
+        """
         updates.setdefault(config.LAST_UPDATED, utcnow())
         if config.ETAG not in updates:
             updated = original.copy()
@@ -188,23 +241,35 @@ class EveBackend():
         return res if res is not None else updates
 
     def replace_in_mongo(self, endpoint_name, id, document, original):
+        """Replace item in mongo.
+
+        :param endpoint_name: resource name
+        :param id: item id
+        :param document: next version of item
+        :param original: current version of item
+        """
         backend = self._backend(endpoint_name)
         res = backend.replace(endpoint_name, id, document, original)
         return res
 
     def replace_in_search(self, endpoint_name, id, document, original):
+        """Replace item in elastic.
+
+        :param endpoint_name: resource name
+        :param id: item id
+        :param document: next version of item
+        :param original: current version of item
+        """
         search_backend = self._lookup_backend(endpoint_name)
         if search_backend is not None:
             search_backend.replace(endpoint_name, id, document)
 
     def delete(self, endpoint_name, lookup):
-        """
-        Delete method to delete by using mongo query syntax
+        """Delete method to delete by using mongo query syntax.
 
         :param endpoint_name: Name of the endpoint
-        :param lookup: User mongo query syntax. example 1. {'_id':123}, 2. {'item_id': {'$in': [123, 234]}}
-        :returns:
-        Returns the mongo remove command response. {'n': 12, 'ok': 1}
+        :param lookup: User mongo query syntax. example 1. ``{'_id':123}``, 2. ``{'item_id': {'$in': [123, 234]}}``
+        :returns: Returns the mongo remove command response. {'n': 12, 'ok': 1}
         """
         backend = self._backend(endpoint_name)
         search_backend = self._lookup_backend(endpoint_name)
@@ -250,6 +315,7 @@ class EveBackend():
         return backend
 
     def set_default_dates(self, doc):
+        """Helper to populate ``_created`` and ``_updated`` timestamps."""
         now = utcnow()
         doc.setdefault(config.DATE_CREATED, now)
         doc.setdefault(config.LAST_UPDATED, now)
