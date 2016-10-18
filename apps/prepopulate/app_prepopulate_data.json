@@ -1195,7 +1195,7 @@
     },
     {
         "resource": "saved_searches",
-        "username": "admin",
+        "username": "admin1",
         "data": {
             "filter": {
                 "query": {
@@ -1252,7 +1252,7 @@
     },
     {
         "resource": "saved_searches",
-        "username": "admin",
+        "username": "admin1",
         "data": {
             "filter": {
                 "query": {
