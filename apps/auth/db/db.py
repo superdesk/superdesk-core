@@ -35,11 +35,7 @@ class DbAuthService(AuthService):
         if not (password and hashed):
             raise CredentialsAuthError(credentials)
 
-        try:
-            rehashed = bcrypt.hashpw(password, hashed)
-            if hashed != rehashed:
-                raise CredentialsAuthError(credentials)
-        except ValueError:
+        if not bcrypt.checkpw(password, hashed):
             raise CredentialsAuthError(credentials)
 
         return user
