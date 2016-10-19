@@ -21,14 +21,31 @@ def get_text_word_count(text):
     return len(text.split())
 
 
+def get_text(html):
+    """Get plain text version of HTML element
+
+    if the HTML string can't be parsed, it will be returned unchanged
+    :param html: html string to convert to plain text
+    """
+    try:
+        root = etree.fromstringlist('<doc>{0}</doc>'.format(html))
+        text = etree.tostring(root, encoding='unicode', method='text')
+        return text
+    except ParseError:
+        return html
+
+
 def get_word_count(html):
     """Get word count for given html.
 
     :param html: html string to count
     """
-    try:
-        root = etree.fromstringlist('<doc>{0}</doc>'.format(html))
-        text = etree.tostring(root, encoding='unicode', method='text')
-        return get_text_word_count(text)
-    except ParseError:
-        return get_text_word_count(html)
+    return get_text_word_count(get_text(html))
+
+
+def get_char_count(html):
+    """Get character count for given html.
+
+    :param html: html string to count
+    """
+    return len(get_text(html))

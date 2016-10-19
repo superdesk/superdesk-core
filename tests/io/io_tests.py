@@ -11,7 +11,7 @@
 import os
 import unittest
 
-from superdesk.etree import etree, get_word_count
+from superdesk.etree import etree, get_word_count, get_char_count
 from superdesk.io import registered_feed_parsers
 from superdesk.io.feed_parsers.newsml_1_2 import NewsMLOneFeedParser
 from superdesk.io.feed_parsers.newsml_2_0 import NewsMLTwoFeedParser
@@ -32,6 +32,14 @@ class UtilsTest(unittest.TestCase):
         self.assertEqual(2, get_word_count('<p> html text </p>'), 'paragraph')
 
         self.assertEqual(22, get_word_count(
+            '<doc><p xml:lang="en-US">The weather was superb today in Norfolk, Virginia. Made me want to take\n'
+            'out my boat, manufactured by the <org value="acm" idsrc="iptc.org">Acme Boat Company</org>.</p></doc>'))
+
+    def test_get_char_count(self):
+        self.assertEqual(10, get_char_count('plain text'))
+        self.assertEqual(11, get_char_count('<p> html text </p>'))
+
+        self.assertEqual(123, get_char_count(
             '<doc><p xml:lang="en-US">The weather was superb today in Norfolk, Virginia. Made me want to take\n'
             'out my boat, manufactured by the <org value="acm" idsrc="iptc.org">Acme Boat Company</org>.</p></doc>'))
 
