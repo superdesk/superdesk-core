@@ -2,7 +2,7 @@ Architecture
 ============
 Here there is info about main components in Superdesk and how these interact.
 To run superdesk we use `honcho <https://github.com/nickstenning/honcho>`_ to define
-processes for each of components:
+processes for each of components::
 
     rest: gunicorn -c gunicorn_config.py wsgi
     wamp: python3 -u ws.py

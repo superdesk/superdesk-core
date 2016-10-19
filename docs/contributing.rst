@@ -15,7 +15,7 @@ Once you make a PR and it gets merged, you will see updated docs on `superdesk.r
 
 Updating docs
 ^^^^^^^^^^^^^
-Documentation should be added/updated together with code changes in a single PR to `superdesk-core <https://github.com/superdesk/superdesk-core>` repository. There can be also PRs with only documentation.
+Documentation should be added/updated together with code changes in a single PR to `superdesk-core <https://github.com/superdesk/superdesk-core>`_ repository. There can be also PRs with only documentation.
 
 New topic/module
 ^^^^^^^^^^^^^^^^

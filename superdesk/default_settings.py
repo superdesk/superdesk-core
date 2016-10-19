@@ -250,13 +250,12 @@ CORE_APPS = [
     'superdesk.allowed_values',
     'apps.picture_crop',
     'apps.picture_renditions',
-]
-
-#: Specify what modules should be enabled
-INSTALLED_APPS = [
     'apps.auth',
     'superdesk.roles',
 ]
+
+#: Specify what modules should be enabled
+INSTALLED_APPS = []
 
 #: LDAP Server (eg: ldap://sourcefabric.org)
 LDAP_SERVER = env('LDAP_SERVER', '')
@@ -279,13 +278,13 @@ LDAP_USER_ATTRIBUTES = json.loads(env('LDAP_USER_ATTRIBUTES',
                                       '"ipPhone": "phone"}'))
 
 if LDAP_SERVER:
-    INSTALLED_APPS.append('apps.ldap')
+    CORE_APPS.append('apps.ldap')
 else:
-    INSTALLED_APPS.append('superdesk.users')
-    INSTALLED_APPS.append('apps.auth.db')
+    CORE_APPS.append('superdesk.users')
+    CORE_APPS.append('apps.auth.db')
 
 
-INSTALLED_APPS.extend([
+CORE_APPS.extend([
     'superdesk.upload',
     'superdesk.sequences',
     'superdesk.notification',
