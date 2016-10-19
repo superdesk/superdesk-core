@@ -57,6 +57,7 @@ class Resource():
     etag_ignore_fields = []
     mongo_prefix = None
     auth_field = None
+    authentication = None
 
     def __init__(self, endpoint_name, app, service, endpoint_schema=None):
         self.endpoint_name = endpoint_name
@@ -95,6 +96,8 @@ class Resource():
                 endpoint_schema.update({'mongo_prefix': self.mongo_prefix})
             if self.auth_field:
                 endpoint_schema.update({'auth_field': self.auth_field})
+            if self.authentication:
+                endpoint_schema.update({'authentication': self.authentication})
 
         self.endpoint_schema = endpoint_schema
 
