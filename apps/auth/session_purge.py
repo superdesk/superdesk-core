@@ -32,3 +32,22 @@ class RemoveExpiredSessions(superdesk.Command):
         sessions = get_resource_service('auth').get(req=None, lookup=query)
         for session in sessions:
             get_resource_service('auth').delete_action({'_id': str(session['_id'])})
+        self._update_online_users()
+
+    def _update_online_users(self):
+        online_users = self._get_online_users()
+        active_sessions_ids = self._get_active_session_ids()
+        for user in online_users:
+            session_preferences = user.get('session_preferences', {})
+            active = {_id: data for _id, data in session_preferences.items() if active_sessions_ids.get(_id)}
+            if len(active) != len(session_preferences):
+                get_resource_service('users').system_update(user['_id'], {'session_preferences': active}, user)
+
+    def _get_active_session_ids(self):
+        active_sessions = get_resource_service('auth').get(req=None, lookup={})
+        return {str(sess['_id']): True for sess in active_sessions}
+
+    def _get_online_users(self):
+        return get_resource_service('users').get_from_mongo(None, {
+            'session_preferences': {'$exists': True, '$nin': [None, {}]}
+        })
