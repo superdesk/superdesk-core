@@ -78,3 +78,15 @@ class ValidateMandatoryInListTest(TestCase):
         ])
 
         self.assertEqual(['HEADLINE empty values not allowed'], errors[0])
+
+    def test_validate_required_empty_list(self):
+        self.app.data.insert('content_types', [
+            {'_id': 'foo', 'schema': {'subject': {'type': 'list', 'required': True}}}
+        ])
+
+        service = ValidateService()
+        errors = service.create([
+            {'act': 'test', 'type': 'test', 'validate': {'profile': 'foo', 'subject': []}}
+        ])
+
+        self.assertEqual(errors, [['SUBJECT is a required field']])
