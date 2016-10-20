@@ -66,13 +66,17 @@ On client those items are not visible anymore in monitoring, only in desk output
 Publish queue
 -------------
 
+.. module:: apps.publish.enqueue
+
 New items from ``published`` collection are further processed via async task:
 
-.. autofunction:: apps.publish.enqueue.enqueue_published
+.. autofunction:: enqueue_published
 
 Enqueueing is done via:
 
-.. autoclass:: apps.publish.enqueue.enqueue_service.EnqueueService
+.. module:: apps.publish.enqueue.enqueue_service
+
+.. autoclass:: EnqueueService
 
     .. automethod:: enqueue_item
 
