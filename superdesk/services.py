@@ -84,7 +84,7 @@ class BaseService():
     def find(self, where, **kwargs):
         """Find items in service collection using mongo query.
 
-        :param dict where
+        :param dict where:
         """
         return self.backend.find(self.datasource, where, **kwargs)
 
@@ -149,7 +149,7 @@ class BaseService():
         """Subclass should override if the resource handled by the service has intrinsic privileges.
 
         :param kwargs: should have properties which help in authorizing the request
-        :return: False if unauthorized and True if authorized
+        :return: ``False`` if unauthorized and True if authorized
         """
 
         return True
@@ -157,13 +157,13 @@ class BaseService():
     def search(self, source):
         """Search using search backend.
 
-        :param source
+        :param source: query source param
         """
         return self.backend.search(self.datasource, source)
 
     def remove_from_search(self, _id):
         """Remove item from search by its id.
 
-        :param _id
+        :param _id: item id
         """
         return self.backend.remove_from_search(self.datasource, _id)

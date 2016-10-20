@@ -1,8 +1,6 @@
 Configuration
 =============
 
-.. module:: superdesk.default_settings
-
 We use ``flask.app.config``, so to use it do::
 
     from flask import current_app as app
@@ -15,57 +13,146 @@ in `application repo <https://github.com/superdesk/superdesk/blob/master/server/
 Default settings
 ----------------
 
-.. automodule:: superdesk.default_settings
+``APPLICATION_NAME``
+~~~~~~~~~~~~~~~~~~~~
 
-General settings
-^^^^^^^^^^^^^^^^
+Default: ``'Superdesk'``
 
-.. autodata:: APPLICATION_NAME
-.. autodata:: SERVER_NAME
-.. autodata:: CLIENT_URL
+``SERVER_NAME``
+~~~~~~~~~~~~~~~
 
-.. autodata:: INSTALLED_APPS
+Default: ``'localhost:5000'``
 
-.. autodata:: DEFAULT_TIMEZONE
+``CLIENT_URL``
+~~~~~~~~~~~~~~
 
-.. autodata:: FTP_TIMEOUT
-.. autodata:: ENABLE_PROFILING
+Default: ``'http://localhost:9000'``
 
-Content settings
-^^^^^^^^^^^^^^^^
+``DEFAULT_TIMEZONE``
+~~~~~~~~~~~~~~~~~~~~
 
-.. autodata:: CONTENT_EXPIRY_MINUTES
-.. autodata:: INGEST_EXPIRY_MINUTES
-.. autodata:: SPIKE_EXPIRY_MINUTES
+Default: ``None``
 
-.. autodata:: MAX_VALUE_OF_INGEST_SEQUENCE
-.. autodata:: MAX_VALUE_OF_PUBLISH_SEQUENCE
+Superdesk will try to guess the value from system if not set.
 
-.. autodata:: DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES
-.. autodata:: DEFAULT_PRIORITY_VALUE_FOR_MANUAL_ARTICLES
-.. autodata:: DEFAULT_URGENCY_VALUE_FOR_MANUAL_ARTICLES
-.. autodata:: DEFAULT_GENRE_VALUE_FOR_MANUAL_ARTICLES
-.. autodata:: DEFAULT_PRIORITY_VALUE_FOR_INGESTED_ARTICLES
-.. autodata:: DEFAULT_URGENCY_VALUE_FOR_INGESTED_ARTICLES
-.. autodata:: RESET_PRIORITY_VALUE_FOR_UPDATE_ARTICLES
+``FTP_TIMEOUT``
+~~~~~~~~~~~~~~~
 
-.. autodata:: NEWSML_PROVIDER_ID
-.. autodata:: ORGANIZATION_NAME
-.. autodata:: ORGANIZATION_NAME_ABBREVIATION
+Default: ``300``
 
-.. autodata:: NO_TAKES
+This is used for all ftp operations. Increase if you get ftp timeout errors.
 
-Publish settings
-^^^^^^^^^^^^^^^^
+``INSTALLED_APPS``
+~~~~~~~~~~~~~~~~~~
 
-.. autodata:: MAX_TRANSMIT_RETRY_ATTEMPT
-.. autodata:: TRANSMIT_RETRY_ATTEMPT_DELAY_MINUTES
-.. autodata:: MAX_TRANSMIT_QUERY_LIMIT
+Default: ``[]``
 
-.. autodata:: ODBC_PUBLISH
+You can install additional modules by adding their names here.
+
+``CONTENT_EXPIRY_MINUTES``
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``43200`` (30 days)
+
+``INGEST_EXPIRY_MINUTES``
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``2880`` (2 days)
+
+``SPIKE_EXPIRY_MINUTES``
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``None``
+
+Will use value from ``CONTENT_EXPIRY_MINUTES`` when empty.
+
+``MAX_VALUE_OF_INGEST_SEQUENCE``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``9999``
+
+``MAX_VALUE_OF_PUBLISH_SEQUENCE``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``9999``
+
+``DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``'AAP'``
+
+``DEFAULT_PRIORITY_VALUE_FOR_MANUAL_ARTICLES``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``6``
+
+``DEFAULT_URGENCY_VALUE_FOR_MANUAL_ARTICLES``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``3``
+
+``DEFAULT_GENRE_VALUE_FOR_MANUAL_ARTICLES``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``[{'qcode': 'Article', 'name': 'Article (news)'}]``
+
+``RESET_PRIORITY_VALUE_FOR_UPDATE_ARTICLES``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``False``
+
+``NEWSML_PROVIDER_ID``
+~~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``'sourcefabric.org'``
+
+``ORGANIZATION_NAME``
+~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``'Australian Associated Press'``
+
+``ORGANIZATION_NAME_ABBREVIATION``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``'AAP'``
+
+``NO_TAKES``
+~~~~~~~~~~~~
+
+Default: ``False``
+
+Disable creation of takes packages.
+
+``MAX_TRANSMIT_RETRY_ATTEMPT``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``10``
+
+Max retries attemps when transmitting an item.
+
+``TRANSMIT_RETRY_ATTEMPT_DELAY_MINUTES``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``3``
+
+Delay between retry attempts.
+
+``MAX_TRANSMIT_QUERY_LIMIT``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``500``
+
+Max transmit items to be fetched from mongo at once.
+
+``ODBC_PUBLISH``
+~~~~~~~~~~~~~~~~
+
+Default: ``None``
+
+Determines if the ODBC publishing mechanism will be used, If enabled then pyodbc must be installed along with it’s dependencies.
 
 Mongo connections
-^^^^^^^^^^^^^^^^^
+-----------------
 
 There are multiple connections by default, so that it can use different instances for legal archive
 and production content.
@@ -73,79 +160,233 @@ and production content.
 For each there is ``_DBNAME`` and ``_URI`` setting, if ``_URI`` is set it will be used as is, if not it will
 use ``localhost`` as server and ``_DBNAME`` as db.
 
-.. autodata:: MONGO_DBNAME
-.. autodata:: MONGO_URI
+``MONGO_DBNAME``
+~~~~~~~~~~~~~~~~
 
-.. autodata:: LEGAL_ARCHIVE_DBNAME
-.. autodata:: LEGAL_ARCHIVE_URI
+Default: ``'superdesk'``
 
-.. autodata:: ARCHIVED_DBNAME
-.. autodata:: ARCHIVED_URI
+``MONGO_URI``
+~~~~~~~~~~~~~
+
+Default: ``'mongodb://localhost/superdesk'``
+
+``LEGAL_ARCHIVE_DBNAME``
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``'legal_archive'``
+
+``LEGAL_ARCHIVE_URI``
+~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``'mongodb://localhost/legal_archive'``
+
+``ARCHIVED_DBNAME``
+~~~~~~~~~~~~~~~~~~~
+
+Default: ``'archived'``
+
+``ARCHIVED_URI``
+~~~~~~~~~~~~~~~~
+
+Default: ``mongodb://localhost/archived'``
 
 Elastic settings
-^^^^^^^^^^^^^^^^
+----------------
 
-.. autodata:: ELASTICSEARCH_URL
-.. autodata:: ELASTICSEARCH_INDEX
-.. autodata:: ELASTICSEARCH_SETTINGS
+``ELASTICSEARCH_URL``
+~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``'http://localhost:9200'``
+
+``ELASTICSEARCH_INDEX``
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``'superdesk'``
 
 Redis settings
-^^^^^^^^^^^^^^
+--------------
 
-.. autodata:: REDIS_URL
+``REDIS_URL``
+~~~~~~~~~~~~~
+
+Default: ``'redis://localhost:6379'``
 
 Cache settings
-^^^^^^^^^^^^^^
+--------------
 
-.. autodata:: CACHE_URL
+``CACHE_URL``
+~~~~~~~~~~~~~
+
+Default: ``'redis://localhost:6379'``
+
+.. versionadded:: 1.3
 
 Celery settings
-^^^^^^^^^^^^^^^
+---------------
 
-.. autodata:: BROKER_URL
+``BROKER_URL``
+~~~~~~~~~~~~~~
+
+Default: ``'redis://localhost:6379'``
 
 Monitoring settings
-^^^^^^^^^^^^^^^^^^^
+-------------------
 
-.. autodata:: SENTRY_DSN
+``SENTRY_DSN``
+~~~~~~~~~~~~~~
+
+Default: ``None``
 
 LDAP settings
-^^^^^^^^^^^^^
+-------------
 
 Used for *LDAP* based authentication, if not configured it will use mongodb for credentials.
 
-.. autodata:: LDAP_SERVER
-.. autodata:: LDAP_SERVER_PORT
-.. autodata:: LDAP_FQDN
-.. autodata:: LDAP_BASE_FILTER
-.. autodata:: LDAP_USER_FILTER
-.. autodata:: LDAP_USER_ATTRIBUTES
+``LDAP_SERVER``
+~~~~~~~~~~~~~~~
+
+Default: ``''``
+
+``LDAP_SERVER_PORT``
+~~~~~~~~~~~~~~~~~~~~
+
+Default: ``389``
+
+``LDAP_FQDN``
+~~~~~~~~~~~~~
+
+Default: ``''``
+
+``LDAP_BASE_FILTER``
+~~~~~~~~~~~~~~~~~~~~
+
+Default: ``''``
+
+``LDAP_USER_FILTER``
+~~~~~~~~~~~~~~~~~~~~
+
+Default: ``'(&(objectCategory=user)(objectClass=user)(sAMAccountName={}))'``
+
+``LDAP_USER_ATTRIBUTES``
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default::
+
+    {
+        'givenName': 'first_name',
+        'sn': 'last_name',
+        'ipPhone': 'phone',
+        'mail': 'email',
+        'displayName':
+        'display_name'
+    }
 
 Amazon S3 settings
-^^^^^^^^^^^^^^^^^^
-.. autodata:: AMAZON_CONTAINER_NAME
-.. autodata:: AMAZON_ACCESS_KEY_ID
-.. autodata:: AMAZON_SECRET_ACCESS_KEY
-.. autodata:: AMAZON_REGION
-.. autodata:: AMAZON_SERVE_DIRECT_LINKS
-.. autodata:: AMAZON_S3_USE_HTTPS
-.. autodata:: AMAZON_SERVER
-.. autodata:: AMAZON_PROXY_SERVER
+------------------
+
+``AMAZON_CONTAINER_NAME``
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``''``
+
+``AMAZON_ACCESS_KEY_ID``
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``''``
+
+``AMAZON_SECRET_ACCESS_KEY``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``''``
+
+``AMAZON_REGION``
+~~~~~~~~~~~~~~~~~
+
+Default: ``'us-east-1'``
+
+``AMAZON_SERVE_DIRECT_LINKS``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``False``
+
+``AMAZON_S3_USE_HTTPS``
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``False``
+
+``AMAZON_SERVER``
+~~~~~~~~~~~~~~~~~
+
+Default: ``'amazonaws.com'``
+
+``AMAZON_PROXY_SERVER``
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``None``
 
 Security settings
-^^^^^^^^^^^^^^^^^
-.. autodata:: SESSION_EXPIRY_MINUTES
-.. autodata:: RESET_PASSWORD_TOKEN_TIME_TO_LIVE
-.. autodata:: ACTIVATE_ACCOUNT_TOKEN_TIME_TO_LIVE
+-----------------
+
+``SESSION_EXPIRY_MINUTES``
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``240``
+
+The number of minutes since the last update of the Mongo auth object after which it will be deleted.
+
+``RESET_PASSWORD_TOKEN_TIME_TO_LIVE``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``1``
+
+The number of days a token is valid, env ``RESET_PASS_TTL``.
+
+``ACTIVATE_ACCOUNT_TOKEN_TIME_TO_LIVE``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``7``
+
+The number of days an activation token is valid, env ``ACTIVATE_TTL``.
 
 Email settings
-^^^^^^^^^^^^^^
+--------------
 
-.. autodata:: MAIL_SERVER
-.. autodata:: MAIL_PORT
-.. autodata:: MAIL_USE_TLS
-.. autodata:: MAIL_USE_SSL
-.. autodata:: MAIL_USERNAME
-.. autodata:: MAIL_PASSWORD
-.. autodata:: MAIL_DEFAULT_SENDER
-.. autodata:: ADMINS
+``MAIL_SERVER``
+~~~~~~~~~~~~~~~
+
+Default: ``'localhost'``
+
+``MAIL_PORT``
+~~~~~~~~~~~~~
+
+Default: ``25``
+
+``MAIL_USE_TLS``
+~~~~~~~~~~~~~~~~
+
+Default: ``False``
+
+``MAIL_USE_SSL``
+~~~~~~~~~~~~~~~~
+
+Default: ``False``
+
+``MAIL_USERNAME``
+~~~~~~~~~~~~~~~~~
+
+Default: ``''``
+
+``MAIL_PASSWORD``
+~~~~~~~~~~~~~~~~~
+
+Default: ``''``
+
+``MAIL_DEFAULT_SENDER``
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``'superdesk@localhost'``
+
+``ADMINS``
+~~~~~~~~~~
+
+Default: ``['']``

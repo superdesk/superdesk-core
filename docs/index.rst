@@ -11,10 +11,12 @@ This documentation is technical, by developers for developers. It focuses on Sup
 Contents:
 
 .. toctree::
-    :maxdepth: 3
+    :maxdepth: 2
 
-    ingest
+    contributing
+    architecture
     publish
+    ingest
     settings
     schema
     cache

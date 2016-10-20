@@ -101,13 +101,14 @@ class AmazonMediaStorage(MediaStorage):
         return url_generator(self.app, media_id)
 
     def media_id(self, filename, content_type=None, version=True):
-        """Get the `media_id` path for the `filename` given.
+        """Get the ``media_id`` path for the given ``filename``.
 
         if filename doesn't have an extension one is guessed,
-        and additional `version` option to have automatic version or not to have,
-            or to send a `string` one.
-        `AMAZON_S3_SUBFOLDER` configuration is used for
-            easement deploying multiple instance on the same bucket.
+        and additional *version* option to have automatic version or not to have,
+        or to send a `string` one.
+
+        ``AMAZON_S3_SUBFOLDER`` configuration is used for
+        easement deploying multiple instance on the same bucket.
         """
         if not self.app.config.get('AMAZON_SERVE_DIRECT_LINKS', False):
             return str(bson.ObjectId())
