@@ -8,14 +8,14 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import logging
 import superdesk
 
-from eve.io.mongo import Validator
 from bs4 import BeautifulSoup
+from eve.io.mongo import Validator
 from superdesk.metadata.item import ITEM_TYPE
+from superdesk.logging import logger
 
-logger = logging.getLogger(__name__)
+REQUIRED_FIELD = 'is a required field'
 
 
 def check_json(doc, field, value):
@@ -61,13 +61,19 @@ class SchemaValidator(Validator):
         for key in mandatory:
             for key_field in mandatory[key]:
                 if not check_json(value, key, mandatory[key][key_field]):
-                    self._error(key_field, 'is a required field')
+                    self._error(key_field, REQUIRED_FIELD)
 
     def _validate_mandatory_in_dictionary(self, mandatory, field, value):
         """Validates if all elements from mandatory are presented in the dictionary"""
         for key in mandatory:
             if not value.get(key):
-                self._error(key, 'is a required field')
+                self._error(key, REQUIRED_FIELD)
+
+    def _validate_empty(self, empty, field, value):
+        """Original validates only strings, adding a list check."""
+        super()._validate_empty(empty, field, value)
+        if isinstance(value, list) and not value:
+            self._error(field, REQUIRED_FIELD)
 
 
 class ValidateResource(superdesk.Resource):
