@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.3.1] 2016-10-20
+
+### Fixed
+
+- Fix validation of list fields.
+
 ## [1.3] 2016-10-14
 
 ### Added
