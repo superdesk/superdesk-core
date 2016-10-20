@@ -309,7 +309,7 @@ class NITFFormatter(Formatter):
 
         if article.get('byline'):
             byline = SubElement(body_head, 'byline')
-            byline.text = "By " + article['byline']
+            byline.text = article['byline']
 
         self._format_body_head_distributor(article, body_head)
         self._format_body_head_dateline(article, body_head)
