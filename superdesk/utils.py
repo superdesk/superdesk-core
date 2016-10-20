@@ -112,7 +112,7 @@ def get_sorted_files(path, sort_by=FileSortAttributes.name, sort_order=SortOrder
 
 def is_hashed(input_str):
     """Check if given input_str is hashed."""
-    return input_str.startswith('$2a$')
+    return input_str.startswith('$2')
 
 
 def merge_dicts(dict_args):

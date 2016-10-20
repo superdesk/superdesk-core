@@ -35,11 +35,11 @@ class DeleteDocCommand(superdesk.Command):
         if file:
             with open(file, "r") as f:
                 for line in f:
-                    data = json.loads(line)
+                    if line.strip():
+                        data = json.loads(line.strip())
+                    else:
+                        continue
 
-                    try:
-                        self.single_delete(data['guid'])
-                    except Exception as e:
-                        print(e)
+                    self.single_delete(data['guid'])
 
 superdesk.command('app:deletedoc', DeleteDocCommand())

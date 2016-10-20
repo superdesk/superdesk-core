@@ -1,8 +1,9 @@
+
+import tempfile
+
 from superdesk.tests import TestCase
 from superdesk import get_resource_service
 from superdesk.commands.delete_text_doc import DeleteDocCommand
-
-from unittest.mock import mock_open, patch
 
 
 class DeleteDocTestCase(TestCase):
@@ -49,7 +50,7 @@ class DeleteDocTestCase(TestCase):
         self.assertEqual(0, len(cursor.docs))
 
     def test_file_contents_delete(self):
-        guids = ['123', '234']
+        guids = ['123', '234', '456']
         for guid in guids:
             doc = [{
                 "_id": guid,
@@ -75,15 +76,12 @@ class DeleteDocTestCase(TestCase):
             self.archivedService.post(doc)
 
         json = '{"guid": "123"}\n{"guid": "234"}\n'
-        mockOpen = mock_open(read_data=json)
-        mockOpen.return_value.__iter__ = lambda self: self
-        mockOpen.return_value.__next__ = lambda self: self.readline()
+        f = tempfile.NamedTemporaryFile('w')
+        f.write(json)
+        f.flush()
 
-        with patch('builtins.open', mockOpen, create=True):
-            DeleteDocCommand().run(file="fake.txt")
+        DeleteDocCommand().run(file=f.name)
 
-        cursor = self.archivedService.get(req=None, lookup={'guid': '123'})
-        self.assertEqual(0, len(cursor.docs))
-
-        cursor = self.archivedService.get(req=None, lookup={'guid': '234'})
-        self.assertEqual(0, len(cursor.docs))
+        cursor = self.archivedService.get(req=None, lookup={})
+        self.assertEqual(1, len(cursor.docs))
+        self.assertEqual('456', cursor.docs[0]['guid'])
