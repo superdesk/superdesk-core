@@ -3,6 +3,7 @@ import json
 import superdesk
 import pymongo
 import logging
+from pathlib import Path
 
 from superdesk import get_resource_service
 from flask import current_app as app
@@ -172,18 +173,16 @@ __entities__ = OrderedDict([
         [('item', pymongo.ASCENDING), ('_created', pymongo.DESCENDING)]
     ], True))
 ])
+INIT_DATA_PATH = Path(__file__).resolve().parent / 'data_init'
 
 
 def get_filepath(filename, path=None):
-    basedir = app.config.get(
-        'INIT_DATA_PATH',
-        os.path.join(os.path.abspath(os.path.dirname(__file__)), 'data_initialization')
-    )
-
     if path:
         basedir = path
+    else:
+        basedir = app.config.get('INIT_DATA_PATH', INIT_DATA_PATH)
 
-    return os.path.join(basedir, filename)
+    return Path(basedir) / filename
 
 
 class AppInitializeWithDataCommand(superdesk.Command):
@@ -196,15 +195,22 @@ class AppInitializeWithDataCommand(superdesk.Command):
     """
 
     option_list = [
-        superdesk.Option('--entity-name', '-n', dest='entity_name', default=''),
+        superdesk.Option('--entity-name', '-n', action='append'),
         superdesk.Option('--full-path', '-p', dest='path'),
+        superdesk.Option('--sample-data', action='store_true')
     ]
 
-    def run(self, entity_name=None, path=None, index_only='false'):
+    def run(self, entity_name=None, path=None, sample_data=None, index_only='false'):
         logger.info('Starting data import')
+        logger.info('Config: %s', app.config['APP_ABSPATH'])
+
+        if sample_data and not path:
+            path = INIT_DATA_PATH.parent / 'data_sample'
+
         if entity_name:
-            (file_name, index_params, do_patch) = __entities__[entity_name]
-            self.import_file(entity_name, path, file_name, index_params, do_patch)
+            for name in entity_name:
+                (file_name, index_params, do_patch) = __entities__[name]
+                self.import_file(name, path, file_name, index_params, do_patch)
             return 0
 
         for name, (file_name, index_params, do_patch) in __entities__.items():
@@ -235,11 +241,15 @@ class AppInitializeWithDataCommand(superdesk.Command):
         http://api.mongodb.org/python/current/api/pymongo/collection.html
         :param bool do_patch: if True then patch the document else don't patch.
         """
-        print('Config: ', app.config['APP_ABSPATH'])
-        if file_name:
-            file_path = get_filepath(file_name, path)
-            print('Got file path: ', file_path)
-            with open(file_path, 'rt') as app_prepopulation:
+        logger.info('Process %r', entity_name)
+        file_path = file_name and get_filepath(file_name, path)
+        if not file_path:
+            pass
+        elif not file_path.exists():
+            logger.info(' - file not exists: %s', file_path)
+        else:
+            logger.info(' - got file path: %s', file_path)
+            with file_path.open('rt') as app_prepopulation:
                 service = get_resource_service(entity_name)
                 json_data = json.loads(app_prepopulation.read())
                 data = [fillEnvironmentVariables(item) for item in json_data]
@@ -248,10 +258,10 @@ class AppInitializeWithDataCommand(superdesk.Command):
                 existing = service.get_from_mongo(None, {})
                 update_data = True
                 if not do_patch and existing.count() > 0:
-                    logger.info('Data already exists for {} none will be loaded'.format(entity_name))
+                    logger.info(' - data already exists none will be loaded')
                     update_data = False
                 elif do_patch and existing.count() > 0:
-                    logger.info('Data already exists for {} it will be updated'.format(entity_name))
+                    logger.info(' - data already exists it will be updated')
 
                 if update_data:
                     if do_patch:
@@ -268,7 +278,7 @@ class AppInitializeWithDataCommand(superdesk.Command):
                         for item in existing_data:
                             service.patch(item['_id'], item)
 
-                logger.info('File {} imported successfully.'.format(file_name))
+                logger.info(' - file imported successfully: %s', file_name)
 
         if index_params:
             for index in index_params:
@@ -276,7 +286,7 @@ class AppInitializeWithDataCommand(superdesk.Command):
                 options = crt_index.pop() if isinstance(crt_index[-1], dict) and isinstance(index, list) else {}
                 collection = app.data.mongo.pymongo(resource=entity_name).db[entity_name]
                 index_name = collection.create_index(crt_index, cache_for=300, **options)
-                logger.info('Index: {} for collection {} created successfully.'.format(index_name, entity_name))
+                logger.info(' - index: %s for collection %s created successfully.', index_name, entity_name)
 
 
 def fillEnvironmentVariables(item):

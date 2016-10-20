@@ -1,31 +1,29 @@
-
 import os
-from flask import current_app as app
 
 from .app_initialize import AppInitializeWithDataCommand
 from .app_scaffold_data import AppScaffoldDataCommand
 from apps.prepopulate.app_initialize import fillEnvironmentVariables
-from superdesk import get_resource_service
+from superdesk import get_resource_service, app
 from superdesk.tests import TestCase
 
 
 class AppInitializeWithDataCommandTestCase(TestCase):
+    def _run(self, *a, **kw):
+        command = AppInitializeWithDataCommand()
+        return command.run(*a, **kw)
 
     def test_app_initialization(self):
-        command = AppInitializeWithDataCommand()
-        result = command.run()
+        result = self._run()
         self.assertEqual(result, 0)
 
     def test_app_initialization_multiple_loads(self):
-        command = AppInitializeWithDataCommand()
-        result = command.run()
+        result = self._run()
         self.assertEqual(result, 0)
-        result = command.run()
+        result = self._run()
         self.assertEqual(result, 0)
 
     def data_scaffolding_test(self):
-        command = AppInitializeWithDataCommand()
-        result = command.run()
+        result = self._run(['desks', 'stages'], sample_data=True)
         self.assertEqual(result, 0)
 
         docs = [{
@@ -50,9 +48,15 @@ class AppInitializeWithDataCommandTestCase(TestCase):
         cursor = get_resource_service('archive').get_from_mongo(None, {})
         self.assertEqual(cursor.count(), existing_desks * stories_per_desk)
 
+    def test_sample_data(self):
+        result = self._run(sample_data=True)
+        self.assertEqual(result, 0)
+
+        cursor = get_resource_service('desks').get_from_mongo(None, {})
+        self.assertEqual(cursor.count(), 18)
+
     def test_app_initialization_index_creation(self):
-        command = AppInitializeWithDataCommand()
-        result = command.run()
+        result = self._run()
         self.assertEqual(result, 0)
         result = app.data.mongo.pymongo(resource='users').db['users'].index_information()
         self.assertTrue('username_1' in result)

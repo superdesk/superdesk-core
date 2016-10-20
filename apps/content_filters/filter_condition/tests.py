@@ -516,7 +516,7 @@ class FilterConditionTests(TestCase):
         with self.app.app_context():
             cmd = VocabulariesPopulateCommand()
             filename = os.path.join(os.path.abspath(
-                os.path.dirname("apps/prepopulate/data_initialization/vocabularies.json")), "vocabularies.json")
+                os.path.dirname("apps/prepopulate/data_init/vocabularies.json")), "vocabularies.json")
             cmd.run(filename)
             self.assertTrue(len(f.check_similar(filter_condition1)) == 2)
             self.assertTrue(len(f.check_similar(filter_condition2)) == 1)
