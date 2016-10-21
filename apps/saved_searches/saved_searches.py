@@ -11,7 +11,6 @@
 
 import json
 
-from flask import request
 from eve.utils import ParsedRequest
 from eve_elastic.elastic import build_elastic_query
 from apps.archive.common import get_user
@@ -20,7 +19,8 @@ from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification
 from superdesk.logging import logger
-
+from superdesk.users.services import current_user_has_privilege
+from apps.auth import get_user_id
 
 UPDATE_NOTIFICATION = 'savedsearch:update'
 
@@ -68,14 +68,14 @@ class SavedSearchesResource(Resource):
             'type': 'dict',
             'required': True
         },
-        'user': Resource.rel('users'),
+        'user': Resource.rel('users', nullable=True),
         'is_global': {
             'type': 'boolean',
             'default': False
         }
     }
 
-    url = 'users/<regex("[a-zA-Z0-9:\\-\\.]+"):user>/saved_searches'
+    url = 'saved_searches'
 
     item_methods = ['GET', 'PATCH', 'DELETE']
 
@@ -102,8 +102,7 @@ class AllSavedSearchesService(BaseService):
 class SavedSearchesService(BaseService):
     def on_create(self, docs):
         for doc in docs:
-            if 'user' not in doc and request:
-                doc['user'] = request.view_args.get('user')
+            doc['user'] = get_user_id(required=True)
             self.process(doc)
         push_notification(UPDATE_NOTIFICATION)
 
@@ -123,24 +122,25 @@ class SavedSearchesService(BaseService):
         Checks if the request owner and the saved search owner are the same person
         If not then the request owner should have global saved search privilege
         """
-        request_user = request.view_args['user']
-        user = get_user(required=True)
-        if str(user['_id']) == request_user or user['active_privileges'].get('global_saved_search', 0) == 0:
-            if 'filter' in updates:
-                self.process(updates)
-            super().on_update(updates, original)
-            push_notification(UPDATE_NOTIFICATION)
-        else:
-            raise SuperdeskApiError.forbiddenError("Unauthorized to modify global search")
+        self._validate_user(original.get('user', ''), original.get('is_global', False))
+        if 'filter' in updates:
+            self.process(updates)
+        super().on_update(updates, original)
+        push_notification(UPDATE_NOTIFICATION)
 
     def get(self, req, lookup):
         """
-        Overriding because of a different resource URL and user_id is part of the URL
+        Overriding to pass user as a search parameter
         """
+        session_user = str(get_user_id(required=True))
         if not req:
             req = ParsedRequest()
 
-        req.where = json.dumps({'$or': [lookup, {'is_global': True}]})
+        if lookup:
+            req.where = json.dumps({'$or': [{'is_global': True}, {'user': session_user}, lookup]})
+        else:
+            req.where = json.dumps({'$or': [{'is_global': True}, {'user': session_user}]})
+
         return super().get(req, lookup=None)
 
     def init_request(self, elastic_query):
@@ -199,10 +199,18 @@ class SavedSearchesService(BaseService):
     def on_deleted(self, doc):
         push_notification(UPDATE_NOTIFICATION)
 
+    def on_delete(self, doc):
+        self._validate_user(str(doc['user']), doc['is_global'])
+
+    def _validate_user(self, doc_user_id, doc_is_global):
+        session_user = get_user(required=True)
+        if str(session_user['_id']) != doc_user_id and \
+                not (current_user_has_privilege('global_saved_searches') and doc_is_global):
+            raise SuperdeskApiError.forbiddenError('Unauthorized to modify global search.')
+
 
 class SavedSearchItemsResource(Resource):
     """Saved search items
-
     Since Eve doesn't support more than one URL for a resource, this resource is being created to fetch items based on
     the search string in the Saved Search document.
     """
