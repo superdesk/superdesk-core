@@ -15,6 +15,7 @@ class ClientsResource(Resource):
     """
     Clients schema
     """
+
     schema = {
         'name': {
             'type': 'string',

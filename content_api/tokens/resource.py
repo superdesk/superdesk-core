@@ -15,6 +15,7 @@ class TokensResource(Resource):
     """
     Tokens schema
     """
+
     schema = {
         'client': Resource.rel('clients', True),
         'user': Resource.rel('users', True),

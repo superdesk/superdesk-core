@@ -32,6 +32,7 @@ def env(variable, fallback_value=None):
         else:
             return env_value
 
+XML = False
 MONGO_DBNAME = 'contentapi'
 MONGO_URI = env('MONGO_URI', 'mongodb://localhost/%s' % MONGO_DBNAME)
 ELASTICSEARCH_URL = env('ELASTICSEARCH_URL', 'http://localhost:9200')
@@ -47,7 +48,7 @@ OAUTH2_ROUTE_PREFIX = '/oauth'
 OAUTH2_TOKEN_URL = '/token'
 OAUTH2_SCOPES = ['content_api']
 BCRYPT_GENSALT_WORK_FACTOR = 12
-PUBLIC_RESOURCES = ['publish', 'assets', 'clients', 'users']
+PUBLIC_RESOURCES = ['items', 'packages', 'publish', 'assets', 'clients', 'users']
 
 INSTALLED_APPS = [
     'content_api.items',
@@ -66,7 +67,7 @@ DOMAIN = {}
 SUPERDESK_CONTENTAPI_TESTING = True
 
 # NOTE: no trailing slash for the PUBLICAPI_URL setting!
-PUBLICAPI_URL = env('PUBLICAPI_URL', 'http://localhost:5050')
+PUBLICAPI_URL = env('PUBLICAPI_URL', 'http://localhost:5400')
 server_url = urlparse(PUBLICAPI_URL)
 URL_PREFIX = server_url.path.strip('/')
 SERVER_NAME = server_url.netloc or None

@@ -14,14 +14,13 @@ from flask import request
 
 
 class BearerAuth(BasicAuth):
-    """ Overrides Eve's built-in basic authorization scheme and uses Redis to
-    validate bearer token
-    """
+    """Overrides Eve's built-in basic authorization scheme and uses Redis to validate bearer token"""
+
     def __init__(self):
         super(BearerAuth, self).__init__()
 
     def check_auth(self, token, allowed_roles, resource, method):
-        """ Check if API request is authorized.
+        """Check if API request is authorized.
 
         Examines token in header and checks Redis cache to see if token is
         valid. If so, request is allowed.
@@ -34,13 +33,13 @@ class BearerAuth(BasicAuth):
         return token and app.redis.get(token)
 
     def authorized(self, allowed_roles, resource, method):
-        """ Validates the the current request is allowed to pass through.
+        """Validates the the current request is allowed to pass through.
 
         :param allowed_roles: allowed roles for the current request, can be a
                               string or a list of roles.
         :param resource: resource being requested.
         """
-        if resource in app.config['PUBLIC_RESOURCES']:
+        if not resource or resource in app.config['PUBLIC_RESOURCES']:
             return True
         try:
             token = request.headers.get('Authorization').split(' ')[1]

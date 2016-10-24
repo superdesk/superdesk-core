@@ -15,6 +15,7 @@ class UsersResource(Resource):
     """
     Users schema
     """
+
     schema = {
         'username': {
             'type': 'string',

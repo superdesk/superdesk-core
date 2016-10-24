@@ -24,7 +24,7 @@ class AuthDataManager:
 
     @staticmethod
     def get_client(client_id):
-        """ Loads a client from the database and returns it as an object or None.
+        """Loads a client from the database and returns it as an object or None.
         """
         client = superdesk.get_resource_service('clients').find_one(req=None, _id=client_id)
         if not client:
@@ -36,7 +36,7 @@ class AuthDataManager:
 
     @staticmethod
     def get_user(username, password, *args, **kwargs):
-        """ Loads a user from the database and returns it as an object or None.
+        """Loads a user from the database and returns it as an object or None.
         """
         user_service = superdesk.get_resource_service('users')
         user = user_service.find_one(req=None, username=username) or {}
@@ -47,7 +47,7 @@ class AuthDataManager:
 
     @staticmethod
     def get_token(access_token=None, refresh_token=None):
-        """ Loads a token from the database and returns it as an object or None.
+        """Loads a token from the database and returns it as an object or None.
         """
         if not (access_token or refresh_token):
             return None

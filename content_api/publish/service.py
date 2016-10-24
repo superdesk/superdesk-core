@@ -20,11 +20,11 @@ logger = logging.getLogger(__name__)
 
 
 class PublishService(BaseService):
-    """
-    A service for publishing to the content api.
+    """A service for publishing to the content api.
 
     Serves mainly as a proxy to the data layer.
     """
+
     def create(self, docs, **kwargs):
         ids = []
         for doc in docs:
