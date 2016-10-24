@@ -25,8 +25,6 @@ import os
 from eve import Eve
 from eve.io.mongo.mongo import MongoJSONEncoder
 from eve.render import send_response
-from raven.contrib.flask import Sentry
-import raven.exceptions
 from redis.client import StrictRedis
 
 from content_api.app import settings
@@ -37,11 +35,10 @@ from superdesk.datalayer import SuperdeskDataLayer
 from superdesk.errors import SuperdeskError, SuperdeskApiError
 from superdesk.storage.desk_media_storage import SuperdeskGridFSMediaStorage
 from superdesk.validator import SuperdeskValidator
+from superdesk.factory.sentry import SuperdeskSentry
 
 
 logger = logging.getLogger('superdesk')
-
-sentry = Sentry(register_signal=False, wrap_wsgi=False)
 
 
 def _set_error_handlers(app):
@@ -111,29 +108,20 @@ def get_app(config=None):
     if config.get('REDIS_URL'):
         app.redis = StrictRedis.from_url(config['REDIS_URL'], 0)
 
-    for module_name in app.config['INSTALLED_APPS']:
+    for module_name in app.config['CONTENTAPI_INSTALLED_APPS']:
         app_module = importlib.import_module(module_name)
         try:
             app_module.init_app(app)
         except AttributeError:
             pass
 
-    for resource in config['DOMAIN']:
-        app.register_resource(resource, config['DOMAIN'][resource])
+    for resource in config['CONTENTAPI_DOMAIN']:
+        app.register_resource(resource, config['CONTENTAPI_DOMAIN'][resource])
 
     for blueprint in superdesk.BLUEPRINTS:
         prefix = app.api_prefix or None
         app.register_blueprint(blueprint, url_prefix=prefix)
 
-    try:
-        sentry.init_app(app)
-    except (
-        raven.exceptions.APIError,
-        raven.exceptions.ConfigurationError,
-        raven.exceptions.InvalidGitRepository
-    ) as e:
-        logger.error("Unable to init Sentry: {}".format(e))
-    else:
-        app.sentry = sentry
+    app.sentry = SuperdeskSentry(app)
 
     return app

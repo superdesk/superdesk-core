@@ -32,17 +32,13 @@ def env(variable, fallback_value=None):
         else:
             return env_value
 
-XML = False
-MONGO_DBNAME = 'contentapi'
-MONGO_URI = env('MONGO_URI', 'mongodb://localhost/%s' % MONGO_DBNAME)
-ELASTICSEARCH_URL = env('ELASTICSEARCH_URL', 'http://localhost:9200')
-ELASTICSEARCH_INDEX = env('ELASTICSEARCH_INDEX', MONGO_DBNAME)
+CONTENTAPI_MONGO_DBNAME = 'contentapi'
+CONTENTAPI_MONGO_URI = env('CONTENTAPI_MONGO_URI', 'mongodb://localhost/%s' % CONTENTAPI_MONGO_DBNAME)
+
+ELASTICSEARCH_URL = env('CONTENTAPI_ELASTICSEARCH_URL', 'http://localhost:9200')
+ELASTICSEARCH_INDEX = env('CONTENTAPI_ELASTICSEARCH_INDEX', CONTENTAPI_MONGO_DBNAME)
 ELASTIC_DATE_FORMAT = '%Y-%m-%d'
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%S+0000'
-
-REDIS_URL = env('REDIS_URL', 'redis://localhost:6379')
-if env('REDIS_PORT'):
-    REDIS_URL = env('REDIS_PORT').replace('tcp:', 'redis:')
 
 OAUTH2_ROUTE_PREFIX = '/oauth'
 OAUTH2_TOKEN_URL = '/token'
@@ -50,7 +46,7 @@ OAUTH2_SCOPES = ['content_api']
 BCRYPT_GENSALT_WORK_FACTOR = 12
 PUBLIC_RESOURCES = ['items', 'packages', 'publish', 'assets', 'clients', 'users']
 
-INSTALLED_APPS = [
+CONTENTAPI_INSTALLED_APPS = [
     'content_api.items',
     'content_api.packages',
     'content_api.prepopulate',
@@ -63,6 +59,7 @@ INSTALLED_APPS = [
 ]
 
 DOMAIN = {}
+CONTENTAPI_DOMAIN = {}
 
 SUPERDESK_CONTENTAPI_TESTING = True
 
