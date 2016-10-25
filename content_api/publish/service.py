@@ -10,10 +10,12 @@
 
 import logging
 
+from copy import copy
 from eve.utils import config
 
-from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
+from superdesk.services import BaseService
+from superdesk.publish.formatters.ninjs_formatter import NINJSFormatter
 
 
 logger = logging.getLogger(__name__)
@@ -25,6 +27,16 @@ class PublishService(BaseService):
     Serves mainly as a proxy to the data layer.
     """
 
+    formatter = NINJSFormatter()
+    subscriber = {'config': {}}
+
+    def publish(self, item):
+        """Publish an item to content api.
+
+        :param item: item to publish
+        """
+        return self._create_doc(self.formatter._transform_to_ninjs(item, self.subscriber))
+
     def create(self, docs, **kwargs):
         ids = []
         for doc in docs:
@@ -32,14 +44,16 @@ class PublishService(BaseService):
         return ids
 
     def _create_doc(self, doc, **kwargs):
-        _id = doc[config.ID_FIELD] = doc.pop('guid')
+        item = copy(doc)
+        item.setdefault('_id', item.get('guid'))
+        _id = item[config.ID_FIELD] = item.pop('guid')
         original = self.find_one(req=None, _id=_id)
-        self._process_associations(doc)
+        self._process_associations(item)
         if original:
-            self.update(_id, doc, original)
+            self.update(_id, item, original)
             return _id
         else:
-            return super().create([doc], **kwargs)
+            return super().create([item], **kwargs)[0]
 
     def _process_associations(self, doc):
         if 'associations' in doc:

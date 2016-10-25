@@ -61,6 +61,8 @@ def get_test_settings():
     test_settings['LEGAL_ARCHIVE_URI'] = get_mongo_uri('LEGAL_ARCHIVE_URI', 'sptests_legal_archive')
     test_settings['ARCHIVED_DBNAME'] = 'sptests_archived'
     test_settings['ARCHIVED_URI'] = get_mongo_uri('ARCHIVED_URI', 'sptests_archived')
+    test_settings['CONTENTAPI_MONGO_DBNAME'] = 'sptests_contentapi'
+    test_settings['CONTENTAPI_MONGO_URI'] = get_mongo_uri('CONTENTAPI_MONGO_URI', 'sptests_contentapi')
     test_settings['DEBUG'] = True
     test_settings['TESTING'] = True
     test_settings['SUPERDESK_TESTING'] = True
@@ -100,6 +102,7 @@ def foreach_mongo(fn):
             ('MONGO', 'MONGO_DBNAME'),
             ('ARCHIVED', 'ARCHIVED_DBNAME'),
             ('LEGAL_ARCHIVE', 'LEGAL_ARCHIVE_DBNAME'),
+            ('CONTENTAPI_MONGO', 'CONTENTAPI_MONGO_DBNAME')
         )
         with app.app_context():
             for prefix, name in pairs:

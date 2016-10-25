@@ -18,6 +18,7 @@ thus essentially just a normal `Flask <http://flask.pocoo.org/>`_ application.
     is meant to be used by the Superdesk browser client only.
 """
 
+import superdesk
 import importlib
 import logging
 import os
@@ -30,7 +31,6 @@ from redis.client import StrictRedis
 from content_api.app import settings
 from content_api.auth.oauth2 import BearerAuth
 from flask.ext.mail import Mail  # @UnresolvedImport
-import superdesk
 from superdesk.datalayer import SuperdeskDataLayer
 from superdesk.errors import SuperdeskError, SuperdeskApiError
 from superdesk.storage.desk_media_storage import SuperdeskGridFSMediaStorage
@@ -81,7 +81,9 @@ def get_app(config=None):
     if config is None:
         config = {}
 
+    config.setdefault('DOMAIN', {})
     config.setdefault('SOURCES', {})
+
     config['APP_ABSPATH'] = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 
     for key in dir(settings):
@@ -108,19 +110,16 @@ def get_app(config=None):
     if config.get('REDIS_URL'):
         app.redis = StrictRedis.from_url(config['REDIS_URL'], 0)
 
-    for module_name in app.config['CONTENTAPI_INSTALLED_APPS']:
+    for module_name in app.config.get('CONTENTAPI_INSTALLED_APPS', []):
+        print('import', module_name)
         app_module = importlib.import_module(module_name)
         try:
             app_module.init_app(app)
         except AttributeError:
             pass
 
-    for resource in config['CONTENTAPI_DOMAIN']:
+    for resource in config.get('CONTENTAPI_DOMAIN', {}):
         app.register_resource(resource, config['CONTENTAPI_DOMAIN'][resource])
-
-    for blueprint in superdesk.BLUEPRINTS:
-        prefix = app.api_prefix or None
-        app.register_blueprint(blueprint, url_prefix=prefix)
 
     app.sentry = SuperdeskSentry(app)
 

@@ -10,26 +10,21 @@
 
 from superdesk.resource import Resource
 
-from content_api.items.resource import schema
-from copy import copy
+
+MONGO_PREFIX = 'CONTENTAPI_MONGO'
 
 
 class PublishResource(Resource):
     """A class defining and configuring the /publish API endpoint."""
 
-    # Example of an ID of an object in database (whitout quotes):
-    #
-    #     "tag:example.com,0000:newsml_BRE9A605"
-    #     "tag:localhost:2015:f4b35e12-559b-4a2b-b1f2-d5e64048bde8"
-    #
-    item_url = 'regex("[\w,.:-]+")'
-    schema = copy(schema)
-    schema.update(guid={'type': 'string', 'required': True})
+    schema = {'item': {'type': 'dict'}}
 
     datasource = {
         'source': 'items',
         'search_backend': 'elastic',
     }
 
-    item_methods = ['GET']
-    resource_methods = ['POST']
+    mongo_prefix = MONGO_PREFIX
+
+    item_methods = []
+    resource_methods = []

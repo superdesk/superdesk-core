@@ -66,7 +66,7 @@ if SERVER_NAME.endswith(':80'):
     SERVER_NAME = SERVER_NAME[:-3]
 
 VALIDATION_ERROR_STATUS = 400
-JSON_SORT_KEYS = True
+JSON_SORT_KEYS = False
 
 CACHE_CONTROL = 'max-age=0, no-cache'
 
@@ -91,6 +91,9 @@ ARCHIVED_DBNAME = env('ARCHIVED_DBNAME', 'archived')
 
 #: archived mongodb uri
 ARCHIVED_URI = env('ARCHIVED_URI', 'mongodb://localhost/%s' % ARCHIVED_DBNAME)
+
+CONTENTAPI_MONGO_DBNAME = 'contentapi'
+CONTENTAPI_MONGO_URI = env('CONTENTAPI_MONGO_URI', 'mongodb://localhost/%s' % CONTENTAPI_MONGO_DBNAME)
 
 #: elastic url
 ELASTICSEARCH_URL = env('ELASTICSEARCH_URL', 'http://localhost:9200')
@@ -252,6 +255,7 @@ CORE_APPS = [
     'apps.picture_renditions',
     'apps.auth',
     'superdesk.roles',
+    'content_api.publish',
 ]
 
 #: Specify what modules should be enabled

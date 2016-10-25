@@ -26,8 +26,8 @@ class ApiApplicationFactoryTestCase(ApiTestCase):
 
         :param dict settings: default settings of the public API application
         """
-        settings.DOMAIN = {}
-        settings.INSTALLED_APPS = []
+        settings.CONTENTAPI_DOMAIN = {}
+        settings.CONTENTAPI_INSTALLED_APPS = []
 
     def setUp(self):
         try:
@@ -48,17 +48,17 @@ class ApiApplicationFactoryTestCase(ApiTestCase):
         self.assertIsInstance(app, Eve)
 
     def test_created_app_uses_default_settings(self, fake_settings):
-        fake_settings.DOMAIN = {'domain_one': {}, 'domain_two': {}}
-        fake_settings.INSTALLED_APPS = ['package.one', 'package.two']
+        fake_settings.CONTENTAPI_DOMAIN = {'domain_one': {}, 'domain_two': {}}
+        fake_settings.CONTENTAPI_INSTALLED_APPS = ['package.one', 'package.two']
 
         app = self.app_factory()
 
         self.assertEqual(
-            sorted(app.settings.get('DOMAIN', {}).keys()),
+            sorted(app.settings.get('CONTENTAPI_DOMAIN', {}).keys()),
             ['domain_one', 'domain_two']
         )
         self.assertEqual(
-            app.settings.get('INSTALLED_APPS'),
+            app.settings.get('CONTENTAPI_INSTALLED_APPS'),
             ['package.one', 'package.two']
         )
 
@@ -100,7 +100,7 @@ class ApiApplicationFactoryTestCase(ApiTestCase):
     def test_initializes_all_installed_applications(self, fake_settings):
         self._init_settings(fake_settings)
 
-        fake_settings.INSTALLED_APPS = ['package.one', 'package.two']
+        fake_settings.CONTENTAPI_INSTALLED_APPS = ['package.one', 'package.two']
 
         # mock importlib package...
         module_one = MagicMock(name='package.one')
@@ -128,7 +128,7 @@ class ApiApplicationFactoryTestCase(ApiTestCase):
     ):
         self._init_settings(fake_settings)
 
-        fake_settings.INSTALLED_APPS = ['some.app']
+        fake_settings.CONTENTAPI_INSTALLED_APPS = ['some.app']
 
         # mock importlib package...
         some_app = MagicMock(name='some.app')
@@ -153,7 +153,7 @@ class ApiApplicationFactoryTestCase(ApiTestCase):
         endpoint_2_config = MagicMock(name='endpoint_2_config')
 
         config = {
-            'DOMAIN': {
+            'CONTENTAPI_DOMAIN': {
                 'endpoint_1': endpoint_1_config,
                 'endpoint_2': endpoint_2_config
             }

@@ -534,5 +534,4 @@ def update_renditions(item, href, old_item):
             app.media.delete(file_id)
         raise
 
-
 superdesk.command('ingest:update', UpdateIngest())
