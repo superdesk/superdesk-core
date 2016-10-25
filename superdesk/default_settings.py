@@ -338,6 +338,7 @@ CORE_APPS.extend([
     'apps.search_providers',
     'apps.feature_preview',
     'apps.workqueue',
+    'apps.analytics',
 ])
 
 RESOURCE_METHODS = ['GET', 'POST']
