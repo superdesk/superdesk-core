@@ -18,7 +18,7 @@ from superdesk.services import BaseService
 from superdesk.utc import utcnow
 from urllib.parse import urljoin, urlparse, quote
 
-from flask import current_app as app
+from flask import current_app as app, g
 from flask import request
 from werkzeug.datastructures import MultiDict
 
@@ -95,6 +95,8 @@ class ItemsService(BaseService):
         internal_req.args['filter'] = json.dumps(date_filter)
         self._set_fields_filter(internal_req)  # Eve's "projection"
 
+        lookup['subscribers.' + g.user] = 1
+
         try:
             res = super().get(internal_req, lookup)
             return res
@@ -145,7 +147,7 @@ class ItemsService(BaseService):
         """
         document['uri'] = self._get_uri(document)
 
-        for field_name in ('_id', '_etag', '_created', '_updated'):
+        for field_name in ('_id', '_etag', '_created', '_updated', 'subscribers'):
             document.pop(field_name, None)
 
         if 'renditions' in document:

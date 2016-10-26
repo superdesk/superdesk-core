@@ -13,6 +13,7 @@ import logging
 from copy import copy
 from eve.utils import config
 
+from superdesk.utc import utcnow
 from superdesk.errors import SuperdeskApiError
 from superdesk.services import BaseService
 from superdesk.publish.formatters.ninjs_formatter import NINJSFormatter
@@ -36,6 +37,9 @@ class PublishService(BaseService):
         :param item: item to publish
         """
         doc = self.formatter._transform_to_ninjs(item, self.subscriber)
+        now = utcnow()
+        doc.setdefault('firstcreated', now)
+        doc.setdefault('versioncreated', now)
         doc['subscribers'] = {str(sub['_id']): 1 for sub in subscribers}
         return self._create_doc(doc)
 

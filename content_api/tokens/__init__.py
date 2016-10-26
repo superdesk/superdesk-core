@@ -16,7 +16,7 @@ from datetime import datetime, timedelta
 from content_api.tokens.resource import TokensResource
 from superdesk.services import BaseService
 from flask import current_app as app, g
-from eve.auth import TokenAuth, BasicAuth
+from eve.auth import TokenAuth
 
 
 JWT_ALGO = 'HS256'
@@ -36,7 +36,11 @@ def _get_secret():
 def generate_subscriber_token(subscriber):
     exp = datetime.utcnow() + timedelta(days=TOKEN_TTL_DAYS)
     payload = {'sub': str(subscriber['_id']), 'exp': _timestamp(exp)}
-    return jwt.encode(payload, _get_secret(), algorithm=JWT_ALGO)
+    try:
+        return jwt.encode(payload, _get_secret(), algorithm=JWT_ALGO)
+    except TypeError:
+        print('payload', payload, 'secret', _get_secret())
+        raise
 
 
 def decode_subscriber_token(token):
@@ -60,4 +64,3 @@ def init_app(app):
     endpoint_name = 'tokens'
     service = BaseService(endpoint_name, backend=superdesk.get_backend())
     TokensResource(endpoint_name, app=app, service=service)
-

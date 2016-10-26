@@ -1,7 +1,7 @@
 
 import flask
 
-from flask import request, g
+from flask import g
 from unittest import TestCase
 from content_api.tokens import generate_subscriber_token, decode_subscriber_token, SubscriberTokenAuth
 

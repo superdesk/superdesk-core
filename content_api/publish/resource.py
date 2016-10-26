@@ -9,9 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk.resource import Resource
-
-
-MONGO_PREFIX = 'CONTENTAPI_MONGO'
+from content_api import MONGO_PREFIX
 
 
 class PublishResource(Resource):

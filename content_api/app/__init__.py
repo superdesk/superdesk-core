@@ -29,7 +29,7 @@ from eve.render import send_response
 from redis.client import StrictRedis
 
 from content_api.app import settings
-from content_api.auth.oauth2 import BearerAuth
+from content_api.tokens import SubscriberTokenAuth
 from flask.ext.mail import Mail  # @UnresolvedImport
 from superdesk.datalayer import SuperdeskDataLayer
 from superdesk.errors import SuperdeskError, SuperdeskApiError
@@ -96,7 +96,7 @@ def get_app(config=None):
         media_storage = AmazonMediaStorage
 
     app = Eve(
-        auth=BearerAuth,
+        auth=SubscriberTokenAuth,
         settings=config,
         data=SuperdeskDataLayer,
         media=media_storage,
@@ -111,7 +111,6 @@ def get_app(config=None):
         app.redis = StrictRedis.from_url(config['REDIS_URL'], 0)
 
     for module_name in app.config.get('CONTENTAPI_INSTALLED_APPS', []):
-        print('import', module_name)
         app_module = importlib.import_module(module_name)
         try:
             app_module.init_app(app)

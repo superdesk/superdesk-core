@@ -124,6 +124,7 @@ class EveBackend():
         :param endpoint_name: api resource name
         :param docs: list of docs to be inserted
         """
+        print('create', endpoint_name, docs)
         ids = self.create_in_mongo(endpoint_name, docs, **kwargs)
         self.create_in_search(endpoint_name, docs, **kwargs)
         return ids
@@ -150,6 +151,7 @@ class EveBackend():
         """
         search_backend = self._lookup_backend(endpoint_name)
         if search_backend:
+            print('insert search', endpoint_name, search_backend)
             search_backend.insert(endpoint_name, docs, **kwargs)
 
     def update(self, endpoint_name, id, updates, original):
