@@ -28,14 +28,15 @@ class ActivityReportResource(Resource):
 
 class ActivityReportService(BaseService):
 
-    # TO DO: add the date as the third search parameter
-    def search_items(self, desk, operation):
+    def search_items(self, desk, operation, date):
         query = {
             "query": {
                 "filtered": {
                     "filter": {
                         "bool": {
                             "must": [
+                                {'range': {'created': {'gte': str(date),
+                                                       'lte': str(date)}}},
                                 {"term": {"operation": operation}},
                                 {"term": {"task.desk": str(desk)}},
                             ]
@@ -53,6 +54,7 @@ class ActivityReportService(BaseService):
         for doc in docs:
             operation = doc['operation']
             desk = doc['desk']
-            doc['report'] = self.search_items(desk, operation)
+            date = doc['date']
+            doc['report'] = self.search_items(desk, operation, date)
         docs = super().create(docs)
         return docs
