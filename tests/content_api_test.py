@@ -20,3 +20,15 @@ class ContentAPITestCase(TestCase):
 
         self.content_api.publish(item)
         self.assertEqual(1, self.db.items.count())
+
+        item['headline'] = 'foo'
+        self.content_api.publish(item)
+        self.assertEqual('foo', self.db.items.find_one()['headline'])
+
+    def test_publish_with_subscriber_ids(self):
+        item = {'guid': 'foo', 'type': 'text'}
+        subscribers = [{'_id': 'sub1'}, {'_id': 'sub2'}]
+
+        self.content_api.publish(item, subscribers)
+        self.assertEqual(1, self.db.items.find({'subscribers.sub1': 1}).count())
+        self.assertEqual(0, self.db.items.find({'subscribers.sub5': 1}).count())

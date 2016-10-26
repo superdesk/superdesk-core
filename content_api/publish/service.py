@@ -30,12 +30,14 @@ class PublishService(BaseService):
     formatter = NINJSFormatter()
     subscriber = {'config': {}}
 
-    def publish(self, item):
+    def publish(self, item, subscribers=[]):
         """Publish an item to content api.
 
         :param item: item to publish
         """
-        return self._create_doc(self.formatter._transform_to_ninjs(item, self.subscriber))
+        doc = self.formatter._transform_to_ninjs(item, self.subscriber)
+        doc['subscribers'] = {str(sub['_id']): 1 for sub in subscribers}
+        return self._create_doc(doc)
 
     def create(self, docs, **kwargs):
         ids = []
@@ -44,6 +46,7 @@ class PublishService(BaseService):
         return ids
 
     def _create_doc(self, doc, **kwargs):
+        """Create a new item or update existing."""
         item = copy(doc)
         item.setdefault('_id', item.get('guid'))
         _id = item[config.ID_FIELD] = item.pop('guid')

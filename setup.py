@@ -44,6 +44,7 @@ install_requires = [
     'websockets>=2.6',
     'mongolock>=1.3.4',
     'PyYAML>=3.11',
+    'pyjwt>=1.4.2',
 ]
 
 package_data = {
