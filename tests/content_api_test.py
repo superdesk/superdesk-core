@@ -15,6 +15,8 @@ class ContentAPITestCase(TestCase):
         self.content_api = superdesk.get_resource_service('content_api')
         self.db = self.app.data.mongo.pymongo(prefix=MONGO_PREFIX).db
         self.app.config['SECRET_KEY'] = 'secret'
+        self.capi = get_app(copy(self.app.config))
+        self.capi.testing = True
 
     def test_publish_to_content_api(self):
         item = {'guid': 'foo', 'type': 'text', 'task': {'desk': 'foo'}}
@@ -45,10 +47,10 @@ class ContentAPITestCase(TestCase):
 
         self.content_api.publish({'_id': 'foo', 'guid': 'foo', 'type': 'text'}, [subscriber])
         self.content_api.publish({'_id': 'bar', 'guid': 'bar', 'type': 'text'}, [])
+        self.content_api.publish({'_id': 'pkg', 'guid': 'pkg', 'type': 'composite'}, [subscriber])
+        self.content_api.publish({'_id': 'pkg2', 'guid': 'pkg2', 'type': 'composite'}, [])
 
-        capi = get_app(copy(self.app.config))
-        capi.testing = True
-        with capi.test_client() as c:
+        with self.capi.test_client() as c:
             response = c.get('api/items')
             self.assertEqual(401, response.status_code)
             response = c.get('api/items', headers=headers)
@@ -56,3 +58,8 @@ class ContentAPITestCase(TestCase):
             data = json.loads(response.data)
             self.assertEqual(1, len(data['_items']))
             self.assertNotIn('subscribers', data['_items'][0])
+            self.assertEqual('http://localhost:5400/items/foo', data['_items'][0]['uri'])
+            response = c.get('api/packages', headers=headers)
+            data = json.loads(response.data)
+            self.assertEqual(1, len(data['_items']))
+            self.assertEqual('http://localhost:5400/packages/pkg', data['_items'][0]['uri'])

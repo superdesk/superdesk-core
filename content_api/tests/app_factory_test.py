@@ -146,28 +146,6 @@ class ApiApplicationFactoryTestCase(ApiTestCase):
                     "An error unexpectedly raised ({}).".format(repr(ex)[:-2])
                 )
 
-    def test_registers_all_domain_resources(self, fake_settings):
-        self._init_settings(fake_settings)
-
-        endpoint_1_config = MagicMock(name='endpoint_1_config')
-        endpoint_2_config = MagicMock(name='endpoint_2_config')
-
-        config = {
-            'CONTENTAPI_DOMAIN': {
-                'endpoint_1': endpoint_1_config,
-                'endpoint_2': endpoint_2_config
-            }
-        }
-
-        with mock.patch('content_api.app.Eve'):
-            app = self.app_factory(config)
-
-        expected_calls = [
-            mock.call('endpoint_1', endpoint_1_config),
-            mock.call('endpoint_2', endpoint_2_config),
-        ]
-        app.register_resource.assert_has_calls(expected_calls, any_order=True)
-
     def test_media_storage_is_properly_initialized(self, fake_settings):
         from superdesk.storage.desk_media_storage import SuperdeskGridFSMediaStorage
         self._init_settings(fake_settings)

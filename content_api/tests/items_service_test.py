@@ -22,6 +22,14 @@ from content_api.tests import ApiTestCase
 class ItemsServiceTestCase(ApiTestCase):
     """Base class for the `items` service tests."""
 
+    def setUp(self):
+        self.app = Flask(__name__)
+        self.ctx = self.app.test_request_context('/')
+        self.ctx.push()
+
+    def tearDown(self):
+        self.ctx.pop()
+
     def _get_target_class(self):
         """Return the class under test.
 

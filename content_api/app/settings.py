@@ -35,8 +35,9 @@ def env(variable, fallback_value=None):
 CONTENTAPI_MONGO_DBNAME = 'contentapi'
 CONTENTAPI_MONGO_URI = env('CONTENTAPI_MONGO_URI', 'mongodb://localhost/%s' % CONTENTAPI_MONGO_DBNAME)
 
-ELASTICSEARCH_URL = env('CONTENTAPI_ELASTICSEARCH_URL', 'http://localhost:9200')
-ELASTICSEARCH_INDEX = env('CONTENTAPI_ELASTICSEARCH_INDEX', CONTENTAPI_MONGO_DBNAME)
+CONTENTAPI_ELASTICSEARCH_URL = env('CONTENTAPI_ELASTICSEARCH_URL', 'http://localhost:9200')
+CONTENTAPI_ELASTICSEARCH_INDEX = env('CONTENTAPI_ELASTICSEARCH_INDEX', CONTENTAPI_MONGO_DBNAME)
+
 ELASTIC_DATE_FORMAT = '%Y-%m-%d'
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%S+0000'
 
@@ -49,19 +50,9 @@ PUBLIC_RESOURCES = []
 CONTENTAPI_INSTALLED_APPS = [
     'content_api.items',
     'content_api.packages',
-    'content_api.prepopulate',
-    'content_api.publish',
-    'content_api.assets',
-    'content_api.clients',
-    'content_api.users',
-    'content_api.tokens',
-    'content_api.auth'
 ]
 
-DOMAIN = {}
 CONTENTAPI_DOMAIN = {}
-
-SUPERDESK_CONTENTAPI_TESTING = True
 
 # NOTE: no trailing slash for the PUBLICAPI_URL setting!
 PUBLICAPI_URL = env('PUBLICAPI_URL', 'http://localhost:5400')

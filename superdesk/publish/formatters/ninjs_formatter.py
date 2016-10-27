@@ -194,7 +194,7 @@ class NINJSFormatter(Formatter):
     def _get_associations(self, article, subscriber):
         """Create associations dict for package groups."""
         associations = dict()
-        for group in article[GROUPS]:
+        for group in article.get(GROUPS, []):
             if group[GROUP_ID] == ROOT_GROUP:
                 continue
 

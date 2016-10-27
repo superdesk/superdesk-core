@@ -39,7 +39,6 @@ def generate_subscriber_token(subscriber):
     try:
         return jwt.encode(payload, _get_secret(), algorithm=JWT_ALGO)
     except TypeError:
-        print('payload', payload, 'secret', _get_secret())
         raise
 
 

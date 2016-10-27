@@ -93,7 +93,6 @@ class SuperdeskDataLayer(DataLayer):
         if resource.endswith(current_app.config['VERSIONS']):
             return
         datasource = self.datasource(resource)
-        print('datasource', resource, datasource[0])
         backend = config.SOURCES.get(resource, {}).get('search_backend', None)
         backend = backend or config.SOURCES.get(datasource[0], {}).get('search_backend', None)
         return getattr(self, backend) if backend is not None else None

@@ -95,7 +95,8 @@ class ItemsService(BaseService):
         internal_req.args['filter'] = json.dumps(date_filter)
         self._set_fields_filter(internal_req)  # Eve's "projection"
 
-        lookup['subscribers.' + g.user] = 1
+        # in case there is no subscriber set by auth return nothing
+        lookup['subscribers.' + g.get('user', '_')] = 1
 
         try:
             res = super().get(internal_req, lookup)

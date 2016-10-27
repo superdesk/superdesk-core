@@ -212,6 +212,9 @@ class EnqueueService:
             logger.exception('Nothing is saved to publish queue for story: {} for action: {}'.
                              format(doc[config.ID_FIELD], self.publish_type))
 
+        # publish to content api
+        get_resource_service('content_api').publish(doc, subscribers)
+
         return queued
 
     def _push_formatter_notification(self, doc, no_formatters=[]):

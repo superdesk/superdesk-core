@@ -18,10 +18,9 @@ thus essentially just a normal `Flask <http://flask.pocoo.org/>`_ application.
     is meant to be used by the Superdesk browser client only.
 """
 
-import superdesk
-import importlib
+import flask
 import logging
-import os
+import importlib
 
 from eve import Eve
 from eve.io.mongo.mongo import MongoJSONEncoder
@@ -78,37 +77,45 @@ def get_app(config=None):
         from `settings.py`
     :return: a new SuperdeskEve app instance
     """
-    if config is None:
-        config = {}
+    app_config = flask.Config('.')
+    app_config.from_object('superdesk.default_settings')
 
-    config.setdefault('DOMAIN', {})
-    config.setdefault('SOURCES', {})
-
-    config['APP_ABSPATH'] = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
+    app_config.update({
+        'DOMAIN': {},
+        'SOURCES': {},
+    })
 
     for key in dir(settings):
         if key.isupper():
-            config.setdefault(key, getattr(settings, key))
+            app_config.update({key: getattr(settings, key)})
+
+    # override elastic config with content api
+    app_config.update({
+        'ELASTICSEARCH_URL': settings.CONTENTAPI_ELASTICSEARCH_URL,
+        'ELASTICSEARCH_INDEX': settings.CONTENTAPI_ELASTICSEARCH_INDEX,
+    })
+
+    if config:
+        app_config.update(config)
 
     media_storage = SuperdeskGridFSMediaStorage
-    if config.get('AMAZON_CONTAINER_NAME'):
+    if app_config.get('AMAZON_CONTAINER_NAME'):
         from superdesk.storage.amazon.amazon_media_storage import AmazonMediaStorage
         media_storage = AmazonMediaStorage
 
     app = Eve(
         auth=SubscriberTokenAuth,
-        settings=config,
+        settings=app_config,
         data=SuperdeskDataLayer,
         media=media_storage,
         json_encoder=MongoJSONEncoder,
         validator=SuperdeskValidator
     )
 
-    superdesk.app = app
     _set_error_handlers(app)
     app.mail = Mail(app)
-    if config.get('REDIS_URL'):
-        app.redis = StrictRedis.from_url(config['REDIS_URL'], 0)
+    if app.config.get('REDIS_URL'):
+        app.redis = StrictRedis.from_url(app.config['REDIS_URL'], 0)
 
     for module_name in app.config.get('CONTENTAPI_INSTALLED_APPS', []):
         app_module = importlib.import_module(module_name)
@@ -116,9 +123,6 @@ def get_app(config=None):
             app_module.init_app(app)
         except AttributeError:
             pass
-
-    for resource in config.get('CONTENTAPI_DOMAIN', {}):
-        app.register_resource(resource, config['CONTENTAPI_DOMAIN'][resource])
 
     app.sentry = SuperdeskSentry(app)
 

@@ -124,7 +124,6 @@ class EveBackend():
         :param endpoint_name: api resource name
         :param docs: list of docs to be inserted
         """
-        print('create', endpoint_name, docs)
         ids = self.create_in_mongo(endpoint_name, docs, **kwargs)
         self.create_in_search(endpoint_name, docs, **kwargs)
         return ids
