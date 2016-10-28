@@ -336,6 +336,7 @@ CORE_APPS.extend([
     'apps.privilege',
     'apps.rules',
     'apps.highlights',
+    'apps.marked_desks',
     'apps.products',
     'apps.publish',
     'apps.publish.formatters',

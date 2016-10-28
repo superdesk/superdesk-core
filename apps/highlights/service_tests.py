@@ -87,16 +87,16 @@ class CreateMethodTestCase(MarkedForHighlightsServiceTest):
         # notifications should have been pushed, one for each highlighted item
         self.assertEqual(fake_push_notify.call_count, 2)
         fake_push_notify.assert_any_call(
-            'item:highlight',
+            'item:highlights',
             marked=1,
             item_id='tag:item_1',
-            highlight_id='highlight_X'
+            mark_id='highlight_X'
         )
         fake_push_notify.assert_any_call(
-            'item:highlight',
+            'item:highlights',
             marked=1,
             item_id='tag:item_2',
-            highlight_id='highlight_Y'
+            mark_id='highlight_Y'
         )
 
     def test_pushes_notifications_for_newly_unhighlighted_items(
@@ -130,14 +130,14 @@ class CreateMethodTestCase(MarkedForHighlightsServiceTest):
         # notifications should have been pushed, one for each highlighted item
         self.assertEqual(fake_push_notify.call_count, 2)
         fake_push_notify.assert_any_call(
-            'item:highlight',
+            'item:highlights',
             marked=0,
             item_id='tag:item_1',
-            highlight_id='highlight_X'
+            mark_id='highlight_X'
         )
         fake_push_notify.assert_any_call(
-            'item:highlight',
+            'item:highlights',
             marked=0,
             item_id='tag:item_2',
-            highlight_id='highlight_Y'
+            mark_id='highlight_Y'
         )

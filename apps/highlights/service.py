@@ -115,10 +115,10 @@ class MarkedForHighlightsService(BaseService):
                     publishedService.update(publishedItem['_id'], updates, publishedItem)
 
             push_notification(
-                'item:highlight',
+                'item:highlights',
                 marked=int(highlight_on),
                 item_id=item['_id'],
-                highlight_id=str(doc['highlights']))
+                mark_id=str(doc['highlights']))
 
         return ids
 
