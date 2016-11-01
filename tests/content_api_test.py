@@ -1,8 +1,9 @@
 
 import superdesk
 
-from flask import json
+from bson import ObjectId
 from copy import copy
+from flask import json
 from superdesk.tests import TestCase
 from content_api.publish import MONGO_PREFIX
 from content_api.tokens import generate_subscriber_token
@@ -34,11 +35,11 @@ class ContentAPITestCase(TestCase):
 
     def test_publish_with_subscriber_ids(self):
         item = {'guid': 'foo', 'type': 'text'}
-        subscribers = [{'_id': 'sub1'}, {'_id': 'sub2'}]
+        subscribers = [{'_id': ObjectId()}, {'_id': ObjectId()}]
 
         self.content_api.publish(item, subscribers)
-        self.assertEqual(1, self.db.items.find({'subscribers.sub1': 1}).count())
-        self.assertEqual(0, self.db.items.find({'subscribers.sub5': 1}).count())
+        self.assertEqual(1, self.db.items.find({'subscribers': str(subscribers[0]['_id'])}).count())
+        self.assertEqual(0, self.db.items.find({'subscribers': 'foo'}).count())
 
     def test_content_filtering_by_subscriber(self):
         subscriber = {'_id': 'sub1'}

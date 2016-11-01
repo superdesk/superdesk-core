@@ -9,7 +9,6 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import jwt
-import jwt.exceptions
 import superdesk
 
 from datetime import datetime, timedelta
@@ -20,7 +19,6 @@ from eve.auth import TokenAuth
 
 
 JWT_ALGO = 'HS256'
-TOKEN_TTL_DAYS = 365
 
 
 def _timestamp(date=None):
@@ -33,18 +31,36 @@ def _get_secret():
     return app.config['SECRET_KEY']
 
 
-def generate_subscriber_token(subscriber):
-    exp = datetime.utcnow() + timedelta(days=TOKEN_TTL_DAYS)
-    payload = {'sub': str(subscriber['_id']), 'exp': _timestamp(exp)}
+def generate_subscriber_token(subscriber, ttl_days=365):
+    """Generate auth token for subscriber.
+
+    Using `JSON Web Tokens <https://jwt.io/>`_. It contains info about
+    subscriber so there is no need to fetch it from db when doing auth.
+
+    :param subscriber: subscriber dict
+    :param ttl_days: token ttl in days
+    """
+    exp = datetime.utcnow() + timedelta(days=ttl_days)
     try:
-        return jwt.encode(payload, _get_secret(), algorithm=JWT_ALGO)
-    except TypeError:
-        raise
+        payload = {'sub': str(subscriber['_id']), 'exp': _timestamp(exp)}
+    except KeyError:  # no id for subscriber - ignore
+        return
+    return jwt.encode(payload, _get_secret(), algorithm=JWT_ALGO)
 
 
 def decode_subscriber_token(token):
+    """Decode subscriber token.
+
+    :param token: auth token
+    """
     try:
-        return jwt.decode(token, _get_secret(), algorithms=[JWT_ALGO])
+        token_bin = token.encode('utf-8')
+    except AttributeError:
+        token_bin = token
+    try:
+        return jwt.decode(token_bin, _get_secret(), algorithms=[JWT_ALGO])
+    except jwt.exceptions.ExpiredSignatureError:
+        return
     except jwt.exceptions.DecodeError:
         return
 
@@ -52,6 +68,7 @@ def decode_subscriber_token(token):
 class SubscriberTokenAuth(TokenAuth):
 
     def check_auth(self, token, allowed_roles, resource, method):
+        """Try to encode auth token and if valid put subscriber id into ``g.user``."""
         decoded = decode_subscriber_token(token)
         if not decoded:
             return

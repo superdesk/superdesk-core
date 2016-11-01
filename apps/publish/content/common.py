@@ -153,9 +153,6 @@ class BasePublishService(BaseService):
         except KeyError as e:
             raise SuperdeskApiError.badRequestError(
                 message="Key is missing on article to be published: {}".format(str(e)))
-        except Exception as e:
-            logger.exception("Something bad happened while publishing %s".format(id))
-            raise SuperdeskApiError.internalError(message="Failed to publish the item: {}".format(str(e)))
 
     def _process_takes_package(self, original, updated, updates):
         if original[ITEM_TYPE] in {CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED} \

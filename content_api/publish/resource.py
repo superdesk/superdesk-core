@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk.resource import Resource
-from content_api import MONGO_PREFIX
+from content_api import MONGO_PREFIX, ELASTIC_PREFIX
 
 
 class PublishResource(Resource):
@@ -23,6 +23,7 @@ class PublishResource(Resource):
     }
 
     mongo_prefix = MONGO_PREFIX
+    elastic_prefix = ELASTIC_PREFIX
 
     item_methods = []
     resource_methods = []

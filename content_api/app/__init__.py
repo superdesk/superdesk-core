@@ -23,13 +23,10 @@ import logging
 import importlib
 
 from eve import Eve
-from eve.io.mongo.mongo import MongoJSONEncoder
 from eve.render import send_response
-from redis.client import StrictRedis
+from eve.io.mongo.mongo import MongoJSONEncoder
 
-from content_api.app import settings
 from content_api.tokens import SubscriberTokenAuth
-from flask.ext.mail import Mail  # @UnresolvedImport
 from superdesk.datalayer import SuperdeskDataLayer
 from superdesk.errors import SuperdeskError, SuperdeskApiError
 from superdesk.storage.desk_media_storage import SuperdeskGridFSMediaStorage
@@ -78,22 +75,21 @@ def get_app(config=None):
     :return: a new SuperdeskEve app instance
     """
     app_config = flask.Config('.')
-    app_config.from_object('superdesk.default_settings')
 
-    app_config.update({
-        'DOMAIN': {},
-        'SOURCES': {},
-    })
+    # get content api default conf
+    app_config.from_object('content_api.app.settings')
 
-    for key in dir(settings):
-        if key.isupper():
-            app_config.update({key: getattr(settings, key)})
+    # set some required fields
+    app_config.update({'DOMAIN': {}, 'SOURCES': {}})
 
-    # override elastic config with content api
-    app_config.update({
-        'ELASTICSEARCH_URL': settings.CONTENTAPI_ELASTICSEARCH_URL,
-        'ELASTICSEARCH_INDEX': settings.CONTENTAPI_ELASTICSEARCH_INDEX,
-    })
+    try:
+        # override from settings module, but only things defined in default config
+        import settings as server_settings
+        for key in dir(server_settings):
+            if key.isupper() and key in app_config:
+                app_config[key] = getattr(server_settings, key)
+    except ImportError:
+        pass  # if exists
 
     if config:
         app_config.update(config)
@@ -113,9 +109,6 @@ def get_app(config=None):
     )
 
     _set_error_handlers(app)
-    app.mail = Mail(app)
-    if app.config.get('REDIS_URL'):
-        app.redis = StrictRedis.from_url(app.config['REDIS_URL'], 0)
 
     for module_name in app.config.get('CONTENTAPI_INSTALLED_APPS', []):
         app_module = importlib.import_module(module_name)

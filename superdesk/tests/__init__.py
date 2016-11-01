@@ -61,8 +61,6 @@ def get_test_settings():
     test_settings['LEGAL_ARCHIVE_URI'] = get_mongo_uri('LEGAL_ARCHIVE_URI', 'sptests_legal_archive')
     test_settings['ARCHIVED_DBNAME'] = 'sptests_archived'
     test_settings['ARCHIVED_URI'] = get_mongo_uri('ARCHIVED_URI', 'sptests_archived')
-    test_settings['CONTENTAPI_MONGO_DBNAME'] = 'sptests_contentapi'
-    test_settings['CONTENTAPI_MONGO_URI'] = get_mongo_uri('CONTENTAPI_MONGO_URI', 'sptests_contentapi')
     test_settings['DEBUG'] = True
     test_settings['TESTING'] = True
     test_settings['SUPERDESK_TESTING'] = True
@@ -70,6 +68,10 @@ def get_test_settings():
     test_settings['CELERY_ALWAYS_EAGER'] = 'True'
     test_settings['CONTENT_EXPIRY_MINUTES'] = 99
     test_settings['VERSION'] = '_current_version'
+    test_settings['SECRET_KEY'] = 'test-secret'
+    test_settings['CONTENTAPI_MONGO_DBNAME'] = 'sptests_contentapi'
+    test_settings['CONTENTAPI_MONGO_URI'] = get_mongo_uri('CONTENTAPI_MONGO_URI', 'sptests_contentapi')
+    test_settings['CONTENTAPI_ELASTICSEARCH_INDEX'] = 'sptest_contentapi'
 
     # limit mongodb connections
     test_settings['MONGO_CONNECT'] = False
@@ -169,7 +171,8 @@ def _clean_es(app):
     indices = '%s*' % app.config['ELASTICSEARCH_INDEX']
     es = app.data.elastic.es
     es.indices.delete(indices, ignore=[404])
-    app.data.init_elastic(app)
+    with app.app_context():
+        app.data.init_elastic(app)
 
 
 @retry(socket.timeout, 2)

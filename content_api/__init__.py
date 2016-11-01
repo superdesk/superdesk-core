@@ -9,3 +9,4 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 MONGO_PREFIX = 'CONTENTAPI_MONGO'
+ELASTIC_PREFIX = 'CONTENTAPI_ELASTICSEARCH'

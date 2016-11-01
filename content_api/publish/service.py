@@ -12,6 +12,7 @@ import logging
 
 from copy import copy
 from eve.utils import config
+from flask import current_app as app
 
 from superdesk.utc import utcnow
 from superdesk.errors import SuperdeskApiError
@@ -19,7 +20,7 @@ from superdesk.services import BaseService
 from superdesk.publish.formatters.ninjs_formatter import NINJSFormatter
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('superdesk')
 
 
 class PublishService(BaseService):
@@ -34,13 +35,19 @@ class PublishService(BaseService):
     def publish(self, item, subscribers=[]):
         """Publish an item to content api.
 
+        This must be enabled via ``PUBLISH_TO_CONTENT_API`` setting.
+
         :param item: item to publish
         """
+        if not app.config.get('PUBLISH_TO_CONTENT_API', True):
+            return
+
         doc = self.formatter._transform_to_ninjs(item, self.subscriber)
         now = utcnow()
         doc.setdefault('firstcreated', now)
         doc.setdefault('versioncreated', now)
-        doc['subscribers'] = {str(sub['_id']): 1 for sub in subscribers}
+        doc['subscribers'] = [str(sub['_id']) for sub in subscribers]
+        logger.info('publishing %s to %s' % (doc['guid'], subscribers))
         return self._create_doc(doc)
 
     def create(self, docs, **kwargs):

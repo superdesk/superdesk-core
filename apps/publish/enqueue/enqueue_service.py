@@ -33,7 +33,7 @@ from apps.packages.package_service import PackageService
 from apps.publish.published_item import PUBLISH_STATE, QUEUE_STATE
 from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('superdesk')
 
 
 class EnqueueService:

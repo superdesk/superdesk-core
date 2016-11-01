@@ -18,7 +18,14 @@ class SubscriberTokenTestCase(TestCase):
         with self.app.app_context():
             token = generate_subscriber_token(self.subscriber)
             decoded = decode_subscriber_token(token)
-        self.assertEqual(self.subscriber['_id'], decoded['sub'])
+            self.assertEqual(self.subscriber['_id'], decoded['sub'])
+
+    def test_decode_str_token(self):
+        with self.app.app_context():
+            token = generate_subscriber_token(self.subscriber)
+            token_str = token.decode('utf-8')
+            decoded = decode_subscriber_token(token_str)
+            self.assertEqual(self.subscriber['_id'], decoded['sub'])
 
     def test_token_auth(self):
         auth = SubscriberTokenAuth()
@@ -30,3 +37,10 @@ class SubscriberTokenTestCase(TestCase):
         with self.app.test_request_context(headers={'Authorization': b'Bearer ' + token}):
             self.assertTrue(auth.authorized([], None, 'GET'))
             self.assertEqual(self.subscriber['_id'], g.get('user'))
+
+    def test_expired_token_auth(self):
+        auth = SubscriberTokenAuth()
+        with self.app.test_request_context():
+            token = generate_subscriber_token(self.subscriber, ttl_days=-1)
+        with self.app.test_request_context(headers={'Authorization': b'Bearer ' + token}):
+            self.assertFalse(auth.authorized([], None, 'GET'))

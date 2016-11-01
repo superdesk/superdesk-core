@@ -47,21 +47,6 @@ class ApiApplicationFactoryTestCase(ApiTestCase):
 
         self.assertIsInstance(app, Eve)
 
-    def test_created_app_uses_default_settings(self, fake_settings):
-        fake_settings.CONTENTAPI_DOMAIN = {'domain_one': {}, 'domain_two': {}}
-        fake_settings.CONTENTAPI_INSTALLED_APPS = ['package.one', 'package.two']
-
-        app = self.app_factory()
-
-        self.assertEqual(
-            sorted(app.settings.get('CONTENTAPI_DOMAIN', {}).keys()),
-            ['domain_one', 'domain_two']
-        )
-        self.assertEqual(
-            app.settings.get('CONTENTAPI_INSTALLED_APPS'),
-            ['package.one', 'package.two']
-        )
-
     def test_created_app_uses_provided_config_settings(self, fake_settings):
         self._init_settings(fake_settings)
 
@@ -145,12 +130,3 @@ class ApiApplicationFactoryTestCase(ApiTestCase):
                 self.fail(
                     "An error unexpectedly raised ({}).".format(repr(ex)[:-2])
                 )
-
-    def test_media_storage_is_properly_initialized(self, fake_settings):
-        from superdesk.storage.desk_media_storage import SuperdeskGridFSMediaStorage
-        self._init_settings(fake_settings)
-        fake_settings.AMAZON_CONTAINER_NAME = ''
-
-        app = self.app_factory()
-
-        self.assertIsInstance(app.media, SuperdeskGridFSMediaStorage)

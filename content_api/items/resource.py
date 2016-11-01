@@ -9,8 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk.resource import Resource
-
-from content_api import MONGO_PREFIX
+from content_api import MONGO_PREFIX, ELASTIC_PREFIX
 
 
 schema = {
@@ -58,7 +57,6 @@ class ItemsResource(Resource):
     schema = schema
 
     datasource = {
-        'source': 'items',
         'search_backend': 'elastic',
         'elastic_filter': {"bool": {"must_not": {"term": {"type": "composite"}}}},
         'default_sort': [('_updated', -1)],
@@ -68,3 +66,4 @@ class ItemsResource(Resource):
     resource_methods = ['GET']
 
     mongo_prefix = MONGO_PREFIX
+    elastic_prefix = ELASTIC_PREFIX

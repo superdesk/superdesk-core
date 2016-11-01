@@ -29,7 +29,7 @@ from content_api.items.resource import ItemsResource
 from eve.utils import ParsedRequest
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('superdesk')
 
 
 class ItemsService(BaseService):
@@ -96,7 +96,9 @@ class ItemsService(BaseService):
         self._set_fields_filter(internal_req)  # Eve's "projection"
 
         # in case there is no subscriber set by auth return nothing
-        lookup['subscribers.' + g.get('user', '_')] = 1
+        lookup['subscribers'] = g.get('user')
+
+        logger.info('lookup %s' % lookup)
 
         try:
             res = super().get(internal_req, lookup)
