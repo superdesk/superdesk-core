@@ -223,7 +223,7 @@ Feature: Role Resource
             {"_items":[
                {
                 "resource": "roles",
-                "message": "role {{role}} is granted new privileges: Please re-login.",
+                "message": "role {{role}} has been granted new privileges: Please re-login.",
                 "data": {"role": "Admin"}
                }
             ]}
@@ -245,12 +245,12 @@ Feature: Role Resource
             {"_items":[
                {
                 "resource": "roles",
-                "message": "role {{role}} is granted new privileges: Please re-login.",
+                "message": "role {{role}} has been granted new privileges: Please re-login.",
                 "data": {"role": "Admin"}
                },
                {
                 "resource": "roles",
-                "message": "role {{role}} is granted new privileges: Please re-login.",
+                "message": "role {{role}} has been granted new privileges: Please re-login.",
                 "data": {"role": "Admin"}
                }
             ]}

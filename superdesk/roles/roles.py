@@ -98,7 +98,7 @@ class RolesService(BaseService):
                 push_notification('role_privileges_revoked', updated=1, role_id=str(role_id))
             if len(added) > 0 or (0, 1) in modified.values():
                 activity = add_activity(ACTIVITY_UPDATE,
-                                        'role {{role}} is granted new privileges: Please re-login.',
+                                        'role {{role}} has been granted new privileges: Please re-login.',
                                         self.datasource,
                                         notify=notified_users,
                                         can_push_notification=False,

@@ -184,7 +184,7 @@ class UsersService(BaseService):
                 push_notification('user_privileges_revoked', updated=1, user_id=str(user_id))
             if len(added) > 0:
                 add_activity(ACTIVITY_UPDATE,
-                             'user {{user}} is granted new privileges: Please re-login.',
+                             'user {{user}} has been granted new privileges: Please re-login.',
                              self.datasource,
                              notify=[user_id],
                              user=user.get('display_name', user.get('username')))
