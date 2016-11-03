@@ -209,8 +209,8 @@ class EnqueueService:
 
         # Step 6
         if not target_media_type and not queued:
-            logger.exception('Nothing is saved to publish queue for story: {} for action: {}'.
-                             format(doc[config.ID_FIELD], self.publish_type))
+            logger.error('Nothing is saved to publish queue for story: {} for action: {}'.
+                         format(doc[config.ID_FIELD], self.publish_type))
 
         return queued
 
