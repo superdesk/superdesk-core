@@ -262,6 +262,7 @@ CORE_APPS = [
     'superdesk.roles',
     'content_api.publish',
     'content_api.items',
+    'content_api.tokens',
 ]
 
 #: Specify what modules should be enabled

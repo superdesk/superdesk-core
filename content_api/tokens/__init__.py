@@ -10,10 +10,10 @@
 
 import jwt
 import superdesk
+import content_api
 
+from bson import ObjectId
 from datetime import datetime, timedelta
-from content_api.tokens.resource import TokensResource
-from superdesk.services import BaseService
 from flask import current_app as app, g
 from eve.auth import TokenAuth
 
@@ -76,7 +76,40 @@ class SubscriberTokenAuth(TokenAuth):
         return decoded.get('sub')
 
 
+class GenerateTokenCommand(superdesk.Command):
+    """Generate subscriber tokens via CLI."""
+
+    option_list = (
+        superdesk.Option('--name', '-n', dest='name'),
+        superdesk.Option('--id', '-i', dest='_id'),
+    )
+
+    def run(self, name, _id):
+        if not content_api.is_enabled():
+            print('Content API is not enabled.')
+            return
+
+        if not name and not _id:
+            print('Please provide name or id.')
+            return
+
+        subscribers_service = superdesk.get_resource_service('subscribers')
+
+        lookup = {'name': name} if name else {'_id': ObjectId(_id)}
+        subscriber = subscribers_service.find_one(req=None, **lookup)
+
+        if not subscriber:
+            print('No subscriber found using %s' % lookup)
+            print('Available subscribers:')
+            subscribers = subscribers_service.find({})
+            for subscriber in subscribers:
+                print(subscriber['name'])
+            return
+
+        print('TOKEN')
+        print(generate_subscriber_token(subscriber).decode('utf-8'))
+        print('-----')
+
+
 def init_app(app):
-    endpoint_name = 'tokens'
-    service = BaseService(endpoint_name, backend=superdesk.get_backend())
-    TokensResource(endpoint_name, app=app, service=service)
+    superdesk.command('capi:generate_token', GenerateTokenCommand())

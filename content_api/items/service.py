@@ -98,8 +98,6 @@ class ItemsService(BaseService):
         # in case there is no subscriber set by auth return nothing
         lookup['subscribers'] = g.get('user')
 
-        logger.info('lookup %s' % lookup)
-
         try:
             res = super().get(internal_req, lookup)
             return res
