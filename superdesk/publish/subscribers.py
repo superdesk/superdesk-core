@@ -10,6 +10,7 @@
 
 import json
 import logging
+import content_api
 from superdesk import get_resource_service
 from eve.utils import ParsedRequest, config
 from superdesk.utils import ListCursor
@@ -232,6 +233,7 @@ class SubscribersService(BaseService):
         )
 
     def on_fetched(self, docs):
-        for subscriber in docs['_items']:
-            if not subscriber.get('content_api_token'):
-                subscriber['content_api_token'] = generate_subscriber_token(subscriber)
+        if content_api.is_enabled():
+            for subscriber in docs['_items']:
+                if not subscriber.get('content_api_token'):
+                    subscriber['content_api_token'] = generate_subscriber_token(subscriber)

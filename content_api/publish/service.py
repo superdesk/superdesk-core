@@ -12,7 +12,6 @@ import logging
 
 from copy import copy
 from eve.utils import config
-from flask import current_app as app
 
 from superdesk.utc import utcnow
 from superdesk.errors import SuperdeskApiError
@@ -39,9 +38,6 @@ class PublishService(BaseService):
 
         :param item: item to publish
         """
-        if not app.config.get('PUBLISH_TO_CONTENT_API', True):
-            return
-
         doc = self.formatter._transform_to_ninjs(item, self.subscriber)
         now = utcnow()
         doc.setdefault('firstcreated', now)

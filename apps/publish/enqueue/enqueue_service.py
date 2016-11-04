@@ -8,12 +8,13 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from functools import partial
-import logging
 import io
 import json
+import logging
+import content_api
 
 from bson import ObjectId
+from functools import partial
 
 from flask import current_app as app
 from superdesk import get_resource_service
@@ -213,7 +214,8 @@ class EnqueueService:
                              format(doc[config.ID_FIELD], self.publish_type))
 
         # publish to content api
-        get_resource_service('content_api').publish(doc, subscribers)
+        if content_api.is_enabled():
+            get_resource_service('content_api').publish(doc, subscribers)
 
         return queued
 
