@@ -450,3 +450,49 @@ Feature: Templates
          "_status": "ERR"
         }
         """
+
+    @auth
+    Scenario: Byline and Place is null after Kill template is applied to an item
+        When we post to "content_templates"
+        """
+        {
+            "template_name": "kill",
+            "template_type": "kill",
+            "is_public": true,
+            "data": {
+                "body_html": "<p>Please kill story slugged {{ item.slugline }} ex {{ item.dateline['text'] }} at {{item.versioncreated | format_datetime(date_format='%d %b %Y %H:%S %Z')}}.<\/p>",
+                "type": "text",
+                "abstract": "This article has been removed",
+                "headline": "Kill\/Takedown notice ~~~ Kill\/Takedown notice",
+                "urgency": 1, "priority": 1,
+                "anpa_take_key": "KILL\/TAKEDOWN"
+            }
+        }
+        """
+        Then we get new resource
+        When we post to "content_templates_apply"
+        """
+            {
+                "template_name": "kill",
+                "item": {
+                    "headline": "Test", "_id": "123",
+                    "body_html": "test", "slugline": "testing",
+                    "abstract": "abstract",
+                    "byline": "Test-byline",
+                    "place": [{"qcode" : "ACT", "world_region" : "Oceania", "country" : "Australia",
+                    "name" : "ACT", "state" : "Australian Capital Territory"}],
+                    "urgency": 5, "priority": 6,
+                    "dateline": {
+                        "text": "Prague, 9 May (SAP)"
+                    },
+                    "versioncreated": "2015-01-01T22:54:53+0000"
+                }
+            }
+        """
+        Then we get updated response
+        """
+        {
+          "byline": null,
+          "place": null
+        }
+        """

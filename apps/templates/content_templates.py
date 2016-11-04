@@ -37,6 +37,7 @@ TEMPLATE_FIELDS = {'template_name', 'template_type', 'schedule', 'type', 'state'
                    config.ETAG, 'task'}
 KILL_TEMPLATE_NOT_REQUIRED_FIELDS = ['schedule', 'dateline', 'template_desks', 'schedule_desk',
                                      'schedule_stage']
+KILL_TEMPLATE_NULL_FIELDS = ['byline', 'place']
 PLAINTEXT_FIELDS = {'headline'}
 
 
@@ -288,6 +289,10 @@ class ContentTemplatesApplyService(Service):
 
         updates = render_content_template(item, template)
         item.update(updates)
+
+        if template_name == 'kill':
+            apply_null_override_for_kill(item)
+
         docs[0] = item
         build_custom_hateoas(CUSTOM_HATEOAS, docs[0])
         return [docs[0].get(config.ID_FIELD)]
@@ -401,6 +406,12 @@ def filter_plaintext_fields(item):
     for field in PLAINTEXT_FIELDS:
         if field in item:
             item[field] = plaintext_filter(item[field])
+
+
+def apply_null_override_for_kill(item):
+    for key in KILL_TEMPLATE_NULL_FIELDS:
+        if key in item:
+            item[key] = None
 
 
 @celery.task(soft_time_limit=120)
