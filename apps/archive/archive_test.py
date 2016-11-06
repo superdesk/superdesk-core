@@ -16,7 +16,7 @@ from unittest.mock import MagicMock
 from bson import ObjectId
 from pytz import timezone
 
-from apps.archive.archive import SOURCE as ARCHIVE
+from apps.archive.archive import ArchiveService, SOURCE as ARCHIVE
 from apps.archive.common import (
     validate_schedule, remove_media_files,
     format_dateline_to_locmmmddsrc, convert_task_attributes_to_objectId,
@@ -477,3 +477,38 @@ class ExpiredArchiveContentTestCase(TestCase):
         test_items['item3'] = self.published_items[3]
         result = self.class_under_test().check_if_items_imported_to_legal_archive(test_items)
         self.assertIn('item3', result)
+
+
+class ArchiveEnhanceTestCase(TestCase):
+    def test_enhancing_archive_items(self):
+        for i in range(0, 10):
+            self.app.data.insert(ARCHIVE, [{'_id': str(i),
+                                            'type': 'text',
+                                            'linked_in_packages': [{'package': str(i + 10),
+                                                                    'package_type': 'takes'}]}])
+
+            self.app.data.insert(ARCHIVE, [{'_id': str(i + 10),
+                                            'type': 'composite',
+                                            'package_type': 'takes',
+                                            'groups': [
+                                                {'id': 'root', 'refs': [{'idRef': 'main'}], 'role': 'grpRole:NEP'},
+                                                {
+                                                    'id': 'main',
+                                                    'refs': [
+                                                        {
+                                                            'location': ARCHIVE,
+                                                            'residRef': str(i),
+                                                            'sequence': 1,
+                                                            'type': 'text'
+                                                        }
+                                                    ],
+                                                    'role': 'grpRole:main'}]}])
+
+        items = list(self.app.data.find_all('archive', None))
+        ArchiveService().enhance_items(items)
+        self.assertEqual(len(items), 20)
+
+        for item in items:
+            if item['type'] == 'text':
+                self.assertTrue('takes' in item)
+                self.assertEqual(item['takes']['_id'], str(int(item['_id']) + 10))
