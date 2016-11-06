@@ -1730,6 +1730,20 @@ def then_field_is_not_populated_in_results(context, field_name):
         assert resp[field_name] is None, 'item is not populated'
 
 
+@then('we get "{field_name}" does not exist')
+def then_field_is_not_populated_in_results(context, field_name):
+    resps = parse_json_response(context.response)
+    for resp in resps['_items']:
+        assert field_name not in resp, 'field exists'
+
+
+@then('we get "{field_name}" does exist')
+def then_field_is_not_populated_in_results(context, field_name):
+    resps = parse_json_response(context.response)
+    for resp in resps['_items']:
+        assert field_name in resp, 'field does not exist'
+
+
 @when('we delete content filter "{name}"')
 def step_delete_content_filter(context, name):
     with context.app.test_request_context(context.app.config['URL_PREFIX']):

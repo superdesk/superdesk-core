@@ -18,6 +18,7 @@ def validate(item, **kwargs):
 
     return item
 
+
 name = 'take_key_validator'
 label = 'validate take key'
 callback = validate

@@ -295,4 +295,5 @@ class TasksService(BaseService):
         old_stage_id = str(original.get('task', {}).get('stage', ''))
         return new_stage_id and new_stage_id != old_stage_id
 
+
 superdesk.privilege(name='tasks', label='Tasks Management', description='Tasks Management')

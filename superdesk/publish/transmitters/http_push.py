@@ -122,4 +122,5 @@ class HTTPPushService(PublishService):
         else:
             raise PublishHTTPPushError.httpPushError(e, destination)
 
+
 register_transmitter('http_push', HTTPPushService(), errors)
