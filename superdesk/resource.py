@@ -59,6 +59,7 @@ class Resource():
     auth_field = None
     authentication = None
     elastic_prefix = None
+    query_objectid_as_string = None
 
     def __init__(self, endpoint_name, app, service, endpoint_schema=None):
         self.endpoint_name = endpoint_name
@@ -101,6 +102,8 @@ class Resource():
                 endpoint_schema.update({'authentication': self.authentication})
             if self.elastic_prefix:
                 endpoint_schema.update({'elastic_prefix': self.elastic_prefix})
+            if self.query_objectid_as_string:
+                endpoint_schema.update({'query_objectid_as_string': self.query_object_id_as_string})
 
         self.endpoint_schema = endpoint_schema
 
