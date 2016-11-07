@@ -86,7 +86,7 @@ Content metadata
 
 ``dateline`` *dict*
 
-    Info about when/where story happens.
+    Info about when/where story was written.
 
 ``groups`` *dict*
 

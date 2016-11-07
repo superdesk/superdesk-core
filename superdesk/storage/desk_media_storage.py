@@ -48,7 +48,7 @@ class SuperdeskGridFSMediaStorage(GridFSMediaStorage):
             return bson.ObjectId(sha(str(filename))[:24])
 
     def url_for_media(self, media_id, content_type=None):
-        """Return url for givne media id.
+        """Return url for given media id.
 
         :param media_id: media id from media_id method
         """
@@ -83,7 +83,7 @@ class SuperdeskGridFSMediaStorage(GridFSMediaStorage):
         return self._fs[px]
 
     def remove_unreferenced_files(self, existing_files):
-        """Get the files from Grid FS and compars agains existing files and deletes the orphans."""
+        """Get the files from Grid FS and compare agains existing files and delete the orphans."""
         current_files = self.fs('upload').find({'_id': {'$nin': list(existing_files)}})
         for file_id in (file._id for file in current_files if str(file._id) not in existing_files):
             print('Removing unused file: ', file_id)

@@ -4,7 +4,7 @@ Publishing
 Publish types
 -------------
 
-There are multiple types of publishing, which correcponds with item life cycle:
+There are multiple types of publishing, which corresponds with item life cycle:
 
 - *publish*
 - *correct*
@@ -80,7 +80,7 @@ Enqueueing is done via:
 
     .. automethod:: enqueue_item
 
-There it finds all subscribers that should recieve the item and if any it will format the item and queue transmission.
+There it finds all subscribers that should receive the item and if any it will format the item and queue transmission.
 
 Output Formats
 --------------
