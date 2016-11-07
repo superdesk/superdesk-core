@@ -1,3 +1,5 @@
+.. _schema:
+
 Item Schema
 ===========
 

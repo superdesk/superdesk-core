@@ -1,0 +1,11 @@
+/*
+ * custom.css
+ * ~~~~~~~~~~
+ *
+ * :copyright: Copyright 2016 Sourcefabric
+ * :license: See LICENSE for details.
+ */
+img.floatinglogo {
+    padding: 0 0 20px 20px;
+    float: right;
+}
