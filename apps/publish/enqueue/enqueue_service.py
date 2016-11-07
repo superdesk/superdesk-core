@@ -8,12 +8,13 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from functools import partial
-import logging
 import io
 import json
+import logging
+import content_api
 
 from bson import ObjectId
+from functools import partial
 
 from flask import current_app as app
 from superdesk import get_resource_service
@@ -33,7 +34,7 @@ from apps.packages.package_service import PackageService
 from apps.publish.published_item import PUBLISH_STATE, QUEUE_STATE
 from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('superdesk')
 
 
 class EnqueueService:
@@ -211,6 +212,10 @@ class EnqueueService:
         if not target_media_type and not queued:
             logger.error('Nothing is saved to publish queue for story: {} for action: {}'.
                          format(doc[config.ID_FIELD], self.publish_type))
+
+        # publish to content api
+        if content_api.is_enabled():
+            get_resource_service('content_api').publish(doc, subscribers)
 
         return queued
 

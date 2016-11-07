@@ -58,6 +58,7 @@ class Resource():
     mongo_prefix = None
     auth_field = None
     authentication = None
+    elastic_prefix = None
 
     def __init__(self, endpoint_name, app, service, endpoint_schema=None):
         self.endpoint_name = endpoint_name
@@ -98,6 +99,8 @@ class Resource():
                 endpoint_schema.update({'auth_field': self.auth_field})
             if self.authentication:
                 endpoint_schema.update({'authentication': self.authentication})
+            if self.elastic_prefix:
+                endpoint_schema.update({'elastic_prefix': self.elastic_prefix})
 
         self.endpoint_schema = endpoint_schema
 

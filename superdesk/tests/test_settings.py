@@ -19,16 +19,8 @@ try:
 except ImportError:
     from urlparse import urlparse
 
+from superdesk.default_settings import env
 
-def env(variable, fallback_value=None):
-    env_value = os.environ.get(variable, '')
-    if len(env_value) == 0:
-        return fallback_value
-    else:
-        if env_value == "__EMPTY__":
-            return ''
-        else:
-            return env_value
 
 ABS_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
 BEHAVE_TESTS_FIXTURES_PATH = os.path.join(ABS_PATH,  # default value: `features/steps/fixtures`

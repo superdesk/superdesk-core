@@ -61,12 +61,13 @@ URL_PROTOCOL = server_url.scheme or None
 
 #: public server url (not proxy), ``SUPERDESK_URL`` env
 SERVER_NAME = server_url.netloc or None
+SERVER_DOMAIN = server_url.netloc or 'localhost'
 URL_PREFIX = server_url.path.lstrip('/') or ''
 if SERVER_NAME.endswith(':80'):
     SERVER_NAME = SERVER_NAME[:-3]
 
 VALIDATION_ERROR_STATUS = 400
-JSON_SORT_KEYS = True
+JSON_SORT_KEYS = False
 
 CACHE_CONTROL = 'max-age=0, no-cache'
 
@@ -92,13 +93,20 @@ ARCHIVED_DBNAME = env('ARCHIVED_DBNAME', 'archived')
 #: archived mongodb uri
 ARCHIVED_URI = env('ARCHIVED_URI', 'mongodb://localhost/%s' % ARCHIVED_DBNAME)
 
+CONTENTAPI_MONGO_DBNAME = 'contentapi'
+CONTENTAPI_MONGO_URI = env('CONTENTAPI_MONGO_URI', 'mongodb://localhost/%s' % CONTENTAPI_MONGO_DBNAME)
+
 #: elastic url
 ELASTICSEARCH_URL = env('ELASTICSEARCH_URL', 'http://localhost:9200')
+CONTENTAPI_ELASTICSEARCH_URL = env('CONTENTAPI_ELASTIC_URL', ELASTICSEARCH_URL)
 
 #: elastic index name
 ELASTICSEARCH_INDEX = env('ELASTICSEARCH_INDEX', 'superdesk')
+CONTENTAPI_ELASTICSEARCH_INDEX = env('CONTENTAPI_ELASTIC_INDEX', 'contentapi')
+
 if env('ELASTIC_PORT'):
     ELASTICSEARCH_URL = env('ELASTIC_PORT').replace('tcp:', 'http:')
+
 ELASTICSEARCH_BACKUPS_PATH = env('ELASTICSEARCH_BACKUPS_PATH', '')
 
 #: elastic settings - superdesk custom filter
@@ -252,6 +260,9 @@ CORE_APPS = [
     'apps.picture_renditions',
     'apps.auth',
     'superdesk.roles',
+    'content_api.publish',
+    'content_api.items',
+    'content_api.tokens',
 ]
 
 #: Specify what modules should be enabled
@@ -509,3 +520,5 @@ NO_TAKES = False
 
 .. versionadded:: 1.3
 """
+
+SECRET_KEY = env('SECRET_KEY', '')

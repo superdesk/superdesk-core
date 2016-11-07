@@ -30,12 +30,13 @@ from superdesk.storage.amazon.amazon_media_storage import AmazonMediaStorage
 from superdesk.logging import configure_logging
 
 
-def get_app(config=None, media_storage=None, config_object=None):
+def get_app(config=None, media_storage=None, config_object=None, init_elastic=True):
     """App factory.
 
     :param config: configuration that can override config from ``default_settings.py``
     :param media_storage: media storage class to use
     :param config_object: config object to load (can be module name, module or an object)
+    :param init_elastic: should it init elastic indexes or not
     :return: a new SuperdeskEve app instance
     """
 
@@ -124,7 +125,7 @@ def get_app(config=None, media_storage=None, config_object=None):
     for name, jinja_filter in superdesk.JINJA_FILTERS.items():
         app.jinja_env.filters[name] = jinja_filter
 
-    if not app_config.get('SUPERDESK_TESTING', False):
+    if not app_config.get('SUPERDESK_TESTING', False) and init_elastic:
         # we can only put mapping when all resources are registered
         app.data.init_elastic(app)
 
