@@ -205,7 +205,7 @@ Item metadata
 
 ``expiry`` *datetime*
 
-    When this item will expire. After that time it will be archived.
+    When this item will expire.
     It updates on every save/send action.
 
 Copyright information
