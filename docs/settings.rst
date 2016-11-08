@@ -1,5 +1,6 @@
 .. _settings:
 
+=============
 Configuration
 =============
 
@@ -12,74 +13,151 @@ We use ``flask.app.config``, so to use it do::
 Configuration is combination of default settings module and settings module
 in `application repo <https://github.com/superdesk/superdesk/blob/master/server/settings.py>`_.
 
+.. _settings:default
+
 Default settings
 ----------------
 
-============================================== ==================================================
-``APPLICATION_NAME``                           Default: ``'Superdesk'``
+``APPLICATION_NAME``
+^^^^^^^^^^^^^^^^^^^^
 
-``SERVER_NAME``                                Default: ``'localhost:5000'``
+Default: ``'Superdesk'``
 
-``CLIENT_URL``                                 Default: ``'http://localhost:9000'``
+``SERVER_NAME``
+^^^^^^^^^^^^^^^
 
-``DEFAULT_TIMEZONE``                           Default: ``None``
-                                               Superdesk will try to guess the value from system
-                                               if not set.
+Default: ``'localhost:5000'``
 
-``FTP_TIMEOUT``                                Default: ``300``
-                                               This is used for all ftp operations. Increase if you
-                                               get ftp timeout errors.
+``CLIENT_URL``
+^^^^^^^^^^^^^^
 
-``INSTALLED_APPS``                             Default: ``[]``
-                                               You can install additional modules by adding their
-                                               names here.
+Default: ``'http://localhost:9000'``
 
-``CONTENT_EXPIRY_MINUTES``                     Default: ``43200`` (30 days)
+``DEFAULT_TIMEZONE``
+^^^^^^^^^^^^^^^^^^^^
 
-``INGEST_EXPIRY_MINUTES``                      Default: ``2880`` (2 days)
+Default: ``None``
 
-``SPIKE_EXPIRY_MINUTES``                       Default: ``None``
-                                               Will use value from ``CONTENT_EXPIRY_MINUTES``
-                                               when empty.
+Superdesk will try to guess the value from system if not set.
 
-``MAX_VALUE_OF_INGEST_SEQUENCE``               Default: ``9999``
+``FTP_TIMEOUT``
+^^^^^^^^^^^^^^^
 
-``MAX_VALUE_OF_PUBLISH_SEQUENCE``              Default: ``9999``
+Default: ``300``
 
-``DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES``   Default: ``'AAP'``
+This is used for all ftp operations. Increase if you get ftp timeout errors.
 
-``DEFAULT_PRIORITY_VALUE_FOR_MANUAL_ARTICLES`` Default: ``6``
+``INSTALLED_APPS``
+^^^^^^^^^^^^^^^^^^
 
-``DEFAULT_URGENCY_VALUE_FOR_MANUAL_ARTICLES``  Default: ``3``
+Default: ``[]``
 
-``DEFAULT_GENRE_VALUE_FOR_MANUAL_ARTICLES``    Default: ``[{'qcode': 'Article', 'name': 'Article (news)'}]``
+You can install additional modules by adding their names here.
 
-``RESET_PRIORITY_VALUE_FOR_UPDATE_ARTICLES``   Default: ``False``
+``CONTENT_EXPIRY_MINUTES``
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``NEWSML_PROVIDER_ID``                         Default: ``'sourcefabric.org'``
+Default: ``43200`` (30 days)
 
-``ORGANIZATION_NAME``                          Default: ``'Australian Associated Press'``
+``INGEST_EXPIRY_MINUTES``
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``ORGANIZATION_NAME_ABBREVIATION``             Default: ``'AAP'``
+Default: ``2880`` (2 days)
 
-``NO_TAKES``                                   Default: ``False``
-                                               Disable creation of takes packages.
+``SPIKE_EXPIRY_MINUTES``
+^^^^^^^^^^^^^^^^^^^^^^^^
 
-``MAX_TRANSMIT_RETRY_ATTEMPT``                 Default: ``10``
-                                               Max retries attemps when transmitting an item.
+Default: ``None``
 
-``TRANSMIT_RETRY_ATTEMPT_DELAY_MINUTES``       Default: ``3``
-                                               Delay between retry attempts.
+Will use value from ``CONTENT_EXPIRY_MINUTES`` when empty.
 
-``MAX_TRANSMIT_QUERY_LIMIT``                   Default: ``500``
-                                               Max transmit items to be fetched from mongo at
-                                               once.
+``MAX_VALUE_OF_INGEST_SEQUENCE``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``ODBC_PUBLISH``                               Default: ``None``
-                                               Determines if the ODBC publishing mechanism will
-                                               be used, If enabled then pyodbc must be
-                                               installed along with it’s dependencies.
-============================================== ==================================================
+Default: ``9999``
+
+``MAX_VALUE_OF_PUBLISH_SEQUENCE``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``9999``
+
+``DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``'AAP'``
+
+``DEFAULT_PRIORITY_VALUE_FOR_MANUAL_ARTICLES``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``6``
+
+``DEFAULT_URGENCY_VALUE_FOR_MANUAL_ARTICLES``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``3``
+
+``DEFAULT_GENRE_VALUE_FOR_MANUAL_ARTICLES``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``[{'qcode': 'Article', 'name': 'Article (news)'}]``
+
+``RESET_PRIORITY_VALUE_FOR_UPDATE_ARTICLES``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``False``
+
+``NEWSML_PROVIDER_ID``
+^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``'sourcefabric.org'``
+
+``ORGANIZATION_NAME``
+^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``'Australian Associated Press'``
+
+``ORGANIZATION_NAME_ABBREVIATION``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``'AAP'``
+
+``NO_TAKES``
+^^^^^^^^^^^^
+
+Default: ``False``
+
+Disable creation of takes packages.
+
+``MAX_TRANSMIT_RETRY_ATTEMPT``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``10``
+
+Max retries attemps when transmitting an item.
+
+``TRANSMIT_RETRY_ATTEMPT_DELAY_MINUTES``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``3``
+
+Delay between retry attempts.
+
+``MAX_TRANSMIT_QUERY_LIMIT``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``500``
+
+Max transmit items to be fetched from mongo at once.
+
+``ODBC_PUBLISH``
+^^^^^^^^^^^^^^^^
+
+Default: ``None``
+
+Determines if the ODBC publishing mechanism will be used, If enabled then pyodbc must be
+installed along with it’s dependencies.
+
+.. _settings:mongo
 
 Mongo connections
 -----------------
@@ -90,144 +168,251 @@ and production content.
 For each there is ``_DBNAME`` and ``_URI`` setting, if ``_URI`` is set it will be used as is, if not it will
 use ``localhost`` as server and ``_DBNAME`` as db.
 
-.. tabularcolumns:: |p{6.5cm}|p{8.5cm}|
+``MONGO_DBNAME``
+^^^^^^^^^^^^^^^^
 
-======================== ==========================================
-``MONGO_DBNAME``         Default: ``'superdesk'``
+Default: ``'superdesk'``
 
-``MONGO_URI``            Default: ``'mongodb://localhost/superdesk'``
+``MONGO_URI``
+^^^^^^^^^^^^^
 
-``LEGAL_ARCHIVE_DBNAME`` Default: ``'legal_archive'``
+Default: ``'mongodb://localhost/superdesk'``
 
-``LEGAL_ARCHIVE_URI``    Default: ``'mongodb://localhost/legal_archive'``
+``LEGAL_ARCHIVE_DBNAME``
+^^^^^^^^^^^^^^^^^^^^^^^^
 
-``ARCHIVED_DBNAME``      Default: ``'archived'``
+Default: ``'legal_archive'``
 
-``ARCHIVED_URI``         Default: ``mongodb://localhost/archived'``
-======================== ==========================================
+``LEGAL_ARCHIVE_URI``
+^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``'mongodb://localhost/legal_archive'``
+
+``ARCHIVED_DBNAME``
+^^^^^^^^^^^^^^^^^^^
+
+Default: ``'archived'``
+
+``ARCHIVED_URI``
+^^^^^^^^^^^^^^^^
+
+Default: ``mongodb://localhost/archived'``
+
+.. _settings:elastic
 
 Elastic settings
 ----------------
 
-.. tabularcolumns:: |p{6.5cm}|p{8.5cm}|
+``ELASTICSEARCH_URL``
+^^^^^^^^^^^^^^^^^^^^^
 
-======================= ====================================
-``ELASTICSEARCH_URL``   Default: ``'http://localhost:9200'``
+Default: ``'http://localhost:9200'``
 
-``ELASTICSEARCH_INDEX`` Default: ``'superdesk'``
-======================= ====================================
+``ELASTICSEARCH_INDEX``
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``'superdesk'``
+
+.. _settings:redis
 
 Redis settings
 --------------
 
-============= =====================================
-``REDIS_URL`` Default: ``'redis://localhost:6379'``
-============= =====================================
+``REDIS_URL``
+^^^^^^^^^^^^^
+
+Default: ``'redis://localhost:6379'``
+
+.. _settings:cache
 
 Cache settings
 --------------
 
-============= =====================================
-``CACHE_URL`` Default: ``'redis://localhost:6379'``
-              .. versionadded:: 1.3
-============= =====================================
+``CACHE_URL``
+^^^^^^^^^^^^^
+
+Default: ``'redis://localhost:6379'``
+
+.. versionadded:: 1.3
+
+.. _settings:celery
 
 Celery settings
 ---------------
 
-============== =====================================
-``BROKER_URL`` Default: ``'redis://localhost:6379'``
-============== =====================================
+``BROKER_URL``
+^^^^^^^^^^^^^^
+
+Default: ``'redis://localhost:6379'``
+
+.. _settings:monitoring
 
 Monitoring settings
 -------------------
 
-============== =================
-``SENTRY_DSN`` Default: ``None``
-============== =================
+``SENTRY_DSN``
+^^^^^^^^^^^^^^
+
+Default: ``None``
+
+.. _settings:ldap
 
 LDAP settings
 -------------
 
 Used for *LDAP* based authentication, if not configured it will use mongodb for credentials.
 
-======================== ===================================================================
-``LDAP_SERVER``          Default: ``''``
+``LDAP_SERVER``
+^^^^^^^^^^^^^^^
 
-``LDAP_SERVER_PORT``     Default: ``389``
+Default: ``''``
 
-``LDAP_FQDN``            Default: ``''``
+``LDAP_SERVER_PORT``
+^^^^^^^^^^^^^^^^^^^^
 
-``LDAP_BASE_FILTER``     Default: ``''``
+Default: ``389``
 
-``LDAP_USER_FILTER``     Default: ``'(&(objectCategory=user)(objectClass=user)(sAMAccountName={}))'``
+``LDAP_FQDN``
+^^^^^^^^^^^^^
 
-``LDAP_USER_ATTRIBUTES`` Default:: {
-                                     'givenName': 'first_name',
-                                     'sn': 'last_name',
-                                     'ipPhone': 'phone',
-                                     'mail': 'email',
-                                     'displayName': 'display_name'
-                                   }
-======================== ===================================================================
+Default: ``''``
+
+``LDAP_BASE_FILTER``
+^^^^^^^^^^^^^^^^^^^^
+
+Default: ``''``
+
+``LDAP_USER_FILTER``
+^^^^^^^^^^^^^^^^^^^^
+
+Default: ``'(&(objectCategory=user)(objectClass=user)(sAMAccountName={}))'``
+
+``LDAP_USER_ATTRIBUTES``
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default::
+
+    {
+        'givenName': 'first_name',
+        'sn': 'last_name',
+        'ipPhone': 'phone',
+        'mail': 'email',
+        'displayName': 'display_name'
+    }
+
+.. _settings:amazons3
 
 Amazon S3 settings
 ------------------
 
-============================= ============================
-``AMAZON_CONTAINER_NAME``     Default: ``''``
+``AMAZON_CONTAINER_NAME``
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``AMAZON_ACCESS_KEY_ID``      Default: ``''``
+Default: ``''``
 
-``AMAZON_SECRET_ACCESS_KEY``  Default: ``''``
+``AMAZON_ACCESS_KEY_ID``
+^^^^^^^^^^^^^^^^^^^^^^^^
 
-``AMAZON_REGION``             Default: ``'us-east-1'``
+Default: ``''``
 
-``AMAZON_SERVE_DIRECT_LINKS`` Default: ``False``
+``AMAZON_SECRET_ACCESS_KEY``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``AMAZON_S3_USE_HTTPS``       Default: ``False``
+Default: ``''``
 
-``AMAZON_SERVER``             Default: ``'amazonaws.com'``
+``AMAZON_REGION``
+^^^^^^^^^^^^^^^^^
 
-``AMAZON_PROXY_SERVER``       Default: ``None``
-============================= ============================
+Default: ``'us-east-1'``
+
+``AMAZON_SERVE_DIRECT_LINKS``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``False``
+
+``AMAZON_S3_USE_HTTPS``
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``False``
+
+``AMAZON_SERVER``
+^^^^^^^^^^^^^^^^^
+
+Default: ``'amazonaws.com'``
+
+``AMAZON_PROXY_SERVER``
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``None``
+
+.. _settings:security
 
 Security settings
 -----------------
 
-======================================= ======================================
-``SESSION_EXPIRY_MINUTES``              Default: ``240``
-                                        The number of minutes since the last
-                                        update of the Mongo auth object after
-                                        which it will be deleted.
+``SESSION_EXPIRY_MINUTES``
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``RESET_PASSWORD_TOKEN_TIME_TO_LIVE``   Default: ``1``
-                                        The number of days a token is valid,
-                                        env ``RESET_PASS_TTL``.
+Default: ``240``
 
-``ACTIVATE_ACCOUNT_TOKEN_TIME_TO_LIVE`` Default: ``7``
-                                        The number of days an activation token
-                                        is valid, env ``ACTIVATE_TTL``.
-======================================= ======================================
+The number of minutes since the last update of the Mongo auth object after which it will be deleted.
+
+``RESET_PASSWORD_TOKEN_TIME_TO_LIVE``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``1``
+
+The number of days a token is valid, env ``RESET_PASS_TTL``.
+
+``ACTIVATE_ACCOUNT_TOKEN_TIME_TO_LIVE``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``7``
+
+The number of days an activation token is valid, env ``ACTIVATE_TTL``.
+
+.. _settings:email
 
 Email settings
 --------------
 
-======================= ==============================
-``MAIL_SERVER``         Default: ``'localhost'``
+``MAIL_SERVER``
+^^^^^^^^^^^^^^^
 
-``MAIL_PORT``           Default: ``25``
+Default: ``'localhost'``
 
-``MAIL_USE_TLS``        Default: ``False``
+``MAIL_PORT``
+^^^^^^^^^^^^^
 
-``MAIL_USE_SSL``        Default: ``False``
+Default: ``25``
 
-``MAIL_USERNAME``       Default: ``''``
+``MAIL_USE_TLS``
+^^^^^^^^^^^^^^^^
 
-``MAIL_PASSWORD``       Default: ``''``
+Default: ``False``
 
-``MAIL_DEFAULT_SENDER`` Default: ``'superdesk@localhost'``
+``MAIL_USE_SSL``
+^^^^^^^^^^^^^^^^
 
-``ADMINS``              Default: ``['']``
-======================= ==============================
+Default: ``False``
+
+``MAIL_USERNAME``
+^^^^^^^^^^^^^^^^^
+
+Default: ``''``
+
+``MAIL_PASSWORD``
+^^^^^^^^^^^^^^^^^
+
+Default: ``''``
+
+``MAIL_DEFAULT_SENDER``
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``'superdesk@localhost'``
+
+``ADMINS``
+^^^^^^^^^^
+
+Default: ``['']``
 
