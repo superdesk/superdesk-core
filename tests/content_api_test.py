@@ -16,9 +16,12 @@ class ContentAPITestCase(TestCase):
         self.content_api = superdesk.get_resource_service('content_api')
         self.db = self.app.data.mongo.pymongo(prefix=MONGO_PREFIX).db
         self.app.config['SECRET_KEY'] = 'secret'
-        self.capi = get_app(copy(self.app.config))
+        config = copy(self.app.config)
+        config['AMAZON_CONTAINER_NAME'] = None  # force gridfs
+        config['SERVER_NAME'] = 'localhost:5400'
+        config['URL_PREFIX'] = ''
+        self.capi = get_app(config)
         self.capi.testing = True
-        self.capi_url = self.capi.config['PUBLICAPI_URL']
 
     def test_publish_to_content_api(self):
         item = {'guid': 'foo', 'type': 'text', 'task': {'desk': 'foo'}}
@@ -44,8 +47,7 @@ class ContentAPITestCase(TestCase):
 
     def test_content_filtering_by_subscriber(self):
         subscriber = {'_id': 'sub1'}
-        token = generate_subscriber_token(subscriber)
-        headers = {'Authorization': b'Bearer ' + token}
+        headers = self._auth_headers(subscriber)
 
         self.content_api.publish({'_id': 'foo', 'guid': 'foo', 'type': 'text'}, [subscriber])
         self.content_api.publish({'_id': 'bar', 'guid': 'bar', 'type': 'text'}, [])
@@ -53,15 +55,45 @@ class ContentAPITestCase(TestCase):
         self.content_api.publish({'_id': 'pkg2', 'guid': 'pkg2', 'type': 'composite'}, [])
 
         with self.capi.test_client() as c:
-            response = c.get('api/items')
+            response = c.get('items')
             self.assertEqual(401, response.status_code)
-            response = c.get('api/items', headers=headers)
+            response = c.get('items', headers=headers)
             self.assertEqual(200, response.status_code)
             data = json.loads(response.data)
             self.assertEqual(1, len(data['_items']))
             self.assertNotIn('subscribers', data['_items'][0])
-            self.assertEqual(self.capi_url + '/items/foo', data['_items'][0]['uri'])
-            response = c.get('api/packages', headers=headers)
+            self.assertEqual('http://localhost:5400/items/foo', data['_items'][0]['uri'])
+            response = c.get('packages', headers=headers)
             data = json.loads(response.data)
             self.assertEqual(1, len(data['_items']))
-            self.assertEqual(self.capi_url + '/packages/pkg', data['_items'][0]['uri'])
+            self.assertEqual('http://localhost:5400/packages/pkg', data['_items'][0]['uri'])
+
+    def test_content_api_picture(self):
+        self.content_api.publish({
+            '_id': 'foo', 'guid': 'foo', 'type': 'picture', 'headline': 'foo',
+            'renditions': {
+                'original': {
+                    'media': 'abcd1234',
+                    'width': 300,
+                    'height': 200,
+                    'mimetype': 'image/jpeg',
+                    'href': 'foo',
+                }
+            }
+        })
+
+        headers = self._auth_headers({'_id': 'sub'})
+
+        with self.capi.test_client() as c:
+            response = c.get('items/foo', headers=headers)
+            self.assertEqual(200, response.status_code)
+            data = json.loads(response.data)
+            self.assertIn('renditions', data)
+            rendition = data['renditions']['original']
+            self.assertNotIn('media', rendition)
+            self.assertEqual('http://localhost:5400/assets/abcd1234', rendition['href'])
+
+    def _auth_headers(self, sub):
+        token = generate_subscriber_token(sub)
+        headers = {'Authorization': b'Bearer ' + token}
+        return headers

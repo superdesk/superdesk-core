@@ -23,7 +23,6 @@ from flask import request
 from werkzeug.datastructures import MultiDict
 
 from content_api.app.settings import ELASTIC_DATE_FORMAT
-from content_api.assets.util import url_for_media
 from content_api.errors import BadParameterValueError, UnexpectedParameterError
 from content_api.items.resource import ItemsResource
 from eve.utils import ParsedRequest
@@ -154,7 +153,8 @@ class ItemsService(BaseService):
         if 'renditions' in document:
             for _k, v in document['renditions'].items():
                 if 'media' in v:
-                    v['href'] = url_for_media(v['media'])
+                    media = v.pop('media')
+                    v['href'] = app.media.url_for_media(media, v.get('mimetype'))
 
     def _get_uri(self, document):
         """Return the given document's `uri`.

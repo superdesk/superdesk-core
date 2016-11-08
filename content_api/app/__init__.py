@@ -80,7 +80,7 @@ def get_app(config=None):
     app_config.from_object('content_api.app.settings')
 
     # set some required fields
-    app_config.update({'DOMAIN': {}, 'SOURCES': {}})
+    app_config.update({'DOMAIN': {'upload': {}}, 'SOURCES': {}})
 
     try:
         # override from settings module, but only things defined in default config
