@@ -63,6 +63,7 @@ def init_app(app):
     service = UploadService(endpoint_name, backend=superdesk.get_backend())
     UploadResource(endpoint_name, app=app, service=service)
     superdesk.blueprint(bp, app)
+    app.upload_url = upload_url
 
 
 class UploadResource(Resource):
