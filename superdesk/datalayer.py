@@ -40,7 +40,7 @@ class SuperdeskDataLayer(DataLayer):
         """Init elastic index.
 
         It will create index and put mapping. It should run only once so locks are in place.
-        Thus mongo must be already setup on an up before running this.
+        Thus mongo must be already setup before running this.
         """
         with app.app_context():
             if lock('elastic', expire=10):

@@ -15,18 +15,20 @@ LONG_DESCRIPTION = "Superdesk Server Core"
 
 install_requires = [
     'eve>=0.6,<0.7',
-    'eve-elastic>=0.3.8,<0.4',
-    'elasticsearch==1.9.0',
+    'eve-elastic>=0.4',
+    'elasticsearch>=1.9.0,<2.0',
     'flask>=0.10,<0.11',
     'flask-mail>=0.9',
     'flask-script>=2.0.5',
+    'flask-sentinel>=0.0.4',
+    'flask-oauthlib>=0.9.1',
     'pillow>=3.0',
     'arrow>=0.4',
     'asyncio>=3.4',
     'bcrypt>=3.1.1',
     'beautifulsoup4>=4.4',
     'blinker>=1.3',
-    'celery[redis]>=3.1.18',
+    'celery[redis]>=3.1.18,<4',
     'feedparser>=5.2',
     'hachoir3-superdesk>=3.0a1',
     'HermesCache>=0.6.0,<0.7.0',
@@ -42,6 +44,7 @@ install_requires = [
     'websockets>=2.6',
     'mongolock>=1.3.4',
     'PyYAML>=3.11',
+    'pyjwt>=1.4.2',
 ]
 
 package_data = {
@@ -60,7 +63,7 @@ package_data = {
 
 setup(
     name='Superdesk-Core',
-    version='1.4.dev0',
+    version='1.4rc1',
     description='Superdesk Core library',
     long_description=LONG_DESCRIPTION,
     author='petr jasek',

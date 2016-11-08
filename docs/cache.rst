@@ -1,3 +1,5 @@
+.. _cache:
+
 Caching
 =======
 
@@ -7,10 +9,10 @@ There is a Superdesk wrapper for `Hermes cache <https://pypi.python.org/pypi/Her
 
 Basic usage is::
 
-   from superdesk.cache import cache 
+    from superdesk.cache import cache 
 
-   @cache(ttl=30)
-   def some_func(foo):
+    @cache(ttl=30)
+    def some_func(foo):
         return foo * 5
 
 
@@ -39,7 +41,7 @@ In order to use memcached:
 App Context
 """""""""""
 
-It requires ``flask.app`` for the config, you can still anotate methods/functions before the app is created,
+It requires ``flask.app`` for the config, you can still annotate methods/functions before the app is created,
 but you can not call these methods before there is an app context in place.
 
 Serialization

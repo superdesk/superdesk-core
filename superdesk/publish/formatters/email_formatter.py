@@ -8,14 +8,14 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import json
+import superdesk
 from superdesk.publish.formatters import Formatter
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, FORMAT, FORMATS
 from flask import render_template
-import superdesk
 from copy import deepcopy
 from bs4 import BeautifulSoup, NavigableString
 from superdesk.errors import FormatterError
-import json
 
 
 class EmailFormatter(Formatter):
@@ -62,4 +62,4 @@ class EmailFormatter(Formatter):
         return [(pub_seq_num, json.dumps(doc))]
 
     def can_format(self, format_type, article):
-        return format_type == 'Email' and article[ITEM_TYPE] == CONTENT_TYPE.TEXT
+        return format_type.lower() == 'email' and article[ITEM_TYPE] == CONTENT_TYPE.TEXT

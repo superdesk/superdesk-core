@@ -68,6 +68,10 @@ def get_test_settings():
     test_settings['CELERY_ALWAYS_EAGER'] = 'True'
     test_settings['CONTENT_EXPIRY_MINUTES'] = 99
     test_settings['VERSION'] = '_current_version'
+    test_settings['SECRET_KEY'] = 'test-secret'
+    test_settings['CONTENTAPI_MONGO_DBNAME'] = 'sptests_contentapi'
+    test_settings['CONTENTAPI_MONGO_URI'] = get_mongo_uri('CONTENTAPI_MONGO_URI', 'sptests_contentapi')
+    test_settings['CONTENTAPI_ELASTICSEARCH_INDEX'] = 'sptest_contentapi'
 
     # limit mongodb connections
     test_settings['MONGO_CONNECT'] = False
@@ -100,6 +104,7 @@ def foreach_mongo(fn):
             ('MONGO', 'MONGO_DBNAME'),
             ('ARCHIVED', 'ARCHIVED_DBNAME'),
             ('LEGAL_ARCHIVE', 'LEGAL_ARCHIVE_DBNAME'),
+            ('CONTENTAPI_MONGO', 'CONTENTAPI_MONGO_DBNAME')
         )
         with app.app_context():
             for prefix, name in pairs:
@@ -166,7 +171,8 @@ def _clean_es(app):
     indices = '%s*' % app.config['ELASTICSEARCH_INDEX']
     es = app.data.elastic.es
     es.indices.delete(indices, ignore=[404])
-    app.data.init_elastic(app)
+    with app.app_context():
+        app.data.init_elastic(app)
 
 
 @retry(socket.timeout, 2)

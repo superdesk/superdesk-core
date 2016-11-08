@@ -10,6 +10,7 @@
 
 import json
 import logging
+import content_api
 from superdesk import get_resource_service
 from eve.utils import ParsedRequest, config
 from superdesk.utils import ListCursor
@@ -17,6 +18,7 @@ from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
 from superdesk.publish import subscriber_types, SUBSCRIBER_TYPES  # NOQA
+from content_api.tokens import generate_subscriber_token
 from flask import current_app as app
 
 logger = logging.getLogger(__name__)
@@ -101,6 +103,9 @@ class SubscribersResource(Resource):
             'valueschema': {
                 'type': 'boolean'
             }
+        },
+        'content_api_token': {
+            'type': 'string',
         },
     }
 
@@ -226,3 +231,9 @@ class SubscribersService(BaseService):
             max_seq_number=max_seq_number,
             min_seq_number=min_seq_number
         )
+
+    def on_fetched(self, docs):
+        if content_api.is_enabled():
+            for subscriber in docs['_items']:
+                if not subscriber.get('content_api_token'):
+                    subscriber['content_api_token'] = generate_subscriber_token(subscriber)

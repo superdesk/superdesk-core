@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import json
+
 from unittest.mock import MagicMock
 from datetime import timedelta
 
