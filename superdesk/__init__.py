@@ -31,7 +31,6 @@ VERSION = (0, 0, 1)
 SCHEMA_VERSION = 0
 DOMAIN = {}
 COMMANDS = {}
-BLUEPRINTS = []
 JINJA_FILTERS = dict()
 app_components = dict()
 app_models = dict()
@@ -88,10 +87,15 @@ def command(name, command):
     COMMANDS[name] = command
 
 
-def blueprint(blueprint, **kwargs):
-    """Register blueprint"""
+def blueprint(blueprint, app, **kwargs):
+    """Register flask blueprint.
+
+    :param blueprint: blueprint instance
+    :param app: flask app instance
+    """
     blueprint.kwargs = kwargs
-    BLUEPRINTS.append(blueprint)
+    prefix = app.api_prefix or None
+    app.register_blueprint(blueprint, url_prefix=prefix, **kwargs)
 
 
 def get_backend():

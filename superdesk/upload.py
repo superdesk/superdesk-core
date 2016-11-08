@@ -24,7 +24,6 @@ from superdesk.filemeta import set_filemeta
 
 
 bp = superdesk.Blueprint('upload_raw', __name__)
-superdesk.blueprint(bp)
 logger = logging.getLogger(__name__)
 cache_for = 3600 * 24 * 30  # 30d cache
 
@@ -45,8 +44,7 @@ def get_upload_as_data_uri(media_id):
         response.cache_control.s_max_age = cache_for
         response.cache_control.public = True
         response.make_conditional(request)
-        response.headers["Content-Disposition"] = \
-            'attachment; filename="{filename}"'.format(filename=media_file.filename)
+        response.headers["Content-Disposition"] = 'inline'
         return response
     raise SuperdeskApiError.notFoundError('File not found on media storage.')
 
@@ -64,6 +62,7 @@ def init_app(app):
     endpoint_name = 'upload'
     service = UploadService(endpoint_name, backend=superdesk.get_backend())
     UploadResource(endpoint_name, app=app, service=service)
+    superdesk.blueprint(bp, app)
 
 
 class UploadResource(Resource):
