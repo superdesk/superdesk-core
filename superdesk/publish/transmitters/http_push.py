@@ -53,7 +53,7 @@ class HTTPPushService(PublishService):
     contain the following fields:
 
     ``media_id``
-        URI string identifing the rendition.
+        URI string identifying the rendition.
 
     ``media``
         ``base64`` encoded file content. See `Eve documentation <http://python-eve.org/features.html#file-storage>`_.

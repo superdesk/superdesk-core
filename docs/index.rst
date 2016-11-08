@@ -20,3 +20,4 @@ Contents:
     settings
     schema
     cache
+    expiry

@@ -5,7 +5,7 @@ Documentation
 -------------
 Superdesk documentation is written using `rst <http://docutils.sourceforge.net/rst.html>`_ format and generated via `Sphinx <http://www.sphinx-doc.org/>`_. It's organized by topic, using `autodoc <http://www.sphinx-doc.org/en/stable/ext/autodoc.html>`_ as much as possible to include docstrings from python code.
 
-When working on docs, you can use live preview. In docs folder with virualenv enabled run::
+When working on docs, you can use live preview. In docs folder with virtualenv enabled run::
 
     $ make livehtml
 
