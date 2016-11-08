@@ -54,7 +54,8 @@ def _set_error_handlers(app):
     def client_error_handler(error):
         error_dict = error.to_dict()
         error_dict.update(internal_error=error.status_code)
-        return send_response(None, (error_dict, None, None, 422))
+        status_code = error.status_code or 422
+        return send_response(None, (error_dict, None, None, status_code))
 
     @app.errorhandler(500)
     def server_error_handler(error):

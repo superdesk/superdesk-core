@@ -93,6 +93,12 @@ class ContentAPITestCase(TestCase):
             self.assertNotIn('media', rendition)
             self.assertEqual('http://localhost:5400/assets/abcd1234', rendition['href'])
 
+            response = c.get(rendition['href'])
+            self.assertEqual(401, response.status_code)
+
+            response = c.get(rendition['href'], headers=headers)
+            self.assertEqual(404, response.status_code)
+
     def _auth_headers(self, sub):
         token = generate_subscriber_token(sub)
         headers = {'Authorization': b'Bearer ' + token}

@@ -10,6 +10,7 @@
 """Assets module"""
 
 import superdesk
+import bson.errors
 
 from werkzeug.wsgi import wrap_file
 from flask import request, url_for, current_app as app
@@ -22,7 +23,12 @@ cache_for = 3600 * 24 * 7  # 7 days cache
 
 @bp.route('/assets/<path:media_id>', methods=['GET'])
 def get_media_streamed(media_id):
-    media_file = app.media.get(media_id, 'upload')
+    if not app.auth.authorized([], 'assets', 'GET'):
+        return app.auth.authenticate()
+    try:
+        media_file = app.media.get(media_id, 'upload')
+    except bson.errors.InvalidId:
+        media_file = None
     if media_file:
         data = wrap_file(request.environ, media_file, buffer_size=1024 * 256)
         response = app.response_class(

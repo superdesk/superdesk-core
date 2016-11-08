@@ -54,3 +54,4 @@ class FileNotFoundError(PublicApiError):
 
     def __init__(self, desc=None):
         super().__init__(10003, desc=desc)
+        self.status_code = 404
