@@ -365,9 +365,11 @@ class ArchivePublishTestCase(TestCase):
         ValidatorsPopulateCommand().run(self.filename)
 
         self.app.media.url_for_media = MagicMock(return_value='url_for_media')
+        self._put = self.app.media.put
         self.app.media.put = MagicMock(return_value='media_id')
 
     def tearDown(self):
+        self.app.media.put = self._put
         if self.filename and os.path.exists(self.filename):
             os.remove(self.filename)
 

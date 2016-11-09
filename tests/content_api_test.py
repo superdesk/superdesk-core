@@ -103,9 +103,11 @@ class ContentAPITestCase(TestCase):
             with self.app.app_context():
                 data = io.BytesIO(b'content')
                 media_id = self.app.media.put(data, resource='upload')
+                self.assertIsInstance(media_id, ObjectId, media_id)
 
-            response = c.get('api/assets/%s' % str(media_id), headers=headers)
-            self.assertEqual(200, response.status_code)
+            url = 'api/assets/%s' % media_id
+            response = c.get(url, headers=headers)
+            self.assertEqual(200, response.status_code, url)
             self.assertEqual(b'content', response.data)
 
     def _auth_headers(self, sub):
