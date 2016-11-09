@@ -18,6 +18,7 @@ class ContentAPITestCase(TestCase):
         self.app.config['SECRET_KEY'] = 'secret'
         self.capi = get_app(copy(self.app.config))
         self.capi.testing = True
+        self.capi_url = self.capi.config['PUBLICAPI_URL']
 
     def test_publish_to_content_api(self):
         item = {'guid': 'foo', 'type': 'text', 'task': {'desk': 'foo'}}
@@ -59,8 +60,8 @@ class ContentAPITestCase(TestCase):
             data = json.loads(response.data)
             self.assertEqual(1, len(data['_items']))
             self.assertNotIn('subscribers', data['_items'][0])
-            self.assertEqual('http://localhost:5400/items/foo', data['_items'][0]['uri'])
+            self.assertEqual(self.capi_url + '/items/foo', data['_items'][0]['uri'])
             response = c.get('api/packages', headers=headers)
             data = json.loads(response.data)
             self.assertEqual(1, len(data['_items']))
-            self.assertEqual('http://localhost:5400/packages/pkg', data['_items'][0]['uri'])
+            self.assertEqual(self.capi_url + '/packages/pkg', data['_items'][0]['uri'])
