@@ -1,3 +1,5 @@
+.. _cache:
+
 Caching
 =======
 
@@ -7,10 +9,10 @@ There is a Superdesk wrapper for `Hermes cache <https://pypi.python.org/pypi/Her
 
 Basic usage is::
 
-   from superdesk.cache import cache 
+    from superdesk.cache import cache 
 
-   @cache(ttl=30)
-   def some_func(foo):
+    @cache(ttl=30)
+    def some_func(foo):
         return foo * 5
 
 

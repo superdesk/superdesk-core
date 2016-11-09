@@ -1,3 +1,5 @@
+.. _architecture:
+
 Architecture
 ============
 Here there is info about main components in Superdesk and how these interact.
