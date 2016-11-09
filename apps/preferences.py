@@ -132,6 +132,13 @@ class PreferencesResource(Resource):
         'selected': {},
     })
 
+    superdesk.register_default_user_preference('desks:preferred', {
+        'type': 'dict',
+        'category': 'desks',
+        'label': 'Preferred Desks',
+        'selected': {},
+    })
+
     superdesk.register_default_user_preference('article:default:place', {
         'type': 'list',
         'label': 'Place',
