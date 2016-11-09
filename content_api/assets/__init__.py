@@ -42,7 +42,7 @@ def get_media_streamed(media_id):
         response.cache_control.s_max_age = cache_for
         response.cache_control.public = True
         response.make_conditional(request)
-        response.headers["Content-Disposition"] = 'inline'
+        response.headers['Content-Disposition'] = 'inline'
         return response
     raise FileNotFoundError('File not found on media storage.')
 

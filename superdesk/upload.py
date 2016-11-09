@@ -44,7 +44,7 @@ def get_upload_as_data_uri(media_id):
         response.cache_control.s_max_age = cache_for
         response.cache_control.public = True
         response.make_conditional(request)
-        response.headers["Content-Disposition"] = 'inline'
+        response.headers['Content-Disposition'] = 'inline'
         return response
     raise SuperdeskApiError.notFoundError('File not found on media storage.')
 

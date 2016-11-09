@@ -108,7 +108,6 @@ class ContentAPITestCase(TestCase):
             self.assertEqual(200, response.status_code)
             self.assertEqual(b'content', response.data)
 
-
     def _auth_headers(self, sub):
         token = generate_subscriber_token(sub)
         headers = {'Authorization': b'Bearer ' + token}

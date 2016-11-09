@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timedelta
 import functools
 import json
 import logging
@@ -287,7 +287,7 @@ class ItemsService(BaseService):
             end_date = today
 
         if start_date is None:
-            start_date = end_date
+            start_date = end_date - timedelta(days=7)  # get last 7 days by default
 
         return start_date, end_date
 
