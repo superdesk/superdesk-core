@@ -1,0 +1,11 @@
+/*
+ * custom.css
+ * ~~~~~~~~~~
+ *
+ * :copyright: Copyright 2016 Sourcefabric
+ * :license: See LICENSE for details.
+ */
+img.floatinglogo {padding: 0 0 20px 20px;float: right;}
+.section h3{margin:40px 0 20px;}
+.section h3 code.literal{font-weight:700;font-size:11px;font-size:1.1rem;color:#3e7c54;}
+div.sphinxsidebar div.sphinxsidebarwrapper ul li ul li ul{display:none;}
