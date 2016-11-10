@@ -23,17 +23,8 @@ There is a major refactoring ongoing for Content API. Major changes are:
 Configuration
 -------------
 
-There are a few settings required for Content API to work:
-
-``CONTENT_API_ENABLED``
-
-default: ``True``
-
-``SECRET_KEY``
-
-default: ``''``
-
-used to generate and validate auth tokens
+You can check available configuration in :ref:`settings:content_api`.
+For generating auth tokens :ref:`settings:secret_key` setting is required.
 
 Running Content API
 -------------------

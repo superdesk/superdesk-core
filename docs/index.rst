@@ -39,6 +39,8 @@ how the Superdesk server works.
     overview
     installation
 
+.. _reference:
+
 Reference
 ---------
 
