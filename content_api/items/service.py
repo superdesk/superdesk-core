@@ -150,11 +150,28 @@ class ItemsService(BaseService):
         for field_name in ('_id', '_etag', '_created', '_updated', 'subscribers'):
             document.pop(field_name, None)
 
-        if 'renditions' in document:
-            for _k, v in document['renditions'].items():
+        self._process_item_renditions(document)
+        self._process_item_associations(document)
+
+    def _process_item_renditions(self, item):
+        hrefs = {}
+        if item.get('renditions'):
+            for _k, v in item['renditions'].items():
                 if 'media' in v:
+                    href = v.get('href')
                     media = v.pop('media')
                     v['href'] = app.media.url_for_media(media, v.get('mimetype'))
+                    hrefs[href] = v['href']
+        return hrefs
+
+    def _process_item_associations(self, item):
+        hrefs = {}
+        if item.get('associations'):
+            for _k, v in item.get('associations', {}).items():
+                hrefs.update(self._process_item_renditions(v))
+        if item.get('body_html'):
+            for k, v in hrefs.items():
+                item['body_html'] = item['body_html'].replace(k, v)
 
     def _get_uri(self, document):
         """Return the given document's `uri`.

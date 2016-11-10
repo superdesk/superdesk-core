@@ -63,11 +63,11 @@ class ContentAPITestCase(TestCase):
             data = json.loads(response.data)
             self.assertEqual(1, len(data['_items']))
             self.assertNotIn('subscribers', data['_items'][0])
-            self.assertEqual('http://localhost:5400/items/foo', data['_items'][0]['uri'])
+            self.assertIn('items/foo', data['_items'][0]['uri'])
             response = c.get('packages', headers=headers)
             data = json.loads(response.data)
             self.assertEqual(1, len(data['_items']))
-            self.assertEqual('http://localhost:5400/packages/pkg', data['_items'][0]['uri'])
+            self.assertIn('packages/pkg', data['_items'][0]['uri'])
 
     def test_content_api_picture(self):
         self.content_api.publish({
@@ -83,7 +83,7 @@ class ContentAPITestCase(TestCase):
             }
         })
 
-        headers = self._auth_headers({'_id': 'sub'})
+        headers = self._auth_headers()
 
         with self.capi.test_client() as c:
             response = c.get('items/foo', headers=headers)
@@ -92,7 +92,7 @@ class ContentAPITestCase(TestCase):
             self.assertIn('renditions', data)
             rendition = data['renditions']['original']
             self.assertNotIn('media', rendition)
-            self.assertEqual('http://localhost:5400/assets/abcd1234', rendition['href'])
+            self.assertIn('assets/abcd1234', rendition['href'])
 
             response = c.get(rendition['href'])
             self.assertEqual(401, response.status_code)
@@ -105,12 +105,52 @@ class ContentAPITestCase(TestCase):
                 media_id = self.app.media.put(data, resource='upload')
                 self.assertIsInstance(media_id, ObjectId, media_id)
 
-            url = 'api/assets/%s' % media_id
+            url = 'assets/%s' % media_id
             response = c.get(url, headers=headers)
             self.assertEqual(200, response.status_code, url)
             self.assertEqual(b'content', response.data)
 
-    def _auth_headers(self, sub):
+    def test_text_with_pic_associations(self):
+        self.content_api.publish({
+            'guid': 'text',
+            'type': 'text',
+            'body_html': '''<p>
+            <p>hey</p>
+            <!-- EMBED START Image {id: \"foo\"} -->
+            <figure>
+                <img src=\"http://localhost:5000/api/upload/foo/raw?_schema=http\"
+                    alt=\"tractor\"
+                    srcset=\"//localhost:5000/api/upload/foo/raw?_schema=http 800w\" />
+                <figcaption>tractor</figcaption>
+            </figure>
+            <!-- EMBED END Image {id: \"embedded12554054581\"} -->
+            ''',
+            'associations': {
+                'foo': {
+                    'type': 'picture',
+                    'renditions': {
+                        'original': {
+                            'href': 'http://localhost:5000/api/upload/foo/raw?_schema=http',
+                            'media': 'bar'
+                        }
+                    }
+                }
+            }
+        })
+
+        headers = self._auth_headers()
+
+        with self.capi.test_client() as c:
+            response = c.get('items/text', headers=headers)
+            data = json.loads(response.data)
+            self.assertEqual(1, len(data['associations']))
+            renditions = data['associations']['foo']['renditions']
+            self.assertIn('assets/bar', renditions['original']['href'])
+            self.assertNotIn('http://localhost:5000/api/upload/', data['body_html'])
+
+    def _auth_headers(self, sub=None):
+        if sub is None:
+            sub = {'_id': 'sub1'}
         token = generate_subscriber_token(sub)
         headers = {'Authorization': b'Bearer ' + token}
         return headers
