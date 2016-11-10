@@ -8,18 +8,18 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import os
 from unittest import mock
 from unittest.mock import MagicMock
 
 from .commands import ImportUserProfileFromADCommand
 from apps.auth.errors import CredentialsAuthError
-from superdesk.tests.test_settings import LDAP_SERVER
 from superdesk.errors import SuperdeskApiError
 from superdesk.tests import TestCase
 from superdesk import get_resource_service
 
 
-if LDAP_SERVER:
+if os.environ.get('LDAP_SERVER', ''):
 
     def get_mock_connection():
         """Create a mock ldap connection object.
