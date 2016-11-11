@@ -3,7 +3,9 @@ import json
 import superdesk
 import pymongo
 import logging
+
 from pathlib import Path
+from eve.utils import config
 
 from superdesk import get_resource_service
 from flask import current_app as app
@@ -197,10 +199,11 @@ class AppInitializeWithDataCommand(superdesk.Command):
     option_list = [
         superdesk.Option('--entity-name', '-n', action='append'),
         superdesk.Option('--full-path', '-p', dest='path'),
-        superdesk.Option('--sample-data', action='store_true')
+        superdesk.Option('--sample-data', action='store_true'),
+        superdesk.Option('--force', '-f', action='store_true'),
     ]
 
-    def run(self, entity_name=None, path=None, sample_data=None, index_only='false'):
+    def run(self, entity_name=None, path=None, sample_data=None, force=None):
         logger.info('Starting data import')
         logger.info('Config: %s', app.config['APP_ABSPATH'])
 
@@ -210,12 +213,12 @@ class AppInitializeWithDataCommand(superdesk.Command):
         if entity_name:
             for name in entity_name:
                 (file_name, index_params, do_patch) = __entities__[name]
-                self.import_file(name, path, file_name, index_params, do_patch)
+                self.import_file(name, path, file_name, index_params, do_patch, force)
             return 0
 
         for name, (file_name, index_params, do_patch) in __entities__.items():
             try:
-                self.import_file(name, path, file_name, index_params, do_patch)
+                self.import_file(name, path, file_name, index_params, do_patch, force)
             except Exception as ex:
                 logger.info('Exception loading entity {} from {}'.format(name, file_name))
                 logger.exception(ex)
@@ -223,7 +226,7 @@ class AppInitializeWithDataCommand(superdesk.Command):
         logger.info('Data import finished')
         return 0
 
-    def import_file(self, entity_name, path, file_name, index_params, do_patch=False):
+    def import_file(self, entity_name, path, file_name, index_params, do_patch=False, force=None):
         """Imports seed data based on the entity_name (resource name) from the file_name specified.
 
         index_params use to create index for that entity/resource
@@ -268,15 +271,20 @@ class AppInitializeWithDataCommand(superdesk.Command):
                         for item in existing:
                             for loaded_item in data:
                                 if '_id' in loaded_item and loaded_item['_id'] == item['_id']:
-                                    existing_data.append(loaded_item)
                                     data.remove(loaded_item)
+                                    if force or item.get('_etag', 'init') == 'init':
+                                        existing_data.append(loaded_item)
 
                     if data:
+                        for item in data:
+                            if not item.get(config.ETAG):
+                                item.setdefault(config.ETAG, 'init')
                         service.post(data)
 
                     if existing_data and do_patch:
                         for item in existing_data:
-                            service.patch(item['_id'], item)
+                            item['_etag'] = 'init'
+                            service.update(item['_id'], item, service.find_one(None, _id=item['_id']))
 
                 logger.info(' - file imported successfully: %s', file_name)
 

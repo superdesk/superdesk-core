@@ -106,7 +106,6 @@ class BaseService():
         for doc in docs:
             resolve_default_values(doc, app.config['DOMAIN'][self.datasource]['defaults'])
         self.on_create(docs)
-        resolve_document_etag(docs, self.datasource)
         ids = self.create(docs, **kwargs)
         self.on_created(docs)
         return ids

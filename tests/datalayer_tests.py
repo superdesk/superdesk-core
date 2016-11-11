@@ -39,3 +39,9 @@ class DatalayerTestCase(TestCase):
 
         self.assertEqual(1, service.find({'resource': {'$in': ['foo']}}).count())
         self.assertEqual(1, service.find({}, max_results=1).count(True))
+
+    def test_set_custom_etag_on_create(self):
+        service = superdesk.get_resource_service('activity')
+        ids = service.post([{'resource': 'foo', 'action': 'get', '_etag': 'foo'}])
+        item = service.find_one(None, _id=ids[0])
+        self.assertEqual('foo', item['_etag'])
