@@ -14,10 +14,11 @@ class ActivityReportResource(Resource):
     schema = {
         'desk': Resource.rel('desks', nullable=True),
         'operation': {'type': 'string'},
-        'date': {'type': 'datetime'},
-        'report': {'type': 'dict'},
+        'operation_date': {'type': 'datetime'},
         'subject': metadata_schema['subject'],
         'keywords': metadata_schema['keywords'],
+        'group_by': {'type': 'list'},
+        'report': {'type': 'dict'},
         'timestamp': {'type': 'datetime'},
         'force_regenerate': {'type': 'boolean', 'default': False}
     }
@@ -28,17 +29,17 @@ class ActivityReportResource(Resource):
 
 class ActivityReportService(BaseService):
 
-    def search_items(self, desk, operation, subject, keywords):
+    def search_items(self, report):
         query = {
             "query": {
                 "filtered": {
                     "filter": {
                         "bool": {
                             "must": [
-                                {"term": {"operation": operation}},
-                                {"term": {"task.desk": str(desk)}},
-                                {"term": {"subject.name": subject}},
-                                {"term": {"keywords": keywords}}
+                                {"term": {"operation": report.operation}},
+                                {"term": {"task.desk": str(report.desk)}},
+                                {"term": {"subject.name": report.subject}},
+                                {"term": {"keywords": report.keywords}}
                             ]
                         }
                     }
@@ -53,11 +54,7 @@ class ActivityReportService(BaseService):
 
     def create(self, docs):
         for doc in docs:
-            operation = doc['operation']
-            desk = doc['desk']
-            subject = doc['subject']
-            keywords = doc['keywords']
             doc['timestamp'] = datetime.now()
-            doc['report'] = self.search_items(desk, operation, subject, keywords)
+            doc['report'] = self.search_items(doc)
         docs = super().create(docs)
         return docs
