@@ -1,10 +1,21 @@
-from superdesk.resource import Resource
-from superdesk import get_resource_service
-from eve.utils import ParsedRequest
-import json
-from superdesk.services import BaseService
-from superdesk.metadata.item import metadata_schema
+# -*- coding: utf-8; -*-
+#
+# This file is part of Superdesk.
+#
+# Copyright 2016 Sourcefabric z.u. and contributors.
+#
+# For the full copyright and license information, please see the
+# AUTHORS and LICENSE files distributed with this source code, or
+# at https://www.sourcefabric.org/superdesk/license
+
 from datetime import datetime
+import json
+from superdesk import get_resource_service
+from superdesk.services import BaseService
+
+from eve.utils import ParsedRequest
+from superdesk.metadata.item import metadata_schema
+from superdesk.resource import Resource
 
 
 class ActivityReportResource(Resource):
@@ -14,10 +25,11 @@ class ActivityReportResource(Resource):
     schema = {
         'desk': Resource.rel('desks', nullable=True),
         'operation': {'type': 'string'},
-        'date': {'type': 'datetime'},
-        'report': {'type': 'dict'},
+        'operation_date': {'type': 'datetime'},
         'subject': metadata_schema['subject'],
         'keywords': metadata_schema['keywords'],
+        'group_by': {'type': 'list'},
+        'report': {'type': 'dict'},
         'timestamp': {'type': 'datetime'},
         'force_regenerate': {'type': 'boolean', 'default': False}
     }
@@ -28,17 +40,17 @@ class ActivityReportResource(Resource):
 
 class ActivityReportService(BaseService):
 
-    def search_items(self, desk, operation, subject, keywords):
+    def search_items(self, report):
         query = {
             "query": {
                 "filtered": {
                     "filter": {
                         "bool": {
                             "must": [
-                                {"term": {"operation": operation}},
-                                {"term": {"task.desk": str(desk)}},
-                                {"term": {"subject.name": subject}},
-                                {"term": {"keywords": keywords}}
+                                {"term": {"operation": report['operation']}},
+                                {"term": {"task.desk": str(report['desk'])}},
+                                {"term": {"subject.name": report['subject']}},
+                                {"term": {"keywords": report['keywords']}}
                             ]
                         }
                     }
@@ -49,16 +61,11 @@ class ActivityReportService(BaseService):
         request = ParsedRequest
         request.args = {'source': json.dumps(query), 'repo': 'archive,published,archived,ingest'}
         items_list = list(get_resource_service('archive').get(req=request, lookup=None))
-        return len(items_list)
+        return [{'items': len(items_list)}]
 
     def create(self, docs):
         for doc in docs:
-            operation = doc['operation']
-            desk = doc['desk']
-            subject = doc['subject']
-            keywords = doc['keywords']
             doc['timestamp'] = datetime.now()
-#             date = doc['date']
-            doc['report'] = self.search_items(desk, operation, subject, keywords)
+            doc['report'] = self.search_items(doc)
         docs = super().create(docs)
         return docs
