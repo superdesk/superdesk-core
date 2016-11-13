@@ -12,7 +12,7 @@
 import os
 import unittest
 
-from superdesk.etree import etree
+from xml.etree import ElementTree
 from superdesk.io.feed_parsers.scoop_newsml_2_0 import ScoopNewsMLTwoFeedParser
 
 
@@ -21,9 +21,10 @@ class ScoopTestCase(unittest.TestCase):
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.normpath(os.path.join(dirname, '../fixtures', self.filename))
         provider = {'name': 'Test'}
-        with open(fixture) as f:
-            self.scoop = f.read()
-            self.item = ScoopNewsMLTwoFeedParser().parse(etree.fromstring(self.scoop), provider)
+        with open(fixture, 'rb') as f:
+            parser = ScoopNewsMLTwoFeedParser()
+            self.xml = ElementTree.parse(f)
+            self.item = parser.parse(self.xml.getroot(), provider)
 
 
 class AAPTestCase(ScoopTestCase):
@@ -40,4 +41,4 @@ class AAPTestCase(ScoopTestCase):
         self.assertEqual(self.item[0].get('firstcreated').isoformat(), '2016-01-11T23:35:40+00:00')
 
     def test_can_parse(self):
-        self.assertTrue(ScoopNewsMLTwoFeedParser().can_parse(etree.fromstring(self.scoop)))
+        self.assertTrue(ScoopNewsMLTwoFeedParser().can_parse(self.xml.getroot()))
