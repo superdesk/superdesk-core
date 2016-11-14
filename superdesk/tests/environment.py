@@ -11,10 +11,6 @@
 import os
 from flask import json
 
-from .test_settings import LDAP_SERVER, AMAZON_CONTAINER_NAME, \
-    AMAZON_ACCESS_KEY_ID, AMAZON_SECRET_ACCESS_KEY, AMAZON_REGION, \
-    AMAZON_SERVE_DIRECT_LINKS, AMAZON_S3_USE_HTTPS, AMAZON_SERVER, \
-    AMAZON_PROXY_SERVER, AMAZON_URL_GENERATOR
 from apps.io.tests import setup_providers, teardown_providers
 from features.steps.steps import get_macro_path
 from superdesk import tests
@@ -24,6 +20,7 @@ from superdesk.vocabularies.command import VocabulariesPopulateCommand
 
 
 readonly_fields = ['display_name', 'password', 'phone', 'first_name', 'last_name']
+LDAP_SERVER = os.environ.get('LDAP_SERVER')
 
 
 def setup_before_all(context, config, app_factory):
@@ -100,17 +97,6 @@ def before_feature(context, feature):
         app_factory = getattr(setup_before_scenario, 'app_factory', None)
     config = config or {}
     app_factory = app_factory or get_app
-
-    if AMAZON_CONTAINER_NAME:
-        config['AMAZON_CONTAINER_NAME'] = AMAZON_CONTAINER_NAME
-        config['AMAZON_ACCESS_KEY_ID'] = AMAZON_ACCESS_KEY_ID
-        config['AMAZON_SECRET_ACCESS_KEY'] = AMAZON_SECRET_ACCESS_KEY
-        config['AMAZON_REGION'] = AMAZON_REGION
-        config['AMAZON_SERVE_DIRECT_LINKS'] = AMAZON_SERVE_DIRECT_LINKS
-        config['AMAZON_S3_USE_HTTPS'] = AMAZON_S3_USE_HTTPS
-        config['AMAZON_SERVER'] = AMAZON_SERVER
-        config['AMAZON_PROXY_SERVER'] = AMAZON_PROXY_SERVER
-        config['AMAZON_URL_GENERATOR'] = AMAZON_URL_GENERATOR
 
     # set the MAX_TRANSMIT_RETRY_ATTEMPT to zero so that transmit does not retry
     config['MAX_TRANSMIT_RETRY_ATTEMPT'] = 0

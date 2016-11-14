@@ -1,4 +1,5 @@
 import os
+from unittest.mock import patch
 
 from .app_initialize import AppInitializeWithDataCommand
 from .app_scaffold_data import AppScaffoldDataCommand
@@ -65,18 +66,15 @@ class AppInitializeWithDataCommandTestCase(TestCase):
         self.assertTrue('groups.refs.residRef_1' in result)
         self.assertTrue(result['groups.refs.residRef_1']['sparse'])
 
+    @patch.dict(os.environ, {'REUTERS_USERNAME': 'r_u', 'REUTERS_PASSWORD': 'r_p'})
     def test_app_initialization_set_env_variables(self):
-        os.environ.update({'REUTERS_USERNAME': 'r_username', 'REUTERS_PASSWORD': 'r_password'})
         item = {'username': '#ENV_REUTERS_USERNAME#', 'password': '#ENV_REUTERS_PASSWORD#'}
         crt_item = fillEnvironmentVariables(item)
-        self.assertTrue(crt_item['username'] == 'r_username')
-        self.assertTrue(crt_item['password'] == 'r_password')
-        os.environ.pop('REUTERS_USERNAME')
-        os.environ.pop('REUTERS_PASSWORD')
+        self.assertEqual(crt_item['username'], 'r_u')
+        self.assertEqual(crt_item['password'], 'r_p')
 
+    @patch.dict(os.environ, {'REUTERS_USERNAME': '', 'REUTERS_PASSWORD': 'r_p'})
     def test_app_initialization_notset_env_variables(self):
-        os.environ.update({'REUTERS_PASSWORD': 'r_password'})
         item = {'username': '#ENV_REUTERS_USERNAME#', 'password': '#ENV_REUTERS_PASSWORD#'}
         crt_item = fillEnvironmentVariables(item)
         self.assertTrue(not crt_item)
-        os.environ.pop('REUTERS_PASSWORD')

@@ -53,34 +53,48 @@ def get_mongo_uri(key, dbname):
     return '/'.join([env_host, dbname])
 
 
-def get_test_settings():
-    test_settings = {}
-    test_settings['ELASTICSEARCH_INDEX'] = 'sptest'
-    test_settings['MONGO_URI'] = get_mongo_uri('MONGO_URI', 'sptests')
-    test_settings['LEGAL_ARCHIVE_DBNAME'] = 'sptests_legal_archive'
-    test_settings['LEGAL_ARCHIVE_URI'] = get_mongo_uri('LEGAL_ARCHIVE_URI', 'sptests_legal_archive')
-    test_settings['ARCHIVED_DBNAME'] = 'sptests_archived'
-    test_settings['ARCHIVED_URI'] = get_mongo_uri('ARCHIVED_URI', 'sptests_archived')
-    test_settings['DEBUG'] = True
-    test_settings['TESTING'] = True
-    test_settings['SUPERDESK_TESTING'] = True
-    test_settings['BCRYPT_GENSALT_WORK_FACTOR'] = 4
-    test_settings['CELERY_ALWAYS_EAGER'] = 'True'
-    test_settings['CONTENT_EXPIRY_MINUTES'] = 99
-    test_settings['VERSION'] = '_current_version'
-    test_settings['SECRET_KEY'] = 'test-secret'
-    test_settings['CONTENTAPI_MONGO_DBNAME'] = 'sptests_contentapi'
-    test_settings['CONTENTAPI_MONGO_URI'] = get_mongo_uri('CONTENTAPI_MONGO_URI', 'sptests_contentapi')
-    test_settings['CONTENTAPI_ELASTICSEARCH_INDEX'] = 'sptest_contentapi'
+def update_config(conf):
+    conf['ELASTICSEARCH_INDEX'] = 'sptest'
+    conf['MONGO_URI'] = get_mongo_uri('MONGO_URI', 'sptests')
+    conf['LEGAL_ARCHIVE_DBNAME'] = 'sptests_legal_archive'
+    conf['LEGAL_ARCHIVE_URI'] = get_mongo_uri('LEGAL_ARCHIVE_URI', 'sptests_legal_archive')
+    conf['ARCHIVED_DBNAME'] = 'sptests_archived'
+    conf['ARCHIVED_URI'] = get_mongo_uri('ARCHIVED_URI', 'sptests_archived')
+    conf['CONTENTAPI_MONGO_DBNAME'] = 'sptests_contentapi'
+    conf['CONTENTAPI_MONGO_URI'] = get_mongo_uri('CONTENTAPI_MONGO_URI', 'sptests_contentapi')
+    conf['CONTENTAPI_ELASTICSEARCH_INDEX'] = 'sptest_contentapi'
+
+    conf['DEBUG'] = True
+    conf['TESTING'] = True
+    conf['SUPERDESK_TESTING'] = True
+    conf['BCRYPT_GENSALT_WORK_FACTOR'] = 4
+    conf['CELERY_ALWAYS_EAGER'] = 'True'
+    conf['CELERYBEAT_SCHEDULE_FILENAME'] = './testschedule.db'
+    conf['CELERYBEAT_SCHEDULE'] = {}
+    conf['CONTENT_EXPIRY_MINUTES'] = 99
+    conf['VERSION'] = '_current_version'
+    conf['SECRET_KEY'] = 'test-secret'
+    conf['JSON_SORT_KEYS'] = True
+    conf['ELASTICSEARCH_BACKUPS_PATH'] = '/tmp/es-backups'
+    conf['ELASTICSEARCH_INDEXES'] = {
+        'archived': 'sptest_archived',
+        'archive': 'sptest_archive',
+        'ingest': 'sptest_ingest',
+    }
+
+    # (behave|nose)tests depends from these settings
+    conf['DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES'] = 'AAP'
+    conf['MACROS_MODULE'] = 'superdesk.macros'
+    conf['DEFAULT_TIMEZONE'] = 'Europe/Prague'
 
     # limit mongodb connections
-    test_settings['MONGO_CONNECT'] = False
-    test_settings['ARCHIVED_CONNECT'] = False
-    test_settings['LEGAL_ARCHIVE_CONNECT'] = False
-    test_settings['MONGO_MAX_POOL_SIZE'] = 1
-    test_settings['ARCHIVED_MAX_POOL_SIZE'] = 1
-    test_settings['LEGAL_ARCHIVE_MAX_POOL_SIZE'] = 1
-    return test_settings
+    conf['MONGO_CONNECT'] = False
+    conf['ARCHIVED_CONNECT'] = False
+    conf['LEGAL_ARCHIVE_CONNECT'] = False
+    conf['MONGO_MAX_POOL_SIZE'] = 1
+    conf['ARCHIVED_MAX_POOL_SIZE'] = 1
+    conf['LEGAL_ARCHIVE_MAX_POOL_SIZE'] = 1
+    return conf
 
 
 def drop_elastic(app):
@@ -125,13 +139,11 @@ def drop_mongo(app, dbconn, dbname):
 def setup_config(config):
     app_abspath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     app_config = Config(app_abspath)
-    app_config.from_object('superdesk.tests.test_settings')
-    app_config['APP_ABSPATH'] = app_abspath
+    app_config.from_object('superdesk.default_settings')
 
-    app_config.update(get_test_settings())
-    app_config.update(config or {})
-
-    app_config.update({
+    update_config(app_config)
+    app_config.update(config or {}, **{
+        'APP_ABSPATH': app_abspath,
         'DEBUG': True,
         'TESTING': True,
     })
