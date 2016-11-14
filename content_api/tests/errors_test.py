@@ -68,7 +68,7 @@ class UnknownParameterErrorTestCase(ApiTestCase):
 
     def test_error_code(self):
         error = self._make_one()
-        self.assertEqual(error.status_code, 10001)
+        self.assertEqual(error.status_code, 400)
 
     def test_error_message(self):
         error = self._make_one()
@@ -100,7 +100,7 @@ class BadParameterValueTestCase(ApiTestCase):
 
     def test_error_code(self):
         error = self._make_one()
-        self.assertEqual(error.status_code, 10002)
+        self.assertEqual(error.status_code, 400)
 
     def test_error_message(self):
         error = self._make_one()

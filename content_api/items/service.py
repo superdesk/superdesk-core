@@ -76,16 +76,12 @@ class ItemsService(BaseService):
         orig_request_params = getattr(req, 'args', MultiDict())
 
         allowed_params = {
-            'q', 'start_date', 'end_date',
+            'start_date', 'end_date',
             'include_fields', 'exclude_fields',
-            'max_results', 'page'
+            'max_results', 'page',
+            'where'
         }
         self._check_for_unknown_params(req, whitelist=allowed_params)
-
-        # set the search query
-        if 'q' in orig_request_params:
-            internal_req.args['q'] = orig_request_params['q']
-            internal_req.args['default_operator'] = 'OR'
 
         # set the date range filter
         start_date, end_date = self._get_date_range(orig_request_params)
@@ -214,10 +210,6 @@ class ItemsService(BaseService):
         if not allow_filtering:
             err_msg = ("Filtering{} is not supported when retrieving a "
                        "single object (the \"{param}\" parameter)")
-
-            if 'q' in request_params.keys():
-                desc = err_msg.format('', param='q')
-                raise UnexpectedParameterError(desc=desc)
 
             if 'start_date' in request_params.keys():
                 desc = err_msg.format(' by date range', param='start_date')

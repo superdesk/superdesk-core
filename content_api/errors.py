@@ -36,6 +36,7 @@ class UnexpectedParameterError(PublicApiError):
 
     def __init__(self, desc=None):
         super().__init__(10001, desc=desc)
+        self.status_code = 400
 
 
 class BadParameterValueError(PublicApiError):
@@ -45,6 +46,7 @@ class BadParameterValueError(PublicApiError):
 
     def __init__(self, desc=None):
         super().__init__(10002, desc=desc)
+        self.status_code = 400
 
 
 class FileNotFoundError(PublicApiError):
