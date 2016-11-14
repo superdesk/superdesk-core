@@ -39,6 +39,8 @@ how the Superdesk server works.
     overview
     installation
 
+.. _reference:
+
 Reference
 ---------
 
@@ -53,6 +55,7 @@ works and can be developed further.
     ingest
     settings
     schema
+    contentapi
 
 Additional topics
 -----------------
@@ -75,4 +78,3 @@ a hand by helping us to either improve this documentation or writing some code.
     :maxdepth: 2
 
     contributing
-

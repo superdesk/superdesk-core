@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timedelta
 import functools
 import json
 import logging
@@ -23,7 +23,6 @@ from flask import request
 from werkzeug.datastructures import MultiDict
 
 from content_api.app.settings import ELASTIC_DATE_FORMAT
-from content_api.assets.util import url_for_media
 from content_api.errors import BadParameterValueError, UnexpectedParameterError
 from content_api.items.resource import ItemsResource
 from eve.utils import ParsedRequest
@@ -151,10 +150,28 @@ class ItemsService(BaseService):
         for field_name in ('_id', '_etag', '_created', '_updated', 'subscribers'):
             document.pop(field_name, None)
 
-        if 'renditions' in document:
-            for _k, v in document['renditions'].items():
+        self._process_item_renditions(document)
+        self._process_item_associations(document)
+
+    def _process_item_renditions(self, item):
+        hrefs = {}
+        if item.get('renditions'):
+            for _k, v in item['renditions'].items():
                 if 'media' in v:
-                    v['href'] = url_for_media(v['media'])
+                    href = v.get('href')
+                    media = v.pop('media')
+                    v['href'] = app.media.url_for_media(media, v.get('mimetype'))
+                    hrefs[href] = v['href']
+        return hrefs
+
+    def _process_item_associations(self, item):
+        hrefs = {}
+        if item.get('associations'):
+            for _k, v in item.get('associations', {}).items():
+                hrefs.update(self._process_item_renditions(v))
+        if item.get('body_html'):
+            for k, v in hrefs.items():
+                item['body_html'] = item['body_html'].replace(k, v)
 
     def _get_uri(self, document):
         """Return the given document's `uri`.
@@ -287,7 +304,7 @@ class ItemsService(BaseService):
             end_date = today
 
         if start_date is None:
-            start_date = end_date
+            start_date = end_date - timedelta(days=7)  # get last 7 days by default
 
         return start_date, end_date
 

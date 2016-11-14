@@ -9,26 +9,26 @@
 # at https://www.sourcefabric.org/superdesk/license
 """Assets module"""
 
-import logging
-
-from flask import request, current_app as app
-from werkzeug.wsgi import wrap_file
-
-from content_api.assets.resource import AssetsResource
-from content_api.assets.service import AssetsService
-from content_api.errors import FileNotFoundError
 import superdesk
+import bson.errors
+
+from werkzeug.wsgi import wrap_file
+from flask import request, url_for, current_app as app
+from content_api.errors import FileNotFoundError
 
 
-bp = superdesk.Blueprint('assets_raw', __name__)
-superdesk.blueprint(bp)
-logger = logging.getLogger(__name__)
-cache_for = 3600 * 24 * 1  # 1d cache
+bp = superdesk.Blueprint('assets', __name__)
+cache_for = 3600 * 24 * 7  # 7 days cache
 
 
-@bp.route('/assets/<path:media_id>/raw', methods=['GET'])
+@bp.route('/assets/<path:media_id>', methods=['GET'])
 def get_media_streamed(media_id):
-    media_file = app.media.get(media_id, 'assets')
+    if not app.auth.authorized([], 'assets', 'GET'):
+        return app.auth.authenticate()
+    try:
+        media_file = app.media.get(media_id, 'upload')
+    except bson.errors.InvalidId:
+        media_file = None
     if media_file:
         data = wrap_file(request.environ, media_file, buffer_size=1024 * 256)
         response = app.response_class(
@@ -42,16 +42,15 @@ def get_media_streamed(media_id):
         response.cache_control.s_max_age = cache_for
         response.cache_control.public = True
         response.make_conditional(request)
+        response.headers['Content-Disposition'] = 'inline'
         return response
     raise FileNotFoundError('File not found on media storage.')
 
 
-def init_app(app):
-    """Initialize the `assets` API endpoint.
+def upload_url(media_id):
+    return url_for('assets.get_media_streamed', media_id=str(media_id), _external=True)
 
-    :param app: the API application object
-    :type app: `Eve`
-    """
-    endpoint_name = 'assets'
-    service = AssetsService(endpoint_name, backend=superdesk.get_backend())
-    AssetsResource(endpoint_name, app=app, service=service)
+
+def init_app(app):
+    superdesk.blueprint(bp, app)
+    app.upload_url = upload_url

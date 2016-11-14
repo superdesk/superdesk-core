@@ -4,7 +4,7 @@ import eve
 import bson
 import unittest
 from unittest.mock import Mock
-from superdesk.upload import bp
+from superdesk.upload import bp, upload_url
 from superdesk.datalayer import SuperdeskDataLayer
 from superdesk.storage.desk_media_storage import SuperdeskGridFSMediaStorage
 
@@ -19,6 +19,7 @@ class GridFSMediaStorageTestCase(unittest.TestCase):
         self.app.data = SuperdeskDataLayer(self.app)
         self.media = SuperdeskGridFSMediaStorage(self.app)
         self.app.register_blueprint(bp)
+        self.app.upload_url = upload_url
 
     def test_media_id(self):
         filename = 'some-file'

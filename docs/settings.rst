@@ -371,6 +371,17 @@ Default: ``7``
 
 The number of days an activation token is valid, env ``ACTIVATE_TTL``.
 
+.. _settings:SECRET_KEY:
+
+``SECRET_KEY``
+^^^^^^^^^^^^^^
+
+.. versionadded:: 1.5
+
+Default: ``''``
+
+This value should be set to a unique, unpredictable value. It is used for auth token signing.
+
 .. _settings:email
 
 Email settings
@@ -416,3 +427,36 @@ Default: ``'superdesk@localhost'``
 
 Default: ``['']``
 
+.. _settings:content_api:
+
+Content API Settings
+--------------------
+
+.. versionadded:: 1.5
+
+``CONTENT_API_ENABLED``
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``True``
+
+Set to false to disable publishing to Content API.
+
+``CONTENTAPI_MONGO_DBNAME``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``contentapi``
+
+``CONTENTAPI_MONGO_URI``
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``mongodb://localhost/contentapi``
+
+``CONTENTAPI_ELASTICSEARCH_URL``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``http://localhost:9200``
+
+``CONTENTAPI_ELASTICSEARCH_INDEX``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``contentapi``
