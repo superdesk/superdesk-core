@@ -41,4 +41,5 @@ class AddProvider(superdesk.Command):
                 except Exception as ex:
                     raise ProviderError.providerAddError(ex, data)
 
+
 superdesk.command('ingest:provider', AddProvider())

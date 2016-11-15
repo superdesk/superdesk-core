@@ -42,4 +42,5 @@ class DeleteDocCommand(superdesk.Command):
 
                     self.single_delete(data['guid'])
 
+
 superdesk.command('app:deletedoc', DeleteDocCommand())

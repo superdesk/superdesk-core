@@ -333,4 +333,5 @@ def get_recipients(user_list, activity_name):
 
     return recipients
 
+
 add_notifier(notify_and_add_activity)

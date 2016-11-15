@@ -253,6 +253,8 @@ def use_snapshot(app, name, funcs=(snapshot_es, snapshot_mongo), force=False):
             return use_snapshot.cache[fn]
         return inner
     return wrapper
+
+
 use_snapshot.cache = {}
 
 

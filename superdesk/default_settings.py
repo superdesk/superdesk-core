@@ -38,9 +38,9 @@ def env(variable, fallback_value=None):
         else:
             return env_value
 
-ABS_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
-BEHAVE_TESTS_FIXTURES_PATH = os.path.join(ABS_PATH,  # default value: `features/steps/fixtures`
-                                          'features', 'steps', 'fixtures')
+
+ABS_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../'))
+BEHAVE_TESTS_FIXTURES_PATH = ABS_PATH + '/features/steps/fixtures'
 
 XML = False
 IF_MATCH = True
