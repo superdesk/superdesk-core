@@ -31,6 +31,7 @@ def populate(item, **kwargs):
 
     return item
 
+
 name = 'populate_abstract'
 label = 'Populate Abstract'
 order = 3
