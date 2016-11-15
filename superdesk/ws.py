@@ -31,6 +31,7 @@ def create_server(config):
     except:
         logger.exception('Failed to start the WebSocket server.')
 
+
 if __name__ == '__main__':
     config = {
         'WS_HOST': '0.0.0.0',

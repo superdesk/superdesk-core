@@ -115,4 +115,5 @@ class ScoopNewsMLTwoFeedParser(NewsMLTwoFeedParser):
         content['content'] = "\n".join(elements)
         return content
 
+
 register_feed_parser(ScoopNewsMLTwoFeedParser.NAME, ScoopNewsMLTwoFeedParser())
