@@ -118,10 +118,6 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=Tr
     for resource in superdesk.DOMAIN:
         app.register_resource(resource, superdesk.DOMAIN[resource])
 
-    for blueprint in superdesk.BLUEPRINTS:
-        prefix = app.api_prefix or None
-        app.register_blueprint(blueprint, url_prefix=prefix)
-
     for name, jinja_filter in superdesk.JINJA_FILTERS.items():
         app.jinja_env.filters[name] = jinja_filter
 

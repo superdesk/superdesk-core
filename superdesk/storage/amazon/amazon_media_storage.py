@@ -15,7 +15,6 @@ import json
 import logging
 from mimetypes import guess_extension
 from superdesk.media.media_operations import download_file_from_url
-from superdesk.upload import upload_url
 import time
 
 import boto3
@@ -72,6 +71,7 @@ def url_for_media_partial(app, media_id):
     url = '%s/%s' % (str(app.config.get('AMAZON_PROXY_SERVER')), media_id)
     return '%s://%s' % (protocol, url)
 
+
 url_generators = {
     'default': url_for_media_default,
     'partial': url_for_media_partial
@@ -91,7 +91,7 @@ class AmazonMediaStorage(MediaStorage):
 
     def url_for_media(self, media_id, content_type=None):
         if not self.app.config.get('AMAZON_SERVE_DIRECT_LINKS', False):
-            return upload_url(str(media_id))
+            return self.app.upload_url(str(media_id))
 
         if self.app.config.get('AMAZON_PROXY_SERVER'):
             url_generator = url_generators.get(self.app.config.get('AMAZON_URL_GENERATOR', 'default'),

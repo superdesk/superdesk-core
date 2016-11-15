@@ -18,4 +18,4 @@ logger = logging.getLogger(__name__)
 
 
 def init_app(app):
-    superdesk.blueprint(bp)
+    superdesk.blueprint(bp, app)

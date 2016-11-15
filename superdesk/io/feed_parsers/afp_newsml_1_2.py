@@ -29,4 +29,5 @@ class AFPNewsMLOneFeedParser(NewsMLOneFeedParser):
         item['versioncreated'] = utc.localize(item['versioncreated']) if item.get('versioncreated') else utcnow()
         return item
 
+
 register_feed_parser(AFPNewsMLOneFeedParser.NAME, AFPNewsMLOneFeedParser())

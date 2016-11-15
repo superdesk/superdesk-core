@@ -29,18 +29,21 @@ except ImportError:
 
 
 def env(variable, fallback_value=None):
-    env_value = os.environ.get(variable, '')
-    if len(env_value) == 0:
+    if os.environ.get('SUPERDESK_TESTING'):
         return fallback_value
-    else:
-        if env_value == "__EMPTY__":
-            return ''
-        else:
-            return env_value
 
-ABS_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
-BEHAVE_TESTS_FIXTURES_PATH = os.path.join(ABS_PATH,  # default value: `features/steps/fixtures`
-                                          'features', 'steps', 'fixtures')
+    env_value = os.environ.get(variable)
+    if env_value is None:
+        return fallback_value
+    # Next isn't needed anymore
+    elif env_value == "__EMPTY__":
+        return ''
+    else:
+        return env_value
+
+
+ABS_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../'))
+BEHAVE_TESTS_FIXTURES_PATH = ABS_PATH + '/features/steps/fixtures'
 
 XML = False
 IF_MATCH = True
@@ -254,12 +257,12 @@ SENTRY_DSN = env('SENTRY_DSN')
 SENTRY_INCLUDE_PATHS = ['superdesk', 'apps']
 
 CORE_APPS = [
+    'apps.auth',
+    'superdesk.roles',
     'superdesk.storage',
     'superdesk.allowed_values',
     'apps.picture_crop',
     'apps.picture_renditions',
-    'apps.auth',
-    'superdesk.roles',
     'content_api.publish',
     'content_api.items',
     'content_api.tokens',

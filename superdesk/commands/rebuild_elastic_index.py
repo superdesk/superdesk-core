@@ -60,4 +60,5 @@ class RebuildElasticIndex(superdesk.Command):
     def _get_available_indexes(self):
         return SearchService(None, None).get_available_indexes()
 
+
 superdesk.command('app:rebuild_elastic_index', RebuildElasticIndex())

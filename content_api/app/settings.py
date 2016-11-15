@@ -15,7 +15,13 @@ The meaning of configuration options is described in the Eve framework
 `documentation <http://python-eve.org/config.html#global-configuration>`_.
 """
 
-from superdesk.default_settings import env, urlparse, SECRET_KEY  # noqa
+from superdesk.default_settings import env, urlparse
+
+from superdesk.default_settings import SECRET_KEY, MONGO_DBNAME, MONGO_URI  # noqa
+from superdesk.default_settings import AMAZON_CONTAINER_NAME, AMAZON_ACCESS_KEY_ID  # noqa
+from superdesk.default_settings import AMAZON_SECRET_ACCESS_KEY, AMAZON_REGION  # noqa
+from superdesk.default_settings import AMAZON_SERVE_DIRECT_LINKS, AMAZON_S3_USE_HTTPS  # noqa
+from superdesk.default_settings import AMAZON_SERVER, AMAZON_PROXY_SERVER, AMAZON_URL_GENERATOR  # noqa
 
 
 CONTENTAPI_MONGO_DBNAME = 'contentapi'
@@ -24,16 +30,10 @@ CONTENTAPI_MONGO_URI = env('CONTENTAPI_MONGO_URI', 'mongodb://localhost/%s' % CO
 CONTENTAPI_ELASTICSEARCH_URL = env('CONTENTAPI_ELASTICSEARCH_URL', 'http://localhost:9200')
 CONTENTAPI_ELASTICSEARCH_INDEX = env('CONTENTAPI_ELASTICSEARCH_INDEX', CONTENTAPI_MONGO_DBNAME)
 
-ELASTIC_DATE_FORMAT = '%Y-%m-%d'
-
-OAUTH2_ROUTE_PREFIX = '/oauth'
-OAUTH2_TOKEN_URL = '/token'
-OAUTH2_SCOPES = ['content_api']
-BCRYPT_GENSALT_WORK_FACTOR = 12
-
 CONTENTAPI_INSTALLED_APPS = [
     'content_api.items',
     'content_api.packages',
+    'content_api.assets',
 ]
 
 CONTENTAPI_DOMAIN = {}
@@ -43,14 +43,8 @@ PUBLICAPI_URL = env('PUBLICAPI_URL', 'http://localhost:5400')
 server_url = urlparse(PUBLICAPI_URL)
 URL_PREFIX = server_url.path.strip('/')
 
-# Amazon S3 assets management
-AMAZON_CONTAINER_NAME = env('AMAZON_CONTAINER_NAME', '')
-AMAZON_ACCESS_KEY_ID = env('AMAZON_ACCESS_KEY_ID', '')
-AMAZON_SECRET_ACCESS_KEY = env('AMAZON_SECRET_ACCESS_KEY', '')
-AMAZON_REGION = env('AMAZON_REGION', 'us-east-1')
-AMAZON_SERVE_DIRECT_LINKS = env('AMAZON_SERVE_DIRECT_LINKS', False)
-AMAZON_S3_USE_HTTPS = env('AMAZON_S3_USE_HTTPS', False)
-
 XML = False
 PUBLIC_RESOURCES = []
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%S+0000'
+ELASTIC_DATE_FORMAT = '%Y-%m-%d'
+BCRYPT_GENSALT_WORK_FACTOR = 12

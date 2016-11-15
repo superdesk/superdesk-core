@@ -13,7 +13,6 @@ import json
 import bson
 import gridfs
 from eve.io.mongo.media import GridFSMediaStorage
-from superdesk.upload import upload_url
 from superdesk.utils import sha
 
 
@@ -52,7 +51,7 @@ class SuperdeskGridFSMediaStorage(GridFSMediaStorage):
 
         :param media_id: media id from media_id method
         """
-        return upload_url(str(media_id))
+        return self.app.upload_url(str(media_id))
 
     def fetch_rendition(self, rendition):
         return self.get(rendition.get('media'), 'upload')

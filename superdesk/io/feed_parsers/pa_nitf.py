@@ -112,4 +112,5 @@ class PAFeedParser(NITFFeedParser):
         self.xml = xml
         return super().parse(xml, provider=provider)
 
+
 register_feed_parser(PAFeedParser.NAME, PAFeedParser())
