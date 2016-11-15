@@ -71,6 +71,7 @@ def url_for_media_partial(app, media_id):
     url = '%s/%s' % (str(app.config.get('AMAZON_PROXY_SERVER')), media_id)
     return '%s://%s' % (protocol, url)
 
+
 url_generators = {
     'default': url_for_media_default,
     'partial': url_for_media_partial

@@ -118,6 +118,7 @@ class AppContextTask(TaskBase):
         with superdesk.app.app_context():
             handle_exception(exc)
 
+
 celery.Task = AppContextTask
 
 

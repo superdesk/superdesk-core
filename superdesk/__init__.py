@@ -74,6 +74,7 @@ def get_headers(self, environ=None):
         ('Access-Control-Allow-Headers', '*'),
     ]
 
+
 setattr(HTTPException, 'get_headers', get_headers)
 
 

@@ -122,4 +122,5 @@ class MarkedForHighlightsService(BaseService):
 
         return ids
 
+
 package.package_create_signal.connect(on_create_package)

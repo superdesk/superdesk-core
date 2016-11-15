@@ -57,4 +57,5 @@ class EmailPublishService(PublishService):
         except Exception as ex:
             raise PublishEmailError.emailError(ex, queue_item.get('destination'))
 
+
 register_transmitter('email', EmailPublishService(), errors)
