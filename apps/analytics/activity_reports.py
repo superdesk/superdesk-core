@@ -48,7 +48,7 @@ class ActivityReportService(BaseService):
 
         request = ParsedRequest
         request.args = {'source': json.dumps(query), 'repo': 'archive,published,archived,ingest'}
-        items_list = list(get_resource_service('archive').get(req=request, lookup=None))
+        items_list = list(get_resource_service('search').get(req=request, lookup=None))
         return len(items_list)
 
     def create(self, docs):
@@ -58,7 +58,6 @@ class ActivityReportService(BaseService):
             subject = doc['subject']
             keywords = doc['keywords']
             doc['timestamp'] = datetime.now()
-#             date = doc['date']
             doc['report'] = self.search_items(desk, operation, subject, keywords)
         docs = super().create(docs)
         return docs

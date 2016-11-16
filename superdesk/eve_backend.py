@@ -135,8 +135,9 @@ class EveBackend():
         :param docs: list of docs to create
         """
         for doc in docs:
-            doc.setdefault(config.ETAG, document_etag(doc))
             self.set_default_dates(doc)
+            if not doc.get(config.ETAG):
+                doc[config.ETAG] = document_etag(doc)
 
         backend = self._backend(endpoint_name)
         ids = backend.insert(endpoint_name, docs)
@@ -191,15 +192,15 @@ class EveBackend():
         try:
             backend.update(endpoint_name, id, updates, original)
         except eve.io.base.DataLayer.OriginalChangedError:
-            if not backend.find_one(endpoint_name, req=None, _id=id):
+            if not backend.find_one(endpoint_name, req=None, _id=id) and search_backend:
                 # item is in elastic, not in mongo - not good
                 logger.warn("Item is missing in mongo resource=%s id=%s".format(endpoint_name, id))
                 self.remove_from_search(endpoint_name, id)
                 raise SuperdeskApiError.notFoundError()
             else:
                 # item is there, but no change was done - ok
-                logger.exception('Item : {} not updated in collection {}. '
-                                 'Updates are : {}'.format(id, endpoint_name, updates))
+                logger.error('Item : {} not updated in collection {}. '
+                             'Updates are : {}'.format(id, endpoint_name, updates))
                 return updates
 
         if search_backend:

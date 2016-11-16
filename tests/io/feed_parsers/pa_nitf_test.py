@@ -26,7 +26,7 @@ class PANITFFileTestCase(TestCase):
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.normpath(os.path.join(dirname, '../fixtures', self.filename))
         provider = {'name': 'Test'}
-        with open(fixture, 'rt') as f:
+        with open(fixture, 'rb') as f:
             xml = ElementTree.parse(f)
             self.item = PAFeedParser().parse(xml.getroot(), provider)
 

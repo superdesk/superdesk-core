@@ -87,8 +87,7 @@ class CheckForUnknownParamsMethodTestCase(ItemsServiceTestCase):
         ex = context.exception
         self.assertEqual(
             ex.payload,
-            'Filtering is not supported when retrieving a single object '
-            '(the "q" parameter)'
+            'Unexpected parameter (q)'
         )
 
     def test_raises_descriptive_error_on_disabled_start_date_filtering(self):
@@ -170,8 +169,9 @@ class GetMethodTestCase(ItemsServiceTestCase):
 
         expected_whitelist = sorted([
             'start_date', 'end_date',
-            'exclude_fields', 'include_fields', 'q',
-            'max_results', 'page'
+            'exclude_fields', 'include_fields',
+            'max_results', 'page',
+            'where'
         ])
 
         whitelist_arg = kwargs.get('whitelist')
@@ -298,25 +298,6 @@ class GetMethodTestCase(ItemsServiceTestCase):
             'lte': '2012-08-26'
         }
         self.assertEqual(date_filter, expected_filter)
-
-    def test_includes_text_query_if_given(self):
-        request = MagicMock()
-        request.args = MultiDict([
-            ('q', 'text')
-        ])
-        lookup = {}
-
-        instance = self._make_one()
-        instance.get(request, lookup)
-
-        self.assertTrue(fake_super_get.called)
-        args, _ = fake_super_get.call_args
-        self.assertGreater(len(args), 0)
-
-        text_query = args[0].args['q']
-        self.assertEqual(text_query, 'text')
-        default_operator = args[0].args['default_operator']
-        self.assertEqual(default_operator, 'OR')
 
     @mock.patch('content_api.items.service.utcnow')
     def test_sets_end_date_to_today_if_not_given(self, fake_utcnow):

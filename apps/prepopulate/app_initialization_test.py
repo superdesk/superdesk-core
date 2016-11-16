@@ -78,3 +78,22 @@ class AppInitializeWithDataCommandTestCase(TestCase):
         item = {'username': '#ENV_REUTERS_USERNAME#', 'password': '#ENV_REUTERS_PASSWORD#'}
         crt_item = fillEnvironmentVariables(item)
         self.assertTrue(not crt_item)
+
+    def test_init_keeps_user_modifications(self):
+        self._run(['vocabularies'])
+        urgency = self.app.data.find_one('vocabularies', req=None, _id='urgency')
+        self.assertIsNotNone(urgency)
+        self.assertEqual('init', urgency['_etag'])
+
+        updates = {'display_name': 'FOO'}
+        self.app.data.update('vocabularies', 'urgency', updates, urgency)
+
+        self._run(['vocabularies'])
+        urgency = self.app.data.find_one('vocabularies', req=None, _id='urgency')
+        self.assertEqual('FOO', urgency['display_name'])
+        self.assertNotEqual('init', urgency['_etag'])
+
+        self._run(['vocabularies'], None, None, True)
+        urgency = self.app.data.find_one('vocabularies', req=None, _id='urgency')
+        self.assertEqual('Urgency', urgency['display_name'])
+        self.assertEqual('init', urgency['_etag'])

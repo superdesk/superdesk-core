@@ -7,17 +7,14 @@ Feature: Activity report
         [{"name": "Sports Desk"}]
         """
         Given "archive"
-            """
-            [{"headline": "test_one", "task": {"desk": "#desks._id#"}}]
-            """
-        When we get "/archive"
-        Then we get list with 1 items
-        When we post to "/activityreports"
         """
-        {"operation": "create", "desk": "#desks._id#"}
+        [{"headline": "test_one", "task": {"desk": "#desks._id#"}, "keywords": ["testkey"], "subject":{"name": "education"}}]
         """
-        When we get "/activityreports/#activityreports._id#"
-        Then we get existing resource
+        When we post to "/activity_reports"
         """
-        {"report": 0}
+        {"operation": "create", "desk": "#desks._id#", "keywords": ["testkey"], "subject": ["education"]}
+        """
+        Then we get new resource
+        """
+        {"operation": "create", "timestamp": "__any_value__", "report": 0}
         """

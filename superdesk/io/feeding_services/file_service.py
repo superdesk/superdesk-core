@@ -58,7 +58,7 @@ class FileFeedingService(FeedingService):
 
                     if self.is_latest_content(last_updated, provider.get('last_updated')):
                         if isinstance(registered_parser, XMLFeedParser):
-                            with open(file_path, 'rt') as f:
+                            with open(file_path, 'rb') as f:
                                 xml = ElementTree.parse(f)
                                 parser = self.get_feed_parser(provider, xml.getroot())
                                 item = parser.parse(xml.getroot(), provider)

@@ -56,5 +56,6 @@ class PackagesService(ItemsService):
         :param dict document: MongoDB document representing a package object
         """
         for item in document.get('associations', {}).values():
-            item['uri'] = self._get_uri(item)
-            item.pop('_id', None)
+            if item.get('_id') or item.get('guid'):
+                item['uri'] = self._get_uri(item)
+                item.pop('_id', None)
