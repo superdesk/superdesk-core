@@ -23,6 +23,7 @@ class ContentAPITestCase(TestCase):
         config['URL_PREFIX'] = ''
         self.capi = get_app(config)
         self.capi.testing = True
+        self.subscriber = {'_id': 'sub1'}
 
     def test_publish_to_content_api(self):
         item = {'guid': 'foo', 'type': 'text', 'task': {'desk': 'foo'}}
@@ -148,9 +149,24 @@ class ContentAPITestCase(TestCase):
             self.assertIn('assets/bar', renditions['original']['href'])
             self.assertNotIn('http://localhost:5000/api/upload/', data['body_html'])
 
+    def test_content_filtering(self):
+        self.content_api.publish({'guid': 'u3', 'type': 'text', 'urgency': 3}, [self.subscriber])
+        self.content_api.publish({'guid': 'u2', 'type': 'text', 'urgency': 2}, [self.subscriber])
+
+        headers = self._auth_headers()
+
+        with self.capi.test_client() as c:
+            response = c.get('items?where={"urgency":3}', headers=headers)
+            data = json.loads(response.data)
+            self.assertEqual(1, data['_meta']['total'])
+            self.assertEqual(3, data['_items'][0]['urgency'])
+
+            response = c.get('items?q=urgency:3', headers=headers)
+            self.assertEqual(400, response.status_code)
+
     def _auth_headers(self, sub=None):
         if sub is None:
-            sub = {'_id': 'sub1'}
+            sub = self.subscriber
         token = generate_subscriber_token(sub)
         headers = {'Authorization': b'Bearer ' + token}
         return headers

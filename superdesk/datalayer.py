@@ -27,7 +27,7 @@ class SuperdeskDataLayer(DataLayer):
 
     serializers = {}
     serializers.update(Mongo.serializers)
-    serializers.update(Elastic.serializers)
+    serializers.update({'datetime': Elastic.serializers['datetime']})
 
     def init_app(self, app):
         app.data = self  # app.data must be set for locks to work
