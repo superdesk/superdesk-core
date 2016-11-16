@@ -1,6 +1,21 @@
 # Superdesk Server Changelog
 
-## [Unreleased]
+## [1.4] 2016-11-15
+
+### Added
+
+- Add option to generate short item ids.
+- Add support for translate item action.
+
+### Fixed
+
+- Set celery version <4.
+- Allow email formatter for publishing.
+- Improve word counting.
+- Ignore dateline when validating correction.
+- Fix online users info when doing sessions gc.
+- Fix rss ingest when missing last updated date.
+- Prevent rss ingested items to have timestamps in future.
 
 ## [1.3] 2016-10-14
 
