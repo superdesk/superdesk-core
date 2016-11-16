@@ -179,12 +179,26 @@ INIT_DATA_PATH = Path(__file__).resolve().parent / 'data_init'
 
 
 def get_filepath(filename, path=None):
-    if path:
-        basedir = path
-    else:
-        basedir = app.config.get('INIT_DATA_PATH', INIT_DATA_PATH)
+    """Get filepath for filename.
 
-    return Path(basedir) / filename
+    If path is set, only check that. Otherwise use configured INIT_DATA_PATH,
+    and if the file is not there, check default data path in core.
+
+    :param filename: filename
+    :param path: custom path
+    """
+    if path:
+        dirs = [path]
+    else:
+        dirs = [
+            app.config.get('INIT_DATA_PATH', INIT_DATA_PATH),
+            INIT_DATA_PATH,
+        ]
+
+    for basedir in dirs:
+        filepath = Path(basedir) / filename
+        if filepath.exists():
+            return filepath
 
 
 class AppInitializeWithDataCommand(superdesk.Command):

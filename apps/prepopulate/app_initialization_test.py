@@ -1,4 +1,7 @@
 import os
+import shutil
+import tempfile
+from flask import json
 from unittest.mock import patch
 
 from .app_initialize import AppInitializeWithDataCommand
@@ -97,3 +100,20 @@ class AppInitializeWithDataCommandTestCase(TestCase):
         urgency = self.app.data.find_one('vocabularies', req=None, _id='urgency')
         self.assertEqual('Urgency', urgency['display_name'])
         self.assertEqual('init', urgency['_etag'])
+
+    def test_init_can_combine_files_from_folders(self):
+        init_dir = tempfile.mkdtemp('init', 'test')
+        self.app.config.update({'INIT_DATA_PATH': init_dir})
+
+        with open(os.path.join(init_dir, 'vocabularies.json'), 'w') as f:
+            f.write(json.dumps([{'_id': 'foo'}]))
+            f.flush()
+
+        self._run(['vocabularies'])
+        self.assertEqual(self.app.data.find('vocabularies', req=None, lookup={}).count(), 1)
+
+        self._run(['validators'])
+        self.assertGreater(self.app.data.find('validators', req=None, lookup={}).count(), 0)
+
+        self.app.config.pop('INIT_DATA_PATH', None)
+        shutil.rmtree(init_dir)
