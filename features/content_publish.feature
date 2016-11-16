@@ -518,7 +518,7 @@ Feature: Content Publishing
       """
 
     @auth
-    Scenario: Publish a user content fails if content format is not compatible
+    Scenario: Publish a user content if content format is not compatible
       Given the "validators"
       """
       [{"_id": "publish_text", "act": "publish", "type": "text", "schema":{}}]
@@ -549,10 +549,7 @@ Feature: Content Publishing
       }
       """
       And we publish "#archive._id#" with "publish" type and "published" state
-      Then we get response code 400
-      """
-      {"_issues": {"validator exception": "500: Failed to publish the item: PublishQueueError Error 9009 - Item could not be queued"}}
-      """
+      Then we get response code 200
 
     @auth
     Scenario: Schedule a user content publish
