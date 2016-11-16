@@ -166,7 +166,7 @@ Feature: Validate
       """
     Then we get existing resource
     """
-    {"errors": ["validator was not found for missing"]}
+    {"errors": []}
     """
 
   @auth
