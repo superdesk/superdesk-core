@@ -675,3 +675,20 @@ Feature: News Items Archive
 
         When we upload a file "bike.jpg" to "archive"
         Then we get new resource
+
+    @auth
+    Scenario: Create content on a desk that has set default language
+        Given "desks"
+        """
+         [{"name": "sports", "desk_language": "ro"}]
+         """
+         And "archive"
+         """
+         [{  "type":"text", "headline": "test1", "guid": "123", "task": {"desk": "#desks._id#"}}]
+         """
+         When we get "archive/123"
+         Then we get OK response
+         Then we get existing resource
+         """
+         {"guid": "123", "language": "ro"}
+         """

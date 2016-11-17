@@ -93,6 +93,10 @@ desks_schema = {
         'type': 'dict',
     },
 
+    'desk_language': {
+        'type': 'string'
+    },
+
     'default_content_profile': Resource.rel('content_types', type='string', nullable=True),
 }
 
