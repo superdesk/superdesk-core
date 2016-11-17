@@ -21,12 +21,12 @@ Feature: Desks
         """
         When we post to "/desks"
         """
-        {"name": "Sports Desk", "members": [{"user": "#users._id#"}]}
+        {"name": "Sports Desk", "members": [{"user": "#users._id#"}], "desk_language": "en"}
         """
         And we get "/desks/#desks._id#"
         Then we get existing resource
         """
-        {"name": "Sports Desk", "desk_type": "authoring", "members": [{"user": "#users._id#"}]}
+        {"name": "Sports Desk", "desk_type": "authoring", "members": [{"user": "#users._id#"}], "desk_language": "en"}
         """
         And we get "incoming_stage"
         And we get "working_stage"
@@ -66,11 +66,11 @@ Feature: Desks
             """
 		And we patch latest
 			 """
-            {"name": "Sports Desk modified"}
+            {"name": "Sports Desk modified", "desk_language": "en"}
              """
 		Then we get updated response
             """
-            {"name": "Sports Desk modified", "desk_type": "production"}
+            {"name": "Sports Desk modified", "desk_type": "production", "desk_language": "en"}
             """
         Then we get notifications
             """

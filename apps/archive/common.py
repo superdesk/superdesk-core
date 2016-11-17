@@ -186,7 +186,12 @@ def on_create_item(docs, repo_type=ARCHIVE):
         copy_metadata_from_user_preferences(doc, repo_type)
 
         if 'language' not in doc:
-            doc['language'] = app.config.get('DEFAULT_LANGUAGE', 'en')
+            if doc.get('task', None) and doc['task'].get('desk', None):
+                desk = superdesk.get_resource_service('desks').find_one(req=None, _id=doc['task']['desk'])
+                if desk and desk.get('desk_language', None):
+                    doc['language'] = desk['desk_language']
+            else:
+                doc['language'] = app.config.get('DEFAULT_LANGUAGE', 'en')
 
         if not doc.get(ITEM_OPERATION):
             doc[ITEM_OPERATION] = ITEM_CREATE
