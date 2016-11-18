@@ -365,7 +365,7 @@ class EMailRFC822FeedParser(EmailFeedParser):
 
                             self._expand_category(item, mail_item)
 
-                            item['original_source'] = mail_item.get('Username', '')
+                            item['original_source'] = mail_item.get('Username', mail_item.get('Email Address', ''))
                             item['headline'] = mail_item.get('Headline', '')
                             item['abstract'] = mail_item.get('Abstract', '')
                             item['slugline'] = mail_item.get('Slugline', '')
@@ -401,10 +401,13 @@ class EMailRFC822FeedParser(EmailFeedParser):
                                 item['urgency'] = int(mail_item.get('News Value', '3'))
 
                             # We expect the username passed corresponds to a superdesk user
-                            query = {'email': re.compile('^{}$'.format(mail_item.get('Username')), re.IGNORECASE)}
+                            query = {'email': re.compile(
+                                '^{}$'.format(mail_item.get('Username', mail_item.get('Email Address', ''))),
+                                re.IGNORECASE)}
                             user = superdesk.get_resource_service('users').find_one(req=None, **query)
                             if not user:
-                                logger.error('Failed to find user for email {}'.format(mail_item.get('Username')))
+                                logger.error('Failed to find user for email {}'.format(
+                                    mail_item.get('Username', mail_item.get('Email Address', ''))))
                                 raise UserNotRegisteredException()
                             item['original_creator'] = user.get('_id')
                             if BYLINE in user and user.get(BYLINE, ''):

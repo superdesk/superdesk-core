@@ -120,7 +120,6 @@ class RFC822CharSetInSubject(TestCase):
 
 
 class RFC822FormattedEmail(TestCase):
-    filename = 'googleform.txt'
 
     def setUp(self):
         setup(context=self)
@@ -139,15 +138,17 @@ class RFC822FormattedEmail(TestCase):
                                                   {'_id': 'priority', 'items': [{'is_active': True,
                                                                                  'name': 'Urgent', 'qcode': '3'}]}])
 
-            provider = {'name': 'Test', 'config': {'formatted': True}}
-            dirname = os.path.dirname(os.path.realpath(__file__))
-            fixture = os.path.normpath(os.path.join(dirname, '../fixtures', self.filename))
-            with open(fixture, mode='rb') as f:
-                bytes = f.read()
-            parser = EMailRFC822FeedParser()
-            self.items = parser.parse([(1, bytes)], provider)
+            self.provider = {'name': 'Test', 'config': {'formatted': True}}
 
     def test_parsed_values(self):
+        filename = 'googleform.txt'
+        dirname = os.path.dirname(os.path.realpath(__file__))
+        fixture = os.path.normpath(os.path.join(dirname, '../fixtures', filename))
+        with open(fixture, mode='rb') as f:
+            bytes = f.read()
+        parser = EMailRFC822FeedParser()
+
+        self.items = parser.parse([(1, bytes)], self.provider)
         self.assertEqual(self.items[0]['headline'], 'TEST NZ HEADER')
         self.assertEqual(self.items[0]['task']['desk'], 1)
         self.assertEqual(self.items[0]['original_creator'], 123)
@@ -156,4 +157,19 @@ class RFC822FormattedEmail(TestCase):
         self.assertEqual(self.items[0]['place'][0]['qcode'], 'ADV')
         self.assertEqual(self.items[0]['flags']['marked_for_legal'], True)
         self.assertEqual(self.items[0]['priority'], 3)
+        self.assertEqual(self.items[0]['byline'], 'E Harvey')
+
+    def test_parsed_values_Email_Address(self):
+        filename = 'googleform1.txt'
+        dirname = os.path.dirname(os.path.realpath(__file__))
+        fixture = os.path.normpath(os.path.join(dirname, '../fixtures', filename))
+        with open(fixture, mode='rb') as f:
+            bytes = f.read()
+        parser = EMailRFC822FeedParser()
+        self.items = parser.parse([(1, bytes)], self.provider)
+        self.assertEqual(self.items[0]['headline'], 'Arnold \'worried\' about maroon-clad Roar')
+        self.assertEqual(self.items[0]['task']['desk'], 1)
+        self.assertEqual(self.items[0]['original_creator'], 123)
+        self.assertEqual(self.items[0]['urgency'], 2)
+        self.assertEqual(self.items[0]['dateline']['text'], 'BRISBANE, Nov 18 AAP -')
         self.assertEqual(self.items[0]['byline'], 'E Harvey')
