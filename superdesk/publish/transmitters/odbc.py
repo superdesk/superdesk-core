@@ -67,5 +67,6 @@ class ODBCPublishService(PublishService):
         else:
             return 1
 
+
 if pyodbc_available:
     register_transmitter('ODBC', ODBCPublishService(), errors)

@@ -73,7 +73,7 @@ Feature: Highlights
         """
         When we patch "highlights/#highlights._id#"
         """
-        {"template": ""}
+        {"template": null}
         """
         Then we get OK response
         When we get "highlights"

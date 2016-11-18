@@ -50,4 +50,5 @@ class FTPPublishService(PublishService):
         except Exception as ex:
             raise PublishFtpError.ftpError(ex, config)
 
+
 register_transmitter('ftp', FTPPublishService(), errors)

@@ -66,4 +66,5 @@ class ImportUserProfileFromADCommand(superdesk.Command):
 
         return user_data
 
+
 superdesk.command('users:copyfromad', ImportUserProfileFromADCommand())

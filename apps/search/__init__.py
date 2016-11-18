@@ -74,6 +74,11 @@ class SearchService(superdesk.Service):
 
         return query
 
+    def _get_projected_fields(self, req):
+        """Get elastic projected fields."""
+        if app.data.elastic.should_project(req):
+            return app.data.elastic.get_projected_fields(req)
+
     def _get_types(self, req):
         """Get document types for the given query."""
         args = getattr(req, 'args', {})
@@ -102,6 +107,7 @@ class SearchService(superdesk.Service):
         """
 
         query = self._get_query(req)
+        fields = self._get_projected_fields(req)
         types = self._get_types(req)
         filters = self._get_filters(types)
         user = g.get('user', {})
@@ -119,7 +125,11 @@ class SearchService(superdesk.Service):
 
         set_filters(query, filters)
 
-        hits = self.elastic.es.search(body=query, index=self._get_index(), doc_type=types)
+        params = {}
+        if fields:
+            params['_source'] = fields
+
+        hits = self.elastic.es.search(body=query, index=self._get_index(), doc_type=types, params=params)
         docs = self._get_docs(hits)
 
         for resource in types:

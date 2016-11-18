@@ -42,4 +42,5 @@ class DeleteDocCommand(superdesk.Command):
                     except Exception as e:
                         print(e)
 
+
 superdesk.command('app:deletedoc', DeleteDocCommand())

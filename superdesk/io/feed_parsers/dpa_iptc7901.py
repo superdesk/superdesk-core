@@ -57,4 +57,5 @@ class DPAIPTC7901FeedParser(IPTC7901FeedParser):
                     break
         return item
 
+
 register_feed_parser(DPAIPTC7901FeedParser.NAME, DPAIPTC7901FeedParser())

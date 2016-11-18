@@ -342,8 +342,14 @@ class TakesPackageService():
 
         :param items:
         """
+        item_lookup = {}
         packages = []
+
         for item in items:
+            if item.get(TAKES_PACKAGE):
+                continue
+
+            item_lookup[item[config.ID_FIELD]] = item
             takes_package_id = self.get_take_package_id(item)
             if takes_package_id:
                 packages.append(takes_package_id)
@@ -355,8 +361,7 @@ class TakesPackageService():
 
             for package in takes_packages:
                 refs = self.get_package_refs(package) or []
-                takes = {ref.get(RESIDREF) for ref in refs}
-
-                for item in items:
-                    if not item.get(TAKES_PACKAGE) and item.get(config.ID_FIELD) in takes:
-                        item[TAKES_PACKAGE] = package
+                take_ids = {ref.get(RESIDREF) for ref in refs}
+                for take_id in take_ids:
+                    if take_id in item_lookup:
+                        item_lookup[take_id][TAKES_PACKAGE] = package
