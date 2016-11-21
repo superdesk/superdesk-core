@@ -16,18 +16,18 @@ class ValidateMandatoryInListTest(TestCase):
 
     def test_fail_validate_mandatory_in_list_for_subject(self):
         validator = SchemaValidator()
-        mandatory = {"scheme": {"subject": "custom_subject", "category": "category"}}
-        field = "scheme"
-        value = [{"name": "DiDFødselsdag", "qcode": "DiDFødselsdag",
-                  "scheme": "category", "service": {"d": 1, "i": 1}}]
+        mandatory = {'scheme': {'subject': 'custom_subject', 'category': 'category'}}
+        field = 'scheme'
+        value = [{'name': 'DiDFødselsdag', 'qcode': 'DiDFødselsdag',
+                  'scheme': 'category', 'service': {'d': 1, 'i': 1}}]
         validator._validate_mandatory_in_list(mandatory, field, value)
 
         self.assertEqual(validator._errors['subject'], 'is a required field')
 
     def test_fail_validate_mandatory_in_list_for_subject_and_category(self):
         validator = SchemaValidator()
-        mandatory = {"scheme": {"subject": "custom_subject", "category": "category"}}
-        field = "scheme"
+        mandatory = {'scheme': {'subject': 'custom_subject', 'category': 'category'}}
+        field = 'scheme'
         value = []
         validator._validate_mandatory_in_list(mandatory, field, value)
 
@@ -36,11 +36,11 @@ class ValidateMandatoryInListTest(TestCase):
 
     def test_validate_mandatory_in_list(self):
         validator = SchemaValidator()
-        mandatory = {"scheme": {"subject": "subject_custom", "category": "category"}}
-        field = "scheme"
-        value = [{"name": "DiDFødselsdag", "qcode": "DiDFødselsdag",
-                  "scheme": "category", "service": {"d": 1, "i": 1}},
-                 {"name": "arkeologi", "qcode": "01001000", "scheme": "subject_custom", "parent": "01000000"}]
+        mandatory = {'scheme': {'subject': 'subject_custom', 'category': 'category'}}
+        field = 'scheme'
+        value = [{'name': 'DiDFødselsdag', 'qcode': 'DiDFødselsdag',
+                  'scheme': 'category', 'service': {'d': 1, 'i': 1}},
+                 {'name': 'arkeologi', 'qcode': '01001000', 'scheme': 'subject_custom', 'parent': '01000000'}]
         validator._validate_mandatory_in_list(mandatory, field, value)
 
         self.assertEqual(validator._errors, {})
@@ -87,6 +87,39 @@ class ValidateMandatoryInListTest(TestCase):
         service = ValidateService()
         errors = service.create([
             {'act': 'test', 'type': 'test', 'validate': {'profile': 'foo', 'subject': []}}
+        ])
+
+        self.assertEqual(errors, [['SUBJECT is a required field']])
+
+    def test_validate_required_none_list(self):
+        self.app.data.insert('content_types', [{
+            '_id': 'foo',
+            'schema': {
+                'subject': {
+                    'type': 'list',
+                    'required': True,
+                    'mandatory_in_list': {'scheme': {'subject': 'subject_custom', 'category': 'category'}},
+                    'schema': {
+                        'type': 'dict',
+                        'schema': {
+                            'name': {},
+                            'qcode': {},
+                            'scheme': {
+                                'type': 'string',
+                                'required': True,
+                                'allowed': ['subject_custom', 'category']
+                            },
+                            'service': {'nullable': True},
+                            'parent': {'nullable': True}
+                        }
+                    }
+                }
+            }
+        }])
+
+        service = ValidateService()
+        errors = service.create([
+            {'act': 'test', 'type': 'test', 'validate': {'profile': 'foo', 'subject': None}}
         ])
 
         self.assertEqual(errors, [['SUBJECT is a required field']])
