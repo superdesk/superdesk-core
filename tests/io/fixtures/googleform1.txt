@@ -1,0 +1,46 @@
+Delivered-To: editorialformatted@aap.com.au
+Received: by 10.103.119.195 with SMTP id s186csp1049712vsc;
+        Thu, 17 Nov 2016 15:35:11 -0800 (PST)
+X-Received: by 10.107.133.206 with SMTP id p75mr6933625ioi.175.1479425711385;
+        Thu, 17 Nov 2016 15:35:11 -0800 (PST)
+Return-Path: <takin@aap.com.au>
+Received: from mail-it0-x247.google.com (mail-it0-x247.google.com. [2607:f8b0:4001:c0b::247])
+        by mx.google.com with ESMTPS id y63si3901209ioi.15.2016.11.17.15.35.11
+        for <editorialformatted@aap.com.au>
+        (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
+        Thu, 17 Nov 2016 15:35:11 -0800 (PST)
+Received-SPF: pass (google.com: domain of takin@aap.com.au designates 2607:f8b0:4001:c0b::247 as permitted sender) client-ip=2607:f8b0:4001:c0b::247;
+Authentication-Results: mx.google.com;
+       dkim=pass header.i=@aap.com.au;
+       spf=pass (google.com: domain of takin@aap.com.au designates 2607:f8b0:4001:c0b::247 as permitted sender) smtp.mailfrom=takin@aap.com.au;
+       dmarc=pass (p=QUARANTINE dis=NONE) header.from=aap.com.au
+Received: by mail-it0-x247.google.com with SMTP id g187so4194273itc.2
+        for <editorialformatted@aap.com.au>; Thu, 17 Nov 2016 15:35:11 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=aap.com.au; s=google;
+        h=mime-version:message-id:date:subject:from:to;
+        bh=BYm1UYVnwvNULnDgSCEJsQC2lrLKey4C3gMRT498BEI=;
+        b=Pgbk2uX2OqfhjKA8XUlGhKIKL7tLosuxl0fr+EOBFGS44J3eDkpV+7e9sA5nbzB3LR
+         5MkbeRFuENc6vYvvIP60NpXvCPT6pnFuB6IEQhRao6HYmqy6DgObS70FVVZg0BSiZtzV
+         SM2nE4cbbNghgJm7dh9o9OLvyWfsQIH78YQDg=
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20130820;
+        h=x-gm-message-state:mime-version:message-id:date:subject:from:to;
+        bh=BYm1UYVnwvNULnDgSCEJsQC2lrLKey4C3gMRT498BEI=;
+        b=aEoultlAiw5HBE0hMBddrTCIQPfYUGBqpt41uiIuy4Vp5l/iggO1Mn2eK8x0A97mHI
+         q8poUPF4BG2cLktnnKVhICbolxoNSor4MM1D0pcW08hqja0nAEMiOuEznlLm3BSlMEEb
+         em82//0YltC6T7T6G72n6kLq2DMVNG1hymUQmhiR7RcvcjyOCuRiWQcw7CVa1mZdQnUe
+         OxDSKyrANnnwanpvzXSQC3yZo21e8FhdNuO7/orlzfd8K8A/BSoGe/WMI0omvYZk+hYZ
+         VHhazOAB5IYvByulgMKek4RrO2OchF66N2XDZNJSYXHtc35WBbhfGck/la6D354D9hzX
+         bOLg==
+X-Gm-Message-State: AKaTC02mIc1bWSMck6/pATff8epUPVdRaACbFRTI0NNH9uwPygGsR0+jnHfcJ9Sa+8dqvPz7JvBBsU9LSmst/UY/yI9zqzdL0iLCu6KaHPsPs9ZFz6ZucpnZ5IGBjVkkClULwqxGSw4AaBs3r6K1ZHLCt/DFZF70XZHDDqLvpTcdIXvj5aWUAhUXD6vLpf7pOcliYTfPLNDAIgI=
+MIME-Version: 1.0
+X-Received: by 10.157.21.117 with SMTP id z50mr2031172otz.111.1479425710795; Thu, 17 Nov 2016 15:35:10 -0800 (PST)
+Message-ID: <94eb2c191d1af6c610054187a3d9@google.com>
+Date: Thu, 17 Nov 2016 23:35:10 +0000
+Subject: Formatted Editorial Story
+From: takin@aap.com.au
+To: editorialformatted@aap.com.au
+Content-Type: text/plain; charset=UTF-8; format=flowed; delsp=yes
+
+{"Dateline":["BRISBANE","",""],"Category":["DOMESTIC SPORT"],"Priority":["","",""],"Abstract":["Sydney FC coach Graham Arnold is \"worried\" Brisbane Roar will end their unblemished A-League run this weekend, John Aloisi says. "],"Timestamp":["11/18/2016 10:35:10"],"Legal flag":[""],"Headline":["Arnold 'worried' about maroon-clad Roar"],"Slugline":["Soc AL Roar"],"Desk":["NEW ZEALAND",""],"News Value":["2"],"Genre":["ARTICLE (NEWS)"],"New Zealand News":[""],"Body":["John Aloisi reckons Sydney FC coach Graham Arnold is \"worried\" a maroon-clad Brisbane Roar will end their unbeaten A-League run on Saturday. \nArnold attempted to play down the significance of Brisbane's one-off State of Origin-inspired maroon jerseys, which they will wear instead of their usual orange strip at Suncorp Stadium - but Aloisi believes that's only because he knows they'll have an effect. \n\"He's probably a little bit worried about us getting up for it so much. I don't even need to play it up with our players,\" Aloisi said on Friday. "],"Place":["QLD"],"Email Address":["eharvey@aap.com.au"]}
