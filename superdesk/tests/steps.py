@@ -1755,6 +1755,20 @@ def step_impl_when_rewrite(context, item_id):
     set_placeholder(context, 'REWRITE_ID', resp['_id']['_id'])
 
 
+@then('we get "{field_name}" does not exist')
+def then_field_is_not_populated_in_results(context, field_name):
+    resps = parse_json_response(context.response)
+    for resp in resps['_items']:
+        assert field_name not in resp, 'field exists'
+
+
+@then('we get "{field_name}" does exist')
+def then_field_is_not_populated_in_results(context, field_name):
+    resps = parse_json_response(context.response)
+    for resp in resps['_items']:
+        assert field_name in resp, 'field does not exist'
+
+
 @when('we publish "{item_id}" with "{pub_type}" type and "{state}" state')
 def step_impl_when_publish_url(context, item_id, pub_type, state):
     item_id = apply_placeholders(context, item_id)
