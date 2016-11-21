@@ -179,4 +179,5 @@ class ValidateService(superdesk.Service):
                     response.append(message)
             return response
         else:
-            return ['validator was not found for {}'.format(doc['act'])]
+            logger.warn('validator was not found for {}'.format(doc['act']))
+            return []
