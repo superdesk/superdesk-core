@@ -154,6 +154,10 @@ class ArchiveRewriteService(Service):
                 if original.get(field):
                     rewrite[field] = original[field]
 
+        # if the original was flagged for SMS the rewrite should not be.
+        if rewrite.get('flags', {}).get('marked_for_sms', False):
+            rewrite['flags']['marked_for_sms'] = False
+
         # SD-4595 - Default value for the update article to be set based on the system config.
         if config.RESET_PRIORITY_VALUE_FOR_UPDATE_ARTICLES:
             # if True then reset to the default priority value.

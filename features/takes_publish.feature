@@ -1859,3 +1859,121 @@ Feature: Take Package Publishing
       }
       """
       Then we get no "ednote"
+
+    @auth
+    Scenario: Publish the very first take with SMS second does not have SMS
+      Given the "validators"
+      """
+      [{"_id": "publish_text", "act": "publish", "type": "text", "schema":{}}]
+      """
+      And empty "ingest"
+      And "desks"
+      """
+      [{"name": "Sports"}]
+      """
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with success
+      """
+      {
+        "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
+      And we post to "archive" with success
+      """
+      [{
+          "guid": "123",
+          "type": "text",
+          "headline": "Take-1 headline",
+          "abstract": "Take-1 abstract",
+          "task": {
+              "user": "#CONTEXT_USER_ID#"
+          },
+          "body_html": "Take-1",
+          "state": "draft",
+          "slugline": "Take-1 slugline",
+          "urgency": "4",
+          "pubstatus": "usable",
+          "subject":[{"qcode": "17004000", "name": "Statistics"}],
+          "anpa_category": [{"qcode": "A", "name": "Sport"}],
+          "anpa_take_key": "Take",
+          "flags": {"marked_for_sms": true},
+          "sms_message": "test"
+      }]
+      """
+      And we post to "/archive/123/move"
+      """
+      [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
+      """
+      Then we get OK response
+      When we post to "archive/123/link"
+      """
+      [{}]
+      """
+      Then we get next take as "TAKE"
+      """
+      {
+          "type": "text",
+          "headline": "Take-1 headline",
+          "slugline": "Take-1 slugline",
+          "anpa_take_key": "Take=2",
+          "state": "draft",
+          "original_creator": "#CONTEXT_USER_ID#"
+      }
+      """
+      When we patch "/archive/#TAKE#"
+      """
+      {"body_html": "Take-2"}
+      """
+      And we post to "/archive/#TAKE#/move"
+      """
+      [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
+      """
+      And we get "/archive"
+      Then we get list with 3 items
+      When we publish "123" with "publish" type and "published" state
+      Then we get OK response
+      When we publish "#TAKE#" with "publish" type and "published" state
+      Then we get OK response
+      When we get "/published"
+      Then we get existing resource
+      """
+      {
+          "_items": [
+          {
+              "flags" : {
+                  "marked_for_sms" : true
+              },
+              "type" : "composite",
+              "_current_version" : 2
+          },
+          {
+              "flags" : {
+                  "marked_for_sms" : true
+              },
+              "type" : "text",
+              "_current_version" : 3
+          },
+          {
+              "flags" : {
+                  "marked_for_sms" : false
+              },
+              "type" : "composite",
+              "_current_version" : 3
+          },
+          {
+              "flags" : {
+                  "marked_for_sms" : false
+              },
+              "type" : "text",
+              "_current_version" : 4
+          }
+          ]
+      }
+      """
