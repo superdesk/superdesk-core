@@ -184,6 +184,7 @@ class PublishedItemService(BaseService):
         if items:
             ids = list(set([item.get('item_id') for item in items if item.get('item_id')]))
             archive_items = []
+            archive_lookup = {}
             if ids:
                 query = {'$and': [{config.ID_FIELD: {'$in': ids}}]}
                 archive_req = ParsedRequest()
@@ -196,11 +197,10 @@ class PublishedItemService(BaseService):
                 takes_service.enhance_items_with_takes_packages(archive_items)
                 for item in archive_items:
                     handle_existing_data(item)
+                    archive_lookup[item[config.ID_FIELD]] = item
 
             for item in items:
-                archive_item = [i for i in archive_items if i.get(config.ID_FIELD) == item.get('item_id')]
-                archive_item = archive_item[0] if len(archive_item) > 0 else \
-                    {config.VERSION: item.get(config.VERSION, 1)}
+                archive_item = archive_lookup.get(item.get('item_id'), {config.VERSION: item.get(config.VERSION, 1)})
 
                 updates = {
                     config.ID_FIELD: item.get('item_id'),

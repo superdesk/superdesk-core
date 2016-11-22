@@ -138,12 +138,12 @@ class ArchiveService(BaseService):
         """
         Overriding this to handle existing data in Mongo & Elastic
         """
-        self.__enhance_items(docs[config.ITEMS])
+        self.enhance_items(docs[config.ITEMS])
 
     def on_fetched_item(self, doc):
-        self.__enhance_items([doc])
+        self.enhance_items([doc])
 
-    def __enhance_items(self, items):
+    def enhance_items(self, items):
         for item in items:
             handle_existing_data(item)
 
