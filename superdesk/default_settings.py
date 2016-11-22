@@ -29,7 +29,10 @@ except ImportError:
 
 
 def env(variable, fallback_value=None):
-    if os.environ.get('SUPERDESK_TESTING'):
+    if os.environ.get('SUPERDESK_TESTING_NEW'):
+        # TODO: need to combine with SUPERDESK_TESTING somehow
+        # it can't be SUPERDESK_TESTING now, cause it breaks a Bamboo
+        # this behavior uses in new LXC containers
         return fallback_value
 
     env_value = os.environ.get(variable)
