@@ -55,6 +55,7 @@ works and can be developed further.
     ingest
     settings
     schema
+    content-types
     contentapi
 
 Additional topics
