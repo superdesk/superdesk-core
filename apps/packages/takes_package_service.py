@@ -111,6 +111,10 @@ class TakesPackageService():
             if field in copy_from:
                 to[field] = copy_from.get(field)
 
+        # if the original was flagged for SMS the new take should not be.
+        if to.get('flags', {}).get('marked_for_sms', False):
+            to['flags']['marked_for_sms'] = False
+
     def package_story_as_a_take(self, target, takes_package, link):
         """Makes a take from an item.
 

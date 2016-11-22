@@ -29,8 +29,8 @@ Feature: Rewrite content
         "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
         "subject":[{"qcode": "17004000", "name": "Statistics"}],
         "body_html": "Test Document body", "genre": [{"name": "Article", "qcode": "Article"}],
-        "flags": {"marked_for_legal": true}, "priority": 2, "urgency": 2,
-        "body_footer": "Suicide Call Back Service 1300 659 467",
+        "flags": {"marked_for_legal": true, "marked_for_sms": true}, "priority": 2, "urgency": 2,
+        "body_footer": "Suicide Call Back Service 1300 659 467", "sms_message": "test",
         "place": [{"qcode" : "ACT", "world_region" : "Oceania", "country" : "Australia",
         "name" : "ACT", "state" : "Australian Capital Territory"}],
         "company_codes" : [{"qcode" : "1PG", "security_exchange" : "ASX", "name" : "1-PAGE LIMITED"}]
@@ -103,7 +103,7 @@ Feature: Rewrite content
       """
       {"_items" : [{"_id": "#REWRITE_ID#", "anpa_take_key": "update", "rewrite_of": "#archive.123.take_package#",
         "task": {"desk": "#desks._id#", "stage": "#desks.working_stage#"}, "genre": [{"name": "Article", "qcode": "Article"}],
-        "flags": {"marked_for_legal": true}, "priority": 2, "urgency": 2, "rewrite_sequence": 1,
+        "flags": {"marked_for_legal": true, "marked_for_sms": false}, "priority": 2, "urgency": 2, "rewrite_sequence": 1,
         "body_footer": "Suicide Call Back Service 1300 659 467",
         "body_html": "Test Document body",
         "company_codes" : [{"qcode" : "1PG", "security_exchange" : "ASX", "name" : "1-PAGE LIMITED"}],
