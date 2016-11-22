@@ -180,7 +180,7 @@ class ItemsService(BaseService):
             endpoint_name = 'items'
 
         resource_url = '{api_url}/{endpoint}/'.format(
-            api_url=app.config['PUBLICAPI_URL'],
+            api_url=app.config['CONTENTAPI_URL'],
             endpoint=app.config['URLS'][endpoint_name]
         )
 

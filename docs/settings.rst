@@ -434,6 +434,12 @@ Content API Settings
 
 .. versionadded:: 1.5
 
+``CONTENTAPI_URL``
+
+Default: ``localhost:5400``
+
+Content API URL. Set this when running api behind a proxy.
+
 ``CONTENT_API_ENABLED``
 ^^^^^^^^^^^^^^^^^^^^^^^
 

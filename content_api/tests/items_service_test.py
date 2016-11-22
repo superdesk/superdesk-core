@@ -646,7 +646,7 @@ class OnFetchedItemMethodTestCase(ItemsServiceTestCase):
         super().setUp()
 
         self.app = Flask(__name__)
-        self.app.config['PUBLICAPI_URL'] = 'http://content_api.com'
+        self.app.config['CONTENTAPI_URL'] = 'http://content_api.com'
         self.app.config['URLS'] = {'items': 'items_endpoint'}
 
         self.app_context = self.app.app_context()
@@ -713,7 +713,7 @@ class OnFetchedMethodTestCase(ItemsServiceTestCase):
         super().setUp()
 
         self.app = Flask(__name__)
-        self.app.config['PUBLICAPI_URL'] = 'http://content_api.com'
+        self.app.config['CONTENTAPI_URL'] = 'http://content_api.com'
         self.app.config['URLS'] = {'items': 'items_endpoint'}
 
         self.app_context = self.app.app_context()
@@ -840,7 +840,7 @@ class GetUriMethodTestCase(ItemsServiceTestCase):
         super().setUp()
 
         self.app = Flask(__name__)
-        self.app.config['PUBLICAPI_URL'] = 'http://content_api.com'
+        self.app.config['CONTENTAPI_URL'] = 'http://content_api.com'
         self.app.config['URLS'] = {
             'items': 'items_endpoint',
             'packages': 'packages_endpoint'

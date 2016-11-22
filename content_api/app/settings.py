@@ -38,9 +38,9 @@ CONTENTAPI_INSTALLED_APPS = [
 
 CONTENTAPI_DOMAIN = {}
 
-# NOTE: no trailing slash for the PUBLICAPI_URL setting!
-PUBLICAPI_URL = env('PUBLICAPI_URL', 'http://localhost:5400')
-server_url = urlparse(PUBLICAPI_URL)
+# NOTE: no trailing slash for the CONTENTAPI_URL setting!
+CONTENTAPI_URL = env('CONTENTAPI_URL', 'http://localhost:5400')
+server_url = urlparse(CONTENTAPI_URL)
 URL_PREFIX = server_url.path.strip('/')
 
 XML = False
