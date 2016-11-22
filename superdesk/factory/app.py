@@ -109,10 +109,10 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=Tr
         except AttributeError:
             pass
 
-    for module_name in app.config.get('INSTALLED_APPS', []):
+    for module_name in app.config.get('CORE_APPS', []):
         install_app(module_name)
 
-    for module_name in app.config.get('CORE_APPS', []):
+    for module_name in app.config.get('INSTALLED_APPS', []):
         install_app(module_name)
 
     for resource in superdesk.DOMAIN:
