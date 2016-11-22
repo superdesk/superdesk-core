@@ -161,7 +161,8 @@ class ValidateService(superdesk.Service):
                 elif doc.get('act', None) == 'kill' and doc['validate'].get('profile', None) and \
                         e in ('headline', 'abstract', 'body_html'):
                     continue
-                elif error_list[e] == 'required field' or type(error_list[e]) is dict:
+                elif error_list[e] == 'required field' or type(error_list[e]) is dict or \
+                        type(error_list[e]) is list:
                     message = '{} is a required field'.format(e.upper())
                 elif 'min length is 1' == error_list[e]:
                     message = '{} is a required field'.format(e.upper())
