@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.4.1] 2016-11-22
+
+### Fixed
+
+- Fix missing validation error for embedded items.
+
 ## [1.4] 2016-11-15
 
 ### Added
