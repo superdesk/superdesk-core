@@ -2,7 +2,7 @@ Content Profiles
 ================
 
 Content profiles let you change the way how your content
-should be edited and what valiation rules should apply.
+should be edited and what validation rules should apply.
 
 Definition
 ----------
@@ -132,10 +132,20 @@ Available fields are:
 
         ``removeFormat``
 
+
+Available schema fields
+-----------------------
+
+These are fields you can use in your content profile:
+
+.. autoclass:: apps.content_types.content_types.DefaultSchema
+    :members:
+
 Plain text profile
 ------------------
 
 Before there are any content profiles defined for a desk there is one called *Plain text*.
+
 
 Package profiles
 ----------------

@@ -1,53 +1,95 @@
 
 import superdesk
+import superdesk.schema as schema
 
+from copy import deepcopy
 from superdesk.errors import SuperdeskApiError
 from apps.auth import get_user_id
 from superdesk import get_resource_service
-from copy import deepcopy
+
 
 CONTENT_TYPE_PRIVILEGE = 'content_type'
 
-DEFAULT_SCHEMA = {
-    'slugline': {'maxlength': 24, 'type': 'string'},
-    'genre': {'type': 'list'},
-    'anpa_take_key': {},
-    'place': {'type': 'list'},
-    'priority': {},
-    'anpa_category': {'type': 'list'},
-    'subject': {
-        'type': 'list',
-        'required': True,
-        'mandatory_in_list': {'scheme': {}},
+
+class DefaultSchema(schema.Schema):
+    """Default schema."""
+
+    #: slugline
+    slugline = schema.StringField(maxlength=24)
+
+    #: item genre
+    genre = schema.ListField()
+
+    #: anpa take key
+    anpa_take_key = schema.StringField()
+
+    #: place where news happened
+    place = schema.ListField()
+
+    #: news item priority
+    priority = schema.IntegerField()
+
+    #: category
+    anpa_category = schema.ListField()
+
+    #: subject
+    subject = schema.ListField(required=True, mandatory_in_list={'scheme': {}}, schema={
+        'type': 'dict',
         'schema': {
-            'type': 'dict',
-            'schema': {
-                'name': {},
-                'qcode': {},
-                'scheme': {
-                    'type': 'string',
-                    'required': True,
-                    'allowed': ['subject']
-                },
-                'service': {'nullable': True},
-                'parent': {'nullable': True}
-            }
+            'name': {},
+            'qcode': {},
+            'scheme': {
+                'type': 'string',
+                'required': True,
+                'allowed': ['subject']
+            },
+            'service': {'nullable': True},
+            'parent': {'nullable': True}
         }
-    },
-    'company_codes': {'type': 'list'},
-    'ednote': {},
-    'headline': {'maxlength': 64, 'type': 'string'},
-    'sms': None,
-    'abstract': {'maxlength': 160, 'type': 'string'},
-    'byline': {'type': 'string'},
-    'dateline': {'type': 'dict'},
-    'body_html': {},
-    'footer': None,
-    'body_footer': None,
-    'sign_off': {'type': 'string'},
-    'media': {},
-    'media_description': {}
-}
+    })
+
+    #: company codes
+    company_codes = schema.ListField()
+
+    #: editorial note
+    ednote = schema.StringField()
+
+    #: headline
+    headline = schema.StringField(maxlength=64)
+
+    #: sms version of an item
+    sms = schema.NoneField()
+
+    #: item abstract
+    abstract = schema.StringField(maxlength=160)
+
+    #: byline
+    byline = schema.StringField()
+
+    #: dateline - info about where news was written
+    dateline = schema.DictField()
+
+    #: item content
+    body_html = schema.StringField()
+
+    #: item footer
+    footer = schema.NoneField()
+
+    #: body footer
+    body_footer = schema.NoneField()
+
+    #: item sign off info
+    sign_off = schema.StringField()
+
+    #: embedded media in the item
+    media = schema.SchemaField()
+
+    #: embedded media description
+    media_description = schema.SchemaField()
+
+
+DEFAULT_SCHEMA = dict(DefaultSchema)
+
 
 DEFAULT_EDITOR = {
     'slugline': {'order': 1, 'sdWidth': 'full', 'enabled': True},
