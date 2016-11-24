@@ -392,7 +392,7 @@ class ArchiveService(BaseService):
 
         convert_task_attributes_to_objectId(new_doc)
         get_model(ItemModel).create([new_doc])
-        self._duplicate_versions(original_doc['guid'], new_doc)
+        self._duplicate_versions(original_doc['_id'], new_doc)
 
         return new_doc['guid']
 
@@ -430,7 +430,7 @@ class ArchiveService(BaseService):
         """
         resource_def = app.config['DOMAIN']['archive']
         version_id = versioned_id_field(resource_def)
-        old_versions = get_resource_service('archive_versions').get(req=None, lookup={'guid': old_id})
+        old_versions = get_resource_service('archive_versions').get(req=None, lookup={version_id: old_id})
 
         new_versions = []
         for old_version in old_versions:
