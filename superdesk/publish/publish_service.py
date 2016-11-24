@@ -145,6 +145,10 @@ class PublishServiceBase():
 PublishService = PublishServiceBase
 
 
+def get_publish_service():
+    return PublishService
+
+
 def set_publish_service(publish_service_class):
     global PublishService
     PublishService = publish_service_class
