@@ -57,6 +57,7 @@ works and can be developed further.
     schema
     content-types
     contentapi
+    extending
 
 Additional topics
 -----------------

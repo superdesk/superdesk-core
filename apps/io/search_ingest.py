@@ -52,6 +52,9 @@ class SearchIngestService(superdesk.Service):
             self.backend.set_credentials(provider['config']['username'], provider['config'].get('password', ''))
         return provider
 
+    def fetch(self, guid):
+        return self.backend.find_one_raw(guid, guid)
+
     def create(self, docs, **kwargs):
         new_guids = []
         provider = self.get_provider()
@@ -60,7 +63,7 @@ class SearchIngestService(superdesk.Service):
                 # if no desk is selected then it is bad request
                 raise SuperdeskApiError.badRequestError("Destination desk cannot be empty.")
             try:
-                archived_doc = self.backend.find_one_raw(doc['guid'], doc['guid'])
+                archived_doc = self.fetch(doc['guid'])
             except FileNotFoundError as ex:
                 raise ProviderError.externalProviderError(ex, provider)
 

@@ -17,6 +17,7 @@ from superdesk import tests
 from superdesk.factory.app import get_app
 from superdesk.tests import setup_auth_user
 from superdesk.vocabularies.command import VocabulariesPopulateCommand
+from superdesk.tests.mocks import TestSearchProvider
 
 
 readonly_fields = ['display_name', 'password', 'phone', 'first_name', 'last_name']
@@ -152,4 +153,4 @@ def before_step(context, step):
 def setup_search_provider(app):
     from apps.search_providers import register_search_provider, allowed_search_providers
     if 'testsearch' not in allowed_search_providers:
-        register_search_provider('testsearch', 'testsearch')
+        register_search_provider('testsearch', TestSearchProvider)

@@ -4,10 +4,13 @@ import superdesk
 from flask import current_app as app
 from superdesk.utils import get_random_string
 from superdesk.media.media_operations import crop_image
+from apps.search_providers.proxy import PROXY_ENDPOINT
 
 
 def get_file(rendition, item):
     if item.get('fetch_endpoint'):
+        if item['fetch_endpoint'] == PROXY_ENDPOINT:  # it requires provider info
+            return superdesk.get_resource_service(item['fetch_endpoint']).fetch_rendition(rendition, item=item)
         return superdesk.get_resource_service(item['fetch_endpoint']).fetch_rendition(rendition)
     else:
         return app.media.fetch_rendition(rendition)

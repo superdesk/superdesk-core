@@ -147,3 +147,7 @@ def register_jinja_filter(name, jinja_filter):
     :param jinja_filter: jinja filter function
     """
     JINJA_FILTERS[name] = jinja_filter
+
+
+from superdesk.search_provider import SearchProvider  # noqa
+from apps.search_providers import register_search_provider  # noqa

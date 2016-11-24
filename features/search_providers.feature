@@ -33,23 +33,6 @@ Feature: Search Provider Feature
         """
 
     @auth
-    Scenario: Creating a Search Provider with same type more than once fails
-        Given empty "search_providers"
-        When we post to "search_providers"
-	    """
-        [{"search_provider": "testsearch", "source": "testsearch", "config": {"password":"", "username":""}}]
-	    """
-        Then we get new resource
-        When we post to "search_providers"
-	    """
-        [{"search_provider": "testsearch", "source": "testsearch", "config": {"password":"", "username":""}}]
-	    """
-        Then we get error 400
-        """
-        {"_status": "ERR", "_issues": {"search_provider": {"unique": 1}}}
-        """
-
-    @auth
     Scenario: Updating an existing search provider fails if the search provider type hasn't been registered with the application
         Given empty "search_providers"
         When we post to "search_providers"
@@ -81,4 +64,43 @@ Feature: Search Provider Feature
         Then we get existing resource
         """
         {"_items": [{"_id": "search_providers.search_provider", "items": ["testsearch"]}]}
+        """
+
+    @wip
+    @auth
+    Scenario: Search using custom search provider
+        Given "search_providers"
+        """
+        [{"search_provider": "testsearch", "source": "testsearch", "config": {"password":"", "username":""}}]
+        """
+        Given "desks"
+        """
+        [{"name": "sports"}]
+        """
+        When we get "search_providers_proxy?repo=#search_providers._id#"
+        Then we get list with 1 items
+        """
+        {"_items": [{
+            "_id": "foo",
+            "guid": "foo",
+            "_type": "externalsource",
+            "pubstatus": "usable",
+            "fetch_endpoint": "search_providers_proxy"
+        }]}
+        """
+
+        When we post to "search_providers_proxy?repo=#search_providers._id#"
+        """
+        {"guid": "foo", "desk": "#desks._id#"}
+        """
+        Then we get new resource
+
+
+    @wip
+    @auth
+    Scenario: Get available search providers
+        When we get "search_providers_allowed"
+        Then we get list with 1+ items
+        """
+        {"_items": [{"search_provider": "testsearch", "label": "Foo"}]}
         """

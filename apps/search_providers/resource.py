@@ -8,13 +8,9 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import logging
-
 from apps.search_providers import allowed_search_providers
 from superdesk.resource import Resource
 from superdesk.utils import required_string
-
-logger = logging.getLogger(__name__)
 
 
 class SearchProviderResource(Resource):
@@ -22,7 +18,6 @@ class SearchProviderResource(Resource):
         'search_provider': {
             'type': 'string',
             'required': True,
-            'unique': True,
             'allowed': allowed_search_providers
         },
         'source': required_string,
