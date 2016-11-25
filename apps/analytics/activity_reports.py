@@ -30,23 +30,23 @@ class ActivityReportResource(Resource):
 class ActivityReportService(BaseService):
 
     def search_items(self, report):
+        print('rep', report)
         query = {
             "query": {
                 "filtered": {
                     "filter": {
                         "bool": {
                             "must": [
-                                {"term": {"operation": report.operation}},
-                                {"term": {"task.desk": str(report.desk)}},
-                                {"term": {"subject.name": report.subject}},
-                                {"term": {"keywords": report.keywords}}
+                                {"term": {"operation": report['operation']}},
+                                {"term": {"task.desk": str(report['desk'])}},
+                                {"term": {"subject.name": report['subject']}},
+                                {"term": {"keywords": report['keywords']}}
                             ]
                         }
                     }
                 }
             }
         }
-
         request = ParsedRequest
         request.args = {'source': json.dumps(query), 'repo': 'archive,published,archived,ingest'}
         items_list = list(get_resource_service('search').get(req=request, lookup=None))
