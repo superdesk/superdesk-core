@@ -29,7 +29,7 @@ except ImportError:
 
 
 def env(variable, fallback_value=None):
-    if os.environ.get('SUPERDESK_TESTING'):
+    if os.environ.get('SUPERDESK_USE_DEFAULTS'):
         return fallback_value
 
     env_value = os.environ.get(variable)
