@@ -1,5 +1,15 @@
 # Superdesk Server Changelog
 
+## [1.4.2] 2016-11-29
+
+### Added
+
+- Add support for desk language
+
+### Fixed
+
+- Fix validation in case of error in list field
+
 ## [1.4.1] 2016-11-22
 
 ### Fixed
