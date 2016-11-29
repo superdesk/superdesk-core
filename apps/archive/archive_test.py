@@ -174,7 +174,10 @@ class RemoveSpikedContentTestCase(TestCase):
     }
 
     def test_query_getting_expired_content(self):
-        self.app.data.insert(ARCHIVE, [{'expiry': get_expiry_date(-10), 'state': 'spiked'}])
+        now = utcnow()
+
+        self.app.data.insert(ARCHIVE, [{'expiry': now - timedelta(minutes=10), 'state': 'spiked',
+                                        'unique_id': 'expired'}])
         self.app.data.insert(ARCHIVE, [{'expiry': get_expiry_date(0), 'state': 'spiked'}])
         self.app.data.insert(ARCHIVE, [{'expiry': get_expiry_date(10), 'state': 'spiked'}])
         self.app.data.insert(ARCHIVE, [{'expiry': get_expiry_date(20), 'state': 'spiked'}])
@@ -182,9 +185,9 @@ class RemoveSpikedContentTestCase(TestCase):
         self.app.data.insert(ARCHIVE, [{'expiry': None, 'state': 'spiked'}])
         self.app.data.insert(ARCHIVE, [{'unique_id': 97, 'state': 'spiked'}])
 
-        now = utcnow()
         expired_items = get_resource_service(ARCHIVE).get_expired_items(now)
         self.assertEquals(1, expired_items.count())
+        self.assertEquals('expired', expired_items[0]['unique_id'])
 
     def test_query_removing_media_files_keeps(self):
         self.app.data.insert(ARCHIVE, [{'state': 'spiked',

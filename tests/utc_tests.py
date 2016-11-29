@@ -46,6 +46,9 @@ class UTCTestCase(unittest.TestCase):
         self.assertEqual(date1.minute, date2.minute)
         self.assertEqual(date1.second, date2.second)
 
+    def test_get_expiry_date_none(self):
+        self.assertIsNone(get_expiry_date(0))
+
     def test_get_expiry_date_with_offset(self):
         offset = utcnow() + timedelta(minutes=10)
         date1 = offset + timedelta(minutes=5)

@@ -437,7 +437,8 @@ if not DEFAULT_TIMEZONE:
 SESSION_EXPIRY_MINUTES = int(env('SESSION_EXPIRY_MINUTES', 240))
 
 #: The number of minutes before content items are purged
-CONTENT_EXPIRY_MINUTES = int(env('CONTENT_EXPIRY_MINUTES', 30 * 24 * 60))
+CONTENT_EXPIRY_MINUTES = int(env('CONTENT_EXPIRY_MINUTES', 0))
+
 #: The number of minutes before ingest items are purged
 INGEST_EXPIRY_MINUTES = int(env('INGEST_EXPIRY_MINUTES', 2 * 24 * 60))
 

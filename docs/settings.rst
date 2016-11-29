@@ -57,7 +57,12 @@ You can install additional modules by adding their names here.
 ``CONTENT_EXPIRY_MINUTES``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Default: ``43200`` (30 days)
+.. versionchanged:: 1.5
+    Change default value to ``0``.
+
+Default: ``0``
+
+By default content will not expire.
 
 ``INGEST_EXPIRY_MINUTES``
 ^^^^^^^^^^^^^^^^^^^^^^^^^
