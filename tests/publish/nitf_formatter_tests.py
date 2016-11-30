@@ -105,6 +105,34 @@ class NitfFormatterTest(TestCase):
             </div>""").replace('\n', '').replace(' ', '')
         self.assertEqual(etree.tostring(nitf, 'unicode').replace('\n', '').replace(' ', ''), expected)
 
+    def test_table(self):
+        html_raw = """
+        <div>
+        <table>
+            <tbody>
+                <tr>
+                    <td>Table cell 1</td>
+                    <td>Table cell 2</td>
+                    <td>Table cell 3</td>
+                </tr>
+                <tr>
+                    <td>Table cell 2.1</td>
+                    <td>Table cell 2.2</td>
+                    <td>Table cell 2.3</td>
+                </tr>
+                <tr>
+                    <td>Table cell 3.1</td>
+                    <td>Table cell 3.2</td>
+                    <td>Table cell 3.3</td>
+                </tr>
+            </tbody>
+        </table>
+        </div>
+        """.replace('\n', '').replace(' ', '')
+        html = etree.fromstring(html_raw)
+        nitf = self.formatter.html2nitf(html)
+        self.assertEqual(etree.tostring(nitf, 'unicode'), html_raw)
+
     def test_company_codes(self):
         article = {
             'guid': 'tag:aap.com.au:20150613:12345',

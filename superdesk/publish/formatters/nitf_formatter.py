@@ -34,6 +34,8 @@ class NITFFormatter(Formatter):
     _debug_message_extra = {
         'schemaLocation': '{} {}'.format(_schema_uri, _schema_ref)}
     NITF_COMMON_ATTR = ('id', 'class', 'style')
+    NITF_CELL_ALIGN = ('align', 'char', 'charoff')
+    NITF_CELL_VALIGN = ('valign',)
     NITF_ALLOWED_ATTR = {
         'p': NITF_COMMON_ATTR + ('lede', 'summary', 'optional-tex'),
         'a': NITF_COMMON_ATTR + ('href', 'name', 'rel', 'rev', 'title'),
@@ -52,6 +54,20 @@ class NITFFormatter(Formatter):
             'rules',
             'cellspacing',
             'cellpadding'),
+        'tbody': NITF_COMMON_ATTR + NITF_CELL_ALIGN + NITF_CELL_VALIGN,
+        'tr': NITF_COMMON_ATTR + NITF_CELL_ALIGN + NITF_CELL_VALIGN,
+        'th': NITF_COMMON_ATTR + NITF_CELL_ALIGN + NITF_CELL_VALIGN + (
+            'axis',
+            'axes',
+            'nowrap',
+            'rowspan',
+            'colspan'),
+        'td': NITF_COMMON_ATTR + NITF_CELL_ALIGN + NITF_CELL_VALIGN + (
+            'axis',
+            'axes',
+            'nowrap',
+            'rowspan',
+            'colspan'),
         'nitf-table': ('id',),
         'ol': NITF_COMMON_ATTR + ('seqnum',),
         'ul': NITF_COMMON_ATTR,
@@ -106,6 +122,12 @@ class NITFFormatter(Formatter):
         'h4': {'nitf': 'hl2'},
         'h5': {'nitf': 'hl2'},
         'h6': {'nitf': 'hl2'},
+        # tables
+        'table': {},
+        'tbody': {},
+        'tr': {},
+        'td': {},
+        'th': {},
     }
 
     def format(self, article, subscriber, codes=None):
