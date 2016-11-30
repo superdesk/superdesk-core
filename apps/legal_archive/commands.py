@@ -410,8 +410,9 @@ class ImportLegalArchiveCommand(superdesk.Command):
                     self._move_to_legal(item.get('item_id'), item.get(config.VERSION), expired_items)
 
             # get the invalid items from archive.
-            for item in get_resource_service(ARCHIVE).get_expired_items(utcnow(), invalid_only=True):
-                self._move_to_legal(item.get(config.ID_FIELD), item.get(config.VERSION), expired_items)
+            for items in get_resource_service(ARCHIVE).get_expired_items(utcnow(), invalid_only=True):
+                for item in items:
+                    self._move_to_legal(item.get(config.ID_FIELD), item.get(config.VERSION), expired_items)
 
             # if publish item is moved but publish_queue item is not.
             if len(expired_items):

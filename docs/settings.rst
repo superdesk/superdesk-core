@@ -64,6 +64,15 @@ Default: ``0``
 
 By default content will not expire.
 
+``PUBLISHED_CONTENT_EXPIRY_MINUTES``
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``0``
+
+It applies only to published content if the value is greater than ``0`` and it overrides the desk/stage content
+expiry settings. If ``PUBLISHED_CONTENT_EXPIRY_MINUTES`` is set to ``0`` then the content is expired based on
+the content expiry settings for that desk/stage.
+
 ``INGEST_EXPIRY_MINUTES``
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 

@@ -59,114 +59,114 @@ class RemoveExpiredContent(superdesk.Command):
         items_to_be_archived = dict()
         items_having_issues = dict()
 
-        expired_items = list(archive_service.get_expired_items(expiry_datetime))
-        if len(expired_items) == 0:
-            logger.info('{} No items found to expire.'.format(self.log_msg))
-            return
+        for expired_items in archive_service.get_expired_items(expiry_datetime):
+            if len(expired_items) == 0:
+                logger.info('{} No items found to expire.'.format(self.log_msg))
+                return
 
-        # delete spiked items
-        self.delete_spiked_items(expired_items)
+            # delete spiked items
+            self.delete_spiked_items(expired_items)
 
-        # get killed items
-        killed_items = {item.get(config.ID_FIELD): item
-                        for item in expired_items if item.get(ITEM_STATE) in {CONTENT_STATE.KILLED}}
+            # get killed items
+            killed_items = {item.get(config.ID_FIELD): item
+                            for item in expired_items if item.get(ITEM_STATE) in {CONTENT_STATE.KILLED}}
 
-        # check if killed items imported to legal
-        items_having_issues.update(self.check_if_items_imported_to_legal_archive(killed_items))
+            # check if killed items imported to legal
+            items_having_issues.update(self.check_if_items_imported_to_legal_archive(killed_items))
 
-        # filter out the killed items not imported to legal.
-        killed_items = {item_id: item for item_id, item in killed_items.items()
-                        if item_id not in items_having_issues}
+            # filter out the killed items not imported to legal.
+            killed_items = {item_id: item for item_id, item in killed_items.items()
+                            if item_id not in items_having_issues}
 
-        # Get the not killed and spiked items
-        not_killed_items = {item.get(config.ID_FIELD): item for item in expired_items
-                            if item.get(ITEM_STATE) not in {CONTENT_STATE.KILLED, CONTENT_STATE.SPIKED}}
+            # Get the not killed and spiked items
+            not_killed_items = {item.get(config.ID_FIELD): item for item in expired_items
+                                if item.get(ITEM_STATE) not in {CONTENT_STATE.KILLED, CONTENT_STATE.SPIKED}}
 
-        log_msg_format = "{{'_id': {_id}, 'unique_name': {unique_name}, 'version': {_current_version}, " \
-                         "'expired_on': {expiry}}}."
+            log_msg_format = "{{'_id': {_id}, 'unique_name': {unique_name}, 'version': {_current_version}, " \
+                             "'expired_on': {expiry}}}."
 
-        # Processing items to expire
-        for item_id, item in not_killed_items.items():
-            item.setdefault(config.VERSION, 1)
-            item.setdefault('expiry', expiry_datetime)
-            item.setdefault('unique_name', '')
-            expiry_msg = log_msg_format.format(**item)
-            logger.info('{} Processing expired item. {}'.format(self.log_msg, expiry_msg))
+            # Processing items to expire
+            for item_id, item in not_killed_items.items():
+                item.setdefault(config.VERSION, 1)
+                item.setdefault('expiry', expiry_datetime)
+                item.setdefault('unique_name', '')
+                expiry_msg = log_msg_format.format(**item)
+                logger.info('{} Processing expired item. {}'.format(self.log_msg, expiry_msg))
 
-            processed_items = dict()
-            if item_id not in items_to_be_archived and item_id not in items_having_issues and \
-                    self._can_remove_item(item, processed_items):
-                # item can be archived and removed from the database
-                logger.info('{} Removing item. {}'.format(self.log_msg, expiry_msg))
-                logger.info('{} Items to be removed. {}'.format(self.log_msg, processed_items))
-                issues = self.check_if_items_imported_to_legal_archive(processed_items)
-                if issues:
-                    items_having_issues.update(processed_items)
-                else:
-                    items_to_be_archived.update(processed_items)
+                processed_items = dict()
+                if item_id not in items_to_be_archived and item_id not in items_having_issues and \
+                        self._can_remove_item(item, processed_items):
+                    # item can be archived and removed from the database
+                    logger.info('{} Removing item. {}'.format(self.log_msg, expiry_msg))
+                    logger.info('{} Items to be removed. {}'.format(self.log_msg, processed_items))
+                    issues = self.check_if_items_imported_to_legal_archive(processed_items)
+                    if issues:
+                        items_having_issues.update(processed_items)
+                    else:
+                        items_to_be_archived.update(processed_items)
 
-        # all items to expire
-        items_to_expire = deepcopy(items_to_be_archived)
+            # all items to expire
+            items_to_expire = deepcopy(items_to_be_archived)
 
-        # check once again in items imported to legal
-        items_having_issues.update(self.check_if_items_imported_to_legal_archive(items_to_expire))
-        if items_having_issues:
-            # remove items not imported to legal
-            items_to_expire = {item_id: item for item_id, item in items_to_expire.items()
-                               if item_id not in items_having_issues}
+            # check once again in items imported to legal
+            items_having_issues.update(self.check_if_items_imported_to_legal_archive(items_to_expire))
+            if items_having_issues:
+                # remove items not imported to legal
+                items_to_expire = {item_id: item for item_id, item in items_to_expire.items()
+                                   if item_id not in items_having_issues}
 
-            # remove items not imported to legal from archived items
-            items_to_be_archived = {item_id: item for item_id, item in items_to_be_archived.items()
-                                    if item_id not in items_having_issues}
+                # remove items not imported to legal from archived items
+                items_to_be_archived = {item_id: item for item_id, item in items_to_be_archived.items()
+                                        if item_id not in items_having_issues}
 
-            # items_to_be_archived might contain killed items
+                # items_to_be_archived might contain killed items
+                for item_id, item in items_to_be_archived.items():
+                    if item.get(ITEM_STATE) == CONTENT_STATE.KILLED:
+                        killed_items[item_id] = item
+
+                # remove killed items from the items_to_be_archived
+                items_to_be_archived = {item_id: item for item_id, item in items_to_be_archived.items()
+                                        if item.get(ITEM_STATE) != CONTENT_STATE.KILLED}
+
+            # add killed items to items to expire
+            items_to_expire.update(killed_items)
+
+            # get the filter conditions
+            logger.info('{} filter conditions.'.format(self.log_msg))
+            req = ParsedRequest()
+            filter_conditions = list(get_resource_service('content_filters').get(req=req,
+                                                                                 lookup={'is_archived_filter': True}))
+
+            # move to archived collection
+            logger.info('{} Archiving items.'.format(self.log_msg))
             for item_id, item in items_to_be_archived.items():
-                if item.get(ITEM_STATE) == CONTENT_STATE.KILLED:
-                    killed_items[item_id] = item
+                self._move_to_archived(item, filter_conditions)
 
-            # remove killed items from the items_to_be_archived
-            items_to_be_archived = {item_id: item for item_id, item in items_to_be_archived.items()
-                                    if item.get(ITEM_STATE) != CONTENT_STATE.KILLED}
+            for item_id, item in killed_items.items():
+                # delete from the published collection and queue
+                msg = log_msg_format.format(**item)
+                try:
+                    published_service.delete_by_article_id(item_id)
+                    logger.info('{} Deleting killed item from published. {}'.format(self.log_msg, msg))
+                    items_to_remove.add(item_id)
+                except:
+                    logger.exception('{} Failed to delete killed item from published. {}'.format(self.log_msg, msg))
 
-        # add killed items to items to expire
-        items_to_expire.update(killed_items)
+            if items_to_remove:
+                logger.info('{} Deleting articles.: {}'.format(self.log_msg, items_to_remove))
+                archive_service.delete_by_article_ids(list(items_to_remove))
 
-        # get the filter conditions
-        logger.info('{} filter conditions.'.format(self.log_msg))
-        req = ParsedRequest()
-        filter_conditions = list(get_resource_service('content_filters').get(req=req,
-                                                                             lookup={'is_archived_filter': True}))
+            push_expired_notification(items_to_expire)
 
-        # move to archived collection
-        logger.info('{} Archiving items.'.format(self.log_msg))
-        for item_id, item in items_to_be_archived.items():
-            self._move_to_archived(item, filter_conditions)
+            for item_id, item in items_having_issues.items():
+                msg = log_msg_format.format(**item)
+                try:
+                    archive_service.system_update(item.get(config.ID_FIELD), {'expiry_status': 'invalid'}, item)
+                    logger.info('{} Setting item expiry status. {}'.format(self.log_msg, msg))
+                except:
+                    logger.exception('{} Failed to set expiry status for item. {}'.format(self.log_msg, msg))
 
-        for item_id, item in killed_items.items():
-            # delete from the published collection and queue
-            msg = log_msg_format.format(**item)
-            try:
-                published_service.delete_by_article_id(item_id)
-                logger.info('{} Deleting killed item from published. {}'.format(self.log_msg, msg))
-                items_to_remove.add(item_id)
-            except:
-                logger.exception('{} Failed to delete killed item from published. {}'.format(self.log_msg, msg))
-
-        if items_to_remove:
-            logger.info('{} Deleting articles.: {}'.format(self.log_msg, items_to_remove))
-            archive_service.delete_by_article_ids(list(items_to_remove))
-
-        push_expired_notification(items_to_expire)
-
-        for item_id, item in items_having_issues.items():
-            msg = log_msg_format.format(**item)
-            try:
-                archive_service.system_update(item.get(config.ID_FIELD), {'expiry_status': 'invalid'}, item)
-                logger.info('{} Setting item expiry status. {}'.format(self.log_msg, msg))
-            except:
-                logger.exception('{} Failed to set expiry status for item. {}'.format(self.log_msg, msg))
-
-        logger.info('{} Deleting killed from archive.'.format(self.log_msg))
+            logger.info('{} Deleting killed from archive.'.format(self.log_msg))
 
     def _can_remove_item(self, item, processed_item=None):
         """Recursively checks if the item can be removed.

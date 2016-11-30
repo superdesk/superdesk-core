@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import json
 import flask
 from superdesk.resource import Resource
 from superdesk.metadata.utils import extra_response_fields, item_url, aggregations, \
@@ -682,25 +683,38 @@ class ArchiveService(BaseService):
         :param bool invalid_only: True only invalid items
         :return pymongo.cursor: expired non published items.
         """
-        query = {
-            '$and': [
-                {'expiry': {'$lte': date_to_str(expiry_datetime)}},
-                {'$or': [
-                    {'task.desk': {'$ne': None}},
-                    {ITEM_STATE: CONTENT_STATE.SPIKED, 'task.desk': None}
-                ]}
-            ]
-        }
+        unique_id = 0
 
-        if invalid_only:
-            query['$and'].append({'expiry_status': 'invalid'})
-        else:
-            query['$and'].append({'expiry_status': {'$ne': 'invalid'}})
+        while True:
+            req = ParsedRequest()
+            req.sort = 'unique_id'
+            query = {
+                '$and': [
+                    {'expiry': {'$lte': date_to_str(expiry_datetime)}},
+                    {'$or': [
+                        {'task.desk': {'$ne': None}},
+                        {ITEM_STATE: CONTENT_STATE.SPIKED, 'task.desk': None}
+                    ]}
+                ]
+            }
 
-        req = ParsedRequest()
-        req.max_results = config.MAX_EXPIRY_QUERY_LIMIT
-        req.sort = 'expiry,_created'
-        return self.get_from_mongo(req=req, lookup=query)
+            query['$and'].append({'unique_id': {'$gt': unique_id}})
+
+            if invalid_only:
+                query['$and'].append({'expiry_status': 'invalid'})
+            else:
+                query['$and'].append({'expiry_status': {'$ne': 'invalid'}})
+
+            req.where = json.dumps(query)
+
+            req.max_results = config.MAX_EXPIRY_QUERY_LIMIT
+            items = list(self.get_from_mongo(req=req, lookup=None))
+
+            if not len(items):
+                break
+
+            unique_id = items[len(items) - 1]['unique_id']
+            yield items
 
     def _add_desk_metadata(self, updates, original):
         """Populate updates metadata from item desk in case it's set.
