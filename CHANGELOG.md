@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.4.3] 2016-11-30
+
+### Fixed
+
+- Allow tables in NITF output.
+
 ## [1.4.2] 2016-11-29
 
 ### Added
