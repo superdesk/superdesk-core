@@ -260,6 +260,7 @@ class NinjsFormatterTest(TestCase):
                     "type": "picture"
                 }
             },
+            'firstcreated': '2015-07-24T05:05:00.000Z',
             "versioncreated": "2015-07-24T05:05:14.000Z",
             "type": "composite",
             "pubstatus": "usable",

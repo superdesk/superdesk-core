@@ -42,6 +42,7 @@ schema = {
     'usageterms': {'type': 'string'},
     'version': {'type': 'string', 'required': True, 'empty': False, 'nullable': False},
     'versioncreated': {'type': 'datetime', 'required': True},
+    'firstcreated': {'type': 'datetime'},
 }
 
 
