@@ -443,6 +443,9 @@ CONTENT_EXPIRY_MINUTES = int(env('CONTENT_EXPIRY_MINUTES', 0))
 #: The number of minutes before ingest items are purged
 INGEST_EXPIRY_MINUTES = int(env('INGEST_EXPIRY_MINUTES', 2 * 24 * 60))
 
+#: The number of minutes before published content items are purged
+PUBLISHED_CONTENT_EXPIRY_MINUTES = int(env('PUBLISHED_CONTENT_EXPIRY_MINUTES', 0))
+
 #: The number records to be fetched for expiry.
 MAX_EXPIRY_QUERY_LIMIT = int(env('MAX_EXPIRY_QUERY_LIMIT', 100))
 
