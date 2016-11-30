@@ -53,6 +53,7 @@ class RSSFeedingService(FeedingService):
         ItemField('headline', 'title', str),
         ItemField('abstract', 'summary', str),
         ItemField('body_html', 'body_text', str),
+        ItemField('byline', 'author', str),
     ]
     """A list of fields that items created from the ingest data should contain.
 
@@ -238,7 +239,7 @@ class RSSFeedingService(FeedingService):
 
         return list(img_links)
 
-    def _create_item(self, data, field_aliases=None, source=None):
+    def _create_item(self, data, field_aliases=None, source='source'):
         """Create a new content item from RSS feed data.
 
         :param dict data: parsed data of a single feed entry
@@ -301,8 +302,13 @@ class RSSFeedingService(FeedingService):
         if item.get('uri', None):
             if not item.get('body_html', None):
                 item['body_html'] = ''
-            source = source or 'source'
             item['body_html'] = '<p><a href="%s" target="_blank">%s</a></p>' % (item['uri'], source) + item['body_html']
+
+        item['dateline'] = {
+            'source': source,
+            'date': item.get('firstcreated', item.get('versioncreated'))
+        }
+
         return item
 
     def _create_image_items(self, image_links, text_item):

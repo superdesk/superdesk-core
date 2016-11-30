@@ -504,9 +504,10 @@ class CreateItemMethodTestCase(RssIngestServiceTest):
             title='Breaking News!',
             summary='Something happened...',
             body_text='This is body text.',
+            author='author',
         )
 
-        item = self.instance._create_item(data)
+        item = self.instance._create_item(data, source='source')
 
         self.assertEqual(item.get('guid'), 'http://news.com/rss/1234abcd')
         self.assertEqual(item.get('uri'), 'http://news.com/rss/1234abcd')
@@ -519,6 +520,10 @@ class CreateItemMethodTestCase(RssIngestServiceTest):
         self.assertEqual(item.get('abstract'), 'Something happened...')
         self.assertEqual(item.get('body_html'),
                          '<p><a href="http://news.com/rss/1234abcd" target="_blank">source</a></p>This is body text.')
+        self.assertEqual(item.get('byline'), 'author')
+        dateline = item.get('dateline', {})
+        self.assertEqual(dateline.get('source'), 'source')
+        self.assertEqual(dateline.get('date'), item.get('firstcreated'))
 
     def test_populates_body_text_from_content_field_as_fallback(self):
         class CustomDict(dict):
