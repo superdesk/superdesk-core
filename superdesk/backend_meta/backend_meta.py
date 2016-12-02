@@ -78,8 +78,8 @@ class BackendMetaService(BaseService):
             try:
                 with open(pkg_path) as f:
                     pkg = json.load(f)
-                return pkg['dependencies']['superdesk-core'].split('#')[1]
-            except (IOError, json.JSONDecodeError, KeyError, IndexError):
+                return pkg['dependencies']['superdesk-core'].split('#')[-1]
+            except (IOError, ValueError, KeyError, IndexError):
                 pass
         return ''
 
