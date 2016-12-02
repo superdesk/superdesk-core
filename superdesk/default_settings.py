@@ -266,6 +266,7 @@ CORE_APPS = [
     'content_api.publish',
     'content_api.items',
     'content_api.tokens',
+    'superdesk.backend_meta',
 ]
 
 #: Specify what modules should be enabled
