@@ -26,6 +26,8 @@ class NewsMLOneFeedParser(XMLFeedParser):
 
     NAME = 'newsml12'
 
+    label = 'News ML 1.2 Parser'
+
     def can_parse(self, xml):
         return xml.tag == 'NewsML' and xml.get('Version', '') == '1.2'
 

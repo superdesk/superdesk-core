@@ -47,6 +47,8 @@ class NITFFeedParser(XMLFeedParser):
 
     NAME = 'nitf'
 
+    label = 'NITF Parser'
+
     def __init__(self):
         super().__init__()
         self.default_mapping = {

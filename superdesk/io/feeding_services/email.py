@@ -25,6 +25,8 @@ class EmailFeedingService(FeedingService):
     ERRORS = [IngestEmailError.emailError().get_error_description(),
               IngestEmailError.emailLoginError().get_error_description()]
 
+    label = 'Email'
+
     def _update(self, provider, update):
         config = provider.get('config', {})
         server = config.get('server', '')

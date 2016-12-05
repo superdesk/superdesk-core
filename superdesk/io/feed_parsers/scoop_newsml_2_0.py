@@ -23,6 +23,8 @@ class ScoopNewsMLTwoFeedParser(NewsMLTwoFeedParser):
 
     NAME = 'scoop_newsml2'
 
+    label = 'Scoop Media News ML-G2 Parser'
+
     def can_parse(self, xml):
         if xml.tag.endswith('newsMessage'):
             try:

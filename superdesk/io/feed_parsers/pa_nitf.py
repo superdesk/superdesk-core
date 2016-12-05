@@ -24,6 +24,8 @@ class PAFeedParser(NITFFeedParser):
 
     NAME = 'pa_nitf'
 
+    label = 'PA NITF'
+
     def _category_mapping(self, elem):
         """Map the category supplied by PA to a best guess anpa_category in the system.
 

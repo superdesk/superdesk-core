@@ -32,6 +32,8 @@ class NewsMLTwoFeedParser(XMLFeedParser):
 
     NAME = 'newsml2'
 
+    label = 'News ML 2.0 Parser'
+
     def can_parse(self, xml):
         return xml.tag.endswith('newsMessage')
 

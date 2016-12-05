@@ -19,6 +19,8 @@ class DPAIPTC7901FeedParser(IPTC7901FeedParser):
 
     NAME = 'dpa_iptc7901'
 
+    label = 'DPA IPTC 7901 Parser'
+
     def parse(self, file_path, provider=None):
         item = super().parse(file_path, provider)
         item = self.dpa_derive_dateline(item)

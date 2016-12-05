@@ -25,6 +25,8 @@ class IPTC7901FeedParser(FileFeedParser):
 
     NAME = 'iptc7901'
 
+    label = 'IPTC 7901 Parser'
+
     def can_parse(self, file_path):
         try:
             with open(file_path, 'rb') as f:

@@ -42,6 +42,8 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
 
     DATE_FORMAT = '%Y.%m.%d.%H.%M'
 
+    label = 'Reuters Feed API'
+
     def _update(self, provider, update):
         updated = utcnow()
 

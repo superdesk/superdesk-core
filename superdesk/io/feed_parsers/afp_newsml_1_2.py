@@ -23,6 +23,8 @@ class AFPNewsMLOneFeedParser(NewsMLOneFeedParser):
 
     NAME = 'afpnewsml12'
 
+    label = 'AFP News ML 1.2 Parser'
+
     def parse(self, xml, provider=None):
         item = super().parse(xml, provider)
         item['firstcreated'] = utc.localize(item['firstcreated']) if item.get('firstcreated') else utcnow()

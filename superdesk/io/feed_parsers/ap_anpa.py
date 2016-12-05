@@ -28,6 +28,8 @@ class AP_ANPAFeedParser(ANPAFeedParser):
 
     NAME = 'ap_anpa1312'
 
+    label = 'AP ANPA Parser'
+
     slug_code_map = {  # Basketball
                        'BKC-': '15008000', 'BKL-': '15008000', 'BKN-': '15008000',
                        'BKW-': '15008000', 'BKO-': '15008000',

@@ -49,6 +49,8 @@ class EMailRFC822FeedParser(EmailFeedParser):
 
     NAME = 'email_rfc822'
 
+    label = 'EMail RFC822 Parser'
+
     def __init__(self):
         self.parser_app = app
 

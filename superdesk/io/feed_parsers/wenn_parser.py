@@ -25,6 +25,8 @@ class WENNFeedParser(XMLFeedParser):
 
     NAME = 'wenn'
 
+    label = 'WENN Parser'
+
     ATOM_NS = 'http://www.w3.org/2005/Atom'
     WENN_MM_NS = 'http://feed.wenn.com/xmlns/2010/03/wenn_mm'
     WENN_NM_NS = 'http://feed.wenn.com/xmlns/2010/03/wenn_nm'

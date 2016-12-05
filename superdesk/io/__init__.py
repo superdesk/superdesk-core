@@ -67,6 +67,7 @@ def init_app(app):
         description='User can maintain Ingest Feed Services.'
     )
 
+
 superdesk.privilege(name='ingest_providers', label='Ingest Channels', description='User can maintain Ingest Channels.')
 
 

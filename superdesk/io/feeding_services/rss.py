@@ -43,6 +43,8 @@ class RSSFeedingService(FeedingService):
               IngestApiError.apiGeneralError().get_error_description(),
               ParserError.parseMessageError().get_error_description()]
 
+    label = 'RSS'
+
     ItemField = namedtuple('ItemField', ['name', 'name_in_data', 'type'])
 
     item_fields = [
