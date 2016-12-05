@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.4.4] 2016-12-05
+
+### Fixed
+
+- Use default language if no language is set on desk.
+
 ## [1.4.3] 2016-11-30
 
 ### Fixed
