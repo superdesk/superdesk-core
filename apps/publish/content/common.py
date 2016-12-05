@@ -41,7 +41,7 @@ from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
 from apps.archive.common import get_user, insert_into_versions, item_operations
 from apps.archive.common import validate_schedule, ITEM_OPERATION, update_schedule_settings, \
     convert_task_attributes_to_objectId, is_genre, \
-    BROADCAST_GENRE, get_expiry, get_utc_schedule, get_dateline_city
+    BROADCAST_GENRE, get_expiry, get_utc_schedule, get_dateline_city, get_expiry_date
 from apps.common.components.utils import get_component
 from apps.item_autosave.components.item_autosave import ItemAutosave
 from apps.legal_archive.commands import import_into_legal_archive
@@ -328,7 +328,10 @@ class BasePublishService(BaseService):
         elif EMBARGO in original or PUBLISH_SCHEDULE in original:
             offset = get_utc_schedule(original, PUBLISH_SCHEDULE) or get_utc_schedule(original, EMBARGO)
 
-        updates['expiry'] = get_expiry(desk_id, stage_id, offset=offset)
+        if app.settings.get('PUBLISHED_CONTENT_EXPIRY_MINUTES'):
+            updates['expiry'] = get_expiry_date(app.settings['PUBLISHED_CONTENT_EXPIRY_MINUTES'], offset=offset)
+        else:
+            updates['expiry'] = get_expiry(desk_id, stage_id, offset=offset)
 
     def _is_take_item(self, item):
         """Returns True if the item was a take."""
@@ -432,6 +435,7 @@ class BasePublishService(BaseService):
                 take_ref[config.VERSION] = updated_take.get(config.VERSION)
 
             package_updates[GROUPS] = groups
+            self._set_item_expiry(package_updates, package)
 
         return package_updates
 

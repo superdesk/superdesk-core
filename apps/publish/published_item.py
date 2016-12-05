@@ -15,7 +15,7 @@ import flask
 from superdesk import get_resource_service
 import superdesk
 from superdesk.errors import SuperdeskApiError
-from superdesk.metadata.item import not_analyzed, ITEM_STATE, PUBLISH_STATES, PUBLISH_SCHEDULE, EMBARGO
+from superdesk.metadata.item import not_analyzed, ITEM_STATE, PUBLISH_STATES
 from superdesk.metadata.utils import aggregations, elastic_highlight_query
 from superdesk.resource import Resource
 from superdesk.services import BaseService
@@ -26,7 +26,7 @@ from eve.utils import ParsedRequest, config
 from flask import current_app as app
 
 from apps.archive.archive import SOURCE as ARCHIVE
-from apps.archive.common import handle_existing_data, item_schema, remove_media_files, get_expiry, get_utc_schedule
+from apps.archive.common import handle_existing_data, item_schema, remove_media_files
 from apps.packages import TakesPackageService
 from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
 
@@ -174,7 +174,6 @@ class PublishedItemService(BaseService):
         doc['item_id'] = doc[config.ID_FIELD]
         doc['versioncreated'] = utcnow()
         doc['publish_sequence_no'] = get_resource_service('sequences').get_next_sequence_number(self.SEQ_KEY_NAME)
-        self.__set_published_item_expiry(doc)
         doc.pop(config.ID_FIELD, None)
         doc.pop('lock_user', None)
         doc.pop('lock_time', None)
@@ -338,16 +337,6 @@ class PublishedItemService(BaseService):
         handle_existing_data(item)
 
         return item
-
-    def __set_published_item_expiry(self, doc):
-        """Set the expiry for the published item.
-
-        :param dict doc: doc on which publishing action is performed
-        """
-        desk_id = doc.get('task', {}).get('desk', None)
-        stage_id = doc.get('task', {}).get('stage', None)
-        offset = get_utc_schedule(doc, PUBLISH_SCHEDULE) or get_utc_schedule(doc, EMBARGO)
-        doc['expiry'] = get_expiry(desk_id, stage_id, offset=offset)
 
     def move_to_archived(self, _id):
         published_items = list(self.get_from_mongo(req=None, lookup={'item_id': _id}))

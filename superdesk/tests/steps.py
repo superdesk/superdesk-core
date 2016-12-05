@@ -2164,3 +2164,8 @@ def we_find_no_reference_of_package_in_item(context, reference):
 @then('we set spike exipry "{expiry}"')
 def we_set_spike_exipry(context, expiry):
     context.app.settings['SPIKE_EXPIRY_MINUTES'] = int(expiry)
+
+
+@then('we set published item expiry {expiry}')
+def we_set_published_item_expiry(context, expiry):
+    context.app.settings['PUBLISHED_CONTENT_EXPIRY_MINUTES'] = int(expiry)

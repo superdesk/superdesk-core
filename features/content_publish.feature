@@ -2160,3 +2160,86 @@ Feature: Content Publishing
       """
       {"_issues": {"validator exception": "['Associated item s234 234: HEADLINE is a required field']"}, "_status": "ERR"}
       """
+
+    @auth
+    Scenario: PUBLISHED_CONTENT_EXPIRY_MINUTES setting overrides content expiry setting.
+      Given the "validators"
+      """
+        [{"_id": "publish_embedded", "type": "picture", "act": "publish", "embedded": true,
+          "schema": {"headline": {"type": "string","required": true}}},
+         {"_id": "publish_text", "type": "text", "act": "publish", "schema": {}}]
+      """
+      And "desks"
+      """
+      [{"name": "Sports", "content_expiry": 180}]
+      """
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with "digital" and success
+      """
+      {
+        "name":"Channel 1","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
+      And we post to "/subscribers" with "wire" and success
+      """
+      {
+        "name":"Channel 2","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
+      When we post to "/archive" with success
+      """
+      [{"guid": "123", "type": "text", "headline": "test", "state": "fetched",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "subject":[{"qcode": "17004000", "name": "Statistics"}],
+        "slugline": "test",
+        "body_html": "Test Document body"}]
+      """
+      Then we get OK response
+      When we publish "123" with "publish" type and "published" state
+      Then we get OK response
+      When we get "/archive/123"
+      Then we get OK response
+      And we get content expiry 180
+      When we get "/archive/#archive.123.take_package#"
+      Then we get OK response
+      And we get content expiry 180
+      And we set published item expiry 60
+      When we post to "/archive" with success
+      """
+      [{"guid": "456", "type": "text", "headline": "test", "state": "fetched",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "subject":[{"qcode": "17004000", "name": "Statistics"}],
+        "slugline": "test",
+        "body_html": "Test Document body"}]
+      """
+      Then we get OK response
+      And we get content expiry 180
+      When we publish "456" with "publish" type and "published" state
+      Then we get OK response
+      When we get "/archive/456"
+      Then we get OK response
+      And we get content expiry 60
+      When we get "/archive/#archive.456.take_package#"
+      Then we get OK response
+      And we get content expiry 60
+      When we get "/published/123"
+      Then we get OK response
+      And we get content expiry 180
+      When we get "/published/#archive.123.take_package#"
+      Then we get OK response
+      And we get content expiry 180
+      When we get "/published/456"
+      Then we get OK response
+      And we get content expiry 60
+      When we get "/published/#archive.456.take_package#"
+      Then we get OK response
+      And we get content expiry 60
