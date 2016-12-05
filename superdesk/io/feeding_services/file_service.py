@@ -15,7 +15,7 @@ from datetime import timedelta, datetime
 
 from xml.etree import ElementTree
 from superdesk.errors import IngestFileError, ParserError, ProviderError
-from superdesk.io import register_feeding_service
+from superdesk.io.registry import register_feeding_service
 from superdesk.io.feed_parsers import XMLFeedParser
 from superdesk.io.feeding_services import FeedingService
 from superdesk.notification import push_notification

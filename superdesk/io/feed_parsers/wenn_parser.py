@@ -11,7 +11,7 @@
 
 import datetime
 
-from superdesk.io import register_feed_parser
+from superdesk.io.registry import register_feed_parser
 from superdesk.io.feed_parsers import XMLFeedParser
 from superdesk.errors import ParserError
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE

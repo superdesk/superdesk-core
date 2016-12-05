@@ -11,7 +11,7 @@
 import logging
 from datetime import datetime
 import dateutil.parser
-from superdesk.io import register_feed_parser
+from superdesk.io.registry import register_feed_parser
 from superdesk.io.feed_parsers import XMLFeedParser
 import xml.etree.ElementTree as etree
 from superdesk.errors import ParserError

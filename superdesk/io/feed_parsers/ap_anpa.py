@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from .anpa import ANPAFeedParser
-from superdesk.io import register_feed_parser
+from superdesk.io.registry import register_feed_parser
 from superdesk.io.iptc import subject_codes
 from flask import current_app as app
 from apps.archive.common import format_dateline_to_locmmmddsrc

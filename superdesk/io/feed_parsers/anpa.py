@@ -13,7 +13,7 @@ import re
 from datetime import datetime
 
 from superdesk.errors import ParserError
-from superdesk.io import register_feed_parser
+from superdesk.io.registry import register_feed_parser
 from superdesk.io.feed_parsers import FileFeedParser
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, Priority, GUID_FIELD, GUID_TAG, FORMAT, FORMATS
 from superdesk.utc import utc

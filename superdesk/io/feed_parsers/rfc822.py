@@ -24,7 +24,7 @@ from pytz import timezone
 import superdesk
 from superdesk import get_resource_service
 from superdesk.errors import IngestEmailError
-from superdesk.io import register_feed_parser
+from superdesk.io.registry import register_feed_parser
 from superdesk.io.feed_parsers import EmailFeedParser
 from superdesk.io.iptc import subject_codes
 from superdesk.media.media_operations import process_file_from_stream

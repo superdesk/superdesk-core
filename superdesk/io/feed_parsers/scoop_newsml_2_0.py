@@ -12,7 +12,7 @@
 import pytz
 import datetime
 from .newsml_2_0 import NewsMLTwoFeedParser
-from superdesk.io import register_feed_parser
+from superdesk.io.registry import register_feed_parser
 from superdesk.errors import ParserError
 from superdesk.metadata.item import ITEM_TYPE
 from superdesk.io.iptc import subject_codes

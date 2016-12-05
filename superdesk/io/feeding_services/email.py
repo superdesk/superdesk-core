@@ -11,7 +11,7 @@
 import imaplib
 
 from superdesk.errors import IngestEmailError
-from superdesk.io import register_feeding_service
+from superdesk.io.registry import register_feeding_service
 from superdesk.io.feeding_services import FeedingService
 from superdesk.upload import url_for_media
 

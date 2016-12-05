@@ -11,7 +11,7 @@
 
 import re
 from superdesk.errors import ParserError
-from superdesk.io import register_feed_parser
+from superdesk.io.registry import register_feed_parser
 from superdesk.io.feed_parsers import FileFeedParser
 from superdesk.metadata.utils import generate_guid
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, GUID_TAG
