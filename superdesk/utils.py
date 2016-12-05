@@ -11,6 +11,7 @@
 import os
 import bcrypt
 import hashlib
+import base64
 from uuid import uuid4
 from datetime import datetime
 from bson import ObjectId
@@ -72,6 +73,14 @@ class SuperdeskBaseEnum(Enum):
 
 def get_random_string(length=12):
     return str(uuid4())
+
+
+def get_random_token(n=40):
+    """Generate random token.
+
+    :param n: how many random bytes to generate
+    """
+    return base64.b64encode(os.urandom(n)).decode()
 
 
 def import_by_path(path):

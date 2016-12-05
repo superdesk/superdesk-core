@@ -5,9 +5,10 @@ import superdesk
 from bson import ObjectId
 from copy import copy
 from flask import json
+from datetime import timedelta
 from superdesk.tests import TestCase
+from superdesk.utc import utcnow
 from content_api.publish import MONGO_PREFIX
-from content_api.tokens import generate_subscriber_token
 from content_api.app import get_app
 
 
@@ -164,9 +165,29 @@ class ContentAPITestCase(TestCase):
             response = c.get('items?q=urgency:3', headers=headers)
             self.assertEqual(400, response.status_code)
 
+    def test_generate_token_service(self):
+        service = superdesk.get_resource_service('subscriber_token')
+        payload = {'subscriber': 'foo'}
+        ids = service.create([payload])
+        token = payload['_id']
+        self.assertEqual('foo', self.capi.auth.check_auth(token, [], 'items', 'get'))
+        self.assertLessEqual((utcnow() + timedelta(days=7)).timestamp() - payload['expiry'].timestamp(), 1)
+
+        service.delete({'_id': ids[0]})
+        self.assertFalse(self.capi.auth.check_auth(token, [], 'items', 'get'))
+
+        payload = {'subscriber': 'foo', 'expiry': utcnow() - timedelta(days=1)}
+        service.create([payload])
+        token = payload['_id']
+        self.assertFalse(self.capi.auth.check_auth(token, [], 'items', 'get'))
+        self.assertIsNone(service.find_one(None, _id=token))
+
     def _auth_headers(self, sub=None):
         if sub is None:
             sub = self.subscriber
-        token = generate_subscriber_token(sub)
-        headers = {'Authorization': b'Bearer ' + token}
+        service = superdesk.get_resource_service('subscriber_token')
+        payload = {'subscriber': sub.get('_id')}
+        service.create([payload])
+        token = payload.get('_id')
+        headers = {'Authorization': 'Token ' + token}
         return headers
