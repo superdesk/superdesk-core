@@ -165,6 +165,7 @@ class NITFFeedParser(XMLFeedParser):
         If a dictionary is used as value, following keys can be used:
             xpath: path to the element
             attribute: attribute to take in this element (if not present, content will be used)
+            callback: callback executed with nitf Element as argument, return value will be used
             default: value to use if element doesn't exists (default: doesn't set the key)
             default_attr: value if element exist but attribute is missing
             filter: callable to be used with found element
