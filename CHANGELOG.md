@@ -1,5 +1,33 @@
 # Superdesk Server Changelog
 
+## [1.4.4] 2016-12-05
+
+### Fixed
+
+- Use default language if no language is set on desk.
+
+## [1.4.3] 2016-11-30
+
+### Fixed
+
+- Allow tables in NITF output.
+
+## [1.4.2] 2016-11-29
+
+### Added
+
+- Add support for desk language
+
+### Fixed
+
+- Fix validation in case of error in list field
+
+## [1.4.1] 2016-11-22
+
+### Fixed
+
+- Fix missing validation error for embedded items.
+
 ## [1.4] 2016-11-15
 
 ### Added
