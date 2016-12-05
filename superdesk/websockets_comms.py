@@ -221,15 +221,10 @@ class SocketCommunication:
     def _server_loop(self, websocket):
         """Server loop - wait for message and broadcast it.
 
-        When message is none it means the socket is closed
-        and there will be no messages so we break the loop.
-
         :param websocket: websocket protocol instance
         """
         while True:
             message = yield from websocket.recv()
-            if message is None:
-                break
             yield from self.broadcast(message)
 
     def _log(self, message, websocket):
