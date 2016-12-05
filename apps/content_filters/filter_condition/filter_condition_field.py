@@ -26,7 +26,8 @@ class FilterConditionFieldsEnum(Enum):
     headline = 12,
     body_html = 13,
     stage = 14,
-    ednote = 15
+    ednote = 15,
+    place = 16
 
 
 class FilterConditionField:
@@ -47,6 +48,8 @@ class FilterConditionField:
             return FilterConditionSubjectField(field)
         elif FilterConditionFieldsEnum[field] == FilterConditionFieldsEnum.urgency:
             return FilterConditionUrgencyField(field)
+        elif FilterConditionFieldsEnum[field] == FilterConditionFieldsEnum.place:
+            return FilterConditionPlaceField(field)
         else:
             return FilterConditionField(field)
 
@@ -146,3 +149,13 @@ class FilterConditionSmsField(FilterConditionField):
 
     def get_value(self, article):
         return str(article.get('flags', {}).get('marked_for_sms'))
+
+
+class FilterConditionPlaceField(FilterConditionField):
+    def __init__(self, field):
+        self.field = FilterConditionFieldsEnum.place
+        self.entity_name = 'place.qcode'
+        self.field_type = str
+
+    def get_value(self, article):
+        return [c['qcode'] for c in article[self.field.name]]

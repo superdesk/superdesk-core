@@ -10,7 +10,8 @@
 from apps.content_filters.filter_condition.filter_condition_field import FilterConditionField
 from apps.content_filters.filter_condition.filter_condition_value import FilterConditionValue
 from apps.content_filters.filter_condition.filter_condition_operator import \
-    FilterConditionOperator, NotInOperator, NotLikeOperator
+    FilterConditionOperator, NotInOperator, NotLikeOperator, MatchOperator
+import json
 
 
 class FilterCondition:
@@ -36,7 +37,10 @@ class FilterCondition:
         field = self.field.get_entity_name()
         operator = self.operator.get_elastic_operator()
         value, field = self.value.get_elastic_value(self.field)
-        return {operator: {field: value}}
+        if isinstance(self.operator, MatchOperator):
+            return json.loads(operator.format(field, value))
+        else:
+            return {operator: {field: value}}
 
     def does_match(self, article):
 
