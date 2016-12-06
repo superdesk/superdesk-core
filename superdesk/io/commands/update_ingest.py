@@ -444,7 +444,9 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
             process_anpa_category(item, provider)
 
         if 'subject' in item:
-            process_iptc_codes(item, provider)
+            if not app.config.get('INGEST_SKIP_IPTC_CODES', False):
+                # FIXME: temporary fix for SDNTB-344, need to be removed once SDESK-439 is implemented
+                process_iptc_codes(item, provider)
             if 'anpa_category' not in item:
                 derive_category(item, provider)
         elif 'anpa_category' in item:
