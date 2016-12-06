@@ -171,5 +171,13 @@
         "items": [
             {"is_active": true, "existing": "FIXME", "replacement": ""}
         ]
+    },
+    {
+        "_id": "locators",
+        "display_name": "Locators",
+        "type": "unmanageable",
+        "items": [
+            {"is_active": true, "name": "NSW", "qcode": "NSW"}
+        ]
     }
 ]

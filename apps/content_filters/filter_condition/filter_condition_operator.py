@@ -17,7 +17,8 @@ class FilterConditionOperatorsEnum(Enum):
     like = 3,
     notlike = 4,
     startswith = 5,
-    endswith = 6
+    endswith = 6,
+    match = 7
 
 
 class FilterConditionOperator:
@@ -30,6 +31,8 @@ class FilterConditionOperator:
             return NotInOperator(operator)
         elif operator == FilterConditionOperatorsEnum.notlike.name:
             return NotLikeOperator(operator)
+        elif operator == FilterConditionOperatorsEnum.match.name:
+            return MatchOperator(operator)
         else:
             return RegexOperator(operator)
 
@@ -97,3 +100,16 @@ class RegexOperator(FilterConditionOperator):
 
     def does_match(self, article_value, filter_value):
         return filter_value.match(article_value) is not None
+
+
+class MatchOperator(FilterConditionOperator):
+    def __init__(self, operator):
+        self.operator = FilterConditionOperatorsEnum[operator]
+        self.mongo_operator = '$in'
+        self.elastic_operator = '{{"query_string": {{"{}":"{}"}}}}'
+
+    def does_match(self, article_value, filter_value):
+        if isinstance(article_value, list):
+            return any([self.get_lower_case(v) in map(self.get_lower_case, filter_value) for v in article_value])
+        else:
+            return self.get_lower_case(article_value) in map(self.get_lower_case, filter_value)

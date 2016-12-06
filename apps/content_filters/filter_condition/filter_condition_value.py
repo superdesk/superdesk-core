@@ -21,7 +21,8 @@ class FilterConditionValue:
     elastic_mapper = {FilterConditionOperatorsEnum.startswith: '{}:{}*',
                       FilterConditionOperatorsEnum.like: '{}:*{}*',
                       FilterConditionOperatorsEnum.notlike: '{}:*{}*',
-                      FilterConditionOperatorsEnum.endswith: '{}:*{}'}
+                      FilterConditionOperatorsEnum.endswith: '{}:*{}',
+                      FilterConditionOperatorsEnum.match: '{}:{}'}
 
     def __init__(self, operator, value):
         self.operator = operator

@@ -88,6 +88,11 @@ class FilterConditionParametersService(BaseService):
                             'operators': ['in', 'nin'],
                             'values': values['sms'],
                             'value_field': 'name'
+                            },
+                           {'field': 'place',
+                            'operators': ['match'],
+                            'values': values['place'],
+                            'value_field': 'qcode'
                             }])
 
     def _get_field_values(self):
@@ -110,6 +115,7 @@ class FilterConditionParametersService(BaseService):
         values['desk'] = list(get_resource_service('desks').get(None, {}))
         values['stage'] = self._get_stage_field_values(values['desk'])
         values['sms'] = [{'qcode': 0, 'name': 'False'}, {'qcode': 1, 'name': 'True'}]
+        values['place'] = vocabularies_resource.find_one(req=None, _id='locators')['items']
         return values
 
     def _get_stage_field_values(self, desks):
