@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.4.5] 2016-12-07
+
+### Added
+
+- Add option to skip iptc codes processing on ingest.
+
 ## [1.4.4] 2016-12-05
 
 ### Fixed
