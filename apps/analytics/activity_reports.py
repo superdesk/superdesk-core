@@ -41,22 +41,26 @@ class ActivityReportResource(Resource):
 class ActivityReportService(BaseService):
 
     def search_items(self, report):
+        print('report: ', report)
+        terms = [
+            {"term": {"operation": report['operation']}},
+            {"term": {"task.desk": str(report['desk'])}}
+        ]
+        if report.get('subject'):
+            subjects = [subject['name'] for subject in report['subject']]
+            terms.append({'term': {'subject': subjects}})
+        if report.get('keywords'):
+            terms.append({'term': {'keywords': report['keywords']}})
         query = {
             "query": {
                 "filtered": {
                     "filter": {
-                        "bool": {
-                            "must": [
-                                {"term": {"operation": report['operation']}},
-                                {"term": {"task.desk": str(report['desk'])}},
-                                {"term": {"subject.name": report['subject']}},
-                                {"term": {"keywords": report['keywords']}}
-                            ]
-                        }
+                        "bool": {"must": terms}
                     }
                 }
             }
         }
+        print('query', query)
 
         request = ParsedRequest
         request.args = {'source': json.dumps(query), 'repo': 'archive,published,archived,ingest'}
