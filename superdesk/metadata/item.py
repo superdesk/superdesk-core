@@ -469,6 +469,10 @@ metadata_schema = {
         'type': 'dict',
         'nullable': True,
     },
+
+    'semantics': {
+        'type': 'dict',
+    },
 }
 
 metadata_schema['lock_user']['versioned'] = False
