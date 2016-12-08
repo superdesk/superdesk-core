@@ -16,7 +16,7 @@ import tempfile
 
 from datetime import datetime
 
-from superdesk.io import register_feeding_service
+from superdesk.io.registry import register_feeding_service
 from superdesk.io.feed_parsers import XMLFeedParser
 from superdesk.utc import utc
 from superdesk.etree import etree

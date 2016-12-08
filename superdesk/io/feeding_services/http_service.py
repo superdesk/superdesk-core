@@ -36,6 +36,8 @@ class HTTPFeedingService(FeedingService, metaclass=ABCMeta):
               IngestApiError.apiParseError().get_error_description(),
               IngestApiError.apiGeneralError().get_error_description()]
 
+    label = 'HTTP'
+
     def __init__(self):
         self.token = None
 

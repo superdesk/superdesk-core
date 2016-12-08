@@ -13,7 +13,7 @@ import datetime
 import logging
 
 from superdesk.errors import ParserError
-from superdesk.io import register_feed_parser
+from superdesk.io.registry import register_feed_parser
 from superdesk.io.feed_parsers import XMLFeedParser
 from superdesk.io.iptc import subject_codes
 from superdesk.metadata.item import ITEM_TYPE
@@ -31,6 +31,8 @@ class NewsMLTwoFeedParser(XMLFeedParser):
     """
 
     NAME = 'newsml2'
+
+    label = 'News ML 2.0 Parser'
 
     def can_parse(self, xml):
         return xml.tag.endswith('newsMessage')

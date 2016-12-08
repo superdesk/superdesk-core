@@ -18,7 +18,7 @@ from .tests import setup_providers, teardown_providers
 from superdesk import etree, get_resource_service
 from superdesk.celery_task_utils import mark_task_as_not_running, is_task_running
 from superdesk.errors import SuperdeskApiError, ProviderError
-from superdesk.io import register_feeding_service, registered_feeding_services
+from superdesk.io.registry import register_feeding_service, registered_feeding_services
 from superdesk.io.commands.remove_expired_content import get_expired_items, RemoveExpiredContent
 from superdesk.io.feeding_services import FeedingService
 from superdesk.tests import TestCase

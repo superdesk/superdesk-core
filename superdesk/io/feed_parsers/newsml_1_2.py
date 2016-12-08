@@ -10,7 +10,7 @@
 
 import datetime
 from superdesk.etree import etree
-from superdesk.io import register_feed_parser
+from superdesk.io.registry import register_feed_parser
 from superdesk.io.feed_parsers import XMLFeedParser
 from superdesk.io.iptc import subject_codes
 from superdesk.errors import ParserError
@@ -25,6 +25,8 @@ class NewsMLOneFeedParser(XMLFeedParser):
     """
 
     NAME = 'newsml12'
+
+    label = 'News ML 1.2 Parser'
 
     def can_parse(self, xml):
         return xml.tag == 'NewsML' and xml.get('Version', '') == '1.2'

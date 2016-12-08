@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from .anpa import ANPAFeedParser
-from superdesk.io import register_feed_parser
+from superdesk.io.registry import register_feed_parser
 from superdesk.io.iptc import subject_codes
 from flask import current_app as app
 from apps.archive.common import format_dateline_to_locmmmddsrc
@@ -27,6 +27,8 @@ class AP_ANPAFeedParser(ANPAFeedParser):
     """
 
     NAME = 'ap_anpa1312'
+
+    label = 'AP ANPA Parser'
 
     slug_code_map = {  # Basketball
                        'BKC-': '15008000', 'BKL-': '15008000', 'BKN-': '15008000',

@@ -17,7 +17,7 @@ from pytz import utc
 import superdesk
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError, SuperdeskIngestError
-from superdesk.io import registered_feed_parsers
+from superdesk.io.registry import registered_feed_parsers
 from superdesk.utc import utcnow
 
 logger = logging.getLogger(__name__)

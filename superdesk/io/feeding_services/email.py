@@ -11,7 +11,7 @@
 import imaplib
 
 from superdesk.errors import IngestEmailError
-from superdesk.io import register_feeding_service
+from superdesk.io.registry import register_feeding_service
 from superdesk.io.feeding_services import FeedingService
 from superdesk.upload import url_for_media
 
@@ -24,6 +24,8 @@ class EmailFeedingService(FeedingService):
     NAME = 'email'
     ERRORS = [IngestEmailError.emailError().get_error_description(),
               IngestEmailError.emailLoginError().get_error_description()]
+
+    label = 'Email'
 
     def _update(self, provider, update):
         config = provider.get('config', {})

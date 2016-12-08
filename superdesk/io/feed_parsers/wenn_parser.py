@@ -11,7 +11,7 @@
 
 import datetime
 
-from superdesk.io import register_feed_parser
+from superdesk.io.registry import register_feed_parser
 from superdesk.io.feed_parsers import XMLFeedParser
 from superdesk.errors import ParserError
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
@@ -24,6 +24,8 @@ class WENNFeedParser(XMLFeedParser):
     """
 
     NAME = 'wenn'
+
+    label = 'WENN Parser'
 
     ATOM_NS = 'http://www.w3.org/2005/Atom'
     WENN_MM_NS = 'http://feed.wenn.com/xmlns/2010/03/wenn_mm'

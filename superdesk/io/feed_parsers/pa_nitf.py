@@ -10,7 +10,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk.io.feed_parsers.nitf import NITFFeedParser, SkipValue
-from superdesk.io import register_feed_parser
+from superdesk.io.registry import register_feed_parser
 import re
 from bs4 import BeautifulSoup
 import xml.etree.ElementTree as etree
@@ -23,6 +23,8 @@ class PAFeedParser(NITFFeedParser):
     """
 
     NAME = 'pa_nitf'
+
+    label = 'PA NITF'
 
     def _category_mapping(self, elem):
         """Map the category supplied by PA to a best guess anpa_category in the system.

@@ -11,7 +11,7 @@
 import logging
 from datetime import datetime
 import dateutil.parser
-from superdesk.io import register_feed_parser
+from superdesk.io.registry import register_feed_parser
 from superdesk.io.feed_parsers import XMLFeedParser
 import xml.etree.ElementTree as etree
 from superdesk.errors import ParserError
@@ -46,6 +46,8 @@ class NITFFeedParser(XMLFeedParser):
     #        now be moved to Superdesk's settings in aap branch
 
     NAME = 'nitf'
+
+    label = 'NITF Parser'
 
     def __init__(self):
         super().__init__()

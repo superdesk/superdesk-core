@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk.io.feed_parsers.newsml_1_2 import NewsMLOneFeedParser
-from superdesk.io import register_feed_parser
+from superdesk.io.registry import register_feed_parser
 from superdesk.utc import utcnow
 from pytz import utc
 
@@ -22,6 +22,8 @@ class AFPNewsMLOneFeedParser(NewsMLOneFeedParser):
     """
 
     NAME = 'afpnewsml12'
+
+    label = 'AFP News ML 1.2 Parser'
 
     def parse(self, xml, provider=None):
         item = super().parse(xml, provider)

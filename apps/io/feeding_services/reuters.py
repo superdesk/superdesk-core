@@ -16,7 +16,7 @@ from flask import current_app as app
 
 from superdesk.errors import IngestApiError
 from superdesk.etree import etree, ParseError
-from superdesk.io import register_feeding_service
+from superdesk.io.registry import register_feeding_service
 from superdesk.io.feeding_services.http_service import HTTPFeedingService
 from superdesk.logging import logger
 from superdesk.utc import utcnow
@@ -41,6 +41,8 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
               IngestApiError.apiGeneralError().get_error_description()]
 
     DATE_FORMAT = '%Y.%m.%d.%H.%M'
+
+    label = 'Reuters Feed API'
 
     def _update(self, provider, update):
         updated = utcnow()

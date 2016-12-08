@@ -10,7 +10,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from .iptc7901 import IPTC7901FeedParser
-from superdesk.io import register_feed_parser
+from superdesk.io.registry import register_feed_parser
 from flask import current_app as app
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
 
@@ -18,6 +18,8 @@ from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
 class DPAIPTC7901FeedParser(IPTC7901FeedParser):
 
     NAME = 'dpa_iptc7901'
+
+    label = 'DPA IPTC 7901 Parser'
 
     def parse(self, file_path, provider=None):
         item = super().parse(file_path, provider)
