@@ -49,14 +49,12 @@ def download_file_from_url(url):
     :param url: file url
     """
     try:
-        rv = requests.get(url, timeout=15)
+        rv = requests.get(url, timeout=(5, 25))
     except requests.exceptions.MissingSchema:  # any route will do here, we only need host
         rv = requests.get(urljoin(url_for('static', filename='x', _external=True), url), timeout=15)
-
     if rv.status_code not in (200, 201):
         raise SuperdeskApiError.internalError('Failed to retrieve file from URL: %s' % url)
-
-    mime = magic.from_buffer(rv.content, mime=True)
+    mime = rv.headers.get('content-type', 'image/jpeg').split(';')[0]
     ext = str(mime).split('/')[1]
     name = str(ObjectId()) + ext
     return BytesIO(rv.content), name, str(mime)

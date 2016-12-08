@@ -11,6 +11,7 @@
 
 LINKED_IN_PACKAGES = 'linked_in_packages'
 PACKAGE = 'package'
+PACKAGE_TYPE = 'package_type'
 REFS = 'refs'
 RESIDREF = 'residRef'
 ID_REF = 'idRef'
