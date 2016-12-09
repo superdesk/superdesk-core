@@ -55,6 +55,11 @@ class UsersResource(Resource):
                 'type': 'string',
                 'nullable': True
             },
+            'jid': {
+                'unique': True,
+                'type': 'string',
+                'required': False,
+            },
             'language': {
                 'type': 'string',
                 'nullable': True
