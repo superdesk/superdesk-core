@@ -8,5 +8,6 @@ httmock
 wooper
 sphinx
 sphinx-autobuild
+docutils==0.12
 requests-mock
 .
