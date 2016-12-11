@@ -65,7 +65,7 @@ Default: ``0``
 By default content will not expire.
 
 ``PUBLISHED_CONTENT_EXPIRY_MINUTES``
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Default: ``0``
 
