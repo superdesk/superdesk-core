@@ -385,7 +385,7 @@ class ArchiveService(BaseService):
 
         new_doc = original_doc.copy()
         self._remove_after_copy(new_doc)
-        on_duplicate_item(new_doc)
+        on_duplicate_item(new_doc, original_doc)
         resolve_document_version(new_doc, SOURCE, 'PATCH', new_doc)
 
         if original_doc.get('task', {}).get('desk') is not None and new_doc.get(ITEM_STATE) != CONTENT_STATE.SUBMITTED:

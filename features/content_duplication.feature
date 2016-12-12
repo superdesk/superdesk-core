@@ -38,13 +38,14 @@ Feature: Duplication of Content
       Then we get list with 3 items
       When we post to "/archive/123/duplicate"
       """
-      {"desk": "#desks._id#"}
+      {"desk": "#desks._id#","type": "archive"}
       """
       When we get "/archive/#duplicate._id#"
       Then we get existing resource
       """
       {"state": "submitted", "_current_version": 4, "source": "AAP",
-       "task": {"desk": "#desks._id#", "stage": "#desks.working_stage#", "user": "#CONTEXT_USER_ID#"}}
+       "task": {"desk": "#desks._id#", "stage": "#desks.working_stage#", "user": "#CONTEXT_USER_ID#"},
+       "original_id": "123"}
       """
       Then there is no "last_production_desk" in task
       And there is no "last_authoring_desk" in task
@@ -67,7 +68,7 @@ Feature: Duplication of Content
     Scenario: Duplicate a content with history doesn't change the state if it's submitted
       When we post to "/archive/123/duplicate"
       """
-      {"desk": "#desks._id#"}
+      {"desk": "#desks._id#","type": "archive"}
       """
       When we get "/archive/#duplicate._id#"
       Then we get existing resource
@@ -88,7 +89,7 @@ Feature: Duplication of Content
        Then we get OK response
        When we post to "/archive/123/duplicate"
        """
-       {"desk": "#desks._id#"}
+       {"desk": "#desks._id#","type": "archive"}
        """
        When we get "/archive/#duplicate._id#"
        Then we get existing resource
@@ -112,7 +113,7 @@ Feature: Duplication of Content
       Then we get "_id"
       When we post to "/archive/#_id#/duplicate"
       """
-      {"desk": "#desks._id#"}
+      {"desk": "#desks._id#","type": "archive"}
       """
       When we get "/archive?q=#desks._id#"
       Then we get list with 13 items
@@ -136,7 +137,7 @@ Feature: Duplication of Content
       """
       When we post to "/archive/123/duplicate"
       """
-      {"desk": "#desks._id#"}
+      {"desk": "#desks._id#","type": "archive"}
       """
       Then we get OK response
       When we get "/archive/#duplicate._id#"
@@ -153,7 +154,7 @@ Feature: Duplication of Content
       """
       And we post to "/archive/123/duplicate"
       """
-      [{"desk": "#desks._id#"}]
+      [{"desk": "#desks._id#","type": "archive"}]
       """
       Then we get response code 403
 
@@ -170,7 +171,7 @@ Feature: Duplication of Content
       When we switch user
       And we post to "/archive/123/duplicate"
       """
-      {"desk": "#desks._id#"}
+      {"desk": "#desks._id#","type": "archive"}
       """
       And we get "/archive/#duplicate._id#"
       Then we get existing resource
@@ -232,7 +233,7 @@ Feature: Duplication of Content
       """
       When we post to "/archive/tag:localhost:2015:515b895a-b336-48b2-a506-5ffaf561b916/duplicate"
       """
-      {"desk": "#desks._id#"}
+      {"desk": "#desks._id#","type": "archive"}
       """
       When we get "/archive/#duplicate._id#"
       Then there is no "linked_in_packages" in response
@@ -266,10 +267,26 @@ Feature: Duplication of Content
       """
       When we post to "/archive/123/duplicate" with success
       """
-      {"desk": "#desks._id#"}
+      {"desk": "#desks._id#","type": "archive"}
       """
       And we get "/archive/#duplicate._id#"
       Then there is no "publish_schedule" in response
+
+    @auth @test
+    Scenario: Duplicate a published item and original item's ID is present in the duplicated item
+     Given "published"
+         """
+         [{"_id":"1","item_id": "123", "state": "published"}]
+         """
+      When we post to "/archive/#archive._id#/duplicate" with success
+      """
+      {"desk": "#desks._id#","type": "archive"}
+      """
+      And we get "/archive/#duplicate._id#"
+      Then we get existing resource
+      """
+      {"original_id": "123"}
+      """
 
     @auth
     Scenario: Duplicate an Updated and Highlighted Item
@@ -292,14 +309,14 @@ Feature: Duplication of Content
       """
       When we post to "/archive/123/duplicate" with success
       """
-      {"desk": "#desks._id#"}
+      {"desk": "#desks._id#","type": "archive"}
       """
       And we get "/archive/#duplicate._id#"
       Then there is no "rewritten_by" in response
       Then there is no "highlights" in response
       When we post to "/archive/#REWRITE_ID#/duplicate" with success
       """
-      {"desk": "#desks._id#"}
+      {"desk": "#desks._id#","type": "archive"}
       """
       And we get "/archive/#duplicate._id#"
       Then there is no "rewrite_of" in response
@@ -333,9 +350,38 @@ Feature: Duplication of Content
       Then we get OK response
       When we post to "/archive/123/duplicate"
       """
-      {"desk": "#desks._id#"}
+      {"desk": "#desks._id#","type": "archive"}
       """
       Then we get error 412
       """
       {"_message": "Workflow transition is invalid."}
       """
+
+    @auth @test
+    Scenario: Duplicate a archived item and the original ID of the archived item should be copied to duplicated item and the latest version of archived item should be picked
+      Given "archived"
+         """
+         [{  "_id": "123_1", "state": "published", "type":"text", "headline": "test1", "guid": "123_1", "item_id": "123", "original_creator": "#CONTEXT_USER_ID#",
+          "source": "REUTERS", "subject":[{"qcode": "17004000", "name": "Statistics"}],
+          "body_html": "Test Document body", "_current_version": 1,
+          "task": {"desk": "#desks._id#", "stage": "#desks.working_stage#", "user": "#CONTEXT_USER_ID#"}},
+          {  "_id": "123_2", "state": "published", "type":"text", "headline": "test2", "guid": "123_2", "item_id": "123", "original_creator": "#CONTEXT_USER_ID#",
+          "source": "REUTERS", "subject":[{"qcode": "17004000", "name": "Statistics"}],
+          "body_html": "Test Document body", "_current_version": 2,
+          "task": {"desk": "#desks._id#", "stage": "#desks.working_stage#", "user": "#CONTEXT_USER_ID#"}
+         }]
+         """
+      When we get "/archived"
+      Then we get list with 2 items
+      When we post to "/archive/123_1/duplicate" with success
+      """
+      {"desk": "#desks._id#", "type": "archived", "item_id": "123"}
+      """
+      When we get "/archive/#duplicate._id#"
+      Then we get existing resource
+      """
+      {"state": "submitted", "_current_version": 3, "source": "AAP",
+       "task": {"desk": "#desks._id#", "stage": "#desks.working_stage#", "user": "#CONTEXT_USER_ID#"},
+       "original_id": "123", "headline": "test2"}
+      """
+
