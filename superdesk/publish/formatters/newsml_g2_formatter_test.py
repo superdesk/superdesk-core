@@ -69,7 +69,8 @@ class NewsMLG2FormatterTest(TestCase):
                    'state': '', 'country': 'Australia',
                    'world_region': 'Oceania'}],
         'embargo': embargo_ts,
-        'company_codes': [{'name': 'YANCOAL AUSTRALIA LIMITED', 'qcode': 'YAL', 'security_exchange': 'ASX'}]
+        'company_codes': [{'name': 'YANCOAL AUSTRALIA LIMITED', 'qcode': 'YAL', 'security_exchange': 'ASX'}],
+        'highlights': ['584ebe7a3b80a172c83334a7', '584ebe823b80a172c83334a8'],
     }
 
     package = {
@@ -931,3 +932,14 @@ class NewsMLG2FormatterTest(TestCase):
                                             'subject[@qcode="loctyp:CountryArea"]'))
         self.assertIsNone(content_meta.find('{http://iptc.org/std/nar/2006-10-01/}'
                                             'subject[@qcode="loctyp:Country"]'))
+
+    def test_highlights(self):
+        article = self.article.copy()
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        xml = etree.fromstring(doc)
+        content_meta = xml.find('{http://iptc.org/std/nar/2006-10-01/}itemSet'
+                                '/{http://iptc.org/std/nar/2006-10-01/}newsItem/'
+                                '{http://iptc.org/std/nar/2006-10-01/}contentMeta')
+        subjects = content_meta.findall('{http://iptc.org/std/nar/2006-10-01/}subject[@type="highlight"]')
+        self.assertEqual(2, len(subjects))
+        self.assertEqual(subjects[0].attrib.get('id'), '584ebe7a3b80a172c83334a7')

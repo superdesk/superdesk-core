@@ -145,6 +145,7 @@ class NewsMLG2Formatter(Formatter):
         self._format_place(article, content_meta)
         self._format_category(article, content_meta)
         self._format_company_codes(article, content_meta, item)
+        self._format_highlights(article, content_meta)
 
         if article[ITEM_TYPE] in {CONTENT_TYPE.PICTURE, CONTENT_TYPE.AUDIO, CONTENT_TYPE.VIDEO}:
             self._format_description(article, content_meta)
@@ -284,6 +285,12 @@ class NewsMLG2Formatter(Formatter):
                     subj = SubElement(content_meta, 'subject',
                                       attrib={'type': 'cpnat:abstract', 'qcode': 'subj:' + s['qcode']})
                     SubElement(subj, 'name', attrib={XML_LANG: 'en'}).text = s['name']
+
+    def _format_highlights(self, article, content_meta):
+        """Adds highlights id as subject."""
+        for highlight in article.get('highlights', []):
+            attrib = {'type': 'highlight', 'id': str(highlight)}
+            SubElement(content_meta, 'subject', attrib=attrib)
 
     def _format_genre(self, article, content_meta):
         """Appends the genre element to the contentMeta element
