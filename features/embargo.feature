@@ -561,7 +561,7 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     Then we get response code 200
     When we post to "/archive/123/duplicate" with success
     """
-    {"desk": "#desks._id#"}
+    {"desk": "#desks._id#","type": "archive"}
     """
     And we get "/archive/#duplicate._id#"
     Then there is no "embargo" in response

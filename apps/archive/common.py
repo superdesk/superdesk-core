@@ -265,7 +265,7 @@ def set_default_source(doc):
                                                              doc['dateline'].get('date'), source)
 
 
-def on_duplicate_item(doc):
+def on_duplicate_item(doc, original_doc):
     """Make sure duplicated item has basic fields populated."""
 
     doc[GUID_FIELD] = generate_guid(type=GUID_NEWSML)
@@ -274,6 +274,7 @@ def on_duplicate_item(doc):
     set_sign_off(doc)
     doc['force_unlock'] = True
     doc[ITEM_OPERATION] = ITEM_DUPLICATE
+    doc['original_id'] = original_doc.get('item_id', original_doc.get('_id'))
     set_default_source(doc)
 
 
