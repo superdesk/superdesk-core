@@ -24,7 +24,7 @@ from apps.content import push_content_notification
 from apps.content_types.content_types import DEFAULT_SCHEMA
 from superdesk.errors import InvalidStateTransitionError, SuperdeskApiError, PublishQueueError
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, GUID_FIELD, ITEM_STATE, CONTENT_STATE, \
-    PUBLISH_STATES, EMBARGO, PUB_STATUS, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS
+    PUBLISH_STATES, EMBARGO, PUB_STATUS, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, ASSOCIATIONS
 from superdesk.metadata.packages import SEQUENCE, LINKED_IN_PACKAGES, GROUPS, PACKAGE, RESIDREF
 from superdesk.metadata.utils import item_url
 from superdesk.notification import push_notification
@@ -132,7 +132,7 @@ class BasePublishService(BaseService):
                 updated = deepcopy(original)
                 updated.update(updates)
 
-                if updates.get('associations'):
+                if updates.get(ASSOCIATIONS):
                     self._refresh_associated_items(updated)  # updates got lost with update
 
                 if self.published_state != CONTENT_STATE.KILLED and not app.config.get('NO_TAKES', False):
@@ -419,6 +419,7 @@ class BasePublishService(BaseService):
             if self.published_state == CONTENT_STATE.KILLED:
                 # if published then update the groups in the take
                 # to reflect the correct version, headline and slugline
+                package_updates[ASSOCIATIONS] = None
                 archive_service = get_resource_service(ARCHIVE)
                 for ref in take_refs:
                     if ref.get(RESIDREF) != take_article_id:
@@ -426,6 +427,9 @@ class BasePublishService(BaseService):
                         ref['headline'] = archive_item.get('headline')
                         ref['slugline'] = archive_item.get('slugline')
                         ref[config.VERSION] = archive_item.get(config.VERSION)
+            else:
+                # update association for takes.
+                self.takes_package_service.update_associations(package_updates, package, metadata_from)
 
             take_ref = next((ref for ref in take_refs if ref.get(RESIDREF) == take_article_id), None)
             if take_ref:
@@ -496,12 +500,12 @@ class BasePublishService(BaseService):
                 self.package_service.update_field_in_package(updates, package_item[config.ID_FIELD],
                                                              config.VERSION, package_item[config.VERSION])
 
-                if package_item.get('associations'):
+                if package_item.get(ASSOCIATIONS):
                     self.package_service.update_field_in_package(
                         updates,
                         package_item[config.ID_FIELD],
-                        'associations',
-                        package_item['associations']
+                        ASSOCIATIONS,
+                        package_item[ASSOCIATIONS]
                     )
 
         updated = deepcopy(package)
@@ -604,7 +608,7 @@ class BasePublishService(BaseService):
         :param takes_package:
         :param validation_errors: validation errors are appended if there are any.
         """
-        items = [value for value in original_item.get('associations', {}).values()]
+        items = [value for value in (original_item.get(ASSOCIATIONS) or {}).values()]
         if original_item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and \
                 not takes_package and self.publish_type == ITEM_PUBLISH:
             items.extend(self.package_service.get_residrefs(original_item))
@@ -659,7 +663,7 @@ class BasePublishService(BaseService):
 
     def _publish_associations(self, parent, guid):
         """Publish parent item associations."""
-        associations = parent.get('associations', {})
+        associations = parent.get(ASSOCIATIONS) or {}
         for rel, item in associations.copy().items():
             if item:
                 if item.get('pubstatus', 'usable') != 'usable':
@@ -733,7 +737,7 @@ class BasePublishService(BaseService):
         Any further updates made to basic metadata done after item was associated will be carried on and
         used when validating those items.
         """
-        associations = original.get('associations', {}) or {}
+        associations = original.get(ASSOCIATIONS) or {}
         for _, item in associations.items():
             if type(item) == dict and item.get('_id'):
                 updates = super().find_one(req=None, _id=item['_id']) or {}

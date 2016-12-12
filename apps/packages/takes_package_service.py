@@ -15,9 +15,9 @@ from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from superdesk import get_resource_service
 from apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE_TYPE, TAKES_PACKAGE, PACKAGE, \
-    LAST_TAKE, REFS, MAIN_GROUP, SEQUENCE, RESIDREF
+    LAST_TAKE, REFS, MAIN_GROUP, SEQUENCE, RESIDREF, ASSOCIATED_TAKE_SEQUENCE
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, PUBLISH_STATES, ITEM_STATE, \
-    CONTENT_STATE, EMBARGO, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS
+    CONTENT_STATE, EMBARGO, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, ASSOCIATIONS
 from apps.archive.common import insert_into_versions, ITEM_CREATE, RE_OPENS
 from .package_service import get_item_ref, create_root_group
 
@@ -143,10 +143,6 @@ class TakesPackageService():
         for field in fields_for_creating_takes_package:
             if field in target:
                 takes_package[field] = target.get(field)
-        if target.get('associations', {}).get('featureimage'):
-            takes_package['associations'] = {'featureimage': target['associations']['featureimage']}
-        elif target.get('associations'):
-            takes_package['associations'] = target['associations']
 
         takes_package.setdefault(config.VERSION, 1)
         takes_package[ITEM_STATE] = CONTENT_STATE.PROGRESS
@@ -368,3 +364,21 @@ class TakesPackageService():
                 for take_id in take_ids:
                     if take_id in item_lookup:
                         item_lookup[take_id][TAKES_PACKAGE] = package
+
+    def update_associations(self, updates, takes_package, take_item):
+        """Adds associations to takes package when the item is published or corrected.
+        :param dict updates: Takes package updates
+        :param dict takes_package: Takes package being published
+        :param dict take_item: take item being published or corrected
+        """
+        sequence = 0
+        refs = self.get_package_refs(takes_package)
+        if refs:
+            sequence = next((ref.get(SEQUENCE) for ref in refs
+                             if ref.get(RESIDREF) == take_item.get(config.ID_FIELD)), 0)
+
+        associated_sequence = takes_package.get(ASSOCIATED_TAKE_SEQUENCE) or 0
+        if (associated_sequence < sequence and take_item.get(ASSOCIATIONS)) or \
+                (sequence and associated_sequence == sequence):
+            updates[ASSOCIATED_TAKE_SEQUENCE] = sequence
+            updates[ASSOCIATIONS] = take_item.get(ASSOCIATIONS)

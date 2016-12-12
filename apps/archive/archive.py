@@ -28,7 +28,7 @@ from eve.utils import parse_request, config, date_to_str, ParsedRequest
 from superdesk.services import BaseService
 from superdesk.users.services import current_user_has_privilege, is_admin
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, CONTENT_TYPE, ITEM_TYPE, EMBARGO, \
-    PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, SIGN_OFF
+    PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, SIGN_OFF, ASSOCIATIONS
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, RESIDREF, SEQUENCE, PACKAGE_TYPE, TAKES_PACKAGE
 from apps.common.components.utils import get_component
 from apps.item_autosave.components.item_autosave import ItemAutosave
@@ -237,8 +237,8 @@ class ArchiveService(BaseService):
             CropService().create_multiple_crops(updates, original)
 
         # iterate over associations. Validate and process them if they are stored in database
-        if 'associations' in updates:
-            for item_name, item_obj in updates.get('associations').items():
+        if ASSOCIATIONS in updates:
+            for item_name, item_obj in updates.get(ASSOCIATIONS).items():
                 if item_obj and config.ID_FIELD in item_obj:
                     _id = item_obj[config.ID_FIELD]
                     stored_item = self.find_one(req=None, _id=_id)
@@ -247,7 +247,7 @@ class ArchiveService(BaseService):
                         if stored_item[ITEM_TYPE] == CONTENT_TYPE.PICTURE:  # create crops
                             CropService().create_multiple_crops(item_obj, stored_item)
                         stored_item.update(item_obj)
-                        updates['associations'][item_name] = stored_item
+                        updates[ASSOCIATIONS][item_name] = stored_item
 
     def on_updated(self, updates, original):
         get_component(ItemAutosave).clear(original['_id'])

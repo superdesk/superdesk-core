@@ -1977,3 +1977,197 @@ Feature: Take Package Publishing
           ]
       }
       """
+
+    @auth
+    Scenario: Publish takes with associations.
+      Given the "validators"
+      """
+        [{"_id": "publish_text", "act": "publish", "type": "text", "schema":{}}]
+      """
+      And empty "ingest"
+      And "desks"
+      """
+      [{"name": "Sports"}]
+      """
+      When we post to "archive"
+      """
+      [{
+          "guid": "123",
+          "type": "text",
+          "headline": "test1",
+          "slugline": "comics",
+          "anpa_take_key": "Take",
+          "state": "draft",
+          "subject":[{"qcode": "17004000", "name": "Statistics"}],
+          "task": {
+              "user": "#CONTEXT_USER_ID#"
+          },
+          "body_html": "Take-1"
+      }]
+      """
+      Then we get OK response
+      When we post to "/archive/123/move"
+      """
+      [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
+      """
+      Then we get OK response
+      When we patch "/archive/123"
+      """
+      {
+        "associations": {
+          "featuremedia": {
+            "_id": "234",
+            "guid": "234",
+            "type": "picture",
+            "headline": "s234",
+            "slugline": "s234",
+            "state": "in_progress"
+          }
+        }
+      }
+      """
+      Then we get OK response
+      When we post to "archive/123/link"
+      """
+      [{}]
+      """
+      Then we get next take as "TAKE"
+      """
+      {
+          "type": "text",
+          "headline": "test1",
+          "slugline": "comics",
+          "anpa_take_key": "Take=2",
+          "subject":[{"qcode": "17004000", "name": "Statistics"}],
+          "state": "draft",
+          "original_creator": "#CONTEXT_USER_ID#"
+      }
+      """
+      When we publish "123" with "publish" type and "published" state
+      Then we get OK response
+      When we get "/archive/#TAKE_PACKAGE#"
+      Then we get existing resource
+      """
+      {
+        "type": "composite", "package_type": "takes",
+        "sequence": 2, "associated_take_sequence": 1,
+        "state": "published",
+        "_current_version": 2,
+        "associations": {
+          "featuremedia": {
+            "_id": "234",
+            "guid": "234",
+            "type": "picture",
+            "headline": "s234",
+            "slugline": "s234",
+            "state": "in_progress"
+          }
+        }
+      }
+      """
+      When we patch "/archive/#TAKE#"
+      """
+      {"body_html": "this is another take"}
+      """
+      And we post to "/archive/#TAKE#/move"
+      """
+      [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
+      """
+      Then we get OK response
+      When we publish "#TAKE#" with "publish" type and "published" state
+      Then we get OK response
+      When we get "/archive/#TAKE_PACKAGE#"
+      Then we get existing resource
+      """
+      {
+        "type": "composite", "package_type": "takes",
+        "sequence": 2, "associated_take_sequence": 1,
+        "state": "published",
+        "_current_version": 3,
+        "associations": {
+          "featuremedia": {
+            "_id": "234",
+            "guid": "234",
+            "type": "picture",
+            "headline": "s234",
+            "slugline": "s234",
+            "state": "in_progress"
+          }
+        }
+      }
+      """
+      When we post to "archive/#TAKE#/link"
+      """
+      [{}]
+      """
+      Then we get next take as "TAKE2"
+      """
+      {
+          "type": "text",
+          "headline": "test1",
+          "slugline": "comics",
+          "anpa_take_key": "Take (reopens)=3",
+          "subject":[{"qcode": "17004000", "name": "Statistics"}],
+          "state": "draft",
+          "original_creator": "#CONTEXT_USER_ID#"
+      }
+      """
+      When we post to "/archive/#TAKE2#/move"
+      """
+      [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
+      """
+      And we patch "/archive/#TAKE2#"
+      """
+      {
+        "body_html": "this is another take",
+        "associations": {
+          "featuremedia": {
+            "_id": "456",
+            "guid": "456",
+            "type": "picture",
+            "headline": "s456",
+            "slugline": "s456",
+            "state": "in_progress"
+          }
+        }
+      }
+      """
+      Then we get OK response
+      When we publish "#TAKE2#" with "publish" type and "published" state
+      Then we get OK response
+      When we get "/archive/#TAKE_PACKAGE#"
+      Then we get existing resource
+      """
+      {
+        "type": "composite", "package_type": "takes",
+        "sequence": 3, "associated_take_sequence": 3,
+        "state": "published",
+        "_current_version": 5,
+        "associations": {
+          "featuremedia": {
+            "_id": "456",
+            "guid": "456",
+            "type": "picture",
+            "headline": "s456",
+            "slugline": "s456",
+            "state": "in_progress"
+          }
+        }
+      }
+      """
+      When we publish "#TAKE2#" with "correct" type and "corrected" state
+      """
+      {"associations": {}, "slugline": "correction"}
+      """
+      Then we get OK response
+      When we get "/archive/#TAKE_PACKAGE#"
+      Then we get existing resource
+      """
+      {
+        "type": "composite", "package_type": "takes",
+        "sequence": 3, "associated_take_sequence": 3,
+        "state": "corrected",
+        "_current_version": 6,
+        "associations": {}
+      }
+      """
