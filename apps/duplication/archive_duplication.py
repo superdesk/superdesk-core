@@ -7,8 +7,9 @@
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
+import json
 
-from eve.utils import config
+from eve.utils import config, ParsedRequest
 from flask import request
 
 import superdesk
@@ -31,7 +32,15 @@ class DuplicateResource(Resource):
     resource_title = endpoint_name
 
     schema = {
-        'desk': Resource.rel('desks', False, required=True)
+        'desk': Resource.rel('desks', False, required=True),
+        'type': {
+            'type': 'string',
+            'required': True
+        },
+        'item_id': {
+            'type': 'string',
+            'required': False
+        }
     }
 
     url = 'archive/<{0}:guid>/duplicate'.format(item_url)
@@ -50,8 +59,26 @@ class DuplicateService(BaseService):
 
         for doc in docs:
             archive_service = get_resource_service(ARCHIVE)
+            archived_doc = {}
 
-            archived_doc = archive_service.find_one(req=None, _id=guid_of_item_to_be_duplicated)
+            if doc.get('type') == 'archived':
+                archived_service = get_resource_service('archived')
+                req = ParsedRequest()
+                query = {'query':
+                         {'filtered':
+                          {'filter':
+                           {'bool':
+                            {'must': [
+                                {'term': {'item_id': doc.get('item_id')}}
+                            ]}}}}, "sort": [{"_current_version": "desc"}], "size": 1}
+                req.args = {'source': json.dumps(query)}
+                archived_docs = archived_service.get(req=req, lookup=None)
+                if archived_docs.count() > 0:
+                    archived_doc = archived_docs[0]
+
+            else:
+                archived_doc = archive_service.find_one(req=None, _id=guid_of_item_to_be_duplicated)
+
             self._validate(archived_doc, doc, guid_of_item_to_be_duplicated)
 
             archived_doc['versioncreated'] = utcnow()
