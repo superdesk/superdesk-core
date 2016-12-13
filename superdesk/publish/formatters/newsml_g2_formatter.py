@@ -76,6 +76,7 @@ class NewsMLG2Formatter(Formatter):
 
             return [(pub_seq_num, self.XML_ROOT + etree.tostring(news_message).decode('utf-8'))]
         except Exception as ex:
+            raise
             raise FormatterError.newmsmlG2FormatterError(ex, subscriber)
 
     def _is_package(self, article):
@@ -288,9 +289,17 @@ class NewsMLG2Formatter(Formatter):
 
     def _format_highlights(self, article, content_meta):
         """Adds highlights id as subject."""
+        names = {}
         for highlight in article.get('highlights', []):
-            attrib = {'type': 'highlight', 'id': str(highlight)}
-            SubElement(content_meta, 'subject', attrib=attrib)
+            highlight_id = str(highlight)
+            if not names.get(highlight_id):
+                names[highlight_id] = superdesk.get_resource_service('highlights') \
+                    .find_one(req=None, _id=highlight_id) \
+                    .get('name')
+            highlight_name = names.get(highlight_id)
+            attrib = {'type': 'highlight', 'id': highlight_id}
+            subject = SubElement(content_meta, 'subject', attrib=attrib)
+            SubElement(subject, 'name').text = highlight_name
 
     def _format_genre(self, article, content_meta):
         """Appends the genre element to the contentMeta element
