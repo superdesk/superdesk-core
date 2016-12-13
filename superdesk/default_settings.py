@@ -175,6 +175,10 @@ CELERY_ROUTES = {
         'queue': 'expiry',
         'routing_key': 'expiry.ingest'
     },
+    'superdesk.audit.gc_audit': {
+        'queue': 'expiry',
+        'routing_key': 'expiry.audit'
+    },
     'apps.auth.session_purge': {
         'queue': 'expiry',
         'routing_key': 'expiry.session'
@@ -221,6 +225,10 @@ CELERYBEAT_SCHEDULE = {
     'ingest:gc': {
         'task': 'superdesk.io.gc_ingest',
         'schedule': timedelta(minutes=5),
+    },
+    'audit:gc': {
+        'task': 'superdesk.audit.gc_audit',
+        'schedule': crontab(minute='0', hour='1')
     },
     'session:gc': {
         'task': 'apps.auth.session_purge',
@@ -305,6 +313,7 @@ CORE_APPS.extend([
     'superdesk.notification',
     'superdesk.data_updates',
     'superdesk.activity',
+    'superdesk.audit',
     'superdesk.vocabularies',
     'apps.comments',
     'superdesk.profiling',
@@ -449,6 +458,9 @@ INGEST_EXPIRY_MINUTES = int(env('INGEST_EXPIRY_MINUTES', 2 * 24 * 60))
 
 #: The number of minutes before published content items are purged
 PUBLISHED_CONTENT_EXPIRY_MINUTES = int(env('PUBLISHED_CONTENT_EXPIRY_MINUTES', 0))
+
+#: The number of minutes before audit content is purged
+AUDIT_EXPIRY_MINUTES = int(env('AUDIT_EXPIRY_MINUTES', 0))
 
 #: The number records to be fetched for expiry.
 MAX_EXPIRY_QUERY_LIMIT = int(env('MAX_EXPIRY_QUERY_LIMIT', 100))
