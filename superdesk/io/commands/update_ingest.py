@@ -153,7 +153,13 @@ def get_provider_routing_scheme(provider):
 
 def get_task_ttl(provider):
     update_schedule = provider.get('update_schedule', UPDATE_SCHEDULE_DEFAULT)
-    return update_schedule.get('minutes', 0) * 60 + update_schedule.get('hours', 0) * 3600
+    ttl = (update_schedule.get('minutes', 0) * 60 +
+           update_schedule.get('hours', 0) * 3600 +
+           update_schedule.get('seconds', 0)
+           )
+    if ttl < 15:
+        ttl = 15
+    return ttl
 
 
 def get_is_idle(provider):
