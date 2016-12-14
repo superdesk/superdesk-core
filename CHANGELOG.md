@@ -1,5 +1,12 @@
 # Superdesk Server Changelog
 
+## [1.4.6] 2016-12-14
+
+### Fixed
+
+- Fix parsing of non-unicode nitf.
+- Fix ingestion with refresh rate < 1m.
+
 ## [1.4.5] 2016-12-07
 
 ### Added
