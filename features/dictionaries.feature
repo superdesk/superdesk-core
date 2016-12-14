@@ -1,7 +1,7 @@
-@wip
 Feature: Dictionaries Upload
 
     @auth
+    @notification
     Scenario: Upload a new dictionary and patch it
         When we upload a new dictionary with success
         """
@@ -11,6 +11,10 @@ Feature: Dictionaries Upload
         """
         {"name": "test", "language_id": "en", "type": "dictionary"}
         """
+        And we get notifications
+        """
+        [{"event": "dictionary:created", "extra": {"language": "en"}}]
+        """
 
         When we upload to an existing dictionary with success
         """
@@ -19,6 +23,10 @@ Feature: Dictionaries Upload
         Then we get existing resource
         """
         {"name": "test", "language_id": "en", "type": "dictionary"}
+        """
+        And we get notifications
+        """
+        [{"event": "dictionary:updated", "extra": {"language": "en"}}]
         """
 
     @auth
