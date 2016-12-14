@@ -16,6 +16,7 @@ from superdesk.services import BaseService
 from eve.utils import ParsedRequest
 from superdesk.metadata.item import metadata_schema
 from superdesk.resource import Resource
+from content_api import items
 
 
 class ActivityReportResource(Resource):
@@ -50,6 +51,9 @@ class ActivityReportService(BaseService):
             terms.append({'term': {'subject': subjects}})
         if report.get('keywords'):
             terms.append({'term': {'keywords': report['keywords']}})
+        if report.get('operation_date'):
+            op_date = items.ItemsService._format_date(report['operation_date'])
+            terms.append({'range': {'versioncreated': {'gte': op_date, 'lte': op_date}}})
 
         return terms
 
