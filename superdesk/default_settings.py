@@ -447,6 +447,9 @@ if DEFAULT_TIMEZONE is None:
 if not DEFAULT_TIMEZONE:
     raise ValueError("DEFAULT_TIMEZONE is empty")
 
+#: Set the timezone celery functions on to the same as the default
+CELERY_TIMEZONE = DEFAULT_TIMEZONE
+
 #: The number of minutes since the last update of the Mongo auth object after which it will be deleted
 SESSION_EXPIRY_MINUTES = int(env('SESSION_EXPIRY_MINUTES', 240))
 

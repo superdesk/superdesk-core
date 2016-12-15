@@ -64,6 +64,8 @@ class AuditService(BaseService):
             'action': 'updated',
             'extra': doc
         }
+        if '_id' not in doc:
+            audit['extra']['_id'] = original.get('_id', None)
         self.post([audit])
 
     def on_generic_deleted(self, resource, doc):

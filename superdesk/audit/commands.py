@@ -13,6 +13,7 @@ import logging
 import datetime
 from superdesk.utc import utcnow
 from eve.utils import date_to_str, ParsedRequest, config
+from copy import deepcopy
 
 logger = logging.getLogger(__name__)
 
@@ -60,12 +61,19 @@ class PurgeAudit(superdesk.Command):
                                               {'extra.item': {'$exists': False}}
                                               ]}]}
 
-    def run(self):
-        if config.AUDIT_EXPIRY_MINUTES == 0:
-            logger.info('Audit purge is not eanabled')
-            return
-        logger.info("Starting audit purge")
-        self.expiry = utcnow() - datetime.timedelta(minutes=config.AUDIT_EXPIRY_MINUTES)
+    option_list = (
+        superdesk.Option('--expiry_minutes', '-e', dest='expiry', required=False),
+    )
+
+    def run(self, expiry=None):
+        if expiry is not None:
+            self.expiry = utcnow() - datetime.timedelta(minutes=int(expiry))
+        else:
+            if config.AUDIT_EXPIRY_MINUTES == 0:
+                logger.info('Audit purge is not enabled')
+                return
+            self.expiry = utcnow() - datetime.timedelta(minutes=config.AUDIT_EXPIRY_MINUTES)
+        logger.info("Starting audit purge for items older than {}".format(self.expiry))
         self.purge_old_entries()
         self.purge_orphaned_item_audits()
         logger.info("Completed audit purge")
@@ -78,7 +86,7 @@ class PurgeAudit(superdesk.Command):
         """
         service = superdesk.get_resource_service('archive')
         query = {'_id': {'$in': list(ids)}}
-        req = ParsedRequest
+        req = ParsedRequest()
         req.projection = '{"_id": 1}'
         archive_ids = service.get_from_mongo(req=req, lookup=query)
         existing = list([item['_id'] for item in archive_ids])
@@ -113,13 +121,14 @@ class PurgeAudit(superdesk.Command):
 
         # Scan the audit collection for items to delete
         while True:
-            query = self.item_entry_query
+            query = deepcopy(self.item_entry_query)
             query['$and'].append({'_updated': {'$lte': date_to_str(self.expiry)}})
             if current_id:
                 query['$and'].append({'_id': {'$gt': current_id}})
-            req = ParsedRequest
+            req = ParsedRequest()
             req.sort = '[("_id", 1)]'
             req.projection = '{"_id": 1, "extra.guid": 1, "extra._id": 1, "extra.item_id": 1, "extra.item": 1}'
+            req.max_results = 1000
             audits = service.get_from_mongo(req=req, lookup=query)
             if audits.count() == 0:
                 break
@@ -138,21 +147,22 @@ class PurgeAudit(superdesk.Command):
         :return:
         """
         service = superdesk.get_resource_service('audit')
-        current_id = None
+        current_date = None
 
         while True:
             lookup = {'$and': [self.not_item_entry_query, {'_updated': {'$lte': date_to_str(self.expiry)}}]}
-            if current_id:
-                lookup['$and'].append({'_id': {'$gt': current_id}})
-            req = ParsedRequest
+            if current_date:
+                lookup['$and'].append({'_updated': {'$gte': current_date}})
+            req = ParsedRequest()
             req.sort = '[("_updated", 1)]'
-            req.projection = '{"_id": 1}'
+            req.projection = '{"_id": 1, "_updated": 1}'
+            req.max_results = 1000
             audits = service.get_from_mongo(req=req, lookup=lookup)
             if audits.count() == 0:
                 break
-            items = list([(item['_id']) for item in audits])
-            current_id = items[len(items) - 1]
-            service.delete({'_id': {'$in': items}})
+            items = list([(item['_id'], item['_updated']) for item in audits])
+            current_date = items[len(items) - 1][1]
+            service.delete({'_id': {'$in': [i[0] for i in items]}})
 
 
 superdesk.command('audit:purge', PurgeAudit())
