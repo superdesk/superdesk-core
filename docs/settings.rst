@@ -47,6 +47,8 @@ Default: ``300``
 
 This is used for all ftp operations. Increase if you get ftp timeout errors.
 
+.. _settings.installed_apps:
+
 ``INSTALLED_APPS``
 ^^^^^^^^^^^^^^^^^^
 

@@ -9,44 +9,35 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import superdesk
-from superdesk.errors import AlreadyExistsError
 
-registered_search_providers = {}
-allowed_search_providers = []
+from apps.search_providers.registry import registered_search_providers, allowed_search_providers, register_search_provider  # noqa
+from apps.search_providers.proxy import SearchProviderProxyResource, SearchProviderProxyService
+from apps.search_providers.resource import SearchProviderResource
+from apps.search_providers.service import SearchProviderService
+from apps.search_providers.registry import SearchProviderAllowedResource, SearchProviderAllowedService
 
 
 def init_app(app):
-    # Must be imported here as the registered_search_providers is referenced by the below modules
-    from .resource import SearchProviderResource
-    from .service import SearchProviderService
+    superdesk.privilege(
+        name='search_providers',
+        label='Manage Search Providers',
+        description='User can manage search providers.'
+    )
 
-    endpoint_name = 'search_providers'
-    search_provider_service = SearchProviderService(endpoint_name, backend=superdesk.get_backend())
-    SearchProviderResource(endpoint_name, app=app, service=search_provider_service)
+    superdesk.register_resource(
+        name='search_providers',
+        resource=SearchProviderResource,
+        service=SearchProviderService
+    )
 
-    superdesk.privilege(name='search_providers', label='Manage Search Providers',
-                        description='User can manage search providers.')
+    superdesk.register_resource(
+        name='search_providers_proxy',
+        resource=SearchProviderProxyResource,
+        service=SearchProviderProxyService
+    )
 
-
-def register_search_provider(name, fetch_endpoint):
-    """Registers a Search Provider with the given name and fetch_endpoint.
-
-    Both have to be unique and if not raises
-    AlreadyExistsError. The fetch_endpoint is used by clients to fetch the article from the Search Provider.
-
-    :param name: Search Provider Name
-    :type name: str
-    :param fetch_endpoint: relative url to /api
-    :type fetch_endpoint: str
-    :raises: AlreadyExistsError - if a search has been registered with either name or fetch_endpoint.
-    """
-
-    if name in registered_search_providers:
-        raise AlreadyExistsError("A Search Provider with name: {} already exists".format(name))
-
-    if fetch_endpoint in registered_search_providers.values():
-        raise AlreadyExistsError("A Search Provider for the fetch endpoint: {} exists with name: {}"
-                                 .format(fetch_endpoint, registered_search_providers[name]))
-
-    registered_search_providers[name] = fetch_endpoint
-    allowed_search_providers.append(name)
+    superdesk.register_resource(
+        name='search_providers_allowed',
+        resource=SearchProviderAllowedResource,
+        service=SearchProviderAllowedService
+    )
