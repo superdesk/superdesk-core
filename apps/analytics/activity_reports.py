@@ -16,6 +16,7 @@ from superdesk.services import BaseService
 from eve.utils import ParsedRequest
 from superdesk.metadata.item import metadata_schema
 from superdesk.resource import Resource
+from content_api import items
 
 
 class ActivityReportResource(Resource):
@@ -35,22 +36,39 @@ class ActivityReportResource(Resource):
     }
     item_methods = ['GET', 'DELETE']
     resource_methods = ['POST']
+
     privileges = {'POST': 'activity_reports', 'DELETE': 'activity_reports', 'GET': 'activity_reports'}
 
 
 class ActivityReportService(BaseService):
-
-    def search_items(self, report):
-        print('report: ', report)
+    # check if some fields are filled out before generating the report and initiate the filter
+    def check_for_fields(self, report):
         terms = [
-            {"term": {"operation": report['operation']}},
-            {"term": {"task.desk": str(report['desk'])}}
+            {"term": {"operation": report['operation']}}
         ]
         if report.get('subject'):
-            subjects = [subject['name'] for subject in report['subject']]
+            subjects = [subject[0] for subject in report['subject']]
             terms.append({'term': {'subject': subjects}})
         if report.get('keywords'):
             terms.append({'term': {'keywords': report['keywords']}})
+        if report.get('operation_date'):
+            op_date = items.ItemsService._format_date(report['operation_date'])
+            terms.append({'range': {'versioncreated': {'gte': op_date, 'lte': op_date}}})
+
+        return terms
+
+    # get the list of all items in the 4 repos
+    def get_items_list(self, query):
+            request = ParsedRequest
+            request.args = {'source': json.dumps(query), 'repo': 'archive,published,archived,ingest'}
+            items_list = list(get_resource_service('search').get(req=request, lookup=None))
+            return items_list
+
+    def search_items_without_groupping(self, report):
+        terms = []
+        terms.append({"term": {"task.desk": str(report['desk'])}})
+        terms.append(self.check_for_fields(report))
+
         query = {
             "query": {
                 "filtered": {
@@ -60,16 +78,39 @@ class ActivityReportService(BaseService):
                 }
             }
         }
-        print('query', query)
 
-        request = ParsedRequest
-        request.args = {'source': json.dumps(query), 'repo': 'archive,published,archived,ingest'}
-        items_list = list(get_resource_service('archive').get(req=request, lookup=None))
-        return [{'items': len(items_list)}]
+        items_list = self.get_items_list(query)
+        return {'items': len(items_list)}
+
+    def search_items_when_groupping(self, report):
+        result_list = []
+        desks = get_resource_service('desks').get(req=None, lookup={})
+
+        # return the filtered items for each desk
+        for desk in desks:
+            terms = []
+            terms.append({"term": {"task.desk": str(desk['_id'])}})
+            terms.append(self.check_for_fields(report))
+            query = {
+                "query": {
+                    "filtered": {
+                        "filter": {
+                            "bool": {"must": terms}
+                        }
+                    }
+                }
+            }
+            items_list = self.get_items_list(query)
+            item = [{'desk': desk['name'], 'items': len(items_list)}]
+            result_list.append(item)
+        return result_list
 
     def create(self, docs):
         for doc in docs:
             doc['timestamp'] = datetime.now()
-            doc['report'] = self.search_items(doc)
+            if doc.get('group_by'):
+                doc['report'] = self.search_items_when_groupping(doc)
+            else:
+                doc['report'] = self.search_items_without_groupping(doc)
         docs = super().create(docs)
         return docs
