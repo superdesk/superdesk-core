@@ -16,8 +16,9 @@ import collections
 from flask import json, current_app as app
 from eve.utils import config
 
-from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
+from superdesk.services import BaseService
+from superdesk.notification import push_notification
 from apps.dictionaries.resource import DICTIONARY_FILE, DictionaryType
 
 
@@ -157,6 +158,10 @@ class DictionaryService(BaseService):
 
             store_dict(doc, {})
 
+    def on_created(self, docs):
+        for doc in docs:
+            push_notification('dictionary:created', language=doc.get('language_id'))
+
     def find_one(self, req, **lookup):
         doc = super().find_one(req, **lookup)
         if doc:
@@ -244,6 +249,9 @@ class DictionaryService(BaseService):
             merge(updates, file_words)
 
         store_dict(updates, original)
+
+    def on_updated(self, updates, original):
+        push_notification('dictionary:updated', language=updates.get('language_id', original.get('language_id')))
 
     def __set_default(self, doc):
         if 'type' not in doc:
