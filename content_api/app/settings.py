@@ -17,18 +17,15 @@ The meaning of configuration options is described in the Eve framework
 
 from superdesk.default_settings import env, urlparse
 
-from superdesk.default_settings import SECRET_KEY, MONGO_DBNAME, MONGO_URI  # noqa
-from superdesk.default_settings import AMAZON_CONTAINER_NAME, AMAZON_ACCESS_KEY_ID  # noqa
-from superdesk.default_settings import AMAZON_SECRET_ACCESS_KEY, AMAZON_REGION  # noqa
-from superdesk.default_settings import AMAZON_SERVE_DIRECT_LINKS, AMAZON_S3_USE_HTTPS  # noqa
-from superdesk.default_settings import AMAZON_SERVER, AMAZON_PROXY_SERVER, AMAZON_URL_GENERATOR  # noqa
-
-
-CONTENTAPI_MONGO_DBNAME = 'contentapi'
-CONTENTAPI_MONGO_URI = env('CONTENTAPI_MONGO_URI', 'mongodb://localhost/%s' % CONTENTAPI_MONGO_DBNAME)
-
-CONTENTAPI_ELASTICSEARCH_URL = env('CONTENTAPI_ELASTICSEARCH_URL', 'http://localhost:9200')
-CONTENTAPI_ELASTICSEARCH_INDEX = env('CONTENTAPI_ELASTICSEARCH_INDEX', CONTENTAPI_MONGO_DBNAME)
+from superdesk.default_settings import (  # noqa
+    SECRET_KEY, MONGO_DBNAME, MONGO_URI,
+    CONTENTAPI_MONGO_DBNAME, CONTENTAPI_MONGO_URI,
+    CONTENTAPI_ELASTICSEARCH_URL, CONTENTAPI_ELASTICSEARCH_INDEX,
+    AMAZON_CONTAINER_NAME, AMAZON_ACCESS_KEY_ID,
+    AMAZON_SECRET_ACCESS_KEY, AMAZON_REGION,
+    AMAZON_SERVE_DIRECT_LINKS, AMAZON_S3_USE_HTTPS,
+    AMAZON_SERVER, AMAZON_PROXY_SERVER, AMAZON_URL_GENERATOR,
+)
 
 CONTENTAPI_INSTALLED_APPS = [
     'content_api.items',
