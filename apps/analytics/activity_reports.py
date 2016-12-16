@@ -47,8 +47,8 @@ class ActivityReportService(BaseService):
             {"term": {"operation": report['operation']}}
         ]
         if report.get('subject'):
-            subjects = [subject[0] for subject in report['subject']]
-            terms.append({'term': {'subject': subjects}})
+            subjects = [subject['qcode'] for subject in report['subject']]
+            terms.append({'term': {'subject.qcode': subjects}})
         if report.get('keywords'):
             terms.append({'term': {'keywords': report['keywords']}})
         if report.get('operation_date'):
@@ -101,7 +101,7 @@ class ActivityReportService(BaseService):
                 }
             }
             items_list = self.get_items_list(query)
-            item = [{'desk': desk['name'], 'items': len(items_list)}]
+            item = {'desk': desk['name'], 'items': len(items_list)}
             result_list.append(item)
         return result_list
 
