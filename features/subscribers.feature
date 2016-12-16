@@ -319,3 +319,21 @@ Feature: Subscribers
     """
     {"global_filters":{"#content_filters._id#":true}}
     """
+
+  @wip
+  @auth
+  Scenario: Generate token for subscriber
+    Given "subscribers"
+    """
+    [{"name": "Foo"}]
+    """
+
+    When we post to "subscriber_token"
+    """
+    {"subscriber": "#subscribers._id#"}
+    """
+
+    Then we get new resource
+    """
+    {"expiry": "__any_value__"}
+    """

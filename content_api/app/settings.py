@@ -31,6 +31,7 @@ CONTENTAPI_INSTALLED_APPS = [
     'content_api.items',
     'content_api.packages',
     'content_api.assets',
+    'content_api.tokens',
 ]
 
 CONTENTAPI_DOMAIN = {}

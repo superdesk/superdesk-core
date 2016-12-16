@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import superdesk
+
 from eve.io.base import DataLayer
 from eve.io.mongo import Mongo
 from eve.utils import config, ParsedRequest

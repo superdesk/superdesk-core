@@ -19,6 +19,5 @@ def is_enabled():
     """Test if content api is enabled.
 
     It can be turned off via ``CONTENTAPI_ENABLED`` setting.
-    And it requires ``SECRET_KEY`` to be set for auth.
     """
-    return current_app.config.get('CONTENTAPI_ENABLED', True) and current_app.config.get('SECRET_KEY')
+    return current_app.config.get('CONTENTAPI_ENABLED', True)
