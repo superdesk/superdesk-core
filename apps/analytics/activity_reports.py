@@ -50,7 +50,8 @@ class ActivityReportService(BaseService):
             subjects = [subject['qcode'] for subject in report['subject']]
             terms.append({'term': {'subject.qcode': subjects}})
         if report.get('keywords'):
-            terms.append({'term': {'keywords': report['keywords']}})
+            key = [x.lower() for x in report['keywords']]
+            terms.append({'term': {'keywords': key}})
         if report.get('operation_date'):
             op_date = items.ItemsService._format_date(report['operation_date'])
             terms.append({'range': {'versioncreated': {'gte': op_date, 'lte': op_date}}})
