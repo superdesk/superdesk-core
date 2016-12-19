@@ -9,9 +9,11 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 """Generic comments module."""
-from .comments import CommentsService, CommentsResource, comments_schema  # noqa
+
 import superdesk
-from .user_mentions import on_activity_updated
+
+from apps.comments.comments import CommentsService, CommentsResource, comments_schema  # noqa
+from apps.comments.user_mentions import on_activity_updated
 
 
 def init_app(app):
