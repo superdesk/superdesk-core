@@ -20,7 +20,6 @@ from .archive import ArchiveResource, ArchiveService, ArchiveVersionsResource, A
     ArchiveSaveService
 from .commands import RemoveExpiredContent
 from .ingest import IngestResource, AppIngestService
-from .item_comments import ItemCommentsResource, ItemCommentsSubResource, ItemCommentsService, ItemCommentsSubService
 from .user_content import UserContentResource, UserContentService
 from .archive_lock import ArchiveLockResource, ArchiveUnlockResource, ArchiveLockService, ArchiveUnlockService
 from .archive_spike import ArchiveUnspikeResource, ArchiveSpikeService, ArchiveSpikeResource, ArchiveUnspikeService
@@ -49,14 +48,6 @@ def init_app(app):
     endpoint_name = 'archive'
     service = ArchiveService(endpoint_name, backend=superdesk.get_backend())
     ArchiveResource(endpoint_name, app=app, service=service)
-
-    endpoint_name = 'item_comments'
-    service = ItemCommentsService(endpoint_name, backend=superdesk.get_backend())
-    ItemCommentsResource(endpoint_name, app=app, service=service)
-
-    endpoint_name = 'content_item_comments'
-    service = ItemCommentsSubService(endpoint_name, backend=superdesk.get_backend())
-    ItemCommentsSubResource(endpoint_name, app=app, service=service)
 
     endpoint_name = 'archive_lock'
     service = ArchiveLockService(endpoint_name, backend=superdesk.get_backend())
