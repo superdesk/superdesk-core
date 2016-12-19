@@ -8,10 +8,12 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import superdesk
+
 from flask import current_app as app, g
 from eve.auth import TokenAuth
 from superdesk.utc import utcnow
-from superdesk.publish.subscriber_token import SubscriberTokenResource
+from superdesk.publish.subscriber_token import SubscriberTokenResource, SubscriberTokenService
 
 
 TOKEN_RESOURCE = 'subscriber_token'
@@ -38,5 +40,4 @@ class SubscriberTokenAuth(TokenAuth):
 
 
 def init_app(app):
-    # this is required for mongo
-    app.register_resource(TOKEN_RESOURCE, {'schema': AuthSubscriberTokenResource.schema})
+    superdesk.register_resource(TOKEN_RESOURCE, AuthSubscriberTokenResource, SubscriberTokenService)
