@@ -350,6 +350,11 @@ Default: ``'amazonaws.com'``
 
 Default: ``None``
 
+``AMAZON_S3_SUBFOLDER``
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``''``
+
 .. _settings:security
 
 Security settings
