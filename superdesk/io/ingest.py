@@ -32,7 +32,7 @@ class IngestResource(Resource):
         'payload': {
             'type': 'dict'
         },
-        'searchable': 
+        'searchable': {
             'type': 'boolean',
             'default': True
         }
