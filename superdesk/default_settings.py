@@ -363,6 +363,8 @@ AMAZON_S3_USE_HTTPS = env('AMAZON_S3_USE_HTTPS', False)
 AMAZON_SERVER = env('AMAZON_SERVER', 'amazonaws.com')
 #: amazon proxy server
 AMAZON_PROXY_SERVER = env('AMAZON_PROXY_SERVER', None)
+#: use subfolder in bucket to store files
+AMAZON_S3_SUBFOLDER = env('AMAZON_S3_SUBFOLDER', '')
 AMAZON_URL_GENERATOR = env('AMAZON_URL_GENERATOR', 'default')
 
 RENDITIONS = {

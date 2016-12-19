@@ -324,6 +324,14 @@ Default: ``'amazonaws.com'``
 
 Default: ``None``
 
+``AMAZON_S3_SUBFOLDER``
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``''``
+
+.. _settings:security
+
+>>>>>>> c15a685... Add AMAZON_S3_SUBFOLDER to default_settings.py
 Security settings
 -----------------
 
