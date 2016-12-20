@@ -374,6 +374,20 @@ metadata_schema = {
         'type': 'list',
         'schema': Resource.rel('highlights', True)
     },
+    'marked_desks': {
+        'type': 'list',
+        'nullable': True,
+        'schema': {
+            'type': 'dict',
+            'schema': {
+                'desk_id': Resource.rel('desks', True),
+                'date_marked': {'type': 'datetime', 'nullable': True},
+                'user_marked': Resource.rel('users', required=False, nullable=True),
+                'date_acknowledged': {'type': 'datetime', 'nullable': True},
+                'user_acknowledged': Resource.rel('users', required=False, nullable=True)
+            }
+        },
+    },
 
     'more_coming': {'type': 'boolean'},  # deprecated
 
