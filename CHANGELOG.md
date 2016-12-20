@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.4.7] 2016-12-20
+
+### Fixed
+
+- Fix comments notifications for users with `.` in username.
+
 ## [1.4.6] 2016-12-14
 
 ### Fixed
