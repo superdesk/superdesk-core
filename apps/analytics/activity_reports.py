@@ -16,7 +16,7 @@ from superdesk.services import BaseService
 from eve.utils import ParsedRequest
 from superdesk.metadata.item import metadata_schema
 from superdesk.resource import Resource
-from content_api import items
+from superdesk.utils import format_date
 
 
 class ActivityReportResource(Resource):
@@ -48,18 +48,19 @@ class ActivityReportService(BaseService):
         ]
         if report.get('subject'):
             subjects = [subject['qcode'] for subject in report['subject']]
-            terms.append({'term': {'subject.qcode': subjects}})
+            terms.append({'terms': {'subject.qcode': subjects}})
         if report.get('keywords'):
-            terms.append({'term': {'keywords': report['keywords']}})
+            key = [x.lower() for x in report['keywords']]
+            terms.append({'terms': {'keywords': key}})
         if report.get('operation_date'):
-            op_date = items.ItemsService._format_date(report['operation_date'])
+            op_date = format_date(report['operation_date'])
             terms.append({'range': {'versioncreated': {'gte': op_date, 'lte': op_date}}})
 
         return terms
 
     # get the list of all items in the 4 repos
     def get_items_list(self, query):
-            request = ParsedRequest
+            request = ParsedRequest()
             request.args = {'source': json.dumps(query), 'repo': 'archive,published,archived,ingest'}
             items_list = list(get_resource_service('search').get(req=request, lookup=None))
             return items_list

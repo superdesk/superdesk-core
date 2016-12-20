@@ -18,6 +18,7 @@ from enum import Enum
 from importlib import import_module
 from eve.utils import config
 from bs4 import BeautifulSoup
+from superdesk.default_settings import ELASTIC_DATE_FORMAT
 
 
 required_string = {'type': 'string', 'required': True, 'nullable': False, 'empty': False}
@@ -182,3 +183,7 @@ def plaintext_filter(value):
     soup = BeautifulSoup(value, 'html.parser')
     text = soup.get_text()
     return text.replace('\n', ' ').strip()
+
+
+def format_date(date_string):
+    return datetime.strftime(date_string, ELASTIC_DATE_FORMAT)
