@@ -1,5 +1,6 @@
-
 import time
+from unittest.mock import patch
+
 from superdesk.tests import TestCase
 from superdesk.storage.amazon.amazon_media_storage import AmazonMediaStorage
 
@@ -7,12 +8,19 @@ from superdesk.storage.amazon.amazon_media_storage import AmazonMediaStorage
 class AmazonMediaStorageTestCase(TestCase):
 
     def setUp(self):
-        self.app.config['AMAZON_CONTAINER_NAME'] = 'AMAZON_CONTAINER_NAME'
-        self.app.config['AMAZON_REGION'] = 'us-east-1'
-        self.app.config['AMAZON_S3_USE_HTTPS'] = True
-        self.app.config['AMAZON_SERVE_DIRECT_LINKS'] = True
-        self.app.config['AMAZON_SERVER'] = 'amazonaws.com'
         self.amazon = AmazonMediaStorage(self.app)
+
+        # Patch config with defaults
+        p = patch.dict(self.app.config, {
+            'AMAZON_CONTAINER_NAME': 'acname',
+            'AMAZON_REGION': 'us-east-1',
+            'AMAZON_S3_USE_HTTPS': True,
+            'AMAZON_SERVE_DIRECT_LINKS': True,
+            'AMAZON_SERVER': 'amazonaws.com',
+            'AMAZON_S3_SUBFOLDER': '',
+        })
+        p.start()
+        self.addCleanup(p.stop)
 
     def test_media_id(self):
         filename = 'test'
@@ -22,16 +30,29 @@ class AmazonMediaStorageTestCase(TestCase):
         media_id = self.amazon.media_id(filename)
         self.assertEqual('%s/%s' % (time_id, filename), media_id)
 
+        sub = 'test-sub'
+        with patch.dict(self.app.config, {'AMAZON_S3_SUBFOLDER': sub}):
+            media_id = self.amazon.media_id(filename)
+            self.assertEqual('%s/%s/%s' % (sub, time_id, filename), media_id)
+
     def test_url_for_media(self):
         media_id = 'test'
-        self.assertEqual(self.amazon.url_for_media(media_id),
-                         'https://AMAZON_CONTAINER_NAME.s3-us-east-1.amazonaws.com/%s' % (media_id))
-        self.app.config['AMAZON_S3_USE_HTTPS'] = False
-        self.assertEqual(self.amazon.url_for_media(media_id),
-                         'http://AMAZON_CONTAINER_NAME.s3-us-east-1.amazonaws.com/%s' % (media_id))
-        self.app.config['AMAZON_REGION'] = 'eu-west-1'
-        self.assertEqual(self.amazon.url_for_media(media_id),
-                         'http://AMAZON_CONTAINER_NAME.s3-eu-west-1.amazonaws.com/%s' % (media_id))
+        self.assertEqual(
+            self.amazon.url_for_media(media_id),
+            'https://acname.s3-us-east-1.amazonaws.com/%s' % media_id
+        )
+
+        with patch.dict(self.app.config, {'AMAZON_S3_USE_HTTPS': False}):
+            self.assertEqual(
+                self.amazon.url_for_media(media_id),
+                'http://acname.s3-us-east-1.amazonaws.com/%s' % media_id
+            )
+
+        with patch.dict(self.app.config, {'AMAZON_REGION': 'eu-west-1'}):
+            self.assertEqual(
+                self.amazon.url_for_media(media_id),
+                'https://acname.s3-eu-west-1.amazonaws.com/%s' % media_id
+            )
 
 
 class AmazonMediaStoragePutAndDeleteTest(TestCase):
