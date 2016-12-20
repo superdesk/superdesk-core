@@ -48,3 +48,13 @@ class ItemCommentsSubService(BaseService):
     def get(self, req, lookup):
         self.check_item_valid(lookup.get('item'))
         return super().get(req, lookup)
+
+
+def init_app(app):
+    endpoint_name = 'item_comments'
+    service = ItemCommentsService(endpoint_name, backend=superdesk.get_backend())
+    ItemCommentsResource(endpoint_name, app=app, service=service)
+
+    endpoint_name = 'content_item_comments'
+    service = ItemCommentsSubService(endpoint_name, backend=superdesk.get_backend())
+    ItemCommentsSubResource(endpoint_name, app=app, service=service)
