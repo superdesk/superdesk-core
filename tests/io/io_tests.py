@@ -11,6 +11,8 @@
 import os
 import unittest
 
+from datetime import timedelta
+from superdesk.utc import utcnow
 from superdesk.etree import etree, get_word_count, get_char_count
 from superdesk.io import registered_feed_parsers
 from superdesk.io.feed_parsers.newsml_1_2 import NewsMLOneFeedParser
@@ -57,6 +59,11 @@ class UtilsTest(unittest.TestCase):
         etree = get_etree('afp.xml')
         self.assertIsInstance(FileFeedingService().get_feed_parser({'feed_parser': 'newsml12'}, etree),
                               NewsMLOneFeedParser)
+
+    def test_is_old_content(self):
+        service = FileFeedingService()
+        self.assertFalse(service.is_old_content(utcnow()))
+        self.assertTrue(service.is_old_content(utcnow() - timedelta(minutes=11)))
 
 
 class ItemTest(unittest.TestCase):
