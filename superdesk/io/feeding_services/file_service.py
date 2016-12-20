@@ -53,6 +53,7 @@ class FileFeedingService(FeedingService):
         registered_parser = self.get_feed_parser(provider)
         for filename in get_sorted_files(self.path, sort_by=FileSortAttributes.created):
             try:
+                last_updated = None
                 file_path = os.path.join(self.path, filename)
                 if os.path.isfile(file_path):
                     stat = os.lstat(file_path)
@@ -78,7 +79,8 @@ class FileFeedingService(FeedingService):
                     else:
                         self.move_file(self.path, filename, provider=provider, success=True)
             except Exception as ex:
-                self.move_file(self.path, filename, provider=provider, success=False)
+                if last_updated and self.is_old_content(last_updated):
+                    self.move_file(self.path, filename, provider=provider, success=False)
                 raise ParserError.parseFileError('{}-{}'.format(provider['name'], self.NAME), filename, ex, provider)
 
         push_notification('ingest:update')
@@ -138,6 +140,15 @@ class FileFeedingService(FeedingService):
             provider_last_updated = utcnow() - timedelta(days=7)
 
         return provider_last_updated - timedelta(minutes=10) < last_updated
+
+    def is_old_content(self, last_updated):
+        """Test if file is old so it wouldn't probably work in is_latest_content next time.
+
+        Such files can be moved to `_ERROR` folder, it wouldn't be ingested anymore.
+
+        :param last_updated: file last updated datetime
+        """
+        return last_updated < utcnow() - timedelta(minutes=10)
 
 
 register_feeding_service(FileFeedingService.NAME, FileFeedingService(), FileFeedingService.ERRORS)
