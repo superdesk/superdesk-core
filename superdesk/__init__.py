@@ -121,7 +121,7 @@ def register_default_session_preference(preference_name, preference):
     default_session_preferences[preference_name] = preference
 
 
-def register_resource(name, resource, service=None, backend=None, privilege=None):
+def register_resource(name, resource, service=None, backend=None, privilege=None, _app=None):
     """Shortcut for registering resource and service together.
 
     :param name: resource name
@@ -129,6 +129,7 @@ def register_resource(name, resource, service=None, backend=None, privilege=None
     :param service: service class
     :param backend: backend instance
     :param privilege: privilege to register with resource
+    :param _app: flask app
     """
     if not backend:
         backend = get_backend()
@@ -136,8 +137,10 @@ def register_resource(name, resource, service=None, backend=None, privilege=None
         service = Service
     if privilege:
         intrinsic_privilege(name, privilege)
+    if not _app:
+        _app = app
     service_instance = service(name, backend=backend)
-    resource(name, app=app, service=service_instance)
+    resource(name, app=_app, service=service_instance)
 
 
 def register_jinja_filter(name, jinja_filter):
