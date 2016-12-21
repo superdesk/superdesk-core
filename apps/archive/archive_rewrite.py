@@ -115,6 +115,10 @@ class ArchiveRewriteService(Service):
                     any(genre.get('value', '').lower() == BROADCAST_GENRE.lower() for genre in update.get('genre')):
                 raise SuperdeskApiError.badRequestError("Broadcast cannot be a update story !")
 
+            if original.get('profile') and original.get('profile') != update.get('profile'):
+                raise SuperdeskApiError.badRequestError("Rewrite item content profile does "
+                                                        "not match with Original item.")
+
     def _create_rewrite_article(self, original, digital, existing_item=None, desk_id=None):
         """Creates a new story and sets the metadata from original and digital.
 
@@ -125,7 +129,7 @@ class ArchiveRewriteService(Service):
         """
         rewrite = dict()
 
-        fields = ['family_id', 'event_id', 'flags', 'language']
+        fields = ['family_id', 'event_id', 'flags', 'language', 'associations']
 
         if existing_item:
             # for associate an existing file as update merge subjects
@@ -139,7 +143,8 @@ class ArchiveRewriteService(Service):
                 content_type = get_resource_service('content_types').find_one(req=None, _id=original['profile'])
                 extended_fields = list(content_type['schema'].keys())
                 # extra fields needed.
-                extended_fields.extend(['profile', 'associations'])
+                extended_fields.extend(['profile', 'keywords', 'target_regions',
+                                        'target_types', 'target_subscribers'])
             else:
                 extended_fields = [
                     'abstract', 'anpa_category', 'pubstatus', 'slugline', 'urgency',
@@ -151,8 +156,8 @@ class ArchiveRewriteService(Service):
             fields.extend(extended_fields)
 
         for field in fields:
-                if original.get(field):
-                    rewrite[field] = original[field]
+            if original.get(field):
+                rewrite[field] = original[field]
 
         # if the original was flagged for SMS the rewrite should not be.
         if rewrite.get('flags', {}).get('marked_for_sms', False):
