@@ -37,11 +37,11 @@ class EmailPublishService(PublishService):
             except:
                 item = {}
 
-            if not config.get('recipients'):
-                raise PublishEmailError.recipientNotFoundError(LookupError('recipient field not found!'))
-
             admins = app.config['ADMINS']
-            recipients = config.get('recipients').rstrip(';').split(';')
+            recipients = [r.strip() for r in config.get('recipients', '').split(';') if r.strip()]
+            bcc = [r.strip() for r in config.get('recipients_bcc', '').split(';') if r.strip()]
+            if not recipients and not bcc:
+                raise PublishEmailError.recipientNotFoundError(LookupError('recipient and bcc fields are empty!'))
 
             subject = item.get('message_subject', 'Story: {}'.format(queue_item['item_id']))
             text_body = item.get('message_text', queue_item['formatted_item'])
@@ -52,7 +52,8 @@ class EmailPublishService(PublishService):
                        sender=admins[0],
                        recipients=recipients,
                        text_body=text_body,
-                       html_body=html_body)
+                       html_body=html_body,
+                       bcc=bcc)
 
         except Exception as ex:
             raise PublishEmailError.emailError(ex, queue_item.get('destination'))
