@@ -149,13 +149,14 @@ class BasePublishService(BaseService):
                               desk=str(original.get('task', {}).get('desk', '')),
                               user=str(user.get(config.ID_FIELD, '')))
         except SuperdeskApiError as e:
-            raise e
+            raise
         except KeyError as e:
+            logger.exception(e)
             raise SuperdeskApiError.badRequestError(
-                message="Key is missing on article to be published: {}".format(str(e)))
+                message="Key is missing on article to be published: {}".format(str(e))
+            )
         except Exception as e:
-            logger.exception("Something bad happened while publishing %s".format(id))
-            raise SuperdeskApiError.internalError(message="Failed to publish the item: {}".format(str(e)))
+            raise SuperdeskApiError.internalError(message="Failed to publish the item: {}".format(str(id)), exception=e)
 
     def _process_takes_package(self, original, updated, updates):
         if original[ITEM_TYPE] in {CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED} \

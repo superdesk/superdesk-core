@@ -10,6 +10,7 @@
 
 import json
 import superdesk
+
 from superdesk.publish.formatters import Formatter
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, FORMAT, FORMATS
 from flask import render_template

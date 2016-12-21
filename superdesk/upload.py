@@ -139,10 +139,9 @@ class UploadService(BaseService):
                                              content_type, rendition_spec, url_for_media)
             doc['renditions'] = renditions
         except Exception as io:
-            logger.exception(io)
             for file_id in inserted:
                 delete_file_on_error(doc, file_id)
-            raise SuperdeskApiError.internalError('Generating renditions failed')
+            raise SuperdeskApiError.internalError('Generating renditions failed', exception=io)
 
     def download_file(self, doc):
         url = doc.get('URL')

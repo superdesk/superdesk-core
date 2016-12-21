@@ -8,12 +8,8 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import logging
 from superdesk.errors import SuperdeskApiError
 from superdesk.services import BaseService
-
-
-logger = logging.getLogger(__name__)
 
 
 class KeywordsService(BaseService):
@@ -34,4 +30,4 @@ class KeywordsService(BaseService):
                 ids.append(len(ids))
             return ids
         except Exception as ex:
-            raise SuperdeskApiError.internalError(str(ex))
+            raise SuperdeskApiError.internalError(str(ex), exception=ex)

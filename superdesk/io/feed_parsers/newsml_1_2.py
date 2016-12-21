@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import datetime
+
 from superdesk.etree import etree
 from superdesk.io.registry import register_feed_parser
 from superdesk.io.feed_parsers import XMLFeedParser

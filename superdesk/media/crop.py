@@ -211,7 +211,7 @@ class CropService():
                 superdesk.app.media.delete(file_id)
             except:
                 pass
-            raise SuperdeskApiError.internalError('Generating crop failed: {}'.format(str(ex)))
+            raise SuperdeskApiError.internalError('Generating crop failed: {}'.format(str(ex)), exception=ex)
 
     def _delete_crop_file(self, file_id):
         """Delete the crop file

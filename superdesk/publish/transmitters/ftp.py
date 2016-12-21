@@ -13,6 +13,7 @@ from superdesk.publish import register_transmitter
 from io import BytesIO
 from superdesk.publish.publish_service import get_publish_service, PublishService
 from superdesk.errors import PublishFtpError
+
 errors = [PublishFtpError.ftpError().get_error_description()]
 
 try:

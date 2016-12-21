@@ -234,8 +234,8 @@ class AppInitializeWithDataCommand(superdesk.Command):
             try:
                 self.import_file(name, path, file_name, index_params, do_patch, force)
             except Exception as ex:
-                logger.info('Exception loading entity {} from {}'.format(name, file_name))
                 logger.exception(ex)
+                logger.info('Exception loading entity {} from {}'.format(name, file_name))
 
         logger.info('Data import finished')
         return 0

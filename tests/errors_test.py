@@ -103,8 +103,11 @@ class ErrorsTestCase(TestCase):
 
     def test_raise_apiGeneralError(self):
         with assert_raises(IngestApiError) as error_context:
-            ex = Exception("Testing general API error")
-            raise IngestApiError.apiGeneralError(ex, self.provider)
+            try:
+                ex = Exception("Testing general API error")
+                raise ex
+            except:
+                raise IngestApiError.apiGeneralError(ex, self.provider)
 
         exception = error_context.exception
         self.assertEqual(exception.code, 4000)
@@ -125,8 +128,11 @@ class ErrorsTestCase(TestCase):
 
     def test_raise_apiRequestError(self):
         with assert_raises(IngestApiError) as error_context:
-            ex = Exception("Testing apiRequestError")
-            raise IngestApiError.apiRequestError(ex, self.provider)
+            try:
+                ex = Exception("Testing apiRequestError")
+                raise ex
+            except:
+                raise IngestApiError.apiRequestError(ex, self.provider)
         exception = error_context.exception
         self.assertTrue(exception.code == 4003)
         self.assertTrue(exception.message == "API ingest has request error")
@@ -139,8 +145,11 @@ class ErrorsTestCase(TestCase):
 
     def test_raise_apiTimeoutError(self):
         with assert_raises(IngestApiError) as error_context:
-            ex = Exception("Testing apiTimeoutError")
-            raise IngestApiError.apiTimeoutError(ex, self.provider)
+            try:
+                ex = Exception("Testing apiTimeoutError")
+                raise ex
+            except:
+                raise IngestApiError.apiTimeoutError(ex, self.provider)
         exception = error_context.exception
         self.assertTrue(exception.code == 4001)
         self.assertTrue(exception.message == "API ingest connection has timed out.")
@@ -153,8 +162,11 @@ class ErrorsTestCase(TestCase):
 
     def test_raise_apiRedirectError(self):
         with assert_raises(IngestApiError) as error_context:
-            ex = Exception("Testing apiRedirectError")
-            raise IngestApiError.apiRedirectError(ex, self.provider)
+            try:
+                ex = Exception("Testing apiRedirectError")
+                raise ex
+            except:
+                raise IngestApiError.apiRedirectError(ex, self.provider)
         exception = error_context.exception
         self.assertTrue(exception.code == 4002)
         self.assertTrue(exception.message == "API ingest has too many redirects")
@@ -167,8 +179,11 @@ class ErrorsTestCase(TestCase):
 
     def test_raise_apiUnicodeError(self):
         with assert_raises(IngestApiError) as error_context:
-            ex = Exception("Testing apiUnicodeError")
-            raise IngestApiError.apiUnicodeError(ex, self.provider)
+            try:
+                ex = Exception("Testing apiUnicodeError")
+                raise ex
+            except:
+                raise IngestApiError.apiUnicodeError(ex, self.provider)
         exception = error_context.exception
         self.assertTrue(exception.code == 4004)
         self.assertTrue(exception.message == "API ingest Unicode Encode Error")
@@ -181,8 +196,11 @@ class ErrorsTestCase(TestCase):
 
     def test_raise_apiParseError(self):
         with assert_raises(IngestApiError) as error_context:
-            ex = Exception("Testing apiParseError")
-            raise IngestApiError.apiParseError(ex, self.provider)
+            try:
+                ex = Exception("Testing apiParseError")
+                raise ex
+            except:
+                raise IngestApiError.apiParseError(ex, self.provider)
         exception = error_context.exception
         self.assertTrue(exception.code == 4005)
         self.assertTrue(exception.message == "API ingest xml parse error")
@@ -195,8 +213,11 @@ class ErrorsTestCase(TestCase):
 
     def test_raise_apiNotFoundError(self):
         with assert_raises(IngestApiError) as error_context:
-            ex = Exception("Testing apiNotFoundError")
-            raise IngestApiError.apiNotFoundError(ex, self.provider)
+            try:
+                ex = Exception("Testing apiNotFoundError")
+                raise ex
+            except:
+                raise IngestApiError.apiNotFoundError(ex, self.provider)
         exception = error_context.exception
         self.assertTrue(exception.code == 4006)
         self.assertTrue(exception.message == "API service not found(404) error")
@@ -209,8 +230,11 @@ class ErrorsTestCase(TestCase):
 
     def test_raise_apiAuthError(self):
         with assert_raises(IngestApiError) as error_context:
-            ex = Exception("Testing API authorization error")
-            raise IngestApiError.apiAuthError(ex, self.provider)
+            try:
+                ex = Exception("Testing API authorization error")
+                raise ex
+            except:
+                raise IngestApiError.apiAuthError(ex, self.provider)
 
         exception = error_context.exception
         self.assertEqual(exception.code, 4007)
@@ -231,8 +255,11 @@ class ErrorsTestCase(TestCase):
 
     def test_raise_folderCreateError(self):
         with assert_raises(IngestFileError) as error_context:
-            ex = Exception("Testing folderCreateError")
-            raise IngestFileError.folderCreateError(ex, self.provider)
+            try:
+                ex = Exception("Testing folderCreateError")
+                raise ex
+            except:
+                raise IngestFileError.folderCreateError(ex, self.provider)
         exception = error_context.exception
         self.assertTrue(exception.code == 3001)
         self.assertTrue(exception.message == "Destination folder could not be created")
@@ -245,8 +272,11 @@ class ErrorsTestCase(TestCase):
 
     def test_raise_fileMoveError(self):
         with assert_raises(IngestFileError) as error_context:
-            ex = Exception("Testing fileMoveError")
-            raise IngestFileError.fileMoveError(ex, self.provider)
+            try:
+                ex = Exception("Testing fileMoveError")
+                raise ex
+            except:
+                raise IngestFileError.fileMoveError(ex, self.provider)
         exception = error_context.exception
         self.assertTrue(exception.code == 3002)
         self.assertTrue(exception.message == "Ingest file could not be copied")
@@ -259,8 +289,11 @@ class ErrorsTestCase(TestCase):
 
     def test_raise_parseMessageError(self):
         with assert_raises(ParserError) as error_context:
-            ex = Exception("Testing parseMessageError")
-            raise ParserError.parseMessageError(ex, self.provider)
+            try:
+                ex = Exception("Testing parseMessageError")
+                raise ex
+            except:
+                raise ParserError.parseMessageError(ex, self.provider)
         exception = error_context.exception
         self.assertTrue(exception.code == 1001)
         self.assertTrue(exception.message == "Message could not be parsed")

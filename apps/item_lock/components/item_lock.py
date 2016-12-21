@@ -79,8 +79,6 @@ class ItemLock(BaseComponent):
 
             item = item_model.find_one(item_filter)
             return item
-        except Exception as e:
-            raise e
         finally:
             # unlock the lock :)
             unlock(lock_id)

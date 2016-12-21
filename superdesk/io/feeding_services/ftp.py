@@ -30,7 +30,7 @@ try:
 except ImportError:
     from urlparse import urlparse
 
-logger = logging.getLogger("FTPFeedingService")
+logger = logging.getLogger(__name__)
 
 
 class FTPFeedingService(FeedingService):
@@ -91,10 +91,10 @@ class FTPFeedingService(FeedingService):
                                 ftp.retrbinary('RETR %s' % filename, f.write)
                             except ftplib.all_errors as ex:
                                 os.remove(local_file_path)
-                                logger.exception('Exception retrieving from FTP server')
+                                logger.exception('Exception retrieving file from FTP server (%s)', filename)
                                 continue
                     except FileExistsError:
-                        logger.exception('Exception retrieving from FTP server, file already exists')
+                        logger.error('Exception retrieving from FTP server, file already exists (%s)', local_file_path)
                         continue
 
                     registered_parser = self.get_feed_parser(provider)

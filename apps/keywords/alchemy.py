@@ -8,15 +8,11 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import logging
-from superdesk.errors import SuperdeskApiError
 import urllib
-
-from flask import current_app as app
 import requests
 
-
-logger = logging.getLogger(__name__)
+from flask import current_app as app
+from superdesk.errors import SuperdeskApiError
 
 
 class AlchemyKeywordsProvider():
@@ -40,11 +36,11 @@ class AlchemyKeywordsProvider():
         result = ""
         try:
             result = self._http.post(url, data=values)
-        except Exception:
-            raise SuperdeskApiError.notFoundError('Fail to connect to Alchemy service')
+        except Exception as ex:
+            raise SuperdeskApiError.internalError('Fail to connect to Alchemy service', exception=ex)
 
         try:
             keywords = result.json()
             return keywords.get('entities', [])
-        except Exception:
-            raise SuperdeskApiError.notFoundError('Fail to parse the response from Alchemy service')
+        except Exception as ex:
+            raise SuperdeskApiError.internalError('Fail to parse the response from Alchemy service', exception=ex)

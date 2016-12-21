@@ -22,7 +22,7 @@ from superdesk.metadata.utils import is_normal_package
 XMLNS = 'http://iptc.org/std/nar/2006-10-01/'
 XHTML = 'http://www.w3.org/1999/xhtml'
 
-logger = logging.getLogger("NewsMLTwoFeedParser")
+logger = logging.getLogger(__name__)
 
 
 class NewsMLTwoFeedParser(XMLFeedParser):
