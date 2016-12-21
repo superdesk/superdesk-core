@@ -1,5 +1,84 @@
 # Superdesk Server Changelog
 
+## [1.5] 2016-12-21
+
+### Fixed
+
+- Push notification when dictionary is created/updated.
+- Fix `backend_meta` service on python3.4.
+- Parse byline from rss.
+- Fix slow query in duplicate item.
+- In app factory load `CORE_APPS` before `INSTALLED_APPS`.
+- Clear SMS flag for new takes and updates.
+- Load init files from core if missing in data folder.
+- Fix xml file ingest with BOM or non-unicode encoding.
+
+### Changed
+
+- Set default content expiry to `0`.
+- Use `CONTENTAPI_URL` setting for content API.
+- Use projections in search results.
+- App init command won't override modified data. Use `-f` to keep old behaviour.
+- Make `byline` empty on kill.
+- Remove `By` prefix from `byline` in nitf output.
+- Initial [Content API Refactoring](http://superdesk.readthedocs.io/en/latest/contentapi.html).
+
+### Added
+
+- Allow duplication of items in text archive.
+- Add `Place` to criteria fields for content filters.
+- Add `PUBLISHED_CONTENT_EXPIRY_MINUTES` for published items.
+- Add `firtscreated` field to superdesk ninjs output.
+- Add `desk:preferred` user preference.
+- Add `suggestions` resource for related items suggestion.
+
+## [1.4.7] 2016-12-20
+
+### Fixed
+
+- Fix comments notifications for users with `.` in username.
+
+## [1.4.6] 2016-12-14
+
+### Fixed
+
+- Fix parsing of non-unicode nitf.
+- Fix ingestion with refresh rate < 1m.
+
+## [1.4.5] 2016-12-07
+
+### Added
+
+- Add option to skip iptc codes processing on ingest.
+
+## [1.4.4] 2016-12-05
+
+### Fixed
+
+- Use default language if no language is set on desk.
+
+## [1.4.3] 2016-11-30
+
+### Fixed
+
+- Allow tables in NITF output.
+
+## [1.4.2] 2016-11-29
+
+### Added
+
+- Add support for desk language
+
+### Fixed
+
+- Fix validation in case of error in list field
+
+## [1.4.1] 2016-11-22
+
+### Fixed
+
+- Fix missing validation error for embedded items.
+
 ## [1.4] 2016-11-15
 
 ### Added
