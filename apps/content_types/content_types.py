@@ -134,54 +134,6 @@ class ContentTypesService(superdesk.Service):
     def _set_created_by(self, doc):
         doc['created_by'] = get_user_id()
 
-    def get_allowed_list(self, schema):
-        return schema['subject']['schema']['schema']['scheme']['allowed']
-
-    def extend_content_type(self, doc):
-        # set the editor/schema definition if they are not set
-        editor = doc['editor'] = doc.get('editor', None)
-        schema = doc['schema'] = doc.get('schema', None)
-        default = False
-
-        if editor and schema:
-            for field in DEFAULT_EDITOR:
-                # add missing fields in editor with enabled = false
-                if field not in editor:
-                    editor[field] = deepcopy(DEFAULT_EDITOR[field])
-                    editor[field]['enabled'] = False
-                    schema[field] = deepcopy(DEFAULT_SCHEMA[field])
-        else:
-            editor = doc['editor'] = deepcopy(DEFAULT_EDITOR)
-            schema = doc['schema'] = deepcopy(DEFAULT_SCHEMA)
-            default = True
-
-        # process custom fields defined on vocabularies
-        vocabularies = get_resource_service('vocabularies').find({'service': {'$exists': True}})
-        for vocabulary in vocabularies:
-            field = vocabulary['_id']
-            if 'schema_field' in vocabulary:
-                # custom storage for field, replace default editor with custom one
-                old_field = vocabulary['schema_field']
-                if old_field in editor:
-                    if field not in editor:
-                        # if not set the editor for field, set it
-                        editor[field] = deepcopy(editor[old_field])
-                        if not default:
-                            editor[field]['enabled'] = False
-                    del editor[old_field]
-                if old_field == 'subject':
-                    # if subject is custom replace in allowed subject with the new custom name
-                    allowed_list = self.get_allowed_list(schema)
-                    allowed_list.remove(old_field)
-                    allowed_list.append(field)
-                if old_field not in schema:
-                    schema[old_field] = {}
-            elif field not in editor:
-                # fields are stored in subject so add new custom editor and add it to allowed in subject
-                editor[field] = {'enabled': default}
-                allowed_list = self.get_allowed_list(schema)
-                allowed_list.append(field)
-
     def on_create(self, docs):
         for doc in docs:
             self._set_updated_by(doc)
@@ -193,11 +145,14 @@ class ContentTypesService(superdesk.Service):
 
     def on_update(self, updates, original):
         self._set_updated_by(updates)
+        prepare_for_save_content_type(original, updates)
 
     def find_one(self, req, **lookup):
         doc = super().find_one(req, **lookup)
         if doc and req and 'edit' in req.args:
-            self.extend_content_type(doc)
+            prepare_for_edit_content_type(doc)
+        if doc:
+            clean_doc(doc)
         return doc
 
     def set_used(self, profile_ids):
@@ -208,3 +163,186 @@ class ContentTypesService(superdesk.Service):
         query = {'_id': {'$in': list(profile_ids)}, 'is_used': {'$ne': True}}
         update = {'$set': {'is_used': True}}
         self.find_and_modify(query=query, update=update)
+
+
+def clean_doc(doc):
+    clean_json(doc.get('schema', {}))
+    clean_json(doc.get('editor', {}))
+
+
+def clean_json(json):
+    if not isinstance(json, dict):
+        return
+    for key in list(json.keys()):
+        value = json[key]
+        if value is None:
+            del json[key]
+        else:
+            clean_json(value)
+
+
+def prepare_for_edit_content_type(doc):
+    init_default(doc)
+    editor = doc['editor']
+    schema = doc['schema']
+    fieldsMap = get_field_map()
+    init_custom(editor, schema, fieldsMap)
+    expand_subject(editor, schema, fieldsMap)
+    set_field_name(editor, fieldsMap)
+
+
+def get_allowed_list(schema):
+    return schema['schema']['schema']['scheme']['allowed']
+
+
+def get_mandatory_list(schema):
+    return schema['mandatory_in_list']['scheme']
+
+
+def get_field_map():
+    vocabularies = get_resource_service('vocabularies').find({'service': {'$exists': True}})
+    return {
+        vocabulary.get('schema_field', vocabulary['_id']): vocabulary['_id']
+        for vocabulary in vocabularies
+    }
+
+
+def init_default(doc):
+    editor = doc['editor'] = doc.get('editor', None)
+    schema = doc['schema'] = doc.get('schema', None)
+    if editor and schema:
+        for field in DEFAULT_EDITOR:
+            # add missing fields in editor with enabled = false
+            if not editor.get(field, None):
+                editor[field] = deepcopy(DEFAULT_EDITOR[field])
+                editor[field]['enabled'] = False
+                if not schema.get(field, None):
+                    schema[field] = deepcopy(DEFAULT_SCHEMA[field])
+            else:
+                editor[field]['enabled'] = True
+    else:
+        doc['editor'] = deepcopy(DEFAULT_EDITOR)
+        doc['schema'] = deepcopy(DEFAULT_SCHEMA)
+
+
+def init_custom(editor, schema, fieldsMap):
+    # process custom fields defined on vocabularies
+    for old_field, field in fieldsMap.items():
+        if field != old_field:
+            if (editor.get(field, None)):
+                editor[field]['enabled'] = True
+            # custom storage for field, replace default editor with custom one
+            replaceKey(editor, old_field, field)
+            replaceKey(schema, old_field, field)
+        else:
+            # fields are stored in subject so add new custom editor
+            schema[field] = {'type': 'list', 'required': False}
+            if editor.get(field, None):
+                editor[field]['enabled'] = True
+            else:
+                editor[field] = {'enabled': False}
+
+
+def replaceKey(dictionary, oldKey, newKey):
+    if dictionary.get(oldKey, None):
+        if not dictionary.get(newKey, None):
+            dictionary[newKey] = deepcopy(dictionary[oldKey])
+        del dictionary[oldKey]
+    elif not dictionary.get(newKey, None):
+        dictionary[newKey] = {}
+
+
+def expand_subject(editor, schema, fieldsMap):
+    subject = getSubjectName(fieldsMap)
+    allowed = get_allowed_list(schema[subject])
+    mandatory = get_mandatory_list(schema[subject])
+    schema[subject]['schema'] = {}
+    set_enabled_for_custom(editor, allowed, fieldsMap)
+    set_required_for_custom(editor, schema, mandatory, fieldsMap)
+
+
+def set_enabled_for_custom(editor, allowed, fieldsMap):
+    for field in allowed:
+        editor[fieldsMap.get(field, field)]['enabled'] = True
+
+
+def set_required_for_custom(editor, schema, mandatory, fieldsMap):
+    for field, value in mandatory.items():
+        editor[fieldsMap.get(field, field)]['required'] = value is not None
+        schema[fieldsMap.get(field, field)]['required'] = value is not None
+
+
+def getSubjectName(fieldsMap):
+    return fieldsMap.get('subject', 'subject')
+
+
+def set_field_name(editor, fieldsMap):
+    for (old_field, field) in fieldsMap.items():
+        editor[field]['field_name'] = old_field
+
+
+def prepare_for_save_content_type(original, updates):
+    editor = updates['editor'] = updates.get('editor', {})
+    schema = updates['schema'] = updates.get('schema', {})
+    original = deepcopy(original)
+    prepare_for_edit_content_type(original)
+    concatenate_dictionary(original['editor'], editor)
+    concatenate_dictionary(original['schema'], schema)
+    delete_disabled_fields(editor, schema)
+    fieldMap = get_field_map()
+    clean_editor(editor)
+    compose_subject_schema(schema, fieldMap)
+    rename_schema_for_custom_fields(schema, fieldMap)
+
+
+def concatenate_dictionary(source, destination):
+    for key in source:
+        if key not in destination:
+            destination[key] = source[key]
+
+
+def delete_disabled_fields(editor, schema):
+    for field, value in editor.items():
+        if value is None or not value.get('enabled', False):
+            editor[field] = None
+            schema[field] = None
+
+
+def clean_editor(editor):
+    valid_attributes = ['order', 'sdWidth', 'required', 'hideDate',
+                        'formatOptions', 'editor3', 'default']
+    for field_value in editor.values():
+        if not field_value:
+            continue
+        for attribute in list(field_value.keys()):
+            if attribute not in valid_attributes:
+                del field_value[attribute]
+
+
+def compose_subject_schema(schema, fieldMap):
+    mandatory = {}
+    allowed = []
+    for old_field, field in fieldMap.items():
+        if schema.get(field, None):
+            allowed.append(field)
+            if schema[field].get('required', False):
+                mandatory[old_field] = field
+            else:
+                mandatory[old_field] = None
+    if allowed:
+        init_subject_schema(schema, mandatory, allowed, fieldMap)
+
+
+def init_subject_schema(schema, mandatory, allowed, fieldMap):
+    subject = getSubjectName(fieldMap)
+    schema[subject] = deepcopy(DEFAULT_SCHEMA['subject'])
+    schema[subject]['mandatory_in_list']['scheme'] = mandatory
+    schema[subject]['schema']['schema']['scheme']['allowed'] = allowed
+
+
+def rename_schema_for_custom_fields(schema, fieldMap):
+    for old_field, field in fieldMap.items():
+        if schema.get(field, None):
+            if old_field != field:
+                schema[old_field] = schema[field]
+            del schema[field]
