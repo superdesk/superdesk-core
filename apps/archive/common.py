@@ -27,7 +27,7 @@ from superdesk.metadata.item import metadata_schema, ITEM_STATE, CONTENT_STATE, 
     LINKED_IN_PACKAGES, BYLINE, SIGN_OFF, EMBARGO, ITEM_TYPE, CONTENT_TYPE, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS
 from superdesk.workflow import set_default_state, is_workflow_state_transition_valid
 from superdesk.metadata.item import GUID_NEWSML, GUID_FIELD, GUID_TAG, not_analyzed
-from superdesk.metadata.packages import PACKAGE_TYPE, TAKES_PACKAGE, SEQUENCE
+from superdesk.metadata.packages import PACKAGE_TYPE, TAKES_PACKAGE, SEQUENCE, ASSOCIATED_TAKE_SEQUENCE
 from superdesk.metadata.utils import generate_guid
 from superdesk.errors import SuperdeskApiError, IdentifierGenerationError
 from apps.auth import get_user
@@ -119,6 +119,9 @@ ARCHIVE_SCHEMA_FIELDS = {
         'nullable': True
     },
     SEQUENCE: {
+        'type': 'integer'
+    },
+    ASSOCIATED_TAKE_SEQUENCE: {
         'type': 'integer'
     },
     EMBARGO: {

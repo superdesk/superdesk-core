@@ -21,6 +21,7 @@ GUID_FIELD = 'guid'
 GUID_NEWSML = 'newsml'
 INGEST_ID = 'ingest_id'
 FAMILY_ID = 'family_id'
+ASSOCIATIONS = 'associations'
 
 #: item public states
 pub_status = ['usable', 'withhold', 'canceled']
@@ -337,7 +338,7 @@ metadata_schema = {
     'contents': {
         'type': 'list'
     },
-    'associations': {
+    ASSOCIATIONS: {
         'type': 'dict',
     },
     'alt_text': {

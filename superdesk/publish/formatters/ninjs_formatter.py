@@ -19,7 +19,7 @@ import superdesk
 from eve.utils import config
 from superdesk.publish.formatters import Formatter
 from superdesk.errors import FormatterError
-from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, GUID_FIELD
+from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, GUID_FIELD, ASSOCIATIONS
 from superdesk.metadata.packages import RESIDREF, GROUP_ID, GROUPS, ROOT_GROUP, REFS
 from superdesk.utils import json_serialize_datetime_objectId
 from superdesk.media.renditions import get_renditions_spec
@@ -119,13 +119,13 @@ class NINJSFormatter(Formatter):
 
         if recursive:
             if article[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
-                ninjs['associations'] = self._get_associations(article, subscriber)
-                if 'associations' in article:
-                    ninjs['associations'].update(self._format_related(article, subscriber))
-            elif article.get('associations', {}):
-                ninjs['associations'] = self._format_related(article, subscriber)
-        elif article.get('associations'):
-            ninjs['associations'] = self._format_related(article, subscriber)
+                ninjs[ASSOCIATIONS] = self._get_associations(article, subscriber)
+                if article.get(ASSOCIATIONS):
+                    ninjs[ASSOCIATIONS].update(self._format_related(article, subscriber))
+            elif article.get(ASSOCIATIONS):
+                ninjs[ASSOCIATIONS] = self._format_related(article, subscriber)
+        elif article.get(ASSOCIATIONS):
+            ninjs[ASSOCIATIONS] = self._format_related(article, subscriber)
 
         if article.get(EMBARGO):
             ninjs['embargoed'] = get_utc_schedule(article, EMBARGO).isoformat()
@@ -218,7 +218,7 @@ class NINJSFormatter(Formatter):
     def _format_related(self, article, subscriber):
         """Format all associated items for simple items (not packages)."""
         associations = {}
-        for key, item in article.get('associations', {}).items():
+        for key, item in (article.get(ASSOCIATIONS) or {}).items():
             if item:
                 associations[key] = self._transform_to_ninjs(item, subscriber)
         return associations
