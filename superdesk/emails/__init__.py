@@ -22,8 +22,8 @@ EMAIL_TIMESTAMP_RESOURCE = 'email_timestamps'
 
 
 @celery.task(bind=True, max_retries=3, soft_time_limit=100)
-def send_email(self, subject, sender, recipients, text_body, html_body):
-    msg = Message(subject, sender=sender, recipients=recipients)
+def send_email(self, subject, sender, recipients, text_body, html_body, cc=None, bcc=None):
+    msg = Message(subject, sender=sender, recipients=recipients, cc=cc, bcc=bcc)
     msg.body = text_body
     msg.html = html_body
     return app.mail.send(msg)
