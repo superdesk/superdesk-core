@@ -373,7 +373,7 @@ def ingest_cancel(item):
     :param item:
     :return:
     """
-    ingest_service = superdesk.get_resource_service('ingest')
+    ingest_service = superdesk.get_resource_service(feeding_service.get('service', 'ingest'))
     lookup = {'uri': item.get('uri')}
     family_members = ingest_service.get_from_mongo(req=None, lookup=lookup)
     for relative in family_members:
@@ -419,7 +419,7 @@ def ingest_items(items, provider, feeding_service, rule_set=None, routing_scheme
             failed_items.add(item[GUID_FIELD])
 
     # sync mongo with ingest after all changes
-    ingest_service = superdesk.get_resource_service('ingest')
+    ingest_service = superdesk.get_resource_service(feeding_service.get('service', 'ingest'))
     updated_items_ids = [item['_id'] for item in all_items if item[GUID_FIELD] not in failed_items]
     updated_items = ingest_service.find({'_id': {'$in': updated_items_ids}}, max_results=len(updated_items_ids))
     app.data._search_backend('ingest').bulk_insert('ingest', [item for item in updated_items])
@@ -431,7 +431,7 @@ def ingest_items(items, provider, feeding_service, rule_set=None, routing_scheme
 
 def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=None):
     try:
-        ingest_service = superdesk.get_resource_service('ingest')
+        ingest_service = superdesk.get_resource_service(feeding_service.get('service', 'ingest'))
 
         # determine if we already have this item
         old_item = ingest_service.find_one(guid=item[GUID_FIELD], req=None)

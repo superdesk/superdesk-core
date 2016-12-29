@@ -28,13 +28,6 @@ class IngestResource(Resource):
     schema = {
         'archived': {
             'type': 'datetime'
-        },
-        'payload': {
-            'type': 'dict'
-        },
-        'searchable': {
-            'type': 'boolean',
-            'default': True
         }
     }
     schema.update(metadata_schema)

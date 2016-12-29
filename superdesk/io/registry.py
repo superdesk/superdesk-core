@@ -108,7 +108,7 @@ class FeedingServiceAllowedService(Service):
         def service(service_id):
             registered = registered_feeding_services[service_id]
             return {
-                'search_provider': service_id,
+                'feeding_service': service_id,
                 'label': getattr(registered, 'label', service_id)
             }
 
