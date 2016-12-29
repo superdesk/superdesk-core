@@ -15,8 +15,9 @@ from eve.utils import config
 from flask import json
 
 from apps.archive.archive import SOURCE as ARCHIVE
-from apps.archive.common import generate_unique_id_and_name
+from apps.archive.common import generate_unique_id_and_name, ITEM_OPERATION
 from apps.archive.common import insert_into_versions, remove_unwanted, set_original_creator
+from apps.duplication.archive_fetch import ITEM_FETCH
 from apps.tasks import send_to
 from superdesk import get_resource_service
 import superdesk
@@ -24,7 +25,7 @@ from superdesk.errors import SuperdeskApiError, ProviderError
 from superdesk.metadata.item import GUID_TAG, FAMILY_ID, INGEST_ID, ITEM_STATE, CONTENT_STATE
 from superdesk.metadata.utils import generate_guid
 from superdesk.resource import Resource
-
+from superdesk.utc import utcnow
 
 logger = logging.getLogger(__name__)
 
@@ -81,11 +82,16 @@ class SearchIngestService(superdesk.Service):
             dest_doc[ITEM_STATE] = doc.get(ITEM_STATE, CONTENT_STATE.FETCHED)
             dest_doc[INGEST_ID] = archived_doc['_id']
             dest_doc[FAMILY_ID] = archived_doc['_id']
+            dest_doc[ITEM_OPERATION] = ITEM_FETCH
             remove_unwanted(dest_doc)
             set_original_creator(dest_doc)
 
             superdesk.get_resource_service(ARCHIVE).post([dest_doc])
             insert_into_versions(dest_doc.get('_id'))
+
+        if new_guids:
+            get_resource_service('search_providers').system_update(provider.get(config.ID_FIELD),
+                                                                   {'last_item_update': utcnow()}, provider)
 
         return new_guids
 
