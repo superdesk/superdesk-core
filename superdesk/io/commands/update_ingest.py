@@ -365,7 +365,7 @@ def apply_rule_set(item, provider, rule_set=None):
         raise ProviderError.ruleError(ex, provider)
 
 
-def ingest_cancel(item):
+def ingest_cancel(item, feeding_service):
     """Given an item that has a pubstatus of canceled finds all versions of this item and mark them as canceled as well.
 
     Uses the URI to identify those items in ingest that are related to this cancellation.
@@ -374,7 +374,7 @@ def ingest_cancel(item):
     :return:
     """
     ingest_service = superdesk.get_resource_service(
-        feeding_service.service if hasattr(feeding_service, 'service')  else 'ingest')
+        feeding_service.service if hasattr(feeding_service, 'service') else 'ingest')
     lookup = {'uri': item.get('uri')}
     family_members = ingest_service.get_from_mongo(req=None, lookup=lookup)
     for relative in family_members:
@@ -420,7 +420,7 @@ def ingest_items(items, provider, feeding_service, rule_set=None, routing_scheme
             failed_items.add(item[GUID_FIELD])
 
     # sync mongo with ingest after all changes
-    ingest_collection = feeding_service.service if hasattr(feeding_service, 'service')  else 'ingest'
+    ingest_collection = feeding_service.service if hasattr(feeding_service, 'service') else 'ingest'
     ingest_service = superdesk.get_resource_service(ingest_collection)
     updated_items_ids = [item['_id'] for item in all_items if item[GUID_FIELD] not in failed_items]
     updated_items = ingest_service.find({'_id': {'$in': updated_items_ids}}, max_results=len(updated_items_ids))
@@ -434,7 +434,7 @@ def ingest_items(items, provider, feeding_service, rule_set=None, routing_scheme
 def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=None):
     try:
         ingest_service = superdesk.get_resource_service(
-            feeding_service.service if hasattr(feeding_service, 'service')  else 'ingest')
+            feeding_service.service if hasattr(feeding_service, 'service') else 'ingest')
 
         # determine if we already have this item
         old_item = ingest_service.find_one(guid=item[GUID_FIELD], req=None)
@@ -465,7 +465,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
 
         if item.get('pubstatus', '') == 'canceled':
             item[ITEM_STATE] = CONTENT_STATE.KILLED
-            ingest_cancel(item)
+            ingest_cancel(item, feeding_service)
 
         rend = item.get('renditions', {})
         if rend:
