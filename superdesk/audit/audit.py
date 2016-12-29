@@ -36,13 +36,18 @@ class AuditService(BaseService):
 
         user = getattr(g, 'user', None)
         if not user:
-            return
+            if resource == 'auth':
+                user_id = docs[0].get('user')
+            else:
+                return
+        else:
+            user_id = user.get('_id')
 
         if not len(docs):
             return
 
         audit = {
-            'user': user.get('_id'),
+            'user': user_id,
             'resource': resource,
             'action': 'created',
             'extra': docs[0]
