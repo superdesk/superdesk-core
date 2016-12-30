@@ -5,6 +5,7 @@ import mongolock
 from werkzeug.local import LocalProxy
 from flask import current_app as app
 from superdesk.logging import logger
+import re
 import socket
 
 
@@ -57,3 +58,13 @@ def unlock(task, host=None):
         host = get_host()
     logger.info('releasing lock task=%s host=%s' % (task, host))
     return _lock.release(task, host)
+
+
+def remove_locks():
+    """
+    Removes item related locks that are not in use
+    :return:
+    """
+    result = _lock.collection.delete_many({'$or': [{'_id': re.compile('^item_move'), 'locked': False},
+                                          {'_id': re.compile('^item_lock'), 'locked': False}]})
+    logger.info('unused item locks deleted count={}'.format(result.deleted_count))
