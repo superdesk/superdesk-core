@@ -29,7 +29,22 @@ Feature: Content Publishing
         "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
         "subject":[{"qcode": "17004000", "name": "Statistics"}],
         "slugline": "test",
-        "body_html": "Test Document body"}]
+        "body_html": "Test Document body",
+        "dateline": {
+          "located" : {
+              "country" : "Afghanistan",
+              "tz" : "Asia/Kabul",
+              "city" : "Mazar-e Sharif",
+              "alt_name" : "",
+              "country_code" : "AF",
+              "city_code" : "Mazar-e Sharif",
+              "dateline" : "city",
+              "state" : "Balkh",
+              "state_code" : "AF.30"
+          },
+          "text" : "MAZAR-E SHARIF, Dec 30  -",
+          "source": "AAP"}
+        }]
       """
       Then we get OK response
       And we get existing resource
@@ -1666,7 +1681,7 @@ Feature: Content Publishing
       {"_current_version": 4, "state": "killed", "pubstatus": "canceled", "sign_off": "abc/foo", "operation": "kill", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
       """
 
-    @auth @vocabulary
+    @auth @vocabulary @wip
     Scenario: Publish broadcast content to wire/digital subscribers
       Given the "validators"
       """
@@ -1695,7 +1710,23 @@ Feature: Content Publishing
         "task": {"desk": "#desks._id#", "stage": "#desks.working_stage#", "user": "#CONTEXT_USER_ID#"},
         "subject":[{"qcode": "17004000", "name": "Statistics"}],
         "slugline": "test",
-        "body_html": "Test Document body"}]
+        "body_html": "Test Document body",
+        "dateline": {
+          "date": "#DATE#",
+          "located" : {
+              "country" : "Afghanistan",
+              "tz" : "Asia/Kabul",
+              "city" : "Mazar-e Sharif",
+              "alt_name" : "",
+              "country_code" : "AF",
+              "city_code" : "Mazar-e Sharif",
+              "dateline" : "city",
+              "state" : "Balkh",
+              "state_code" : "AF.30"
+          },
+          "text" : "MAZAR-E SHARIF, Dec 30  -",
+          "source": "AAP"}
+        }]
       """
       When we post to "/products" with success
       """

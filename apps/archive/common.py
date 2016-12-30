@@ -253,16 +253,7 @@ def set_default_source(doc):
     if not doc.get('dateline'):
         return
 
-    doc['dateline']['source'] = source
-
-    if not (doc['dateline'].get('located') and doc['dateline'].get('date')):
-        return
-
-    if isinstance(doc['dateline'].get('date'), str):
-        doc['dateline']['date'] = get_date(doc['dateline'].get('date'))
-
-    doc['dateline']['text'] = format_dateline_to_locmmmddsrc(doc['dateline'].get('located'),
-                                                             doc['dateline'].get('date'), source)
+    set_dateline(doc, {})
 
 
 def on_duplicate_item(doc, original_doc):
@@ -276,6 +267,24 @@ def on_duplicate_item(doc, original_doc):
     doc[ITEM_OPERATION] = ITEM_DUPLICATE
     doc['original_id'] = original_doc.get('item_id', original_doc.get('_id'))
     set_default_source(doc)
+
+
+def set_dateline(updates, original):
+    """Set the dateline for the item.
+    :param {dict} updates: Updates related to the doc
+    :param {dict} original: Original document.
+    """
+    if not ((updates.get('dateline') or {}).get('located') and (updates.get('dateline') or {}).get('date')):
+        return
+
+    source = updates.get('source', original.get('source')) or get_default_source()
+    updates['dateline']['source'] = source
+
+    if isinstance(updates['dateline'].get('date'), str):
+        updates['dateline']['date'] = get_date(updates['dateline'].get('date'))
+
+    updates['dateline']['text'] = format_dateline_to_locmmmddsrc(updates['dateline'].get('located'),
+                                                                 updates['dateline'].get('date'), source)
 
 
 def update_dates_for(doc):
@@ -690,16 +699,13 @@ def copy_metadata_from_user_preferences(doc, repo_type=ARCHIVE):
         source = doc.get('source') or get_default_source()
 
         if doc.get('operation', '') != 'fetch':
-            if 'dateline' not in doc:
+            located = user.get('user_preferences', {}).get('dateline:located', {}).get('located')
+            if 'dateline' not in doc and user and located:
                 current_date_time = dateline_ts = utcnow()
-                doc['dateline'] = {'date': current_date_time, 'source': source, 'located': None,
-                                   'text': None}
-
-                if user and user.get('user_preferences', {}).get('dateline:located'):
-                    located = user.get('user_preferences', {}).get('dateline:located', {}).get('located')
-                    if located:
-                        doc['dateline']['located'] = located
-                        doc['dateline']['text'] = format_dateline_to_locmmmddsrc(located, dateline_ts, source)
+                doc['dateline'] = {'date': current_date_time,
+                                   'source': source,
+                                   'located': located,
+                                   'text': format_dateline_to_locmmmddsrc(located, dateline_ts, source)}
 
             if BYLINE not in doc and user and user.get(BYLINE):
                     doc[BYLINE] = user[BYLINE]

@@ -600,7 +600,22 @@ Feature: News Items Archive
          """
          [{  "type":"text", "headline": "test1", "guid": "123", "original_creator": "#CONTEXT_USER_ID#", "state": "submitted",
                "subject":[{"qcode": "17004000", "name": "Statistics"}], "body_html": "Test Document body",
-               "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}]
+               "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+              "dateline": {
+                "date": "#DATE#",
+                "located" : {
+                    "country" : "Afghanistan",
+                    "tz" : "Asia/Kabul",
+                    "city" : "Mazar-e Sharif",
+                    "alt_name" : "",
+                    "country_code" : "AF",
+                    "city_code" : "Mazar-e Sharif",
+                    "dateline" : "city",
+                    "state" : "Balkh",
+                    "state_code" : "AF.30"
+                }
+              }
+         }]
          """
          When we get "archive/123"
          Then we get OK response
@@ -619,7 +634,21 @@ Feature: News Items Archive
          """
          [{  "type":"text", "headline": "test1", "guid": "123", "original_creator": "#CONTEXT_USER_ID#", "state": "submitted",
                "subject":[{"qcode": "17004000", "name": "Statistics"}], "body_html": "Test Document body",
-               "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}]
+               "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+              "dateline": {
+                "date": "#DATE#",
+                "located" : {
+                    "country" : "Afghanistan",
+                    "tz" : "Asia/Kabul",
+                    "city" : "Mazar-e Sharif",
+                    "alt_name" : "",
+                    "country_code" : "AF",
+                    "city_code" : "Mazar-e Sharif",
+                    "dateline" : "city",
+                    "state" : "Balkh",
+                    "state_code" : "AF.30"
+              }
+           }}]
          """
          When we get "archive/123"
          Then we get OK response
