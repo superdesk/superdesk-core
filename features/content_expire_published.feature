@@ -76,7 +76,23 @@ Feature: Content Expiry Published Items
       "anpa_category" : [{"qcode" : "e", "name" : "Entertainment"}],
       "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
       "subject":[{"qcode": "17004000", "name": "Statistics"}],
-      "body_html": "Test Document body"}]
+      "body_html": "Test Document body",
+      "dateline": {
+        "date": "#DATE#",
+        "located" : {
+            "country" : "Afghanistan",
+            "tz" : "Asia/Kabul",
+            "city" : "Mazar-e Sharif",
+            "alt_name" : "",
+            "country_code" : "AF",
+            "city_code" : "Mazar-e Sharif",
+            "dateline" : "city",
+            "state" : "Balkh",
+            "state_code" : "AF.30"
+        },
+        "text" : "MAZAR-E SHARIF, Dec 30  -",
+        "source": "AAP"}
+      }]
     """
     Then we get OK response
     And we get existing resource
