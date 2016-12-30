@@ -18,9 +18,8 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.resource import Resource
 from flask import current_app as app
 import superdesk
-from apps.auth.errors import UserDisabledError, CredentialsAuthError
+from apps.auth.errors import CredentialsAuthError
 from apps.auth import get_user
-from superdesk.users.errors import UserInactiveError
 
 
 logger = logging.getLogger(__name__)
@@ -184,11 +183,7 @@ class ADAuthService(AuthService):
                                user_type=None if 'user_type' not in user_data else user_data['user_type'])
             user = user_data
         else:
-            if 'is_enabled' in user and not user.get('is_enabled', False):
-                raise UserDisabledError()
-
-            if not user.get('is_active', False):
-                raise UserInactiveError()
+            self.check_user(user)
 
             superdesk.get_resource_service('users').patch(user.get('_id'), user_data)
             user = superdesk.get_resource_service('users').find_one(req=None, **query)

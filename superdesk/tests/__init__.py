@@ -336,7 +336,7 @@ def setup_db_user(context, user):
 
         user['password'] = original_password
         auth_data = json.dumps({'username': user['username'], 'password': user['password']})
-        auth_response = context.client.post(get_prefixed_url(context.app, '/auth'),
+        auth_response = context.client.post(get_prefixed_url(context.app, '/auth_db'),
                                             data=auth_data, headers=context.headers)
 
         auth_data = json.loads(auth_response.get_data())
@@ -383,7 +383,7 @@ def setup_ad_user(context, user):
 
     with patch.object(ADAuth, 'authenticate_and_fetch_profile', return_value=ad_profile):
         auth_data = json.dumps({'username': ad_user['username'], 'password': ad_user['password']})
-        auth_response = context.client.post(get_prefixed_url(context.app, '/auth'),
+        auth_response = context.client.post(get_prefixed_url(context.app, '/auth_db'),
                                             data=auth_data, headers=context.headers)
         auth_response_as_json = json.loads(auth_response.get_data())
         token = auth_response_as_json.get('token').encode('ascii')

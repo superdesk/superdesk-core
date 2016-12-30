@@ -14,6 +14,8 @@ from superdesk import utils as utils, get_resource_service
 from superdesk.services import BaseService
 from eve.utils import config
 from superdesk.errors import SuperdeskApiError
+from apps.auth.errors import UserDisabledError
+from superdesk.users.errors import UserInactiveError
 
 
 class AuthService(BaseService):
@@ -44,6 +46,14 @@ class AuthService(BaseService):
         doc['user'] = user_id
         doc['token'] = utils.get_random_string(40)
         del doc['password']
+
+    def check_user(self, user):
+        """Check if the user is enabled and active"""
+        if 'is_enabled' in user and not user.get('is_enabled', False):
+            raise UserDisabledError()
+
+        if not user.get('is_active', False):
+            raise UserInactiveError()
 
 
 class UserSessionClearService(BaseService):

@@ -12,8 +12,7 @@ import bcrypt
 from flask import g
 from apps.auth.service import AuthService
 from superdesk import get_resource_service
-from apps.auth.errors import UserDisabledError, CredentialsAuthError
-from superdesk.users.errors import UserInactiveError
+from apps.auth.errors import CredentialsAuthError
 
 
 class DbAuthService(AuthService):
@@ -23,11 +22,7 @@ class DbAuthService(AuthService):
         if not user:
             raise CredentialsAuthError(credentials)
 
-        if 'is_enabled' in user and not user.get('is_enabled', False):
-            raise UserDisabledError()
-
-        if not user.get('is_active', False):
-            raise UserInactiveError()
+        self.check_user(user)
 
         password = credentials.get('password').encode('UTF-8')
         hashed = user.get('password').encode('UTF-8')

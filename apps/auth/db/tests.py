@@ -20,11 +20,11 @@ class UsersTestCase(TestCase):
             user = {'username': 'foo', 'password': 'bar', 'email': 'baz'}
             cmd = CreateUserCommand()
             cmd.run(user['username'], user['password'], user['email'], admin=True)
-            auth_user = get_resource_service('auth').authenticate(user)
+            auth_user = get_resource_service('auth_db').authenticate(user)
             self.assertEquals(auth_user['username'], user['username'])
 
             cmd.run(user['username'], user['password'], user['email'], admin=True)
-            auth_user2 = get_resource_service('auth').authenticate(user)
+            auth_user2 = get_resource_service('auth_db').authenticate(user)
             self.assertEquals(auth_user2['username'], user['username'])
             self.assertEquals(auth_user2['_id'], auth_user['_id'])
 
@@ -38,4 +38,4 @@ class UsersTestCase(TestCase):
             cmd.run(
                 user['username'], "new_password", user['email'], admin=True
             )
-            get_resource_service('auth').authenticate(user)
+            get_resource_service('auth_db').authenticate(user)

@@ -7,7 +7,7 @@ Feature: Authentication
             [{"username": "foo", "password": "bar", "email": "foo@bar.org", "is_active": true}]
             """
 
-        When we post to auth
+        When we post to auth_db
             """
             {"username": "foo", "password": "bar"}
             """
@@ -27,7 +27,7 @@ Feature: Authentication
         """
         [{"username": "foo", "old_password": "bar", "new_password": "new"}]
         """
-        And we post to auth
+        And we post to auth_db
             """
             {"username": "foo", "password": "new"}
             """
@@ -104,7 +104,7 @@ Feature: Authentication
             [{"username": "foo", "password": "bar", "email": "foo@bar.org", "is_active": true}]
             """
 
-        When we post to auth
+        When we post to auth_db
             """
             {"username": "foo", "password": "xyz"}
             """
@@ -120,7 +120,7 @@ Feature: Authentication
             [{"username": "foo", "password": "bar", "is_active": false, "email": "foo@bar.org"}]
             """
 
-        When we post to auth
+        When we post to auth_db
             """
             {"username": "foo", "password": "bar"}
             """
@@ -136,7 +136,7 @@ Feature: Authentication
             [{"username": "foo", "password": "bar", "email": "foo@bar.org", "is_active": true}]
             """
 
-        When we post to auth
+        When we post to auth_db
             """
             {"username": "x", "password": "y"}
             """
@@ -171,7 +171,7 @@ Feature: Authentication
             {"username": "foo", "email": "foo@bar.com"}
             """
 
-        When we post to "auth"
+        When we post to "auth_db"
             """
             {"username": "foo", "password": "barbar"}
             """
@@ -195,14 +195,14 @@ Feature: Authentication
             {"username": "foo", "email": "foo@bar.com"}
             """
 
-        When we post to auth
+        When we post to auth_db
             """
             {"username": "foo", "password": "barbar"}
             """
         When we delete latest
         Then we get response code 204
 
-        When we post to auth
+        When we post to auth_db
             """
             {"username": "test_user", "password": "test_password"}
             """
@@ -218,7 +218,7 @@ Feature: Authentication
             """
             [{"username": "foo", "password": "bar", "email": "foo@bar.org", "is_active": true, "user_type": "administrator"}]
             """
-        When we post to auth
+        When we post to auth_db
         """
         {"username": "foo", "password": "bar"}
         """
@@ -235,7 +235,7 @@ Feature: Authentication
         {}
         """
         Then we get response code 204
-        When we post to auth
+        When we post to auth_db
         """
         {"username": "foo", "password": "bar"}
         """
