@@ -49,6 +49,7 @@ XML = False
 IF_MATCH = True
 BANDWIDTH_SAVER = False
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%S+0000'
+ELASTIC_DATE_FORMAT = '%Y-%m-%d'
 PAGINATION_LIMIT = 200
 
 LOG_CONFIG_FILE = env('LOG_CONFIG_FILE', 'logging_config.yml')
@@ -356,6 +357,7 @@ CORE_APPS.extend([
     'apps.search_providers',
     'apps.feature_preview',
     'apps.workqueue',
+    'apps.analytics',
 ])
 
 RESOURCE_METHODS = ['GET', 'POST']
