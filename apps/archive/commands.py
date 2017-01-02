@@ -334,4 +334,5 @@ class RemoveExpiredContent(superdesk.Command):
 
         return items_not_moved
 
+
 superdesk.command('archive:remove_expired', RemoveExpiredContent())
