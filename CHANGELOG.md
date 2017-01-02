@@ -1,5 +1,15 @@
 # Superdesk Server Changelog
 
+## [1.4.8] 2017-01-02
+
+### Fixed
+
+- Fix file ingest when file is incomplete.
+
+### Added
+
+- Add `AMAZON_S3_SUBFOLDER` to default settings.
+
 ## [1.4.7] 2016-12-20
 
 ### Fixed
