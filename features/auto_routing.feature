@@ -990,3 +990,123 @@ Feature: Auto Routing
             ]
         }
         """
+
+    @auth @provider @vocabulary
+    Scenario: Content is ingested and auto published not using content profile
+        Given empty "desks"
+        Given the "validators"
+        """
+          [{"_id": "publish_text", "act": "auto_publish", "type": "text", "schema":{}}]
+        """
+        Given "filter_conditions"
+        """
+        [{
+            "_id": "2222222222bbbb2222222222",
+            "name": "Finance Subject",
+            "field": "subject",
+            "operator": "in",
+            "value": "04000000"
+        }]
+        """
+        Given "content_filters"
+        """
+        [{
+            "_id": "1234567890abcd1234567890",
+            "name": "Finance Content",
+            "content_filter": [
+                {
+                    "expression": {
+                        "fc": ["2222222222bbbb2222222222"]
+                    }
+                }
+            ]
+        }]
+        """
+        When we post to "content_types"
+        """
+        [{
+            "_id": "foo",
+            "schema" : {
+                "body_html" : {
+                    "required" : true,
+                    "type" : "string"
+                },
+                "headline" : {
+                    "required" : true,
+                    "maxlength" : 30,
+                    "type" : "string"
+                },
+                "body_footer" : {
+                    "type" : "string",
+                    "default" : "test",
+                    "maxlength": null
+                },
+                "slugline" : {
+                    "required" : true,
+                    "maxlength" : 24,
+                    "type" : "string"
+                }
+            }
+        }]
+        """
+        Then we get response code 201
+        When we post to "/desks"
+        """
+          {
+            "name": "Finance Desk",
+            "members": [{"user": "#CONTEXT_USER_ID#"}],
+            "default_content_profile": "#content_types._id#"
+          }
+        """
+        Then we get response code 201
+        When we post to "/routing_schemes"
+        """
+        [
+          {
+            "name": "routing rule scheme 1",
+            "rules": [
+              {
+                "name": "Finance Rule 1",
+                "filter": "1234567890abcd1234567890",
+                "actions": {
+                  "fetch": [],
+                  "publish": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}],
+                  "exit": true
+                }
+              }
+            ]
+          }
+        ]
+        """
+        Then we get response code 201
+        When we ingest with routing scheme "AAP" "aap-finance.xml"
+        """
+        #routing_schemes._id#
+        """
+        When we get "/published"
+        Then we get list with 2 items
+        """
+        {"_items": [
+          {
+              "headline": "ASIA:Samsung sells defence, petrochemical units",
+              "type": "text",
+              "profile": "#content_types._id#"
+          },
+          {
+              "headline": "ASIA:Samsung sells defence, petrochemical units", "type": "composite"
+          }
+        ]}
+        """
+        When we find for "published" the id as "published_doc" by "where={"type": "text"}"
+        Then we get OK response
+        When we post to "/archive/#published_doc#/duplicate"
+        """
+        {"desk": "#desks._id#","type": "archive"}
+        """
+        Then we get OK response
+        When we publish "#duplicate._id#" with "publish" type and "published" state
+        Then we get error 400
+        """
+         {"_issues": {"validator exception": "[['HEADLINE is too long']]"}, "_status": "ERR"}
+        """
+        
