@@ -100,7 +100,7 @@ def init_app(app):
     superdesk.privilege(name='rewrite', label='Update', description='Update a published content')
 
     superdesk.intrinsic_privilege(ArchiveUnlockResource.endpoint_name, method=['POST'])
-    superdesk.intrinsic_privilege(ArchiveLinkResource.endpoint_name, method=['POST'])
+    superdesk.intrinsic_privilege(ArchiveLinkResource.endpoint_name, method=['POST', 'DELETE'])
 
 
 @celery.task(soft_time_limit=600)

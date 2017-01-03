@@ -1152,3 +1152,344 @@ Feature: Link content in takes
             ]
         }
         """
+
+    @auth @test
+    Scenario: Unlink an update of an unpublished story
+        Given "desks"
+        """
+        [{"name": "Sports"}]
+        """
+        And "archive"
+        """
+        [{
+              "guid": "123",
+              "type": "text",
+              "headline": "test1",
+              "slugline": "comics",
+              "state": "fetched",
+              "subject":[{"qcode": "17004000", "name": "Statistics"}],
+              "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+              "body_html": "Story-1"
+        }]
+        """
+        When we rewrite "123"
+        """
+            {"desk_id": "#desks._id#"}
+        """
+        When we get "/archive/#REWRITE_ID#"
+        Then we get existing resource
+        """
+        {
+            "_id": "#REWRITE_ID#",
+            "rewrite_of": "123",
+            "headline": "test1",
+            "rewrite_sequence": 1,
+            "anpa_take_key": "update"
+        }
+        """
+        When we get "/archive/123"
+        Then we get existing resource
+        """
+        {
+            "_id": "123",
+            "rewritten_by": "#REWRITE_ID#"
+        }
+        """
+        When we delete link "archive/#REWRITE_ID#/link"
+        Then we get response code 204
+        When we get "/archive/#REWRITE_ID#"
+        Then we get "rewrite_of" not populated
+        And we get "anpa_take_key" not populated
+        And we get "rewrite_sequence" not populated
+        When we get "/archive/123"
+        Then we get "rewritten_by" not populated
+
+    @auth
+    Scenario: Unlink an update of a published story
+        Given "desks"
+        """
+        [{"name": "Sports"}]
+        """
+        And "validators"
+        """
+        [
+        {
+            "schema": {},
+            "type": "text",
+            "act": "publish",
+            "_id": "publish_text"
+        },
+        {
+            "_id": "publish_composite",
+            "act": "publish",
+            "type": "composite",
+            "schema": {}
+        }
+        ]
+        """
+        And "archive"
+        """
+        [{
+              "guid": "123",
+              "type": "text",
+              "headline": "test1",
+              "slugline": "comics",
+              "state": "fetched",
+              "subject":[{"qcode": "17004000", "name": "Statistics"}],
+              "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+              "body_html": "Story-1"
+        }]
+        """
+        When we publish "123" with "publish" type and "published" state
+        Then we get OK response
+        When we rewrite "123"
+        """
+            {"desk_id": "#desks._id#"}
+        """
+        When we get "/archive/#REWRITE_ID#"
+        Then we get existing resource
+        """
+        {
+            "_id": "#REWRITE_ID#",
+            "rewrite_of": "#archive.123.take_package#",
+            "headline": "test1",
+            "rewrite_sequence": 1,
+            "anpa_take_key": "update"
+        }
+        """
+        When we get "/archive/123"
+        Then we get existing resource
+        """
+        {
+            "_id": "123",
+            "rewritten_by": "#REWRITE_ID#"
+        }
+        """
+        When we delete link "archive/#REWRITE_ID#/link"
+        Then we get response code 204
+        When we get "/archive/#REWRITE_ID#"
+        Then we get "rewrite_of" not populated
+        And we get "anpa_take_key" not populated
+        And we get "rewrite_sequence" not populated
+        When we get "/archive/123"
+        Then we get "rewritten_by" not populated
+        When we get "/published/123"
+        Then we get "rewritten_by" not populated
+
+    @auth
+    Scenario: Unlink the last take
+        Given "desks"
+        """
+        [{"name": "Sports"}]
+        """
+        When we post to "archive"
+        """
+        [{
+            "guid": "123",
+            "type": "text",
+            "headline": "test1",
+            "slugline": "comics",
+            "anpa_take_key": "Take",
+            "guid": "123",
+            "state": "draft",
+            "task": {
+                "user": "#CONTEXT_USER_ID#"
+            }
+        }]
+        """
+        And we post to "/archive/123/move"
+        """
+        [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
+        """
+        Then we get OK response
+        When we post to "archive/123/link"
+        """
+        [{}]
+        """
+        Then we get next take as "TAKE2"
+        """
+        {
+            "_id": "#TAKE2#",
+            "type": "text",
+            "headline": "test1",
+            "slugline": "comics",
+            "anpa_take_key": "Take=2",
+            "state": "draft",
+            "original_creator": "#CONTEXT_USER_ID#",
+            "takes": {
+                "_id": "#TAKE_PACKAGE#",
+                "package_type": "takes",
+                "type": "composite"
+            },
+            "linked_in_packages": [{"package_type" : "takes","package" : "#TAKE_PACKAGE#"}]
+        }
+        """
+
+        When we delete link "archive/#TAKE2#/link"
+        Then we get response code 204
+        When we get "archive"
+        Then we get list with 3 items
+        """
+        {
+            "_items": [
+                {
+                    "groups": [
+                        {"id": "root", "refs": [{"idRef": "main"}]},
+                        {
+                            "id": "main",
+                            "refs": [
+                                {
+                                    "headline": "test1",
+                                    "slugline": "comics",
+                                    "residRef": "123",
+                                    "sequence": 1
+                                }
+                            ]
+                        }
+                    ],
+                    "type": "composite",
+                    "package_type": "takes",
+                    "sequence": 1
+                },
+                {
+                    "guid": "123",
+                    "headline": "test1",
+                    "type": "text",
+                    "linked_in_packages": [{"package_type": "takes"}]
+                }
+            ]
+        }
+        """
+        When we get "/archive/#TAKE2#"
+        Then we get existing resource
+        """
+        {
+          "linked_in_packages": []
+        }
+        """
+        And we get "sequence" not populated
+        And we get "anpa_take_key" not populated
+
+    @auth
+    Scenario: Unlink the non-last take fails
+        Given "desks"
+        """
+        [{"name": "Sports"}]
+        """
+        When we post to "archive"
+        """
+        [{
+            "guid": "123",
+            "type": "text",
+            "headline": "test1",
+            "slugline": "comics",
+            "anpa_take_key": "Take",
+            "guid": "123",
+            "state": "draft",
+            "task": {
+                "user": "#CONTEXT_USER_ID#"
+            }
+        }]
+        """
+        And we post to "/archive/123/move"
+        """
+        [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
+        """
+        Then we get OK response
+        When we post to "archive/123/link"
+        """
+        [{}]
+        """
+        Then we get next take as "TAKE2"
+        """
+        {
+            "_id": "#TAKE2#",
+            "type": "text",
+            "headline": "test1",
+            "slugline": "comics",
+            "anpa_take_key": "Take=2",
+            "state": "draft",
+            "original_creator": "#CONTEXT_USER_ID#",
+            "takes": {
+                "_id": "#TAKE_PACKAGE#",
+                "package_type": "takes",
+                "type": "composite"
+            },
+            "linked_in_packages": [{"package_type" : "takes","package" : "#TAKE_PACKAGE#"}]
+        }
+        """
+        When we post to "archive/#TAKE2#/link"
+        """
+        [{}]
+        """
+        Then we get next take as "LAST_TAKE"
+        """
+        {
+            "_id": "#LAST_TAKE#",
+            "type": "text",
+            "headline": "test1",
+            "slugline": "comics",
+            "anpa_take_key": "Take=3",
+            "state": "draft",
+            "original_creator": "#CONTEXT_USER_ID#",
+            "takes": {
+                "_id": "#TAKE_PACKAGE#",
+                "package_type": "takes",
+                "type": "composite"
+            },
+            "linked_in_packages": [{"package_type" : "takes","package" : "#TAKE_PACKAGE#"}]
+        }
+        """
+        When we get "archive"
+        Then we get list with 4 items
+        When we delete link "archive/#TAKE2#/link"
+        Then we get error 400
+        """
+        {"_message": "Only the last take can be unlinked!"}
+        """
+
+    @auth
+    Scenario: Unlink ignores item in a normal package
+        Given empty "archive"
+        And "desks"
+        """
+        [{"name": "test desk"}]
+        """
+        When we post to "archive" with success
+        """
+        [{"headline": "test", "guid": "123", "slugline": "WORMS"},
+         {"headline": "test", "guid": "456", "slugline": "SNAILS"}]
+        """
+        When we post to "archive" with success
+        """
+        {
+            "groups": [
+                {"id": "root", "refs": [{"idRef": "main"}], "role": "grpRole:NEP"},
+                {
+                    "id": "main",
+                    "refs": [
+                        {
+                            "headline": "test package with text",
+                            "residRef": "123",
+                            "slugline": "WORMS"
+                        },
+                        {
+                            "headline": "test package with text",
+                            "residRef": "456",
+                            "slugline": "SNAILS"
+                        }
+                    ],
+                    "role": "grpRole:Main"
+                }
+            ],
+            "guid": "789",
+            "type": "composite",
+            "task": {"user": "#user._id#", "desk": "#desks._id#"}
+        }
+        """
+        When we delete link "archive/456/link"
+        Then we get error 400
+        """
+        {"_message": "Only takes and updates can be unlinked!"}
+        """
+
