@@ -17,7 +17,7 @@ from .common import remove_unwanted, update_state, set_item_expiry, remove_media
     on_create_item, on_duplicate_item, get_user, update_version, set_sign_off, \
     handle_existing_data, item_schema, validate_schedule, is_item_in_package, update_schedule_settings, \
     ITEM_OPERATION, ITEM_RESTORE, ITEM_UPDATE, ITEM_DESCHEDULE, ARCHIVE as SOURCE, \
-    LAST_PRODUCTION_DESK, LAST_AUTHORING_DESK, convert_task_attributes_to_objectId, BROADCAST_GENRE
+    LAST_PRODUCTION_DESK, LAST_AUTHORING_DESK, convert_task_attributes_to_objectId, BROADCAST_GENRE, set_dateline
 from superdesk.media.crop import CropService
 from flask import current_app as app
 from superdesk import get_resource_service
@@ -664,6 +664,7 @@ class ArchiveService(BaseService):
 
         set_item_expiry(updates, original)
         set_sign_off(updates, original=original)
+        set_dateline(updates, original)
 
         # Clear publish_schedule field
         if updates.get(PUBLISH_SCHEDULE) \
