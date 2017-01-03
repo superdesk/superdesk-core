@@ -1,5 +1,17 @@
 # Superdesk Server Changelog
 
+## [1.5.1] 2017-01-03
+
+### Changed
+
+- Bypass content validation using profile for auto published content.
+
+### Fixed
+
+- Clean up old item locks.
+- Mark search provider as used when an item is fetched.
+- Fix issues with dateline validation for content profile.
+
 ## [1.5] 2016-12-21
 
 ### Fixed
