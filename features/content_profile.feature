@@ -70,76 +70,168 @@ Feature: Content Profile
         Then we get existing resource
         """
         {
-            "_id": "foo",
-            "label": "Foo",
-            "enabled": false,
-            "created_by": "#CONTEXT_USER_ID#",
-            "updated_by": "#CONTEXT_USER_ID#",
-            "schema": {
-                "slugline": {"maxlength": 24, "type": "string"},
-                "genre": {"type": "list"},
-                "anpa_take_key": {},
-                "place": {"type": "list"},
-                "priority": {},
-                "anpa_category": {"type": "list"},
-                "subject": {
-                  "type": "list",
-                  "required": true,
-                  "mandatory_in_list": {"scheme": {}},
-                  "schema": {
-                     "type": "dict",
-                     "schema": {
-                        "name": {},
-                        "qcode": {},
-                        "scheme": {
-                           "type": "string",
-                           "required": true,
-                           "allowed": ["subject"]
-                        },
-                        "service": {"nullable": true},
-                        "parent": {"nullable": true}
-                      }
-                  }
-                },
-                "company_codes": {"type": "list"},
-                "ednote": {},
-                "headline": {"maxlength": 64, "type": "string"},
-                "sms": null,
-                "abstract": {"maxlength": 160, "type": "string"},
-                "byline": {"type": "string"},
-                "dateline": {"type": "dict"},
-                "body_html": {},
-                "footer": null,
-                "body_footer": null,
-                "sign_off": {"type": "string"},
-                "media": {},
-                "media_description": {}
-            },
             "editor": {
-                "slugline": {"order": 1, "sdWidth": "full", "enabled": true},
-                "genre": {"order": 2, "sdWidth": "half", "enabled": true},
-                "anpa_take_key": {"order": 3, "sdWidth": "half", "enabled": false},
-                "place": {"order": 4, "sdWidth": "half", "enabled": true},
-                "priority": {"order": 5, "sdWidth": "quarter", "enabled": true},
-                "anpa_category": {"order": 7, "sdWidth": "full", "enabled": true},
-                "subject": {"order": 8, "sdWidth": "full", "enabled": true},
-                "company_codes": {"order": 9, "sdWidth": "full", "enabled": false},
-                "ednote": {"order": 10, "sdWidth": "full", "enabled": true},
-                "headline": {"order": 11, "formatOptions": ["underline", "anchor", "bold", "removeFormat"], "enabled": true},
-                "sms": {"order": 12, "enabled": false},
-                "abstract": {"order": 13, "formatOptions": ["bold", "italic", "underline", "anchor", "removeFormat"], "enabled": true},
-                "byline": {"order": 14, "enabled": true},
-                "dateline": {"order": 15, "enabled": true},
-                "body_html": {
-                    "order": 16,
-                    "formatOptions": ["h2", "bold", "italic", "underline", "quote", "anchor", "embed", "picture", "removeFormat"],
+                "place": {
+                    "sdWidth": "half",
+                    "enabled": true,
+                    "order": 4
+                },
+                "abstract": {
+                    "formatOptions": ["bold", "italic", "underline", "anchor", "removeFormat"],
+                    "enabled": true,
+                    "order": 13
+                },
+                "media": {
                     "enabled": true
                 },
-                "footer": {"order": 17, "enabled": false},
-                "body_footer": {"order": 18, "enabled": false},
-                "sign_off": {"order": 19, "enabled": true},
-                "media": {"enabled": true},
-                "media_description": {"enabled": true}
+                "slugline": {
+                    "sdWidth": "full",
+                    "enabled": true,
+                    "order": 1
+                },
+                "headline": {
+                    "formatOptions": ["underline", "anchor", "bold", "removeFormat"],
+                    "enabled": true,
+                    "order": 11
+                },
+                "body_footer": {
+                    "enabled": false,
+                    "order": 18
+                },
+                "sign_off": {
+                    "enabled": true,
+                    "order": 19
+                },
+                "footer": {
+                    "enabled": false,
+                    "order": 17
+                },
+                "anpa_category": {
+                    "sdWidth": "full",
+                    "enabled": true,
+                    "order": 7
+                },
+                "dateline": {
+                    "enabled": true,
+                    "order": 15
+                },
+                "ednote": {
+                    "sdWidth": "full",
+                    "enabled": true,
+                    "order": 10
+                },
+                "anpa_take_key": {
+                    "sdWidth": "half",
+                    "enabled": false,
+                    "order": 3
+                },
+                "subject": {
+                    "sdWidth": "full",
+                    "enabled": true,
+                    "order": 8
+                },
+                "genre": {
+                    "sdWidth": "half",
+                    "enabled": true,
+                    "order": 2
+                },
+                "company_codes": {
+                    "sdWidth": "full",
+                    "enabled": false,
+                    "order": 9
+                },
+                "priority": {
+                    "sdWidth": "quarter",
+                    "enabled": true,
+                    "order": 5
+                },
+                "body_html": {
+                    "formatOptions": ["h2", "bold", "italic", "underline", "quote", "anchor", "embed", "picture", "removeFormat"],
+                    "enabled": true,
+                    "order": 16
+                },
+                "byline": {
+                    "enabled": true,
+                    "order": 14
+                },
+                "media_description": {
+                    "enabled": true
+                },
+                "sms": {
+                    "enabled": false,
+                    "order": 12
+                }
+            },
+            "schema": {
+                "abstract": {
+                    "type": "string",
+                    "required": false,
+                    "maxlength": 160
+                },
+                "place": {
+                    "type": "list",
+                    "required": false
+                },
+                "media": {},
+                "slugline": {
+                    "type": "string",
+                    "required": false,
+                    "maxlength": 24
+                },
+                "ednote": {
+                    "type": "string",
+                    "required": false
+                },
+                "sign_off": {
+                    "type": "string",
+                    "required": false
+                },
+                "byline": {
+                    "type": "string",
+                    "required": false
+                },
+                "body_html": {
+                    "type": "string",
+                    "required": false
+                },
+                "dateline": {
+                    "type": "dict",
+                    "required": false
+                },
+                "anpa_category": {
+                    "type": "list",
+                    "required": false
+                },
+                "anpa_take_key": {
+                    "type": "string",
+                    "required": false
+                },
+                "subject": {
+                    "type": "list",
+                    "schema": {},
+                    "required": true,
+                    "mandatory_in_list": {
+                        "scheme": {}
+                    }
+                },
+                "genre": {
+                    "type": "list",
+                    "required": false
+                },
+                "company_codes": {
+                    "type": "list",
+                    "required": false
+                },
+                "priority": {
+                    "type": "integer",
+                    "required": false
+                },
+                "headline": {
+                    "type": "string",
+                    "required": false,
+                    "maxlength": 64
+                },
+                "media_description": {}
             }
         }
         """
@@ -188,70 +280,166 @@ Feature: Content Profile
             "created_by": "#CONTEXT_USER_ID#",
             "updated_by": "#CONTEXT_USER_ID#",
             "schema": {
-                "slugline": {"maxlength": 24, "type": "string"},
-                "genre": {"type": "list"},
-                "anpa_take_key": {},
-                "place": {"type": "list"},
-                "priority": {},
-                "anpa_category": {"type": "list"},
-                "subject": {
-                  "type": "list",
-                  "required": true,
-                  "mandatory_in_list": {"scheme": {}},
-                  "schema": {
-                     "type": "dict",
-                     "schema": {
-                        "name": {},
-                        "qcode": {},
-                        "scheme": {
-                           "type": "string",
-                           "required": true,
-                           "allowed": ["subject"]
-                        },
-                        "service": {"nullable": true},
-                        "parent": {"nullable": true}
-                      }
-                  }
+                "ednote": {
+                    "required": false,
+                    "type": "string"
                 },
-                "company_codes": {"type": "list"},
-                "ednote": {},
-                "headline": {"maxlength": 64, "type": "string"},
-                "sms": null,
-                "abstract": {"maxlength": 160, "type": "string"},
-                "byline": {"type": "string"},
-                "dateline": {"type": "dict"},
-                "body_html": {},
-                "footer": null,
-                "body_footer": null,
-                "sign_off": {"type": "string"},
+                "priority": {
+                    "type": "integer",
+                    "required": false
+                },
+                "anpa_take_key": {
+                    "required": false,
+                    "type": "string"
+                },
+                "body_html": {
+                    "required": false,
+                    "type": "string"
+                },
+                "anpa_category": {
+                    "type": "list",
+                    "required": false
+                },
                 "media": {},
-                "media_description": {}
+                "subject": {
+                    "mandatory_in_list": {
+                        "scheme": {}
+                    },
+                    "type": "list",
+                    "schema": {},
+                    "required": true
+                },
+                "abstract": {
+                    "maxlength": 160,
+                    "required": false,
+                    "type": "string"
+                },
+                "media_description": {},
+                "headline": {
+                    "maxlength": 64,
+                    "required": false,
+                    "type": "string"
+                },
+                "place": {
+                    "type": "list",
+                    "required": false
+                },
+                "byline": {
+                    "required": false,
+                    "type": "string"
+                },
+                "genre": {
+                    "type": "list",
+                    "required": false
+                },
+                "company_codes": {
+                    "type": "list",
+                    "required": false
+                },
+                "sign_off": {
+                    "required": false,
+                    "type": "string"
+                },
+                "slugline": {
+                    "maxlength": 24,
+                    "type": "string"
+                },
+                "dateline": {
+                    "type": "dict",
+                    "required": false
+                }
             },
             "editor": {
-                "slugline": {"order": 1, "sdWidth": "full", "enabled": true},
-                "genre": {"order": 2, "sdWidth": "half", "enabled": false},
-                "anpa_take_key": {"order": 3, "sdWidth": "half", "enabled": false},
-                "place": {"order": 4, "sdWidth": "half", "enabled": false},
-                "priority": {"order": 5, "sdWidth": "quarter", "enabled": false},
-                "anpa_category": {"order": 7, "sdWidth": "full", "enabled": false},
-                "subject": {"order": 8, "sdWidth": "full", "enabled": false},
-                "company_codes": {"order": 9, "sdWidth": "full", "enabled": false},
-                "ednote": {"order": 10, "sdWidth": "full", "enabled": false},
-                "headline": {"order": 11, "formatOptions": ["underline", "anchor", "bold", "removeFormat"], "enabled": false},
-                "sms": {"order": 12, "enabled": false},
-                "abstract": {"order": 13, "formatOptions": ["bold", "italic", "underline", "anchor", "removeFormat"], "enabled": false},
-                "byline": {"order": 14, "enabled": false},
-                "dateline": {"order": 15, "enabled": false},
+                "ednote": {
+                    "enabled": false,
+                    "order": 10,
+                    "sdWidth": "full"
+                },
+                "priority": {
+                    "enabled": false,
+                    "order": 5,
+                    "sdWidth": "quarter"
+                },
+                "anpa_take_key": {
+                    "enabled": false,
+                    "order": 3,
+                    "sdWidth": "half"
+                },
                 "body_html": {
+                    "enabled": false,
                     "order": 16,
-                    "formatOptions": ["h2", "bold", "italic", "underline", "quote", "anchor", "embed", "picture", "removeFormat"],
+                    "formatOptions": ["h2", "bold", "italic", "underline", "quote", "anchor", "embed", "picture", "removeFormat"]
+                },
+                "anpa_category": {
+                    "enabled": false,
+                    "order": 7,
+                    "sdWidth": "full"
+                },
+                "media": {
                     "enabled": false
                 },
-                "footer": {"order": 17, "enabled": false},
-                "body_footer": {"order": 18, "enabled": false},
-                "sign_off": {"order": 19, "enabled": false},
-                "media": {"enabled": false},
-                "media_description": {"enabled": false}
+                "subject": {
+                    "enabled": true,
+                    "order": 8,
+                    "sdWidth": "full"
+                },
+                "abstract": {
+                    "enabled": false,
+                    "order": 13,
+                    "formatOptions": ["bold", "italic", "underline", "anchor", "removeFormat"]
+                },
+                "media_description": {
+                    "enabled": false
+                },
+                "headline": {
+                    "enabled": false,
+                    "order": 11,
+                    "formatOptions": ["underline", "anchor", "bold", "removeFormat"]
+                },
+                "place": {
+                    "enabled": false,
+                    "order": 4,
+                    "sdWidth": "half"
+                },
+                "byline": {
+                    "enabled": false,
+                    "order": 14
+                },
+                "sms": {
+                    "enabled": false,
+                    "order": 12
+                },
+                "footer": {
+                    "enabled": false,
+                    "order": 17
+                },
+                "body_footer": {
+                    "enabled": false,
+                    "order": 18
+                },
+                "genre": {
+                    "enabled": false,
+                    "order": 2,
+                    "sdWidth": "half"
+                },
+                "company_codes": {
+                    "enabled": false,
+                    "order": 9,
+                    "sdWidth": "full"
+                },
+                "sign_off": {
+                    "enabled": false,
+                    "order": 19
+                },
+                "slugline": {
+                    "enabled": true,
+                    "order": 1,
+                    "sdWidth": "full"
+                },
+                "dateline": {
+                    "enabled": false,
+                    "order": 15
+                }
             }
         }
         """
@@ -329,71 +517,177 @@ Feature: Content Profile
             "created_by": "#CONTEXT_USER_ID#",
             "updated_by": "#CONTEXT_USER_ID#",
             "schema": {
-                "slugline": {"maxlength": 24, "type": "string"},
-                "genre": {"type": "list"},
-                "anpa_take_key": {},
-                "place": {"type": "list"},
-                "priority": {},
-                "anpa_category": {"type": "list"},
-                "subject": {
-                  "type": "list",
-                  "required": true,
-                  "mandatory_in_list": {"scheme": {}},
-                  "schema": {
-                     "type": "dict",
-                     "schema": {
-                        "name": {},
-                        "qcode": {},
-                        "scheme": {
-                           "type": "string",
-                           "required": true,
-                           "allowed": ["subject_custom", "category"]
-                        },
-                        "service": {"nullable": true},
-                        "parent": {"nullable": true}
-                      }
-                  }
+                "dateline": {
+                    "type": "dict",
+                    "required": false
                 },
-                "company_codes": {"type": "list"},
-                "ednote": {},
-                "headline": {"maxlength": 64, "type": "string"},
-                "sms": null,
-                "abstract": {"maxlength": 160, "type": "string"},
-                "byline": {"type": "string"},
-                "dateline": {"type": "dict"},
-                "body_html": {},
-                "footer": null,
-                "body_footer": null,
-                "sign_off": {"type": "string"},
+                "media_description": {},
+                "priority": {
+                    "type": "integer",
+                    "required": false
+                },
+                "subject_custom": {
+                    "mandatory_in_list": {
+                        "scheme": {}
+                    },
+                    "type": "list",
+                    "required": true,
+                    "schema": {}
+                },
+                "ednote": {
+                    "type": "string",
+                    "required": false
+                },
+                "abstract": {
+                    "type": "string",
+                    "maxlength": 160,
+                    "required": false
+                },
+                "place": {
+                    "type": "list",
+                    "required": false
+                },
+                "sign_off": {
+                    "type": "string",
+                    "required": false
+                },
+                "genre_custom": {
+                    "type": "list",
+                    "required": false
+                },
+                "anpa_take_key": {
+                    "type": "string",
+                    "required": false
+                },
+                "slugline": {
+                    "type": "string",
+                    "maxlength": 24,
+                    "required": false
+                },
+                "category": {
+                    "type": "list",
+                    "required": false
+                },
+                "byline": {
+                    "type": "string",
+                    "required": false
+                },
+                "body_html": {
+                    "type": "string",
+                    "required": false
+                },
+                "company_codes": {
+                    "type": "list",
+                    "required": false
+                },
+                "anpa_category": {
+                    "type": "list",
+                    "required": false
+                },
                 "media": {},
-                "media_description": {}
+                "headline": {
+                    "type": "string",
+                    "maxlength": 64,
+                    "required": false
+                }
             },
             "editor": {
-                "slugline": {"order": 1, "sdWidth": "full", "enabled": true},
-                "genre_custom": {"order": 2, "sdWidth": "half", "enabled": true},
-                "category": {"enabled": true},
-                "anpa_take_key": {"order": 3, "sdWidth": "half", "enabled": false},
-                "place": {"order": 4, "sdWidth": "half", "enabled": true},
-                "priority": {"order": 5, "sdWidth": "quarter", "enabled": true},
-                "anpa_category": {"order": 7, "sdWidth": "full", "enabled": true},
-                "subject_custom": {"order": 8, "sdWidth": "full", "enabled": true},
-                "company_codes": {"order": 9, "sdWidth": "full", "enabled": false},
-                "ednote": {"order": 10, "sdWidth": "full", "enabled": true},
-                "headline": {"order": 11, "formatOptions": ["underline", "anchor", "bold", "removeFormat"], "enabled": true},
-                "sms": {"order": 12, "enabled": false},
-                "abstract": {"order": 13, "formatOptions": ["bold", "italic", "underline", "anchor", "removeFormat"], "enabled": true},
-                "byline": {"order": 14, "enabled": true},
-                "dateline": {"order": 15, "enabled": true},
-                "body_html": {
-                    "order": 16,
-                    "formatOptions": ["h2", "bold", "italic", "underline", "quote", "anchor", "embed", "picture", "removeFormat"],
+                "dateline": {
+                    "order": 15,
                     "enabled": true
                 },
-                "footer": {"order": 17, "enabled": false},
-                "body_footer": {"order": 18, "enabled": false},
-                "sign_off": {"order": 19, "enabled": true},
-                "media": {"enabled": true},
-                "media_description": {"enabled": true}
+                "media_description": {
+                    "enabled": true
+                },
+                "priority": {
+                    "order": 5,
+                    "sdWidth": "quarter",
+                    "enabled": true
+                },
+                "subject_custom": {
+                    "field_name": "subject",
+                    "order": 8,
+                    "sdWidth": "full",
+                    "enabled": true
+                },
+                "anpa_take_key": {
+                    "order": 3,
+                    "sdWidth": "half",
+                    "enabled": false
+                },
+                "abstract": {
+                    "order": 13,
+                    "enabled": true,
+                    "formatOptions": ["bold", "italic", "underline", "anchor", "removeFormat"]
+                },
+                "place": {
+                    "order": 4,
+                    "sdWidth": "half",
+                    "enabled": true
+                },
+                "sign_off": {
+                    "order": 19,
+                    "enabled": true
+                },
+                "body_footer": {
+                    "order": 18,
+                    "enabled": false
+                },
+                "genre_custom": {
+                    "field_name": "genre",
+                    "order": 2,
+                    "sdWidth": "half",
+                    "enabled": true
+                },
+                "ednote": {
+                    "order": 10,
+                    "sdWidth": "full",
+                    "enabled": true
+                },
+                "slugline": {
+                    "order": 1,
+                    "sdWidth": "full",
+                    "enabled": true
+                },
+                "category": {
+                    "field_name": "category",
+                    "enabled": false
+                },
+                "byline": {
+                    "order": 14,
+                    "enabled": true
+                },
+                "body_html": {
+                    "order": 16,
+                    "enabled": true,
+                    "formatOptions": ["h2", "bold", "italic", "underline", "quote", "anchor", "embed", "picture", "removeFormat"]
+                },
+                "footer": {
+                    "order": 17,
+                    "enabled": false
+                },
+                "company_codes": {
+                    "order": 9,
+                    "sdWidth": "full",
+                    "enabled": false
+                },
+                "media": {
+                    "enabled": true
+                },
+                "sms": {
+                    "order": 12,
+                    "enabled": false
+                },
+                "anpa_category": {
+                    "order": 7,
+                    "sdWidth": "full",
+                    "enabled": true
+                },
+                "headline": {
+                    "order": 11,
+                    "enabled": true,
+                    "formatOptions": ["underline", "anchor", "bold", "removeFormat"]
+                }
             }
         }
         """
@@ -483,72 +777,177 @@ Feature: Content Profile
             "enabled": false,
             "created_by": "#CONTEXT_USER_ID#",
             "updated_by": "#CONTEXT_USER_ID#",
-            "schema": {
-                "slugline": {"maxlength": 24, "type": "string"},
-                "genre": {"type": "list"},
-                "anpa_take_key": {},
-                "place": {"type": "list"},
-                "priority": {},
-                "anpa_category": {"type": "list"},
-                "subject": {
-                  "type": "list",
-                  "required": true,
-                  "mandatory_in_list": {"scheme": {}},
-                  "schema": {
-                     "type": "dict",
-                     "schema": {
-                        "name": {},
-                        "qcode": {},
-                        "scheme": {
-                           "type": "string",
-                           "required": true,
-                           "allowed": ["subject_custom", "category"]
-                        },
-                        "service": {"nullable": true},
-                        "parent": {"nullable": true}
-                      }
-                  }
-                },
-                "company_codes": {"type": "list"},
-                "ednote": {},
-                "headline": {"maxlength": 64, "type": "string"},
-                "sms": null,
-                "abstract": {"maxlength": 160, "type": "string"},
-                "byline": {"type": "string"},
-                "dateline": {"type": "dict"},
-                "body_html": {},
-                "footer": null,
-                "body_footer": null,
-                "sign_off": {"type": "string"},
-                "media": {},
-                "media_description": {}
-            },
             "editor": {
-                "slugline": {"order": 1, "sdWidth": "full", "enabled": true},
-                "genre_custom": {"order": 2, "sdWidth": "half", "enabled": false},
-                "category": {"enabled": false},
-                "anpa_take_key": {"order": 3, "sdWidth": "half", "enabled": false},
-                "place": {"order": 4, "sdWidth": "half", "enabled": false},
-                "priority": {"order": 5, "sdWidth": "quarter", "enabled": false},
-                "anpa_category": {"order": 7, "sdWidth": "full", "enabled": false},
-                "subject_custom": {"order": 8, "sdWidth": "full", "enabled": false},
-                "company_codes": {"order": 9, "sdWidth": "full", "enabled": false},
-                "ednote": {"order": 10, "sdWidth": "full", "enabled": false},
-                "headline": {"order": 11, "formatOptions": ["underline", "anchor", "bold", "removeFormat"], "enabled": false},
-                "sms": {"order": 12, "enabled": false},
-                "abstract": {"order": 13, "formatOptions": ["bold", "italic", "underline", "anchor", "removeFormat"], "enabled": false},
-                "byline": {"order": 14, "enabled": false},
-                "dateline": {"order": 15, "enabled": false},
-                "body_html": {
-                    "order": 16,
-                    "formatOptions": ["h2", "bold", "italic", "underline", "quote", "anchor", "embed", "picture", "removeFormat"],
+                "footer": {
+                    "order": 17,
                     "enabled": false
                 },
-                "footer": {"order": 17, "enabled": false},
-                "body_footer": {"order": 18, "enabled": false},
-                "sign_off": {"order": 19, "enabled": false},
-                "media": {"enabled": false},
-                "media_description": {"enabled": false}
+                "body_footer": {
+                    "order": 18,
+                    "enabled": false
+                },
+                "ednote": {
+                    "sdWidth": "full",
+                    "order": 10,
+                    "enabled": false
+                },
+                "media_description": {
+                    "enabled": false
+                },
+                "body_html": {
+                    "formatOptions": ["h2", "bold", "italic", "underline", "quote", "anchor", "embed", "picture", "removeFormat"],
+                    "enabled": false,
+                    "order": 16
+                },
+                "dateline": {
+                    "order": 15,
+                    "enabled": false
+                },
+                "media": {
+                    "enabled": false
+                },
+                "anpa_category": {
+                    "sdWidth": "full",
+                    "order": 7,
+                    "enabled": false
+                },
+                "category": {
+                    "field_name": "category",
+                    "enabled": false
+                },
+                "place": {
+                    "sdWidth": "half",
+                    "order": 4,
+                    "enabled": false
+                },
+                "sign_off": {
+                    "order": 19,
+                    "enabled": false
+                },
+                "slugline": {
+                    "sdWidth": "full",
+                    "order": 1,
+                    "enabled": true
+                },
+                "headline": {
+                    "formatOptions": ["underline", "anchor", "bold", "removeFormat"],
+                    "enabled": false,
+                    "order": 11
+                },
+                "subject_custom": {
+                    "sdWidth": "full",
+                    "field_name": "subject",
+                    "order": 8,
+                    "enabled": true
+                },
+                "sms": {
+                    "order": 12,
+                    "enabled": false
+                },
+                "abstract": {
+                    "formatOptions": ["bold", "italic", "underline", "anchor", "removeFormat"],
+                    "enabled": false,
+                    "order": 13
+                },
+                "company_codes": {
+                    "sdWidth": "full",
+                    "order": 9,
+                    "enabled": false
+                },
+                "priority": {
+                    "sdWidth": "quarter",
+                    "order": 5,
+                    "enabled": false
+                },
+                "anpa_take_key": {
+                    "sdWidth": "half",
+                    "order": 3,
+                    "enabled": false
+                },
+                "genre_custom": {
+                    "sdWidth": "half",
+                    "field_name": "genre",
+                    "order": 2,
+                    "enabled": false
+                },
+                "byline": {
+                    "order": 14,
+                    "enabled": false
+                }
+            },
+            "schema": {
+                "ednote": {
+                    "type": "string",
+                    "required": false
+                },
+                "media_description": {},
+                "body_html": {
+                    "type": "string",
+                    "required": false
+                },
+                "dateline": {
+                    "type": "dict",
+                    "required": false
+                },
+                "media": {},
+                "anpa_category": {
+                    "type": "list",
+                    "required": false
+                },
+                "category": {
+                    "type": "list",
+                    "required": false
+                },
+                "place": {
+                    "type": "list",
+                    "required": false
+                },
+                "sign_off": {
+                    "type": "string",
+                    "required": false
+                },
+                "slugline": {
+                    "type": "string",
+                    "maxlength": 24
+                },
+                "headline": {
+                    "type": "string",
+                    "maxlength": 64,
+                    "required": false
+                },
+                "subject_custom": {
+                    "type": "list",
+                    "mandatory_in_list": {
+                        "scheme": {}
+                    },
+                    "schema": {},
+                    "required": true
+                },
+                "abstract": {
+                    "type": "string",
+                    "maxlength": 160,
+                    "required": false
+                },
+                "company_codes": {
+                    "type": "list",
+                    "required": false
+                },
+                "priority": {
+                    "type": "integer",
+                    "required": false
+                },
+                "anpa_take_key": {
+                    "type": "string",
+                    "required": false
+                },
+                "genre_custom": {
+                    "type": "list",
+                    "required": false
+                },
+                "byline": {
+                    "type": "string",
+                    "required": false
+                }
             }
         }
         """
