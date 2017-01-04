@@ -98,13 +98,23 @@ def set_sign_off(user):
     """
 
     if SIGN_OFF not in user:
-        signOffMapping = app.config.get('SIGN_OFF_MAPPING', None)
-        if signOffMapping and signOffMapping in user:
-            user[SIGN_OFF] = user[signOffMapping]
+        sign_off_mapping = app.config.get('SIGN_OFF_MAPPING', None)
+        if sign_off_mapping and sign_off_mapping in user:
+            user[SIGN_OFF] = user[sign_off_mapping]
         elif 'first_name' not in user or 'last_name' not in user:
             user[SIGN_OFF] = user['username'][:3].upper()
         else:
             user[SIGN_OFF] = '{first_name[0]}{last_name[0]}'.format(**user)
+
+
+def update_sign_off(updates):
+    """
+    Update sign_off property on user if the mapped field is changed.
+    """
+
+    sign_off_mapping = app.config.get('SIGN_OFF_MAPPING', None)
+    if sign_off_mapping and sign_off_mapping in updates:
+        updates[SIGN_OFF] = updates[sign_off_mapping]
 
 
 def get_sign_off(user):
@@ -237,8 +247,7 @@ class UsersService(BaseService):
         if updates.get('is_enabled', False):
             updates['is_active'] = True
 
-        if SIGN_OFF not in original:
-            set_sign_off(updates)
+        update_sign_off(updates)
 
         if updates.get('avatar'):
             updates['avatar_renditions'] = self.get_avatar_renditions(updates['avatar'])
