@@ -56,6 +56,7 @@ class Resource():
     resource_preferences = None
     etag_ignore_fields = []
     mongo_prefix = None
+    mongo_indexes = None
     auth_field = None
     authentication = None
     elastic_prefix = None
@@ -104,6 +105,8 @@ class Resource():
                 endpoint_schema.update({'elastic_prefix': self.elastic_prefix})
             if self.query_objectid_as_string:
                 endpoint_schema.update({'query_objectid_as_string': self.query_object_id_as_string})
+            if self.mongo_indexes:
+                endpoint_schema['mongo_indexes'] = self.mongo_indexes
 
         self.endpoint_schema = endpoint_schema
 

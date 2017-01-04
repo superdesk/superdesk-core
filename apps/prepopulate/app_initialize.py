@@ -36,11 +36,7 @@ dictionary:
 """
 __entities__ = OrderedDict([
     ('roles', ('roles.json', ['name'], False)),
-    ('users', ('users.json', [
-        [
-            ('first_name', pymongo.ASCENDING),
-            ('last_name', pymongo.DESCENDING)
-        ], 'username'], False)),
+    ('users', ('users.json', [], False)),
     ('stages', ('stages.json', ['desk'], False)),
     ('desks', ('desks.json', ['incoming_stage'], False)),
     ('groups', ('groups.json', '', False)),
