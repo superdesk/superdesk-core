@@ -10,6 +10,7 @@
 
 
 import superdesk
+
 from superdesk.errors import SuperdeskApiError
 from superdesk.utils import ListCursor
 from .macro_register import macros
@@ -51,7 +52,7 @@ class MacrosService(superdesk.Service):
                 ids.append(doc['macro'])
             return ids
         except Exception as ex:
-            raise SuperdeskApiError.internalError(str(ex))
+            raise SuperdeskApiError.internalError(str(ex), exception=ex)
 
     def get_macro_by_name(self, macro_name):
         return macros.find(macro_name)

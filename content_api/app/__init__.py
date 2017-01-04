@@ -19,7 +19,6 @@ thus essentially just a normal `Flask <http://flask.pocoo.org/>`_ application.
 """
 
 import flask
-import logging
 import importlib
 
 from eve import Eve
@@ -32,9 +31,6 @@ from superdesk.errors import SuperdeskError, SuperdeskApiError
 from superdesk.storage.desk_media_storage import SuperdeskGridFSMediaStorage
 from superdesk.validator import SuperdeskValidator
 from superdesk.factory.sentry import SuperdeskSentry
-
-
-logger = logging.getLogger('superdesk')
 
 
 def _set_error_handlers(app):
@@ -60,10 +56,7 @@ def _set_error_handlers(app):
     @app.errorhandler(500)
     def server_error_handler(error):
         """Log server errors."""
-        if getattr(app, 'sentry'):
-            app.sentry.captureException()
-        logger.exception(error)
-        return_error = SuperdeskApiError.internalError()
+        return_error = SuperdeskApiError.internalError(error)
         return client_error_handler(return_error)
 
 

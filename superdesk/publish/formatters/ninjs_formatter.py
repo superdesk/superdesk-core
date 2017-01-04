@@ -14,7 +14,6 @@
 
 
 import json
-import logging
 import superdesk
 from eve.utils import config
 from superdesk.publish.formatters import Formatter
@@ -25,9 +24,6 @@ from superdesk.utils import json_serialize_datetime_objectId
 from superdesk.media.renditions import get_renditions_spec
 from apps.archive.common import get_utc_schedule
 from bs4 import BeautifulSoup
-
-
-logger = logging.getLogger(__name__)
 
 
 def filter_empty_vals(data):

@@ -75,8 +75,6 @@ class MoveService(BaseService):
             moved_item = self.move_content(guid_of_item_to_be_moved, doc)
             guid_of_moved_items.append(moved_item.get(config.ID_FIELD))
             return guid_of_moved_items
-        except Exception as e:
-            raise e
         finally:
             unlock(lock_id)
 

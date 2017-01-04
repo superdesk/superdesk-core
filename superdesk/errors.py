@@ -8,7 +8,6 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-
 import logging
 
 from flask import current_app as app
@@ -35,6 +34,15 @@ def get_registered_errors(self):
         'IngestFtpError': IngestFtpError._codes,
         'IngestFileError': IngestFileError._codes
     }
+
+
+def log_exception(msg):
+    """Log exception if handling exception, error otherwise."""
+    try:
+        logger.exception(msg)
+    except AttributeError:
+        # there is attribute error in python3.4 in case there is no exception context
+        logger.error(msg)
 
 
 class SuperdeskError(ValidationError):
@@ -69,7 +77,7 @@ class SuperdeskApiError(SuperdeskError):
     #: error status code
     status_code = 400
 
-    def __init__(self, message=None, status_code=None, payload=None):
+    def __init__(self, message=None, status_code=None, payload=None, exception=None):
         Exception.__init__(self)
 
         #: a human readable error description
@@ -81,7 +89,10 @@ class SuperdeskApiError(SuperdeskError):
         if payload:
             self.payload = payload
 
-        logger.error("HTTP Exception {} has been raised: {}".format(status_code, message))
+        if exception:
+            logger.exception(message or exception)
+        elif message:
+            logger.error("HTTP Exception {} has been raised: {}".format(status_code, message))
 
     def to_dict(self):
         """Create dict for json response."""
@@ -96,28 +107,28 @@ class SuperdeskApiError(SuperdeskError):
         return "{}: {}".format(repr(self.status_code), self.message)
 
     @classmethod
-    def badRequestError(cls, message=None, payload=None):
-        return SuperdeskApiError(status_code=400, message=message, payload=payload)
+    def badRequestError(cls, message=None, payload=None, exception=None):
+        return SuperdeskApiError(status_code=400, message=message, payload=payload, exception=exception)
 
     @classmethod
-    def unauthorizedError(cls, message=None, payload={'auth': 1}):
-        return SuperdeskApiError(status_code=401, message=message, payload=payload)
+    def unauthorizedError(cls, message=None, payload={'auth': 1}, exception=None):
+        return SuperdeskApiError(status_code=401, message=message, payload=payload, exception=exception)
 
     @classmethod
-    def forbiddenError(cls, message=None, payload=None):
-        return SuperdeskApiError(status_code=403, message=message, payload=payload)
+    def forbiddenError(cls, message=None, payload=None, exception=None):
+        return SuperdeskApiError(status_code=403, message=message, payload=payload, exception=exception)
 
     @classmethod
-    def notFoundError(cls, message=None, payload=None):
-        return SuperdeskApiError(status_code=404, message=message, payload=payload)
+    def notFoundError(cls, message=None, payload=None, exception=None):
+        return SuperdeskApiError(status_code=404, message=message, payload=payload, exception=exception)
 
     @classmethod
-    def preconditionFailedError(cls, message=None, payload=None):
-        return SuperdeskApiError(status_code=412, message=message, payload=payload)
+    def preconditionFailedError(cls, message=None, payload=None, exception=None):
+        return SuperdeskApiError(status_code=412, message=message, payload=payload, exception=exception)
 
     @classmethod
-    def internalError(cls, message=None, payload=None):
-        return SuperdeskApiError(status_code=500, message=message, payload=payload)
+    def internalError(cls, message=None, payload=None, exception=None):
+        return SuperdeskApiError(status_code=500, message=message, payload=payload, exception=exception)
 
 
 class IdentifierGenerationError(SuperdeskApiError):
@@ -174,9 +185,9 @@ class SuperdeskIngestError(SuperdeskError):
                                  provider_id=provider.get('_id', ''))
 
             if provider:
-                logger.error("{}: {} on channel {}".format(self, exception, self.provider_name))
+                log_exception("{}: {} on channel {}".format(self, exception, self.provider_name))
             else:
-                logger.error("{}: {}".format(self, exception))
+                log_exception("{}: {}".format(self, exception))
 
     @classmethod
     def parserNotFoundError(cls, exception=None, provider=None):
@@ -247,13 +258,13 @@ class ParserError(SuperdeskIngestError):
     @classmethod
     def parseFileError(cls, source=None, filename=None, exception=None, provider=None):
         if source and filename:
-            logger.exception("Source Type: {} - File: {} could not be processed".format(source, filename))
+            log_exception("Source Type: {} - File: {} could not be processed".format(source, filename))
         return ParserError(1002, exception, provider)
 
     @classmethod
     def anpaParseFileError(cls, filename=None, exception=None):
         if filename:
-            logger.exception("File: {} could not be processed".format(filename))
+            logger.error("File: {} could not be processed".format(filename))
         return ParserError(1003, exception)
 
     @classmethod
@@ -351,8 +362,8 @@ class IngestFtpError(SuperdeskIngestError):
     @classmethod
     def ftpUnknownParserError(cls, exception=None, provider=None, filename=None):
         if provider:
-            logger.exception("Provider: {} - File: {} unknown file format. "
-                             "FeedParser couldn't be found.".format(provider.get('name', 'Unknown provider'), filename))
+            logger.error("Provider: {} - File: {} unknown file format. "
+                         "FeedParser couldn't be found.".format(provider.get('name', 'Unknown provider'), filename))
         return IngestFtpError(5001, exception, provider)
 
 
@@ -392,9 +403,9 @@ class SuperdeskPublishError(SuperdeskError):
                              provider_id=destination.get('_id', ''))
 
             if destination:
-                logger.error("{}: {} on destination {}".format(self, exception, self.destination_name))
+                log_exception("{}: {} on destination {}".format(self, exception, self.destination_name))
             else:
-                logger.error("{}: {}".format(self, exception))
+                log_exception("{}: {}".format(self, exception))
 
 
 class FormatterError(SuperdeskPublishError):

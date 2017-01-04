@@ -9,16 +9,18 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import json
+import logging
+import requests
+
 from superdesk import app
 from superdesk.publish import register_transmitter
 
-import requests
 from superdesk.errors import PublishHTTPPushError, PublishHTTPPushServerError, PublishHTTPPushClientError
 from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
 from superdesk.publish.publish_service import PublishService
 
-
 errors = [PublishHTTPPushError.httpPushError().get_error_description()]
+logger = logging.getLogger(__name__)
 
 
 class HTTPPushService(PublishService):
@@ -88,7 +90,8 @@ class HTTPPushService(PublishService):
         # need to rethrow exception as a superdesk exception for now for notifiers.
         try:
             response.raise_for_status()
-        except Exception:
+        except Exception as ex:
+            logger.exception(ex)
             message = 'Error pushing item %s: %s' % (response.status_code, response.text)
             self._raise_publish_error(response.status_code, Exception(message), destination)
 

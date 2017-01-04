@@ -8,11 +8,12 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import superdesk
 import xml.etree.ElementTree as etree
+
 from xml.etree.ElementTree import SubElement
 from flask import current_app as app
 from superdesk.publish.formatters import Formatter
-import superdesk
 from superdesk.errors import FormatterError
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, FORMAT, FORMATS
 from apps.archive.common import get_utc_schedule

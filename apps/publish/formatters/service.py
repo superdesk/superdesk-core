@@ -7,6 +7,9 @@
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
+
+import logging
+
 from superdesk import get_resource_service
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
@@ -14,6 +17,8 @@ from superdesk.publish.formatters import get_all_formatters
 from superdesk.utils import ListCursor
 from eve.validation import ValidationError
 from apps.publish.content.common import ITEM_PUBLISH
+
+logger = logging.getLogger(__name__)
 
 
 class FormattersService(BaseService):
@@ -58,6 +63,7 @@ class FormattersService(BaseService):
                 sequence, formatted_doc = formatter.format(article, {'_id': '0'}, None)[0]
                 formatted_doc = formatted_doc.replace('\'\'', '\'')
             except Exception as ex:
+                logger.exception(ex)
                 raise SuperdeskApiError.\
                     badRequestError('Error in formatting article: {}'.format(str(ex)))
 

@@ -8,12 +8,14 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import json
+
 from superdesk.emails import send_email
 from flask import current_app as app
 from superdesk.publish import register_transmitter
 from superdesk.publish.publish_service import PublishService
 from superdesk.errors import PublishEmailError
-import json
+
 errors = [PublishEmailError.emailError().get_error_description()]
 
 

@@ -86,7 +86,10 @@ class HTTPFeedingService(FeedingService, metaclass=ABCMeta):
 
         response = session.get(auth_url, params=payload, verify=False, timeout=30)
         if response.status_code < 200 or response.status_code >= 300:
-            raise IngestApiError.apiAuthError(provider=provider)
+            try:
+                response.raise_for_status()
+            except Exception:
+                raise IngestApiError.apiAuthError(provider=provider)
 
         tree = etree.fromstring(response.content)  # workaround for http mock lib
         return tree.text

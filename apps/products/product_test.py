@@ -7,6 +7,8 @@
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
+
+import logging
 from eve.utils import ParsedRequest
 from superdesk import get_resource_service
 from superdesk.resource import Resource
@@ -14,6 +16,8 @@ from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
 from apps.publish.enqueue.enqueue_service import EnqueueService
 from apps.publish.content.common import BasePublishService
+
+logger = logging.getLogger(__name__)
 
 
 class ProductTestResource(Resource):
@@ -45,6 +49,7 @@ class ProductTestService(BaseService):
         try:
             results = self.test_products(article)
         except Exception as ex:
+            logger.exception(ex)
             raise SuperdeskApiError.badRequestError('Error in testing article: {}'.format(str(ex)))
 
         return [results]

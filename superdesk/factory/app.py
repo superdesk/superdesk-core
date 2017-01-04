@@ -91,9 +91,7 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=Tr
     @app.errorhandler(500)
     def server_error_handler(error):
         """Log server errors."""
-        app.sentry.captureException()
-        superdesk.logger.exception(error)
-        return_error = SuperdeskApiError.internalError()
+        return_error = SuperdeskApiError.internalError(error)
         return client_error_handler(return_error)
 
     init_celery(app)

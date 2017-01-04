@@ -497,10 +497,6 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
 
     except Exception as ex:
         logger.exception(ex)
-        try:
-            superdesk.app.sentry.captureException()
-        except:
-            pass
         return False
     return True
 
@@ -540,7 +536,8 @@ def update_renditions(item, href, old_item):
         item['renditions'] = renditions
         item['mimetype'] = content_type
         set_filemeta(item, metadata)
-    except Exception:
+    except Exception as e:
+        logger.exception(e)
         for file_id in inserted:
             app.media.delete(file_id)
         raise

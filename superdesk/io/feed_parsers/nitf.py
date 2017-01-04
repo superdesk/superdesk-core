@@ -22,6 +22,7 @@ from superdesk.io.iptc import subject_codes
 from bs4 import BeautifulSoup
 import re
 import superdesk
+
 logger = logging.getLogger(__name__)
 
 SETTINGS_MAPPING_PARAM = 'NITF_MAPPING'

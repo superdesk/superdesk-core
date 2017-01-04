@@ -8,8 +8,6 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import logging
-
 from bson import ObjectId
 from flask import current_app as app
 
@@ -17,9 +15,6 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.media.media_operations import download_file_from_encoded_str, \
     download_file_from_url, process_file_from_stream, decode_metadata
 from superdesk.services import BaseService
-
-
-logger = logging.getLogger(__name__)
 
 
 class AssetsService(BaseService):
@@ -56,8 +51,7 @@ class AssetsService(BaseService):
             doc['mime_type'] = content_type
             doc['filemeta'] = decode_metadata(metadata)
         except Exception as io:
-            logger.exception(io)
-            raise SuperdeskApiError.internalError('Saving file failed')
+            raise SuperdeskApiError.internalError('Saving file failed', exception=io)
 
     def download_file(self, doc):
         url = doc.get('URL')

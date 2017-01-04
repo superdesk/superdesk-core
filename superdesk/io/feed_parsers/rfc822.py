@@ -256,6 +256,7 @@ class EMailRFC822FeedParser(EmailFeedParser):
             soup = BeautifulSoup(html, "html.parser")
         except Exception as e:
             # special handling?
+            logger.exception(e)
             raise e
 
         # remove the doctype declaration if present
