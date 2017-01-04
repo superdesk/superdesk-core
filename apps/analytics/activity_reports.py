@@ -29,6 +29,9 @@ class ActivityReportResource(Resource):
         'operation_date': {'type': 'datetime'},
         'subject': metadata_schema['subject'],
         'keywords': metadata_schema['keywords'],
+        'category': metadata_schema['anpa_category'],
+        'urgency': metadata_schema['urgency'],
+        'priority': metadata_schema['priority'],
         'group_by': {'type': 'list'},
         'report': {'type': 'dict'},
         'timestamp': {'type': 'datetime'},
@@ -55,6 +58,15 @@ class ActivityReportService(BaseService):
         if report.get('operation_date'):
             op_date = format_date(report['operation_date'])
             terms.append({'range': {'versioncreated': {'gte': op_date, 'lte': op_date}}})
+        if report.get('category'):
+            categories = [category['qcode'] for category in report['category']]
+            terms.append({'terms': {'anpa_category.qcode': categories}})
+        if report.get('urgency'):
+            urgency = report['urgency']
+            terms.append({'terms': {'urgency': [urgency]}})
+        if report.get('priority'):
+            priority = report['priority']
+            terms.append({'terms': {'priority': [priority]}})
 
         return terms
 
