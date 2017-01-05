@@ -146,3 +146,4 @@ from superdesk.io.feed_parsers.afp_newsml_1_2 import AFPNewsMLOneFeedParser  # N
 from superdesk.io.feed_parsers.scoop_newsml_2_0 import ScoopNewsMLTwoFeedParser  # NOQA
 from superdesk.io.feed_parsers.ap_anpa import AP_ANPAFeedParser  # NOQA
 from superdesk.io.feed_parsers.pa_nitf import PAFeedParser  # NOQA
+from superdesk.io.feed_parsers.efe_nitf import EFEFeedParser  # NOQA
