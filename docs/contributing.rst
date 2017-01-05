@@ -45,3 +45,9 @@ If you want to document whole module with all its members, you can just use `aut
         :members:
 
 This will document all public members from the module which have a docstring.
+
+You can integrate UML diagrams using `PlantUML <http://plantuml.com/>`_ syntax, with::
+
+    .. uml::
+
+        [plantuml diagram]
