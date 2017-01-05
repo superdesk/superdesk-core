@@ -133,5 +133,10 @@ class UsersResource(Resource):
             'default_sort': [('username', 1)],
         }
 
+        self.mongo_indexes = {
+            'username_1': ([('username', 1)], {'unique': True}),
+            'first_name_1_last_name_-1': [('first_name', 1), ('last_name', -1)],
+        }
+
         self.privileges = {'POST': 'users', 'DELETE': 'users', 'PATCH': 'users'}
         super().__init__(endpoint_name, app=app, service=service, endpoint_schema=endpoint_schema)
