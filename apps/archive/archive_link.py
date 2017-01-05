@@ -11,14 +11,16 @@ from eve.utils import config
 from flask import request
 
 from superdesk import get_resource_service, Service
-from superdesk.metadata.item import EMBARGO
+from superdesk.metadata.item import EMBARGO, ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTENT_TYPE
 from superdesk.resource import Resource, build_custom_hateoas
-from apps.packages import TakesPackageService
+from apps.packages import TakesPackageService, PackageService
+from apps.archive import ArchiveSpikeService
 from apps.archive.common import CUSTOM_HATEOAS, BROADCAST_GENRE, is_genre, insert_into_versions
 from apps.auth import get_user
 from superdesk.metadata.utils import item_url
 from apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.errors import SuperdeskApiError
+from superdesk.notification import push_notification
 import logging
 
 logger = logging.getLogger(__name__)
@@ -29,13 +31,13 @@ class ArchiveLinkResource(Resource):
     resource_title = endpoint_name
 
     schema = {
-        'link_id': Resource.rel('archive', embeddable=False, type='string'),
-        'desk': Resource.rel('desks', embeddable=False)
+        'link_id': Resource.rel('archive', embeddable=False, type='string', nullable=True, required=False),
+        'desk': Resource.rel('desks', embeddable=False, nullable=True, required=False)
     }
 
     url = 'archive/<{0}:target_id>/link'.format(item_url)
 
-    resource_methods = ['POST']
+    resource_methods = ['POST', 'DELETE']
     item_methods = []
 
 
@@ -89,3 +91,61 @@ class ArchiveLinkService(Service):
 
         if get_resource_service('published').is_rewritten_before(target['_id']):
             raise SuperdeskApiError.badRequestError(message='Article has been rewritten before !')
+
+    def _validate_unlink(self, target):
+        """Validates that the links for takes or updates can be removed.
+
+        :param target: article whose links will be removed
+        :raises: SuperdeskApiError
+        """
+        if target[ITEM_TYPE] != CONTENT_TYPE.TEXT:
+            raise SuperdeskApiError.badRequestError("Only text stories can be unlinked!")
+
+        # if the story is in published states then it cannot be unlinked
+        if target[ITEM_STATE] in [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED, CONTENT_STATE.KILLED]:
+            raise SuperdeskApiError.badRequestError("Published stories cannot be unlinked!")
+
+        # if the story is not the last take then it cannot be unlinked
+        if TakesPackageService().get_take_package(target) and \
+                not TakesPackageService().is_last_takes_package_item(target):
+            raise SuperdeskApiError.badRequestError("Only the last take can be unlinked!")
+
+    def on_delete(self, doc):
+        self._validate_unlink(doc)
+
+    def delete(self, lookup):
+        target_id = request.view_args['target_id']
+        archive_service = get_resource_service(ARCHIVE)
+        target = archive_service.find_one(req=None, _id=target_id)
+        self._validate_unlink(target)
+        updates = {}
+
+        takes_package = TakesPackageService().get_take_package(target)
+
+        if takes_package and TakesPackageService().is_last_takes_package_item(target):
+            # remove the take link
+            PackageService().remove_refs_in_package(takes_package, target_id)
+
+        if target.get('rewrite_of'):
+            # remove the rewrite info
+            ArchiveSpikeService().update_rewrite(target)
+
+        if not takes_package and not target.get('rewrite_of'):
+            # there is nothing to do
+            raise SuperdeskApiError.badRequestError("Only takes and updates can be unlinked!")
+
+        if target.get('rewrite_of'):
+            updates['rewrite_of'] = None
+
+        if target.get('anpa_take_key'):
+            updates['anpa_take_key'] = None
+
+        if target.get('rewrite_sequence'):
+            updates['rewrite_sequence'] = None
+
+        if target.get('sequence'):
+            updates['sequence'] = None
+
+        archive_service.system_update(target_id, updates, target)
+        user = get_user(required=True)
+        push_notification('item:unlink', item=target_id, user=str(user.get(config.ID_FIELD)))

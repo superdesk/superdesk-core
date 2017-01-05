@@ -222,7 +222,8 @@ class ArchiveRewriteService(Service):
         archive_service = get_resource_service(ARCHIVE)
 
         published_rewritten_stories = publish_service.get_rewritten_items_by_event_story(event_id,
-                                                                                         rewrite_id, rewrite_field)
+                                                                                         rewrite_id,
+                                                                                         rewrite_field)
         processed_items = set()
         for doc in published_rewritten_stories:
             doc_id = doc.get(config.ID_FIELD)

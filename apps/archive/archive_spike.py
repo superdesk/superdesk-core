@@ -72,7 +72,7 @@ class ArchiveSpikeService(BaseService):
         updates[ITEM_OPERATION] = ITEM_SPIKE
         self._validate_item(original)
         self._validate_take(original)
-        self._update_rewrite(original)
+        self.update_rewrite(original)
         set_sign_off(updates, original=original)
 
     def _validate_item(self, original):
@@ -98,7 +98,7 @@ class ArchiveSpikeService(BaseService):
         if not takes_service.is_last_takes_package_item(original):
             raise SuperdeskApiError.badRequestError(message="Only last take of the package can be spiked.")
 
-    def _update_rewrite(self, original):
+    def update_rewrite(self, original):
         """Removes the reference from the rewritten story in published collection."""
         rewrite_service = ArchiveRewriteService()
         if original.get('rewrite_of') and original.get('event_id'):
