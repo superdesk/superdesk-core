@@ -32,6 +32,7 @@ class ActivityReportResource(Resource):
         'category': metadata_schema['anpa_category'],
         'urgency': metadata_schema['urgency'],
         'priority': metadata_schema['priority'],
+        'subscriber': {'type': 'string'},
         'group_by': {'type': 'list'},
         'report': {'type': 'dict'},
         'timestamp': {'type': 'datetime'},
@@ -67,6 +68,9 @@ class ActivityReportService(BaseService):
         if report.get('priority'):
             priority = report['priority']
             terms.append({'terms': {'priority': [priority]}})
+        if report.get('subscriber'):
+            subscriber = report['subscriber']
+            terms.append({'terms': {'target_subscribers.name': [subscriber]}})
 
         return terms
 
