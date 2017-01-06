@@ -7,3 +7,13 @@
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
+
+from .media_references import MediaReferencesResource
+from superdesk.services import BaseService
+import superdesk
+
+
+def init_app(app):
+    endpoint_name = 'media_references'
+    service = BaseService(endpoint_name, backend=superdesk.get_backend())
+    MediaReferencesResource(endpoint_name, app=app, service=service)

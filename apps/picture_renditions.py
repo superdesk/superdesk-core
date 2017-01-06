@@ -1,6 +1,5 @@
 
 import superdesk
-
 from flask import current_app as app
 from superdesk.media.renditions import generate_renditions, get_renditions_spec
 from apps.picture_crop import get_file

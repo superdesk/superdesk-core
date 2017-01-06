@@ -11,6 +11,7 @@
 from bson import ObjectId
 
 import flask
+import logging
 from eve.utils import config
 from datetime import datetime
 from flask import current_app as app
@@ -24,7 +25,8 @@ from superdesk.users.services import get_sign_off
 from superdesk.utc import utcnow, get_expiry_date, local_to_utc, get_date
 from superdesk import get_resource_service
 from superdesk.metadata.item import metadata_schema, ITEM_STATE, CONTENT_STATE, \
-    LINKED_IN_PACKAGES, BYLINE, SIGN_OFF, EMBARGO, ITEM_TYPE, CONTENT_TYPE, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS
+    LINKED_IN_PACKAGES, BYLINE, SIGN_OFF, EMBARGO, ITEM_TYPE, CONTENT_TYPE, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, \
+    ASSOCIATIONS
 from superdesk.workflow import set_default_state, is_workflow_state_transition_valid
 from superdesk.metadata.item import GUID_NEWSML, GUID_FIELD, GUID_TAG, not_analyzed
 from superdesk.metadata.packages import PACKAGE_TYPE, TAKES_PACKAGE, SEQUENCE, ASSOCIATED_TAKE_SEQUENCE
@@ -34,6 +36,7 @@ from superdesk.logging import logger
 from apps.auth import get_user
 
 
+logger = logging.getLogger(__name__)
 ARCHIVE = 'archive'
 CUSTOM_HATEOAS = {'self': {'title': 'Archive', 'href': '/archive/{_id}'}}
 ITEM_OPERATION = 'operation'
@@ -396,41 +399,32 @@ def remove_unwanted(doc):
 def remove_media_files(doc):
     """Removes the media files of the given doc.
 
-    If media files  are not references by any other
-    story across all repos. Returns true if the medis files are removed.
+    If media files are not references by any other
+    story then delete the media files
+    :param dict doc: document for which the media are being deleted
+    :return boolean: True if files are deleted else false.
     """
-    print('Removing Media Files...')
+    logger.info('Removing Media Files...')
 
-    if doc.get(ITEM_TYPE) in [CONTENT_TYPE.PICTURE, CONTENT_TYPE.VIDEO, CONTENT_TYPE.AUDIO]:
-        base_image_id = doc.get('renditions', {}).get('baseImage', {}).get('media')
+    renditions = doc.get('renditions', {})
+    if not renditions:
+        renditions = (doc.get(ASSOCIATIONS) or {}).get('featuremedia', {}).get('renditions', {})
 
-        if base_image_id:
-            try:
-                archive_docs = superdesk.get_resource_service('archive'). \
-                    get_from_mongo(None, {'renditions.baseImage.media': base_image_id})
-                ingest_docs = superdesk.get_resource_service('ingest'). \
-                    get_from_mongo(None, {'renditions.baseImage.media': base_image_id})
-                legal_archive_docs = superdesk.get_resource_service('legal_archive'). \
-                    get_from_mongo(None, {'renditions.baseImage.media': base_image_id})
-                archive_version_docs = superdesk.get_resource_service('archive_versions'). \
-                    get_from_mongo(None, {'renditions.baseImage.media': base_image_id})
-                legal_archive_version_docs = superdesk.get_resource_service('legal_archive_versions'). \
-                    get_from_mongo(None, {'renditions.baseImage.media': base_image_id})
+    if not renditions:
+        return
 
-                if archive_docs.count() == 0 and ingest_docs.count() == 0 and legal_archive_docs.count() == 0 and \
-                        archive_version_docs.count() == 0 and legal_archive_version_docs.count() == 0:
-                    # there's no reference so do remove the file
-                    for name, rendition in doc.get('renditions').items():
-                        if 'media' in rendition:
-                            print('Deleting media:{}'.format(rendition.get('media')))
-                            app.media.delete(rendition.get('media'))
-                    # files are removed
-                    return True
-            except Exception as ex:
-                logger.exception(ex)
-                print('Removing Media Exception:{}'.format(ex))
-                return False
-    return False
+    for rendition in renditions.values():
+        media = rendition.get('media') if isinstance(rendition.get('media'), str) else str(rendition.get('media'))
+        try:
+            references = get_resource_service('media_references').get(req=None, lookup={
+                'media_id': media, 'published': True
+            })
+
+            if references.count() == 0:
+                logger.info('Deleting media:{}'.format(rendition.get('media')))
+                app.media.delete(media)
+        except Exception:
+            logger.exception('Failed to remove Media Id: {} from item: {}'.format(media, doc.get(config.ID_FIELD)))
 
 
 def is_assigned_to_a_desk(doc):
@@ -751,3 +745,12 @@ def get_dateline_city(dateline):
         city = city[:city.rfind(',')]
 
     return city
+
+
+def is_media_item(doc):
+    """Item is media item or not
+
+    :param dict doc: item on which the check is performed.
+    :return: If media item then true else false
+    """
+    return doc.get(ITEM_TYPE) in [CONTENT_TYPE.PICTURE, CONTENT_TYPE.VIDEO, CONTENT_TYPE.AUDIO]

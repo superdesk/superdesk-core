@@ -12,6 +12,7 @@ from __future__ import absolute_import
 from PIL import Image
 from io import BytesIO
 import logging
+from copy import deepcopy
 from flask import current_app as app
 from .media_operations import process_file_from_stream
 from .media_operations import crop_image
@@ -140,9 +141,9 @@ def _resize_image(content, size, format='png', keepProportions=True):
     """
     assert isinstance(size, tuple)
     img = Image.open(content)
+    width, height = img.size
+    new_width, new_height = size
     if keepProportions:
-        width, height = img.size
-        new_width, new_height = size
         if new_width is None and new_height is None:
             raise Exception('size parameter requires at least width or height value')
         # resize with width and height
@@ -180,7 +181,7 @@ def get_renditions_spec(without_internal_renditions=False):
     rendition_spec = {}
     # renditions required by superdesk
     if not without_internal_renditions:
-        rendition_spec = config.RENDITIONS['picture']
+        rendition_spec = deepcopy(config.RENDITIONS['picture'])
     # load custom renditions sizes
     custom_crops = get_resource_service('vocabularies').find_one(req=None, _id='crop_sizes')
     if custom_crops:

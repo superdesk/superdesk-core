@@ -29,6 +29,10 @@ class CleanImages(superdesk.Command):
             archive_items = superdesk.get_resource_service('archive').get_from_mongo(None, {'type': {'$in': types}})
             self.__add_existing_files(used_images, archive_items)
 
+            archive_version_items = superdesk.get_resource_service('archive_versions').\
+                get_from_mongo(None, {'type': {'$in': types}})
+            self.__add_existing_files(used_images, archive_version_items)
+
             ingest_items = superdesk.get_resource_service('ingest').get_from_mongo(None, {'type': {'$in': types}})
             self.__add_existing_files(used_images, ingest_items)
 
@@ -55,9 +59,13 @@ class CleanImages(superdesk.Command):
             if 'media' in item:
                 used_images.add(str(item['media']))
 
-            for file_id in [str(rend.get('media')) for rend in item.get('renditions', {}).values()
-                            if rend.get('media')]:
-                used_images.add(file_id)
+            if item.get('renditions', {}):
+                used_images.add([str(rend.get('media')) for rend in item.get('renditions', {}).values()
+                                 if rend.get('media')])
+
+            renditions = ((item.get('associations') or {}).get('featuremedia') or {}).get('renditions')
+            if renditions:
+                used_images.add([str(rend.get('media')) for rend in renditions.values() if rend.get('media')])
 
 
 superdesk.command('app:clean_images', CleanImages())
