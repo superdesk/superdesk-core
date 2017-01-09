@@ -461,7 +461,7 @@ metadata_schema = {
     # True indicates that the item has been or is to be published as a result of a routing rule
     'auto_publish': {
         'type': 'boolean'
-    }
+    },
 }
 
 metadata_schema['lock_user']['versioned'] = False

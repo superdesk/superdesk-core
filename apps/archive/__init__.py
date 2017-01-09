@@ -16,8 +16,10 @@ import logging
 import superdesk
 from superdesk.celery_app import celery
 
-from .archive import ArchiveResource, ArchiveService, ArchiveVersionsResource, AutoSaveResource, \
-    ArchiveSaveService
+from .archive import (
+    ArchiveResource, ArchiveService,
+    ArchiveVersionsResource, ArchiveVersionsService,
+    AutoSaveResource, ArchiveSaveService)
 from .commands import RemoveExpiredContent
 from .ingest import IngestResource, AppIngestService
 from .user_content import UserContentResource, UserContentService
@@ -42,7 +44,7 @@ def init_app(app):
     IngestResource(endpoint_name, app=app, service=service)
 
     endpoint_name = 'archive_versions'
-    service = superdesk.Service(endpoint_name, backend=superdesk.get_backend())
+    service = ArchiveVersionsService(endpoint_name, backend=superdesk.get_backend())
     ArchiveVersionsResource(endpoint_name, app=app, service=service)
 
     endpoint_name = 'archive'
