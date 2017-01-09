@@ -145,29 +145,28 @@ CACHE_URL = env('SUPERDESK_CACHE_URL', REDIS_URL)
 
 #: celery broker
 BROKER_URL = env('CELERY_BROKER_URL', REDIS_URL)
-CELERY_RESULT_BACKEND = BROKER_URL
-CELERY_ALWAYS_EAGER = (env('CELERY_ALWAYS_EAGER', False) == 'True')
+CELERY_BROKER_URL = BROKER_URL
+CELERY_TASK_ALWAYS_EAGER = (env('CELERY_ALWAYS_EAGER', False) == 'True')
 CELERY_TASK_SERIALIZER = 'json'
-CELERY_ACCEPT_CONTENT = ['pickle', 'json']  # it's using pickle when in eager mode
-CELERY_IGNORE_RESULT = True
-CELERY_DISABLE_RATE_LIMITS = True
-CELERYD_TASK_SOFT_TIME_LIMIT = 300
-CELERYD_LOG_FORMAT = '%(message)s level=%(levelname)s process=%(processName)s'
-CELERYD_TASK_LOG_FORMAT = ' '.join([CELERYD_LOG_FORMAT, 'task=%(task_name)s task_id=%(task_id)s'])
+CELERY_TASK_IGNORE_RESULT = True
+CELERY_TASK_PROTOCOL = 1
+CELERY_WORKER_DISABLE_RATE_LIMITS = True
+CELERY_WORKER_TASK_SOFT_TIME_LIMIT = 300
+CELERY_WORKER_LOG_FORMAT = '%(message)s level=%(levelname)s process=%(processName)s'
+CELERY_WORKER_TASK_LOG_FORMAT = ' '.join([CELERY_WORKER_LOG_FORMAT, 'task=%(task_name)s task_id=%(task_id)s'])
 
-CELERYBEAT_SCHEDULE_FILENAME = env('CELERYBEAT_SCHEDULE_FILENAME', './celerybeatschedule.db')
-CELERY_DEFAULT_QUEUE = 'default'
-CELERY_DEFAULT_EXCHANGE = 'default'
-CELERY_DEFAULT_ROUTING_KEY = 'default'
+CELERY_TASK_DEFAULT_QUEUE = 'default'
+CELERY_TASK_DEFAULT_EXCHANGE = 'default'
+CELERY_TASK_DEFAULT_ROUTING_KEY = 'default'
 
-CELERY_QUEUES = (
-    Queue('default', Exchange(CELERY_DEFAULT_EXCHANGE), routing_key=CELERY_DEFAULT_ROUTING_KEY),
+CELERY_TASK_QUEUES = (
+    Queue('default', Exchange(CELERY_TASK_DEFAULT_EXCHANGE), routing_key=CELERY_TASK_DEFAULT_ROUTING_KEY),
     Queue('expiry', Exchange('expiry', type='topic'), routing_key='expiry.#'),
     Queue('legal', Exchange('legal', type='topic'), routing_key='legal.#'),
     Queue('publish', Exchange('publish', type='topic'), routing_key='publish.#'),
 )
 
-CELERY_ROUTES = {
+CELERY_TASK_ROUTES = {
     'apps.archive.content_expiry': {
         'queue': 'expiry',
         'routing_key': 'expiry.content'
@@ -214,8 +213,8 @@ CELERY_ROUTES = {
     }
 }
 
-
-CELERYBEAT_SCHEDULE = {
+CELERY_BEAT_SCHEDULE_FILENAME = env('CELERYBEAT_SCHEDULE_FILENAME', './celerybeatschedule.db')
+CELERY_BEAT_SCHEDULE = {
     'ingest:update': {
         'task': 'superdesk.io.update_ingest',
         # there is internal schedule for updates per provider,
