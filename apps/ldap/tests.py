@@ -51,11 +51,11 @@ if os.environ.get('LDAP_SERVER', ''):
             cmd = ImportUserProfileFromADCommand()
 
             cmd.run(user['username'], user['password'], user['user_to_import'])
-            auth_user = get_resource_service('auth').authenticate({'username': 'barf', 'password': 'dummy'})
+            auth_user = get_resource_service('auth_db').authenticate({'username': 'barf', 'password': 'dummy'})
             self.assertEqual(auth_user['username'], user['user_to_import'])
 
             cmd.run(user['username'], user['password'], 'BARF')
-            auth_user2 = get_resource_service('auth').authenticate({'username': 'barf', 'password': 'dummy'})
+            auth_user2 = get_resource_service('auth_db').authenticate({'username': 'barf', 'password': 'dummy'})
             self.assertEqual(auth_user2['username'], user['user_to_import'])
 
             self.assertEqual(auth_user2['_id'], auth_user['_id'])

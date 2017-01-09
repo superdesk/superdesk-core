@@ -205,7 +205,7 @@ class ImportUserProfileService(UsersService):
             try:
                 # authenticate on error sends 401 and the client is redirected to login.
                 # but in case import user profile from Active Directory 403 should be fine.
-                user = get_resource_service('auth').authenticate(doc)
+                user = get_resource_service('auth_db').authenticate(doc)
             except CredentialsAuthError:
                 raise SuperdeskApiError.forbiddenError(message="Invalid Credentials.", payload={'credentials': 1})
 
