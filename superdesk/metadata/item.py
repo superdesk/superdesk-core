@@ -16,6 +16,7 @@ from superdesk.utils import SuperdeskBaseEnum
 
 not_analyzed = {'type': 'string', 'index': 'not_analyzed'}
 not_indexed = {'type': 'string', 'index': 'no'}
+
 GUID_TAG = 'tag'
 GUID_FIELD = 'guid'
 GUID_NEWSML = 'newsml'
@@ -472,6 +473,16 @@ metadata_schema = {
 
     'semantics': {
         'type': 'dict',
+        'schema': {
+            'iptcCodes': {'type': 'string', 'mapping': not_analyzed},
+            'iptcDomains': {'type': 'string', 'mapping': not_analyzed},
+            'newsDomains': {'type': 'string', 'mapping': not_analyzed},
+            'places': {'type': 'string', 'mapping': not_analyzed},
+            'persons': {'type': 'string', 'mapping': not_analyzed},
+            'organizations': {'type': 'string', 'mapping': not_analyzed},
+            'mainGroups': {'type': 'string', 'mapping': not_analyzed},
+            'mainLemmas': {'type': 'string', 'mapping': not_analyzed},
+        }
     },
 }
 
