@@ -21,6 +21,7 @@ Feature: Activity report
 		    "priority": 6,
 		    "urgency": 3,
 		    "target_subscribers": [{"name":"test"}],
+		    "anpa_category": [{"name": "arts, culture and entertainment" , "qcode": "01000000"}],
 		    "body_html": "Test Document body"
 		}]
         """
@@ -36,6 +37,7 @@ Feature: Activity report
         	"keywords": ["UNIVERSITY"],
         	"priority": 6,
         	"urgency": 3,
+        	"category": [{"name": "arts, culture and entertainment" , "qcode": "01000000"}],
         	"subscriber": "test"
         }
         """
@@ -47,6 +49,7 @@ Feature: Activity report
         	"priority": 6,
         	"urgency":3,
         	"subscriber": "test",
+        	"category": [{"name": "arts, culture and entertainment" , "qcode": "01000000"}],
         	"report": {"items": 2}
         }
         """
@@ -61,6 +64,7 @@ Feature: Activity report
         	"keywords": ["UNIVERSITY"],
         	"priority": 6,
         	"urgency":3,
+        	"category": [{"name": "arts, culture and entertainment" , "qcode": "01000000"}],
         	"subscriber": "test"
         }
         """
@@ -74,7 +78,9 @@ Feature: Activity report
         	"keywords": ["UNIVERSITY"],
         	"priority": 6,
         	"urgency":3,
+        	"category": [{"name": "arts, culture and entertainment" , "qcode": "01000000"}],
         	"subscriber": "test",
         	"report": [{"desk": "Sports Desk", "items": 2}]
         }
         """
+	
