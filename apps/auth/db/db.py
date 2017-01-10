@@ -22,8 +22,6 @@ class DbAuthService(AuthService):
         if not user:
             raise CredentialsAuthError(credentials)
 
-        self.check_user(user)
-
         password = credentials.get('password').encode('UTF-8')
         hashed = user.get('password').encode('UTF-8')
 

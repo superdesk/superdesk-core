@@ -13,6 +13,7 @@ from superdesk import get_resource_service
 from superdesk.resource import Resource
 from apps.auth.errors import CredentialsAuthError
 from superdesk.errors import SuperdeskApiError
+from superdesk.services import BaseService
 from superdesk import utils
 from flask import current_app as app
 import requests
@@ -35,8 +36,7 @@ class XMPPAuthResource(Resource):
         'user': Resource.rel('users', True)
     }
     resource_methods = ['POST']
-    item_methods = ['GET', 'DELETE']
-    public_methods = ['POST', 'DELETE']
+    public_methods = ['POST']
     extra_response_fields = ['user', 'token', 'username']
 
 
@@ -57,8 +57,6 @@ class XMPPAuthService(AuthService):
         if not user:
             raise CredentialsAuthError(credentials)
 
-        self.check_user(user)
-
         try:
             r = requests.post(app.config['XMPP_AUTH_URL'],
                               data={
@@ -77,3 +75,14 @@ class XMPPAuthService(AuthService):
     def set_auth_default(self, doc, user_id):
         doc['user'] = user_id
         doc['token'] = utils.get_random_string(40)
+
+
+class ActivatedResource(Resource):
+    public_methods = ['GET']
+
+
+class ActivatedService(BaseService):
+    """Service telling if XMPP auth is activated"""
+
+    def on_fetched(self, doc):
+        doc['activated'] = bool(app.config['XMPP_AUTH_URL'])

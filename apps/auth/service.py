@@ -26,7 +26,10 @@ class AuthService(BaseService):
     def on_create(self, docs):
         for doc in docs:
             user = self.authenticate(doc)
-
+            if 'is_enabled' in user and not user.get('is_enabled', False):
+                raise UserDisabledError()
+            if not user.get('is_active', False):
+                raise UserInactiveError()
             self.set_auth_default(doc, user['_id'])
 
     def on_created(self, docs):
@@ -46,14 +49,6 @@ class AuthService(BaseService):
         doc['user'] = user_id
         doc['token'] = utils.get_random_string(40)
         del doc['password']
-
-    def check_user(self, user):
-        """Check if the user is enabled and active"""
-        if 'is_enabled' in user and not user.get('is_enabled', False):
-            raise UserDisabledError()
-
-        if not user.get('is_active', False):
-            raise UserInactiveError()
 
 
 class UserSessionClearService(BaseService):

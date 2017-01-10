@@ -183,8 +183,6 @@ class ADAuthService(AuthService):
                                user_type=None if 'user_type' not in user_data else user_data['user_type'])
             user = user_data
         else:
-            self.check_user(user)
-
             superdesk.get_resource_service('users').patch(user.get('_id'), user_data)
             user = superdesk.get_resource_service('users').find_one(req=None, **query)
 
