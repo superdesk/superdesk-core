@@ -400,21 +400,15 @@ class ArchiveService(BaseService):
     def _remove_after_copy(self, copied_item):
         """Removes the properties which doesn't make sense to have for an item after copy.
         """
+        keys_to_delete = [config.ID_FIELD, 'guid', LINKED_IN_PACKAGES, EMBARGO, PUBLISH_SCHEDULE,
+                          SCHEDULE_SETTINGS, 'lock_time', 'lock_session', 'lock_user', SIGN_OFF,
+                          'rewritten_by', 'rewrite_of', 'rewrite_sequence', 'highlights', 'is_take_item',
+                          'item_id', 'publish_state', 'last_published_version', 'queue_state',
+                          'digital_item_id', 'publish_sequence_no', 'last_queue_event', 'moved_to_legal',
+                          'published_in_package', '_type']
 
-        del copied_item[config.ID_FIELD]
-        del copied_item['guid']
-        copied_item.pop(LINKED_IN_PACKAGES, None)
-        copied_item.pop(EMBARGO, None)
-        copied_item.pop(PUBLISH_SCHEDULE, None)
-        copied_item.pop(SCHEDULE_SETTINGS, None)
-        copied_item.pop('lock_time', None)
-        copied_item.pop('lock_session', None)
-        copied_item.pop('lock_user', None)
-        copied_item.pop(SIGN_OFF, None)
-        copied_item.pop('rewritten_by', None)
-        copied_item.pop('rewrite_of', None)
-        copied_item.pop('rewrite_sequence', None)
-        copied_item.pop('highlights', None)
+        for key in keys_to_delete:
+            copied_item.pop(key, None)
 
         task = copied_item.get('task', {})
         task.pop(LAST_PRODUCTION_DESK, None)
