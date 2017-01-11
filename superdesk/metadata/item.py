@@ -474,14 +474,14 @@ metadata_schema = {
     'semantics': {
         'type': 'dict',
         'schema': {
-            'iptcCodes': {'type': 'string', 'mapping': not_analyzed},
-            'iptcDomains': {'type': 'string', 'mapping': not_analyzed},
-            'newsDomains': {'type': 'string', 'mapping': not_analyzed},
-            'places': {'type': 'string', 'mapping': not_analyzed},
-            'persons': {'type': 'string', 'mapping': not_analyzed},
-            'organizations': {'type': 'string', 'mapping': not_analyzed},
-            'mainGroups': {'type': 'string', 'mapping': not_analyzed},
-            'mainLemmas': {'type': 'string', 'mapping': not_analyzed},
+            'iptcCodes': {'type': 'list', 'mapping': not_analyzed},
+            'iptcDomains': {'type': 'list', 'mapping': not_analyzed},
+            'newsDomains': {'type': 'list', 'mapping': not_analyzed},
+            'places': {'type': 'list', 'mapping': not_analyzed},
+            'persons': {'type': 'list', 'mapping': not_analyzed},
+            'organizations': {'type': 'list', 'mapping': not_analyzed},
+            'mainGroups': {'type': 'list', 'mapping': not_analyzed},
+            'mainLemmas': {'type': 'list', 'mapping': not_analyzed},
         }
     },
 }
