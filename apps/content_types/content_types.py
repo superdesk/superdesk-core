@@ -61,7 +61,7 @@ class DefaultSchema(schema.Schema):
     headline = schema.StringField(maxlength=64)
 
     #: sms version of an item
-    sms = schema.NoneField()
+    sms = schema.StringField()
 
     #: item abstract
     abstract = schema.StringField(maxlength=160)
@@ -76,10 +76,10 @@ class DefaultSchema(schema.Schema):
     body_html = schema.StringField()
 
     #: item footer
-    footer = schema.NoneField()
+    footer = schema.StringField()
 
     #: body footer
-    body_footer = schema.NoneField()
+    body_footer = schema.StringField()
 
     #: item sign off info
     sign_off = schema.StringField()
