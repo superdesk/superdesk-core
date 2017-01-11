@@ -29,6 +29,9 @@ class DefaultSchema(schema.Schema):
     #: news item priority
     priority = schema.IntegerField()
 
+    #: news item urgency
+    urgency = schema.IntegerField()
+
     #: category
     anpa_category = schema.ListField()
 
@@ -97,6 +100,7 @@ DEFAULT_EDITOR = {
     'anpa_take_key': {'order': 3, 'sdWidth': 'half', 'enabled': False},
     'place': {'order': 4, 'sdWidth': 'half', 'enabled': True},
     'priority': {'order': 5, 'sdWidth': 'quarter', 'enabled': True},
+    'urgency': {'order': 6, 'sdWidth': 'quarter', 'enabled': True},
     'anpa_category': {'order': 7, 'sdWidth': 'full', 'enabled': True},
     'subject': {'order': 8, 'sdWidth': 'full', 'enabled': True},
     'company_codes': {'order': 9, 'sdWidth': 'full', 'enabled': False},
