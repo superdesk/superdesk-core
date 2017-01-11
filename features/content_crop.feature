@@ -204,7 +204,6 @@ Feature: Cropping the Image Articles
       }
       """
       And we fetch a file "#rendition.4-3.href#"
-      And we get error 404
       When we get "/archive/123"
       Then we get rendition "4-3" with mimetype "image/jpeg"
       And we get rendition "16-9" with mimetype "image/jpeg"
@@ -354,7 +353,6 @@ Feature: Cropping the Image Articles
       """
       Then we get OK response
       And we fetch a file "#rendition.4-3.href#"
-      And we get error 404
       When we get "/archive/123"
       Then we get rendition "4-3" with mimetype "image/jpeg"
       And we get rendition "16-9" with mimetype "image/jpeg"

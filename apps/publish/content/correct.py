@@ -70,7 +70,6 @@ class CorrectPublishService(BasePublishService):
         original_updates['operation'] = updates['operation']
         original_updates[ITEM_STATE] = updates[ITEM_STATE]
         super().on_updated(updates, original)
-        CropService().delete_replaced_crop_files(updates, original)
         packages = self.package_service.get_packages(original[config.ID_FIELD])
         if packages and packages.count() > 0:
             archive_correct = get_resource_service('archive_correct')

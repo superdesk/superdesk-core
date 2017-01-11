@@ -136,7 +136,7 @@ class BaseService():
             lookup = {}
             docs = []
         else:
-            docs = self.get_from_mongo(None, lookup)
+            docs = list(doc for doc in self.get_from_mongo(None, lookup))
         for doc in docs:
             self.on_delete(doc)
         res = self.delete(lookup)

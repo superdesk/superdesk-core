@@ -9,9 +9,11 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
+import copy
 import unittest
+
 from datetime import timedelta, datetime
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from bson import ObjectId
 from pytz import timezone
@@ -176,20 +178,21 @@ class RemoveSpikedContentTestCase(TestCase):
     def test_query_getting_expired_content(self):
         now = utcnow()
 
-        self.app.data.insert(ARCHIVE, [{'expiry': now - timedelta(minutes=10), 'state': 'spiked',
-                                        'unique_id': 'expired'}])
-        self.app.data.insert(ARCHIVE, [{'expiry': get_expiry_date(0), 'state': 'spiked'}])
-        self.app.data.insert(ARCHIVE, [{'expiry': get_expiry_date(10), 'state': 'spiked'}])
-        self.app.data.insert(ARCHIVE, [{'expiry': get_expiry_date(20), 'state': 'spiked'}])
-        self.app.data.insert(ARCHIVE, [{'expiry': get_expiry_date(30), 'state': 'spiked'}])
-        self.app.data.insert(ARCHIVE, [{'expiry': None, 'state': 'spiked'}])
-        self.app.data.insert(ARCHIVE, [{'unique_id': 97, 'state': 'spiked'}])
+        self.app.data.insert(ARCHIVE, [
+            {'expiry': get_expiry_date(0), 'state': 'spiked'},
+            {'expiry': get_expiry_date(10), 'state': 'spiked'},
+            {'expiry': get_expiry_date(20), 'state': 'spiked'},
+            {'expiry': get_expiry_date(30), 'state': 'spiked'},
+            {'expiry': None, 'state': 'spiked'},
+            {'unique_id': 97, 'state': 'spiked'},
+            {'expiry': now - timedelta(minutes=10), 'state': 'spiked', 'unique_id': 100},
+        ])
 
         expired_items = get_resource_service(ARCHIVE).get_expired_items(now)
         now = utcnow()
         for expired_items in get_resource_service(ARCHIVE).get_expired_items(now):
             self.assertEquals(1, len(expired_items))
-            self.assertEquals('expired', expired_items[0]['unique_id'])
+            self.assertEquals(100, expired_items[0]['unique_id'])
 
     def test_query_removing_media_files_keeps(self):
         self.app.data.insert(ARCHIVE, [{'state': 'spiked',
@@ -215,6 +218,30 @@ class RemoveSpikedContentTestCase(TestCase):
         self.assertTrue(self.app.data.mongo.is_empty(ARCHIVE))
         self.assertTrue(self.app.data.elastic.is_empty(ARCHIVE))
         self.assertEqual(len(self.articles), archive_service.on_delete.call_count)
+
+    def test_remove_renditions_from_all_versions(self):
+        renditions = copy.copy(self.media)
+
+        ids = self.app.data.insert(ARCHIVE, [{
+            'state': 'spiked',
+            'expiry': get_expiry_date(-10),
+            'type': 'picture',
+            'renditions': {},
+        }])
+
+        self.app.data.insert('archive_versions', [{
+            '_id_document': ids[0],
+            'type': 'picture',
+            'renditions': renditions,
+        }])
+
+        with patch.object(self.app.media, 'delete') as media_delete:
+            get_resource_service('archive').delete_by_article_ids(ids)
+            for key, rendition in renditions.items():
+                media_delete.assert_any_call(rendition['media'])
+
+    def _get_original(self, _id):
+        return self.app.data.find_one(ARCHIVE, None, _id=_id)
 
 
 class ArchiveTestCase(TestCase):

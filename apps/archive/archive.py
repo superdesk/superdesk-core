@@ -95,6 +95,12 @@ class ArchiveVersionsResource(Resource):
     privileges = {'PATCH': 'archive'}
 
 
+class ArchiveVersionsService(superdesk.Service):
+
+    def on_deleted(self, doc):
+        remove_media_files(doc)
+
+
 class ArchiveResource(Resource):
     schema = item_schema()
     extra_response_fields = extra_response_fields
@@ -254,8 +260,6 @@ class ArchiveService(BaseService):
 
         if original[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
             self.packageService.on_updated(updates, original)
-
-        CropService().delete_replaced_crop_files(updates, original)
 
         updated = copy(original)
         updated.update(updates)
@@ -501,7 +505,7 @@ class ArchiveService(BaseService):
         :param list ids: list of ids to be removed
         """
         version_field = versioned_id_field(app.config['DOMAIN']['archive_versions'])
-        get_resource_service('archive_versions').delete(lookup={version_field: {'$in': ids}})
+        get_resource_service('archive_versions').delete_action(lookup={version_field: {'$in': ids}})
         super().delete_action({config.ID_FIELD: {'$in': ids}})
 
     def __is_req_for_save(self, doc):
@@ -714,7 +718,7 @@ class ArchiveService(BaseService):
             if not len(items):
                 break
 
-            unique_id = items[len(items) - 1]['unique_id']
+            unique_id = items[-1]['unique_id']
             yield items
 
     def _add_desk_metadata(self, updates, original):

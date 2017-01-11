@@ -30,6 +30,7 @@ from superdesk.metadata.item import GUID_NEWSML, GUID_FIELD, GUID_TAG, not_analy
 from superdesk.metadata.packages import PACKAGE_TYPE, TAKES_PACKAGE, SEQUENCE, ASSOCIATED_TAKE_SEQUENCE
 from superdesk.metadata.utils import generate_guid
 from superdesk.errors import SuperdeskApiError, IdentifierGenerationError
+from superdesk.logging import logger
 from apps.auth import get_user
 
 
@@ -393,42 +394,43 @@ def remove_unwanted(doc):
 
 
 def remove_media_files(doc):
-        """Removes the media files of the given doc.
+    """Removes the media files of the given doc.
 
-        If media files  are not references by any other
-        story across all repos. Returns true if the medis files are removed.
-        """
-        print('Removing Media Files...')
+    If media files  are not references by any other
+    story across all repos. Returns true if the medis files are removed.
+    """
+    print('Removing Media Files...')
 
-        if doc.get(ITEM_TYPE) in [CONTENT_TYPE.PICTURE, CONTENT_TYPE.VIDEO, CONTENT_TYPE.AUDIO]:
-            base_image_id = doc.get('renditions', {}).get('baseImage', {}).get('media')
+    if doc.get(ITEM_TYPE) in [CONTENT_TYPE.PICTURE, CONTENT_TYPE.VIDEO, CONTENT_TYPE.AUDIO]:
+        base_image_id = doc.get('renditions', {}).get('baseImage', {}).get('media')
 
-            if base_image_id:
-                try:
-                    archive_docs = superdesk.get_resource_service('archive'). \
-                        get_from_mongo(None, {'renditions.baseImage.media': base_image_id})
-                    ingest_docs = superdesk.get_resource_service('ingest'). \
-                        get_from_mongo(None, {'renditions.baseImage.media': base_image_id})
-                    legal_archive_docs = superdesk.get_resource_service('legal_archive'). \
-                        get_from_mongo(None, {'renditions.baseImage.media': base_image_id})
-                    archive_version_docs = superdesk.get_resource_service('archive_versions'). \
-                        get_from_mongo(None, {'renditions.baseImage.media': base_image_id})
-                    legal_archive_version_docs = superdesk.get_resource_service('legal_archive_versions'). \
-                        get_from_mongo(None, {'renditions.baseImage.media': base_image_id})
+        if base_image_id:
+            try:
+                archive_docs = superdesk.get_resource_service('archive'). \
+                    get_from_mongo(None, {'renditions.baseImage.media': base_image_id})
+                ingest_docs = superdesk.get_resource_service('ingest'). \
+                    get_from_mongo(None, {'renditions.baseImage.media': base_image_id})
+                legal_archive_docs = superdesk.get_resource_service('legal_archive'). \
+                    get_from_mongo(None, {'renditions.baseImage.media': base_image_id})
+                archive_version_docs = superdesk.get_resource_service('archive_versions'). \
+                    get_from_mongo(None, {'renditions.baseImage.media': base_image_id})
+                legal_archive_version_docs = superdesk.get_resource_service('legal_archive_versions'). \
+                    get_from_mongo(None, {'renditions.baseImage.media': base_image_id})
 
-                    if archive_docs.count() == 0 and ingest_docs.count() == 0 and legal_archive_docs.count() == 0 and \
-                            archive_version_docs.count() == 0 and legal_archive_version_docs.count() == 0:
-                        # there's no reference so do remove the file
-                        for name, rendition in doc.get('renditions').items():
-                            if 'media' in rendition:
-                                print('Deleting media:{}'.format(rendition.get('media')))
-                                app.media.delete(rendition.get('media'))
-                        # files are removed
-                        return True
-                except Exception as ex:
-                    print('Removing Media Exception:{}'.format(ex))
-                    return False
-        return False
+                if archive_docs.count() == 0 and ingest_docs.count() == 0 and legal_archive_docs.count() == 0 and \
+                        archive_version_docs.count() == 0 and legal_archive_version_docs.count() == 0:
+                    # there's no reference so do remove the file
+                    for name, rendition in doc.get('renditions').items():
+                        if 'media' in rendition:
+                            print('Deleting media:{}'.format(rendition.get('media')))
+                            app.media.delete(rendition.get('media'))
+                    # files are removed
+                    return True
+            except Exception as ex:
+                logger.exception(ex)
+                print('Removing Media Exception:{}'.format(ex))
+                return False
+    return False
 
 
 def is_assigned_to_a_desk(doc):
