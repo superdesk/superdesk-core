@@ -9,12 +9,13 @@ from copy import deepcopy
 CONTENT_TYPE_PRIVILEGE = 'content_type'
 
 DEFAULT_SCHEMA = {
-    'slugline': {'maxlength': 24, 'type': 'string'},
-    'genre': {'type': 'list'},
-    'anpa_take_key': {},
-    'place': {'type': 'list'},
-    'priority': {},
-    'anpa_category': {'type': 'list'},
+    'slugline': {'maxlength': 24, 'type': 'string', 'required': False},
+    'genre': {'type': 'list', 'required': False},
+    'anpa_take_key': {'type': 'string', 'required': False},
+    'place': {'type': 'list', 'required': False},
+    'priority': {'type': 'integer', 'required': False},
+    'urgency': {'type': 'integer', 'required': False},
+    'anpa_category': {'type': 'list', 'required': False},
     'subject': {
         'type': 'list',
         'required': True,
@@ -34,19 +35,19 @@ DEFAULT_SCHEMA = {
             }
         }
     },
-    'company_codes': {'type': 'list'},
-    'ednote': {},
-    'headline': {'maxlength': 64, 'type': 'string'},
-    'sms': None,
-    'abstract': {'maxlength': 160, 'type': 'string'},
-    'byline': {'type': 'string'},
-    'dateline': {'type': 'dict'},
-    'body_html': {},
-    'footer': None,
-    'body_footer': None,
-    'sign_off': {'type': 'string'},
-    'media': {},
-    'media_description': {}
+    'company_codes': {'type': 'list', 'required': False},
+    'ednote': {'type': 'string', 'required': False},
+    'headline': {'maxlength': 64, 'type': 'string', 'required': False},
+    'sms': {'type': 'string', 'required': False},
+    'abstract': {'maxlength': 160, 'type': 'string', 'required': False},
+    'byline': {'type': 'string', 'required': False},
+    'dateline': {'type': 'dict', 'required': False},
+    'body_html': {'type': 'string', 'required': False},
+    'footer': {'type': 'string', 'required': False},
+    'body_footer': {'type': 'string', 'required': False},
+    'sign_off': {'type': 'string', 'required': False},
+    'media': {'required': False},
+    'media_description': {'required': False}
 }
 
 DEFAULT_EDITOR = {
@@ -55,6 +56,7 @@ DEFAULT_EDITOR = {
     'anpa_take_key': {'order': 3, 'sdWidth': 'half', 'enabled': False},
     'place': {'order': 4, 'sdWidth': 'half', 'enabled': True},
     'priority': {'order': 5, 'sdWidth': 'quarter', 'enabled': True},
+    'urgency': {'order': 6, 'sdWidth': 'quarter', 'enabled': True},
     'anpa_category': {'order': 7, 'sdWidth': 'full', 'enabled': True},
     'subject': {'order': 8, 'sdWidth': 'full', 'enabled': True},
     'company_codes': {'order': 9, 'sdWidth': 'full', 'enabled': False},
@@ -213,10 +215,10 @@ def init_default(doc):
     if editor and schema:
         for field in DEFAULT_EDITOR:
             # add missing fields in editor with enabled = false
-            if not editor.get(field, None):
+            if editor.get(field, None) is None:
                 editor[field] = deepcopy(DEFAULT_EDITOR[field])
                 editor[field]['enabled'] = False
-                if not schema.get(field, None):
+                if schema.get(field, None) is None:
                     schema[field] = deepcopy(DEFAULT_SCHEMA[field])
             else:
                 editor[field]['enabled'] = True
