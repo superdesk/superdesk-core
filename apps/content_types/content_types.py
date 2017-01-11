@@ -29,6 +29,9 @@ class DefaultSchema(schema.Schema):
     #: news item priority
     priority = schema.IntegerField()
 
+    #: news item urgency
+    urgency = schema.IntegerField()
+
     #: category
     anpa_category = schema.ListField()
 
@@ -97,6 +100,7 @@ DEFAULT_EDITOR = {
     'anpa_take_key': {'order': 3, 'sdWidth': 'half', 'enabled': False},
     'place': {'order': 4, 'sdWidth': 'half', 'enabled': True},
     'priority': {'order': 5, 'sdWidth': 'quarter', 'enabled': True},
+    'urgency': {'order': 6, 'sdWidth': 'quarter', 'enabled': True},
     'anpa_category': {'order': 7, 'sdWidth': 'full', 'enabled': True},
     'subject': {'order': 8, 'sdWidth': 'full', 'enabled': True},
     'company_codes': {'order': 9, 'sdWidth': 'full', 'enabled': False},
@@ -255,10 +259,10 @@ def init_default(doc):
     if editor and schema:
         for field in DEFAULT_EDITOR:
             # add missing fields in editor with enabled = false
-            if not editor.get(field, None):
+            if editor.get(field, None) is None:
                 editor[field] = deepcopy(DEFAULT_EDITOR[field])
                 editor[field]['enabled'] = False
-                if not schema.get(field, None):
+                if schema.get(field, None) is None:
                     schema[field] = deepcopy(DEFAULT_SCHEMA[field])
             else:
                 editor[field]['enabled'] = True
