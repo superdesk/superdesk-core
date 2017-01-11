@@ -17,6 +17,7 @@ from eve.utils import ParsedRequest
 from superdesk.metadata.item import metadata_schema
 from superdesk.resource import Resource
 from superdesk.utils import format_date
+from eve.default_settings import ID_FIELD
 
 
 class ActivityReportResource(Resource):
@@ -41,8 +42,9 @@ class ActivityReportResource(Resource):
 
 
 class ActivityReportService(BaseService):
-    # check if some fields are filled out before generating the report and initiate the filter
-    def check_for_fields(self, report):
+    def set_query_terms(self, report):
+        """Check if some fields are filled out before generating the report and initiate the filter
+        """
         terms = [
             {"term": {"operation": report['operation']}}
         ]
@@ -58,18 +60,18 @@ class ActivityReportService(BaseService):
 
         return terms
 
-    # get the list of all items in the 4 repos
-    def get_items_list(self, query):
-            request = ParsedRequest()
-            request.args = {'source': json.dumps(query), 'repo': 'archive,published,archived,ingest'}
-            items_list = list(get_resource_service('search').get(req=request, lookup=None))
-            return items_list
+    def get_items(self, query):
+        """Return the result of the item search by the given query
+        """
+        request = ParsedRequest()
+        request.args = {'source': json.dumps(query), 'repo': 'archive,published,archived,ingest'}
+        return get_resource_service('search').get(req=request, lookup=None)
 
     def search_items_without_groupping(self, report):
-        terms = []
+        """Return the report without grouping by desk
+        """
+        terms = self.set_query_terms(report)
         terms.append({"term": {"task.desk": str(report['desk'])}})
-        terms.append(self.check_for_fields(report))
-
         query = {
             "query": {
                 "filtered": {
@@ -79,38 +81,43 @@ class ActivityReportService(BaseService):
                 }
             }
         }
+        return {'items': self.get_items(query).count()}
 
-        items_list = self.get_items_list(query)
-        return {'items': len(items_list)}
-
-    def search_items_when_groupping(self, report):
-        result_list = []
-        desks = get_resource_service('desks').get(req=None, lookup={})
-
-        # return the filtered items for each desk
-        for desk in desks:
-            terms = []
-            terms.append({"term": {"task.desk": str(desk['_id'])}})
-            terms.append(self.check_for_fields(report))
-            query = {
-                "query": {
-                    "filtered": {
-                        "filter": {
-                            "bool": {"must": terms}
-                        }
+    def search_items_with_groupping(self, report):
+        """Return the report without grouping by desk
+        """
+        query = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "bool": {"must": self.set_query_terms(report)}
                     }
                 }
             }
-            items_list = self.get_items_list(query)
-            item = {'desk': desk['name'], 'items': len(items_list)}
-            result_list.append(item)
+        }
+        items = self.get_items(query)
+
+        if 'aggregations' in items.hits and 'desk' in items.hits['aggregations']:
+            desk_buckets = items.hits['aggregations']['desk']['buckets']
+        else:
+            desk_buckets = []
+        result_list = []
+        for desk in get_resource_service('desks').get(req=None, lookup={}):
+            desk_item_count = self._desk_item_count(desk_buckets, desk[ID_FIELD])
+            result_list.append({'desk': desk['name'], 'items': desk_item_count})
         return result_list
+
+    def _desk_item_count(self, bucket, desk_id):
+        for desk_stats in bucket:
+            if desk_stats['key'] == str(desk_id):
+                return desk_stats['doc_count']
+        return 0
 
     def create(self, docs):
         for doc in docs:
             doc['timestamp'] = datetime.now()
             if doc.get('group_by'):
-                doc['report'] = self.search_items_when_groupping(doc)
+                doc['report'] = self.search_items_with_groupping(doc)
             else:
                 doc['report'] = self.search_items_without_groupping(doc)
         docs = super().create(docs)
