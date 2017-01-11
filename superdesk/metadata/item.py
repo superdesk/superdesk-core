@@ -482,7 +482,7 @@ metadata_schema = {
             'organizations': {'type': 'list', 'mapping': not_analyzed},
             'mainGroups': {'type': 'list', 'mapping': not_analyzed},
             'mainLemmas': {'type': 'list', 'mapping': not_analyzed},
-            'mainSentences': {'type': 'list'},
+            'mainSenteces': {'type': 'list'},
             'isMOODneutral': {'type': 'boolean'},
             'isMOODnegative': {'type': 'boolean'},
             'isMOODpositive': {'type': 'boolean'},
