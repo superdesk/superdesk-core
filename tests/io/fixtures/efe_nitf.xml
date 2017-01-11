@@ -1,0 +1,54 @@
+<nitf version="-//IPTC//DTD NITF 3.2//EN" change.date="October 10, 2003" change.time="19:30" baselang="en-US">
+    <head>
+        <title>Honduran president announces Cabinet changes</title>
+        <meta name="prioridad" content="R"/>
+        <meta name="categoria" content="POL"/>
+        <meta name="tabulacion" content="BT"/>
+        <meta name="tabuladores" content="NO"/>
+        <meta name="regional" content=""/>
+        <meta name="complemento" content=""/>
+        <tobject tobject.type="News"><!--Politics;Government;Executive (government)-->
+            <tobject.subject tobject.subject.ipr="IPTC" tobject.subject.refnum="11006005"
+                             tobject.subject.type="Politics" tobject.subject.matter="Government"
+                             tobject.subject.detail="Executive (government)"/><!--POL:POLITICS;GOVERNMENT-->
+            <tobject.subject tobject.subject.ipr="EFE" tobject.subject.refnum="F01001000"
+                             tobject.subject.type="POL:POLITICS" tobject.subject.matter="GOVERNMENT"/>
+        </tobject>
+        <docdata management-status="usable">
+            <evloc city="Tegucigalpa" iso-cc="HND"/>
+            <doc-id id-string="22751909"/>
+            <urgency ed-urg="5"/>
+            <date.issue norm="20170102T222800+0000"/>
+            <key-list>
+                <keyword key="HONDURAS GOVERNMENT"/>
+            </key-list>
+        </docdata>
+        <pubdata date.publication="20170102T222800+0000" edition.area="MWM SIF" item-length="00279"
+                 unit-of-measure="word" id="IM1026"/>
+    </head>
+    <body>
+        <body.head>
+            <hedline>
+                <hl1>Honduran president announces Cabinet changes</hl1>
+                <hl2>HONDURAS GOVERNMENT</hl2>
+            </hedline>
+            <rights>
+                <rights.owner>Agencia EFE</rights.owner>
+            </rights>
+            <byline>gr/bp</byline>
+            <distributor>Agencia EFE</distributor>
+            <dateline><!--Creation date.--><!--ATTENTION: Use "norm" attribute as datetime. The datetime inside tag "story.date" is a mistake but we maintain it to avoid errors in our customers.
+ATENCION: Use el atributo "norm" como fecha y hora. La fecha y hora presente en la etiqueta "story.date" es un error pero seguimos incluy?ndolo para evitar errores en nuestros clientes.-->
+                <story.date norm="20170102T222800+0000">20170102T222800+0000</story.date>
+            </dateline>
+            <abstract>
+                <p>Test Abstract
+                </p>
+            </abstract>
+        </body.head>
+        <body.content>
+            <p>Tegucigalpa, Jan 2 (EFE).- Test body.
+            </p>
+        </body.content>
+    </body>
+</nitf>
