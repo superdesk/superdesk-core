@@ -259,10 +259,10 @@ def init_default(doc):
     if editor and schema:
         for field in DEFAULT_EDITOR:
             # add missing fields in editor with enabled = false
-            if not editor.get(field, None):
+            if editor.get(field, None) is None:
                 editor[field] = deepcopy(DEFAULT_EDITOR[field])
                 editor[field]['enabled'] = False
-                if not schema.get(field, None):
+                if schema.get(field, None) is None:
                     schema[field] = deepcopy(DEFAULT_SCHEMA[field])
             else:
                 editor[field]['enabled'] = True
