@@ -145,6 +145,11 @@ Feature: Content Profile
                     "enabled": true,
                     "order": 5
                 },
+                "urgency": {
+                    "sdWidth": "quarter",
+                    "enabled": true,
+                    "order": 6
+                },
                 "body_html": {
                     "formatOptions": ["h2", "bold", "italic", "underline", "quote", "anchor", "embed", "picture", "removeFormat"],
                     "enabled": true,
@@ -226,12 +231,28 @@ Feature: Content Profile
                     "type": "integer",
                     "required": false
                 },
+                "urgency": {
+                    "type": "integer",
+                    "required": false
+                },
                 "headline": {
                     "type": "string",
                     "required": false,
                     "maxlength": 64
                 },
-                "media_description": {}
+                "media_description": {},
+                "sms": {
+                    "type": "string",
+                    "required": false
+                },
+                "body_footer": {
+                    "type": "string",
+                    "required": false
+                },
+                "footer": {
+                    "type": "string",
+                    "required": false
+                }
             }
         }
         """
@@ -285,6 +306,10 @@ Feature: Content Profile
                     "type": "string"
                 },
                 "priority": {
+                    "type": "integer",
+                    "required": false
+                },
+                "urgency": {
                     "type": "integer",
                     "required": false
                 },
@@ -347,6 +372,18 @@ Feature: Content Profile
                 "dateline": {
                     "type": "dict",
                     "required": false
+                },
+                "sms": {
+                    "required": false,
+                    "type": "string"
+                },
+                "body_footer": {
+                    "type": "string",
+                    "required": false
+                },
+                "footer": {
+                    "type": "string",
+                    "required": false
                 }
             },
             "editor": {
@@ -358,6 +395,11 @@ Feature: Content Profile
                 "priority": {
                     "enabled": false,
                     "order": 5,
+                    "sdWidth": "quarter"
+                },
+                "urgency": {
+                    "enabled": false,
+                    "order": 6,
                     "sdWidth": "quarter"
                 },
                 "anpa_take_key": {
@@ -526,6 +568,10 @@ Feature: Content Profile
                     "type": "integer",
                     "required": false
                 },
+                "urgency": {
+                    "type": "integer",
+                    "required": false
+                },
                 "subject_custom": {
                     "mandatory_in_list": {
                         "scheme": {}
@@ -589,6 +635,18 @@ Feature: Content Profile
                     "type": "string",
                     "maxlength": 64,
                     "required": false
+                },
+                "sms": {
+                    "type": "string",
+                    "required": false
+                },
+                "body_footer": {
+                    "type": "string",
+                    "required": false
+                },
+                "footer": {
+                    "type": "string",
+                    "required": false
                 }
             },
             "editor": {
@@ -601,6 +659,11 @@ Feature: Content Profile
                 },
                 "priority": {
                     "order": 5,
+                    "sdWidth": "quarter",
+                    "enabled": true
+                },
+                "urgency": {
+                    "order": 6,
                     "sdWidth": "quarter",
                     "enabled": true
                 },
@@ -859,6 +922,11 @@ Feature: Content Profile
                     "order": 5,
                     "enabled": false
                 },
+                "urgency": {
+                    "sdWidth": "quarter",
+                    "order": 6,
+                    "enabled": false
+                },
                 "anpa_take_key": {
                     "sdWidth": "half",
                     "order": 3,
@@ -936,6 +1004,10 @@ Feature: Content Profile
                     "type": "integer",
                     "required": false
                 },
+                "urgency": {
+                    "type": "integer",
+                    "required": false
+                },
                 "anpa_take_key": {
                     "type": "string",
                     "required": false
@@ -945,6 +1017,18 @@ Feature: Content Profile
                     "required": false
                 },
                 "byline": {
+                    "type": "string",
+                    "required": false
+                },
+                "sms": {
+                    "type": "string",
+                    "required": false
+                },
+                "body_footer": {
+                    "type": "string",
+                    "required": false
+                },
+                "footer": {
                     "type": "string",
                     "required": false
                 }
