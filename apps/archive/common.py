@@ -143,6 +143,10 @@ ARCHIVE_SCHEMA_FIELDS = {
         'type': 'string',
         'mapping': not_analyzed,
         'nullable': True
+    },
+    'original_id': {
+        'type': 'string',
+        'mapping': not_analyzed
     }
 }
 

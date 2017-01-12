@@ -272,7 +272,7 @@ Feature: Duplication of Content
       And we get "/archive/#duplicate._id#"
       Then there is no "publish_schedule" in response
 
-    @auth @test
+    @auth
     Scenario: Duplicate a published item and original item's ID is present in the duplicated item
      Given "published"
          """
@@ -357,7 +357,77 @@ Feature: Duplication of Content
       {"_message": "Workflow transition is invalid."}
       """
 
-    @auth @test
+    @auth
+    Scenario: Duplicate an expired published item and publish the duplicated item
+      When we publish "#archive._id#" with "publish" type and "published" state
+      Then we get OK response
+      And we get existing resource
+      """
+      {"_current_version": 2, "state": "published", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
+      """
+      When we get "/published"
+      Then we get list with 2 items
+      """
+      {"_items" : [
+        {"package_type": "takes", "_id": "#archive.123.take_package#",
+         "state": "published", "type": "composite", "_current_version": 2},
+        {"_id": "123", "_current_version": 1, "state": "published", "type": "text", "_current_version": 2}
+        ]
+      }
+      """
+      When we enqueue published
+      When we transmit items
+      And run import legal publish queue
+      And we expire items
+      """
+      ["123"]
+      """
+      And we get "/published"
+      Then we get list with 2 items
+      When we expire items
+      """
+      ["#archive.123.take_package#"]
+      """
+      And we get "/published"
+      Then we get list with 0 items
+      When we enqueue published
+      When we get "/publish_queue"
+      Then we get list with 0 items
+      When we get "/archived"
+      Then we get list with 2 items
+      """
+      {"_items" : [
+        {"package_type": "takes", "item_id": "#archive.123.take_package#",
+         "state": "published", "type": "composite", "_current_version": 2},
+        {"item_id": "123", "_current_version": 1, "state": "published", "type": "text", "_current_version": 2}
+        ]
+      }
+      """
+      When we post to "/archive/#archive._id#/duplicate" with success
+      """
+      {"desk": "#desks._id#", "type": "archived", "item_id": "123"}
+      """
+      When we get "/archive/#duplicate._id#"
+      Then we get existing resource
+      """
+      {"state": "submitted", "_current_version": 3, "source": "AAP",
+       "task": {"desk": "#desks._id#", "stage": "#desks.working_stage#", "user": "#CONTEXT_USER_ID#"},
+       "original_id": "123", "headline": "test1", "type": "text"}
+      """
+      When we get "/published"
+      Then we get list with 0 items
+      When we publish "#duplicate._id#" with "publish" type and "published" state
+      Then we get OK response
+      When we get "/published"
+      Then we get list with 2 items
+      """
+      {"_items" : [
+        {"package_type": "takes", "state": "published", "type": "composite", "_current_version": 2},
+        {"_current_version": 4, "state": "published", "type": "text"}]
+      }
+      """
+
+    @auth
     Scenario: Duplicate a archived item and the original ID of the archived item should be copied to duplicated item and the latest version of archived item should be picked
       Given "archived"
          """
