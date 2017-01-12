@@ -21,6 +21,12 @@ from superdesk.users.errors import UserInactiveError
 class AuthService(BaseService):
 
     def authenticate(self, document):
+        """Authenticate user according to credentials
+
+        :param documents: credentials for this authentication mechanism
+        :return: authenticated user
+        :raise: CredentialsAuthError if authentication is invalid
+        """
         raise NotImplementedError()
 
     def on_create(self, docs):

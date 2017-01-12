@@ -67,7 +67,7 @@ def get_user(required=False):
 def get_user_id(required=False):
     """Get authenticated user id.
 
-    :param boolean requred: if True and there is no user it will raise an error
+    :param boolean required: if True and there is no user it will raise an error
     """
     user = get_user(required)
     return user.get(config.ID_FIELD)

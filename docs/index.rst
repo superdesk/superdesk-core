@@ -58,6 +58,7 @@ works and can be developed further.
     content-types
     contentapi
     extending
+    authentication
 
 Additional topics
 -----------------
