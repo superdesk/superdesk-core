@@ -240,7 +240,19 @@ Feature: Content Profile
                     "required": false,
                     "maxlength": 64
                 },
-                "media_description": {}
+                "media_description": {},
+                "sms": {
+                    "type": "string",
+                    "required": false
+                },
+                "body_footer": {
+                    "type": "string",
+                    "required": false
+                },
+                "footer": {
+                    "type": "string",
+                    "required": false
+                }
             }
         }
         """
@@ -359,6 +371,18 @@ Feature: Content Profile
                 },
                 "dateline": {
                     "type": "dict",
+                    "required": false
+                },
+                "sms": {
+                    "required": false,
+                    "type": "string"
+                },
+                "body_footer": {
+                    "type": "string",
+                    "required": false
+                },
+                "footer": {
+                    "type": "string",
                     "required": false
                 }
             },
@@ -610,6 +634,18 @@ Feature: Content Profile
                 "headline": {
                     "type": "string",
                     "maxlength": 64,
+                    "required": false
+                },
+                "sms": {
+                    "type": "string",
+                    "required": false
+                },
+                "body_footer": {
+                    "type": "string",
+                    "required": false
+                },
+                "footer": {
+                    "type": "string",
                     "required": false
                 }
             },
@@ -981,6 +1017,18 @@ Feature: Content Profile
                     "required": false
                 },
                 "byline": {
+                    "type": "string",
+                    "required": false
+                },
+                "sms": {
+                    "type": "string",
+                    "required": false
+                },
+                "body_footer": {
+                    "type": "string",
+                    "required": false
+                },
+                "footer": {
                     "type": "string",
                     "required": false
                 }
