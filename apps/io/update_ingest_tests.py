@@ -188,7 +188,7 @@ class UpdateIngestTest(TestCase):
 
         service = get_resource_service('ingest')
         service.post(items)
-        expiredItems = get_expired_items(provider)
+        expiredItems = get_expired_items(provider, 'ingest')
         self.assertEqual(5, expiredItems.count())
 
     def test_expiring_with_content(self):
