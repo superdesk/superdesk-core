@@ -20,7 +20,7 @@ from superdesk.services import BaseService
 from superdesk.celery_app import celery
 from .session_purge import RemoveExpiredSessions
 from superdesk.errors import SuperdeskApiError
-from .service import UserSessionClearService
+from .service import UserSessionClearService, AuthService
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +39,10 @@ def init_app(app):
     endpoint_name = 'clear_sessions'
     service = UserSessionClearService(endpoint_name, backend=superdesk.get_backend())
     UserSessionClearResource(endpoint_name, app=app, service=service)
+
+    endpoint_name = 'auth'
+    service = AuthService(endpoint_name, backend=superdesk.get_backend())
+    AuthResource(endpoint_name, app=app, service=service)
 
 
 @celery.task

@@ -18,9 +18,8 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.resource import Resource
 from flask import current_app as app
 import superdesk
-from apps.auth.errors import UserDisabledError, CredentialsAuthError
+from apps.auth.errors import CredentialsAuthError
 from apps.auth import get_user
-from superdesk.users.errors import UserInactiveError
 
 
 logger = logging.getLogger(__name__)
@@ -184,12 +183,6 @@ class ADAuthService(AuthService):
                                user_type=None if 'user_type' not in user_data else user_data['user_type'])
             user = user_data
         else:
-            if 'is_enabled' in user and not user.get('is_enabled', False):
-                raise UserDisabledError()
-
-            if not user.get('is_active', False):
-                raise UserInactiveError()
-
             superdesk.get_resource_service('users').patch(user.get('_id'), user_data)
             user = superdesk.get_resource_service('users').find_one(req=None, **query)
 
@@ -210,7 +203,7 @@ class ImportUserProfileService(UsersService):
             try:
                 # authenticate on error sends 401 and the client is redirected to login.
                 # but in case import user profile from Active Directory 403 should be fine.
-                user = get_resource_service('auth').authenticate(doc)
+                user = get_resource_service('auth_db').authenticate(doc)
             except CredentialsAuthError:
                 raise SuperdeskApiError.forbiddenError(message="Invalid Credentials.", payload={'credentials': 1})
 

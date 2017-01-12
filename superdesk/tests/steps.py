@@ -382,10 +382,11 @@ def step_impl_given_user_type(context, user_type):
     assert_ok(response)
 
 
-@when('we post to auth')
+@when('we post to auth_db')
 def step_impl_when_auth(context):
     data = context.text
-    context.response = context.client.post(get_prefixed_url(context.app, '/auth'), data=data, headers=context.headers)
+    context.response = context.client.post(
+        get_prefixed_url(context.app, '/auth_db'), data=data, headers=context.headers)
     if context.response.status_code == 200 or context.response.status_code == 201:
         item = json.loads(context.response.get_data())
         if item.get('_id'):
@@ -1399,7 +1400,7 @@ def we_reset_password_for_user(context):
     auth_data = {'username': 'foo', 'password': 'test_pass'}
     headers = [('Content-Type', 'multipart/form-data')]
     headers = unique_headers(headers, context.headers)
-    context.response = context.client.post(get_prefixed_url(context.app, '/auth'), data=auth_data, headers=headers)
+    context.response = context.client.post(get_prefixed_url(context.app, '/auth_db'), data=auth_data, headers=headers)
     expect_status_in(context.response, (200, 201))
 
 
@@ -1931,7 +1932,7 @@ def assert_items_in_package(item, state, desk, stage):
 @given('I logout')
 def logout(context):
     we_have_sessions_get_id(context, '/sessions')
-    step_impl_when_delete_url(context, '/auth/{}'.format(context.session_id))
+    step_impl_when_delete_url(context, '/auth_db/{}'.format(context.session_id))
     assert_200(context.response)
 
 

@@ -14,6 +14,8 @@ from superdesk import utils as utils, get_resource_service
 from superdesk.services import BaseService
 from eve.utils import config
 from superdesk.errors import SuperdeskApiError
+from apps.auth.errors import UserDisabledError
+from superdesk.users.errors import UserInactiveError
 
 
 class AuthService(BaseService):
@@ -24,7 +26,10 @@ class AuthService(BaseService):
     def on_create(self, docs):
         for doc in docs:
             user = self.authenticate(doc)
-
+            if 'is_enabled' in user and not user.get('is_enabled', False):
+                raise UserDisabledError()
+            if not user.get('is_active', False):
+                raise UserInactiveError()
             self.set_auth_default(doc, user['_id'])
 
     def on_created(self, docs):

@@ -96,7 +96,7 @@ class GetAuthTokenCommand(superdesk.Command):
             'username': username,
             'password': password
         }
-        service = superdesk.get_resource_service('auth')
+        service = superdesk.get_resource_service('auth_db')
         id = str(service.post([credentials])[0])
         print('Session ID:', id)
         creds = service.find_one(req=None, _id=id)

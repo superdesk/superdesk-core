@@ -306,6 +306,7 @@ if LDAP_SERVER:
 else:
     CORE_APPS.append('superdesk.users')
     CORE_APPS.append('apps.auth.db')
+    CORE_APPS.append('apps.auth.xmpp')
 
 
 CORE_APPS.extend([
@@ -551,3 +552,7 @@ NO_TAKES = False
 """
 
 SECRET_KEY = env('SECRET_KEY', '')
+
+#: secure login
+XMPP_AUTH_URL = env('XMPP_AUTH_URL', '')
+XMPP_AUTH_DOMAIN = env('XMPP_AUTH_DOMAIN', 'Superdesk')

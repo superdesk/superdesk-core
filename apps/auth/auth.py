@@ -66,6 +66,7 @@ class AuthResource(Resource):
     item_methods = ['GET', 'DELETE']
     public_methods = ['POST', 'DELETE']
     extra_response_fields = ['user', 'token', 'username']
+    datasource = {'source': 'auth'}
 
 
 superdesk.intrinsic_privilege('auth', method=['DELETE'])

@@ -19,8 +19,8 @@ from apps.auth.db.change_password import ChangePasswordService,\
 
 
 def init_app(app):
-    endpoint_name = 'auth'
-    service = DbAuthService(endpoint_name, backend=superdesk.get_backend())
+    endpoint_name = 'auth_db'
+    service = DbAuthService('auth', backend=superdesk.get_backend())
     AuthResource(endpoint_name, app=app, service=service)
 
     endpoint_name = 'reset_user_password'
@@ -34,3 +34,6 @@ def init_app(app):
     endpoint_name = 'active_tokens'
     service = BaseService(endpoint_name, backend=superdesk.get_backend())
     ActiveTokensResource(endpoint_name, app=app, service=service)
+
+
+superdesk.intrinsic_privilege('auth_db', method=['DELETE'])

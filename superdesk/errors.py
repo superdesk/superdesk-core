@@ -130,6 +130,11 @@ class SuperdeskApiError(SuperdeskError):
     def internalError(cls, message=None, payload=None, exception=None):
         return SuperdeskApiError(status_code=500, message=message, payload=payload, exception=exception)
 
+    @classmethod
+    def notConfiguredError(cls, message=None, payload=None):
+        default_message = "configuration is not done for this action"
+        return SuperdeskApiError(status_code=500, message=message or default_message, payload=payload)
+
 
 class IdentifierGenerationError(SuperdeskApiError):
     """Exception raised if failed to generate unique_id."""
