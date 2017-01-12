@@ -433,8 +433,8 @@ def ingest_items(items, provider, feeding_service, rule_set=None, routing_scheme
 
 def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=None):
     try:
-        ingest_service = superdesk.get_resource_service(
-            feeding_service.service if hasattr(feeding_service, 'service') else 'ingest')
+        ingest_collection = feeding_service.service if hasattr(feeding_service, 'service') else 'ingest'
+        ingest_service = superdesk.get_resource_service(ingest_collection)
 
         # determine if we already have this item
         old_item = ingest_service.find_one(guid=item[GUID_FIELD], req=None)
@@ -489,7 +489,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
             try:
                 ingest_service.post_in_mongo([item])
             except HTTPException as e:
-                logger.error("Exception while persisting item in ingest collection", e)
+                logger.error('Exception while persisting item in %s collection', ingest_collection, e)
 
         if routing_scheme and new_version:
             routed = ingest_service.find_one(_id=item[superdesk.config.ID_FIELD], req=None)
