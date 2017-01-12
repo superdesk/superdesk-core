@@ -79,11 +79,10 @@ class ResetPasswordService(BaseService):
             raise SuperdeskApiError.badRequestError('Either key:password or email must be provided')
 
     def store_reset_password_token(self, doc, email, days_alive, user_id):
-        token_ttl = app.config['RESET_PASSWORD_TOKEN_TIME_TO_LIVE']
         now = utcnow()
         doc[app.config['DATE_CREATED']] = now
         doc[app.config['LAST_UPDATED']] = now
-        doc['expire_time'] = now + timedelta(days=token_ttl)
+        doc['expire_time'] = now + timedelta(days=days_alive)
         doc['user'] = user_id
         doc['token'] = get_random_string()
         ids = super().create([doc])
@@ -106,7 +105,7 @@ class ResetPasswordService(BaseService):
             raise SuperdeskApiError.forbiddenError('User not active')
 
         ids = self.store_reset_password_token(doc, email, token_ttl, user['_id'])
-        send_reset_password_email(doc)
+        send_reset_password_email(doc, token_ttl)
         self.remove_private_data(doc)
         return ids
 
