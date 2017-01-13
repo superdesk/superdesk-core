@@ -165,6 +165,10 @@ Feature: Content Profile
                 "sms": {
                     "enabled": false,
                     "order": 12
+                },
+                "feature_media": {
+                    "enabled": false,
+                    "order": 20
                 }
             },
             "schema": {
@@ -251,6 +255,10 @@ Feature: Content Profile
                 },
                 "footer": {
                     "type": "string",
+                    "required": false
+                },
+                "feature_media": {
+                    "type": "picture",
                     "required": false
                 }
             }
@@ -384,6 +392,10 @@ Feature: Content Profile
                 "footer": {
                     "type": "string",
                     "required": false
+                },
+                "feature_media": {
+                    "type": "picture",
+                    "required": false
                 }
             },
             "editor": {
@@ -481,6 +493,10 @@ Feature: Content Profile
                 "dateline": {
                     "enabled": false,
                     "order": 15
+                },
+                "feature_media": {
+                    "enabled": false,
+                    "order": 20
                 }
             }
         }
@@ -647,6 +663,10 @@ Feature: Content Profile
                 "footer": {
                     "type": "string",
                     "required": false
+                },
+                "feature_media": {
+                    "type": "picture",
+                    "required": false
                 }
             },
             "editor": {
@@ -750,6 +770,10 @@ Feature: Content Profile
                     "order": 11,
                     "enabled": true,
                     "formatOptions": ["underline", "anchor", "bold", "removeFormat"]
+                },
+                "feature_media": {
+                    "enabled": false,
+                    "order": 20
                 }
             }
         }
@@ -941,6 +965,10 @@ Feature: Content Profile
                 "byline": {
                     "order": 14,
                     "enabled": false
+                },
+                "feature_media": {
+                    "enabled": false,
+                    "order": 20
                 }
             },
             "schema": {
@@ -1030,6 +1058,10 @@ Feature: Content Profile
                 },
                 "footer": {
                     "type": "string",
+                    "required": false
+                },
+                "feature_media": {
+                    "type": "picture",
                     "required": false
                 }
             }

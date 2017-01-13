@@ -46,6 +46,7 @@ DEFAULT_SCHEMA = {
     'footer': {'type': 'string', 'required': False},
     'body_footer': {'type': 'string', 'required': False},
     'sign_off': {'type': 'string', 'required': False},
+    'feature_media': {'type': 'picture', 'required': False},
     'media': {'required': False},
     'media_description': {'required': False}
 }
@@ -78,6 +79,7 @@ DEFAULT_EDITOR = {
     'footer': {'order': 17, 'enabled': False},
     'body_footer': {'order': 18, 'enabled': False},
     'sign_off': {'order': 19, 'enabled': True},
+    'feature_media': {'order': 20, 'enabled': False},
     'media': {'enabled': True},
     'media_description': {'enabled': True},
 }
