@@ -18,6 +18,10 @@ Feature: Activity report
 		    "subject":[{"qcode": "05007000", "name": "university"}],
 		    "keywords": ["UNIVERSITY"],
 		    "slugline": "test",
+		    "priority": 6,
+		    "urgency": 3,
+		    "target_subscribers": [{"name":"test"}],
+		    "anpa_category": [{"name": "arts, culture and entertainment" , "qcode": "01000000"}],
 		    "body_html": "Test Document body"
 		}]
         """
@@ -30,16 +34,22 @@ Feature: Activity report
         	"desk": "#desks._id#",
         	"operation_date": "#DATE#",
         	"subject":[{"qcode": "05007000", "name": "university"}],
-        	"keywords": ["UNIVERSITY"]
+        	"keywords": ["UNIVERSITY"],
+        	"priority": 6,
+        	"urgency": 3,
+        	"category": [{"name": "arts, culture and entertainment" , "qcode": "01000000"}],
+        	"subscriber": "test"
         }
         """
         Then we get existing resource
         """
         {
-        	"operation": "publish",
-        	"desk": "#desks._id#",
         	"subject":[{"qcode": "05007000", "name": "university"}],
         	"keywords": ["UNIVERSITY"],
+        	"priority": 6,
+        	"urgency":3,
+        	"subscriber": "test",
+        	"category": [{"name": "arts, culture and entertainment" , "qcode": "01000000"}],
         	"report": {"items": 2}
         }
         """
@@ -51,7 +61,11 @@ Feature: Activity report
         	"operation_date": "#DATE#",
         	"group_by": ["desk"],
         	"subject":[{"qcode": "05007000", "name": "university"}],
-        	"keywords": ["UNIVERSITY"]
+        	"keywords": ["UNIVERSITY"],
+        	"priority": 6,
+        	"urgency":3,
+        	"category": [{"name": "arts, culture and entertainment" , "qcode": "01000000"}],
+        	"subscriber": "test"
         }
         """
         Then we get existing resource
@@ -62,6 +76,11 @@ Feature: Activity report
         	"group_by": ["desk"],
         	"subject":[{"qcode": "05007000", "name": "university"}],
         	"keywords": ["UNIVERSITY"],
+        	"priority": 6,
+        	"urgency":3,
+        	"category": [{"name": "arts, culture and entertainment" , "qcode": "01000000"}],
+        	"subscriber": "test",
         	"report": [{"desk": "Sports Desk", "items": 2}]
         }
         """
+	
