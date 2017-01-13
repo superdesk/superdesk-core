@@ -269,6 +269,53 @@ class RemoveSpikedContentTestCase(TestCase):
             for key, rendition in item.get('renditions').items():
                 media_delete.assert_any_call(rendition['media'])
 
+    def test_remove_media_files_for_picture_associations(self):
+        item = {
+            '_id': 'testimage',
+            'type': 'text',
+            'associations': {
+                'featuremedia': {
+                    '_id': '123',
+                    'renditions': self.media
+                },
+                'featurevideo': {
+                    '_id': '456',
+                    'renditions': {
+                        'viewImage': {
+                            'media': 'testing_123',
+                            'mimetype': 'image/jpeg',
+                            'href': 'http://192.168.220.209/api/upload/abc/raw?_schema=http',
+                            'height': 452,
+                            'width': 640
+                        },
+                        'thumbnail': {
+                            'media': 'testing_456',
+                            'mimetype': 'image/jpeg',
+                            'href': 'http://192.168.220.209/api/upload/abc/raw?_schema=http',
+                            'height': 120,
+                            'width': 169
+                        }
+                    }
+                }
+            }
+        }
+
+        original = item.copy()
+        with patch.object(self.app.media, 'delete') as media_delete:
+            CropService().update_media_references(item, original)
+            references_service = get_resource_service('media_references')
+            refs = references_service.get(req=None, lookup={'item_id': 'testimage'})
+            self.assertEqual(refs.count(), 6)
+            for ref in refs:
+                self.assertEqual(ref.get('published'), False)
+            CropService().update_media_references(item, original, True)
+            refs = references_service.get(req=None, lookup={'item_id': 'testimage'})
+            for ref in refs:
+                self.assertEqual(ref.get('published'), True)
+
+            remove_media_files(item)
+            self.assertEqual(0, media_delete.call_count)
+
     def test_delete_by_ids(self):
         ids = self.app.data.insert(ARCHIVE, self.articles)
         archive_service = get_resource_service(ARCHIVE)

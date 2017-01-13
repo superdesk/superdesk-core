@@ -325,34 +325,41 @@ class CropService():
         :param dict original: Original item
         :param boolean published: True if publishing the item else False
         """
-        renditions = updates.get('renditions', original.get('renditions', {}))
         item_id = original.get(config.ID_FIELD)
-        associated_item_id = None
+        references = {}
+        if updates.get('renditions', original.get('renditions', {})):
+            references = {
+                item_id: updates.get('renditions', original.get('renditions', {}))
+            }
+
         if original.get(ITEM_TYPE) not in MEDIA_TYPES:
             associations = updates.get(ASSOCIATIONS) or original.get(ASSOCIATIONS)
             if not associations:
                 return
 
-            associated_item_id = (associations.get('featuremedia') or {}).get(config.ID_FIELD)
-            renditions = (associations.get('featuremedia') or {}).get('renditions', {})
-            if not renditions:
-                return
+            references = {assoc.get(config.ID_FIELD): assoc.get('renditions')
+                          for assoc in associations.values() if assoc and assoc.get('renditions')}
 
-        for rendition in renditions.values():
-            if not rendition.get('media'):
-                continue
+        if not references:
+            return
 
-            media = rendition.get('media') if isinstance(rendition.get('media'), str) else str(rendition.get('media'))
-            reference = get_resource_service('media_references').find_one(req=None, item_id=item_id,
-                                                                          media_id=media)
-            if not reference:
-                try:
-                    get_resource_service('media_references').post([{'item_id': item_id,
-                                                                    'media_id': media,
-                                                                    'associated_id': associated_item_id,
-                                                                    'published': False}])
-                except:
-                    logger.exception('Failed to insert media reference item {} media {}'.format(item_id, media))
+        for assoc_id, renditions in references.items():
+            associated_id = assoc_id if assoc_id != item_id else None
+            for rendition in renditions.values():
+                if not rendition.get('media'):
+                    continue
+
+                media = str(rendition.get('media'))
+                reference = get_resource_service('media_references').find_one(req=None, item_id=item_id,
+                                                                              media_id=media)
+                if not reference:
+                    try:
+                        get_resource_service('media_references').post([{'item_id': item_id,
+                                                                        'media_id': media,
+                                                                        'associated_id': associated_id,
+                                                                        'published': False}])
+                    except:
+                        logger.exception('Failed to insert media reference item {} media {}'.format(item_id, media))
 
         # item is publish
         if not published:

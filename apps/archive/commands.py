@@ -8,7 +8,6 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from eve.versioning import versioned_id_field
 
 from superdesk.notification import push_notification
 from apps.content import push_expired_notification
@@ -16,7 +15,6 @@ from apps.content import push_expired_notification
 import superdesk
 import logging
 from eve.utils import config, ParsedRequest
-from flask import current_app as app
 from copy import deepcopy
 from apps.packages import PackageService
 from superdesk.celery_task_utils import get_lock_id
@@ -238,10 +236,11 @@ class RemoveExpiredContent(superdesk.Command):
         :param dict item:
         :return list: list of associated item ids
         """
-        if (item.get(ASSOCIATIONS) or {}).get('featuremedia'):
-            return [item.get(ASSOCIATIONS).get('featuremedia').get(config.ID_FIELD)]
-
-        return []
+        ids = []
+        for key, associated_item in (item.get(ASSOCIATIONS) or {}).items():
+            if associated_item:
+                ids.append(associated_item.get(config.ID_FIELD))
+        return ids
 
     def _get_associated_items(self, item):
         """Get the list of item ids where the media item is associated.
@@ -251,20 +250,21 @@ class RemoveExpiredContent(superdesk.Command):
         if item.get(ITEM_TYPE) not in MEDIA_TYPES:
             return []
 
-        query = {
-            'associations.featuremedia._id': item.get(config.ID_FIELD)
-        }
+        associated_items = list(get_resource_service('media_references').get(req=None,
+                                                                             lookup={
+                                                                                 'associated_id':
+                                                                                     item.get(config.ID_FIELD)
+                                                                             }))
 
+        ids = set()
+        for assoc in associated_items:
+            ids.add(assoc['item_id'])
+
+        # extra query just to ensure that item is not deleted
         # get the associated items from the archive collection
-        archive_docs = list(get_resource_service(ARCHIVE).get_from_mongo(req=None, lookup=query))
-        item_ids = set(doc.get(config.ID_FIELD) for doc in archive_docs)
-
-        # get the associated items from the archive versions collection
-        resource_def = app.config['DOMAIN']['archive']
-        version_id = versioned_id_field(resource_def)
-        archive_version_docs = list(get_resource_service('archive_versions').get_from_mongo(req=None, lookup=query))
-        item_ids = item_ids.union(set(doc.get(version_id) for doc in archive_version_docs))
-        return list(item_ids)
+        archive_docs = list(get_resource_service(ARCHIVE).get_from_mongo(req=None,
+                                                                         lookup={'_id': {'$in': list(ids)}}))
+        return [doc.get(config.ID_FIELD) for doc in archive_docs]
 
     def _move_to_archived(self, item, filter_conditions):
         """Moves all the published version of an article to archived.

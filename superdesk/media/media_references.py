@@ -38,7 +38,8 @@ class MediaReferencesResource(Resource):
     resource_methods = []
     item_methods = []
     mongo_indexes = {
-        'item_id_1_media_1': ([('item_id', 1), ('media_id', 1)], {'unique': True}),
-        'media_1': [('media_id', 1)]
+        'item_id_1_media_1': [('item_id', 1), ('media_id', 1)],
+        'media_1': [('media_id', 1)],
+        'associated_id': [('associated_id', 1)]
     }
     query_objectid_as_string = True

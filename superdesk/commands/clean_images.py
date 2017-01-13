@@ -10,6 +10,7 @@
 
 
 import superdesk
+from superdesk.metadata.item import ASSOCIATIONS
 
 
 class CleanImages(superdesk.Command):
@@ -25,12 +26,12 @@ class CleanImages(superdesk.Command):
             print('Starting image cleaning.')
             used_images = set()
             types = ['picture', 'video', 'audio']
+            query = {'$or': [{'type': {'$in': types}}, {ASSOCIATIONS: {'$ne': None}}]}
 
-            archive_items = superdesk.get_resource_service('archive').get_from_mongo(None, {'type': {'$in': types}})
+            archive_items = superdesk.get_resource_service('archive').get_from_mongo(None, query)
             self.__add_existing_files(used_images, archive_items)
 
-            archive_version_items = superdesk.get_resource_service('archive_versions').\
-                get_from_mongo(None, {'type': {'$in': types}})
+            archive_version_items = superdesk.get_resource_service('archive_versions').get_from_mongo(None, query)
             self.__add_existing_files(used_images, archive_version_items)
 
             ingest_items = superdesk.get_resource_service('ingest').get_from_mongo(None, {'type': {'$in': types}})
@@ -39,12 +40,11 @@ class CleanImages(superdesk.Command):
             upload_items = superdesk.get_resource_service('upload').get_from_mongo(req=None, lookup={})
             self.__add_existing_files(used_images, upload_items)
 
-            legal_archive_items = superdesk.get_resource_service('legal_archive').\
-                get_from_mongo(None, {'type': {'$in': types}})
+            legal_archive_items = superdesk.get_resource_service('legal_archive').get_from_mongo(None, query)
             self.__add_existing_files(used_images, legal_archive_items)
 
             legal_archive_version_items = superdesk.get_resource_service('legal_archive_versions').\
-                get_from_mongo(None, {'type': {'$in': types}})
+                get_from_mongo(None, query)
             self.__add_existing_files(used_images, legal_archive_version_items)
 
             print('Number of used files: ', len(used_images))
@@ -63,9 +63,11 @@ class CleanImages(superdesk.Command):
                 used_images.add([str(rend.get('media')) for rend in item.get('renditions', {}).values()
                                  if rend.get('media')])
 
-            renditions = ((item.get('associations') or {}).get('featuremedia') or {}).get('renditions')
-            if renditions:
-                used_images.add([str(rend.get('media')) for rend in renditions.values() if rend.get('media')])
+            associations = [assoc.get('renditions') for assoc in (item.get(ASSOCIATIONS) or {}).values()
+                            if assoc and assoc.get('renditions')]
+            if associations:
+                for renditions in associations:
+                    used_images.add([str(rend.get('media')) for rend in renditions.values() if rend.get('media')])
 
 
 superdesk.command('app:clean_images', CleanImages())

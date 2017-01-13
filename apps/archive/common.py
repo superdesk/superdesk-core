@@ -405,26 +405,28 @@ def remove_media_files(doc):
     :return boolean: True if files are deleted else false.
     """
     logger.info('Removing Media Files...')
+    references = None
 
-    renditions = doc.get('renditions', {})
-    if not renditions:
-        renditions = (doc.get(ASSOCIATIONS) or {}).get('featuremedia', {}).get('renditions', {})
+    if doc.get('renditions'):
+        references = [doc.get('renditions')]
 
-    if not renditions:
-        return
+    if not references:
+        references = [assoc.get('renditions') for assoc in (doc.get(ASSOCIATIONS) or {}).values()
+                      if assoc and assoc.get('renditions')]
 
-    for rendition in renditions.values():
-        media = rendition.get('media') if isinstance(rendition.get('media'), str) else str(rendition.get('media'))
-        try:
-            references = get_resource_service('media_references').get(req=None, lookup={
-                'media_id': media, 'published': True
-            })
+    for renditions in references:
+        for rendition in renditions.values():
+            media = rendition.get('media') if isinstance(rendition.get('media'), str) else str(rendition.get('media'))
+            try:
+                references = get_resource_service('media_references').get(req=None, lookup={
+                    'media_id': media, 'published': True
+                })
 
-            if references.count() == 0:
-                logger.info('Deleting media:{}'.format(rendition.get('media')))
-                app.media.delete(media)
-        except Exception:
-            logger.exception('Failed to remove Media Id: {} from item: {}'.format(media, doc.get(config.ID_FIELD)))
+                if references.count() == 0:
+                    logger.info('Deleting media:{}'.format(rendition.get('media')))
+                    app.media.delete(media)
+            except Exception:
+                logger.exception('Failed to remove Media Id: {} from item: {}'.format(media, doc.get(config.ID_FIELD)))
 
 
 def is_assigned_to_a_desk(doc):
