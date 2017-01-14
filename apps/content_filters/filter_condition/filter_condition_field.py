@@ -48,6 +48,8 @@ class FilterConditionField:
             return FilterConditionSubjectField(field)
         elif FilterConditionFieldsEnum[field] == FilterConditionFieldsEnum.urgency:
             return FilterConditionUrgencyField(field)
+        elif FilterConditionFieldsEnum[field] == FilterConditionFieldsEnum.priority:
+            return FilterConditionPriorityField(field)
         elif FilterConditionFieldsEnum[field] == FilterConditionFieldsEnum.place:
             return FilterConditionPlaceField(field)
         else:
@@ -132,6 +134,13 @@ class FilterConditionGenreField(FilterConditionField):
 
 
 class FilterConditionUrgencyField(FilterConditionField):
+    def __init__(self, field):
+        self.field = FilterConditionFieldsEnum[field]
+        self.entity_name = field
+        self.field_type = int
+
+
+class FilterConditionPriorityField(FilterConditionField):
     def __init__(self, field):
         self.field = FilterConditionFieldsEnum[field]
         self.entity_name = field
