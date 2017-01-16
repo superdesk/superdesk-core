@@ -330,6 +330,7 @@ CORE_APPS.extend([
     'superdesk.publish',
     'superdesk.commands',
     'superdesk.locators',
+    'superdesk.media',
 
     'apps.auth',
     'apps.archive',

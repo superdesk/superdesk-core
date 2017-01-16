@@ -104,7 +104,7 @@ class Resource():
             if self.elastic_prefix:
                 endpoint_schema.update({'elastic_prefix': self.elastic_prefix})
             if self.query_objectid_as_string:
-                endpoint_schema.update({'query_objectid_as_string': self.query_object_id_as_string})
+                endpoint_schema.update({'query_objectid_as_string': self.query_objectid_as_string})
             if self.mongo_indexes:
                 endpoint_schema['mongo_indexes'] = self.mongo_indexes
 

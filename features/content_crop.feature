@@ -90,6 +90,9 @@ Feature: Cropping the Image Articles
         }
       }
       """
+      Then we get OK response
+      And we get rendition "4-3" with mimetype "image/jpeg"
+      And we get rendition "16-9" with mimetype "image/jpeg"
       When we post to "/products" with success
       """
       {
@@ -106,6 +109,21 @@ Feature: Cropping the Image Articles
       """
       When we publish "123" with "publish" type and "published" state
       Then we get OK response
+      When we enqueue published
+      And we transmit items
+      And run import legal publish queue
+      And we get "/legal_archive/123"
+      Then we get OK response
+      When we expire items
+      """
+      ["123"]
+      """
+      When we get "/published"
+      Then we get list with 0 items
+      And we fetch a file "#rendition.4-3.href#"
+      And we get OK response
+      And we fetch a file "#rendition.16-9.href#"
+      And we get OK response
 
 
     @auth
@@ -204,6 +222,7 @@ Feature: Cropping the Image Articles
       }
       """
       And we fetch a file "#rendition.4-3.href#"
+      And we get OK response
       When we get "/archive/123"
       Then we get rendition "4-3" with mimetype "image/jpeg"
       And we get rendition "16-9" with mimetype "image/jpeg"
@@ -353,6 +372,7 @@ Feature: Cropping the Image Articles
       """
       Then we get OK response
       And we fetch a file "#rendition.4-3.href#"
+      Then we get OK response
       When we get "/archive/123"
       Then we get rendition "4-3" with mimetype "image/jpeg"
       And we get rendition "16-9" with mimetype "image/jpeg"

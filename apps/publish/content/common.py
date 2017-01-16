@@ -114,6 +114,7 @@ class BasePublishService(BaseService):
         get_resource_service('archive_broadcast').reset_broadcast_status(updates, original)
         push_content_notification([updates])
         self._import_into_legal_archive(updates)
+        CropService().update_media_references(updates, original, True)
 
     def update(self, id, updates, original):
         """
@@ -740,8 +741,8 @@ class BasePublishService(BaseService):
         """
         associations = original.get(ASSOCIATIONS) or {}
         for _, item in associations.items():
-            if type(item) == dict and item.get('_id'):
-                updates = super().find_one(req=None, _id=item['_id']) or {}
+            if type(item) == dict and item.get(config.ID_FIELD):
+                updates = super().find_one(req=None, _id=item[config.ID_FIELD]) or {}
                 update_item_data(item, updates)
 
 

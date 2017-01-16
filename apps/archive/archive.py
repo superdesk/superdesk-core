@@ -95,8 +95,7 @@ class ArchiveVersionsResource(Resource):
     privileges = {'PATCH': 'archive'}
 
 
-class ArchiveVersionsService(superdesk.Service):
-
+class ArchiveVersionsService(BaseService):
     def on_deleted(self, doc):
         remove_media_files(doc)
 
@@ -140,6 +139,7 @@ class ArchiveService(BaseService):
     packageService = PackageService()
     takesService = TakesPackageService()
     mediaService = ArchiveMediaService()
+    cropService = CropService()
 
     def on_fetched(self, docs):
         """
@@ -204,6 +204,8 @@ class ArchiveService(BaseService):
             if doc.get('profile'):
                 profiles.add(doc['profile'])
 
+            self.cropService.update_media_references(doc, {})
+
         get_resource_service('content_types').set_used(profiles)
         push_content_notification(docs)
 
@@ -236,24 +238,32 @@ class ArchiveService(BaseService):
 
         remove_unwanted(updates)
         self._add_system_updates(original, updates, user)
-
         self._add_desk_metadata(updates, original)
+        self._handle_media_updates(updates, original, user)
+
+    def _handle_media_updates(self, updates, original, user):
 
         if original[ITEM_TYPE] == CONTENT_TYPE.PICTURE:  # create crops
-            CropService().create_multiple_crops(updates, original)
+            self.cropService.create_multiple_crops(updates, original)
+
+        if ASSOCIATIONS not in updates or not updates.get(ASSOCIATIONS):
+            return
 
         # iterate over associations. Validate and process them if they are stored in database
-        if ASSOCIATIONS in updates:
-            for item_name, item_obj in updates.get(ASSOCIATIONS).items():
-                if item_obj and config.ID_FIELD in item_obj:
-                    _id = item_obj[config.ID_FIELD]
-                    stored_item = self.find_one(req=None, _id=_id)
-                    if stored_item:
-                        self._validate_updates(stored_item, item_obj, user)
-                        if stored_item[ITEM_TYPE] == CONTENT_TYPE.PICTURE:  # create crops
-                            CropService().create_multiple_crops(item_obj, stored_item)
-                        stored_item.update(item_obj)
-                        updates[ASSOCIATIONS][item_name] = stored_item
+        for item_name, item_obj in updates.get(ASSOCIATIONS).items():
+            if not (item_obj and config.ID_FIELD in item_obj):
+                continue
+
+            _id = item_obj[config.ID_FIELD]
+            stored_item = self.find_one(req=None, _id=_id)
+            if not stored_item:
+                continue
+
+            self._validate_updates(stored_item, item_obj, user)
+            if stored_item[ITEM_TYPE] == CONTENT_TYPE.PICTURE:  # create crops
+                CropService().create_multiple_crops(item_obj, stored_item)
+            stored_item.update(item_obj)
+            updates[ASSOCIATIONS][item_name] = stored_item
 
     def on_updated(self, updates, original):
         get_component(ItemAutosave).clear(original['_id'])
@@ -265,7 +275,8 @@ class ArchiveService(BaseService):
         updated.update(updates)
 
         if config.VERSION in updates:
-            add_activity(ACTIVITY_UPDATE, 'created new version {{ version }} for item {{ type }} about "{{ subject }}"',
+            add_activity(ACTIVITY_UPDATE,
+                         'created new version {{ version }} for item {{ type }} about "{{ subject }}"',
                          self.datasource, item=updated,
                          version=updates[config.VERSION], subject=get_subject(updates, original),
                          type=updated[ITEM_TYPE])
@@ -275,6 +286,8 @@ class ArchiveService(BaseService):
 
         if updates.get('profile'):
             get_resource_service('content_types').set_used([updates.get('profile')])
+
+        self.cropService.update_media_references(updates, original)
 
     def on_replace(self, document, original):
         document[ITEM_OPERATION] = ITEM_UPDATE
@@ -297,6 +310,7 @@ class ArchiveService(BaseService):
                      self.datasource, item=original,
                      type=original['type'], subject=get_subject(original))
         push_content_notification([document, original])
+        self.cropService.update_media_references(document, original)
 
     def on_deleted(self, doc):
         if doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:

@@ -74,7 +74,7 @@ class PictureCropResource(superdesk.Resource):
 
     schema = {
         'item': {'type': 'dict', 'required': True},
-        'crop': {'type': 'dict', 'required': True},
+        'crop': {'type': 'dict', 'required': True}
     }
 
 

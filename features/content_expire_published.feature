@@ -43,7 +43,22 @@ Feature: Content Expiry Published Items
             "act": "kill",
             "type": "composite",
             "schema": {}
-        }                    
+        },
+        {
+            "_id": "publish_picture",
+            "act": "publish",
+            "type": "picture",
+            "schema": {
+                "renditions": {
+                    "type": "dict",
+                    "required": true,
+                    "schema": {
+                        "4-3": {"type": "dict", "required": true},
+                        "16-9": {"type": "dict", "required": true}
+                    }
+                }
+            }
+        }
     
     ]
     """
@@ -1069,3 +1084,126 @@ Feature: Content Expiry Published Items
     Then we get error 404
     When we get "/archive/#archive.789.take_package#"
     Then we get error 404
+
+  @auth @vocabulary
+  Scenario: Published a story with associated picture and expire the items
+      When upload a file "bike.jpg" to "archive" with "bike"
+      And we post to "/archive/bike/move"
+      """
+      [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
+      """
+      Then we get OK response
+      When we patch "/archive/bike"
+      """
+      {
+        "renditions": {
+          "4-3": {"CropLeft":0,"CropRight":800,"CropTop":0,"CropBottom":600},
+          "16-9": {"CropLeft":0,"CropRight":1280,"CropTop":0,"CropBottom":720}
+        }
+      }
+      """
+      Then we get OK response
+      And we get rendition "4-3" with mimetype "image/jpeg"
+      And we get rendition "16-9" with mimetype "image/jpeg"
+      When we patch "/archive/123"
+      """
+      {
+        "associations": {
+          "featuremedia": {
+            "_id": "bike",
+            "poi": {"x": 0.2, "y": 0.3}
+          }
+        }
+      }
+      """
+      Then we get OK response
+      When we publish "123" with "publish" type and "published" state
+      Then we get OK response
+      When we get "/archive/123"
+      Then we get OK response
+      And we fetch a file "#rendition.4-3.href#"
+      And we get OK response      
+      When we enqueue published
+      And we transmit items
+      And run import legal publish queue
+      When we get "/legal_archive"
+      Then we get list with 2 items
+      When we expire items
+      """
+      ["123", "#archive.123.take_package#"]
+      """
+      And we get "/archived"
+      Then we get list with 0 items
+      When we expire items
+      """
+      ["123", "#archive.123.take_package#", "bike"]
+      """
+      And we get "/archived"
+      Then we get list with 2 items
+      When we get "/archive"
+      Then we get list with 0 items
+      And we fetch a file "#rendition.4-3.href#"
+      And we get OK response      
+
+  @auth @vocabulary
+  Scenario: Published a story with associated picture and spike the picture
+      When upload a file "bike.jpg" to "archive" with "bike"
+      And we post to "/archive/bike/move"
+      """
+      [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
+      """
+      Then we get OK response
+      When we patch "/archive/bike"
+      """
+      {
+        "renditions": {
+          "4-3": {"CropLeft":0,"CropRight":800,"CropTop":0,"CropBottom":600},
+          "16-9": {"CropLeft":0,"CropRight":1280,"CropTop":0,"CropBottom":720}
+        }
+      }
+      """
+      Then we get OK response
+      And we get rendition "4-3" with mimetype "image/jpeg"
+      And we get rendition "16-9" with mimetype "image/jpeg"
+      When we patch "/archive/123"
+      """
+      {
+        "associations": {
+          "featuremedia": {
+            "_id": "bike",
+            "poi": {"x": 0.2, "y": 0.3}
+          }
+        }
+      }
+      """
+      Then we get OK response
+      When we publish "123" with "publish" type and "published" state
+      Then we get OK response
+      When we get "/archive/123"
+      Then we get OK response
+      And we fetch a file "#rendition.4-3.href#"
+      And we get OK response
+      When we enqueue published
+      And we transmit items
+      And run import legal publish queue
+      When we spike "bike"
+      Then we get OK response
+      And we get spiked content "bike"
+      When we get "/legal_archive"
+      Then we get list with 2 items
+      When we expire items
+      """
+      ["bike"]
+      """
+      And we get "/archived"
+      Then we get list with 0 items
+      When we expire items
+      """
+      ["123", "#archive.123.take_package#", "bike"]
+      """
+      And we get "/archived"
+      Then we get list with 2 items
+      When we get "/archive"
+      Then we get list with 0 items
+      And we fetch a file "#rendition.4-3.href#"
+      And we get OK response

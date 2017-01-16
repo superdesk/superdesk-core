@@ -7,6 +7,8 @@
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
+
+
 from superdesk.notification import push_notification
 from apps.content import push_expired_notification
 
@@ -18,7 +20,7 @@ from apps.packages import PackageService
 from superdesk.celery_task_utils import get_lock_id
 from superdesk.utc import utcnow
 from .archive import SOURCE as ARCHIVE
-from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTENT_TYPE
+from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTENT_TYPE, ASSOCIATIONS, MEDIA_TYPES
 from superdesk.metadata.packages import PACKAGE_TYPE, TAKES_PACKAGE
 from superdesk.lock import lock, unlock, remove_locks
 from superdesk import get_resource_service
@@ -202,6 +204,12 @@ class RemoveExpiredContent(superdesk.Command):
             if item.get('rewritten_by'):
                 item_refs.append(item.get('rewritten_by'))
 
+        # get the list of associated item ids
+        if item.get(ITEM_TYPE) in MEDIA_TYPES:
+            item_refs.extend(self._get_associated_items(item))
+        else:
+            item_refs.extend(self._get_associated_media_id(item))
+
         # get item reference where this referred
         item_refs.extend(package_service.get_linked_in_package_ids(item))
 
@@ -222,6 +230,41 @@ class RemoveExpiredContent(superdesk.Command):
                         break
 
         return is_expired
+
+    def _get_associated_media_id(self, item):
+        """Get the associated media id
+        :param dict item:
+        :return list: list of associated item ids
+        """
+        ids = []
+        for key, associated_item in (item.get(ASSOCIATIONS) or {}).items():
+            if associated_item:
+                ids.append(associated_item.get(config.ID_FIELD))
+        return ids
+
+    def _get_associated_items(self, item):
+        """Get the list of item ids where the media item is associated.
+        :param dict item: media item
+        :return list: list of associated item ids
+        """
+        if item.get(ITEM_TYPE) not in MEDIA_TYPES:
+            return []
+
+        associated_items = list(get_resource_service('media_references').get(req=None,
+                                                                             lookup={
+                                                                                 'associated_id':
+                                                                                     item.get(config.ID_FIELD)
+                                                                             }))
+
+        ids = set()
+        for assoc in associated_items:
+            ids.add(assoc['item_id'])
+
+        # extra query just to ensure that item is not deleted
+        # get the associated items from the archive collection
+        archive_docs = list(get_resource_service(ARCHIVE).get_from_mongo(req=None,
+                                                                         lookup={'_id': {'$in': list(ids)}}))
+        return [doc.get(config.ID_FIELD) for doc in archive_docs]
 
     def _move_to_archived(self, item, filter_conditions):
         """Moves all the published version of an article to archived.
@@ -290,7 +333,7 @@ class RemoveExpiredContent(superdesk.Command):
         try:
             logger.info('{} deleting spiked items.'.format(self.log_msg))
             spiked_ids = [item.get(config.ID_FIELD) for item in items
-                          if item.get(ITEM_STATE) in {CONTENT_STATE.SPIKED}]
+                          if item.get(ITEM_STATE) == CONTENT_STATE.SPIKED and not self._get_associated_items(item)]
             if spiked_ids:
                 logger.warning('{} deleting spiked items: {}.'.format(self.log_msg, spiked_ids))
                 get_resource_service('archive').delete_by_article_ids(spiked_ids)

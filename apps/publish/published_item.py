@@ -26,7 +26,7 @@ from eve.utils import ParsedRequest, config
 from flask import current_app as app
 
 from apps.archive.archive import SOURCE as ARCHIVE
-from apps.archive.common import handle_existing_data, item_schema, remove_media_files
+from apps.archive.common import handle_existing_data, item_schema
 from apps.packages import TakesPackageService
 from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
 
@@ -321,16 +321,13 @@ class PublishedItemService(BaseService):
     def delete_by_article_id(self, _id):
         """Removes the article from the published collection.
 
-        Removes published queue entries and media files.
+        Removes published queue entries.
 
         :param str _id: id of the document to be deleted. In mongo, it is the item_id
         """
         lookup = {'item_id': _id}
-        docs = list(self.get_from_mongo(req=None, lookup=lookup))
         self.delete(lookup=lookup)
         get_resource_service('publish_queue').delete_by_article_id(_id)
-        for doc in docs:
-            remove_media_files(doc)
 
     def find_one(self, req, **lookup):
         item = super().find_one(req, **lookup)
