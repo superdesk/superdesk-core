@@ -16,6 +16,7 @@ from apps.content import push_expired_notification
 from superdesk.errors import ProviderError
 from superdesk.stats import stats
 from superdesk.lock import lock, unlock
+from superdesk.io.registry import registered_feeding_services
 
 
 class RemoveExpiredContent(superdesk.Command):
@@ -55,9 +56,17 @@ superdesk.command('ingest:clean_expired', RemoveExpiredContent())
 def remove_expired_data(provider):
     """Remove expired data for provider"""
     logger.info('Removing expired content for provider: %s' % provider.get('_id', 'Detached items'))
-    ingest_service = superdesk.get_resource_service('ingest')
 
-    items = get_expired_items(provider)
+    if provider.get('feeding_service', None):
+        feeding_service = registered_feeding_services[provider['feeding_service']]
+        feeding_service = feeding_service.__class__()
+        ingest_collection = feeding_service.service if hasattr(feeding_service, 'service') else 'ingest'
+    else:
+        ingest_collection = 'ingest'
+
+    ingest_service = superdesk.get_resource_service(ingest_collection)
+
+    items = get_expired_items(provider, ingest_collection)
 
     ids = [item['_id'] for item in items]
     items.rewind()
@@ -79,12 +88,12 @@ def remove_expired_data(provider):
     logger.info('Removed expired content for provider: {0} count: {1}'
                 .format(provider.get('_id', 'Detached items'), len(ids)))
 
-    remove_expired_from_elastic()
+    remove_expired_from_elastic(ingest_collection)
 
 
-def remove_expired_from_elastic():
+def remove_expired_from_elastic(ingest_collection):
     """Remove expired items from elastic which shouldn't be there anymore - expired before previous run."""
-    ingest = superdesk.get_resource_service('ingest')
+    ingest = superdesk.get_resource_service(ingest_collection)
     items = ingest.search({'filter': {'range': {'expiry': {'lt': 'now-5m/m'}}}})
     if items.count():
         logger.warning('there are expired items in elastic (%d)' % (items.count(), ))
@@ -93,9 +102,9 @@ def remove_expired_from_elastic():
             ingest.remove_from_search(item.get('_id'))
 
 
-def get_expired_items(provider_id):
+def get_expired_items(provider_id, ingest_collection):
     query_filter = get_query_for_expired_items(provider_id)
-    return superdesk.get_resource_service('ingest').get_from_mongo(lookup=query_filter, req=None)
+    return superdesk.get_resource_service(ingest_collection).get_from_mongo(lookup=query_filter, req=None)
 
 
 def get_query_for_expired_items(provider):
