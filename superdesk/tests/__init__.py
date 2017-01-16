@@ -68,9 +68,9 @@ def update_config(conf):
     conf['TESTING'] = True
     conf['SUPERDESK_TESTING'] = True
     conf['BCRYPT_GENSALT_WORK_FACTOR'] = 4
-    conf['CELERY_ALWAYS_EAGER'] = 'True'
-    conf['CELERYBEAT_SCHEDULE_FILENAME'] = './testschedule.db'
-    conf['CELERYBEAT_SCHEDULE'] = {}
+    conf['CELERY_TASK_ALWAYS_EAGER'] = 'True'
+    conf['CELERY_BEAT_SCHEDULE_FILENAME'] = './testschedule.db'
+    conf['CELERY_BEAT_SCHEDULE'] = {}
     conf['CONTENT_EXPIRY_MINUTES'] = 99
     conf['VERSION'] = '_current_version'
     conf['SECRET_KEY'] = 'test-secret'

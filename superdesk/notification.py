@@ -36,7 +36,7 @@ class ClosedSocket():
 
 def init_app(app):
     try:
-        app.notification_client = SocketMessageProducer(app.config['BROKER_URL'])
+        app.notification_client = SocketMessageProducer(app.config['CELERY_BROKER_URL'])
     except (RuntimeError, OSError):
         # not working now, but we can try later when actually sending something
         app.notification_client = ClosedSocket()

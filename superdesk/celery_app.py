@@ -33,6 +33,10 @@ TaskBase = celery.Task
 
 
 def try_cast(v):
+    if v is None:
+        return v
+    if v is 0:  # otherwise arrow will make it a datetime
+        return 0
     try:
         str_to_date(v)  # try if it matches format
         return arrow.get(v).datetime  # return timezone aware time
@@ -43,50 +47,26 @@ def try_cast(v):
             return v
 
 
-def cast_item(o):
+def dumps(o):
     with superdesk.app.app_context():
-        for k, v in o.items():
-            if isinstance(v, dict):
-                cast_item(v)
-            elif isinstance(v, bool):
-                pass
-            else:
-                o[k] = try_cast(v)
+        return MongoJSONEncoder().encode(o)
 
 
 def loads(s):
     o = json.loads(s)
-
-    if not o.get('args', None):
-        o['args'] = []
-
-    if not o.get('kwargs', None):
-        o['kwargs'] = {}
-
-    for v in o['args']:
-        if isinstance(v, dict):
-            cast_item(v)
-
-    kwargs = o['kwargs']
-    if isinstance(kwargs, str):
-        o['kwargs'] = json.loads(kwargs)
-        kwargs = o['kwargs']
-    for k, v in kwargs.items():
-        if isinstance(v, str):
-            kwargs[k] = try_cast(v)
-
-        if isinstance(v, list):
-            kwargs[k] = [try_cast(val) for val in v]
-
-        if isinstance(v, dict):
-            cast_item(v)
-
-    return o
-
-
-def dumps(o):
     with superdesk.app.app_context():
-        return MongoJSONEncoder().encode(o)
+        return serialize(o)
+
+
+def serialize(o):
+    if isinstance(o, list):
+        return [serialize(item) for item in o]
+    elif isinstance(o, dict):
+        if o.get('kwargs') and not isinstance(o['kwargs'], dict):
+            o['kwargs'] = json.loads(o['kwargs'])
+        return {k: serialize(v) for k, v in o.items()}
+    else:
+        return try_cast(o)
 
 
 register('eve/json', dumps, loads, content_type='application/json')
@@ -121,7 +101,7 @@ celery.Task = AppContextTask
 
 
 def init_celery(app):
-    celery.conf.update(app.config)
+    celery.config_from_object(app.config, namespace='CELERY')
     app.celery = celery
     app.redis = __get_redis(app)
 
@@ -166,7 +146,7 @@ def update_key(key, flag=False, db=None):
 
 
 def _update_subtask_progress(task_id, current=None, total=None, done=None):
-    redis_db = redis.from_url(celery.conf['CELERY_RESULT_BACKEND'])
+    redis_db = redis.from_url(app.config['REDIS_URL'])
     try:
         current_key = 'current_%s' % task_id
         total_key = 'total_%s' % task_id

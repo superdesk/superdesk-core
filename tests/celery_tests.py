@@ -39,3 +39,13 @@ class CeleryTestCase(TestCase):
         o = loads(s)
         self.assertEqual({}, o['kwargs'])
         self.assertIsNone(o['eta'])
+
+    def test_loads_lists(self):
+        s = b'''[{}, {"foo": null}]'''
+        o = loads(s)
+        self.assertEqual([{}, {"foo": None}], o)
+
+    def test_loads_zero(self):
+        s = b'''[0]'''
+        o = loads(s)
+        self.assertEqual([0], o)
