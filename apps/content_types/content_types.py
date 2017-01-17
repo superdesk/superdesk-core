@@ -80,7 +80,6 @@ DEFAULT_EDITOR = {
     'body_footer': {'order': 18, 'enabled': False},
     'sign_off': {'order': 19, 'enabled': True},
     'feature_media': {'order': 20, 'enabled': False},
-    'media': {'enabled': True},
     'media_description': {'enabled': True},
 }
 

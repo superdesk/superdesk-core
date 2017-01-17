@@ -81,9 +81,6 @@ Feature: Content Profile
                     "enabled": true,
                     "order": 13
                 },
-                "media": {
-                    "enabled": true
-                },
                 "slugline": {
                     "sdWidth": "full",
                     "enabled": true,
@@ -181,7 +178,6 @@ Feature: Content Profile
                     "type": "list",
                     "required": false
                 },
-                "media": {},
                 "slugline": {
                     "type": "string",
                     "required": false,
@@ -333,7 +329,6 @@ Feature: Content Profile
                     "type": "list",
                     "required": false
                 },
-                "media": {},
                 "subject": {
                     "mandatory_in_list": {
                         "scheme": {}
@@ -428,9 +423,6 @@ Feature: Content Profile
                     "enabled": false,
                     "order": 7,
                     "sdWidth": "full"
-                },
-                "media": {
-                    "enabled": false
                 },
                 "subject": {
                     "enabled": true,
@@ -646,7 +638,6 @@ Feature: Content Profile
                     "type": "list",
                     "required": false
                 },
-                "media": {},
                 "headline": {
                     "type": "string",
                     "maxlength": 64,
@@ -753,9 +744,6 @@ Feature: Content Profile
                     "order": 9,
                     "sdWidth": "full",
                     "enabled": false
-                },
-                "media": {
-                    "enabled": true
                 },
                 "sms": {
                     "order": 12,
@@ -890,9 +878,6 @@ Feature: Content Profile
                     "order": 15,
                     "enabled": false
                 },
-                "media": {
-                    "enabled": false
-                },
                 "anpa_category": {
                     "sdWidth": "full",
                     "order": 7,
@@ -985,7 +970,6 @@ Feature: Content Profile
                     "type": "dict",
                     "required": false
                 },
-                "media": {},
                 "anpa_category": {
                     "type": "list",
                     "required": false
