@@ -176,7 +176,8 @@ Feature: Validate
       [{"_id": "snap", "schema": {
         "headline": {"enabled": true},
         "foo": {"required": true},
-        "image": {"type": "picture"}
+        "image": {"type": "picture"},
+        "genre": {"genre": {"value": "foo"}, "type": "string"}
       }}]
       """
       When we post to "/validate"
