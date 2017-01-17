@@ -73,6 +73,7 @@ DEFAULT_EDITOR = {
     'body_html': {
         'order': 16,
         'formatOptions': ['h2', 'bold', 'italic', 'underline', 'quote', 'anchor', 'embed', 'picture', 'removeFormat'],
+        'cleanPastedHTML': False,
         'enabled': True
     },
     'footer': {'order': 17, 'enabled': False},
@@ -315,7 +316,7 @@ def delete_disabled_fields(editor, schema):
 
 def clean_editor(editor):
     valid_attributes = ['order', 'sdWidth', 'required', 'hideDate',
-                        'formatOptions', 'editor3', 'default']
+                        'formatOptions', 'editor3', 'default', 'cleanPastedHTML']
     for field_value in editor.values():
         if not field_value:
             continue
