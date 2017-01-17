@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
-from xml.etree.ElementTree import SubElement
+from lxml.etree import SubElement
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, FORMATS, FORMAT
 from superdesk.metadata.utils import is_takes_package
 from bs4 import BeautifulSoup

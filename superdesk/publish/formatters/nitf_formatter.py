@@ -9,9 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import superdesk
-import xml.etree.ElementTree as etree
-
-from xml.etree.ElementTree import SubElement
+from lxml import etree as etree
+from lxml.etree import SubElement
 from flask import current_app as app
 from superdesk.publish.formatters import Formatter
 from superdesk.errors import FormatterError
