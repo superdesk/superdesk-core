@@ -82,7 +82,7 @@ class FilterConditionService(BaseService):
         """
         parameters = get_resource_service('filter_condition_parameters').get(req=None, lookup=None)
         parameter = [p for p in parameters if p['field'] == filter_condition['field']]
-        if parameter[0]['operators'] == ['in', 'nin']:
+        if 'in' in parameter[0]['operators'] or 'nin' in parameter[0]['operators']:
             # this is a controlled vocabulary field so find the overlapping values
             existing_docs = list(self.get(None,
                                           {'field': filter_condition['field'],

@@ -32,7 +32,7 @@ class FilterConditionParametersService(BaseService):
                             'value_field': 'qcode'
                             },
                            {'field': 'urgency',
-                            'operators': ['in', 'nin'],
+                            'operators': ['in', 'nin', 'eq', 'ne', 'lt', 'lte', 'gt', 'gte'],
                             'values': values['urgency'],
                             'value_field': 'qcode'
                             },
@@ -47,7 +47,7 @@ class FilterConditionParametersService(BaseService):
                             'value_field': 'qcode'
                             },
                            {'field': 'priority',
-                            'operators': ['in', 'nin'],
+                            'operators': ['in', 'nin', 'eq', 'ne', 'lt', 'lte', 'gt', 'gte'],
                             'values': values['priority'],
                             'value_field': 'qcode'
                             },
@@ -55,37 +55,38 @@ class FilterConditionParametersService(BaseService):
                             'operators': ['in', 'nin']
                             },
                            {'field': 'slugline',
-                            'operators': ['in', 'nin', 'like', 'notlike', 'startswith', 'endswith']
+                            'operators': ['in', 'nin', 'eq', 'ne', 'like', 'notlike', 'startswith', 'endswith']
                             },
                            {'field': 'type',
-                            'operators': ['in', 'nin'],
+                            'operators': ['in', 'nin', 'eq', 'ne'],
                             'values': values['type'],
                             'value_field': 'qcode'
                             },
                            {'field': 'source',
-                            'operators': ['in', 'nin', 'like', 'notlike', 'startswith', 'endswith']
+                            'operators': ['in', 'nin', 'eq', 'ne', 'like', 'notlike', 'startswith', 'endswith']
                             },
                            {'field': 'headline',
-                            'operators': ['in', 'nin', 'like', 'notlike', 'startswith', 'endswith']
+                            'operators': ['in', 'nin', 'eq', 'ne', 'eq',
+                                          'ne', 'like', 'notlike', 'startswith', 'endswith']
                             },
                            {'field': 'ednote',
-                            'operators': ['in', 'nin', 'like', 'notlike', 'startswith', 'endswith']
+                            'operators': ['in', 'nin', 'eq', 'ne', 'like', 'notlike', 'startswith', 'endswith']
                             },
                            {'field': 'body_html',
                             'operators': ['in', 'nin', 'like', 'notlike', 'startswith', 'endswith']
                             },
                            {'field': 'desk',
-                            'operators': ['in', 'nin'],
+                            'operators': ['in', 'nin', 'eq', 'ne'],
                             'values': values['desk'],
                             'value_field': '_id'
                             },
                            {'field': 'stage',
-                            'operators': ['in', 'nin'],
+                            'operators': ['in', 'nin', 'eq', 'ne'],
                             'values': values['stage'],
                             'value_field': '_id'
                             },
                            {'field': 'sms',
-                            'operators': ['in', 'nin'],
+                            'operators': ['in', 'nin', 'eq', 'ne'],
                             'values': values['sms'],
                             'value_field': 'name'
                             },

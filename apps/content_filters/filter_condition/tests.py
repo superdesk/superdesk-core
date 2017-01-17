@@ -30,7 +30,7 @@ class FilterConditionTests(TestCase):
                              {'_id': '2', 'headline': 'prtorque', 'state': 'fetched'},
                              {'_id': '3', 'urgency': 3, 'state': 'fetched', 'flags': {'marked_for_sms': True}},
                              {'_id': '4', 'urgency': 4, 'state': 'fetched', 'task': {'desk': '1'}},
-                             {'_id': '5', 'urgency': 2, 'state': 'fetched', 'task': {'desk': '2'}},
+                             {'_id': '5', 'urgency': 2, 'state': 'fetched', 'task': {'desk': '2'}, 'priority': 3},
                              {'_id': '6', 'state': 'fetched'},
                              {'_id': '7', 'genre': [{'name': 'Sidebar'}], 'state': 'fetched'},
                              {'_id': '8', 'subject': [{'name': 'adult education',
@@ -110,6 +110,33 @@ class FilterConditionTests(TestCase):
             self.assertEqual(1, docs.count())
             self.assertEqual('7', docs[0]['_id'])
 
+    def test_mongo_using_priority_compare_eq_filter(self):
+        f = FilterCondition('priority', 'eq', '3')
+        query = f.get_mongo_query()
+        with self.app.app_context():
+            docs = get_resource_service('archive').\
+                get_from_mongo(req=self.req, lookup=query)
+            self.assertEqual(1, docs.count())
+            self.assertEqual('5', docs[0]['_id'])
+
+    def test_mongo_using_priority_compare_ne_filter(self):
+        f = FilterCondition('priority', 'ne', '3')
+        query = f.get_mongo_query()
+        with self.app.app_context():
+            docs = get_resource_service('archive').\
+                get_from_mongo(req=self.req, lookup=query)
+            self.assertEqual(10, docs.count())
+            self.assertTrue('5' not in [d['_id'] for d in docs])
+
+    def test_mongo_using_priority_compare_lte_filter(self):
+        f = FilterCondition('priority', 'lte', '3')
+        query = f.get_mongo_query()
+        with self.app.app_context():
+            docs = get_resource_service('archive').\
+                get_from_mongo(req=self.req, lookup=query)
+            self.assertEqual(1, docs.count())
+            self.assertEqual('5', docs[0]['_id'])
+
     def test_mongo_using_desk_filter_complete_string(self):
         f = FilterCondition('desk', 'in', '1')
         query = f.get_mongo_query()
@@ -127,8 +154,25 @@ class FilterConditionTests(TestCase):
                 get_from_mongo(req=self.req, lookup=query)
             self.assertEqual(10, docs.count())
 
+    def test_mongo_using_desk_filter_eq(self):
+        f = FilterCondition('desk', 'eq', '1')
+        query = f.get_mongo_query()
+        with self.app.app_context():
+            docs = get_resource_service('archive').\
+                get_from_mongo(req=self.req, lookup=query)
+            self.assertEqual(1, docs.count())
+            self.assertEqual('4', docs[0]['_id'])
+
     def test_mongo_using_sms_filter_with_is(self):
         f = FilterCondition('sms', 'in', 'true')
+        query = f.get_mongo_query()
+        with self.app.app_context():
+            docs = get_resource_service('archive').\
+                get_from_mongo(req=self.req, lookup=query)
+            self.assertEqual(1, docs.count())
+
+    def test_mongo_using_sms_filter_with_eq_comp(self):
+        f = FilterCondition('sms', 'eq', 'true')
         query = f.get_mongo_query()
         with self.app.app_context():
             docs = get_resource_service('archive').\
@@ -161,7 +205,25 @@ class FilterConditionTests(TestCase):
             self.assertEqual(1, docs.count())
             self.assertEqual('8', docs[0]['_id'])
 
+    def test_mongo_using_subject_filter_complete_string_eq(self):
+        f = FilterCondition('subject', 'eq', '05005003')
+        query = f.get_mongo_query()
+        with self.app.app_context():
+            docs = get_resource_service('archive').\
+                get_from_mongo(req=self.req, lookup=query)
+            self.assertEqual(1, docs.count())
+            self.assertEqual('8', docs[0]['_id'])
+
     def test_mongo_using_like_filter_complete_string(self):
+        f = FilterCondition('headline', 'like', 'story')
+        query = f.get_mongo_query()
+        with self.app.app_context():
+            docs = get_resource_service('archive').\
+                get_from_mongo(req=self.req, lookup=query)
+            self.assertEqual(1, docs.count())
+            self.assertEqual('1', docs[0]['_id'])
+
+    def test_mongo_using_like_filter_complete_string_eq(self):
         f = FilterCondition('headline', 'like', 'story')
         query = f.get_mongo_query()
         with self.app.app_context():
@@ -281,6 +343,16 @@ class FilterConditionTests(TestCase):
             self.assertTrue('4' in doc_ids)
             self.assertTrue('3' in doc_ids)
 
+    def test_elastic_using_eq_filter(self):
+        f = FilterCondition('urgency', 'eq', '3')
+        query = f.get_elastic_query()
+        with self.app.app_context():
+            self._setup_elastic_args(query)
+            docs = get_resource_service('archive').get(req=self.req, lookup=None)
+            doc_ids = [d['_id'] for d in docs]
+            self.assertEqual(1, docs.count())
+            self.assertTrue('3' in doc_ids)
+
     def test_elastic_using_nin_filter(self):
         f = FilterCondition('urgency', 'nin', '3,4')
         query = f.get_elastic_query()
@@ -288,6 +360,17 @@ class FilterConditionTests(TestCase):
             self._setup_elastic_args(query, 'not')
             docs = get_resource_service('archive').get(req=self.req, lookup=None)
             self.assertEqual(8, docs.count())
+            doc_ids = [d['_id'] for d in docs]
+            self.assertTrue('6' in doc_ids)
+            self.assertTrue('5' in doc_ids)
+
+    def test_elastic_using_ne_filter(self):
+        f = FilterCondition('urgency', 'ne', '4')
+        query = f.get_elastic_query()
+        with self.app.app_context():
+            self._setup_elastic_args(query, 'not')
+            docs = get_resource_service('archive').get(req=self.req, lookup=None)
+            self.assertEqual(9, docs.count())
             doc_ids = [d['_id'] for d in docs]
             self.assertTrue('6' in doc_ids)
             self.assertTrue('5' in doc_ids)
@@ -344,7 +427,7 @@ class FilterConditionTests(TestCase):
         self.assertEqual(f.value.get_mongo_value(f.field), [1, 2])
 
         f = FilterCondition('priority', 'nin', '3')
-        self.assertEqual(f.value.get_mongo_value(f.field), ['3'])
+        self.assertEqual(f.value.get_mongo_value(f.field), [3])
 
         f = FilterCondition('headline', 'like', 'test')
         self.assertEqual(f.value.get_mongo_value(f.field), re.compile('.*test.*', re.IGNORECASE))
@@ -357,6 +440,79 @@ class FilterConditionTests(TestCase):
 
         f = FilterCondition('headline', 'endswith', 'test')
         self.assertEqual(f.value.get_mongo_value(f.field), re.compile('.*test', re.IGNORECASE))
+
+    def test_does_match_with_eq(self):
+        f = FilterCondition('urgency', 'eq', '1')
+        self.assertTrue(f.does_match(self.articles[0]))
+        self.assertFalse(f.does_match(self.articles[1]))
+        self.assertFalse(f.does_match(self.articles[2]))
+        self.assertFalse(f.does_match(self.articles[3]))
+        self.assertFalse(f.does_match(self.articles[4]))
+        self.assertFalse(f.does_match(self.articles[5]))
+
+    def test_does_match_with_eq_string(self):
+        f = FilterCondition('headline', 'eq', 'Story')
+        self.assertTrue(f.does_match(self.articles[0]))
+        self.assertFalse(f.does_match(self.articles[1]))
+        self.assertFalse(f.does_match(self.articles[2]))
+        self.assertFalse(f.does_match(self.articles[3]))
+        self.assertFalse(f.does_match(self.articles[4]))
+        self.assertFalse(f.does_match(self.articles[5]))
+
+    def test_does_match_with_eq_bool(self):
+        f = FilterCondition('sms', 'eq', 'true')
+        self.assertFalse(f.does_match(self.articles[0]))
+        self.assertFalse(f.does_match(self.articles[1]))
+        self.assertTrue(f.does_match(self.articles[2]))
+        self.assertFalse(f.does_match(self.articles[3]))
+        self.assertFalse(f.does_match(self.articles[4]))
+        self.assertFalse(f.does_match(self.articles[5]))
+        self.assertFalse(f.does_match(self.articles[6]))
+        self.assertFalse(f.does_match(self.articles[7]))
+
+    def test_does_match_with_lt_int(self):
+        f = FilterCondition('priority', 'lt', '7')
+        self.assertFalse(f.does_match(self.articles[0]))
+        self.assertFalse(f.does_match(self.articles[1]))
+        self.assertFalse(f.does_match(self.articles[2]))
+        self.assertFalse(f.does_match(self.articles[3]))
+        self.assertTrue(f.does_match(self.articles[4]))
+        self.assertFalse(f.does_match(self.articles[5]))
+        self.assertFalse(f.does_match(self.articles[6]))
+        self.assertFalse(f.does_match(self.articles[7]))
+
+    def test_does_match_with_gt_int(self):
+        f = FilterCondition('priority', 'gt', '1')
+        self.assertFalse(f.does_match(self.articles[0]))
+        self.assertFalse(f.does_match(self.articles[1]))
+        self.assertFalse(f.does_match(self.articles[2]))
+        self.assertFalse(f.does_match(self.articles[3]))
+        self.assertTrue(f.does_match(self.articles[4]))
+        self.assertFalse(f.does_match(self.articles[5]))
+        self.assertFalse(f.does_match(self.articles[6]))
+        self.assertFalse(f.does_match(self.articles[7]))
+
+    def test_does_match_with_gte_int(self):
+        f = FilterCondition('priority', 'gte', '3')
+        self.assertFalse(f.does_match(self.articles[0]))
+        self.assertFalse(f.does_match(self.articles[1]))
+        self.assertFalse(f.does_match(self.articles[2]))
+        self.assertFalse(f.does_match(self.articles[3]))
+        self.assertTrue(f.does_match(self.articles[4]))
+        self.assertFalse(f.does_match(self.articles[5]))
+        self.assertFalse(f.does_match(self.articles[6]))
+        self.assertFalse(f.does_match(self.articles[7]))
+
+    def test_does_match_with_ne_int(self):
+        f = FilterCondition('priority', 'ne', '3')
+        self.assertTrue(f.does_match(self.articles[0]))
+        self.assertTrue(f.does_match(self.articles[1]))
+        self.assertTrue(f.does_match(self.articles[2]))
+        self.assertTrue(f.does_match(self.articles[3]))
+        self.assertFalse(f.does_match(self.articles[4]))
+        self.assertTrue(f.does_match(self.articles[5]))
+        self.assertTrue(f.does_match(self.articles[6]))
+        self.assertTrue(f.does_match(self.articles[7]))
 
     def test_does_match_with_like_full(self):
         f = FilterCondition('headline', 'like', 'story')

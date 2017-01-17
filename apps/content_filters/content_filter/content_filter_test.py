@@ -62,6 +62,8 @@ class ContentFilterTestService(BaseService):
                         query = service.build_elastic_query(content_filter)
                     else:
                         query = service.build_elastic_not_filter(content_filter)
+                    query['sort'] = [{'versioncreated': 'desc'}]
+                    query['size'] = 200
                     req = ParsedRequest()
                     req.args = {'source': json.dumps(query)}
                     doc['match_results'] = list(get_resource_service('archive').get(req=req, lookup=None))

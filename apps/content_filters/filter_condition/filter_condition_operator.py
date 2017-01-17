@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from enum import Enum
+import operator
 
 
 class FilterConditionOperatorsEnum(Enum):
@@ -18,7 +19,13 @@ class FilterConditionOperatorsEnum(Enum):
     notlike = 4,
     startswith = 5,
     endswith = 6,
-    match = 7
+    match = 7,
+    eq = 8,
+    ne = 9,
+    gt = 10,
+    gte = 11,
+    lt = 12,
+    lte = 13
 
 
 class FilterConditionOperator:
@@ -33,6 +40,13 @@ class FilterConditionOperator:
             return NotLikeOperator(operator)
         elif operator == FilterConditionOperatorsEnum.match.name:
             return MatchOperator(operator)
+        elif operator in [FilterConditionOperatorsEnum.eq.name,
+                          FilterConditionOperatorsEnum.ne.name,
+                          FilterConditionOperatorsEnum.gt.name,
+                          FilterConditionOperatorsEnum.gte.name,
+                          FilterConditionOperatorsEnum.lt.name,
+                          FilterConditionOperatorsEnum.lte.name]:
+            return ComparisonOperator(operator)
         else:
             return RegexOperator(operator)
 
@@ -44,6 +58,9 @@ class FilterConditionOperator:
 
     def get_elastic_operator(self):
         return self.elastic_operator
+
+    def contains_not(self):
+        return False
 
     def does_match(self, article_value, filter_value):
         raise NotImplementedError()
@@ -77,6 +94,9 @@ class NotInOperator(FilterConditionOperator):
         else:
             return self.get_lower_case(article_value) not in map(self.get_lower_case, filter_value)
 
+    def contains_not(self):
+        return True
+
 
 class NotLikeOperator(FilterConditionOperator):
     def __init__(self, operator):
@@ -86,6 +106,53 @@ class NotLikeOperator(FilterConditionOperator):
 
     def does_match(self, article_value, filter_value):
         return filter_value.match(article_value) is None
+
+    def contains_not(self):
+        return True
+
+
+class ComparisonOperator(FilterConditionOperator):
+    """
+    Represents comparison operators
+    """
+
+    _operators = {FilterConditionOperatorsEnum.gt: operator.gt,
+                  FilterConditionOperatorsEnum.lt: operator.lt,
+                  FilterConditionOperatorsEnum.gte: operator.ge,
+                  FilterConditionOperatorsEnum.lte: operator.le,
+                  FilterConditionOperatorsEnum.ne: operator.ne,
+                  FilterConditionOperatorsEnum.eq: operator.eq}
+
+    _elastic_mapper = {FilterConditionOperatorsEnum.gt: '{{"range": {{"{}": {{"gt": "{}"}}}}}}',
+                       FilterConditionOperatorsEnum.gte: '{{"range": {{"{}": {{"gte": "{}"}}}}}}',
+                       FilterConditionOperatorsEnum.lt: '{{"range": {{"{}": {{"lt": "{}"}}}}}}',
+                       FilterConditionOperatorsEnum.lte: '{{"range": {{"{}": {{"lte": "{}"}}}}}}',
+                       FilterConditionOperatorsEnum.eq: '{{"term": {{"{}": "{}"}}}}',
+                       FilterConditionOperatorsEnum.ne: '{{"term": {{"{}": "{}"}}}}'}
+
+    def __init__(self, operator):
+        self.operator = FilterConditionOperatorsEnum[operator]
+        self.operator_func = ComparisonOperator._operators[FilterConditionOperatorsEnum[operator]]
+        self.mongo_operator = self._get_default_mongo_operator()
+        self.elastic_operator = ComparisonOperator._elastic_mapper[FilterConditionOperatorsEnum[operator]]
+
+    def contains_not(self):
+        return self.operator == FilterConditionOperatorsEnum.ne
+
+    def does_match(self, article_value, filter_value):
+        try:
+            if isinstance(filter_value, bool):
+                article_value = article_value.lower() in ("yes", "true", "t", "1")
+            else:
+                t = type(filter_value)
+                article_value = t(article_value)
+
+            if isinstance(filter_value, str):
+                article_value = self.get_lower_case(article_value).strip()
+                filter_value = self.get_lower_case(filter_value).strip()
+            return self.operator_func(article_value, filter_value)
+        except:
+            return False
 
 
 class RegexOperator(FilterConditionOperator):

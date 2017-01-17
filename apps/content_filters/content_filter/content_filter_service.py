@@ -170,12 +170,15 @@ class ContentFilterService(BaseService):
 
         filter_condition_service = get_resource_service('filter_conditions')
         for expression in doc.get('content_filter', []):
-            filter_conditions = {'must': []}
+            filter_conditions = {'must': [], 'must_not': [{"term": {"state": "spiked"}}]}
             if 'fc' in expression.get('expression', {}):
                 for f in expression['expression']['fc']:
                     current_filter = FilterCondition.parse(filter_condition_service.find_one(req=None, _id=f))
                     elastic_query = current_filter.get_elastic_query()
-                    filter_conditions['must'].append(elastic_query)
+                    if current_filter.contains_not():
+                        filter_conditions['must_not'].append(elastic_query)
+                    else:
+                        filter_conditions['must'].append(elastic_query)
             if 'pf' in expression.get('expression', {}):
                 for f in expression['expression']['pf']:
                     current_filter = super().find_one(req=None, _id=f)
