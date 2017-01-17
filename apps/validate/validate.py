@@ -75,8 +75,28 @@ class SchemaValidator(Validator):
         if isinstance(value, list) and not value:
             self._error(field, REQUIRED_FIELD)
 
-    def _validate_enabled(self, enabled, field, value):
+    def _validate_enabled(self, *args):
         """Ignore ``enabled`` in the schema."""
+        pass
+
+    def _validate_place(self, *args):
+        """Ignore place."""
+        pass
+
+    def _validate_genre(self, *args):
+        """Ignore genre."""
+        pass
+
+    def _validate_anpa_category(self, *args):
+        """Ignore anpa category."""
+        pass
+
+    def _validate_subject(self, *args):
+        """Ignore subject."""
+        pass
+
+    def _validate_company_codes(self, *args):
+        """Ignore company codes."""
         pass
 
 
