@@ -173,7 +173,11 @@ Feature: Validate
   Scenario: Validate using content type
       Given "content_types"
       """
-      [{"_id": "snap", "schema": {"headline": {}, "foo": {"required": true}, "image": {"type": "picture"}}}]
+      [{"_id": "snap", "schema": {
+        "headline": {"enabled": true},
+        "foo": {"required": true},
+        "image": {"type": "picture"}
+      }}]
       """
       When we post to "/validate"
       """

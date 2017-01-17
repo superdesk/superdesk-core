@@ -195,7 +195,10 @@ def prepare_for_edit_content_type(doc):
 
 
 def get_allowed_list(schema):
-    return schema['schema']['schema']['scheme']['allowed']
+    try:
+        return schema['schema']['schema']['scheme']['allowed']
+    except KeyError:
+        return []
 
 
 def get_mandatory_list(schema):
