@@ -8,8 +8,9 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import xml.etree.ElementTree as etree
-from xml.etree.ElementTree import SubElement
+import superdesk
+from lxml import etree as etree
+from lxml.etree import SubElement
 from flask import current_app as app
 from superdesk.publish.formatters import Formatter
 import superdesk

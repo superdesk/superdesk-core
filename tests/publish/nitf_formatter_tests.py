@@ -13,7 +13,7 @@ from unittest import mock
 from superdesk.publish.formatters.nitf_formatter import NITFFormatter
 from superdesk.publish.formatters import Formatter
 from superdesk.publish import init_app
-import xml.etree.ElementTree as etree
+from lxml import etree
 from textwrap import dedent
 
 
@@ -103,7 +103,7 @@ class NitfFormatterTest(TestCase):
                     <hl2>removed</hl2>
                 </p>
             </div>""").replace('\n', '').replace(' ', '')
-        self.assertEqual(etree.tostring(nitf, 'unicode').replace('\n', '').replace(' ', ''), expected)
+        self.assertEqual(etree.tostring(nitf, encoding='unicode').replace('\n', '').replace(' ', ''), expected)
 
     def test_table(self):
         html_raw = """
@@ -131,7 +131,7 @@ class NitfFormatterTest(TestCase):
         """.replace('\n', '').replace(' ', '')
         html = etree.fromstring(html_raw)
         nitf = self.formatter.html2nitf(html)
-        self.assertEqual(etree.tostring(nitf, 'unicode'), html_raw)
+        self.assertEqual(etree.tostring(nitf, encoding='unicode'), html_raw)
 
     def test_company_codes(self):
         article = {
