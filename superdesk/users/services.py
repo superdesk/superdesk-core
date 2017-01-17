@@ -417,7 +417,7 @@ class DBUsersService(UsersService):
                 if not id:
                     raise SuperdeskApiError.internalError('Failed to send account activation email.')
                 tokenDoc.update({'username': doc['username']})
-                send_activate_account_email(tokenDoc)
+                send_activate_account_email(tokenDoc, activate_ttl)
 
     def on_update(self, updates, user):
         super().on_update(updates, user)

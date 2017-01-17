@@ -29,10 +29,9 @@ def send_email(self, subject, sender, recipients, text_body, html_body, cc=None,
     return app.mail.send(msg)
 
 
-def send_activate_account_email(doc):
+def send_activate_account_email(doc, activate_ttl):
     user = get_resource_service('users').find_one(req=None, _id=doc['user'])
     first_name = user.get('first_name')
-    activate_ttl = app.config['ACTIVATE_ACCOUNT_TOKEN_TIME_TO_LIVE']
     app_name = app.config['APPLICATION_NAME']
     admins = app.config['ADMINS']
     client_url = app.config['CLIENT_URL']
@@ -57,8 +56,7 @@ def send_user_status_changed_email(recipients, status):
                      text_body=text_body, html_body=html_body)
 
 
-def send_reset_password_email(doc):
-    token_ttl = app.config['RESET_PASSWORD_TOKEN_TIME_TO_LIVE']
+def send_reset_password_email(doc, token_ttl):
     admins = app.config['ADMINS']
     client_url = app.config['CLIENT_URL']
     app_name = app.config['APPLICATION_NAME']
