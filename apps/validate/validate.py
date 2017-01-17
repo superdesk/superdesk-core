@@ -75,6 +75,10 @@ class SchemaValidator(Validator):
         if isinstance(value, list) and not value:
             self._error(field, REQUIRED_FIELD)
 
+    def _validate_enabled(self, enabled, field, value):
+        """Ignore ``enabled`` in the schema."""
+        pass
+
 
 class ValidateResource(superdesk.Resource):
     schema = {
