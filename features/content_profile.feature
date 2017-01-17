@@ -81,7 +81,7 @@ Feature: Content Profile
                     "enabled": true,
                     "order": 13
                 },
-                "media": {
+                "feature_media": {
                     "enabled": true
                 },
                 "slugline": {
@@ -177,7 +177,7 @@ Feature: Content Profile
                     "type": "list",
                     "required": false
                 },
-                "media": {},
+                "feature_media": {},
                 "slugline": {
                     "type": "string",
                     "required": false,
@@ -325,7 +325,7 @@ Feature: Content Profile
                     "type": "list",
                     "required": false
                 },
-                "media": {},
+                "feature_media": {},
                 "subject": {
                     "mandatory_in_list": {
                         "scheme": {}
@@ -417,7 +417,7 @@ Feature: Content Profile
                     "order": 7,
                     "sdWidth": "full"
                 },
-                "media": {
+                "feature_media": {
                     "enabled": false
                 },
                 "subject": {
@@ -630,7 +630,7 @@ Feature: Content Profile
                     "type": "list",
                     "required": false
                 },
-                "media": {},
+                "feature_media": {},
                 "headline": {
                     "type": "string",
                     "maxlength": 64,
@@ -734,7 +734,7 @@ Feature: Content Profile
                     "sdWidth": "full",
                     "enabled": false
                 },
-                "media": {
+                "feature_media": {
                     "enabled": true
                 },
                 "sms": {
@@ -866,7 +866,7 @@ Feature: Content Profile
                     "order": 15,
                     "enabled": false
                 },
-                "media": {
+                "feature_media": {
                     "enabled": false
                 },
                 "anpa_category": {
@@ -957,7 +957,7 @@ Feature: Content Profile
                     "type": "dict",
                     "required": false
                 },
-                "media": {},
+                "feature_media": {},
                 "anpa_category": {
                     "type": "list",
                     "required": false

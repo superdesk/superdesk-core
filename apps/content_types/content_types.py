@@ -85,7 +85,7 @@ class DefaultSchema(schema.Schema):
     sign_off = schema.StringField()
 
     #: embedded media in the item
-    media = schema.SchemaField()
+    feature_media = schema.SchemaField()
 
     #: embedded media description
     media_description = schema.SchemaField()
@@ -122,7 +122,7 @@ DEFAULT_EDITOR = {
     'footer': {'order': 17, 'enabled': False},
     'body_footer': {'order': 18, 'enabled': False},
     'sign_off': {'order': 19, 'enabled': True},
-    'media': {'enabled': True},
+    'feature_media': {'enabled': True},
     'media_description': {'enabled': True},
 }
 
