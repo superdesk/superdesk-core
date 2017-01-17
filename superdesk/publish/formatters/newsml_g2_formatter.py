@@ -11,10 +11,10 @@
 """NewsML G2 Superdesk formatter"""
 
 import superdesk
-import xml.etree.ElementTree as etree
+from lxml import etree
+from lxml.etree import SubElement
 
 from bs4 import BeautifulSoup
-from xml.etree.ElementTree import SubElement
 from flask import current_app as app
 
 from superdesk.publish.formatters import Formatter
@@ -25,6 +25,8 @@ from superdesk.publish.formatters.nitf_formatter import NITFFormatter
 from superdesk.metadata.packages import PACKAGE_TYPE, REFS, RESIDREF, ROLE, GROUPS, GROUP_ID, ID_REF
 from superdesk.filemeta import get_filemeta
 from apps.archive.common import ARCHIVE, get_utc_schedule
+
+XML_LANG = "{http://www.w3.org/XML/1998/namespace}lang"
 
 
 def get_newsml_provider_id():
@@ -38,10 +40,10 @@ class NewsMLG2Formatter(Formatter):
     now = utcnow()
     string_now = now.strftime('%Y-%m-%dT%H:%M:%S.0000Z')
 
-    _message_attrib = {'xmlns': 'http://iptc.org/std/nar/2006-10-01/', 'xmlns:x': 'http://www.w3.org/1999/xhtml',
-                       'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance'}
+    _message_nsmap = {None: 'http://iptc.org/std/nar/2006-10-01/', 'x': 'http://www.w3.org/1999/xhtml',
+                      'xsi': 'http://www.w3.org/2001/XMLSchema-instance'}
 
-    _debug_message_extra = {'xsi:schemaLocation': 'http://iptc.org/std/nar/2006-10-01/ \
+    _debug_message_extra = {'{{{}}}schemaLocation'.format(_message_nsmap['xsi']): 'http://iptc.org/std/nar/2006-10-01/ \
     http://www.iptc.org/std/NewsML-G2/2.18/specification/NewsML-G2_2.18-spec-All-Power.xsd'}
 
     def format(self, article, subscriber, codes=None):
@@ -57,8 +59,7 @@ class NewsMLG2Formatter(Formatter):
         try:
             pub_seq_num = superdesk.get_resource_service('subscribers').generate_sequence_number(subscriber)
             is_package = self._is_package(article)
-            self._message_attrib.update(self._debug_message_extra)
-            news_message = etree.Element('newsMessage', attrib=self._message_attrib)
+            news_message = etree.Element('newsMessage', attrib=self._debug_message_extra, nsmap=self._message_nsmap)
             self._format_header(article, news_message, pub_seq_num)
             item_set = self._format_item(news_message)
             if is_package:
@@ -112,7 +113,7 @@ class NewsMLG2Formatter(Formatter):
         item = SubElement(item_set, item_type, attrib={'standard': 'NewsML-G2', 'standardversion': '2.18',
                                                        'guid': article['guid'],
                                                        'version': str(article[superdesk.config.VERSION]),
-                                                       'xml:lang': article.get('language', 'en'),
+                                                       XML_LANG: article.get('language', 'en'),
                                                        'conformance': 'power'})
         SubElement(item, 'catalogRef',
                    attrib={'href': 'http://www.iptc.org/std/catalog/catalog.IPTC-G2-Standards_25.xml'})
@@ -282,7 +283,7 @@ class NewsMLG2Formatter(Formatter):
                 if 'qcode' in s:
                     subj = SubElement(content_meta, 'subject',
                                       attrib={'type': 'cpnat:abstract', 'qcode': 'subj:' + s['qcode']})
-                    SubElement(subj, 'name', attrib={'xml:lang': 'en'}).text = s['name']
+                    SubElement(subj, 'name', attrib={XML_LANG: 'en'}).text = s['name']
 
     def _format_genre(self, article, content_meta):
         """Appends the genre element to the contentMeta element
@@ -293,7 +294,7 @@ class NewsMLG2Formatter(Formatter):
         if 'genre' in article and len(article['genre']) > 0:
             for g in article['genre']:
                 genre = SubElement(content_meta, 'genre')
-                SubElement(genre, 'name', attrib={'xml:lang': 'en'}).text = g.get('name', '')
+                SubElement(genre, 'name', attrib={XML_LANG: 'en'}).text = g.get('name', '')
 
     def _format_category(self, article, content_meta):
         """Appends the subject element to the contentMeta element
@@ -304,7 +305,7 @@ class NewsMLG2Formatter(Formatter):
         for category in article.get('anpa_category', []):
             subject = SubElement(content_meta, 'subject',
                                  attrib={'type': 'cpnat:abstract', 'qcode': 'cat:' + category['qcode']})
-            SubElement(subject, 'name', attrib={'xml:lang': 'en'}).text = category.get('name', '')
+            SubElement(subject, 'name', attrib={XML_LANG: 'en'}).text = category.get('name', '')
 
     def _format_slugline(self, article, content_meta):
         """Appends the slugline element to the contentMeta element
