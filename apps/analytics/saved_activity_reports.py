@@ -43,7 +43,11 @@ class SavedActivityReportResource(Resource):
             'required': True
         },
         'subject': metadata_schema['subject'],
+        'category': metadata_schema['anpa_category'],
         'keywords': metadata_schema['keywords'],
+        'urgency': metadata_schema['urgency'],
+        'priority': metadata_schema['priority'],
+        'subscriber': {'type': 'string'},
         'group_by': {
             'type': 'list'
         }
