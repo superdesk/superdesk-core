@@ -1,5 +1,17 @@
 # Superdesk Server Changelog
 
+## [1.5.2] 2017-01-18
+
+### Fixed
+
+- Update sign off if mapped field is updated on user.
+- Fix editing content profiles with custom fields.
+- Fix publishing with content profiles.
+
+### Added
+
+- Implement email publishing to multiple users via bcc.
+
 ## [1.5.1] 2017-01-03
 
 ### Changed
