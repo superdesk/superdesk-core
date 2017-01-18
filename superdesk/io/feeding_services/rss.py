@@ -131,13 +131,12 @@ class RSSFeedingService(FeedingService):
                 'password': config.get('password', '')
             }
 
+        xml_data = self._fetch_data(config, provider)
+
         try:
-            xml_data = self._fetch_data(config, provider)
             data = feedparser.parse(xml_data)
-        except IngestApiError:
-            raise
         except Exception as ex:
-            raise ParserError.parseMessageError(ex, provider)
+            raise ParserError.parseMessageError(ex, provider, data=xml_data)
 
         # If provider last updated time is not available, set it to 1.1.1970
         # so that it will be recognized as "not up to date".
@@ -195,7 +194,7 @@ class RSSFeedingService(FeedingService):
         else:
             auth = None
 
-        response = requests.get(url, auth=auth)
+        response = requests.get(url, auth=auth, timeout=30)
 
         if response.ok:
             return response.content

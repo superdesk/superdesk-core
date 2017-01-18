@@ -12,6 +12,8 @@ import os
 import bcrypt
 import hashlib
 import base64
+import tempfile
+
 from uuid import uuid4
 from datetime import datetime
 from bson import ObjectId
@@ -196,3 +198,13 @@ def plaintext_filter(value):
 
 def format_date(date_string):
     return datetime.strftime(date_string, ELASTIC_DATE_FORMAT)
+
+
+def save_error_data(data, prefix='superdesk-', suffix='.txt'):
+    """Save given data into file and return its name.
+
+    :param data: unicode data
+    """
+    with tempfile.NamedTemporaryFile(prefix=prefix, suffix=suffix, delete=False) as file:
+        file.write(data.encode('utf-8'))
+        return file.name
