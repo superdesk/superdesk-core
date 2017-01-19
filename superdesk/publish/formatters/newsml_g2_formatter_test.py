@@ -11,7 +11,7 @@
 import datetime
 from unittest import mock
 
-import xml.etree.ElementTree as etree
+from lxml import etree
 
 from apps.publish import init_app
 from superdesk.tests import TestCase
@@ -638,7 +638,7 @@ class NewsMLG2FormatterTest(TestCase):
 
     def test_formatter(self):
         seq, doc = self.formatter.format(self.article, {'name': 'Test Subscriber'})[0]
-        xml = etree.fromstring(doc)
+        xml = etree.fromstring(doc.encode('utf-8'))
         self.assertEqual(xml.find(
             '{http://iptc.org/std/nar/2006-10-01/}header/{http://iptc.org/std/nar/2006-10-01/}sender').text,
             'sourcefabric.org')
@@ -714,7 +714,7 @@ class NewsMLG2FormatterTest(TestCase):
         article = dict(self.article)
         article['format'] = 'preserved'
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
-        xml = etree.fromstring(doc)
+        xml = etree.fromstring(doc.encode('utf-8'))
         self.assertEqual(xml.find(
             '{http://iptc.org/std/nar/2006-10-01/}itemSet/{http://iptc.org/std/nar/2006-10-01/}newsItem/' +
             '{http://iptc.org/std/nar/2006-10-01/}contentSet/{http://iptc.org/std/nar/2006-10-01/}inlineData').text,
@@ -724,7 +724,7 @@ class NewsMLG2FormatterTest(TestCase):
         article = dict(self.article)
         article['source'] = 'BOGUS'
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
-        xml = etree.fromstring(doc)
+        xml = etree.fromstring(doc.encode('utf-8'))
         self.assertEqual(xml.find(
             '{http://iptc.org/std/nar/2006-10-01/}itemSet/{http://iptc.org/std/nar/2006-10-01/}newsItem/' +
             '{http://iptc.org/std/nar/2006-10-01/}rightsInfo/{http://iptc.org/std/nar/2006-10-01/}usageTerms').text,
@@ -735,7 +735,7 @@ class NewsMLG2FormatterTest(TestCase):
         article['firstcreated'] = self.now
         article['versioncreated'] = self.now
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
-        xml = etree.fromstring(doc)
+        xml = etree.fromstring(doc.encode('utf-8'))
         self.assertEqual(xml.find(
             '{http://iptc.org/std/nar/2006-10-01/}header/{http://iptc.org/std/nar/2006-10-01/}priority').text,
             '5')
@@ -755,7 +755,7 @@ class NewsMLG2FormatterTest(TestCase):
         article['firstcreated'] = self.now
         article['versioncreated'] = self.now
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
-        xml = etree.fromstring(doc)
+        xml = etree.fromstring(doc.encode('utf-8'))
         self.assertEqual(xml.find(
             '{http://iptc.org/std/nar/2006-10-01/}header/{http://iptc.org/std/nar/2006-10-01/}priority').text,
             '5')
@@ -775,7 +775,7 @@ class NewsMLG2FormatterTest(TestCase):
         article['firstcreated'] = self.now
         article['versioncreated'] = self.now
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
-        xml = etree.fromstring(doc)
+        xml = etree.fromstring(doc.encode('utf-8'))
         self.assertEqual(xml.find(
             '{http://iptc.org/std/nar/2006-10-01/}header/{http://iptc.org/std/nar/2006-10-01/}priority').text,
             '5')
@@ -805,7 +805,7 @@ class NewsMLG2FormatterTest(TestCase):
         article['firstcreated'] = self.now
         article['versioncreated'] = self.now
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
-        xml = etree.fromstring(doc)
+        xml = etree.fromstring(doc.encode('utf-8'))
         self.assertEqual(xml.find(
             '{http://iptc.org/std/nar/2006-10-01/}header/{http://iptc.org/std/nar/2006-10-01/}priority').text,
             '5')
@@ -840,7 +840,7 @@ class NewsMLG2FormatterTest(TestCase):
         article['firstcreated'] = self.now
         article['versioncreated'] = self.now
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
-        xml = etree.fromstring(doc)
+        xml = etree.fromstring(doc.encode('utf-8'))
         item_refs = xml.findall('.//{http://iptc.org/std/nar/2006-10-01/}itemRef')
         self.assertEqual(len(item_refs), 2)
         self.assertEqual(item_refs[0].get('residref'), 'tag:localhost:2015:5838657b-b3ec-4e5a-9b39-36039e16400b')
@@ -859,7 +859,7 @@ class NewsMLG2FormatterTest(TestCase):
         article['firstcreated'] = self.now
         article['versioncreated'] = self.now
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
-        xml = etree.fromstring(doc)
+        xml = etree.fromstring(doc.encode('utf-8'))
         item_refs = xml.findall('.//{http://iptc.org/std/nar/2006-10-01/}itemRef')
         self.assertEqual(len(item_refs), 2)
         self.assertEqual(item_refs[0].get('residref'), 'tag:localhost:2015:5838657b-b3ec-4e5a-9b39-36039e16400b')
@@ -889,7 +889,7 @@ class NewsMLG2FormatterTest(TestCase):
     def testPlace(self):
         article = self.article.copy()
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
-        xml = etree.fromstring(doc)
+        xml = etree.fromstring(doc.encode('utf-8'))
         content_meta = xml.find('{http://iptc.org/std/nar/2006-10-01/}itemSet'
                                 '/{http://iptc.org/std/nar/2006-10-01/}newsItem/'
                                 '{http://iptc.org/std/nar/2006-10-01/}contentMeta')
@@ -904,7 +904,7 @@ class NewsMLG2FormatterTest(TestCase):
                              "state": "Australian Capital Territory",
                              "country": "Australia", "world_region": "Oceania"}]
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
-        xml = etree.fromstring(doc)
+        xml = etree.fromstring(doc.encode('utf-8'))
         content_meta = xml.find('{http://iptc.org/std/nar/2006-10-01/}itemSet'
                                 '/{http://iptc.org/std/nar/2006-10-01/}newsItem/'
                                 '{http://iptc.org/std/nar/2006-10-01/}contentMeta')
@@ -921,7 +921,7 @@ class NewsMLG2FormatterTest(TestCase):
         article['place'] = [{"name": "EUR", "qcode": "EUR",
                              "state": "", "country": "", "world_region": "Europe"}]
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
-        xml = etree.fromstring(doc)
+        xml = etree.fromstring(doc.encode('utf-8'))
         content_meta = xml.find('{http://iptc.org/std/nar/2006-10-01/}itemSet'
                                 '/{http://iptc.org/std/nar/2006-10-01/}newsItem/'
                                 '{http://iptc.org/std/nar/2006-10-01/}contentMeta')

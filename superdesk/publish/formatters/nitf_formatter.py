@@ -9,9 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import superdesk
-import xml.etree.ElementTree as etree
-
-from xml.etree.ElementTree import SubElement
+from lxml import etree as etree
+from lxml.etree import SubElement
 from flask import current_app as app
 from superdesk.publish.formatters import Formatter
 from superdesk.errors import FormatterError
@@ -136,7 +135,7 @@ class NITFFormatter(Formatter):
             pub_seq_num = superdesk.get_resource_service('subscribers').generate_sequence_number(subscriber)
 
             nitf = self.get_nitf(article, subscriber, pub_seq_num)
-            return [(pub_seq_num, self.XML_ROOT + etree.tostring(nitf).decode('utf-8'))]
+            return [(pub_seq_num, self.XML_ROOT + etree.tostring(nitf, pretty_print=True).decode('utf-8'))]
         except Exception as ex:
             raise FormatterError.nitfFormatterError(ex, subscriber)
 

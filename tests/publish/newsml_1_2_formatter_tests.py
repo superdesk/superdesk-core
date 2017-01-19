@@ -13,7 +13,7 @@ from superdesk.utc import utcnow
 
 from superdesk.tests import TestCase
 from superdesk.publish.formatters.newsml_1_2_formatter import NewsML12Formatter
-import xml.etree.ElementTree as etree
+from lxml import etree
 import datetime
 from superdesk.publish import init_app
 

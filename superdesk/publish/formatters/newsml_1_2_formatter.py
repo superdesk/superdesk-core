@@ -10,8 +10,8 @@
 
 import time
 import logging
-import xml.etree.ElementTree as etree
-from xml.etree.ElementTree import SubElement
+from lxml import etree
+from lxml.etree import SubElement
 from eve.utils import config
 from superdesk.publish.formatters import Formatter
 import superdesk
