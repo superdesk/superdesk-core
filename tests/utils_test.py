@@ -13,3 +13,9 @@ class UtilsTestCase(unittest.TestCase):
         token = utils.get_random_token()
         self.assertGreater(len(token), 20)
         self.assertNotEqual(token, utils.get_random_token())
+
+    def test_save_error_data(self):
+        filename = utils.save_error_data('foo')
+        self.assertIn('superdesk', filename)
+        with open(filename) as f:
+            self.assertEqual('foo', f.read())

@@ -12,6 +12,7 @@ import logging
 
 from flask import current_app as app
 from eve.validation import ValidationError
+from superdesk.utils import save_error_data
 
 
 logger = logging.getLogger(__name__)
@@ -36,13 +37,29 @@ def get_registered_errors(self):
     }
 
 
-def log_exception(msg):
-    """Log exception if handling exception, error otherwise."""
+def log_exception(message, extra=None, data=None):
+    """Log exception if handling exception, error otherwise.
+
+    It adds extra as key=val to the log message.
+    If data is provided it's stored to fs and filename is added to extra info.
+
+    :param message: error message
+    :param extra: extra kwargs
+    :param data: data that caused the error
+    """
+    if not extra:
+        extra = {}
+    if data:
+        extra['file'] = save_error_data(data)
+    for k, v in extra.items():
+        message = "{} {}={}".format(message, k, v)
+    if data:
+        extra['data'] = data
     try:
-        logger.exception(msg)
+        logger.exception(message, extra=extra)
     except AttributeError:
         # there is attribute error in python3.4 in case there is no exception context
-        logger.error(msg)
+        logger.error(message, extra=extra)
 
 
 class SuperdeskError(ValidationError):
@@ -174,7 +191,7 @@ class SuperdeskIngestError(SuperdeskError):
         2000: 'Configured Feed Parser either not found or not registered with the application'
     }
 
-    def __init__(self, code, exception, provider=None):
+    def __init__(self, code, exception, provider=None, data=None, extra=None):
         super().__init__(code)
         self.system_exception = exception
         provider = provider or {}
@@ -190,9 +207,11 @@ class SuperdeskIngestError(SuperdeskError):
                                  provider_id=provider.get('_id', ''))
 
             if provider:
-                log_exception("{}: {} on channel {}".format(self, exception, self.provider_name))
+                message = "{}: {} on channel {}".format(self, exception, self.provider_name)
             else:
-                log_exception("{}: {}".format(self, exception))
+                message = "{}: {}".format(self, exception)
+
+            log_exception(message, extra=extra, data=data)
 
     @classmethod
     def parserNotFoundError(cls, exception=None, provider=None):
@@ -257,20 +276,16 @@ class ParserError(SuperdeskIngestError):
     }
 
     @classmethod
-    def parseMessageError(cls, exception=None, provider=None):
-        return ParserError(1001, exception, provider)
+    def parseMessageError(cls, exception=None, provider=None, data=None):
+        return ParserError(1001, exception, provider, data=data)
 
     @classmethod
     def parseFileError(cls, source=None, filename=None, exception=None, provider=None):
-        if source and filename:
-            log_exception("Source Type: {} - File: {} could not be processed".format(source, filename))
-        return ParserError(1002, exception, provider)
+        return ParserError(1002, exception, provider, extra={'source': source, 'file': filename})
 
     @classmethod
     def anpaParseFileError(cls, filename=None, exception=None):
-        if filename:
-            logger.error("File: {} could not be processed".format(filename))
-        return ParserError(1003, exception)
+        return ParserError(1003, exception, extra={'file': filename})
 
     @classmethod
     def newsmlOneParserError(cls, exception=None, provider=None):
@@ -366,10 +381,7 @@ class IngestFtpError(SuperdeskIngestError):
 
     @classmethod
     def ftpUnknownParserError(cls, exception=None, provider=None, filename=None):
-        if provider:
-            logger.error("Provider: {} - File: {} unknown file format. "
-                         "FeedParser couldn't be found.".format(provider.get('name', 'Unknown provider'), filename))
-        return IngestFtpError(5001, exception, provider)
+        return IngestFtpError(5001, exception, provider, extra={'file': filename})
 
 
 class IngestEmailError(SuperdeskIngestError):
@@ -407,10 +419,10 @@ class SuperdeskPublishError(SuperdeskError):
                              name=self.destination_name,
                              provider_id=destination.get('_id', ''))
 
+            extra = {}
             if destination:
-                log_exception("{}: {} on destination {}".format(self, exception, self.destination_name))
-            else:
-                log_exception("{}: {}".format(self, exception))
+                extra['destination'] = destination.get('name', 'unknown')
+            log_exception(exception, extra=extra)
 
 
 class FormatterError(SuperdeskPublishError):

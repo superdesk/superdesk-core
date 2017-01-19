@@ -44,7 +44,10 @@ class FakeIngestApiError(Exception):
 
 
 class FakeParseError(Exception):
-    pass
+
+    @classmethod
+    def parseMessageError(cls, exception=None, provider=None, data=None):
+        return FakeParseError(exception)
 
 
 class RssIngestServiceTest(TestCase):
@@ -97,7 +100,7 @@ class PrepareHrefMethodTestCase(RssIngestServiceTest):
 
 @mock.patch('superdesk.io.feeding_services.rss.feedparser.parse', feed_parse)
 @mock.patch('superdesk.io.feeding_services.rss.IngestApiError', FakeIngestApiError)
-@mock.patch('superdesk.io.feeding_services.rss.ParserError.parseMessageError', FakeParseError)
+@mock.patch('superdesk.io.feeding_services.rss.ParserError', FakeParseError)
 class UpdateMethodTestCase(RssIngestServiceTest):
     """Tests for the _update() method."""
 
@@ -145,11 +148,8 @@ class UpdateMethodTestCase(RssIngestServiceTest):
 
     def test_raises_ingest_error_on_parse_error(self):
         feed_parse.side_effect = Exception("Parse error!")
-        try:
-            with self.assertRaises(FakeParseError):
-                self.instance._update({}, {})
-        except:
-            self.fail('Expected exception type was not raised.')
+        with self.assertRaises(FakeParseError):
+            self.instance._update({}, {})
 
     def test_returns_items_built_from_retrieved_data(self):
         feed_parse.return_value = MagicMock(
