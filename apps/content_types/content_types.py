@@ -47,7 +47,6 @@ DEFAULT_SCHEMA = {
     'body_footer': {'type': 'string', 'required': False},
     'sign_off': {'type': 'string', 'required': False},
     'feature_media': {'type': 'picture', 'required': False},
-    'media': {'required': False},
     'media_description': {'required': False}
 }
 
