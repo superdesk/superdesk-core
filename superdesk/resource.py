@@ -153,3 +153,10 @@ class Resource():
             'nullable': nullable,
             'data_relation': {'resource': resource, 'field': '_id', 'embeddable': embeddable}
         }
+
+    @staticmethod
+    def not_analyzed_field(type='string'):
+        return {
+            'type': type,
+            'mapping': {'type': 'string', 'index': 'not_analyzed'},
+        }

@@ -282,5 +282,9 @@
 				"^[a-zA-Z0-9]+" :  { "$ref": "http://url.to.be.defined#" }
 			}
 		}
+	},
+	"evolvedfrom" : {
+		"description" : "The content of this item has evolved from related item with this guid.",
+		"type" : "string"
 	}
 }
