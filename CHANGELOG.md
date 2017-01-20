@@ -1,5 +1,80 @@
 # Superdesk Server Changelog
 
+## [1.5.2] 2017-01-18
+
+### Fixed
+
+- Update sign off if mapped field is updated on user.
+- Fix editing content profiles with custom fields.
+- Fix publishing with content profiles.
+
+### Added
+
+- Implement email publishing to multiple users via bcc.
+
+## [1.5.1] 2017-01-03
+
+### Changed
+
+- Bypass content validation using profile for auto published content.
+
+### Fixed
+
+- Clean up old item locks.
+- Mark search provider as used when an item is fetched.
+- Fix issues with dateline validation for content profile.
+
+## [1.5] 2016-12-21
+
+### Fixed
+
+- Push notification when dictionary is created/updated.
+- Fix `backend_meta` service on python3.4.
+- Parse byline from rss.
+- Fix slow query in duplicate item.
+- In app factory load `CORE_APPS` before `INSTALLED_APPS`.
+- Clear SMS flag for new takes and updates.
+- Load init files from core if missing in data folder.
+- Fix xml file ingest with BOM or non-unicode encoding.
+
+### Changed
+
+- Set default content expiry to `0`.
+- Use `CONTENTAPI_URL` setting for content API.
+- Use projections in search results.
+- App init command won't override modified data. Use `-f` to keep old behaviour.
+- Make `byline` empty on kill.
+- Remove `By` prefix from `byline` in nitf output.
+- Initial [Content API Refactoring](http://superdesk.readthedocs.io/en/latest/contentapi.html).
+
+### Added
+
+- Allow duplication of items in text archive.
+- Add `Place` to criteria fields for content filters.
+- Add `PUBLISHED_CONTENT_EXPIRY_MINUTES` for published items.
+- Add `firtscreated` field to superdesk ninjs output.
+- Add `desk:preferred` user preference.
+- Add `suggestions` resource for related items suggestion.
+
+## [1.4.7] 2016-12-20
+
+### Fixed
+
+- Fix comments notifications for users with `.` in username.
+
+## [1.4.6] 2016-12-14
+
+### Fixed
+
+- Fix parsing of non-unicode nitf.
+- Fix ingestion with refresh rate < 1m.
+
+## [1.4.5] 2016-12-07
+
+### Added
+
+- Add option to skip iptc codes processing on ingest.
+
 ## [1.4.4] 2016-12-05
 
 ### Fixed
