@@ -215,14 +215,26 @@ class AppInitializeWithDataCommand(superdesk.Command):
         superdesk.Option('--force', '-f', action='store_true'),
     ]
 
-    def run(self, entity_name=None, path=None, sample_data=None, force=None):
+    def run(self, entity_name=None, path=None, sample_data=False, force=False):
+        """Run the initialization
+
+        :param str,list,NoneType entity_name: entity(ies) to initialize
+        :param str,NoneType path: path of the file to import
+        :param bool sample_data: True if sample data need to be used
+        :param bool force: if True, update item even if it has been modified by user
+        """
         logger.info('Starting data import')
         logger.info('Config: %s', app.config['APP_ABSPATH'])
 
-        if sample_data and not path:
-            path = INIT_DATA_PATH.parent / 'data_sample'
+        if sample_data:
+            if not path:
+                path = INIT_DATA_PATH.parent / 'data_sample'
+            else:
+                raise ValueError('path and sample_data should not be set at the same time')
 
         if entity_name:
+            if isinstance(entity_name, str):
+                entity_name = [entity_name]
             for name in entity_name:
                 (file_name, index_params, do_patch) = __entities__[name]
                 self.import_file(name, path, file_name, index_params, do_patch, force)
@@ -238,7 +250,7 @@ class AppInitializeWithDataCommand(superdesk.Command):
         logger.info('Data import finished')
         return 0
 
-    def import_file(self, entity_name, path, file_name, index_params, do_patch=False, force=None):
+    def import_file(self, entity_name, path, file_name, index_params, do_patch=False, force=False):
         """Imports seed data based on the entity_name (resource name) from the file_name specified.
 
         index_params use to create index for that entity/resource
