@@ -10,6 +10,9 @@
 
 """NINJS formatter for Superdesk
 
+.. versionadded:: 1.6
+    Added *evolvedfrom* field to ninjs output.
+
 """
 
 
@@ -52,6 +55,7 @@ class NINJSFormatter(Formatter):
     * added ``service`` field
     * added ``slugline`` field
     * added ``keywords`` field
+    * added ``evolvedfrom`` field
 
     Associations dictionary may contain entire items like
     in `ninjs example <http://dev.iptc.org/ninjs-Examples-3>`_ or just the item ``guid``
@@ -157,6 +161,9 @@ class NINJSFormatter(Formatter):
                                      for c in article['company_codes']]
         elif 'company' in article:
             ninjs['organisation'] = [{'name': article['company']}]
+
+        if article.get('rewrite_of'):
+            ninjs['evolvedfrom'] = article['rewrite_of']
 
         return ninjs
 

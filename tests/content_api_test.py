@@ -27,7 +27,7 @@ class ContentAPITestCase(TestCase):
         self.subscriber = {'_id': 'sub1'}
 
     def test_publish_to_content_api(self):
-        item = {'guid': 'foo', 'type': 'text', 'task': {'desk': 'foo'}}
+        item = {'guid': 'foo', 'type': 'text', 'task': {'desk': 'foo'}, 'rewrite_of': 'bar'}
         self.content_api.publish(item)
         self.assertEqual(1, self.db.items.count())
         self.assertNotIn('task', self.db.items.find_one())
@@ -39,6 +39,7 @@ class ContentAPITestCase(TestCase):
         item['headline'] = 'foo'
         self.content_api.publish(item)
         self.assertEqual('foo', self.db.items.find_one()['headline'])
+        self.assertEqual('bar', self.db.items.find_one()['evolvedfrom'])
 
     def test_publish_with_subscriber_ids(self):
         item = {'guid': 'foo', 'type': 'text'}

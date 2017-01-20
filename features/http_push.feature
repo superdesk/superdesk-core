@@ -71,6 +71,14 @@ Feature: HTTP Push publishing
         [{"guid": "#archive.guid#", "type": "text", "version": "4", "body_html": "corrected"}]
         """
 
+        When we rewrite "#archive._id#"
+        And we publish "#REWRITE_ID#" with "publish" type and "published" state
+        And we transmit published
+        Then we pushed 1 item
+        """
+        [{"guid": "#REWRITE_ID#", "evolvedfrom": "#archive.guid#"}]
+        """
+
         When we publish "#archive._id#" with "kill" type and "killed" state
         When we transmit published
         Then we pushed 1 item
