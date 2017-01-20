@@ -23,11 +23,12 @@ from kombu.mixins import ConsumerMixin
 from kombu.pools import producers
 from superdesk.utc import utcnow
 from superdesk.utils import get_random_string
+from superdesk.default_settings import celery_queue
 from flask import json
 
 
 logger = logging.getLogger(__name__)
-exchange_name = 'socket_notification'
+exchange_name = celery_queue('socket_notification')
 
 
 class SocketBrokerClient:
