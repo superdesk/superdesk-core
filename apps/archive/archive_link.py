@@ -11,13 +11,13 @@ from eve.utils import config
 from flask import request
 
 from superdesk import get_resource_service, Service
-from superdesk.metadata.item import EMBARGO, ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTENT_TYPE
+from superdesk.metadata.item import EMBARGO, ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTENT_TYPE, GUID_TAG
 from superdesk.resource import Resource, build_custom_hateoas
 from apps.packages import TakesPackageService, PackageService
 from apps.archive import ArchiveSpikeService
 from apps.archive.common import CUSTOM_HATEOAS, BROADCAST_GENRE, is_genre, insert_into_versions
 from apps.auth import get_user
-from superdesk.metadata.utils import item_url
+from superdesk.metadata.utils import item_url, generate_guid
 from apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification
@@ -145,6 +145,8 @@ class ArchiveLinkService(Service):
 
         if target.get('sequence'):
             updates['sequence'] = None
+
+        updates['event_id'] = generate_guid(type=GUID_TAG)
 
         archive_service.system_update(target_id, updates, target)
         user = get_user(required=True)

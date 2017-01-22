@@ -1731,6 +1731,12 @@ def then_field_is_not_populated(context, field_name):
     assert resp[field_name] is None, 'item is not populated'
 
 
+@then('the field "{field_name}" value is not "{field_value}"')
+def then_field_value_is_not_same(context, field_name, field_value):
+    resp = parse_json_response(context.response)
+    assert resp[field_name] != field_value, 'values are the same'
+
+
 @then('we get "{field_name}" not populated in results')
 def then_field_is_not_populated_in_results(context, field_name):
     resps = parse_json_response(context.response)

@@ -423,7 +423,7 @@ class ArchiveService(BaseService):
                           'rewritten_by', 'rewrite_of', 'rewrite_sequence', 'highlights', 'is_take_item',
                           'item_id', 'publish_state', 'last_published_version', 'queue_state',
                           'digital_item_id', 'publish_sequence_no', 'last_queue_event', 'moved_to_legal',
-                          'published_in_package', '_type']
+                          'published_in_package', '_type', 'event_id']
 
         for key in keys_to_delete:
             copied_item.pop(key, None)

@@ -13,7 +13,8 @@ Feature: Duplication of Content
       """
       And "archive"
       """
-      [{  "type":"text", "headline": "test1", "guid": "123", "original_creator": "#CONTEXT_USER_ID#",
+      [{  "type":"text", "event_id": "abc123", "headline": "test1", "guid": "123",
+          "original_creator": "#CONTEXT_USER_ID#",
           "state": "submitted", "source": "REUTERS", "subject":[{"qcode": "17004000", "name": "Statistics"}],
           "body_html": "Test Document body",
           "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}]
@@ -287,6 +288,15 @@ Feature: Duplication of Content
       """
       {"original_id": "123"}
       """
+
+    @auth @test
+    Scenario: Duplicated item will have a new event_id
+     When we post to "/archive/123/duplicate" with success
+      """
+      {"desk": "#desks._id#","type": "archive"}
+      """
+      And we get "/archive/#duplicate._id#"
+      Then the field "event_id" value is not "abc123"
 
     @auth
     Scenario: Duplicate an Updated and Highlighted Item

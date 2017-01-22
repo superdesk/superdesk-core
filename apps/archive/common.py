@@ -272,6 +272,7 @@ def on_duplicate_item(doc, original_doc):
 
     doc[GUID_FIELD] = generate_guid(type=GUID_NEWSML)
     generate_unique_id_and_name(doc)
+    doc['event_id'] = generate_guid(type=GUID_TAG)
     doc.setdefault('_id', doc[GUID_FIELD])
     set_sign_off(doc)
     doc['force_unlock'] = True
