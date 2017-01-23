@@ -25,7 +25,7 @@ class WENNTestCase(unittest.TestCase):
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.normpath(os.path.join(dirname, '../fixtures', self.filename))
         provider = {'name': 'Wenn'}
-        with open(fixture) as f:
+        with open(fixture, 'rb') as f:
             self.file = f.read()
             etree.fromstring(self.file)
             self.items = WENNFeedParser().parse(etree.fromstring(self.file), provider)

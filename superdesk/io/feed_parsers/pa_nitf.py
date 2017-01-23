@@ -13,7 +13,7 @@ from superdesk.io.feed_parsers.nitf import NITFFeedParser, SkipValue
 from superdesk.io.registry import register_feed_parser
 import re
 from bs4 import BeautifulSoup
-import xml.etree.ElementTree as etree
+from lxml import etree
 import html
 
 

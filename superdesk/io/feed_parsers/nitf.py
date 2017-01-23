@@ -13,7 +13,7 @@ from datetime import datetime
 import dateutil.parser
 from superdesk.io.registry import register_feed_parser
 from superdesk.io.feed_parsers import XMLFeedParser
-import xml.etree.ElementTree as etree
+from lxml import etree
 from superdesk.errors import ParserError
 from superdesk.utc import utc
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, FORMAT, FORMATS

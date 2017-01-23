@@ -471,9 +471,9 @@ class NewsMLG2Formatter(Formatter):
         :param article: object having published article details
         :type article: dict
         :param content_meta: object representing <contentMeta> in the XML tree
-        :type content_meta: xml.etree.ElementTree.Element
+        :type content_meta: lxml.etree.Element
         :param item: object representing <newsItem> in the XML tree
-        :type item: xml.etree.ElementTree.Element
+        :type item: lxml.etree.Element
         """
 
         for company in article.get('company_codes', []):

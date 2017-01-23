@@ -12,7 +12,7 @@
 import os
 from superdesk.tests import TestCase
 from superdesk.io.feed_parsers.pa_nitf import PAFeedParser
-from xml.etree import ElementTree
+from lxml import etree
 
 
 class PANITFFileTestCase(TestCase):
@@ -27,7 +27,7 @@ class PANITFFileTestCase(TestCase):
         fixture = os.path.normpath(os.path.join(dirname, '../fixtures', self.filename))
         provider = {'name': 'Test'}
         with open(fixture, 'rb') as f:
-            xml = ElementTree.parse(f)
+            xml = etree.parse(f)
             self.item = PAFeedParser().parse(xml.getroot(), provider)
 
 

@@ -10,8 +10,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import bs4
-import xml.etree.ElementTree as etree  # noqa
-from xml.etree.ElementTree import ParseError  # noqa
+from lxml import etree  # noqa
+from lxml.etree import ParseError  # noqa
 
 inline_elements = set([
     'a',
@@ -49,7 +49,7 @@ def get_text(html):
     :param html: html string to convert to plain text
     """
     try:
-        root = etree.fromstringlist('<doc>{0}</doc>'.format(html))
+        root = etree.fromstring('<doc>{0}</doc>'.format(html))
         text = etree.tostring(root, encoding='unicode', method='text')
         return text
     except ParseError:

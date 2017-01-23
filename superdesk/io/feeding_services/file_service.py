@@ -13,7 +13,7 @@ import os
 import shutil
 from datetime import timedelta, datetime
 
-from xml.etree import ElementTree
+from lxml import etree
 from superdesk.errors import IngestFileError, ParserError, ProviderError
 from superdesk.io.registry import register_feeding_service
 from superdesk.io.feed_parsers import XMLFeedParser
@@ -62,7 +62,7 @@ class FileFeedingService(FeedingService):
                     if self.is_latest_content(last_updated, provider.get('last_updated')):
                         if isinstance(registered_parser, XMLFeedParser):
                             with open(file_path, 'rb') as f:
-                                xml = ElementTree.parse(f)
+                                xml = etree.parse(f)
                                 parser = self.get_feed_parser(provider, xml.getroot())
                                 item = parser.parse(xml.getroot(), provider)
                         else:

@@ -12,7 +12,7 @@
 import os
 import unittest
 
-from xml.etree import ElementTree
+from lxml import etree
 from superdesk.io.feed_parsers.scoop_newsml_2_0 import ScoopNewsMLTwoFeedParser
 
 
@@ -23,7 +23,7 @@ class ScoopTestCase(unittest.TestCase):
         provider = {'name': 'Test'}
         with open(fixture, 'rb') as f:
             parser = ScoopNewsMLTwoFeedParser()
-            self.xml = ElementTree.parse(f)
+            self.xml = etree.parse(f)
             self.item = parser.parse(self.xml.getroot(), provider)
 
 
