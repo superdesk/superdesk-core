@@ -116,7 +116,11 @@ class FilterConditionParametersService(BaseService):
         values['desk'] = list(get_resource_service('desks').get(None, {}))
         values['stage'] = self._get_stage_field_values(values['desk'])
         values['sms'] = [{'qcode': 0, 'name': 'False'}, {'qcode': 1, 'name': 'True'}]
-        values['place'] = vocabularies_resource.find_one(req=None, _id='locators')['items']
+        req = ParsedRequest()
+        req.where = json.dumps({'$or': [{"schema_field": "place"}, {"_id": "place"}, {"_id": "locators"}]})
+        place = vocabularies_resource.get(req=req, lookup=None)
+        if place.count():
+            values['place'] = place[0]['items']
         return values
 
     def _get_stage_field_values(self, desks):
