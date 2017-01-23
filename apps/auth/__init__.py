@@ -73,4 +73,13 @@ def get_user_id(required=False):
     return user.get(config.ID_FIELD)
 
 
+def is_current_user_admin(required=False):
+    """Test if current user is administrator.
+
+    :param required: raise an error if required and there is no user context
+    """
+    user = get_user(required) or {}
+    return user.get('user_type', '') == 'administrator'
+
+
 superdesk.command('session:gc', RemoveExpiredSessions())

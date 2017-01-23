@@ -150,7 +150,6 @@ class BaseService():
         :param kwargs: should have properties which help in authorizing the request
         :return: ``False`` if unauthorized and True if authorized
         """
-
         return True
 
     def search(self, source):
