@@ -9,10 +9,10 @@ Feature: Create renditions
     {
         "item":{
             "_id": 123,
-            "mimetype":"image/jpeg",
             "renditions":{
                 "original":{
-                    "media":"#archive.renditions.viewImage.media#"
+                    "media":"#archive.renditions.viewImage.media#",
+                    "mimetype": "image/jpeg"
                 }
             }
         }
