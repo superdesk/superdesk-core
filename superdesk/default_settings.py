@@ -569,3 +569,7 @@ SECRET_KEY = env('SECRET_KEY', '')
 #: secure login
 XMPP_AUTH_URL = env('XMPP_AUTH_URL', '')
 XMPP_AUTH_DOMAIN = env('XMPP_AUTH_DOMAIN', 'Superdesk')
+
+
+#: copies basic metadata from parent of associated items
+COPY_METADATA_FROM_PARENT = (env('COPY_METADATA_FROM_PARENT', 'false').lower() == 'true')
