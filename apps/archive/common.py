@@ -45,6 +45,7 @@ ITEM_UPDATE = 'update'
 ITEM_RESTORE = 'restore'
 ITEM_DUPLICATE = 'duplicate'
 ITEM_DESCHEDULE = 'deschedule'
+ITEM_EVENT_ID = 'event_id'
 item_operations = [ITEM_CREATE, ITEM_UPDATE, ITEM_RESTORE, ITEM_DUPLICATE, ITEM_DESCHEDULE]
 # part the task dict
 LAST_AUTHORING_DESK = 'last_authoring_desk'
