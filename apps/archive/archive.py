@@ -154,7 +154,8 @@ class ArchiveService(BaseService):
         for item in items:
             handle_existing_data(item)
 
-        self.takesService.enhance_items_with_takes_packages(items)
+        if not app.config.get('NO_TAKES', False):
+            self.takesService.enhance_items_with_takes_packages(items)
 
     def on_create(self, docs):
         on_create_item(docs)
