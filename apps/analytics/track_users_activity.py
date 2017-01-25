@@ -34,16 +34,21 @@ class TrackActivityResource(Resource):
 class TrackActivityService(BaseService):
     def create_query(self, doc):
         terms = [
-            {"term": {"original_creator": str(doc['user'])}}
+            {"term": {"task.user": str(doc['user'])}}
         ]
 
         return terms
 
     def get_items(self, query):
         request = ParsedRequest()
-        request.args = {'source': json.dumps(query), 'repo': 'archive, published'}
 
-        return get_resource_service('archive').get(req=request, lookup=None)
+        return get_resource_service('published').get(req=request, lookup=None)
+
+    def count_items(self, query, option):
+        my_list = self.get_items(query)
+        items = sum(1 for i in my_list if i['state'] == option)
+
+        return items
 
     def search_without_grouping(self, doc):
         terms = self.create_query(doc)
@@ -59,13 +64,16 @@ class TrackActivityService(BaseService):
 
         all_items = self.get_items(query)
         info_list = []
+
         for t in all_items:
-            creation_date = t['_created']
+            no_of_processed_items = self.count_items(query, 'published')
+            creation_date = t['firstcreated']
             last_modification_date = t['versioncreated']
             difference = str(abs(creation_date - last_modification_date))
-            info_list.append({'state': t['state'], 'item': t['_id'], 'time_to_complete': difference})
+            if t['state'] == 'published':
+                info_list.append({'state': t['state'], 'item': t['_id'], 'time_to_complete': difference})
 
-        return {'no_of_items': self.get_items(query).count(), 'info': info_list}
+        return {'info': info_list, 'no_of_processed_items': no_of_processed_items}
 
     def create(self, docs):
         for doc in docs:
