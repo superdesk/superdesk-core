@@ -75,17 +75,15 @@ class FeedingService(metaclass=ABCMeta):
                 self.close_provider(provider, error)
                 raise error
 
-    def close_provider(self, provider, error):
+    def close_provider(self, provider, error, force=False):
         """Closes the provider and uses error as reason for closing.
 
         :param provider: Ingest Provider Details.
                 .. seealso:: :class: `superdesk.io.ingest_provider_model.IngestProviderResource`
-        :type provider: dict
-        :param error:
-        :type error: :py:class: `superdes.errors.SuperdeskIngestError`
+        :param error: ingest error
+        :param force: force closing of provider, no matter how it's configured
         """
-
-        if provider.get('critical_errors', {}).get(str(error.code)):
+        if provider.get('critical_errors', {}).get(str(error.code)) or force:
             updates = {
                 'is_closed': True,
                 'last_closed': {
