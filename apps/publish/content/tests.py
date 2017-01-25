@@ -13,7 +13,7 @@ import json
 from copy import copy
 from datetime import timedelta
 from unittest import mock
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from bson.objectid import ObjectId
 from eve.utils import config, ParsedRequest
@@ -29,7 +29,6 @@ from apps.publish.enqueue.enqueue_service import EnqueueService
 from apps.publish.published_item import LAST_PUBLISHED_VERSION
 from apps.validators import ValidatorsPopulateCommand
 from superdesk import get_resource_service, get_backend
-from superdesk.media.crop import CropService
 from superdesk.metadata.item import TAKES_PACKAGE, PACKAGE_TYPE, ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTENT_TYPE
 from superdesk.metadata.packages import RESIDREF
 from superdesk.publish import init_app, publish_queue
@@ -878,47 +877,3 @@ class ArchivePublishTestCase(TestCase):
         removed_items, added_items = ArchivePublishService()._get_changed_items(items, updates)
         self.assertEqual(len(removed_items), 1)
         self.assertEqual(len(added_items), 1)
-
-    def test_publish_associations(self):
-        item = {
-            'associations': {
-                'sidebar': {
-                    'headline': 'foo',
-                    'pubstatus': 'canceled',
-                },
-                'image': {
-                    'pubstatus': 'usable',
-                    'headline': 'bar',
-                    'fetch_endpoint': 'paimg',
-                    'renditions': {
-                        'original': {
-                            'href': 'https://c2.staticflickr.com/4/3665/9203816834_3329fac058_t.jpg',
-                            'width': 100,
-                            'height': 67,
-                            'mimetype': 'image/jpeg'
-                        },
-                        'thumbnail': {
-                            'CropLeft': 10,
-                            'CropRight': 50,
-                            'CropTop': 10,
-                            'CropBottom': 40,
-                        }
-                    }
-                }
-            }
-        }
-
-        thumbnail_crop = {'width': 40, 'height': 30}
-        with patch.object(CropService, 'get_crop_by_name', return_value=thumbnail_crop):
-            ArchivePublishService()._publish_associations(item, 'baz')
-
-        self.assertNotIn('sidebar', item['associations'])
-        self.assertIn('image', item['associations'])
-
-        image = item['associations']['image']
-        renditions = image['renditions']
-        print(renditions)
-        self.assertEqual(40, renditions['thumbnail']['width'])
-        self.assertEqual(30, renditions['thumbnail']['height'])
-        self.assertEqual('image/jpeg', renditions['thumbnail']['mimetype'])
-        self.assertEqual('url_for_media', renditions['thumbnail']['href'])

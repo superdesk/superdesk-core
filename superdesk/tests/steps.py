@@ -2185,3 +2185,8 @@ def we_set_spike_exipry(context, expiry):
 @then('we set published item expiry {expiry}')
 def we_set_published_item_expiry(context, expiry):
     context.app.settings['PUBLISHED_CONTENT_EXPIRY_MINUTES'] = int(expiry)
+
+
+@then('we set copy metadata from parent flag')
+def we_set_copy_metadata_from_parent(context):
+    context.app.settings['COPY_METADATA_FROM_PARENT'] = True

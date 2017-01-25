@@ -154,6 +154,10 @@ ARCHIVE_SCHEMA_FIELDS = {
 }
 
 
+FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM = ['anpa_category', 'subjects', 'slugline', 'urgency',
+                                      'priority', 'footer', 'abstract', 'genre']
+
+
 def get_default_source():
     return app.config.get('DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES')
 
