@@ -5,7 +5,8 @@ Feature: Content Spiking
     Scenario: Spike a user content and validate metadata set by API
         Given "archive"
         """
-        [{"_id": "item-1", "guid": "item-1", "headline": "test", "_current_version": 1, "state": "draft"}]
+        [{"_id": "item-1", "guid": "item-1", "headline": "test",
+        "_current_version": 1, "state": "draft", "event_id": "abc123"}]
         """
         When we get "/archive/item-1"
         Then we get latest
@@ -26,6 +27,7 @@ Feature: Content Spiking
         """
         {"_id": "item-1", "state": "spiked", "sign_off": "abc"}
         """
+        And the field "event_id" value is not "abc123"
 
     @auth
     Scenario: Spike a desk content
