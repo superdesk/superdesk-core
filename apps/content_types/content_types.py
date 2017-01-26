@@ -334,6 +334,8 @@ def compose_subject_schema(schema, fieldMap):
                 mandatory[old_field] = field
             else:
                 mandatory[old_field] = None
+        else:
+            mandatory[old_field] = None
     if allowed:
         init_subject_schema(schema, mandatory, allowed, fieldMap)
 
