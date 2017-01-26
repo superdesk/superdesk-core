@@ -63,7 +63,7 @@ class WENNFeedParser(XMLFeedParser):
 
     def parse_news_management(self, item, entry):
         news_mgmt_el = entry.find(self.qname('NewsManagement', self.WENN_NM_NS))
-        if news_mgmt_el:
+        if news_mgmt_el is not None:
             item['firstcreated'] = self.datetime(self.get_elem_content(
                 news_mgmt_el.find(self.qname('published', self.WENN_NM_NS))))
             item['versioncreated'] = self.datetime(self.get_elem_content(
@@ -73,7 +73,7 @@ class WENNFeedParser(XMLFeedParser):
 
     def parse_content_management(self, item, entry):
         content_mgmt_el = entry.find(self.qname('ContentMetadata', self.WENN_CM_NS))
-        if content_mgmt_el:
+        if content_mgmt_el is not None:
             item['headline'] = self.get_elem_content(content_mgmt_el.find(self.qname('title', self.WENN_CM_NS)))
             item['abstract'] = self.get_elem_content(
                 content_mgmt_el.find(self.qname('first_line', self.WENN_CM_NS)))

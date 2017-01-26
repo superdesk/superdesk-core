@@ -15,8 +15,8 @@ from superdesk.publish.formatters import Formatter
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, FORMAT, FORMATS
 from flask import render_template
 from copy import deepcopy
-from bs4 import BeautifulSoup, NavigableString
 from superdesk.errors import FormatterError
+from superdesk import etree as sd_etree
 
 
 class EmailFormatter(Formatter):
@@ -48,11 +48,11 @@ class EmailFormatter(Formatter):
         try:
             # If there is a dateline inject it into the body
             if formatted_article.get(FORMAT) == FORMATS.HTML and formatted_article.get('dateline', {}).get('text'):
-                soup = BeautifulSoup(formatted_article.get('body_html'), "html.parser")
-                ptag = soup.find('p')
+                body_html_elem = sd_etree.parse_html(formatted_article.get('body_html'))
+                ptag = body_html_elem.find('.//p')
                 if ptag is not None:
-                    ptag.insert(0, NavigableString('{} '.format(formatted_article.get('dateline').get('text'))))
-                    formatted_article['body_html'] = str(soup)
+                    ptag.text = formatted_article['dateline']['text'] + ' ' + (ptag.text or '')
+                    formatted_article['body_html'] = sd_etree.to_string(body_html_elem)
                 doc['message_html'] = render_template('email_article_body.html', article=formatted_article)
             else:
                 doc['message_html'] = None

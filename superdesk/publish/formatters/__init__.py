@@ -9,10 +9,10 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
-from lxml.etree import SubElement
+from lxml import etree
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, FORMATS, FORMAT
 from superdesk.metadata.utils import is_takes_package
-from bs4 import BeautifulSoup
+from superdesk.etree import parse_html, get_text
 
 formatters = []
 logger = logging.getLogger(__name__)
@@ -54,17 +54,18 @@ class Formatter(metaclass=FormatterRegistry):
 
         if body and article.get(FORMAT, '') == FORMATS.PRESERVED:
             body = body.replace('\n', '\r\n').replace('\r\r', '\r')
-            soup = BeautifulSoup(body, 'html.parser')
+            parsed = parse_html(body)
 
-            for br in soup.find_all('br'):
-                br.replace_with('\r\n')
-            body = str(soup)
+            for br in parsed.xpath('//br'):
+                br.tail = '\r\n' + br.tail if br.tail else '\r\n'
+
+            etree.strip_elements(parsed, 'br', with_tail=False)
+            body = etree.tostring(parsed, encoding="unicode")
 
         if body and article.get('body_footer'):
             footer = article.get('body_footer')
             if article.get(FORMAT, '') == FORMATS.PRESERVED:
-                soup = BeautifulSoup(footer, 'html.parser')
-                body = '{}\r\n{}'.format(body, soup.get_text())
+                body = '{}\r\n{}'.format(body, get_text(footer))
             else:
                 body = '{}{}'.format(body, footer)
         return body
@@ -90,27 +91,27 @@ class Formatter(metaclass=FormatterRegistry):
         """
         Map the html text tags to xml
 
-        :param element: The xml element to populate
-        :param html: the html to parse the text from
+        :param etree.Element element: The xml element to populate
+        :param str html: the html to parse the text from
         :return:
         """
-        soup = BeautifulSoup(html, 'html.parser')
+        root = parse_html(html)
         # if there are no ptags just br
-        if not len(soup.find_all('p')) and len(soup.find_all('br')):
-            para = SubElement(element, 'p')
-            for br in soup.find_all('br'):
-                SubElement(para, 'br').text = br.get_text()
+        if not len(root.xpath('//p')) and len(root.xpath('//br')):
+            para = etree.SubElement(element, 'p')
+            for br in root.xpath('//br'):
+                etree.SubElement(para, 'br').text = br.text
 
-        for p in soup.find_all('p'):
-            para = SubElement(element, 'p')
-            if len(p.find_all('br')) > 0:
-                for br in p.find_all('br'):
-                    SubElement(para, 'br').text = br.get_text()
-            para.text = p.get_text()
+        for p in root.xpath('//p'):
+            para = etree.SubElement(element, 'p')
+            if len(p.xpath('//br')) > 0:
+                for br in p.xpath('//br'):
+                    etree.SubElement(para, 'br').text = br.text
+            para.text = etree.tostring(p, encoding="unicode", method="text")
 
         # there neither ptags pr br's
         if len(list(element)) == 0:
-            SubElement(element, 'p').text = soup.get_text()
+            etree.SubElement(element, 'p').text = etree.tostring(root, encoding="unicode", method="text")
 
 
 def get_formatter(format_type, article):

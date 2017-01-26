@@ -14,7 +14,7 @@ import superdesk
 from lxml import etree
 from lxml.etree import SubElement
 
-from bs4 import BeautifulSoup
+from superdesk.etree import get_text
 from flask import current_app as app
 
 from superdesk.publish.formatters import Formatter
@@ -160,9 +160,9 @@ class NewsMLG2Formatter(Formatter):
         """
         content_set = SubElement(news_item, 'contentSet')
         if article.get(FORMAT) == FORMATS.PRESERVED:
+            inline_data = get_text(self.append_body_footer(article))
             SubElement(content_set, 'inlineData',
-                       attrib={'contenttype': 'text/plain'}).text = BeautifulSoup(self.append_body_footer(article),
-                                                                                  "html.parser").get_text()
+                       attrib={'contenttype': 'text/plain'}).text = inline_data
         elif article[ITEM_TYPE] in [CONTENT_TYPE.TEXT, CONTENT_TYPE.COMPOSITE]:
             inline = SubElement(content_set, 'inlineXML',
                                 attrib={'contenttype': 'application/nitf+xml'})

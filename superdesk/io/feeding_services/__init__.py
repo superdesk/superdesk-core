@@ -146,10 +146,10 @@ class FeedingService(metaclass=ABCMeta):
         if not parser:
             raise SuperdeskIngestError.parserNotFoundError(provider=provider)
 
-        if article and not parser.can_parse(article):
+        if article is not None and not parser.can_parse(article):
             raise SuperdeskIngestError.parserNotFoundError(provider=provider)
 
-        if article:
+        if article is not None:
             parser = parser.__class__()
 
         return parser

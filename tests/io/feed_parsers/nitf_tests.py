@@ -105,7 +105,7 @@ class APExampleTestCase(NITFTestCase):
         self.assertEqual(self.item.get('ednote'), 'For global distribution')
 
     def test_word_count(self):
-        self.assertEqual(1047, self.item.get('word_count'))
+        self.assertEqual(1063, self.item.get('word_count'))
 
 
 class IPTCExampleTestCase(NITFTestCase):
@@ -143,7 +143,7 @@ class IPTCExampleTestCase(NITFTestCase):
         self.assertEqual('By Alan Karben', self.item.get('byline'))
 
     def test_word_count(self):
-        self.assertEqual(221, self.item.get('word_count'))
+        self.assertEqual(223, self.item.get('word_count'))
 
 
 class PATestCase(NITFTestCase):
@@ -167,7 +167,7 @@ class PATestCase(NITFTestCase):
         self.assertIn('Trivia (Oct 14)', self.item.get('keywords'))
 
     def test_word_count(self):
-        self.assertEqual(678, self.item.get('word_count'))
+        self.assertEqual(637, self.item.get('word_count'))
 
 
 class PATestCase2(NITFTestCase):
@@ -184,7 +184,7 @@ class PATestCase2(NITFTestCase):
         self.assertEqual('T201510140143580001T', self.item.get('guid'))
         self.assertEqual(self.item.get('format'), 'preserved')
 
-    def test_guid(self):
+    def test_guid_2(self):
         self.assertEqual(self.item.get('type'), 'text')
 
     def test_subjects(self):

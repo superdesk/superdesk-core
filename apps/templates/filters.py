@@ -9,9 +9,10 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
-from bs4 import BeautifulSoup
 from superdesk.utc import get_date, timezone
 from superdesk import config
+from superdesk.etree import parse_html
+from lxml import etree
 
 logger = logging.getLogger(__name__)
 
@@ -46,10 +47,14 @@ def format_datetime_filter(date_or_string, timezone_string=None, date_format=Non
 
 def first_paragraph_filter(input_string):
     try:
-        soup = BeautifulSoup(input_string, 'html.parser')
+        elem = parse_html(input_string)
+    except ValueError as e:
+        logger.warning(e)
+    else:
         # all non-empty paragraphs: ignores <p><br></p> sections
-        all_paragraphs = [p for p in soup.find_all('p') if p.get_text()]
-        return all_paragraphs[0]
-    except:
-        logger.warning('Failed to locate the first paragraph from input_string: {}.'.format(input_string))
-        return ''
+        for p in elem.iterfind('.//p'):
+            if p.text:
+                return etree.tostring(p, encoding="unicode")
+
+    logger.warning('Failed to locate the first paragraph from input_string: {}.'.format(input_string))
+    return ''

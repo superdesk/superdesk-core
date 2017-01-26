@@ -64,7 +64,7 @@ class ScoopNewsMLTwoFeedParser(NewsMLTwoFeedParser):
         """
         header = tree.find(self.qname('Header'))
         priority = 5
-        if header:
+        if header is not None:
             priority = self.map_priority(header.find(self.qname('priority')).text)
 
         return {'priority': priority}

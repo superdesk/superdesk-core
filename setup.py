@@ -25,7 +25,6 @@ install_requires = [
     'arrow>=0.4,<0.9',
     'asyncio>=3.4,<3.5',
     'bcrypt>=3.1.1,<3.2',
-    'beautifulsoup4>=4.4,<4.6',
     'blinker>=1.3,<1.5',
     'celery[redis]>=4.0.2,<4.1',
     'feedparser>=5.2,<5.3',

@@ -12,7 +12,6 @@
 from superdesk.io.feed_parsers.nitf import NITFFeedParser, SkipValue
 from superdesk.io.registry import register_feed_parser
 import re
-from bs4 import BeautifulSoup
 from lxml import etree
 import html
 
@@ -57,10 +56,9 @@ class PAFeedParser(NITFFeedParser):
         """
         elements = []
         for elem in xml.find('body/body.content'):
-            soup = BeautifulSoup(etree.tostring(elem), 'html.parser')
-            for top_level_tag in soup.find_all(recursive=False):
-                elements.append(
-                    '<p>{}</p>\n'.format(html.escape(top_level_tag.get_text().encode('iso-8859-1').decode('utf-8'))))
+            text = etree.tostring(elem, encoding="unicode", method="text")
+            elements.append(
+                '<p>{}</p>\n'.format(html.escape(text)))
         content = ''.join(elements)
         if self.get_anpa_format(xml) == 't':
             if not content.startswith('<pre>'):
@@ -90,7 +88,7 @@ class PAFeedParser(NITFFeedParser):
         :return:
         """
         # Remove any leading numbers and split to list of words
-        sluglineList = re.sub('^[\d.]+\W+', '', elem.text).split(' ')
+        sluglineList = re.sub(r'^[\d.]+\W+', '', elem.text).split(' ')
         slugline = sluglineList[0].capitalize()
         if len(sluglineList) > 1:
             slugline = '{} {}'.format(slugline, ' '.join(sluglineList[1:]))

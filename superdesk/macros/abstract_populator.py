@@ -9,15 +9,13 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import re
-from bs4 import BeautifulSoup
+from superdesk.etree import get_text
+
+p = re.compile('(?i)(?<=[.?!])\\S+(?=[a-z])')
 
 
 def populate(item, **kwargs):
     """Populate the abstract field with the first sentence of the body"""
-
-    # compile the regex
-    # p = re.compile('[.!?]')
-    p = re.compile('(?i)(?<=[.?!])\\S+(?=[a-z])')
 
     # get the list of sentences of the body
     if not item.get('body_html', None):
@@ -27,7 +25,7 @@ def populate(item, **kwargs):
 
         # chop the first sentence to size for abstract (64)
         if sentences and len(sentences) > 0:
-            item['abstract'] = BeautifulSoup(sentences[0][:64], "html.parser").text
+            item['abstract'] = get_text(sentences[0][:64]).strip()
 
     return item
 
