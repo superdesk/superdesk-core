@@ -12,12 +12,12 @@ import os
 from flask import json
 
 from apps.io.tests import setup_providers, teardown_providers
-from features.steps.steps import get_macro_path
 from superdesk import tests
 from superdesk.factory.app import get_app
 from superdesk.tests import setup_auth_user
 from superdesk.vocabularies.command import VocabulariesPopulateCommand
 from superdesk.tests.mocks import TestSearchProvider
+from superdesk.tests.steps import get_macro_path
 
 
 readonly_fields = ['display_name', 'password', 'phone', 'first_name', 'last_name']
