@@ -28,7 +28,7 @@ from eve.utils import parse_request, config, date_to_str, ParsedRequest
 from superdesk.services import BaseService
 from superdesk.users.services import current_user_has_privilege, is_admin
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, CONTENT_TYPE, ITEM_TYPE, EMBARGO, \
-    PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, SIGN_OFF, ASSOCIATIONS
+    PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, SIGN_OFF, ASSOCIATIONS, MEDIA_TYPES
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, RESIDREF, SEQUENCE, PACKAGE_TYPE, TAKES_PACKAGE
 from apps.common.components.utils import get_component
 from apps.item_autosave.components.item_autosave import ItemAutosave
@@ -154,7 +154,8 @@ class ArchiveService(BaseService):
         for item in items:
             handle_existing_data(item)
 
-        self.takesService.enhance_items_with_takes_packages(items)
+        if not app.config.get('NO_TAKES', False):
+            self.takesService.enhance_items_with_takes_packages(items)
 
     def on_create(self, docs):
         on_create_item(docs)
@@ -254,10 +255,13 @@ class ArchiveService(BaseService):
             if not (item_obj and config.ID_FIELD in item_obj):
                 continue
 
-            _id = item_obj[config.ID_FIELD]
-            stored_item = self.find_one(req=None, _id=_id)
-            if not stored_item:
-                continue
+            if app.settings.get('COPY_METADATA_FROM_PARENT') and item_obj.get(ITEM_TYPE) in MEDIA_TYPES:
+                stored_item = (original.get(ASSOCIATIONS) or {}).get(item_name) or item_obj
+            else:
+                _id = item_obj[config.ID_FIELD]
+                stored_item = self.find_one(req=None, _id=_id)
+                if not stored_item:
+                    continue
 
             self._validate_updates(stored_item, item_obj, user)
             if stored_item[ITEM_TYPE] == CONTENT_TYPE.PICTURE:  # create crops
@@ -423,7 +427,7 @@ class ArchiveService(BaseService):
                           'rewritten_by', 'rewrite_of', 'rewrite_sequence', 'highlights', 'is_take_item',
                           'item_id', 'publish_state', 'last_published_version', 'queue_state',
                           'digital_item_id', 'publish_sequence_no', 'last_queue_event', 'moved_to_legal',
-                          'published_in_package', '_type']
+                          'published_in_package', '_type', 'event_id']
 
         for key in keys_to_delete:
             copied_item.pop(key, None)

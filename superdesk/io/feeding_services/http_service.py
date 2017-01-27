@@ -89,7 +89,9 @@ class HTTPFeedingService(FeedingService, metaclass=ABCMeta):
             try:
                 response.raise_for_status()
             except Exception:
-                raise IngestApiError.apiAuthError(provider=provider)
+                err = IngestApiError.apiAuthError(provider=provider)
+                self.close_provider(provider, err, force=True)
+                raise err
 
         tree = etree.fromstring(response.content)  # workaround for http mock lib
         return tree.text

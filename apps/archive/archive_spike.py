@@ -16,14 +16,15 @@ from flask import current_app as app
 import superdesk
 from superdesk import get_resource_service, config
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
-from superdesk.metadata.item import ITEM_STATE, CONTENT_TYPE, ITEM_TYPE, PUBLISH_STATES
+from superdesk.metadata.item import ITEM_STATE, CONTENT_TYPE, ITEM_TYPE, PUBLISH_STATES, GUID_FIELD, GUID_TAG
 from superdesk.metadata.packages import SEQUENCE, PACKAGE_TYPE
 from superdesk.notification import push_notification
 from superdesk.services import BaseService
-from superdesk.metadata.utils import item_url
+from superdesk.metadata.utils import item_url, generate_guid
 from .common import get_user, get_expiry, item_operations, ITEM_OPERATION, set_sign_off
 from superdesk.workflow import is_workflow_state_transition_valid
 from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
+from apps.archive.common import ITEM_EVENT_ID
 from apps.packages import PackageService, TakesPackageService
 from apps.archive.archive_rewrite import ArchiveRewriteService
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE
@@ -101,8 +102,8 @@ class ArchiveSpikeService(BaseService):
     def update_rewrite(self, original):
         """Removes the reference from the rewritten story in published collection."""
         rewrite_service = ArchiveRewriteService()
-        if original.get('rewrite_of') and original.get('event_id'):
-            rewrite_service._clear_rewritten_flag(original.get('event_id'),
+        if original.get('rewrite_of') and original.get(ITEM_EVENT_ID):
+            rewrite_service._clear_rewritten_flag(original.get(ITEM_EVENT_ID),
                                                   original[config.ID_FIELD], 'rewritten_by')
 
         # write the rewritten_by to the take before spiked
@@ -171,7 +172,7 @@ class ArchiveSpikeService(BaseService):
 
     def update(self, id, updates, original):
         original_state = original[ITEM_STATE]
-        if not is_workflow_state_transition_valid('spike', original_state):
+        if not is_workflow_state_transition_valid(ITEM_SPIKE, original_state):
             raise InvalidStateTransitionError()
 
         user = get_user(required=True)
@@ -193,12 +194,15 @@ class ArchiveSpikeService(BaseService):
         if original.get('rewrite_sequence'):
             updates['rewrite_sequence'] = None
 
+        # remove any relation with linked items
+        updates[ITEM_EVENT_ID] = generate_guid(type=GUID_TAG)
+
         if original[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
             # remove links from items in the package
             package_service = PackageService()
             items = package_service.get_item_refs(original)
             for item in items:
-                package_item = get_resource_service(ARCHIVE).find_one(req=None, _id=item['guid'])
+                package_item = get_resource_service(ARCHIVE).find_one(req=None, _id=item[GUID_FIELD])
                 if package_item:
                     linked_in_packages = [linked for linked in package_item.get(LINKED_IN_PACKAGES, [])
                                           if linked.get(PACKAGE) != original.get(config.ID_FIELD)]
@@ -229,7 +233,7 @@ class ArchiveUnspikeService(BaseService):
         updates.update({
             REVERT_STATE: None,
             EXPIRY: None,
-            'state': doc.get(REVERT_STATE),
+            ITEM_STATE: doc.get(REVERT_STATE),
             ITEM_OPERATION: ITEM_UNSPIKE,
         })
 
@@ -255,11 +259,12 @@ class ArchiveUnspikeService(BaseService):
 
     def on_update(self, updates, original):
         updates[ITEM_OPERATION] = ITEM_UNSPIKE
+        updates[ITEM_STATE] = original.get(REVERT_STATE)
         set_sign_off(updates, original=original)
 
     def update(self, id, updates, original):
         original_state = original[ITEM_STATE]
-        if not is_workflow_state_transition_valid('unspike', original_state):
+        if not is_workflow_state_transition_valid(ITEM_UNSPIKE, original_state):
             raise InvalidStateTransitionError()
 
         user = get_user(required=True)

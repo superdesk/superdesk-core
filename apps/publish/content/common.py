@@ -24,7 +24,7 @@ from apps.content import push_content_notification
 from apps.content_types.content_types import DEFAULT_SCHEMA
 from superdesk.errors import InvalidStateTransitionError, SuperdeskApiError, PublishQueueError
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, GUID_FIELD, ITEM_STATE, CONTENT_STATE, \
-    PUBLISH_STATES, EMBARGO, PUB_STATUS, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, ASSOCIATIONS
+    PUBLISH_STATES, EMBARGO, PUB_STATUS, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, ASSOCIATIONS, MEDIA_TYPES
 from superdesk.metadata.packages import SEQUENCE, LINKED_IN_PACKAGES, GROUPS, PACKAGE, RESIDREF
 from superdesk.metadata.utils import item_url
 from superdesk.notification import push_notification
@@ -38,7 +38,8 @@ from eve.validation import ValidationError
 from eve.versioning import resolve_document_version
 
 from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
-from apps.archive.common import get_user, insert_into_versions, item_operations
+from apps.archive.common import get_user, insert_into_versions, item_operations, \
+    FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM
 from apps.archive.common import validate_schedule, ITEM_OPERATION, update_schedule_settings, \
     convert_task_attributes_to_objectId, is_genre, \
     BROADCAST_GENRE, get_expiry, get_utc_schedule, get_dateline_city, get_expiry_date
@@ -49,10 +50,8 @@ from apps.packages import TakesPackageService
 from apps.packages.package_service import PackageService
 from apps.publish.published_item import LAST_PUBLISHED_VERSION, PUBLISHED,\
     PUBLISHED_IN_PACKAGE
-from apps.picture_crop import get_file
 from superdesk.media.crop import CropService
-from superdesk.media.media_operations import crop_image
-from superdesk.celery_app import celery
+
 
 logger = logging.getLogger(__name__)
 
@@ -129,7 +128,6 @@ class BasePublishService(BaseService):
                 self._update_archive(original, updates, should_insert_into_versions=auto_publish)
             else:
                 self._refresh_associated_items(original)
-                self._publish_associations(original, id)
                 updated = deepcopy(original)
                 updated.update(updates)
 
@@ -623,6 +621,9 @@ class BasePublishService(BaseService):
             else:
                 continue
 
+            if not doc:
+                continue
+
             if original_item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
                 digital = self.takes_package_service.get_take_package(doc) or {}
                 self._validate_associated_items(doc, digital, validation_errors)
@@ -662,43 +663,6 @@ class BasePublishService(BaseService):
 
             # countdown=3 is for elasticsearch to be refreshed with archive and published changes
             import_into_legal_archive.apply_async(countdown=3, kwargs=kwargs)  # @UndefinedVariable
-
-    def _publish_associations(self, parent, guid):
-        """Publish parent item associations."""
-        associations = parent.get(ASSOCIATIONS) or {}
-        for rel, item in associations.copy().items():
-            if item:
-                if item.get('pubstatus', 'usable') != 'usable':
-                    associations.pop(rel)
-                    continue
-                self._publish_renditions(item, rel, guid)
-
-    def _publish_renditions(self, item, rel, guid):
-        """Publish item renditions."""
-        images = []
-        renditions = item.get('renditions', {})
-        original = renditions.get('original')
-        crop_service = CropService()
-        for rendition_name, rendition in renditions.items():
-            crop = get_crop(rendition)
-            rend_spec = crop_service.get_crop_by_name(rendition_name)
-            if crop and rend_spec:
-                file_name = '%s/%s/%s' % (guid, rel, rendition_name)
-                rendition['media'] = app.media.media_id(file_name, original.get('mimetype'))
-                rendition['href'] = app.media.url_for_media(rendition['media'], original.get('mimetype'))
-                rendition['width'] = rend_spec.get('width')
-                rendition['height'] = rend_spec.get('height')
-                rendition['ratio'] = rend_spec.get('ratio')
-                rendition['mimetype'] = original.get('mimetype')
-                images.append({
-                    'rendition': rendition_name,
-                    'file_name': file_name,
-                    'media': rendition['media'],
-                    'spec': rend_spec,
-                    'crop': crop,
-                })
-        if images:
-            publish_images.delay(images=images, original=original, item=item)
 
     def _apply_kill_template(self, item):
         # apply the kill template
@@ -742,8 +706,14 @@ class BasePublishService(BaseService):
         associations = original.get(ASSOCIATIONS) or {}
         for _, item in associations.items():
             if type(item) == dict and item.get(config.ID_FIELD):
-                updates = super().find_one(req=None, _id=item[config.ID_FIELD]) or {}
-                update_item_data(item, updates)
+                keys = DEFAULT_SCHEMA.keys()
+                if app.settings.get('COPY_METADATA_FROM_PARENT') and item.get(ITEM_TYPE) in MEDIA_TYPES:
+                    updates = original
+                    keys = FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM
+                else:
+                    updates = super().find_one(req=None, _id=item[config.ID_FIELD]) or {}
+
+                update_item_data(item, updates, keys)
 
 
 def get_crop(rendition):
@@ -751,22 +721,12 @@ def get_crop(rendition):
     return {field: rendition[field] for field in fields if field in rendition}
 
 
-def update_item_data(item, data):
+def update_item_data(item, data, keys=DEFAULT_SCHEMA.keys()):
     """Update main item data, so only keys from default schema.
     """
-    for key in DEFAULT_SCHEMA:
+    for key in keys:
         if data.get(key):
             item[key] = data[key]
-
-
-@celery.task
-def publish_images(images, original, item):
-    orig_file = get_file(original, item)
-    for image in images:
-        content_type = original['mimetype']
-        ok, output = crop_image(orig_file, image['file_name'], image['crop'], image['spec'])
-        if ok and output:
-            app.media.put(output, image['file_name'], content_type, _id=image['media'])
 
 
 superdesk.workflow_state('published')

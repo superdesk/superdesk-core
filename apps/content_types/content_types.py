@@ -373,12 +373,14 @@ def compose_subject_schema(schema, fieldMap):
     mandatory = {}
     allowed = []
     for old_field, field in fieldMap.items():
-        if schema.get(field, None):
+        if (old_field == field or old_field == 'subject') and schema.get(field, None):
             allowed.append(field)
             if schema[field].get('required', False):
                 mandatory[old_field] = field
             else:
                 mandatory[old_field] = None
+        else:
+            mandatory[old_field] = None
     if allowed:
         init_subject_schema(schema, mandatory, allowed, fieldMap)
 

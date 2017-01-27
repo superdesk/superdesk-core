@@ -45,6 +45,7 @@ ITEM_UPDATE = 'update'
 ITEM_RESTORE = 'restore'
 ITEM_DUPLICATE = 'duplicate'
 ITEM_DESCHEDULE = 'deschedule'
+ITEM_EVENT_ID = 'event_id'
 item_operations = [ITEM_CREATE, ITEM_UPDATE, ITEM_RESTORE, ITEM_DUPLICATE, ITEM_DESCHEDULE]
 # part the task dict
 LAST_AUTHORING_DESK = 'last_authoring_desk'
@@ -152,6 +153,10 @@ ARCHIVE_SCHEMA_FIELDS = {
         'mapping': not_analyzed
     }
 }
+
+
+FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM = ['anpa_category', 'subjects', 'slugline', 'urgency',
+                                      'priority', 'footer', 'abstract', 'genre']
 
 
 def get_default_source():
@@ -272,6 +277,7 @@ def on_duplicate_item(doc, original_doc):
 
     doc[GUID_FIELD] = generate_guid(type=GUID_NEWSML)
     generate_unique_id_and_name(doc)
+    doc['event_id'] = generate_guid(type=GUID_TAG)
     doc.setdefault('_id', doc[GUID_FIELD])
     set_sign_off(doc)
     doc['force_unlock'] = True
@@ -731,8 +737,10 @@ def is_genre(item, genre_value):
     :param str genre_value: genre_value as string
     :return: If exists then true else false
     """
-    return item.get('genre') and any(genre.get('qcode', '').lower() == genre_value.lower()
-                                     for genre in item.get('genre', []))
+    try:
+        return any(genre.get('qcode', '').lower() == genre_value.lower() for genre in item.get('genre', []))
+    except (AttributeError, TypeError):  # from sentry
+        return False
 
 
 def get_dateline_city(dateline):

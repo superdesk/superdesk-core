@@ -23,6 +23,7 @@ from superdesk.errors import IngestApiError
 
 def setup_provider(token, hours):
     return {
+        '_id': 'foo',
         'name': 'test http',
         'source': 'test http',
         'feeding_service': 'test',

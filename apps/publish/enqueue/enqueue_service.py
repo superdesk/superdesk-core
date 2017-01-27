@@ -252,9 +252,12 @@ class EnqueueService:
             self._resend_to_subscribers(doc, wire_subscribers, subscriber_codes)
 
         if len(digital_subscribers) > 0:
-            package = self.takes_package_service.get_take_package(doc)
-            package['item_id'] = package[config.ID_FIELD]
-            self._resend_to_subscribers(package, digital_subscribers, subscriber_codes)
+            if not app.config.get('NO_TAKES', False):
+                package = self.takes_package_service.get_take_package(doc)
+                package['item_id'] = package[config.ID_FIELD]
+                self._resend_to_subscribers(package, digital_subscribers, subscriber_codes)
+            else:
+                self._resend_to_subscribers(doc, digital_subscribers, subscriber_codes)
 
     def _resend_to_subscribers(self, doc, subscribers, subscriber_codes):
         formatter_messages, queued = self.queue_transmission(doc, subscribers, subscriber_codes)

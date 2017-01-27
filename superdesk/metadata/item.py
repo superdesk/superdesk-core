@@ -463,6 +463,12 @@ metadata_schema = {
     'auto_publish': {
         'type': 'boolean'
     },
+
+    # draft-js editor state
+    'editor_state': {
+        'type': 'dict',
+        'nullable': True,
+    },
 }
 
 metadata_schema['lock_user']['versioned'] = False

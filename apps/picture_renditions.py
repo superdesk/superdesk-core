@@ -20,9 +20,10 @@ class PictureRenditionsService(superdesk.Service):
             orig_file = get_file(orig, item)
             rendition_spec = get_renditions_spec()
             inserted = []
-            media_type, content_type = item['mimetype'].split('/')
+            mimetype = item.get('mimetype', orig.get('mimetype', '/'))
+            media_type, content_type = mimetype.split('/')
             renditions = generate_renditions(orig_file, orig['media'], inserted, media_type,
-                                             item['mimetype'], rendition_spec, app.media.url_for_media)
+                                             mimetype, rendition_spec, app.media.url_for_media)
             doc['renditions'] = renditions
             ids.append(item['_id'])
         return ids

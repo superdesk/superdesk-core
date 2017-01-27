@@ -1036,6 +1036,149 @@ Feature: Content Profile
         }
         """
 
+   @auth
+    Scenario: User can add profile with custom subject disabled and category(saved on subject) enabled
+        Given "vocabularies"
+        """
+        [
+          {
+            "_id": "category",
+            "display_name": "Category",
+            "type": "manageable",
+            "service": {"all": 1},
+            "single_value": true,
+            "dependent": 1,
+            "items": [
+                {"is_active": true, "name": "Innenriks", "qcode": "Innenriks", "service": {"n": 1, "s": 1, "e": 1, "t": 1, "m": 1, "j": 1, "i": 1}},
+                {"is_active": true, "name": "Utenriks", "qcode": "Utenriks", "service": {"n": 1, "s": 1, "e": 1, "t": 1, "m": 1, "i": 1}}
+            ]
+          },
+          {
+            "_id": "subject_custom",
+            "display_name": "Subject",
+            "type": "manageable",
+            "service": {"all": 1},
+            "schema_field": "subject",
+            "dependent": 0,
+            "items": [
+                {"is_active": true, "name": "Kultur og underholdning", "qcode": "01000000", "parent": null},
+                {"is_active": true, "name": "Kriminalitet og rettsvesen", "qcode": "02000000", "parent": null}
+            ]
+          }
+        ]
+        """
+
+        When we post to "content_types"
+        """
+        {
+            "_id": "foo",
+            "label": "Foo",
+            "enabled": false,
+            "created_by": "#CONTEXT_USER_ID#",
+            "updated_by": "#CONTEXT_USER_ID#",
+            "schema": {
+                "subject_custom": {
+                    "schema": {
+                        "schema": {
+                            "scheme": {
+                                "allowed": ["category"],
+                                "required": true,
+                                "type": "string"
+                            }
+                        },
+                        "type": "dict"
+                    },
+                    "type": "list",
+                    "required": true,
+                    "mandatory_in_list": {"scheme": {"category": "category"}}
+                }
+            },
+            "editor": {
+                "category": {
+                    "field_name": "category",
+                    "enabled": true
+                }
+            }
+        }
+        """
+        Then we get new resource
+        """
+        {
+            "_id": "foo",
+            "label": "Foo",
+            "enabled": false,
+            "created_by": "#CONTEXT_USER_ID#",
+            "updated_by": "#CONTEXT_USER_ID#"
+        }
+        """
+
+        When we patch "/content_types/#content_types._id#"
+        """
+        {
+            "schema": {
+                "subject_custom": {
+                    "type": "list",
+                    "mandatory_in_list": {
+                        "scheme": {}
+                    },
+                    "schema": {},
+                    "required": true
+                },
+                "category": {
+                    "type": "list",
+                    "required": false
+                }
+            },
+            "editor": {
+                "category": {
+                    "field_name": "category",
+                    "enabled": true
+                },
+                "subject_custom": {
+                    "sdWidth": "full",
+                    "field_name": "subject",
+                    "order": 8,
+                    "enabled": false
+                }
+            }
+        }
+        """
+
+        When we get "/content_types/#content_types._id#"
+        Then we get existing resource
+        """
+        {
+            "_id": "foo",
+            "label": "Foo",
+            "enabled": false,
+            "created_by": "#CONTEXT_USER_ID#",
+            "updated_by": "#CONTEXT_USER_ID#",
+            "schema": {
+                "subject_custom": {
+                    "schema": {
+                        "schema": {
+                            "scheme": {
+                                "allowed": ["category"],
+                                "required": true,
+                                "type": "string"
+                            }
+                        },
+                        "type": "dict"
+                    },
+                    "type": "list",
+                    "required": true,
+                    "mandatory_in_list": {"scheme": {"category": "category"}}
+                }
+            },
+            "editor": {
+                "category": {
+                    "field_name": "category",
+                    "enabled": true
+                }
+            }
+        }
+        """
+
     @auth
     Scenario: Content profile defaults override user profile defaults
         Given "content_types"

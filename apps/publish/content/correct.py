@@ -14,11 +14,8 @@ from superdesk.media.crop import CropService
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, EMBARGO, SCHEDULE_SETTINGS
 from superdesk.metadata.packages import PACKAGE_TYPE
 from superdesk.utc import utcnow
-
 from eve.utils import config
-
 from apps.archive.common import set_sign_off, ITEM_OPERATION, insert_into_versions
-
 from .common import BasePublishService, BasePublishResource, ITEM_CORRECT
 
 
