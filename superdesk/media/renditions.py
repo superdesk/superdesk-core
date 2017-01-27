@@ -124,6 +124,14 @@ def _crop_image(content, format, ratio):
     return out, new_width, new_height, cropping_data
 
 
+def to_int(x):
+    """Try to convert x to int."""
+    try:
+        return int(x)
+    except TypeError:
+        return x
+
+
 def _resize_image(content, size, format='png', keepProportions=True):
     """Resize the image given as a binary stream
 
@@ -142,13 +150,13 @@ def _resize_image(content, size, format='png', keepProportions=True):
     assert isinstance(size, tuple)
     img = Image.open(content)
     width, height = img.size
-    new_width, new_height = size
+    new_width, new_height = [to_int(x) for x in size]
     if keepProportions:
         if new_width is None and new_height is None:
             raise Exception('size parameter requires at least width or height value')
         # resize with width and height
         if new_width is not None and new_height is not None:
-            new_width, new_height = int(new_width), int(new_height)
+            new_width, new_height = new_width, new_height
             x_ratio = width / new_width
             y_ratio = height / new_height
             if x_ratio > y_ratio:
@@ -159,7 +167,7 @@ def _resize_image(content, size, format='png', keepProportions=True):
         else:
             original_ratio = width / height
             if new_width is not None:
-                new_height = int(new_width / original_ratio)
+                new_height = int(int(new_width) / original_ratio)
             else:
                 new_width = int(new_height * original_ratio)
     resized = img.resize((new_width, new_height), Image.ANTIALIAS)

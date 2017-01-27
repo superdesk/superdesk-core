@@ -140,7 +140,7 @@ def _get_cropping_data(doc):
     """
     if all([doc.get('CropTop', None) is not None, doc.get('CropLeft', None) is not None,
             doc.get('CropRight', None) is not None, doc.get('CropBottom', None) is not None]):
-        return (doc['CropLeft'], doc['CropTop'], doc['CropRight'], doc['CropBottom'])
+        return (int(doc['CropLeft']), int(doc['CropTop']), int(doc['CropRight']), int(doc['CropBottom']))
 
 
 def crop_image(content, file_name, cropping_data, exact_size=None, image_format=None):
@@ -159,7 +159,7 @@ def crop_image(content, file_name, cropping_data, exact_size=None, image_format=
         img = Image.open(content)
         cropped = img.crop(cropping_data)
         if exact_size and 'width' in exact_size and 'height' in exact_size:
-            cropped = cropped.resize((exact_size['width'], exact_size['height']), Image.ANTIALIAS)
+            cropped = cropped.resize((int(exact_size['width']), int(exact_size['height'])), Image.ANTIALIAS)
         logger.debug('Cropped image {} from stream, going to save it'.format(file_name))
         try:
             out = BytesIO()
