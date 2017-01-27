@@ -274,8 +274,9 @@ def set_enabled_for_custom(editor, allowed, fieldsMap):
 
 def set_required_for_custom(editor, schema, mandatory, fieldsMap):
     for field, value in mandatory.items():
-        editor[fieldsMap.get(field, field)]['required'] = value is not None
-        schema[fieldsMap.get(field, field)]['required'] = value is not None
+        if field == value or field == 'subject':
+            editor[fieldsMap.get(field, field)]['required'] = value is not None
+            schema[fieldsMap.get(field, field)]['required'] = value is not None
 
 
 def getSubjectName(fieldsMap):
@@ -297,7 +298,9 @@ def prepare_for_save_content_type(original, updates):
     delete_disabled_fields(editor, schema)
     fieldMap = get_field_map()
     clean_editor(editor)
+    init_schema_for_custom_fields(schema, fieldMap)
     compose_subject_schema(schema, fieldMap)
+    init_editor_required(editor, schema)
     rename_schema_for_custom_fields(schema, fieldMap)
 
 
@@ -329,7 +332,7 @@ def compose_subject_schema(schema, fieldMap):
     mandatory = {}
     allowed = []
     for old_field, field in fieldMap.items():
-        if old_field == field or old_field == 'subject':
+        if (old_field == field or old_field == 'subject') and schema.get(field, None):
             allowed.append(field)
             if schema[field].get('required', False):
                 mandatory[old_field] = field
@@ -346,6 +349,21 @@ def init_subject_schema(schema, mandatory, allowed, fieldMap):
     schema[subject] = deepcopy(DEFAULT_SCHEMA['subject'])
     schema[subject]['mandatory_in_list']['scheme'] = mandatory
     schema[subject]['schema']['schema']['scheme']['allowed'] = allowed
+    schema[subject]['required'] = mandatory['subject'] is not None
+
+
+def init_editor_required(editor, schema):
+    for field in schema:
+        if editor[field] is not None and schema[field] is not None and schema[field].get('required') is not None:
+            editor[field]['required'] = schema[field]['required']
+
+
+def init_schema_for_custom_fields(schema, fieldMap):
+    for field in fieldMap.values():
+        if schema.get(field, None) and schema[field].get('default', None):
+            list_values = schema[field]['default']
+            for value in list_values:
+                value['scheme'] = field
 
 
 def rename_schema_for_custom_fields(schema, fieldMap):
