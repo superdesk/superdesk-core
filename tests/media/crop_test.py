@@ -10,10 +10,13 @@
 
 from unittest import mock
 from nose.tools import assert_raises
+from ..media import get_picture_fixture
 from superdesk.tests import TestCase
 from superdesk.media.crop import CropService
 from superdesk.errors import SuperdeskApiError
 from superdesk.vocabularies.command import populate_table_json
+from superdesk.media.media_operations import crop_image
+from superdesk.media.renditions import _resize_image
 
 
 class CropTestCase(TestCase):
@@ -149,3 +152,19 @@ class CropTestCase(TestCase):
             ex = context.exception
             self.assertEqual(ex.message, 'Saving crop failed.')
             self.assertEqual(ex.status_code, 400)
+
+    def test_crop_image_exact_size(self):
+        img = get_picture_fixture()
+        size = {'width': '300', 'height': '200'}
+        crop = {'CropTop': '0', 'CropRight': '300', 'CropBottom': '200', 'CropLeft': '0'}
+        with open(img, 'rb') as imgfile:
+            res = crop_image(imgfile, img, crop, size)
+            self.assertTrue(res[0])
+            self.assertEqual(300, res[1].width)
+            self.assertEqual(200, res[1].height)
+
+    def test_resize_image(self):
+        img = get_picture_fixture()
+        with open(img, 'rb') as imgfile:
+            resized, width, height = _resize_image(imgfile, ('200', None), 'jpeg')
+            self.assertEqual(150, height)
