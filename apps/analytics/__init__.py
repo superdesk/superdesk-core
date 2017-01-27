@@ -13,6 +13,7 @@ import superdesk
 from apps.analytics.activity_reports import ActivityReportResource, ActivityReportService
 from apps.analytics.saved_activity_reports import SavedActivityReportResource, \
     SavedActivityReportService
+from apps.analytics.processed_items_report import ProcessedItemsResource, ProcessedItemsService
 
 
 def init_app(app):
@@ -24,5 +25,11 @@ def init_app(app):
     service = SavedActivityReportService(endpoint_name, backend=superdesk.get_backend())
     SavedActivityReportResource(endpoint_name, app=app, service=service)
 
+    endpoint_name = 'processed_items_report'
+    service = ProcessedItemsService(endpoint_name, backend=superdesk.get_backend())
+    ProcessedItemsResource(endpoint_name, app=app, service=service)
+
     superdesk.privilege(name='activity_reports', label='Activity Report View',
+                        description='User can view activity reports.')
+    superdesk.privilege(name='processed_items_report', label='Activity Report View',
                         description='User can view activity reports.')
