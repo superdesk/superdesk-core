@@ -1,7 +1,6 @@
 from superdesk import get_resource_service
 from superdesk.services import BaseService
 
-from eve.utils import ParsedRequest
 from superdesk.metadata.item import metadata_schema
 from superdesk.resource import Resource
 
@@ -25,16 +24,15 @@ class ProcessedItemsResource(Resource):
 class ProcessedItemsService(BaseService):
 
     def create_query(self, doc):
-        terms = [
-            {"term": {"task.user": str(doc['user'])}}
-        ]
-        return terms
+        archive_versions_query = {
+            '$or': [{"task.user": str(doc['user'])}]
+        }
+        return archive_versions_query
 
     def get_items(self, query):
         """Return the result of the item search by the given query
         """
-        request = ParsedRequest()
-        return get_resource_service('archive_versions').get(req=request, lookup=None)
+        return get_resource_service('archive_versions').get(req=None, lookup=query)
 
     def count_items(self, query, state, starting, ending):
         """
@@ -53,16 +51,7 @@ class ProcessedItemsService(BaseService):
         return items
 
     def search_without_grouping(self, doc):
-        terms = self.create_query(doc)
-        query = {
-            "query": {
-                "filtered": {
-                    "filter": {
-                        "bool": {"must": terms}
-                    }
-                }
-            }
-        }
+        query = self.create_query(doc)
 
         total_no_of_processed_items = self.count_items(query, '',
                                                        str(doc['starting_time']), str(doc['ending_time']))
