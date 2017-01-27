@@ -657,7 +657,7 @@
             },
             "dateline": {
                 "type": "dict",
-                "required": true,
+                "required": false,
                 "schema": {
                     "located": {"type": "dict", "required": true},
                     "text": {"type": "string", "required": true}
