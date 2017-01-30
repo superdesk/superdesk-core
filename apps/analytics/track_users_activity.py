@@ -15,6 +15,8 @@ from eve.utils import ParsedRequest
 from superdesk.metadata.item import metadata_schema
 from superdesk.resource import Resource
 import json
+from superdesk import config
+import superdesk
 
 
 class TrackActivityResource(Resource):
@@ -22,7 +24,8 @@ class TrackActivityResource(Resource):
     """
 
     schema = {
-        'user': metadata_schema['original_creator']
+        'user': metadata_schema['original_creator'],
+        'desk': Resource.rel('desks', True)
     }
 
     item_methods = ['GET', 'DELETE']
@@ -33,47 +36,31 @@ class TrackActivityResource(Resource):
 
 class TrackActivityService(BaseService):
     def create_query(self, doc):
-        terms = [
-            {"term": {"task.user": str(doc['user'])}}
-        ]
 
-        return terms
+        archive_version_query = {
+                '$and': [
+                    {'task.user': str(doc['user'])},
+                    {'task.desk': str(doc['desk'])}
+                ]
+            }
+
+        return archive_version_query
 
     def get_items(self, query):
-        request = ParsedRequest()
 
-        return get_resource_service('published').get(req=request, lookup=None)
-
-    def count_items(self, query, option):
-        my_list = self.get_items(query)
-        items = sum(1 for i in my_list if i['state'] == option)
-
-        return items
+        return get_resource_service('archive_versions').get(req=None, lookup=query)
 
     def search_without_grouping(self, doc):
-        terms = self.create_query(doc)
-        query = {
-            "query": {
-                "filtered": {
-                    "filter": {
-                        "bool": {"must": terms}
-                    }
-                }
-            }
-        }
+        query = self.create_query(doc)
+        items = superdesk.get_resource_service('archive_versions').get(req=None, lookup=query)
 
-        all_items = self.get_items(query)
-        info_list = []
+        # items_create = [i['_created'] for i in items if i['state'] == 'submitted']
 
-        for t in all_items:
-            no_of_processed_items = self.count_items(query, 'published')
-            creation_date = t['firstcreated']
-            last_modification_date = t['versioncreated']
-            difference = str(abs(creation_date - last_modification_date))
-            if t['state'] == 'published':
-                info_list.append({'state': t['state'], 'item': t['_id'], 'time_to_complete': difference})
-
-        return {'info': info_list, 'no_of_processed_items': no_of_processed_items}
+        list_of_items = []
+        for it in items:         
+            elements = {'item_id': it['guid'], 'state': it['state'], 'stage': it['task'].get('stage')}
+            list_of_items.append(elements)
+        return {'info':list_of_items}
 
     def create(self, docs):
         for doc in docs:
