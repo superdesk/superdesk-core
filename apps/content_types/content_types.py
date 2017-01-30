@@ -44,7 +44,7 @@ class DefaultSchema(schema.Schema):
             'scheme': {
                 'type': 'string',
                 'required': True,
-                'allowed': ['subject']
+                'allowed': []
             },
             'service': {'nullable': True},
             'parent': {'nullable': True}
@@ -229,6 +229,7 @@ def clean_json(json):
 
 
 def prepare_for_edit_content_type(doc):
+    clean_doc(doc)
     init_default(doc)
     editor = doc['editor']
     schema = doc['schema']
@@ -400,6 +401,7 @@ def init_editor_required(editor, schema):
     for field in schema:
         if editor[field] is not None and schema[field] is not None and schema[field].get('required') is not None:
             editor[field]['required'] = schema[field]['required']
+            schema[field]['minlength'] = 1 if schema[field]['required'] else 0
 
 
 def init_schema_for_custom_fields(schema, fieldMap):
@@ -412,7 +414,7 @@ def init_schema_for_custom_fields(schema, fieldMap):
 
 def rename_schema_for_custom_fields(schema, fieldMap):
     for old_field, field in fieldMap.items():
-        if schema.get(field, None):
+        if field in schema:
             if old_field != field:
                 schema[old_field] = schema[field]
             del schema[field]
