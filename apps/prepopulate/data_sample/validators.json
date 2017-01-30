@@ -511,11 +511,7 @@
             },
             "renditions": {
                 "type": "dict",
-                "required": true,
-                "schema": {
-                    "4-3": {"type": "dict", "required": true},
-                    "16-9": {"type": "dict", "required": true}
-                }
+                "required": false
             }
         }
     },
@@ -601,11 +597,7 @@
             },
             "renditions": {
                 "type": "dict",
-                "required": false,
-                "schema": {
-                    "4-3": {"type": "dict", "required": false},
-                    "16-9": {"type": "dict", "required": false}
-                }
+                "required": false
             }
         }
     },
@@ -665,7 +657,7 @@
             },
             "dateline": {
                 "type": "dict",
-                "required": true,
+                "required": false,
                 "schema": {
                     "located": {"type": "dict", "required": true},
                     "text": {"type": "string", "required": true}
@@ -685,11 +677,7 @@
             },
             "renditions": {
                 "type": "dict",
-                "required": false,
-                "schema": {
-                    "4-3": {"type": "dict", "required": false},
-                    "16-9": {"type": "dict", "required": false}
-                }
+                "required": false
             }
         }
     },

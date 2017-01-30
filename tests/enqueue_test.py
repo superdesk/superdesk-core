@@ -4,7 +4,7 @@ from superdesk.tests import TestCase
 from apps.publish.enqueue.enqueue_service import EnqueueService
 
 
-class EnqueueTestCase(TestCase):
+class NoTakesEnqueueTestCase(TestCase):
 
     def setUp(self):
         super().setUp()
@@ -24,11 +24,10 @@ class EnqueueTestCase(TestCase):
         self.service = EnqueueService()
 
     def test_resend_no_takes(self):
-        self.app.config['NO_TAKES'] = True
-
         doc = {}
         subscribers = [s for s in self.app.data.find_all('subscribers')]
         subscriber_codes = self.service._get_subscriber_codes(subscribers)
         with patch.object(self.service, '_resend_to_subscribers') as resend:
-            self.service.resend(doc, subscribers)
+            with patch.dict('apps.publish.enqueue.enqueue_service.app.config', {'NO_TAKES': True}):
+                self.service.resend(doc, subscribers)
             resend.assert_called_with(doc, subscribers, subscriber_codes)
