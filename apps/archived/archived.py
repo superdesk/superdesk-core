@@ -96,7 +96,7 @@ class ArchivedService(BaseService):
                 if is_takes_package:
                     doc[SEQUENCE] = len(package_service.get_item_refs(doc))
 
-    def on_delete(self, doc):
+    def validate_delete_action(self, doc, allow_all_types=False):
         """Runs on delete of archive item.
 
         Overriding to validate the item being killed is actually eligible for kill. Validates the following:
@@ -109,6 +109,8 @@ class ArchivedService(BaseService):
 
         :param doc: represents the article in archived collection
         :type doc: dict
+        :param allow_all_types: represents if different types of documents are allowed to be killed
+        :type doc: bool
         :raises SuperdeskApiError.badRequestError() if any of the above validation conditions fail.
         """
 
@@ -120,8 +122,8 @@ class ArchivedService(BaseService):
         doc['item_id'] = id_field
         doc[config.ID_FIELD] = item_id
 
-        if doc[ITEM_TYPE] != CONTENT_TYPE.TEXT:
-            raise bad_req_error(message='Only Text articles are allowed to Kill in Archived repo')
+        if not allow_all_types and doc[ITEM_TYPE] != CONTENT_TYPE.TEXT:
+            raise bad_req_error(message='Only Text articles are allowed to be Killed in Archived repo')
 
         if is_genre(doc, BROADCAST_GENRE):
             raise bad_req_error(message="Killing of Broadcast Items isn't allowed in Archived repo")
@@ -132,7 +134,7 @@ class ArchivedService(BaseService):
         if get_resource_service(ARCHIVE).find_one(req=None, _id=doc[GUID_FIELD]):
             raise bad_req_error(message="Can't Kill as article is still available in production")
 
-        if is_item_in_package(doc):
+        if not allow_all_types and is_item_in_package(doc):
             raise bad_req_error(message="Can't kill as article is part of a Package")
 
         takes_package_service = TakesPackageService()
@@ -148,7 +150,7 @@ class ArchivedService(BaseService):
                 raise bad_req_error(message='Digital Story of the article not found in Archived repo')
 
             takes_package = takes_package[0]
-            if is_item_in_package(takes_package):
+            if not allow_all_types and is_item_in_package(takes_package):
                 raise bad_req_error(message="Can't kill as Digital Story is part of a Package")
 
             for takes_ref in takes_package_service.get_package_refs(takes_package):
@@ -160,11 +162,14 @@ class ArchivedService(BaseService):
                     if not take:
                         raise bad_req_error(message='One of Take(s) not found in Archived repo')
 
-                    if is_item_in_package(take[0]):
+                    if not allow_all_types and is_item_in_package(take[0]):
                         raise bad_req_error(message="Can't kill as one of Take(s) is part of a Package")
 
         doc['item_id'] = item_id
         doc[config.ID_FIELD] = id_field
+
+    def on_delete(self, doc):
+        self.validate_delete_action(doc)
 
     def delete(self, lookup):
         if app.testing and len(lookup) == 0:
@@ -198,7 +203,7 @@ class ArchivedService(BaseService):
         """
 
         # Step 1
-        articles_to_kill = self._find_articles_to_kill({'_id': id})
+        articles_to_kill = self.find_articles_to_kill({'_id': id})
         logger.info('Fetched articles to kill for id: {}'.format(id))
         articles_to_kill.sort(key=itemgetter(ITEM_TYPE), reverse=True)  # Needed because package has to be inserted last
         kill_service = KillPublishService()
@@ -269,7 +274,18 @@ class ArchivedService(BaseService):
     def _get_archived_id(self, item_id, version):
         return '{}:{}'.format(item_id, version)
 
-    def _find_articles_to_kill(self, lookup):
+    def get_archived_takes_package(self, package_id, take_id, version, include_other_takes=True):
+        req = ParsedRequest()
+        req.sort = '[("%s", -1)]' % config.VERSION
+        takes_package_service = TakesPackageService()
+        take_packages = list(self.get(req=req, lookup={'item_id': package_id}))
+
+        for take_package in take_packages:
+            for ref in takes_package_service.get_package_refs(take_package):
+                if ref[RESIDREF] == take_id and (include_other_takes or ref['_current_version'] == version):
+                    return take_package
+
+    def find_articles_to_kill(self, lookup, include_other_takes=True):
         """Finds the article to kill.
 
         If the article is associated with Digital Story then Digital Story will
@@ -282,6 +298,8 @@ class ArchivedService(BaseService):
         """
 
         archived_doc = self.find_one(req=None, **lookup)
+        if not archived_doc:
+            return
 
         req = ParsedRequest()
         req.sort = '[("%s", -1)]' % config.VERSION
@@ -290,13 +308,17 @@ class ArchivedService(BaseService):
         takes_package_service = TakesPackageService()
         takes_package_id = takes_package_service.get_take_package_id(archived_doc)
         if takes_package_id:
-            takes_package = list(self.get(req=req, lookup={'item_id': takes_package_id}))[0]
+            takes_package = self.get_archived_takes_package(takes_package_id,
+                                                            archived_doc['item_id'],
+                                                            archived_doc['_current_version'],
+                                                            include_other_takes)
             articles_to_kill.append(takes_package)
 
-            for takes_ref in takes_package_service.get_package_refs(takes_package):
-                if takes_ref[RESIDREF] != archived_doc[GUID_FIELD]:
-                    take = list(self.get(req=req, lookup={'item_id': takes_ref[RESIDREF]}))[0]
-                    articles_to_kill.append(take)
+            if include_other_takes:
+                for takes_ref in takes_package_service.get_package_refs(takes_package):
+                    if takes_ref[RESIDREF] != archived_doc[GUID_FIELD]:
+                        take = list(self.get(req=req, lookup={'item_id': takes_ref[RESIDREF]}))[0]
+                        articles_to_kill.append(take)
 
         return articles_to_kill
 
