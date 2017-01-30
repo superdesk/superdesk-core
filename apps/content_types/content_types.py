@@ -71,6 +71,7 @@ DEFAULT_EDITOR = {
     'body_html': {
         'order': 16,
         'formatOptions': ['h2', 'bold', 'italic', 'underline', 'quote', 'anchor', 'embed', 'picture', 'removeFormat'],
+        'cleanPastedHTML': False,
         'enabled': True
     },
     'footer': {'order': 17, 'enabled': False},
