@@ -425,7 +425,7 @@ Feature: Content Profile
                     "sdWidth": "full"
                 },
                 "subject": {
-                    "enabled": true,
+                    "enabled": false,
                     "order": 8,
                     "sdWidth": "full"
                 },
@@ -910,7 +910,7 @@ Feature: Content Profile
                     "sdWidth": "full",
                     "field_name": "subject",
                     "order": 8,
-                    "enabled": true
+                    "enabled": false
                 },
                 "sms": {
                     "order": 12,
@@ -1093,7 +1093,7 @@ Feature: Content Profile
             "created_by": "#CONTEXT_USER_ID#",
             "updated_by": "#CONTEXT_USER_ID#",
             "schema": {
-                "subject_custom": {
+                "subject": {
                     "schema": {
                         "schema": {
                             "scheme": {
@@ -1170,7 +1170,7 @@ Feature: Content Profile
             "created_by": "#CONTEXT_USER_ID#",
             "updated_by": "#CONTEXT_USER_ID#",
             "schema": {
-                "subject_custom": {
+                "subject": {
                     "schema": {
                         "schema": {
                             "scheme": {
@@ -1182,8 +1182,8 @@ Feature: Content Profile
                         "type": "dict"
                     },
                     "type": "list",
-                    "required": true,
-                    "mandatory_in_list": {"scheme": {"category": "category"}}
+                    "required": false,
+                    "mandatory_in_list": {"scheme": {}}
                 }
             },
             "editor": {
