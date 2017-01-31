@@ -100,6 +100,14 @@ class PreferencesResource(Resource):
         'category': 'archive'
     })
 
+    superdesk.register_default_user_preference('singleline:view', {
+        'type': 'bool',
+        'enabled': False,
+        'default': False,
+        'label': 'Enable Single Line View',
+        'category': 'rows'
+    })
+
     superdesk.register_default_user_preference('editor:theme', {
         'type': 'string',
         'theme': '',
