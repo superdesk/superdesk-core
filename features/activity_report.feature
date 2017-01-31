@@ -32,7 +32,8 @@ Feature: Activity report
         {
         	"operation": "publish",
         	"desk": "#desks._id#",
-        	"operation_date": "#DATE#",
+        	"operation_date_start": "#DATE#",
+        	"operation_date_end": "#DATE#",
         	"subject":[{"qcode": "05007000", "name": "university"}],
         	"keywords": ["UNIVERSITY"],
         	"priority_start": 2,
@@ -62,7 +63,8 @@ Feature: Activity report
         {
         	"operation": "publish",
         	"desk": "#desks._id#",
-        	"operation_date": "#DATE#",
+        	"operation_date_start": "#DATE#",
+        	"operation_date_end": "#DATE#",
         	"group_by": ["desk"],
         	"subject":[{"qcode": "05007000", "name": "university"}],
         	"keywords": ["UNIVERSITY"],

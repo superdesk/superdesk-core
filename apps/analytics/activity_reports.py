@@ -27,7 +27,8 @@ class ActivityReportResource(Resource):
     schema = {
         'desk': Resource.rel('desks', nullable=True),
         'operation': {'type': 'string'},
-        'operation_date': {'type': 'datetime'},
+        'operation_date_start': {'type': 'datetime'},
+        'operation_date_end': {'type': 'datetime'},
         'subject': metadata_schema['subject'],
         'keywords': metadata_schema['keywords'],
         'category': metadata_schema['anpa_category'],
@@ -61,9 +62,10 @@ class ActivityReportService(BaseService):
         if report.get('keywords'):
             key = [x.lower() for x in report['keywords']]
             terms.append({'terms': {'keywords': key}})
-        if report.get('operation_date'):
-            op_date = format_date(report['operation_date'])
-            terms.append({'range': {'versioncreated': {'gte': op_date, 'lte': op_date}}})
+        if report.get('operation_date_start') and report.get('operation_date_end'):
+            op_date_start = format_date(report['operation_date_start'])
+            op_date_end = format_date(report['operation_date_end'])
+            terms.append({'range': {'versioncreated': {'gte': op_date_start, 'lte': op_date_end}}})
         if report.get('category'):
             categories = [category['qcode'] for category in report['category']]
             terms.append({'terms': {'anpa_category.qcode': categories}})

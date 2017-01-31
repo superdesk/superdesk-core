@@ -38,7 +38,11 @@ class SavedActivityReportResource(Resource):
             'required': True
         },
         'desk': Resource.rel('desks', nullable=True),
-        'operation_date': {
+        'operation_date_start': {
+            'type': 'datetime',
+            'required': True
+        },
+        'operation_date_end': {
             'type': 'datetime',
             'required': True
         },
