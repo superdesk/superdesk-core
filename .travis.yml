@@ -1,47 +1,61 @@
 language: python
 
 sudo: required
-
-python:
-    - "3.4"
-    - "3.5"
+dist: trusty
 
 services:
-    - elasticsearch
-    - mongodb
     - redis-server
-
-addons:
-  apt:
-    sources:
-    - mongodb-3.0-precise
-    - elasticsearch-1.7
-    packages:
-    - mongodb-org-server
     - elasticsearch
+
+matrix:
+    include:
+        - env: ELASTIC2X
+          python: "3.5"
+          addons:
+              apt:
+                  sources:
+                      - elasticsearch-2.x
+                      - mongodb-3.0-precise
+                  packages:
+                      - elasticsearch
+                      - mongodb-org-server
+
+        - env: ELASTIC17
+          python: "3.4"
+          addons:
+              apt:
+                  sources:
+                      - elasticsearch-1.7
+                      - mongodb-3.0-precise
+                  packages:
+                      - elasticsearch
+                      - mongodb-org-server
+
+
+        - env: ELASTIC17
+          python: "3.5"
+          addons:
+              apt:
+                  sources:
+                      - elasticsearch-1.7
+                      - mongodb-3.0-precise
+                  packages:
+                      - elasticsearch
+                      - mongodb-org-server
 
 cache:
   - pip
 
 install:
     - pip install .
-    - pip install -r requirements.txt
-    - pip install nose-timer
+    - pip install -r dev-requirements.txt
 
 before_script: >
     df -h
     && sudo sed -i 's\enabled: true\enabled: false\' /etc/mongod.conf
     && sudo service mongod restart
-    && mkdir /tmp/es-backups
-    && sudo chown elasticsearch:elasticsearch /tmp/es-backups
-    && echo "path.repo: ['/tmp/es-backups']" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
-    && echo "index.store.type: memory" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
-    && sudo service elasticsearch restart
-    && tail -n1 /etc/elasticsearch/elasticsearch.yml
-    && sleep 10
-    && curl -XPUT 'http://localhost:9200/_snapshot/backups' -d '{"type": "fs", "settings": {"location": "/tmp/es-backups"}}'
 
 script:
     - flake8
-    - time nosetests
-    - time behave --format progress2 --logging-clear-handlers --logcapture
+    - nosetests --logging-level=ERROR
+    - behave --format progress2 --logging-level=ERROR
