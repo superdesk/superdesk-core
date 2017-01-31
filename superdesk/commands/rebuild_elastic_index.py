@@ -9,11 +9,11 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-from superdesk.utils import get_random_string
-from elasticsearch.helpers import reindex
-from eve_elastic import get_es, get_indices
-import elasticsearch
 import superdesk
+import elasticsearch
+
+from superdesk.utils import get_random_string
+from eve_elastic import get_es, get_indices, reindex
 from apps.search import SearchService
 
 
