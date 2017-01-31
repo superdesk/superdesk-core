@@ -225,6 +225,10 @@ class NewsMLTwoFeedParser(XMLFeedParser):
                 tag = elem.tag.rsplit('}')[1]
                 elements.append('<%s>%s</%s>' % (tag, elem.text, tag))
 
+        # If there is a single p tag then replace the line feeds with breaks
+        if len(elements) == 1 and body[0].tag.rsplit('}')[1] == 'p':
+            elements[0] = elements[0].replace('\n    ', '</p><p>').replace('\n', '<br/>')
+
         content = dict()
         content['contenttype'] = tree.attrib['contenttype']
         content['content'] = "\n".join(elements)
