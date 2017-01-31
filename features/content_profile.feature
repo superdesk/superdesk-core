@@ -506,7 +506,7 @@ Feature: Content Profile
           },
           {
             "_id": "category",
-            "display_name": "Category",
+            "display_name": "NTB Category",
             "type": "manageable",
             "service": {"all": 1},
             "single_value": true,
@@ -668,7 +668,7 @@ Feature: Content Profile
                     "enabled": true
                 },
                 "subject_custom": {
-                    "field_name": "subject",
+                    "field_name": "Subject",
                     "order": 8,
                     "sdWidth": "full",
                     "enabled": true
@@ -697,7 +697,7 @@ Feature: Content Profile
                     "enabled": false
                 },
                 "genre_custom": {
-                    "field_name": "genre",
+                    "field_name": "Genre",
                     "order": 2,
                     "sdWidth": "half",
                     "enabled": true
@@ -713,7 +713,7 @@ Feature: Content Profile
                     "enabled": true
                 },
                 "category": {
-                    "field_name": "category",
+                    "field_name": "NTB Category",
                     "enabled": false
                 },
                 "byline": {
@@ -776,7 +776,7 @@ Feature: Content Profile
           },
           {
             "_id": "category",
-            "display_name": "Category",
+            "display_name": "NTB Category",
             "type": "manageable",
             "service": {"all": 1},
             "single_value": true,
@@ -875,7 +875,7 @@ Feature: Content Profile
                     "enabled": false
                 },
                 "category": {
-                    "field_name": "category",
+                    "field_name": "NTB Category",
                     "enabled": false
                 },
                 "place": {
@@ -899,7 +899,7 @@ Feature: Content Profile
                 },
                 "subject_custom": {
                     "sdWidth": "full",
-                    "field_name": "subject",
+                    "field_name": "Subject",
                     "order": 8,
                     "enabled": false
                 },
@@ -934,7 +934,7 @@ Feature: Content Profile
                 },
                 "genre_custom": {
                     "sdWidth": "half",
-                    "field_name": "genre",
+                    "field_name": "Genre",
                     "order": 2,
                     "enabled": false
                 },
@@ -1043,7 +1043,7 @@ Feature: Content Profile
         [
           {
             "_id": "category",
-            "display_name": "Category",
+            "display_name": "NTB Category",
             "type": "manageable",
             "service": {"all": 1},
             "single_value": true,
@@ -1095,7 +1095,7 @@ Feature: Content Profile
             },
             "editor": {
                 "category": {
-                    "field_name": "category",
+                    "field_name": "NTB Category",
                     "enabled": true
                 }
             }
@@ -1131,12 +1131,12 @@ Feature: Content Profile
             },
             "editor": {
                 "category": {
-                    "field_name": "category",
+                    "field_name": "NTB Category",
                     "enabled": true
                 },
                 "subject_custom": {
                     "sdWidth": "full",
-                    "field_name": "subject",
+                    "field_name": "Subject",
                     "order": 8,
                     "enabled": false
                 }
@@ -1172,7 +1172,7 @@ Feature: Content Profile
             },
             "editor": {
                 "category": {
-                    "field_name": "category",
+                    "field_name": "NTB Category",
                     "enabled": true
                 }
             }
