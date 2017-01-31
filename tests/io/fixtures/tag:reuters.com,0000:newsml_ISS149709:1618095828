@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+SUMMARY: 
+- Structure: NML2 SNI Text 
+- Based On: NML2 v2.10
+
+AUTHOR: thomsonreuters.com
+-->
+<!-- ========================================================= -->
+<newsMessage xmlns="http://iptc.org/std/nar/2006-10-01/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:rtr="http://www.reuters.com/ns/2003/08/content" xmlns:x="http://www.w3.org/1999/xhtml">
+  <header>
+    <sent>2017-01-30T18:54:14.000Z</sent>
+    <sender>reuters.com</sender>
+    <transmitId>tag:reuters.com,0000:newsml_ISS149709:1618095828</transmitId>
+    <priority>3</priority>
+    <destination>AFA</destination>
+    <destination>CSA</destination>
+    <destination>LBY</destination>
+    <destination>REULB</destination>
+    <destination>RSP</destination>
+    <destination>RWSA</destination>
+    <destination>RBN</destination>
+    <channel>TXT</channel>
+  </header>
+  <itemSet>
+    <newsItem guid="tag:reuters.com,0000:newsml_ISS149709" version="1618095828" standard="NewsML-G2" standardversion="2.10" conformance="power" xml:lang="en">
+      <catalogRef href="http://www.iptc.org/std/catalog/catalog.IPTC-G2-Standards_3.xml" />
+      <rightsInfo>
+        <copyrightHolder literal="Thomson Reuters" />
+        <copyrightNotice xml:lang="en">(c) Copyright Thomson Reuters 2017. Click For Restrictions - http://about.reuters.com/fulllegal.asp</copyrightNotice>
+      </rightsInfo>
+      <itemMeta>
+        <itemClass qcode="icls:text" rtr:msgType="S" />
+        <provider literal="reuters.com" />
+        <versionCreated>2017-01-30T18:54:14.000Z</versionCreated>
+        <firstCreated>2017-01-30T18:54:14.000Z</firstCreated>
+        <pubStatus qcode="stat:usable" />
+        <role qcode="itemRole:N" />
+        <fileName>2017-01-30T185414Z_1618095828_ISS149709_RTRMADT_0_SOCCER-TURKEY-RESULTS.XML</fileName>
+        <generator versioninfo="00.00.01">G3:IIM:FH</generator>
+        <profile versioninfo="00.00.01">SNI-Text</profile>
+        <service qcode="svc:RTR_TNS" />
+        <memberOf creator="trRule:rule1" modified="2017-01-30T18:54:14.000Z" literal="Business">
+          <name>Business</name>
+        </memberOf>
+        <memberOf creator="trRule:rule15" modified="2017-01-30T18:54:14.000Z" literal="Sports">
+          <name>Sports</name>
+        </memberOf>
+        <memberOf creator="trRule:rule22" modified="2017-01-30T18:54:14.000Z" literal="World-Asia">
+          <name>Asia</name>
+        </memberOf>
+        <memberOf creator="trRule:rule25" modified="2017-01-30T18:54:14.000Z" literal="World-Europe">
+          <name>Europe</name>
+        </memberOf>
+        <memberOf creator="trRule:rule27" modified="2017-01-30T18:54:14.000Z" literal="World-MiddleEast">
+          <name>Middle East</name>
+        </memberOf>
+        <signal qcode="edStat:N" />
+        <signal qcode="sic:TABLE" />
+        <signal qcode="prodId:TXT" />
+        <signal qcode="pmt:text" />
+        <rtr:versionedId guid="tag:reuters.com,0000:newsml_ISS149709:1618095828" />
+      </itemMeta>
+      <contentMeta>
+        <urgency>3</urgency>
+        <infoSource role="cRole:origProv" literal="Reuters" />
+        <creator literal="Reuters" />
+        <altId type="idType:USN" rtr:isOriginal="1">ISS149709</altId>
+        <altId type="idType:OTR">ISS149709</altId>
+        <language tag="en" />
+        <genre qcode="N2:RSLT">
+          <name>"Results, Listings and Statistics (Sports)"</name>
+        </genre>
+        <subject qcode="MCC:SPO" />
+        <subject qcode="N2:SOCC" />
+        <subject qcode="N2:SPO" />
+        <subject qcode="N2:EUROP" />
+        <subject qcode="N2:MEAST" />
+        <subject qcode="N2:ASIA" />
+        <subject qcode="N2:TR" />
+        <subject qcode="subj:15054000" />
+        <subject qcode="subj:15000000" />
+        <subject qcode="N2:SOC" />
+        <subject qcode="N2:TUR" />
+        <subject qcode="a1312cat:s" />
+        <subject qcode="MCCL:SPO" />
+        <slugline separator="-">SOCCER-TURKEY/RESULTS</slugline>
+        <headline>Soccer-Turkish championship results and standings</headline>
+        <creditline>Reuters</creditline>
+        <description role="descRole:caption">SOCCER-TURKEY/RESULTS:Soccer-Turkish championship results and standings</description>
+      </contentMeta>
+      <contentSet>
+        <inlineXML contenttype="application/xhtml+html" wordcount="265">
+          <html xmlns="http://www.w3.org/1999/xhtml">
+            <head>
+              <title />
+            </head>
+            <body>
+              <p>Jan 30 (Gracenote) - Results and standings from the Turkish championship matches on Monday 
+Monday, January 30  
+Adanaspor           2 Kasimpasa            0  
+Besiktas            5 Konyaspor            1  
+Sunday, January 29  
+Genclerbirligi      1 Osmanlispor          1  
+Kayserispor         4 Fenerbahce           1  
+Istanbul Basaksehir 1 Bursaspor            0  
+Trabzonspor         4 Gaziantepspor        0  
+Saturday, January 28
+Antalyaspor         2 Alanyaspor           1  
+Rizespor            1 Kardemir Karabukspor 0  
+Galatasaray         6 Akhisar Belediyespor 0  
+   Standings             P  W  D L  F  A  Pts 
+1  Besiktas              19 13 5 1  39 15 44  
+-------------------------
+2  Istanbul Basaksehir   19 12 6 1  37 12 42  
+-------------------------
+3  Galatasaray           19 12 3 4  38 18 39  
+4  Fenerbahce            19 10 5 4  38 18 35  
+-------------------------
+5  Antalyaspor           19 9  4 6  23 22 31  
+-------------------------
+6  Osmanlispor           19 6  9 4  23 21 27  
+7  Konyaspor             19 7  6 6  23 23 27  
+8  Bursaspor             19 8  3 8  21 21 27  
+9  Trabzonspor           19 8  3 8  19 21 27  
+10 Kardemir Karabuekspor 19 7  3 9  22 27 24  
+11 Genclerbirligi        18 5  8 5  17 16 23  
+12 Kasimpasa             19 6  3 10 21 28 21  
+13 Akhisar Belediyespor  19 5  6 8  11 24 21  
+14 Rizespor              19 5  4 10 20 31 19  
+15 Alanyaspor            19 5  3 11 26 40 18  
+-------------------------
+16 Adanaspor             19 4  5 10 18 26 17  
+17 Kayserispor           19 4  4 11 18 32 16  
+18 Gaziantepspor         18 3  2 13 15 34 11  
+1:     Champions League / EC I                 
+2:     Champions League preliminary round      
+3-4:   Europa League preliminary round         
+5:     Europa League depending on domestic cup 
+16-18: Relegation</p>
+            </body>
+          </html>
+        </inlineXML>
+      </contentSet>
+    </newsItem>
+  </itemSet>
+</newsMessage>
+

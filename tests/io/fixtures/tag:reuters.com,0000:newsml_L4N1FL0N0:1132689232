@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+SUMMARY: 
+- Structure: NML2 SNI Text 
+- Based On: NML2 v2.10
+
+AUTHOR: thomsonreuters.com
+-->
+<!-- ========================================================= -->
+<newsMessage xmlns="http://iptc.org/std/nar/2006-10-01/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:rtr="http://www.reuters.com/ns/2003/08/content" xmlns:x="http://www.w3.org/1999/xhtml">
+  <header>
+    <sent>2017-01-31T03:47:29.000Z</sent>
+    <sender>reuters.com</sender>
+    <transmitId>tag:reuters.com,0000:newsml_L4N1FL0N0:1132689232</transmitId>
+    <priority>3</priority>
+    <destination>C</destination>
+    <destination>D</destination>
+    <destination>E</destination>
+    <destination>M</destination>
+    <destination>O</destination>
+    <destination>U</destination>
+    <destination>MTL</destination>
+    <destination>GRO</destination>
+    <destination>SOF</destination>
+    <destination>OIL</destination>
+    <destination>AUF</destination>
+    <destination>CANT</destination>
+    <destination>J</destination>
+    <destination>ABN</destination>
+    <destination>ABX</destination>
+    <destination>BNX</destination>
+    <destination>FUN</destination>
+    <destination>SNI</destination>
+    <destination>Z</destination>
+    <channel>TXT</channel>
+  </header>
+  <itemSet>
+    <newsItem guid="tag:reuters.com,0000:newsml_L4N1FL0N0" version="1132689232" standard="NewsML-G2" standardversion="2.10" conformance="power" xml:lang="en">
+      <catalogRef href="http://www.iptc.org/std/catalog/catalog.IPTC-G2-Standards_3.xml" />
+      <rightsInfo>
+        <copyrightHolder literal="Thomson Reuters" />
+        <copyrightNotice xml:lang="en">(c) Copyright Thomson Reuters 2017. Click For Restrictions - http://about.reuters.com/fulllegal.asp</copyrightNotice>
+      </rightsInfo>
+      <itemMeta>
+        <itemClass qcode="icls:text" rtr:msgType="R" />
+        <provider literal="reuters.com" />
+        <versionCreated>2017-01-31T03:47:29.000Z</versionCreated>
+        <firstCreated>2017-01-31T03:47:29.000Z</firstCreated>
+        <pubStatus qcode="stat:usable" />
+        <role qcode="itemRole:N" />
+        <fileName>2017-01-31T034729Z_1132689232_L4N1FL0N0_RTRMADT_0_GLOBAL-PRECIOUS-UPDATE-1.XML</fileName>
+        <generator versioninfo="00.00.01">G3:IIM:FH</generator>
+        <profile versioninfo="00.00.01">SNI-Text</profile>
+        <service qcode="svc:RTR_TNS" />
+        <memberOf creator="trRule:rule1" modified="2017-01-31T03:47:30.000Z" literal="Business">
+          <name>Business</name>
+        </memberOf>
+        <memberOf creator="trRule:rule2" modified="2017-01-31T03:47:30.000Z" literal="Economy">
+          <name>Economy</name>
+        </memberOf>
+        <memberOf creator="trRule:rule11" modified="2017-01-31T03:47:30.000Z" literal="Politics">
+          <name>Politics</name>
+        </memberOf>
+        <memberOf creator="trRule:rule22" modified="2017-01-31T03:47:30.000Z" literal="World-Asia">
+          <name>Asia</name>
+        </memberOf>
+        <memberOf creator="trRule:rule25" modified="2017-01-31T03:47:30.000Z" literal="World-Europe">
+          <name>Europe</name>
+        </memberOf>
+        <memberOf creator="trRule:rule29" modified="2017-01-31T03:47:30.000Z" literal="World-US">
+          <name>US</name>
+        </memberOf>
+        <memberOf creator="trRule:rule33" modified="2017-01-31T03:47:30.000Z" literal="World-UK">
+          <name>UK</name>
+        </memberOf>
+        <instanceOf qcode="NI:GOL/" />
+        <signal qcode="edStat:U" />
+        <signal qcode="sic:TABLE" />
+        <signal qcode="prodId:TXT" />
+        <signal qcode="pmt:text" />
+        <rtr:versionedId guid="tag:reuters.com,0000:newsml_L4N1FL0N0:1132689232" />
+      </itemMeta>
+      <contentMeta>
+        <urgency>3</urgency>
+        <infoSource role="cRole:origProv" literal="Reuters" />
+        <creator literal="Reuters" />
+        <altId type="idType:USN" rtr:isOriginal="1">L4N1FL0N0</altId>
+        <altId type="idType:OTR">L4N1FL0N0</altId>
+        <language tag="en" />
+        <genre qcode="N2:MKTREP">
+          <name>Market Reports</name>
+        </genre>
+        <genre qcode="N2:REP">
+          <name>Reports</name>
+        </genre>
+        <genre qcode="N2:MTGFX">
+          <name>Media type Graphics</name>
+        </genre>
+        <subject qcode="MCC:OEC" />
+        <subject qcode="N2:COM" />
+        <subject qcode="N2:CDTY" />
+        <subject qcode="N2:US" />
+        <subject qcode="N2:ASIA" />
+        <subject qcode="N2:PREMTL" />
+        <subject qcode="N2:GOL" />
+        <subject qcode="N2:PALL" />
+        <subject qcode="N2:SLVR" />
+        <subject qcode="N2:PLAT" />
+        <subject qcode="N2:METL" />
+        <subject qcode="N2:GB" />
+        <subject qcode="N2:EU" />
+        <subject qcode="N2:AMERS" />
+        <subject qcode="N2:NAMER" />
+        <subject qcode="N2:WEU" />
+        <subject qcode="N2:EUROP" />
+        <subject qcode="N2:INTAG" />
+        <subject qcode="N2:GEN" />
+        <subject qcode="N2:POL" />
+        <subject qcode="N2:PGM" />
+        <subject qcode="subj:04008024" />
+        <subject qcode="subj:04012002" />
+        <subject qcode="subj:04012004" />
+        <subject qcode="subj:04009002" />
+        <subject qcode="subj:11000000" />
+        <subject qcode="subj:11028000" />
+        <subject qcode="subj:10000000" />
+        <subject qcode="N2:USA" />
+        <subject qcode="N2:GBR" />
+        <subject qcode="N2:BACT" />
+        <subject qcode="N2:UK" />
+        <subject qcode="N2:PIA" />
+        <subject qcode="a1312cat:f" />
+        <subject qcode="MCCL:OVR" />
+        <subject qcode="MCCL:OEC" />
+        <slugline separator="-">GLOBAL-PRECIOUS/ (UPDATE 1)</slugline>
+        <headline>PRECIOUS-Gold rises as Trump policy fuels safe haven demand</headline>
+        <creditline>Reuters</creditline>
+        <description role="descRole:caption">GLOBAL-PRECIOUS/ (UPDATE 1):PRECIOUS-Gold rises as Trump policy fuels safe haven demand</description>
+      </contentMeta>
+      <contentSet>
+        <inlineXML contenttype="application/xhtml+html" wordcount="348">
+          <html xmlns="http://www.w3.org/1999/xhtml">
+            <head>
+              <title />
+            </head>
+            <body>
+              <p>(Adds comments, detail)
+    * Spot gold may edge up to $1,205 per ounce- technicals
+    * Investors eye U.S. Fed monetary policy meeting
+    * Dollar index down 0.1 percent
+
+    By Arpan Varghese
+    Jan 30 (Reuters) - Gold rose on Tuesday on increased safe
+haven demand as U.S. President Donald Trump's tough stance on
+immigration rattled global markets, with prices finding further
+support from a weaker dollar.
+    Traders were also awaiting the U.S. Federal Reserve's
+two-day meeting on monetary policy starting on Tuesday for cues
+on U.S. interest rate hikes.
+    Spot gold rose 0.4 percent to $1,200.00 per ounce by
+0307 GMT, while U.S. gold futures edged up 0.5 percent
+to $1,199.6.
+    The dollar index, which measures the greenback
+against a basket of currencies, was down 0.1 percent at 100.34. 
+    Asian shares were on the defensive on Tuesday as stringent
+curbs on travel to the United States ordered by President Donald
+Trump brought home to investors that he is serious about putting
+his radical campaign pledges into action. 
+    "There are talks that the ban could affect the tech and
+energy sectors and this suggests that there could be some growth
+challenges if the ban is prolonged, so the current risk aversion
+(driving gold markets) comes as no surprise," OCBC analyst
+Barnabas Gan said.
+    Spot gold may edge up to $1,205 per ounce, as it has pierced
+resistance at $1,197, according to Reuters technical analyst
+Wang Tao. 
+    Traders were also eyeing a meeting of the U.S. Fed on
+Tuesday and Wednesday. The Fed, which raised interest rates in
+December, has signaled as many as three rate rises in 2017.
+    Higher rates could mean a higher U.S. currency, which makes
+dollar-denominated gold more expensive for holders of other
+currencies, potentially dampening demand.
+    "The market sentiment is for the Fed to stay pat in the
+upcoming meeting," Gan said.
+    In other precious metals, spot silver was up 0.2
+percent, at $17.14 per ounce, while platinum edged up by
+0.5 percent, to $990.30.
+    Palladium rose 0.7 percent, to $745.40 per ounce.
+    
+
+ (Reporting by Arpan Varghese in Bengaluru; Editing by Joseph
+Radford and Richard Pullin)</p>
+            </body>
+          </html>
+        </inlineXML>
+      </contentSet>
+    </newsItem>
+  </itemSet>
+</newsMessage>
+
