@@ -1,0 +1,262 @@
+{
+    "service": [
+        {
+            "name": "News",
+            "code": "news"
+        }
+    ],
+    "byline": "Ljuba Rankovi\u0107",
+    "urgency": 3,
+    "firstcreated": "2017-02-01T10:18:33+0000",
+    "priority": 6,
+    "language": "en",
+    "guid": "urn:newsml:localhost:2017-02-01T11:18:33.977356:c1a2d498-5170-4eea-8a9b-f1025c012962",
+    "type": "composite",
+    "version": "3",
+    "subject": [
+        {
+            "name": "arts, culture and entertainment",
+            "code": "01000000"
+        }
+    ],
+    "associations": {
+        "main-0": {
+            "description_text": "Venice",
+            "byline": "Ljuba Rankovi\u0107",
+            "place": [],
+            "urgency": 3,
+            "firstcreated": "2017-02-01T10:16:27+0000",
+            "priority": 6,
+            "language": "en",
+            "versioncreated": "2017-02-01T10:19:04+0000",
+            "mimetype": "image/jpeg",
+            "type": "picture",
+            "version": "5",
+            "subject": [
+                {
+                    "name": "arts, culture and entertainment",
+                    "code": "01000000"
+                }
+            ],
+            "guid": "tag:localhost:2017:fb0f18f1-7334-4989-ac2c-2635e55702e6",
+            "pubstatus": "usable",
+            "slugline": "Venice",
+            "headline": "Venice",
+            "body_text": "Venice",
+            "service": [
+                {
+                    "name": "News",
+                    "code": "news"
+                }
+            ],
+            "renditions": {
+                "777x600": {
+                    "width": 775,
+                    "poi": {
+                        "y": 996,
+                        "x": 880
+                    },
+                    "href": "https://superdesk-sourcefabric.s3-eu-west-1.amazonaws.com/20170201110216/09f3d350-2877-4f7a-853f-2d9401efce5b.jpg",
+                    "media": "20170201110216/09f3d350-2877-4f7a-853f-2d9401efce5b.jpg",
+                    "height": 600,
+                    "mimetype": "image/jpeg"
+                },
+                "viewImage": {
+                    "width": 640,
+                    "poi": {
+                        "y": 310,
+                        "x": 275
+                    },
+                    "href": "https://superdesk-sourcefabric.s3-eu-west-1.amazonaws.com/20170201110216/66da382fdc80b8744ae9f7462d619eaca98f32fd538d0d18e5bb628a2b2309e7.jpg",
+                    "media": "20170201110216/66da382fdc80b8744ae9f7462d619eaca98f32fd538d0d18e5bb628a2b2309e7.jpg",
+                    "height": 426,
+                    "mimetype": "image/jpeg"
+                },
+                "thumbnail": {
+                    "width": 180,
+                    "poi": {
+                        "y": 87,
+                        "x": 77
+                    },
+                    "href": "https://superdesk-sourcefabric.s3-eu-west-1.amazonaws.com/20170201110216/79690dbdd472a083c80b6ddb8412da04715095c0238f225df673ca8f6c6bed8c.jpg",
+                    "media": "20170201110216/79690dbdd472a083c80b6ddb8412da04715095c0238f225df673ca8f6c6bed8c.jpg",
+                    "height": 120,
+                    "mimetype": "image/jpeg"
+                },
+                "original": {
+                    "width": 2048,
+                    "poi": {
+                        "y": 996,
+                        "x": 880
+                    },
+                    "href": "https://superdesk-sourcefabric.s3-eu-west-1.amazonaws.com/20170201110216/d3ad29bafe0710c42b7cfc201939f266c6ca5c11a713625388decff4da87ba5b.jpg",
+                    "media": "20170201110216/d3ad29bafe0710c42b7cfc201939f266c6ca5c11a713625388decff4da87ba5b.jpg",
+                    "height": 1365,
+                    "mimetype": "image/jpeg"
+                },
+                "700xauto": {
+                    "width": 700,
+                    "poi": {
+                        "y": 340,
+                        "x": 301
+                    },
+                    "href": "https://superdesk-sourcefabric.s3-eu-west-1.amazonaws.com/20170201110216/1b15187ece7e3163305d1916491827f6ecf6b10313039a5b25d170c4c661750c.jpg",
+                    "media": "20170201110216/1b15187ece7e3163305d1916491827f6ecf6b10313039a5b25d170c4c661750c.jpg",
+                    "height": 466,
+                    "mimetype": "image/jpeg"
+                },
+                "600x300": {
+                    "width": 600,
+                    "poi": {
+                        "y": 658,
+                        "x": 880
+                    },
+                    "href": "https://superdesk-sourcefabric.s3-eu-west-1.amazonaws.com/20170201110216/a853c328-f595-4f9c-8dc9-546d151c4856.jpg",
+                    "media": "20170201110216/a853c328-f595-4f9c-8dc9-546d151c4856.jpg",
+                    "height": 300,
+                    "mimetype": "image/jpeg"
+                },
+                "baseImage": {
+                    "width": 1400,
+                    "poi": {
+                        "y": 681,
+                        "x": 602
+                    },
+                    "href": "https://superdesk-sourcefabric.s3-eu-west-1.amazonaws.com/20170201110216/88fd8cd90c9c225aec29f81d4fff058c31c5762da0807a76b2f51adf5f24035b.jpg",
+                    "media": "20170201110216/88fd8cd90c9c225aec29f81d4fff058c31c5762da0807a76b2f51adf5f24035b.jpg",
+                    "height": 933,
+                    "mimetype": "image/jpeg"
+                }
+            }
+        },
+        "main-1": {
+            "description_text": "Hashtag twee fam, actually offal sustainable activated charcoal vexillologist try-hard tilde ethical hammock bushwick shabby chic. Quinoa tattooed hashtag, poutine 8-bit polaroid church-key",
+            "byline": "Ljuba Rankovi\u0107",
+            "pubstatus": "usable",
+            "urgency": 3,
+            "firstcreated": "2017-02-01T10:02:27+0000",
+            "priority": 6,
+            "headline": "Quinoa tattooed hashtag",
+            "language": "en",
+            "versioncreated": "2017-02-01T10:19:04+0000",
+            "type": "text",
+            "version": "3",
+            "description_html": "<p>Hashtag twee fam, actually offal sustainable activated charcoal vexillologist try-hard tilde ethical hammock bushwick shabby chic. Quinoa tattooed hashtag, poutine 8-bit polaroid church-key</p>",
+            "located": "2017",
+            "associations": {
+                "embedded6964110311": {
+                    "type": "picture",
+                    "byline": "Ljuba Rankovi\u0107",
+                    "place": [],
+                    "urgency": 3,
+                    "priority": 6,
+                    "firstcreated": "2017-02-01T10:11:26+0000",
+                    "mimetype": "image/jpeg",
+                    "guid": "tag:localhost:2017:50cf3b7d-9ee0-497f-9909-d8a7aeef72cd",
+                    "description_text": "St Marco",
+                    "version": "3",
+                    "versioncreated": "2017-02-01T10:11:52+0000",
+                    "pubstatus": "usable",
+                    "headline": "St Marco",
+                    "language": "en",
+                    "body_text": "St Marco",
+                    "renditions": {
+                        "777x600": {
+                            "width": 775,
+                            "poi": {
+                                "y": 1105,
+                                "x": 878
+                            },
+                            "href": "https://superdesk-sourcefabric.s3-eu-west-1.amazonaws.com/2017020111028/1c2a4083-6473-4da6-b7a7-c263931d14e3.jpg",
+                            "media": "2017020111028/1c2a4083-6473-4da6-b7a7-c263931d14e3.jpg",
+                            "height": 600,
+                            "mimetype": "image/jpeg"
+                        },
+                        "viewImage": {
+                            "width": 640,
+                            "poi": {
+                                "y": 345,
+                                "x": 320
+                            },
+                            "href": "https://superdesk-sourcefabric.s3-eu-west-1.amazonaws.com/2017020111028/3e698f090668ac4ce19926bb0cb31dedec7f95a4f612db852f144d164e9b0ab1.jpg",
+                            "media": "2017020111028/3e698f090668ac4ce19926bb0cb31dedec7f95a4f612db852f144d164e9b0ab1.jpg",
+                            "height": 426,
+                            "mimetype": "image/jpeg"
+                        },
+                        "thumbnail": {
+                            "width": 180,
+                            "poi": {
+                                "y": 97,
+                                "x": 90
+                            },
+                            "href": "https://superdesk-sourcefabric.s3-eu-west-1.amazonaws.com/2017020111028/a0502320d6d07dd921253171e971943adf791eb2b34dfe82da73c053a343a7c2.jpg",
+                            "media": "2017020111028/a0502320d6d07dd921253171e971943adf791eb2b34dfe82da73c053a343a7c2.jpg",
+                            "height": 120,
+                            "mimetype": "image/jpeg"
+                        },
+                        "original": {
+                            "width": 2048,
+                            "poi": {
+                                "y": 1105,
+                                "x": 1024
+                            },
+                            "href": "https://superdesk-sourcefabric.s3-eu-west-1.amazonaws.com/2017020111028/9a836848c3c3387a151dbed96e83b7d50e6b0e71ca397e0b1dc0f4b2f4127acd.jpg",
+                            "media": "2017020111028/9a836848c3c3387a151dbed96e83b7d50e6b0e71ca397e0b1dc0f4b2f4127acd.jpg",
+                            "height": 1365,
+                            "mimetype": "image/jpeg"
+                        },
+                        "700xauto": {
+                            "width": 700,
+                            "poi": {
+                                "y": 377,
+                                "x": 350
+                            },
+                            "href": "https://superdesk-sourcefabric.s3-eu-west-1.amazonaws.com/2017020111028/86cc6bbd7bd0cb8ab6528eb6e9ea369af69530c23eb5990a97c1c90660067615.jpg",
+                            "media": "2017020111028/86cc6bbd7bd0cb8ab6528eb6e9ea369af69530c23eb5990a97c1c90660067615.jpg",
+                            "height": 466,
+                            "mimetype": "image/jpeg"
+                        },
+                        "600x300": {
+                            "width": 600,
+                            "poi": {
+                                "y": 767,
+                                "x": 1024
+                            },
+                            "href": "https://superdesk-sourcefabric.s3-eu-west-1.amazonaws.com/2017020111028/8106201b-0f3c-4f04-821d-828ee76a1865.jpg",
+                            "media": "2017020111028/8106201b-0f3c-4f04-821d-828ee76a1865.jpg",
+                            "height": 300,
+                            "mimetype": "image/jpeg"
+                        },
+                        "baseImage": {
+                            "width": 1400,
+                            "poi": {
+                                "y": 755,
+                                "x": 700
+                            },
+                            "href": "https://superdesk-sourcefabric.s3-eu-west-1.amazonaws.com/2017020111028/4e00dc9022fbfd91606daf18466373c669784df77e1efc5122b02370ee20c778.jpg",
+                            "media": "2017020111028/4e00dc9022fbfd91606daf18466373c669784df77e1efc5122b02370ee20c778.jpg",
+                            "height": 933,
+                            "mimetype": "image/jpeg"
+                        }
+                    }
+                }
+            },
+            "guid": "urn:newsml:localhost:2017-02-01T11:02:27.909552:d306e5bf-4bbc-4222-9dda-383591f8cb6e",
+            "profile": "57d91f4ec3a5bed769c59846",
+            "slugline": "Quinoa tattooed hashtag",
+            "body_html": "<p style=\"box-sizing: border-box; margin-bottom: 1.1em; border: 0px; font-size: 19.35px; line-height: 32.895px; font-family: Lato, sans-serif; color: rgb(68, 68, 68); background-color: rgb(255, 255, 255);\">Cardigan listicle synth, next level skateboard artisan narwhal lo-fi asymmetrical chambray raclette meh occupy YOLO tacos. Quinoa letterpress PBR&amp;B synth prism distillery, tumeric pork belly venmo keytar. Raw denim PBR&amp;B pour-over, farm-to-table gentrify offal keffiyeh hella polaroid helvetica vaporware chambray irony. Man bun direct trade schlitz distillery, pork belly raw denim tumblr wayfarers vice hexagon. Four dollar toast keytar polaroid, raw denim hashtag mustache distillery fap.</p>\n<!-- EMBED START Image {id: \"embedded6964110311\"} -->\n<figure><img src=\"https://superdesk-sourcefabric.s3-eu-west-1.amazonaws.com/2017020111028/8106201b-0f3c-4f04-821d-828ee76a1865.jpg\" alt=\"St Marco\" srcset=\"https://superdesk-sourcefabric.s3-eu-west-1.amazonaws.com/2017020111028/8106201b-0f3c-4f04-821d-828ee76a1865.jpg 600w, https://superdesk-sourcefabric.s3-eu-west-1.amazonaws.com/2017020111028/1c2a4083-6473-4da6-b7a7-c263931d14e3.jpg 775w\" /><figcaption>St Marco</figcaption></figure>\n<!-- EMBED END Image {id: \"embedded6964110311\"} -->\n<p style=\"box-sizing: border-box; margin-bottom: 1.1em; border: 0px; font-size: 19.35px; line-height: 32.895px; font-family: Lato, sans-serif; color: rgb(68, 68, 68); background-color: rgb(255, 255, 255);\">Helvetica gastropub yuccie locavore, leggings raclette hoodie DIY four loko letterpress keffiyeh af mixtape. Hot chicken butcher tote bag, taxidermy scenester retro freegan synth disrupt before they sold out whatever. Vice cold-pressed cronut meh. Listicle XOXO iceland, PBR&amp;B direct trade woke poke organic enamel pin. Bushwick meggings williamsburg, vaporware tilde listicle tofu cred gochujang next level neutra. Man braid intelligentsia plaid whatever chia pabst occupy, vape wayfarers. Meditation 8-bit authentic, stumptown banh mi lyft farm-to-table hammock narwhal.</p><p style=\"box-sizing: border-box; margin-bottom: 1.1em; border: 0px; font-size: 19.35px; line-height: 32.895px; font-family: Lato, sans-serif; color: rgb(68, 68, 68); background-color: rgb(255, 255, 255);\">Cold-pressed brunch PBR&amp;B, franzen live-edge tumeric hell of chambray forage activated charcoal poke jean shorts bushwick put a bird on it. Cold-pressed fanny pack distillery unicorn sustainable ethical. Skateboard meditation lumbersexual fam, XOXO pinterest man bun edison bulb intelligentsia selfies photo booth health goth. Lo-fi synth neutra yr pok pok, next level sartorial. Direct trade franzen vexillologist, swag flannel beard butcher iceland tacos chillwave blue bottle mustache. Blue bottle etsy brooklyn, poutine bicycle rights hot chicken whatever vape freegan craft beer four loko enamel pin plaid. Man bun iceland polaroid ethical, viral flannel green juice etsy.</p>",
+            "place": [],
+            "service": [
+                {
+                    "name": "News",
+                    "code": "news"
+                }
+            ]
+        }
+    },
+    "versioncreated": "2017-02-01T10:19:04+0000",
+    "pubstatus": "usable",
+    "slugline": "Quinoa tattooed hashtag",
+    "headline": "Quinoa tattooed hashtag",
+    "place": []
+}

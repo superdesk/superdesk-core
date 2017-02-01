@@ -109,21 +109,25 @@ class HTTPPushService(PublishService):
         if not (type(assets_url) == str and assets_url.strip()):
             return
 
-        renditions = item.get('renditions', {})
+        def parse_media(renditions):
+            media = {}
+            for _, rendition in renditions.items():
+                rendition.pop('href', None)
+                media[rendition['media']] = rendition
+            return media
+
+        media = {}
+
         for assoc in item.get('associations', {}).values():
-            renditions.update(assoc.get('renditions', {}))
+            media.update(parse_media(assoc.get('renditions', {})))
             for assoc2 in assoc.get('associations', {}).values():
-                renditions.update(assoc2.get('renditions', {}))
-        for name, rendition in renditions.items():
-            del renditions[name]['href']
-            if not self._media_exists(rendition['media'], destination):
-                media = app.media.get(rendition['media'], resource='upload')
-                files = {'media': (
-                    rendition['media'], media, rendition['mimetype']
-                )}
-                response = requests.post(
-                    assets_url, files=files, data={'media_id': rendition['media']}
-                )
+                media.update(parse_media(assoc2.get('renditions', {})))
+
+        for media_id, rendition in media.items():
+            if not self._media_exists(media_id, destination):
+                binary = app.media.get(media_id, resource='upload')
+                files = {'media': (media_id, binary, rendition['mimetype'])}
+                response = requests.post(assets_url, files=files, data={'media_id': media_id})
                 if response.status_code != requests.codes.created:  # @UndefinedVariable
                     self._raise_publish_error(
                         response.status_code,
