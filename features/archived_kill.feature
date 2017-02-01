@@ -392,7 +392,7 @@ Feature: Kill a content item in the (dusty) archive
     When we delete "/archived/#archived._id#"
     Then we get error 400
     """
-    {"_message": "Only Text articles are allowed to Kill in Archived repo"}
+    {"_message": "Only Text articles are allowed to be Killed in Archived repo"}
     """
 
   @auth
