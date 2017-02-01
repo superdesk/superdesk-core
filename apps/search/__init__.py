@@ -121,7 +121,7 @@ class SearchService(superdesk.Service):
 
         # if the system has a setting value for the maximum search depth then apply the filter
         if not app.settings['MAX_SEARCH_DEPTH'] == -1:
-            filters.append(dict(limit={'value': app.settings['MAX_SEARCH_DEPTH']}))
+            query['terminate_after'] = app.settings['MAX_SEARCH_DEPTH']
 
         set_filters(query, filters)
 

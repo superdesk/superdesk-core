@@ -848,10 +848,12 @@ def step_impl_then_get_error(context, code):
 def step_impl_then_get_list(context, total_count):
     assert_200(context.response)
     data = get_json_data(context.response)
-    int_count = int(total_count.replace('+', ''))
+    int_count = int(total_count.replace('+', '').replace('<', ''))
 
     if '+' in total_count:
         assert int_count <= data['_meta']['total'], '%d items is not enough' % data['_meta']['total']
+    elif total_count.startswith('<'):
+        assert int_count > data['_meta']['total'], '%d items is too much' % data['_meta']['total']
     else:
         assert int_count == data['_meta']['total'], 'got %d: %s' % (data['_meta']['total'],
                                                                     format_items(data['_items']))
