@@ -311,9 +311,11 @@ def expand_subject(editor, schema, fields_map):
     subject = get_subject_name(fields_map)
     allowed = get_allowed_list(schema[subject])
     mandatory = get_mandatory_list(schema[subject])
+    default_values = schema[subject].get('default', [])
     schema[subject]['schema'] = {}
     set_enabled_for_custom(editor, allowed, fields_map)
     set_required_for_custom(editor, schema, mandatory, fields_map)
+    set_default_for_custom(schema, default_values, fields_map)
 
 
 def set_enabled_for_custom(editor, allowed, fields_map):
@@ -326,6 +328,16 @@ def set_required_for_custom(editor, schema, mandatory, fields_map):
         if field == value or field == 'subject':
             editor[fields_map.get(field, field)]['required'] = value is not None
             schema[fields_map.get(field, field)]['required'] = value is not None
+
+
+def set_default_for_custom(schema, default_values, fields_map):
+    for old_field, field in fields_map.items():
+        if (field == old_field or old_field == 'subject') and schema.get(field, None) is not None:
+            default = []
+            for value in default_values:
+                if value.get('scheme', None) == field:
+                    default.append(value)
+            schema[field]['default'] = default
 
 
 def get_subject_name(fields_map):
@@ -380,6 +392,7 @@ def clean_editor(editor):
 def compose_subject_schema(schema, fields_map):
     mandatory = {}
     allowed = []
+    default = []
     for old_field, field in fields_map.items():
         if (old_field == field or old_field == 'subject') and schema.get(field, None):
             allowed.append(field)
@@ -387,15 +400,18 @@ def compose_subject_schema(schema, fields_map):
                 mandatory[old_field] = field
             else:
                 mandatory[old_field] = None
+            if schema[field].get('default', None):
+                default.extend(schema[field]['default'])
         else:
             mandatory[old_field] = None
     if allowed:
-        init_subject_schema(schema, mandatory, allowed, fields_map)
+        init_subject_schema(schema, default, mandatory, allowed, fields_map)
 
 
-def init_subject_schema(schema, mandatory, allowed, fields_map):
+def init_subject_schema(schema, default, mandatory, allowed, fields_map):
     subject = get_subject_name(fields_map)
     schema[subject] = deepcopy(DEFAULT_SCHEMA['subject'])
+    schema[subject]['default'] = default
     schema[subject]['mandatory_in_list']['scheme'] = mandatory
     schema[subject]['schema']['schema']['scheme']['allowed'] = allowed
     schema[subject]['required'] = mandatory['subject'] is not None

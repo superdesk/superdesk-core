@@ -1126,7 +1126,23 @@ Feature: Content Profile
                 },
                 "category": {
                     "type": "list",
-                    "required": false
+                    "required": false,
+                    "default" : [
+                        {
+                            "scheme" : "category",
+                            "qcode" : "Innenriks",
+                            "name" : "Innenriks",
+                            "service" : {
+                                "t" : 1,
+                                "e" : 1,
+                                "j" : 1,
+                                "s" : 1,
+                                "n" : 1,
+                                "m" : 1,
+                                "i" : 1
+                            }
+                        }
+                    ]
                 }
             },
             "editor": {
@@ -1167,7 +1183,23 @@ Feature: Content Profile
                     },
                     "type": "list",
                     "required": false,
-                    "mandatory_in_list": {"scheme": {}}
+                    "mandatory_in_list": {"scheme": {}},
+                    "default" : [
+                        {
+                            "scheme" : "category",
+                            "qcode" : "Innenriks",
+                            "name" : "Innenriks",
+                            "service" : {
+                                "t" : 1,
+                                "e" : 1,
+                                "j" : 1,
+                                "s" : 1,
+                                "n" : 1,
+                                "m" : 1,
+                                "i" : 1
+                            }
+                        }
+                    ]
                 }
             },
             "editor": {
