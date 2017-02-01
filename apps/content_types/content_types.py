@@ -233,10 +233,10 @@ def prepare_for_edit_content_type(doc):
     init_default(doc)
     editor = doc['editor']
     schema = doc['schema']
-    fieldsMap = get_field_map()
-    init_custom(editor, schema, fieldsMap)
-    expand_subject(editor, schema, fieldsMap)
-    set_field_name(editor, fieldsMap)
+    fields_map, field_names = get_fields_map_and_names()
+    init_custom(editor, schema, fields_map)
+    expand_subject(editor, schema, fields_map)
+    set_field_name(editor, field_names)
 
 
 def get_allowed_list(schema):
@@ -250,12 +250,16 @@ def get_mandatory_list(schema):
     return schema['mandatory_in_list']['scheme']
 
 
-def get_field_map():
+def get_fields_map_and_names():
     vocabularies = get_resource_service('vocabularies').find({'service': {'$exists': True}})
-    return {
-        vocabulary.get('schema_field', vocabulary['_id']): vocabulary['_id']
-        for vocabulary in vocabularies
-    }
+    fields_map = {}
+    field_names = {}
+
+    for vocabulary in vocabularies:
+        fields_map[vocabulary.get('schema_field', vocabulary['_id'])] = vocabulary['_id']
+        field_names[vocabulary['_id']] = vocabulary.get('display_name', vocabulary['_id'])
+
+    return fields_map, field_names
 
 
 def init_default(doc):
@@ -276,15 +280,15 @@ def init_default(doc):
         doc['schema'] = deepcopy(DEFAULT_SCHEMA)
 
 
-def init_custom(editor, schema, fieldsMap):
+def init_custom(editor, schema, fields_map):
     # process custom fields defined on vocabularies
-    for old_field, field in fieldsMap.items():
+    for old_field, field in fields_map.items():
         if field != old_field:
             if (editor.get(field, None)):
                 editor[field]['enabled'] = True
             # custom storage for field, replace default editor with custom one
-            replaceKey(editor, old_field, field)
-            replaceKey(schema, old_field, field)
+            replace_key(editor, old_field, field)
+            replace_key(schema, old_field, field)
         else:
             # fields are stored in subject so add new custom editor
             schema[field] = {'type': 'list', 'required': False}
@@ -294,7 +298,7 @@ def init_custom(editor, schema, fieldsMap):
                 editor[field] = {'enabled': False}
 
 
-def replaceKey(dictionary, oldKey, newKey):
+def replace_key(dictionary, oldKey, newKey):
     if dictionary.get(oldKey, None):
         if not dictionary.get(newKey, None):
             dictionary[newKey] = deepcopy(dictionary[oldKey])
@@ -303,34 +307,34 @@ def replaceKey(dictionary, oldKey, newKey):
         dictionary[newKey] = {}
 
 
-def expand_subject(editor, schema, fieldsMap):
-    subject = getSubjectName(fieldsMap)
+def expand_subject(editor, schema, fields_map):
+    subject = get_subject_name(fields_map)
     allowed = get_allowed_list(schema[subject])
     mandatory = get_mandatory_list(schema[subject])
     schema[subject]['schema'] = {}
-    set_enabled_for_custom(editor, allowed, fieldsMap)
-    set_required_for_custom(editor, schema, mandatory, fieldsMap)
+    set_enabled_for_custom(editor, allowed, fields_map)
+    set_required_for_custom(editor, schema, mandatory, fields_map)
 
 
-def set_enabled_for_custom(editor, allowed, fieldsMap):
+def set_enabled_for_custom(editor, allowed, fields_map):
     for field in allowed:
-        editor[fieldsMap.get(field, field)]['enabled'] = True
+        editor[fields_map.get(field, field)]['enabled'] = True
 
 
-def set_required_for_custom(editor, schema, mandatory, fieldsMap):
+def set_required_for_custom(editor, schema, mandatory, fields_map):
     for field, value in mandatory.items():
         if field == value or field == 'subject':
-            editor[fieldsMap.get(field, field)]['required'] = value is not None
-            schema[fieldsMap.get(field, field)]['required'] = value is not None
+            editor[fields_map.get(field, field)]['required'] = value is not None
+            schema[fields_map.get(field, field)]['required'] = value is not None
 
 
-def getSubjectName(fieldsMap):
-    return fieldsMap.get('subject', 'subject')
+def get_subject_name(fields_map):
+    return fields_map.get('subject', 'subject')
 
 
-def set_field_name(editor, fieldsMap):
-    for (old_field, field) in fieldsMap.items():
-        editor[field]['field_name'] = old_field
+def set_field_name(editor, field_names):
+    for (field, name) in field_names.items():
+        editor[field]['field_name'] = name
 
 
 def prepare_for_save_content_type(original, updates):
@@ -341,12 +345,12 @@ def prepare_for_save_content_type(original, updates):
     concatenate_dictionary(original['editor'], editor)
     concatenate_dictionary(original['schema'], schema)
     delete_disabled_fields(editor, schema)
-    fieldMap = get_field_map()
+    fields_map, _ = get_fields_map_and_names()
     clean_editor(editor)
-    init_schema_for_custom_fields(schema, fieldMap)
-    compose_subject_schema(schema, fieldMap)
+    init_schema_for_custom_fields(schema, fields_map)
+    compose_subject_schema(schema, fields_map)
     init_editor_required(editor, schema)
-    rename_schema_for_custom_fields(schema, fieldMap)
+    rename_schema_for_custom_fields(schema, fields_map)
 
 
 def concatenate_dictionary(source, destination):
@@ -373,10 +377,10 @@ def clean_editor(editor):
                 del field_value[attribute]
 
 
-def compose_subject_schema(schema, fieldMap):
+def compose_subject_schema(schema, fields_map):
     mandatory = {}
     allowed = []
-    for old_field, field in fieldMap.items():
+    for old_field, field in fields_map.items():
         if (old_field == field or old_field == 'subject') and schema.get(field, None):
             allowed.append(field)
             if schema[field].get('required', False):
@@ -386,11 +390,11 @@ def compose_subject_schema(schema, fieldMap):
         else:
             mandatory[old_field] = None
     if allowed:
-        init_subject_schema(schema, mandatory, allowed, fieldMap)
+        init_subject_schema(schema, mandatory, allowed, fields_map)
 
 
-def init_subject_schema(schema, mandatory, allowed, fieldMap):
-    subject = getSubjectName(fieldMap)
+def init_subject_schema(schema, mandatory, allowed, fields_map):
+    subject = get_subject_name(fields_map)
     schema[subject] = deepcopy(DEFAULT_SCHEMA['subject'])
     schema[subject]['mandatory_in_list']['scheme'] = mandatory
     schema[subject]['schema']['schema']['scheme']['allowed'] = allowed
@@ -404,16 +408,16 @@ def init_editor_required(editor, schema):
             schema[field]['minlength'] = 1 if schema[field]['required'] else 0
 
 
-def init_schema_for_custom_fields(schema, fieldMap):
-    for field in fieldMap.values():
+def init_schema_for_custom_fields(schema, fields_map):
+    for field in fields_map.values():
         if schema.get(field, None) and schema[field].get('default', None):
             list_values = schema[field]['default']
             for value in list_values:
                 value['scheme'] = field
 
 
-def rename_schema_for_custom_fields(schema, fieldMap):
-    for old_field, field in fieldMap.items():
+def rename_schema_for_custom_fields(schema, fields_map):
+    for old_field, field in fields_map.items():
         if field in schema:
             if old_field != field:
                 schema[old_field] = schema[field]
