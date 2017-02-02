@@ -9,8 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-import json
 import os
+import json
 import unittest
 import requests
 
@@ -22,8 +22,22 @@ from unittest.mock import Mock
 from superdesk.errors import PublishHTTPPushServerError, PublishHTTPPushClientError
 
 
+def get_fixture(fixture):
+    filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), '%s.json' % fixture)
+    with open(filename, 'r') as file:
+        return json.load(file)
+
+
 class ItemNotFound(Exception):
     pass
+
+
+class NotFoundResponse():
+    status_code = 404
+
+
+class CreatedResponse():
+    status_code = 201
 
 
 class HTTPPushPublishTestCase(unittest.TestCase):
@@ -136,3 +150,35 @@ class HTTPPushPublishTestCase(unittest.TestCase):
 
         with self.assertRaises(PublishHTTPPushServerError):
             service._push_item(self.destination, json.dumps(self.item))
+
+    @mock.patch('superdesk.publish.transmitters.http_push.app')
+    @mock.patch('requests.post', return_value=CreatedResponse)
+    @mock.patch('requests.get', return_value=NotFoundResponse)
+    def test_push_associated_assets(self, get_mock, post_mock, app_mock):
+        app_mock.media.get.return_value = 'bin'
+
+        dest = {'config': {'assets_url': 'http://example.com'}}
+        item = get_fixture('package')
+
+        service = HTTPPushService()
+        service._copy_published_media_files({}, dest)
+
+        get_mock.assert_not_called()
+        post_mock.assert_not_called()
+
+        service._copy_published_media_files(item, dest)
+
+        images = [
+            # embedded original
+            '2017020111028/9a836848c3c3387a151dbed96e83b7d50e6b0e71ca397e0b1dc0f4b2f4127acd.jpg',
+            # main-0 original
+            '20170201110216/d3ad29bafe0710c42b7cfc201939f266c6ca5c11a713625388decff4da87ba5b.jpg',
+            # embedded thumbnail
+            '2017020111028/a0502320d6d07dd921253171e971943adf791eb2b34dfe82da73c053a343a7c2.jpg',
+        ]
+
+        for media in images:
+            get_mock.assert_any_call('http://example.com/%s' % media)
+            post_mock.assert_any_call('http://example.com',
+                                      files={'media': (media, app_mock.media.get.return_value, 'image/jpeg')},
+                                      data={'media_id': media})
