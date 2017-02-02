@@ -11,12 +11,12 @@
 import logging
 
 from copy import copy
-from eve.utils import config
+from eve.utils import config, ParsedRequest
 
 from superdesk.utc import utcnow
 from superdesk.services import BaseService
 from superdesk.publish.formatters.ninjs_formatter import NINJSFormatter
-
+from superdesk import get_resource_service
 
 logger = logging.getLogger('superdesk')
 
@@ -37,13 +37,17 @@ class PublishService(BaseService):
 
         :param item: item to publish
         """
-        doc = self.formatter._transform_to_ninjs(item, self.subscriber)
-        now = utcnow()
-        doc.setdefault('firstcreated', now)
-        doc.setdefault('versioncreated', now)
-        doc['subscribers'] = [str(sub['_id']) for sub in subscribers]
-        logger.info('publishing %s to %s' % (doc['guid'], subscribers))
-        return self._create_doc(doc)
+
+        if not self._filter_item(item):
+            doc = self.formatter._transform_to_ninjs(item, self.subscriber)
+            now = utcnow()
+            doc.setdefault('firstcreated', now)
+            doc.setdefault('versioncreated', now)
+            doc['subscribers'] = [str(sub['_id']) for sub in subscribers]
+            logger.info('publishing %s to %s' % (doc['guid'], subscribers))
+            return self._create_doc(doc)
+        else:
+            return None
 
     def create(self, docs, **kwargs):
         ids = []
@@ -62,3 +66,25 @@ class PublishService(BaseService):
             return _id
         else:
             return super().create([item], **kwargs)[0]
+
+    def _filter_item(self, item):
+        """
+        Filter the item out if it matches any API Block filter conditions
+        :param item:
+        :return: True of the item is blocked, False if it is OK to publish it on the API.
+        """
+        # Get the API blocking Filters
+        req = ParsedRequest()
+        filter_conditions = list(get_resource_service('content_filters').get(req=req, lookup={'api_block': True}))
+
+        # No API blocking filters
+        if not filter_conditions:
+            return False
+
+        filter_service = get_resource_service('content_filters')
+        for fc in filter_conditions:
+            if filter_service.does_match(fc, item):
+                logger.info('API Filter block {} matched for item {}.'.format(fc, item.get(config.ID_FIELD)))
+                return True
+
+        return False

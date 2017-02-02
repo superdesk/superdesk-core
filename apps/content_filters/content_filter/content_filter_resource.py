@@ -47,6 +47,10 @@ class ContentFilterResource(Resource):
         'is_archived_filter': {
             'type': 'boolean',
             'default': False
+        },
+        'api_block': {
+            'type': 'boolean',
+            'default': False
         }
     }
 
