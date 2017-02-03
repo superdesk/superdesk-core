@@ -192,3 +192,15 @@ class ContentAPITestCase(TestCase):
         token = payload.get('_id')
         headers = {'Authorization': 'Token ' + token}
         return headers
+
+    def test_api_block(self):
+        self.app.data.insert('filter_conditions', [{'_id': 1, 'operator': 'eq', 'field': 'source',
+                                                    'value': 'fred', 'name': 'Fred'}])
+        content_filter = {'_id': 1, 'name': 'fred API Block', 'content_filter': [{"expression": {"fc": [1]}}],
+                          'api_block': True}
+        self.app.data.insert('content_filters', [content_filter])
+
+        self.content_api.publish({'_id': 'foo', 'source': 'fred', 'type': 'text', 'guid': 'foo'})
+        self.assertEqual(0, self.db.items.count())
+        self.content_api.publish({'_id': 'bar', 'source': 'jane', 'type': 'text', 'guid': 'bar'})
+        self.assertEqual(1, self.db.items.count())
