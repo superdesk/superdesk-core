@@ -214,8 +214,13 @@ class RoutingRuleSchemeService(BaseService):
 
         for rule in self._get_scheduled_routing_rules(rules, now):
             content_filter = rule.get('filter', {})
-
+            logger.info('Applying rule. Item: %s . Routing Scheme: %s. Rule Name %s.' % (ingest_item.get('guid'),
+                                                                                         routing_scheme.get('name'),
+                                                                                         rule.get('name')))
             if filters_service.does_match(content_filter, ingest_item):
+                logger.info('Filter matched. Item: %s. Routing Scheme: %s. Rule Name %s.' % (ingest_item.get('guid'),
+                                                                                             routing_scheme.get('name'),
+                                                                                             rule.get('name')))
                 if rule.get('actions', {}).get('preserve_desk', False) and ingest_item.get('task', {}).get('desk'):
                     desk = get_resource_service('desks').find_one(req=None, _id=ingest_item['task']['desk'])
                     if ingest_item.get('task', {}).get('stage'):
@@ -231,6 +236,9 @@ class RoutingRuleSchemeService(BaseService):
                 self.__fetch(ingest_item, fetch_actions)
                 self.__publish(ingest_item, rule.get('actions', {}).get('publish', []))
                 if rule.get('actions', {}).get('exit', False):
+                    logger.info('Exiting routing scheme. Item: %s . Routing Scheme: %s. '
+                                'Rule Name %s.' % (ingest_item.get('guid'), routing_scheme.get('name'),
+                                                   rule.get('name')))
                     break
             else:
                 logger.info("Routing rule %s of Routing Scheme %s for Provider %s did not match for item %s" %
@@ -418,6 +426,7 @@ class RoutingRuleSchemeService(BaseService):
         archive_items = []
         for destination in destinations:
             try:
+                logger.info('Fetching item %s to desk %s' % (ingest_item.get('guid'), destination))
                 target = self.__getTarget(destination)
                 item_id = get_resource_service('fetch') \
                     .fetch([{config.ID_FIELD: ingest_item[config.ID_FIELD],
@@ -428,8 +437,9 @@ class RoutingRuleSchemeService(BaseService):
                              'target': target}])[0]
 
                 archive_items.append(item_id)
+                logger.info('Fetched item %s to desk %s' % (ingest_item.get('guid'), destination))
             except:
-                logger.exception("Failed to fetch item %s to desk %s" % (ingest_item['guid'], destination))
+                logger.exception("Failed to fetch item %s to desk %s" % (ingest_item.get('guid'), destination))
 
         return archive_items
 
@@ -457,8 +467,10 @@ class RoutingRuleSchemeService(BaseService):
         items_to_publish = self.__fetch(ingest_item, destinations)
         for item in items_to_publish:
             try:
+                logger.info('Publishing item %s' % (ingest_item.get('guid')))
                 self._set_default_values(item)
                 get_resource_service('archive_publish').patch(item, {'auto_publish': True})
+                logger.info('Published item %s' % (ingest_item.get('guid')))
             except:
                 logger.exception("Failed to publish item %s." % item)
 

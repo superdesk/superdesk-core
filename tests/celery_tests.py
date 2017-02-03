@@ -49,3 +49,8 @@ class CeleryTestCase(TestCase):
         s = b'''[0]'''
         o = loads(s)
         self.assertEqual([0], o)
+
+    def test_loads_boolean(self):
+        s = b'''[{"foo": false, "bar": true}]'''
+        o = loads(s)
+        self.assertEqual([{"foo": False, "bar": True}], o)

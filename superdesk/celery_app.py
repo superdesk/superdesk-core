@@ -33,10 +33,10 @@ TaskBase = celery.Task
 
 
 def try_cast(v):
-    if v is None:
+    # False and 0 are getting converted to datetime by arrow
+    if v is None or isinstance(v, bool) or v is 0:
         return v
-    if v is 0:  # otherwise arrow will make it a datetime
-        return 0
+
     try:
         str_to_date(v)  # try if it matches format
         return arrow.get(v).datetime  # return timezone aware time
