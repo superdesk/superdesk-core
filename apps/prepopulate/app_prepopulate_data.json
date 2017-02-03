@@ -863,7 +863,7 @@
     		"headline": "package1",
     		"type": "composite",
     		"guid": "package1",
-            "versioncreated": "2015-01-01T10:10:10+0000",
+            "versioncreated": "2015-01-01T10:05:10+0000",
             "_current_version" : 1,
             "original_creator": "-id user admin-",
             "state": "in_progress",
