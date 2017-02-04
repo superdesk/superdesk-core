@@ -1681,7 +1681,7 @@ Feature: Content Publishing
       {"_current_version": 4, "state": "killed", "pubstatus": "canceled", "sign_off": "abc/foo", "operation": "kill", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
       """
 
-    @auth @vocabulary @wip
+    @auth @vocabulary
     Scenario: Publish broadcast content to wire/digital subscribers
       Given the "validators"
       """

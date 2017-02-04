@@ -255,6 +255,10 @@ def set_default_source(doc):
     :param {dict} doc: doc where source is defined
     """
 
+    # source is already set for takes package.
+    if doc.get(PACKAGE_TYPE) == TAKES_PACKAGE:
+        return
+
     # set the source for the article as default
     source = get_default_source()
     desk_id = doc.get('task', {}).get('desk')

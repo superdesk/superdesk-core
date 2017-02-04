@@ -347,8 +347,11 @@ def step_impl_given_resource_with_provider(context, provider):
     with context.app.test_request_context(context.app.config['URL_PREFIX']):
         get_resource_service(resource).delete_action()
         items = [parse(item, resource) for item in json.loads(context.text)]
+        ingest_provider = get_resource_service('ingest_providers').find_one(req=None,
+                                                                            _id=context.providers[provider])
         for item in items:
             item['ingest_provider'] = context.providers[provider]
+            item['source'] = ingest_provider.get('source')
         get_resource_service(resource).post(items)
         context.data = items
         context.resource = resource
