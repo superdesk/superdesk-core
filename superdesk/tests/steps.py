@@ -1777,8 +1777,12 @@ def step_impl_when_rewrite(context, item_id):
 @then('we get "{field_name}" does not exist')
 def then_field_is_not_populated_in_results(context, field_name):
     resps = parse_json_response(context.response)
-    for resp in resps['_items']:
-        assert field_name not in resp, 'field exists'
+
+    if '_items' in resps:
+        for resp in resps['_items']:
+            assert field_name not in resp, 'field exists'
+    else:
+        assert field_name not in resps, 'field exists'
 
 
 @then('we get "{field_name}" does exist')

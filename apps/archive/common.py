@@ -725,8 +725,8 @@ def copy_metadata_from_user_preferences(doc, repo_type=ARCHIVE):
                                    'located': located,
                                    'text': format_dateline_to_locmmmddsrc(located, dateline_ts, source)}
 
-            if BYLINE not in doc and user and user.get(BYLINE):
-                    doc[BYLINE] = user[BYLINE]
+            if doc.get(PACKAGE_TYPE) != TAKES_PACKAGE and BYLINE not in doc and user and user.get(BYLINE):
+                doc[BYLINE] = user[BYLINE]
 
             if 'place' not in doc and user:
                 place_in_preference = user.get('user_preferences', {}).get('article:default:place')

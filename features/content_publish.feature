@@ -51,6 +51,11 @@ Feature: Content Publishing
       """
       {"_current_version": 1, "state": "fetched", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
       """
+      When we patch "/users/#CONTEXT_USER_ID#"
+      """
+      {"byline": "Admin Admin"}
+      """
+      Then we get OK response
       When we post to "/products" with success
       """
       {
@@ -77,13 +82,33 @@ Feature: Content Publishing
       Then we get OK response
       And we get existing resource
       """
-      {"_current_version": 2, "state": "published", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
+      {
+        "_current_version": 2,
+        "type": "text",
+        "state": "published",
+        "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}
+       }
       """
+      And we get "byline" does not exist
+      When we get "/archive/#archive.take_package#"
+      Then we get OK response
+      And we get existing resource
+      """
+      {
+        "_current_version": 2,
+        "type": "composite",
+        "state": "published",
+        "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}
+       }
+      """
+      And we get "byline" does not exist
       When we get "/published"
       Then we get existing resource
       """
-      {"_items" : [{"_id": "123", "guid": "123", "headline": "test", "_current_version": 2, "state": "published",
-        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}]}
+      {"_items" : [
+        {"_id": "123", "guid": "123", "headline": "test", "_current_version": 2, "state": "published",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}
+        }]}
       """
       When we enqueue published
       When we get "/publish_queue"
