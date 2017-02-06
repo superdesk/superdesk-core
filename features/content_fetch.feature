@@ -324,3 +324,166 @@ Feature: Fetch Items from Ingest
         """
         {"profile": null}
         """
+
+    @auth
+    @provider
+    Scenario: Fetch an item from reuters and ensure that dateline and source don't change on publish.
+      Given empty "archive"
+      And "desks"
+      """
+      [{"name": "Sports", "source": "AAP"}]
+      """
+      And the "validators"
+      """
+        [
+        {
+            "schema": {},
+            "type": "text",
+            "act": "publish",
+            "_id": "publish_text"
+        },
+        {
+            "_id": "publish_composite",
+            "act": "publish",
+            "type": "composite",
+            "schema": {}
+        }
+        ]
+      """
+      And ingest from "reuters"
+      """
+      [{"guid": "tag_reuters.com_2014_newsml_LOVEA6M0L7U2E"}]
+      """
+      When we post to "/ingest/tag_reuters.com_2014_newsml_LOVEA6M0L7U2E/fetch" with "fetched_item" and success
+      """
+      {"desk": "#desks._id#"}
+      """
+      And we patch "/archive/#fetched_item#"
+      """
+      {
+        "dateline": {
+          "date": "2017-01-05T04:00:00+0000",
+          "located" : {
+              "city" : "Sydney",
+              "state" : "NSW",
+              "tz" : "Australia/Sydney",
+              "country" : "Australia",
+              "city_code" : "Sydney",
+              "country_code" : "AU",
+              "state_code" : "AU.02",
+              "dateline" : "city",
+              "alt_name" : ""
+          }
+        }
+      }
+      """
+      Then we get existing resource
+      """
+      {
+        "_current_version": 2,
+        "source": "reuters",
+        "dateline": {
+          "date": "2017-01-05T04:00:00+0000",
+          "text": "SYDNEY, Jan 5 reuters -",
+          "located" : {
+              "city" : "Sydney",
+              "state" : "NSW",
+              "tz" : "Australia/Sydney",
+              "country" : "Australia",
+              "city_code" : "Sydney",
+              "country_code" : "AU",
+              "state_code" : "AU.02",
+              "dateline" : "city",
+              "alt_name" : ""
+          }
+        }
+      }
+      """
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz"
+      }
+      """
+      And we post to "/subscribers" with "digital" and success
+      """
+      {
+        "name":"Channel 1","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
+      And we post to "/subscribers" with "wire" and success
+      """
+      {
+        "name":"Channel 2","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
+      And we publish "#fetched_item#" with "publish" type and "published" state
+      Then we get OK response
+      And we get existing resource
+      """
+      {
+        "_current_version": 3, "state": "published", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"},
+        "source": "reuters",
+        "dateline": {
+          "date": "2017-01-05T04:00:00+0000",
+          "text": "SYDNEY, Jan 5 reuters -",
+          "located" : {
+              "city" : "Sydney",
+              "state" : "NSW",
+              "tz" : "Australia/Sydney",
+              "country" : "Australia",
+              "city_code" : "Sydney",
+              "country_code" : "AU",
+              "state_code" : "AU.02",
+              "dateline" : "city",
+              "alt_name" : ""
+          }
+        }
+      }
+      """
+      When we get "/published"
+      Then we get existing resource
+      """
+      {"_items" : [
+        {
+          "_id": "#fetched_item#", "_current_version": 3, "state": "published", "type": "text","source": "reuters",
+          "dateline": {
+            "date": "2017-01-05T04:00:00+0000",
+            "text": "SYDNEY, Jan 5 reuters -",
+            "located" : {
+                "city" : "Sydney",
+                "state" : "NSW",
+                "tz" : "Australia/Sydney",
+                "country" : "Australia",
+                "city_code" : "Sydney",
+                "country_code" : "AU",
+                "state_code" : "AU.02",
+                "dateline" : "city",
+                "alt_name" : ""
+            }
+          }
+        },
+        {
+          "_id": "#archive.take_package#", "_current_version": 2, "state": "published", "type": "composite", "source": "reuters",
+          "dateline": {
+            "date": "2017-01-05T04:00:00+0000",
+            "text": "SYDNEY, Jan 5 reuters -",
+            "located" : {
+                "city" : "Sydney",
+                "state" : "NSW",
+                "tz" : "Australia/Sydney",
+                "country" : "Australia",
+                "city_code" : "Sydney",
+                "country_code" : "AU",
+                "state_code" : "AU.02",
+                "dateline" : "city",
+                "alt_name" : ""
+            }
+          }
+        }
+        ]}
+      """

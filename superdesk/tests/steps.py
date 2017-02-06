@@ -347,8 +347,11 @@ def step_impl_given_resource_with_provider(context, provider):
     with context.app.test_request_context(context.app.config['URL_PREFIX']):
         get_resource_service(resource).delete_action()
         items = [parse(item, resource) for item in json.loads(context.text)]
+        ingest_provider = get_resource_service('ingest_providers').find_one(req=None,
+                                                                            _id=context.providers[provider])
         for item in items:
             item['ingest_provider'] = context.providers[provider]
+            item['source'] = ingest_provider.get('source')
         get_resource_service(resource).post(items)
         context.data = items
         context.resource = resource
@@ -1774,8 +1777,12 @@ def step_impl_when_rewrite(context, item_id):
 @then('we get "{field_name}" does not exist')
 def then_field_is_not_populated_in_results(context, field_name):
     resps = parse_json_response(context.response)
-    for resp in resps['_items']:
-        assert field_name not in resp, 'field exists'
+
+    if '_items' in resps:
+        for resp in resps['_items']:
+            assert field_name not in resp, 'field exists'
+    else:
+        assert field_name not in resps, 'field exists'
 
 
 @then('we get "{field_name}" does exist')
