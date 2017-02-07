@@ -692,7 +692,7 @@ def copy_metadata_from_profile(doc):
     defaults.setdefault('urgency', config.DEFAULT_URGENCY_VALUE_FOR_MANUAL_ARTICLES)
     defaults.setdefault('genre', config.DEFAULT_GENRE_VALUE_FOR_MANUAL_ARTICLES)
     for field in defaults:
-        if field in doc and doc[field] is None:
+        if field in doc and not doc[field]:
             del doc[field]
     resolve_default_values(doc, defaults)
 
