@@ -58,8 +58,7 @@
                     },
                     "href": "https://superdesk-sourcefabric.s3-eu-west-1.amazonaws.com/20170201110216/09f3d350-2877-4f7a-853f-2d9401efce5b.jpg",
                     "media": "20170201110216/09f3d350-2877-4f7a-853f-2d9401efce5b.jpg",
-                    "height": 600,
-                    "mimetype": "image/jpeg"
+                    "height": 600
                 },
                 "viewImage": {
                     "width": 640,
@@ -69,8 +68,7 @@
                     },
                     "href": "https://superdesk-sourcefabric.s3-eu-west-1.amazonaws.com/20170201110216/66da382fdc80b8744ae9f7462d619eaca98f32fd538d0d18e5bb628a2b2309e7.jpg",
                     "media": "20170201110216/66da382fdc80b8744ae9f7462d619eaca98f32fd538d0d18e5bb628a2b2309e7.jpg",
-                    "height": 426,
-                    "mimetype": "image/jpeg"
+                    "height": 426
                 },
                 "thumbnail": {
                     "width": 180,
@@ -80,8 +78,7 @@
                     },
                     "href": "https://superdesk-sourcefabric.s3-eu-west-1.amazonaws.com/20170201110216/79690dbdd472a083c80b6ddb8412da04715095c0238f225df673ca8f6c6bed8c.jpg",
                     "media": "20170201110216/79690dbdd472a083c80b6ddb8412da04715095c0238f225df673ca8f6c6bed8c.jpg",
-                    "height": 120,
-                    "mimetype": "image/jpeg"
+                    "height": 120
                 },
                 "original": {
                     "width": 2048,
@@ -102,8 +99,7 @@
                     },
                     "href": "https://superdesk-sourcefabric.s3-eu-west-1.amazonaws.com/20170201110216/1b15187ece7e3163305d1916491827f6ecf6b10313039a5b25d170c4c661750c.jpg",
                     "media": "20170201110216/1b15187ece7e3163305d1916491827f6ecf6b10313039a5b25d170c4c661750c.jpg",
-                    "height": 466,
-                    "mimetype": "image/jpeg"
+                    "height": 466
                 },
                 "600x300": {
                     "width": 600,
@@ -113,8 +109,7 @@
                     },
                     "href": "https://superdesk-sourcefabric.s3-eu-west-1.amazonaws.com/20170201110216/a853c328-f595-4f9c-8dc9-546d151c4856.jpg",
                     "media": "20170201110216/a853c328-f595-4f9c-8dc9-546d151c4856.jpg",
-                    "height": 300,
-                    "mimetype": "image/jpeg"
+                    "height": 300
                 },
                 "baseImage": {
                     "width": 1400,
@@ -124,8 +119,7 @@
                     },
                     "href": "https://superdesk-sourcefabric.s3-eu-west-1.amazonaws.com/20170201110216/88fd8cd90c9c225aec29f81d4fff058c31c5762da0807a76b2f51adf5f24035b.jpg",
                     "media": "20170201110216/88fd8cd90c9c225aec29f81d4fff058c31c5762da0807a76b2f51adf5f24035b.jpg",
-                    "height": 933,
-                    "mimetype": "image/jpeg"
+                    "height": 933
                 }
             }
         },

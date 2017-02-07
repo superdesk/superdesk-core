@@ -109,24 +109,27 @@ class HTTPPushService(PublishService):
         if not (type(assets_url) == str and assets_url.strip()):
             return
 
-        def parse_media(renditions):
+        def parse_media(item):
             media = {}
+            renditions = item.get('renditions', {})
             for _, rendition in renditions.items():
                 rendition.pop('href', None)
+                rendition.setdefault('mimetype', rendition.get('original', {}).get('mimetype', item.get('mimetype')))
                 media[rendition['media']] = rendition
             return media
 
         media = {}
 
         for assoc in item.get('associations', {}).values():
-            media.update(parse_media(assoc.get('renditions', {})))
+            media.update(parse_media(assoc))
             for assoc2 in assoc.get('associations', {}).values():
-                media.update(parse_media(assoc2.get('renditions', {})))
+                media.update(parse_media(assoc2))
 
         for media_id, rendition in media.items():
             if not self._media_exists(media_id, destination):
                 binary = app.media.get(media_id, resource='upload')
-                files = {'media': (media_id, binary, rendition['mimetype'])}
+                mimetype = rendition.get('mimetype', getattr(binary, 'content_type', 'image/jpeg'))
+                files = {'media': (media_id, binary, mimetype)}
                 response = requests.post(assets_url, files=files, data={'media_id': media_id})
                 if response.status_code != requests.codes.created:  # @UndefinedVariable
                     self._raise_publish_error(
