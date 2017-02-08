@@ -9,8 +9,11 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import hashlib
+import email.policy
+
 from datetime import timedelta
 from superdesk.utc import utcnow
+from superdesk.lock import lock, unlock
 from bson.json_util import dumps
 from flask.ext.mail import Message
 from superdesk.celery_app import celery
@@ -18,15 +21,37 @@ from flask import current_app as app, render_template, render_template_string
 from superdesk import get_resource_service
 
 
+class SuperdeskMessage(Message):
+
+    def as_bytes(self):
+        msg = self._message()
+        return msg.as_bytes(policy=email.policy.HTTP)
+
+
 EMAIL_TIMESTAMP_RESOURCE = 'email_timestamps'
 
 
-@celery.task(bind=True, max_retries=3, soft_time_limit=100)
+@celery.task(bind=True, max_retries=3, soft_time_limit=120)
 def send_email(self, subject, sender, recipients, text_body, html_body, cc=None, bcc=None):
-    msg = Message(subject, sender=sender, recipients=recipients, cc=cc, bcc=bcc)
-    msg.body = text_body
-    msg.html = html_body
-    return app.mail.send(msg)
+    _id = get_activity_digest({
+        'subject': subject,
+        'recipients': recipients,
+        'text_body': text_body,
+        'html_body': html_body,
+        'cc': cc,
+        'bcc': bcc,
+    })
+
+    lock_id = 'email:%s' % _id
+    if not lock(lock_id, expire=120):
+        return
+
+    try:
+        msg = SuperdeskMessage(subject, sender=sender, recipients=recipients, cc=cc, bcc=bcc,
+                               body=text_body, html=html_body)
+        return app.mail.send(msg)
+    finally:
+        unlock(lock_id, remove=True)
 
 
 def send_activate_account_email(doc, activate_ttl):

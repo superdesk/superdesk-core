@@ -76,7 +76,7 @@ class MoveService(BaseService):
             guid_of_moved_items.append(moved_item.get(config.ID_FIELD))
             return guid_of_moved_items
         finally:
-            unlock(lock_id)
+            unlock(lock_id, remove=True)
 
     def move_content(self, id, doc):
         archive_service = get_resource_service(ARCHIVE)

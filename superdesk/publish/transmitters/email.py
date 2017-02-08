@@ -10,8 +10,8 @@
 
 import json
 
-from superdesk.emails import send_email
 from flask import current_app as app
+from superdesk.emails import send_email
 from superdesk.publish import register_transmitter
 from superdesk.publish.publish_service import PublishService
 from superdesk.errors import PublishEmailError

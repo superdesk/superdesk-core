@@ -200,3 +200,9 @@ class EmailFormatterTest(TestCase):
                                                'slugline \n\n------------------------------------'
                                                '----------------------\nCan of beans\n\njoe\nBERN, July 13 - The story '
                                                'body of the story so far\nAAP aa/bb\n')
+
+    def test_subject_cyrilic(self):
+        article = {'headline': 'Неправильная музыка Джамала Али'}
+        seq, doc = self.formatter.format(article, {'name': 'Test'})[0]
+        item = json.loads(doc)
+        self.assertEqual(article['headline'], item['message_subject'])
