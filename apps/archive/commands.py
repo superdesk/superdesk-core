@@ -9,9 +9,6 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-from superdesk.notification import push_notification
-from apps.content import push_expired_notification
-
 import superdesk
 import logging
 from eve.utils import config, ParsedRequest
@@ -23,7 +20,9 @@ from .archive import SOURCE as ARCHIVE
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTENT_TYPE, ASSOCIATIONS, MEDIA_TYPES
 from superdesk.metadata.packages import PACKAGE_TYPE, TAKES_PACKAGE
 from superdesk.lock import lock, unlock, remove_locks
+from superdesk.notification import push_notification
 from superdesk import get_resource_service
+
 logger = logging.getLogger(__name__)
 
 
@@ -159,8 +158,6 @@ class RemoveExpiredContent(superdesk.Command):
             if items_to_remove:
                 logger.info('{} Deleting articles.: {}'.format(self.log_msg, items_to_remove))
                 archive_service.delete_by_article_ids(list(items_to_remove))
-
-            push_expired_notification(items_to_expire)
 
             for item_id, item in items_having_issues.items():
                 msg = log_msg_format.format(**item)
