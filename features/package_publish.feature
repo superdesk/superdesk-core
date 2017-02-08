@@ -1327,7 +1327,7 @@ Feature: Package Publishing
       When we get "/published"
       Then we get existing resource
       """
-      {"_items" : [{"_id": "123", "guid": "123", "headline": "Take-1 soccer headline", "_current_version": 3, "state": "published"},
+      {"_items" : [{"_id": "123", "guid": "123", "headline": "Take-1 soccer headline", "_current_version": 4, "state": "published"},
                    {"_id": "#TAKE2#", "guid": "#TAKE2#", "headline": "Take-2 soccer headline", "_current_version": 4, "state": "published"},
                    {"headline": "Take-1 soccer headline", "_current_version": 2, "state": "published", "package_type": "takes"},
                    {"headline": "Take-2 soccer headline", "_current_version": 3, "state": "published", "package_type": "takes"},
@@ -1493,7 +1493,7 @@ Feature: Package Publishing
       When we get "/published"
       Then we get existing resource
       """
-      {"_items" : [{"_id": "123", "guid": "123", "headline": "Take-1 soccer headline", "_current_version": 3, "state": "published"},
+      {"_items" : [{"_id": "123", "guid": "123", "headline": "Take-1 soccer headline", "_current_version": 4, "state": "published"},
                    {"_id": "#TAKE2#", "guid": "#TAKE2#", "headline": "Take-2 soccer headline", "_current_version": 4, "state": "published"},
                    {"headline": "Take-1 soccer headline", "_current_version": 2, "state": "published", "package_type": "takes"},
                    {"headline": "Take-2 soccer headline", "_current_version": 3, "state": "published", "package_type": "takes"},

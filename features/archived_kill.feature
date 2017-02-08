@@ -331,7 +331,7 @@ Feature: Kill a content item in the (dusty) archive
     When we enqueue published
     When we get "/legal_publish_queue"
     Then we get list with 8 items
-    When we patch "/archived/123:2"
+    When we patch "/archived/123:3"
     """
     {}
     """
@@ -348,10 +348,10 @@ Feature: Kill a content item in the (dusty) archive
     When we get "/legal_archive/123"
     Then we get existing resource
     """
-    {"_id": "123", "type": "text", "_current_version": 4, "state": "killed", "pubstatus": "canceled", "operation": "kill"}
+    {"_id": "123", "type": "text", "_current_version": 5, "state": "killed", "pubstatus": "canceled", "operation": "kill"}
     """
     When we get "/legal_archive/123?version=all"
-    Then we get list with 4 items
+    Then we get list with 5 items
     When we get "/legal_archive/#archive.123.take_package#"
     Then we get existing resource
     """
@@ -362,10 +362,10 @@ Feature: Kill a content item in the (dusty) archive
     When we get "/legal_archive/#take1#"
     Then we get existing resource
     """
-    {"_id": "#take1#", "type": "text", "_current_version": 4, "state": "killed", "pubstatus": "canceled", "operation": "kill"}
+    {"_id": "#take1#", "type": "text", "_current_version": 5, "state": "killed", "pubstatus": "canceled", "operation": "kill"}
     """
     When we get "/legal_archive/#take1#?version=all"
-    Then we get list with 4 items
+    Then we get list with 5 items
     When we get "/legal_archive/#take2#"
     Then we get existing resource
     """
