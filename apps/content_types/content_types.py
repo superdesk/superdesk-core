@@ -422,6 +422,7 @@ def init_editor_required(editor, schema):
         if editor[field] is not None and schema[field] is not None and schema[field].get('required') is not None:
             editor[field]['required'] = schema[field]['required']
             schema[field]['minlength'] = 1 if schema[field]['required'] else 0
+            schema[field]['nullable'] = not schema[field]['required']
 
 
 def init_schema_for_custom_fields(schema, fields_map):

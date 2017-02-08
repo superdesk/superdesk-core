@@ -1042,6 +1042,19 @@ Feature: Content Profile
         """
         [
           {
+            "_id": "genre_custom",
+            "display_name": "Genre",
+            "type": "manageable",
+            "service": {"all": 1},
+            "single_value": true,
+            "schema_field": "genre",
+            "dependent": 1,
+            "items": [
+                {"is_active": true, "name": "Nyheter", "qcode": "Nyheter", "service": {"n": 1, "j": 1, "e": 1, "t": 1, "m": 1, "s": 1, "d": 1, "o": 1, "p": 1, "k": 1}},
+                {"is_active": true, "name": "Faktaboks", "qcode": "Faktaboks", "service": {"n": 1}}
+            ]
+          },
+          {
             "_id": "category",
             "display_name": "NTB Category",
             "type": "manageable",
@@ -1077,6 +1090,10 @@ Feature: Content Profile
             "created_by": "#CONTEXT_USER_ID#",
             "updated_by": "#CONTEXT_USER_ID#",
             "schema": {
+                "genre": {
+                    "type": "list",
+                    "required": false
+                },
                 "subject": {
                     "schema": {
                         "schema": {
@@ -1094,6 +1111,11 @@ Feature: Content Profile
                 }
             },
             "editor": {
+                "genre_custom": {
+                    "sdWidth": "half",
+                    "order": 2,
+                    "enabled": true
+                },
                 "category": {
                     "field_name": "NTB Category",
                     "enabled": true
@@ -1116,6 +1138,10 @@ Feature: Content Profile
         """
         {
             "schema": {
+                "genre_custom": {
+                    "type": "list",
+                    "required": false
+                },
                 "subject_custom": {
                     "type": "list",
                     "mandatory_in_list": {
@@ -1150,6 +1176,10 @@ Feature: Content Profile
                     "field_name": "NTB Category",
                     "enabled": true
                 },
+                "genre_custom": {
+                    "field_name": "Genre",
+                    "enabled": true
+                },
                 "subject_custom": {
                     "sdWidth": "full",
                     "field_name": "Subject",
@@ -1170,6 +1200,11 @@ Feature: Content Profile
             "created_by": "#CONTEXT_USER_ID#",
             "updated_by": "#CONTEXT_USER_ID#",
             "schema": {
+                "genre": {
+                    "type": "list",
+                    "required": false,
+                    "nullable": true
+                },
                 "subject": {
                     "schema": {
                         "schema": {
@@ -1205,6 +1240,9 @@ Feature: Content Profile
             "editor": {
                 "category": {
                     "field_name": "NTB Category",
+                    "enabled": true
+                },
+                "genre_custom": {
                     "enabled": true
                 }
             }
