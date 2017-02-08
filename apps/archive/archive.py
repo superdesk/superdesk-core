@@ -325,7 +325,7 @@ class ArchiveService(BaseService):
         add_activity(ACTIVITY_DELETE, 'removed item {{ type }} about {{ subject }}',
                      self.datasource, item=doc,
                      type=doc[ITEM_TYPE], subject=get_subject(doc))
-        push_expired_notification([doc])
+        push_expired_notification([doc.get(config.ID_FIELD)])
 
     def replace(self, id, document, original):
         return self.restore_version(id, document, original) or super().replace(id, document, original)
