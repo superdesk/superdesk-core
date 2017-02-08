@@ -21,7 +21,7 @@ from superdesk.io.registry import register_feeding_service
 from superdesk.io.feeding_services import FeedingService
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, GUID_TAG
 from superdesk.utils import merge_dicts
-from superdesk.metadata.utils import generate_guid
+from superdesk.metadata.utils import generate_guid, generate_tag
 
 from urllib.parse import quote as urlquote, urlsplit, urlunsplit
 
@@ -299,6 +299,11 @@ class RSSFeedingService(FeedingService):
                     item['body_html'] = data.content[0].value
                 except:
                     pass  # content either non-existent or parsed differently
+
+        if not data.get('guidislink') and data.get('link'):
+            item['uri'] = data['link']
+            scheme, netloc, path, query, fragment = urlsplit(item['uri'])
+            item['guid'] = generate_tag(domain=netloc, id=data.get('guid'))
 
         if item.get('uri', None):
             if not item.get('body_html', None):

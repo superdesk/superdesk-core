@@ -69,6 +69,15 @@ def generate_guid(**hints):
     return None
 
 
+def generate_tag(domain, id):
+    """Generate tag for given domain and id.
+
+    :param domain: domain string
+    :param id: local id
+    """
+    return 'tag:{}:{}'.format(domain, id)
+
+
 def is_normal_package(doc):
     """
     Returns True if the passed doc is a package and not a takes package. Otherwise, returns False.

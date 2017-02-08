@@ -19,6 +19,32 @@ from superdesk.tests import TestCase
 feed_parse = MagicMock()
 requests_get = MagicMock()
 
+nrk_xml = """
+<rss version="2.0">
+<channel>
+<description/>
+<link>https://www.nrk.no/finnmark/siste-nytt-finnmark-1.11957920</link>
+<pubDate>Mon, 06 Feb 2017 10:51:00 +0100</pubDate>
+<item>
+    <guid isPermaLink="false">1.13362571</guid>
+    <title>Stanset ikke for fotgjenger</title>
+    <description>
+    En fører av en personbil er anmeldt for ikke...
+    </description>
+    <link>
+    https://www.nrk.no/finnmark/stanset-ikke-for-fotgjenger-1.13362571
+    </link>
+    <pubDate>Mon, 06 Feb 2017 10:51:00 +0100</pubDate>
+</item>
+</channel>
+</rss>
+"""
+
+
+class RssResponse():
+    ok = True
+    content = nrk_xml
+
 
 class RssError(Exception):
     def __init__(self, name, orig_ex, provider):
@@ -644,6 +670,15 @@ class CreateItemMethodTestCase(RssIngestServiceTest):
         item = self.instance._create_item(data, field_aliases)
 
         self.assertEqual(item.get('abstract'), 'http://news.com/1234abcd')
+
+    def test_guid_not_permalink(self):
+        provider = {'config': {'url': 'http://example.com/rss'}}
+        with mock.patch('superdesk.io.feeding_services.rss.requests.get', return_value=RssResponse()):
+            items = self.instance._update(provider, None)[0]
+        self.assertEqual(1, len(items))
+        self.assertEqual('https://www.nrk.no/finnmark/stanset-ikke-for-fotgjenger-1.13362571', items[0]['uri'])
+        self.assertEqual('tag:www.nrk.no:1.13362571', items[0]['guid'])
+        self.assertIn(items[0]['uri'], items[0]['body_html'])
 
 
 class CreateImageItemsMethodTestCase(RssIngestServiceTest):
