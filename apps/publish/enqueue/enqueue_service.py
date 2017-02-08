@@ -130,7 +130,11 @@ class EnqueueService:
         req.args = {'source': json.dumps(query)}
         req.max_results = 1000
         previously_published_packages = published_service.get(req=req, lookup=None)
-        previously_published_package = previously_published_packages[0]
+
+        try:
+            previously_published_package = previously_published_packages[0]
+        except IndexError:
+            return [], []
 
         if 'groups' in previously_published_package:
             old_items = self.package_service.get_residrefs(previously_published_package)
