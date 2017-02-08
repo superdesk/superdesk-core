@@ -1409,7 +1409,7 @@ Feature: Rewrite content
               {"state": "pending", "content_type": "composite",
               "subscriber_id": "#digital#", "item_id": "#take_package1#", "item_version": 2},
               {"state": "pending", "content_type": "text",
-              "subscriber_id": "#wire#", "item_id": "123", "item_version": 2}
+              "subscriber_id": "#wire#", "item_id": "123", "item_version": 3}
             ]
         }
         """
@@ -1425,7 +1425,7 @@ Feature: Rewrite content
               {"state": "pending", "content_type": "composite",
               "subscriber_id": "#digital#", "item_id": "#take_package1#", "item_version": 2},
               {"state": "pending", "content_type": "text",
-              "subscriber_id": "#wire#", "item_id": "123", "item_version": 2},
+              "subscriber_id": "#wire#", "item_id": "123", "item_version": 3},
               {"state": "pending", "content_type": "composite", "item_id": "#take_package2#",
               "subscriber_id": "#digital#", "item_version": 2},
               {"state": "pending", "content_type": "text",

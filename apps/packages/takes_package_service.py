@@ -18,7 +18,7 @@ from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE_TYPE, TAKES_
     LAST_TAKE, REFS, MAIN_GROUP, SEQUENCE, RESIDREF, ASSOCIATED_TAKE_SEQUENCE
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, PUBLISH_STATES, ITEM_STATE, \
     CONTENT_STATE, EMBARGO, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, ASSOCIATIONS
-from apps.archive.common import insert_into_versions, ITEM_CREATE, RE_OPENS
+from apps.archive.common import insert_into_versions, ITEM_CREATE, RE_OPENS, ITEM_OPERATION, ITEM_TAKE
 from .package_service import get_item_ref, create_root_group
 
 logger = logging.getLogger(__name__)
@@ -114,6 +114,8 @@ class TakesPackageService():
         # if the original was flagged for SMS the new take should not be.
         if to.get('flags', {}).get('marked_for_sms', False):
             to['flags']['marked_for_sms'] = False
+
+        to[ITEM_OPERATION] = ITEM_TAKE
 
     def package_story_as_a_take(self, target, takes_package, link):
         """Makes a take from an item.
