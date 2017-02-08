@@ -81,7 +81,7 @@ class ItemLock(BaseComponent):
             return item
         finally:
             # unlock the lock :)
-            unlock(lock_id)
+            unlock(lock_id, remove=True)
 
     def unlock(self, item_filter, user_id, session_id, etag):
         item_model = get_model(ItemModel)

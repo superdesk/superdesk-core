@@ -1,12 +1,12 @@
 
 import os
-import mongolock
+import re
+import socket
 
+from mongolock import MongoLock
 from werkzeug.local import LocalProxy
 from flask import current_app as app
 from superdesk.logging import logger
-import re
-import socket
 
 
 _lock_resource_settings = {
@@ -15,10 +15,24 @@ _lock_resource_settings = {
 }
 
 
+class SuperdeskMongoLock(MongoLock):
+    """Superdesk MongoLock
+
+    Change release to remove the lock instead of updating it
+    so there is no need to gc that collection.
+    """
+
+    def release(self, key, owner, remove=False):
+        if remove:
+            return self.collection.delete_one({'_id': key, 'owner': owner})
+        else:
+            return super().release(key, owner)
+
+
 def _get_lock():
     """Get mongolock instance using app mongodb."""
     app.register_resource('_lock', _lock_resource_settings)  # setup dummy resource for locks
-    return mongolock.MongoLock(client=app.data.mongo.pymongo('_lock').db)
+    return SuperdeskMongoLock(client=app.data.mongo.pymongo('_lock').db)
 
 
 _lock = LocalProxy(_get_lock)
@@ -40,24 +54,25 @@ def lock(task, host=None, expire=300, timeout=None):
         host = get_host()
     got_lock = _lock.lock(task, host, expire=expire, timeout=timeout)
     if got_lock:
-        logger.info('got lock task=%s host=%s' % (task, host))
+        logger.debug('got lock task=%s host=%s' % (task, host))
     else:
-        logger.info('task locked already task=%s host=%s' % (task, host))
+        logger.debug('task locked already task=%s host=%s' % (task, host))
     return got_lock
 
 
-def unlock(task, host=None):
+def unlock(task, host=None, remove=False):
     """Release lock on given task.
 
     Lock can be only released by host which locked it.
 
     :param task: task name
     :param host: current host id
+    :param remove: remove lock when unlocking
     """
     if not host:
         host = get_host()
-    logger.info('releasing lock task=%s host=%s' % (task, host))
-    return _lock.release(task, host)
+    logger.debug('releasing lock task=%s host=%s' % (task, host))
+    return _lock.release(task, host, remove)
 
 
 def remove_locks():
