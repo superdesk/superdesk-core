@@ -27,7 +27,8 @@ class FilterConditionFieldsEnum(Enum):
     body_html = 13,
     stage = 14,
     ednote = 15,
-    place = 16
+    place = 16,
+    ingest_provider = 17
 
 
 class FilterConditionField:
@@ -52,6 +53,8 @@ class FilterConditionField:
             return FilterConditionPriorityField(field)
         elif FilterConditionFieldsEnum[field] == FilterConditionFieldsEnum.place:
             return FilterConditionPlaceField(field)
+        elif FilterConditionFieldsEnum[field] == FilterConditionFieldsEnum.ingest_provider:
+            return FilterConditionIngestProviderField(field)
         else:
             return FilterConditionField(field)
 
@@ -168,3 +171,10 @@ class FilterConditionPlaceField(FilterConditionField):
 
     def get_value(self, article):
         return [c['qcode'] for c in article[self.field.name]]
+
+
+class FilterConditionIngestProviderField(FilterConditionField):
+    def __init__(self, field):
+        self.field = FilterConditionFieldsEnum.ingest_provider
+        self.entity_name = 'ingest_provider'
+        self.field_type = str

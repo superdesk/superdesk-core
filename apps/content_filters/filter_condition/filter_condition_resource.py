@@ -38,7 +38,8 @@ class FilterConditionResource(Resource):
                         'desk',
                         'stage',
                         'sms',
-                        'place'],
+                        'place',
+                        'ingest_provider'],
         },
         'operator': {
             'type': 'string',
