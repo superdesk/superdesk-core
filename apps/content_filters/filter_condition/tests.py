@@ -22,14 +22,14 @@ from superdesk.vocabularies.command import VocabulariesPopulateCommand
 
 
 class FilterConditionTests(TestCase):
-
     def setUp(self):
         self.req = ParsedRequest()
         with self.app.test_request_context(self.app.config.get('URL_PREFIX')):
             self.articles = [{'_id': '1', 'urgency': 1, 'headline': 'story', 'state': 'fetched'},
                              {'_id': '2', 'headline': 'prtorque', 'state': 'fetched'},
                              {'_id': '3', 'urgency': 3, 'state': 'fetched', 'flags': {'marked_for_sms': True}},
-                             {'_id': '4', 'urgency': 4, 'state': 'fetched', 'task': {'desk': '1'}},
+                             {'_id': '4', 'urgency': 4, 'state': 'fetched', 'task': {'desk': '1'},
+                              'ingest_provider': '1'},
                              {'_id': '5', 'urgency': 2, 'state': 'fetched', 'task': {'desk': '2'}, 'priority': 3},
                              {'_id': '6', 'state': 'fetched'},
                              {'_id': '7', 'genre': [{'name': 'Sidebar'}], 'state': 'fetched'},
@@ -88,24 +88,24 @@ class FilterConditionTests(TestCase):
             self.req.args = {'source': json.dumps({'query': {'bool': {'must_not': [elastic_translation]}}})}
         elif search_type == 'filter':
             self.req.args = {'source': json.dumps({'query': {
-                                                   'filtered': {
-                                                       'filter': {
-                                                           'bool': {
-                                                               'should': [elastic_translation]}}}}})}
+                'filtered': {
+                    'filter': {
+                        'bool': {
+                            'should': [elastic_translation]}}}}})}
         elif search_type == 'match':
             self.req.args = {'source': json.dumps({'query': {
-                                                   'filtered': {
-                                                       'query': {
-                                                           'bool': {
-                                                               'should': [{
-                                                                   'bool': {
-                                                                       'must': [elastic_translation]}}]}}}}})}
+                'filtered': {
+                    'query': {
+                        'bool': {
+                            'should': [{
+                                'bool': {
+                                    'must': [elastic_translation]}}]}}}}})}
 
     def test_mongo_using_genre_filter_complete_string(self):
         f = FilterCondition('genre', 'in', 'Sidebar')
         query = f.get_mongo_query()
         with self.app.app_context():
-            docs = get_resource_service('archive').\
+            docs = get_resource_service('archive'). \
                 get_from_mongo(req=self.req, lookup=query)
             self.assertEqual(1, docs.count())
             self.assertEqual('7', docs[0]['_id'])
@@ -114,7 +114,7 @@ class FilterConditionTests(TestCase):
         f = FilterCondition('priority', 'eq', '3')
         query = f.get_mongo_query()
         with self.app.app_context():
-            docs = get_resource_service('archive').\
+            docs = get_resource_service('archive'). \
                 get_from_mongo(req=self.req, lookup=query)
             self.assertEqual(1, docs.count())
             self.assertEqual('5', docs[0]['_id'])
@@ -123,7 +123,7 @@ class FilterConditionTests(TestCase):
         f = FilterCondition('priority', 'ne', '3')
         query = f.get_mongo_query()
         with self.app.app_context():
-            docs = get_resource_service('archive').\
+            docs = get_resource_service('archive'). \
                 get_from_mongo(req=self.req, lookup=query)
             self.assertEqual(10, docs.count())
             self.assertTrue('5' not in [d['_id'] for d in docs])
@@ -132,7 +132,7 @@ class FilterConditionTests(TestCase):
         f = FilterCondition('priority', 'lte', '3')
         query = f.get_mongo_query()
         with self.app.app_context():
-            docs = get_resource_service('archive').\
+            docs = get_resource_service('archive'). \
                 get_from_mongo(req=self.req, lookup=query)
             self.assertEqual(1, docs.count())
             self.assertEqual('5', docs[0]['_id'])
@@ -141,7 +141,7 @@ class FilterConditionTests(TestCase):
         f = FilterCondition('desk', 'in', '1')
         query = f.get_mongo_query()
         with self.app.app_context():
-            docs = get_resource_service('archive').\
+            docs = get_resource_service('archive'). \
                 get_from_mongo(req=self.req, lookup=query)
             self.assertEqual(1, docs.count())
             self.assertEqual('4', docs[0]['_id'])
@@ -150,7 +150,7 @@ class FilterConditionTests(TestCase):
         f = FilterCondition('desk', 'nin', '1')
         query = f.get_mongo_query()
         with self.app.app_context():
-            docs = get_resource_service('archive').\
+            docs = get_resource_service('archive'). \
                 get_from_mongo(req=self.req, lookup=query)
             self.assertEqual(10, docs.count())
 
@@ -158,7 +158,7 @@ class FilterConditionTests(TestCase):
         f = FilterCondition('desk', 'eq', '1')
         query = f.get_mongo_query()
         with self.app.app_context():
-            docs = get_resource_service('archive').\
+            docs = get_resource_service('archive'). \
                 get_from_mongo(req=self.req, lookup=query)
             self.assertEqual(1, docs.count())
             self.assertEqual('4', docs[0]['_id'])
@@ -167,7 +167,7 @@ class FilterConditionTests(TestCase):
         f = FilterCondition('sms', 'in', 'true')
         query = f.get_mongo_query()
         with self.app.app_context():
-            docs = get_resource_service('archive').\
+            docs = get_resource_service('archive'). \
                 get_from_mongo(req=self.req, lookup=query)
             self.assertEqual(1, docs.count())
 
@@ -175,7 +175,7 @@ class FilterConditionTests(TestCase):
         f = FilterCondition('sms', 'eq', 'true')
         query = f.get_mongo_query()
         with self.app.app_context():
-            docs = get_resource_service('archive').\
+            docs = get_resource_service('archive'). \
                 get_from_mongo(req=self.req, lookup=query)
             self.assertEqual(1, docs.count())
 
@@ -183,7 +183,7 @@ class FilterConditionTests(TestCase):
         f = FilterCondition('desk', 'in', '1,2')
         query = f.get_mongo_query()
         with self.app.app_context():
-            docs = get_resource_service('archive').\
+            docs = get_resource_service('archive'). \
                 get_from_mongo(req=self.req, lookup=query)
             self.assertEqual(2, docs.count())
 
@@ -191,7 +191,7 @@ class FilterConditionTests(TestCase):
         f = FilterCondition('anpa_category', 'in', 'a,i')
         query = f.get_mongo_query()
         with self.app.app_context():
-            docs = get_resource_service('archive').\
+            docs = get_resource_service('archive'). \
                 get_from_mongo(req=self.req, lookup=query)
             self.assertEqual(1, docs.count())
             self.assertEqual('9', docs[0]['_id'])
@@ -200,7 +200,7 @@ class FilterConditionTests(TestCase):
         f = FilterCondition('subject', 'in', '05005003')
         query = f.get_mongo_query()
         with self.app.app_context():
-            docs = get_resource_service('archive').\
+            docs = get_resource_service('archive'). \
                 get_from_mongo(req=self.req, lookup=query)
             self.assertEqual(1, docs.count())
             self.assertEqual('8', docs[0]['_id'])
@@ -209,7 +209,7 @@ class FilterConditionTests(TestCase):
         f = FilterCondition('subject', 'eq', '05005003')
         query = f.get_mongo_query()
         with self.app.app_context():
-            docs = get_resource_service('archive').\
+            docs = get_resource_service('archive'). \
                 get_from_mongo(req=self.req, lookup=query)
             self.assertEqual(1, docs.count())
             self.assertEqual('8', docs[0]['_id'])
@@ -218,7 +218,7 @@ class FilterConditionTests(TestCase):
         f = FilterCondition('headline', 'like', 'story')
         query = f.get_mongo_query()
         with self.app.app_context():
-            docs = get_resource_service('archive').\
+            docs = get_resource_service('archive'). \
                 get_from_mongo(req=self.req, lookup=query)
             self.assertEqual(1, docs.count())
             self.assertEqual('1', docs[0]['_id'])
@@ -227,7 +227,7 @@ class FilterConditionTests(TestCase):
         f = FilterCondition('headline', 'like', 'story')
         query = f.get_mongo_query()
         with self.app.app_context():
-            docs = get_resource_service('archive').\
+            docs = get_resource_service('archive'). \
                 get_from_mongo(req=self.req, lookup=query)
             self.assertEqual(1, docs.count())
             self.assertEqual('1', docs[0]['_id'])
@@ -236,7 +236,7 @@ class FilterConditionTests(TestCase):
         f = FilterCondition('headline', 'like', 'tor')
         query = f.get_mongo_query()
         with self.app.app_context():
-            docs = get_resource_service('archive').\
+            docs = get_resource_service('archive'). \
                 get_from_mongo(req=self.req, lookup=query)
             doc_ids = [d['_id'] for d in docs]
             self.assertEqual(2, docs.count())
@@ -247,7 +247,7 @@ class FilterConditionTests(TestCase):
         f = FilterCondition('headline', 'startswith', 'Sto')
         query = f.get_mongo_query()
         with self.app.app_context():
-            docs = get_resource_service('archive').\
+            docs = get_resource_service('archive'). \
                 get_from_mongo(req=self.req, lookup=query)
             self.assertEqual(1, docs.count())
             self.assertEqual('1', docs[0]['_id'])
@@ -256,7 +256,7 @@ class FilterConditionTests(TestCase):
         f = FilterCondition('headline', 'endswith', 'Que')
         query = f.get_mongo_query()
         with self.app.app_context():
-            docs = get_resource_service('archive').\
+            docs = get_resource_service('archive'). \
                 get_from_mongo(req=self.req, lookup=query)
             self.assertEqual(1, docs.count())
             self.assertEqual('2', docs[0]['_id'])
@@ -265,7 +265,7 @@ class FilterConditionTests(TestCase):
         f = FilterCondition('headline', 'notlike', 'Que')
         query = f.get_mongo_query()
         with self.app.app_context():
-            docs = get_resource_service('archive').\
+            docs = get_resource_service('archive'). \
                 get_from_mongo(req=self.req, lookup=query)
             self.assertEqual(10, docs.count())
             doc_ids = [d['_id'] for d in docs]
@@ -275,7 +275,7 @@ class FilterConditionTests(TestCase):
         f = FilterCondition('urgency', 'in', '3,4')
         query = f.get_mongo_query()
         with self.app.app_context():
-            docs = get_resource_service('archive').\
+            docs = get_resource_service('archive'). \
                 get_from_mongo(req=self.req, lookup=query)
             self.assertEqual(2, docs.count())
             self.assertEqual('3', docs[0]['_id'])
@@ -285,7 +285,7 @@ class FilterConditionTests(TestCase):
         f = FilterCondition('urgency', 'nin', '2,3,4')
         query = f.get_mongo_query()
         with self.app.app_context():
-            docs = get_resource_service('archive').\
+            docs = get_resource_service('archive'). \
                 get_from_mongo(req=self.req, lookup=query)
             self.assertEqual(8, docs.count())
             doc_ids = [d['_id'] for d in docs]
@@ -708,3 +708,22 @@ class FilterConditionTests(TestCase):
             doc_ids = [d['_id'] for d in docs]
             self.assertEqual(1, docs.count())
             self.assertTrue('11' in doc_ids)
+
+    def test_mongo_using_ingest_provider_filter_eq(self):
+        f = FilterCondition('ingest_provider', 'eq', '1')
+        query = f.get_mongo_query()
+        with self.app.app_context():
+            docs = get_resource_service('archive'). \
+                get_from_mongo(req=self.req, lookup=query)
+            self.assertEqual(1, docs.count())
+            self.assertEqual('4', docs[0]['_id'])
+
+    def test_elastic_using_ingest_provider_filter_eq(self):
+        f = FilterCondition('ingest_provider', 'eq', '1')
+        query = f.get_elastic_query()
+        with self.app.app_context():
+            self._setup_elastic_args(query)
+            docs = get_resource_service('archive').get(req=self.req, lookup=None)
+            doc_ids = [d['_id'] for d in docs]
+            self.assertEqual(1, docs.count())
+            self.assertTrue('4' in doc_ids)

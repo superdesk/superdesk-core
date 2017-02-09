@@ -94,6 +94,11 @@ class FilterConditionParametersService(BaseService):
                             'operators': ['match'],
                             'values': values['place'],
                             'value_field': 'qcode'
+                            },
+                           {'field': 'ingest_provider',
+                            'operators': ['eq', 'ne'],
+                            'values': values['ingest_provider'],
+                            'value_field': '_id'
                             }])
 
     def _get_field_values(self):
@@ -121,6 +126,7 @@ class FilterConditionParametersService(BaseService):
         place = vocabularies_resource.get(req=req, lookup=None)
         if place.count():
             values['place'] = place[0]['items']
+        values['ingest_provider'] = list(get_resource_service('ingest_providers').get(None, {}))
         return values
 
     def _get_stage_field_values(self, desks):
