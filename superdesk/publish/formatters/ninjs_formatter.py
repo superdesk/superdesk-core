@@ -207,7 +207,7 @@ class NINJSFormatter(Formatter):
                 if RESIDREF in ref:
                     item = {}
                     item['guid'] = ref[RESIDREF]
-                    item[ITEM_TYPE] = ref[ITEM_TYPE]
+                    item[ITEM_TYPE] = ref.get(ITEM_TYPE, 'text')
                     if ref.get('package_item'):
                         item.update(self._transform_to_ninjs(ref['package_item'], subscriber, recursive=False))
                     group_items.append(item)
