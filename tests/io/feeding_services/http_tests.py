@@ -21,12 +21,15 @@ from superdesk.tests import TestCase
 from superdesk.errors import IngestApiError
 
 
+TEST_FEEDING_SERVICE_NAME = 'test_feeding_service'
+
+
 def setup_provider(token, hours):
     return {
         '_id': 'foo',
         'name': 'test http',
         'source': 'test http',
-        'feeding_service': 'test',
+        'feeding_service': TEST_FEEDING_SERVICE_NAME,
         'feed_parser': 'newsml2',
         'content_expiry': 2880,
         'tokens': {
@@ -37,7 +40,7 @@ def setup_provider(token, hours):
 
 
 class TestFeedingService(HTTPFeedingService):
-    NAME = 'test'
+    NAME = TEST_FEEDING_SERVICE_NAME
     ERRORS = []
 
     def _update(self, provider, update):

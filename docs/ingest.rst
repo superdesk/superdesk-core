@@ -46,10 +46,12 @@ Handle transport protocols when ingesting.
 
 .. autoclass:: RSSFeedingService
 
+.. autoclass:: apps.io.feeding_services.wufoo.WufooFeedingService
+
 Add new Service
 ^^^^^^^^^^^^^^^
 
-.. autofunction:: superdesk.io.register_feeding_service
+.. autofunction:: superdesk.io.registry.register_feeding_service
 
 Feed Parsers
 ------------
@@ -85,4 +87,4 @@ Parse items from services.
 Add new Parser
 ^^^^^^^^^^^^^^
 
-.. autofunction:: superdesk.io.register_feed_parser
+.. autofunction:: superdesk.io.registry.register_feed_parser

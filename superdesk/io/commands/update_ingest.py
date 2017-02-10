@@ -38,6 +38,7 @@ from superdesk.filemeta import set_filemeta
 
 UPDATE_SCHEDULE_DEFAULT = {'minutes': 5}
 LAST_UPDATED = 'last_updated'
+LAST_INGESTED_ID = 'last_ingested_id'
 LAST_ITEM_UPDATE = 'last_item_update'
 IDLE_TIME_DEFAULT = {'hours': 0, 'minutes': 0}
 
