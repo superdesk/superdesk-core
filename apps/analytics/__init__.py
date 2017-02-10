@@ -13,6 +13,7 @@ import superdesk
 from apps.analytics.activity_reports import ActivityReportResource, ActivityReportService
 from apps.analytics.saved_activity_reports import SavedActivityReportResource, \
     SavedActivityReportService
+from apps.analytics.track_users_activity import TrackActivityResource, TrackActivityService
 
 
 def init_app(app):
@@ -24,5 +25,11 @@ def init_app(app):
     service = SavedActivityReportService(endpoint_name, backend=superdesk.get_backend())
     SavedActivityReportResource(endpoint_name, app=app, service=service)
 
+    endpoint_name = 'track_users_report'
+    service = TrackActivityService(endpoint_name, backend=superdesk.get_backend())
+    TrackActivityResource(endpoint_name, app=app, service=service)
+
     superdesk.privilege(name='activity_reports', label='Activity Report View',
+                        description='User can view activity reports.')
+    superdesk.privilege(name='track_users_report', label='Activity Report View',
                         description='User can view activity reports.')
