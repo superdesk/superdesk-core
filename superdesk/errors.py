@@ -435,7 +435,8 @@ class FormatterError(SuperdeskPublishError):
         7006: 'Article couldn"t be converted to NewsML G2 format',
         7008: 'Article couldn"t be converted to AAP SMS format',
         7009: 'Article couldn"t be converted to AAP Newscentre',
-        7010: 'Article couldn"t be converted to Email'
+        7010: 'Article couldn"t be converted to Email',
+        7011: 'Article couldn"t be converted to AAP Text format',
     }
 
     @classmethod
@@ -477,6 +478,10 @@ class FormatterError(SuperdeskPublishError):
     @classmethod
     def EmailFormatterError(cls, exception=None, destination=None):
         return FormatterError(7010, exception, destination)
+
+    @classmethod
+    def AAPTextFormatterError(cls, exception=None, destination=None):
+        return FormatterError(7011, exception, destination)
 
 
 class SubscriberError(SuperdeskPublishError):

@@ -1307,6 +1307,11 @@ def step_impl_then_get_header(context, header):
     expect_headers_contain(context.response, header)
 
 
+@then('we get "{header}" header with "{type}" type')
+def step_impl_then_get_header_with_type(context, header, type):
+    expect_headers_contain(context.response, header, type)
+
+
 @then('we get link to "{resource}"')
 def then_we_get_link_to_resource(context, resource):
     doc = get_json_data(context.response)

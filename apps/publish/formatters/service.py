@@ -17,6 +17,7 @@ from superdesk.publish.formatters import get_all_formatters
 from superdesk.utils import ListCursor
 from eve.validation import ValidationError
 from apps.publish.content.common import ITEM_PUBLISH
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,10 @@ class FormattersService(BaseService):
 
     def get(self, req, lookup):
         formatters = get_all_formatters()
+
+        if req.args.get('criteria'):
+            formatters = (f for f in formatters if getattr(f, req.args.get('criteria')) is True)
+
         return ListCursor([{'name': type(f).__name__} for f in formatters])
 
     def _get_formatter(self, name):
@@ -62,6 +67,11 @@ class FormattersService(BaseService):
                 self._validate(article)
                 sequence, formatted_doc = formatter.format(article, {'_id': '0'}, None)[0]
                 formatted_doc = formatted_doc.replace('\'\'', '\'')
+
+                # respond only with the formatted output if output_field is configured
+                if hasattr(formatter, 'output_field'):
+                    formatted_doc = json.loads(formatted_doc)
+                    formatted_doc = formatted_doc.get(formatter.output_field, '').replace('\'\'', '\'')
             except Exception as ex:
                 logger.exception(ex)
                 raise SuperdeskApiError.\
