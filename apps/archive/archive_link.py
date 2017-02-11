@@ -15,15 +15,13 @@ from superdesk.metadata.item import EMBARGO, ITEM_STATE, CONTENT_STATE, ITEM_TYP
 from superdesk.resource import Resource, build_custom_hateoas
 from apps.packages import TakesPackageService, PackageService
 from apps.archive import ArchiveSpikeService
-from apps.archive.common import CUSTOM_HATEOAS, BROADCAST_GENRE, is_genre, insert_into_versions, \
-    ITEM_OPERATION, ITEM_UNLINK, ITEM_TAKE
+from apps.archive.common import CUSTOM_HATEOAS, BROADCAST_GENRE, is_genre, insert_into_versions
 from apps.auth import get_user
 from superdesk.metadata.utils import item_url, generate_guid
 from apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification
 import logging
-from eve.versioning import resolve_document_version
 
 logger = logging.getLogger(__name__)
 
@@ -73,13 +71,6 @@ class ArchiveLinkService(Service):
         insert_into_versions(id_=linked_item[config.ID_FIELD])
         doc.update(linked_item)
         build_custom_hateoas(CUSTOM_HATEOAS, doc)
-
-        updates = {ITEM_OPERATION: ITEM_TAKE}
-        resolve_document_version(updates, ARCHIVE, 'PATCH', target)
-        service.system_update(target_id, updates, target)
-        target.update(updates)
-        insert_into_versions(doc=target)
-
         return [linked_item['_id']]
 
     def _validate_link(self, target, target_id):
@@ -156,12 +147,7 @@ class ArchiveLinkService(Service):
             updates['sequence'] = None
 
         updates['event_id'] = generate_guid(type=GUID_TAG)
-        updates[ITEM_OPERATION] = ITEM_UNLINK
-
-        resolve_document_version(updates, ARCHIVE, 'PATCH', target)
 
         archive_service.system_update(target_id, updates, target)
-        target.update(updates)
-        insert_into_versions(doc=target)
         user = get_user(required=True)
         push_notification('item:unlink', item=target_id, user=str(user.get(config.ID_FIELD)))

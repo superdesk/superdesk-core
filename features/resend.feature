@@ -185,7 +185,7 @@ Feature: Resend
     """
     {
       "subscribers": ["#subscribers._id#"],
-      "version": 5
+      "version": 4
     }
     """
     Then we get error 400
