@@ -79,6 +79,10 @@ class ArchiveLinkService(Service):
         service.system_update(target_id, updates, target)
         target.update(updates)
         insert_into_versions(doc=target)
+        get_resource_service('published').update_published_items(target[config.ID_FIELD],
+                                                                 'linked_in_packages',
+                                                                 target['linked_in_packages'],
+                                                                 operation=ITEM_TAKE)
 
         return [linked_item['_id']]
 
@@ -128,6 +132,7 @@ class ArchiveLinkService(Service):
         target = archive_service.find_one(req=None, _id=target_id)
         self._validate_unlink(target)
         updates = {}
+        rewrite_unlink = False
 
         takes_package = TakesPackageService().get_take_package(target)
 
@@ -138,6 +143,7 @@ class ArchiveLinkService(Service):
         if target.get('rewrite_of'):
             # remove the rewrite info
             ArchiveSpikeService().update_rewrite(target)
+            rewrite_unlink = True
 
         if not takes_package and not target.get('rewrite_of'):
             # there is nothing to do
@@ -157,11 +163,16 @@ class ArchiveLinkService(Service):
 
         updates['event_id'] = generate_guid(type=GUID_TAG)
         updates[ITEM_OPERATION] = ITEM_UNLINK
-
-        resolve_document_version(updates, ARCHIVE, 'PATCH', target)
-
         archive_service.system_update(target_id, updates, target)
-        target.update(updates)
-        insert_into_versions(doc=target)
+
+        if not rewrite_unlink:
+            resolve_document_version(updates, ARCHIVE, 'PATCH', target)
+            target.update(updates)
+            insert_into_versions(doc=target)
+            get_resource_service('published').update_published_items(target[config.ID_FIELD],
+                                                                     'event_id',
+                                                                     target['event_id'],
+                                                                     operation=ITEM_UNLINK)
+
         user = get_user(required=True)
         push_notification('item:unlink', item=target_id, user=str(user.get(config.ID_FIELD)))

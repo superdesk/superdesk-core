@@ -922,7 +922,7 @@ Feature: Take Package Publishing
           "_items": [
               {
                   "_id": "123",
-                  "_current_version": 3,
+                  "_current_version": 4,
                   "state": "published",
                   "body_html": "Take-1"
               },
@@ -948,6 +948,7 @@ Feature: Take Package Publishing
           ]
       }
       """
+
 
     @auth
     Scenario: Reopen a story published to wire subscriber by adding a new take
@@ -1033,7 +1034,7 @@ Feature: Take Package Publishing
           "_items": [
               {
                   "type": "text",
-                  "_current_version": 3,
+                  "_current_version": 4,
                   "body_html": "Take-1"
               },
               {
