@@ -95,7 +95,7 @@ Feature: Rewrite content
       When we get "/published"
       Then we get existing resource
       """
-      {"_items" : [{"_id": "123", "rewritten_by": "#REWRITE_ID#"},
+      {"_items" : [{"_id": "123", "rewritten_by": "#REWRITE_ID#", "_current_version": 5},
                    {"package_type": "takes", "rewritten_by": "#REWRITE_ID#"}]}
       """
       When we get "/archive"
@@ -113,7 +113,7 @@ Feature: Rewrite content
       When we get "/archive/123"
       Then we get existing resource
       """
-      {"_id": "123", "rewritten_by": "#REWRITE_ID#", "place": [{"qcode" : "ACT"}]}
+      {"_id": "123", "rewritten_by": "#REWRITE_ID#", "_current_version": 5, "place": [{"qcode" : "ACT"}]}
       """
       When we publish "#REWRITE_ID#" with "publish" type and "published" state
       Then we get OK response

@@ -248,9 +248,9 @@ class ArchiveRewriteService(Service):
         processed_items = set()
         for doc in published_rewritten_stories:
             doc_id = doc.get(config.ID_FIELD)
-            publish_service.update_published_items(doc_id, rewrite_field, None, operation=ITEM_UNLINK)
             if doc_id not in processed_items:
                 # clear the flag from the archive as well.
+                publish_service.update_published_items(doc_id, rewrite_field, None, operation=ITEM_UNLINK)
                 archive_item = archive_service.find_one(req=None, _id=doc_id)
                 updates = {rewrite_field: None}
                 resolve_document_version(updates, ARCHIVE, 'PATCH', archive_item)

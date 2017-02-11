@@ -26,7 +26,7 @@ from eve.utils import ParsedRequest, config
 from flask import current_app as app
 
 from apps.archive.archive import SOURCE as ARCHIVE
-from apps.archive.common import handle_existing_data, item_schema, ITEM_OPERATION, insert_into_versions
+from apps.archive.common import handle_existing_data, item_schema, ITEM_OPERATION
 from apps.packages import TakesPackageService
 from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
 
@@ -313,10 +313,11 @@ class PublishedItemService(BaseService):
         items = self.get_other_published_items(_id)
         for item in items:
             try:
-                super().system_update(ObjectId(item[config.ID_FIELD]), {field: state}, item)
+                update = {field: state}
                 if operation:
-                    item.update({ITEM_OPERATION: operation})
-                    insert_into_versions(doc=item)
+                    update[config.VERSION] = item[config.VERSION] + 1
+                    update[ITEM_OPERATION] = operation
+                super().system_update(ObjectId(item[config.ID_FIELD]), update, item)
             except:
                 # This part is used in unit testing
                 super().system_update(item[config.ID_FIELD], {field: state}, item)
