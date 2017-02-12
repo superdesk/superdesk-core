@@ -21,7 +21,7 @@ from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, PUBLISH_SCHEDULE,
 
 from apps.publish.enqueue.enqueue_corrected import EnqueueCorrectedService
 from apps.publish.enqueue.enqueue_killed import EnqueueKilledService
-from apps.publish.published_item import PUBLISH_STATE, QUEUE_STATE, PUBLISHED
+from apps.publish.published_item import PUBLISH_STATE, QUEUE_STATE, PUBLISHED, ERROR_MESSAGE
 from bson.objectid import ObjectId
 from eve.utils import config, ParsedRequest
 from eve.versioning import resolve_document_version
@@ -122,11 +122,13 @@ def enqueue_item(published_item):
         queue_state = PUBLISH_STATE.QUEUED if queued else PUBLISH_STATE.QUEUED_NOT_TRANSMITTED
         published_service.patch(published_item_id, {QUEUE_STATE: queue_state})
         logger.info('Queued item with id: {} and item_id: {}'.format(published_item_id, published_item['item_id']))
-    except KeyError:
-        published_service.patch(published_item_id, {QUEUE_STATE: PUBLISH_STATE.PENDING})
+    except KeyError as key_error:
+        error_updates = {QUEUE_STATE: PUBLISH_STATE.ERROR, ERROR_MESSAGE: str(key_error)}
+        published_service.patch(published_item_id, error_updates)
         logger.exception('No enqueue service found for operation %s', published_item[ITEM_OPERATION])
-    except:
-        published_service.patch(published_item_id, {QUEUE_STATE: PUBLISH_STATE.PENDING})
+    except Exception as error:
+        error_updates = {QUEUE_STATE: PUBLISH_STATE.ERROR, ERROR_MESSAGE: str(error)}
+        published_service.patch(published_item_id, error_updates)
         raise
 
 
