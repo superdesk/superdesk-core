@@ -87,7 +87,7 @@ class SearchProviderProxyService(SearchIngestService):
         service = self._get_service(provider)
         if isinstance(service, str):
             return superdesk.get_resource_service(service).fetch_rendition(self, rendition)
-        return service.fetch_file(rendition.get('href'))
+        return service.fetch_file(rendition.get('href'), rendition=rendition, item=item)
 
     def _set_item_defaults(self, item, provider):
         """Add default values to external items."""
