@@ -36,9 +36,13 @@ logger = logging.getLogger(__name__)
 PUBLISHED = 'published'
 LAST_PUBLISHED_VERSION = 'last_published_version'
 QUEUE_STATE = 'queue_state'
-queue_states = ['pending', 'in_progress', 'queued', 'queued_not_transmitted']
-PUBLISH_STATE = namedtuple('PUBLISH_STATE', ['PENDING', 'IN_PROGRESS', 'QUEUED',
-                                             'QUEUED_NOT_TRANSMITTED'])(*queue_states)
+ERROR_MESSAGE = 'error_message'
+queue_states = ['pending', 'in_progress', 'queued', 'queued_not_transmitted', 'error']
+PUBLISH_STATE = namedtuple('PUBLISH_STATE', ['PENDING',
+                                             'IN_PROGRESS',
+                                             'QUEUED',
+                                             'QUEUED_NOT_TRANSMITTED',
+                                             'ERROR'])(*queue_states)
 
 published_item_fields = {
     'item_id': {
@@ -59,6 +63,9 @@ published_item_fields = {
         'type': 'string',
         'default': 'pending',
         'allowed': queue_states,
+    },
+    ERROR_MESSAGE: {
+        'type': 'string'
     },
     'is_take_item': {
         'type': 'boolean',

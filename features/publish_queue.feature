@@ -98,6 +98,91 @@ Feature: Publish Queue
     Then we get list with 0 items
 
 
+  @auth @vocabulary
+  Scenario: Error in queueing will be recorded if happens
+    Given empty "archive"
+    And empty "subscribers"
+    And empty "products"
+    Given empty "filter_conditions"
+
+    When we post to "/filter_conditions" with success
+    """
+    [{"name": "sport", "field": "place", "operator": "match", "value": "4"}]
+    """
+    Then we get latest
+
+    Given empty "content_filters"
+    When we post to "/content_filters" with success
+    """
+    [{"content_filter": [{"expression": {"fc": ["#filter_conditions._id#"]}}], "name": "soccer"}]
+    """
+    Then we get latest
+    Given "products"
+      """
+      [{
+        "_id":"570340ef1d41c89b50716dae", "name":"prod-2","codes":"def,xyz",
+        "content_filter": {
+            "filter_id": "#content_filter._id#",
+            "filter_type": "blocking"
+        },
+        "geo_restrictions": "NSW"
+      }]
+      """
+    And the "validators"
+      """
+      [{"_id": "publish_text", "act": "publish", "type": "text", "schema":{}}]
+      """
+    And "desks"
+      """
+      [{"name": "Sports"}]
+      """
+    And "archive"
+      """
+      [{"guid": "123",
+        "state": "fetched",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "target_regions": [{"a": "b"}]
+      }]
+      """
+    And "subscribers"
+      """
+      [{
+        "name":"Channel 3",
+        "media_type":"media",
+        "subscriber_type": "wire",
+        "sequence_num_settings":{"min" : 1, "max" : 10},
+        "email": "test@test.com",
+        "products": ["570340ef1d41c89b50716dae"],
+        "codes": "ptr, axx,",
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }]
+      """
+
+    When we publish "#archive._id#" with "publish" type and "published" state
+    Then we get OK response
+
+    When we enqueue published
+    When we get "/publish_queue"
+    Then we get list with 0 items
+    When we get "/published"
+    Then we get existing resource
+    """
+    {
+        "_items": [
+            {
+                "type": "text",
+                "queue_state": "error",
+                "error_message": "400: Key is missing on article to be published: 'qcode'"
+            },
+            {
+                "type": "composite",
+                "queue_state": "queued_not_transmitted"
+            }
+        ]
+    }
+    """
+
+
   @auth
   Scenario: Transmission will have the collated codes
     Given empty "archive"
