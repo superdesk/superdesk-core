@@ -15,20 +15,14 @@ from superdesk import get_resource_service, Service, config
 from superdesk.metadata.item import ITEM_STATE, EMBARGO, CONTENT_STATE, CONTENT_TYPE, \
     ITEM_TYPE, PUBLISH_STATES, ASSOCIATIONS
 from superdesk.resource import Resource, build_custom_hateoas
-from apps.archive.common import insert_into_versions, CUSTOM_HATEOAS, ITEM_CREATE, ARCHIVE, BROADCAST_GENRE, \
-    item_operations, ITEM_OPERATION, ITEM_UNLINK
+from apps.archive.common import CUSTOM_HATEOAS, ITEM_CREATE, ARCHIVE, BROADCAST_GENRE
 from superdesk.metadata.utils import item_url
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from apps.packages.takes_package_service import TakesPackageService
 from apps.tasks import send_to
-from eve.versioning import resolve_document_version
-
 
 logger = logging.getLogger(__name__)
-
-ITEM_REWRITE = 'rewrite'
-item_operations.append(ITEM_REWRITE)
 
 
 class ArchiveRewriteResource(Resource):
@@ -65,19 +59,14 @@ class ArchiveRewriteService(Service):
             archive_service.patch(update_document[config.ID_FIELD], rewrite)
             rewrite[config.ID_FIELD] = update_document[config.ID_FIELD]
             ids = [update_document[config.ID_FIELD]]
-            rewrite[ITEM_OPERATION] = ITEM_REWRITE
         else:
             ids = archive_service.post([rewrite])
             build_custom_hateoas(CUSTOM_HATEOAS, rewrite)
-            rewrite[ITEM_OPERATION] = ITEM_CREATE
 
         self._add_rewritten_flag(original, digital, rewrite)
         get_resource_service('archive_broadcast').on_broadcast_master_updated(ITEM_CREATE,
                                                                               item=original,
                                                                               rewrite_id=ids[0])
-
-        insert_into_versions(doc=rewrite)
-
         return [rewrite]
 
     def _validate_rewrite(self, original, update):
@@ -199,7 +188,6 @@ class ArchiveRewriteService(Service):
                     rewrite['body_html'] = original.get('body_html', '')
 
         rewrite[ITEM_STATE] = CONTENT_STATE.PROGRESS
-        rewrite[config.VERSION] = 1
         self._set_take_key(rewrite, original.get('event_id'))
         return rewrite
 
@@ -210,27 +198,18 @@ class ArchiveRewriteService(Service):
         :param dict digital: digital item
         :param dict rewrite: rewritten document
         """
-        updates = {'rewritten_by': rewrite[config.ID_FIELD], ITEM_OPERATION: ITEM_REWRITE}
-
         get_resource_service('published').update_published_items(original[config.ID_FIELD],
-                                                                 'rewritten_by',
-                                                                 rewrite[config.ID_FIELD],
-                                                                 operation=ITEM_REWRITE)
+                                                                 'rewritten_by', rewrite[config.ID_FIELD])
         if digital:
             # update the rewritten_by for digital
-            get_resource_service('published').update_published_items(digital[config.ID_FIELD],
-                                                                     'rewritten_by',
-                                                                     rewrite[config.ID_FIELD],
-                                                                     operation=ITEM_REWRITE)
-            get_resource_service(ARCHIVE).system_update(digital[config.ID_FIELD], updates, digital)
-
-        resolve_document_version(updates, ARCHIVE, 'PATCH', original)
+            get_resource_service('published').update_published_items(digital[config.ID_FIELD], 'rewritten_by',
+                                                                     rewrite[config.ID_FIELD])
+            get_resource_service(ARCHIVE).system_update(digital[config.ID_FIELD],
+                                                        {'rewritten_by': rewrite[config.ID_FIELD]}, digital)
 
         # modify the original item as well.
-        get_resource_service(ARCHIVE).system_update(original[config.ID_FIELD], updates, original)
-
-        original.update(updates)
-        insert_into_versions(doc=original)
+        get_resource_service(ARCHIVE).system_update(original[config.ID_FIELD],
+                                                    {'rewritten_by': rewrite[config.ID_FIELD]}, original)
 
     def _clear_rewritten_flag(self, event_id, rewrite_id, rewrite_field):
         """Clears rewritten_by or rewrite_of field from the existing published and archive items.
@@ -248,16 +227,11 @@ class ArchiveRewriteService(Service):
         processed_items = set()
         for doc in published_rewritten_stories:
             doc_id = doc.get(config.ID_FIELD)
-            publish_service.update_published_items(doc_id, rewrite_field, None, operation=ITEM_UNLINK)
+            publish_service.update_published_items(doc_id, rewrite_field, None)
             if doc_id not in processed_items:
                 # clear the flag from the archive as well.
                 archive_item = archive_service.find_one(req=None, _id=doc_id)
-                updates = {rewrite_field: None}
-                resolve_document_version(updates, ARCHIVE, 'PATCH', archive_item)
-                archive_service.system_update(doc_id, updates, archive_item)
-                updates[ITEM_OPERATION] = ITEM_UNLINK
-                archive_item.update(updates)
-                insert_into_versions(doc=archive_item)
+                archive_service.system_update(doc_id, {rewrite_field: None}, archive_item)
                 processed_items.add(doc_id)
 
     def _set_take_key(self, rewrite, event_id):

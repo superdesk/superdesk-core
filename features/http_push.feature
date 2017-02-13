@@ -83,5 +83,5 @@ Feature: HTTP Push publishing
         When we transmit published
         Then we pushed 1 item
         """
-        [{"guid": "#archive.guid#", "type": "text", "pubstatus": "canceled", "version": "6"}]
+        [{"guid": "#archive.guid#", "type": "text", "pubstatus": "canceled", "version": "5"}]
         """
