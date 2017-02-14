@@ -33,7 +33,7 @@ class UtilsTest(unittest.TestCase):
         self.assertEqual(2, get_word_count('plain text'), 'plain text')
         self.assertEqual(2, get_word_count('<p> html text </p>'), 'paragraph')
 
-        self.assertEqual(22, get_word_count(
+        self.assertEqual(23, get_word_count(
             '<doc><p xml:lang="en-US">The weather was superb today in Norfolk, Virginia. Made me want to take\n'
             'out my boat, manufactured by the <org value="acm" idsrc="iptc.org">Acme Boat Company</org>.</p></doc>'))
 
