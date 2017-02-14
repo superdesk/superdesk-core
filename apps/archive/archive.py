@@ -126,13 +126,18 @@ class ArchiveResource(Resource):
     privileges = {'POST': SOURCE, 'PATCH': SOURCE, 'PUT': SOURCE}
 
 
-def update_word_count(doc):
+def update_word_count(update, original=None):
     """Update word count if there was change in content.
 
-    :param doc: created/udpated document
+    :param update: created/updated document
+    :param original: original document if updated
     """
-    if doc.get('body_html'):
-        doc.setdefault('word_count', get_word_count(doc.get('body_html')))
+    if update.get('body_html'):
+        update.setdefault('word_count', get_word_count(update.get('body_html')))
+    else:
+        # If the body is removed then set the count to zero
+        if original and 'word_count' in original and 'body_html' in update:
+            update['word_count'] = 0
 
 
 class ArchiveService(BaseService):
@@ -675,7 +680,7 @@ class ArchiveService(BaseService):
         updates['versioncreated'] = utcnow()
         updates['version_creator'] = str(user.get(config.ID_FIELD)) if user else None
 
-        update_word_count(updates)
+        update_word_count(updates, original)
         update_version(updates, original)
 
         set_item_expiry(updates, original)

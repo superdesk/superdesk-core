@@ -9,7 +9,6 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import re
 import bs4
 import xml.etree.ElementTree as etree  # noqa
 from xml.etree.ElementTree import ParseError  # noqa
@@ -35,23 +34,12 @@ inline_elements = set([
 ])
 
 
-_word_pattern = re.compile('.*[\w\d].*')
-
-
-def is_word(word):
-    """Test if given word is word - contains any word character.
-
-    :param word: word string
-    """
-    return word and _word_pattern.match(word)
-
-
 def get_text_word_count(text):
     """Get word count for given plain text.
 
     :param text: text string
     """
-    return len([word for word in text.split() if is_word(word)])
+    return len(text.split())
 
 
 def get_text(html):
