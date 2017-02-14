@@ -32,11 +32,14 @@ Feature: Activity report
         {
         	"operation": "publish",
         	"desk": "#desks._id#",
-        	"operation_date": "#DATE#",
+        	"operation_date_start": "#DATE#",
+        	"operation_date_end": "#DATE#",
         	"subject":[{"qcode": "05007000", "name": "university"}],
         	"keywords": ["UNIVERSITY"],
-        	"priority": 6,
-        	"urgency": 3,
+        	"priority_start": 2,
+        	"priority_end": 6,
+        	"urgency_start": 3,
+        	"urgency_end": 5,
         	"category": [{"name": "arts, culture and entertainment" , "qcode": "01000000"}],
         	"subscriber": "test"
         }
@@ -46,8 +49,10 @@ Feature: Activity report
         {
         	"subject":[{"qcode": "05007000", "name": "university"}],
         	"keywords": ["UNIVERSITY"],
-        	"priority": 6,
-        	"urgency":3,
+        	"priority_start": 2,
+        	"priority_end": 6,
+        	"urgency_start": 3,
+        	"urgency_end": 5,
         	"subscriber": "test",
         	"category": [{"name": "arts, culture and entertainment" , "qcode": "01000000"}],
         	"report": {"items": 2}
@@ -58,12 +63,15 @@ Feature: Activity report
         {
         	"operation": "publish",
         	"desk": "#desks._id#",
-        	"operation_date": "#DATE#",
+        	"operation_date_start": "#DATE#",
+        	"operation_date_end": "#DATE#",
         	"group_by": ["desk"],
         	"subject":[{"qcode": "05007000", "name": "university"}],
         	"keywords": ["UNIVERSITY"],
-        	"priority": 6,
-        	"urgency":3,
+        	"priority_start": 2,
+        	"priority_end": 6,
+        	"urgency_start": 3,
+        	"urgency_end": 5,
         	"category": [{"name": "arts, culture and entertainment" , "qcode": "01000000"}],
         	"subscriber": "test"
         }
@@ -76,8 +84,10 @@ Feature: Activity report
         	"group_by": ["desk"],
         	"subject":[{"qcode": "05007000", "name": "university"}],
         	"keywords": ["UNIVERSITY"],
-        	"priority": 6,
-        	"urgency":3,
+        	"priority_start": 2,
+        	"priority_end": 6,
+        	"urgency_start": 3,
+        	"urgency_end": 5,
         	"category": [{"name": "arts, culture and entertainment" , "qcode": "01000000"}],
         	"subscriber": "test",
         	"report": [{"desk": "Sports Desk", "items": 2}]

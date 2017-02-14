@@ -27,12 +27,16 @@ class ActivityReportResource(Resource):
     schema = {
         'desk': Resource.rel('desks', nullable=True),
         'operation': {'type': 'string'},
-        'operation_date': {'type': 'datetime'},
+        'operation_date_start': {'type': 'datetime'},
+        'operation_date_end': {'type': 'datetime'},
         'subject': metadata_schema['subject'],
         'keywords': metadata_schema['keywords'],
         'category': metadata_schema['anpa_category'],
         'urgency': metadata_schema['urgency'],
-        'priority': metadata_schema['priority'],
+        'urgency_start': metadata_schema['urgency'],
+        'urgency_end': metadata_schema['urgency'],
+        'priority_start': metadata_schema['priority'],
+        'priority_end': metadata_schema['priority'],
         'subscriber': {'type': 'string'},
         'group_by': {'type': 'list'},
         'report': {'type': 'dict'},
@@ -58,18 +62,21 @@ class ActivityReportService(BaseService):
         if report.get('keywords'):
             key = [x.lower() for x in report['keywords']]
             terms.append({'terms': {'keywords': key}})
-        if report.get('operation_date'):
-            op_date = format_date(report['operation_date'])
-            terms.append({'range': {'versioncreated': {'gte': op_date, 'lte': op_date}}})
+        if report.get('operation_date_start') and report.get('operation_date_end'):
+            op_date_start = format_date(report['operation_date_start'])
+            op_date_end = format_date(report['operation_date_end'])
+            terms.append({'range': {'versioncreated': {'gte': op_date_start, 'lte': op_date_end}}})
         if report.get('category'):
             categories = [category['qcode'] for category in report['category']]
             terms.append({'terms': {'anpa_category.qcode': categories}})
-        if report.get('urgency'):
-            urgency = report['urgency']
-            terms.append({'terms': {'urgency': [urgency]}})
-        if report.get('priority'):
-            priority = report['priority']
-            terms.append({'terms': {'priority': [priority]}})
+        if report.get('urgency_start') and report.get('urgency_end'):
+            urgency_start = report['urgency_start']
+            urgency_end = report['urgency_end']
+            terms.append({'range': {'urgency': {'gte': urgency_start, 'lte': urgency_end}}})
+        if report.get('priority_start') and report.get('priority_end'):
+            priority_start = report['priority_start']
+            priority_end = report['priority_end']
+            terms.append({'range': {'priority': {'gte': priority_start, 'lte': priority_end}}})
         if report.get('subscriber'):
             subscriber = report['subscriber']
             terms.append({'terms': {'target_subscribers.name': [subscriber]}})

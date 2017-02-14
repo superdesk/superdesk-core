@@ -38,15 +38,21 @@ class SavedActivityReportResource(Resource):
             'required': True
         },
         'desk': Resource.rel('desks', nullable=True),
-        'operation_date': {
+        'operation_date_start': {
+            'type': 'datetime',
+            'required': True
+        },
+        'operation_date_end': {
             'type': 'datetime',
             'required': True
         },
         'subject': metadata_schema['subject'],
         'category': metadata_schema['anpa_category'],
         'keywords': metadata_schema['keywords'],
-        'urgency': metadata_schema['urgency'],
-        'priority': metadata_schema['priority'],
+        'urgency_start': metadata_schema['urgency'],
+        'urgency_end': metadata_schema['urgency'],
+        'priority_start': metadata_schema['priority'],
+        'priority_end': metadata_schema['priority'],
         'subscriber': {'type': 'string'},
         'group_by': {
             'type': 'list'
