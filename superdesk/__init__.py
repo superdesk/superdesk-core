@@ -25,9 +25,11 @@ from .resource import Resource  # noqa
 from .privilege import privilege, intrinsic_privilege, get_intrinsic_privileges  # noqa
 from .workflow import *  # noqa
 
+__version__ = '1.6rc9'
+
+VERSION = (1, 6, 0, 'rc', 9)
 
 API_NAME = 'Superdesk API'
-VERSION = (0, 0, 1)
 SCHEMA_VERSION = 0
 DOMAIN = {}
 COMMANDS = {}
