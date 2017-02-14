@@ -558,7 +558,7 @@ class ArchivePublishTestCase(TestCase):
 
         enqueue_published()
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
-        self.assertEqual(1, queue_items.count())
+        self.assertEqual(2, queue_items.count())
 
     def test_queue_transmission_for_digital_channels(self):
         self._is_publish_queue_empty()
@@ -650,12 +650,12 @@ class ArchivePublishTestCase(TestCase):
 
         enqueue_published()
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
-        self.assertEqual(7, queue_items.count())
+        self.assertEqual(13, queue_items.count())
 
         # this will delete queue transmission for the wire article not the takes package.
         publish_queue.PublishQueueService(PUBLISH_QUEUE, get_backend()).delete_by_article_id(doc['_id'])
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
-        self.assertEqual(2, queue_items.count())
+        self.assertEqual(4, queue_items.count())
 
     def test_conform_target_regions(self):
         doc = {'headline': 'test'}
@@ -737,7 +737,7 @@ class ArchivePublishTestCase(TestCase):
         get_resource_service(ARCHIVE_PUBLISH).patch(id=doc_id, updates={ITEM_STATE: CONTENT_STATE.PUBLISHED})
         enqueue_published()
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
-        self.assertEqual(7, queue_items.count())
+        self.assertEqual(13, queue_items.count())
         expected_subscribers = ['1', '2', '3', '4', '5']
         for item in queue_items:
             self.assertIn(item["subscriber_id"], expected_subscribers, 'item {}'.format(item))
@@ -762,7 +762,7 @@ class ArchivePublishTestCase(TestCase):
         enqueue_published()
 
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
-        self.assertEqual(2, queue_items.count())
+        self.assertEqual(4, queue_items.count())
         request = ParsedRequest()
         request.args = {'aggregations': 0}
         published_items = self.app.data.find(PUBLISHED, request, None)
@@ -780,7 +780,7 @@ class ArchivePublishTestCase(TestCase):
         enqueue_published()
 
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
-        self.assertEqual(4, queue_items.count())
+        self.assertEqual(8, queue_items.count())
         published_items = self.app.data.find(PUBLISHED, request, None)
         self.assertEqual(4, published_items.count())
         last_published_digital = get_publish_items(published_digital_doc['item_id'], True)

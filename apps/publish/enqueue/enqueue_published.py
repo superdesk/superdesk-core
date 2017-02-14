@@ -68,13 +68,13 @@ class EnqueuePublishedService(EnqueueService):
             # Step 1a
             query = {'$and': [{'item_id': doc['item_id']},
                               {'publishing_action': {'$in': [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]}}]}
-            takes_subscribers, take_codes = self._get_subscribers_for_previously_sent_items(query)
+            takes_subscribers, take_codes = self.get_subscribers_for_previously_sent_items(query)
 
             if rewrite_of and rewrite_take_package:
                 # Step 3b
                 query = {'$and': [{'item_id': rewrite_take_package.get(config.ID_FIELD)},
                                   {'publishing_action': {'$in': [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]}}]}
-                rewrite_subscribers, rewrite_codes = self._get_subscribers_for_previously_sent_items(query)
+                rewrite_subscribers, rewrite_codes = self.get_subscribers_for_previously_sent_items(query)
 
         # Step 2
         if doc.get(ITEM_TYPE) in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
@@ -88,7 +88,7 @@ class EnqueuePublishedService(EnqueueService):
                 # if first take is published then subsequent takes should to same subscribers.
                 query = {'$and': [{'item_id': first_take},
                                   {'publishing_action': {'$in': [CONTENT_STATE.PUBLISHED]}}]}
-                subscribers, subscriber_codes = self._get_subscribers_for_previously_sent_items(query)
+                subscribers, subscriber_codes = self.get_subscribers_for_previously_sent_items(query)
 
             if rewrite_of:
                 # Step 3b
@@ -99,7 +99,7 @@ class EnqueuePublishedService(EnqueueService):
 
                 query = {'$and': [{'item_id': {'$in': item_ids}},
                                   {'publishing_action': {'$in': [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]}}]}
-                rewrite_subscribers, rewrite_codes = self._get_subscribers_for_previously_sent_items(query)
+                rewrite_subscribers, rewrite_codes = self.get_subscribers_for_previously_sent_items(query)
 
         # Step 3
         if not first_take:

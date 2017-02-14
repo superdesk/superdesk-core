@@ -11,6 +11,8 @@
 from datetime import datetime
 from uuid import uuid4
 from flask import current_app as app
+
+from superdesk.utils import SuperdeskBaseEnum
 from .item import GUID_TAG, GUID_NEWSML, GUID_FIELD, ITEM_TYPE, CONTENT_TYPE
 from .packages import PACKAGE_TYPE, TAKES_PACKAGE
 
@@ -96,3 +98,9 @@ def is_takes_package(doc):
     """
 
     return doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and doc.get(PACKAGE_TYPE, '') == TAKES_PACKAGE
+
+
+class ProductTypes(SuperdeskBaseEnum):
+    API = 'api'
+    DIRECT = 'direct'
+    BOTH = 'both'

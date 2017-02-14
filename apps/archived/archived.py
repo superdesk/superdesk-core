@@ -20,6 +20,7 @@ from apps.legal_archive.commands import import_into_legal_archive
 from apps.legal_archive.resource import LEGAL_PUBLISH_QUEUE_NAME
 from apps.packages.takes_package_service import TakesPackageService
 from apps.publish.content.common import ITEM_KILL
+from apps.publish.enqueue import get_enqueue_service, get_enqueue_service_type
 from apps.publish.published_item import published_item_fields, QUEUE_STATE, PUBLISH_STATE
 from apps.packages import PackageService
 from superdesk import get_resource_service
@@ -33,10 +34,10 @@ from apps.archive.common import get_user, item_schema, is_genre, BROADCAST_GENRE
     insert_into_versions
 from apps.archive.archive import SOURCE as ARCHIVE
 import superdesk
+from superdesk.publish import PublishingMode
 from superdesk.services import BaseService
 from superdesk.resource import Resource
 from superdesk.utc import utcnow
-from apps.publish.enqueue.enqueue_killed import EnqueueKilledService
 from apps.publish.content.kill import KillPublishService
 
 logger = logging.getLogger(__name__)
@@ -233,12 +234,7 @@ class ArchivedService(BaseService):
                                                                    lookup={'item_id': article['item_id']}))
 
             if transmission_details:
-                subscriber_ids = [t['_subscriber_id'] for t in transmission_details]
-                query = {'$and': [{config.ID_FIELD: {'$in': subscriber_ids}}]}
-                subscribers = list(get_resource_service('subscribers').get(req=None, lookup=query))
-
-                EnqueueKilledService().queue_transmission(article, subscribers)
-                logger.info('Queued Transmission for article: {}'.format(article[config.ID_FIELD]))
+                self.enqueue_archived_kill_item(article, transmission_details)
 
             article[config.ID_FIELD] = article.pop('item_id', article['item_id'])
 
@@ -262,6 +258,39 @@ class ArchivedService(BaseService):
             # Step 3(v)
             kill_service.broadcast_kill_email(article, updates)
             logger.info('Broadcast kill email for article: {}'.format(article[config.ID_FIELD]))
+
+    def enqueue_archived_kill_item(self, item, transmission_details):
+        """Enqueue items that are killed from dusty archive.
+
+        :param dict item: item from the archived collection.
+        :param list transmission_details: list of legal publish queue entries
+        """
+
+        def get_subscribers(_ids):
+            query = {'$and': [{config.ID_FIELD: {'$in': _ids}}]}
+            return list(get_resource_service('subscribers').get(req=None, lookup=query))
+
+        # get the subscribers for direct publishing
+        subscriber_ids = [t['_subscriber_id'] for t in transmission_details if
+                          t.get('destination', {}).get('delivery_type') != 'content_api']
+        subscribers = get_subscribers(subscriber_ids)
+
+        if subscribers:
+            service = get_enqueue_service(get_enqueue_service_type(ITEM_KILL, PublishingMode.Direct.value))
+            service.queue_transmission(item, subscribers)
+            logger.info('Queued Transmission for article: {}'.format(item[config.ID_FIELD]))
+
+        # get the subscribers for api publishing
+        subscriber_ids = [t['_subscriber_id'] for t in transmission_details if
+                          t.get('destination', {}).get('delivery_type') == 'content_api']
+        subscribers = get_subscribers(subscriber_ids)
+
+        if subscribers:
+            service = get_enqueue_service(get_enqueue_service_type(ITEM_KILL, PublishingMode.API.value))
+            service.queue_transmission(item, subscribers)
+            # send the item to api
+            service.publish_content_api(item, subscribers)
+            logger.info('Queued Transmission for article: {}'.format(item[config.ID_FIELD]))
 
     def on_updated(self, updates, original):
         user = get_user()

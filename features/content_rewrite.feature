@@ -55,7 +55,7 @@ Feature: Rewrite content
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -240,7 +240,7 @@ Feature: Rewrite content
         When we post to "/products" with success
         """
         {
-          "name":"prod-1","codes":"abc,xyz"
+          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
         }
         """
         And we post to "/subscribers" with success
@@ -356,7 +356,7 @@ Feature: Rewrite content
         When we post to "/products" with success
         """
         {
-          "name":"prod-1","codes":"abc,xyz"
+          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
         }
         """
         And we post to "/subscribers" with success
@@ -480,7 +480,7 @@ Feature: Rewrite content
         When we post to "/products" with success
         """
         {
-          "name":"prod-1","codes":"abc,xyz"
+          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
         }
         """
         And we post to "/subscribers" with success
@@ -552,7 +552,7 @@ Feature: Rewrite content
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -633,7 +633,7 @@ Feature: Rewrite content
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -714,7 +714,7 @@ Feature: Rewrite content
         When we post to "/products" with success
         """
         {
-          "name":"prod-1","codes":"abc,xyz"
+          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
         }
         """
         And we post to "/subscribers" with success
@@ -784,7 +784,7 @@ Feature: Rewrite content
         When we post to "/products" with success
         """
         {
-          "name":"prod-1","codes":"abc,xyz"
+          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
         }
         """
         And we post to "/subscribers" with success
@@ -892,7 +892,7 @@ Feature: Rewrite content
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -974,7 +974,7 @@ Feature: Rewrite content
         When we post to "/products" with success
         """
         {
-          "name":"prod-1","codes":"abc,xyz"
+          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
         }
         """
         And we post to "/subscribers" with success
@@ -1039,7 +1039,7 @@ Feature: Rewrite content
         When we post to "/products" with success
         """
         {
-          "name":"prod-1","codes":"abc,xyz"
+          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
         }
         """
         And we post to "/subscribers" with success
@@ -1135,7 +1135,7 @@ Feature: Rewrite content
         When we post to "/products" with success
         """
         {
-          "name":"prod-1","codes":"abc,xyz"
+          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
         }
         """
         And we post to "/subscribers" with success
@@ -1248,7 +1248,7 @@ Feature: Rewrite content
         When we post to "/products" with success
         """
         {
-          "name":"prod-1","codes":"abc,xyz"
+          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
         }
         """
         And we post to "/subscribers" with success
@@ -1357,7 +1357,7 @@ Feature: Rewrite content
             "content_filter": {
                 "filter_type": "permitting",
                 "filter_id": "#content_filters._id#"
-            }
+            }, "product_type": "both"
         }
         """
         And we post to "/subscribers" with "digital" and success
@@ -1402,7 +1402,7 @@ Feature: Rewrite content
         And we store "take_package1" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
-        Then we get list with 2 items
+        Then we get list with 4 items
         """
         {
             "_items": [
@@ -1418,7 +1418,7 @@ Feature: Rewrite content
         And we store "take_package2" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
-        Then we get list with 4 items
+        Then we get list with 8 items
         """
         {
             "_items": [
@@ -1482,7 +1482,7 @@ Feature: Rewrite content
             "content_filter": {
                 "filter_type": "permitting",
                 "filter_id": "#content_filters._id#"
-            }
+            }, "product_type": "both"
         }
         """
         And we post to "/subscribers" with "digital" and success
@@ -1516,7 +1516,7 @@ Feature: Rewrite content
         And we store "take_package1" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
-        Then we get list with 2 items
+        Then we get list with 4 items
         """
         {
             "_items": [
@@ -1543,7 +1543,7 @@ Feature: Rewrite content
         And we store "take_package2" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
-        Then we get list with 4 items
+        Then we get list with 8 items
         """
         {
             "_items": [
@@ -1607,7 +1607,7 @@ Feature: Rewrite content
             "content_filter": {
                 "filter_type": "permitting",
                 "filter_id": "#cf1#"
-            }
+            }, "product_type": "both"
         }
         """
         When we post to "/filter_conditions" with "fc2" and success
@@ -1628,7 +1628,7 @@ Feature: Rewrite content
             "content_filter": {
                 "filter_type": "permitting",
                 "filter_id": "#cf2#"
-            }
+            }, "product_type": "both"
         }
         """
         And we post to "/subscribers" with "digital" and success
@@ -1662,7 +1662,7 @@ Feature: Rewrite content
         And we store "take_package1" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
-        Then we get list with 1 items
+        Then we get list with 2 items
         """
         {
             "_items": [
@@ -1687,7 +1687,7 @@ Feature: Rewrite content
         And we store "take_package2" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
-        Then we get list with 3 items
+        Then we get list with 6 items
         """
         {
             "_items": [
@@ -1749,7 +1749,7 @@ Feature: Rewrite content
             "content_filter": {
                 "filter_type": "permitting",
                 "filter_id": "#cf1#"
-            }
+            }, "product_type": "both"
         }
         """
         When we post to "/filter_conditions" with "fc2" and success
@@ -1770,7 +1770,7 @@ Feature: Rewrite content
             "content_filter": {
                 "filter_type": "permitting",
                 "filter_id": "#cf2#"
-            }
+            }, "product_type": "both"
         }
         """
         And we post to "/subscribers" with "digital" and success
@@ -1804,7 +1804,7 @@ Feature: Rewrite content
         And we store "take_package1" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
-        Then we get list with 1 items
+        Then we get list with 2 items
         """
         {
             "_items": [
@@ -1829,7 +1829,7 @@ Feature: Rewrite content
         And we store "take_package2" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
-        Then we get list with 3 items
+        Then we get list with 6 items
         """
         {
             "_items": [
@@ -1891,7 +1891,7 @@ Feature: Rewrite content
             "content_filter": {
                 "filter_type": "permitting",
                 "filter_id": "#cf1#"
-            }
+            }, "product_type": "both"
         }
         """
         When we post to "/filter_conditions" with "fc2" and success
@@ -1912,7 +1912,7 @@ Feature: Rewrite content
             "content_filter": {
                 "filter_type": "permitting",
                 "filter_id": "#cf2#"
-            }
+            }, "product_type": "both"
         }
         """
         And we post to "/subscribers" with "digital" and success
@@ -1946,7 +1946,7 @@ Feature: Rewrite content
         And we store "take_package1" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
-        Then we get list with 1 items
+        Then we get list with 2 items
         """
         {
             "_items": [
@@ -1972,7 +1972,7 @@ Feature: Rewrite content
         And we store "take_package2" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
-        Then we get list with 3 items
+        Then we get list with 6 items
         """
         {
             "_items": [
@@ -2002,7 +2002,7 @@ Feature: Rewrite content
         And we store "take_package3" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
-        Then we get list with 5 items
+        Then we get list with 10 items
         """
         {
             "_items": [
@@ -2075,7 +2075,7 @@ Feature: Rewrite content
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -2161,7 +2161,7 @@ Feature: Rewrite content
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success

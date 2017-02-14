@@ -14,7 +14,7 @@ from collections import namedtuple
 from superdesk.celery_app import celery
 from superdesk.publish.publish_content import PublishContent
 from superdesk import get_backend
-
+from superdesk.utils import SuperdeskBaseEnum
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +25,14 @@ subscriber_types = ['digital', 'wire', 'all']
 subscriber_media_types = ['media', 'non-media', 'both']
 SUBSCRIBER_TYPES = namedtuple('SUBSCRIBER_TYPES', ['DIGITAL', 'WIRE', 'ALL'])(*subscriber_types)
 SUBSCRIBER_MEDIA_TYPES = namedtuple('SUBSCRIBER_MEDIA_TYPES', ['MEDIA', 'NONMEDIA', 'BOTH'])(*subscriber_media_types)
+
+
+class PublishingMode(SuperdeskBaseEnum):
+    """All non-api methods are classified as direct publishing.
+    """
+
+    Direct = 'direct'
+    API = 'api'
 
 
 def register_transmitter(transmitter_type, transmitter, errors):

@@ -54,7 +54,7 @@ Feature: Publish content to the public API
     When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
     And we post to "/subscribers" with success
@@ -178,7 +178,7 @@ Feature: Publish content to the public API
     When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
     And we post to "/subscribers" with success
@@ -412,7 +412,7 @@ Feature: Publish content to the public API
     When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
     And we post to "/subscribers" with success
@@ -659,7 +659,7 @@ Feature: Publish content to the public API
     When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
     And we post to "/subscribers" with success
@@ -682,7 +682,7 @@ Feature: Publish content to the public API
         """
     When we enqueue published
     When we get "/publish_queue"
-    Then we get list with 1 items
+    Then we get list with 4 items
         """
         {"_items":
         	[
@@ -695,31 +695,3 @@ Feature: Publish content to the public API
         """
         {"guid": "compositeitem", "_current_version": 2, "state": "published"}
         """
-    When we get "/publish_queue/compositeitem"
-    Then we get formatted item
-    	"""
-    	{
-    		"guid": "compositeitem",
-    		"type": "composite",
-    		"associations": {
-    			"main": {
-                    "body_html": "item content",
-					"headline": "text item with embedded pic",
-					"type": "text",
-                    "associations": {
-                        "embedded1": {
-                            "type": "picture",
-                            "slugline": "foo",
-                            "pubstatus": "usable"
-                        }
-                    }
-                },
-    			"sidebars": {
-					"guid": "item2",
-					"type": "picture",
-					"headline": "ABC SHOP CLOSURES",
-					"renditions": {
-						"original": {"mimetype": "image/jpeg"}}}
-    		}
-    	}
-    	"""

@@ -252,7 +252,7 @@ Feature: Link content in takes
         When we post to "/products" with success
         """
         {
-            "name":"prod-1","codes":"abc,xyz"
+            "name":"prod-1","codes":"abc,xyz", "product_type": "both"
         }
         """
         And we post to "/subscribers" with success
@@ -645,7 +645,7 @@ Feature: Link content in takes
         When we post to "/products" with success
         """
         {
-            "name":"prod-1","codes":"abc,xyz"
+            "name":"prod-1","codes":"abc,xyz", "product_type": "both"
         }
         """
         And we post to "/subscribers" with success

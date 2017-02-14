@@ -8,8 +8,13 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import logging
+
 from superdesk.metadata.item import CONTENT_STATE
 from apps.publish.enqueue.enqueue_service import EnqueueService
+
+
+logger = logging.getLogger(__name__)
 
 
 class EnqueueKilledService(EnqueueService):
@@ -33,6 +38,6 @@ class EnqueueKilledService(EnqueueService):
         subscribers, subscribers_yet_to_receive = [], []
         query = {'$and': [{'item_id': doc['item_id']},
                           {'publishing_action': {'$in': [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]}}]}
-        subscribers, subscriber_codes = self._get_subscribers_for_previously_sent_items(query)
+        subscribers, subscriber_codes = self.get_subscribers_for_previously_sent_items(query)
 
         return subscribers, subscribers_yet_to_receive, subscriber_codes

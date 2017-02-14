@@ -21,7 +21,7 @@ Feature: Products
     When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1", "codes":"abc,xyz", "product_type": "both"
       }
       """
     And we post to "/subscribers" with success
@@ -39,5 +39,34 @@ Feature: Products
     """
     Then we get updated response
     """
-    {"content_filter":{"filter_id":"#content_filters._id#", "filter_type":"blocking"}}
+    {"product_type": "both", "content_filter":{"filter_id":"#content_filters._id#", "filter_type":"blocking"}}
+    """
+
+  @auth
+  @vocabulary
+  Scenario: Create or Update a product with no product type
+    When we post to "/products"
+    """
+    {
+      "name":"prod-1", "codes":"abc,xyz"
+    }
+    """
+    Then we get error 400
+    """
+    {"_status": "ERR", "_issues": {"product_type": {"required": 1}}}
+    """
+    When we post to "/products"
+    """
+    {
+      "name":"prod-1", "codes":"abc,xyz", "product_type": "both"
+    }
+    """
+    Then we get OK response
+    When we patch "/products/#products._id#"
+    """
+    {"product_type": null}
+    """
+    Then we get error 400
+    """
+    {"_status": "ERR", "_issues": {"product_type": ["null value not allowed", "must be of string type"]}}
     """

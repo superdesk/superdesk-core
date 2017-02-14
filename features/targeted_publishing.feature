@@ -100,7 +100,7 @@ Feature: Targeted Publishing
     """
     When we enqueue published
     And we get "/publish_queue"
-    Then we get list with 1 items
+    Then we get list with 2 items
     """
     {
       "_items":
@@ -131,11 +131,13 @@ Feature: Targeted Publishing
     """
     When we enqueue published
     And we get "/publish_queue"
-    Then we get list with 2 items
+    Then we get list with 4 items
     """
     {
       "_items":
         [
+          {"subscriber_id": "sub-2"},
+          {"subscriber_id": "sub-4"},
           {"subscriber_id": "sub-2"},
           {"subscriber_id": "sub-4"}
         ]
@@ -187,11 +189,13 @@ Feature: Targeted Publishing
     """
     When we enqueue published
     And we get "/publish_queue"
-    Then we get list with 2 items
+    Then we get list with 4 items
     """
     {
       "_items":
         [
+          {"subscriber_id": "sub-1"},
+          {"subscriber_id": "sub-3"},
           {"subscriber_id": "sub-1"},
           {"subscriber_id": "sub-3"}
         ]
@@ -219,7 +223,7 @@ Feature: Targeted Publishing
     """
     When we enqueue published
     And we get "/publish_queue"
-    Then we get list with 1 items
+    Then we get list with 2 items
     """
     {
       "_items":
@@ -250,7 +254,7 @@ Feature: Targeted Publishing
     """
     When we enqueue published
     And we get "/publish_queue"
-    Then we get list with 3 items
+    Then we get list with 6 items
     """
     {
       "_items":
@@ -285,7 +289,7 @@ Feature: Targeted Publishing
     """
     When we enqueue published
     And we get "/publish_queue"
-    Then we get list with 2 items
+    Then we get list with 4 items
     """
     {
       "_items":
@@ -317,7 +321,7 @@ Feature: Targeted Publishing
     """
     When we enqueue published
     And we get "/publish_queue"
-    Then we get list with 3 items
+    Then we get list with 6 items
     """
     {
       "_items":
@@ -335,7 +339,7 @@ Feature: Targeted Publishing
     Then we get OK response
     When we enqueue published
     And we get "/publish_queue"
-    Then we get list with 6 items
+    Then we get list with 12 items
     """
     {
       "_items":
@@ -353,7 +357,7 @@ Feature: Targeted Publishing
     Then we get OK response
     When we enqueue published
     And we get "/publish_queue"
-    Then we get list with 9 items
+    Then we get list with 18 items
     """
     {
       "_items":

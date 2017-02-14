@@ -8,9 +8,6 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from apps.archive.common import ITEM_OPERATION, ARCHIVE, insert_into_versions
-from apps.legal_archive.commands import import_into_legal_archive
-from apps.publish.enqueue.enqueue_published import EnqueuePublishedService
 import cProfile
 import logging
 from superdesk import get_resource_service
@@ -18,14 +15,19 @@ import superdesk
 from superdesk.celery_task_utils import get_lock_id
 from superdesk.lock import lock, unlock
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS
-
+from apps.archive.common import ITEM_OPERATION, ARCHIVE, insert_into_versions
+from apps.legal_archive.commands import import_into_legal_archive
 from apps.publish.enqueue.enqueue_corrected import EnqueueCorrectedService
 from apps.publish.enqueue.enqueue_killed import EnqueueKilledService
+from apps.publish.enqueue.enqueue_published import EnqueuePublishedService
+from apps.publish.enqueue.enqueue_api_service import EnqueuePublishedAPIService, EnqueueCorrectedAPIService, \
+    EnqueueKilledAPIService
 from apps.publish.published_item import PUBLISH_STATE, QUEUE_STATE, PUBLISHED, ERROR_MESSAGE
 from bson.objectid import ObjectId
 from eve.utils import config, ParsedRequest
 from eve.versioning import resolve_document_version
 from superdesk.celery_app import celery
+from superdesk.publish import PublishingMode
 from superdesk.utc import utcnow
 
 from superdesk.profiling import ProfileManager
@@ -41,10 +43,24 @@ ITEM_PUBLISH = 'publish'
 ITEM_CORRECT = 'correct'
 ITEM_KILL = 'kill'
 
+
+def get_enqueue_service_type(operation, mode):
+    return '{}_{}'.format(operation, mode)
+
+
 enqueue_services = {
-    ITEM_PUBLISH: EnqueuePublishedService(),
-    ITEM_CORRECT: EnqueueCorrectedService(),
-    ITEM_KILL: EnqueueKilledService()
+    get_enqueue_service_type(ITEM_PUBLISH, PublishingMode.Direct.value):
+        EnqueuePublishedService(),
+    get_enqueue_service_type(ITEM_CORRECT, PublishingMode.Direct.value):
+        EnqueueCorrectedService(),
+    get_enqueue_service_type(ITEM_KILL, PublishingMode.Direct.value):
+        EnqueueKilledService(),
+    get_enqueue_service_type(ITEM_PUBLISH, PublishingMode.API.value):
+        EnqueuePublishedAPIService(),
+    get_enqueue_service_type(ITEM_CORRECT, PublishingMode.API.value):
+        EnqueueCorrectedAPIService(),
+    get_enqueue_service_type(ITEM_KILL, PublishingMode.API.value):
+        EnqueueKilledAPIService()
 }
 
 
@@ -116,7 +132,17 @@ def enqueue_item(published_item):
                                    config.VERSION: item_updates[config.VERSION]})
 
         published_service.patch(published_item_id, published_update)
-        queued = get_enqueue_service(published_item[ITEM_OPERATION]).enqueue_item(published_item)
+        # queue via direct publishing mode
+        enqueue_service = get_enqueue_service(get_enqueue_service_type(published_item[ITEM_OPERATION],
+                                                                       PublishingMode.Direct.value))
+        queued_direct = enqueue_service.enqueue_item(published_item)
+
+        # queue via api publishing mode
+        enqueue_service = get_enqueue_service(get_enqueue_service_type(published_item[ITEM_OPERATION],
+                                                                       PublishingMode.API.value))
+        queued_api = enqueue_service.enqueue_item(published_item)
+
+        queued = queued_direct or queued_api
         # if the item is queued in the publish_queue then the state is "queued"
         # else the queue state is "queued_not_transmitted"
         queue_state = PUBLISH_STATE.QUEUED if queued else PUBLISH_STATE.QUEUED_NOT_TRANSMITTED

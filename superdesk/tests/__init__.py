@@ -60,6 +60,7 @@ def update_config(conf):
     conf['LEGAL_ARCHIVE_URI'] = get_mongo_uri('LEGAL_ARCHIVE_URI', 'sptests_legal_archive')
     conf['ARCHIVED_DBNAME'] = 'sptests_archived'
     conf['ARCHIVED_URI'] = get_mongo_uri('ARCHIVED_URI', 'sptests_archived')
+    conf['CONTENTAPI_URL'] = 'http://localhost:5400'
     conf['CONTENTAPI_MONGO_DBNAME'] = 'sptests_contentapi'
     conf['CONTENTAPI_MONGO_URI'] = get_mongo_uri('CONTENTAPI_MONGO_URI', 'sptests_contentapi')
     conf['CONTENTAPI_ELASTICSEARCH_INDEX'] = 'sptest_contentapi'

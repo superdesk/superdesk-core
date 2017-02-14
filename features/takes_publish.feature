@@ -93,7 +93,7 @@ Feature: Take Package Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -190,7 +190,7 @@ Feature: Take Package Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -338,7 +338,7 @@ Feature: Take Package Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -620,7 +620,7 @@ Feature: Take Package Publishing
       """
       {
         "name":"prod-1","codes":"abc,xyz",
-        "content_filter":{"filter_id":"#content_filters._id#", "filter_type": "permitting"}
+        "content_filter":{"filter_id":"#content_filters._id#", "filter_type": "permitting"}, "product_type": "both"
       }
       """
       And we post to "/subscribers" with "First_Wire_Subscriber" and success
@@ -699,7 +699,7 @@ Feature: Take Package Publishing
       Then we get OK response
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 2 items
+      Then we get list with 4 items
       """
       {
           "_items": [
@@ -739,7 +739,7 @@ Feature: Take Package Publishing
       Then we get OK response
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 4 items
+      Then we get list with 8 items
       """
       {
           "_items": [
@@ -780,7 +780,7 @@ Feature: Take Package Publishing
       Then we get OK response
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 6 items
+      Then we get list with 12 items
       """
       {
           "_items": [
@@ -849,7 +849,7 @@ Feature: Take Package Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -962,7 +962,7 @@ Feature: Take Package Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -1145,7 +1145,7 @@ Feature: Take Package Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -1386,7 +1386,7 @@ Feature: Take Package Publishing
           "content_filter" : {
             "filter_type" : "permitting",
             "filter_id" : "#DomesticSportFilter#"
-          }
+          }, "product_type": "both"
         }
         """
         And we post to "/subscribers" with "DomesticSportSubscriber" and success
@@ -1406,7 +1406,7 @@ Feature: Take Package Publishing
           "content_filter" : {
             "filter_type" : "permitting",
             "filter_id" : "#OverseasSportFilter#"
-          }
+          }, "product_type": "both"
         }
         """
         And we post to "/subscribers" with "OverseasSportSubscriber" and success
@@ -1483,7 +1483,7 @@ Feature: Take Package Publishing
         Then we get OK response
         When we enqueue published
         When we get "/publish_queue"
-        Then we get list with 1 items
+        Then we get list with 2 items
         """
         {
         "_items": [
@@ -1502,7 +1502,7 @@ Feature: Take Package Publishing
         Then we get OK response
         When we enqueue published
         When we get "/publish_queue"
-        Then we get list with 3 items
+        Then we get list with 6 items
         """
         {
         "_items": [
@@ -1571,7 +1571,7 @@ Feature: Take Package Publishing
         Then we get OK response
         When we enqueue published
         When we get "/publish_queue"
-        Then we get list with 5 items
+        Then we get list with 10 items
         """
         {
         "_items": [
@@ -1635,7 +1635,7 @@ Feature: Take Package Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -1795,7 +1795,7 @@ Feature: Take Package Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -1874,7 +1874,7 @@ Feature: Take Package Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
