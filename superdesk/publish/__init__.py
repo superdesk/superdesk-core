@@ -15,7 +15,6 @@ from superdesk.celery_app import celery
 from superdesk.publish.publish_content import PublishContent
 from superdesk import get_backend
 
-
 logger = logging.getLogger(__name__)
 
 registered_transmitters = {}

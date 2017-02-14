@@ -64,13 +64,14 @@ class PublishContentTests(TestCase):
                    {
                        "_id": 4,
                        "destination": {
-                           "delivery_type": "pull",
+                           "delivery_type": "content_api",
+                           "format": "ninjs",
                            "config": {},
                            "name": "destination1"
                        },
                        "_etag": "f28b9af64f169072fb171ec7f316fc03d5826d6b",
                        "subscriber_id": "552ba73f1d41c8437971613e",
-                       "state": "pending",
+                       "state": "success",
                        "_created": "2015-04-17T13:15:20.000Z",
                        "_updated": "2015-04-20T05:04:25.000Z",
                        "item_id": '2'}]

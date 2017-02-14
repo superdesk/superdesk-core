@@ -65,6 +65,22 @@ Feature: Targeted Publishing
       "codes": "ptk,rst",
       "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
       "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+    },
+    {
+      "_id": "sub-2-api",
+      "name":"Wire channel with geo restriction Victoria API",
+      "media_type":"media",
+      "subscriber_type": "wire",
+      "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+      "api_products": ["2"]
+    },
+    {
+      "_id": "sub-4-api",
+      "name":"Wire channel with geo restriction Queensland API",
+      "media_type":"media",
+      "subscriber_type": "wire",
+      "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+      "api_products": ["3"]
     }
     ]
     """
@@ -100,12 +116,13 @@ Feature: Targeted Publishing
     """
     When we enqueue published
     And we get "/publish_queue"
-    Then we get list with 1 items
+    Then we get list with 2 items
     """
     {
       "_items":
         [
-          {"subscriber_id": "sub-4"}
+          {"subscriber_id": "sub-4"},
+          {"subscriber_id": "sub-4-api"}
         ]
     }
     """
@@ -131,13 +148,15 @@ Feature: Targeted Publishing
     """
     When we enqueue published
     And we get "/publish_queue"
-    Then we get list with 2 items
+    Then we get list with 4 items
     """
     {
       "_items":
         [
           {"subscriber_id": "sub-2"},
-          {"subscriber_id": "sub-4"}
+          {"subscriber_id": "sub-2-api"},
+          {"subscriber_id": "sub-4"},
+          {"subscriber_id": "sub-4-api"}
         ]
     }
     """
@@ -285,13 +304,14 @@ Feature: Targeted Publishing
     """
     When we enqueue published
     And we get "/publish_queue"
-    Then we get list with 2 items
+    Then we get list with 3 items
     """
     {
       "_items":
         [
           {"subscriber_id": "sub-3"},
-          {"subscriber_id": "sub-4"}
+          {"subscriber_id": "sub-4"},
+          {"subscriber_id": "sub-4-api"}
         ]
     }
     """
@@ -340,9 +360,11 @@ Feature: Targeted Publishing
     {
       "_items":
         [
-          {"subscriber_id": "sub-1", "codes": ["Aaa", "abc", "xyz"], "headline": "corrected"},
-          {"subscriber_id": "sub-4", "headline": "corrected"},
-          {"subscriber_id": "sub-5", "codes": ["ptk", "rst"], "headline": "corrected"}
+          {"subscriber_id": "sub-1", "codes": ["Aaa", "abc", "xyz"],
+          "publishing_action": "corrected", "headline": "corrected"},
+          {"subscriber_id": "sub-4", "headline": "corrected", "publishing_action": "corrected"},
+          {"subscriber_id": "sub-5", "codes": ["ptk", "rst"],
+          "publishing_action": "corrected", "headline": "corrected"}
         ]
     }
     """

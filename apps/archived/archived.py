@@ -20,6 +20,7 @@ from apps.legal_archive.commands import import_into_legal_archive
 from apps.legal_archive.resource import LEGAL_PUBLISH_QUEUE_NAME
 from apps.packages.takes_package_service import TakesPackageService
 from apps.publish.content.common import ITEM_KILL
+from apps.publish.enqueue import get_enqueue_service
 from apps.publish.published_item import published_item_fields, QUEUE_STATE, PUBLISH_STATE
 from apps.packages import PackageService
 from superdesk import get_resource_service
@@ -36,7 +37,6 @@ import superdesk
 from superdesk.services import BaseService
 from superdesk.resource import Resource
 from superdesk.utc import utcnow
-from apps.publish.enqueue.enqueue_killed import EnqueueKilledService
 from apps.publish.content.kill import KillPublishService
 
 logger = logging.getLogger(__name__)
@@ -233,12 +233,7 @@ class ArchivedService(BaseService):
                                                                    lookup={'item_id': article['item_id']}))
 
             if transmission_details:
-                subscriber_ids = [t['_subscriber_id'] for t in transmission_details]
-                query = {'$and': [{config.ID_FIELD: {'$in': subscriber_ids}}]}
-                subscribers = list(get_resource_service('subscribers').get(req=None, lookup=query))
-
-                EnqueueKilledService().queue_transmission(article, subscribers)
-                logger.info('Queued Transmission for article: {}'.format(article[config.ID_FIELD]))
+                get_enqueue_service(ITEM_KILL).enqueue_archived_kill_item(article, transmission_details)
 
             article[config.ID_FIELD] = article.pop('item_id', article['item_id'])
 

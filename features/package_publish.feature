@@ -18,7 +18,7 @@ Feature: Package Publishing
         When we post to "/products" with success
         """
         {
-          "name":"prod-1","codes":"abc,xyz"
+          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
         }
         """
         And we post to "/subscribers" with success
@@ -275,7 +275,7 @@ Feature: Package Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -425,7 +425,7 @@ Feature: Package Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -575,7 +575,7 @@ Feature: Package Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -727,7 +727,7 @@ Feature: Package Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -852,7 +852,7 @@ Feature: Package Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -991,7 +991,7 @@ Feature: Package Publishing
           When we post to "/products" with success
           """
           {
-            "name":"prod-1","codes":"abc,xyz"
+            "name":"prod-1","codes":"abc,xyz", "product_type": "both"
           }
           """
           And we post to "/subscribers" with success
@@ -1339,9 +1339,6 @@ Feature: Package Publishing
       When we enqueue published
       When we get "/publish_queue"
       Then we get list with 5 items
-      #Then we get "#archive.123.take_package#" in formatted output as "main" story for subscriber "sub-2"
-      #Then we get "#archive.123.take_package#" in formatted output as "sidebars" story for subscriber "sub-2"
-
 
 
       @auth
@@ -1505,12 +1502,11 @@ Feature: Package Publishing
       When we enqueue published
       When we get "/publish_queue"
       Then we get list with 5 items
-      #Then we get "#archive.123.take_package#" in formatted output as "NewsItemId" newsml12 story
 
 
       @auth
       @notification
-      @vocabulary
+      @vocabulary 
       Scenario: Publish a package with a text and an image with one wire and one digital subscriber
       Given empty "archive"
       Given "desks"
@@ -1789,7 +1785,7 @@ Feature: Package Publishing
 
 
       @auth
-      @notification
+      @notification  
       Scenario: Publish a package with two already published text stories and one digital subscriber
       Given empty "archive"
       Given "desks"
@@ -1955,7 +1951,7 @@ Feature: Package Publishing
 
       @auth
       @notification
-      @vocabulary
+      @vocabulary  
       Scenario: Publish a package with three already published text stories being sent different subscribers
       Given empty "filter_conditions"
       Given empty "content_filters"
@@ -2201,7 +2197,7 @@ Feature: Package Publishing
 
       @auth
       @notification
-      @vocabulary
+      @vocabulary 
       Scenario: Publish a package with three already published text stories no subscribers matched so no package sent
       Given empty "filter_conditions"
       Given empty "content_filters"
@@ -3221,7 +3217,7 @@ Feature: Package Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -3496,7 +3492,7 @@ Feature: Package Publishing
           When we post to "/products" with success
           """
           {
-            "name":"prod-1","codes":"abc,xyz"
+            "name":"prod-1","codes":"abc,xyz", "product_type": "both"
           }
           """
           And we post to "/subscribers" with success
@@ -3897,7 +3893,7 @@ Feature: Package Publishing
           When we post to "/products" with success
           """
           {
-            "name":"prod-1","codes":"abc,xyz"
+            "name":"prod-1","codes":"abc,xyz", "product_type": "both"
           }
           """
         And we post to "/subscribers" with success
@@ -4034,7 +4030,7 @@ Feature: Package Publishing
         When we post to "/products" with success
         """
         {
-          "name":"prod-1","codes":"abc,xyz"
+          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
         }
         """
         And we post to "/subscribers" with success
@@ -4798,7 +4794,7 @@ Feature: Package Publishing
           When we post to "/products" with success
           """
           {
-            "name":"prod-1","codes":"abc,xyz"
+            "name":"prod-1","codes":"abc,xyz", "product_type": "both"
           }
           """
           And we post to "/subscribers" with success
@@ -5388,7 +5384,7 @@ Feature: Package Publishing
         When we post to "/products" with success
           """
           {
-            "name":"prod-1","codes":"abc,xyz"
+            "name":"prod-1","codes":"abc,xyz", "product_type": "both"
           }
           """
         And we post to "/subscribers" with success

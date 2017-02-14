@@ -44,6 +44,7 @@ schema = {
     'versioncreated': {'type': 'datetime', 'required': True},
     'firstcreated': {'type': 'datetime'},
     'evolvedfrom': Resource.not_analyzed_field(),
+    'subscribers': {'type': 'list'}
 }
 
 
@@ -62,6 +63,7 @@ class ItemsResource(Resource):
         'search_backend': 'elastic',
         'elastic_filter': {"bool": {"must_not": {"term": {"type": "composite"}}}},
         'default_sort': [('_updated', -1)],
+        'projection': {'subscribers': 0}
     }
 
     item_methods = ['GET']

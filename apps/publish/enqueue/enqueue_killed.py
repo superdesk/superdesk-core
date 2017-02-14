@@ -8,8 +8,15 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import logging
+
+from eve.utils import config
+from superdesk import get_resource_service
 from superdesk.metadata.item import CONTENT_STATE
 from apps.publish.enqueue.enqueue_service import EnqueueService
+
+
+logger = logging.getLogger(__name__)
 
 
 class EnqueueKilledService(EnqueueService):
@@ -36,3 +43,22 @@ class EnqueueKilledService(EnqueueService):
         subscribers, subscriber_codes = self._get_subscribers_for_previously_sent_items(query)
 
         return subscribers, subscribers_yet_to_receive, subscriber_codes
+
+    def enqueue_archived_kill_item(self, item, transmission_details):
+        """Enqueue items that are killed from dusty archive.
+
+        :param dict item: item from the archived collection.
+        :param list transmission_details: list of legal publish queue entries
+        """
+        subscriber_ids = [transmission_record['_subscriber_id'] for transmission_record in transmission_details]
+        api_subscribers = {t['_subscriber_id'] for t in transmission_details if
+                           t.get('destination', {}).get('delivery_type') == 'content_api'}
+        query = {'$and': [{config.ID_FIELD: {'$in': subscriber_ids}}]}
+        subscribers = list(get_resource_service('subscribers').get(req=None, lookup=query))
+
+        for subscriber in subscribers:
+            subscriber['api_enabled'] = subscriber.get(config.ID_FIELD) in api_subscribers
+
+        self.queue_transmission(item, subscribers)
+        logger.info('Queued Transmission for article: {}'.format(item[config.ID_FIELD]))
+        self.publish_content_api(item, [subscriber for subscriber in subscribers if subscriber['api_enabled']])

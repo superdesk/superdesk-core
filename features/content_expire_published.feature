@@ -65,7 +65,7 @@ Feature: Content Expiry Published Items
     When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
     And we post to "/subscribers" with "digital" and success
@@ -115,7 +115,7 @@ Feature: Content Expiry Published Items
     {"_current_version": 1, "state": "fetched", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
     """
 
-  @auth
+  @auth  
   Scenario: Item on a desk is published and expired
     When we publish "#archive._id#" with "publish" type and "published" state
     Then we get OK response
@@ -174,7 +174,7 @@ Feature: Content Expiry Published Items
     }
     """
 
-  @auth
+  @auth 
   Scenario: Item in a package is published and expired
     When we publish "#archive._id#" with "publish" type and "published" state
     Then we get OK response
@@ -250,7 +250,7 @@ Feature: Content Expiry Published Items
     When we get "publish_queue"
     Then we get list with 0 items
 
-  @auth
+  @auth 
   Scenario: Item in multiple packages is published and expired
     When we publish "#archive._id#" with "publish" type and "published" state
     Then we get OK response
@@ -687,7 +687,7 @@ Feature: Content Expiry Published Items
     }
     """
 
-  @auth @vocabulary
+  @auth @vocabulary 
   Scenario: Expire the master story then it expires all related broadcast content.
     When we publish "123" with "publish" type and "published" state
     Then we get OK response
@@ -893,7 +893,7 @@ Feature: Content Expiry Published Items
     When we get "archived"
     Then we get list with 0 items
 
-  @auth @vocabulary
+  @auth @vocabulary 
   Scenario: Expire items that not moved to legal.
     When we publish "123" with "publish" type and "published" state
     Then we get OK response

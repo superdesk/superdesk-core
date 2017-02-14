@@ -10,14 +10,19 @@
 
 import json
 import logging
+
+from copy import deepcopy
+
 from superdesk import get_resource_service
 from eve.utils import ParsedRequest, config
 from superdesk.utils import ListCursor
-from superdesk.resource import Resource
+from superdesk.resource import Resource, build_custom_hateoas
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
 from superdesk.publish import subscriber_types, SUBSCRIBER_TYPES  # NOQA
 from flask import current_app as app
+from superdesk.metadata.utils import ProductTypes
+
 
 logger = logging.getLogger(__name__)
 
@@ -77,8 +82,6 @@ class SubscribersResource(Resource):
         },
         'destinations': {
             'type': 'list',
-            'required': True,
-            "minlength": 1,
             'schema': {
                 'type': 'dict',
                 'schema': {
@@ -105,6 +108,10 @@ class SubscribersResource(Resource):
         'content_api_token': {
             'type': 'string',
         },
+        'api_products': {
+            'type': 'list',
+            'schema': Resource.rel('products', True)
+        }
     }
 
     item_methods = ['GET', 'PATCH', 'PUT']
@@ -124,9 +131,13 @@ class SubscribersService(BaseService):
     def on_create(self, docs):
         for doc in docs:
             self._validate_seq_num_settings(doc)
+            self._validate_products_destinations(doc)
 
     def on_update(self, updates, original):
         self._validate_seq_num_settings(updates)
+        subscriber = deepcopy(original)
+        subscriber.update(updates)
+        self._validate_products_destinations(subscriber)
 
     def on_deleted(self, doc):
         get_resource_service('sequences').delete(lookup={
@@ -163,6 +174,7 @@ class SubscribersService(BaseService):
                     for s in all_subscribers:
                         gfs = s.get('global_filters', {})
                         if gfs.get(str(pf['_id']), True):
+                            build_custom_hateoas({'self': {'title': 'subscribers', 'href': '/subscribers/{_id}'}}, s)
                             selected_subscribers[s['_id']] = s
 
                 for product in existing_products:
@@ -172,8 +184,10 @@ class SubscribersService(BaseService):
                         selected_products[product['_id']] = product
 
                 for s in all_subscribers:
-                    for p in s.get('products', []):
+                    all_subscriber_products = list(set(s.get('products') or []) | set(s.get('api_products') or []))
+                    for p in all_subscriber_products:
                         if p in selected_products:
+                            build_custom_hateoas({'self': {'title': 'subscribers', 'href': '/subscribers/{_id}'}}, s)
                             selected_subscribers[s['_id']] = s
 
         res = {'filter_conditions': existing_filter_conditions,
@@ -181,6 +195,50 @@ class SubscribersService(BaseService):
                'products': list(selected_products.values()),
                'selected_subscribers': list(selected_subscribers.values())}
         return [res]
+
+    def _validate_products_destinations(self, subscriber):
+        """Validates the subscribers
+            1. At least one destination or one api_products is specified.
+            2. If direct products are specified then at least one destination is specified.
+        :param dict subscriber:
+        :return:
+        """
+        if not subscriber.get('is_active'):
+            return
+
+        if not subscriber.get('destinations') and not subscriber.get('api_products'):
+            raise SuperdeskApiError.badRequestError(payload={"destinations": {"required": 1},
+                                                             "api_products": {"required": 1}},
+                                                    message="At least one destination or one API Product should "
+                                                            "be specified")
+
+        if len(subscriber.get("products") or []) and not subscriber.get('destinations'):
+            raise SuperdeskApiError.badRequestError(payload={"destinations": {"required": 1}},
+                                                    message="Destinations not specified.")
+
+        if subscriber.get('products'):
+            lookup = {config.ID_FIELD: {'$in': subscriber.get('products')}, 'product_type': ProductTypes.API.value}
+            products = get_resource_service('products').get_product_names(lookup)
+            if products:
+                raise SuperdeskApiError.badRequestError(payload={'products': 1},
+                                                        message="Invalid Product Type. "
+                                                                "Products {}.".format(', '.join(products)))
+        if subscriber.get('api_products'):
+            lookup = {config.ID_FIELD: {'$in': subscriber.get('api_products')},
+                      'product_type': ProductTypes.DIRECT.value}
+            products = get_resource_service('products').get_product_names(lookup)
+            if products:
+                raise SuperdeskApiError.badRequestError(payload={'products': 1},
+                                                        message="Invalid Product Type. "
+                                                                "API Products {}.".format(', '.join(products)))
+
+    def get_subscriber_names(self, lookup):
+        """Get the subscriber names based on the lookup.
+        :param dict lookup: search criteria
+        :return list: list of subscriber name
+        """
+        subscribers = list(self.get(req=None, lookup=lookup))
+        return [subscriber['name'] for subscriber in subscribers]
 
     def _validate_seq_num_settings(self, subscriber):
         """

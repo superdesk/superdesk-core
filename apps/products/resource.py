@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk.resource import Resource
+from superdesk.metadata.utils import ProductTypes
 
 
 class ProductsResource(Resource):
@@ -41,6 +42,12 @@ class ProductsResource(Resource):
         'geo_restrictions': {
             'type': 'string',
             'nullable': True
+        },
+        'product_type': {
+            'type': 'string',
+            'default': ProductTypes.BOTH.value,
+            'allowed': ProductTypes.values(),
+            'required': True
         }
     }
 

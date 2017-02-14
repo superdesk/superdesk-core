@@ -8,7 +8,7 @@ Feature: Subscribers
     When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
     And we post to "/subscribers" with success
@@ -26,7 +26,43 @@ Feature: Subscribers
     {"_items":[{"name":"News1", "is_targetable": true}]}
     """
 
-    @auth
+  @auth
+  Scenario: Create new subscriber with invalid product type.
+    Given empty "subscribers"
+    When we get "/subscribers"
+    Then we get list with 0 items
+    When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz", "product_type": "direct"
+      }
+      """
+    And we post to "/subscribers"
+    """
+    {
+      "name":"News1","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+      "api_products": ["#products._id#"],
+      "codes": "xyz, abc"
+    }
+    """
+    Then we get error 400
+    When we patch "/products/#products._id#"
+    """
+    {"product_type": "api"}
+    """
+    Then we get OK response
+    When we post to "/subscribers"
+    """
+    {
+      "name":"News1","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+      "products": ["#products._id#"],
+      "codes": "xyz, abc"
+    }
+    """
+    Then we get error 400
+
+
+  @auth
   Scenario: Add a new subscriber without product succeeds
     Given empty "subscribers"
     When we get "/subscribers"
@@ -49,7 +85,7 @@ Feature: Subscribers
     When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
     And we post to "/subscribers"
@@ -90,19 +126,30 @@ Feature: Subscribers
       """
       {
         "name":"prod-1","codes":"abc,xyz",
-        "content_filter": {"filter_id":"#content_filters._id#", "filter_type":"blocking"}
+        "content_filter": {"filter_id":"#content_filters._id#", "filter_type":"blocking"}, "product_type": "both"
       }
       """
     And we post to "/subscribers" with success
     """
     {
-      "name":"News1",
+      "name":"News-Direct",
       "media_type":"media",
-      "subscriber_type": "digital",
+      "subscriber_type": "wire",
       "sequence_num_settings":{"min" : 1, "max" : 10},
       "email": "test@test.com",
       "destinations":[{"name":"destination1","format": "nitf", "delivery_type":"FTP","config":{"ip":"144.122.244.55","password":"xyz"}}],
       "products": ["#products._id#"]
+    }
+    """
+    And we post to "/subscribers" with success
+    """
+    {
+      "name":"News-API",
+      "media_type":"media",
+      "subscriber_type": "digital",
+      "sequence_num_settings":{"min" : 1, "max" : 10},
+      "email": "test@test.com",
+      "api_products": ["#products._id#"]
     }
     """
     And we get "/subscribers?filter_condition={"field":"anpa_category", "operator":"in", "value":"4"}"
@@ -112,7 +159,7 @@ Feature: Subscribers
     "filter_conditions": [{"name": "sport"}],
     "content_filters": [{"name": "soccer-only"}],
     "products": [{"name": "prod-1"}],
-    "selected_subscribers": [{"name":"News1"}]}]}
+    "selected_subscribers": [{"name":"News-Direct"}, {"name":"News-API"}]}]}
     """
 
   @auth
@@ -121,7 +168,7 @@ Feature: Subscribers
     When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
     And we post to "/subscribers"
@@ -141,7 +188,7 @@ Feature: Subscribers
      When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
     And we post to "/subscribers"
@@ -149,25 +196,64 @@ Feature: Subscribers
     {
       "name":"News1",
       "products": ["#products._id#"],
+      "email": "test@test.com",
       "subscriber_type": "digital","media_type":"media", "sequence_num_settings":{"min" : 1, "max" : 10}
     }
     """
     Then we get error 400
     """
-    {"_issues": {"destinations": {"required": 1}}, "_status": "ERR"}
+    {"_issues": {
+      "destinations": {"required": 1},
+      "api_products": {"required": 1}},
+      "_status": "ERR"}
     """
     When we post to "/subscribers"
     """
     {
       "name":"News1", "subscriber_type": "digital","media_type":"media", "sequence_num_settings":{"min" : 1, "max" : 10},
+      "email": "test@test.com",
       "products": ["#products._id#"],
       "destinations": []
     }
     """
     Then we get error 400
     """
-    {"_issues": {"destinations": {"minlength": 1}}, "_status": "ERR"}
+    {"_issues": {"destinations": {"required": 1}}, "_status": "ERR"}
     """
+
+  @auth
+  Scenario: Creating a subscriber with api product only but no destinations.
+    Given empty "subscribers"
+    When we post to "/products" with success
+    """
+    {
+      "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+    }
+    """
+    And we post to "/subscribers"
+    """
+    {
+      "name":"News1",
+      "email": "test@test.com",
+      "subscriber_type": "digital","media_type":"media", "sequence_num_settings":{"min" : 1, "max" : 10},
+      "api_products": ["#products._id#"]
+    }
+    """
+    Then we get OK response
+    When we patch "/subscribers/#subscribers._id#"
+    """
+    {"api_products": []}
+    """
+    Then we get error 400
+    """
+    {"_issues": {"validator exception": "400: At least one destination or one API Product should be specified"}, "_status": "ERR"}
+    """
+    When we patch "/subscribers/#subscribers._id#"
+    """
+    {"products": ["#products._id#"]}
+    """
+    Then we get error 400
+
 
   @auth
   Scenario: Updating a Subscriber with no destinations should fail
@@ -177,7 +263,7 @@ Feature: Subscribers
     When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
     And we post to "/subscribers" with success
@@ -199,7 +285,7 @@ Feature: Subscribers
     """
     Then we get error 400
     """
-    {"_issues": {"destinations": {"minlength": 1}}, "_status": "ERR"}
+    {"_issues": {"validator exception": "400: At least one destination or one API Product should be specified"}, "_status": "ERR"}
     """
 
   @auth
@@ -208,7 +294,7 @@ Feature: Subscribers
     When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
     And we post to "/subscribers"
@@ -234,7 +320,7 @@ Feature: Subscribers
     When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
     And we post to "/subscribers"
@@ -257,7 +343,7 @@ Feature: Subscribers
     When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
     And we post to "/subscribers" with success
@@ -299,7 +385,7 @@ Feature: Subscribers
     When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
     And we post to "/subscribers" with success
@@ -320,12 +406,17 @@ Feature: Subscribers
     {"global_filters":{"#content_filters._id#":true}}
     """
 
-  @wip
   @auth
   Scenario: Generate token for subscriber
+    Given "products"
+      """
+      [{
+        "_id":"prod-1", "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+      }]
+      """
     Given "subscribers"
     """
-    [{"name": "Foo"}]
+    [{"name": "Foo", "api_products": ["prod-1"]}]
     """
 
     When we post to "subscriber_token"

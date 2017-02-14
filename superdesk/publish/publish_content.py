@@ -74,15 +74,13 @@ def get_queue_items(retries=False):
         lookup = {
             '$and': [
                 {'state': QueueState.RETRYING.value},
-                {'next_retry_attempt_at': {'$lte': utcnow()}},
-                {'destination.delivery_type': {'$ne': 'pull'}}
+                {'next_retry_attempt_at': {'$lte': utcnow()}}
             ]
         }
     else:
         lookup = {
             '$and': [
-                {'state': QueueState.PENDING.value},
-                {'destination.delivery_type': {'$ne': 'pull'}}
+                {'state': QueueState.PENDING.value}
             ]
         }
     request = ParsedRequest()

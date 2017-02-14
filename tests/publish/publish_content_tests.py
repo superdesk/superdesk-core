@@ -291,12 +291,13 @@ class QueueItemsTestCase(TestCase):
         fake_doc.__getitem__ = lambda s, k: doc_dict.get(k, MagicMock())
         fake_destination = MagicMock()
         fake_subscriber = MagicMock()
-        subs_dict = {'destinations': [fake_destination]}
+        subs_dict = {'destinations': [fake_destination], 'api_enabled': False}
         fake_subscriber.__getitem__ = lambda s, k: subs_dict.get(k, MagicMock())
         fake_subscriber['destinations'] = [fake_destination]
         subscribers = [fake_subscriber]
         fake_formatter.format.return_value = [{'published_seq_num': 42,
                                                'formatted_item': 'test OK'}]
+        service.get_destinations = MagicMock(return_value=fake_subscriber['destinations'])
         service.queue_transmission(fake_doc, subscribers)
         self.assertEqual(len(fake_post.call_args_list), 1)
         self.assertEqual(len(fake_post.call_args_list[0][0][0]), 1)
