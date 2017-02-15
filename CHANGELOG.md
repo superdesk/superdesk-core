@@ -1,5 +1,56 @@
 # Superdesk Server Changelog
 
+## [1.6.0] 2017-02-16
+
+### Fixed
+
+- Report original exception details to sentry.
+- Ensure username is unique.
+- Remove the link to other stories.
+- Keep renditions until item expiry.
+- Fix renditions if published it can't be removed.
+- Activate token should be active for 7 days.
+- Fix bad argument handling in data upgrades.
+- Fix image cropping if mimetype is missing for some rendition.
+- Fix `place` filter condition.
+- Reset `event_id` for unlinked stories.
+- Fix resending of stories when `NO_TAKES` is on.
+- Fix image cropping for renditions defined via vocabulary.
+- Fix dateline is required for picture item kill.
+- Fix push to send all renditions of package items and embedded items.
+- Fix reuters content formatting.
+- Fix `item:expired` notification to send item id.
+- Fix rss guid handling when it's not permalink.
+- Fix email subject with utf8.
+- Stop retrying enqueue on error.
+- Make word counts consistent with UI.
+
+### Added
+
+- Add mark stories for desks.
+- Add endpoint to generate content api tokens for subscribers.
+- Activity reports generating and management.
+- Add audit collection gc.
+- Add EFE specific parser.
+- Password-less authentication via xmpp.
+- Document authentication.
+- New operators for filter conditions.
+- Store ingested data that could not be parsed.
+- Add `CELERY_PREFIX` config option.
+- Add `evolvedfrom` to ninjs output.
+- Copy metadata field from parent to associated items.
+- Add archived collection curation functions.
+- Add group label to macros.
+- Add filter to block api content.
+
+### Changed
+
+- Refactor ingest providers registry.
+- Refactor search providers registry.
+- Add associations to rewrites and takes.
+- Update celery to 4.0.
+- Make single-line view a user preference.
+
 ## [1.5.2] 2017-01-18
 
 ### Fixed
