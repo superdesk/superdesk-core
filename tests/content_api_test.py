@@ -67,10 +67,17 @@ class ContentAPITestCase(TestCase):
             self.assertEqual(1, len(data['_items']))
             self.assertNotIn('subscribers', data['_items'][0])
             self.assertIn('items/foo', data['_items'][0]['uri'])
+
+            audit_entries = superdesk.get_resource_service('api_audit').get(req=None, lookup={})
+            self.assertEqual(1, audit_entries.count())
+
             response = c.get('packages', headers=headers)
             data = json.loads(response.data)
             self.assertEqual(1, len(data['_items']))
             self.assertIn('packages/pkg', data['_items'][0]['uri'])
+
+            audit_entries = superdesk.get_resource_service('api_audit').get(req=None, lookup={})
+            self.assertEqual(2, audit_entries.count())
 
     def test_content_api_picture(self):
         self.content_api.publish({
@@ -112,6 +119,9 @@ class ContentAPITestCase(TestCase):
             response = c.get(url, headers=headers)
             self.assertEqual(200, response.status_code, url)
             self.assertEqual(b'content', response.data)
+
+            audit_entries = superdesk.get_resource_service('api_audit').get(req=None, lookup={'type': 'asset'})
+            self.assertEqual(1, audit_entries.count())
 
     def test_text_with_pic_associations(self):
         self.content_api.publish({
