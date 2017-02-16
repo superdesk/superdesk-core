@@ -310,7 +310,10 @@ def step_impl_given_(context, resource):
         get_resource_service(resource).post(items)
         context.data = items
         context.resource = resource
-        setattr(context, resource, items[-1])
+        try:
+            setattr(context, resource, items[-1])
+        except KeyError:
+            pass
 
 
 @given('"{resource}" with objectid')
@@ -537,7 +540,10 @@ def store_placeholder(context, url):
     if context.response.status_code in (200, 201):
         item = json.loads(context.response.get_data())
         if item['_status'] == 'OK' and item.get('_id'):
-            setattr(context, get_resource_name(url), item)
+            try:
+                setattr(context, get_resource_name(url), item)
+            except (IndexError, KeyError):
+                pass
 
 
 def post_data(context, url, success=False):

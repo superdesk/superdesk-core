@@ -1,9 +1,11 @@
 
+from unittest.mock import patch
 from bson import ObjectId
 from datetime import timedelta
 from superdesk.utc import utcnow
 from superdesk.tests import TestCase
 from apps.auth.session_purge import RemoveExpiredSessions
+from apps.auth import is_current_user_admin
 
 
 class AuthTestCase(TestCase):
@@ -11,8 +13,8 @@ class AuthTestCase(TestCase):
     def test_remove_expired_sessions_syncs_online_users(self):
         sess_id = ObjectId()
         user_ids = self.app.data.insert('users', [
-            {'name': 'foo', 'session_preferences': {'test': {}}},
-            {'name': 'bar', 'session_preferences': {'bar': {}, str(sess_id): {}}},
+            {'name': 'foo', 'username': 'foo', 'session_preferences': {'test': {}}},
+            {'name': 'bar', 'username': 'bar', 'session_preferences': {'bar': {}, str(sess_id): {}}},
         ])
 
         self.assertEqual(2, len(user_ids))
@@ -29,3 +31,10 @@ class AuthTestCase(TestCase):
 
         self.assertEqual({}, users[0]['session_preferences'])
         self.assertEqual({str(sess_id): {}}, users[1]['session_preferences'])
+
+    def test_is_current_user_admin(self):
+        with patch('apps.auth.get_user', return_value={}):
+            self.assertFalse(is_current_user_admin())
+
+        with patch('apps.auth.get_user', return_value={'user_type': 'administrator'}):
+            self.assertTrue(is_current_user_admin())
