@@ -32,6 +32,7 @@ aggregations = {
 }
 
 elastic_highlight_query = {
+    'require_field_match': False,
     'pre_tags': ['<span class=\"es-highlight\">'],
     'post_tags': ['</span>'],
     'fields': {

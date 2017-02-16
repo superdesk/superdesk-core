@@ -15,8 +15,7 @@ LONG_DESCRIPTION = "Superdesk Server Core"
 
 install_requires = [
     'eve>=0.6,<0.7',
-    'eve-elastic>=0.5.2,<0.7',
-    'elasticsearch>=1.9.0,<2.0',
+    'eve-elastic==2.0',
     'flask>=0.10,<0.11',
     'flask-mail>=0.9,<0.10',
     'flask-script>=2.0.5,<3.0',

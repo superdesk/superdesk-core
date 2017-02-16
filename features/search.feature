@@ -51,7 +51,7 @@ Feature: Search Feature
         """
         Then we set elastic limit
         When we get "/search"
-        Then we get list with 5 items
+        Then we get list with <6 items
 
     @auth
     Scenario: Search Invisible stages without desk membership
