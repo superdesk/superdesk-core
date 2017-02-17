@@ -43,7 +43,7 @@ def get_media_streamed(media_id):
         response.cache_control.public = True
         response.make_conditional(request)
         response.headers['Content-Disposition'] = 'inline'
-        get_resource_service('api_audit').post({'type': 'asset', 'uri': request.url}, id=media_id)
+        get_resource_service('api_audit').audit_item({'type': 'asset', 'uri': request.url}, media_id)
         return response
     raise FileNotFoundError('File not found on media storage.')
 

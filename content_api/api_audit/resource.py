@@ -26,8 +26,7 @@ class ApiAuditResource(Resource):
     Resource class for the auditing of the API
     """
 
-    item_methods = ['PUT']
     schema = schema
-
     mongo_prefix = MONGO_PREFIX
     internal_resource = True
+    mongo_indexes = {'subscriber': [('subscriber', 1)]}

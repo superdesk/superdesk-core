@@ -151,7 +151,7 @@ class ItemsService(BaseService):
 
         self._process_item_renditions(document)
         self._process_item_associations(document)
-        get_resource_service('api_audit').post(document, id=_id)
+        get_resource_service('api_audit').audit_item(document, _id)
 
     def _process_item_renditions(self, item):
         hrefs = {}

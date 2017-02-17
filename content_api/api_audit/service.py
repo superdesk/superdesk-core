@@ -17,14 +17,20 @@ class ApiAuditService(BaseService):
     Service class that provides an auditing service for the retrieval of items, assets and packages via the API
     """
 
-    def post(self, docs, **kwargs):
+    def audit_item(self, item, id):
+        """
+        Record the retrieval of an item or asset
+        :param item: The item to audit
+        :param id: id of the item
+        :return:
+        """
         subscriber = getattr(g, 'user', None)
         audit = {
-            'type': docs.get('type', ''),
+            'type': item.get('type', ''),
             'subscriber': subscriber,
-            'uri': docs.get('uri', None),
-            'items_id': kwargs.get('id', None),
-            'version': docs.get('version', ''),
+            'uri': item.get('uri', None),
+            'items_id': id,
+            'version': item.get('version', ''),
             'remote_addr': request.remote_addr
         }
-        super().post([audit])
+        self.post([audit])

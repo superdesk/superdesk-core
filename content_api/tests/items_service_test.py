@@ -21,7 +21,7 @@ from content_api.tests import ApiTestCase
 
 class FakeAuditService():
 
-    def post(self, doc, **kwargs):
+    def audit_item(self, doc, id):
         return
 
 
