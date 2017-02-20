@@ -387,17 +387,18 @@ def ingest_items(items, provider, feeding_service, rule_set=None, routing_scheme
     items_dict = {doc[GUID_FIELD]: doc for doc in all_items}
     items_in_package = []
     failed_items = set()
-
+    created_ids = []
     for item in [doc for doc in all_items if doc.get(ITEM_TYPE) == CONTENT_TYPE.COMPOSITE]:
         items_in_package = [ref['residRef'] for group in item.get('groups', [])
                             for ref in group.get('refs', []) if 'residRef' in ref]
 
     for item in [doc for doc in all_items if doc.get(ITEM_TYPE) != CONTENT_TYPE.COMPOSITE]:
-        ingested = ingest_item(item, provider, feeding_service, rule_set,
-                               routing_scheme=routing_scheme if not item[GUID_FIELD] in items_in_package else None)
-        if not ingested:
+        ingested, ids = ingest_item(item, provider, feeding_service, rule_set,
+                                    routing_scheme=routing_scheme if not item[GUID_FIELD] in items_in_package else None)
+        if ingested:
+            created_ids = created_ids + ids
+        else:
             failed_items.add(item[GUID_FIELD])
-
     for item in [doc for doc in all_items if doc.get(ITEM_TYPE) == CONTENT_TYPE.COMPOSITE]:
         for ref in [ref for group in item.get('groups', [])
                     for ref in group.get('refs', []) if 'residRef' in ref]:
@@ -414,18 +415,16 @@ def ingest_items(items, provider, feeding_service, rule_set=None, routing_scheme
                 ref['residRef'] = items_dict.get(ref['residRef'], {}).get(superdesk.config.ID_FIELD)
         if item[GUID_FIELD] in failed_items:
             continue
-
-        ingested = ingest_item(item, provider, feeding_service, rule_set, routing_scheme)
-        if not ingested:
+        ingested, ids = ingest_item(item, provider, feeding_service, rule_set, routing_scheme)
+        if ingested:
+            created_ids = created_ids + ids
+        else:
             failed_items.add(item[GUID_FIELD])
-
     # sync mongo with ingest after all changes
     ingest_collection = feeding_service.service if hasattr(feeding_service, 'service') else 'ingest'
     ingest_service = superdesk.get_resource_service(ingest_collection)
-    updated_items_ids = [item['_id'] for item in all_items if item[GUID_FIELD] not in failed_items]
-    updated_items = ingest_service.find({'_id': {'$in': updated_items_ids}}, max_results=len(updated_items_ids))
-    app.data._search_backend(ingest_collection).bulk_insert(ingest_collection, [item for item in updated_items])
-
+    updated_items = ingest_service.find({'_id': {'$in': created_ids}}, max_results=len(created_ids))
+    app.data._search_backend(ingest_collection).bulk_insert(ingest_collection, list(updated_items))
     if failed_items:
         logger.error('Failed to ingest the following items: %s', failed_items)
     return failed_items
@@ -475,11 +474,13 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
                 update_renditions(item, href, old_item)
 
         new_version = True
+        items_ids = []
         if old_item:
             updates = deepcopy(item)
             ingest_service.patch_in_mongo(old_item[superdesk.config.ID_FIELD], updates, old_item)
             item.update(old_item)
             item.update(updates)
+            items_ids = [item['_id']]
             # if the feed is versioned and this is not a new version
             if 'version' in item and 'version' in old_item and item.get('version') == old_item.get('version'):
                 new_version = False
@@ -487,9 +488,9 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
             if item.get('ingest_provider_sequence') is None:
                 ingest_service.set_ingest_provider_sequence(item, provider)
             try:
-                ingest_service.post_in_mongo([item])
+                items_ids = ingest_service.post_in_mongo([item])
             except HTTPException as e:
-                logger.error('Exception while persisting item in %s collection', ingest_collection, e)
+                logger.error('Exception while persisting item in %s collection: %s', ingest_collection, e)
 
         if routing_scheme and new_version:
             routed = ingest_service.find_one(_id=item[superdesk.config.ID_FIELD], req=None)
@@ -498,7 +499,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
     except Exception as ex:
         logger.exception(ex)
         return False
-    return True
+    return True, items_ids
 
 
 def update_renditions(item, href, old_item):
