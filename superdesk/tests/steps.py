@@ -475,7 +475,7 @@ def fetch_from_provider(context, provider_name, guid, routing_scheme=None, desk_
         file_path = os.path.join(provider.get('config', {}).get('path', ''), guid)
         feeding_parser = provider_service.get_feed_parser(provider)
         if isinstance(feeding_parser, XMLFeedParser):
-            with open(file_path, 'r') as f:
+            with open(file_path, 'rb') as f:
                 xml_string = etree.etree.fromstring(f.read())
                 items = [feeding_parser.parse(xml_string, provider)]
         else:

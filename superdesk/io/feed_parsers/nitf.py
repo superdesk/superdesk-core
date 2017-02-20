@@ -13,13 +13,12 @@ from datetime import datetime
 import dateutil.parser
 from superdesk.io.registry import register_feed_parser
 from superdesk.io.feed_parsers import XMLFeedParser
-import xml.etree.ElementTree as etree
+from lxml import etree
 from superdesk.errors import ParserError
 from superdesk.utc import utc
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, FORMAT, FORMATS
 from superdesk.etree import get_word_count
 from superdesk.io.iptc import subject_codes
-from bs4 import BeautifulSoup
 import re
 import superdesk
 
@@ -160,7 +159,7 @@ class NITFFeedParser(XMLFeedParser):
 
         The following mappings are used in this order (last is more important):
             - self.default_mapping
-            - self.MAPPING, intended for sublasses
+            - self.MAPPING, intended for subclasses
             - NITF_MAPPING dictionary which can be put in settings
         If a value is a non-empty string, it is a xpath, @attribute can be used as last path component.
         If value is empty string/dict, the key will be ignored
@@ -264,7 +263,7 @@ class NITFFeedParser(XMLFeedParser):
             if elem is not None:
                 self.set_dateline(item, city=elem.text)
 
-            item.setdefault('word_count', get_word_count(item['body_html']))
+            item.setdefault('word_count', get_word_count(item['body_html'], no_html=True))
             return item
         except Exception as ex:
             raise ParserError.nitfParserError(ex, provider)
@@ -334,9 +333,10 @@ class NITFFeedParser(XMLFeedParser):
         :return:
         """
         elements = []
-        soup = BeautifulSoup(element, 'html.parser')
-        for elem in soup.findAll(True):
-            elements.append(elem.get_text() + '\r\n')
+        parsed = etree.fromstring("<div>" + element + "</div>")
+        for elem in parsed.iterfind(".//"):
+            text = etree.tostring(elem, encoding="unicode", method="text")
+            elements.append(text + '\r\n')
         return ''.join(elements)
 
     def get_content(self, xml):

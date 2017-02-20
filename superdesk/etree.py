@@ -9,74 +9,186 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import bs4
-import xml.etree.ElementTree as etree  # noqa
-from xml.etree.ElementTree import ParseError  # noqa
+import re
+from lxml import etree  # noqa
+from lxml.etree import ParseError  # noqa
+from lxml import html as lxml_html
+from lxml.html import clean
 
-inline_elements = set([
-    'a',
-    'b',
-    'i',
-    'em',
-    'img',
-    'sub',
-    'sup',
-    'abbr',
-    'bold',
-    'span',
-    'cite',
-    'code',
-    'small',
-    'label',
-    'script',
-    'strong',
-    'object',
-])
+
+# This pattern matches http(s) links, numbers (1.000.000 or 1,000,000 or 1 000 000), regulars words,
+# compound words (e.g. "two-done") or abbreviation (e.g. D.C.)
+WORD_PATTERN = re.compile(r'https?:[^ ]*|([0-9]+[,. ]?)+|([\w]\.)+|[\w][\w-]*')
+
+# from https://developer.mozilla.org/en-US/docs/Web/HTML/Block-level_elements
+BLOCK_ELEMENTS = (
+    "address",
+    "article",
+    "aside",
+    "blockquote",
+    "br",
+    "canvas",
+    "dd",
+    "div",
+    "dl",
+    "fieldset",
+    "figcaption",
+    "figure",
+    "footer",
+    "form",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "header",
+    "hgroup",
+    "hr",
+    "li",
+    "main",
+    "nav",
+    "noscript",
+    "ol",
+    "output",
+    "p",
+    "pre",
+    "section",
+    "table",
+    "tfoot",
+    "ul",
+    "video")
+
+
+def parse_html(html, content='xml', lf_on_block=False, space_on_elements=False):
+    """Parse element and return etreeElement
+
+    <div> element is added around the HTML
+    recovery is used in case of bad markup
+    :param str html: HTML markup
+    :param str content: use 'xml' for XHTML or non html XML, and 'html' for HTML or if you are unsure
+    :param bool lf_on_block: if True, add a line feed on block elements' tail
+    :param bool space_on_elements: if True, add a space on each element's tail
+        mainly used to count words with non HTML markup
+    :return etree.Element: parsed element
+    """
+    if not isinstance(html, str):
+        raise ValueError("a string is expected")
+    if content == 'xml':
+        parser = etree.XMLParser(recover=True, remove_blank_text=True)
+        root = etree.fromstring("<div>" + html + "</div>", parser)
+    elif content == 'html':
+        parser = etree.HTMLParser(recover=True, remove_blank_text=True)
+        root = etree.fromstring(html, parser)
+    else:
+        raise ValueError('invalid content: {}'.format(content))
+    if lf_on_block:
+        for elem in root.iterfind('.//'):
+            if elem.tag in BLOCK_ELEMENTS:
+                elem.tail = (elem.tail or '') + '\n'
+    if space_on_elements:
+        for elem in root.iterfind('.//'):
+            elem.tail = (elem.tail or '') + ' '
+    return root
 
 
 def get_text_word_count(text):
     """Get word count for given plain text.
 
-    :param text: text string
+    :param str text: text string
+    :return int: word count
     """
-    return len(text.split())
+    return sum(1 for word in WORD_PATTERN.finditer(text))
 
 
-def get_text(html):
-    """Get plain text version of HTML element
+def get_text(markup, content='xml', lf_on_block=False, space_on_elements=False):
+    """Get plain text version of (X)HTML or other XML element
 
-    if the HTML string can't be parsed, it will be returned unchanged
-    :param html: html string to convert to plain text
+    if the markup can't be parsed, it will be returned unchanged
+    :param str markup: string to convert to plain text
+    :param str content: 'xml' or 'html', as in parse_html
+    :param bool lf_on_block: if True, add a line feed on block elements' tail
+    :param bool space_on_elements: if True, add a space on each element's tail
+        mainly used to count words with non HTML markup
+    :return str: plain text version of markup
     """
     try:
-        root = etree.fromstringlist('<doc>{0}</doc>'.format(html))
+        root = parse_html(markup, content=content, lf_on_block=lf_on_block, space_on_elements=space_on_elements)
         text = etree.tostring(root, encoding='unicode', method='text')
         return text
     except ParseError:
-        return html
+        return markup
 
 
-def get_word_count(html):
+def to_string(elem, encoding="unicode", method="xml", remove_root_div=True):
+    """Convert Element to string
+
+    :param etree.Element elem: element to convert
+    :param str encoding: encoding to use (same as for etree.tostring)
+    :param str method: method to use (same as for etree.tostring)
+    :param bool remove_root_dir: if True remove surrounding <div> which is added by parse_html
+    :return str: converted element
+    """
+    string = etree.tostring(elem, encoding=encoding, method=method)
+    if remove_root_div:
+        if encoding == "unicode":
+            div_start = "<div>"
+            div_end = "</div>"
+        else:
+            div_start = b"<div>"
+            div_end = b"</div>"
+        if string.startswith(div_start) and string.endswith(div_end):
+            return string[len(div_start):-len(div_end)]
+    return string
+
+
+def get_word_count(markup, no_html=False):
     """Get word count for given html.
 
-    :param html: html string to count
+    :param str markup: xhtml (or other xml) markup
+    :param bool no_html: set to True if xml param is not (X)HTML
+        if True, a space will be added after each element to separate words.
+        This avoid to have construct like <hl2>word</hl2><p>another</p> (like in NITF)
+        being counted as one word.
+    :return int: count of words inside the text
     """
-    soup = bs4.BeautifulSoup(html.replace('<br>', ' ').replace('<hr>', ' '), 'html.parser')
-
-    # first run to filter out inlines
-    for elem in soup.find_all():
-        if elem.name in inline_elements:  # ignore inline elements
-            elem.unwrap()
-
-    # re-parse without inline, it will merge sibling text nodes
-    soup = bs4.BeautifulSoup(str(soup), 'html.parser')
-    text = ' '.join(soup.find_all(text=True))
-    return get_text_word_count(text)
+    if no_html:
+        return get_text_word_count(get_text(markup, content='xml', space_on_elements=True))
+    else:
+        return get_text_word_count(get_text(markup, content='html', lf_on_block=True))
 
 
 def get_char_count(html):
     """Get character count for given html.
 
     :param html: html string to count
+    :return int: count of chars inside the text
     """
     return len(get_text(html))
+
+
+def sanitize_html(html):
+    """Sanitize HTML
+
+    :param str html: unsafe HTML markup
+    :return str: sanitized HTML
+    """
+    if not html:
+        return ""
+
+    blacklist = ["script", "style", "head"]
+
+    root_elem = lxml_html.fromstring(html)
+    cleaner = clean.Cleaner(
+        add_nofollow=False,
+        kill_tags=blacklist
+    )
+    cleaned_xhtml = cleaner.clean_html(root_elem)
+
+    safe_html = etree.tostring(cleaned_xhtml, encoding="unicode")
+
+    # the following code is legacy (pre-lxml)
+    if safe_html == ", -":
+        return ""
+
+    return safe_html

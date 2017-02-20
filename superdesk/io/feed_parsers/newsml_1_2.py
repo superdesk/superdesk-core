@@ -45,7 +45,7 @@ class NewsMLOneFeedParser(XMLFeedParser):
                 item['ingest_provider_sequence'] = parsed_el.text
 
             parsed_el = xml.find('NewsEnvelope/Priority')
-            item['priority'] = self.map_priority(parsed_el.text if parsed_el else None)
+            item['priority'] = self.map_priority(parsed_el.text if parsed_el is not None else None)
 
             self.parse_news_identifier(item, xml)
             self.parse_newslines(item, xml)

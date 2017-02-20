@@ -27,7 +27,7 @@ class NITFTestCase(TestCase):
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.normpath(os.path.join(dirname, '../fixtures', self.filename))
         provider = {'name': 'Test'}
-        with open(fixture) as f:
+        with open(fixture, 'rb') as f:
             self.nitf = f.read()
             self.item = NITFFeedParser().parse(etree.fromstring(self.nitf), provider)
 
@@ -73,7 +73,7 @@ class AAPTestCase(NITFTestCase):
         self.assertEqual(self.item.get('versioncreated').isoformat(), '2013-10-20T08:27:51+00:00')
 
     def test_content(self):
-        text = "<p>   1A) More extreme weather forecast over the next few days the <br />fire situation is likely"
+        text = "<p>   1A) More extreme weather forecast over the next few days the <br/>fire situation is likely"
         self.assertIn(text, self.item.get('body_html'))
         self.assertIsInstance(self.item.get('body_html'), type(''))
         self.assertNotIn('<body.content>', self.item.get('body_html'))
@@ -105,7 +105,7 @@ class APExampleTestCase(NITFTestCase):
         self.assertEqual(self.item.get('ednote'), 'For global distribution')
 
     def test_word_count(self):
-        self.assertEqual(1047, self.item.get('word_count'))
+        self.assertEqual(1063, self.item.get('word_count'))
 
 
 class IPTCExampleTestCase(NITFTestCase):
@@ -143,7 +143,7 @@ class IPTCExampleTestCase(NITFTestCase):
         self.assertEqual('By Alan Karben', self.item.get('byline'))
 
     def test_word_count(self):
-        self.assertEqual(221, self.item.get('word_count'))
+        self.assertEqual(223, self.item.get('word_count'))
 
 
 class PATestCase(NITFTestCase):
@@ -167,7 +167,7 @@ class PATestCase(NITFTestCase):
         self.assertIn('Trivia (Oct 14)', self.item.get('keywords'))
 
     def test_word_count(self):
-        self.assertEqual(678, self.item.get('word_count'))
+        self.assertEqual(637, self.item.get('word_count'))
 
 
 class PATestCase2(NITFTestCase):
@@ -184,7 +184,7 @@ class PATestCase2(NITFTestCase):
         self.assertEqual('T201510140143580001T', self.item.get('guid'))
         self.assertEqual(self.item.get('format'), 'preserved')
 
-    def test_guid(self):
+    def test_guid_2(self):
         self.assertEqual(self.item.get('type'), 'text')
 
     def test_subjects(self):
@@ -199,26 +199,26 @@ class PATestCase2(NITFTestCase):
 
 class ParseSubjects(TestCase):
     def test_get_subjects(self):
-        xml = ('<?xml version="1.0" encoding="UTF-8"?>'
-               '<nitf><head>'
-               '<tobject tobject.type="News">'
-               '<tobject.property tobject.property.type="Current" />'
-               '<tobject.subject tobject.subject.refnum="02003000" '
-               'tobject.subject.type="Justice" tobject.subject.matter="Police" />'
-               '</tobject></head></nitf>')
+        xml = (b'<?xml version="1.0" encoding="UTF-8"?>'
+               b'<nitf><head>'
+               b'<tobject tobject.type="News">'
+               b'<tobject.property tobject.property.type="Current" />'
+               b'<tobject.subject tobject.subject.refnum="02003000" '
+               b'tobject.subject.type="Justice" tobject.subject.matter="Police" />'
+               b'</tobject></head></nitf>')
         subjects = NITFFeedParser().get_subjects(etree.fromstring(xml))
         self.assertEqual(len(subjects), 2)
         self.assertIn({'qcode': '02000000', 'name': 'Justice'}, subjects)
         self.assertIn({'qcode': '02003000', 'name': 'Police'}, subjects)
 
     def test_get_subjects_with_invalid_qcode(self):
-        xml = ('<?xml version="1.0" encoding="UTF-8"?>'
-               '<nitf><head>'
-               '<tobject tobject.type="News">'
-               '<tobject.property tobject.property.type="Current" />'
-               '<tobject.subject tobject.subject.refnum="00000000" '
-               'tobject.subject.type="Justice" tobject.subject.matter="Police" />'
-               '</tobject></head></nitf>')
+        xml = (b'<?xml version="1.0" encoding="UTF-8"?>'
+               b'<nitf><head>'
+               b'<tobject tobject.type="News">'
+               b'<tobject.property tobject.property.type="Current" />'
+               b'<tobject.subject tobject.subject.refnum="00000000" '
+               b'tobject.subject.type="Justice" tobject.subject.matter="Police" />'
+               b'</tobject></head></nitf>')
         subjects = NITFFeedParser().get_subjects(etree.fromstring(xml))
         self.assertEqual(len(subjects), 0)
 
@@ -242,7 +242,7 @@ class MappingTestCase(TestCase):
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.normpath(os.path.join(dirname, '../fixtures', self.filename))
         provider = {'name': 'Test'}
-        with open(fixture) as f:
+        with open(fixture, 'rb') as f:
             self.nitf = f.read()
             self.item = NITFFeedParser().parse(etree.fromstring(self.nitf), provider)
 

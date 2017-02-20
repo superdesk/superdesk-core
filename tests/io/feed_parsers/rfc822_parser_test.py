@@ -45,7 +45,8 @@ class RFC822TestCase(TestCase):
         self.assertEqual(self.items[0]['headline'], 'Test message 1234')
 
     def test_body(self):
-        self.assertEqual(self.items[0]['body_html'].strip(), '<div>body text<br/><div>\n</div></div>')
+        self.assertEqual(self.items[0]['body_html'].strip(),
+                         '<div dir="ltr">body text<br clear="all"/><div>&#13;\n</div></div>')
 
     def test_from(self):
         self.assertEqual(self.items[0]['original_source'],
@@ -97,7 +98,7 @@ class RFC822OddCharSet(TestCase):
         self.assertEqual(self.items[0]['headline'], '=?windows-1252?Q?TravTalk���s_Special_for_TAAI_convention?=')
 
     def test_body(self):
-        self.assertRegex(self.items[0]['body_html'], '<span>')
+        self.assertRegex(self.items[0]['body_html'], '<span lang="EN-AU">')
 
 
 class RFC822CharSetInSubject(TestCase):

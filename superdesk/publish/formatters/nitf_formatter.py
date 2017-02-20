@@ -16,7 +16,7 @@ from superdesk.publish.formatters import Formatter
 from superdesk.errors import FormatterError
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, FORMAT, FORMATS
 from apps.archive.common import get_utc_schedule
-from bs4 import BeautifulSoup
+from superdesk.etree import get_text
 
 
 class NITFFormatter(Formatter):
@@ -344,8 +344,8 @@ class NITFFormatter(Formatter):
 
     def _format_body_content(self, article, body_content):
         if article.get(FORMAT) == FORMATS.PRESERVED:
-            soup = BeautifulSoup(self.append_body_footer(article), 'html.parser')
-            SubElement(body_content, 'pre').text = soup.get_text()
+            pre = get_text(self.append_body_footer(article))
+            SubElement(body_content, 'pre').text = pre
         else:
             self.map_html_to_xml(body_content, self.append_body_footer(article))
 

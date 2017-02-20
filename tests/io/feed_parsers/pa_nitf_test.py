@@ -12,7 +12,7 @@
 import os
 from superdesk.tests import TestCase
 from superdesk.io.feed_parsers.pa_nitf import PAFeedParser
-from xml.etree import ElementTree
+from lxml import etree
 
 
 class PANITFFileTestCase(TestCase):
@@ -27,7 +27,7 @@ class PANITFFileTestCase(TestCase):
         fixture = os.path.normpath(os.path.join(dirname, '../fixtures', self.filename))
         provider = {'name': 'Test'}
         with open(fixture, 'rb') as f:
-            xml = ElementTree.parse(f)
+            xml = etree.parse(f)
             self.item = PAFeedParser().parse(xml.getroot(), provider)
 
 
@@ -54,7 +54,7 @@ class PATestCase(PANITFFileTestCase):
         self.assertEqual(self.item.get('format'), 'HTML')
         self.assertEqual(4, len(self.item.get('subject')))
         self.assertIn('Trivia (Oct 14)', self.item.get('keywords'))
-        self.assertEqual(665, self.item.get('word_count'))
+        self.assertEqual(637, self.item.get('word_count'))
 
 
 class PAEmbargoTestCase(PANITFFileTestCase):

@@ -8,7 +8,8 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 from enum import Enum
-from bs4 import BeautifulSoup
+from lxml import etree
+from superdesk.etree import get_text
 
 
 class FilterConditionFieldsEnum(Enum):
@@ -74,9 +75,8 @@ class FilterConditionField:
 
     def get_value(self, article):
         try:
-            soup = BeautifulSoup(article[self.field.name], "html.parser")
-            return soup.get_text().replace('\n', ' ')
-        except:
+            return get_text(article[self.field.name]).replace('\n', ' ')
+        except (etree.XMLSyntaxError, ValueError):
             return article[self.field.name]
 
 

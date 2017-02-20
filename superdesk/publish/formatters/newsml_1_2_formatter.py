@@ -16,13 +16,13 @@ from eve.utils import config
 from superdesk.publish.formatters import Formatter
 import superdesk
 from superdesk.errors import FormatterError
+from superdesk.etree import parse_html
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, ITEM_STATE, CONTENT_STATE,\
     GUID_FIELD
 from superdesk.metadata.packages import PACKAGE_TYPE, GROUP_ID, REFS, RESIDREF, ROLE, ROOT_GROUP
 from superdesk.utc import utcnow
 from flask import current_app as app
 from apps  .archive.common import get_utc_schedule
-from bs4 import BeautifulSoup
 from superdesk.filemeta import get_filemeta
 
 logger = logging.getLogger(__name__)
@@ -315,8 +315,8 @@ class NewsML12Formatter(Formatter):
         content_item = SubElement(abstract_news_component, "ContentItem")
         SubElement(content_item, 'MediaType', {'FormalName': 'Text'})
         SubElement(content_item, 'Format', {'FormalName': 'Text'})
-        soup = BeautifulSoup(article.get('abstract', ''), 'html.parser')
-        SubElement(content_item, 'DataContent').text = soup.get_text()
+        abstract = parse_html(article.get('abstract', ''))
+        SubElement(content_item, 'DataContent').text = etree.tostring(abstract, encoding="unicode", method="text")
 
     def _format_body(self, article, main_news_component):
         """

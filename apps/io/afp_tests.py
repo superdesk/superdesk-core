@@ -22,7 +22,7 @@ class TestCase(unittest.TestCase):
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.join(dirname, 'fixtures', 'afp.xml')
         provider = {'name': 'Test'}
-        with open(fixture) as f:
+        with open(fixture, 'rb') as f:
             self.item = AFPNewsMLOneFeedParser().parse(etree.fromstring(f.read()), provider)
 
     def test_headline(self):

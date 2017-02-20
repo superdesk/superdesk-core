@@ -14,7 +14,7 @@ from superdesk.io.iptc import subject_codes
 from flask import current_app as app
 from apps.archive.common import format_dateline_to_locmmmddsrc
 from superdesk.utc import get_date
-from bs4 import BeautifulSoup
+from lxml import etree
 from superdesk import get_resource_service
 import logging
 
@@ -115,10 +115,10 @@ class AP_ANPAFeedParser(ANPAFeedParser):
         try:
             html = item.get('body_html')
             if html:
-                soup = BeautifulSoup(html, "html.parser")
-                pars = soup.findAll('p')
+                elem = etree.fromstring("<div>" + html + "</div>")
+                pars = elem.iterfind('.//p')
                 for par in pars:
-                    city, source, the_rest = par.get_text().partition(' (AP) _ ')
+                    city, source, the_rest = par.text.partition(' (AP) _ ')
                     if source:
                         # sometimes the city is followed by a comma and either a date or a state
                         city = city.split(',')[0]

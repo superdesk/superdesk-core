@@ -17,7 +17,6 @@ import re
 from email.header import decode_header
 
 import eve
-from bs4 import BeautifulSoup, Comment, Doctype
 from flask import current_app as app, json
 from pytz import timezone
 
@@ -34,6 +33,7 @@ from superdesk.users.errors import UserNotRegisteredException
 from superdesk.utc import utcnow, get_date
 from apps.archive.common import format_dateline_to_locmmmddsrc
 from superdesk.filemeta import set_filemeta
+from superdesk.etree import sanitize_html
 
 
 logger = logging.getLogger(__name__)
@@ -129,7 +129,7 @@ class EMailRFC822FeedParser(EmailFeedParser):
                                 else:
                                     charset = part.get_content_charset()
                                     html_body = body.decode(charset)
-                                html_body = self.safe_html(html_body)
+                                html_body = sanitize_html(html_body)
                                 continue
                             except Exception as ex:
                                 logger.exception(
@@ -202,7 +202,7 @@ class EMailRFC822FeedParser(EmailFeedParser):
                                 media_ref['original_creator'] = item['original_creator']
                             refs.append(media_ref)
 
-            if html_body is not None:
+            if html_body:
                 item['body_html'] = html_body
             else:
                 item['body_html'] = '<pre>' + text_body + '</pre>'
@@ -238,58 +238,6 @@ class EMailRFC822FeedParser(EmailFeedParser):
                 parsed_field = 'Unknown'
             pass
         return parsed_field
-
-    # from http://chase-seibert.github.io/blog/2011/01/28/sanitize-html-with-beautiful-soup.html
-    def safe_html(self, html):
-        if not html:
-            return None
-
-        # remove these tags, complete with contents.
-        blacklist = ["script", "style", "head"]
-
-        whitelist = ["div", "span", "p", "br", "pre", "table", "tbody", "thead", "tr", "td", "a", "blockquote",
-                     "ul", "li", "ol", "b", "em", "i", "strong", "u", "font"]
-
-        try:
-            # BeautifulSoup is catching out-of-order and unclosed tags, so markup
-            # can't leak out of comments and break the rest of the page.
-            soup = BeautifulSoup(html, "html.parser")
-        except Exception as e:
-            # special handling?
-            logger.exception(e)
-            raise e
-
-        # remove the doctype declaration if present
-        if isinstance(soup.contents[0], Doctype):
-            soup.contents[0].extract()
-
-        # now strip HTML we don't like.
-        for tag in soup.findAll():
-            if tag.name.lower() in blacklist:
-                # blacklisted tags are removed in their entirety
-                tag.extract()
-            elif tag.name.lower() in whitelist:
-                # tag is allowed. Make sure the attributes are allowed.
-                attrs = dict(tag.attrs)
-                for a in attrs:
-                    if self._attr_name_whitelisted(a):
-                        tag.attrs[a] = [self.safe_css(a, tag.attrs[a])]
-                    else:
-                        del tag.attrs[a]
-            else:
-                tag.replaceWithChildren()
-
-        # scripts can be executed from comments in some cases
-        comments = soup.findAll(text=lambda text: isinstance(text, Comment))
-        for comment in comments:
-            comment.extract()
-
-        safe_html = str(soup)
-
-        if safe_html == ", -":
-            return None
-
-        return safe_html.replace('</br>', '').replace('<br>', '<br/>')
 
     def _attr_name_whitelisted(self, attr_name):
         return attr_name.lower() in ["href", "style", "color", "size", "bgcolor", "border"]

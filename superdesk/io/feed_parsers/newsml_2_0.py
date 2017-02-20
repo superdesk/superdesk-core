@@ -76,7 +76,7 @@ class NewsMLTwoFeedParser(XMLFeedParser):
         """
         header = tree.find(self.qname('header'))
         priority = 5
-        if header:
+        if header is not None:
             priority = self.map_priority(header.find(self.qname('priority')).text)
 
         return {'priority': priority}

@@ -10,10 +10,10 @@
 
 import superdesk
 
-from bs4 import BeautifulSoup
 from eve.io.mongo import Validator
 from superdesk.metadata.item import ITEM_TYPE
 from superdesk.logging import logger
+from superdesk.etree import get_text
 
 REQUIRED_FIELD = 'is a required field'
 
@@ -154,7 +154,7 @@ class ValidateService(superdesk.Service):
         for field in schema:
             if doc.get(field) and schema.get(field) and any(k in schema[field] for k in fields_to_check):
                 try:
-                    doc[field] = BeautifulSoup(doc[field], 'html.parser').get_text()
+                    doc[field] = get_text(doc[field])
                 except TypeError:
                     # fails for json fields like subject, genre
                     pass
