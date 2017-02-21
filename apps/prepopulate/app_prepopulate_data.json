@@ -1263,6 +1263,12 @@
             "user": "-id user admin1-",
             "is_global": true
         }
+    },
+    {
+        "resource": "config",
+        "data": {
+            "_id": "phone_home",
+            "val": {"done": 1}
+        }
     }
-
 ]
