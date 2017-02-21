@@ -76,6 +76,11 @@ class NINJSFormatter(Formatter):
         'size': 'size',
     })
 
+    def __init__(self):
+        self.format_type = 'ninjs'
+        self.can_preview = True
+        self.can_export = True
+
     def format(self, article, subscriber, codes=None):
         try:
             pub_seq_num = superdesk.get_resource_service('subscribers').generate_sequence_number(subscriber)
@@ -179,7 +184,7 @@ class NINJSFormatter(Formatter):
         return renditions
 
     def can_format(self, format_type, article):
-        return format_type == 'ninjs'
+        return format_type == self.format_type
 
     def _get_byline(self, article):
         if 'byline' in article:
@@ -255,3 +260,10 @@ class NINJSFormatter(Formatter):
     def _format_rendition(self, rendition):
         """Format single rendition using fields whitelist."""
         return {field: rendition[field] for field in self.rendition_properties if field in rendition}
+
+    def export(self, item):
+        if self.can_format(self.format_type, item):
+            sequence, formatted_doc = self.format(item, {'_id': '0'}, None)[0]
+            return formatted_doc.replace('\'\'', '\'')
+        else:
+            raise Exception()

@@ -31,8 +31,16 @@ class FormatterRegistry(type):
 class Formatter(metaclass=FormatterRegistry):
     """Base Formatter class for all types of Formatters like News ML 1.2, News ML G2, NITF, etc."""
 
+    def __init__(self):
+        self.can_preview = False
+        self.can_export = False
+
     def format(self, article, subscriber, codes=None):
         """Formats the article and returns the transformed string"""
+        raise NotImplementedError()
+
+    def export(self, article, subscriber, codes=None):
+        """Formats the article and returns the output string for export"""
         raise NotImplementedError()
 
     def can_format(self, format_type, article):

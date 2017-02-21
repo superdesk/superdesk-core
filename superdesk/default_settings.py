@@ -324,6 +324,7 @@ else:
 
 CORE_APPS.extend([
     'superdesk.upload',
+    'superdesk.download',
     'superdesk.sequences',
     'superdesk.notification',
     'superdesk.data_updates',
@@ -365,6 +366,7 @@ CORE_APPS.extend([
     'apps.marked_desks',
     'apps.products',
     'apps.publish',
+    'apps.export',
     'apps.publish.formatters',
     'apps.content_filters',
     'apps.content_types',

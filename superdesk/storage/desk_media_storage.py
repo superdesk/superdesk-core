@@ -53,6 +53,13 @@ class SuperdeskGridFSMediaStorage(GridFSMediaStorage):
         """
         return self.app.upload_url(str(media_id))
 
+    def url_for_download(self, media_id, content_type=None):
+        """Return url for download.
+
+        :param media_id: media id from media_id method
+        """
+        return self.app.download_url(str(media_id))
+
     def fetch_rendition(self, rendition):
         return self.get(rendition.get('media'), 'upload')
 

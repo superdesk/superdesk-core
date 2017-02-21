@@ -100,6 +100,17 @@ class AmazonMediaStorage(MediaStorage):
             url_generator = url_for_media_default
         return url_generator(self.app, media_id)
 
+    def url_for_download(self, media_id, content_type=None):
+        if not self.app.config.get('AMAZON_SERVE_DIRECT_LINKS', False):
+            return self.app.download_url(str(media_id))
+
+        if self.app.config.get('AMAZON_PROXY_SERVER'):
+            url_generator = url_generators.get(self.app.config.get('AMAZON_URL_GENERATOR', 'default'),
+                                               url_for_media_default)
+        else:
+            url_generator = url_for_media_default
+        return url_generator(self.app, media_id)
+
     def media_id(self, filename, content_type=None, version=True):
         """Get the ``media_id`` path for the given ``filename``.
 
