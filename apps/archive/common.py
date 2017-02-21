@@ -41,12 +41,24 @@ ARCHIVE = 'archive'
 CUSTOM_HATEOAS = {'self': {'title': 'Archive', 'href': '/archive/{_id}'}}
 ITEM_OPERATION = 'operation'
 ITEM_CREATE = 'create'
+ITEM_FETCH = 'fetch'
 ITEM_UPDATE = 'update'
+ITEM_REWRITE = 'rewrite'
 ITEM_RESTORE = 'restore'
+ITEM_LINK = 'link'
+ITEM_UNLINK = 'unlink'
+ITEM_TAKE = 'take'
+ITEM_REOPEN = 'reopen'
 ITEM_DUPLICATE = 'duplicate'
+ITEM_DUPLICATED_FROM = 'duplicated_from'
 ITEM_DESCHEDULE = 'deschedule'
+ITEM_MARK = 'mark'
+ITEM_UNMARK = 'unmark'
+ITEM_RESEND = 'resend'
 ITEM_EVENT_ID = 'event_id'
-item_operations = [ITEM_CREATE, ITEM_UPDATE, ITEM_RESTORE, ITEM_DUPLICATE, ITEM_DESCHEDULE]
+item_operations = [ITEM_CREATE, ITEM_FETCH, ITEM_UPDATE, ITEM_RESTORE,
+                   ITEM_DUPLICATE, ITEM_DUPLICATED_FROM, ITEM_DESCHEDULE,
+                   ITEM_REWRITE, ITEM_LINK, ITEM_UNLINK, ITEM_TAKE, ITEM_MARK, ITEM_UNMARK, ITEM_RESEND]
 # part the task dict
 LAST_AUTHORING_DESK = 'last_authoring_desk'
 LAST_PRODUCTION_DESK = 'last_production_desk'

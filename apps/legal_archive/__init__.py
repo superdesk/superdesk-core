@@ -12,8 +12,10 @@ import logging
 from superdesk.celery_app import celery
 from superdesk import get_backend, privilege
 from .resource import LegalArchiveResource, LegalArchiveVersionsResource, LegalPublishQueueResource, \
-    LEGAL_ARCHIVE_NAME, LEGAL_ARCHIVE_VERSIONS_NAME, LEGAL_PUBLISH_QUEUE_NAME
-from .service import LegalArchiveService, LegalArchiveVersionsService, LegalPublishQueueService
+    LegalArchiveHistoryResource, LEGAL_ARCHIVE_NAME, LEGAL_ARCHIVE_VERSIONS_NAME, \
+    LEGAL_ARCHIVE_HISTORY_NAME, LEGAL_PUBLISH_QUEUE_NAME
+from .service import LegalArchiveService, LegalArchiveVersionsService, LegalPublishQueueService, \
+    LegalArchiveHistoryService
 from .commands import ImportLegalPublishQueueCommand, ImportLegalArchiveCommand  # noqa
 
 logger = logging.getLogger(__name__)
@@ -27,6 +29,10 @@ def init_app(app):
     endpoint_name = LEGAL_ARCHIVE_VERSIONS_NAME
     service = LegalArchiveVersionsService(endpoint_name, backend=get_backend())
     LegalArchiveVersionsResource(endpoint_name, app=app, service=service)
+
+    endpoint_name = LEGAL_ARCHIVE_HISTORY_NAME
+    service = LegalArchiveHistoryService(endpoint_name, backend=get_backend())
+    LegalArchiveHistoryResource(endpoint_name, app=app, service=service)
 
     endpoint_name = LEGAL_PUBLISH_QUEUE_NAME
     service = LegalPublishQueueService(endpoint_name, backend=get_backend())

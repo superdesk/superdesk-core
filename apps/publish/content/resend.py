@@ -12,13 +12,13 @@ from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
 from superdesk.metadata.utils import item_url
 import logging
 from functools import partial
-from flask import request
+from flask import request, current_app as app
 from superdesk import get_resource_service, Service, config
 from superdesk.errors import SuperdeskApiError
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, CONTENT_STATE
 from superdesk.publish import SUBSCRIBER_TYPES
 from apps.publish.enqueue.enqueue_service import EnqueueService
-from apps.archive.common import is_genre, BROADCAST_GENRE
+from apps.archive.common import is_genre, BROADCAST_GENRE, ITEM_RESEND
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +49,7 @@ class ResendService(Service):
         article = self._validate_article(article_id, article_version)
         subscribers = self._validate_subscribers(doc.get('subscribers'), article)
         EnqueueService().resend(article, subscribers)
+        app.on_archive_item_updated({'subscribers': doc.get('subscribers')}, article, ITEM_RESEND)
         return [article_id]
 
     def _validate_subscribers(self, subscriber_ids, article):

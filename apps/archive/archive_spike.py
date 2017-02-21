@@ -24,7 +24,7 @@ from superdesk.metadata.utils import item_url, generate_guid
 from .common import get_user, get_expiry, item_operations, ITEM_OPERATION, set_sign_off
 from superdesk.workflow import is_workflow_state_transition_valid
 from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
-from apps.archive.common import ITEM_EVENT_ID
+from apps.archive.common import ITEM_EVENT_ID, ITEM_UNLINK
 from apps.packages import PackageService, TakesPackageService
 from apps.archive.archive_rewrite import ArchiveRewriteService
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE
@@ -147,6 +147,7 @@ class ArchiveSpikeService(BaseService):
             rewrite_id = original.get('rewritten_by') or takes_package.get('rewritten_by')
             rewritten_by = archive_service.find_one(req=None, _id=rewrite_id)
             archive_service.system_update(rewrite_id, {'rewrite_of': None, 'rewrite_sequence': 0}, rewritten_by)
+            app.on_archive_item_updated({'rewrite_of': None, 'rewrite_sequence': 0}, original, ITEM_UNLINK)
 
     def _removed_refs_from_package(self, item):
         """Remove reference from the package of the spiked item.
@@ -215,6 +216,11 @@ class ArchiveSpikeService(BaseService):
 
         item = self.backend.update(self.datasource, id, updates, original)
         push_notification('item:spike', item=str(id), user=str(user.get(config.ID_FIELD)))
+
+        history_updates = dict(updates)
+        if original.get('task'):
+            history_updates['task'] = original.get('task')
+        app.on_archive_item_updated(history_updates, original, ITEM_SPIKE)
         self._removed_refs_from_package(id)
         return item
 
@@ -275,6 +281,8 @@ class ArchiveUnspikeService(BaseService):
 
         item = get_resource_service(ARCHIVE).find_one(req=None, _id=id)
         push_notification('item:unspike', item=str(id), user=str(user.get(config.ID_FIELD)))
+        app.on_archive_item_updated(updates, original, ITEM_UNSPIKE)
+
         return item
 
 

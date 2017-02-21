@@ -8,14 +8,14 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 from eve.utils import config
-from flask import request
+from flask import request, current_app as app
 
 from superdesk import get_resource_service, Service
 from superdesk.metadata.item import EMBARGO, ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTENT_TYPE, GUID_TAG
 from superdesk.resource import Resource, build_custom_hateoas
 from apps.packages import TakesPackageService, PackageService
 from apps.archive import ArchiveSpikeService
-from apps.archive.common import CUSTOM_HATEOAS, BROADCAST_GENRE, is_genre, insert_into_versions
+from apps.archive.common import CUSTOM_HATEOAS, BROADCAST_GENRE, is_genre, insert_into_versions, ITEM_UNLINK
 from apps.auth import get_user
 from superdesk.metadata.utils import item_url, generate_guid
 from apps.archive.archive import SOURCE as ARCHIVE
@@ -151,3 +151,4 @@ class ArchiveLinkService(Service):
         archive_service.system_update(target_id, updates, target)
         user = get_user(required=True)
         push_notification('item:unlink', item=target_id, user=str(user.get(config.ID_FIELD)))
+        app.on_archive_item_updated(updates, target, ITEM_UNLINK)

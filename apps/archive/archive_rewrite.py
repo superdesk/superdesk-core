@@ -9,13 +9,14 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
-from flask import request
+from flask import request, current_app as app
 from eve.utils import config
 from superdesk import get_resource_service, Service, config
 from superdesk.metadata.item import ITEM_STATE, EMBARGO, CONTENT_STATE, CONTENT_TYPE, \
     ITEM_TYPE, PUBLISH_STATES, ASSOCIATIONS
 from superdesk.resource import Resource, build_custom_hateoas
-from apps.archive.common import CUSTOM_HATEOAS, ITEM_CREATE, ARCHIVE, BROADCAST_GENRE
+from apps.archive.common import CUSTOM_HATEOAS, ITEM_CREATE, ARCHIVE, BROADCAST_GENRE, ITEM_REWRITE, \
+    ITEM_UNLINK, ITEM_LINK
 from superdesk.metadata.utils import item_url
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
@@ -57,11 +58,13 @@ class ArchiveRewriteService(Service):
         if update_document:
             # process the existing story
             archive_service.patch(update_document[config.ID_FIELD], rewrite)
+            app.on_archive_item_updated(rewrite, update_document, ITEM_LINK)
             rewrite[config.ID_FIELD] = update_document[config.ID_FIELD]
             ids = [update_document[config.ID_FIELD]]
         else:
             ids = archive_service.post([rewrite])
             build_custom_hateoas(CUSTOM_HATEOAS, rewrite)
+            app.on_archive_item_updated({'rewrite_of': rewrite.get('rewrite_of')}, rewrite, ITEM_LINK)
 
         self._add_rewritten_flag(original, digital, rewrite)
         get_resource_service('archive_broadcast').on_broadcast_master_updated(ITEM_CREATE,
@@ -206,10 +209,12 @@ class ArchiveRewriteService(Service):
                                                                      rewrite[config.ID_FIELD])
             get_resource_service(ARCHIVE).system_update(digital[config.ID_FIELD],
                                                         {'rewritten_by': rewrite[config.ID_FIELD]}, digital)
+            app.on_archive_item_updated({'rewritten_by': rewrite[config.ID_FIELD]}, digital, ITEM_REWRITE)
 
         # modify the original item as well.
         get_resource_service(ARCHIVE).system_update(original[config.ID_FIELD],
                                                     {'rewritten_by': rewrite[config.ID_FIELD]}, original)
+        app.on_archive_item_updated({'rewritten_by': rewrite[config.ID_FIELD]}, original, ITEM_REWRITE)
 
     def _clear_rewritten_flag(self, event_id, rewrite_id, rewrite_field):
         """Clears rewritten_by or rewrite_of field from the existing published and archive items.
@@ -233,6 +238,7 @@ class ArchiveRewriteService(Service):
                 archive_item = archive_service.find_one(req=None, _id=doc_id)
                 archive_service.system_update(doc_id, {rewrite_field: None}, archive_item)
                 processed_items.add(doc_id)
+                app.on_archive_item_updated({rewrite_field: None}, archive_item, ITEM_UNLINK)
 
     def _set_take_key(self, rewrite, event_id):
         """Sets the anpa take key of the rewrite with ordinal.

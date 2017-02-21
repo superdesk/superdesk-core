@@ -350,6 +350,7 @@ CORE_APPS.extend([
     'apps.auth',
     'apps.archive',
     'apps.archive.item_comments',
+    'apps.archive_history',
     'apps.stages',
     'apps.desks',
     'apps.tasks',

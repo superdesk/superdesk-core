@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import json
+from flask import current_app as app
 from superdesk import get_resource_service
 from superdesk.services import BaseService
 from eve.utils import ParsedRequest
@@ -16,6 +17,7 @@ from superdesk.notification import push_notification
 from apps.archive.common import get_user
 from eve.utils import config
 from superdesk.utc import utcnow
+from apps.archive.common import ITEM_MARK, ITEM_UNMARK
 
 
 def get_marked_items(desk_id):
@@ -76,5 +78,10 @@ class MarkedForDesksService(BaseService):
                 marked=int(marked_desks_on),
                 item_id=item['_id'],
                 mark_id=str(doc['marked_desk']))
+
+            if marked_desks_on:
+                app.on_archive_item_updated({'desk_id': doc['marked_desk']}, item, ITEM_MARK)
+            else:
+                app.on_archive_item_updated({'desk_id': doc['marked_desk']}, item, ITEM_UNMARK)
 
         return ids

@@ -7,13 +7,14 @@ import apps.archive  # NOQA
 # When that issue is resolved, the workaround should be removed.
 
 import apps.packages.package_service as package
-
+from flask import current_app as app
 from superdesk import get_resource_service
 from superdesk.services import BaseService
 from eve.utils import ParsedRequest
 from superdesk.notification import push_notification
 from superdesk.utc import get_timezone_offset, utcnow
 from eve.utils import config
+from apps.archive.common import ITEM_MARK, ITEM_UNMARK
 
 
 def init_parsed_request(elastic_query):
@@ -113,6 +114,11 @@ class MarkedForHighlightsService(BaseService):
                         '_etag': publishedItem['_etag']
                     }
                     publishedService.update(publishedItem['_id'], updates, publishedItem)
+
+            if highlight_on:
+                app.on_archive_item_updated({'highlight_id': doc['highlights']}, item, ITEM_MARK)
+            else:
+                app.on_archive_item_updated({'highlight_id': doc['highlights']}, item, ITEM_UNMARK)
 
             push_notification(
                 'item:highlights',

@@ -138,7 +138,15 @@ Feature: Content Expiry Published Items
     Then we get list with 2 items
     When we transmit items
     And run import legal publish queue
-    And we expire items
+    When we get "/archive_history?where=item_id==%22123%22"
+    Then we get list with 2 items
+    """
+    {"_items": [
+      {"version": 1, "operation": "create"},
+      {"version": 2, "operation": "publish"}
+    ]}
+    """
+    When we expire items
     """
     ["123"]
     """
@@ -152,6 +160,8 @@ Feature: Content Expiry Published Items
     Then we get list with 0 items
     When we enqueue published
     When we get "/publish_queue"
+    Then we get list with 0 items
+    When we get "/archive_history?where=item_id==%22123%22"
     Then we get list with 0 items
     When we get "/archived"
     Then we get list with 2 items

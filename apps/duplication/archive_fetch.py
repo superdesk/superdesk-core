@@ -17,7 +17,7 @@ from apps.archive.archive import SOURCE as ARCHIVE
 from apps.content import push_item_move_notification
 from superdesk.metadata.utils import item_url
 from apps.archive.common import generate_unique_id_and_name, remove_unwanted, \
-    set_original_creator, insert_into_versions, ITEM_OPERATION, item_operations
+    set_original_creator, insert_into_versions, ITEM_OPERATION, ITEM_FETCH
 from superdesk.metadata.utils import generate_guid
 from superdesk.metadata.item import GUID_TAG, INGEST_ID, FAMILY_ID, ITEM_STATE, \
     CONTENT_STATE, GUID_FIELD
@@ -31,8 +31,6 @@ from superdesk.metadata.packages import RESIDREF, REFS, GROUPS
 from superdesk.metadata.item import MEDIA_TYPES
 
 custom_hateoas = {'self': {'title': 'Archive', 'href': '/archive/{_id}'}}
-ITEM_FETCH = 'fetch'
-item_operations.extend([ITEM_FETCH])
 
 
 class FetchResource(Resource):
