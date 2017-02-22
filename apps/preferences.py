@@ -102,7 +102,7 @@ class PreferencesResource(Resource):
 
     superdesk.register_default_user_preference('singleline:view', {
         'type': 'bool',
-        'enabled': False,
+        'enabled': None,
         'default': False,
         'label': 'Enable Single Line View',
         'category': 'rows'
