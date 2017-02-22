@@ -155,7 +155,7 @@ class ValidateService(superdesk.Service):
             if doc.get(field) and schema.get(field) and any(k in schema[field] for k in fields_to_check):
                 try:
                     doc[field] = get_text(doc[field])
-                except TypeError:
+                except (ValueError, TypeError):
                     # fails for json fields like subject, genre
                     pass
 
