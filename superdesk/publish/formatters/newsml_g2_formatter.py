@@ -178,6 +178,8 @@ class NewsMLG2Formatter(Formatter):
         """
         all_rights = superdesk.get_resource_service('vocabularies').find_one(req=None, _id='rightsinfo')
         rights_key = article.get('source', article.get('original_source', 'default'))
+        if not all_rights:
+            return
         default_rights = next(info for info in all_rights['items'] if info['name'] == 'default')
         rights = next((info for info in all_rights['items'] if info['name'] == rights_key), default_rights)
         rightsinfo = SubElement(newsItem, 'rightsInfo')
