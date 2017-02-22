@@ -11,6 +11,8 @@
 """NewsML G2 Superdesk formatter"""
 
 import superdesk
+
+from os import path
 from lxml import etree
 from lxml.etree import SubElement
 
@@ -57,6 +59,7 @@ class NewsMLG2Formatter(Formatter):
         :raises FormatterError: if the formatter fails to format an article
         """
         try:
+            self.subscriber = subscriber
             pub_seq_num = superdesk.get_resource_service('subscribers').generate_sequence_number(subscriber)
             is_package = self._is_package(article)
             news_message = etree.Element('newsMessage', attrib=self._debug_message_extra, nsmap=self._message_nsmap)
@@ -133,6 +136,7 @@ class NewsMLG2Formatter(Formatter):
         # optional properties
         self._format_ednote(article, item_meta)
         self._format_signal(article, item_meta)
+        self._format_related(article, item_meta)
 
         content_meta = SubElement(item, 'contentMeta')
         SubElement(content_meta, 'urgency').text = str(article.get('urgency', 5))
@@ -246,6 +250,31 @@ class NewsMLG2Formatter(Formatter):
             SubElement(item_meta, 'signal', attrib={'qcode': 'sig:correction'})
         else:
             SubElement(item_meta, 'signal', attrib={'qcode': 'sig:update'})
+
+    def _format_related(self, article, item_meta):
+        featured = article.get('associations', {}).get('featuremedia')
+        if featured:
+            orig = featured.get('renditions', {}).get('original')
+            if orig:
+                SubElement(item_meta, 'link', attrib={
+                    'rel': 'irel:seeAlso',
+                    'mimetype': orig.get('mimetype', featured.get('mimetype')),
+                    'href': self._publish_media(orig.get('media')),
+                })
+
+    def _publish_media(self, media):
+        binary = app.media.get(media, 'upload')
+        if binary:
+            filename = '%s.jpg' % str(media)
+            for dest in self.subscriber.get('destinations', []):
+                if dest.get('config', {}).get('file_path'):
+                    file_path = dest['config']['file_path']
+                    if not path.isabs(file_path):
+                        file_path = "/" + file_path
+                    with open(path.join(file_path, filename), 'wb') as output:
+                        output.write(binary.read())
+                        binary.seek(0)
+            return filename
 
     def _format_ednote(self, article, item_meta):
         """Appends the edNote element to the item_meta element.
@@ -512,6 +541,6 @@ class NewsMLG2Formatter(Formatter):
         :param dict article:
         :return: True if article can formatted else False
         """
-        return format_type == 'newsmlg2' and \
+        return format_type == 'newsmlg2nitf' and \
             article[ITEM_TYPE] in {CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED, CONTENT_TYPE.COMPOSITE,
                                    CONTENT_TYPE.PICTURE, CONTENT_TYPE.VIDEO, CONTENT_TYPE.AUDIO}

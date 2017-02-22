@@ -1,6 +1,5 @@
 
-import xml.etree.ElementTree as etree
-
+from lxml import etree
 from .newsml_g2_formatter import NewsMLG2Formatter
 
 
@@ -16,17 +15,21 @@ class HTMLNewsMLG2Formatter(NewsMLG2Formatter):
         :param Element nitf:
         """
         content_set = etree.SubElement(news_item, 'contentSet')
-        inline = etree.SubElement(content_set, 'inlineXML',
-                                  attrib={'contenttype': 'application/xhtml+xml'})
-
+        inline = etree.SubElement(content_set, 'inlineXML', attrib={'contenttype': 'application/xhtml+xml'})
         inline.append(self._build_html_doc(article))
 
     def _build_html_doc(self, article):
-        doc = etree.Element('html', attrib=self._message_attrib)
-        head = etree.SubElement(doc, 'head')
-        title = etree.SubElement(head, 'title')
-        title.text = article.get('headline')
-        body = etree.SubElement(doc, 'body')
-        contents = etree.fromstring(article.get('body_html'))
-        body.append(contents)
-        return doc
+        try:
+            html = etree.HTML(article.get('body_html'))
+        except etree.XMLSyntaxError:
+            html = etree.HTML('<p></p>')
+        return html
+
+    def can_format(self, format_type, article):
+        """Method check if the article can be formatted to NewsML G2 or not.
+
+        :param str format_type:
+        :param dict article:
+        :return: True if article can formatted else False
+        """
+        return format_type == 'newsmlg2'

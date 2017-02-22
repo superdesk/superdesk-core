@@ -1,7 +1,12 @@
 
+import io
+import os
+import tempfile
+from lxml import etree
+from unittest import mock
+
 from superdesk.utc import utcnow
 from superdesk.tests import TestCase
-
 from .html_newsml_g2_formatter import HTMLNewsMLG2Formatter
 
 
@@ -24,7 +29,7 @@ class HTMLNewsmlG2FormatterTestCase(TestCase):
                     {'qcode': '02011002', 'name': 'extradition'}],
         'anpa_take_key': 'take_key',
         'unique_id': '1',
-        'body_html': '<p>The story body <b>HTML</b></p>',
+        'body_html': '<p>The story body <b>HTML</b></p><p>another paragraph</p><style></style>',
         'type': 'text',
         'word_count': '1',
         'priority': '1',
@@ -56,7 +61,8 @@ class HTMLNewsmlG2FormatterTestCase(TestCase):
         'company_codes': [{'name': 'YANCOAL AUSTRALIA LIMITED', 'qcode': 'YAL', 'security_exchange': 'ASX'}],
     }
 
-    subscriber = {'_id': 'foo', 'name': 'Foo'}
+    dest = {'config': {'file_path': tempfile.gettempdir()}}
+    subscriber = {'_id': 'foo', 'name': 'Foo', 'config': {}, 'destinations': [dest]}
 
     def get_article(self):
         article = self.article.copy()
@@ -64,8 +70,46 @@ class HTMLNewsmlG2FormatterTestCase(TestCase):
         return article
 
     def test_html_content(self):
-        formatter = HTMLNewsMLG2Formatter()
         article = self.get_article()
+        formatter = HTMLNewsMLG2Formatter()
         _, doc = formatter.format(article, self.subscriber)[0]
-        self.assertIn('<body>%s</body>' % article['body_html'], doc)
-        self.assertIn('<title>%s</title>' % article['headline'], doc)
+        self.assertIn('<body>', doc)
+        self.assertIn('<b>HTML</b>', doc)
+
+    def test_html_empty_content(self):
+        article = self.get_article()
+        article['body_html'] = ''
+        formatter = HTMLNewsMLG2Formatter()
+        _, doc = formatter.format(article, self.subscriber)[0]
+        self.assertIn('<body>', doc)
+
+    def test_featured_item_link(self):
+        article = self.get_article()
+        article['associations'] = {
+            'featuremedia': {
+                'type': 'picture',
+                'renditions': {
+                    'original': {
+                        'mimetype': 'image/jpeg',
+                        'media': 'featured'
+                    }
+                }
+            }
+        }
+
+        formatter = HTMLNewsMLG2Formatter()
+        with mock.patch('superdesk.app.media.get', return_value=io.BytesIO(b'test')):
+            _, doc = formatter.format(article, self.subscriber)[0]
+        self.assertIn('<link', doc)
+        xml = etree.fromstring(doc.encode('utf-8'))
+        link = xml.find(
+            '{http://iptc.org/std/nar/2006-10-01/}itemSet/{http://iptc.org/std/nar/2006-10-01/}newsItem/' +
+            '{http://iptc.org/std/nar/2006-10-01/}itemMeta/{http://iptc.org/std/nar/2006-10-01/}link')
+        self.assertIsNotNone(link)
+        self.assertEqual('image/jpeg', link.attrib['mimetype'])
+        self.assertEqual('irel:seeAlso', link.attrib['rel'])
+        self.assertIn('href', link.attrib)
+        filepath = os.path.join(self.dest['config']['file_path'], link.attrib['href'])
+        self.assertTrue(os.path.exists(filepath))
+        with open(filepath, 'rb') as related:
+            self.assertEqual(b'test', related.read())
