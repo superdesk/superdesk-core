@@ -19,6 +19,7 @@ from .media_operations import crop_image
 from .image import fix_orientation
 from eve.utils import config
 from superdesk import get_resource_service
+from superdesk.logging import time, time_end
 
 
 logger = logging.getLogger(__name__)
@@ -38,6 +39,7 @@ def generate_renditions(original, media_id, inserted, file_type, content_type,
     :param bool insert_metadata: boolean to inserted metadata or not. For AWS storage it is false.
     :return: dict of renditions
     """
+    time('intro')
     rend = {'href': url_for_media(media_id, content_type), 'media': media_id, 'mimetype': content_type}
     renditions = {'original': rend}
 
@@ -54,7 +56,9 @@ def generate_renditions(original, media_id, inserted, file_type, content_type,
     if ext in ('JPG', 'jpg'):
         ext = 'jpeg'
     ext = ext if ext in ('jpeg', 'gif', 'tiff', 'png') else 'png'
+    time_end('intro')
     for rendition, rsize in rendition_config.items():
+        time(rendition)
         cropping_data = {}
         # reset
         original.seek(0)
@@ -75,6 +79,7 @@ def generate_renditions(original, media_id, inserted, file_type, content_type,
                                  'mimetype': 'image/%s' % ext, 'width': width, 'height': height}
         # add the cropping data if exist
         renditions[rendition].update(cropping_data)
+        time_end(rendition)
     return renditions
 
 

@@ -35,6 +35,7 @@ from superdesk.utc import utcnow, get_expiry_date
 from superdesk.workflow import set_default_state
 from copy import deepcopy
 from superdesk.filemeta import set_filemeta
+from superdesk.logging import time, time_end
 
 UPDATE_SCHEDULE_DEFAULT = {'minutes': 5}
 LAST_UPDATED = 'last_updated'
@@ -525,14 +526,22 @@ def update_renditions(item, href, old_item):
                 item['filemeta_json'] = old_item.get('filemeta_json')
                 return
 
+        time('download')
         content, filename, content_type = download_file_from_url(href)
+        time_end('download')
         file_type, ext = content_type.split('/')
         metadata = process_file(content, file_type)
+        time('put')
         file_guid = app.media.put(content, filename, content_type, metadata)
+        time_end('put')
         inserted.append(file_guid)
+        time('specs')
         rendition_spec = get_renditions_spec()
+        time_end('specs')
+        time('generate')
         renditions = generate_renditions(content, file_guid, inserted, file_type,
                                          content_type, rendition_spec, url_for_media)
+        time_end('generate')
         item['renditions'] = renditions
         item['mimetype'] = content_type
         set_filemeta(item, metadata)
