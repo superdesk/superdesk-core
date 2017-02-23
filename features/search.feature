@@ -88,6 +88,42 @@ Feature: Search Feature
         When we get "/archive/#archive._id#"
         Then we get response code 403
 
+    @auth
+    Scenario: Search returns archived items in Invisible stages without desk membership
+        Given "users"
+        """
+        [{"username": "foo", "email": "foo@bar.com", "is_active": true, "sign_off": "abc"}]
+        """
+        And "desks"
+        """
+        [{"name": "Sports Desk", "members": [{"user": "#users._id#"}]}]
+        """
+        And "archived"
+            """
+            [{"item_id": "123", "guid": "123", "type": "text", "headline": "test", "slugline": "slugline",
+              "genre": [{"name": "Broadcast Script", "qcode": "Broadcast Script"}], "headline": "headline",
+              "anpa_category" : [{"qcode" : "e", "name" : "Entertainment"}], "state": "published",
+              "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#users._id#"},
+              "subject":[{"qcode": "17004000", "name": "Statistics"}], "body_html": "Test Document body", "_current_version": 2}]
+            """
+        When we post to "/archive"
+            """
+            [{"guid": "item1", "state": "in_progress", "task": {"desk": "#desks._id#",
+            "stage": "#desks.incoming_stage#", "user": "#users._id#"}}]
+            """
+        Then we get response code 201
+        When we get "/search"
+        Then we get list with 2 items
+        When we patch "/stages/#desks.incoming_stage#"
+            """
+            {"is_visible": false}
+            """
+        Then we get response code 200
+        When we get "/search"
+        Then we get list with 1 items
+        When we get "/archive/#archive._id#"
+        Then we get response code 403
+
 
     @auth @test
     Scenario: Search Invisible stages with desk membership
