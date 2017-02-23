@@ -35,32 +35,38 @@ class SearchService(superdesk.Service):
     def __init__(self, datasource, backend):
         super().__init__(datasource=datasource, backend=backend)
 
-    def _get_private_filters(self, repo):
+    def _get_private_filters(self, repo, invisible_stages):
+        query = {}
         if repo == 'ingest':
-            return {'and': [{'term': {'_type': 'ingest'}}]}
+            query = {'and': [{'term': {'_type': 'ingest'}}]}
         elif repo == 'archive':
             user_id = g.get('user', {}).get('_id')
-            return {'and': [{'exists': {'field': 'task.desk'}},
-                            {'bool': {
-                                'should': [
-                                    {'and': [{'term': {ITEM_STATE: CONTENT_STATE.DRAFT}},
-                                             {'term': {'task.user': str(user_id)}}]},
-                                    {'terms': {ITEM_STATE: [CONTENT_STATE.FETCHED,
-                                                            CONTENT_STATE.ROUTED,
-                                                            CONTENT_STATE.PROGRESS,
-                                                            CONTENT_STATE.SUBMITTED,
-                                                            CONTENT_STATE.SPIKED]}},
-                                ],
-                                'must_not': {'term': {'version': 0}}
-                            }}]}
+            query = {'and': [{'exists': {'field': 'task.desk'}},
+                             {'bool': {
+                                 'should': [
+                                     {'and': [{'term': {ITEM_STATE: CONTENT_STATE.DRAFT}},
+                                              {'term': {'task.user': str(user_id)}}]},
+                                     {'terms': {ITEM_STATE: [CONTENT_STATE.FETCHED,
+                                                             CONTENT_STATE.ROUTED,
+                                                             CONTENT_STATE.PROGRESS,
+                                                             CONTENT_STATE.SUBMITTED,
+                                                             CONTENT_STATE.SPIKED]}},
+                                 ],
+                                 'must_not': {'term': {'version': 0}}
+                             }}]}
         elif repo == 'published':
-            return {'and': [{'term': {'_type': 'published'}},
-                            {'terms': {ITEM_STATE: [CONTENT_STATE.SCHEDULED,
-                                                    CONTENT_STATE.PUBLISHED,
-                                                    CONTENT_STATE.KILLED,
-                                                    CONTENT_STATE.CORRECTED]}}]}
+            query = {'and': [{'term': {'_type': 'published'}},
+                             {'terms': {ITEM_STATE: [CONTENT_STATE.SCHEDULED,
+                                                     CONTENT_STATE.PUBLISHED,
+                                                     CONTENT_STATE.KILLED,
+                                                     CONTENT_STATE.CORRECTED]}}]}
         elif repo == 'archived':
-            return {'and': [{'term': {'_type': 'archived'}}]}
+            query = {'and': [{'term': {'_type': 'archived'}}]}
+
+        if invisible_stages and (repo == 'archive' or repo == 'published'):
+            query['and'].append({'not': {'terms': {'task.stage': invisible_stages}}})
+
+        return query
 
     def _get_query(self, req):
         """Get elastic query."""
@@ -90,14 +96,14 @@ class SearchService(superdesk.Service):
             repos = repos.split(',')
             return [repo for repo in repos if repo in self.repos]
 
-    def _get_filters(self, repos):
+    def _get_filters(self, repos, invisible_stages):
         """
         Gets filters for the passed repos.
         """
         filters = []
 
         for repo in repos:
-            filters.append(self._get_private_filters(repo))
+            filters.append(self._get_private_filters(repo, invisible_stages))
 
         return [{'or': filters}]
 
@@ -109,15 +115,14 @@ class SearchService(superdesk.Service):
         query = self._get_query(req)
         fields = self._get_projected_fields(req)
         types = self._get_types(req)
-        filters = self._get_filters(types)
+
         user = g.get('user', {})
         if 'invisible_stages' in user:
             stages = user.get('invisible_stages')
         else:
             stages = get_resource_service('users').get_invisible_stages_ids(user.get('_id'))
 
-        if stages:
-            filters.append({'and': [{'not': {'terms': {'task.stage': stages}}}]})
+        filters = self._get_filters(types, stages)
 
         # if the system has a setting value for the maximum search depth then apply the filter
         if not app.settings['MAX_SEARCH_DEPTH'] == -1:
