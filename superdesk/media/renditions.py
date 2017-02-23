@@ -198,7 +198,8 @@ def get_renditions_spec(without_internal_renditions=False):
     # load custom renditions sizes
     custom_crops = get_resource_service('vocabularies').find_one(req=None, _id='crop_sizes')
     if custom_crops:
+        # complete list of wanted renditions
         for crop in custom_crops.get('items'):
-            # complete list of wanted renditions
-            rendition_spec[crop['name']] = crop
+            if crop.get('is_active'):
+                rendition_spec[crop['name']] = crop
     return rendition_spec
