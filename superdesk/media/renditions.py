@@ -57,7 +57,12 @@ def generate_renditions(original, media_id, inserted, file_type, content_type,
         ext = 'jpeg'
     ext = ext if ext in ('jpeg', 'gif', 'tiff', 'png') else 'png'
     time_end('intro')
-    for rendition, rsize in rendition_config.items():
+    # make baseImage rendition first
+    base_image = rendition_config.pop('baseImage', None)
+    specs = [(k, v) for k, v in rendition_config.items()]
+    if base_image:
+        specs.insert(0, ('baseImage', base_image))
+    for rendition, rsize in specs:
         time(rendition)
         cropping_data = {}
         # reset
@@ -80,6 +85,8 @@ def generate_renditions(original, media_id, inserted, file_type, content_type,
         # add the cropping data if exist
         renditions[rendition].update(cropping_data)
         time_end(rendition)
+        if rendition == 'baseImage': # use baseImage for other renditions once we have it
+            original = resized
     return renditions
 
 
