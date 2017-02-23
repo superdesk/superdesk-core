@@ -26,6 +26,7 @@ from content_api.app.settings import ELASTIC_DATE_FORMAT
 from content_api.errors import BadParameterValueError, UnexpectedParameterError
 from content_api.items.resource import ItemsResource
 from eve.utils import ParsedRequest
+from superdesk import get_resource_service
 
 
 logger = logging.getLogger('superdesk')
@@ -143,11 +144,14 @@ class ItemsService(BaseService):
         """
         document['uri'] = self._get_uri(document)
 
-        for field_name in ('_id', '_etag', '_created', '_updated', 'subscribers'):
+        _id = document.pop('_id')
+
+        for field_name in ('_etag', '_created', '_updated', 'subscribers'):
             document.pop(field_name, None)
 
         self._process_item_renditions(document)
         self._process_item_associations(document)
+        get_resource_service('api_audit').audit_item(document, _id)
 
     def _process_item_renditions(self, item):
         hrefs = {}

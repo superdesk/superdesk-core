@@ -15,8 +15,21 @@ from flask import Flask
 from unittest import mock
 from unittest.mock import MagicMock
 from werkzeug.datastructures import MultiDict
-
+from superdesk import resources
 from content_api.tests import ApiTestCase
+
+
+class FakeAuditService():
+
+    def audit_item(self, doc, id):
+        return
+
+
+class FakeAuditResource():
+    service = None
+
+    def __init__(self, service):
+        self.service = service
 
 
 class ItemsServiceTestCase(ApiTestCase):
@@ -26,6 +39,7 @@ class ItemsServiceTestCase(ApiTestCase):
         self.app = Flask(__name__)
         self.ctx = self.app.test_request_context('/')
         self.ctx.push()
+        resources['api_audit'] = FakeAuditResource(FakeAuditService())
 
     def tearDown(self):
         self.ctx.pop()

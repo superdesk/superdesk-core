@@ -15,7 +15,7 @@ import bson.errors
 from werkzeug.wsgi import wrap_file
 from flask import request, url_for, current_app as app
 from content_api.errors import FileNotFoundError
-
+from superdesk import get_resource_service
 
 bp = superdesk.Blueprint('assets', __name__)
 cache_for = 3600 * 24 * 7  # 7 days cache
@@ -43,6 +43,7 @@ def get_media_streamed(media_id):
         response.cache_control.public = True
         response.make_conditional(request)
         response.headers['Content-Disposition'] = 'inline'
+        get_resource_service('api_audit').audit_item({'type': 'asset', 'uri': request.url}, media_id)
         return response
     raise FileNotFoundError('File not found on media storage.')
 
