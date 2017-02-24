@@ -10,6 +10,7 @@
 
 import superdesk
 from superdesk import register_jinja_filter
+from superdesk.etree import get_text
 from .content_templates import ContentTemplatesResource, ContentTemplatesService, CONTENT_TEMPLATE_PRIVILEGE
 from .content_templates import ContentTemplatesApplyResource, ContentTemplatesApplyService
 from .content_templates import create_scheduled_content  # noqa
@@ -28,3 +29,4 @@ def init_app(app):
 
     register_jinja_filter('format_datetime', format_datetime_filter)
     register_jinja_filter('first_paragraph', first_paragraph_filter)
+    register_jinja_filter('get_text', get_text)
