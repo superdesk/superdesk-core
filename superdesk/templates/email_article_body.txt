@@ -6,6 +6,6 @@ Published At : {{ article.versioncreated | format_datetime(date_format='%c') }}
 {{ article.abstract | striptags}}
 
 {{ article.byline }}
-{{article.body_html | striptags}}
+{{article.body_html | default | get_text('html', lf_on_block=True)}}
 {{ article.source }} {{ article.sign_off}}
 {{ article.body_footer | striptags}}

@@ -59,8 +59,8 @@ class EmailFormatterTest(TestCase):
                                                'AAP&nbsp;aa/bb\n\n</body>\n</html>')
         self.assertEqual(item['message_text'], 'VIC: This is a test headline\nPublished At : Fri Jan 30 03:40:56 2015\n'
                                                'slugline take\nVery good story\n------------------------------------'
-                                               '----------------------\nCan of beans\n\njoe\nBERN, July 13 - The story '
-                                               'body of the story so far\nAAP aa/bb\n')
+                                               '----------------------\nCan of beans\n\njoe\nBERN, July 13  - The story'
+                                               ' body of the story so far\n\nAAP aa/bb\n')
 
     def test_preserved_formatter(self):
         article = {
@@ -123,8 +123,8 @@ class EmailFormatterTest(TestCase):
                                                'AAP&nbsp;aa/bb\n\n</body>\n</html>')
         self.assertEqual(item['message_text'], 'This is a test headline\nPublished At : Fri Jan 30 03:40:56 2015\n'
                                                'slugline take\nVery good story\n------------------------------------'
-                                               '----------------------\nCan of beans\n\njoe\nBERN, July 13 - The story '
-                                               'body of the story so far\nAAP aa/bb\n')
+                                               '----------------------\nCan of beans\n\njoe\nBERN, July 13  - The story'
+                                               ' body of the story so far\n\nAAP aa/bb\n')
 
     def test_none_place_formatter(self):
         article = {
@@ -161,8 +161,8 @@ class EmailFormatterTest(TestCase):
                                                'AAP&nbsp;aa/bb\n\n</body>\n</html>')
         self.assertEqual(item['message_text'], 'This is a test headline\nPublished At : Fri Jan 30 03:40:56 2015\n'
                                                'slugline take\nVery good story\n------------------------------------'
-                                               '----------------------\nCan of beans\n\njoe\nBERN, July 13 - The story '
-                                               'body of the story so far\nAAP aa/bb\n')
+                                               '----------------------\nCan of beans\n\njoe\nBERN, July 13  - The'
+                                               ' story body of the story so far\n\nAAP aa/bb\n')
 
     def test_none_takekey_ednote(self):
         article = {
@@ -198,11 +198,39 @@ class EmailFormatterTest(TestCase):
                                                'AAP&nbsp;aa/bb\n\n</body>\n</html>')
         self.assertEqual(item['message_text'], 'This is a test headline\nPublished At : Fri Jan 30 03:40:56 2015\n'
                                                'slugline \n\n------------------------------------'
-                                               '----------------------\nCan of beans\n\njoe\nBERN, July 13 - The story '
-                                               'body of the story so far\nAAP aa/bb\n')
+                                               '----------------------\nCan of beans\n\njoe\nBERN, July 13  - The story'
+                                               ' body of the story so far\n\nAAP aa/bb\n')
 
     def test_subject_cyrilic(self):
         article = {'headline': 'Неправильная музыка Джамала Али'}
         seq, doc = self.formatter.format(article, {'name': 'Test'})[0]
         item = json.loads(doc)
         self.assertEqual(article['headline'], item['message_subject'])
+
+    def test_paragraphs(self):
+        """Test that paragraphs (block elements) are followed by line feed in text version
+
+        SDPRO-85 regression test
+        """
+        article = {
+            'source': 'AAP',
+            'anpa_take_key': 'take',
+            'subject': [{'qcode': '02011001'}],
+            'format': 'HTML',
+            'type': 'text',
+            'body_html': '<p>paragraph 1</p><br><br><p>paragraph 2</p><p>paragraph 3</p>',
+            'word_count': '1',
+            'priority': 1,
+            'place': [{'qcode': 'VIC', 'name': 'VIC'}],
+            'genre': [],
+            'sign_off': 'aa/bb'
+        }
+        article['versioncreated'] = datetime.datetime(year=2017, month=2, day=24, hour=16, minute=40, second=56,
+                                                      tzinfo=utc)
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+
+        item = json.loads(doc)
+        self.assertEqual(item['message_text'], 'VIC: \nPublished At : Fri Feb 24 17:40:56 2017\n'
+                                               ' take\n\n--------------------------------------'
+                                               '--------------------\n\n\n\nparagraph 1\n\n\n'
+                                               'paragraph 2\nparagraph 3\n\nAAP aa/bb\n')
