@@ -36,7 +36,7 @@ def register_feeding_service(service_name, service_class, errors):
     :raises: AlreadyExistsError if a feeding service with same name already been registered
     """
 
-    if service_name in registered_feed_parsers:
+    if service_name in registered_feeding_services:
         raise AlreadyExistsError('Feeding Service: {} already registered by {}'
                                  .format(service_name, type(registered_feeding_services[service_name])))
 
