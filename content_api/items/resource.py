@@ -66,6 +66,6 @@ class ItemsResource(Resource):
 
     item_methods = ['GET']
     resource_methods = ['GET']
-
+    versioning = True
     mongo_prefix = MONGO_PREFIX
     elastic_prefix = ELASTIC_PREFIX

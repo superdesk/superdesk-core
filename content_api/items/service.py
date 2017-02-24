@@ -53,7 +53,7 @@ class ItemsService(BaseService):
         if req is None:
             req = ParsedRequest()
 
-        allowed_params = {'include_fields', 'exclude_fields'}
+        allowed_params = {'include_fields', 'exclude_fields', 'version'}
         self._check_for_unknown_params(
             req, whitelist=allowed_params, allow_filtering=False)
 
@@ -80,7 +80,8 @@ class ItemsService(BaseService):
             'start_date', 'end_date',
             'include_fields', 'exclude_fields',
             'max_results', 'page',
-            'where'
+            'where',
+            'version'
         }
         self._check_for_unknown_params(req, whitelist=allowed_params)
 
@@ -146,7 +147,8 @@ class ItemsService(BaseService):
 
         _id = document.pop('_id')
 
-        for field_name in ('_etag', '_created', '_updated', 'subscribers'):
+        for field_name in ('_etag', '_created', '_updated', 'subscribers',
+                           '_current_version', '_latest_version'):
             document.pop(field_name, None)
 
         self._process_item_renditions(document)

@@ -32,6 +32,8 @@ CONTENTAPI_INSTALLED_APPS = [
     'content_api.packages',
     'content_api.assets',
     'content_api.tokens',
+    'content_api.items_versions',
+    'content_api.packages_versions',
     'content_api.api_audit',
 ]
 
@@ -41,6 +43,7 @@ CONTENTAPI_DOMAIN = {}
 CONTENTAPI_URL = env('CONTENTAPI_URL', 'http://localhost:5400')
 server_url = urlparse(CONTENTAPI_URL)
 URL_PREFIX = server_url.path.strip('/')
+VERSION = '_current_version'
 
 XML = False
 PUBLIC_RESOURCES = []

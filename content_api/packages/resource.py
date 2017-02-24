@@ -20,6 +20,5 @@ class PackagesResource(ItemsResource):
         'elastic_filter': {"bool": {"must": {"term": {"type": "composite"}}}},
         'default_sort': [('_updated', -1)],
     }
-
     item_methods = ['GET']
     resource_methods = ['GET']

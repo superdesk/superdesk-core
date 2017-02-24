@@ -10,12 +10,14 @@
 
 from superdesk.resource import Resource
 from content_api import MONGO_PREFIX, ELASTIC_PREFIX
+from content_api.items.resource import schema as item_schema
+from copy import deepcopy
 
 
 class PublishResource(Resource):
     """A class defining and configuring the /publish API endpoint."""
 
-    schema = {'item': {'type': 'dict'}}
+    schema = deepcopy(item_schema)
 
     datasource = {
         'source': 'items',

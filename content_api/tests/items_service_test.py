@@ -185,7 +185,8 @@ class GetMethodTestCase(ItemsServiceTestCase):
             'start_date', 'end_date',
             'exclude_fields', 'include_fields',
             'max_results', 'page',
-            'where'
+            'where',
+            'version'
         ])
 
         whitelist_arg = kwargs.get('whitelist')
@@ -599,7 +600,7 @@ class FindOneMethodTestCase(ItemsServiceTestCase):
         self.assertEqual(args[0], fake_request)
         self.assertEqual(kwargs.get('allow_filtering'), False)
 
-        expected_whitelist = sorted(['exclude_fields', 'include_fields'])
+        expected_whitelist = sorted(['exclude_fields', 'include_fields', 'version'])
 
         whitelist_arg = kwargs.get('whitelist')
         if whitelist_arg is not None:
