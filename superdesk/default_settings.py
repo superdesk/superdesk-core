@@ -287,6 +287,7 @@ CORE_APPS = [
     'content_api.publish',
     'content_api.items',
     'content_api.tokens',
+    'content_api.items_versions',
     'content_api.api_audit',
     'superdesk.backend_meta',
     'superdesk.server_config',

@@ -43,6 +43,7 @@ class PublishService(BaseService):
             now = utcnow()
             doc.setdefault('firstcreated', now)
             doc.setdefault('versioncreated', now)
+            doc.setdefault(config.VERSION, item.get(config.VERSION, 1))
             doc['subscribers'] = [str(sub['_id']) for sub in subscribers]
             logger.info('publishing %s to %s' % (doc['guid'], subscribers))
             return self._create_doc(doc)
@@ -60,12 +61,23 @@ class PublishService(BaseService):
         item = copy(doc)
         item.setdefault('_id', item.get('guid'))
         _id = item[config.ID_FIELD] = item.pop('guid')
+        self._create_version_doc(item)
         original = self.find_one(req=None, _id=_id)
         if original:
             self.update(_id, item, original)
             return _id
         else:
             return super().create([item], **kwargs)[0]
+
+    def _create_version_doc(self, item):
+        """
+        Store the item in the item version collection
+        :param item:
+        :return:
+        """
+        version_item = copy(item)
+        version_item['_id_document'] = version_item.pop('_id')
+        get_resource_service('items_versions').create([version_item])
 
     def _filter_item(self, item):
         """

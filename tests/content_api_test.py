@@ -33,13 +33,17 @@ class ContentAPITestCase(TestCase):
         self.assertNotIn('task', self.db.items.find_one())
         self.assertEqual('foo', self.db.items.find_one()['_id'])
 
+        item['_current_version'] = '2'
         self.content_api.publish(item)
         self.assertEqual(1, self.db.items.count())
 
+        item['_current_version'] = '3'
         item['headline'] = 'foo'
         self.content_api.publish(item)
         self.assertEqual('foo', self.db.items.find_one()['headline'])
         self.assertEqual('bar', self.db.items.find_one()['evolvedfrom'])
+
+        self.assertEqual(3, self.db.items_versions.count())
 
     def test_publish_with_subscriber_ids(self):
         item = {'guid': 'foo', 'type': 'text'}
@@ -214,3 +218,50 @@ class ContentAPITestCase(TestCase):
         self.assertEqual(0, self.db.items.count())
         self.content_api.publish({'_id': 'bar', 'source': 'jane', 'type': 'text', 'guid': 'bar'})
         self.assertEqual(1, self.db.items.count())
+
+    def test_item_versions_api(self):
+        subscriber = {'_id': 'sub1'}
+        headers = self._auth_headers(subscriber)
+
+        item = {'guid': 'foo', 'type': 'text', 'task': {'desk': 'foo'}, 'rewrite_of': 'bar', '_current_version': 1}
+        self.content_api.publish(item, [subscriber])
+        item['_current_version'] = 2
+        self.content_api.publish(item, [subscriber])
+        item['_current_version'] = 3
+        self.content_api.publish(item, [subscriber])
+
+        with self.capi.test_client() as c:
+            response = c.get('items/foo?version=all', headers=headers)
+            data = json.loads(response.data)
+            self.assertEqual(3, data['_meta']['total'])
+
+            response = c.get('items/foo?version=2', headers=headers)
+            data = json.loads(response.data)
+            self.assertEqual(str(2), data['version'])
+
+    def test_package_version(self):
+        subscriber = {'_id': 'sub1'}
+        headers = self._auth_headers(subscriber)
+
+        item = {'_id': 'pkg', 'guid': 'pkg', 'type': 'composite', '_current_version': 1}
+        self.content_api.publish(item, [subscriber])
+        item['_current_version'] = 2
+        self.content_api.publish(item, [subscriber])
+        item['_current_version'] = 3
+        self.content_api.publish(item, [subscriber])
+        item = {'guid': 'foo', 'type': 'text', 'task': {'desk': 'foo'}, 'rewrite_of': 'bar', '_current_version': 1}
+        self.content_api.publish(item, [subscriber])
+
+        with self.capi.test_client() as c:
+            response = c.get('packages', headers=headers)
+            data = json.loads(response.data)
+            self.assertEqual(1, len(data['_items']))
+            self.assertIn('packages/pkg', data['_items'][0]['uri'])
+
+            response = c.get('packages/pkg?version=all', headers=headers)
+            data = json.loads(response.data)
+            self.assertEqual(3, data['_meta']['total'])
+
+            response = c.get('packages/pkg?version=2', headers=headers)
+            data = json.loads(response.data)
+            self.assertEqual(str(2), data['version'])
