@@ -981,7 +981,7 @@ Feature: Auto Routing
         """
         When we enqueue published
         And we get "/publish_queue"
-        Then we get list with 1 items
+        Then we get list with 2 items
         """
         {
           "_items":

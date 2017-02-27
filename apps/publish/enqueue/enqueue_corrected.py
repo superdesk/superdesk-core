@@ -46,7 +46,7 @@ class EnqueueCorrectedService(EnqueueService):
         query = {'$and': [{'item_id': doc['item_id']},
                           {'publishing_action': {'$in': [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]}}]}
 
-        subscribers, subscriber_codes = self._get_subscribers_for_previously_sent_items(query)
+        subscribers, subscriber_codes = self.get_subscribers_for_previously_sent_items(query)
 
         if subscribers:
             # step 2

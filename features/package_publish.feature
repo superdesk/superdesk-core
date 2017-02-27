@@ -18,7 +18,7 @@ Feature: Package Publishing
         When we post to "/products" with success
         """
         {
-          "name":"prod-1","codes":"abc,xyz"
+          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
         }
         """
         And we post to "/subscribers" with success
@@ -275,7 +275,7 @@ Feature: Package Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -425,7 +425,7 @@ Feature: Package Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -575,7 +575,7 @@ Feature: Package Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -727,7 +727,7 @@ Feature: Package Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -852,7 +852,7 @@ Feature: Package Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -881,7 +881,7 @@ Feature: Package Publishing
       """
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 3 items
+      Then we get list with 6 items
 
 
 
@@ -991,7 +991,7 @@ Feature: Package Publishing
           When we post to "/products" with success
           """
           {
-            "name":"prod-1","codes":"abc,xyz"
+            "name":"prod-1","codes":"abc,xyz", "product_type": "both"
           }
           """
           And we post to "/subscribers" with success
@@ -1018,12 +1018,12 @@ Feature: Package Publishing
           """
 	      When we enqueue published
           When we get "/publish_queue"
-          Then we get list with 2 items
+          Then we get list with 4 items
 
 
 
       @auth
-      @notification
+      @notification @wip
       Scenario: Publish a package with two text stories and one wire and one digital subscriber
       Given empty "archive"
       Given "desks"
@@ -1167,7 +1167,7 @@ Feature: Package Publishing
         When we get digital item of "123"
 	    When we enqueue published
         When we get "/publish_queue"
-        Then we get list with 5 items
+        Then we get list with 10 items
         Then we get "#archive.123.take_package#" in formatted output as "main" story for subscriber "sub-2"
 
 
@@ -1338,7 +1338,7 @@ Feature: Package Publishing
       When we get digital item of "123"
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 5 items
+      Then we get list with 10 items
       #Then we get "#archive.123.take_package#" in formatted output as "main" story for subscriber "sub-2"
       #Then we get "#archive.123.take_package#" in formatted output as "sidebars" story for subscriber "sub-2"
 
@@ -1346,7 +1346,7 @@ Feature: Package Publishing
 
       @auth
       @notification
-      @vocabulary
+      @vocabulary @wip
       Scenario: Publish two takes within a package in the same group with one wire and one digital subscriber
       Given empty "archive"
       Given "desks"
@@ -1504,13 +1504,13 @@ Feature: Package Publishing
       When we get digital item of "123"
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 5 items
+      Then we get list with 10 items
       #Then we get "#archive.123.take_package#" in formatted output as "NewsItemId" newsml12 story
 
 
       @auth
       @notification
-      @vocabulary
+      @vocabulary @wip
       Scenario: Publish a package with a text and an image with one wire and one digital subscriber
       Given empty "archive"
       Given "desks"
@@ -1646,14 +1646,14 @@ Feature: Package Publishing
       When we get digital item of "123"
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 4 items
+      Then we get list with 8 items
       Then we get "#archive.123.take_package#" in formatted output as "main" story for subscriber "sub-2"
 
 
 
       @auth
       @notification
-      @vocabulary
+      @vocabulary  @wip
       Scenario: Publish a package with a text and an image with only one wire subscriber
       Given empty "archive"
       Given "desks"
@@ -1780,7 +1780,7 @@ Feature: Package Publishing
       When we get digital item of "123"
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 1 items
+      Then we get list with 2 items
       """
       {"_items" : [{"item_id": "123", "content_type": "text", "state": "pending"}]
       }
@@ -1789,7 +1789,7 @@ Feature: Package Publishing
 
 
       @auth
-      @notification
+      @notification  @wip
       Scenario: Publish a package with two already published text stories and one digital subscriber
       Given empty "archive"
       Given "desks"
@@ -1862,7 +1862,7 @@ Feature: Package Publishing
       """
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 2 items
+      Then we get list with 4 items
       When we post to "archive" with success
           """
           [{
@@ -1940,7 +1940,7 @@ Feature: Package Publishing
       """
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 3 items
+      Then we get list with 6 items
       """
       {"_items" : [{"headline": "item-1 headline", "content_type": "composite", "state": "pending"},
                    {"headline": "item-2 headline", "content_type": "composite", "state": "pending"},
@@ -1955,7 +1955,7 @@ Feature: Package Publishing
 
       @auth
       @notification
-      @vocabulary
+      @vocabulary  @wip
       Scenario: Publish a package with three already published text stories being sent different subscribers
       Given empty "filter_conditions"
       Given empty "content_filters"
@@ -2085,7 +2085,7 @@ Feature: Package Publishing
       """
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 8 items
+      Then we get list with 16 items
       """
       {"_items" : [
       {"headline": "item-1 headline", "content_type": "text", "subscriber_id": "sub-1"},
@@ -2185,7 +2185,7 @@ Feature: Package Publishing
       """
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 10 items
+      Then we get list with 20 items
       """
       {"_items" : [
       {"headline": "test package", "content_type": "composite", "subscriber_id": "sub-2"},
@@ -2201,7 +2201,7 @@ Feature: Package Publishing
 
       @auth
       @notification
-      @vocabulary
+      @vocabulary @wip
       Scenario: Publish a package with three already published text stories no subscribers matched so no package sent
       Given empty "filter_conditions"
       Given empty "content_filters"
@@ -2330,7 +2330,7 @@ Feature: Package Publishing
       """
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 3 items
+      Then we get list with 6 items
       """
       {"_items" : [
       {"headline": "item-1 headline", "content_type": "text", "subscriber_id": "sub-1"},
@@ -2424,7 +2424,7 @@ Feature: Package Publishing
       """
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 3 items
+      Then we get list with 6 items
       """
       {"_items" : [
       {"headline": "item-1 headline", "content_type": "text", "subscriber_id": "sub-1"},
@@ -2616,7 +2616,7 @@ Feature: Package Publishing
       """
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 4 items
+      Then we get list with 8 items
       """
       {"_items" : [{"headline": "item-1 headline", "content_type": "composite", "subscriber_id": "sub-2"},
                    {"headline": "item-2 headline", "content_type": "composite", "subscriber_id": "sub-2"},
@@ -3077,7 +3077,7 @@ Feature: Package Publishing
       """
       When we enqueue published
       When we get "/publish_queue?max_results=100"
-      Then we get list with 26 items
+      Then we get list with 52 items
       """
       {"_items" : [{"headline": "item-1 headline", "content_type": "composite", "subscriber_id": "sub-1"},
                    {"headline": "ABC-4", "content_type": "picture", "subscriber_id": "sub-1"},
@@ -3221,7 +3221,7 @@ Feature: Package Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -3295,7 +3295,7 @@ Feature: Package Publishing
       """
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 3 items
+      Then we get list with 6 items
       When we publish "123" with "correct" type and "corrected" state
         """
         {"headline": "item-1.2 headline"}
@@ -3313,7 +3313,7 @@ Feature: Package Publishing
       """
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 5 items
+      Then we get list with 10 items
       """
       {"_items" : [{"headline": "item-1.2 headline", "publishing_action": "corrected"},
                    {"headline": "test package", "publishing_action": "corrected"}]
@@ -3496,7 +3496,7 @@ Feature: Package Publishing
           When we post to "/products" with success
           """
           {
-            "name":"prod-1","codes":"abc,xyz"
+            "name":"prod-1","codes":"abc,xyz", "product_type": "both"
           }
           """
           And we post to "/subscribers" with success
@@ -3577,7 +3577,7 @@ Feature: Package Publishing
       Then we get list with 2 items
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 1 items
+      Then we get list with 2 items
       When we publish "123" with "correct" type and "corrected" state
       Then we get OK response
       When we get "/published"
@@ -3588,7 +3588,7 @@ Feature: Package Publishing
       """
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 2 items
+      Then we get list with 4 items
 
 
 
@@ -3805,7 +3805,7 @@ Feature: Package Publishing
       """
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 4 items
+      Then we get list with 8 items
       """
       {"_items" : [{"headline": "item-1 headline", "content_type": "composite", "subscriber_id": "sub-2"},
                    {"headline": "item-2 headline", "content_type": "composite", "subscriber_id": "sub-2"},
@@ -3834,7 +3834,7 @@ Feature: Package Publishing
       """
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 7 items
+      Then we get list with 14 items
       """
       {"_items" : [{"headline": "item-1.2 headline", "publishing_action": "corrected"},
                    {"headline": "test package", "publishing_action": "corrected"},
@@ -3897,7 +3897,7 @@ Feature: Package Publishing
           When we post to "/products" with success
           """
           {
-            "name":"prod-1","codes":"abc,xyz"
+            "name":"prod-1","codes":"abc,xyz", "product_type": "both"
           }
           """
         And we post to "/subscribers" with success
@@ -3978,7 +3978,7 @@ Feature: Package Publishing
       Then we get list with 2 items
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 1 items
+      Then we get list with 2 items
       When we publish "123" with "kill" type and "killed" state
       Then we get error 400
       """
@@ -4034,7 +4034,7 @@ Feature: Package Publishing
         When we post to "/products" with success
         """
         {
-          "name":"prod-1","codes":"abc,xyz"
+          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
         }
         """
         And we post to "/subscribers" with success
@@ -4117,12 +4117,12 @@ Feature: Package Publishing
       Then we get OK response
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 4 items
+      Then we get list with 8 items
       When we publish "123" with "kill" type and "killed" state
       Then we get OK response
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 5 items
+      Then we get list with 10 items
 
       @auth
       @notification
@@ -4321,7 +4321,7 @@ Feature: Package Publishing
       """
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 9 items
+      Then we get list with 18 items
       """
       {"_items" : [{"headline": "item-1 headline", "subscriber_id": "sub-1"},
                    {"headline": "item-2 headline", "subscriber_id": "sub-1"},
@@ -4389,7 +4389,7 @@ Feature: Package Publishing
       """
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 12 items
+      Then we get list with 24 items
       """
       {"_items" : [{"headline": "test package", "publishing_action": "corrected", "subscriber_id": "sub-1"},
                    {"headline": "test package", "publishing_action": "corrected", "subscriber_id": "sub-2"},
@@ -4585,7 +4585,7 @@ Feature: Package Publishing
       """
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 6 items
+      Then we get list with 12 items
       """
       {"_items" : [{"headline": "item-1 headline", "subscriber_id": "sub-1"},
                    {"headline": "item-2 headline", "subscriber_id": "sub-1"},
@@ -4662,7 +4662,7 @@ Feature: Package Publishing
       """
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 11 items
+      Then we get list with 22 items
       """
       {"_items" : [{"headline": "item-3 headline", "publishing_action": "published", "subscriber_id": "sub-3"},
                    {"headline": "item-3 headline", "publishing_action": "published", "subscriber_id": "sub-2"},
@@ -4798,7 +4798,7 @@ Feature: Package Publishing
           When we post to "/products" with success
           """
           {
-            "name":"prod-1","codes":"abc,xyz"
+            "name":"prod-1","codes":"abc,xyz", "product_type": "both"
           }
           """
           And we post to "/subscribers" with success
@@ -4818,7 +4818,7 @@ Feature: Package Publishing
       Then we get list with 5 items
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 3 items
+      Then we get list with 6 items
       When we publish "compositeitem" with "kill" type and "killed" state
       Then we get OK response
       When we get "/published"
@@ -4832,7 +4832,7 @@ Feature: Package Publishing
       """
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 4 items
+      Then we get list with 8 items
       """
       {"_items" : [{"headline": "test package", "publishing_action": "killed"}]
       }
@@ -5009,7 +5009,7 @@ Feature: Package Publishing
       Then we get list with 6 items
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 4 items
+      Then we get list with 8 items
       When we publish "compositeitem" with "kill" type and "killed" state
       Then we get error 400
       """
@@ -5388,7 +5388,7 @@ Feature: Package Publishing
         When we post to "/products" with success
           """
           {
-            "name":"prod-1","codes":"abc,xyz"
+            "name":"prod-1","codes":"abc,xyz", "product_type": "both"
           }
           """
         And we post to "/subscribers" with success
@@ -5408,7 +5408,7 @@ Feature: Package Publishing
       Then we get list with 3 items
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 1 items
+      Then we get list with 2 items
       When we publish "123" with "correct" type and "corrected" state
         """
         {"headline": "item-1.2 headline"}
@@ -5423,7 +5423,7 @@ Feature: Package Publishing
       """
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 2 items
+      Then we get list with 4 items
       """
       {"_items" : [{"headline": "item-1.2 headline", "publishing_action": "corrected"}]
       }

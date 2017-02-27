@@ -8,7 +8,7 @@ Feature: Subscribers
     When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
     And we post to "/subscribers" with success
@@ -49,7 +49,7 @@ Feature: Subscribers
     When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
     And we post to "/subscribers"
@@ -90,7 +90,7 @@ Feature: Subscribers
       """
       {
         "name":"prod-1","codes":"abc,xyz",
-        "content_filter": {"filter_id":"#content_filters._id#", "filter_type":"blocking"}
+        "content_filter": {"filter_id":"#content_filters._id#", "filter_type":"blocking"}, "product_type": "both"
       }
       """
     And we post to "/subscribers" with success
@@ -121,7 +121,7 @@ Feature: Subscribers
     When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
     And we post to "/subscribers"
@@ -141,7 +141,7 @@ Feature: Subscribers
      When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
     And we post to "/subscribers"
@@ -177,7 +177,7 @@ Feature: Subscribers
     When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
     And we post to "/subscribers" with success
@@ -208,7 +208,7 @@ Feature: Subscribers
     When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
     And we post to "/subscribers"
@@ -234,7 +234,7 @@ Feature: Subscribers
     When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
     And we post to "/subscribers"
@@ -257,7 +257,7 @@ Feature: Subscribers
     When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
     And we post to "/subscribers" with success
@@ -299,7 +299,7 @@ Feature: Subscribers
     When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
     And we post to "/subscribers" with success

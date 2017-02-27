@@ -65,7 +65,7 @@ Feature: Content Expiry Published Items
     When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
     And we post to "/subscribers" with "digital" and success
@@ -135,7 +135,7 @@ Feature: Content Expiry Published Items
     """
     When we enqueue published
     When we get "/publish_queue"
-    Then we get list with 2 items
+    Then we get list with 4 items
     When we transmit items
     And run import legal publish queue
     And we expire items
@@ -186,7 +186,7 @@ Feature: Content Expiry Published Items
     When we transmit items
     And run import legal publish queue
     When we get "/publish_queue"
-    Then we get list with 2 items
+    Then we get list with 4 items
     When we post to "/archive" with "package" and success
     """
     {
@@ -222,7 +222,7 @@ Feature: Content Expiry Published Items
     When we transmit items
     And run import legal publish queue
     When we get "publish_queue"
-    Then we get list with 3 items
+    Then we get list with 6 items
     When we expire items
     """
     ["#archive.123.take_package#"]
@@ -230,7 +230,7 @@ Feature: Content Expiry Published Items
     When we get "published"
     Then we get list with 3 items
     When we get "publish_queue"
-    Then we get list with 3 items
+    Then we get list with 6 items
     When we expire items
     """
     ["#package#"]
@@ -262,7 +262,7 @@ Feature: Content Expiry Published Items
     And we transmit items
     And run import legal publish queue
     And we get "/publish_queue"
-    Then we get list with 2 items
+    Then we get list with 4 items
     When we post to "/archive" with success
     """
     [{"guid": "456", "type": "text", "headline": "test", "state": "fetched", "slugline": "slugline",
@@ -346,7 +346,7 @@ Feature: Content Expiry Published Items
     """
     When we enqueue published
     When we get "publish_queue"
-    Then we get list with 5 items
+    Then we get list with 10 items
     When we get "archive"
     Then we get list with 1 items
     """
@@ -373,7 +373,7 @@ Feature: Content Expiry Published Items
     }
     """
     When we get "publish_queue"
-    Then we get list with 5 items
+    Then we get list with 10 items
     When we get "archive"
     Then we get list with 1 items
     """
@@ -400,7 +400,7 @@ Feature: Content Expiry Published Items
     }
     """
     When we get "publish_queue"
-    Then we get list with 5 items
+    Then we get list with 10 items
     When we get "archive"
     Then we get list with 1 items
     """
@@ -639,7 +639,7 @@ Feature: Content Expiry Published Items
     When we get "published"
     Then we get list with 2 items
     When we get "publish_queue"
-    Then we get list with 2 items
+    Then we get list with 4 items
     When we expire items
     """
     ["#package1#"]
@@ -728,7 +728,7 @@ Feature: Content Expiry Published Items
     When we get "published"
     Then we get list with 3 items
     When we get "publish_queue"
-    Then we get list with 4 items
+    Then we get list with 8 items
     When we get "archived"
     Then we get list with 0 items
     When we expire items
@@ -867,7 +867,7 @@ Feature: Content Expiry Published Items
     When we get "published"
     Then we get list with 6 items
     When we get "publish_queue"
-    Then we get list with 6 items
+    Then we get list with 12 items
     When we get "archived"
     Then we get list with 0 items
     When we expire items
@@ -883,7 +883,7 @@ Feature: Content Expiry Published Items
     When we get "archived"
     Then we get list with 0 items
 
-  @auth @vocabulary
+  @auth @vocabulary @wip
   Scenario: Expire items that not moved to legal.
     When we publish "123" with "publish" type and "published" state
     Then we get OK response
@@ -893,7 +893,7 @@ Feature: Content Expiry Published Items
     When we get "/legal_archive/123"
     Then we get OK response
     When we get "/legal_publish_queue?where=item_id==%22123%22"
-    Then we get list with 1 items
+    Then we get list with 2 items
     """
     {"_items" : [
         {"item_id": "123", "item_version": 2, "state": "success", "content_type": "text"}
@@ -901,7 +901,7 @@ Feature: Content Expiry Published Items
     }
     """
     When we get "/legal_publish_queue?where=item_id==%22#archive.123.take_package#%22"
-    Then we get list with 1 items
+    Then we get list with 2 items
     """
     {"_items" : [
         {"item_id": "#archive.123.take_package#", "item_version": 2, "state": "success", "content_type": "composite"}
@@ -977,7 +977,7 @@ Feature: Content Expiry Published Items
     When we get "/legal_archive/123"
     Then we get OK response
     When we get "/legal_publish_queue?where=item_id==%22123%22"
-    Then we get list with 1 items
+    Then we get list with 2 items
     """
     {"_items" : [
         {"item_id": "123", "item_version": 2, "state": "success", "content_type": "text"}
@@ -985,7 +985,7 @@ Feature: Content Expiry Published Items
     }
     """
     When we get "/legal_publish_queue?where=item_id==%22#archive.123.take_package#%22"
-    Then we get list with 1 items
+    Then we get list with 2 items
     """
     {"_items" : [
         {"item_id": "#archive.123.take_package#", "item_version": 2, "state": "success", "content_type": "composite"}
@@ -1008,7 +1008,7 @@ Feature: Content Expiry Published Items
     When we get "/legal_archive/456"
     Then we get OK response
     When we get "/legal_publish_queue?where=item_id==%22456%22"
-    Then we get list with 1 items
+    Then we get list with 2 items
     When we post to "/archive" with success
     """
     [{"guid": "789", "type": "text", "headline": "test", "state": "fetched", "slugline": "slugline",
@@ -1025,7 +1025,7 @@ Feature: Content Expiry Published Items
     When we get "/legal_archive/789"
     Then we get OK response
     When we get "/legal_publish_queue?where=item_id==%22789%22"
-    Then we get list with 1 items
+    Then we get list with 2 items
     When we post to "/filter_conditions" with success
     """
     [{"name": "international sport", "field": "anpa_category", "operator": "in", "value": "s"}]

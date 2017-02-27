@@ -14,7 +14,7 @@ Feature: Kill a content item in the (dusty) archive
     When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
     And we post to "/subscribers" with "digital" and success
@@ -79,10 +79,10 @@ Feature: Kill a content item in the (dusty) archive
     """
     When we enqueue published
     And we get "/publish_queue"
-    Then we get list with 1 items
+    Then we get list with 2 items
     When run import legal publish queue
     And we get "/legal_publish_queue"
-    Then we get list with 0 items
+    Then we get list with 1 items
     When we transmit items
     And run import legal publish queue
     And we expire items
@@ -101,7 +101,7 @@ Feature: Kill a content item in the (dusty) archive
     """
     When run import legal publish queue
     And we get "/legal_publish_queue"
-    Then we get list with 1 items
+    Then we get list with 2 items
     When we patch "/archived/123:2"
     """
     {"body_html": "Killed body."}
@@ -116,11 +116,33 @@ Feature: Kill a content item in the (dusty) archive
     When we transmit items
     And run import legal publish queue
     And we get "/legal_publish_queue"
-    Then we get list with 2 items
+    Then we get list with 4 items
     """
     {"_items" : [
-        {"item_id": "123", "content_type": "text", "item_version": 2, "publishing_action": "published"},
-        {"item_id": "123", "content_type": "text", "item_version": 3, "publishing_action": "killed"}
+        {"item_id": "123", "content_type": "text",
+        "item_version": 2, "publishing_action": "published",
+        "destination" : {
+          "delivery_type" : "content_api",
+          "format" : "ninjs",
+          "name" : "content api"}},
+        {"item_id": "123", "content_type": "text",
+        "item_version": 2, "publishing_action": "published",
+         "destination" : {
+          "delivery_type" : "email",
+          "format" : "nitf",
+          "name" : "Test"}},
+        {"item_id": "123", "content_type": "text",
+        "item_version": 3, "publishing_action": "killed",
+        "destination" : {
+          "delivery_type" : "content_api",
+          "format" : "ninjs",
+          "name" : "content api"}},
+        {"item_id": "123", "content_type": "text",
+        "item_version": 3, "publishing_action": "killed",
+        "destination" : {
+          "delivery_type" : "email",
+          "format" : "nitf",
+          "name" : "Test"}}
      ]}
     """
     When we get "/archive/123"
@@ -198,7 +220,7 @@ Feature: Kill a content item in the (dusty) archive
     """
     When we enqueue published
     When we get "/publish_queue"
-    Then we get list with 2 items
+    Then we get list with 4 items
     When we transmit items
     And run import legal publish queue
     And we expire items
@@ -219,7 +241,7 @@ Feature: Kill a content item in the (dusty) archive
     }
     """
     When we get "/legal_publish_queue"
-    Then we get list with 2 items
+    Then we get list with 4 items
     When we patch "/archived/123:2"
     """
     {"body_html": "Killed body"}
@@ -229,7 +251,7 @@ Feature: Kill a content item in the (dusty) archive
     When we get "/published"
     Then we get list with 2 items
     When we get "/publish_queue"
-    Then we get list with 2 items
+    Then we get list with 4 items
     When we get "/archive/123"
     Then we get OK response
     And we get text "Please kill story slugged slugline" in response field "body_html"
@@ -257,7 +279,7 @@ Feature: Kill a content item in the (dusty) archive
     When we get "/legal_archive/#archive.123.take_package#?version=all"
     Then we get list with 2 items
     When we get "/legal_publish_queue"
-    Then we get list with 4 items
+    Then we get list with 8 items
     When we expire items
     """
     ["123", "#archive.123.take_package#"]
@@ -314,7 +336,7 @@ Feature: Kill a content item in the (dusty) archive
     Then we get list with 8 items
     When we enqueue published
     When we get "/publish_queue"
-    Then we get list with 8 items
+    Then we get list with 16 items
     When we transmit items
     And run import legal publish queue
     And we expire items
@@ -330,7 +352,7 @@ Feature: Kill a content item in the (dusty) archive
     Then we get list with 8 items
     When we enqueue published
     When we get "/legal_publish_queue"
-    Then we get list with 8 items
+    Then we get list with 16 items
     When we patch "/archived/123:2"
     """
     {}
@@ -340,7 +362,7 @@ Feature: Kill a content item in the (dusty) archive
     When we get "/published"
     Then we get list with 4 items
     When we get "/publish_queue"
-    Then we get list with 4 items
+    Then we get list with 8 items
     When we get "/archived"
     Then we get list with 0 items
     When we transmit items

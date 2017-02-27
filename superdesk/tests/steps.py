@@ -2210,3 +2210,32 @@ def we_set_published_item_expiry(context, expiry):
 @then('we set copy metadata from parent flag')
 def we_set_copy_metadata_from_parent(context):
     context.app.settings['COPY_METADATA_FROM_PARENT'] = True
+
+
+@then('we assert the content api item "{item_id}" is published to subscriber "{subscriber}"')
+def we_assert_content_api_item_is_published(context, item_id, subscriber):
+    with context.app.test_request_context(context.app.config['URL_PREFIX']):
+        item_id = apply_placeholders(context, item_id)
+        req = ParsedRequest()
+        req.projection = json.dumps({'subscribers': 1})
+        cursor = get_resource_service('items').get_from_mongo(req, {'_id': item_id})
+        assert cursor.count() > 0, 'Item not found'
+        item = cursor[0]
+        subscriber = apply_placeholders(context, subscriber)
+        assert len(item.get('subscribers', [])) > 0, 'No subscribers found.'
+        assert subscriber in item.get('subscribers', []), 'Subscriber with Id: {} not found.'.format(subscriber)
+
+
+@then('we assert the content api item "{item_id}" is not published to subscriber "{subscriber}"')
+def we_assert_content_api_item_is_published(context, item_id, subscriber):
+    with context.app.test_request_context(context.app.config['URL_PREFIX']):
+        item_id = apply_placeholders(context, item_id)
+        req = ParsedRequest()
+        req.projection = json.dumps({'subscribers': 1})
+        cursor = get_resource_service('items').get_from_mongo(req, {'_id': item_id})
+        assert cursor.count() > 0, 'Item not found'
+        item = cursor[0]
+        subscriber = apply_placeholders(context, subscriber)
+        assert len(item.get('subscribers', [])) > 0, 'No subscribers found.'
+        assert subscriber not in item.get('subscribers', []), \
+            'Subscriber with Id: {} found for the item. '.format(subscriber)

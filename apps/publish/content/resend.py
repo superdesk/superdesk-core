@@ -18,6 +18,7 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, CONTENT_STATE
 from superdesk.publish import SUBSCRIBER_TYPES
 from apps.publish.enqueue.enqueue_service import EnqueueService
+from apps.publish.enqueue.enqueue_api_service import EnqueueAPIService
 from apps.archive.common import is_genre, BROADCAST_GENRE
 
 logger = logging.getLogger(__name__)
@@ -49,6 +50,7 @@ class ResendService(Service):
         article = self._validate_article(article_id, article_version)
         subscribers = self._validate_subscribers(doc.get('subscribers'), article)
         EnqueueService().resend(article, subscribers)
+        EnqueueAPIService().resend(article, subscribers)
         return [article_id]
 
     def _validate_subscribers(self, subscriber_ids, article):

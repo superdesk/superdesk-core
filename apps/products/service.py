@@ -15,6 +15,7 @@ from superdesk.errors import SuperdeskApiError
 
 
 class ProductsService(BaseService):
+
     def on_delete(self, doc):
         # Check if any subscriber is using the product
         req = ParsedRequest()

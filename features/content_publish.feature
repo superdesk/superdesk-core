@@ -59,7 +59,7 @@ Feature: Content Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with "digital" and success
@@ -112,16 +112,32 @@ Feature: Content Publishing
       """
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 2 items
+      Then we get list with 4 items
       """
       {
         "_items": [
           {"state": "pending", "content_type": "composite",
           "subscriber_id": "#digital#", "item_id": "#archive.123.take_package#",
-          "item_version": 2, "ingest_provider": "__none__"},
+          "item_version": 2, "ingest_provider": "__none__",
+          "destination": {
+            "delivery_type": "email"
+          }},
           {"state": "pending", "content_type": "text",
           "subscriber_id": "#wire#", "item_id": "123", "item_version": 2,
-          "ingest_provider": "__none__"}
+          "ingest_provider": "__none__",
+          "destination": {
+            "delivery_type": "email"
+          }},
+          {"state": "success", "content_type": "composite",
+          "subscriber_id": "#digital#", "item_id": "#archive.123.take_package#",
+          "item_version": 2, "ingest_provider": "__none__",
+          "destination": {"delivery_type": "content_api"}
+          },
+          {"state": "success", "content_type": "text",
+          "subscriber_id": "#wire#", "item_id": "123", "item_version": 2,
+          "ingest_provider": "__none__",
+          "destination": {"delivery_type": "content_api"}
+          }
         ]
       }
       """
@@ -196,7 +212,7 @@ Feature: Content Publishing
       And run import legal publish queue
       When we enqueue published
       And we get "/legal_publish_queue"
-      Then we get list with 2 items
+      Then we get list with 4 items
       """
       {
         "_items": [
@@ -207,6 +223,8 @@ Feature: Content Publishing
         ]
       }
       """
+      And we assert the content api item "123" is published to subscriber "#wire#"
+      And we assert the content api item "#archive.123.take_package#" is published to subscriber "#digital#"
 
     @auth
     @provider
@@ -248,7 +266,7 @@ Feature: Content Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with "digital" and success
@@ -275,19 +293,27 @@ Feature: Content Publishing
       """
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 2 items
+      Then we get list with 4 items
       """
       {
         "_items": [
-          {"state": "pending", "content_type": "text",
+          {"state": "pending", "content_type": "text", "destination": {"delivery_type": "email"},
           "subscriber_id": "#wire#", "item_id": "#_id#", "item_version": 2,
           "ingest_provider": "#providers.aap#"},
-          {"state": "pending", "content_type": "composite",
-          "subscriber_id": "#digital#", "item_version": 2,
+          {"state": "pending", "content_type": "composite", "destination": {"delivery_type": "email"},
+          "subscriber_id": "#digital#", "item_version": 2, "item_id": "#archive.take_package#",
+          "ingest_provider": "__none__"},
+          {"state": "success", "content_type": "text", "destination": {"delivery_type": "content_api"},
+          "subscriber_id": "#wire#", "item_id": "#_id#", "item_version": 2,
+          "ingest_provider": "#providers.aap#"},
+          {"state": "success", "content_type": "composite", "destination": {"delivery_type": "content_api"},
+          "subscriber_id": "#digital#", "item_version": 2, "item_id": "#archive.take_package#",
           "ingest_provider": "__none__"}
         ]
       }
       """
+      And we assert the content api item "#_id#" is published to subscriber "#wire#"
+      And we assert the content api item "#archive.take_package#" is published to subscriber "#digital#"
 
     @auth
     @vocabulary
@@ -323,7 +349,7 @@ Feature: Content Publishing
         """
         {
           "name":"prod-1","codes":"abc,xyz",
-          "content_filter":{"filter_id":"#content_filters._id#", "filter_type": "permitting"}
+          "content_filter":{"filter_id":"#content_filters._id#", "filter_type": "permitting"}, "product_type": "both"
         }
         """
       And we post to "/subscribers" with success
@@ -350,7 +376,151 @@ Feature: Content Publishing
       """
       When we enqueue published
       When we get "/publish_queue"
+      Then we get list with 2 items
+
+    @auth
+    @vocabulary
+    Scenario: Publish a user content that use API product
+      Given the "validators"
+      """
+      [{"_id": "publish_text", "act": "publish", "type": "text", "schema":{}}]
+      """
+      And "desks"
+      """
+      [{"name": "Sports"}]
+      """
+      And "archive"
+      """
+      [{"guid": "123", "type": "text", "headline": "publish via direct", "_current_version": 1, "state": "fetched",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "anpa_category": [{"qcode": "a", "name": "National"}],
+        "subject":[{"qcode": "17004000", "name": "Statistics"}],
+        "slugline": "test",
+        "body_html": "Test Document body"},
+       {"guid": "456", "type": "text", "headline": "publish via api", "_current_version": 1, "state": "fetched",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "anpa_category": [{"qcode": "a", "name": "National"}],
+        "subject":[{"qcode": "17004000", "name": "Statistics"}],
+        "slugline": "test",
+        "body_html": "Test Document body"}]
+      """
+      Given empty "filter_conditions"
+      When we post to "/filter_conditions" with "fc_direct" and success
+      """
+      [{"name": "fc_direct", "field": "headline", "operator": "like", "value": "direct"}]
+      """
+      And we post to "/filter_conditions" with "fc_api" and success
+      """
+      [{"name": "fc_api", "field": "headline", "operator": "like", "value": "api"}]
+      """
+      Then we get latest
+      Given empty "content_filters"
+      When we post to "/content_filters" with "cf_direct" and success
+      """
+      [{"content_filter": [{"expression": {"fc": ["#fc_direct#"]}}], "name": "cf_direct"}]
+      """
+      And we post to "/content_filters" with "cf_api" and success
+      """
+      [{"content_filter": [{"expression": {"fc": ["#fc_api#"]}}], "name": "cf_api"}]
+      """
+      And we post to "/products" with "p_direct" and success
+        """
+        [{
+          "name":"prod-1","codes":"direct",
+          "content_filter":{"filter_id":"#cf_direct#", "filter_type": "permitting"},
+          "product_type": "direct"
+        }]
+        """
+      And we post to "/products" with "p_api" and success
+        """
+        [{
+          "name":"prod-2","codes":"api",
+          "content_filter":{"filter_id":"#cf_api#", "filter_type": "permitting"},
+          "product_type": "api"
+        }]
+        """
+      And we post to "/subscribers" with "sub_direct" and success
+      """
+      {
+        "name":"Channel Direct","media_type":"media", "subscriber_type": "wire",  "email": "test@test.com",
+        "sequence_num_settings":{"min" : 1, "max" : 10},
+        "products": ["#p_direct#"],
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
+      And we post to "/subscribers" with "sub_api" and success
+      """
+      {
+        "name":"Channel API","media_type":"media", "subscriber_type": "wire",  "email": "test@test.com",
+        "sequence_num_settings":{"min" : 1, "max" : 10},
+        "products": ["#p_api#"],
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
+      Then we get latest
+      When we publish "123" with "publish" type and "published" state
+      Then we get OK response
+      And we get existing resource
+      """
+      {"_current_version": 2, "state": "published", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
+      """
+      When we get "/published"
+      Then we get existing resource
+      """
+      {"_items" : [
+        {"_id": "123", "headline": "publish via direct", "_current_version": 2, "state": "published",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}},
+        {"_id": "#archive.123.take_package#", "headline": "publish via direct", "_current_version": 2,
+        "state": "published",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}
+      ]}
+      """
+      When we enqueue published
+      When we get "/publish_queue"
       Then we get list with 1 items
+      """
+      {"_items" : [
+        {"item_id": "123", "headline": "publish via direct",
+        "destination": {"format": "nitf", "delivery_type":"email"},
+        "item_version": 2, "content_type": "text", "state": "pending", "publishing_action": "published"}
+      ]}
+      """
+      When we get "/items/123"
+      Then we get error 404
+      When we publish "456" with "publish" type and "published" state
+      Then we get OK response
+      When we get "/published"
+      Then we get list with 4 items
+      """
+      {"_items" : [
+        {"_id": "123", "headline": "publish via direct", "_current_version": 2, "state": "published",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}},
+        {"_id": "#archive.123.take_package#", "headline": "publish via direct", "_current_version": 2,
+        "state": "published",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}},
+        {"_id": "456", "headline": "publish via api", "_current_version": 2, "state": "published",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}},
+        {"_id": "#archive.456.take_package#", "headline": "publish via api", "_current_version": 2,
+        "state": "published",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}
+      ]}
+      """
+      When we enqueue published
+      When we get "/publish_queue"
+      Then we get list with 2 items
+      """
+      {"_items" : [
+        {"item_id": "123", "headline": "publish via direct", "subscriber_id": "#sub_direct#",
+        "destination": {"format": "nitf", "delivery_type":"email"},
+        "item_version": 2, "content_type": "text", "state": "pending", "publishing_action": "published"},
+        {"item_id": "456", "headline": "publish via api", "subscriber_id": "#sub_api#",
+        "destination": {"format": "ninjs", "delivery_type":"content_api"},
+        "item_version": 2, "content_type": "text", "state": "success", "publishing_action": "published"}
+      ]}
+      """
+      Then we assert the content api item "456" is published to subscriber "#sub_api#"
+      Then we assert the content api item "456" is not published to subscriber "#sub_direct#"
+
 
     @auth
     @vocabulary
@@ -388,7 +558,7 @@ Feature: Content Publishing
       """
       {
         "name":"prod-1","codes":"abc,xyz",
-        "content_filter":{"filter_id":"#content_filters._id#", "filter_type": "blocking"}
+        "content_filter":{"filter_id":"#content_filters._id#", "filter_type": "blocking"}, "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -444,7 +614,7 @@ Feature: Content Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -500,7 +670,7 @@ Feature: Content Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -532,7 +702,7 @@ Feature: Content Publishing
       """
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 1 items
+      Then we get list with 2 items
 
     @auth
     Scenario: Publish user content that fails validation
@@ -577,7 +747,7 @@ Feature: Content Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -614,7 +784,7 @@ Feature: Content Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -677,7 +847,7 @@ Feature: Content Publishing
       }
       """
       When we get "/publish_queue"
-      Then we get list with 1 items
+      Then we get list with 2 items
       When we transmit items
       And run import legal publish queue
       When we get "/legal_archive/123"
@@ -743,7 +913,7 @@ Feature: Content Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -827,7 +997,7 @@ Feature: Content Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -895,7 +1065,7 @@ Feature: Content Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -933,7 +1103,7 @@ Feature: Content Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -972,7 +1142,7 @@ Feature: Content Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -1019,7 +1189,7 @@ Feature: Content Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -1071,7 +1241,7 @@ Feature: Content Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -1094,7 +1264,7 @@ Feature: Content Publishing
       When we transmit items
       And run import legal publish queue
       And we get "/legal_publish_queue"
-      Then we get list with 1 items
+      Then we get list with 2 items
       When we post to "/archive/#archive._id#/lock"
       """
       {}
@@ -1129,7 +1299,7 @@ Feature: Content Publishing
       When we transmit items
       And run import legal publish queue
       And we get "/legal_publish_queue"
-      Then we get list with 2 items
+      Then we get list with 4 items
 
     @auth
     Scenario: We can lock a published content and then correct it and then kill the article
@@ -1154,7 +1324,7 @@ Feature: Content Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -1187,7 +1357,7 @@ Feature: Content Publishing
       When we transmit items
       And run import legal publish queue
       And we get "/legal_publish_queue"
-      Then we get list with 1 items
+      Then we get list with 2 items
       """
       {
         "_items":[
@@ -1233,7 +1403,7 @@ Feature: Content Publishing
       When we transmit items
       And run import legal publish queue
       And we get "/legal_publish_queue"
-      Then we get list with 2 items
+      Then we get list with 4 items
       """
       {
         "_items":[
@@ -1281,13 +1451,22 @@ Feature: Content Publishing
       When we transmit items
       And run import legal publish queue
       And we get "/legal_publish_queue"
-      Then we get list with 3 items
+      Then we get list with 6 items
       """
       {
         "_items":[
-          {"item_version": 2, "publishing_action": "published", "item_id": "123"},
-          {"item_version": 3, "publishing_action": "corrected", "item_id": "123"},
-          {"item_version": 4, "publishing_action": "killed", "item_id": "123"}
+          {"item_version": 2, "publishing_action": "published", "item_id": "123",
+           "destination": {"delivery_type": "email"}},
+          {"item_version": 3, "publishing_action": "corrected", "item_id": "123",
+           "destination": {"delivery_type": "email"}},
+          {"item_version": 4, "publishing_action": "killed", "item_id": "123",
+           "destination": {"delivery_type": "email"}},
+          {"item_version": 2, "publishing_action": "published", "item_id": "123",
+           "destination": {"delivery_type": "content_api"}},
+          {"item_version": 3, "publishing_action": "corrected", "item_id": "123",
+           "destination": {"delivery_type": "content_api"}},
+          {"item_version": 4, "publishing_action": "killed", "item_id": "123",
+           "destination": {"delivery_type": "content_api"}}
         ]
       }
       """
@@ -1314,7 +1493,7 @@ Feature: Content Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -1363,7 +1542,7 @@ Feature: Content Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -1462,7 +1641,7 @@ Feature: Content Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -1522,7 +1701,7 @@ Feature: Content Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -1583,7 +1762,7 @@ Feature: Content Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "direct"
       }
       """
       And we post to "/subscribers" with success
@@ -1633,7 +1812,7 @@ Feature: Content Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -1672,7 +1851,7 @@ Feature: Content Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -1756,7 +1935,7 @@ Feature: Content Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with "DigitalSubscriber" and success
@@ -1824,7 +2003,7 @@ Feature: Content Publishing
       """
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 4 items
+      Then we get list with 8 items
       """
       {
         "_items": [
@@ -1894,7 +2073,7 @@ Feature: Content Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -1979,7 +2158,7 @@ Feature: Content Publishing
       }
       """
       When we get "/publish_queue"
-      Then we get list with 1 items
+      Then we get list with 2 items
       When we post to "/archive/123/link"
       """
       [{"desk": "#desks._id#"}]
@@ -2200,7 +2379,7 @@ Feature: Content Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -2232,7 +2411,7 @@ Feature: Content Publishing
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with "digital" and success
