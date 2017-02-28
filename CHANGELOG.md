@@ -1,5 +1,12 @@
 # Superdesk Server Changelog
 
+## [1.6.1] 2017-02-28
+
+### Fixed
+
+- Fix email formatter to preserve line breaks in text version.
+- Make archived items published from invisible stages visible.
+
 ## [1.6.0] 2017-02-16
 
 ### Fixed
