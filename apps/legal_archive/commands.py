@@ -21,7 +21,8 @@ from eve.versioning import versioned_id_field
 from superdesk.celery_app import celery
 from superdesk import get_resource_service, config
 from superdesk.celery_task_utils import get_lock_id
-from .resource import LEGAL_ARCHIVE_NAME, LEGAL_ARCHIVE_VERSIONS_NAME, LEGAL_PUBLISH_QUEUE_NAME
+from .resource import LEGAL_ARCHIVE_NAME, LEGAL_ARCHIVE_VERSIONS_NAME, LEGAL_PUBLISH_QUEUE_NAME, \
+    LEGAL_ARCHIVE_HISTORY_NAME
 from superdesk.users.services import get_display_name
 from apps.archive.common import ARCHIVE
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
@@ -45,6 +46,7 @@ class LegalArchiveImport:
             2.  De-normalize the expired article
             3.  Upserting Legal Archive.
             4.  Get Version History and De-normalize and Inserting Legal Archive Versions
+            5.  Get History and de-normalize and insert into Legal Archive History
 
         :param dict item_id: id of the document from 'archive' collection.
         """
@@ -75,6 +77,7 @@ class LegalArchiveImport:
             legal_archive_doc = deepcopy(doc)
             legal_archive_service = get_resource_service(LEGAL_ARCHIVE_NAME)
             legal_archive_versions_service = get_resource_service(LEGAL_ARCHIVE_VERSIONS_NAME)
+            legal_archive_history_service = get_resource_service(LEGAL_ARCHIVE_HISTORY_NAME)
 
             log_msg = self.log_msg_format.format(**legal_archive_doc)
             version_id_field = versioned_id_field(app.config['DOMAIN'][ARCHIVE])
@@ -112,15 +115,25 @@ class LegalArchiveImport:
             else:
                 legal_archive_service.post([legal_archive_doc])
 
-            # Step 4 - Get Version History and De-normalize and Inserting Legal Archive Versions
+            # Step 4 - Get Versions and De-normalize and Inserting Legal Archive Versions
             lookup = {version_id_field: legal_archive_doc[config.ID_FIELD]}
-            version_history = list(get_resource_service('archive_versions').get(req=None, lookup=lookup))
-            legal_version_history = list(legal_archive_versions_service.get(req=None, lookup=lookup))
+            versions = list(get_resource_service('archive_versions').get(req=None, lookup=lookup))
+            legal_versions = list(legal_archive_versions_service.get(req=None, lookup=lookup))
 
             logger.info('Fetched version history for article {}'.format(log_msg))
-            versions_to_insert = [version for version in version_history
-                                  if not any(legal_version for legal_version in legal_version_history
+            versions_to_insert = [version for version in versions
+                                  if not any(legal_version for legal_version in legal_versions
                                              if version[config.VERSION] == legal_version[config.VERSION])]
+
+            # Step 5 - Get History and de-normalize and insert into Legal Archive History
+            lookup = {'item_id': legal_archive_doc[config.ID_FIELD]}
+            history_items = list(get_resource_service('archive_history').get(req=None, lookup=lookup))
+            legal_history_items = list(legal_archive_history_service.get(req=None, lookup=lookup))
+
+            logger.info('Fetched history for article {}'.format(log_msg))
+            history_to_insert = [history for history in history_items
+                                 if not any(legal_version for legal_version in legal_history_items
+                                            if history[config.ID_FIELD] == legal_version[config.ID_FIELD])]
 
             # This happens when user kills an article from Dusty Archive
             if article_in_legal_archive and \
@@ -143,7 +156,15 @@ class LegalArchiveImport:
 
             if versions_to_insert:
                 legal_archive_versions_service.post(versions_to_insert)
-                logger.info('Inserted de-normalized version history for article {}'.format(log_msg))
+                logger.info('Inserted de-normalized versions for article {}'.format(log_msg))
+
+            for history_doc in history_to_insert:
+                self._denormalize_history(history_doc)
+                history_doc.pop(config.ETAG, None)
+
+            if history_to_insert:
+                legal_archive_history_service.post(history_to_insert)
+                logger.info('Inserted de-normalized history for article {}'.format(log_msg))
 
             # Set the flag that item is moved to legal.
             self._set_moved_to_legal(doc)
@@ -152,6 +173,40 @@ class LegalArchiveImport:
         except:
             logger.exception('Failed to import into legal archive {}.'.format(item_id))
             raise
+
+    def _denormalize_history(self, history_item):
+        """
+        De-normalizes history items
+        """
+        msg = "item_id: {} and version: {}".format(history_item['item_id'], history_item['version'])
+
+        # De-normalizing User Details
+        history_item['user_id'] = self.__get_user_name(history_item.get('user_id'))
+
+        # De-normalizing Desk and Stage details
+        history_update = history_item.get('update')
+        if history_update:
+            if history_update.get('task') and history_update.get('task').get('desk'):
+                desk = get_resource_service('desks').find_one(req=None, _id=str(history_update['task']['desk']))
+                if desk:
+                    history_update['task']['desk'] = desk.get('name')
+                    logger.info('De-normalized Desk Details for article history {}'.format(msg))
+                else:
+                    logger.info('Desk Details Not Found: {}. {}'.format(history_update['task'].get('desk'), msg))
+
+            if history_update.get('task') and history_update['task'].get('stage'):
+                stage = get_resource_service('stages').find_one(req=None, _id=str(history_update['task']['stage']))
+                if stage:
+                    history_update['task']['stage'] = stage.get('name')
+                    logger.info('De-normalized Stage Details for article {}'.format(msg))
+                else:
+                    logger.info('Stage Details Not Found: {}. {}'.format(history_update['task'].get('stage'),
+                                                                         msg))
+
+            if history_update.get('task') and history_update['task'].get('user'):
+                    history_update['task']['user'] = self.__get_user_name(history_update['task'].get('user'))
+
+            history_item['update'] = history_update
 
     def _denormalize_user_desk(self, legal_archive_doc, log_msg):
         """

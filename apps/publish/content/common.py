@@ -573,6 +573,7 @@ class BasePublishService(BaseService):
         """
 
         self.backend.update(self.datasource, original[config.ID_FIELD], updates, original)
+        app.on_archive_item_updated(updates, original, updates[ITEM_OPERATION])
 
         if should_insert_into_versions:
             if versioned_doc is None:

@@ -16,8 +16,9 @@ from superdesk.metadata.utils import extra_response_fields, item_url, aggregatio
 from .common import remove_unwanted, update_state, set_item_expiry, remove_media_files, \
     on_create_item, on_duplicate_item, get_user, update_version, set_sign_off, \
     handle_existing_data, item_schema, validate_schedule, is_item_in_package, update_schedule_settings, \
-    ITEM_OPERATION, ITEM_RESTORE, ITEM_UPDATE, ITEM_DESCHEDULE, ARCHIVE as SOURCE, \
-    LAST_PRODUCTION_DESK, LAST_AUTHORING_DESK, convert_task_attributes_to_objectId, BROADCAST_GENRE, set_dateline
+    ITEM_OPERATION, ITEM_RESTORE, ITEM_CREATE, ITEM_UPDATE, ITEM_DUPLICATE, ITEM_DUPLICATED_FROM, \
+    ITEM_DESCHEDULE, ARCHIVE as SOURCE, LAST_PRODUCTION_DESK, LAST_AUTHORING_DESK, ITEM_FETCH, \
+    convert_task_attributes_to_objectId, BROADCAST_GENRE, set_dateline
 from superdesk.media.crop import CropService
 from flask import current_app as app
 from superdesk import get_resource_service
@@ -211,6 +212,10 @@ class ArchiveService(BaseService):
                 profiles.add(doc['profile'])
 
             self.cropService.update_media_references(doc, {})
+            if doc[ITEM_OPERATION] == ITEM_FETCH:
+                app.on_archive_item_updated({'task': doc.get('task')}, doc, ITEM_FETCH)
+            else:
+                app.on_archive_item_updated({'task': doc.get('task')}, doc, ITEM_CREATE)
 
         get_resource_service('content_types').set_used(profiles)
         push_content_notification(docs)
@@ -331,6 +336,7 @@ class ArchiveService(BaseService):
                      self.datasource, item=doc,
                      type=doc[ITEM_TYPE], subject=get_subject(doc))
         push_expired_notification([doc.get(config.ID_FIELD)])
+        app.on_archive_item_deleted(doc)
 
     def replace(self, id, document, original):
         return self.restore_version(id, document, original) or super().replace(id, document, original)
@@ -421,6 +427,9 @@ class ArchiveService(BaseService):
         convert_task_attributes_to_objectId(new_doc)
         get_model(ItemModel).create([new_doc])
         self._duplicate_versions(original_doc['_id'], new_doc)
+        self._duplicate_history(original_doc['_id'], new_doc)
+        app.on_archive_item_updated({'duplicate_id': new_doc['guid']}, original_doc, ITEM_DUPLICATE)
+        app.on_archive_item_updated({'duplicate_id': original_doc['_id']}, new_doc, ITEM_DUPLICATED_FROM)
 
         return new_doc['guid']
 
@@ -442,13 +451,13 @@ class ArchiveService(BaseService):
         task.pop(LAST_AUTHORING_DESK, None)
 
     def _duplicate_versions(self, old_id, new_doc):
-        """Duplicates version history for an item.
+        """Duplicates versions for an item.
 
-        Duplicates the version history of the article identified by old_id. Each version identifiers are changed
+        Duplicates the versions of the article identified by old_id. Each version identifiers are changed
         to have the identifiers of new_doc.
 
-        :param old_id: identifier to fetch version history
-        :param new_doc: identifiers from this doc will be used to create version history for the duplicated item.
+        :param old_id: identifier to fetch versions
+        :param new_doc: identifiers from this doc will be used to create versions for the duplicated item.
         """
         resource_def = app.config['DOMAIN']['archive']
         version_id = versioned_id_field(resource_def)
@@ -466,12 +475,36 @@ class ArchiveService(BaseService):
             if old_version[config.VERSION] == new_doc[config.VERSION]:
                 old_version[ITEM_OPERATION] = new_doc[ITEM_OPERATION]
             new_versions.append(old_version)
+
         last_version = deepcopy(new_doc)
         last_version['_id_document'] = new_doc['_id']
         del last_version['_id']
         new_versions.append(last_version)
         if new_versions:
             get_resource_service('archive_versions').post(new_versions)
+
+    def _duplicate_history(self, old_id, new_doc):
+        """Duplicates history for an item.
+
+        Duplicates the history of the article identified by old_id. Each history identifiers are changed
+        to have the identifiers of new_doc.
+
+        :param old_id: identifier to fetch history
+        :param new_doc: identifiers from this doc will be used to create version history for the duplicated item.
+        """
+        resource_def = app.config['DOMAIN']['archive']
+        version_id = versioned_id_field(resource_def)
+        old_history_items = get_resource_service('archive_history').get(req=None, lookup={'item_id': old_id})
+
+        new_history_items = []
+        for old_history_item in old_history_items:
+            old_history_item[version_id] = new_doc[config.ID_FIELD]
+            del old_history_item[config.ID_FIELD]
+            old_history_item['item_id'] = new_doc['guid']
+            new_history_items.append(old_history_item)
+
+        if new_history_items:
+            get_resource_service('archive_history').post(new_history_items)
 
     def update(self, id, updates, original):
         # this needs to here as resolve_nested_documents (in eve) will add the schedule_settings

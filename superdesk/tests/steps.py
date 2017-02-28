@@ -115,7 +115,8 @@ def assert_is_now(val, key):
 
 def json_match(context_data, response_data):
     if isinstance(context_data, dict):
-        assert isinstance(response_data, dict), 'response data is not dict, but %s' % type(response_data)
+        if (not isinstance(response_data, dict)):
+            return False
         for key in context_data:
             if context_data[key] == "__none__":
                 assert response_data[key] is None

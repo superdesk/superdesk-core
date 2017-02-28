@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from apps.archive.archive import ArchiveResource, ArchiveVersionsResource
+from apps.archive_history import ArchiveHistoryResource
 
 from superdesk.publish.publish_queue import PublishQueueResource
 from superdesk.resource import Resource
@@ -16,6 +17,7 @@ from superdesk.resource import Resource
 
 LEGAL_ARCHIVE_NAME = 'legal_archive'
 LEGAL_ARCHIVE_VERSIONS_NAME = 'legal_archive_versions'
+LEGAL_ARCHIVE_HISTORY_NAME = 'legal_archive_history'
 LEGAL_PUBLISH_QUEUE_NAME = 'legal_publish_queue'
 
 
@@ -40,6 +42,13 @@ class LegalArchiveVersionsResource(LegalResource, ArchiveVersionsResource):
     datasource = {'source': LEGAL_ARCHIVE_VERSIONS_NAME,
                   'projection': {'old_version': 0, 'last_version': 0}
                   }
+
+
+class LegalArchiveHistoryResource(LegalResource, ArchiveHistoryResource):
+    endpoint_name = LEGAL_ARCHIVE_HISTORY_NAME
+    resource_title = endpoint_name
+
+    datasource = {'source': LEGAL_ARCHIVE_HISTORY_NAME}
 
 
 class LegalPublishQueueResource(LegalResource, PublishQueueResource):

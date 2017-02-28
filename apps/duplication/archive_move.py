@@ -10,7 +10,7 @@
 
 from eve.utils import config
 from eve.versioning import resolve_document_version
-from flask import request
+from flask import request, current_app as app
 from copy import deepcopy
 
 import superdesk
@@ -121,6 +121,7 @@ class MoveService(BaseService):
         archive_service.update(original[config.ID_FIELD], archived_doc, original)
         insert_into_versions(id_=original[config.ID_FIELD])
         push_item_move_notification(original, archived_doc)
+        app.on_archive_item_updated(archived_doc, original, ITEM_MOVE)
 
     def _validate(self, archived_doc, doc):
         """Validate that the item can be move.

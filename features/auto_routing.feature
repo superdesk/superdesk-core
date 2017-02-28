@@ -123,6 +123,14 @@ Feature: Auto Routing
           "ingest": "#AAP.AAP.123253116.6697929#"
         }
         """
+        When we get "/archive_history"
+        Then we get list with 2 items
+        """
+        {"_items": [
+          {"version": 1, "operation": "fetch", "user_id": "__none__"},
+          {"version": 1, "operation": "fetch", "user_id": "__none__"}
+        ]}
+        """
         Then the ingest item is not routed based on routing scheme and rule "Finance Rule"
         """
         {
@@ -314,6 +322,7 @@ Feature: Auto Routing
           "ingest": "#AAP.AAP.0.6703189#"
         }
         """
+
 
     @auth @provider @vocabulary
     Scenario: Content is fetched and published to different stages 2
@@ -1109,4 +1118,4 @@ Feature: Auto Routing
         """
          {"_issues": {"validator exception": "[['HEADLINE is too long']]"}, "_status": "ERR"}
         """
-        
+

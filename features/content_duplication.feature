@@ -21,7 +21,7 @@ Feature: Duplication of Content
       """
 
     @auth @notification
-    Scenario: Duplicate a content with history
+    Scenario: Duplicate a content with versions
       When we patch given
       """
       {"headline": "test2"}
@@ -65,6 +65,52 @@ Feature: Duplication of Content
       When we get "/archive?q=#desks._id#"
       Then we get list with 2 items
 
+    @auth @notification
+    Scenario: Duplicate a content with history
+      When we patch given
+      """
+      {"headline": "test2"}
+      """
+      And we patch latest
+      """
+      {"headline": "test3"}
+      """
+      Then we get updated response
+      """
+      {"headline": "test3", "state": "in_progress", "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}
+      """
+      And we get version 3
+      When we get "/archive_history?where=item_id==%22123%22"
+      Then we get list with 3 items
+      When we post to "/archive/123/duplicate"
+      """
+      {"desk": "#desks._id#","type": "archive"}
+      """
+      When we get "/archive/#duplicate._id#"
+      Then we get existing resource
+      """
+      {"state": "submitted", "_current_version": 4, "source": "AAP",
+       "task": {"desk": "#desks._id#", "stage": "#desks.working_stage#", "user": "#CONTEXT_USER_ID#"},
+       "original_id": "123"}
+      """
+      Then there is no "last_production_desk" in task
+      And there is no "last_authoring_desk" in task
+      And we get notifications
+      """
+        [{"event": "content:update", "extra": {"items": {"123": 1}, "desks": {"#desks._id#": 1}, "stages": {"#desks.working_stage#": 1}}, "_created": "__any_value__"}]
+      """
+      When we get "/archive_history?where=item_id==%22#duplicate._id#%22"
+      Then we get list with 4 items
+      """
+      {"_items": [
+        {"version": 1, "operation": "create"},
+        {"version": 2, "operation": "update"},
+        {"version": 3, "operation": "update"},
+        {"version": 4, "operation": "duplicated_from"}
+      ]}
+      """
+
+
     @auth
     Scenario: Duplicate a content with history doesn't change the state if it's submitted
       When we post to "/archive/123/duplicate"
@@ -102,7 +148,7 @@ Feature: Duplication of Content
        Then we get list with 1 items
        When we get "/archive?q=#desks._id#"
        Then we get list with 2 items
-      
+
     @auth
     @provider
     Scenario: Duplicate a package

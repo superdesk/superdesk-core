@@ -20,7 +20,7 @@ from superdesk import get_resource_service
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE_TYPE, TAKES_PACKAGE, PACKAGE, LAST_TAKE, \
     REFS, RESIDREF, GROUPS, ID_REF, MAIN_GROUP, SEQUENCE, ROOT_GROUP, ROLE, ROOT_ROLE, MAIN_ROLE, GROUP_ID
-from apps.archive.common import insert_into_versions
+from apps.archive.common import insert_into_versions, ITEM_UNLINK
 from apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.utc import utcnow
 from superdesk.default_settings import VERSION
@@ -402,10 +402,13 @@ class PackageService():
 
                 if last_take_group:
                     updates[LAST_TAKE] = last_take_group.get(RESIDREF)
+                    last_take_item = get_resource_service(ARCHIVE).find_one(req=None, _id=updates[LAST_TAKE])
+                    app.on_archive_item_updated({}, last_take_item, ITEM_UNLINK)
 
         if not delete_package:
             resolve_document_version(updates, ARCHIVE, 'PATCH', package)
             get_resource_service(ARCHIVE).patch(package[config.ID_FIELD], updates)
+            app.on_archive_item_updated(updates, package, ITEM_UNLINK)
             insert_into_versions(id_=package[config.ID_FIELD])
 
         sub_package_ids.append(package[config.ID_FIELD])

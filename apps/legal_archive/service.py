@@ -167,6 +167,10 @@ class LegalArchiveVersionsService(LegalService):
             if config.ID_FIELD in doc:  # This happens when inserting docs from pre-populate command
                 doc_if_exists = self.find_one(req=None, _id=doc['_id'])
 
+            # This also happens when inserting docs from pre-populate command
+            if not doc.get('operation'):
+                doc['operation'] = 'create'
+
             if doc_if_exists is None:
                 ids.extend(super().create([doc]))
 
@@ -191,3 +195,20 @@ class LegalArchiveVersionsService(LegalService):
             self.enhance(doc)
 
         return ListCursor(version_history)
+
+
+class LegalArchiveHistoryService(LegalService):
+    def create(self, docs, **kwargs):
+        """
+        Overriding this from preventing the same version again. This happens when an item is published more than once.
+        """
+
+        ids = []
+        for doc in docs:
+            doc_if_exists = None
+            if doc.get('item_id'):
+                doc_if_exists = self.find_one(req=None, _id=doc.get('_id'))
+            if doc_if_exists is None:
+                ids.extend(super().create([doc]))
+
+        return ids

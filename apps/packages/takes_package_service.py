@@ -9,6 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+from flask import current_app as app
+from copy import deepcopy
 from eve.utils import config, ParsedRequest
 from eve.versioning import resolve_document_version
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
@@ -18,7 +20,8 @@ from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE_TYPE, TAKES_
     LAST_TAKE, REFS, MAIN_GROUP, SEQUENCE, RESIDREF, ASSOCIATED_TAKE_SEQUENCE
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, PUBLISH_STATES, ITEM_STATE, \
     CONTENT_STATE, EMBARGO, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, ASSOCIATIONS
-from apps.archive.common import insert_into_versions, ITEM_CREATE, RE_OPENS
+from apps.archive.common import insert_into_versions, ITEM_CREATE, RE_OPENS, \
+    ITEM_OPERATION, ITEM_TAKE, ITEM_LINK, ITEM_REOPEN
 from .package_service import get_item_ref, create_root_group
 
 logger = logging.getLogger(__name__)
@@ -185,6 +188,7 @@ class TakesPackageService():
         if not link.get(config.ID_FIELD):
             # A new story to be linked
             self.__copy_metadata__(target, link, takes_package, set_state=True)
+            link[ITEM_OPERATION] = ITEM_CREATE
             archive_service.post([link])
         else:
             self.__copy_metadata__(target, link_updates, takes_package, set_state=False)
@@ -194,6 +198,7 @@ class TakesPackageService():
         if not takes_package_id:
             takes_package_id = self.package_story_as_a_take(target, takes_package, link)
         else:
+            original_takes_package = deepcopy(takes_package)
             self.__link_items__(takes_package, target, link)
             del takes_package[config.ID_FIELD]
             takes_package.pop('unique_id', None)
@@ -203,14 +208,22 @@ class TakesPackageService():
 
             resolve_document_version(takes_package, ARCHIVE, 'PATCH', takes_package)
             archive_service.patch(takes_package_id, takes_package)
+            app.on_archive_item_updated(link_updates, original_takes_package, ITEM_LINK)
             get_resource_service('archive_broadcast').on_broadcast_master_updated(ITEM_CREATE, target,
                                                                                   takes_package_id=takes_package_id)
 
         if link.get(SEQUENCE):
             link_updates.update({SEQUENCE: link[SEQUENCE]})
             archive_service.system_update(link[config.ID_FIELD], link_updates, link)
+            app.on_archive_item_updated({'linked_to': target[config.ID_FIELD]}, link, ITEM_LINK)
 
         insert_into_versions(id_=takes_package_id)
+
+        if RE_OPENS.lower() in link.get('anpa_take_key', '').lower():
+            app.on_archive_item_updated({'new_take_id': link[config.ID_FIELD]}, target, ITEM_REOPEN)
+        else:
+            app.on_archive_item_updated({'new_take_id': link[config.ID_FIELD]}, target, ITEM_TAKE)
+
         return link
 
     def is_last_takes_package_item(self, doc):

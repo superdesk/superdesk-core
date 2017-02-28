@@ -21,6 +21,13 @@ Feature: Content Expiry Not Published Items
   @auth
   @notification
   Scenario: Item on a desk and not part of any package is expired .
+    When we get "/archive_history?where=item_id==%22123%22"
+    Then we get list with 1 items
+    """
+    {"_items": [
+      {"version": 1, "operation": "create"}
+    ]}
+    """
     When we expire items
     """
     ["#archive._id#"]
@@ -29,6 +36,8 @@ Feature: Content Expiry Not Published Items
     Then we get error 404
     When we get "archive/123?versions=all"
     Then we get error 404
+    When we get "/archive_history?where=item_id==%22123%22"
+    Then we get list with 0 items
     And we get notifications
     """
     [
