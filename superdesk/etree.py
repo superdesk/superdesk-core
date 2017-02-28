@@ -33,6 +33,45 @@ inline_elements = set([
     'object',
 ])
 
+# from https://developer.mozilla.org/en-US/docs/Web/HTML/Block-level_elements
+BLOCK_ELEMENTS = (
+    "address",
+    "article",
+    "aside",
+    "blockquote",
+    "br",
+    "canvas",
+    "dd",
+    "div",
+    "dl",
+    "fieldset",
+    "figcaption",
+    "figure",
+    "footer",
+    "form",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "header",
+    "hgroup",
+    "hr",
+    "li",
+    "main",
+    "nav",
+    "noscript",
+    "ol",
+    "output",
+    "p",
+    "pre",
+    "section",
+    "table",
+    "tfoot",
+    "ul",
+    "video")
+
 
 def get_text_word_count(text):
     """Get word count for given plain text.
@@ -42,14 +81,24 @@ def get_text_word_count(text):
     return len(text.split())
 
 
-def get_text(html):
+def get_text(html, content='xml', lf_on_block=False):
     """Get plain text version of HTML element
 
     if the HTML string can't be parsed, it will be returned unchanged
     :param html: html string to convert to plain text
+    :param str content: 'xml' or 'html'
+    :param bool lf_on_block: if True, add a line feed on block elements' tail
     """
     try:
+        if content == 'html':
+            # FIXME: this is a fragile way of handling HTML, it will be properly fixed
+            #        when lxml patch will be used
+            html = html.replace('<br>', '<br/>').replace('</br>', '').replace('<hr>', ' ')
         root = etree.fromstringlist('<doc>{0}</doc>'.format(html))
+        if lf_on_block:
+            for elem in root.iterfind('.//'):
+                if elem.tag in BLOCK_ELEMENTS:
+                    elem.tail = (elem.tail or '') + '\n'
         text = etree.tostring(root, encoding='unicode', method='text')
         return text
     except ParseError:
