@@ -1,6 +1,6 @@
 
 import unittest
-from superdesk.etree import get_word_count
+from superdesk.etree import get_word_count, parse_html, to_string
 
 
 class WordCountTestCase(unittest.TestCase):
@@ -54,3 +54,14 @@ class WordCountTestCase(unittest.TestCase):
         at its Kennecott mine in the US and no supplies from the Grasberg joint venture in Indonesia.</p><p>It has
         forecast a wide guidance range of 525,000 to 665,000 tonnes for 2017.</p><p>The miner topped production
         forecasts for bauxite and coking coal, while aluminium output jumped 10 per cent in 2016.</p>"""))
+
+
+class ParseHtmlTestCase(unittest.TestCase):
+    def test_encode_carriage_return(self):
+        text = 'This is first line.\r\nThis is second line.\r\n'
+        parsed = parse_html(text)
+        self.assertEqual(text.replace('\r', '&#13;'), to_string(parsed))
+
+        text = '<pre>This is first line.\r\nThis is second line.\r\n</pre>'
+        parsed = parse_html(text, content='html')
+        self.assertEqual('<html><body>{}</body></html>'.format(text.replace('\r', '&#13;')), to_string(parsed))
