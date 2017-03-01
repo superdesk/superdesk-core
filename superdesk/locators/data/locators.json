@@ -26676,6 +26676,12 @@
             "name": "Shimla",
             "dateline_format": "city",
             "timezone": "Asia/Kolkata"
+          },
+          {
+            "qcode": "Dharamsala",
+            "name": "Dharamsala",
+            "dateline_format": "city",
+            "timezone": "Asia/Kolkata"
           }
         ]
       },
@@ -26828,8 +26834,8 @@
             "timezone": "Asia/Kolkata"
           },
           {
-            "qcode": "Bengalore",
-            "name": "Bengalore",
+            "qcode": "Bangalore",
+            "name": "Bangalore",
             "dateline_format": "city",
             "timezone": "Asia/Kolkata"
           },
