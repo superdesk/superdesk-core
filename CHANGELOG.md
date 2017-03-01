@@ -1,5 +1,12 @@
 # Superdesk Server Changelog
 
+## [1.6.2] 2017-03-01
+
+### Fixed
+
+- Fix city names in locators vocabulary.
+- Fix again *Fix email formatter to preserve line breaks in text version.*.
+
 ## [1.6.1] 2017-02-28
 
 ### Fixed
