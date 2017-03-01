@@ -46,13 +46,14 @@ class EmailFormatter(Formatter):
         pub_seq_num = superdesk.get_resource_service('subscribers').generate_sequence_number(subscriber)
         doc = {}
         try:
-            # If there is a dateline inject it into the body
-            if formatted_article.get(FORMAT) == FORMATS.HTML and formatted_article.get('dateline', {}).get('text'):
-                soup = BeautifulSoup(formatted_article.get('body_html'), "html.parser")
-                ptag = soup.find('p')
-                if ptag is not None:
-                    ptag.insert(0, NavigableString('{} '.format(formatted_article.get('dateline').get('text'))))
-                    formatted_article['body_html'] = str(soup)
+            if formatted_article.get(FORMAT) == FORMATS.HTML:
+                # If there is a dateline inject it into the body
+                if formatted_article.get('dateline', {}).get('text'):
+                    soup = BeautifulSoup(formatted_article.get('body_html'), "html.parser")
+                    ptag = soup.find('p')
+                    if ptag is not None:
+                        ptag.insert(0, NavigableString('{} '.format(formatted_article.get('dateline').get('text'))))
+                        formatted_article['body_html'] = str(soup)
                 doc['message_html'] = render_template('email_article_body.html', article=formatted_article)
             else:
                 doc['message_html'] = None

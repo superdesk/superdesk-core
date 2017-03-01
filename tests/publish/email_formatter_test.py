@@ -218,6 +218,7 @@ class EmailFormatterTest(TestCase):
             'subject': [{'qcode': '02011001'}],
             'format': 'HTML',
             'type': 'text',
+            'dateline': {'text': 'BERN, July 13  -'},
             'body_html': '<p>paragraph 1</p><br><br><p>paragraph 2</p><p>paragraph 3</p>',
             'word_count': '1',
             'priority': 1,
@@ -232,5 +233,5 @@ class EmailFormatterTest(TestCase):
         item = json.loads(doc)
         self.assertEqual(item['message_text'], 'VIC: \nPublished At : Fri Feb 24 17:40:56 2017\n'
                                                ' take\n\n--------------------------------------'
-                                               '--------------------\n\n\n\nparagraph 1\n\n\n'
+                                               '--------------------\n\n\n\nBERN, July 13  - paragraph 1\n\n\n'
                                                'paragraph 2\nparagraph 3\n\nAAP aa/bb\n')
