@@ -210,7 +210,7 @@ class EmailFormatterTest(TestCase):
     def test_paragraphs(self):
         """Test that paragraphs (block elements) are followed by line feed in text version
 
-        SDPRO-85 regression test
+        SDESK-824 regression test
         """
         article = {
             'source': 'AAP',
@@ -234,3 +234,16 @@ class EmailFormatterTest(TestCase):
                                                ' take\n\n--------------------------------------'
                                                '--------------------\n\n\n\nparagraph 1\n\n\n'
                                                'paragraph 2\nparagraph 3\n\nAAP aa/bb\n')
+
+    def test_dateline_html(self):
+        """Check that message_html output is producted even without a dateline
+
+        SDESK-836 regression test
+        """
+        article = {
+            'format': 'HTML',
+            'type': 'text',
+            'body_html': '<p>some HTML</p>'}
+        _, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        item = json.loads(doc)
+        self.assertIsNotNone(item['message_html'])
