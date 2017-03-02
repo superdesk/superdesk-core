@@ -478,7 +478,7 @@ metadata_schema = {
             'iptcDomains': {'type': 'list', 'mapping': not_analyzed},
             'newsDomains': {'type': 'list', 'mapping': not_analyzed},
             'places': {'type': 'list', 'mapping': not_analyzed},
-            'persons': {'type': 'list', 'mapping': not_analyzed},
+            'persons': {'type': 'list'},  # enable analyzer
             'organizations': {'type': 'list', 'mapping': not_analyzed},
             'mainGroups': {'type': 'list', 'mapping': not_analyzed},
             'mainLemmas': {'type': 'list', 'mapping': not_analyzed},
