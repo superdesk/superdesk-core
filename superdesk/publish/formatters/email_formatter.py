@@ -41,18 +41,23 @@ class EmailFormatter(Formatter):
 
     """
 
+    def _inject_dateline(self, formatted_article):
+        """Inject dateline in article's body_html"""
+        body_html_elem = sd_etree.parse_html(formatted_article.get('body_html', '<p> </p>'))
+        ptag = body_html_elem.find('.//p')
+        if ptag is not None:
+            ptag.text = formatted_article['dateline']['text'] + ' ' + (ptag.text or '')
+            formatted_article['body_html'] = sd_etree.to_string(body_html_elem)
+
     def format(self, article, subscriber, codes=None):
         formatted_article = deepcopy(article)
         pub_seq_num = superdesk.get_resource_service('subscribers').generate_sequence_number(subscriber)
         doc = {}
         try:
-            # If there is a dateline inject it into the body
-            if formatted_article.get(FORMAT) == FORMATS.HTML and formatted_article.get('dateline', {}).get('text'):
-                body_html_elem = sd_etree.parse_html(formatted_article.get('body_html'))
-                ptag = body_html_elem.find('.//p')
-                if ptag is not None:
-                    ptag.text = formatted_article['dateline']['text'] + ' ' + (ptag.text or '')
-                    formatted_article['body_html'] = sd_etree.to_string(body_html_elem)
+            if formatted_article.get(FORMAT) == FORMATS.HTML:
+                if formatted_article.get('dateline', {}).get('text'):
+                    # If there is a dateline inject it into the body
+                    self._inject_dateline(formatted_article)
                 doc['message_html'] = render_template('email_article_body.html', article=formatted_article)
             else:
                 doc['message_html'] = None
