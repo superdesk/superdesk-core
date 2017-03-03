@@ -50,6 +50,12 @@ def generate_renditions(original, media_id, inserted, file_type, content_type,
     rend.update({'width': width})
     rend.update({'height': height})
 
+    # remove crop if original is small
+    custom_renditions = get_renditions_spec(without_internal_renditions=True)
+    for rendition, crop in custom_renditions.items():
+        if not can_generate_custom_crop_from_original(width, height, crop):
+            rendition_config.pop(rendition, None)
+
     ext = content_type.split('/')[1].lower()
     if ext in ('JPG', 'jpg'):
         ext = 'jpeg'
@@ -76,6 +82,29 @@ def generate_renditions(original, media_id, inserted, file_type, content_type,
         # add the cropping data if exist
         renditions[rendition].update(cropping_data)
     return renditions
+
+
+def can_generate_custom_crop_from_original(width, height, crop):
+    """Checks whether custom crop can be generated or not
+
+    :param int width: width of original
+    :param int height: height of original
+    :param dict crop: custom crop data
+    :return bool: True if custom crop is within original image dimensions
+    """
+    if not crop:
+        crop = {}
+
+    if crop.get('ratio'):
+        return True
+
+    if 'width' not in crop and 'height' not in crop:
+        return False
+
+    if ('width' in crop and 'height' not in crop) or ('width' not in crop and 'height' in crop):
+        return True
+
+    return width >= to_int(crop['width']) and height >= to_int(crop['height'])
 
 
 def delete_file_on_error(doc, file_id):
@@ -177,7 +206,7 @@ def _resize_image(content, size, format='png', keepProportions=True):
     return out, new_width, new_height
 
 
-def get_renditions_spec(without_internal_renditions=False):
+def get_renditions_spec(without_internal_renditions=False, no_custom_crops=False):
     """Return the list of the needed renditions.
 
     It contains the ones defined in settings in `RENDITIONS.picture`
@@ -190,10 +219,12 @@ def get_renditions_spec(without_internal_renditions=False):
     # renditions required by superdesk
     if not without_internal_renditions:
         rendition_spec = deepcopy(config.RENDITIONS['picture'])
-    # load custom renditions sizes
-    custom_crops = get_resource_service('vocabularies').find_one(req=None, _id='crop_sizes')
-    if custom_crops:
-        for crop in custom_crops.get('items'):
-            # complete list of wanted renditions
-            rendition_spec[crop['name']] = crop
+
+    if not no_custom_crops:
+        # load custom renditions sizes
+        custom_crops = get_resource_service('vocabularies').find_one(req=None, _id='crop_sizes')
+        if custom_crops:
+            for crop in custom_crops.get('items'):
+                # complete list of wanted renditions
+                rendition_spec[crop['name']] = crop
     return rendition_spec

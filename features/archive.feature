@@ -699,11 +699,23 @@ Feature: News Items Archive
     Scenario: Upload image with custom crops
         Given "vocabularies"
         """
-        [{"_id": "crop_sizes", "items": [{"is_active": true, "name": "3:2", "width": "3", "height": "2"}]}]
+        [{"_id": "crop_sizes", "items": [{"is_active": true, "name": "4:3", "width": 400, "height": 300}]}]
         """
 
         When we upload a file "bike.jpg" to "archive"
         Then we get new resource
+        And we get rendition "4:3" with mimetype "image/jpeg"
+
+    @auth
+    Scenario: Upload image with custom crops with original size less than custom crop
+        Given "vocabularies"
+        """
+        [{"_id": "crop_sizes", "items": [{"is_active": true, "name": "4:3", "width": 4000, "height": 3000}]}]
+        """
+
+        When we upload a file "bike.jpg" to "archive"
+        Then we get new resource
+        And we get "4:3" not in renditions
 
     @auth
     Scenario: Create content on a desk that has set default language

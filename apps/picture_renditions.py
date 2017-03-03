@@ -34,7 +34,7 @@ class PictureRenditionsResource(superdesk.Resource):
     resource_methods = ['POST']
     privileges = {'POST': 'archive'}
     schema = {
-        'item': {'type': 'dict', 'required': True},
+        'item': {'type': 'dict', 'required': True}
     }
 
 
