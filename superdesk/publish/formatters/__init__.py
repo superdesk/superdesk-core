@@ -35,7 +35,7 @@ class Formatter(metaclass=FormatterRegistry):
         self.can_preview = False
         self.can_export = False
 
-    def format(self, article, subscriber, codes=None):
+    def format(self, article, subscriber, pub_seq_num, codes=None):
         """Formats the article and returns the transformed string"""
         raise NotImplementedError()
 

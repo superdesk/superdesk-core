@@ -46,18 +46,18 @@ class NewsMLG2Formatter(Formatter):
     _debug_message_extra = {'{{{}}}schemaLocation'.format(_message_nsmap['xsi']): 'http://iptc.org/std/nar/2006-10-01/ \
     http://www.iptc.org/std/NewsML-G2/2.18/specification/NewsML-G2_2.18-spec-All-Power.xsd'}
 
-    def format(self, article, subscriber, codes=None):
+    def format(self, article, subscriber, pub_seq_num, codes=None):
         """Create article in NewsML G2 format
 
         :param dict article:
         :param dict subscriber:
+        :param int pub_seq_num:
         :param list codes: selector codes
         :return [(int, str)]: return a List of tuples. A tuple consist of
             publish sequence number and formatted article string.
         :raises FormatterError: if the formatter fails to format an article
         """
         try:
-            pub_seq_num = superdesk.get_resource_service('subscribers').generate_sequence_number(subscriber)
             is_package = self._is_package(article)
             news_message = etree.Element('newsMessage', attrib=self._debug_message_extra, nsmap=self._message_nsmap)
             self._format_header(article, news_message, pub_seq_num)

@@ -344,8 +344,11 @@ class EnqueueService:
                             no_formatters.append(destination['format'])
                             continue
 
+                        pub_seq_num = get_resource_service('subscribers').generate_sequence_number(subscriber)
+
                         formatted_docs = formatter.format(doc,
                                                           subscriber,
+                                                          pub_seq_num,
                                                           subscriber_codes.get(subscriber[config.ID_FIELD]))
 
                         for idx, publish_data in enumerate(formatted_docs):

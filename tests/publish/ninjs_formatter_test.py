@@ -7,9 +7,10 @@
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
-from unittest import mock
-from datetime import timedelta
+
 import json
+
+from datetime import timedelta
 
 from superdesk.utc import utcnow
 from superdesk.tests import TestCase
@@ -17,7 +18,6 @@ from superdesk.publish.formatters.ninjs_formatter import NINJSFormatter
 from superdesk.publish import init_app
 
 
-@mock.patch('superdesk.publish.subscribers.SubscribersService.generate_sequence_number', lambda self, subscriber: 1)
 class NinjsFormatterTest(TestCase):
     def setUp(self):
         self.formatter = NINJSFormatter()
@@ -55,7 +55,7 @@ class NinjsFormatterTest(TestCase):
             'body_footer': '<p>call helpline 999 if you are planning to quit smoking</p>',
             'company_codes': [{'name': 'YANCOAL AUSTRALIA LIMITED', 'qcode': 'YAL', 'security_exchange': 'ASX'}]
         }
-        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'}, 1)[0]
         expected = {
             "guid": "tag:aap.com.au:20150613:12345",
             "version": "1",
@@ -110,7 +110,7 @@ class NinjsFormatterTest(TestCase):
             'guid': '20150723001158606583',
             'body_footer': '<p>call helpline 999 if you are planning to quit smoking</p>'
         }
-        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'}, 1)[0]
         expected = {
             "byline": "MICKEY MOUSE",
             "renditions": {
@@ -246,7 +246,7 @@ class NinjsFormatterTest(TestCase):
             'version': 2,
         }
 
-        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'}, 1)[0]
         expected = {
             "headline": "WA:Navy steps in with WA asylum-seeker boat",
             "version": "2",
@@ -299,7 +299,7 @@ class NinjsFormatterTest(TestCase):
             }
         }
 
-        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'}, 1)[0]
         formatted = json.loads(doc)
         self.assertIn('associations', formatted)
         self.assertIn('image', formatted['associations'])
@@ -347,7 +347,7 @@ class NinjsFormatterTest(TestCase):
                 }
             }
         }
-        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'}, 1)[0]
         expected = {
             "guid": "tag:aap.com.au:20150613:12345",
             "version": "1",
