@@ -9,7 +9,6 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import json
-import superdesk
 
 from superdesk.publish.formatters import Formatter
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, FORMAT, FORMATS
@@ -49,9 +48,8 @@ class EmailFormatter(Formatter):
             ptag.text = formatted_article['dateline']['text'] + ' ' + (ptag.text or '')
             formatted_article['body_html'] = sd_etree.to_string(body_html_elem)
 
-    def format(self, article, subscriber, codes=None):
+    def format(self, article, subscriber, pub_seq_num, codes=None):
         formatted_article = deepcopy(article)
-        pub_seq_num = superdesk.get_resource_service('subscribers').generate_sequence_number(subscriber)
         doc = {}
         try:
             if formatted_article.get(FORMAT) == FORMATS.HTML:

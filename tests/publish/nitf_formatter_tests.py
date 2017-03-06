@@ -9,7 +9,6 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk.tests import TestCase
-from unittest import mock
 from superdesk.publish.formatters.nitf_formatter import NITFFormatter
 from superdesk.publish.formatters import Formatter
 from superdesk.publish import init_app
@@ -17,7 +16,6 @@ from lxml import etree
 from textwrap import dedent
 
 
-@mock.patch('superdesk.publish.subscribers.SubscribersService.generate_sequence_number', lambda self, subscriber: 1)
 class NitfFormatterTest(TestCase):
     def setUp(self):
         self.formatter = NITFFormatter()
@@ -54,7 +52,7 @@ class NitfFormatterTest(TestCase):
             'urgency': 2
         }
 
-        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'}, 1)[0]
         nitf_xml = etree.fromstring(doc)
         self.assertEqual(nitf_xml.find('head/title').text, article['headline'])
         self.assertEqual(nitf_xml.find('body/body.content/p').text, 'test body')
@@ -178,7 +176,7 @@ class NitfFormatterTest(TestCase):
             'company_codes': [{'name': 'YANCOAL AUSTRALIA LIMITED', 'qcode': 'YAL', 'security_exchange': 'ASX'}]
         }
 
-        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'}, 1)[0]
         nitf_xml = etree.fromstring(doc)
         company = nitf_xml.find('body/body.head/org')
         self.assertEqual(company.text, 'YANCOAL AUSTRALIA LIMITED')
@@ -207,6 +205,6 @@ class NitfFormatterTest(TestCase):
                 }
             ],
         }
-        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'}, 1)[0]
         nitf_xml = etree.fromstring(doc)
         self.assertEqual(nitf_xml.find('body/body.content/p').text, 'Tommi Mäkinen crashes a Škoda in Äppelbo')

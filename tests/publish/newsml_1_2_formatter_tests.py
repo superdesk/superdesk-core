@@ -7,7 +7,6 @@
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
-from unittest import mock
 
 from superdesk.utc import utcnow
 
@@ -18,7 +17,6 @@ import datetime
 from superdesk.publish import init_app
 
 
-@mock.patch('superdesk.publish.subscribers.SubscribersService.generate_sequence_number', lambda self, subscriber: 1)
 class Newsml12FormatterTest(TestCase):
     article = {
         '_id': 'urn:localhost.abc',
@@ -796,7 +794,7 @@ class Newsml12FormatterTest(TestCase):
 
     def test_format_picture(self):
         doc = self.picture.copy()
-        seq, xml_str = self.formatter.format(doc, {'name': 'Test Subscriber'})[0]
+        seq, xml_str = self.formatter.format(doc, {'name': 'Test Subscriber'}, 1)[0]
         xml = etree.fromstring(xml_str)
 
         self.assertEqual(xml.find('NewsItem/NewsComponent/NewsComponent/NewsLines/HeadLine').text,
@@ -821,7 +819,7 @@ class Newsml12FormatterTest(TestCase):
 
     def test_format_video(self):
         doc = self.video.copy()
-        seq, xml_str = self.formatter.format(doc, {'name': 'Test Subscriber'})[0]
+        seq, xml_str = self.formatter.format(doc, {'name': 'Test Subscriber'}, 1)[0]
         xml = etree.fromstring(xml_str)
         self.assertEqual(xml.find('NewsItem/NewsComponent/NewsComponent/NewsLines/HeadLine').text, 'test video')
         self.assertEqual(xml.find('NewsItem/NewsComponent/NewsComponent/NewsLines/ByLine').text, 'test video')
@@ -843,7 +841,7 @@ class Newsml12FormatterTest(TestCase):
 
     def test_format_package(self):
         doc = self.package.copy()
-        seq, xml_str = self.formatter.format(doc, {'name': 'Test Subscriber'})[0]
+        seq, xml_str = self.formatter.format(doc, {'name': 'Test Subscriber'}, 1)[0]
         xml = etree.fromstring(xml_str)
         self.assertEqual(xml.find('.//Role[@FormalName="root"]/../NewsComponent/Role').get('FormalName'),
                          'grpRole:main')
@@ -852,7 +850,7 @@ class Newsml12FormatterTest(TestCase):
 
     def test_format_picture_package(self):
         doc = self.picture_package.copy()
-        seq, xml_str = self.formatter.format(doc, {'name': 'Test Subscriber'})[0]
+        seq, xml_str = self.formatter.format(doc, {'name': 'Test Subscriber'}, 1)[0]
         xml = etree.fromstring(xml_str)
         self.assertEqual(xml.find('.//Role[@FormalName="root"]/../NewsComponent/Role').get('FormalName'),
                          'grpRole:main')
@@ -861,7 +859,7 @@ class Newsml12FormatterTest(TestCase):
 
     def test_format_picture_text_package(self):
         doc = self.picture_text_package.copy()
-        seq, xml_str = self.formatter.format(doc, {'name': 'Test Subscriber'})[0]
+        seq, xml_str = self.formatter.format(doc, {'name': 'Test Subscriber'}, 1)[0]
         xml = etree.fromstring(xml_str)
         news_component = xml.find('.//Role[@FormalName="root"]/../NewsComponent')
         self.assertEqual(news_component.find('Role').get('FormalName'), 'grpRole:main')

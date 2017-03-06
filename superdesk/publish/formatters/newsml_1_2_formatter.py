@@ -46,20 +46,19 @@ class NewsML12Formatter(Formatter):
         CONTENT_TYPE.TEXT: 'Text'
     }
 
-    def format(self, article, subscriber, codes=None):
+    def format(self, article, subscriber, pub_seq_num, codes=None):
         """
         Create article in NewsML1.2 format
 
         :param dict article:
         :param dict subscriber:
+        :param int pub_seq_num:
         :param list codes:
         :return [(int, str)]: return a List of tuples. A tuple consist of
             publish sequence number and formatted article string.
         :raises FormatterError: if the formatter fails to format an article
         """
         try:
-            pub_seq_num = superdesk.get_resource_service('subscribers').generate_sequence_number(subscriber)
-
             newsml = etree.Element("NewsML")
             SubElement(newsml, "Catalog", {'Href': 'http://www.iptc.org/std/catalog/catalog.IptcMasterCatalog.xml'})
             news_envelope = SubElement(newsml, "NewsEnvelope")

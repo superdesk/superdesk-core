@@ -8,7 +8,6 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import superdesk
 from lxml import etree as etree
 from lxml.etree import SubElement
 from flask import current_app as app
@@ -130,10 +129,8 @@ class NITFFormatter(Formatter):
         'th': {},
     }
 
-    def format(self, article, subscriber, codes=None):
+    def format(self, article, subscriber, pub_seq_num, codes=None):
         try:
-            pub_seq_num = superdesk.get_resource_service('subscribers').generate_sequence_number(subscriber)
-
             nitf = self.get_nitf(article, subscriber, pub_seq_num)
             return [(pub_seq_num, self.XML_ROOT + etree.tostring(nitf, pretty_print=True).decode('utf-8'))]
         except Exception as ex:

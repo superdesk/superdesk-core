@@ -7,9 +7,9 @@
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
+
 import json
 import datetime
-from unittest import mock
 
 from superdesk.publish import init_app
 from superdesk.publish.formatters.email_formatter import EmailFormatter
@@ -17,7 +17,6 @@ from superdesk.tests import TestCase
 from superdesk.utc import utc
 
 
-@mock.patch('superdesk.publish.subscribers.SubscribersService.generate_sequence_number', lambda self, subscriber: 1)
 class EmailFormatterTest(TestCase):
     def setUp(self):
         self.formatter = EmailFormatter()
@@ -47,7 +46,7 @@ class EmailFormatterTest(TestCase):
 
         article['versioncreated'] = datetime.datetime(year=2015, month=1, day=30, hour=2, minute=40, second=56,
                                                       tzinfo=utc)
-        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'}, 1)[0]
         item = json.loads(doc)
         self.assertEqual(item['message_subject'], 'This is a test headline')
         self.assertEqual(item['message_html'], '<html>\n<body>\n<h1>VIC:&nbsp;This is a test headline</h1>\n'
@@ -84,7 +83,7 @@ class EmailFormatterTest(TestCase):
 
         article['versioncreated'] = datetime.datetime(year=2015, month=1, day=30, hour=2, minute=40, second=56,
                                                       tzinfo=utc)
-        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'}, 1)[0]
         item = json.loads(doc)
         self.assertEqual(item['message_subject'], 'This is a test headline')
         self.assertEqual(item['message_html'], None)
@@ -111,7 +110,7 @@ class EmailFormatterTest(TestCase):
 
         article['versioncreated'] = datetime.datetime(year=2015, month=1, day=30, hour=2, minute=40, second=56,
                                                       tzinfo=utc)
-        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'}, 1)[0]
         item = json.loads(doc)
         self.assertEqual(item['message_subject'], 'This is a test headline')
         self.assertEqual(item['message_html'], '<html>\n<body>\n<h1>This is a test headline</h1>\n'
@@ -149,7 +148,7 @@ class EmailFormatterTest(TestCase):
 
         article['versioncreated'] = datetime.datetime(year=2015, month=1, day=30, hour=2, minute=40, second=56,
                                                       tzinfo=utc)
-        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'}, 1)[0]
         item = json.loads(doc)
         self.assertEqual(item['message_subject'], 'This is a test headline')
         self.assertEqual(item['message_html'], '<html>\n<body>\n<h1>This is a test headline</h1>\n'
@@ -187,7 +186,7 @@ class EmailFormatterTest(TestCase):
 
         article['versioncreated'] = datetime.datetime(year=2015, month=1, day=30, hour=2, minute=40, second=56,
                                                       tzinfo=utc)
-        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'}, 1)[0]
         item = json.loads(doc)
         self.assertEqual(item['message_subject'], 'This is a test headline')
         self.assertEqual(item['message_html'], '<html>\n<body>\n<h1>This is a test headline</h1>\n'
@@ -203,7 +202,7 @@ class EmailFormatterTest(TestCase):
 
     def test_subject_cyrilic(self):
         article = {'headline': 'Неправильная музыка Джамала Али'}
-        seq, doc = self.formatter.format(article, {'name': 'Test'})[0]
+        seq, doc = self.formatter.format(article, {'name': 'Test'}, 1)[0]
         item = json.loads(doc)
         self.assertEqual(article['headline'], item['message_subject'])
 
@@ -227,7 +226,7 @@ class EmailFormatterTest(TestCase):
         }
         article['versioncreated'] = datetime.datetime(year=2017, month=2, day=24, hour=16, minute=40, second=56,
                                                       tzinfo=utc)
-        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'}, 1)[0]
 
         item = json.loads(doc)
         self.assertEqual(item['message_text'], 'VIC: \nPublished At : Fri Feb 24 17:40:56 2017\n'
@@ -244,6 +243,6 @@ class EmailFormatterTest(TestCase):
             'format': 'HTML',
             'type': 'text',
             'body_html': '<p>some HTML</p>'}
-        _, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        _, doc = self.formatter.format(article, {'name': 'Test Subscriber'}, 1)[0]
         item = json.loads(doc)
         self.assertIsNotNone(item['message_html'])

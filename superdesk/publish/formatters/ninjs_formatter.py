@@ -81,10 +81,8 @@ class NINJSFormatter(Formatter):
         self.can_preview = True
         self.can_export = True
 
-    def format(self, article, subscriber, codes=None):
+    def format(self, article, subscriber, pub_seq_num, codes=None):
         try:
-            pub_seq_num = superdesk.get_resource_service('subscribers').generate_sequence_number(subscriber)
-
             ninjs = self._transform_to_ninjs(article, subscriber)
             return [(pub_seq_num, json.dumps(ninjs, default=json_serialize_datetime_objectId))]
         except Exception as ex:
