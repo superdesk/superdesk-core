@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import json
 import logging
 
 from superdesk import get_resource_service
@@ -17,7 +18,7 @@ from superdesk.publish.formatters import get_all_formatters
 from superdesk.utils import ListCursor
 from eve.validation import ValidationError
 from apps.publish.content.common import ITEM_PUBLISH
-import json
+from apps.content_types import apply_schema
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +66,7 @@ class FormattersService(BaseService):
 
             try:
                 self._validate(article)
-                sequence, formatted_doc = formatter.format(article, {'_id': '0'}, None)[0]
+                sequence, formatted_doc = formatter.format(apply_schema(article), {'_id': '0'}, None)[0]
                 formatted_doc = formatted_doc.replace('\'\'', '\'')
 
                 # respond only with the formatted output if output_field is configured

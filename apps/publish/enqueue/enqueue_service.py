@@ -33,6 +33,7 @@ from apps.packages import TakesPackageService
 from apps.packages.package_service import PackageService
 from apps.publish.published_item import PUBLISH_STATE, QUEUE_STATE
 from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
+from apps.content_types import apply_schema
 
 logger = logging.getLogger('superdesk')
 
@@ -344,7 +345,7 @@ class EnqueueService:
                             no_formatters.append(destination['format'])
                             continue
 
-                        formatted_docs = formatter.format(doc,
+                        formatted_docs = formatter.format(apply_schema(doc),
                                                           subscriber,
                                                           subscriber_codes.get(subscriber[config.ID_FIELD]))
 

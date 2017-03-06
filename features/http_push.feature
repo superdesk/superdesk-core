@@ -34,7 +34,7 @@ Feature: HTTP Push publishing
         """
         Given "content_types"
         """
-        [{"_id": "foo", "schema": {}}]
+        [{"_id": "foo", "schema": {"body_html": {}, "slugline": {}}}]
         """
         Given "desks"
         """
@@ -43,12 +43,12 @@ Feature: HTTP Push publishing
 
         When we post to "archive"
         """
-        {"profile": "foo", "type": "text", "task": {"desk": "#desks._id#"}}
+        {"profile": "foo", "type": "text", "task": {"desk": "#desks._id#"}, "byline": "foo"}
         """
 
         When we patch "archive/#archive._id#"
         """
-        {"slugline": "slug", "body_html": "body"}
+        {"slugline": "slug", "body_html": "body", "headline": "Foo"}
         """
 
         When we publish "#archive._id#" with "publish" type and "published" state
@@ -57,7 +57,7 @@ Feature: HTTP Push publishing
         When we transmit published
         Then we pushed 1 item
         """
-        [{"guid": "#archive.guid#", "profile": "foo", "type": "text", "body_html": "body", "version": "3"}]
+        [{"guid": "#archive.guid#", "profile": "foo", "type": "text", "byline": "__no_value__", "headline": "__no_value__", "body_html": "body", "version": "3"}]
         """
 
         When we publish "#archive._id#" with "correct" type and "corrected" state
