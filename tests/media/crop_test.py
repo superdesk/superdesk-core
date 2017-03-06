@@ -16,7 +16,7 @@ from superdesk.media.crop import CropService
 from superdesk.errors import SuperdeskApiError
 from superdesk.vocabularies.command import populate_table_json
 from superdesk.media.media_operations import crop_image
-from superdesk.media.renditions import _resize_image
+from superdesk.media.renditions import _resize_image, get_renditions_spec, can_generate_custom_crop_from_original
 
 
 class CropTestCase(TestCase):
@@ -168,3 +168,24 @@ class CropTestCase(TestCase):
         with open(img, 'rb') as imgfile:
             resized, width, height = _resize_image(imgfile, ('200', None), 'jpeg')
             self.assertEqual(150, height)
+
+    def test_get_rendition_spec_no_custom_crop(self):
+        renditions = get_renditions_spec(no_custom_crops=True)
+        for crop in self.crop_sizes.get('items'):
+            self.assertNotIn(crop['name'], renditions)
+
+    def test_get_rendition_spec_with_custom_crop(self):
+        renditions = get_renditions_spec()
+        for crop in self.crop_sizes.get('items'):
+            self.assertIn(crop['name'], renditions)
+
+    def test_can_generate_custom_crop_from_original(self):
+        self.assertEquals(True, can_generate_custom_crop_from_original(800, 600, {'ratio': '16:9'}))
+        self.assertEquals(True, can_generate_custom_crop_from_original(800, 600, {'width': 800, 'height': 600}))
+        self.assertEquals(True, can_generate_custom_crop_from_original(810, 600, {'width': 800, 'height': 600}))
+        self.assertEquals(True, can_generate_custom_crop_from_original(810, 610, {'width': 800, 'height': 600}))
+        self.assertEquals(False, can_generate_custom_crop_from_original(780, 610, {'width': 800, 'height': 600}))
+        self.assertEquals(False, can_generate_custom_crop_from_original(780, 590, {'width': 800, 'height': 600}))
+        self.assertEquals(True, can_generate_custom_crop_from_original(780, 590, {'width': 800}))
+        self.assertEquals(True, can_generate_custom_crop_from_original(780, 590, {'height': 800}))
+        self.assertEquals(False, can_generate_custom_crop_from_original(780, 590, None))

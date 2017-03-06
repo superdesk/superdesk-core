@@ -1124,6 +1124,26 @@ def step_impl_then_get_renditions(context, type):
         we_can_fetch_a_file(context, desc['href'], 'image/jpeg')
 
 
+@then('we get "{crop_name}" in renditions')
+def step_impl_then_get_renditions(context, crop_name):
+    expect_json_contains(context.response, 'renditions')
+    renditions = apply_path(parse_json_response(context.response), 'renditions')
+    assert isinstance(renditions, dict), 'expected dict for image renditions'
+    desc = renditions[crop_name]
+    assert isinstance(desc, dict), 'expected dict for rendition description'
+    assert 'href' in desc, 'expected href in rendition description'
+    assert 'media' in desc, 'expected media identifier in rendition description'
+    we_can_fetch_a_file(context, desc['href'], 'image/jpeg')
+
+
+@then('we get "{crop_name}" not in renditions')
+def step_impl_then_get_renditions(context, crop_name):
+    expect_json_contains(context.response, 'renditions')
+    renditions = apply_path(parse_json_response(context.response), 'renditions')
+    assert isinstance(renditions, dict), 'expected dict for image renditions'
+    assert crop_name not in renditions, 'expected crop not in renditions'
+
+
 @then('item "{item_id}" is unlocked')
 def then_item_is_unlocked(context, item_id):
     assert_200(context.response)
