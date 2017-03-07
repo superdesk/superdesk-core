@@ -97,10 +97,8 @@ class NINJSFormatter(Formatter):
             'type': self._get_type(article)
         }
 
-        try:
-            ninjs['byline'] = self._get_byline(article)
-        except:
-            pass
+        if article.get('byline'):
+            ninjs['byline'] = article['byline']
 
         located = article.get('dateline', {}).get('located', {})
         if located:
@@ -185,14 +183,6 @@ class NINJSFormatter(Formatter):
 
     def can_format(self, format_type, article):
         return format_type == self.format_type
-
-    def _get_byline(self, article):
-        if 'byline' in article:
-            return article['byline'] or ''
-        user = superdesk.get_resource_service('users').find_one(req=None, _id=article['original_creator'])
-        if user:
-            return user['display_name'] or ''
-        raise Exception('User not found')
 
     def _get_type(self, article):
         if article[ITEM_TYPE] == CONTENT_TYPE.PREFORMATTED:

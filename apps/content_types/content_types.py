@@ -439,3 +439,25 @@ def rename_schema_for_custom_fields(schema, fields_map):
             if old_field != field:
                 schema[old_field] = schema[field]
             del schema[field]
+
+
+def is_enabled(field, schema):
+    """Return true if field is enabled using given schema.
+
+    :param field: field name
+    :param schema: schema dict
+    """
+    return schema.get(field) or schema.get(field) == {} or field not in DEFAULT_SCHEMA
+
+
+def apply_schema(item):
+    """Return item without fields that should not be there given it's profile.
+
+    :param item: item to apply schema to
+    """
+    try:
+        profile = get_resource_service('content_types').find_one(req=None, _id=item['profile'])
+        schema = profile['schema']
+    except:
+        schema = DEFAULT_SCHEMA
+    return {key: val for key, val in item.items() if is_enabled(key, schema)}
