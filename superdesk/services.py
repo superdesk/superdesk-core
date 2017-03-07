@@ -165,3 +165,7 @@ class BaseService():
         :param _id: item id
         """
         return self.backend.remove_from_search(self.datasource, _id)
+
+
+class Service(BaseService):
+    pass

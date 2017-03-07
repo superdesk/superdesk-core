@@ -41,8 +41,10 @@ eve_backend = EveBackend()
 default_user_preferences = dict()
 default_session_preferences = dict()
 signals = blinker.Namespace()
-
 logger = logging_lib.getLogger(__name__)
+
+# core signals
+item_published = signals.signal('item:published')
 
 
 class Command(BaseCommand):

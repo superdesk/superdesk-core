@@ -291,6 +291,7 @@ CORE_APPS = [
     'content_api.api_audit',
     'superdesk.backend_meta',
     'superdesk.server_config',
+    'superdesk.internal_destinations',
 ]
 
 #: Specify what modules should be enabled
