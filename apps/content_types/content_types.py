@@ -163,7 +163,7 @@ class ContentTypesResource(superdesk.Resource):
         'updated_by': superdesk.Resource.rel('users', nullable=True),
     }
 
-    item_url = 'regex("[\w,.:-]+")'
+    item_url = r'regex("[\w,.:-]+")'
 
     privileges = {'POST': CONTENT_TYPE_PRIVILEGE,
                   'PATCH': CONTENT_TYPE_PRIVILEGE,
@@ -421,7 +421,8 @@ def init_editor_required(editor, schema):
     for field in schema:
         if editor[field] is not None and schema[field] is not None and schema[field].get('required') is not None:
             editor[field]['required'] = schema[field]['required']
-            schema[field]['minlength'] = 1 if schema[field]['required'] else 0
+            if schema[field]['required'] and schema[field].get('minlength', 0) == 0:
+                schema[field]['minlength'] = 1
             schema[field]['nullable'] = not schema[field]['required']
 
 
