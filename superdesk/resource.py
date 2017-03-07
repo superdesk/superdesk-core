@@ -41,6 +41,7 @@ class Resource():
     item_url = None
     additional_lookup = None
     schema = {}
+    allow_unknown = None
     item_methods = None
     resource_methods = None
     public_methods = None
@@ -67,6 +68,8 @@ class Resource():
         self.service = service
         if not endpoint_schema:
             endpoint_schema = {'schema': self.schema}
+            if self.allow_unknown is not None:
+                endpoint_schema.update({'allow_unknown': self.allow_unknown})
             if self.additional_lookup is not None:
                 endpoint_schema.update({'additional_lookup': self.additional_lookup})
             if self.extra_response_fields is not None:
