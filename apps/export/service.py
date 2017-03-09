@@ -46,7 +46,7 @@ class ExportService(BaseService):
                 url = app.media.url_for_download(zip_id, 'application/zip')
 
             return [{'url': url, 'failures': unsuccessful_exports}]
-        except Exception as ex:
+        except Exception:
             return [{'err_msg': 'Error creating export zip file. Try again please.'}]
 
     def _validate_for_publish(self, doc):

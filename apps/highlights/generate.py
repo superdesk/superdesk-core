@@ -73,7 +73,7 @@ class GenerateHighlightsService(superdesk.Service):
             else:
                 doc['body_html'] = render_template('default_highlight_template.txt', package=package, items=items)
         if preview:
-            return [doc['body_html'] for doc in docs]
+            return ['' for doc in docs]
         else:
             return service.post(docs, **kwargs)
 

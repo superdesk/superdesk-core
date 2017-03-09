@@ -15,7 +15,7 @@ from datetime import timedelta
 from superdesk.utc import utcnow
 from superdesk.lock import lock, unlock
 from bson.json_util import dumps
-from flask.ext.mail import Message
+from flask_mail import Message
 from superdesk.celery_app import celery
 from flask import current_app as app, render_template, render_template_string
 from superdesk import get_resource_service
