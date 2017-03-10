@@ -389,7 +389,7 @@ class ArchiveService(BaseService):
         doc.update(old)
         return item_id
 
-    def duplicate_content(self, original_doc):
+    def duplicate_content(self, original_doc, state=None):
         """
         Duplicates the 'original_doc' including it's version history. Copy and Duplicate actions use this method.
 
@@ -405,9 +405,9 @@ class ArchiveService(BaseService):
                             item, _item_id, _endpoint = self.packageService.get_associated_item(assoc)
                             assoc[RESIDREF] = assoc['guid'] = self.duplicate_content(item)
 
-        return self._duplicate_item(original_doc)
+        return self._duplicate_item(original_doc, state)
 
-    def _duplicate_item(self, original_doc):
+    def _duplicate_item(self, original_doc, state=None):
         """Duplicates an item.
 
         Duplicates the 'original_doc' including it's version history. If the article being duplicated is contained
@@ -423,6 +423,9 @@ class ArchiveService(BaseService):
 
         if original_doc.get('task', {}).get('desk') is not None and new_doc.get(ITEM_STATE) != CONTENT_STATE.SUBMITTED:
             new_doc[ITEM_STATE] = CONTENT_STATE.SUBMITTED
+
+        if state:
+            new_doc[ITEM_STATE] = state
 
         convert_task_attributes_to_objectId(new_doc)
         get_model(ItemModel).create([new_doc])

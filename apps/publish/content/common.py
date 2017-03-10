@@ -114,6 +114,7 @@ class BasePublishService(BaseService):
         push_content_notification([updates])
         self._import_into_legal_archive(updates)
         CropService().update_media_references(updates, original, True)
+        superdesk.item_published.send(self, item=original)
 
     def update(self, id, updates, original):
         """
