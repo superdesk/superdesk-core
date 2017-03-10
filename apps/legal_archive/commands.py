@@ -52,7 +52,7 @@ class LegalArchiveImport:
         """
         try:
 
-            logger.warning('Import item into legal {}.'.format(item_id))
+            logger.info('Import item into legal {}.'.format(item_id))
 
             doc = get_resource_service(ARCHIVE).find_one(req=None, _id=item_id)
 

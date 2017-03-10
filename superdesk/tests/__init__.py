@@ -148,10 +148,12 @@ def setup_config(config):
         'TESTING': True,
     })
 
-    logging.getLogger('superdesk').setLevel(logging.WARNING)
+    logging.getLogger('apps').setLevel(logging.WARNING)
     logging.getLogger('elastic').setLevel(logging.WARNING)  # elastic datalayer
-    logging.getLogger('elasticsearch').setLevel(logging.WARNING)
     logging.getLogger('urllib3').setLevel(logging.WARNING)
+    logging.getLogger('celery').setLevel(logging.WARNING)
+    logging.getLogger('superdesk').setLevel(logging.ERROR)
+    logging.getLogger('elasticsearch').setLevel(logging.ERROR)
     return app_config
 
 
