@@ -20,7 +20,7 @@ class SearchProviderProxyResource(superdesk.Resource):
     }
 
     resource_methods = ['GET', 'POST']
-    privileges = {'POST': 'search_providers'}
+    privileges = {'POST': 'archive'}
 
 
 class SearchProviderProxyService(SearchIngestService):
