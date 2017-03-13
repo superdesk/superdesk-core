@@ -62,7 +62,7 @@ class Formatter(metaclass=FormatterRegistry):
 
         if body and article.get(FORMAT, '') == FORMATS.PRESERVED:
             body = body.replace('\n', '\r\n').replace('\r\r', '\r')
-            parsed = parse_html(body)
+            parsed = parse_html(body, content='html')
 
             for br in parsed.xpath('//br'):
                 br.tail = '\r\n' + br.tail if br.tail else '\r\n'
