@@ -205,6 +205,10 @@ class EveBackend():
 
         if search_backend:
             doc = backend.find_one(endpoint_name, req=None, _id=id)
+            if not doc:  # there is no doc in mongo, remove it from elastic
+                logger.warn("Item is missing in mongo resource=%s id=%s".format(endpoint_name, id))
+                self.remove_from_search(endpoint_name, id)
+                raise SuperdeskApiError.notFoundError()
             search_backend.update(endpoint_name, id, doc)
 
         return updates

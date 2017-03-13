@@ -105,9 +105,9 @@ class PublishContentTests(TestCase):
             "_updated": utcnow(),
             "queue_state": "pending",
             "state": "scheduled",
-            "publish_schedule": utcnow() + timedelta(minutes=5),
+            "publish_schedule": utcnow() + timedelta(minutes=60),
             "schedule_settings": {
-                "utc_publish_schedule": utcnow() + timedelta(minutes=5),
+                "utc_publish_schedule": utcnow() + timedelta(minutes=60),
                 "timezone": "UTC",
                 "utc_embargo": None
             }

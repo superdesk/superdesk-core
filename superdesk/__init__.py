@@ -13,7 +13,7 @@
 import blinker
 import logging as logging_lib
 from flask import abort, json, Blueprint, current_app as app  # noqa
-from flask.ext.script import Command as BaseCommand, Option  # noqa
+from flask_script import Command as BaseCommand, Option  # noqa
 from werkzeug.exceptions import HTTPException
 from eve.utils import config  # noqa
 from eve.methods.common import document_link  # noqa

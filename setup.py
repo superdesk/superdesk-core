@@ -14,9 +14,9 @@ from setuptools import setup, find_packages
 LONG_DESCRIPTION = "Superdesk Server Core"
 
 install_requires = [
-    'eve>=0.6,<0.7',
+    'eve>=0.6,<=0.7.2',
     'eve-elastic==2.0',
-    'flask>=0.10,<0.11',
+    'flask>=0.10,<0.13',
     'flask-mail>=0.9,<0.10',
     'flask-script>=2.0.5,<3.0',
     'flask-sentinel>=0.0.4,<0.1',
@@ -35,7 +35,7 @@ install_requires = [
     'pytz>=2015.4',
     'tzlocal>=1.2.2,<1.4',
     'raven[flask]>=5.10,<6.0',
-    'requests>=2.7.0,<2.13',
+    'requests>=2.7.0,<=2.13',
     'statsd>=3.1,<3.3',
     'httmock>=1.2.3,<1.3',
     'boto3>=1.1.4,<1.5',

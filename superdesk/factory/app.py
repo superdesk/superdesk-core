@@ -15,7 +15,7 @@ import importlib
 import jinja2
 import eve
 import superdesk
-from flask.ext.mail import Mail
+from flask_mail import Mail
 from eve.io.mongo import MongoJSONEncoder
 from eve.render import send_response
 from superdesk.celery_app import init_celery
@@ -69,6 +69,8 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=Tr
         validator=SuperdeskValidator,
         template_folder=os.path.join(abs_path, 'templates'))
 
+    app.jinja_options = {'autoescape': False}
+
     superdesk.app = app
 
     custom_loader = jinja2.ChoiceLoader([
@@ -102,10 +104,8 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=Tr
             return
         installed.add(module_name)
         app_module = importlib.import_module(module_name)
-        try:
+        if hasattr(app_module, 'init_app'):
             app_module.init_app(app)
-        except AttributeError:
-            pass
 
     for module_name in app.config.get('CORE_APPS', []):
         install_app(module_name)
