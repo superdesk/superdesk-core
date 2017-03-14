@@ -84,51 +84,58 @@ class NITFFormatter(Formatter):
         'hr': NITF_COMMON_ATTR,
     }
 
-    # in elements' dicts, following key can be used:
-    # - 'nitf': new NITF compatible element to use (empty string to remove)
-    # - 'attrib': new attribute to use (replace existing one if set)
-    # - 'filter': callback to use for complex changes (root_elment and element as arguments)
-    HTML2NITF = {
-        'p': {},
-        'b': {
-            'nitf': 'em',
-            'attrib': {'class': 'bold'}},
-        'strong': {
-            'nitf': 'em',
-            'attrib': {'class': 'bold'}},
-        'i': {
-            'nitf': 'em',
-            'attrib': {'class': 'italic'}},
-        'em': {
-            'nitf': 'em',
-            'attrib': {'class': 'italic'}},
-        'u': {
-            'nitf': 'em',
-            'attrib': {'class': 'underscore'}},
-        'strike': {'nitf': 'em'},
-        'sup': {},
-        'sub': {},
-        'a': {},
-        'img': {'nitf': ''},  # <img> use <media> in nitf, so we remove element
-        'blockquote': {'nitf': 'bq'},
-        'pre': {},
-        'ol': {},
-        'ul': {},
-        'li': {},
-        # FIXME: hl1 is not used here as it can only appear in <hedline>
-        'h1': {'nitf': 'hl2'},
-        'h2': {'nitf': 'hl2'},
-        'h3': {'nitf': 'hl2'},
-        'h4': {'nitf': 'hl2'},
-        'h5': {'nitf': 'hl2'},
-        'h6': {'nitf': 'hl2'},
-        # tables
-        'table': {},
-        'tbody': {},
-        'tr': {},
-        'td': {},
-        'th': {},
-    }
+    NITF_ENRICHED_TEXT_PARENTS = ("a", "caption", "credit", "dd", "dt", "em", "hl1", "hl2", "lang", "li",
+                                  "media-caption", "media-producer", "p", "pronounce", "q", "tagline", "td", "th")
+
+    def __init__(self):
+        Formatter.__init__(self)
+
+        # in elements' dicts, following key can be used:
+        # - 'nitf': new NITF compatible element to use (empty string to remove)
+        # - 'attrib': new attribute to use (replace existing one if set)
+        # - 'filter': callback to use for complex changes (root_elment and element as arguments)
+        self.HTML2NITF = {
+            'p': {},
+            'b': {
+                'nitf': 'em',
+                'attrib': {'class': 'bold'}},
+            'br': {'filter': self.br_filter},
+            'strong': {
+                'nitf': 'em',
+                'attrib': {'class': 'bold'}},
+            'i': {
+                'nitf': 'em',
+                'attrib': {'class': 'italic'}},
+            'em': {
+                'nitf': 'em',
+                'attrib': {'class': 'italic'}},
+            'u': {
+                'nitf': 'em',
+                'attrib': {'class': 'underscore'}},
+            'strike': {'nitf': 'em'},
+            'sup': {},
+            'sub': {},
+            'a': {},
+            'img': {'nitf': ''},  # <img> use <media> in nitf, so we remove element
+            'blockquote': {'nitf': 'bq'},
+            'pre': {},
+            'ol': {},
+            'ul': {},
+            'li': {},
+            # FIXME: hl1 is not used here as it can only appear in <hedline>
+            'h1': {'nitf': 'hl2'},
+            'h2': {'nitf': 'hl2'},
+            'h3': {'nitf': 'hl2'},
+            'h4': {'nitf': 'hl2'},
+            'h5': {'nitf': 'hl2'},
+            'h6': {'nitf': 'hl2'},
+            # tables
+            'table': {},
+            'tbody': {},
+            'tr': {},
+            'td': {},
+            'th': {},
+        }
 
     def format(self, article, subscriber, codes=None):
         try:
@@ -253,6 +260,14 @@ class NITFFormatter(Formatter):
                 del html_elem.attrib[attr]
 
         return self._parse_children(html_elem, root_elem, attr_remove)
+
+    def br_filter(self, root_elem, html_elem):
+        parent = html_elem.find('..')
+        if parent.tag not in self.NITF_ENRICHED_TEXT_PARENTS:
+            raise ValueError(u"this element need to be removed")
+        elif parent.tag == 'p':
+            if parent[-1] == html_elem and not (html_elem.tail or '').strip():
+                raise ValueError(u"this element need to be removed")
 
     def _format_tobject(self, article, head):
         return SubElement(head, 'tobject', {'tobject.type': 'news'})

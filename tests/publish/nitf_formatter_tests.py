@@ -105,6 +105,62 @@ class NitfFormatterTest(TestCase):
             </div>""").replace('\n', '').replace(' ', '')
         self.assertEqual(etree.tostring(nitf, encoding='unicode').replace('\n', '').replace(' ', ''), expected)
 
+    def test_html2nitf_br(self):
+        """Check that <br/> is kept if it is a child of and enrichedText parent element"""
+        html = etree.fromstring(dedent("""\
+            <div>
+                <br/>the previous tag should be removed (but not the text)
+                    <p>
+                        the following tag <br/> should still be here
+                        and the next one <br/> too
+                    </p>
+            </div>
+            """))
+
+        nitf = self.formatter.html2nitf(html, attr_remove=['style'])
+
+        expected = dedent("""\
+            <div>
+                the previous tag should be removed (but not the text)
+                    <p>
+                        the following tag <br/> should still be here
+                        and the next one <br/> too
+                    </p>
+            </div>""")
+        self.assertEqual(etree.tostring(nitf, encoding='unicode'), expected)
+
+    def test_html2nitf_br_last(self):
+        """Check that last <br/> in a <p> element is removed"""
+        html = etree.fromstring(dedent("""\
+            <div>
+                    <p>
+                        the following tag <br/> should still be here
+                    </p>
+                    <p>
+                        and the next one <br/> too
+                    </p>
+                    <p>
+                        but not the last one:<br/>
+                    </p>
+            </div>
+            """))
+
+        nitf = self.formatter.html2nitf(html, attr_remove=['style'])
+
+        expected = dedent("""\
+            <div>
+                    <p>
+                        the following tag <br/> should still be here
+                    </p>
+                    <p>
+                        and the next one <br/> too
+                    </p>
+                    <p>
+                        but not the last one:
+                    </p>
+            </div>""")
+        self.assertEqual(etree.tostring(nitf, encoding='unicode'), expected)
+
     def test_table(self):
         html_raw = """
         <div>
