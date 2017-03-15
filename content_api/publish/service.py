@@ -83,6 +83,21 @@ class PublishService(BaseService):
         version_item = copy(item)
         version_item['_id_document'] = version_item.pop('_id')
         get_resource_service('items_versions').create([version_item])
+        # if the update is a cancel we need to cancel all versions
+        if item.get('pubstatus', '') == 'canceled':
+            self._cancel_versions(item.get('_id'))
+
+    def _cancel_versions(self, doc_id):
+        """
+        Given an id of a document set the pubstatus to canceled for all versions
+        :param doc_id:
+        :return:
+        """
+        query = {'_id_document': doc_id}
+        update = {'pubstatus': 'canceled'}
+        for item in get_resource_service('items_versions').get_from_mongo(req=None, lookup=query):
+            if item.get('pubstatus') != 'canceled':
+                get_resource_service('items_versions').update(item['_id'], update, item)
 
     def _filter_item(self, item):
         """

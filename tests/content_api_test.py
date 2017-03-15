@@ -265,3 +265,36 @@ class ContentAPITestCase(TestCase):
             response = c.get('packages/pkg?version=2', headers=headers)
             data = json.loads(response.data)
             self.assertEqual(str(2), data['version'])
+
+    def test_publish_kill_to_content_api(self):
+        subscriber = {'_id': 'sub1'}
+        headers = self._auth_headers(subscriber)
+        item = {'guid': 'foo', 'type': 'text', 'task': {'desk': 'foo'}, 'rewrite_of': 'bar', 'pubstatus': 'usable'}
+        self.content_api.publish(item, [subscriber])
+
+        with self.capi.test_client() as c:
+            response = c.get('items/foo?version=all', headers=headers)
+            data = json.loads(response.data)
+            self.assertEqual(1, data['_meta']['total'])
+
+            response = c.get('items/foo?version=1', headers=headers)
+            data = json.loads(response.data)
+            self.assertEqual('1', data['version'])
+
+        item['pubstatus'] = 'canceled'
+        item['_current_version'] = 2
+        self.content_api.publish(item, [subscriber])
+
+        self.assertEqual(1, self.db.items.count())
+        self.assertEqual('canceled', self.db.items.find_one()['pubstatus'])
+        self.assertEqual(2, self.db.items_versions.count())
+        for i in self.db.items_versions.find():
+            self.assertEqual(i.get('pubstatus'), 'canceled')
+
+        with self.capi.test_client() as c:
+            response = c.get('items/foo?version=all', headers=headers)
+            data = json.loads(response.data)
+            self.assertEqual(0, data['_meta']['total'])
+
+            response = c.get('items/foo?version=1', headers=headers)
+            self.assertEqual(404, response._status_code)
