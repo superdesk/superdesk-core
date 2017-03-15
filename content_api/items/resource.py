@@ -19,6 +19,7 @@ schema = {
     'body_text': {'type': 'string'},
     'byline': {'type': 'string'},
     'copyrightnotice': {'type': 'string'},
+    'copyrightholder': {'type': 'string'},
     'description_html': {'type': 'string'},
     'description_text': {'type': 'string'},
     'headline': {'type': 'string'},
@@ -44,7 +45,10 @@ schema = {
     'versioncreated': {'type': 'datetime', 'required': True},
     'firstcreated': {'type': 'datetime'},
     'evolvedfrom': Resource.not_analyzed_field(),
-    'subscribers': {'type': 'list'}
+    'subscribers': {'type': 'list'},
+    'ednote': {'type': 'string'},
+    'signal': {'type': 'list'},
+    'genre': {'type': 'list'},
 }
 
 

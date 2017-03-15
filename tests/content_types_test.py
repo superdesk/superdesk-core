@@ -1,6 +1,9 @@
+
+import copy
+import bson
+
 from superdesk.tests import TestCase
 from unittest import mock
-import copy
 from apps.content_types import content_types, apply_schema
 
 
@@ -42,3 +45,9 @@ class ContentTypesTestCase(TestCase):
         updates['schema']['body_html']['minlength'] = '99'
         content_types.ContentTypesService().on_update(updates, original)
         self.assertEqual(updates['schema']['body_html']['minlength'], '99')
+
+    def test_get_output_name(self):
+        _id = bson.ObjectId()
+        service = content_types.ContentTypesService()
+        with mock.patch.object(service, 'find_one', return_value={'label': 'Test Label 123 *#$'}):
+            self.assertEqual('TestLabel123', service.get_output_name(_id))

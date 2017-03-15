@@ -40,6 +40,23 @@ Feature: HTTP Push publishing
         """
         [{"name": "sports"}]
         """
+        Given "vocabularies"
+        """
+        [{
+            "_id": "rightsinfo",
+            "display_name": "Copyrights",
+            "type": "manageable",
+            "items": [
+                {
+                    "is_active": true,
+                    "name": "default",
+                    "copyrightHolder": "copyright holder",
+                    "copyrightNotice": "copyright notice",
+                    "usageTerms": ""
+                }
+            ]
+        }]
+        """
 
         When we post to "archive"
         """
@@ -57,7 +74,7 @@ Feature: HTTP Push publishing
         When we transmit published
         Then we pushed 1 item
         """
-        [{"guid": "#archive.guid#", "profile": "foo", "type": "text", "byline": "__no_value__", "headline": "__no_value__", "body_html": "body", "version": "3"}]
+        [{"guid": "#archive.guid#", "profile": "foo", "type": "text", "byline": "__no_value__", "headline": "__no_value__", "body_html": "body", "version": "3", "copyrightholder": "copyright holder", "copyrightnotice": "copyright notice"}]
         """
 
         When we publish "#archive._id#" with "correct" type and "corrected" state

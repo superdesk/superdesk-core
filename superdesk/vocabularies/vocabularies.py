@@ -185,3 +185,25 @@ class VocabulariesService(BaseService):
         user = get_user_from_request()
         push_notification('vocabularies:updated', vocabulary=updated_vocabulary.get('display_name'),
                           user=str(user[config.ID_FIELD]) if user else None)
+
+    def get_rightsinfo(self, item):
+        rights_key = item.get('source', item.get('original_source', 'default'))
+        all_rights = self.find_one(req=None, _id='rightsinfo')
+        if not all_rights or not all_rights.get('items'):
+            return {}
+        try:
+            default_rights = next(info for info in all_rights['items'] if info['name'] == 'default')
+        except StopIteration:
+            default_rights = None
+        try:
+            rights = next(info for info in all_rights['items'] if info['name'] == rights_key)
+        except StopIteration:
+            rights = default_rights
+        if rights:
+            return {
+                'copyrightholder': rights.get('copyrightHolder'),
+                'copyrightnotice': rights.get('copyrightNotice'),
+                'usageterms': rights.get('usageTerms'),
+            }
+        else:
+            return {}

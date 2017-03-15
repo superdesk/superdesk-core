@@ -174,15 +174,12 @@ class NewsMLG2Formatter(Formatter):
         :param Element newsItem:
         :param dict article:
         """
-        all_rights = superdesk.get_resource_service('vocabularies').find_one(req=None, _id='rightsinfo')
-        rights_key = article.get('source', article.get('original_source', 'default'))
-        default_rights = next(info for info in all_rights['items'] if info['name'] == 'default')
-        rights = next((info for info in all_rights['items'] if info['name'] == rights_key), default_rights)
+        rights = superdesk.get_resource_service('vocabularies').get_rightsinfo(article)
         rightsinfo = SubElement(newsItem, 'rightsInfo')
         holder = SubElement(rightsinfo, 'copyrightHolder')
-        SubElement(holder, 'name').text = rights['copyrightHolder']
-        SubElement(rightsinfo, 'copyrightNotice').text = rights['copyrightNotice']
-        SubElement(rightsinfo, 'usageTerms').text = rights['usageTerms']
+        SubElement(holder, 'name').text = rights['copyrightholder']
+        SubElement(rightsinfo, 'copyrightNotice').text = rights['copyrightnotice']
+        SubElement(rightsinfo, 'usageTerms').text = rights['usageterms']
 
     # itemClass elements
     def _format_itemClass(self, article, item_meta):
