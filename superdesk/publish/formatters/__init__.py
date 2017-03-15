@@ -53,6 +53,10 @@ class Formatter(metaclass=FormatterRegistry):
 
         :return: body with public service announcements.
         """
+        try:
+            article['body_html'].replace('<br>', '<br/>')
+        except KeyError:
+            pass
 
         body = ''
         if article[ITEM_TYPE] in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED] or is_takes_package(article):
