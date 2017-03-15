@@ -536,7 +536,8 @@
     {
     	"data": {
             "name" : "all",
-            "_id": "570e04e23c5e9f89fe95366e"
+            "_id": "570e04e23c5e9f89fe95366e",
+            "product_type": "both"
     	},
     	"resource": "products",
     	"username": "admin",

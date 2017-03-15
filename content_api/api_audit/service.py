@@ -10,6 +10,7 @@
 
 from superdesk.services import BaseService
 from flask import g, request
+from eve.utils import config
 
 
 class ApiAuditService(BaseService):
@@ -25,6 +26,10 @@ class ApiAuditService(BaseService):
         :return:
         """
         subscriber = getattr(g, 'user', None)
+        # in behave testing we get user (dict)
+        if isinstance(subscriber, dict):
+            subscriber = subscriber.get(config.ID_FIELD)
+
         audit = {
             'type': item.get('type', ''),
             'subscriber': subscriber,

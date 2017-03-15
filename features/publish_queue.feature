@@ -11,7 +11,7 @@ Feature: Publish Queue
     When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
     And we post to "/subscribers" with success
@@ -298,7 +298,7 @@ Feature: Publish Queue
     When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
     And we post to "/subscribers" with success
@@ -356,7 +356,7 @@ Feature: Publish Queue
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -398,7 +398,7 @@ Feature: Publish Queue
     When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
     And we post to "/subscribers" with success

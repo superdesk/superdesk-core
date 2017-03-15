@@ -61,8 +61,13 @@ class PublishService(BaseService):
         item = copy(doc)
         item.setdefault('_id', item.get('guid'))
         _id = item[config.ID_FIELD] = item.pop('guid')
-        self._create_version_doc(item)
+
+        # merging the existing and new subscribers
         original = self.find_one(req=None, _id=_id)
+        if original:
+            item['subscribers'] = list(set(original.get('subscribers', [])) | set(item.get('subscribers', [])))
+
+        self._create_version_doc(item)
         if original:
             self.update(_id, item, original)
             return _id

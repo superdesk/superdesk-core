@@ -66,7 +66,6 @@ Feature: Search Provider Feature
         {"_items": [{"_id": "search_providers.search_provider", "items": ["testsearch"]}]}
         """
 
-    @wip
     @auth
     Scenario: Search using custom search provider
         Given "search_providers"
@@ -96,7 +95,6 @@ Feature: Search Provider Feature
         Then we get new resource
 
 
-    @wip
     @auth
     Scenario: Get available search providers
         When we get "search_providers_allowed"

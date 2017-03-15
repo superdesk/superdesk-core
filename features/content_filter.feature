@@ -146,7 +146,7 @@ Feature: Content Filter
     When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz",
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both",
         "content_filter": {
             "filter_id": "#content_filters._id#",
             "filter_type": "blocking"

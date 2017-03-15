@@ -402,7 +402,7 @@ Feature: Fetch Items from Ingest
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with "digital" and success

@@ -65,7 +65,6 @@ Feature: User Content
         }
         """
 
-    @wip
     @auth
     Scenario: Hide new content version 0
         When we post to "/archive"

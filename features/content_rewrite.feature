@@ -55,7 +55,7 @@ Feature: Rewrite content
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -240,7 +240,7 @@ Feature: Rewrite content
         When we post to "/products" with success
         """
         {
-          "name":"prod-1","codes":"abc,xyz"
+          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
         }
         """
         And we post to "/subscribers" with success
@@ -356,7 +356,7 @@ Feature: Rewrite content
         When we post to "/products" with success
         """
         {
-          "name":"prod-1","codes":"abc,xyz"
+          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
         }
         """
         And we post to "/subscribers" with success
@@ -480,7 +480,7 @@ Feature: Rewrite content
         When we post to "/products" with success
         """
         {
-          "name":"prod-1","codes":"abc,xyz"
+          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
         }
         """
         And we post to "/subscribers" with success
@@ -552,7 +552,7 @@ Feature: Rewrite content
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -633,7 +633,7 @@ Feature: Rewrite content
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -714,7 +714,7 @@ Feature: Rewrite content
         When we post to "/products" with success
         """
         {
-          "name":"prod-1","codes":"abc,xyz"
+          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
         }
         """
         And we post to "/subscribers" with success
@@ -784,7 +784,7 @@ Feature: Rewrite content
         When we post to "/products" with success
         """
         {
-          "name":"prod-1","codes":"abc,xyz"
+          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
         }
         """
         And we post to "/subscribers" with success
@@ -892,7 +892,7 @@ Feature: Rewrite content
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -974,7 +974,7 @@ Feature: Rewrite content
         When we post to "/products" with success
         """
         {
-          "name":"prod-1","codes":"abc,xyz"
+          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
         }
         """
         And we post to "/subscribers" with success
@@ -1039,7 +1039,7 @@ Feature: Rewrite content
         When we post to "/products" with success
         """
         {
-          "name":"prod-1","codes":"abc,xyz"
+          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
         }
         """
         And we post to "/subscribers" with success
@@ -1135,7 +1135,7 @@ Feature: Rewrite content
         When we post to "/products" with success
         """
         {
-          "name":"prod-1","codes":"abc,xyz"
+          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
         }
         """
         And we post to "/subscribers" with success
@@ -1248,7 +1248,7 @@ Feature: Rewrite content
         When we post to "/products" with success
         """
         {
-          "name":"prod-1","codes":"abc,xyz"
+          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
         }
         """
         And we post to "/subscribers" with success
@@ -1357,7 +1357,7 @@ Feature: Rewrite content
             "content_filter": {
                 "filter_type": "permitting",
                 "filter_id": "#content_filters._id#"
-            }
+            }, "product_type": "both"
         }
         """
         And we post to "/subscribers" with "digital" and success
@@ -1482,7 +1482,7 @@ Feature: Rewrite content
             "content_filter": {
                 "filter_type": "permitting",
                 "filter_id": "#content_filters._id#"
-            }
+            }, "product_type": "both"
         }
         """
         And we post to "/subscribers" with "digital" and success
@@ -1607,7 +1607,7 @@ Feature: Rewrite content
             "content_filter": {
                 "filter_type": "permitting",
                 "filter_id": "#cf1#"
-            }
+            }, "product_type": "both"
         }
         """
         When we post to "/filter_conditions" with "fc2" and success
@@ -1628,7 +1628,7 @@ Feature: Rewrite content
             "content_filter": {
                 "filter_type": "permitting",
                 "filter_id": "#cf2#"
-            }
+            }, "product_type": "both"
         }
         """
         And we post to "/subscribers" with "digital" and success
@@ -1749,7 +1749,7 @@ Feature: Rewrite content
             "content_filter": {
                 "filter_type": "permitting",
                 "filter_id": "#cf1#"
-            }
+            }, "product_type": "both"
         }
         """
         When we post to "/filter_conditions" with "fc2" and success
@@ -1770,7 +1770,7 @@ Feature: Rewrite content
             "content_filter": {
                 "filter_type": "permitting",
                 "filter_id": "#cf2#"
-            }
+            }, "product_type": "both"
         }
         """
         And we post to "/subscribers" with "digital" and success
@@ -1891,7 +1891,7 @@ Feature: Rewrite content
             "content_filter": {
                 "filter_type": "permitting",
                 "filter_id": "#cf1#"
-            }
+            }, "product_type": "both"
         }
         """
         When we post to "/filter_conditions" with "fc2" and success
@@ -1912,7 +1912,7 @@ Feature: Rewrite content
             "content_filter": {
                 "filter_type": "permitting",
                 "filter_id": "#cf2#"
-            }
+            }, "product_type": "both"
         }
         """
         And we post to "/subscribers" with "digital" and success
@@ -2075,7 +2075,7 @@ Feature: Rewrite content
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -2161,7 +2161,7 @@ Feature: Rewrite content
       When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success

@@ -122,7 +122,7 @@ class PublishQueueService(BaseService):
         subscriber_service = get_resource_service('subscribers')
 
         for doc in docs:
-            doc['state'] = QueueState.PENDING.value
+            self._set_queue_state(doc, {})
             doc['moved_to_legal'] = False
 
             if 'published_seq_num' not in doc:
@@ -131,6 +131,7 @@ class PublishQueueService(BaseService):
 
     def on_updated(self, updates, original):
         if updates.get('state', '') != original.get('state', ''):
+            self._set_queue_state(updates, original)
             push_notification('publish_queue:update',
                               queue_id=str(original['_id']),
                               completed_at=(updates.get('completed_at').isoformat()
@@ -138,6 +139,11 @@ class PublishQueueService(BaseService):
                               state=updates.get('state'),
                               error_message=updates.get('error_message')
                               )
+
+    def _set_queue_state(self, updates, original):
+        destination = updates.get('destination', original.get('destination')) or {}
+        updates['state'] = QueueState.SUCCESS.value if destination.get('delivery_type') == 'content_api' \
+            else updates.get('state') or QueueState.PENDING.value
 
     def delete(self, lookup):
         # as encoded item is added manually to storage

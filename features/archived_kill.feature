@@ -14,7 +14,7 @@ Feature: Kill a content item in the (dusty) archive
     When we post to "/products" with success
       """
       {
-        "name":"prod-1","codes":"abc,xyz"
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
     And we post to "/subscribers" with "digital" and success
@@ -44,7 +44,14 @@ Feature: Kill a content item in the (dusty) archive
 
   @auth @notification
   Scenario: Kill a Text Article in the Dusty Archive
-    When we post to "/archive" with success
+    When we post to "/subscribers" with "api" and success
+    """
+    {
+      "name":"Channel api", "media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+      "api_products": ["#products._id#"]
+    }
+    """
+    And we post to "/archive" with success
     """
     [{"guid": "123", "type": "text", "state": "fetched", "slugline": "archived",
       "headline": "headline", "anpa_category" : [{"qcode" : "e", "name" : "Entertainment"}],
@@ -79,13 +86,29 @@ Feature: Kill a content item in the (dusty) archive
     """
     When we enqueue published
     And we get "/publish_queue"
-    Then we get list with 1 items
+    Then we get list with 2 items
     When run import legal publish queue
     And we get "/legal_publish_queue"
-    Then we get list with 0 items
+    Then we get list with 1 items
+    """
+    {"_items" : [
+        {"item_id": "123", "subscriber_id":"Channel api", "content_type": "text",
+        "item_version": 2, "publishing_action": "published"}
+     ]}
+    """
     When we transmit items
     And run import legal publish queue
-    And we expire items
+    When we get "/legal_publish_queue"
+    Then we get list with 2 items
+    """
+    {"_items" : [
+        {"item_id": "123", "subscriber_id":"Channel api", "content_type": "text",
+        "item_version": 2, "publishing_action": "published"},
+        {"item_id": "123", "subscriber_id":"Channel 2", "content_type": "text",
+        "item_version": 2, "publishing_action": "published"}
+     ]}
+    """
+    When we expire items
     """
     ["123", "#archive.123.take_package#"]
     """
@@ -99,9 +122,8 @@ Feature: Kill a content item in the (dusty) archive
     """
     {"_items" : [{"item_id": "123", "state": "published", "type": "text", "_current_version": 2}]}
     """
-    When run import legal publish queue
-    And we get "/legal_publish_queue"
-    Then we get list with 1 items
+    When we get "/legal_publish_queue"
+    Then we get list with 2 items
     When we patch "/archived/123:2"
     """
     {"body_html": "Killed body."}
@@ -116,11 +138,17 @@ Feature: Kill a content item in the (dusty) archive
     When we transmit items
     And run import legal publish queue
     And we get "/legal_publish_queue"
-    Then we get list with 2 items
+    Then we get list with 4 items
     """
     {"_items" : [
-        {"item_id": "123", "content_type": "text", "item_version": 2, "publishing_action": "published"},
-        {"item_id": "123", "content_type": "text", "item_version": 3, "publishing_action": "killed"}
+        {"item_id": "123", "subscriber_id":"Channel api", "content_type": "text",
+        "item_version": 2, "publishing_action": "published"},
+        {"item_id": "123", "subscriber_id":"Channel 2", "content_type": "text",
+        "item_version": 2, "publishing_action": "published"},
+        {"item_id": "123", "subscriber_id":"Channel api", "content_type": "text",
+        "item_version": 3, "publishing_action": "killed"},
+        {"item_id": "123", "subscriber_id":"Channel 2", "content_type": "text",
+        "item_version": 3, "publishing_action": "killed"}
      ]}
     """
     When we get "/archive/123"
