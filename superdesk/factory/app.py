@@ -15,6 +15,7 @@ import importlib
 import jinja2
 import eve
 import superdesk
+
 from flask_mail import Mail
 from eve.io.mongo import MongoJSONEncoder
 from eve.render import send_response
@@ -28,6 +29,19 @@ from superdesk.datalayer import SuperdeskDataLayer  # noqa
 from superdesk.factory.sentry import SuperdeskSentry
 from superdesk.storage.amazon.amazon_media_storage import AmazonMediaStorage
 from superdesk.logging import configure_logging
+
+
+class SuperdeskEve(eve.Eve):
+
+    def register_resource(self, resource, settings):
+        """If `init_indexes` param is True it will avoid creating mongo indexes.
+
+        This is by default only enabled when running manage.py task so when running
+        single process.
+        """
+        if not getattr(self, 'init_indexes', True):
+            settings.pop('mongo_indexes', None)
+        return super().register_resource(resource, settings)
 
 
 def get_app(config=None, media_storage=None, config_object=None, init_elastic=True):
@@ -60,7 +74,7 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=Tr
     elif not media_storage:
         media_storage = SuperdeskGridFSMediaStorage
 
-    app = eve.Eve(
+    app = SuperdeskEve(
         data=SuperdeskDataLayer,
         auth=TokenAuth,
         media=media_storage,
@@ -69,6 +83,7 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=Tr
         validator=SuperdeskValidator,
         template_folder=os.path.join(abs_path, 'templates'))
 
+    app.init_indexes = init_elastic
     app.jinja_options = {'autoescape': False}
 
     superdesk.app = app
