@@ -33,6 +33,7 @@ class DuplicateResource(Resource):
 
     schema = {
         'desk': Resource.rel('desks', False, required=True),
+        'stage': Resource.rel('stages', False, required=False),
         'type': {
             'type': 'string',
             'required': True
@@ -82,7 +83,7 @@ class DuplicateService(BaseService):
             self._validate(archived_doc, doc, guid_of_item_to_be_duplicated)
 
             archived_doc['versioncreated'] = utcnow()
-            send_to(doc=archived_doc, desk_id=doc.get('desk'), default_stage='working_stage')
+            send_to(doc=archived_doc, desk_id=doc.get('desk'), stage_id=doc.get('stage'), default_stage='working_stage')
             new_guid = archive_service.duplicate_content(archived_doc)
             guid_of_duplicated_items.append(new_guid)
 

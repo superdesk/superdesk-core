@@ -194,6 +194,34 @@ Feature: Duplication of Content
       """
 
     @auth
+    Scenario: Item can be duplicated to a different desk and stage
+      When we post to "/desks"
+      """
+      [{"name": "Finance"}]
+      """
+      And we post to "/stages"
+      """
+      [
+        {
+        "name": "another stage",
+        "description": "another stage",
+        "task_status": "in_progress",
+        "desk": "#desks._id#"
+        }
+      ]
+      """
+      And we post to "/archive/123/duplicate"
+      """
+      {"desk": "#desks._id#","stage": "#stages._id#","type": "archive"}
+      """
+      Then we get OK response
+      When we get "/archive/#duplicate._id#"
+      Then we get existing resource
+      """
+      { "task": {"desk": "#desks._id#", "stage": "#stages._id#", "user": "#CONTEXT_USER_ID#"}}
+      """
+
+    @auth
     Scenario: User can't duplicate content without a privilege
       When we login as user "foo" with password "bar" and user type "user"
       """
