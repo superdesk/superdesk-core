@@ -298,3 +298,27 @@ class ContentAPITestCase(TestCase):
 
             response = c.get('items/foo?version=1', headers=headers)
             self.assertEqual(404, response._status_code)
+
+    def test_publish_item_with_ancestors(self):
+        item = {'guid': 'foo', 'type': 'text', 'task': {'desk': 'foo'}}
+        self.content_api.publish(item)
+        self.assertEqual(1, self.db.items.count())
+        self.assertNotIn('ancestors', self.db.items.find_one({'_id': 'foo'}))
+
+        item['guid'] = 'bar'
+        item['rewrite_of'] = 'foo'
+        self.content_api.publish(item)
+
+        self.assertEqual(2, self.db.items.count())
+        bar = self.db.items.find_one({'_id': 'bar'})
+        self.assertEqual(['foo'], bar.get('ancestors', []))
+        self.assertEqual('foo', bar.get('evolvedfrom'))
+
+        item['guid'] = 'fun'
+        item['rewrite_of'] = 'bar'
+        self.content_api.publish(item)
+
+        self.assertEqual(3, self.db.items.count())
+        fun = self.db.items.find_one({'_id': 'fun'})
+        self.assertEqual(['foo', 'bar'], fun.get('ancestors', []))
+        self.assertEqual('bar', fun.get('evolvedfrom'))

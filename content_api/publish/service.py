@@ -45,6 +45,17 @@ class PublishService(BaseService):
             doc.setdefault('versioncreated', now)
             doc.setdefault(config.VERSION, item.get(config.VERSION, 1))
             doc['subscribers'] = [str(sub['_id']) for sub in subscribers]
+
+            if 'evolvedfrom' in doc:
+                parent_item = self.find_one(req=None, _id=doc['evolvedfrom'])
+                if parent_item:
+                    doc['ancestors'] = copy(parent_item.get('ancestors', []))
+                    doc['ancestors'].append(doc['evolvedfrom'])
+                else:
+                    logger.warning("Failed to find evolvedfrom item '{}' for '{}'".format(
+                        doc['evolvedfrom'], doc['guid'])
+                    )
+
             logger.info('publishing %s to %s' % (doc['guid'], subscribers))
             return self._create_doc(doc)
         else:

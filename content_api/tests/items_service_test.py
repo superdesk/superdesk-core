@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import json
-from datetime import date
+from datetime import date, timedelta
 from eve.utils import ParsedRequest
 from flask import Flask
 from unittest import mock
@@ -17,6 +17,9 @@ from unittest.mock import MagicMock
 from werkzeug.datastructures import MultiDict
 from superdesk import resources
 from content_api.tests import ApiTestCase
+from superdesk.tests import TestCase
+from superdesk.utc import utcnow
+from superdesk import get_resource_service
 
 
 class FakeAuditService():
@@ -691,13 +694,18 @@ class OnFetchedItemMethodTestCase(ItemsServiceTestCase):
             '_etag': '12345abcde',
             '_created': '12345abcde',
             '_updated': '12345abcde',
-            'headline': 'breaking news'
+            'headline': 'breaking news',
+            'ancestors': ['item:1234'],
+            'subscribers': [],
+            '_current_version': '1',
+            '_latest_version': '1'
         }
 
         instance = self._make_one(datasource='items')
         instance.on_fetched_item(document)
 
-        for field in ('_created', '_etag', '_id', '_updated'):
+        for field in ('_created', '_etag', '_id', '_updated', 'ancestors',
+                      'subscribers', '_current_version', '_latest_version'):
             self.assertNotIn(field, document)
 
     def test_does_not_remove_hateoas_links_from_fetched_document(self):
@@ -770,12 +778,20 @@ class OnFetchedMethodTestCase(ItemsServiceTestCase):
                 '_created': '12345abcde',
                 '_updated': '12345abcde',
                 'headline': 'breaking news',
+                'ancestors': ['item:1234'],
+                'subscribers': [],
+                '_current_version': '1',
+                '_latest_version': '1'
             }, {
                 '_id': 'item:555',
                 '_etag': '67890fedcb',
                 '_created': '2121abab',
                 '_updated': '2121abab',
                 'headline': 'good news',
+                'ancestors': ['item:5554'],
+                'subscribers': [],
+                '_current_version': '1',
+                '_latest_version': '1'
             }]
         }
 
@@ -784,7 +800,8 @@ class OnFetchedMethodTestCase(ItemsServiceTestCase):
 
         documents = result['_items']
         for doc in documents:
-            for field in ('_created', '_etag', '_id', '_updated'):
+            for field in ('_created', '_etag', '_id', '_updated', 'ancestors',
+                          'subscribers', '_current_version', '_latest_version'):
                 self.assertNotIn(field, doc)
 
     def test_does_not_remove_hateoas_links_from_fetched_documents(self):
@@ -889,3 +906,82 @@ class GetUriMethodTestCase(ItemsServiceTestCase):
         result = instance._get_uri(document)
 
         self.assertEqual(result, 'http://content_api.com/packages_endpoint/foo%3Abar')
+
+
+class GetExpiredItemsTestCase(TestCase):
+    """Tests for the `get_expired_items` helper method."""
+
+    def setUp(self):
+        utc = utcnow()
+        expired = utc - timedelta(days=10)
+        not_expired = utc - timedelta(days=1)
+        self.app.data.insert('items', [
+            {'_id': 'a1', '_updated': not_expired, 'type': 'text'},  # Single item, not expired
+
+            {'_id': 'b2', '_updated': expired, 'type': 'text'},  # Single item, expired
+
+            # Evolved from: parent expired, child not expired
+            {'_id': 'c3', '_updated': expired, 'type': 'text'},
+            {'_id': 'd4', '_updated': not_expired, 'type': 'text', 'evolvedfrom': 'c3', 'ancestors': ['c3']},
+
+            # Evolved from: parent expired, child expired
+            {'_id': 'e5', '_updated': expired, 'type': 'text'},
+            {'_id': 'f6', '_updated': expired, 'type': 'text', 'evolvedfrom': 'e5', 'ancestors': ['e5']},
+
+            # Multi-branch evolved from,
+            {'_id': 'g7', '_updated': expired, 'type': 'text'},
+            {'_id': 'h8', '_updated': expired, 'type': 'text', 'evolvedfrom': 'g7', 'ancestors': ['g7']},
+            {'_id': 'i9', '_updated': not_expired, 'type': 'text', 'evolvedfrom': 'h8', 'ancestors': ['g7', 'h8']},
+
+            # Multi-branch evolved from
+            {'_id': 'j10', '_updated': expired, 'type': 'text'},
+            {'_id': 'k11', '_updated': expired, 'type': 'text', 'evolvedfrom': 'j10', 'ancestors': ['j10']},
+            {'_id': 'l12', '_updated': expired, 'type': 'text', 'evolvedfrom': 'k11', 'ancestors': ['j10', 'k11']},
+        ])
+        self.expired_ids = ['b2', 'c3', 'e5', 'f6', 'g7', 'h8', 'j10', 'k11', 'l12']
+        self.service = get_resource_service('items')
+
+    def test_get_only_expired_items(self):
+        expired_items = []
+        for items in self.service.get_expired_items(expiry_days=8):
+            expired_items.extend(items)
+
+        self.assertEqual(len(expired_items), 9)
+
+        for item in expired_items:
+            self.assertIn(item['_id'], self.expired_ids)
+
+    def test_generator_iteration(self):
+        """Tests that the yield generator works for `get_expired_items`
+
+        Ensures that each iteration contains the correct items
+        """
+        iterations = 0
+        for items in self.service.get_expired_items(expiry_days=8, max_results=4):
+            iterations += 1
+            self.assertLess(iterations, 4)
+
+            num_items = len(items)
+            item_ids = [item['_id'] for item in items]
+
+            if iterations == 1:
+                self.assertEqual(num_items, 4)
+                self.assertEqual(item_ids, ['b2', 'c3', 'e5', 'f6'])
+            elif iterations == 2:
+                self.assertEqual(num_items, 4)
+                self.assertEqual(item_ids, ['g7', 'h8', 'j10', 'k11'])
+            elif iterations == 3:
+                self.assertEqual(num_items, 1)
+                self.assertEqual(item_ids, ['l12'])
+
+        self.assertEqual(iterations, 3)
+
+    def test_get_expired_not_including_children(self):
+        expired_items = []
+        for items in self.service.get_expired_items(expiry_days=8, include_children=False):
+            expired_items.extend(items)
+
+        self.assertEqual(len(expired_items), 5)
+
+        for item in expired_items:
+            self.assertIn(item['_id'], ['b2', 'c3', 'e5', 'g7', 'j10'])

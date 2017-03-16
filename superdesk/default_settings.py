@@ -200,6 +200,10 @@ CELERY_TASK_ROUTES = {
         'queue': celery_queue('expiry'),
         'routing_key': 'expiry.temp_files'
     },
+    'content_api.commands.item_expiry': {
+        'queue': celery_queue('expiry'),
+        'routing_key': 'expiry.content_api'
+    },
     'apps.legal_archive.import_legal_publish_queue': {
         'queue': celery_queue('legal'),
         'routing_key': 'legal.publish_queue'
@@ -257,6 +261,9 @@ CELERY_BEAT_SCHEDULE = {
     },
     'temp_files:gc': {
         'task': 'superdesk.commands.temp_file_expiry',
+    },
+    'content_api:gc': {
+        'task': 'content_api.commands.item_expiry',
         'schedule': crontab(minute='0', hour='2')
     },
     'publish:transmit': {
@@ -589,3 +596,5 @@ COPY_METADATA_FROM_PARENT = (env('COPY_METADATA_FROM_PARENT', 'false').lower() =
 
 #: The number of hours before temporary media files are purged
 TEMP_FILE_EXPIRY_HOURS = int(env('TEMP_FILE_EXPIRY_HOURS', 24))
+#: The number of days before content api items are removed, defaults to approximately 6 months
+CONTENT_API_EXPIRY_DAYS = int(env('CONTENT_API_EXPIRY_DAYS', 183))
