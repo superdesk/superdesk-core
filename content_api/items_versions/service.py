@@ -32,3 +32,12 @@ class ItemsVersionsService(BaseService):
         lookup = {'$and': [lookup,
                            {'pubstatus': {'$ne': 'canceled'}}]}
         return super().find_one(req, **lookup)
+
+    def on_item_deleted(self, document):
+        """Called from ``content_api.items.ItemService`` when an item has been deleted.
+
+        Makes sure that associated item versions are deleted along with the stored item
+
+        :param dict document: Item that has been deleted
+        """
+        self.delete(lookup={'_id_document': document['_id']})

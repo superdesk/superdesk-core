@@ -25,7 +25,7 @@ from werkzeug.datastructures import MultiDict
 from content_api.app.settings import ELASTIC_DATE_FORMAT
 from content_api.errors import BadParameterValueError, UnexpectedParameterError
 from content_api.items.resource import ItemsResource
-from eve.utils import ParsedRequest
+from eve.utils import ParsedRequest, date_to_str
 from superdesk import get_resource_service
 
 
@@ -133,6 +133,61 @@ class ItemsService(BaseService):
                 url_parts.query
             )
 
+    def on_deleted(self, document):
+        """Event handler when an item has been deleted.
+
+        Make sure that all associated item versions are delete as well.
+
+        :param dict document: Item that has been deleted
+        """
+        get_resource_service('items_versions').on_item_deleted(document)
+
+    def get_expired_items(self, expiry_datetime=None, expiry_days=None, max_results=None, include_children=True):
+        """Get the expired items.
+
+        Returns a generator for the list of expired items, sorting by `_id` and returning `max_results` per iteration.
+
+        :param datetime expiry_datetime: Expiry date/time used to retrieve the list of items, defaults to `utcnow()`
+        :param int expiry_days: Number of days content expires, defaults to `CONTENT_API_EXPIRY_DAYS`
+        :param int max_results: Maximum results to retrieve per iteration, defaults to `MAX_EXPIRY_QUERY_LIMIT`
+        :param boolean include_children: Include only root item if False, otherwise include the entire item chain
+        :return list: expired content_api items
+        """
+
+        if expiry_datetime is None:
+            expiry_datetime = utcnow()
+
+        if expiry_days is None:
+            expiry_days = app.settings['CONTENT_API_EXPIRY_DAYS']
+
+        if max_results is None:
+            max_results = app.settings['MAX_EXPIRY_QUERY_LIMIT']
+
+        last_id = None
+        expire_at = date_to_str(expiry_datetime - timedelta(days=expiry_days))
+
+        while True:
+            query = {'$and': [{'_updated': {'$lte': expire_at}}]}
+
+            if last_id is not None:
+                query['$and'].append({'_id': {'$gt': last_id}})
+
+            if not include_children:
+                query['$and'].append({'ancestors': {'$exists': False}})
+
+            req = ParsedRequest()
+            req.sort = '_id'
+            req.where = json.dumps(query)
+            req.max_results = max_results
+
+            items = list(self.get_from_mongo(req=req, lookup=None))
+
+            if not items:
+                break
+
+            last_id = items[-1]['_id']
+            yield items
+
     def _process_fetched_object(self, document):
         """Does some processing on the raw document fetched from database.
 
@@ -148,7 +203,7 @@ class ItemsService(BaseService):
         _id = document.pop('_id')
 
         for field_name in ('_etag', '_created', '_updated', 'subscribers',
-                           '_current_version', '_latest_version'):
+                           '_current_version', '_latest_version', 'ancestors'):
             document.pop(field_name, None)
 
         self._process_item_renditions(document)

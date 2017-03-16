@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from flask import current_app
+from .commands import RemoveExpiredItems  # noqa
 
 
 MONGO_PREFIX = 'CONTENTAPI_MONGO'
