@@ -10,6 +10,8 @@
 
 import os
 import json
+
+from unittest.mock import patch
 from superdesk.tests import TestCase
 from superdesk import get_resource_service
 from superdesk.vocabularies import VocabulariesService
@@ -65,6 +67,38 @@ class VocabulariesPopulateTest(TestCase):
                  {"name": "Domestic Sports", "qcode": "A", "is_active": True}]
         with self.assertRaises(SuperdeskApiError):
             VocabulariesService()._check_uniqueness(items, "qcode")
+
+    def test_get_rightsinfo(self):
+        service = get_resource_service('vocabularies')
+        vocab = {
+            '_id': 'rightsinfo',
+            'items': [
+                {
+                    'is_active': True,
+                    'name': 'default',
+                    'copyrightHolder': "default holder",
+                    'copyrightNotice': "default notice",
+                    'usageTerms': "default terms"
+                },
+                {
+                    'is_active': True,
+                    'name': 'foo',
+                    'copyrightHolder': "foo holder",
+                    'copyrightNotice': "foo notice",
+                    'usageTerms': "foo terms"
+                },
+            ]
+        }
+
+        with patch.object(service, 'find_one', return_value=vocab):
+            info = service.get_rightsinfo({})
+            self.assertEqual('default holder', info['copyrightholder'])
+            self.assertEqual('default notice', info['copyrightnotice'])
+            self.assertEqual('default terms', info['usageterms'])
+            info = service.get_rightsinfo({'source': 'foo'})
+            self.assertEqual('foo holder', info['copyrightholder'])
+            self.assertEqual('foo notice', info['copyrightnotice'])
+            self.assertEqual('foo terms', info['usageterms'])
 
     def tearDown(self):
         os.remove(self.filename)

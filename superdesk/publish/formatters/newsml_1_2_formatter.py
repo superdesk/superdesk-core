@@ -220,21 +220,18 @@ class NewsML12Formatter(Formatter):
         :param dict article:
         :param Element main_news_component:
         """
-        all_rights = superdesk.get_resource_service('vocabularies').find_one(req=None, _id='rightsinfo')
-        rights_key = article.get('source', article.get('original_source', 'default'))
-        default_rights = next(info for info in all_rights['items'] if info['name'] == 'default')
-        rights = next((info for info in all_rights['items'] if info['name'] == rights_key), default_rights)
+        rights = superdesk.get_resource_service('vocabularies').get_rightsinfo(article)
 
         rights_metadata = SubElement(main_news_component, "RightsMetadata")
         copyright = SubElement(rights_metadata, "Copyright")
-        SubElement(copyright, 'CopyrightHolder').text = rights['copyrightHolder']
+        SubElement(copyright, 'CopyrightHolder').text = rights['copyrightholder']
         SubElement(copyright, 'CopyrightDate').text = self.now.strftime("%Y")
 
         usage_rights = SubElement(rights_metadata, "UsageRights")
-        SubElement(usage_rights, 'UsageType').text = rights['copyrightNotice']
+        SubElement(usage_rights, 'UsageType').text = rights['copyrightnotice']
         # SubElement(usage_rights, 'Geography').text = article.get('place', article.get('located', ''))
         SubElement(usage_rights, 'RightsHolder').text = article.get('original_source', article.get('source', ''))
-        SubElement(usage_rights, 'Limitations').text = rights['usageTerms']
+        SubElement(usage_rights, 'Limitations').text = rights['usageterms']
         SubElement(usage_rights, 'StartDate').text = self.string_now
         SubElement(usage_rights, 'EndDate').text = self.string_now
 

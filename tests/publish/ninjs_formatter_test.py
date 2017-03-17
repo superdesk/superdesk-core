@@ -7,9 +7,11 @@
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
+
+import json
+
 from unittest import mock
 from datetime import timedelta
-import json
 
 from superdesk.utc import utcnow
 from superdesk.tests import TestCase
@@ -50,16 +52,18 @@ class NinjsFormatterTest(TestCase):
             'creditline': 'sample creditline',
             'keywords': ['traffic'],
             'abstract': '<p>sample <b>abstract</b></p>',
-            'place': 'Australia',
+            'place': [{'name': 'Australia', 'qcode': 'NSW'}],
             'embargo': embargo_ts,
             'body_footer': '<p>call helpline 999 if you are planning to quit smoking</p>',
-            'company_codes': [{'name': 'YANCOAL AUSTRALIA LIMITED', 'qcode': 'YAL', 'security_exchange': 'ASX'}]
+            'company_codes': [{'name': 'YANCOAL AUSTRALIA LIMITED', 'qcode': 'YAL', 'security_exchange': 'ASX'}],
+            'genre': [{'name': 'Article', 'qcode': 'article'}],
+            'flags': {'marked_for_legal': True},
         }
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
         expected = {
             "guid": "tag:aap.com.au:20150613:12345",
             "version": "1",
-            "place": "Australia",
+            "place": [{'name': 'Australia', 'code': 'NSW'}],
             "pubstatus": "usable",
             "body_html": "The story body<p>call helpline 999 if you are planning to quit smoking</p>",
             "type": "text",
@@ -77,7 +81,9 @@ class NinjsFormatterTest(TestCase):
             "description_html": "<p>sample <b>abstract</b></p>",
             'keywords': ['traffic'],
             'organisation': [{'name': 'YANCOAL AUSTRALIA LIMITED', 'rel': 'Securities Identifier',
-                              'symbols': [{'ticker': 'YAL', 'exchange': 'ASX'}]}]
+                              'symbols': [{'ticker': 'YAL', 'exchange': 'ASX'}]}],
+            'genre': [{'name': 'Article', 'code': 'article'}],
+            'signal': [{'name': 'Content Warning', 'code': 'cwarn', 'scheme': 'http://cv.iptc.org/newscodes/signal/'}],
         }
         self.assertEqual(json.loads(doc), expected)
 
@@ -129,6 +135,7 @@ class NinjsFormatterTest(TestCase):
             "type": "picture",
             "priority": 5,
             "slugline": "AMAZING PICTURE",
+            'ednote': 'TEST ONLY',
         }
         self.assertEqual(expected, json.loads(doc))
 
@@ -384,3 +391,28 @@ class NinjsFormatterTest(TestCase):
             }
         }
         self.assertEqual(json.loads(doc), expected)
+
+    def test_copyright_holder_notice(self):
+        self.app.data.insert('vocabularies', [{'_id': 'rightsinfo', 'items': [
+            {
+                "is_active": True,
+                "name": "default",
+                "copyrightHolder": "copyright holder",
+                "copyrightNotice": "copyright notice",
+                "usageTerms": ""
+            }
+        ]}])
+
+        article = {
+            '_id': 'urn:bar',
+            '_current_version': 1,
+            'guid': 'urn:bar',
+            'type': 'text',
+        }
+
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        data = json.loads(doc)
+
+        self.assertEqual('copyright holder', data['copyrightholder'])
+        self.assertEqual('copyright notice', data['copyrightnotice'])
+        self.assertEqual('', data['usageterms'])

@@ -10,6 +10,16 @@
 
 """NINJS formatter for Superdesk
 
+.. versionadded:: 1.7
+    Added *ednote* field.
+    Added *signal* field.
+    Added *genre* field.
+
+.. versionchanged:: 1.7
+    Fixed copyrightholder/copyrightnotice handling to be consistent with newsml.
+    Fixed place property qcode should be code.
+    Output profile name instead of _id in profile field.
+
 .. versionadded:: 1.6
     Added *evolvedfrom* field to ninjs output.
 
@@ -18,6 +28,7 @@
 
 import json
 import superdesk
+
 from eve.utils import config
 from superdesk.publish.formatters import Formatter
 from superdesk.errors import FormatterError
@@ -63,8 +74,8 @@ class NINJSFormatter(Formatter):
     """
 
     direct_copy_properties = ('versioncreated', 'usageterms', 'language', 'headline', 'copyrightnotice',
-                              'urgency', 'pubstatus', 'mimetype', 'place', 'copyrightholder',
-                              'body_text', 'body_html', 'profile', 'slugline', 'keywords',
+                              'urgency', 'pubstatus', 'mimetype', 'copyrightholder', 'ednote',
+                              'body_text', 'body_html', 'slugline', 'keywords',
                               'firstcreated')
 
     rendition_properties = ('href', 'width', 'height', 'mimetype', 'poi', 'media')
@@ -120,6 +131,12 @@ class NINJSFormatter(Formatter):
         if article.get('description'):
             ninjs['description_html'] = self.append_body_footer(article)
 
+        if article.get('place'):
+            ninjs['place'] = self._format_qcodes(article['place'])
+
+        if article.get('profile'):
+            ninjs['profile'] = self._format_profile(article['profile'])
+
         if recursive:
             if article[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
                 ninjs[ASSOCIATIONS] = self._get_associations(article, subscriber)
@@ -166,6 +183,15 @@ class NINJSFormatter(Formatter):
 
         if article.get('rewrite_of'):
             ninjs['evolvedfrom'] = article['rewrite_of']
+
+        if not ninjs.get('copyrightholder') and not ninjs.get('copyrightnotice') and not ninjs.get('usageterms'):
+            ninjs.update(superdesk.get_resource_service('vocabularies').get_rightsinfo(article))
+
+        if article.get('genre'):
+            ninjs['genre'] = self._format_qcodes(article['genre'])
+
+        if article.get('flags', {}).get('marked_for_legal'):
+            ninjs['signal'] = self._format_signal_cwarn()
 
         return ninjs
 
@@ -250,6 +276,15 @@ class NINJSFormatter(Formatter):
     def _format_rendition(self, rendition):
         """Format single rendition using fields whitelist."""
         return {field: rendition[field] for field in self.rendition_properties if field in rendition}
+
+    def _format_qcodes(self, items):
+        return [{'name': item.get('name'), 'code': item.get('qcode')} for item in items]
+
+    def _format_profile(self, profile):
+        return superdesk.get_resource_service('content_types').get_output_name(profile)
+
+    def _format_signal_cwarn(self):
+        return [{'name': 'Content Warning', 'code': 'cwarn', 'scheme': 'http://cv.iptc.org/newscodes/signal/'}]
 
     def export(self, item):
         if self.can_format(self.format_type, item):

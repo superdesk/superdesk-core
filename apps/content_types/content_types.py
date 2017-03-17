@@ -1,4 +1,6 @@
 
+import re
+import bson
 import superdesk
 import superdesk.schema as schema
 
@@ -210,6 +212,14 @@ class ContentTypesService(superdesk.Service):
         query = {'_id': {'$in': list(profile_ids)}, 'is_used': {'$ne': True}}
         update = {'$set': {'is_used': True}}
         self.find_and_modify(query=query, update=update)
+
+    def get_output_name(self, profile):
+        try:
+            _id = bson.ObjectId(profile)
+            item = self.find_one(req=None, _id=_id) or {}
+            return re.compile('[^0-9a-zA-Z_]').sub('', item.get('label', str(_id)))
+        except bson.errors.InvalidId:
+            return profile
 
 
 def clean_doc(doc):
