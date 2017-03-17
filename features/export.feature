@@ -32,9 +32,9 @@ Feature: Export
       Then we get response code 201
       Then we get new resource
       """
-      {"_id": {"failures": 0, "url": "__any_value__"}}
+      {"failures": 0, "url": "__any_value__"}
       """
-      When we get "#export._id.url#"
+      When we get "#export.url#"
       Then we get response code 200
       And we get "Content-Disposition" header with "attachment; filename="export.zip"" type
       And we get "Content-Type" header with "application/zip" type
@@ -64,5 +64,5 @@ Feature: Export
       Then we get response code 201
       Then we get new resource
       """
-      {"_id": {"failures": 1, "url": "__none__"}}
+      {"failures": 1, "url": "__none__"}
       """

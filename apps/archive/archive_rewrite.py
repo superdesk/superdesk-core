@@ -70,7 +70,10 @@ class ArchiveRewriteService(Service):
         get_resource_service('archive_broadcast').on_broadcast_master_updated(ITEM_CREATE,
                                                                               item=original,
                                                                               rewrite_id=ids[0])
-        return [rewrite]
+
+        doc.clear()
+        doc.update(rewrite)
+        return ids
 
     def _validate_rewrite(self, original, update):
         """Validates the article to be rewritten.

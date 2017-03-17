@@ -1805,7 +1805,7 @@ def step_impl_when_rewrite(context, item_id):
 
     resp = parse_json_response(context.response)
     set_placeholder(context, 'REWRITE_OF', _id)
-    set_placeholder(context, 'REWRITE_ID', resp['_id']['_id'])
+    set_placeholder(context, 'REWRITE_ID', resp['_id'])
 
 
 @then('we get "{field_name}" does not exist')

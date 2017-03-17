@@ -52,17 +52,15 @@ class ProductTestService(BaseService):
             logger.exception(ex)
             raise SuperdeskApiError.badRequestError('Error in testing article: {}'.format(str(ex)))
 
-        return [results]
+        doc['_items'] = results
+        return [article_id]
 
     def test_products(self, article):
         req = ParsedRequest()
         results = []
         products = list(get_resource_service('products').get(req=req, lookup=None))
         for product in products:
-            result = {}
-            result['product_id'] = product['_id']
-            result['matched'] = True
-
+            result = {'product_id': product['_id'], 'matched': True}
             reason = ''
             if not EnqueueService().conforms_product_targets(product, article):
                 # Here it fails to match due to geo restriction

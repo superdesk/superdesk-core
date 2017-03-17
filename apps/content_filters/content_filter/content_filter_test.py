@@ -71,4 +71,4 @@ class ContentFilterTestService(BaseService):
                     raise SuperdeskApiError.\
                         badRequestError('Error in testing archive: {}'.format(str(ex)))
 
-        return [doc['match_results'] for doc in docs]
+        return [len(docs)]
