@@ -1,5 +1,6 @@
 
 import logging
+import re
 from superdesk.services import BaseService
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
@@ -32,7 +33,7 @@ class ExportService(BaseService):
                                 self._validate_for_publish(item)
 
                             contents = formatter.export(item)
-                            zip.writestr(item_id + '.txt', contents.encode("UTF-8"))
+                            zip.writestr(re.sub('\W+', r'_', item_id) + '.txt', contents.encode("UTF-8"))
                         except:
                             unsuccessful_exports += 1
                     else:
@@ -45,9 +46,12 @@ class ExportService(BaseService):
                 zip_id = app.media.put(in_memory_zip.getvalue(), filename='export.zip', content_type='application/zip')
                 url = app.media.url_for_download(zip_id, 'application/zip')
 
-            return [{'url': url, 'failures': unsuccessful_exports}]
-        except Exception:
-            return [{'err_msg': 'Error creating export zip file. Try again please.'}]
+            doc['url'] = url
+            doc['failures'] = unsuccessful_exports
+            return [len(docs)]
+        except Exception as ex:
+            raise SuperdeskApiError.badRequestError('Error creating export zip file. Try again please.',
+                                                    exception=ex)
 
     def _validate_for_publish(self, doc):
         """Validates the given story for publish action"""
