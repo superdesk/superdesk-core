@@ -282,6 +282,11 @@ metadata_schema = {
         'type': 'string',
         'nullable': True
     },
+    # This is a description of the item as recieved from its source.
+    'archive_description': {
+        'type': 'string',
+        'nullable': True
+    },
     'groups': {
         'type': 'list',
         'minlength': 1,

@@ -100,7 +100,10 @@ class TextParserTest(ItemTest):
         self.assertEqual("SOCCER-ENGLAND/CHELSEA-BENITEZ", self.item["slugline"])
         self.assertEqual("Soccer-Smiling Benitez pleads for support "
                          "after midweek outburst against opponent", self.item["headline"])
-        self.assertEqual("SOCCER-ENGLAND/CHELSEA-BENITEZ:Soccer-Smiling Benitez pleads for support after midweek outburst", self.item.get('description_text'))  # noqa
+        self.assertEqual("SOCCER-ENGLAND/CHELSEA-BENITEZ:Soccer-Smiling Benitez pleads for support after "
+                         "midweek outburst", self.item.get('description_text'))
+        self.assertEqual("SOCCER-ENGLAND/CHELSEA-BENITEZ:Soccer-Smiling Benitez pleads for support after "
+                         "midweek outburst", self.item.get('archive_description'))
 
     def test_content_set(self):
         self.assertEqual("<p>By Toby Davis</p>", self.item.get('body_html'))
