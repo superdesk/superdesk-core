@@ -56,6 +56,12 @@ class FilenameTest(Base):
         filename = self.service.get_filename(item)
         self.assertEqual(filename, "123-test_id-123-3-5.test_ext")
 
+    def test_get_filename_with_default_extension(self):
+        item = self.fake_item.copy()
+        item['destination'].pop('format', None)
+        filename = self.service.get_filename(item)
+        self.assertEqual(filename, "123-test_id-123-3-5.txt")
+
 
 class FilenameCustomizedExtTest(Base):
     def setUp(self):
