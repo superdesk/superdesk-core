@@ -23,7 +23,7 @@ from behave import given, when, then  # @UnresolvedImport
 from bson import ObjectId
 from eve.io.mongo import MongoJSONEncoder
 from eve.methods.common import parse
-from eve.utils import ParsedRequest
+from eve.utils import ParsedRequest, config
 from flask import json
 from wooper.assertions import (
     assert_in, assert_equal, assertions
@@ -2260,3 +2260,17 @@ def we_assert_content_api_item_is_published(context, item_id, subscriber):
         assert len(item.get('subscribers', [])) > 0, 'No subscribers found.'
         assert subscriber not in item.get('subscribers', []), \
             'Subscriber with Id: {} found for the item. '.format(subscriber)
+
+
+@then('we ensure that archived schema extra fields are not present in duplicated item')
+def we_ensure_that_archived_schema_extra_fields_are_not_present(context):
+    with context.app.test_request_context(context.app.config['URL_PREFIX']):
+        eve_keys = set([config.ID_FIELD, config.LAST_UPDATED, config.DATE_CREATED, config.VERSION, config.ETAG])
+        archived_schema_keys = set(context.app.config['DOMAIN']['archived']['schema'].keys())
+        archived_schema_keys.union(eve_keys)
+        archive_schema_keys = set(context.app.config['DOMAIN']['archive']['schema'].keys())
+        archive_schema_keys.union(eve_keys)
+        extra_fields = [key for key in archived_schema_keys if key not in archive_schema_keys]
+        duplicate_item = json.loads(context.response.get_data())
+        for field in extra_fields:
+            assert field not in duplicate_item, 'Field {} found the duplicate item'.format(field)

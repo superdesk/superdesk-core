@@ -439,12 +439,16 @@ class ArchiveService(BaseService):
     def _remove_after_copy(self, copied_item):
         """Removes the properties which doesn't make sense to have for an item after copy.
         """
-        keys_to_delete = [config.ID_FIELD, 'guid', LINKED_IN_PACKAGES, EMBARGO, PUBLISH_SCHEDULE,
-                          SCHEDULE_SETTINGS, 'lock_time', 'lock_session', 'lock_user', SIGN_OFF,
-                          'rewritten_by', 'rewrite_of', 'rewrite_sequence', 'highlights', 'is_take_item',
-                          'item_id', 'publish_state', 'last_published_version', 'queue_state',
-                          'digital_item_id', 'publish_sequence_no', 'last_queue_event', 'moved_to_legal',
-                          'published_in_package', '_type', 'event_id']
+        # get the archive schema keys
+        archive_schema_keys = list(app.config['DOMAIN'][SOURCE]['schema'].keys())
+        archive_schema_keys.extend([config.ID_FIELD, config.LAST_UPDATED, config.DATE_CREATED,
+                                    config.VERSION, config.ETAG])
+
+        # Delete the keys that are not part of archive schema.
+        keys_to_delete = [key for key in copied_item.keys() if key not in archive_schema_keys]
+        keys_to_delete.extend([config.ID_FIELD, 'guid', LINKED_IN_PACKAGES, EMBARGO, PUBLISH_SCHEDULE,
+                               SCHEDULE_SETTINGS, 'lock_time', 'lock_session', 'lock_user', SIGN_OFF,
+                               'rewritten_by', 'rewrite_of', 'rewrite_sequence', 'highlights', '_type', 'event_id'])
 
         for key in keys_to_delete:
             copied_item.pop(key, None)

@@ -197,7 +197,7 @@ def on_create_item(docs, repo_type=ARCHIVE):
         if 'family_id' not in doc:
             doc['family_id'] = doc[GUID_FIELD]
 
-        if 'event_id' not in doc:
+        if 'event_id' not in doc and repo_type != 'ingest':
             doc['event_id'] = generate_guid(type=GUID_TAG)
 
         set_default_state(doc, CONTENT_STATE.DRAFT)
