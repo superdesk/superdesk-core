@@ -17,6 +17,7 @@ class SearchProviderProxyResource(superdesk.Resource):
         'guid': {'type': 'string', 'required': True},
         'desk': superdesk.Resource.rel('desks', False, nullable=True),
         'repo': superdesk.Resource.rel('search_providers', False, nullable=True),
+        'stage': superdesk.Resource.rel('stages', False, nullable=True)
     }
 
     resource_methods = ['GET', 'POST']
