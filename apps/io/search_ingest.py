@@ -38,7 +38,8 @@ class SearchIngestResource(superdesk.Resource):
     resource_methods = ['GET', 'POST']
     schema = {
         'guid': {'type': 'string', 'required': True},
-        'desk': Resource.rel('desks', False, nullable=True)
+        'desk': Resource.rel('desks', False, nullable=True),
+        'stage': Resource.rel('stages', False, nullable=True)
     }
 
 
