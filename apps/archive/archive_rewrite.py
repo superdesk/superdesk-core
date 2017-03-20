@@ -194,7 +194,7 @@ class ArchiveRewriteService(Service):
                     rewrite['body_html'] = original.get('body_html', '')
 
         rewrite[ITEM_STATE] = CONTENT_STATE.PROGRESS
-        self._set_take_key(rewrite, original.get('event_id'))
+        self._set_take_key(rewrite)
         return rewrite
 
     def _add_rewritten_flag(self, original, digital, rewrite):
@@ -243,11 +243,10 @@ class ArchiveRewriteService(Service):
                 processed_items.add(doc_id)
                 app.on_archive_item_updated({rewrite_field: None}, archive_item, ITEM_UNLINK)
 
-    def _set_take_key(self, rewrite, event_id):
+    def _set_take_key(self, rewrite):
         """Sets the anpa take key of the rewrite with ordinal.
 
         :param rewrite: rewrite story
-        :param event_id: event id
         """
         rewrite_sequence = rewrite.get('rewrite_sequence') or 0
         if rewrite_sequence > 1:

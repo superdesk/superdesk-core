@@ -498,6 +498,7 @@ Feature: Duplication of Content
        "task": {"desk": "#desks._id#", "stage": "#desks.working_stage#", "user": "#CONTEXT_USER_ID#"},
        "original_id": "123", "headline": "test1", "type": "text"}
       """
+      Then we ensure that archived schema extra fields are not present in duplicated item
       When we get "/published"
       Then we get list with 0 items
       When we publish "#duplicate._id#" with "publish" type and "published" state
@@ -517,11 +518,11 @@ Feature: Duplication of Content
          """
          [{  "_id": "123_1", "state": "published", "type":"text", "headline": "test1", "guid": "123_1", "item_id": "123", "original_creator": "#CONTEXT_USER_ID#",
           "source": "REUTERS", "subject":[{"qcode": "17004000", "name": "Statistics"}],
-          "body_html": "Test Document body", "_current_version": 1,
+          "body_html": "Test Document body", "_current_version": 1, "archived_id": "123:1",
           "task": {"desk": "#desks._id#", "stage": "#desks.working_stage#", "user": "#CONTEXT_USER_ID#"}},
           {  "_id": "123_2", "state": "published", "type":"text", "headline": "test2", "guid": "123_2", "item_id": "123", "original_creator": "#CONTEXT_USER_ID#",
           "source": "REUTERS", "subject":[{"qcode": "17004000", "name": "Statistics"}],
-          "body_html": "Test Document body", "_current_version": 2,
+          "body_html": "Test Document body", "_current_version": 2, "archived_id": "123:2",
           "task": {"desk": "#desks._id#", "stage": "#desks.working_stage#", "user": "#CONTEXT_USER_ID#"}
          }]
          """
@@ -538,4 +539,4 @@ Feature: Duplication of Content
        "task": {"desk": "#desks._id#", "stage": "#desks.working_stage#", "user": "#CONTEXT_USER_ID#"},
        "original_id": "123", "headline": "test2"}
       """
-
+      Then we ensure that archived schema extra fields are not present in duplicated item
