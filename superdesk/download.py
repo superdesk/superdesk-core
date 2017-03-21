@@ -21,9 +21,12 @@ bp = superdesk.Blueprint('download_raw', __name__)
 logger = logging.getLogger(__name__)
 
 
-@bp.route('/download/<id>', methods=['GET'])
-def download_file(id):
-    file = app.media.get(id, 'download')
+@bp.route('/download/<id>', methods=['GET'], defaults={'folder': None})
+@bp.route('/download/<path:folder>/<id>', methods=['GET'])
+def download_file(id, folder=None):
+    filename = '{}/{}'.format(folder, id) if folder else id
+
+    file = app.media.get(filename, 'download')
     if file:
         data = wrap_file(request.environ, file, buffer_size=1024 * 256)
         response = app.response_class(

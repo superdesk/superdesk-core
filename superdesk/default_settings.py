@@ -196,6 +196,10 @@ CELERY_TASK_ROUTES = {
         'queue': celery_queue('expiry'),
         'routing_key': 'expiry.session'
     },
+    'superdesk.commands.remove_exported_files': {
+        'queue': celery_queue('expiry'),
+        'routing_key': 'expiry.temp_files'
+    },
     'apps.legal_archive.import_legal_publish_queue': {
         'queue': celery_queue('legal'),
         'routing_key': 'legal.publish_queue'
@@ -250,6 +254,10 @@ CELERY_BEAT_SCHEDULE = {
     'content:gc': {
         'task': 'apps.archive.content_expiry',
         'schedule': crontab(minute='*/30')
+    },
+    'temp_files:gc': {
+        'task': 'superdesk.commands.temp_file_expiry',
+        'schedule': crontab(minute='0', hour='2')
     },
     'publish:transmit': {
         'task': 'superdesk.publish.transmit',
@@ -579,3 +587,6 @@ XMPP_AUTH_DOMAIN = env('XMPP_AUTH_DOMAIN', 'Superdesk')
 
 #: copies basic metadata from parent of associated items
 COPY_METADATA_FROM_PARENT = (env('COPY_METADATA_FROM_PARENT', 'false').lower() == 'true')
+
+#: The number of hours before temporary media files are purged
+TEMP_FILE_EXPIRY_HOURS = int(env('TEMP_FILE_EXPIRY_HOURS', 24))
