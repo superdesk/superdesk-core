@@ -265,17 +265,30 @@ class ArchiveService(BaseService):
             if not (item_obj and config.ID_FIELD in item_obj):
                 continue
 
+            item_id = item_obj[config.ID_FIELD]
+            media_item = {}
             if app.settings.get('COPY_METADATA_FROM_PARENT') and item_obj.get(ITEM_TYPE) in MEDIA_TYPES:
                 stored_item = (original.get(ASSOCIATIONS) or {}).get(item_name) or item_obj
             else:
-                _id = item_obj[config.ID_FIELD]
-                stored_item = self.find_one(req=None, _id=_id)
+                media_item = stored_item = self.find_one(req=None, _id=item_id)
                 if not stored_item:
                     continue
 
             self._validate_updates(stored_item, item_obj, user)
             if stored_item[ITEM_TYPE] == CONTENT_TYPE.PICTURE:  # create crops
                 CropService().create_multiple_crops(item_obj, stored_item)
+
+            # If the media item is not marked as 'used', mark it as used
+            if original.get(ITEM_TYPE) == CONTENT_TYPE.TEXT and \
+                    (item_obj is not stored_item or not stored_item.get('used')):
+                if media_item is not stored_item:
+                    media_item = self.find_one(req=None, _id=item_id)
+
+                if media_item and not media_item.get('used'):
+                    self.system_update(media_item['_id'], {'used': True}, media_item)
+
+                stored_item['used'] = True
+
             stored_item.update(item_obj)
             updates[ASSOCIATIONS][item_name] = stored_item
 
