@@ -33,7 +33,10 @@ class ExportService(BaseService):
                                 self._validate_for_publish(item)
 
                             contents = formatter.export(item)
-                            zip.writestr(re.sub('\W+', r'_', item_id) + '.txt', contents.encode("UTF-8"))
+                            # Remove invalid filename chars (for windows OS) and create the filename
+                            filename = re.sub(r'[\\/*?:"<>|]', '', item.get('slugline', '')) +\
+                                '_' + str(item.get('unique_id')) + '.txt'
+                            zip.writestr(filename, contents.encode("UTF-8"))
                         except:
                             unsuccessful_exports += 1
                     else:
