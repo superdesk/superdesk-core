@@ -942,7 +942,7 @@ class NewsMLG2FormatterTest(TestCase):
         article = self.article.copy()
         article['highlights'] = ids
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
-        xml = etree.fromstring(doc)
+        xml = etree.fromstring(doc.encode('utf-8'))
         content_meta = xml.find('{http://iptc.org/std/nar/2006-10-01/}itemSet'
                                 '/{http://iptc.org/std/nar/2006-10-01/}newsItem/'
                                 '{http://iptc.org/std/nar/2006-10-01/}contentMeta')

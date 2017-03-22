@@ -46,8 +46,10 @@ def configure_logging(file_path):
     except:
         logger.warn('Cannot load logging config. File: %s', file_path)
 
+
 def time(name):
     _times[name] = _time.time()
+
 
 def time_end(name):
     if _times.get(name):

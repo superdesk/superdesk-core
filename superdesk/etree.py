@@ -72,6 +72,39 @@ BLOCK_ELEMENTS = (
     "ul",
     "video")
 
+# from https://www.w3.org/TR/html/syntax.html#void-elements
+VOID_ELEMENTS = (
+    "area",
+    "base",
+    "br",
+    "col",
+    "embed",
+    "hr",
+    "img",
+    "input",
+    "keygen",
+    "link",
+    "menuitem",
+    "meta",
+    "param",
+    "source",
+    "track",
+    "wbr")
+
+
+def fix_html_void_elements(element):
+    """Use self-closing elements for HTML void elements, and start/end pairs otherwise
+
+    :param element: Element to fix
+    :type element: lxml.etree.Element
+    :return: fixed Element
+    """
+    # we want self closing for HTML void elemends and start/end tags otherwise
+    # so we set element.text to None for void ones, and empty string otherwise
+    for e in element.xpath("//*[not(node())]"):
+        e.text = None if e.tag in VOID_ELEMENTS else ''
+    return element
+
 
 def get_text_word_count(text):
     """Get word count for given plain text.
