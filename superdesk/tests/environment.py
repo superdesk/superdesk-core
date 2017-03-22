@@ -159,4 +159,4 @@ def before_step(context, step):
 def setup_search_provider(app):
     from apps.search_providers import register_search_provider, allowed_search_providers
     if 'testsearch' not in allowed_search_providers:
-        register_search_provider('testsearch', TestSearchProvider)
+        register_search_provider('testsearch', provider_class=TestSearchProvider)
