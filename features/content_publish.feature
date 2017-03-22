@@ -1165,7 +1165,7 @@ Feature: Content Publishing
       When we get "/archive_autosave/#archive._id#"
       Then we get error 404
 
-    @auth @wip
+    @auth
     Scenario: We can lock a published content and then kill it
       Given the "validators"
       """

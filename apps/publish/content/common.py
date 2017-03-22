@@ -135,7 +135,11 @@ class BasePublishService(BaseService):
                 if updates.get(ASSOCIATIONS):
                     self._refresh_associated_items(updated)  # updates got lost with update
 
-                if self.published_state != CONTENT_STATE.KILLED and not app.config.get('NO_TAKES', False):
+                # process takes package for published or corrected items
+                # if no_takes is true but takes package exists then process takes package.
+                if self.published_state != CONTENT_STATE.KILLED and \
+                        (not app.config.get('NO_TAKES', False) or
+                         self.takes_package_service.get_take_package_id(updated)):
                     self._process_takes_package(original, updated, updates)
 
                 self._update_archive(original, updates, should_insert_into_versions=auto_publish)

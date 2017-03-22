@@ -287,7 +287,7 @@ class EnqueueService:
 
         if len(digital_subscribers) > 0:
             package = None
-            if not app.config.get('NO_TAKES', False):
+            if not app.config.get('NO_TAKES', False) or self.takes_package_service.get_take_package_id(doc):
                 package = self.takes_package_service.get_take_package(doc)
                 package['item_id'] = package[config.ID_FIELD]
                 self._resend_to_subscribers(package, digital_subscribers, subscriber_codes)

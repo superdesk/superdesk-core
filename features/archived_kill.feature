@@ -649,3 +649,126 @@ Feature: Kill a content item in the (dusty) archive
       Then we get response code 403
       When we get "/archived"
       Then we get list with 1 items
+
+  @auth @notification
+  Scenario: Kill a Text Article in the Dusty Archive with no takes
+    When we post to "/archive" with success
+    """
+    [{"guid": "123", "type": "text", "state": "fetched", "slugline": "archived",
+      "headline": "headline", "anpa_category" : [{"qcode" : "e", "name" : "Entertainment"}],
+      "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+      "subject":[{"qcode": "17004000", "name": "Statistics"}],
+      "dateline" : {
+        "located" : {
+            "state_code" : "NSW",
+            "city" : "Sydney",
+            "tz" : "Australia/Sydney",
+            "country_code" : "AU",
+            "dateline" : "city",
+            "alt_name" : "",
+            "state" : "New South Wales",
+            "city_code" : "Sydney",
+            "country" : "Australia"
+        },
+        "source" : "AAP",
+        "date" : "2016-04-13T04:29:14",
+        "text" : "SYDNEY April 13 AAP -"
+      },
+      "body_html": "Test Document body"}]
+    """
+    Then we get OK response
+    When we publish "#archive._id#" with "publish" type and "published" state
+    Then we get OK response
+    When we get "/published"
+    Then we get list with 2 items
+    """
+    {"_items" : [{"_id": "123", "state": "published", "type": "text", "_current_version": 2}]}
+    """
+    When we enqueue published
+    And we get "/publish_queue"
+    Then we get list with 2 items
+    When run import legal publish queue
+    And we get "/legal_publish_queue"
+    Then we get list with 0 items
+    When we transmit items
+    And run import legal publish queue
+    When we get "/legal_publish_queue"
+    Then we get list with 2 items
+    """
+    {"_items" : [
+        {"item_id": "123", "subscriber_id":"Channel 2", "content_type": "text",
+        "item_version": 2, "publishing_action": "published"},
+        {"item_id": "#archive.123.take_package#", "subscriber_id":"Channel 1", "content_type": "composite",
+        "item_version": 2, "publishing_action": "published"}
+     ]}
+    """
+    When we expire items
+    """
+    ["123", "#archive.123.take_package#"]
+    """
+    And we get "/published"
+    Then we get list with 0 items
+    When we enqueue published
+    And we get "/publish_queue"
+    Then we get list with 0 items
+    When we get "/archived"
+    Then we get list with 2 items
+    """
+    {"_items" : [{"item_id": "123", "state": "published", "type": "text", "_current_version": 2}]}
+    """
+    When we get "/legal_publish_queue"
+    Then we get list with 2 items
+    Given config update
+    """
+    {"NO_TAKES": true}
+    """
+    When we patch "/archived/123:2"
+    """
+    {"body_html": "Killed body."}
+    """
+    Then we get OK response
+    And we get 2 emails
+    When we get "/published"
+    Then we get list with 2 items
+    """
+    {"_items" : [{"_id": "123", "state": "killed", "type": "text", "_current_version": 3, "queue_state": "queued"}]}
+    """
+    When we transmit items
+    And run import legal publish queue
+    And we get "/legal_publish_queue"
+    Then we get list with 4 items
+    """
+    {"_items" : [
+        {"item_id": "123", "subscriber_id":"Channel 2", "content_type": "text",
+        "item_version": 2, "publishing_action": "published"},
+        {"item_id": "#archive.123.take_package#", "subscriber_id":"Channel 1", "content_type": "composite",
+        "item_version": 2, "publishing_action": "published"},
+        {"item_id": "123", "subscriber_id":"Channel 2", "content_type": "text",
+        "item_version": 3, "publishing_action": "killed"},
+        {"item_id": "#archive.123.take_package#", "subscriber_id":"Channel 1", "content_type": "composite",
+        "item_version": 3, "publishing_action": "killed"}
+     ]}
+    """
+    When we get "/archive/123"
+    Then we get OK response
+    And we get text "Please kill story slugged archived" in response field "body_html"
+    And we get text "Killed body" in response field "body_html"
+    When we get "/archived/123:2"
+    Then we get error 404
+    When we get "/archived"
+    Then we get list with 0 items
+    When we get "/legal_archive/123"
+    Then we get existing resource
+    """
+    {"_id": "123", "type": "text", "_current_version": 3, "state": "killed", "pubstatus": "canceled", "operation": "kill"}
+    """
+    When we get "/legal_archive/123?version=all"
+    Then we get list with 3 items
+    When we expire items
+    """
+    ["123", "#archive.123.take_package#"]
+    """
+    And we get "/published"
+    Then we get list with 0 items
+    When we get "/archive"
+    Then we get list with 0 items

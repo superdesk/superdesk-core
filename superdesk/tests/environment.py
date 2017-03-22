@@ -37,7 +37,12 @@ def setup_before_all(context, config, app_factory):
 def setup_before_scenario(context, scenario, config, app_factory):
     if scenario.status != 'skipped' and 'notesting' in scenario.tags:
         config['SUPERDESK_TESTING'] = False
+
     tests.setup(context, config, app_factory, bool(config))
+
+    if context.app:
+        # reset to False.
+        context.app.config.update({'NO_TAKES': False})
 
     context.headers = [
         ('Content-Type', 'application/json'),
@@ -102,6 +107,7 @@ def before_feature(context, feature):
     # set the MAX_TRANSMIT_RETRY_ATTEMPT to zero so that transmit does not retry
     config['MAX_TRANSMIT_RETRY_ATTEMPT'] = 0
     os.environ['BEHAVE_TESTING'] = '1'
+    # config['NO_TAKES'] = False
     tests.setup(context, config, app_factory=app_factory)
 
     if 'tobefixed' in feature.tags:

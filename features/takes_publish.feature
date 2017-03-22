@@ -2171,3 +2171,242 @@ Feature: Take Package Publishing
         "associations": {}
       }
       """
+
+  @auth @vocabulary
+    Scenario: Publish stories in takes and change system setting to no takes and correct/kill a take.
+      Given the "validators"
+      """
+        [
+        {"schema": {}, "type": "text", "act": "publish", "_id": "publish_text"},
+        {"_id": "publish_composite", "act": "publish", "type": "composite", "schema": {}},
+        {"schema": {}, "type": "text", "act": "correct", "_id": "correct_text"},
+        {"_id": "correct_composite", "act": "correct", "type": "composite", "schema": {}},
+        {"schema": {}, "type": "text", "act": "kill", "_id": "kill_text"},
+        {"schema": {}, "type": "composite", "act": "kill", "_id": "kill_composite"}
+        ]
+      """
+      And empty "ingest"
+      And "desks"
+      """
+      [{"name": "Sports"}]
+      """
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+      }
+      """
+      And we post to "/subscribers" with "digital" and success
+      """
+      {
+        "name":"Channel 1","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
+      And we post to "/subscribers" with "wire" and success
+      """
+      {
+        "name":"Channel 2","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
+      When we post to "archive"
+      """
+      [{
+          "guid": "123",
+          "type": "text",
+          "headline": "test1",
+          "slugline": "comics",
+          "anpa_take_key": "Take",
+          "state": "draft",
+          "subject":[{"qcode": "17004000", "name": "Statistics"}],
+          "task": {
+              "user": "#CONTEXT_USER_ID#"
+          },
+          "body_html": "Take-1"
+      }]
+      """
+      And we post to "/archive/123/move"
+      """
+      [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
+      """
+      Then we get OK response
+      When we post to "archive/123/link"
+      """
+      [{}]
+      """
+      Then we get next take as "TAKE"
+      """
+      {
+          "type": "text",
+          "headline": "test1",
+          "slugline": "comics",
+          "anpa_take_key": "Take=2",
+          "subject":[{"qcode": "17004000", "name": "Statistics"}],
+          "state": "draft",
+          "original_creator": "#CONTEXT_USER_ID#"
+      }
+      """
+      When we patch "/archive/#TAKE#"
+      """
+      {"body_html": "Take-2"}
+      """
+      And we post to "/archive/#TAKE#/move"
+      """
+      [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
+      """
+      And we get "/archive"
+      Then we get list with 3 items
+      """
+      {
+        "_items": [
+          {"_id": "123", "type": "text", "anpa_take_key": "Take",
+           "takes": {"_id": "#TAKE_PACKAGE#", "type": "composite", "package_type": "takes"}},
+          {"_id": "#TAKE#", "type": "text", "anpa_take_key": "Take=2",
+           "takes": {"_id": "#TAKE_PACKAGE#", "type": "composite", "package_type": "takes"}},
+          {"_id": "#TAKE_PACKAGE#", "type": "composite"}
+        ]
+      }
+      """
+      When we publish "123" with "publish" type and "published" state
+      Then we get OK response
+      When we enqueue published
+      When we get "/published"
+      Then we get list with 2 items
+      When we get "/publish_queue"
+      Then we get list with 2 items
+      """
+      {
+        "_items": [
+          {"state": "pending", "content_type": "composite",
+          "subscriber_id": "#digital#", "item_id": "#archive.123.take_package#",
+          "item_version": 2, "ingest_provider": "__none__",
+          "destination": {"delivery_type": "email"}},
+          {"state": "pending", "content_type": "text",
+          "subscriber_id": "#wire#", "item_id": "123", "item_version": 3,
+          "ingest_provider": "__none__",
+          "destination": {"delivery_type": "email"}}
+        ]
+      }
+      """
+      When we publish "#TAKE#" with "publish" type and "published" state
+      Then we get OK response
+      When we enqueue published
+      When we get "/published"
+      Then we get list with 4 items
+      When we get "/publish_queue"
+      Then we get list with 4 items
+      """
+      {
+        "_items": [
+          {"state": "pending", "content_type": "composite",
+          "subscriber_id": "#digital#", "item_id": "#archive.123.take_package#",
+          "item_version": 2, "ingest_provider": "__none__",
+          "destination": {"delivery_type": "email"}},
+          {"state": "pending", "content_type": "text",
+          "subscriber_id": "#wire#", "item_id": "123", "item_version": 3,
+          "ingest_provider": "__none__",
+          "destination": {"delivery_type": "email"}},
+          {"state": "pending", "content_type": "composite",
+          "subscriber_id": "#digital#", "item_id": "#archive.123.take_package#",
+          "item_version": 3, "ingest_provider": "__none__",
+          "destination": {"delivery_type": "email"}},
+          {"state": "pending", "content_type": "text",
+          "subscriber_id": "#wire#", "item_id": "#TAKE#", "item_version": 4,
+          "ingest_provider": "__none__",
+          "destination": {"delivery_type": "email"}}
+        ]
+      }
+      """
+      Given config update
+      """
+      {"NO_TAKES": true}
+      """
+      When we publish "123" with "correct" type and "corrected" state
+      Then we get OK response
+      When we enqueue published
+      And we get "/published"
+      Then we get list with 6 items
+      When we get "/publish_queue"
+      Then we get list with 6 items
+      """
+      {
+        "_items": [
+          {"state": "pending", "content_type": "composite",
+          "subscriber_id": "#digital#", "item_id": "#archive.123.take_package#",
+          "item_version": 2, "ingest_provider": "__none__",
+          "destination": {"delivery_type": "email"}},
+          {"state": "pending", "content_type": "text",
+          "subscriber_id": "#wire#", "item_id": "123", "item_version": 3,
+          "ingest_provider": "__none__",
+          "destination": {"delivery_type": "email"}},
+          {"state": "pending", "content_type": "composite",
+          "subscriber_id": "#digital#", "item_id": "#archive.123.take_package#",
+          "item_version": 3, "ingest_provider": "__none__",
+          "destination": {"delivery_type": "email"}},
+          {"state": "pending", "content_type": "text",
+          "subscriber_id": "#wire#", "item_id": "#TAKE#", "item_version": 4,
+          "ingest_provider": "__none__",
+          "destination": {"delivery_type": "email"}},
+          {"state": "pending", "content_type": "composite",
+          "subscriber_id": "#digital#", "item_id": "#archive.123.take_package#",
+          "item_version": 4, "ingest_provider": "__none__",
+          "destination": {"delivery_type": "email"}},
+          {"state": "pending", "content_type": "text",
+          "subscriber_id": "#wire#", "item_id": "123", "item_version": 4,
+          "ingest_provider": "__none__",
+          "destination": {"delivery_type": "email"}}
+        ]
+      }
+      """
+      When we publish "123" with "kill" type and "killed" state
+      Then we get OK response
+      When we enqueue published
+      And we get "/published"
+      Then we get list with 9 items
+      When we get "/publish_queue"
+      Then we get list with 9 items
+      """
+      {
+        "_items": [
+          {"state": "pending", "content_type": "composite",
+          "subscriber_id": "#digital#", "item_id": "#archive.123.take_package#",
+          "item_version": 2, "ingest_provider": "__none__",
+          "destination": {"delivery_type": "email"}},
+          {"state": "pending", "content_type": "text",
+          "subscriber_id": "#wire#", "item_id": "123", "item_version": 3,
+          "ingest_provider": "__none__",
+          "destination": {"delivery_type": "email"}},
+          {"state": "pending", "content_type": "composite",
+          "subscriber_id": "#digital#", "item_id": "#archive.123.take_package#",
+          "item_version": 3, "ingest_provider": "__none__",
+          "destination": {"delivery_type": "email"}},
+          {"state": "pending", "content_type": "text",
+          "subscriber_id": "#wire#", "item_id": "#TAKE#", "item_version": 4,
+          "ingest_provider": "__none__",
+          "destination": {"delivery_type": "email"}},
+          {"state": "pending", "content_type": "composite",
+          "subscriber_id": "#digital#", "item_id": "#archive.123.take_package#",
+          "item_version": 4, "ingest_provider": "__none__",
+          "destination": {"delivery_type": "email"}},
+          {"state": "pending", "content_type": "text",
+          "subscriber_id": "#wire#", "item_id": "123", "item_version": 4,
+          "ingest_provider": "__none__",
+          "destination": {"delivery_type": "email"}},
+          {"state": "pending", "content_type": "composite",
+          "subscriber_id": "#digital#", "item_id": "#archive.123.take_package#",
+          "item_version": 5, "ingest_provider": "__none__",
+          "destination": {"delivery_type": "email"}},
+          {"state": "pending", "content_type": "text",
+          "subscriber_id": "#wire#", "item_id": "123", "item_version": 5,
+          "ingest_provider": "__none__",
+          "destination": {"delivery_type": "email"}},
+          {"state": "pending", "content_type": "text",
+          "subscriber_id": "#wire#", "item_id": "#TAKE#", "item_version": 5,
+          "ingest_provider": "__none__",
+          "destination": {"delivery_type": "email"}}
+        ]
+      }
+      """
