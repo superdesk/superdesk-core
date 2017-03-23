@@ -113,3 +113,19 @@ class HTMLNewsmlG2FormatterTestCase(TestCase):
         self.assertTrue(os.path.exists(filepath))
         with open(filepath, 'rb') as related:
             self.assertEqual(b'test', related.read())
+
+    def test_html_void(self):
+        """Check that HTML void element use self closing tags, but other elements with no content use start/end pairs
+
+        SDESK-947 regression test
+        """
+        article = self.get_article()
+        article['body_html'] = ('<p><h1>The story body</h1><h3/>empty element on purpose<br/><strong>test</strong>'
+                                '<em/><br/>other test</p>')
+        formatter = HTMLNewsMLG2Formatter()
+        _, doc = formatter.format(article, self.subscriber)[0]
+        html_start = '<inlineXML contenttype="application/xhtml+xml">'
+        html = doc[doc.find(html_start) + len(html_start):doc.find('</inlineXML>')]
+        expected = ('<html><body><p></p><h1>The story body</h1><h3></h3>empty element on purpose<br/>'
+                    '<strong>test</strong><em></em><br/>other test</body></html>')
+        self.assertEqual(html, expected)

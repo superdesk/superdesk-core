@@ -85,7 +85,7 @@ def generate_renditions(original, media_id, inserted, file_type, content_type,
         # add the cropping data if exist
         renditions[rendition].update(cropping_data)
         time_end(rendition)
-        if rendition == 'baseImage': # use baseImage for other renditions once we have it
+        if rendition == 'baseImage':  # use baseImage for other renditions once we have it
             original = resized
     return renditions
 

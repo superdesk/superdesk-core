@@ -26,6 +26,7 @@ from superdesk.errors import FormatterError
 from superdesk.publish.formatters.nitf_formatter import NITFFormatter
 from superdesk.metadata.packages import PACKAGE_TYPE, REFS, RESIDREF, ROLE, GROUPS, GROUP_ID, ID_REF
 from superdesk.filemeta import get_filemeta
+from superdesk import etree as sd_etree
 from apps.archive.common import ARCHIVE, get_utc_schedule
 
 XML_LANG = "{http://www.w3.org/XML/1998/namespace}lang"
@@ -77,6 +78,7 @@ class NewsMLG2Formatter(Formatter):
                 newsItem = self._format_item_set(article, item_set, 'newsItem')
                 self._format_content(article, newsItem, nitf)
 
+            sd_etree.fix_html_void_elements(news_message)
             return [(pub_seq_num, self.XML_ROOT + etree.tostring(news_message).decode('utf-8'))]
         except Exception as ex:
             raise
