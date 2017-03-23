@@ -379,6 +379,33 @@ Feature: Resend
       ]
     }
     """
+    Given config update
+    """
+    {"NO_TAKES": true}
+    """
+    When we post to "/archive/#archive._id#/resend"
+    """
+    {
+      "subscribers": ["#subscribers._id#"],
+      "version": 4
+    }
+    """
+    Then we get OK response
+    When we get "/publish_queue"
+    Then we get list with 3 items
+    """
+    {
+      "_items": [
+        {"state": "pending", "content_type": "text", "destination": {"delivery_type": "email"},
+        "subscriber_id": "sub-1", "item_id": "123", "item_version": 4},
+        {"state": "pending", "content_type": "composite", "destination": {"delivery_type": "email"},
+        "subscriber_id": "#subscribers._id#", "item_id": "#archive.123.take_package#", "item_version": 2},
+        {"state": "pending", "content_type": "composite", "destination": {"delivery_type": "email"},
+        "subscriber_id": "#subscribers._id#", "item_id": "#archive.123.take_package#", "item_version": 2}
+      ]
+    }
+    """
+
 
   @auth
   @vocabulary
@@ -468,6 +495,20 @@ Feature: Resend
       ]
     }
     """
+    Given config update
+    """
+    {"NO_TAKES": true}
+    """
+    When we post to "/archive/#archive._id#/resend"
+    """
+    {
+      "subscribers": ["#subscribers._id#"],
+      "version": 4
+    }
+    """
+    Then we get OK response
+    When we get "/publish_queue"
+    Then we get list with 3 items
 
   @auth
   @vocabulary
