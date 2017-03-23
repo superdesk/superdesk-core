@@ -101,6 +101,7 @@ class BasePublishService(BaseService):
         self._set_updates(original, updates, updates.get(config.LAST_UPDATED, utcnow()))
         convert_task_attributes_to_objectId(updates)  # ???
         self._process_publish_updates(original, updates)
+        self._mark_media_item_as_used(updates, original)
 
     def on_updated(self, updates, original):
         original = get_resource_service(ARCHIVE).find_one(req=None, _id=original[config.ID_FIELD])
@@ -720,6 +721,35 @@ class BasePublishService(BaseService):
                     updates = super().find_one(req=None, _id=item[config.ID_FIELD]) or {}
 
                 update_item_data(item, updates, keys)
+
+    def _mark_media_item_as_used(self, updates, original):
+        if ASSOCIATIONS not in updates or not updates.get(ASSOCIATIONS):
+            return
+
+        for item_name, item_obj in updates.get(ASSOCIATIONS).items():
+            if not (item_obj and config.ID_FIELD in item_obj):
+                continue
+
+            item_id = item_obj[config.ID_FIELD]
+            media_item = {}
+            if app.settings.get('COPY_METADATA_FROM_PARENT') and item_obj.get(ITEM_TYPE) in MEDIA_TYPES:
+                stored_item = (original.get(ASSOCIATIONS) or {}).get(item_name) or item_obj
+            else:
+                media_item = stored_item = self.find_one(req=None, _id=item_id)
+                if not stored_item:
+                    continue
+
+            # If the media item is not marked as 'used', mark it as used
+            if original.get(ITEM_TYPE) == CONTENT_TYPE.TEXT and \
+                    (item_obj is not stored_item or not stored_item.get('used')):
+                archive_service = get_resource_service('archive')
+                if media_item is not stored_item:
+                    media_item = archive_service.find_one(req=None, _id=item_id)
+
+                if media_item and not media_item.get('used'):
+                    archive_service.system_update(media_item['_id'], {'used': True}, media_item)
+
+                stored_item['used'] = True
 
 
 def get_crop(rendition):

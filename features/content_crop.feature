@@ -412,3 +412,153 @@ Feature: Cropping the Image Articles
       """
       {"width": 5, "height": 5, "href": "__any_value__"}
       """
+
+    @auth
+    @vocabulary
+    Scenario: Verify the featured media item is marked as "used" when it is associated to a story
+      When upload a file "bike.jpg" to "archive" with "bike"
+      And we post to "/archive"
+      """
+      [{"guid": "feature_image", "slugline": "feature_image"}]
+      """
+      When we patch "/archive/feature_image"
+      """
+      {
+        "associations": {
+          "featureimage": {
+            "_id": "bike",
+            "poi": {"x": 0.2, "y": 0.3}
+          }
+        }
+      }
+      """
+      Then we get OK response
+      And we get existing resource
+      """
+      {
+        "associations": {
+          "featureimage": {
+            "_id": "bike",
+            "poi": {"x": 0.2, "y": 0.3},
+            "renditions": {
+              "16-9" : {
+                "poi" : {"y" : 18, "x" : 240},
+                "width": 1200, "height": 675
+              },
+              "4-3" : {
+                "poi" : {"y" : 130, "x" : 240},
+                "width": 1200, "height": 900
+              },
+              "original" : {
+                "poi" : {"y" : 480, "x" : 240},
+                "width": 1200, "height": 1600
+              },
+              "viewImage" : {
+                "poi" : {"y" : 192, "x" : 96},
+                "width": 480, "height": 640
+              },
+              "baseImage" : {
+                "poi" : {"y" : 420, "x" : 210},
+                "width": 1050, "height": 1400
+              },
+              "thumbnail" : {
+                "poi" : {"y" : 36, "x" : 18},
+                "width": 90, "height": 120
+              }
+            }
+          }
+        }
+      }
+      """
+      When we get "/archive/bike"
+      Then we get existing resource
+      """
+        {"_id": "bike", "used": true}
+      """
+
+    @auth
+    Scenario: Ensure new media associated during correction of a story is marked as used
+      Given "desks"
+      """
+      [{"name": "Sports", "content_expiry": 60}]
+      """
+      When we post to "/archive" with success
+      """
+      [{"guid": "123", "type": "text", "headline": "test", "state": "fetched", "slugline": "slugline",
+        "headline": "headline",
+        "anpa_category" : [{"qcode" : "e", "name" : "Entertainment"}],
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "subject":[{"qcode": "17004000", "name": "Statistics"}],
+        "body_html": "Test Document body",
+        "dateline": {
+          "date": "#DATE#",
+          "located" : {
+              "country" : "Afghanistan",
+              "tz" : "Asia/Kabul",
+              "city" : "Mazar-e Sharif",
+              "alt_name" : "",
+              "country_code" : "AF",
+              "city_code" : "Mazar-e Sharif",
+              "dateline" : "city",
+              "state" : "Balkh",
+              "state_code" : "AF.30"
+          },
+          "text" : "MAZAR-E SHARIF, Dec 30  -",
+          "source": "AAP"}
+        }]
+      """
+      Then we get OK response
+      And we get existing resource
+      """
+      {"_current_version": 1, "state": "fetched", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
+      """
+      When upload a file "bike.jpg" to "archive" with "bike"
+      And we post to "/archive/bike/move"
+      """
+      [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
+      """
+      Then we get OK response
+      When upload a file "bike.jpg" to "archive" with "bike_2"
+      And we post to "/archive/bike_2/move"
+      """
+      [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
+      """
+      When we patch "/archive/123"
+      """
+      {
+        "associations": {
+          "featuremedia": {
+            "_id": "bike",
+            "poi": {"x": 0.2, "y": 0.3}
+          }
+        }
+      }
+      """
+      Then we get OK response
+      When we publish "123" with "publish" type and "published" state
+      Then we get OK response
+      When we enqueue published
+      And we transmit items
+      And run import legal publish queue
+      When we publish "123" with "correct" type and "corrected" state
+      """
+      {"body_html": "Corrected", "slugline": "corrected", "headline": "corrected",
+      "associations": {
+          "featuremedia": {
+            "_id": "bike_2",
+            "poi": {"x": 0.3, "y": 0.4}
+          }
+        }}
+      """
+      Then we get OK response
+      When we get "/archive/bike"
+      Then we get existing resource
+      """
+        {"_id": "bike", "used": true}
+      """
+      When we get "/archive/bike_2"
+      Then we get existing resource
+      """
+        {"_id": "bike_2", "used": true}
+      """
+      Then we get OK response
