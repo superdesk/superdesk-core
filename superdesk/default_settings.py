@@ -359,7 +359,6 @@ CORE_APPS.extend([
     'apps.tasks',
     'apps.preferences',
     'apps.spikes',
-    'apps.groups',
     'apps.prepopulate',
     'apps.legal_archive',
     'apps.search',
