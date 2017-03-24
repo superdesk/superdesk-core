@@ -25,7 +25,8 @@ from apps.content_types.content_types import DEFAULT_SCHEMA
 from superdesk.errors import InvalidStateTransitionError, SuperdeskApiError, PublishQueueError
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, GUID_FIELD, ITEM_STATE, CONTENT_STATE, \
     PUBLISH_STATES, EMBARGO, PUB_STATUS, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, ASSOCIATIONS, MEDIA_TYPES
-from superdesk.metadata.packages import SEQUENCE, LINKED_IN_PACKAGES, GROUPS, PACKAGE, RESIDREF
+from superdesk.metadata.packages import SEQUENCE, LINKED_IN_PACKAGES, GROUPS, PACKAGE, RESIDREF,\
+    PACKAGE_TYPE
 from superdesk.metadata.utils import item_url
 from superdesk.notification import push_notification
 from superdesk.publish import SUBSCRIBER_TYPES
@@ -114,6 +115,30 @@ class BasePublishService(BaseService):
         push_content_notification([updates])
         self._import_into_legal_archive(updates)
         CropService().update_media_references(updates, original, True)
+        packages = self.package_service.get_packages(original[config.ID_FIELD])
+        original_updates = dict()
+        original_updates['operation'] = updates['operation']
+        original_updates[ITEM_STATE] = updates[ITEM_STATE]
+        if packages and packages.count() > 0:
+            archive_correct = get_resource_service('archive_correct')
+            processed_packages = []
+            for package in packages:
+                if package[ITEM_STATE] in [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED] and \
+                        package.get(PACKAGE_TYPE, '') == '' and \
+                        str(package[config.ID_FIELD]) not in processed_packages:
+                    original_updates['groups'] = package['groups']
+
+                    if updates.get('headline'):
+                        self.package_service.update_field_in_package(original_updates, original[config.ID_FIELD],
+                                                                     'headline', updates.get('headline'))
+
+                    if updates.get('slugline'):
+                        self.package_service.update_field_in_package(original_updates, original[config.ID_FIELD],
+                                                                     'slugline', updates.get('slugline'))
+
+                    archive_correct.patch(id=package[config.ID_FIELD], updates=original_updates)
+                    insert_into_versions(id_=package[config.ID_FIELD])
+                    processed_packages.append(package[config.ID_FIELD])
 
     def update(self, id, updates, original):
         """
