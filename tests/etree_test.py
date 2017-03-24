@@ -1,23 +1,23 @@
 
 import unittest
-from superdesk.etree import get_word_count, parse_html, to_string
+from superdesk import etree as sd_etree
 
 
 class WordCountTestCase(unittest.TestCase):
 
     def test_word_count_p_tags(self):
-        self.assertEqual(2, get_word_count('<p>foo<strong>s</strong></p><p>bar</p>'))
+        self.assertEqual(2, sd_etree.get_word_count('<p>foo<strong>s</strong></p><p>bar</p>'))
 
     def test_word_count_brs(self):
-        self.assertEqual(2, get_word_count('<p>foo<br><br>bar</p>'))
-        self.assertEqual(2, get_word_count('<p>foo<br /><br />bar</p>'))
+        self.assertEqual(2, sd_etree.get_word_count('<p>foo<br><br>bar</p>'))
+        self.assertEqual(2, sd_etree.get_word_count('<p>foo<br /><br />bar</p>'))
 
     def test_word_count_hrs(self):
-        self.assertEqual(2, get_word_count('<p>foo<br><hr>bar</p>'))
-        self.assertEqual(2, get_word_count('<p>foo<br /><hr />bar</p>'))
+        self.assertEqual(2, sd_etree.get_word_count('<p>foo<br><hr>bar</p>'))
+        self.assertEqual(2, sd_etree.get_word_count('<p>foo<br /><hr />bar</p>'))
 
     def test_word_count_ul(self):
-        self.assertEqual(3, get_word_count("""
+        self.assertEqual(3, sd_etree.get_word_count("""
             <ul>
                 <li>foo</li>
                 <li>bar</li>
@@ -27,14 +27,14 @@ class WordCountTestCase(unittest.TestCase):
         """))
 
     def test_word_count_nitf(self):
-        self.assertEqual(40, get_word_count("""
+        self.assertEqual(40, sd_etree.get_word_count("""
         <p>2014: Northern Ireland beat <location>Greece</location> 2-0 in <location>Athens</location>
         with goals from <person>Jamie Ward</person> and <person>Kyle Lafferty</person> to boost their
         hopes of qualifying for <money>Euro 2016</money>. <person>Michael O'Neill's</person> side
         sealed their place at the finals in <chron>October 2015</chron>.</p>"""))
 
     def test_word_count_nitf_2(self):
-        self.assertEqual(316, get_word_count("""
+        self.assertEqual(316, sd_etree.get_word_count("""
         <p>Rio Tinto has kept intact its target for iron ore shipments in 2017 after hitting the mid-point
         of its revised guidance range for 2016. </p><p>The world's second largest iron ore exporter shipped
         327.6 million tonnes of iron ore from its Pilbara operations in 2016, in line with the slightly lowered
@@ -59,9 +59,16 @@ class WordCountTestCase(unittest.TestCase):
 class ParseHtmlTestCase(unittest.TestCase):
     def test_encode_carriage_return(self):
         text = 'This is first line.\r\nThis is second line.\r\n'
-        parsed = parse_html(text)
-        self.assertEqual(text.replace('\r', '&#13;'), to_string(parsed))
+        parsed = sd_etree.parse_html(text)
+        self.assertEqual(text.replace('\r', '&#13;'), sd_etree.to_string(parsed))
 
         text = '<pre>This is first line.\r\nThis is second line.\r\n</pre>'
-        parsed = parse_html(text, content='html')
-        self.assertEqual('<html><body>{}</body></html>'.format(text.replace('\r', '&#13;')), to_string(parsed))
+        parsed = sd_etree.parse_html(text, content='html')
+        self.assertEqual('<html><body>{}</body></html>'.format(text.replace('\r', '&#13;')), sd_etree.to_string(parsed))
+
+    def test_void_elements_fix(self):
+        html = '<p>this is a test with empty <h3/> non-void <em/> elements and a void <br/> one</p>'
+        expected = '<p>this is a test with empty <h3></h3> non-void <em></em> elements and a void <br/> one</p>'
+        parsed = sd_etree.parse_html(html)
+        sd_etree.fix_html_void_elements(parsed)
+        self.assertEqual(sd_etree.to_string(parsed), expected)
