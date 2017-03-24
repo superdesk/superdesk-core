@@ -17,6 +17,8 @@ from apps.publish.content import ArchivePublishResource, ArchivePublishService, 
     ResendResource, ResendService
 from apps.publish.enqueue import EnqueueContent
 from apps.publish.published_item import PublishedItemResource, PublishedItemService
+from apps.publish.content.published_package_items import PublishedPackageItemsService,\
+    PublishedPackageItemsResource
 
 
 logger = logging.getLogger(__name__)
@@ -43,6 +45,10 @@ def init_app(app):
     endpoint_name = 'archive_resend'
     service = ResendService(endpoint_name, backend=get_backend())
     ResendResource(endpoint_name, app=app, service=service)
+
+    endpoint_name = 'published_package_items'
+    service = PublishedPackageItemsService(endpoint_name, backend=get_backend())
+    PublishedPackageItemsResource(endpoint_name, app=app, service=service)
 
     superdesk.privilege(name='subscribers', label='Subscribers', description='User can manage subscribers')
     superdesk.privilege(name='publish', label='Publish', description='Publish a content')
