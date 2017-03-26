@@ -15,7 +15,7 @@ import superdesk
 
 from superdesk import get_resource_service
 from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE
-from superdesk.metadata.utils import aggregations, item_url, elastic_highlight_query
+from superdesk.metadata.utils import aggregations, item_url, get_elastic_highlight_query
 from apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.resource import build_custom_hateoas
 
@@ -76,9 +76,16 @@ class SearchService(superdesk.Service):
             query['aggs'] = aggregations
 
         if app.data.elastic.should_highlight(req):
-            query['highlight'] = elastic_highlight_query
-
+            highlight_query = get_elastic_highlight_query(self._get_highlight_query_string(req))
+            if highlight_query:
+                query['highlight'] = highlight_query
         return query
+
+    def _get_highlight_query_string(self, req):
+        args = getattr(req, 'args', {})
+        source = json.loads(args.get('source')) if args.get('source') else {'query': {'filtered': {}}}
+        query_string = source.get('query', {}).get('filtered', {}).get('query', {}).get('query_string')
+        return query_string
 
     def _get_projected_fields(self, req):
             """Get elastic projected fields."""

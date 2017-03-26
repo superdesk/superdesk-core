@@ -33,18 +33,26 @@ aggregations = {
     'genre': {'terms': {'field': 'genre.name', 'size': 0}}
 }
 
-elastic_highlight_query = {
-    'require_field_match': False,
-    'pre_tags': ['<span class=\"es-highlight\">'],
-    'post_tags': ['</span>'],
-    'fields': {
-        'body_html': {'number_of_fragments': 0},
-        'body_footer': {'number_of_fragments': 0},
-        'headline': {'number_of_fragments': 0},
-        'slugline': {'number_of_fragments': 0},
-        'abstract': {'number_of_fragments': 0}
-    }
-}
+
+def get_elastic_highlight_query(query_string):
+    if query_string:
+        field_settings = {'highlight_query': {'query_string': query_string},
+                          'number_of_fragments': 0}
+
+        elastic_highlight_query = {
+            'require_field_match': False,
+            'pre_tags': ['<span class=\"es-highlight\">'],
+            'post_tags': ['</span>'],
+            'fields': {
+                'body_html': field_settings,
+                'body_footer': field_settings,
+                'headline': field_settings,
+                'slugline': field_settings,
+                'abstract': field_settings
+            }
+        }
+
+        return elastic_highlight_query
 
 
 def generate_guid(**hints):
