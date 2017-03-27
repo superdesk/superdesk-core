@@ -16,7 +16,7 @@ from superdesk import get_resource_service
 import superdesk
 from superdesk.errors import SuperdeskApiError
 from superdesk.metadata.item import not_analyzed, ITEM_STATE, PUBLISH_STATES
-from superdesk.metadata.utils import aggregations, elastic_highlight_query
+from superdesk.metadata.utils import aggregations, get_elastic_highlight_query
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.utc import utcnow
@@ -112,7 +112,7 @@ class PublishedItemResource(Resource):
     datasource = {
         'search_backend': 'elastic',
         'aggregations': aggregations,
-        'es_highlight': elastic_highlight_query,
+        'es_highlight': get_elastic_highlight_query,
         'default_sort': [('_updated', -1)],
         'elastic_filter_callback': get_content_filter,
         'projection': {
