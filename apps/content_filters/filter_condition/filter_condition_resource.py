@@ -39,7 +39,8 @@ class FilterConditionResource(Resource):
                         'stage',
                         'sms',
                         'place',
-                        'ingest_provider'],
+                        'ingest_provider',
+                        'embargo'],
         },
         'operator': {
             'type': 'string',

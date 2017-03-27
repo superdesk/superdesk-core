@@ -99,6 +99,11 @@ class FilterConditionParametersService(BaseService):
                             'operators': ['eq', 'ne'],
                             'values': values['ingest_provider'],
                             'value_field': '_id'
+                            },
+                           {'field': 'embargo',
+                            'operators': ['eq', 'ne'],
+                            'values': values['embargo'],
+                            'value_field': 'name'
                             }])
 
     def _get_field_values(self):
@@ -121,6 +126,7 @@ class FilterConditionParametersService(BaseService):
         values['desk'] = list(get_resource_service('desks').get(None, {}))
         values['stage'] = self._get_stage_field_values(values['desk'])
         values['sms'] = [{'qcode': 0, 'name': 'False'}, {'qcode': 1, 'name': 'True'}]
+        values['embargo'] = [{'qcode': 0, 'name': 'False'}, {'qcode': 1, 'name': 'True'}]
         req = ParsedRequest()
         req.where = json.dumps({'$or': [{"schema_field": "place"}, {"_id": "place"}, {"_id": "locators"}]})
         place = vocabularies_resource.get(req=req, lookup=None)
