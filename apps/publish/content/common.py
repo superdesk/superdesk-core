@@ -116,13 +116,11 @@ class BasePublishService(BaseService):
         self._import_into_legal_archive(updates)
         CropService().update_media_references(updates, original, True)
         packages = self.package_service.get_packages(original[config.ID_FIELD])
-        original_updates = dict()
-        original_updates['operation'] = updates['operation']
-        original_updates[ITEM_STATE] = updates[ITEM_STATE]
         if packages and packages.count() > 0:
             archive_correct = get_resource_service('archive_correct')
             processed_packages = []
             for package in packages:
+                original_updates = {'operation': updates['operation'], ITEM_STATE: updates[ITEM_STATE]}
                 if package[ITEM_STATE] in [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED] and \
                         package.get(PACKAGE_TYPE, '') == '' and \
                         str(package[config.ID_FIELD]) not in processed_packages:
