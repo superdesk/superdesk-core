@@ -219,11 +219,12 @@ class BasePublishService(BaseService):
                        article.get('target_subscribers', [])) > 0
 
     def _validate(self, original, updates):
-        self.raise_if_not_marked_for_publication(original)
         self.raise_if_invalid_state_transition(original)
 
         updated = original.copy()
         updated.update(updates)
+
+        self.raise_if_not_marked_for_publication(updated)
 
         takes_package = self.takes_package_service.get_take_package(original)
 
