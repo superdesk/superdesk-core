@@ -45,10 +45,11 @@ class SearchProviderProxyService(SearchIngestService):
         return provider
 
     def _get_service(self, provider):
-        service = registered_search_providers[provider['search_provider']]
-        if not isinstance(service, str):
-            return service(provider)
-        return service
+        provider_data = registered_search_providers[provider['search_provider']]
+        try:
+            return provider_data['endpoint']
+        except KeyError:
+            return provider_data['class'](provider)
 
     def get(self, req, lookup):
         """Search using provider."""

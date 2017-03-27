@@ -8,7 +8,7 @@ registered_search_providers = {}
 allowed_search_providers = []
 
 
-def register_search_provider(name, fetch_endpoint=None, provider_class=None):
+def register_search_provider(name, fetch_endpoint=None, provider_class=None, label=None):
     """Register a Search Provider with the given name and fetch_endpoint.
 
     Both have to be unique and if not raises AlreadyExistsError.
@@ -20,19 +20,37 @@ def register_search_provider(name, fetch_endpoint=None, provider_class=None):
     :type fetch_endpoint: str
     :param provider_class: provider implementation
     :type provider: superdesk.SearchProvider
+    :param label: label to use (None to use provider_class.label or name in this order)
+    :type label: str
     :raises: AlreadyExistsError - if a search has been registered with either name or fetch_endpoint.
     """
+    if fetch_endpoint is not None and not isinstance(fetch_endpoint, str):
+        raise ValueError("fetch_enpoint must be a string")
     if name in registered_search_providers:
         raise AlreadyExistsError("A Search Provider with name: {} already exists".format(name))
 
-    if fetch_endpoint and fetch_endpoint in registered_search_providers.values():
-        raise AlreadyExistsError("A Search Provider for the fetch endpoint: {} exists with name: {}"
-                                 .format(fetch_endpoint, registered_search_providers[name]))
+    if not ((fetch_endpoint and not provider_class) or (not fetch_endpoint and provider_class)):
+        raise ValueError('You have to specify either fetch_endpoint or provider_class.')
 
-    registered_search_providers[name] = provider_class if provider_class else fetch_endpoint
+    provider_data = {}
 
-    if not registered_search_providers[name]:
-        raise ValueError('You have to specify fetch_endpoint or provider_class.')
+    if fetch_endpoint:
+        existing_endpoints = {d['endpoint'] for d in registered_search_providers.values() if 'endpoint' in d}
+        if fetch_endpoint in existing_endpoints:
+            raise AlreadyExistsError("A Search Provider for the fetch endpoint: {} exists with name: {}"
+                                     .format(fetch_endpoint, registered_search_providers[name]))
+        provider_data['endpoint'] = fetch_endpoint
+    else:
+        provider_data['class'] = provider_class
+
+    if label is not None:
+        provider_data['label'] = label
+    elif provider_class is not None and hasattr(provider_class, 'label') and provider_class.label:
+        provider_data['label'] = provider_class.label
+    else:
+        provider_data['label'] = name
+
+    provider_data = registered_search_providers[name] = provider_data
 
     allowed_search_providers.append(name)
 
@@ -46,10 +64,10 @@ class SearchProviderAllowedService(Service):
 
     def get(self, req, lookup):
         def provider(provider_id):
-            registered = registered_search_providers[provider_id]
+            provider_data = registered_search_providers[provider_id]
             return {
                 'search_provider': provider_id,
-                'label': getattr(registered, 'label', provider_id)
+                'label': provider_data['label']
             }
 
         return ListCursor(
