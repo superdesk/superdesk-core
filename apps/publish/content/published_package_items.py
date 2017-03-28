@@ -20,7 +20,8 @@ from eve.utils import config
 from eve.validation import ValidationError
 from superdesk.errors import SuperdeskApiError
 from superdesk.services import BaseService
-from superdesk.metadata.packages import GROUPS, GROUP_ID, REFS, RESIDREF
+from superdesk.metadata.packages import GROUPS, GROUP_ID, REFS, RESIDREF,\
+    ROOT_GROUP, ID_REF, PACKAGE_TYPE
 from copy import deepcopy
 
 
@@ -60,6 +61,7 @@ class PublishedPackageItemsService(BaseService):
                 raise SuperdeskApiError.badRequestError('Invalid package identifier')
             if original[ITEM_STATE] not in PUBLISH_STATES:
                 raise SuperdeskApiError.badRequestError('Package was not published')
+
             items = {}
             for new_item in doc['new_items']:
                 item = get_resource_service(ARCHIVE).find_one(req=None, _id=new_item['item_id'])
@@ -70,20 +72,20 @@ class PublishedPackageItemsService(BaseService):
                 except ValidationError:
                     raise SuperdeskApiError.badRequestError('Circular reference in item %s', new_item['item_id'])
                 items[item[config.ID_FIELD]] = item
-    
-            package = deepcopy(original)
+
+            updates = {key: original[key] for key in [config.ID_FIELD, PACKAGE_TYPE, GROUPS]
+                       if key in original}
+            create_root_group([updates])
             items_refs = []
             for new_item in doc['new_items']:
-                create_root_group([package])
-                items_refs.append(self._set_item_assoc(package, new_item, items[new_item['item_id']]))
-            get_resource_service(ARCHIVE).system_update(package[config.ID_FIELD], package, original)
+                items_refs.append(self._set_item_assoc(updates, new_item, items[new_item['item_id']]))
+            get_resource_service(ARCHIVE).system_update(original[config.ID_FIELD], updates, original)
             for item_ref in items_refs:
-                self.package_service.update_link(package, item_ref)
-            ids.append(package[config.ID_FIELD])
+                self.package_service.update_link(updates, item_ref)
+            ids.append(original[config.ID_FIELD])
         return ids
 
     def _set_item_assoc(self, package, new_item, item_doc):
-        items_refs = []
         group = self._get_group(package, new_item['group'])
         for assoc in group[REFS]:
             if assoc.get(RESIDREF) == new_item['item_id']:
@@ -96,5 +98,14 @@ class PublishedPackageItemsService(BaseService):
         for package_group in package[GROUPS]:
             if group == package_group[GROUP_ID]:
                 return package_group
+        self._add_group_in_root(group, package[GROUPS])
         package[GROUPS].append({GROUP_ID: group, REFS: []})
         return package[GROUPS][-1]
+
+    def _add_group_in_root(self, group, groups):
+        root_refs = []
+        for group_meta in groups:
+            if group_meta.get(GROUP_ID) == ROOT_GROUP:
+                root_refs = [ref[ID_REF] for ref in group_meta[REFS]]
+            if not group in root_refs:
+                group_meta[REFS].append({ID_REF: group})

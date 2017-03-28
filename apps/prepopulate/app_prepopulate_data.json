@@ -715,7 +715,8 @@
 		        "user" : "-id user admin1-",
 		        "status": "todo",
 		        "stage": "-id stage one Politic Desks-"
-		    }
+		    },
+		    "linked_in_packages": [{"package": "package2"}]
         }
     },
 
@@ -743,7 +744,8 @@
 		        "user" : "-id user admin1-",
 		        "status": "todo",
 		        "stage": "-id stage one Politic Desks-"
-		    }
+		    },
+		    "linked_in_packages": [{"package": "package2"}]
         }
     },
 
@@ -843,7 +845,8 @@
 		        "user" : "-id user admin2-",
 		        "status": "in_progress",
 		        "stage": "-id stage two Politic Desks-"
-		    }
+		    },
+		    "linked_in_packages": [{"package": "package1"}]
         }
     },
     {
@@ -860,9 +863,11 @@
     	"resource": "archive",
     	"username": "admin",
     	"data": {
+		    "slugline": "PACKAGE1 SLUGLINE",
     		"headline": "package1",
     		"type": "composite",
     		"guid": "package1",
+		    "firstcreated": "NOW()",
             "versioncreated": "2015-01-01T10:10:10+0000",
             "_current_version" : 1,
             "original_creator": "-id user admin-",
@@ -875,7 +880,24 @@
                 "status": "in_progress",
                 "stage": "-id stage two Politic Desks-"
             },
-	    	"groups": [{"id": "root", "refs": [{"idRef": "main"}]}, {"id": "main", "refs": []}]
+		    "groups": [{
+		            "id": "root",
+		            "refs": [{"idRef": "main"}]
+		        },
+		        {
+		            "id": "main",
+		            "refs": [
+		                {
+		                    "guid": "item6",
+		                    "headline": "item6",
+		                    "location": "archive",
+		                    "residRef": "item6",
+		                    "slugline": "item6 slugline",
+		                    "type": "text"
+		                }
+		            ]
+		        }
+		    ]
     	}
     },
     {
