@@ -22,7 +22,6 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.services import BaseService
 from superdesk.metadata.packages import GROUPS, GROUP_ID, REFS, RESIDREF,\
     ROOT_GROUP, ID_REF, PACKAGE_TYPE
-from copy import deepcopy
 
 
 class PublishedPackageItemsResource(Resource):
@@ -82,6 +81,11 @@ class PublishedPackageItemsService(BaseService):
             get_resource_service(ARCHIVE).system_update(original[config.ID_FIELD], updates, original)
             for item_ref in items_refs:
                 self.package_service.update_link(updates, item_ref)
+
+            items_published = [new_item[ITEM_STATE] in PUBLISH_STATES for new_item in items.values()]
+            if any(items_published):
+                get_resource_service('archive_correct').patch(id=doc['package_id'], updates=updates)
+
             ids.append(original[config.ID_FIELD])
         return ids
 
