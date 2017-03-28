@@ -1734,6 +1734,29 @@ Feature: Content Publishing
       {"_issues": {"validator exception": "400: Cannot publish an item which is marked as Not for Publication"}}
       """
 
+      @auth
+      Scenario: Publish a content directly which is marked not-for-publication should fail
+      Given "desks"
+      """
+      [{"name": "Sports"}]
+      """
+      When we post to "/archive" with success
+      """
+      [{"guid": "123", "headline": "test",
+        "body_html": "body", "state": "fetched",
+        "slugline": "test",
+        "flags": {"marked_for_not_publication": false},
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}]
+      """
+      And we publish "#archive._id#" with "publish" type and "published" state
+      """
+      {"flags": {"marked_for_not_publication": true}}
+      """
+      Then we get error 400
+      """
+      {"_issues": {"validator exception": "400: Cannot publish an item which is marked as Not for Publication"}}
+      """
+
     @auth
     Scenario: Assign a default Source to user created content Items and is overwritten by Source at desk level when published
       Given the "validators"
