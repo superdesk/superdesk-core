@@ -10,6 +10,7 @@
 from enum import Enum
 from lxml import etree
 from superdesk.etree import get_text
+from superdesk.utc import utcnow
 
 
 class FilterConditionFieldsEnum(Enum):
@@ -30,6 +31,7 @@ class FilterConditionFieldsEnum(Enum):
     ednote = 15,
     place = 16,
     ingest_provider = 17
+    embargo = 18
 
 
 class FilterConditionField:
@@ -56,6 +58,8 @@ class FilterConditionField:
             return FilterConditionPlaceField(field)
         elif FilterConditionFieldsEnum[field] == FilterConditionFieldsEnum.ingest_provider:
             return FilterConditionIngestProviderField(field)
+        elif FilterConditionFieldsEnum[field] == FilterConditionFieldsEnum.embargo:
+            return FilterConditionEmbargoField(field)
         else:
             return FilterConditionField(field)
 
@@ -178,3 +182,26 @@ class FilterConditionIngestProviderField(FilterConditionField):
         self.field = FilterConditionFieldsEnum.ingest_provider
         self.entity_name = 'ingest_provider'
         self.field_type = str
+
+
+class FilterConditionEmbargoField(FilterConditionField):
+    def __init__(self, field):
+        self.field = FilterConditionFieldsEnum.embargo
+        self.entity_name = 'embargo'
+        self.field_type = bool
+
+    def is_in_article(self, article):
+        return article.get('embargo')
+
+    def get_value(self, article):
+        if article.get('embargo'):
+            utc_embargo = article.get('schedule_settings', {}).get('utc_embargo')
+            if utc_embargo and utc_embargo > utcnow():
+                return str(True)
+        return str(False)
+
+    def get_elastic_query(self):
+        return {'range': {'schedule_settings.utc_embargo': {'gt': utcnow().isoformat()}}}
+
+    def get_mongo_query(self):
+        return {'schedule_settings.utc_embargo': {'$gt': utcnow()}}

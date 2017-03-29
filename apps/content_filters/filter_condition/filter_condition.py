@@ -29,19 +29,24 @@ class FilterCondition:
                                filter_condition['value'])
 
     def get_mongo_query(self):
-        field = self.field.get_entity_name()
-        operator = self.operator.get_mongo_operator()
-        value = self.value.get_value(self.field, self.operator)
-        return {field: {operator: value}}
+        try:
+            return self.field.get_mongo_query()
+        except AttributeError:
+            field = self.field.get_entity_name()
+            operator = self.operator.get_mongo_operator()
+            value = self.value.get_value(self.field, self.operator)
+            return {field: {operator: value}}
 
     def get_elastic_query(self):
-        field = self.field.get_entity_name()
-        operator = self.operator.get_elastic_operator()
-        value, field = self.value.get_elastic_value(self.field, self.operator)
-        if isinstance(self.operator, MatchOperator) or isinstance(self.operator, ComparisonOperator):
-            return json.loads(operator.format(field, value))
-        else:
-            return {operator: {field: value}}
+        try:
+            return self.field.get_elastic_query()
+        except AttributeError:
+            operator = self.operator.get_elastic_operator()
+            value, field = self.value.get_elastic_value(self.field, self.operator)
+            if isinstance(self.operator, MatchOperator) or isinstance(self.operator, ComparisonOperator):
+                return json.loads(operator.format(field, value))
+            else:
+                return {operator: {field: value}}
 
     def contains_not(self):
         return self.operator.contains_not()
@@ -51,7 +56,9 @@ class FilterCondition:
         if not self.field.is_in_article(article):
             return type(self.operator) is NotInOperator or \
                 type(self.operator) is NotLikeOperator or \
-                self.operator.operator is FilterConditionOperatorsEnum.ne
+                self.operator.operator is FilterConditionOperatorsEnum.ne or \
+                (self.operator.operator is FilterConditionOperatorsEnum.eq and
+                 self.value.value.lower() in ("no", "false", "f", "0"))
 
         article_value = self.field.get_value(article)
         filter_value = self.value.get_value(self.field, self.operator)

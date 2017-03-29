@@ -12,6 +12,8 @@ import re
 import os
 
 from eve.utils import ParsedRequest
+from superdesk.utc import utcnow
+from datetime import timedelta
 
 from apps.content_filters.filter_condition.filter_condition_service import FilterConditionService
 from apps.content_filters.filter_condition.filter_condition import FilterCondition
@@ -31,7 +33,8 @@ class FilterConditionTests(TestCase):
                              {'_id': '4', 'urgency': 4, 'state': 'fetched', 'task': {'desk': '1'},
                               'ingest_provider': '1'},
                              {'_id': '5', 'urgency': 2, 'state': 'fetched', 'task': {'desk': '2'}, 'priority': 3},
-                             {'_id': '6', 'state': 'fetched'},
+                             {'_id': '6', 'state': 'fetched', 'embargo': utcnow(),
+                             'schedule_settings': {'utc_embargo': utcnow() + timedelta(minutes=20)}},
                              {'_id': '7', 'genre': [{'name': 'Sidebar'}], 'state': 'fetched'},
                              {'_id': '8', 'subject': [{'name': 'adult education',
                                                        'qcode': '05001000',
@@ -41,7 +44,8 @@ class FilterConditionTests(TestCase):
                                                        'parent': '05005000'}], 'state': 'fetched'},
                              {'_id': '9', 'state': 'fetched', 'anpa_category':
                                  [{'qcode': 'a', 'name': 'Aus News'}]},
-                             {'_id': '10', 'body_html': '<p>Mention<p>'},
+                             {'_id': '10', 'body_html': '<p>Mention<p>', 'embargo': utcnow(),
+                             'schedule_settings': {'utc_embargo': utcnow() - timedelta(minutes=20)}},
                              {'_id': '11', 'place': [{'qcode': 'NSW', 'name': 'NSW'}], 'state': 'fetched'}]
 
             self.app.data.insert('archive', self.articles)
@@ -173,6 +177,14 @@ class FilterConditionTests(TestCase):
 
     def test_mongo_using_sms_filter_with_eq_comp(self):
         f = FilterCondition('sms', 'eq', 'true')
+        query = f.get_mongo_query()
+        with self.app.app_context():
+            docs = get_resource_service('archive'). \
+                get_from_mongo(req=self.req, lookup=query)
+            self.assertEqual(1, docs.count())
+
+    def test_mongo_using_embargo_filter_with_eq_comp(self):
+        f = FilterCondition('embargo', 'eq', 'true')
         query = f.get_mongo_query()
         with self.app.app_context():
             docs = get_resource_service('archive'). \
@@ -311,6 +323,16 @@ class FilterConditionTests(TestCase):
             doc_ids = [d['_id'] for d in docs]
             self.assertEqual(1, docs.count())
             self.assertTrue('3' in doc_ids)
+
+    def test_elastic_using_embargo_filter(self):
+        f = FilterCondition('embargo', 'eq', 'true')
+        query = f.get_elastic_query()
+        with self.app.app_context():
+            self._setup_elastic_args(query)
+            docs = get_resource_service('archive').get(req=self.req, lookup=None)
+            doc_ids = [d['_id'] for d in docs]
+            self.assertEqual(1, docs.count())
+            self.assertTrue('6' in doc_ids)
 
     def test_elastic_using_subject_filter_complete_string(self):
         f = FilterCondition('subject', 'in', '05005003')
@@ -611,6 +633,28 @@ class FilterConditionTests(TestCase):
         self.assertTrue(f.does_match(self.articles[5]))
         self.assertTrue(f.does_match(self.articles[6]))
         self.assertTrue(f.does_match(self.articles[7]))
+
+    def test_does_match_with_embargo_filter_with_false(self):
+        f = FilterCondition('embargo', 'eq', 'false')
+        self.assertTrue(f.does_match(self.articles[0]))
+        self.assertTrue(f.does_match(self.articles[1]))
+        self.assertTrue(f.does_match(self.articles[2]))
+        self.assertTrue(f.does_match(self.articles[3]))
+        self.assertTrue(f.does_match(self.articles[4]))
+        self.assertFalse(f.does_match(self.articles[5]))
+        self.assertTrue(f.does_match(self.articles[6]))
+        self.assertTrue(f.does_match(self.articles[7]))
+
+    def test_does_match_with_embargo_filter_with_true(self):
+        f = FilterCondition('embargo', 'eq', 'true')
+        self.assertFalse(f.does_match(self.articles[0]))
+        self.assertFalse(f.does_match(self.articles[1]))
+        self.assertFalse(f.does_match(self.articles[2]))
+        self.assertFalse(f.does_match(self.articles[3]))
+        self.assertFalse(f.does_match(self.articles[4]))
+        self.assertTrue(f.does_match(self.articles[5]))
+        self.assertFalse(f.does_match(self.articles[6]))
+        self.assertFalse(f.does_match(self.articles[7]))
 
     def test_does_match_with_in_filter(self):
         f = FilterCondition('urgency', 'in', '3,4')
