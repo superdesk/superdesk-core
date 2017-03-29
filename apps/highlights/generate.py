@@ -1,9 +1,11 @@
-
 import superdesk
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, CONTENT_STATE, ITEM_STATE
 from flask import render_template, render_template_string
 from superdesk.errors import SuperdeskApiError
 from eve.utils import config
+from flask import current_app as app
+from .service import get_highlight_name
+from apps.archive.common import ITEM_EXPORT_HIGHLIGHT, ITEM_CREATE_HIGHLIGHT
 
 PACKAGE_FIELDS = {
     'type', 'state', 'groups', 'unique_name', 'pubstatus', 'origina_creator', 'flags', 'guid',
@@ -67,6 +69,11 @@ class GenerateHighlightsService(superdesk.Service):
                                 raise SuperdeskApiError.forbiddenError(message)
 
                             items.append(item)
+                            if not preview:
+                                app.on_archive_item_updated(
+                                    {'highlight_id': package.get('highlight'),
+                                     'highlight_name': get_highlight_name(package.get('highlight'))}, item,
+                                    ITEM_EXPORT_HIGHLIGHT)
 
             if stringTemplate:
                 doc['body_html'] = render_template_string(stringTemplate, package=package, items=items)
@@ -75,7 +82,13 @@ class GenerateHighlightsService(superdesk.Service):
         if preview:
             return ['' for doc in docs]
         else:
-            return service.post(docs, **kwargs)
+            ids = service.post(docs, **kwargs)
+            for id in ids:
+                app.on_archive_item_updated(
+                    {'highlight_id': package.get('highlight'),
+                     'highlight_name': get_highlight_name(package.get('highlight'))}, {'_id': id},
+                    ITEM_CREATE_HIGHLIGHT)
+            return ids
 
 
 class GenerateHighlightsResource(superdesk.Resource):

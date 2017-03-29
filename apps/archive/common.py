@@ -55,10 +55,13 @@ ITEM_DESCHEDULE = 'deschedule'
 ITEM_MARK = 'mark'
 ITEM_UNMARK = 'unmark'
 ITEM_RESEND = 'resend'
+ITEM_EXPORT_HIGHLIGHT = 'export_highlight'
+ITEM_CREATE_HIGHLIGHT = 'create_highlight'
 ITEM_EVENT_ID = 'event_id'
 item_operations = [ITEM_CREATE, ITEM_FETCH, ITEM_UPDATE, ITEM_RESTORE,
                    ITEM_DUPLICATE, ITEM_DUPLICATED_FROM, ITEM_DESCHEDULE,
-                   ITEM_REWRITE, ITEM_LINK, ITEM_UNLINK, ITEM_TAKE, ITEM_MARK, ITEM_UNMARK, ITEM_RESEND]
+                   ITEM_REWRITE, ITEM_LINK, ITEM_UNLINK, ITEM_TAKE, ITEM_MARK, ITEM_UNMARK, ITEM_RESEND,
+                   ITEM_EXPORT_HIGHLIGHT, ITEM_CREATE_HIGHLIGHT]
 # part the task dict
 LAST_AUTHORING_DESK = 'last_authoring_desk'
 LAST_PRODUCTION_DESK = 'last_production_desk'

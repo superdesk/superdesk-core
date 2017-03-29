@@ -181,6 +181,45 @@ Feature: Highlights
         """
 
     @auth
+    Scenario: Delete a highlight that has an item that is in another highlight
+         Given "desks"
+		"""
+		[{"_id": "1", "name": "desk1"}]
+		"""
+        Given "highlights"
+        """
+        [{"_id": "111111111111111111111111", "name": "highlight1", "desks": ["1"]},
+        {"_id":  "222222222222222222222222", "name": "highlight2", "desks": ["1"]}]
+        """
+        When we post to "archive"
+		"""
+		[{"headline": "test"}]
+		"""
+		Then we get new resource
+        """
+        {"headline": "test"}
+        """
+		When we post to "marked_for_highlights"
+		"""
+		[{"highlights": "111111111111111111111111", "marked_item": "#archive._id#"},
+		{"highlights": "222222222222222222222222", "marked_item": "#archive._id#"}]
+		"""
+		When we get "archive"
+        Then we get list with 1 items
+        """
+        {"_items": [{"headline": "test", "highlights": ["111111111111111111111111", "222222222222222222222222"]}]}
+        """
+		When we delete "highlights/111111111111111111111111"
+		Then we get response code 204
+		When we get "highlights"
+        Then we get list with 1 items
+		When we get "archive"
+        Then we get list with 1 items
+        """
+        {"_items": [{"headline": "test", "highlights": ["222222222222222222222222"]}]}
+        """
+
+    @auth
     Scenario: Generate text item from highlights using default template
         Given "desks"
         """

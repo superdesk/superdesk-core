@@ -63,6 +63,18 @@ def on_create_package(sender, docs):
             init_highlight_package(doc)
 
 
+def get_highlight_name(highlights_id):
+    """
+    Given the id of a highlight it will return the name.
+    :param hightlight_id:
+    :return:
+    """
+    highlight = get_resource_service('highlights').find_one(req=None, _id=highlights_id)
+    if highlight and 'name' in highlight:
+        return highlight.get('name', None)
+    return None
+
+
 class HighlightsService(BaseService):
     def on_delete(self, doc):
         service = get_resource_service('archive')
@@ -71,8 +83,10 @@ class HighlightsService(BaseService):
         req = init_parsed_request(query)
         proposedItems = service.get(req=req, lookup=None)
         for item in proposedItems:
-            updates = item.get('highlights').remove(highlights_id)
-            service.update(item['_id'], {'highlights': updates}, item)
+            app.on_archive_item_updated(
+                {'highlight_id': highlights_id, 'highlight_name': get_highlight_name(highlights_id)}, item, ITEM_UNMARK)
+            highlights = [h for h in item.get('highlights') if h != highlights_id]
+            service.update(item['_id'], {'highlights': highlights}, item)
 
 
 class MarkedForHighlightsService(BaseService):
@@ -116,9 +130,13 @@ class MarkedForHighlightsService(BaseService):
                     publishedService.update(publishedItem['_id'], updates, publishedItem)
 
             if highlight_on:
-                app.on_archive_item_updated({'highlight_id': doc['highlights']}, item, ITEM_MARK)
+                app.on_archive_item_updated(
+                    {'highlight_id': doc['highlights'], 'highlight_name': get_highlight_name(doc['highlights'])}, item,
+                    ITEM_MARK)
             else:
-                app.on_archive_item_updated({'highlight_id': doc['highlights']}, item, ITEM_UNMARK)
+                app.on_archive_item_updated(
+                    {'highlight_id': doc['highlights'], 'highlight_name': get_highlight_name(doc['highlights'])}, item,
+                    ITEM_UNMARK)
 
             push_notification(
                 'item:highlights',
