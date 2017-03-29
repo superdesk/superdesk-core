@@ -64,7 +64,7 @@ class CreateMethodTestCase(MarkedForHighlightsServiceTest):
     ):
 
         def fake_find_one(**kwargs):
-            item_id = kwargs.get('guid')
+            item_id = kwargs.get('_id')
             return self.db_items.get(item_id)
 
         fake_archive_service = MagicMock()
@@ -107,7 +107,7 @@ class CreateMethodTestCase(MarkedForHighlightsServiceTest):
         self.db_items['tag:item_2']['highlights'] = ['highlight_Y']
 
         def fake_find_one(**kwargs):
-            item_id = kwargs.get('guid')
+            item_id = kwargs.get('_id')
             return self.db_items.get(item_id)
 
         fake_archive_service = MagicMock()

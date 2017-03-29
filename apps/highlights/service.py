@@ -82,7 +82,7 @@ class MarkedForHighlightsService(BaseService):
         publishedService = get_resource_service('published')
         ids = []
         for doc in docs:
-            item = service.find_one(req=None, guid=doc['marked_item'])
+            item = service.find_one(req=None, _id=doc['marked_item'])
             if not item:
                 ids.append(None)
                 continue
