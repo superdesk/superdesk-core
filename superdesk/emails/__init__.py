@@ -141,9 +141,10 @@ def send_article_killed_email(article, recipients, transmitted_at):
     if place:
         place = place.get('qcode', '')
     body = article.get('body_html', '')
+    subject = article.get('headline', 'Kill Notification')
 
     text_body = render_template("article_killed.txt", app_name=app_name, place=place, body=body)
     html_body = render_template("article_killed.html", app_name=app_name, place=place, body=body)
 
-    send_email.delay(subject='Transmission from circuit: E_KILL_', sender=admins[0], recipients=recipients,
+    send_email.delay(subject=subject, sender=admins[0], recipients=recipients,
                      text_body=text_body, html_body=html_body)
