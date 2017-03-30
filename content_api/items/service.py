@@ -223,9 +223,17 @@ class ItemsService(BaseService):
 
     def _process_item_associations(self, item):
         hrefs = {}
+        allowed_items = {}
         if item.get('associations'):
             for _k, v in item.get('associations', {}).items():
-                hrefs.update(self._process_item_renditions(v))
+                # only allow subscribers
+                if g.get('user') in v.get('subscribers', []):
+                    hrefs.update(self._process_item_renditions(v))
+                    v.pop('subscribers', None)
+                    allowed_items[_k] = v
+
+        item['associations'] = allowed_items
+
         if item.get('body_html'):
             for k, v in hrefs.items():
                 item['body_html'] = item['body_html'].replace(k, v)

@@ -35,21 +35,22 @@ class EnqueueCorrectedService(EnqueueService):
         :param target_media_type: dictate if the doc being queued is a Takes Package or an Individual Article.
                 Valid values are - Wire, Digital. If Digital then the doc being queued is a Takes Package and if Wire
                 then the doc being queues is an Individual Article.
-        :return: (list, list) List of filtered subscribers, List of subscribers that have not received item previously
+        :return: (list, dict, dict) List of filtered subscribers, product codes per subscriber,
+                associations per subscriber
         """
         subscribers, subscribers_yet_to_receive = [], []
+
         # step 1
         query = {'$and': [{'item_id': doc['item_id']},
                           {'publishing_action': {'$in': [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]}}]}
 
-        subscribers, subscriber_codes = self._get_subscribers_for_previously_sent_items(query)
+        subscribers, subscriber_codes, previous_associations = self._get_subscribers_for_previously_sent_items(query)
 
         if subscribers:
             # step 2
             if not self.takes_package_service.get_take_package_id(doc):
                 # Step 3
                 query = {'is_active': True}
-
                 active_subscribers = list(get_resource_service('subscribers').get(req=None, lookup=query))
                 subscribers_yet_to_receive = [a for a in active_subscribers
                                               if not any(a[config.ID_FIELD] == s[config.ID_FIELD]
@@ -65,4 +66,8 @@ class EnqueueCorrectedService(EnqueueService):
                 if codes:
                     subscriber_codes.update(codes)
 
-        return subscribers, subscribers_yet_to_receive, subscriber_codes
+        subscribers = subscribers + subscribers_yet_to_receive
+        associations = self._filter_subscribers_for_associations(subscribers, doc,
+                                                                 target_media_type, previous_associations)
+
+        return subscribers, subscriber_codes, associations

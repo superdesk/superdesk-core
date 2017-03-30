@@ -715,14 +715,14 @@ Feature: Resend
         "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
       }
     """
-    When we post to "/archive/#archive._id#/resend"
-    """
-    {
-      "subscribers": ["#subscribers._id#"],
-      "version": 4
-    }
-    """
-    Then we get OK response
+      When we post to "/archive/#archive._id#/resend"
+      """
+      {
+        "subscribers": ["#subscribers._id#"],
+        "version": 4
+      }
+      """
+      Then we get OK response
     When we get "/publish_queue"
     Then we get list with 2 items
     """

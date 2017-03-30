@@ -1,4 +1,3 @@
-
 import io
 import superdesk
 
@@ -13,7 +12,6 @@ from content_api.app import get_app
 
 
 class ContentAPITestCase(TestCase):
-
     def setUp(self):
         self.content_api = superdesk.get_resource_service('content_api')
         self.db = self.app.data.mongo.pymongo(prefix=MONGO_PREFIX).db
@@ -128,6 +126,7 @@ class ContentAPITestCase(TestCase):
             self.assertEqual(1, audit_entries.count())
 
     def test_text_with_pic_associations(self):
+        subscriber = {'_id': 'sub1'}
         self.content_api.publish({
             'guid': 'text',
             'type': 'text',
@@ -150,13 +149,13 @@ class ContentAPITestCase(TestCase):
                             'href': 'http://localhost:5000/api/upload/foo/raw?_schema=http',
                             'media': 'bar'
                         }
-                    }
+                    },
+                    'subscribers': ['sub1']
                 }
             }
-        })
+        }, [subscriber])
 
-        headers = self._auth_headers()
-
+        headers = self._auth_headers(subscriber)
         with self.capi.test_client() as c:
             response = c.get('items/text', headers=headers)
             data = json.loads(response.data)
@@ -322,3 +321,29 @@ class ContentAPITestCase(TestCase):
         fun = self.db.items.find_one({'_id': 'fun'})
         self.assertEqual(['foo', 'bar'], fun.get('ancestors', []))
         self.assertEqual('bar', fun.get('evolvedfrom'))
+
+    def test_associated_item_filter_by_subscriber(self):
+        item = {
+            'guid': 'foo', 'type': 'text', 'task': {'desk': 'foo'},
+            'associations': {
+                'featuremedia': {
+                    'guid': 'a1',
+                    'type': 'picture',
+                    'subscribers': ['sub1']
+                }
+            }
+        }
+        subscriber1 = {'_id': 'sub1'}
+        subscriber2 = {'_id': 'sub2'}
+        self.content_api.publish(item, [subscriber1, subscriber2])
+        self.assertEqual(1, self.db.items.count())
+        with self.capi.test_client() as c:
+            response = c.get('items/foo', headers=self._auth_headers(subscriber1))
+            data = json.loads(response.data)
+            self.assertIn('items/foo', data['uri'])
+            self.assertEqual(data['associations']['featuremedia']['guid'], 'a1')
+
+            response = c.get('items/foo', headers=self._auth_headers(subscriber2))
+            data = json.loads(response.data)
+            self.assertIn('items/foo', data['uri'])
+            self.assertNotIn('featuremedia', data['associations'])

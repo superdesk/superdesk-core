@@ -18,7 +18,7 @@ import content_api
 from flask import current_app as app
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError, SuperdeskPublishError
-from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, PUBLISH_SCHEDULE
+from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, PUBLISH_SCHEDULE, ASSOCIATIONS
 from superdesk.metadata.packages import SEQUENCE, PACKAGE_TYPE, GROUPS,\
     ROOT_GROUP, GROUP_ID, REFS, RESIDREF
 from superdesk.notification import push_notification
@@ -95,7 +95,7 @@ class EnqueueService:
                     raise SuperdeskApiError.badRequestError(
                         "Package item with id: {} has not been published.".format(guid))
 
-                subscribers, subscriber_codes = self._get_subscribers_for_package_item(package_item)
+                subscribers, subscriber_codes, associations = self._get_subscribers_for_package_item(package_item)
                 digital_item_id = BasePublishService().get_digital_id_for_package_item(package_item)
                 self._extend_subscriber_items(subscriber_items,
                                               subscribers,
@@ -105,7 +105,7 @@ class EnqueueService:
 
             for removed_id in removed_items:
                 package_item = archive_service.find_one(req=None, _id=removed_id)
-                subscribers, subscriber_codes = self._get_subscribers_for_package_item(package_item)
+                subscribers, subscriber_codes, associations = self._get_subscribers_for_package_item(package_item)
                 digital_item_id = None
                 self._extend_subscriber_items(subscriber_items,
                                               subscribers,
@@ -126,17 +126,17 @@ class EnqueueService:
         """
         published_service = get_resource_service('published')
         req = ParsedRequest()
-        query = {'query': {'filtered': {'filter': {'and': [{'term': {QUEUE_STATE: PUBLISH_STATE.QUEUED}},
-                                                           {'term': {'item_id': package['item_id']}}]}}},
-                 'sort': [{'publish_sequence_no': 'desc'}]}
+        query = {'query': {'filtered': {'filter': {'and': [{'terms': {QUEUE_STATE: [
+            PUBLISH_STATE.QUEUED, PUBLISH_STATE.QUEUED_NOT_TRANSMITTED]}},
+            {'term': {'item_id': package['item_id']}}]}}}, 'sort': [{'publish_sequence_no': 'desc'}]}
         req.args = {'source': json.dumps(query)}
-        req.max_results = 1000
+        req.max_results = 1
         previously_published_packages = published_service.get(req=req, lookup=None)
 
-        try:
-            previously_published_package = previously_published_packages[0]
-        except IndexError:
+        if not previously_published_packages.count():
             return [], []
+
+        previously_published_package = previously_published_packages[0]
 
         if 'groups' in previously_published_package:
             old_items = self.package_service.get_residrefs(previously_published_package)
@@ -182,10 +182,9 @@ class EnqueueService:
         1. Get the subscribers.
         2. Update the headline of wire stories with the sequence
         3. Queue the content for subscribers
-        4. Queue the content for previously published subscribers if any.
-        5. Sends notification if no formatter has found for any of the formats configured in Subscriber.
-        6. If not queued and not formatters then raise exception.
-        7. Publish the content to content api.
+        4. Sends notification if no formatter has found for any of the formats configured in Subscriber.
+        5. If not queued and not formatters then raise exception.
+        6. Publish the content to content api.
 
         :param dict doc: document to publish
         :param str target_media_type: dictate if the doc being queued is a Takes Package or an Individual Article.
@@ -196,31 +195,24 @@ class EnqueueService:
                 If the nothing is queued.
         """
         # Step 1
-        subscribers, subscribers_yet_to_receive, subscriber_codes = self.get_subscribers(doc, target_media_type)
+        subscribers, subscriber_codes, associations = self.get_subscribers(doc, target_media_type)
 
         # Step 2
         if target_media_type == SUBSCRIBER_TYPES.WIRE:
             self._update_headline_sequence(doc)
 
         # Step 3
-        no_formatters, queued = self.queue_transmission(deepcopy(doc), subscribers, subscriber_codes)
+        no_formatters, queued = self.queue_transmission(deepcopy(doc), subscribers, subscriber_codes, associations)
 
         # Step 4
-        if subscribers_yet_to_receive:
-            formatters_not_found, queued_new_subscribers = \
-                self.queue_transmission(deepcopy(doc), subscribers_yet_to_receive, subscriber_codes)
-            no_formatters.extend(formatters_not_found)
-            queued = queued or queued_new_subscribers
-
-        # Step 5
         self._push_formatter_notification(doc, no_formatters)
 
-        # Step 6
+        # Step 5
         if not target_media_type and not queued:
             logger.error('Nothing is saved to publish queue for story: {} for action: {}'.
                          format(doc[config.ID_FIELD], self.publish_type))
 
-        # Step 7
+        # Step 6
         self.publish_content_api(doc, [s for s in subscribers if s.get('api_enabled')])
 
         return queued
@@ -232,11 +224,11 @@ class EnqueueService:
         :param list subscribers: list of subscribers
         """
         try:
-            if content_api.is_enabled() and subscribers:
+            if content_api.is_enabled():
                 get_resource_service('content_api').publish(doc, subscribers)
         except:
-            logger.error('Failed to queue item to API for item: {} for action {}'.
-                         format(doc[config.ID_FIELD], self.publish_type))
+            logger.exception('Failed to queue item to API for item: {} for action {}'.
+                             format(doc[config.ID_FIELD], self.publish_type))
 
     def _push_formatter_notification(self, doc, no_formatters=[]):
         if len(no_formatters) > 0:
@@ -279,8 +271,9 @@ class EnqueueService:
             subscriber['api_enabled'] = len(subscriber.get('api_products') or []) > 0
 
         doc['item_id'] = doc[config.ID_FIELD]
+        associations = self._resend_associations_to_subscribers(doc, subscribers)
         if len(wire_subscribers) > 0:
-            self._resend_to_subscribers(doc, wire_subscribers, subscriber_codes)
+            self._resend_to_subscribers(doc, wire_subscribers, subscriber_codes, associations)
             self.publish_content_api(doc,
                                      [subscriber for subscriber in wire_subscribers
                                       if subscriber.get('api_enabled')])
@@ -290,16 +283,43 @@ class EnqueueService:
             if not app.config.get('NO_TAKES', False) or self.takes_package_service.get_take_package_id(doc):
                 package = self.takes_package_service.get_take_package(doc)
                 package['item_id'] = package[config.ID_FIELD]
-                self._resend_to_subscribers(package, digital_subscribers, subscriber_codes)
+                associations = self._resend_associations_to_subscribers(package, subscribers)
+                self._resend_to_subscribers(package, digital_subscribers, subscriber_codes, associations)
             else:
-                self._resend_to_subscribers(doc, digital_subscribers, subscriber_codes)
+                self._resend_to_subscribers(doc, digital_subscribers, subscriber_codes, associations)
 
             self.publish_content_api(package or doc,
                                      [subscriber for subscriber in digital_subscribers
                                       if subscriber.get('api_enabled')])
 
-    def _resend_to_subscribers(self, doc, subscribers, subscriber_codes):
-        formatter_messages, queued = self.queue_transmission(doc, subscribers, subscriber_codes)
+    def _resend_associations_to_subscribers(self, doc, subscribers):
+        """
+        On resend association are also sent to the subscribers.
+        :param dict doc: item to resend
+        :param list subscribers: list of subscribers
+        :return dict: associations
+        """
+        if not doc.get(ASSOCIATIONS):
+            return {}
+
+        associations = {}
+
+        for assoc_id, item in doc.get(ASSOCIATIONS).items():
+            if not item:
+                continue
+
+            item['subscribers'] = []
+
+            for s in subscribers:
+                item['subscribers'].append(s.get(config.ID_FIELD))
+                if not associations.get(s.get(config.ID_FIELD)):
+                    associations[s.get(config.ID_FIELD)] = []
+
+                associations[s.get(config.ID_FIELD)].append(item.get(config.ID_FIELD))
+        return associations
+
+    def _resend_to_subscribers(self, doc, subscribers, subscriber_codes, associations={}):
+        formatter_messages, queued = self.queue_transmission(doc, subscribers, subscriber_codes, associations)
         self._push_formatter_notification(doc, formatter_messages)
         if not queued:
             logger.exception('Nothing is saved to publish queue for story: {} for action: {}'.
@@ -349,7 +369,7 @@ class EnqueueService:
             destinations.append({'name': 'content api', 'delivery_type': 'content_api', 'format': 'ninjs'})
         return destinations
 
-    def queue_transmission(self, doc, subscribers, subscriber_codes={}):
+    def queue_transmission(self, doc, subscribers, subscriber_codes={}, associations={}):
         """Method formats and then queues the article for transmission to the passed subscribers.
 
         ::Important Note:: Format Type across Subscribers can repeat. But we can't have formatted item generated once
@@ -415,6 +435,8 @@ class EnqueueService:
                             publish_queue_item['publishing_action'] = self.published_state
                             publish_queue_item['ingest_provider'] = \
                                 ObjectId(doc.get('ingest_provider')) if doc.get('ingest_provider') else None
+                            publish_queue_item['associated_items'] = associations.get(subscriber[config.ID_FIELD], [])
+
                             if doc.get(PUBLISHED_IN_PACKAGE):
                                 publish_queue_item[PUBLISHED_IN_PACKAGE] = doc[PUBLISHED_IN_PACKAGE]
                             try:
@@ -468,11 +490,13 @@ class EnqueueService:
             query = {'$and': [{'item_id': package_item[config.ID_FIELD]},
                               {'publishing_action': package_item[ITEM_STATE]}]}
         else:
-            package_item_takes_package = self.takes_package_service.get_take_package(package_item)
-            if not package_item_takes_package:
-                # this item has not been published to digital subscribers so
-                # the list of subscribers are empty
-                return [], {}
+            package_item_takes_package = package_item
+            if not app.config.get('NO_TAKES', False):
+                package_item_takes_package = self.takes_package_service.get_take_package(package_item)
+                if not package_item_takes_package:
+                    # this item has not been published to digital subscribers so
+                    # the list of subscribers are empty
+                    return [], {}, {}
 
             query = {'$and': [{'item_id': package_item_takes_package[config.ID_FIELD]},
                               {'publishing_action': package_item_takes_package[ITEM_STATE]}]}
@@ -488,6 +512,7 @@ class EnqueueService:
         req = ParsedRequest()
         subscribers = []
         subscriber_codes = {}
+        associations = {}
         queued_items = list(get_resource_service('publish_queue').get(req=req, lookup=lookup))
 
         if len(queued_items) > 0:
@@ -500,13 +525,16 @@ class EnqueueService:
                         subscriber_ids[subscriber_id] = True
 
                 subscriber_codes[subscriber_id] = queue_item.get('codes', [])
+                if queue_item.get('associated_items'):
+                    associations[subscriber_id] = list(set(associations.get(subscriber_id, [])) |
+                                                       set(queue_item.get('associated_items', [])))
 
             query = {'$and': [{config.ID_FIELD: {'$in': list(subscriber_ids.keys())}}]}
             subscribers = list(get_resource_service('subscribers').get(req=None, lookup=query))
             for s in subscribers:
                 s['api_enabled'] = subscriber_ids.get(s.get(config.ID_FIELD))
 
-        return subscribers, subscriber_codes
+        return subscribers, subscriber_codes, associations
 
     def filter_subscribers(self, doc, subscribers, target_media_type):
         """Filter subscribers to whom the current document is going to be delivered.
@@ -526,6 +554,8 @@ class EnqueueService:
         existing_products = {p[config.ID_FIELD]: p for p in
                              list(get_resource_service('products').get(req=req, lookup=None))}
         global_filters = list(filter_service.get(req=req, lookup=None))
+
+        # apply global filters
         self.conforms_global_filter(global_filters, doc)
 
         for subscriber in subscribers:
@@ -581,6 +611,13 @@ class EnqueueService:
         return filtered_subscribers, subscriber_codes
 
     def _validate_article_for_subscriber(self, doc, products, existing_products):
+        """Validate the article for subscriber
+
+        :param dict doc: Document to be validated
+        :param list products: list of product ids
+        :param dict existing_products: Product lookup
+        :return tuple bool, list: Boolean flag to add subscriber or not and list of product codes.
+        """
         add_subscriber, product_codes = False, []
 
         if not products:
@@ -602,6 +639,66 @@ class EnqueueService:
                 add_subscriber = True
 
         return add_subscriber, product_codes
+
+    def _filter_subscribers_for_associations(self, subscribers, doc, target_media_type, existing_associations):
+        """Filter the subscriber for associations.
+
+        :param list subscribers: list of subscriber that are going to receive parent item.
+        :param dict doc: item with associations
+        :param dict existing_associations: existing associations
+        :param target_media_type: dictate if the doc being queued is a Takes Package or an Individual Article.
+                Valid values are - Wire, Digital. If Digital then the doc being queued is a Takes Package and if Wire
+                then the doc being queues is an Individual Article.
+        """
+        associations = {}
+
+        if not doc.get(ASSOCIATIONS) or not subscribers:
+            return associations
+
+        for assoc, item in doc.get(ASSOCIATIONS).items():
+            if not item:
+                continue
+
+            assoc_subscribers = set()
+            assoc_id = item.get(config.ID_FIELD)
+            filtered_subscribers, subscriber_codes = self.filter_subscribers(item,
+                                                                             deepcopy(subscribers),
+                                                                             target_media_type)
+
+            for subscriber in filtered_subscribers:
+                # for the validated subscribers
+                subscriber_id = subscriber.get(config.ID_FIELD)
+                if not associations.get(subscriber_id):
+                    associations[subscriber_id] = []
+
+                associations[subscriber_id].append(assoc_id)
+                assoc_subscribers.add(subscriber_id)
+
+            for subscriber_id, items in existing_associations.items():
+                # for the not validated associated item but previously published to the subscriber.
+                if assoc_id in items and assoc_id not in associations.get(subscriber_id, []):
+                    if not associations.get(subscriber_id):
+                        associations[subscriber_id] = []
+
+                    associations[subscriber_id].append(assoc_id)
+                    assoc_subscribers.add(subscriber_id)
+
+            item['subscribers'] = list(assoc_subscribers)
+
+        return associations
+
+    def _update_associations(self, original, updates):
+        """Update the associations
+
+        :param dict original: original item
+        :param dict updates: updates item
+        """
+        if not updates:
+            return
+
+        for subscriber, items in updates.items():
+            if items:
+                original[subscriber] = list(set(original.get(subscriber, [])) | set(updates.get(subscriber, [])))
 
     def conforms_product_targets(self, product, article):
         """Check product targets.

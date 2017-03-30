@@ -28,6 +28,8 @@ class NoTakesEnqueueTestCase(TestCase):
         subscribers = [s for s in self.app.data.find_all('subscribers')]
         subscriber_codes = self.service._get_subscriber_codes(subscribers)
         with patch.object(self.service, '_resend_to_subscribers') as resend:
-            with patch.dict('apps.publish.enqueue.enqueue_service.app.config', {'NO_TAKES': True}):
-                self.service.resend(doc, subscribers)
-            resend.assert_called_with(doc, subscribers, subscriber_codes)
+            with patch.object(self.service, 'publish_content_api') as content_api:
+                with patch.dict('apps.publish.enqueue.enqueue_service.app.config', {'NO_TAKES': True}):
+                    self.service.resend(doc, subscribers)
+                resend.assert_called_with(doc, subscribers, subscriber_codes, {})
+                content_api.assert_called_with(doc, [])

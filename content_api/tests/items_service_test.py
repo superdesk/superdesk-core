@@ -864,6 +864,42 @@ class OnFetchedMethodTestCase(ItemsServiceTestCase):
         self_link = result.get('_links', {}).get('self', {}).get('href')
         self.assertEqual(self_link, 'items?start_date=1975-12-31%23foo')
 
+    @mock.patch('content_api.items.service.g')
+    def test_removes_associated_item_if_subscriber_is_not_entitled(self, fake_g):
+        fake_g.get = MagicMock(return_value='test')
+        result = {
+            '_items': [
+                {
+                    '_id': 'item:123',
+                    'headline': 'a test item',
+                    'associations': {
+                        'featuremedia': {
+                            '_id': 'a1',
+                            'subscribers': ['test']
+                        }
+                    }
+                },
+                {
+                    '_id': 'item:555',
+                    'headline': 'another item',
+                    'associations': {
+                        'featuremedia': {
+                            '_id': 'a2',
+                            'subscribers': ['test2']
+                        }
+                    }
+                },
+            ]
+        }
+
+        with self.app.test_request_context():
+            instance = self._make_one(datasource='items')
+            instance.on_fetched(result)
+
+        self.assertEqual(result['_items'][0]['associations']['featuremedia']['_id'], 'a1')
+        self.assertNotIn('subscribers', result['_items'][0]['associations']['featuremedia'])
+        self.assertNotIn('featuremedia', result['_items'][1]['associations'])
+
 
 class GetUriMethodTestCase(ItemsServiceTestCase):
     """Tests for the _get_uri() helper method."""

@@ -33,16 +33,15 @@ class EnqueueKilledService(EnqueueService):
         :param target_media_type: dictate if the doc being queued is a Takes Package or an Individual Article.
                 Valid values are - Wire, Digital. If Digital then the doc being queued is a Takes Package and if Wire
                 then the doc being queued is an Individual Article.
-        :return: (list, list) List of filtered subscribers,
-                List of subscribers that have not received item previously (empty list in this case).
+        :return: (list, dict, dict) List of filtered subscribers, product codes per subscriber,
+                associations per subscriber
         """
 
-        subscribers, subscribers_yet_to_receive = [], []
         query = {'$and': [{'item_id': doc['item_id']},
                           {'publishing_action': {'$in': [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]}}]}
-        subscribers, subscriber_codes = self._get_subscribers_for_previously_sent_items(query)
+        subscribers, subscriber_codes, associations = self._get_subscribers_for_previously_sent_items(query)
 
-        return subscribers, subscribers_yet_to_receive, subscriber_codes
+        return subscribers, subscriber_codes, associations
 
     def enqueue_archived_kill_item(self, item, transmission_details):
         """Enqueue items that are killed from dusty archive.
