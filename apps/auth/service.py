@@ -56,6 +56,15 @@ class AuthService(BaseService):
         doc['token'] = utils.get_random_string(40)
         del doc['password']
 
+    def update_session(self, updates=None):
+        """Update current session with given data.
+
+        :param updates: updates to be made
+        """
+        if not updates:
+            updates = {}
+        self.system_update(flask.g.auth['_id'], updates, flask.g.auth)
+
 
 class UserSessionClearService(BaseService):
 

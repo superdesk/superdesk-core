@@ -86,3 +86,20 @@ Feature: Content Autosave
 
         When we get "/archive_autosave/item-1"
         Then we get error 404
+
+    @auth
+    Scenario: Update session expiry on autosave
+        Given "archive"
+            """
+            [{"_id": "item-1", "guid": "item-1", "headline": "test"}]
+            """
+        When we sleep for 3s
+        when we post to "/archive_autosave"
+            """
+            {"_id": "item-1", "guid": "item-1", "slugline": "foo"}
+            """
+        When we get "/auth/#AUTH_ID#"
+        Then we get existing resource
+            """
+            {"_updated": "__now__"}
+            """

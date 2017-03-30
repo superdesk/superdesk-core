@@ -103,14 +103,14 @@ def test_key_is_not_present(key, response):
 
 
 def assert_is_now(val, key):
-    """Assert that given datetime value is now (with 5s tolerance).
+    """Assert that given datetime value is now (with 2s tolerance).
 
     :param val: datetime
     :param key: val label - used for error reporting
     """
     now = arrow.get()
     val = arrow.get(val)
-    assert val + timedelta(seconds=3) > now, '%s should be now, it is %s' % (key, val)
+    assert val + timedelta(seconds=2) > now, '%s should be now, it is %s' % (key, val)
 
 
 def json_match(context_data, response_data):
@@ -400,6 +400,11 @@ def step_impl_when_auth(context):
             set_placeholder(context, 'AUTH_ID', item['_id'])
         context.headers.append(('Authorization', b'basic ' + b64encode(item['token'].encode('ascii') + b':')))
         context.user = item['user']
+
+
+@when('we sleep for {limit}s')
+def when_we_sleep_for(context, limit):
+    time.sleep(int(limit))
 
 
 @given('we create a new macro "{macro_name}"')
