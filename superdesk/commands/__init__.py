@@ -5,3 +5,11 @@ from .run_macro import RunMacro  # noqa
 from .data_updates import *  # noqa
 from .delete_archived_document import *  # noqa
 from .update_archived_document import *  # noqa
+from .remove_exported_files import RemoveExportedFiles  # noqa
+
+from superdesk.celery_app import celery
+
+
+@celery.task()
+def temp_file_expiry():
+    RemoveExportedFiles()

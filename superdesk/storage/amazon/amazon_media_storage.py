@@ -15,6 +15,7 @@ import json
 import logging
 from mimetypes import guess_extension
 from superdesk.media.media_operations import download_file_from_url
+from superdesk.utc import query_datetime
 import time
 
 import boto3
@@ -213,7 +214,8 @@ class AmazonMediaStorage(MediaStorage):
                         logger.exception(ex)
         return headers
 
-    def put(self, content, filename=None, content_type=None, resource=None, metadata=None, _id=None, version=True):
+    def put(self, content, filename=None, content_type=None, resource=None, metadata=None, _id=None, version=True,
+            folder=None):
         """Save a new file using the storage system, preferably with the name specified.
 
         If there already exists a file with this name name, the
@@ -221,11 +223,28 @@ class AmazonMediaStorage(MediaStorage):
         name. Depending on the storage system, a unique id or the actual name
         of the stored file will be returned. The content type argument is used
         to appropriately identify the file when it is retrieved.
+
+        :param ByteIO content: Data to store in the file object
+        :param str filename: Filename used to store the object
+        :param str content_type: Content type of the data to be stored
+        :param resource: Superdesk resource, i.e. 'upload' or 'download'
+        :param metadata: Not currently used with Amazon S3 storage
+        :param str _id: ID to be used as the key in the bucket
+        :param version: If True the timestamp will be prepended to the key else a string can be used to prepend the key
+        :param str folder: The folder to store the object in
+        :return str: The ID that was generated for this object
         """
         # XXX: we don't use metadata here as Amazon S3 as a limit of 2048 bytes (keys + values)
         #      and they are anyway stored in MongoDB (and still part of the file). See issue SD-4231
         logger.debug('Going to save file file=%s media=%s ' % (filename, _id))
-        _id = _id or self.media_id(filename, content_type=content_type, version=version)
+        if not _id:
+            _id = self.media_id(filename, content_type=content_type, version=version)
+
+        if folder:
+            if folder[-1] == '/':
+                folder = folder[:-1]
+            _id = '{}/{}'.format(folder, _id)
+
         found = self._check_exists(_id)
         if found:
             return _id
@@ -286,3 +305,46 @@ class AmazonMediaStorage(MediaStorage):
                 print('Failed to clean orphans: {}'.format(errors))
         else:
             print('There\'s nothing to clean.')
+
+    def find(self, folder=None, upload_date=None, resource=None):
+        """Search for files in the S3 bucket
+
+        Searches for files in the S3 bucket using a combination of folder name and/or upload date
+        comparisons. Also uses the `superdesk.utc.query_datetime` method to compare the upload_date provided
+        and the upload_date of the file.
+
+        :param str folder: Folder name
+        :param dict upload_date: Upload date with comparison operator (i.e. $lt, $lte, $gt or $gte)
+        :param resource: The resource type to use
+        :return list: List of files that matched the provided parameters
+        """
+
+        files = []
+        next_marker = ''
+        folder = '{}/'.format(folder) if folder else None
+        while True:
+            result = self.client.list_objects(
+                Bucket=self.container_name,
+                Marker=next_marker,
+                MaxKeys=MAX_KEYS,
+                Prefix=folder
+            )
+
+            if not result or len(result.get('Contents', [])) <= 0:
+                break
+
+            objects = result.get('Contents', [])
+            for file in objects:
+                if upload_date is not None and not query_datetime(file.get('LastModified'), upload_date):
+                    continue
+                files.append({
+                    '_id': file.get('Key'),
+                    'filename': file.get('Key'),
+                    'upload_date': file.get('LastModified'),
+                    'size': file.get('Size'),
+                    '_etag': file.get('ETag')
+                })
+
+            next_marker = objects[-1]['Key']
+
+        return files

@@ -100,3 +100,30 @@ def get_timezone_offset(local_tz_name, utc_datetime):
         return local_dt.strftime('%z')
     except:
         return utcnow().strftime('%z')
+
+
+def query_datetime(datetime_value, query):
+    """Checks the datetime_value against the query provided.
+
+    The query format is similar to that of MongoDB BSON comparison operators.
+    It uses `$eq`, `$gt`, `$gte`, `$lt`, `$lte` and `$ne`. Combine these operators together in a dictionary
+    to provide the datetime checking functionality. This is currently used when finding files from Amazon S3, but
+    could possibly be used in other areas.
+
+    :param datetime.datetime datetime_value: The datetime value used to check against the query
+    :param dict query: The query parameters used to check against the datetime_value
+    :return boolean: True if all comparison operators pass, else False
+    """
+    if '$lte' in query and datetime_value > query['$lte']:
+        return False
+    elif '$lt' in query and datetime_value >= query['$lt']:
+        return False
+    elif '$gte' in query and datetime_value < query['$gte']:
+        return False
+    elif '$gt' in query and datetime_value <= query['$gt']:
+        return False
+    elif '$eq' in query and datetime_value != query['$eq']:
+        return False
+    elif '$ne' in query and datetime_value == query['$ne']:
+        return False
+    return True

@@ -7,6 +7,8 @@ from unittest.mock import Mock
 from superdesk.upload import bp, upload_url
 from superdesk.datalayer import SuperdeskDataLayer
 from superdesk.storage.desk_media_storage import SuperdeskGridFSMediaStorage
+from superdesk.utc import utcnow
+from datetime import timedelta
 
 
 class GridFSMediaStorageTestCase(unittest.TestCase):
@@ -37,9 +39,7 @@ class GridFSMediaStorageTestCase(unittest.TestCase):
         data = io.StringIO("test data")
         filename = 'x'
 
-        gridfs = Mock()
-        gridfs.put = Mock(return_value='y')
-        self.media._fs['MONGO'] = gridfs
+        gridfs = self._mock_gridfs()
         _id = bson.ObjectId()
 
         with self.app.app_context():
@@ -53,3 +53,48 @@ class GridFSMediaStorageTestCase(unittest.TestCase):
         }
 
         gridfs.put.assert_called_once_with(data, **kwargs)
+
+    def test_put_into_folder(self):
+        data = b'test data'
+        filename = 'x'
+        folder = 'gridtest'
+
+        gridfs = self._mock_gridfs()
+
+        with self.app.app_context():
+            self.media.put(data, filename=filename, content_type='text/plain', folder=folder)
+
+        kwargs = {
+            'content_type': 'text/plain',
+            'filename': '{}/{}'.format(folder, filename),
+            'metadata': None
+        }
+
+        gridfs.put.assert_called_once_with(data, **kwargs)
+
+    def test_find_files(self):
+        gridfs = self._mock_gridfs()
+        upload_date = {'$lte': utcnow(), '$gte': utcnow() - timedelta(hours=1)}
+        folder = 'gridtest'
+        query_filename = {'filename': {'$regex': '^{}/'.format(folder)}}
+        query_upload_date = {'uploadDate': upload_date}
+
+        with self.app.app_context():
+            self.media.find(folder=folder, upload_date=upload_date)
+            gridfs.find.assert_called_once_with({'$and': [query_filename, query_upload_date]})
+
+            self.media.find(folder=folder)
+            gridfs.find.assert_called_with(query_filename)
+
+            self.media.find(upload_date=upload_date)
+            gridfs.find.assert_called_with(query_upload_date)
+
+            self.media.find()
+            gridfs.find.assert_called_with({})
+
+    def _mock_gridfs(self):
+        gridfs = Mock()
+        gridfs.put = Mock(return_value='y')
+        gridfs.find = Mock(return_value=[])
+        self.media._fs['MONGO'] = gridfs
+        return gridfs

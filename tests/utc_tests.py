@@ -12,7 +12,8 @@
 import pytz
 import unittest
 from datetime import datetime, timedelta
-from superdesk.utc import get_date, utcnow, get_expiry_date, local_to_utc, utc_to_local, get_timezone_offset
+from superdesk.utc import get_date, utcnow, get_expiry_date, local_to_utc, utc_to_local, get_timezone_offset,\
+    query_datetime
 from pytz import utc, timezone # flake8: noqa
 from nose.tools import assert_raises
 
@@ -118,3 +119,50 @@ class UTCTestCase(unittest.TestCase):
         utc_dt = datetime(2015, 9, 8, 23, 0, 0, 0, pytz.UTC)
         offset = get_timezone_offset('Europe/Sydney', utc_dt)
         self.assertEqual(offset, '+0000')
+
+
+class UTCQueryTest(unittest.TestCase):
+    def setUp(self):
+        self.now = utcnow()
+        self.past = self.now - timedelta(hours=1)
+        self.future = self.now + timedelta(hours=1)
+
+    def test_lte(self):
+        self.assertTrue(query_datetime(self.past, {'$lte': self.now}))
+        self.assertTrue(query_datetime(self.now, {'$lte': self.now}))
+        self.assertFalse(query_datetime(self.future, {'$lte': self.now}))
+
+    def test_lt(self):
+        self.assertTrue(query_datetime(self.past, {'$lt': self.now}))
+        self.assertFalse(query_datetime(self.now, {'$lt': self.now}))
+        self.assertFalse(query_datetime(self.future, {'$lt': self.now}))
+
+    def test_gte(self):
+        self.assertFalse(query_datetime(self.past, {'$gte': self.now}))
+        self.assertTrue(query_datetime(self.now, {'$gte': self.now}))
+        self.assertTrue(query_datetime(self.future, {'$gte': self.now}))
+
+    def test_gt(self):
+        self.assertFalse(query_datetime(self.past, {'$gt': self.now}))
+        self.assertFalse(query_datetime(self.now, {'$gt': self.now}))
+        self.assertTrue(query_datetime(self.future, {'$gt': self.now}))
+
+    def test_eq(self):
+        self.assertFalse(query_datetime(self.past, {'$eq': self.now}))
+        self.assertTrue(query_datetime(self.now, {'$eq': self.now}))
+        self.assertFalse(query_datetime(self.future, {'$eq': self.now}))
+
+    def test_neq(self):
+        self.assertTrue(query_datetime(self.past, {'$ne': self.now}))
+        self.assertFalse(query_datetime(self.now, {'$ne': self.now}))
+        self.assertTrue(query_datetime(self.future, {'$ne': self.now}))
+
+    def test_combination(self):
+        self.assertTrue(query_datetime(self.now, {
+            '$lt': self.future,
+            '$gt': self.past
+        }))
+        self.assertFalse(query_datetime(self.past, {
+            '$lt': self.future,
+            '$gt': self.now
+        }))

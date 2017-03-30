@@ -1,8 +1,10 @@
 import time
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 from superdesk.tests import TestCase
 from superdesk.storage.amazon.amazon_media_storage import AmazonMediaStorage
+from superdesk.utc import utcnow
+from datetime import timedelta
 
 
 class AmazonMediaStorageTestCase(TestCase):
@@ -77,3 +79,57 @@ class AmazonMediaStoragePutAndDeleteTest(TestCase):
             self.assertFalse(self.amazon.exists(id))
         else:
             self.assertTrue(True)
+
+    def test_put_into_folder(self):
+        data = b'test data'
+        folder = 's3test'
+        filename = 'abc123.zip'
+        content_type = 'text/plain'
+        self.amazon.client.put_object = Mock()
+        self.amazon.media_id = Mock(return_value=filename)
+        self.amazon._check_exists = Mock(return_value=False)
+
+        self.amazon.put(data, filename, content_type, folder=folder)
+
+        kwargs = {
+            'Key': '{}/{}'.format(folder, filename),
+            'Body': data,
+            'Bucket': self.amazon.container_name,
+            'ContentType': content_type
+        }
+        self.amazon.client.put_object.assert_called_once_with(**kwargs)
+
+
+class AmazonMediaStorageFind(TestCase):
+    def setUp(self):
+        self.amazon = AmazonMediaStorage(self.app)
+        self.amazon.client = Mock()
+
+        # Mock getting list of files from Amazon, first request returns a file, second request returns empty list
+        self.amazon.client.list_objects = Mock(side_effect=[
+            {
+                'Contents': [{'Key': 'gridtest/abcd1234', 'LastModified': utcnow() - timedelta(minutes=30),
+                              'Size': 500, 'ETag': 'abcd1234'}]
+            },
+            {'Contents': []}
+        ])
+
+    def test_find_folder(self):
+        folder = 'gridtest'
+        self.amazon.find(folder=folder)
+
+        call_arg_list = [({
+            'Bucket': self.amazon.container_name,
+            'Marker': '',
+            'MaxKeys': 1000,
+            'Prefix': '{}/'.format(folder)
+        },), ({
+            'Bucket': self.amazon.container_name,
+            'Marker': 'gridtest/abcd1234',
+            'MaxKeys': 1000,
+            'Prefix': '{}/'.format(folder)
+        },)]
+
+        # We test the call_args_list as self.amazon.client.list_objects would have been called twice
+        self.assertEqual(self.amazon.client.list_objects.call_count, 2)
+        self.assertEqual(self.amazon.client.list_objects.call_args_list, call_arg_list)

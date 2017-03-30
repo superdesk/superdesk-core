@@ -5,6 +5,7 @@ from superdesk.services import BaseService
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
 from superdesk.publish.formatters import get_all_formatters
+from superdesk.utils import get_random_string
 from eve.validation import ValidationError
 from io import BytesIO
 from zipfile import ZipFile
@@ -46,7 +47,12 @@ class ExportService(BaseService):
             # Store the zip file on media_storage
             # only if at least one item is formatted successfully
             if unsuccessful_exports < len(doc.get('item_ids')):
-                zip_id = app.media.put(in_memory_zip.getvalue(), filename='export.zip', content_type='application/zip')
+                zip_id = app.media.put(
+                    in_memory_zip.getvalue(),
+                    filename='export_{}.zip'.format(get_random_string()),
+                    content_type='application/zip',
+                    folder='temp'
+                )
                 url = app.media.url_for_download(zip_id, 'application/zip')
 
             doc['url'] = url
