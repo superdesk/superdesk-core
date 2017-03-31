@@ -1,9 +1,9 @@
 
 import superdesk
 
-from flask import current_app as app
+from flask import current_app as app, json
 from superdesk.utils import get_random_string
-from superdesk.media.media_operations import crop_image
+from superdesk.media.media_operations import crop_image, process_image, encode_metadata
 from apps.search_providers.proxy import PROXY_ENDPOINT
 
 
@@ -58,7 +58,9 @@ class PictureCropService(superdesk.Service):
             filename = get_random_string()
             ok, output = crop_image(orig_file, filename, crop, size)
             if ok:
-                media = app.media.put(output, filename, orig['mimetype'])
+                metadata = encode_metadata(process_image(orig_file))
+                metadata.update({'length': json.dumps(len(output.getvalue()))})
+                media = app.media.put(output, filename, orig['mimetype'], metadata=metadata)
                 doc['href'] = app.media.url_for_media(media, orig['mimetype'])
                 doc['width'] = output.width
                 doc['height'] = output.height

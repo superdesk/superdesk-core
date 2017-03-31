@@ -45,7 +45,7 @@ class ArchiveMediaService():
 
             try:
                 doc[ITEM_TYPE] = self.type_av.get(file_type)
-                rendition_spec = get_renditions_spec()
+                rendition_spec = get_renditions_spec(no_custom_crops=True)
                 renditions = generate_renditions(file, doc['media'], inserted, file_type,
                                                  content_type, rendition_spec, url_for_media)
                 doc['renditions'] = renditions

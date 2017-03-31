@@ -2,55 +2,6 @@ Feature: Cropping the Image Articles
 
     @auth
     @vocabulary
-    Scenario: Crops generated automatically for pictures
-      Given the "validators"
-      """
-        [
-        {
-            "_id": "publish_picture",
-            "act": "publish",
-            "type": "picture",
-            "schema": {
-                "renditions": {
-                    "type": "dict",
-                    "required": true,
-                    "schema": {
-                        "4-3": {"type": "dict", "required": true},
-                        "16-9": {"type": "dict", "required": true}
-                    }
-                }
-            }
-        }
-        ]
-      """
-      And "desks"
-      """
-      [{"name": "Sports"}]
-      """
-      When upload a file "bike.jpg" to "archive" with "123"
-      And we post to "/archive/123/move"
-      """
-      [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
-      """
-      When we post to "/products" with success
-      """
-      {
-        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
-      }
-      """
-      And we post to "/subscribers" with success
-      """
-      {
-        "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-        "products": ["#products._id#"],
-        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
-      }
-      """
-      When we publish "123" with "publish" type and "published" state
-      Then we get response code 200
-
-    @auth
-    @vocabulary
     Scenario: Publish a picture with the crops succeeds
       Given the "validators"
       """
@@ -124,7 +75,6 @@ Feature: Cropping the Image Articles
       And we get OK response
       And we fetch a file "#rendition.16-9.href#"
       And we get OK response
-
 
     @auth
     @vocabulary
@@ -229,7 +179,6 @@ Feature: Cropping the Image Articles
       And we fetch a file "#rendition.4-3.href#"
       And we get OK response
 
-
     @auth
     @vocabulary
     Scenario: Create a story with a featured image
@@ -258,14 +207,6 @@ Feature: Cropping the Image Articles
             "_id": "bike",
             "poi": {"x": 0.2, "y": 0.3},
             "renditions": {
-              "16-9" : {
-                "poi" : {"y" : 18, "x" : 240},
-                "width": 1200, "height": 675
-              },
-              "4-3" : {
-                "poi" : {"y" : 130, "x" : 240},
-                "width": 1200, "height": 900
-              },
               "original" : {
                 "poi" : {"y" : 480, "x" : 240},
                 "width": 1200, "height": 1600
@@ -314,8 +255,7 @@ Feature: Cropping the Image Articles
             "poi": {"x": 0.1, "y": 0.1},
             "renditions": {
               "16-9" : {
-                "poi" : {"y" : 160, "x" : 120},
-                "width": 1200, "height": 675
+                "poi" : {"y" : 160, "x" : 120}
               }
             }
           }
@@ -441,14 +381,6 @@ Feature: Cropping the Image Articles
             "_id": "bike",
             "poi": {"x": 0.2, "y": 0.3},
             "renditions": {
-              "16-9" : {
-                "poi" : {"y" : 18, "x" : 240},
-                "width": 1200, "height": 675
-              },
-              "4-3" : {
-                "poi" : {"y" : 130, "x" : 240},
-                "width": 1200, "height": 900
-              },
               "original" : {
                 "poi" : {"y" : 480, "x" : 240},
                 "width": 1200, "height": 1600
