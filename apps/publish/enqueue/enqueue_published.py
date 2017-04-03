@@ -9,13 +9,9 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk import get_resource_service
-from superdesk.metadata.item import EMBARGO, ITEM_TYPE, CONTENT_TYPE, \
-    CONTENT_STATE
+from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, CONTENT_STATE
 from superdesk.metadata.packages import PACKAGE_TYPE, TAKES_PACKAGE
-from superdesk.publish import SUBSCRIBER_TYPES
-from superdesk.utc import utcnow
 from superdesk.metadata.utils import is_takes_package
-from apps.archive.common import get_utc_schedule
 from eve.utils import config
 from apps.publish.enqueue.enqueue_service import EnqueueService
 
@@ -24,8 +20,7 @@ class EnqueuePublishedService(EnqueueService):
     def get_subscribers(self, doc, target_media_type):
         """Get the subscribers for this document based on the target_media_type for publishing.
 
-        1. If the item has embargo and is a future date then fetch active Wire Subscribers.
-           Otherwise get all active subscribers.
+        1. Get all active subscribers.
             a. Get the list of takes subscribers if Takes Package
         2. If takes package then subsequent takes are sent to same wire subscriber as first take.
         3. Filter the subscriber list based on the publish filter and global filters (if configured).
@@ -57,11 +52,6 @@ class EnqueuePublishedService(EnqueueService):
 
         # Step 1
         query = {'is_active': True}
-        if doc.get(EMBARGO) and get_utc_schedule(doc, EMBARGO) > utcnow():
-            query['subscriber_type'] = SUBSCRIBER_TYPES.WIRE
-            # Ta 04/05/16: Commenting out this section for ticket SD-4465
-            # query['media_type'] = SUBSCRIBER_MEDIA_TYPES.MEDIA
-
         subscribers = list(get_resource_service('subscribers').get(req=None, lookup=query))
 
         if doc.get(ITEM_TYPE) in [CONTENT_TYPE.COMPOSITE] and doc.get(PACKAGE_TYPE) == TAKES_PACKAGE:

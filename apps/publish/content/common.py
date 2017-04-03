@@ -562,10 +562,6 @@ class BasePublishService(BaseService):
         if original[config.VERSION] == updates.get(config.VERSION, original[config.VERSION]):
             resolve_document_version(document=updates, resource=ARCHIVE, method='PATCH', latest_doc=original)
 
-        if updates.get(EMBARGO, original.get(EMBARGO)) \
-                and updates.get('ednote', original.get('ednote', '')).find('Embargo') == -1:
-            updates['ednote'] = '{} {}'.format(original.get('ednote', ''), 'Embargoed.').strip()
-
         user = get_user()
         if user and user.get(config.ID_FIELD):
             updates['version_creator'] = user[config.ID_FIELD]

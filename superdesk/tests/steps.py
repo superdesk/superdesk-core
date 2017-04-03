@@ -2031,7 +2031,7 @@ def there_is_no_key_in_namespace_preferences(context, key, namespace):
     assert key not in data[namespace], 'key "%s" is in %s' % (key, data[namespace])
 
 
-@then('we check if article has Embargo and Ed. Note of the article has embargo indication')
+@then('we check if article has Embargo')
 def step_impl_then_check_embargo(context):
     assert_200(context.response)
     try:
@@ -2049,11 +2049,6 @@ def step_impl_then_check_embargo(context):
 def assert_embargo(context, item):
     if not item.get('embargo'):
         fail_and_print_body(context, context.response, 'Embargo not found')
-
-    if not item.get('ednote'):
-        fail_and_print_body(context, context.response, 'Embargo indication in "Ed. Note" not found')
-
-    assert_equal((item['ednote'].find('Embargoed') > -1), True)
 
 
 @when('embargo lapses for "{item_id}"')

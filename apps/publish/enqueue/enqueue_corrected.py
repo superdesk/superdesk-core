@@ -9,10 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk import get_resource_service
-from superdesk.metadata.item import EMBARGO, CONTENT_STATE
-from superdesk.publish import SUBSCRIBER_TYPES
-from superdesk.utc import utcnow
-from apps.archive.common import get_utc_schedule
+from superdesk.metadata.item import CONTENT_STATE
 from eve.utils import config
 from apps.publish.enqueue.enqueue_service import EnqueueService
 
@@ -28,8 +25,7 @@ class EnqueueCorrectedService(EnqueueService):
         1. The article is sent to Subscribers (digital and wire) who has received the article previously.
         2. For subsequent takes, only published to previously published wire clients. Digital clients don't get
            individual takes but digital client takes package.
-        3. If the item has embargo and is a future date then fetch active Wire Subscribers.
-           Otherwise fetch Active Subscribers. After fetching exclude those who received the article previously from
+        3. Fetch Active Subscribers. After fetching exclude those who received the article previously from
            active subscribers list.
         4. If article has 'targeted_for' property then exclude subscribers of type Internet from Subscribers list.
         5. Filter the subscriber that have not received the article previously against publish filters
@@ -53,10 +49,6 @@ class EnqueueCorrectedService(EnqueueService):
             if not self.takes_package_service.get_take_package_id(doc):
                 # Step 3
                 query = {'is_active': True}
-                if doc.get(EMBARGO) and get_utc_schedule(doc, EMBARGO) > utcnow():
-                    query['subscriber_type'] = SUBSCRIBER_TYPES.WIRE
-                    # Ta 04/05/16: Commenting out this section for ticket SD-4465
-                    # query['media_type'] = SUBSCRIBER_MEDIA_TYPES.MEDIA
 
                 active_subscribers = list(get_resource_service('subscribers').get(req=None, lookup=query))
                 subscribers_yet_to_receive = [a for a in active_subscribers
