@@ -14,6 +14,7 @@ from superdesk.etree import get_text
 from .content_templates import ContentTemplatesResource, ContentTemplatesService, CONTENT_TEMPLATE_PRIVILEGE
 from .content_templates import ContentTemplatesApplyResource, ContentTemplatesApplyService
 from .content_templates import create_scheduled_content  # noqa
+from .content_templates import create_template_for_profile
 from .filters import format_datetime_filter, first_paragraph_filter
 
 
@@ -30,3 +31,5 @@ def init_app(app):
     register_jinja_filter('format_datetime', format_datetime_filter)
     register_jinja_filter('first_paragraph', first_paragraph_filter)
     register_jinja_filter('get_text', get_text)
+
+    app.on_inserted_content_types += create_template_for_profile

@@ -29,8 +29,8 @@ import logging
 from superdesk.lock import lock, unlock
 from superdesk.celery_task_utils import get_lock_id
 
-
-CONTENT_TEMPLATE_PRIVILEGE = 'content_templates'
+CONTENT_TEMPLATE_RESOURCE = 'content_templates'
+CONTENT_TEMPLATE_PRIVILEGE = CONTENT_TEMPLATE_RESOURCE
 TEMPLATE_FIELDS = {'template_name', 'template_type', 'schedule', 'type', 'state',
                    'last_run', 'next_run', 'template_desks', 'schedule_desk', 'schedule_stage',
                    config.ID_FIELD, config.LAST_UPDATED, config.DATE_CREATED,
@@ -439,3 +439,22 @@ def create_scheduled_content(now=None):
         logger.exception('Task: {} failed with error {}.'.format(lock_name, str(e)))
     finally:
         unlock(lock_name)
+
+
+def create_template_for_profile(items):
+    """Create templates based on given profiles.
+
+    Each template should have same name like profile.
+
+    :param items: list of profiles
+    """
+    templates = []
+    for profile in items:
+        if profile.get('label'):
+            templates.append({
+                'template_name': profile.get('label'),
+                'is_public': True,
+                'data': {'profile': profile.get('_id')}
+            })
+    if templates:
+        superdesk.get_resource_service(CONTENT_TEMPLATE_RESOURCE).post(templates)

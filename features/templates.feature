@@ -496,3 +496,15 @@ Feature: Templates
           "place": null
         }
         """
+
+    @auth
+    Scenario: Create template for new content profile
+        When we post to "content_types"
+        """
+        {"label": "Foo"}
+        """
+        When we get "content_templates"
+        Then we get list with 1 items
+        """
+        {"_items": [{"template_name": "foo", "template_type": "create", "is_public": true, "data": {"profile": "#content_types._id#"}}]}
+        """

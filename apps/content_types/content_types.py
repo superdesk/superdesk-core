@@ -134,7 +134,7 @@ class ContentTypesResource(superdesk.Resource):
     schema = {
         '_id': {
             'type': 'string',
-            'unique': True,
+            'iunique': True,
         },
         'label': {
             'type': 'string',

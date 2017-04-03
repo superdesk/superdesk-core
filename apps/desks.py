@@ -98,6 +98,7 @@ desks_schema = {
     },
 
     'default_content_profile': Resource.rel('content_types', type='string', nullable=True),
+    'default_content_template': Resource.rel('content_templates', nullable=True),
 }
 
 
