@@ -156,7 +156,17 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     """
 
   @auth
+  @vocabulary
   Scenario: An article with Embargo always goes to Wire Subscribers irrespective of publish action until embargo lapses
+    Given "filter_conditions"
+    """
+    [{"_id" : "58e1aee91d41c8a54b1ce067", "value" : "True", "name" : "Embargo Block", "operator" : "eq","field" : "embargo"},
+    {"_id" : "58e1af3b1d41c8a54b1ce06b", "value" : "composite","name" : "Composite Block", "operator" : "eq", "field" : "type"}]
+    """
+    And "content_filters" with objectid
+    """
+    [{"_id" : "58e1af1c1d41c8a54b1ce069", "api_block" : false, "name" : "Embargo block", "is_global" : true, "content_filter" : [ {"expression" : {"fc" : ["58e1aee91d41c8a54b1ce067", "58e1af3b1d41c8a54b1ce06b"]}}], "is_archived_filter" : false}]
+    """
     When we patch "/archive/123"
     """
     {"embargo": "#DATE+2#"}
@@ -168,9 +178,9 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     {"_current_version": 3, "state": "published"}
     """
     And we get expiry for schedule and embargo content 4320 minutes after "#archive_publish.embargo#"
-    And we check if article has Embargo and Ed. Note of the article has embargo indication
+    And we check if article has Embargo
     When we get "/published"
-    Then we check if article has Embargo and Ed. Note of the article has embargo indication
+    Then we check if article has Embargo
     When we enqueue published
     When we get "/publish_queue"
     Then we get list with 2 items
@@ -213,7 +223,17 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     """
 
   @auth
+  @vocabulary
   Scenario: Publish an article with Embargo and validate metadata
+    Given "filter_conditions"
+    """
+    [{"_id" : "58e1aee91d41c8a54b1ce067", "value" : "True", "name" : "Embargo Block", "operator" : "eq","field" : "embargo"},
+    {"_id" : "58e1af3b1d41c8a54b1ce06b", "value" : "composite","name" : "Composite Block", "operator" : "eq", "field" : "type"}]
+    """
+    And "content_filters" with objectid
+    """
+    [{"_id" : "58e1af1c1d41c8a54b1ce069", "api_block" : false, "name" : "Embargo block", "is_global" : true, "content_filter" : [ {"expression" : {"fc" : ["58e1aee91d41c8a54b1ce067", "58e1af3b1d41c8a54b1ce06b"]}}], "is_archived_filter" : false}]
+    """
     When we patch "/archive/123"
     """
     {"embargo": "#DATE+2#"}
@@ -225,14 +245,14 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     {"_current_version": 3, "state": "published", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
     """
     And we get expiry for schedule and embargo content 4320 minutes after "#archive_publish.embargo#"
-    And we check if article has Embargo and Ed. Note of the article has embargo indication
+    And we check if article has Embargo
     When we get "/published"
     Then we get existing resource
     """
     {"_items" : [{"_id": "123", "guid": "123", "headline": "test", "_current_version": 3, "state": "published",
       "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}]}
     """
-    And we check if article has Embargo and Ed. Note of the article has embargo indication
+    And we check if article has Embargo
     When we enqueue published
     When we get "/publish_queue"
     Then we get list with 2 items
@@ -254,12 +274,22 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
                 {"subscriber_id": "456", "publishing_action": "corrected"}]}
     """
     When we get "/archive/#archive.123.take_package#"
-    Then we check if article has Embargo and Ed. Note of the article has embargo indication
+    Then we check if article has Embargo
     When we get "/published"
     Then we validate the published item expiry to be after publish expiry set in desk settings 4320
 
   @auth
+  @vocabulary
   Scenario: Publish an article with Embargo and embargo lapses
+    Given "filter_conditions"
+    """
+    [{"_id" : "58e1aee91d41c8a54b1ce067", "value" : "True", "name" : "Embargo Block", "operator" : "eq","field" : "embargo"},
+    {"_id" : "58e1af3b1d41c8a54b1ce06b", "value" : "composite","name" : "Composite Block", "operator" : "eq", "field" : "type"}]
+    """
+    And "content_filters" with objectid
+    """
+    [{"_id" : "58e1af1c1d41c8a54b1ce069", "api_block" : false, "name" : "Embargo block", "is_global" : true, "content_filter" : [ {"expression" : {"fc" : ["58e1aee91d41c8a54b1ce067", "58e1af3b1d41c8a54b1ce06b"]}}], "is_archived_filter" : false}]
+    """
     When we patch "/archive/123"
     """
     {"embargo": "#DATE+2#"}
@@ -271,14 +301,14 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     {"_current_version": 3, "state": "published", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
     """
     And we get expiry for schedule and embargo content 4320 minutes after "#archive_publish.embargo#"
-    And we check if article has Embargo and Ed. Note of the article has embargo indication
+    And we check if article has Embargo
     When we get "/published"
     Then we get existing resource
     """
     {"_items" : [{"_id": "123", "guid": "123", "headline": "test", "_current_version": 3, "state": "published",
       "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}]}
     """
-    And we check if article has Embargo and Ed. Note of the article has embargo indication
+    And we check if article has Embargo
     When we enqueue published
     When we get "/publish_queue"
     Then we get list with 2 items
@@ -306,7 +336,17 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     Then we validate the published item expiry to be after publish expiry set in desk settings 4320
 
   @auth
+  @vocabulary
   Scenario: Publish an article with Embargo and change embargo in correction
+    Given "filter_conditions"
+    """
+    [{"_id" : "58e1aee91d41c8a54b1ce067", "value" : "True", "name" : "Embargo Block", "operator" : "eq","field" : "embargo"},
+    {"_id" : "58e1af3b1d41c8a54b1ce06b", "value" : "composite","name" : "Composite Block", "operator" : "eq", "field" : "type"}]
+    """
+    And "content_filters" with objectid
+    """
+    [{"_id" : "58e1af1c1d41c8a54b1ce069", "api_block" : false, "name" : "Embargo block", "is_global" : true, "content_filter" : [ {"expression" : {"fc" : ["58e1aee91d41c8a54b1ce067", "58e1af3b1d41c8a54b1ce06b"]}}], "is_archived_filter" : false}]
+    """
     When we patch "/archive/123"
     """
     {"embargo": "#DATE+2#"}
@@ -318,14 +358,14 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     {"_current_version": 3, "state": "published", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
     """
     And we get expiry for schedule and embargo content 4320 minutes after "#archive_publish.embargo#"
-    And we check if article has Embargo and Ed. Note of the article has embargo indication
+    And we check if article has Embargo
     When we get "/published"
     Then we get existing resource
     """
     {"_items" : [{"_id": "123", "guid": "123", "headline": "test", "_current_version": 3, "state": "published",
       "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}]}
     """
-    And we check if article has Embargo and Ed. Note of the article has embargo indication
+    And we check if article has Embargo
     When we enqueue published
     When we get "/publish_queue"
     Then we get list with 2 items
@@ -349,7 +389,7 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     """
     When we get "/published"
     Then we validate the published item expiry to be after publish expiry set in desk settings 4320
-    And we check if article has Embargo and Ed. Note of the article has embargo indication
+    And we check if article has Embargo
     When we publish "#archive._id#" with "correct" type and "corrected" state
     """
     {"embargo": null}
@@ -580,7 +620,17 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     Then there is no "embargo" in response
 
   @auth
+  @vocabulary
   Scenario: Deschedule an article then embargo the same article
+    Given "filter_conditions"
+    """
+    [{"_id" : "58e1aee91d41c8a54b1ce067", "value" : "True", "name" : "Embargo Block", "operator" : "eq","field" : "embargo"},
+    {"_id" : "58e1af3b1d41c8a54b1ce06b", "value" : "composite","name" : "Composite Block", "operator" : "eq", "field" : "type"}]
+    """
+    And "content_filters" with objectid
+    """
+    [{"_id" : "58e1af1c1d41c8a54b1ce069", "api_block" : false, "name" : "Embargo block", "is_global" : true, "content_filter" : [ {"expression" : {"fc" : ["58e1aee91d41c8a54b1ce067", "58e1af3b1d41c8a54b1ce06b"]}}], "is_archived_filter" : false}]
+    """
     When we patch "/archive/123"
     """
     {"publish_schedule": "#DATE+1#"}
@@ -642,13 +692,76 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     When we publish "123" with "publish" type and "published" state
     Then we get OK response
     And we get expiry for schedule and embargo content 4320 minutes after "#archive_publish.embargo#"
-    And we check if article has Embargo and Ed. Note of the article has embargo indication
+    And we check if article has Embargo
     When we get "/published"
-    Then we check if article has Embargo and Ed. Note of the article has embargo indication
+    Then we check if article has Embargo
     When we enqueue published
     When we get "/publish_queue"
     Then we get list with 2 items
     """
     {"_items": [{"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
                 {"subscriber_id": "456"}]}
+    """
+
+  @auth
+  Scenario: An article with Embargo goes to Digital Subscribers if not blocked
+    When we patch "/archive/123"
+    """
+    {"embargo": "#DATE+2#"}
+    """
+    And we publish "#archive._id#" with "publish" type and "published" state
+    Then we get OK response
+    And we get existing resource
+    """
+    {"_current_version": 3, "state": "published"}
+    """
+    And we get expiry for schedule and embargo content 4320 minutes after "#archive_publish.embargo#"
+    And we check if article has Embargo
+    When we get "/published"
+    Then we check if article has Embargo
+    When we enqueue published
+    When we get "/publish_queue"
+    Then we get list with 3 items
+    """
+    {"_items": [
+      {"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
+      {"subscriber_id": "456"},
+      {"subscriber_id": "321", "publishing_action": "published", "content_type": "composite", "destination":{"name":"email"}}
+     ]
+    }
+    """
+    When we publish "#archive._id#" with "correct" type and "corrected" state
+    """
+    {"headline": "corrected article"}
+    """
+    Then we get OK response
+    When we enqueue published
+    When we get "/publish_queue"
+    Then we get list with 6 items
+    """
+    {"_items": [{"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
+                {"subscriber_id": "123", "publishing_action": "corrected", "content_type": "text", "destination":{"name":"email"}},
+                {"subscriber_id": "456", "publishing_action": "published"},
+                {"subscriber_id": "456", "publishing_action": "corrected"},
+                {"subscriber_id": "321", "publishing_action": "published"},
+                {"subscriber_id": "321", "publishing_action": "corrected"}]}
+    """
+    When we publish "#archive._id#" with "kill" type and "killed" state
+    """
+    {"abstract": "killed"}
+    """
+    Then we get OK response
+    When we enqueue published
+    When we get "/publish_queue"
+    Then we get list with 9 items
+    """
+    {"_items": [{"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
+                {"subscriber_id": "123", "publishing_action": "corrected", "content_type": "text", "destination":{"name":"email"}},
+                {"subscriber_id": "123", "publishing_action": "killed", "content_type": "text", "destination":{"name":"email"}},
+                {"subscriber_id": "456", "publishing_action": "published"},
+                {"subscriber_id": "456", "publishing_action": "corrected"},
+                {"subscriber_id": "456", "publishing_action": "killed"},
+                {"subscriber_id": "321", "publishing_action": "published"},
+                {"subscriber_id": "321", "publishing_action": "corrected"},
+                {"subscriber_id": "321", "publishing_action": "killed"}]}
     """
