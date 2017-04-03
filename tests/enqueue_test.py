@@ -24,7 +24,7 @@ class NoTakesEnqueueTestCase(TestCase):
         self.service = EnqueueService()
 
     def test_resend_no_takes(self):
-        doc = {}
+        doc = {'_id': 'test'}
         subscribers = [s for s in self.app.data.find_all('subscribers')]
         subscriber_codes = self.service._get_subscriber_codes(subscribers)
         with patch.object(self.service, '_resend_to_subscribers') as resend:

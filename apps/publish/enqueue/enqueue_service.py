@@ -278,8 +278,8 @@ class EnqueueService:
         for subscriber in digital_subscribers:
             subscriber['api_enabled'] = len(subscriber.get('api_products') or []) > 0
 
+        doc['item_id'] = doc[config.ID_FIELD]
         if len(wire_subscribers) > 0:
-            doc['item_id'] = doc[config.ID_FIELD]
             self._resend_to_subscribers(doc, wire_subscribers, subscriber_codes)
             self.publish_content_api(doc,
                                      [subscriber for subscriber in wire_subscribers
