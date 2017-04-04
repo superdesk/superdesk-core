@@ -39,7 +39,6 @@ __entities__ = OrderedDict([
     ('users', ('users.json', [], False)),
     ('stages', ('stages.json', ['desk'], False)),
     ('desks', ('desks.json', ['incoming_stage'], False)),
-    ('groups', ('groups.json', '', False)),
     ('vocabularies', ('vocabularies.json', '', True)),
     ('validators', ('validators.json', '', True)),
     ('content_templates', ('content_templates.json', [
@@ -202,7 +201,7 @@ def get_filepath(filename, path=None):
 class AppInitializeWithDataCommand(superdesk.Command):
     """Initialize application with predefined data for various entities.
 
-    Entities supported: [roles, users, desks, stages, groups, vocabularies, validators, content_templates].
+    Entities supported: [roles, users, desks, stages, vocabularies, validators, content_templates].
     If no --entity-name parameter is supplied, all the entities are inserted.
     The entities [vocabularies, validators] will be updated with the predefined data if it already exists,
     no action will be taken for the other entities.
