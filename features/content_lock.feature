@@ -216,6 +216,13 @@ Feature: Content Locking
         {"_id": "item-1", "guid": "item-1", "headline": "test"}
         """
         And item "item-1" is locked
+
+        When we post to "/archive_autosave"
+        """
+        {"_id": "item-1", "guid": "item-1", "body_html": "autosaved"}
+        """
+        Then we get new resource
+
         When we setup test user
         When we post to "/archive/item-1/unlock"
         """
@@ -223,7 +230,13 @@ Feature: Content Locking
         """
         Then we get new resource
         """
-        {"_id": "item-1", "guid": "item-1", "headline": "test"}
+        {
+            "_id": "item-1",
+            "guid": "item-1",
+            "headline": "test",
+            "body_html": "autosaved",
+            "_current_version": 3
+        }
         """
         And item "item-1" is unlocked
 

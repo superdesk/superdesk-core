@@ -340,6 +340,7 @@ class ArchiveService(BaseService):
         self.cropService.update_media_references(document, original)
 
     def on_deleted(self, doc):
+        get_component(ItemAutosave).clear(doc['_id'])
         if doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
             self.packageService.on_deleted(doc)
 

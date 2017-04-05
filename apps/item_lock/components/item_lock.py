@@ -7,15 +7,19 @@
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
-from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTENT_TYPE
-import superdesk
+
+import flask
 import logging
+import superdesk
+
+from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTENT_TYPE, PUBLISH_STATES
 from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification
 from superdesk.users.services import current_user_has_privilege
 from superdesk.utc import utcnow
 from superdesk.lock import lock, unlock
 from eve.utils import config
+from eve.versioning import resolve_document_version, insert_versioning_documents
 
 from apps.common.components.base_component import BaseComponent
 from apps.common.models.utils import get_model
@@ -109,7 +113,17 @@ class ItemLock(BaseComponent):
                 push_content_notification([item])
             else:
                 updates = {LOCK_USER: None, LOCK_SESSION: None, 'lock_time': None, 'force_unlock': True}
-                item_model.update(item_filter, updates)
+                autosave = superdesk.get_resource_service('archive_autosave').find_one(req=None, _id=item['_id'])
+                if autosave and item[ITEM_STATE] not in PUBLISH_STATES:
+                    if not hasattr(flask.g, 'user'):  # user is not set when session expires
+                        flask.g.user = superdesk.get_resource_service('users').find_one(req=None, _id=user_id)
+                    autosave.update(updates)
+                    resolve_document_version(autosave, 'archive', 'PATCH', item)
+                    superdesk.get_resource_service('archive').patch(item['_id'], autosave)
+                    item = superdesk.get_resource_service('archive').find_one(req=None, _id=item['_id'])
+                    insert_versioning_documents('archive', item)
+                else:
+                    item_model.update(item_filter, updates)
                 self.app.on_item_unlocked(item, user_id)
 
             push_notification('item:unlock',

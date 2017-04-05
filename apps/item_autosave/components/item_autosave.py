@@ -19,7 +19,6 @@ from superdesk import get_resource_service
 class ItemAutosave(BaseComponent):
     def __init__(self, app):
         self.app = app
-        self.app.on_item_locked += self.on_item_locked
 
     @classmethod
     def name(cls):
@@ -51,8 +50,3 @@ class ItemAutosave(BaseComponent):
     def clear(self, item_id):
         autosave_model = get_model(ItemAutosaveModel)
         return autosave_model.delete({'_id': item_id})
-
-    def on_item_locked(self, item, user):
-        lock_user = item.get('lock_user', None)
-        if str(lock_user) != str(user):
-            self.clear(item['_id'])
