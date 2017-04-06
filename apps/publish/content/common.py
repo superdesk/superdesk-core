@@ -693,7 +693,8 @@ class BasePublishService(BaseService):
                                                      city=city,
                                                      versioncreated=item.get('versioncreated',
                                                                              item.get(config.LAST_UPDATED)),
-                                                     body_html=updates.get('body_html')))
+                                                     body_html=updates.get('body_html', ''),
+                                                     update_headline=updates.get('headline', '')), strict=False)
             for key, value in kill_header.items():
                 kill_header[key] = html.unescape(value)
 
