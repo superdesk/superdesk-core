@@ -1181,8 +1181,8 @@ Feature: Content Publishing
       [{"guid": "123", "headline": "test", "_current_version": 0, "state": "fetched",
         "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
         "subject":[{"qcode": "17004000", "name": "Statistics"}],
-        "slugline": "test",
-        "body_html": "Test Document body"}]
+        "slugline": "test", "type": "text",
+        "body_html": "<p>Test Document body</p>\n<p>with a \"quote\"</p>"}]
       """
       When we post to "/products" with success
       """
