@@ -35,7 +35,7 @@ Feature: Content Autosave
         Then we get error 404
 
     @auth
-    Scenario: Clean autosave on locked item
+    Scenario: Keep autosave on locked item
         Given empty "archive_autosave"
         Given "archive"
             """
@@ -58,7 +58,10 @@ Feature: Content Autosave
         Then item "item-1" is locked
 
         When we get "/archive_autosave/item-1"
-        Then we get error 404
+        Then we get existing resource
+        """
+        {"headline": "test"}
+        """
 
 
     @auth
