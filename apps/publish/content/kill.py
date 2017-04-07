@@ -115,6 +115,7 @@ class KillPublishService(BasePublishService):
         # send kill email.
         kill_article = deepcopy(original)
         kill_article['body_html'] = updates.get('body_html')
+        kill_article['headline'] = updates.get('headline')
         kill_article['desk_name'] = get_resource_service('desks').get_desk_name(kill_article.get('task',
                                                                                                  {}).get('desk'))
         kill_article['city'] = get_dateline_city(kill_article.get('dateline'))
