@@ -49,6 +49,7 @@ schema = {
     'ednote': {'type': 'string'},
     'signal': {'type': 'list'},
     'genre': {'type': 'list'},
+    'ancestors': {'type': 'list'},
 }
 
 
