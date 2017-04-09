@@ -8,7 +8,7 @@ Feature: Content Locking
         """
         When we post to "/archive/item-1/lock"
         """
-        {}
+        {"lock_action": "edit"}
         """
         Then we get new resource
         """
@@ -24,7 +24,7 @@ Feature: Content Locking
         When we get "/workqueue?source={"filter": {"term": {"lock_user": "#CONTEXT_USER_ID#"}}}"
         Then we get list with 1 items
         """
-        {"_items": [{"_id": "item-1", "guid": "item-1", "headline": "test 2"}]}
+        {"_items": [{"_id": "item-1", "guid": "item-1", "headline": "test 2", "lock_action": "edit"}]}
         """
 
     @auth

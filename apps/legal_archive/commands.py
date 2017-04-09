@@ -88,6 +88,7 @@ class LegalArchiveImport:
             legal_archive_doc.pop('lock_user', None)
             legal_archive_doc.pop('lock_session', None)
             legal_archive_doc.pop('lock_time', None)
+            legal_archive_doc.pop('lock_action', None)
 
             logger.info('Removed irrelevant properties from the article {}'.format(log_msg))
 
