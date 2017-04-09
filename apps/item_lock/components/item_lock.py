@@ -44,7 +44,7 @@ class ItemLock(BaseComponent):
     def name(cls):
         return 'item_lock'
 
-    def lock(self, item_filter, user_id, session_id, etag):
+    def lock(self, item_filter, user_id, session_id, action):
         item_model = get_model(ItemModel)
         item = item_model.find_one(item_filter)
 
@@ -64,6 +64,9 @@ class ItemLock(BaseComponent):
             if can_user_lock:
                 self.app.on_item_lock(item, user_id)
                 updates = {LOCK_USER: user_id, LOCK_SESSION: session_id, 'lock_time': utcnow()}
+                if action:
+                    updates['lock_action'] = action
+
                 item_model.update(item_filter, updates)
 
                 if item.get(TASK):
@@ -112,7 +115,8 @@ class ItemLock(BaseComponent):
                 superdesk.get_resource_service('archive').delete_action(lookup={'_id': item['_id']})
                 push_content_notification([item])
             else:
-                updates = {LOCK_USER: None, LOCK_SESSION: None, 'lock_time': None, 'force_unlock': True}
+                updates = {LOCK_USER: None, LOCK_SESSION: None, 'lock_time': None,
+                           'lock_action': None, 'force_unlock': True}
                 autosave = superdesk.get_resource_service('archive_autosave').find_one(req=None, _id=item['_id'])
                 if autosave and item[ITEM_STATE] not in PUBLISH_STATES:
                     if not hasattr(flask.g, 'user'):  # user is not set when session expires

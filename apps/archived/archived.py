@@ -81,6 +81,7 @@ class ArchivedService(BaseService):
         for doc in docs:
             doc.pop('lock_user', None)
             doc.pop('lock_time', None)
+            doc.pop('lock_action', None)
             doc.pop('lock_session', None)
             doc['archived_id'] = self._get_archived_id(doc.get('item_id'), doc.get(config.VERSION))
 

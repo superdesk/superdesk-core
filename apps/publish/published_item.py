@@ -184,6 +184,7 @@ class PublishedItemService(BaseService):
         doc.pop(config.ID_FIELD, None)
         doc.pop('lock_user', None)
         doc.pop('lock_time', None)
+        doc.pop('lock_action', None)
         doc.pop('lock_session', None)
 
     def enhance_with_archive_items(self, items):
@@ -213,6 +214,7 @@ class PublishedItemService(BaseService):
                     'item_id': item.get(config.ID_FIELD),
                     'lock_user': archive_item.get('lock_user', None),
                     'lock_time': archive_item.get('lock_time', None),
+                    'lock_action': archive_item.get('lock_action', None),
                     'lock_session': archive_item.get('lock_session', None),
                     'archive_item': archive_item if archive_item else None
                 }

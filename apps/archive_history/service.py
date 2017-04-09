@@ -19,7 +19,7 @@ from apps.archive.common import ITEM_UPDATE
 log = logging.getLogger(__name__)
 
 fields_to_remove = ['_id', '_etag', 'versioncreator', 'originalcreator', 'versioncreated',
-                    '_current_version', 'version', '_updated', 'lock_session', 'lock_user', 'lock_time',
+                    '_current_version', 'version', '_updated', 'lock_session', 'lock_user', 'lock_time', 'lock_action',
                     'force_unlock', '_created', 'guid', 'family_id', 'firstcreated', 'original_creator']
 
 

@@ -282,7 +282,8 @@ class UsersService(BaseService):
         archive_service = get_resource_service('archive')
         archive_autosave_service = get_resource_service('archive_autosave')
 
-        doc_to_unlock = {'lock_user': None, 'lock_session': None, 'lock_time': None, 'force_unlock': True}
+        doc_to_unlock = {'lock_user': None, 'lock_session': None, 'lock_time': None,
+                         'lock_action': None, 'force_unlock': True}
         user = ObjectId(user_id) if isinstance(user_id, str) else user_id
         query = {
             '$or': [{'lock_user': user},
