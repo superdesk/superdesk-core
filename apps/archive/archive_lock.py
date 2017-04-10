@@ -27,7 +27,7 @@ def _update_returned_document(doc, item):
 class ArchiveLockResource(Resource):
     endpoint_name = 'archive_lock'
     url = 'archive/<{0}:item_id>/lock'.format(item_url)
-    schema = {'lock_user': {'type': 'string'}}
+    schema = {'lock_action': {'type': 'string'}}
     datasource = {'source': 'archive'}
     resource_methods = ['GET', 'POST']
     resource_title = endpoint_name
@@ -40,7 +40,8 @@ class ArchiveLockService(BaseService):
         user = get_user(required=True)
         auth = get_auth()
         item_id = request.view_args['item_id']
-        item = get_component(ItemLock).lock({'_id': item_id}, user['_id'], auth['_id'], None)
+        lock_action = docs[0].get('lock_action', 'edit')
+        item = get_component(ItemLock).lock({'_id': item_id}, user['_id'], auth['_id'], lock_action)
         return _update_returned_document(docs[0], item)
 
 

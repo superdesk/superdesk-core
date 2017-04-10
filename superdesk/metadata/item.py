@@ -421,6 +421,13 @@ metadata_schema = {
     },
     'lock_session': Resource.rel('auth'),
 
+    # Action when the story is locked: edit, correct, kill
+    'lock_action': {
+        'type': 'string',
+        'mapping': not_analyzed,
+        'nullable': True
+    },
+
     # template used to create an item
     'template': Resource.rel('content_templates'),
 
