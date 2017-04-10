@@ -13,7 +13,7 @@ We use ``flask.app.config``, so to use it do::
 Configuration is combination of default settings module and settings module
 in `application repo <https://github.com/superdesk/superdesk/blob/master/server/settings.py>`_.
 
-.. _settings:default
+.. _settings.default:
 
 Default settings
 ----------------
@@ -100,7 +100,10 @@ Default: ``9999``
 ``DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Default: ``'AAP'``
+Default: ``'Superdesk'``
+
+.. versionchanged:: 1.8
+    Change default value to ``'Superdesk'``.
 
 ``DEFAULT_PRIORITY_VALUE_FOR_MANUAL_ARTICLES``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -130,12 +133,18 @@ Default: ``'sourcefabric.org'``
 ``ORGANIZATION_NAME``
 ^^^^^^^^^^^^^^^^^^^^^
 
-Default: ``'Australian Associated Press'``
+Default: ``'Your organisation'``
+
+.. versionchanged:: 1.8
+    Change default value to ``'Your organisation'``.
 
 ``ORGANIZATION_NAME_ABBREVIATION``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Default: ``'AAP'``
+Default: ``'Short name for your organisation'``
+
+.. versionchanged:: 1.8
+    Change default value to ``'Short name for your organisation'``.
 
 ``NO_TAKES``
 ^^^^^^^^^^^^
@@ -173,7 +182,7 @@ Default: ``None``
 Determines if the ODBC publishing mechanism will be used. If enabled then pyodbc must be
 installed along with its dependencies.
 
-.. _settings:mongo
+.. _settings.mongo:
 
 Mongo connections
 -----------------
@@ -214,7 +223,7 @@ Default: ``'archived'``
 
 Default: ``mongodb://localhost/archived'``
 
-.. _settings:elastic
+.. _settings.elastic:
 
 Elastic settings
 ----------------
@@ -229,7 +238,7 @@ Default: ``'http://localhost:9200'``
 
 Default: ``'superdesk'``
 
-.. _settings:redis
+.. _settings.redis:
 
 Redis settings
 --------------
@@ -239,7 +248,7 @@ Redis settings
 
 Default: ``'redis://localhost:6379'``
 
-.. _settings:cache
+.. _settings.cache:
 
 Cache settings
 --------------
@@ -251,7 +260,7 @@ Default: ``'redis://localhost:6379'``
 
 .. versionadded:: 1.3
 
-.. _settings:celery
+.. _settings.celery:
 
 Celery settings
 ---------------
@@ -261,7 +270,7 @@ Celery settings
 
 Default: ``'redis://localhost:6379'``
 
-.. _settings:monitoring
+.. _settings.monitoring:
 
 Monitoring settings
 -------------------
@@ -271,7 +280,7 @@ Monitoring settings
 
 Default: ``None``
 
-.. _settings:ldap
+.. _settings.ldap:
 
 LDAP settings
 -------------
@@ -316,7 +325,7 @@ Default::
         'displayName': 'display_name'
     }
 
-.. _settings:amazons3
+.. _settings.amazons3:
 
 Amazon S3 settings
 ------------------
@@ -366,7 +375,7 @@ Default: ``None``
 
 Default: ``''``
 
-.. _settings:security
+.. _settings.security:
 
 Security settings
 -----------------
@@ -392,7 +401,7 @@ Default: ``7``
 
 The number of days an activation token is valid, env ``ACTIVATE_TTL``.
 
-.. _settings:SECRET_KEY:
+.. _settings.secret_key:
 
 ``SECRET_KEY``
 ^^^^^^^^^^^^^^
@@ -403,7 +412,7 @@ Default: ``''``
 
 This value should be set to a unique, unpredictable value. It is used for auth token signing.
 
-.. _settings:email
+.. _settings.email:
 
 Email settings
 --------------
@@ -448,7 +457,7 @@ Default: ``'superdesk@localhost'``
 
 Default: ``['']``
 
-.. _settings:content_api:
+.. _settings.content_api:
 
 Content API Settings
 --------------------

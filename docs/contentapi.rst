@@ -23,8 +23,8 @@ There is a major refactoring ongoing for Content API. Major changes are:
 Configuration
 -------------
 
-You can check available configuration in :ref:`settings:content_api`.
-For generating auth tokens :ref:`settings:secret_key` setting is required.
+You can check available configuration in :ref:`settings.content_api`.
+For generating auth tokens :ref:`settings.secret_key` setting is required.
 
 Running Content API
 -------------------
