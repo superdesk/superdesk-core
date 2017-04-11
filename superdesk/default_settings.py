@@ -525,7 +525,7 @@ WS_PORT = env('WSPORT', '5100')
 MAX_VALUE_OF_PUBLISH_SEQUENCE = int(env('MAX_VALUE_OF_PUBLISH_SEQUENCE', 9999))
 
 #: Defines default value for Source to be set for manually created articles
-DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES = env('DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES', 'AAP')
+DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES = env('DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES', 'Superdesk')
 
 #: Defines default value for Priority to be set for manually created articles
 DEFAULT_PRIORITY_VALUE_FOR_MANUAL_ARTICLES = int(env('DEFAULT_PRIORITY_VALUE_FOR_MANUAL_ARTICLES', 6))
@@ -557,9 +557,9 @@ ODBC_TEST_CONNECTION_STRING = env('ODBC_TEST_CONNECTION_STRING',
 #: This value gets injected into NewsML 1.2 and G2 output documents.
 NEWSML_PROVIDER_ID = env('NEWSML_PROVIDER_ID', 'sourcefabric.org')
 #: This value gets injected into NewsML 1.2 and G2 output documents.
-ORGANIZATION_NAME = env('ORGANIZATION_NAME', 'Australian Associated Press')
+ORGANIZATION_NAME = env('ORGANIZATION_NAME', 'Your organisation')
 #: This value gets injected into NewsML 1.2 and G2 output documents.
-ORGANIZATION_NAME_ABBREVIATION = env('ORGANIZATION_NAME_ABBREVIATION', 'AAP')
+ORGANIZATION_NAME_ABBREVIATION = env('ORGANIZATION_NAME_ABBREVIATION', 'Short name for your organisation')
 
 #: max retries when transmitting an item
 MAX_TRANSMIT_RETRY_ATTEMPT = int(env('MAX_TRANSMIT_RETRY_ATTEMPT', 10))
