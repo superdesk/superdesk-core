@@ -27,6 +27,7 @@ from eve.versioning import resolve_document_version
 from superdesk.celery_app import celery
 from superdesk.utc import utcnow
 from superdesk.profiling import ProfileManager
+from apps.content import push_content_notification
 
 
 logger = logging.getLogger(__name__)
@@ -112,6 +113,9 @@ def enqueue_item(published_item):
             published_item.update({'versioncreated': versioncreated,
                                    ITEM_STATE: CONTENT_STATE.PUBLISHED,
                                    config.VERSION: item_updates[config.VERSION]})
+            # send a notification to the clients
+            push_content_notification(
+                [{'_id': str(published_item['item_id']), 'task': published_item.get('task', None)}])
 
         published_service.patch(published_item_id, published_update)
         # queue the item for publishing
