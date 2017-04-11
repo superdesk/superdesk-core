@@ -759,7 +759,7 @@ Feature: Content Publishing
       And we publish "#archive._id#" with "publish" type and "published" state
       Then we get response code 200
 
-    @auth
+    @auth @notification
     Scenario: Schedule a user content publish
       Given empty "subscribers"
       And "desks"
@@ -818,6 +818,10 @@ Feature: Content Publishing
       }
       """
       When we enqueue published
+      Then we get notifications
+      """
+      [{"event": "content:update"}]
+      """
       When we get "/publish_queue"
       Then we get list with 0 items
       When we get "/legal_archive/123"
