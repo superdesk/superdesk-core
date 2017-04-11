@@ -138,6 +138,8 @@ def get_provider_routing_scheme(provider):
     filters_service = superdesk.get_resource_service('content_filters')
 
     scheme = schemes_service.find_one(_id=provider['routing_scheme'], req=None)
+    if not scheme:
+        return None
 
     # for those routing rules that have a content filter defined,
     # get that filter from DB and embed it into the rule...
