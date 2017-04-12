@@ -11,19 +11,20 @@
 """Amazon media storage module."""
 
 from io import BytesIO
+from os.path import splitext
+from urllib.parse import urlparse
 import json
 import logging
-from mimetypes import guess_extension
-from superdesk.media.media_operations import download_file_from_url
-from superdesk.utc import query_datetime
 import time
 
 import boto3
 import bson
+from botocore.client import Config
 from eve.io.media import MediaStorage
-from urllib.parse import urlparse
-from os.path import splitext
+from mimetypes import guess_extension
 
+from superdesk.media.media_operations import download_file_from_url
+from superdesk.utc import query_datetime
 
 logger = logging.getLogger(__name__)
 MAX_KEYS = 1000
@@ -84,10 +85,13 @@ class AmazonMediaStorage(MediaStorage):
     def __init__(self, app=None):
         super().__init__(app)
         username, api_key = self.read_from_config()
-        self.client = boto3.client('s3',
-                                   aws_access_key_id=username,
-                                   aws_secret_access_key=api_key,
-                                   region_name=self.region)
+        self.client = boto3.client(
+            's3',
+            aws_access_key_id=username,
+            aws_secret_access_key=api_key,
+            region_name=self.region,
+            config=Config(signature_version='s3v4'),
+        )
         self.user_metadata_header = 'x-amz-meta-'
 
     def url_for_media(self, media_id, content_type=None):
