@@ -103,7 +103,7 @@ class PAFeedParser(NITFFeedParser):
         return 'usable' if elem.attrib['management-status'] == 'embargoed' else elem.attrib['management-status']
 
     def __init__(self):
-        self.MAPPING = {'anpa_category': {'xpath': "head/meta/[@name='category']", 'filter': self._category_mapping},
+        self.MAPPING = {'anpa_category': {'xpath': "head/meta[@name='category']", 'filter': self._category_mapping},
                         'slugline': {'xpath': 'head/title', 'filter': self._get_slugline},
                         'pubstatus': {'xpath': 'head/docdata', 'filter': self._get_pubstatus}}
         super().__init__()

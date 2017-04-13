@@ -107,6 +107,8 @@ def parse_html(html, content='xml', lf_on_block=False, space_on_elements=False):
     """
     if not isinstance(html, str):
         raise ValueError("a string is expected")
+    if not html:
+        return etree.Element('div')
 
     if content == 'xml':
         # to preserve 'carriage return' otherwise it gets stripped.
@@ -116,6 +118,11 @@ def parse_html(html, content='xml', lf_on_block=False, space_on_elements=False):
     elif content == 'html':
         parser = etree.HTMLParser(recover=True, remove_blank_text=True)
         root = etree.fromstring(html, parser)
+        if root is None:
+            root = etree.Element('div')
+        else:
+            root = root.find('body')
+            root.tag = 'div'
     else:
         raise ValueError('invalid content: {}'.format(content))
     if lf_on_block:

@@ -77,6 +77,18 @@ def register_feed_parser(parser_name, parser_class):
     allowed_feed_parsers.append(parser_name)
 
 
+def get_feed_parser(parser_name):
+    """
+    Retrieve registered feed parser class from its name
+
+    :param parser_name: name of the parser, as in register_feed_parser
+    :type parser_name: str
+    :return str: feed parser class
+    :raise KeyError: there is no parser registered with this name
+    """
+    return registered_feed_parsers[parser_name]
+
+
 class FeedParserAllowedResource(Resource):
     resource_methods = ['GET']
     item_methods = []

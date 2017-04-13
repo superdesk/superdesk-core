@@ -22,6 +22,7 @@ from superdesk.io.registry import FeedParserAllowedResource, FeedParserAllowedSe
 from superdesk.io.registry import FeedingServiceAllowedResource, FeedingServiceAllowedService
 
 from superdesk.io.commands.add_provider import AddProvider  # noqa
+from superdesk.io import importers  # noqa
 from superdesk.io.commands.update_ingest import UpdateIngest, update_provider  # noqa
 from superdesk.io.commands.remove_expired_content import RemoveExpiredContent
 from superdesk.io.ingest_provider_model import IngestProviderResource, IngestProviderService
