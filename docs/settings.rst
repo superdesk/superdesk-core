@@ -325,15 +325,33 @@ Default::
         'displayName': 'display_name'
     }
 
+.. _settings.media:
+
+Media settings
+--------------
+
+``MEDIA_PREFIX``
+^^^^^^^^^^^^^^^^
+
+Default: ``''``
+
+Uses for generation of media url ``(<media_prefix>/<media_id>)``::
+
+    # if it's empty (default value) uses something like
+    'http://<host>/api/upload-raw'
+
+    # serve directly from AMAZON S3
+    'https://<bucket>.s3-<region>.amazonaws.com/<subfolder>'
+
+    # save relative urls to database
+    '/media-via-nginx'
+    # or using api view
+    '/api/upload-raw'
+
 .. _settings.amazons3:
 
 Amazon S3 settings
 ------------------
-
-``AMAZON_CONTAINER_NAME``
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Default: ``''``
 
 ``AMAZON_ACCESS_KEY_ID``
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -350,28 +368,18 @@ Default: ``''``
 
 Default: ``'us-east-1'``
 
-``AMAZON_SERVE_DIRECT_LINKS``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``AMAZON_CONTAINER_NAME``
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Default: ``False``
-
-``AMAZON_S3_USE_HTTPS``
-^^^^^^^^^^^^^^^^^^^^^^^
-
-Default: ``False``
-
-``AMAZON_SERVER``
-^^^^^^^^^^^^^^^^^
-
-Default: ``'amazonaws.com'``
-
-``AMAZON_PROXY_SERVER``
-^^^^^^^^^^^^^^^^^^^^^^^
-
-Default: ``None``
+Default: ``''``
 
 ``AMAZON_S3_SUBFOLDER``
 ^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``''``
+
+``AMAZON_OBJECT_ACL``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Default: ``''``
 

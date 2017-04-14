@@ -16,10 +16,12 @@ from superdesk.errors import SuperdeskApiError
 from werkzeug.wsgi import wrap_file
 from .resource import Resource
 from .services import BaseService
-from flask import url_for, request, current_app as app
+from flask import url_for, request, current_app as app, redirect
 from superdesk.media.renditions import generate_renditions, delete_file_on_error
-from superdesk.media.media_operations import download_file_from_url, process_file_from_stream, \
-    crop_image, decode_metadata, download_file_from_encoded_str
+from superdesk.media.media_operations import (
+    download_file_from_url, download_file_from_encoded_str,
+    process_file_from_stream, crop_image, decode_metadata,
+)
 from superdesk.filemeta import set_filemeta
 
 
@@ -29,6 +31,12 @@ cache_for = 3600 * 24 * 30  # 30d cache
 
 
 @bp.route('/upload/<path:media_id>/raw', methods=['GET'])
+def get_upload_as_data_uri_bc(media_id):
+    """Keep previous url for backward compatibility"""
+    return redirect(upload_url(media_id))
+
+
+@bp.route('/upload-raw/<path:media_id>', methods=['GET'])
 def get_upload_as_data_uri(media_id):
     media_file = app.media.get(media_id, 'upload')
     if media_file:
@@ -53,9 +61,11 @@ def url_for_media(media_id, mimetype=None):
     return app.media.url_for_media(media_id, mimetype)
 
 
-def upload_url(media_id):
-    return url_for('upload_raw.get_upload_as_data_uri', media_id=media_id,
-                   _external=True, _schema=app.config.get('URL_PROTOCOL'))
+def upload_url(media_id, view='upload_raw.get_upload_as_data_uri'):
+    media_prefix = app.config.get('MEDIA_PREFIX')
+    if media_prefix:
+        return '%s/%s' % (media_prefix.rstrip('/'), media_id)
+    return url_for(view, media_id=media_id, _external=True)
 
 
 def init_app(app):

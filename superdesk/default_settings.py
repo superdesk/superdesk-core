@@ -13,15 +13,14 @@
 
 Environment variables names match config name, with some expections documented below.
 """
-
-import os
 import json
+import os
 import pytz
+import tzlocal
 
 from datetime import timedelta, datetime
 from celery.schedules import crontab
 from kombu import Queue, Exchange
-import tzlocal
 
 try:
     from urllib.parse import urlparse
@@ -432,25 +431,21 @@ EXTENDED_MEDIA_INFO = ['content_type', 'name', 'length']
 RETURN_MEDIA_AS_BASE64_STRING = False
 VERSION = '_current_version'
 
-#: amazon container name
-AMAZON_CONTAINER_NAME = env('AMAZON_CONTAINER_NAME', '')
+#: uses for generation of media url ``(<media_prefix>/<media_id>)``::
+MEDIA_PREFIX = env('MEDIA_PREFIX', '')
+
 #: amazon access key
 AMAZON_ACCESS_KEY_ID = env('AMAZON_ACCESS_KEY_ID', '')
 #: amazon secret access key
 AMAZON_SECRET_ACCESS_KEY = env('AMAZON_SECRET_ACCESS_KEY', '')
 #: amazon region
 AMAZON_REGION = env('AMAZON_REGION', 'us-east-1')
-#: if set it will link to amazon, otherwise will use internal url (with auth)
-AMAZON_SERVE_DIRECT_LINKS = env('AMAZON_SERVE_DIRECT_LINKS', False)
-#: use https for amazon links
-AMAZON_S3_USE_HTTPS = env('AMAZON_S3_USE_HTTPS', False)
-#: amazon server url
-AMAZON_SERVER = env('AMAZON_SERVER', 'amazonaws.com')
-#: amazon proxy server
-AMAZON_PROXY_SERVER = env('AMAZON_PROXY_SERVER', None)
+#: amazon bucket name
+AMAZON_CONTAINER_NAME = env('AMAZON_CONTAINER_NAME', '')
 #: use subfolder in bucket to store files
 AMAZON_S3_SUBFOLDER = env('AMAZON_S3_SUBFOLDER', '')
-AMAZON_URL_GENERATOR = env('AMAZON_URL_GENERATOR', 'default')
+#: adds ACL when putting to S3, can be set to ``public-read``, etc.
+AMAZON_OBJECT_ACL = env('AMAZON_OBJECT_ACL', '')
 
 RENDITIONS = {
     'picture': {

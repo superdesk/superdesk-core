@@ -13,9 +13,10 @@ import superdesk
 import bson.errors
 
 from werkzeug.wsgi import wrap_file
-from flask import request, url_for, current_app as app
+from flask import request, current_app as app
 from content_api.errors import FileNotFoundError
 from superdesk import get_resource_service
+from superdesk.upload import upload_url as _upload_url
 
 bp = superdesk.Blueprint('assets', __name__)
 cache_for = 3600 * 24 * 7  # 7 days cache
@@ -49,7 +50,7 @@ def get_media_streamed(media_id):
 
 
 def upload_url(media_id):
-    return url_for('assets.get_media_streamed', media_id=str(media_id), _external=True)
+    return _upload_url(media_id, view='assets.get_media_streamed')
 
 
 def init_app(app):
