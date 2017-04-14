@@ -16,19 +16,18 @@ import jinja2
 import eve
 import superdesk
 
-from flask_mail import Mail
+from eve.auth import TokenAuth
 from eve.io.mongo import MongoJSONEncoder
 from eve.render import send_response
+from flask_mail import Mail
 from superdesk.celery_app import init_celery
-from eve.auth import TokenAuth
-from superdesk.storage.desk_media_storage import SuperdeskGridFSMediaStorage
-from superdesk.validator import SuperdeskValidator
-from superdesk.errors import SuperdeskError, SuperdeskApiError
-from superdesk.io import registered_feeding_services
 from superdesk.datalayer import SuperdeskDataLayer  # noqa
+from superdesk.errors import SuperdeskError, SuperdeskApiError
 from superdesk.factory.sentry import SuperdeskSentry
-from superdesk.storage.amazon.amazon_media_storage import AmazonMediaStorage
+from superdesk.io import registered_feeding_services
 from superdesk.logging import configure_logging
+from superdesk.storage import AmazonMediaStorage, SuperdeskGridFSMediaStorage
+from superdesk.validator import SuperdeskValidator
 
 
 class SuperdeskEve(eve.Eve):

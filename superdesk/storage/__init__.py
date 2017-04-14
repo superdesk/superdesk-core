@@ -12,7 +12,8 @@
 
 from eve.io.mongo.media import GridFSMediaStorage, GridFS
 
-from .desk_media_storage import SuperdeskGridFSMediaStorage  # NOQA
+from .desk_media_storage import SuperdeskGridFSMediaStorage  # noqa
+from .amazon_media_storage import AmazonMediaStorage  # noqa
 
 
 class SimpleMediaStorage(GridFSMediaStorage):

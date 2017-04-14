@@ -57,10 +57,10 @@ Media Storage
 --------------
 By default uploaded/ingested files are stored in `mongoDB GridFS <https://docs.mongodb.com/manual/core/gridfs/>`_.
 
-.. autoclass:: superdesk.storage.desk_media_storage.SuperdeskGridFSMediaStorage
+.. autoclass:: superdesk.storage.SuperdeskGridFSMediaStorage
     :members:
 
 There is also Amazon S3 implementation, which is used when Amazon is configured via settings.
 
-.. autoclass:: superdesk.storage.amazon.amazon_media_storage.AmazonMediaStorage
+.. autoclass:: superdesk.storage.AmazonMediaStorage
     :members:

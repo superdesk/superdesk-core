@@ -16,7 +16,7 @@ from superdesk.errors import SuperdeskApiError
 from werkzeug.wsgi import wrap_file
 from .resource import Resource
 from .services import BaseService
-from flask import url_for, request, current_app as app
+from flask import url_for, request, current_app as app, redirect
 from superdesk.media.renditions import generate_renditions, delete_file_on_error
 from superdesk.media.media_operations import download_file_from_url, process_file_from_stream, \
     crop_image, decode_metadata, download_file_from_encoded_str
@@ -28,8 +28,12 @@ logger = logging.getLogger(__name__)
 cache_for = 3600 * 24 * 30  # 30d cache
 
 
-@bp.route('/upload/<path:media_id>/raw', methods=['GET'])
+@bp.route('/upload-raw/<path:media_id>', methods=['GET'])
 def get_upload_as_data_uri(media_id):
+    redirect_url = app.media.get_redirect_url(media_id)
+    if redirect_url:
+        return redirect(redirect_url)
+
     media_file = app.media.get(media_id, 'upload')
     if media_file:
         data = wrap_file(request.environ, media_file, buffer_size=1024 * 256)
@@ -54,8 +58,7 @@ def url_for_media(media_id, mimetype=None):
 
 
 def upload_url(media_id):
-    return url_for('upload_raw.get_upload_as_data_uri', media_id=media_id,
-                   _external=True, _schema=app.config.get('URL_PROTOCOL'))
+    return url_for('upload_raw.get_upload_as_data_uri', media_id=media_id)
 
 
 def init_app(app):

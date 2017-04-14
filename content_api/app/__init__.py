@@ -28,7 +28,7 @@ from eve.io.mongo.mongo import MongoJSONEncoder
 from content_api.tokens import SubscriberTokenAuth
 from superdesk.datalayer import SuperdeskDataLayer
 from superdesk.errors import SuperdeskError, SuperdeskApiError
-from superdesk.storage.desk_media_storage import SuperdeskGridFSMediaStorage
+from superdesk.storage import SuperdeskGridFSMediaStorage
 from superdesk.validator import SuperdeskValidator
 from superdesk.factory.sentry import SuperdeskSentry
 
@@ -90,7 +90,7 @@ def get_app(config=None):
 
     media_storage = SuperdeskGridFSMediaStorage
     if app_config.get('AMAZON_CONTAINER_NAME'):
-        from superdesk.storage.amazon.amazon_media_storage import AmazonMediaStorage
+        from superdesk.storage import AmazonMediaStorage
         media_storage = AmazonMediaStorage
 
     app = Eve(

@@ -49,7 +49,7 @@ def get_media_streamed(media_id):
 
 
 def upload_url(media_id):
-    return url_for('assets.get_media_streamed', media_id=str(media_id), _external=True)
+    return url_for('assets.get_media_streamed', media_id=str(media_id))
 
 
 def init_app(app):

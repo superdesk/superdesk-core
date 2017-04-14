@@ -317,9 +317,11 @@ def get_prefixed_url(current_app, endpoint):
     if endpoint.startswith('http://'):
         return endpoint
 
-    endpoint = endpoint if endpoint.startswith('/') else ('/' + endpoint)
-    url = current_app.config['URL_PREFIX'] + endpoint
-    return url
+    endpoint = endpoint.lstrip('/')
+    url_prefix = current_app.config['URL_PREFIX'] + '/'
+    if endpoint.startswith(url_prefix):
+        return endpoint
+    return url_prefix + endpoint
 
 
 def setup_db_user(context, user):
