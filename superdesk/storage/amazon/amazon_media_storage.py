@@ -84,7 +84,10 @@ class AmazonMediaStorage(MediaStorage):
 
     def __init__(self, app=None):
         super().__init__(app)
-        username, api_key = self.read_from_config()
+        username = self.app.config['AMAZON_ACCESS_KEY_ID']
+        api_key = self.app.config['AMAZON_SECRET_ACCESS_KEY']
+        self.region = self.app.config.get('AMAZON_REGION') or 'us-east-1'
+        self.container_name = self.app.config['AMAZON_CONTAINER_NAME']
         self.client = boto3.client(
             's3',
             aws_access_key_id=username,
@@ -95,26 +98,10 @@ class AmazonMediaStorage(MediaStorage):
         self.user_metadata_header = 'x-amz-meta-'
 
     def url_for_media(self, media_id, content_type=None):
-        if not self.app.config.get('AMAZON_SERVE_DIRECT_LINKS', False):
-            return self.app.upload_url(str(media_id))
-
-        if self.app.config.get('AMAZON_PROXY_SERVER'):
-            url_generator = url_generators.get(self.app.config.get('AMAZON_URL_GENERATOR', 'default'),
-                                               url_for_media_default)
-        else:
-            url_generator = url_for_media_default
-        return url_generator(self.app, media_id)
+        return self.app.upload_url(str(media_id))
 
     def url_for_download(self, media_id, content_type=None):
-        if not self.app.config.get('AMAZON_SERVE_DIRECT_LINKS', False):
-            return self.app.download_url(str(media_id))
-
-        if self.app.config.get('AMAZON_PROXY_SERVER'):
-            url_generator = url_generators.get(self.app.config.get('AMAZON_URL_GENERATOR', 'default'),
-                                               url_for_media_default)
-        else:
-            url_generator = url_for_media_default
-        return url_generator(self.app, media_id)
+        return self.app.download_url(str(media_id))
 
     def media_id(self, filename, content_type=None, version=True):
         """Get the ``media_id`` path for the given ``filename``.
@@ -122,24 +109,13 @@ class AmazonMediaStorage(MediaStorage):
         if filename doesn't have an extension one is guessed,
         and additional *version* option to have automatic version or not to have,
         or to send a `string` one.
-
-        ``AMAZON_S3_SUBFOLDER`` configuration is used for
-        easement deploying multiple instance on the same bucket.
         """
-        if not self.app.config.get('AMAZON_SERVE_DIRECT_LINKS', False):
-            return str(bson.ObjectId())
-
         path = urlparse(filename).path
         file_extension = splitext(path)[1]
 
         extension = ''
         if not file_extension:
             extension = str(_guess_extension(content_type)) if content_type else ''
-
-        subfolder = ''
-        env_subfolder = self.app.config.get('AMAZON_S3_SUBFOLDER', 'false')
-        if env_subfolder and env_subfolder.lower() != 'false':
-            subfolder = '%s/' % env_subfolder.strip('/')
 
         if version is True:
             # automatic version is set on 15mins granularity.
@@ -150,21 +126,11 @@ class AmazonMediaStorage(MediaStorage):
         else:
             version = '%s/' % version.strip('/')
 
-        return '%s%s%s%s' % (subfolder, version, filename, extension)
+        return '%s%s%s' % (version, filename, extension)
 
     def fetch_rendition(self, rendition):
         stream, name, mime = download_file_from_url(rendition.get('href'))
         return stream
-
-    def read_from_config(self):
-        self.region = self.app.config.get('AMAZON_REGION', 'us-east-1') or 'us-east-1'
-        username = self.app.config['AMAZON_ACCESS_KEY_ID']
-        api_key = self.app.config['AMAZON_SECRET_ACCESS_KEY']
-        self.container_name = self.app.config['AMAZON_CONTAINER_NAME']
-        self.kwargs = {}
-        if self.app.config.get('AMAZON_SERVE_DIRECT_LINKS', False):
-            self.kwargs['ACL'] = 'public-read'
-        return username, api_key
 
     def get(self, id_or_filename, resource=None):
         """Open the file given by name or unique id.
@@ -181,6 +147,19 @@ class AmazonMediaStorage(MediaStorage):
         except:
             return None
         return None
+
+    def get_redirect_url(self, media_id):
+        if not self.app.config.get('AMAZON_SERVE_DIRECT_LINKS', False):
+            return None
+
+        if self.app.config.get('AMAZON_PROXY_SERVER'):
+            url_generator = url_generators.get(
+                self.app.config.get('AMAZON_URL_GENERATOR') or 'default',
+                url_for_media_default
+            )
+        else:
+            url_generator = url_for_media_default
+        return url_generator(self.app, media_id)
 
     def get_all_keys(self):
         """Return the list of all keys from the bucket."""
@@ -245,17 +224,31 @@ class AmazonMediaStorage(MediaStorage):
             _id = self.media_id(filename, content_type=content_type, version=version)
 
         if folder:
-            if folder[-1] == '/':
-                folder = folder[:-1]
-            _id = '{}/{}'.format(folder, _id)
+            _id = '%s/%s' % (folder.rstrip('/'), _id)
+
+        subfolder = ''
+        env_subfolder = self.app.config.get('AMAZON_S3_SUBFOLDER', 'false')
+        if env_subfolder and env_subfolder.lower() != 'false':
+            subfolder = '%s/%s' % (env_subfolder.strip('/'), _id)
 
         found = self._check_exists(_id)
         if found:
             return _id
 
+        kwargs = {}
+        if self.app.config.get('AMAZON_SERVE_DIRECT_LINKS', False):
+            # not sure it's really needed here,
+            # probably better to turn on/off public-read on the bucket instead
+            kwargs['ACL'] = 'public-read'
+
         try:
-            self.client.put_object(Key=_id, Body=content, Bucket=self.container_name,
-                                   ContentType=content_type, **self.kwargs)
+            self.client.put_object(
+                Key=_id,
+                Body=content,
+                Bucket=self.container_name,
+                ContentType=content_type,
+                **kwargs
+            )
             return _id
         except Exception as ex:
             logger.exception(ex)
