@@ -109,7 +109,8 @@ class Resource():
             if self.query_objectid_as_string:
                 endpoint_schema.update({'query_objectid_as_string': self.query_objectid_as_string})
             if self.mongo_indexes:
-                endpoint_schema['mongo_indexes'] = self.mongo_indexes
+                # used in app:initialize_data
+                endpoint_schema['mongo_indexes__init'] = self.mongo_indexes
 
         self.endpoint_schema = endpoint_schema
 

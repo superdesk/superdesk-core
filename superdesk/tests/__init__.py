@@ -222,7 +222,7 @@ def snapshot_es(app, name):
         })
 
     def restore():
-        es.indices.close(indices, expand_wildcards='open')
+        es.indices.close(indices, expand_wildcards='open', ignore=[404])
         es.snapshot.restore(*backup, body={
             'indices': indices,
             'allow_no_indices': False
