@@ -83,6 +83,8 @@ class ArchivedService(BaseService):
             doc.pop('lock_time', None)
             doc.pop('lock_action', None)
             doc.pop('lock_session', None)
+            doc.pop('highlights', None)
+            doc.pop('marked_desks', None)
             doc['archived_id'] = self._get_archived_id(doc.get('item_id'), doc.get(config.VERSION))
 
             if doc.get(ITEM_TYPE) == CONTENT_TYPE.COMPOSITE:
