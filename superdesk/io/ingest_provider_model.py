@@ -103,6 +103,10 @@ class IngestProviderResource(Resource):
                 'type': 'boolean',
                 'default': False
             },
+            'is_default': {
+                'type': 'boolean',
+                'default': False
+            },
             'update_schedule': {
                 'type': 'dict',
                 'schema': {
@@ -195,6 +199,14 @@ class IngestProviderService(BaseService):
                                     user_list=self.user_service.get_users_by_user_type('administrator'),
                                     name=doc.get('name'), provider_id=doc.get('_id'))
             push_notification('ingest_provider:create', provider_id=str(doc.get('_id')))
+            if doc['type'] == 'search' and doc.get('is_default'):
+                self.find_and_modify(
+                    query={'$and': [{'_id': {'$ne': doc[config.ID_FIELD]}}, {'type': 'search'},
+                                    {'is_default': True}]},
+                    update={'$set': {'is_default': False}},
+                    upsert=False
+                )
+
         logger.info("Created Ingest Channel. Data:{}".format(docs))
 
     def on_update(self, updates, original):
@@ -212,6 +224,14 @@ class IngestProviderService(BaseService):
                                 if do_notification else None,
                                 name=updates.get('name', original.get('name')),
                                 provider_id=original.get('_id'))
+
+        if (updates.get('type') == 'search' or original['type'] == 'search') and updates.get('is_default'):
+            self.find_and_modify(
+                query={'$and': [{'_id': {'$ne': original[config.ID_FIELD]}}, {'type': 'search'},
+                                {'is_default': True}]},
+                update={'$set': {'is_default': False}},
+                upsert=False
+            )
 
         if updates.get('is_closed', False) != original.get('is_closed', False):
             status = ''

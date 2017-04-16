@@ -87,7 +87,7 @@ class VocabulariesResource(Resource):
     item_url = 'regex("[\w]+")'
     item_methods = ['GET', 'PATCH']
     resource_methods = ['GET']
-    privileges = {'PATCH': 'vocabularies', }
+    privileges = {'PATCH': 'vocabularies'}
 
 
 class VocabulariesService(BaseService):
