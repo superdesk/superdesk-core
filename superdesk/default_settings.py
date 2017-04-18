@@ -116,6 +116,9 @@ MONGO_DBNAME = env('MONGO_DBNAME', 'superdesk')
 #: full mongodb connection uri, overrides ``MONGO_DBNAME`` if set
 MONGO_URI = env('MONGO_URI', 'mongodb://localhost/%s' % MONGO_DBNAME)
 
+#: legal archive switch
+LEGAL_ARCHIVE = env('LEGAL_ARCHIVE', None)
+
 #: legal archive db name
 LEGAL_ARCHIVE_DBNAME = env('LEGAL_ARCHIVE_DBNAME', 'legal_archive')
 
