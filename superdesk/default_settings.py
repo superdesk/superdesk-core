@@ -16,8 +16,9 @@ Environment variables names match config name, with some expections documented b
 
 import os
 import json
+import pytz
 
-from datetime import timedelta
+from datetime import timedelta, datetime
 from celery.schedules import crontab
 from kombu import Queue, Exchange
 import tzlocal
@@ -53,6 +54,23 @@ def celery_queue(name):
     :param name: queue name
     """
     return "{}{}".format(os.environ.get('SUPERDESK_CELERY_PREFIX', ''), name)
+
+
+#: Default TimeZone, will try to guess from server settings if not set
+DEFAULT_TIMEZONE = env('DEFAULT_TIMEZONE')
+
+if DEFAULT_TIMEZONE is None:
+    DEFAULT_TIMEZONE = tzlocal.get_localzone().zone
+
+if not DEFAULT_TIMEZONE:
+    raise ValueError("DEFAULT_TIMEZONE is empty")
+
+
+def local_to_utc_hour(hour):
+    now = datetime.now()
+    tz = pytz.timezone(DEFAULT_TIMEZONE)
+    local = tz.localize(now.replace(hour=hour))
+    return local.utctimetuple()[3]
 
 
 ABS_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../'))
@@ -249,7 +267,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'audit:gc': {
         'task': 'superdesk.audit.gc_audit',
-        'schedule': crontab(minute='0', hour='1')
+        'schedule': crontab(minute='0', hour=local_to_utc_hour(1))
     },
     'session:gc': {
         'task': 'apps.auth.session_purge',
@@ -261,11 +279,11 @@ CELERY_BEAT_SCHEDULE = {
     },
     'temp_files:gc': {
         'task': 'superdesk.commands.temp_file_expiry',
-        'schedule': crontab(minute='0', hour='3')
+        'schedule': crontab(minute='0', hour=local_to_utc_hour(3))
     },
     'content_api:gc': {
         'task': 'content_api.commands.item_expiry',
-        'schedule': crontab(minute='0', hour='2')
+        'schedule': crontab(minute='0', hour=local_to_utc_hour(2))
     },
     'publish:transmit': {
         'task': 'superdesk.publish.transmit',
@@ -285,7 +303,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'legal:import_legal_archive': {
         'task': 'apps.legal_archive.import_legal_archive',
-        'schedule': crontab(minute=30, hour=0)
+        'schedule': crontab(minute=30, hour=local_to_utc_hour(0))
     }
 }
 
@@ -476,17 +494,8 @@ ADMINS = [_MAIL_FROM]
 
 SUPERDESK_TESTING = (env('SUPERDESK_TESTING', 'false').lower() == 'true')
 
-#: Default TimeZone, will try to guess from server settings if not set
-DEFAULT_TIMEZONE = env('DEFAULT_TIMEZONE')
-
-if DEFAULT_TIMEZONE is None:
-    DEFAULT_TIMEZONE = tzlocal.get_localzone().zone
-
-if not DEFAULT_TIMEZONE:
-    raise ValueError("DEFAULT_TIMEZONE is empty")
-
-#: Set the timezone celery functions on to the same as the default
-CELERY_TIMEZONE = DEFAULT_TIMEZONE
+#: Set the timezone celery functions to UTC to avoid daylight savings issues SDESK-1057
+CELERY_TIMEZONE = 'UTC'
 
 #: The number of minutes since the last update of the Mongo auth object after which it will be deleted
 SESSION_EXPIRY_MINUTES = int(env('SESSION_EXPIRY_MINUTES', 240))
