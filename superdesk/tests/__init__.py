@@ -87,6 +87,7 @@ def update_config(conf):
     conf['DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES'] = 'AAP'
     conf['MACROS_MODULE'] = 'superdesk.macros'
     conf['DEFAULT_TIMEZONE'] = 'Europe/Prague'
+    conf['LEGAL_ARCHIVE'] = True
 
     # limit mongodb connections
     conf['MONGO_CONNECT'] = False

@@ -9,6 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+import superdesk
+
 from superdesk.celery_app import celery
 from superdesk import get_backend, privilege
 from .resource import LegalArchiveResource, LegalArchiveVersionsResource, LegalPublishQueueResource, \
@@ -22,6 +24,9 @@ logger = logging.getLogger(__name__)
 
 
 def init_app(app):
+    if not app.config['LEGAL_ARCHIVE']:
+        return
+
     endpoint_name = LEGAL_ARCHIVE_NAME
     service = LegalArchiveService(endpoint_name, backend=get_backend())
     LegalArchiveResource(endpoint_name, app=app, service=service)
@@ -39,6 +44,9 @@ def init_app(app):
     LegalPublishQueueResource(endpoint_name, app=app, service=service)
 
     privilege(name=LEGAL_ARCHIVE_NAME, label='Legal Archive', description='Read from legal archive')
+
+    superdesk.command('legal_publish_queue:import', ImportLegalPublishQueueCommand())
+    superdesk.command('legal_archive:import', ImportLegalArchiveCommand())
 
 
 @celery.task(soft_time_limit=300)

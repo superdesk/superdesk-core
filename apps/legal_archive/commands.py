@@ -35,6 +35,11 @@ from superdesk.utc import utcnow
 logger = logging.getLogger(__name__)
 
 
+def is_legal_archive_enabled():
+    """Test if legal archive is enabled."""
+    return app.config['LEGAL_ARCHIVE']
+
+
 class LegalArchiveImport:
     log_msg_format = "{{'_id': {_id}, 'unique_name': {unique_name}, 'version': {_current_version}, " \
                      "'expired_on': {expiry}}}."
@@ -405,6 +410,8 @@ def import_into_legal_archive(self, item_id):
     :param self: celery task
     :param str item_id: document id to import into legal_archive
     """
+    if not is_legal_archive_enabled():
+        return
     try:
         LegalArchiveImport().upsert_into_legal_archive(item_id)
     except Exception:
@@ -425,6 +432,8 @@ class ImportLegalPublishQueueCommand(superdesk.Command):
     ]
 
     def run(self, page_size=None):
+        if not is_legal_archive_enabled():
+            return
         logger.info('Import to Legal Publish Queue')
         lock_name = get_lock_id('legal_archive', 'import_legal_publish_queue')
         page_size = int(page_size) if page_size else self.default_page_size
@@ -451,6 +460,8 @@ class ImportLegalArchiveCommand(superdesk.Command):
     ]
 
     def run(self, page_size=None):
+        if not is_legal_archive_enabled():
+            return
         logger.info('Import to Legal Archive')
         lock_name = get_lock_id('legal_archive', 'import_to_legal_archive')
         page_size = int(page_size) if page_size else self.default_page_size
@@ -558,7 +569,3 @@ class ImportLegalArchiveCommand(superdesk.Command):
             logger.info('Fetched No. of Items: {} for page: {} '
                         'For import into legal archive.'.format(len(items), (page + 1)))
             yield items
-
-
-superdesk.command('legal_publish_queue:import', ImportLegalPublishQueueCommand())
-superdesk.command('legal_archive:import', ImportLegalArchiveCommand())
