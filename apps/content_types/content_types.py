@@ -431,8 +431,12 @@ def init_editor_required(editor, schema):
     for field in schema:
         if editor[field] is not None and schema[field] is not None and schema[field].get('required') is not None:
             editor[field]['required'] = schema[field]['required']
-            if schema[field]['required'] and schema[field].get('minlength', 0) == 0:
-                schema[field]['minlength'] = 1
+            if schema[field]['required']:
+                if (schema[field].get('minlength', 0) or 0) == 0:
+                    schema[field]['minlength'] = 1
+            else:
+                if (schema[field].get('minlength', 0) or 0) > 0:
+                    schema[field]['minlength'] = 0
             schema[field]['nullable'] = not schema[field]['required']
 
 
