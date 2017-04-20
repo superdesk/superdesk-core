@@ -526,6 +526,7 @@ class EnqueueService:
         existing_products = {p[config.ID_FIELD]: p for p in
                              list(get_resource_service('products').get(req=req, lookup=None))}
         global_filters = list(filter_service.get(req=req, lookup=None))
+        self.conforms_global_filter(global_filters, doc)
 
         for subscriber in subscribers:
             if target_media_type and subscriber.get('subscriber_type', '') != SUBSCRIBER_TYPES.ALL:
@@ -538,7 +539,7 @@ class EnqueueService:
             if not conforms:
                 continue
 
-            if not self.conforms_global_filter(subscriber, global_filters, doc):
+            if not self.conforms_subscriber_global_filter(subscriber, global_filters):
                 continue
 
             product_codes = self._get_codes(subscriber)
@@ -690,26 +691,36 @@ class EnqueueService:
         else:
             return content_filter['filter_type'] == 'blocking'
 
-    def conforms_global_filter(self, subscriber, global_filters, doc):
-        """Check gloval filter
+    def conforms_global_filter(self, global_filters, doc):
+        """Check global filter
+
+        Checks if document matches the global filter
+
+        :param global_filters: List of all global filters
+        :param doc: Document to test the global filter against
+        """
+        service = get_resource_service('content_filters')
+        for global_filter in global_filters:
+            global_filter['does_match'] = service.does_match(global_filter, doc)
+
+    def conforms_subscriber_global_filter(self, subscriber, global_filters):
+        """Check global filter for subscriber
 
         Checks if subscriber has a override rule against each of the
         global filter and if not checks if document matches the global filter
 
         :param subscriber: Subscriber to get if the global filter is overriden
         :param global_filters: List of all global filters
-        :param doc: Document to test the global filter against
         :return: True if at least one global filter is not overriden
         and it matches the document
         False if global filter matches the document or all of them overriden
         """
-        service = get_resource_service('content_filters')
+
         gfs = subscriber.get('global_filters', {})
         for global_filter in global_filters:
             if gfs.get(str(global_filter[config.ID_FIELD]), True):
                 # Global filter applies to this subscriber
-                if service.does_match(global_filter, doc):
-                    # All global filters behaves like blocking filters
+                if global_filter.get('does_match'):
                     return False
         return True
 

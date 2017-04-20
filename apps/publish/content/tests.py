@@ -705,13 +705,14 @@ class ArchivePublishTestCase(TestCase):
         service = get_resource_service('content_filters')
         req = ParsedRequest()
         req.args = {'is_global': True}
-        global_filters = service.get(req=req, lookup=None)
-
-        can_it = EnqueueService().conforms_global_filter(subscriber, global_filters, self.articles[8])
+        global_filters = list(service.get(req=req, lookup=None))
+        enqueue_service = EnqueueService()
+        enqueue_service.conforms_global_filter(global_filters, self.articles[8])
+        can_it = enqueue_service.conforms_subscriber_global_filter(subscriber, global_filters)
         self.assertFalse(can_it)
 
         subscriber['global_filters'] = {'1': False}
-        can_it = EnqueueService().conforms_global_filter(subscriber, global_filters, self.articles[8])
+        can_it = enqueue_service.conforms_subscriber_global_filter(subscriber, global_filters)
         self.assertTrue(can_it)
 
         product.pop('content_filter')
