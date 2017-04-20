@@ -32,6 +32,8 @@ class AuthService(BaseService):
     def on_create(self, docs):
         for doc in docs:
             user = self.authenticate(doc)
+            if not user:
+                raise ValueError()
             if 'is_enabled' in user and not user.get('is_enabled', False):
                 raise UserDisabledError()
             if not user.get('is_active', False):
@@ -54,7 +56,7 @@ class AuthService(BaseService):
     def set_auth_default(self, doc, user_id):
         doc['user'] = user_id
         doc['token'] = utils.get_random_string(40)
-        del doc['password']
+        doc.pop('password', None)
 
     def update_session(self, updates=None):
         """Update current session with given data.

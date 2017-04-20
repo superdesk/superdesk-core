@@ -28,6 +28,7 @@ from superdesk.io import registered_feeding_services
 from superdesk.logging import configure_logging
 from superdesk.storage import AmazonMediaStorage, SuperdeskGridFSMediaStorage
 from superdesk.validator import SuperdeskValidator
+from superdesk.oauth import configure_oauth
 
 
 class SuperdeskEve(eve.Eve):
@@ -152,5 +153,6 @@ def get_app(config=None, media_storage=None, config_object=None):
         registered_feeding_services[key] = provider() if isinstance(provider, type) else provider
 
     configure_logging(app.config['LOG_CONFIG_FILE'])
+    configure_oauth(app)
 
     return app

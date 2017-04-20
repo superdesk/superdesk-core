@@ -504,3 +504,18 @@ Default: ``http://localhost:9200``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Default: ``contentapi``
+
+OAuth2 Settings
+---------------
+
+.. versionadded:: 1.8
+
+``GOOGLE_CLIENT_ID``
+^^^^^^^^^^^^^^^^^^^^
+
+Default: ``''``
+
+``GOOGLE_CLIENT_SECRET``
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``''``
