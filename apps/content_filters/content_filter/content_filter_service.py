@@ -74,14 +74,13 @@ class ContentFilterService(BaseService):
         products_service = get_resource_service('products')
         subscribers = []
 
-        products = products_service.get(
-            req=None,
-            lookup={'content_filter.filter_id': filter_id})
+        products = products_service.get(req=None, lookup={'content_filter.filter_id': filter_id})
 
         for p in products:
-            subs = list(subscribers_service.get(
-                req=None,
-                lookup={'products': p['_id']}))
+            subs = list(subscribers_service.get(req=None,
+                                                lookup={
+                                                    '$or': [{'products': p['_id']}, {'api_products': p['_id']}]
+                                                }))
             subscribers.extend(subs)
 
         return subscribers

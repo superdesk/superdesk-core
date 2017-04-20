@@ -127,7 +127,7 @@ Feature: Content Filter
 
   @auth
   @vocabulary
-  Scenario: Deleting content filter referenced by subscribers fails
+  Scenario: Deleting content filter referenced by direct products for subscribers
     Given empty "filter_conditions"
     When we post to "/filter_conditions" with success
     """
@@ -172,6 +172,49 @@ Feature: Content Filter
     """
     Then we get latest
 
+    When we delete content filter "soccer"
+    Then we get error 400
+
+  @auth
+  @vocabulary
+  Scenario: Deleting content filter referenced by api products for subscribers
+    Given empty "filter_conditions"
+    When we post to "/filter_conditions" with success
+    """
+    [{"name": "sport", "field": "anpa_category", "operator": "in", "value": "4"}]
+    """
+    Then we get latest
+
+    Given empty "content_filters"
+    When we post to "/content_filters" with success
+    """
+    [{"content_filter": [{"expression": {"fc": ["#filter_conditions._id#"]}}], "name": "soccer"}]
+    """
+    Then we get latest
+
+    Given empty "subscribers"
+    When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both",
+        "content_filter": {
+            "filter_id": "#content_filters._id#",
+            "filter_type": "blocking"
+        }
+      }
+      """
+    And we post to "/subscribers" with success
+    """
+    {
+        "name": "Subscriber Foo",
+        "media_type": "media",
+        "subscriber_type": "digital",
+        "api_products": ["#products._id#"],
+        "sequence_num_settings":{"min" : 1, "max" : 10},
+        "email": "foo@bar.com"
+    }
+    """
+    Then we get latest
     When we delete content filter "soccer"
     Then we get error 400
 
