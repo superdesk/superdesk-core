@@ -84,6 +84,10 @@ Feature: Content Expiry Published Items
       "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
     }
     """
+    And we post to "highlights"
+    """
+    {"name": "highlight1", "desks": ["#desks._id#"]}
+    """
     And we post to "/archive" with success
     """
     [{"guid": "123", "type": "text", "headline": "test", "state": "fetched", "slugline": "slugline",
@@ -174,7 +178,63 @@ Feature: Content Expiry Published Items
     }
     """
 
-  @auth 
+  @auth
+  Scenario: Highlights and mark desks are removed from archived
+    When we post to "marked_for_highlights"
+    """
+    [{"highlights": "#highlights._id#", "marked_item": "#archive._id#"}]
+    """
+    Then we get new resource
+    """
+    {"highlights": "#highlights._id#", "marked_item": "#archive._id#"}
+    """
+    When we post to "/marked_for_desks" with success
+    """
+    [{"marked_desk": "#desks._id#", "marked_item": "#archive._id#"}]
+    """
+    Then we get new resource
+    """
+    {"marked_desk": "#desks._id#", "marked_item": "#archive._id#"}
+    """
+    When we publish "#archive._id#" with "publish" type and "published" state
+    Then we get OK response
+    And we get existing resource
+    """
+    {"_current_version": 2, "state": "published",
+    "highlights": ["#highlights._id#"],
+    "marked_desks": [{"desk_id": "#desks._id#"}],
+    "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
+    """
+    When we get "/published"
+    Then we get list with 2 items
+    """
+    {"_items" : [
+      {"package_type": "takes", "_id": "#archive.123.take_package#",
+       "state": "published", "type": "composite", "_current_version": 2},
+      {"_id": "123", "_current_version": 1, "state": "published", "type": "text", "_current_version": 2}
+      ]
+    }
+    """
+    When we enqueue published
+    When we get "/publish_queue"
+    Then we get list with 2 items
+    When we transmit items
+    And run import legal publish queue
+    When we expire items
+    """
+    ["123"]
+    """
+    And we get "/published"
+    Then we get list with 2 items
+    When we expire items
+    """
+    ["#archive.123.take_package#"]
+    """
+    When we get "/archived"
+    Then we get "highlights" does not exist
+    Then we get "marked_desks" does not exist
+
+  @auth
   Scenario: Item in a package is published and expired
     When we publish "#archive._id#" with "publish" type and "published" state
     Then we get OK response
