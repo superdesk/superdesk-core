@@ -30,7 +30,9 @@ aggregations = {
     'priority': {'terms': {'field': 'priority'}},
     'legal': {'terms': {'field': 'flags.marked_for_legal'}},
     'sms': {'terms': {'field': 'flags.marked_for_sms'}},
-    'genre': {'terms': {'field': 'genre.name', 'size': 0}}
+    'genre': {'terms': {'field': 'genre.name', 'size': 0}},
+    'items_over_days': {'date_histogram': {'field': '_updated', 'interval': 'day'}},
+    'items_over_hours': {'date_histogram': {'field': '_updated', 'interval': 'hour'}}
 }
 
 
