@@ -17,7 +17,7 @@ import eve
 import superdesk
 
 from flask_mail import Mail
-from eve.io.mongo import MongoJSONEncoder
+from eve.io.mongo import MongoJSONEncoder, create_index
 from eve.render import send_response
 from superdesk.celery_app import init_celery
 from eve.auth import TokenAuth
@@ -32,25 +32,29 @@ from superdesk.logging import configure_logging
 
 
 class SuperdeskEve(eve.Eve):
+    def init_indexes(self):
+        for resource, resource_config in self.config['DOMAIN'].items():
+            mongo_indexes = resource_config.get('mongo_indexes__init')
+            if not mongo_indexes:
+                continue
 
-    def register_resource(self, resource, settings):
-        """If `init_indexes` param is True it will avoid creating mongo indexes.
+            # Borrowed https://github.com/pyeve/eve/blob/22ea4bfebc8b633251cd06837893ff699bd07a00/eve/flaskapp.py#L915
+            for name, value in mongo_indexes.items():
+                if isinstance(value, tuple):
+                    list_of_keys, index_options = value
+                else:
+                    list_of_keys = value
+                    index_options = {}
 
-        This is by default only enabled when running manage.py task so when running
-        single process.
-        """
-        if not getattr(self, 'init_indexes', True):
-            settings.pop('mongo_indexes', None)
-        return super().register_resource(resource, settings)
+                create_index(self, resource, name, list_of_keys, index_options)
 
 
-def get_app(config=None, media_storage=None, config_object=None, init_elastic=True):
+def get_app(config=None, media_storage=None, config_object=None):
     """App factory.
 
     :param config: configuration that can override config from ``default_settings.py``
     :param media_storage: media storage class to use
     :param config_object: config object to load (can be module name, module or an object)
-    :param init_elastic: should it init elastic indexes or not
     :return: a new SuperdeskEve app instance
     """
 
@@ -83,7 +87,6 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=Tr
         validator=SuperdeskValidator,
         template_folder=os.path.join(abs_path, 'templates'))
 
-    app.init_indexes = init_elastic
     app.jinja_options = {'autoescape': False}
 
     superdesk.app = app
@@ -133,10 +136,6 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=Tr
 
     for name, jinja_filter in superdesk.JINJA_FILTERS.items():
         app.jinja_env.filters[name] = jinja_filter
-
-    if not app_config.get('SUPERDESK_TESTING', False) and init_elastic:
-        # we can only put mapping when all resources are registered
-        app.data.init_elastic(app)
 
     # instantiate registered provider classes (leave non-classes intact)
     for key, provider in registered_feeding_services.items():

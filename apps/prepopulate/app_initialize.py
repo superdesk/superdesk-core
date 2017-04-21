@@ -1,16 +1,14 @@
-import os
 import json
+import logging
+import os
+import re
+from collections import OrderedDict
+from pathlib import Path
+
 import superdesk
 import pymongo
-import logging
-
-from pathlib import Path
 from eve.utils import config
-
-from superdesk import get_resource_service
 from flask import current_app as app
-from re import findall
-from collections import OrderedDict
 
 logger = logging.getLogger(__name__)
 
@@ -222,8 +220,13 @@ class AppInitializeWithDataCommand(superdesk.Command):
         :param bool sample_data: True if sample data need to be used
         :param bool force: if True, update item even if it has been modified by user
         """
-        logger.info('Starting data import')
+        logger.info('Starting data initialization')
         logger.info('Config: %s', app.config['APP_ABSPATH'])
+
+        # create indexes in mongo
+        app.init_indexes()
+        # put mapping to elastic
+        app.data.init_elastic(app)
 
         if sample_data:
             if not path:
@@ -276,7 +279,7 @@ class AppInitializeWithDataCommand(superdesk.Command):
         else:
             logger.info(' - got file path: %s', file_path)
             with file_path.open('rt') as app_prepopulation:
-                service = get_resource_service(entity_name)
+                service = superdesk.get_resource_service(entity_name)
                 json_data = json.loads(app_prepopulation.read())
                 data = [fillEnvironmentVariables(item) for item in json_data]
                 data = [app.data.mongo._mongotize(item, service.datasource) for item in data if item]
@@ -324,7 +327,7 @@ def fillEnvironmentVariables(item):
     variables = {}
     text = json.dumps(item)
 
-    for variable in findall('#ENV_([^#"]+)#', text):
+    for variable in re.findall('#ENV_([^#"]+)#', text):
         value = os.environ.get(variable, None)
         if not value:
             return None
