@@ -10,6 +10,7 @@
 
 
 import json
+import logging
 
 from eve.utils import ParsedRequest
 from eve_elastic.elastic import build_elastic_query
@@ -18,11 +19,12 @@ from superdesk import Resource, get_resource_service
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification
-from superdesk.logging import logger
 from superdesk.users.services import current_user_has_privilege
 from apps.auth import get_user_id
 
 UPDATE_NOTIFICATION = 'savedsearch:update'
+
+logger = logging.getLogger(__name__)
 
 
 def decode_filter(data):

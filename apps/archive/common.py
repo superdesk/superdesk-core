@@ -32,11 +32,11 @@ from superdesk.metadata.item import GUID_NEWSML, GUID_FIELD, GUID_TAG, not_analy
 from superdesk.metadata.packages import PACKAGE_TYPE, TAKES_PACKAGE, SEQUENCE, ASSOCIATED_TAKE_SEQUENCE
 from superdesk.metadata.utils import generate_guid
 from superdesk.errors import SuperdeskApiError, IdentifierGenerationError
-from superdesk.logging import logger
 from apps.auth import get_user
 
 
 logger = logging.getLogger(__name__)
+
 ARCHIVE = 'archive'
 CUSTOM_HATEOAS = {'self': {'title': 'Archive', 'href': '/archive/{_id}'}}
 ITEM_OPERATION = 'operation'
