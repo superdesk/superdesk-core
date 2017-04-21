@@ -15,6 +15,8 @@ from superdesk.tests import TestCase
 from superdesk import get_resource_service
 from ..media import get_picture_fixture
 
+from apps.picture_crop import get_crop_size
+
 
 def get_file_mock(rendition, item):
     filename = get_picture_fixture()
@@ -53,12 +55,31 @@ class PictureCropServiceTest(TestCase):
             },
             'crop': {
                 'CropLeft': 10,
-                'CropRight': 10,
-                'CropTop': 5,
-                'CropBottom': 5
+                'CropRight': 100,
+                'CropTop': 10,
+                'CropBottom': 100
             }
         }])
 
         self.assertEqual(images[0].metadata.get('datetime'), '"2015:07:06 16:30:23"')
         self.assertEqual(images[0].metadata.get('exifimagewidth'), '400')
         self.assertEqual(images[0].metadata.get('exifimageheight'), '300')
+
+    def test_get_crop_size_fixes_crop_aspect_ratio(self):
+        crop_data = {
+            'CropLeft': 0,
+            'CropRight': 1620,
+            'CropTop': 0,
+            'CropBottom': 1230,
+            'width': 800,
+            'height': 600
+        }
+        get_crop_size(crop_data)
+
+        crop_width = crop_data['CropRight'] - crop_data['CropLeft']
+        crop_height = crop_data['CropBottom'] - crop_data['CropTop']
+
+        crop_ratio = crop_height / crop_width
+        size_ratio = crop_data['height'] / crop_data['width']
+
+        self.assertEqual(crop_ratio, size_ratio)
