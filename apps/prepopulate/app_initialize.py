@@ -242,6 +242,8 @@ class AppInitializeWithDataCommand(superdesk.Command):
         for name, (file_name, index_params, do_patch) in __entities__.items():
             try:
                 self.import_file(name, path, file_name, index_params, do_patch, force)
+            except KeyError:
+                continue
             except Exception as ex:
                 logger.exception(ex)
                 logger.info('Exception loading entity {} from {}'.format(name, file_name))

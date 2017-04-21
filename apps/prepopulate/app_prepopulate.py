@@ -62,7 +62,10 @@ def prepopulate_data(file_name, default_user=get_default_user()):
         json_data = json.load(app_prepopulation)
         for item in json_data:
             resource = item.get('resource', None)
-            service = get_resource_service(resource)
+            try:
+                service = get_resource_service(resource)
+            except KeyError:
+                continue  # resource which is not configured - ignore
             username = item.get('username', None) or default_username
             set_logged_user(username, users[username])
             id_name = item.get('id_name', None)
