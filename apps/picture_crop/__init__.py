@@ -22,22 +22,28 @@ def get_crop_size(crop):
     :param size: size dict with `width` or `height`
     :param crop: crop specs
     """
-    size = {}
-    x = crop['CropRight'] - crop['CropLeft']
-    y = crop['CropBottom'] - crop['CropTop']
+    crop_width = crop['CropRight'] - crop['CropLeft']
+    crop_height = crop['CropBottom'] - crop['CropTop']
 
-    size['width'] = crop.get('width', x)
-    size['height'] = crop.get('height', y)
+    size = {
+        'width': crop.get('width', crop_width),
+        'height': crop.get('height', crop_height)
+    }
 
-    if size:  # preserve aspect ratio
-        width, height = size['width'], size['height']
-        if x > width:
-            y = int(max(y * width / x, 1))
-            x = int(width)
-        if y > height:
-            x = int(max(x * height / y, 1))
-            y = int(height)
-        size['width'], size['height'] = x, y
+    crop_ratio = crop_height / crop_width
+    size_ratio = size['height'] / size['width']
+
+    # Keep crop data proportional to the size provided
+    # i.e. if the rendition is 4x3, make sure the crop data is also a 4x3 aspect ratio
+    if crop_ratio != size_ratio:
+        crop_width = int(crop_height / size_ratio)
+        crop_height = int(crop_width * size_ratio)
+
+        # Calculating from the top-left, re-assign the cropping coordinates
+        # based on the new aspect ratio of the crop
+        crop['CropRight'] = crop['CropLeft'] + crop_width
+        crop['CropBottom'] = crop['CropTop'] + crop_height
+
     return size
 
 

@@ -350,7 +350,7 @@ Feature: Cropping the Image Articles
       """
       Then we get new resource
       """
-      {"width": 5, "height": 5, "href": "__any_value__"}
+      {"width": 5, "height": 10, "href": "__any_value__"}
       """
 
     @auth
