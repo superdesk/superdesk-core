@@ -94,6 +94,7 @@ class ArchiveVersionsResource(Resource):
     resource_methods = []
     internal_resource = True
     privileges = {'PATCH': 'archive'}
+    mongo_indexes = {'guid': ([('guid', 1)], {'background': True})}
 
 
 class ArchiveVersionsService(BaseService):
