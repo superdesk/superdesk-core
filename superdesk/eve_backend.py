@@ -192,15 +192,34 @@ class EveBackend():
         try:
             backend.update(endpoint_name, id, updates, original)
         except eve.io.base.DataLayer.OriginalChangedError:
-            if not backend.find_one(endpoint_name, req=None, _id=id) and search_backend:
+            # Retrieve the original copy from mongo
+            original_mongo = backend.find_one(endpoint_name, req=None, _id=id)
+
+            if not original_mongo and search_backend:
                 # item is in elastic, not in mongo - not good
                 logger.warn("Item is missing in mongo resource=%s id=%s".format(endpoint_name, id))
                 self.remove_from_search(endpoint_name, id)
                 raise SuperdeskApiError.notFoundError()
             else:
-                # item is there, but no change was done - ok
-                logger.error('Item : {} not updated in collection {}. '
-                             'Updates are : {}'.format(id, endpoint_name, updates))
+                # Check to make sure the updates provided does actually change the item in mongo
+                update_identical = True
+                for key, value in updates.items():
+                    if original_mongo.get(key, None) != value:
+                        update_identical = False
+                        break
+
+                if update_identical:
+                    # Update is identical to the item in mongo, why is the update being called?
+                    logger.error('Item : {} not updated in collection {} as the updates are identical '
+                                 'to the item in mongo. Updates are : {}'.format(id, endpoint_name, updates))
+                elif original != original_mongo:
+                    logger.error('Original item provided does not match item in mongo for {} in collection {}. '
+                                 'Original : {}, Mongo : {}.'.format(id, endpoint_name, original, original_mongo))
+                else:
+                    # Update is not identical, but still no change was done
+                    logger.error('Item : {} not updated in collection {}. '
+                                 'Updates are : {}'.format(id, endpoint_name, updates))
+
                 return updates
 
         if search_backend:
