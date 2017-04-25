@@ -346,6 +346,10 @@ metadata_schema = {
     },
     ASSOCIATIONS: {
         'type': 'dict',
+        'mapping': {
+            'dynamic': False,
+            'type': 'object',
+        }
     },
     'alt_text': {
         'type': 'string',
