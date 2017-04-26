@@ -66,7 +66,7 @@ class SuperdeskError(ValidationError):
     _codes = {}
     system_exception = None
 
-    def __init__(self, code, desc=None):
+    def __init__(self, code, desc=None, status_code=400):
         #: numeric error code
         self.code = code
 
@@ -74,6 +74,8 @@ class SuperdeskError(ValidationError):
         self.desc = desc
 
         self.message = self._codes.get(code, 'Unknown error')
+
+        self.status_code = status_code
 
     def __str__(self):
         desc_text = '' if not self.desc else (' Details: ' + self.desc)
@@ -83,6 +85,13 @@ class SuperdeskError(ValidationError):
             self.message,
             desc=desc_text
         )
+
+    def to_dict(self):
+        return {
+            'code': self.code,
+            'desc': self.desc,
+            'message': self.message,
+        }
 
     def get_error_description(self):
         return self.code, self._codes[self.code]
@@ -311,7 +320,9 @@ class ParserError(SuperdeskIngestError):
 class IngestFileError(SuperdeskIngestError):
     _codes = {
         3001: 'Destination folder could not be created',
-        3002: 'Ingest file could not be copied'
+        3002: 'Ingest file could not be copied',
+        3003: 'Ingest path not found',
+        3004: 'Ingest path is not directory',
     }
 
     @classmethod
@@ -321,6 +332,14 @@ class IngestFileError(SuperdeskIngestError):
     @classmethod
     def fileMoveError(cls, exception=None, provider=None):
         return IngestFileError(3002, exception, provider)
+
+    @classmethod
+    def notExistsError(cls, exception=None, provider=None):
+        return IngestFileError(3003, exception, provider)
+
+    @classmethod
+    def isNotDirError(cls, exception=None, provider=None):
+        return IngestFileError(3004, exception, provider)
 
 
 class IngestApiError(SuperdeskIngestError):
@@ -333,7 +352,8 @@ class IngestApiError(SuperdeskIngestError):
         4005: 'API ingest xml parse error',
         4006: 'API service not found(404) error',
         4007: 'API authorization error',
-        4008: 'Authentication URL is missing from Ingest Provider configuraion'
+        4008: 'Authentication URL is missing from Ingest Provider configuraion',
+        4009: 'API ingest connection error',
     }
 
     @classmethod
@@ -368,11 +388,17 @@ class IngestApiError(SuperdeskIngestError):
     def apiAuthError(cls, exception=None, provider=None):
         return cls(4007, exception, provider)
 
+    @classmethod
+    def apiConnectionError(cls, exception=None, provider=None):
+        return cls(4009, exception, provider)
+
 
 class IngestFtpError(SuperdeskIngestError):
     _codes = {
         5000: "FTP ingest error",
-        5001: "FTP parser could not be found"
+        5001: "FTP parser could not be found",
+        5002: "FTP Auth error",
+        5003: "FTP Host error",
     }
 
     @classmethod
@@ -383,12 +409,23 @@ class IngestFtpError(SuperdeskIngestError):
     def ftpUnknownParserError(cls, exception=None, provider=None, filename=None):
         return IngestFtpError(5001, exception, provider, extra={'file': filename})
 
+    @classmethod
+    def ftpAuthError(cls, exception=None, provider=None):
+        return IngestFtpError(5002, exception, provider)
+
+    @classmethod
+    def ftpHostError(cls, exception=None, provider=None):
+        return IngestFtpError(5003, exception, provider)
+
 
 class IngestEmailError(SuperdeskIngestError):
     _codes = {
         6000: "Email authentication failure",
         6001: "Email parse error",
-        6002: "Email ingest error"
+        6002: "Email ingest error",
+        6003: "Email host error",
+        6004: "Email mailbox error",
+        6005: "Email filter error",
     }
 
     @classmethod
@@ -402,6 +439,18 @@ class IngestEmailError(SuperdeskIngestError):
     @classmethod
     def emailError(cls, exception=None, provider=None):
         return IngestEmailError(6002, exception, provider)
+
+    @classmethod
+    def emailHostError(cls, exception=None, provider=None):
+        return IngestEmailError(6003, exception, provider)
+
+    @classmethod
+    def emailMailboxError(cls, exception=None, provider=None):
+        return IngestEmailError(6004, exception, provider)
+
+    @classmethod
+    def emailFilterError(cls, exception=None, provider=None):
+        return IngestEmailError(6005, exception, provider)
 
 
 class SuperdeskPublishError(SuperdeskError):

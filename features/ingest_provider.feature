@@ -41,6 +41,26 @@ Feature: Ingest Provider
         """
 
     @auth
+    Scenario: Test provider config on save
+        Given "ingest_providers"
+        """
+        [{"name": "bar", "source": "bar", "is_closed": false}]
+        """
+        When we patch "/ingest_providers/#ingest_providers._id#"
+        """
+        {"feeding_service": "rss", "config": {"url": "http://localhost:1234"}}
+        """
+        Then we get error 400
+
+        When we post to "ingest_providers"
+        """
+        {"name": "foo", "source": "foo", "feeding_service": "rss", "is_closed": false, "config": {
+            "url": "http://localhost:1234"
+        }}
+        """
+        Then we get error 400
+
+    @auth
     Scenario: Update ingest_provider aliases
         Given "ingest_providers"
 	    """

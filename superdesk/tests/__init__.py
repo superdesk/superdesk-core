@@ -156,6 +156,7 @@ def setup_config(config):
     logging.getLogger('celery').setLevel(logging.WARNING)
     logging.getLogger('superdesk').setLevel(logging.ERROR)
     logging.getLogger('elasticsearch').setLevel(logging.ERROR)
+    logging.getLogger('superdesk.errors').setLevel(logging.CRITICAL)
     return app_config
 
 

@@ -589,6 +589,9 @@ ENABLE_PROFILING = False
 #: default timeout for ftp connections
 FTP_TIMEOUT = 300
 
+#: default timeout for email connections
+EMAIL_TIMEOUT = 10
+
 #: This setting is used to overide the desk/stage expiry for items when spiked
 SPIKE_EXPIRY_MINUTES = None
 

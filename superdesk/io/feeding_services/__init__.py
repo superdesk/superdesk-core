@@ -45,8 +45,39 @@ class FeedingService(metaclass=ABCMeta):
         :type update: dict
         :return: a list of articles which can be saved in Ingest Collection.
         """
-
         raise NotImplementedError()
+
+    def _test(self, provider):
+        """
+        Subclasses should override this method and do specific config test.
+
+        :param provider: Ingest Provider Details.
+        """
+        return
+
+    def config_test(self, provider=None):
+        """Test provider configuration.
+
+        :param provider: provider data
+        """
+        if not provider:  # nosetests run this for some reason
+            return
+        if self._is_closed(provider):
+            return
+        return self._test(provider)
+
+    def _is_closed(self, provider):
+        """Test if provider is closed.
+
+        :param provider: provider data
+        :return bool: True if is closed
+        """
+        is_closed = provider.get('is_closed', False)
+
+        if isinstance(is_closed, datetime):
+            is_closed = False
+
+        return is_closed
 
     def update(self, provider, update):
         """
@@ -60,13 +91,7 @@ class FeedingService(metaclass=ABCMeta):
         :raises SuperdeskApiError.internalError if Provider is closed
         :raises SuperdeskIngestError if failed to get items from provider
         """
-
-        is_closed = provider.get('is_closed', False)
-
-        if isinstance(is_closed, datetime):
-            is_closed = False
-
-        if is_closed:
+        if self._is_closed(provider):
             raise SuperdeskApiError.internalError('Ingest Provider is closed')
         else:
             try:

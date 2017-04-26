@@ -112,6 +112,14 @@ class RSSFeedingService(FeedingService):
 
         return url
 
+    def _test(self, provider):
+        """Test connection."""
+        config = provider.get('config', {})
+        xml = self._fetch_data(config, provider)
+        data = feedparser.parse(xml)
+        if data.bozo:
+            raise ParserError.parseMessageError(data.bozo_exception, provider)
+
     def _update(self, provider, update):
         """
         Check data provider for data updates and returns new items (if any).
@@ -124,13 +132,6 @@ class RSSFeedingService(FeedingService):
         :raises ParserError: if retrieved RSS data cannot be parsed
         """
         config = provider.get('config', {})
-
-        if config.get('auth_required'):
-            self.auth_info = {
-                'username': config.get('username', ''),
-                'password': config.get('password', '')
-            }
-
         xml_data = self._fetch_data(config, provider)
 
         try:
@@ -191,10 +192,17 @@ class RSSFeedingService(FeedingService):
 
         if config.get('auth_required', False):
             auth = (config.get('username'), config.get('password'))
+            self.auth_info = {
+                'username': config.get('username', ''),
+                'password': config.get('password', '')
+            }
         else:
             auth = None
 
-        response = requests.get(url, auth=auth, timeout=30)
+        try:
+            response = requests.get(url, auth=auth, timeout=30)
+        except requests.exceptions.ConnectionError as err:
+            raise IngestApiError.apiConnectionError(exception=err)
 
         if response.ok:
             return response.content

@@ -18,7 +18,7 @@ from superdesk import get_resource_service
 from superdesk.activity import ACTIVITY_CREATE, ACTIVITY_EVENT, ACTIVITY_UPDATE, notify_and_add_activity, \
     ACTIVITY_DELETE
 from superdesk.errors import SuperdeskApiError
-from superdesk.io import allowed_feeding_services, allowed_feed_parsers
+from superdesk.io import allowed_feeding_services, allowed_feed_parsers, registered_feeding_services
 from superdesk.metadata.item import CONTENT_STATE, content_type
 from superdesk.notification import push_notification
 from superdesk.resource import Resource
@@ -187,6 +187,7 @@ class IngestProviderService(BaseService):
             if doc.get('content_expiry', 0) == 0:
                 doc['content_expiry'] = app.config['INGEST_EXPIRY_MINUTES']
                 self._set_provider_status(doc, doc.get('last_closed', {}).get('message', ''))
+            self._test_config(doc)
 
     def on_created(self, docs):
         for doc in docs:
@@ -202,6 +203,8 @@ class IngestProviderService(BaseService):
             updates['content_expiry'] = app.config['INGEST_EXPIRY_MINUTES']
         if 'is_closed' in updates and original.get('is_closed', False) != updates.get('is_closed'):
             self._set_provider_status(updates, updates.get('last_closed', {}).get('message', ''))
+        if 'config' in updates:
+            self._test_config(updates, original)
 
     def on_updated(self, updates, original):
         do_notification = updates.get('notifications', {})\
@@ -257,6 +260,16 @@ class IngestProviderService(BaseService):
             'key': 'ingest_providers_{_id}'.format(_id=doc[config.ID_FIELD])
         })
         logger.info("Deleted Ingest Channel. Data:{}".format(doc))
+
+    def _test_config(self, updates, original=None):
+        provider = original.copy() if original else {}
+        provider.update(updates)
+
+        try:
+            service = registered_feeding_services[provider['feeding_service']].__class__()
+        except KeyError:
+            return
+        service.config_test(provider)
 
 
 superdesk.workflow_state(CONTENT_STATE.INGESTED)

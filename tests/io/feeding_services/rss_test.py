@@ -147,23 +147,6 @@ class UpdateMethodTestCase(RssIngestServiceTest):
         self.instance._fetch_images = MagicMock()
         self.instance._wrap_into_package = MagicMock()
 
-    def test_stores_auth_info_in_instance_if_auth_required(self):
-        self.instance.auth_info = None
-        fake_provider = {
-            'config': {
-                'auth_required': True,
-                'username': 'james',
-                'password': 'bond+007',
-            }
-        }
-
-        self.instance._update(fake_provider, {})
-
-        self.assertEqual(
-            self.instance.auth_info,
-            {'username': 'james', 'password': 'bond+007'}
-        )
-
     def test_raises_ingest_error_if_fetching_data_fails(self):
         self.instance._fetch_data.side_effect = FakeIngestApiError
         try:
@@ -300,6 +283,29 @@ class FetchDataMethodTestCase(RssIngestServiceTest):
 
         call_args = requests_get.call_args[0]
         self.assertEqual(call_args[0], 'http://news.com/rss')
+
+    def test_stores_auth_info_in_instance_if_auth_required(self):
+        self.instance.auth_info = None
+        fake_provider = {
+            'config': {
+                'url': 'foo',
+                'auth_required': True,
+                'username': 'james',
+                'password': 'bond+007',
+            }
+        }
+
+        requests_get.return_value = MagicMock(ok=False)
+
+        try:
+            self.instance._update(fake_provider, {})
+        except:
+            pass
+
+        self.assertEqual(
+            self.instance.auth_info,
+            {'username': 'james', 'password': 'bond+007'}
+        )
 
     def test_provides_auth_info_if_required(self):
         requests_get.return_value = MagicMock(ok=True)
