@@ -52,6 +52,7 @@ from superdesk.filemeta import get_filemeta
 
 external_url = 'http://thumbs.dreamstime.com/z/digital-nature-10485007.jpg'
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S%z"
+ANALYTICS_DATETIME_FORMAT = "%Y-%m-%d %H:00:00"
 
 
 def test_json(context):
@@ -182,6 +183,10 @@ def format_date(date_to_format):
     return date_to_format.strftime(DATETIME_FORMAT)
 
 
+def format_date_analytics(date_to_format):
+    return date_to_format.strftime(ANALYTICS_DATETIME_FORMAT)
+
+
 def assert_200(response):
     """Assert we get status code 200."""
     expect_status_in(response, (200, 201, 204))
@@ -248,7 +253,10 @@ def apply_placeholders(context, text):
                 if unit != -1:
                     value -= timedelta(days=int(placeholder[unit + 1]))
 
-            value = format_date(value)
+            if placeholder == 'DATE_FORMATTED':
+                value = format_date_analytics(value)
+            else:
+                value = format_date(value)
             placeholders['LAST_DATE_VALUE'] = value
         elif placeholder not in placeholders:
             try:
