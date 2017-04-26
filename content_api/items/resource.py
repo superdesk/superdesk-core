@@ -34,6 +34,7 @@ schema = {
     'renditions': {'type': 'dict'},
     'service': {'type': 'list'},
     'slugline': {'type': 'string'},
+    'source': {'type': 'string'},
     'subject': {'type': 'list'},
     'keywords': {'type': 'list'},
     'type': {'type': 'string'},

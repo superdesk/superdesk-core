@@ -10,6 +10,9 @@
 
 """NINJS formatter for Superdesk
 
+.. versionadded:: 1.8
+    Added *source* field.
+
 .. versionadded:: 1.7
     Added *ednote* field.
     Added *signal* field.
@@ -67,6 +70,7 @@ class NINJSFormatter(Formatter):
     * added ``slugline`` field
     * added ``keywords`` field
     * added ``evolvedfrom`` field
+    * added ``source`` field
 
     Associations dictionary may contain entire items like
     in `ninjs example <http://dev.iptc.org/ninjs-Examples-3>`_ or just the item ``guid``
@@ -76,7 +80,7 @@ class NINJSFormatter(Formatter):
     direct_copy_properties = ('versioncreated', 'usageterms', 'language', 'headline', 'copyrightnotice',
                               'urgency', 'pubstatus', 'mimetype', 'copyrightholder', 'ednote',
                               'body_text', 'body_html', 'slugline', 'keywords',
-                              'firstcreated')
+                              'firstcreated', 'source')
 
     rendition_properties = ('href', 'width', 'height', 'mimetype', 'poi', 'media')
     vidible_fields = {field: field for field in rendition_properties}
