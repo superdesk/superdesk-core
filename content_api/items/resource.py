@@ -14,7 +14,7 @@ from content_api import MONGO_PREFIX, ELASTIC_PREFIX
 
 schema = {
     '_id': {'type': 'string', 'unique': True},
-    'associations': {'type': 'dict'},
+    'associations': {'type': 'dict', 'mapping': {'type': 'object', 'dynamic': False}},
     'body_html': {'type': 'string'},
     'body_text': {'type': 'string'},
     'byline': {'type': 'string'},
