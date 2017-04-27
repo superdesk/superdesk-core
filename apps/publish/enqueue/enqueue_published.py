@@ -31,12 +31,12 @@ class EnqueuePublishedService(EnqueueService):
         :param str target_media_type: dictate if the doc being queued is a Takes Package or an Individual Article.
                 Valid values are - Wire, Digital. If Digital then the doc being queued is a Takes Package and if Wire
                 then the doc being queues is an Individual Article.
-        :return: (list, list, dict) List of filtered subscriber,
-                List of subscribers that have not received item previously (empty list in this case).
-                List of product codes per subscriber
+        :return: (list, dict, dict) List of filtered subscribers, product codes per subscriber,
+                associations per subscriber
         """
-        subscribers, subscribers_yet_to_receive, takes_subscribers, rewrite_subscribers = [], [], [], []
+        subscribers, takes_subscribers, rewrite_subscribers = [], [], []
         subscriber_codes, take_codes, codes, rewrite_codes = {}, {}, {}, {}
+        associations, takes_associations, rewrite_associations = {}, {}, {}
         first_take = None
 
         # Step 3b
@@ -58,13 +58,14 @@ class EnqueuePublishedService(EnqueueService):
             # Step 1a
             query = {'$and': [{'item_id': doc['item_id']},
                               {'publishing_action': {'$in': [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]}}]}
-            takes_subscribers, take_codes = self._get_subscribers_for_previously_sent_items(query)
+            takes_subscribers, take_codes, takes_associations = self._get_subscribers_for_previously_sent_items(query)
 
             if rewrite_of and rewrite_take_package:
                 # Step 3b
                 query = {'$and': [{'item_id': rewrite_take_package.get(config.ID_FIELD)},
                                   {'publishing_action': {'$in': [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]}}]}
-                rewrite_subscribers, rewrite_codes = self._get_subscribers_for_previously_sent_items(query)
+                rewrite_subscribers, rewrite_codes, rewrite_associations = \
+                    self._get_subscribers_for_previously_sent_items(query)
 
         # Step 2
         if doc.get(ITEM_TYPE) in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
@@ -78,7 +79,8 @@ class EnqueuePublishedService(EnqueueService):
                 # if first take is published then subsequent takes should to same subscribers.
                 query = {'$and': [{'item_id': first_take},
                                   {'publishing_action': {'$in': [CONTENT_STATE.PUBLISHED]}}]}
-                subscribers, subscriber_codes = self._get_subscribers_for_previously_sent_items(query)
+                subscribers, subscriber_codes, takes_associations = \
+                    self._get_subscribers_for_previously_sent_items(query)
 
             if rewrite_of:
                 # Step 3b
@@ -89,7 +91,8 @@ class EnqueuePublishedService(EnqueueService):
 
                 query = {'$and': [{'item_id': {'$in': item_ids}},
                                   {'publishing_action': {'$in': [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]}}]}
-                rewrite_subscribers, rewrite_codes = self._get_subscribers_for_previously_sent_items(query)
+                rewrite_subscribers, rewrite_codes, rewrite_associations = \
+                    self._get_subscribers_for_previously_sent_items(query)
 
         # Step 3
         if not first_take:
@@ -117,4 +120,12 @@ class EnqueuePublishedService(EnqueueService):
             # join the codes
             subscriber_codes.update(codes)
 
-        return subscribers, subscribers_yet_to_receive, subscriber_codes
+        # update associations
+        self._update_associations(associations, rewrite_associations)
+        self._update_associations(associations, takes_associations)
+
+        # handle associations
+        associations = self._filter_subscribers_for_associations(subscribers, doc,
+                                                                 target_media_type, associations)
+
+        return subscribers, subscriber_codes, associations

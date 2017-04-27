@@ -566,7 +566,7 @@ class ArchivePublishTestCase(TestCase):
         doc = copy(self.articles[1])
         doc['item_id'] = doc['_id']
 
-        subscribers, subscribers_yet_to_receive, subscriber_codes = \
+        subscribers, subscriber_codes, associations = \
             EnqueuePublishedService().get_subscribers(doc, SUBSCRIBER_TYPES.DIGITAL)
         EnqueueService().queue_transmission(doc, subscribers, subscriber_codes)
 
@@ -582,7 +582,7 @@ class ArchivePublishTestCase(TestCase):
         doc = copy(self.articles[1])
         doc['item_id'] = doc['_id']
 
-        subscribers, subscribers_yet_to_receive, subscriber_codes = \
+        subscribers, subscriber_codes, associations = \
             EnqueuePublishedService().get_subscribers(doc, SUBSCRIBER_TYPES.WIRE)
         EnqueueService().queue_transmission(doc, subscribers, subscriber_codes)
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
@@ -610,7 +610,7 @@ class ArchivePublishTestCase(TestCase):
 
         subscriber_service.post(self.subscribers)
 
-        subscribers, subscribers_yet_to_receive, subscriber_codes = \
+        subscribers, subscriber_codes, associations = \
             EnqueuePublishedService().get_subscribers(doc, SUBSCRIBER_TYPES.WIRE)
 
         self.assertEqual(0, len(subscribers))
@@ -623,7 +623,7 @@ class ArchivePublishTestCase(TestCase):
         doc['item_id'] = doc['_id']
         doc[ITEM_TYPE] = CONTENT_TYPE.PICTURE
 
-        subscribers, subscribers_yet_to_receive, subscriber_codes = \
+        subscribers, subscriber_codes, associations = \
             EnqueuePublishedService().get_subscribers(doc, SUBSCRIBER_TYPES.DIGITAL)
         no_formatters, queued = EnqueueService().queue_transmission(doc, subscribers, subscriber_codes)
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
@@ -631,7 +631,7 @@ class ArchivePublishTestCase(TestCase):
         self.assertEqual(0, len(no_formatters))
         self.assertTrue(queued)
 
-        subscribers, subscribers_yet_to_receive, subscriber_codes = \
+        subscribers, subscriber_codes, associations = \
             EnqueuePublishedService().get_subscribers(doc, SUBSCRIBER_TYPES.WIRE)
         no_formatters, queued = EnqueueService().queue_transmission(doc, subscribers)
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
@@ -878,3 +878,11 @@ class ArchivePublishTestCase(TestCase):
         removed_items, added_items = ArchivePublishService()._get_changed_items(items, updates)
         self.assertEqual(len(removed_items), 1)
         self.assertEqual(len(added_items), 1)
+
+    def test_get_changed_items_no_item_found(self):
+        # dummy publishing so that elastic mappings are created.
+        doc = self.articles[3].copy()
+        get_resource_service(ARCHIVE_PUBLISH).patch(id=doc['_id'], updates={ITEM_STATE: CONTENT_STATE.PUBLISHED})
+        removed_items, added_items = EnqueueService()._get_changed_items({}, {'item_id': 'test'})
+        self.assertEqual(len(removed_items), 0)
+        self.assertEqual(len(added_items), 0)

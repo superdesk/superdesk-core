@@ -126,6 +126,10 @@ Feature: Targeted Publishing
         ]
     }
     """
+    When we get "/items/123"
+    Then we get OK response
+    Then we assert the content api item "123" is not published to subscriber "sub-4"
+    Then we assert the content api item "123" is published to subscriber "sub-4-api"
 
   @auth @notification
   Scenario: Publish a story to a target region with negation
@@ -160,6 +164,15 @@ Feature: Targeted Publishing
         ]
     }
     """
+    When we get "/items/123"
+    Then we get OK response
+    Then we assert the content api item "123" is not published to subscriber "sub-4"
+    Then we assert the content api item "123" is not published to subscriber "sub-2"
+    Then we assert the content api item "123" is not published to subscriber "sub-1"
+    Then we assert the content api item "123" is not published to subscriber "sub-3"
+    Then we assert the content api item "123" is not published to subscriber "sub-5"
+    Then we assert the content api item "123" is published to subscriber "sub-4-api"
+    Then we assert the content api item "123" is published to subscriber "sub-2-api"
 
   @auth @notification
   Scenario: Publish a story to a target region doesn't publish if no product
@@ -183,7 +196,9 @@ Feature: Targeted Publishing
     When we enqueue published
     And we get "/publish_queue"
     Then we get list with 0 items
-
+    When we get "/items/123"
+    Then we get OK response
+    Then we assert the content api item "123" is not published to any subscribers
 
 
   @auth @notification
@@ -216,6 +231,10 @@ Feature: Targeted Publishing
         ]
     }
     """
+    When we get "/items/123"
+    Then we get OK response
+    Then we assert the content api item "123" is not published to any subscribers
+
 
   @auth @notification
   Scenario: Publish a story to a target subscriber type
@@ -247,6 +266,9 @@ Feature: Targeted Publishing
         ]
     }
     """
+    When we get "/items/123"
+    Then we get OK response
+    Then we assert the content api item "123" is not published to any subscribers
 
   @auth @notification
   Scenario: Publish a story to target subscribers even no products
@@ -280,7 +302,9 @@ Feature: Targeted Publishing
         ]
     }
     """
-
+    When we get "/items/123"
+    Then we get OK response
+    Then we assert the content api item "123" is not published to any subscribers
 
   @auth @notification
   Scenario: Publish a story to target subscribers and region
@@ -315,6 +339,11 @@ Feature: Targeted Publishing
         ]
     }
     """
+    When we get "/items/123"
+    Then we get OK response
+    Then we assert the content api item "123" is published to subscriber "sub-4-api"
+    Then we assert the content api item "123" is not published to subscriber "sub-4"
+    Then we assert the content api item "123" is not published to subscriber "sub-3"
 
   @auth @notification
   Scenario: Correct a targeted story with a added target ignores the change

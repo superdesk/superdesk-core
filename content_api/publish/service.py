@@ -17,6 +17,7 @@ from superdesk.utc import utcnow
 from superdesk.services import BaseService
 from superdesk.publish.formatters.ninjs_formatter import NINJSFormatter
 from superdesk import get_resource_service
+from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
 
 logger = logging.getLogger('superdesk')
 
@@ -45,7 +46,6 @@ class PublishService(BaseService):
             doc.setdefault('versioncreated', now)
             doc.setdefault(config.VERSION, item.get(config.VERSION, 1))
             doc['subscribers'] = [str(sub['_id']) for sub in subscribers]
-
             if 'evolvedfrom' in doc:
                 parent_item = self.find_one(req=None, _id=doc['evolvedfrom'])
                 if parent_item:
@@ -56,6 +56,7 @@ class PublishService(BaseService):
                         doc['evolvedfrom'], doc['guid'])
                     )
 
+            self._assign_associations(item, doc)
             logger.info('publishing %s to %s' % (doc['guid'], subscribers))
             return self._create_doc(doc)
         else:
@@ -78,6 +79,7 @@ class PublishService(BaseService):
         if original:
             item['subscribers'] = list(set(original.get('subscribers', [])) | set(item.get('subscribers', [])))
 
+        self._process_associations(item, original)
         self._create_version_doc(item)
         if original:
             self.update(_id, item, original)
@@ -131,3 +133,42 @@ class PublishService(BaseService):
                 return True
 
         return False
+
+    def _assign_associations(self, item, doc):
+        """Assign Associations to published item
+
+        :param dict item: item being published
+        :param dit doc: ninjs documents
+        """
+        if item[ITEM_TYPE] != CONTENT_TYPE.TEXT:
+            return
+
+        for assoc, assoc_item in (item.get('associations') or {}).items():
+            if not assoc_item:
+                continue
+
+            doc.get('associations', {}).get(assoc)['subscribers'] = list(map(str, assoc_item.get('subscribers') or []))
+
+    def _process_associations(self, updates, original):
+        """Update associations using existing published item and ensure that associated item subscribers
+        are equal or subset of the parent subscribers.
+        :param updates:
+        :param original:
+        :return:
+        """
+        if updates[ITEM_TYPE] != CONTENT_TYPE.TEXT:
+            return
+
+        subscribers = updates.get('subscribers') or []
+        for assoc, update_assoc in (updates.get('associations') or {}).items():
+            if not update_assoc:
+                continue
+
+            if original:
+                original_assoc = (original.get('associations') or {}).get(assoc)
+
+                if original_assoc and original_assoc.get(config.ID_FIELD) == update_assoc.get(config.ID_FIELD):
+                    update_assoc['subscribers'] = list(set(original_assoc.get('subscribers') or []) |
+                                                       set(update_assoc.get('subscribers') or []))
+
+            update_assoc['subscribers'] = list(set(update_assoc['subscribers']) & set(subscribers))

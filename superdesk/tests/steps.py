@@ -2234,9 +2234,10 @@ def we_set_copy_metadata_from_parent(context):
 
 
 @then('we assert the content api item "{item_id}" is published to subscriber "{subscriber}"')
-def we_assert_content_api_item_is_published(context, item_id, subscriber):
+def we_assert_content_api_item_is_published_to_subscriber(context, item_id, subscriber):
     with context.app.test_request_context(context.app.config['URL_PREFIX']):
         item_id = apply_placeholders(context, item_id)
+        subscriber = apply_placeholders(context, subscriber)
         req = ParsedRequest()
         req.projection = json.dumps({'subscribers': 1})
         cursor = get_resource_service('items').get_from_mongo(req, {'_id': item_id})
@@ -2248,7 +2249,22 @@ def we_assert_content_api_item_is_published(context, item_id, subscriber):
 
 
 @then('we assert the content api item "{item_id}" is not published to subscriber "{subscriber}"')
-def we_assert_content_api_item_is_published(context, item_id, subscriber):
+def we_assert_content_api_item_is_not_published_to_subscriber(context, item_id, subscriber):
+    with context.app.test_request_context(context.app.config['URL_PREFIX']):
+        item_id = apply_placeholders(context, item_id)
+        subscriber = apply_placeholders(context, subscriber)
+        req = ParsedRequest()
+        req.projection = json.dumps({'subscribers': 1})
+        cursor = get_resource_service('items').get_from_mongo(req, {'_id': item_id})
+        assert cursor.count() > 0, 'Item not found'
+        item = cursor[0]
+        subscriber = apply_placeholders(context, subscriber)
+        assert subscriber not in item.get('subscribers', []), \
+            'Subscriber with Id: {} found for the item. '.format(subscriber)
+
+
+@then('we assert the content api item "{item_id}" is not published to any subscribers')
+def we_assert_content_api_item_is_not_published(context, item_id):
     with context.app.test_request_context(context.app.config['URL_PREFIX']):
         item_id = apply_placeholders(context, item_id)
         req = ParsedRequest()
@@ -2256,10 +2272,8 @@ def we_assert_content_api_item_is_published(context, item_id, subscriber):
         cursor = get_resource_service('items').get_from_mongo(req, {'_id': item_id})
         assert cursor.count() > 0, 'Item not found'
         item = cursor[0]
-        subscriber = apply_placeholders(context, subscriber)
-        assert len(item.get('subscribers', [])) > 0, 'No subscribers found.'
-        assert subscriber not in item.get('subscribers', []), \
-            'Subscriber with Id: {} found for the item. '.format(subscriber)
+        assert len(item.get('subscribers', [])) == 0, \
+            'Item published to subscribers {}.'.format(item.get('subscribers', []))
 
 
 @then('we ensure that archived schema extra fields are not present in duplicated item')
@@ -2274,3 +2288,33 @@ def we_ensure_that_archived_schema_extra_fields_are_not_present(context):
         duplicate_item = json.loads(context.response.get_data())
         for field in extra_fields:
             assert field not in duplicate_item, 'Field {} found the duplicate item'.format(field)
+
+
+@then('we assert content api item "{item_id}" with associated item "{embedded_id}" is published to "{subscriber}"')
+def we_assert_that_associated_item_for_subscriber(context, item_id, embedded_id, subscriber):
+    with context.app.test_request_context(context.app.config['URL_PREFIX']):
+        item_id = apply_placeholders(context, item_id)
+        subscriber = apply_placeholders(context, subscriber)
+        embedded_id = apply_placeholders(context, embedded_id)
+        req = ParsedRequest()
+        cursor = get_resource_service('items').get_from_mongo(req, {'_id': item_id})
+        assert cursor.count() > 0, 'Item not found'
+        item = cursor[0]
+        assert embedded_id in (item.get('associations') or {}), '{} association not found.'.format(embedded_id)
+        assert subscriber in (item['associations'][embedded_id] or {}).get('subscribers', []), \
+            '{} subscriber not found in associations {}'.format(subscriber, embedded_id)
+
+
+@then('we assert content api item "{item_id}" with associated item "{embedded_id}" is not published to "{subscriber}"')
+def we_assert_that_associated_item_for_subscriber(context, item_id, embedded_id, subscriber):
+    with context.app.test_request_context(context.app.config['URL_PREFIX']):
+        item_id = apply_placeholders(context, item_id)
+        subscriber = apply_placeholders(context, subscriber)
+        embedded_id = apply_placeholders(context, embedded_id)
+        req = ParsedRequest()
+        cursor = get_resource_service('items').get_from_mongo(req, {'_id': item_id})
+        assert cursor.count() > 0, 'Item not found'
+        item = cursor[0]
+        assert embedded_id in (item.get('associations') or {}), '{} association not found.'.format(embedded_id)
+        assert subscriber not in (item['associations'][embedded_id] or {}).get('subscribers', []), \
+            '{} subscriber found in associations {}'.format(subscriber, embedded_id)

@@ -472,7 +472,8 @@ Feature: Content Publishing
       ]}
       """
       When we get "/items/123"
-      Then we get error 404
+      Then we get OK response
+      Then we assert the content api item "123" is not published to any subscribers
       When we publish "456" with "publish" type and "published" state
       Then we get OK response
       When we get "/published"
