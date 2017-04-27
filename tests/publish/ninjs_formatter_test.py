@@ -70,6 +70,7 @@ class NinjsFormatterTest(TestCase):
             "subject": [{"code": "02011001", "name": "international court or tribunal"},
                         {"code": "02011002", "name": "extradition"}],
             "service": [{"code": "a"}],
+            "source": "AAP",
             "headline": "This is a test headline",
             "byline": "joe",
             "urgency": 2,
@@ -136,6 +137,7 @@ class NinjsFormatterTest(TestCase):
             "priority": 5,
             "slugline": "AMAZING PICTURE",
             'ednote': 'TEST ONLY',
+            'source': 'AAP',
         }
         self.assertEqual(expected, json.loads(doc))
 
@@ -274,6 +276,7 @@ class NinjsFormatterTest(TestCase):
             "language": "en",
             "priority": 5,
             "slugline": "Boat",
+            'source': 'AAP',
         }
         self.assertEqual(expected, json.loads(doc))
 
@@ -364,6 +367,7 @@ class NinjsFormatterTest(TestCase):
             "headline": "This is a test headline",
             "slugline": "slugline",
             "priority": 5,
+            'source': 'AAP',
             'associations': {
                 "embedded5346670761": {
                     "guid": "56ba77bde4b0568f54a1ce68",
