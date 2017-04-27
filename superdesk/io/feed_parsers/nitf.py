@@ -8,7 +8,6 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import logging
 from datetime import datetime
 import dateutil.parser
 from superdesk.io.registry import register_feed_parser
@@ -19,10 +18,9 @@ from superdesk.utc import utc
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, FORMAT, FORMATS
 from superdesk.etree import get_word_count
 from superdesk.io.iptc import subject_codes
+from superdesk.errors import SkipValue
 import re
 import superdesk
-
-logger = logging.getLogger(__name__)
 
 SETTINGS_MAPPING_PARAM = 'NITF_MAPPING'
 SUBJECT_TYPE = 'tobject.subject.type'
@@ -30,10 +28,6 @@ SUBJECT_MATTER = 'tobject.subject.matter'
 SUBJECT_DETAIL = 'tobject.subject.detail'
 
 subject_fields = (SUBJECT_TYPE, SUBJECT_MATTER, SUBJECT_DETAIL)
-
-
-class SkipValue(Exception):
-    """Exception used in callback when a value is not needed"""
 
 
 class NITFFeedParser(XMLFeedParser):
@@ -60,7 +54,7 @@ class NITFFeedParser(XMLFeedParser):
                     },
             'urgency': {'xpath': 'head/docdata/urgency/@ed-urg',
                         'default_attr': 5,
-                        'filter_value': int,
+                        'filter': int,
                         },
             'pubstatus': {'xpath': 'head/docdata/@management-status',
                           'default_attr': 'usable',
@@ -87,186 +81,41 @@ class NITFFeedParser(XMLFeedParser):
             'abstract': self.get_abstract,
             'byline': self.get_byline,
             # metadata
-            'slugline': "head/meta/[@name='anpa-keyword']/@content",
-            'ingest_provider_sequence': "head/meta/[@name='anpa-sequence']/@content",
-            'anpa_category': {'xpath': "head/meta/[@name='anpa-category']",
+            'slugline': "head/meta[@name='anpa-keyword']/@content",
+            'ingest_provider_sequence': "head/meta[@name='anpa-sequence']/@content",
+            'anpa_category': {'xpath': "head/meta[@name='anpa-category']",
                               'filter': lambda elem: [{'qcode': elem.get('content'), 'name': ''}],
                               },
-            'word_count': {'xpath': "head/meta/[@name='anpa-wordcount']",
+            'word_count': {'xpath': "head/meta[@name='anpa-wordcount']",
                            'filter': lambda elem: int(elem.get('content')),
                            },
-            'anpa_take_key': "head/meta/[@name='anpa-keyword']",
-            'priority': {'xpath': "head/meta/[@name='aap-priority']",
+            'anpa_take_key': "head/meta[@name='anpa-keyword']",
+            'priority': {'xpath': "head/meta[@name='aap-priority']",
                          'filter': lambda elem: self.map_priority(elem.get('content')),
                          },
             'original_creator': self.get_original_creator,
             'version_creator': self.get_version_creator,
-            'original_source': "head/meta/[@name='aap-source']/@content",
-            'source': "head/meta/[@name='aap-source']/@content",
+            'original_source': "head/meta[@name='aap-source']/@content",
+            'source': "head/meta[@name='aap-source']/@content",
             'task': self.get_task,
         }
-        self.metadata_mapping = None
-
-    def _parse_xpath(self, xpath):
-        """Parse xpath and handle final attribute."""
-        last_idx = xpath.rfind('/')
-        if last_idx == -1:
-            msg = "No path separator found in xpath {}, ignoring it".format(xpath)
-            logger.warn(msg)
-            raise ValueError(msg)
-        last = xpath[last_idx + 1:].rstrip()
-        if last.startswith('@'):
-            # an attribute is requested
-            return {'xpath': xpath[:last_idx], 'attribute': last[1:]}
-        else:
-            return {'xpath': xpath}
-
-    def _parse_mapping(self, value):
-        if isinstance(value, dict):
-            if not value:
-                return {}
-            try:
-                xpath = value['xpath']
-            except KeyError:
-                return value
-            else:
-                # we parse xpath to handle final @attribute syntax
-                try:
-                    value.update(self._parse_xpath(xpath))
-                except ValueError:
-                    # xpath is invalid, we ignore the key
-                    # a waring is already logged in self._parse_xpath
-                    value = {}
-                if 'filter' in value and 'attribute' in value:
-                    logging.warn('"filter" and "attribte" should not be used in the same mapping,\
-                        "attribute" will not be used: {}'.format(value))
-                return value
-        elif isinstance(value, str):
-            if not value:
-                return {}
-            try:
-                return self._parse_xpath(value)
-            except ValueError:
-                return {}
-        elif callable(value):
-            return {'callback': value}
-        else:
-            logger.warn("Can't parse mapping value {}, ignoring it".format(value))
-            return {}
-
-    def _generate_mapping(self):
-        """Generate self.metadata_mapping according to available mappings.
-
-        The following mappings are used in this order (last is more important):
-            - self.default_mapping
-            - self.MAPPING, intended for subclasses
-            - NITF_MAPPING dictionary which can be put in settings
-        If a value is a non-empty string, it is a xpath, @attribute can be used as last path component.
-        If value is empty string/dict, the key will be ignored
-        If value is a callable, it will be executed with nitf Element as argument, return value will be used.
-        If a dictionary is used as value, following keys can be used:
-            xpath: path to the element
-            attribute: attribute to take in this element (if not present, content will be used)
-            callback: callback executed with nitf Element as argument, return value will be used
-            default: value to use if element doesn't exists (default: doesn't set the key)
-            default_attr: value if element exist but attribute is missing
-            filter: callable to be used with found element
-            filter_value: callable to be used with found value
-            key_hook: a callable which store itself the resulting value in the item,
-                      usefull for specific behaviours when several values goes to same key
-                      callable will get item and value as arguments.
-            update: a bool which indicate that default mapping must be updated instead of overwritten
-        Note the difference between using a callable directly, and "filter" in a dict:
-        the former get the root element and can be skipped with SkipValue, while the
-        later get an element found with xpath.
-        """
-        try:
-            class_mapping = self.MAPPING
-        except AttributeError:
-            class_mapping = {}
-
-        settings_mapping = getattr(superdesk.config, SETTINGS_MAPPING_PARAM)
-        if settings_mapping is None:
-            logging.info("No mapping found in settings for NITF parser, using default one")
-            settings_mapping = {}
-
-        mapping = self.metadata_mapping = {}
-
-        for source_mapping in (self.default_mapping, class_mapping, settings_mapping):
-            for key, value in source_mapping.items():
-                key_mapping = self._parse_mapping(value)
-                if key_mapping.get('update', False) and key in mapping:
-                    mapping[key].update(key_mapping)
-                else:
-                    mapping[key] = key_mapping
 
     def can_parse(self, xml):
         return xml.tag == 'nitf'
 
     def parse(self, xml, provider=None):
-        if self.metadata_mapping is None:
-            self._generate_mapping()
         item = {ITEM_TYPE: CONTENT_TYPE.TEXT,  # set the default type.
                 }
         try:
-            for key, mapping in self.metadata_mapping.items():
-                if not mapping:
-                    # key is ignored
-                    continue
-                try:
-                    xpath = mapping['xpath']
-                except KeyError:
-                    # no xpath, we must have a callable
-                    try:
-                        value = mapping['callback'](xml)
-                    except KeyError:
-                        logging.warn("invalid mapping for key {}, ignoring it".format(key))
-                        continue
-                    except SkipValue:
-                        continue
-                else:
-                    elem = xml.find(xpath)
-                    if elem is None:
-                        try:
-                            value = mapping['default']
-                        except KeyError:
-                            # if there is not default value we skip the key
-                            continue
-                    else:
-                        # we have an element,
-                        # do we want a filter, an attribute or the content?
-                        try:
-                            # filter
-                            value = mapping['filter'](elem)
-                        except KeyError:
-                            try:
-                                attribute = mapping['attribute']
-                            except KeyError:
-                                # content
-                                value = ''.join(elem.itertext())
-                            else:
-                                # attribute
-                                value = elem.get(attribute, mapping.get('default_attr'))
-
-                try:
-                    # filter_value is applied on found value
-                    value = mapping['filter_value'](value)
-                except KeyError:
-                    pass
-
-                if 'key_hook' in mapping:
-                    mapping['key_hook'](item, value)
-                else:
-                    item[key] = value
-
+            self.do_mapping(item, xml, SETTINGS_MAPPING_PARAM)
             elem = xml.find('body/body.head/dateline/location/city')
             if elem is not None:
                 self.set_dateline(item, city=elem.text)
 
             item.setdefault('word_count', get_word_count(item['body_html'], no_html=True))
-            return item
         except Exception as ex:
             raise ParserError.nitfParserError(ex, provider)
+        return item
 
     def get_norm_datetime(self, tree):
         if tree is None:
@@ -365,7 +214,7 @@ class NITFFeedParser(XMLFeedParser):
             return FORMATS.HTML
 
     def get_place(self, tree):
-        elem = tree.find("head/meta/[@name='aap-place']")
+        elem = tree.find("head/meta[@name='aap-place']")
         if elem is None:
             return self.get_places(tree.find('head/docdata'))
         locator_map = superdesk.get_resource_service('vocabularies').find_one(req=None, _id='locators')
@@ -420,7 +269,7 @@ class NITFFeedParser(XMLFeedParser):
         return byline
 
     def get_original_creator(self, tree):
-        elem = tree.find("head/meta/[@name='aap-original-creator']")
+        elem = tree.find("head/meta[@name='aap-original-creator']")
         if elem is not None:
             query = {'username': re.compile('^{}$'.format(elem.get('content')), re.IGNORECASE)}
             user = superdesk.get_resource_service('users').find_one(req=None, **query)
@@ -429,7 +278,7 @@ class NITFFeedParser(XMLFeedParser):
         raise SkipValue()
 
     def get_version_creator(self, tree):
-        elem = tree.find("head/meta/[@name='aap-version-creator']")
+        elem = tree.find("head/meta[@name='aap-version-creator']")
         if elem is not None:
             query = {'username': re.compile('^{}$'.format(elem.get('content')), re.IGNORECASE)}
             user = superdesk.get_resource_service('users').find_one(req=None, **query)

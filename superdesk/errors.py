@@ -615,3 +615,7 @@ class PublishHTTPPushServerError(PublishHTTPPushError):
 
 class AlreadyExistsError(Exception):
     pass
+
+
+class SkipValue(Exception):
+    """Exception used in XML feed_parser callbacks when a value is not needed"""

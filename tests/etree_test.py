@@ -64,7 +64,7 @@ class ParseHtmlTestCase(unittest.TestCase):
 
         text = '<pre>This is first line.\r\nThis is second line.\r\n</pre>'
         parsed = sd_etree.parse_html(text, content='html')
-        self.assertEqual('<html><body>{}</body></html>'.format(text.replace('\r', '&#13;')), sd_etree.to_string(parsed))
+        self.assertEqual(text.replace('\r', '&#13;'), sd_etree.to_string(parsed))
 
     def test_void_elements_fix(self):
         html = '<p>this is a test with empty <h3/> non-void <em/> elements and a void <br/> one</p>'

@@ -40,7 +40,7 @@ class EFEFeedParser(NITFFeedParser):
                     },
             'urgency': {'xpath': 'head/docdata/urgency/@ed-urg',
                         'default_attr': 5,
-                        'filter_value': int,
+                        'filter': int,
                         },
             'pubstatus': {'xpath': 'head/docdata/@management-status',
                           'default_attr': 'usable',
