@@ -47,7 +47,7 @@ def format_datetime_filter(date_or_string, timezone_string=None, date_format=Non
 
 def first_paragraph_filter(input_string):
     try:
-        elem = parse_html(input_string)
+        elem = parse_html(input_string, content='html')
     except ValueError as e:
         logger.warning(e)
     else:
