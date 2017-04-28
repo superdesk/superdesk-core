@@ -6,7 +6,7 @@ import unittest
 from unittest.mock import Mock
 from superdesk.upload import bp, upload_url
 from superdesk.datalayer import SuperdeskDataLayer
-from superdesk.storage.desk_media_storage import SuperdeskGridFSMediaStorage
+from superdesk.storage import SuperdeskGridFSMediaStorage
 from superdesk.utc import utcnow
 from datetime import timedelta
 
@@ -33,7 +33,7 @@ class GridFSMediaStorageTestCase(unittest.TestCase):
         _id = self.media.media_id('test')
         with self.app.app_context():
             url = self.media.url_for_media(_id)
-        self.assertEqual('http://localhost/upload/%s/raw' % _id, url)
+        self.assertEqual('http://localhost/upload-raw/%s' % _id, url)
 
     def test_put_media_with_id(self):
         data = io.StringIO("test data")
