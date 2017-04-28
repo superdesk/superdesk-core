@@ -98,13 +98,23 @@ def can_generate_custom_crop_from_original(width, height, crop):
     if crop.get('ratio'):
         return True
 
-    if 'width' not in crop and 'height' not in crop:
+    try:
+        crop_width = int(crop['width'])
+    except (KeyError, TypeError):
+        crop_width = None
+
+    try:
+        crop_height = int(crop['height'])
+    except (KeyError, TypeError):
+        crop_height = None
+
+    if crop_width is None and crop_height is None:
         return False
 
-    if ('width' in crop and 'height' not in crop) or ('width' not in crop and 'height' in crop):
+    if (crop_width is not None and crop_height is None) or (crop_width is None and crop_height is not None):
         return True
 
-    return width >= to_int(crop['width']) and height >= to_int(crop['height'])
+    return width >= crop_width and height >= crop_height
 
 
 def delete_file_on_error(doc, file_id):
