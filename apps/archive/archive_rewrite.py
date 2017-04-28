@@ -9,14 +9,14 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+from eve.versioning import resolve_document_version
 from flask import request, current_app as app
-from eve.utils import config
 from superdesk import get_resource_service, Service, config
 from superdesk.metadata.item import ITEM_STATE, EMBARGO, CONTENT_STATE, CONTENT_TYPE, \
     ITEM_TYPE, PUBLISH_STATES, ASSOCIATIONS
 from superdesk.resource import Resource, build_custom_hateoas
 from apps.archive.common import CUSTOM_HATEOAS, ITEM_CREATE, ARCHIVE, BROADCAST_GENRE, ITEM_REWRITE, \
-    ITEM_UNLINK, ITEM_LINK
+    ITEM_UNLINK, ITEM_LINK, insert_into_versions
 from superdesk.metadata.utils import item_url
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
@@ -62,8 +62,12 @@ class ArchiveRewriteService(Service):
             rewrite[config.ID_FIELD] = update_document[config.ID_FIELD]
             ids = [update_document[config.ID_FIELD]]
         else:
+            # Set the version.
+            resolve_document_version(rewrite, ARCHIVE, "POST")
             ids = archive_service.post([rewrite])
+            insert_into_versions(doc=rewrite)
             build_custom_hateoas(CUSTOM_HATEOAS, rewrite)
+
             app.on_archive_item_updated({'rewrite_of': rewrite.get('rewrite_of')}, rewrite, ITEM_LINK)
 
         self._add_rewritten_flag(original, digital, rewrite)
