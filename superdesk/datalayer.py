@@ -106,4 +106,13 @@ class SuperdeskDataLayer(DataLayer):
         return getattr(self, backend)
 
     def get_mongo_collection(self, resource):
-        return self.mongo.pymongo('users').db[resource]
+        return self.mongo.pymongo(resource).db[resource]
+
+    def get_elastic_resources(self):
+        """Get set of available elastic resources."""
+        resources = set()
+        for resource in config.SOURCES:
+            datasource = self.datasource(resource)[0]
+            if self._search_backend(datasource):
+                resources.add(datasource)
+        return resources

@@ -9,7 +9,17 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk.resource import Resource
+from superdesk.metadata.item import not_analyzed
 from content_api import MONGO_PREFIX, ELASTIC_PREFIX
+
+
+cv_mapping = {
+    'type': 'object',
+    'properties': {
+        'qcode': not_analyzed,
+        'name': not_analyzed
+    }
+}
 
 
 schema = {
@@ -35,7 +45,7 @@ schema = {
     'service': {'type': 'list'},
     'slugline': {'type': 'string'},
     'source': {'type': 'string'},
-    'subject': {'type': 'list'},
+    'subject': {'type': 'list', 'mapping': cv_mapping},
     'keywords': {'type': 'list'},
     'type': {'type': 'string'},
     'urgency': {'type': 'integer'},
@@ -48,8 +58,8 @@ schema = {
     'evolvedfrom': Resource.not_analyzed_field(),
     'subscribers': {'type': 'list'},
     'ednote': {'type': 'string'},
-    'signal': {'type': 'list'},
-    'genre': {'type': 'list'},
+    'signal': {'type': 'list', 'mapping': not_analyzed},
+    'genre': {'type': 'list', 'mapping': cv_mapping},
     'ancestors': {'type': 'list'},
 }
 
