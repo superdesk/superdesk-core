@@ -253,7 +253,7 @@ def apply_placeholders(context, text):
                 if unit != -1:
                     value -= timedelta(days=int(placeholder[unit + 1]))
 
-            if placeholder == 'DATE_FORMATTED':
+            if placeholder == 'ANALYTICS_DATE_FORMATTED':
                 value = format_date_analytics(value)
             else:
                 value = format_date(value)
