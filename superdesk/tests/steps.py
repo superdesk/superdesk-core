@@ -2017,6 +2017,12 @@ def there_is_no_key_in_preferences(context, key):
     assert key not in data, 'key "%s" is in task' % key
 
 
+@then('there is no "{key}" in data')
+def there_is_no_profile_in_data(context, key):
+    data = get_json_data(context.response)['_items'][0]['data']
+    assert key not in data, 'key "%s" is in data' % key
+
+
 @then('broadcast "{key}" has value "{value}"')
 def broadcast_key_has_value(context, key, value):
     data = get_json_data(context.response).get('broadcast', {})
