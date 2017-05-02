@@ -41,6 +41,13 @@ class FileFeedingService(FeedingService):
 
     label = 'File Feed'
 
+    def _test(self, provider):
+        path = provider.get('config', {}).get('path', None)
+        if not os.path.exists(path):
+            raise IngestFileError.notExistsError()
+        if not os.path.isdir(path):
+            raise IngestFileError.isNotDirError()
+
     def _update(self, provider, update):
         self.provider = provider
         self.path = provider.get('config', {}).get('path', None)

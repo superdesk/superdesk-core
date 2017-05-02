@@ -59,6 +59,16 @@ class FTPFeedingService(FeedingService):
             'path': url_parts.path.lstrip('/'),
         }
 
+    def _test(self, provider):
+        config = provider.get('config', {})
+        try:
+            with ftp_connect(config) as ftp:
+                ftp.mlsd()
+        except IngestFtpError:
+            raise
+        except Exception as ex:
+            raise IngestFtpError.ftpError(ex, provider)
+
     def _update(self, provider, update):
         config = provider.get('config', {})
         last_updated = provider.get('last_updated')
