@@ -18,7 +18,7 @@ from unittest.mock import MagicMock, patch
 from bson import ObjectId
 from pytz import timezone
 
-from apps.archive.archive import ArchiveService, SOURCE as ARCHIVE
+from apps.archive.archive import ArchiveService, SOURCE as ARCHIVE, update_image_caption
 from apps.archive.common import (
     validate_schedule, remove_media_files,
     format_dateline_to_locmmmddsrc, convert_task_attributes_to_objectId,
@@ -464,6 +464,22 @@ class ArchiveTestCase(TestCase):
         self.assertEqual(doc['source'], source)
         self.assertEqual(doc['dateline']['source'], source)
         self.assertEqual(doc['dateline']['text'], 'SYDNEY, %s %s -' % (formatted_date, source))
+
+    def test_if_image_caption_is_updated(self):
+        body = """
+        "body_html" : "<p>test 33</p>\n<!-- EMBED START Image {id: \"embedded9127149191\"} -->\n
+        <figure><img src=\"http://localhost:5000/api/upload/58ff025eb611402decdb82e1/raw?_schema=http\" alt=\"aa\" />
+        <figcaption>[--description--]</figcaption></figure>\n
+        <!-- EMBED END Image {id: \"embedded9127149191\"} -->\n<p>faffaf</p>
+        """
+        changed_body = """
+        "body_html" : "<p>test 33</p>\n<!-- EMBED START Image {id: \"embedded9127149191\"} -->\n
+        <figure><img src=\"http://localhost:5000/api/upload/58ff025eb611402decdb82e1/raw?_schema=http\" alt=\"aa\" />
+        <figcaption>new caption</figcaption></figure>\n
+        <!-- EMBED END Image {id: \"embedded9127149191\"} -->\n<p>faffaf</p>
+        """
+        body = update_image_caption(body, 'embedded9127149191', 'new caption')
+        self.assertEqual(body, changed_body)
 
     def test_get_dateline_city_None(self):
         self.assertEqual(get_dateline_city(None), '')
