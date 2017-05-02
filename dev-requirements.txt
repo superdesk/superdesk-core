@@ -3,7 +3,7 @@ flake8-docstrings
 nose
 pep8
 pyflakes
-pydocstyle==1.0.0
+pydocstyle
 httmock
 wooper
 sphinx
