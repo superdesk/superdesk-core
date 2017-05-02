@@ -100,12 +100,12 @@ def can_generate_custom_crop_from_original(width, height, crop):
 
     try:
         crop_width = int(crop['width'])
-    except (KeyError, TypeError):
+    except (KeyError, TypeError, ValueError):
         crop_width = None
 
     try:
         crop_height = int(crop['height'])
-    except (KeyError, TypeError):
+    except (KeyError, TypeError, ValueError):
         crop_height = None
 
     if crop_width is None and crop_height is None:
