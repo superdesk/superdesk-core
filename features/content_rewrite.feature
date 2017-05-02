@@ -92,6 +92,10 @@ Feature: Rewrite content
       Then we get OK response
       When we get "/archive/#REWRITE_ID#"
       Then we get OK response
+      Then we get existing resource
+      """
+      {"_id": "#REWRITE_ID#", "_current_version": 1, "state": "in_progress", "headline": "test"}
+      """
       When we get "/published"
       Then we get existing resource
       """
@@ -132,7 +136,7 @@ Feature: Rewrite content
       And we get existing resource
       """
       {"_id": "#REWRITE_ID#", "rewrite_of": "#archive.take_package#",
-      "rewrite_sequence": 2, "anpa_take_key": "2nd update"}
+      "rewrite_sequence": 2, "anpa_take_key": "2nd update", "_current_version": 1}
       """
 
     @auth
@@ -195,7 +199,8 @@ Feature: Rewrite content
         "_id": "#REWRITE_ID#",
         "rewrite_of": "123",
         "headline": "test",
-        "rewrite_sequence": 1
+        "rewrite_sequence": 1,
+        "_current_version": 1
       }
       """
       When we get "/archive/123"
