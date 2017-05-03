@@ -148,8 +148,9 @@ class AmazonMediaStorage(MediaStorage):
     def _get_all_keys_in_batches(self):
         """Return the list of all keys from the bucket in batches."""
         NextMarker = ''
+        subfolder = self.app.config.get('AMAZON_S3_SUBFOLDER') or ''
         while True:
-            objects = self.call('list_objects', Marker=NextMarker, MaxKeys=MAX_KEYS)
+            objects = self.call('list_objects', Marker=NextMarker, MaxKeys=MAX_KEYS, Prefix=subfolder)
 
             if not objects or len(objects.get('Contents', [])) == 0:
                 return
@@ -262,14 +263,14 @@ class AmazonMediaStorage(MediaStorage):
         bucket_files = self.get_all_keys()
         orphan_files = list(set(bucket_files) - existing_files)
         print('There are {} orphan files...'.format(len(orphan_files)))
-
-        if len(orphan_files) > 0:
-            print('Cleaning the orphan files...')
-            deleted, errors = self.delete_objects(orphan_files)
+        for i in range(0, len(orphan_files), MAX_KEYS):
+            batch = orphan_files[i:i + MAX_KEYS]
+            print('Cleaning %d orphan files...' % len(batch), end='')
+            deleted, errors = self.delete_objects(batch)
             if deleted:
-                print('Image cleaning completed successfully.')
+                print('done.')
             else:
-                print('Failed to clean orphans: {}'.format(errors))
+                print('failed to clean orphans: {}'.format(errors))
         else:
             print('There\'s nothing to clean.')
 
