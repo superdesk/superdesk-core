@@ -40,6 +40,14 @@ class ItemsService(BaseService):
     Serves mainly as a proxy to the data layer.
     """
 
+    allowed_params = {
+        'start_date', 'end_date',
+        'include_fields', 'exclude_fields',
+        'max_results', 'page',
+        'where',
+        'version'
+    }
+
     def find_one(self, req, **lookup):
         """Retrieve a specific item.
 
@@ -76,14 +84,7 @@ class ItemsService(BaseService):
         internal_req.args = MultiDict()
         orig_request_params = getattr(req, 'args', MultiDict())
 
-        allowed_params = {
-            'start_date', 'end_date',
-            'include_fields', 'exclude_fields',
-            'max_results', 'page',
-            'where',
-            'version'
-        }
-        self._check_for_unknown_params(req, whitelist=allowed_params)
+        self._check_for_unknown_params(req, whitelist=self.allowed_params)
 
         # set the date range filter
         start_date, end_date = self._get_date_range(orig_request_params)
@@ -92,8 +93,13 @@ class ItemsService(BaseService):
         internal_req.args['filter'] = json.dumps(date_filter)
         self._set_fields_filter(internal_req)  # Eve's "projection"
 
-        # in case there is no subscriber set by auth return nothing
-        lookup['subscribers'] = g.get('user')
+        # if subscribers is not allowed it is an external API request that should be filtered by the user
+        if 'subscribers' not in self.allowed_params:
+            # in case there is no subscriber set by auth return nothing
+            lookup['subscribers'] = g.get('user')
+
+        if 'aggregations' in self.allowed_params:
+            internal_req.args.add('aggregations', 1)
 
         try:
             res = super().get(internal_req, lookup)

@@ -78,8 +78,7 @@ class ItemsResource(Resource):
     datasource = {
         'search_backend': 'elastic',
         'elastic_filter': {"bool": {"must_not": {"term": {"type": "composite"}}}},
-        'default_sort': [('_updated', -1)],
-        'projection': {'subscribers': 0}
+        'default_sort': [('_updated', -1)]
     }
 
     item_methods = ['GET']
