@@ -9,22 +9,13 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk.resource import Resource
-from superdesk.metadata.item import not_analyzed
+from superdesk.metadata.item import metadata_schema
 from content_api import MONGO_PREFIX, ELASTIC_PREFIX
 
 
-cv_mapping = {
-    'type': 'object',
-    'properties': {
-        'qcode': not_analyzed,
-        'name': not_analyzed
-    }
-}
-
-
 schema = {
-    '_id': {'type': 'string', 'unique': True},
-    'associations': {'type': 'dict', 'mapping': {'type': 'object', 'dynamic': False}},
+    '_id': metadata_schema['_id'],
+    'associations': metadata_schema['associations'],
     'body_html': {'type': 'string'},
     'body_text': {'type': 'string'},
     'byline': {'type': 'string'},
@@ -33,24 +24,24 @@ schema = {
     'description_html': {'type': 'string'},
     'description_text': {'type': 'string'},
     'headline': {'type': 'string'},
-    'language': {'type': 'string'},
+    'language': metadata_schema['language'],
     'located': {'type': 'string'},
-    'mimetype': {'type': 'string'},
+    'mimetype': metadata_schema['mimetype'],
     'organization': {'type': 'list'},
     'person': {'type': 'list'},
     'place': {'type': 'list'},
     'profile': {'type': 'string'},
-    'pubstatus': {'type': 'string'},
+    'pubstatus': metadata_schema['pubstatus'],
     'renditions': {'type': 'dict'},
     'service': {'type': 'list'},
-    'slugline': {'type': 'string'},
-    'source': {'type': 'string'},
-    'subject': {'type': 'list', 'mapping': cv_mapping},
-    'keywords': {'type': 'list'},
-    'type': {'type': 'string'},
+    'slugline': Resource.not_analyzed_field(),
+    'source': metadata_schema['source'],
+    'subject': metadata_schema['subject'],
+    'keywords': metadata_schema['keywords'],
+    'type': metadata_schema['type'],
     'urgency': {'type': 'integer'},
     'priority': {'type': 'integer'},
-    'uri': {'type': 'string'},
+    'uri': metadata_schema['guid'],  # we use guid value for uri, so index it in a same way
     'usageterms': {'type': 'string'},
     'version': {'type': 'string', 'required': True, 'empty': False, 'nullable': False},
     'versioncreated': {'type': 'datetime', 'required': True},
@@ -58,8 +49,8 @@ schema = {
     'evolvedfrom': Resource.not_analyzed_field(),
     'subscribers': {'type': 'list'},
     'ednote': {'type': 'string'},
-    'signal': {'type': 'list', 'mapping': not_analyzed},
-    'genre': {'type': 'list', 'mapping': cv_mapping},
+    'signal': metadata_schema['signal'],
+    'genre': metadata_schema['genre'],
     'ancestors': {'type': 'list'},
 }
 

@@ -16,6 +16,9 @@ from eve.utils import config
 
 log = logging.getLogger(__name__)
 
+not_indexed = {'type': 'string', 'index': 'no'}  # noqa
+not_analyzed = {'type': 'string', 'index': 'not_analyzed'}
+
 
 def build_custom_hateoas(hateoas, doc, **values):
     values.update(doc)
@@ -162,5 +165,5 @@ class Resource():
     def not_analyzed_field(type='string'):
         return {
             'type': type,
-            'mapping': {'type': 'string', 'index': 'not_analyzed'},
+            'mapping': not_analyzed,
         }
