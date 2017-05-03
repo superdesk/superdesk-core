@@ -116,7 +116,9 @@ def get_activity_digest(value):
 def send_activity_emails(activity, recipients):
     now = utcnow()
     message_id = get_activity_digest(activity)
-    email_timestamps = app.data.get_mongo_collection(EMAIL_TIMESTAMP_RESOURCE)
+    # there is no resource for email timestamps registered,
+    # so use users resoure to get pymongo db
+    email_timestamps = app.data.mongo.pymongo('users').db[EMAIL_TIMESTAMP_RESOURCE]
     last_message_info = email_timestamps.find_one(message_id)
     resend_interval = app.config.get('EMAIL_NOTIFICATION_RESEND', 24)
 
