@@ -325,6 +325,7 @@ CORE_APPS = [
     'content_api.tokens',
     'content_api.items_versions',
     'content_api.api_audit',
+    'content_api.search',
     'superdesk.backend_meta',
     'superdesk.server_config',
     'superdesk.internal_destinations',

@@ -9,6 +9,8 @@ from superdesk.tests import TestCase
 from superdesk.utc import utcnow
 from content_api.publish import MONGO_PREFIX
 from content_api.app import get_app
+from eve.utils import ParsedRequest
+from werkzeug.datastructures import MultiDict
 
 
 class ContentAPITestCase(TestCase):
@@ -321,6 +323,41 @@ class ContentAPITestCase(TestCase):
         fun = self.db.items.find_one({'_id': 'fun'})
         self.assertEqual(['foo', 'bar'], fun.get('ancestors', []))
         self.assertEqual('bar', fun.get('evolvedfrom'))
+
+    def test_search_api(self):
+        subscriber = {'_id': 'sub1'}
+
+        self.content_api.publish({'_id': 'foo', 'guid': 'foo', 'type': 'text',
+                                  'anpa_category': [{'qcode': 'i', 'name': 'International News'}],
+                                  'headline': 'Man bites dog'}, [subscriber])
+        self.content_api.publish({'_id': 'bar', 'guid': 'bar', 'type': 'text'}, [{'_id': 'sub2'}])
+
+        test = superdesk.get_resource_service('search_api')
+        req = ParsedRequest()
+        req.args = MultiDict([('subscribers', 'sub1')])
+        resp = test.get(req=req, lookup=None)
+        self.assertEqual(resp.count(), 1)
+
+        resp = test.get(req=None, lookup=None)
+        self.assertEqual(resp.count(), 2)
+
+        req = ParsedRequest()
+        req.args = MultiDict()
+        req.where = '{"headline":"dog"}'
+        resp = test.get(req=req, lookup=None)
+        self.assertEqual(resp.count(), 1)
+
+    def test_search_api_aggregations(self):
+        self.content_api.publish({'_id': '1', 'guid': '1', 'type': 'text',
+                                  'anpa_category': [{'qcode': 'i', 'name': 'International News'}],
+                                  'headline': 'Man bites dog', 'source': 'AAA', 'urgency': 1}, [])
+        self.content_api.publish({'_id': '2', 'guid': '2', 'type': 'text',
+                                  'anpa_category': [{'qcode': 'i', 'name': 'International News'}],
+                                  'headline': 'Man bites cat', 'source': 'BBB', 'urgency': 2}, [])
+
+        test = superdesk.get_resource_service('search_api')
+        resp = test.get(req=None, lookup=None)
+        self.assertEqual(resp.hits['aggregations']['anpa_category']['buckets'][0]['doc_count'], 2)
 
     def test_associated_item_filter_by_subscriber(self):
         item = {
