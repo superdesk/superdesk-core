@@ -87,6 +87,19 @@ def private_content_filter():
         return {'bool': private_filter}
 
 
+def update_image_caption(body, name, caption):
+    # Note: because of Tansa the image caption from association is updated but
+    # the related image caption from body_html is not updated
+    start = body.find(name)
+    if start == -1:
+        return body
+    startDescription = body.find('<figcaption>', start)
+    endDescription = body.find('</figcaption>', start)
+    if startDescription == -1 or endDescription == -1:
+        return body
+    return body[0:startDescription + len('<figcaption>')] + caption + body[endDescription:]
+
+
 class ArchiveVersionsResource(Resource):
     schema = item_schema()
     extra_response_fields = extra_response_fields
@@ -261,6 +274,8 @@ class ArchiveService(BaseService):
         if ASSOCIATIONS not in updates or not updates.get(ASSOCIATIONS):
             return
 
+        body = updates.get("body_html", original.get("body_html", None))
+
         # iterate over associations. Validate and process them if they are stored in database
         for item_name, item_obj in updates.get(ASSOCIATIONS).items():
             if not (item_obj and config.ID_FIELD in item_obj):
@@ -278,6 +293,8 @@ class ArchiveService(BaseService):
             self._validate_updates(stored_item, item_obj, user)
             if stored_item[ITEM_TYPE] == CONTENT_TYPE.PICTURE:  # create crops
                 CropService().create_multiple_crops(item_obj, stored_item)
+                if body and item_obj.get('description_text', None):
+                    body = update_image_caption(body, item_name, item_obj['description_text'])
 
             # If the media item is not marked as 'used', mark it as used
             if original.get(ITEM_TYPE) == CONTENT_TYPE.TEXT and \
@@ -292,6 +309,8 @@ class ArchiveService(BaseService):
 
             stored_item.update(item_obj)
             updates[ASSOCIATIONS][item_name] = stored_item
+        if body:
+            updates["body_html"] = body
 
     def on_updated(self, updates, original):
         get_component(ItemAutosave).clear(original['_id'])
