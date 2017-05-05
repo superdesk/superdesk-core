@@ -434,6 +434,7 @@ VERSION = '_current_version'
 
 #: uses for generation of media url ``(<media_prefix>/<media_id>)``::
 MEDIA_PREFIX = env('MEDIA_PREFIX', '')
+MEDIA_PREFIXES_TO_FIX = None
 
 #: amazon access key
 AMAZON_ACCESS_KEY_ID = env('AMAZON_ACCESS_KEY_ID', '')

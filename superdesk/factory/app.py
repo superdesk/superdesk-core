@@ -113,6 +113,17 @@ def get_app(config=None, media_storage=None, config_object=None):
         return_error = SuperdeskApiError.internalError(error)
         return client_error_handler(return_error)
 
+    @app.after_request
+    def after_request(response):
+        # fixing previous media prefixes if defined
+        if app.config['MEDIA_PREFIXES_TO_FIX'] and app.config['MEDIA_PREFIX']:
+            current_prefix = app.config['MEDIA_PREFIX'].rstrip('/').encode()
+            for prefix in app.config['MEDIA_PREFIXES_TO_FIX']:
+                response.data = response.data.replace(
+                    prefix.rstrip('/').encode(), current_prefix
+                )
+        return response
+
     init_celery(app)
     installed = set()
 
