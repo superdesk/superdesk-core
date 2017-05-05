@@ -210,15 +210,17 @@ class AppInitializeWithDataCommand(superdesk.Command):
         superdesk.Option('--full-path', '-p', dest='path'),
         superdesk.Option('--sample-data', action='store_true'),
         superdesk.Option('--force', '-f', action='store_true'),
+        superdesk.Option('--init-index-only', '-i', action='store_true'),
     ]
 
-    def run(self, entity_name=None, path=None, sample_data=False, force=False):
+    def run(self, entity_name=None, path=None, sample_data=False, force=False, init_index_only=False):
         """Run the initialization
 
         :param str,list,NoneType entity_name: entity(ies) to initialize
         :param str,NoneType path: path of the file to import
         :param bool sample_data: True if sample data need to be used
         :param bool force: if True, update item even if it has been modified by user
+        :param bool init_index_only: if True, it only initializes index only
         """
         logger.info('Starting data initialization')
         logger.info('Config: %s', app.config['APP_ABSPATH'])
@@ -227,6 +229,10 @@ class AppInitializeWithDataCommand(superdesk.Command):
         app.init_indexes()
         # put mapping to elastic
         app.data.init_elastic(app)
+
+        if init_index_only:
+            logger.info('Only indexes initialized.')
+            return 0
 
         if sample_data:
             if not path:
@@ -321,6 +327,7 @@ class AppInitializeWithDataCommand(superdesk.Command):
                 crt_index = list(index) if isinstance(index, list) else index
                 options = crt_index.pop() if isinstance(crt_index[-1], dict) and isinstance(index, list) else {}
                 collection = app.data.mongo.pymongo(resource=entity_name).db[entity_name]
+                options['background'] = True
                 index_name = collection.create_index(crt_index, **options)
                 logger.info(' - index: %s for collection %s created successfully.', index_name, entity_name)
 
