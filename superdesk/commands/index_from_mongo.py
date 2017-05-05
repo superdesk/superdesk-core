@@ -26,19 +26,22 @@ class IndexFromMongo(superdesk.Command):
     """
 
     option_list = [
-        superdesk.Option('--from', '-f', dest='mongo_collection_name', required=True),
-        superdesk.Option('--page-size', '-p', dest='page_size')
+        superdesk.Option('--from', '-f', dest='collection_name'),
+        superdesk.Option('--all', action='store_true', dest='all_collections'),
+        superdesk.Option('--page-size', '-p')
     ]
     default_page_size = 500
 
-    def run(self, mongo_collection_name, page_size):
-        if mongo_collection_name == 'all':
+    def run(self, collection_name, all_collections, page_size):
+        if not collection_name and not all_collections:
+            raise SystemExit('Specify --all to index from all collections')
+        elif all_collections:
             app.data.init_elastic(app)
             resources = app.data.get_elastic_resources()
             for resource in resources:
                 self._copy_resource(resource, page_size)
         else:
-            self._copy_resource(mongo_collection_name, page_size)
+            self._copy_resource(collection_name, page_size)
 
     def _copy_resource(self, resource, page_size):
         for items in self.get_mongo_items(resource, page_size):
