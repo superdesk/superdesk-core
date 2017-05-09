@@ -14,9 +14,10 @@ from superdesk.io.iptc import subject_codes
 from flask import current_app as app
 from apps.archive.common import format_dateline_to_locmmmddsrc
 from superdesk.utc import get_date
-from lxml import etree
 from superdesk import get_resource_service
+from superdesk.etree import parse_html
 import logging
+import re
 
 logger = logging.getLogger("AP_ANPAFeedParser")
 
@@ -115,9 +116,10 @@ class AP_ANPAFeedParser(ANPAFeedParser):
         try:
             html = item.get('body_html')
             if html:
-                elem = etree.fromstring("<div>" + html + "</div>")
-                pars = elem.iterfind('.//p')
-                for par in pars:
+                parsed = parse_html(html, content='html')
+                for par in parsed.xpath('/html/div/child::*'):
+                    if not par.text:
+                        continue
                     city, source, the_rest = par.text.partition(' (AP) _ ')
                     if source:
                         # sometimes the city is followed by a comma and either a date or a state
@@ -127,10 +129,10 @@ class AP_ANPAFeedParser(ANPAFeedParser):
                         cities = app.locators.find_cities()
                         located = [c for c in cities if c['city'].lower() == city.lower()]
                         item.setdefault('dateline', {})
-                        item['dateline']['located'] = located[0] if len(located) > 0 else {'city_code': city,
-                                                                                           'city': city,
-                                                                                           'tz': 'UTC',
-                                                                                           'dateline': 'city'}
+                        item['dateline']['located'] = located[0] if len(located) == 1 else {'city_code': city,
+                                                                                            'city': city,
+                                                                                            'tz': 'UTC',
+                                                                                            'dateline': 'city'}
                         item['dateline']['source'] = item.get('original_source', 'AP')
                         item['dateline']['text'] = format_dateline_to_locmmmddsrc(item['dateline']['located'],
                                                                                   get_date(item['firstcreated']),
@@ -141,6 +143,21 @@ class AP_ANPAFeedParser(ANPAFeedParser):
             return item
         except:
             logging.exception('AP dateline extraction exception')
+
+    def _parse_ednote(self, header_lines, item):
+        """
+        Attempt to parse the ednote, If no ednote is found by the base class try another pattern
+        :param header_lines:
+        :param item:
+        :return:
+        """
+        super()._parse_ednote(header_lines, item)
+        if not item.get('ednote'):
+            for line in header_lines:
+                m = re.search("(\(?)Eds: (.*)(\)?)", line)
+                if m:
+                    item['ednote'] = m.group(0).strip()[:-1].replace('Eds: ', '')
+                    break
 
 
 register_feed_parser(AP_ANPAFeedParser.NAME, AP_ANPAFeedParser())
