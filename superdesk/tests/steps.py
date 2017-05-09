@@ -16,6 +16,7 @@ from base64 import b64encode
 from datetime import datetime, timedelta
 from os.path import basename
 from re import findall
+from unittest.mock import patch
 from urllib.parse import urlparse
 
 import arrow
@@ -363,7 +364,14 @@ def step_impl_given_resource_with_provider(context, provider):
 
 @given('config update')
 def given_config_update(context):
-    context.app.config.update(json.loads(context.text))
+    diff = json.loads(context.text)
+    context.app.config.update(diff)
+    if 'AMAZON_CONTAINER_NAME' in diff:
+        from superdesk.storage import AmazonMediaStorage
+        context.app.media = AmazonMediaStorage(context.app)
+
+        m = patch.object(context.app.media, 'client')
+        m.start()
 
 
 @given('config')

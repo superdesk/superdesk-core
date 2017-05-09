@@ -55,9 +55,6 @@ def setup_before_scenario(context, scenario, config, app_factory):
     if 'ldapauth' in scenario.tags and not LDAP_SERVER:
         scenario.mark_skipped()
 
-    if 'amazons3' in scenario.tags and not context.app.config.get('AMAZON_CONTAINER_NAME', None):
-        scenario.mark_skipped()
-
     if 'alchemy' in scenario.tags and not context.app.config.get('KEYWORDS_KEY_API'):
         scenario.mark_skipped()
 
@@ -117,9 +114,6 @@ def before_feature(context, feature):
         feature.mark_skipped()
 
     if 'ldapauth' in feature.tags and not LDAP_SERVER:
-        feature.mark_skipped()
-
-    if 'amazons3' in feature.tags and not context.app.config.get('AMAZON_CONTAINER_NAME', None):
         feature.mark_skipped()
 
 
