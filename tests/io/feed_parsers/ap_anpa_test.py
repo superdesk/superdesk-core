@@ -54,3 +54,8 @@ class ANPATestCase(TestCase):
     def test_unknown_category_defaults_to_i(self):
         item = self.open('ap_anpa-3.tst')
         self.assertEqual(item['anpa_category'][0]['qcode'], 'i')
+
+    def test_ed_note_with_parentesis(self):
+        item = self.open('ap_anpa-4.tst')
+        self.assertEqual(item['ednote'], '(Minor edits. A longer version of this story is available. '
+                                         'With AP Photos. With BC-AS--China-Lawyer Trial.)')
