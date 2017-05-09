@@ -9,13 +9,11 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from collections import namedtuple
-from superdesk.resource import Resource
+from superdesk.resource import Resource, not_analyzed, not_indexed
 from .packages import PACKAGE_TYPE, TAKES_PACKAGE, LINKED_IN_PACKAGES, PACKAGE
 from eve.utils import config
 from superdesk.utils import SuperdeskBaseEnum
 
-not_analyzed = {'type': 'string', 'index': 'not_analyzed'}
-not_indexed = {'type': 'string', 'index': 'no'}
 GUID_TAG = 'tag'
 GUID_FIELD = 'guid'
 GUID_NEWSML = 'newsml'
@@ -347,8 +345,19 @@ metadata_schema = {
     ASSOCIATIONS: {
         'type': 'dict',
         'mapping': {
-            'dynamic': False,
             'type': 'object',
+            'dynamic': False,
+            'properties': {
+                'featuremedia': {  # keep indexing featuremedia - we do some filtering using it
+                    'type': 'object',
+                    'dynamic': False,
+                    'properties': {
+                        '_id': not_analyzed,
+                        'guid': not_analyzed,
+                        'unique_id': {'type': 'integer'},
+                    }
+                }
+            }
         }
     },
     'alt_text': {
@@ -484,6 +493,10 @@ metadata_schema = {
     'editor_state': {
         'type': 'dict',
         'nullable': True,
+        'mapping': {
+            'type': 'object',
+            'enabled': False,
+        }
     },
 }
 
