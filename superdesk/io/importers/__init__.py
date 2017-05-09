@@ -42,7 +42,8 @@ class ImportCommand(superdesk.Command):
                 profile_id = content_profile['_id']
 
         with open(path, 'rb') as f:
-            parsed = etree.parse(f)
+            parser = etree.XMLParser(recover=True)
+            parsed = etree.parse(f, parser)
         articles = feed_parser.parse(parsed)
         if profile is not None:
             for article in articles:
