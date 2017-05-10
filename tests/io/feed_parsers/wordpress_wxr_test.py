@@ -63,8 +63,12 @@ class WPWXRTestCase(TestCase):
         fixture = os.path.normpath(os.path.join(dirname, '../fixtures', self.filename))
         provider = {'name': 'Test'}
         with open(fixture, 'rb') as f:
-            self.ori_file = f.read()
-        self.articles = wordpress_wxr.WPWXRFeedParser().parse(etree.fromstring(self.ori_file), provider)
+            buf = f.read()
+        self.ori_file = buf
+        buf = buf.replace(b'\r', b'&#13;')
+        parser = etree.XMLParser(recover=True)
+        parsed = etree.fromstring(buf, parser)
+        self.articles = wordpress_wxr.WPWXRFeedParser().parse(parsed, provider)
 
     def test_guid(self):
         self.assertEqual(self.articles[0]['guid'], 'http://sdnewtester.org/?p=216')
@@ -80,13 +84,11 @@ class WPWXRTestCase(TestCase):
         self.assertEqual(self.articles[0]['headline'], 'Starafrica to dispose assets for $6 million to clear debt')
 
     def test_body_html(self):
-
-        expected = ('By Tester\n'
-                    'Harare, July 19 (The SDNewTester) - Cash-strapped StarAfrica '
-                    'Corporation is set to dispose its transport company and its '
-                    'stake in Tongaat Hulett Botswana for $6 million to offset part '
-                    'of the companyâs $19.7 million debt.\n'
-                    'Bla bla test')
+        expected = ('<p>By Tester\nHarare, July 19 (The SDNewTester) - '
+                    'Cash-strapped StarAfrica Corporation is set to dis'
+                    'pose its transport company and its stake in Tongaa'
+                    't Hulett Botswana for $6 million to offset part of'
+                    ' the companyâs $19.7 million debt.\nBla bla test</p>')
         self.assertEqual(self.articles[0]['body_html'], expected)
 
     def test_keywords(self):
@@ -121,3 +123,10 @@ class WPWXRTestCase(TestCase):
                                                  'width': 200}},
                     'type': 'picture'}
         self.assertEqual(self.articles[1]['associations']['featuremedia'], expected)
+
+    def test_clrf(self):
+        expected = ('<p>By Tester</p><p>Harare, July 19 (The SDNewTester) - Cash-strapped'
+                    ' StarAfrica Corporation is set to dispose its transport company and '
+                    'its stake in Tongaat Hulett Botswana for $6 million to offset part o'
+                    'f the companyâs $19.7 million debt.</p><hr><p>Bla bla test</p>')
+        self.assertEqual(self.articles[2]['body_html'], expected)
