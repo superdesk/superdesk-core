@@ -45,6 +45,8 @@ class SuperdeskEve(eve.Eve):
                     list_of_keys = value
                     index_options = {}
 
+                # index creation in background
+                index_options['background'] = True
                 create_index(self, resource, name, list_of_keys, index_options)
 
 
