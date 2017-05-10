@@ -111,6 +111,13 @@ class WPWXRFeedParser(XMLFeedParser):
         if img are found in the content, they are uploaded.
         First image is used as feature media, then there are embeds
         """
+        # we need to convert CRLF to <p>
+        # cf. SDTS-22
+        html = html.replace('&#13;', '\r')
+        splitted = html.split('\r\n')
+        if len(splitted) > 1:
+            html = ''.join(['<p>{}</p>'.format(s) if not s.startswith('<hr') else s for s in splitted if s])
+
         if "img" in html:
             content = sd_etree.parse_html(html, 'html')
             for img in content.xpath('//img'):
