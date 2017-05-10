@@ -468,3 +468,16 @@ class SluglineDeskService(BaseService):
                 else:
                     return (True, [])
         return (False, older_sluglines)
+
+
+def remove_profile_from_desks(item):
+    """Removes the profile data from desks that are using the profile
+
+    :param item: deleted content profile
+    """
+    req = ParsedRequest()
+    desks = list(superdesk.get_resource_service('desks').get(req=req, lookup={}))
+    for desk in desks:
+        if desk.get('default_content_profile') == str(item.get(config.ID_FIELD)):
+            desk['default_content_profile'] = None
+            superdesk.get_resource_service('desks').patch(desk[config.ID_FIELD], desk)

@@ -1319,7 +1319,7 @@ Feature: Content Profile
 
         And we publish "#archive._id#" with "publish" type and "published" state
         Then we get OK response
-    
+
     @auth
     Scenario: Mark profile when used and prevent delete
         Given "content_types"
@@ -1370,3 +1370,105 @@ Feature: Content Profile
         When we delete "content_types/foo"
         And we get "content_templates/foo"
         Then we get response code 200
+
+    @auth
+    Scenario: Disabling content profile fails if there are references
+        Given "content_types"
+        """
+        [{"_id": "foo", "enabled": true}]
+        """
+        And "content_templates"
+        """
+        [{"template_name": "foo", "data": {"profile": "foo"}}, {"template_name": "bar"}]
+        """
+        When we get "content_templates/foo"
+        Then we get response code 200
+        When we patch "content_types/foo"
+        """
+        {"enabled": false}
+        """
+        Then we get response code 400
+        When we patch "content_templates/foo"
+        """
+        {"data": {"profile": null}}
+        """
+        When we patch "content_types/#content_types._id#"
+        """
+        {"enabled": false}
+        """
+        Then we get response code 200
+        When we patch "content_types/#content_types._id#"
+        """
+        {"enabled": true}
+        """
+        When we post to "/desks"
+        """
+        {"name": "Sports Desk", "default_content_profile": "foo"}
+        """
+        When we patch "content_types/#content_types._id#"
+        """
+        {"enabled": false}
+        """
+        Then we get response code 400
+
+    @auth
+    Scenario: Updated content profile removes the field value from template
+        Given "content_types"
+        """
+        [{"_id": "foo", "label": "Foo", "schema": {
+            "headline": {
+                "maxlength" : 64,
+                "type" : "string",
+                "required" : false,
+                "nullable" : true
+            },
+            "slugline" : {
+                "type" : "string",
+                "nullable" : true,
+                "maxlength" : 24,
+                "required" : false
+            },
+            "place": {"default": [{"name": "Prague"}]}
+        }}]
+        """
+        And "content_templates"
+        """
+        [{
+            "template_name": "foo",
+            "data": {
+                "slugline": "Testing the slugline",
+                "headline": "Testing the headline",
+                "profile": "foo"
+            }
+        }]
+        """
+        When we patch "content_types/foo"
+        """
+        {"schema": {
+            "headline": null,
+            "slugline" : {
+                "type" : "string",
+                "nullable" : true,
+                "maxlength" : 24,
+                "required" : false
+            },
+            "place": {"default": [{"name": "Prague"}]}
+        }}
+        """
+        Then we get updated response
+        """
+        {"updated_by": "#CONTEXT_USER_ID#"}
+        """
+        When we get "content_templates"
+        Then we get list with 1 items
+        """
+        {"_items": [{
+            "template_name": "foo",
+            "data": {
+                "slugline": "Testing the slugline",
+                "profile": "foo"
+            }
+          }]
+        }
+        """
+        And there is no "headline" in data

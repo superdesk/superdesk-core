@@ -508,3 +508,85 @@ Feature: Templates
         """
         {"_items": [{"template_name": "foo", "template_type": "create", "is_public": true, "data": {"profile": "#content_types._id#"}}]}
         """
+        When we post to "/desks"
+        """
+        {"name": "Sports Desk", "default_content_profile": "#content_types._id#"}
+        """
+        When we delete "content_types/#content_types._id#"
+        Then we get response code 204
+        When we get "content_templates"
+        Then we get list with 1 items
+        And there is no "profile" in data
+        When we get "/desks/#desks._id#"
+        Then we get existing resource
+        """
+        {"default_content_profile": "__none__"}
+        """
+
+    @auth
+    Scenario: Changing content profile removes unnecessary fields
+        Given "content_types"
+        """
+        [{
+            "_id": "foo",
+            "label": "Foo",
+            "schema": {
+                "headline": {
+                    "maxlength" : 64,
+                    "type" : "string",
+                    "required" : false,
+                    "nullable" : true
+                },
+                "slugline" : {
+                    "type" : "string",
+                    "nullable" : true,
+                    "maxlength" : 24,
+                    "required" : false
+                }
+            }
+        }, {
+            "_id": "bar",
+            "label": "Bar",
+            "schema": {
+                "headline": {
+                    "maxlength" : 64,
+                    "type" : "string",
+                    "required" : false,
+                    "nullable" : true
+                }
+            }
+        }]
+        """
+        And "content_templates"
+        """
+        [{
+            "template_name": "foo",
+            "data": {
+                "slugline": "Testing the slugline",
+                "headline": "Testing the headline",
+                "profile": "foo"
+            }
+        }]
+        """
+        When we patch "content_templates/foo"
+        """
+        {"data": {
+                "slugline": "Testing the slugline",
+                "headline": "Testing the headline",
+                "profile": "bar"
+        }}
+        """
+        Then we get OK response
+        When we get "content_templates"
+        Then we get list with 1 items
+        """
+        {"_items": [{
+            "template_name": "foo",
+            "data": {
+                "headline": "Testing the headline",
+                "slugline": "",
+                "profile": "bar"
+            }
+          }]
+        }
+        """

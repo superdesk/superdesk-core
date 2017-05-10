@@ -8,6 +8,9 @@ from copy import deepcopy
 from superdesk.errors import SuperdeskApiError
 from apps.auth import get_user_id
 from superdesk import get_resource_service
+from apps.templates.content_templates import remove_profile_from_templates
+from apps.desks import remove_profile_from_desks
+from eve.utils import ParsedRequest
 
 
 CONTENT_TYPE_PRIVILEGE = 'content_type'
@@ -191,10 +194,59 @@ class ContentTypesService(superdesk.Service):
     def on_delete(self, doc):
         if doc.get('is_used'):
             raise SuperdeskApiError(status_code=202, payload={"is_used": True})
+        remove_profile_from_templates(doc)
+        remove_profile_from_desks(doc)
 
     def on_update(self, updates, original):
+        self._validate_disable(updates, original)
         self._set_updated_by(updates)
         prepare_for_save_content_type(original, updates)
+        self._update_template_fields(updates, original)
+
+    def _validate_disable(self, updates, original):
+        """
+        Checks the templates and desks that are referencing the given
+        content profile if the profile is being disabled
+        """
+        if 'enabled' in updates and updates.get('enabled') is False and original.get('enabled') is True:
+            templates = list(superdesk.get_resource_service('content_templates').
+                             get_templates_by_profile_id(original.get('_id')))
+
+            if len(templates) > 0:
+                template_names = ', '.join([t.get('template_name') for t in templates])
+                raise SuperdeskApiError.badRequestError(
+                    message='Cannot disable content profile as following templates are referencing: {}'.
+                    format(template_names))
+
+            req = ParsedRequest()
+            all_desks = list(superdesk.get_resource_service('desks').get(req=req, lookup={}))
+            profile_desks = [desk for desk in all_desks if
+                             desk.get('default_content_profile') == str(original.get('_id'))]
+
+            if len(profile_desks) > 0:
+                profile_desk_names = ', '.join([d.get('name') for d in profile_desks])
+                raise SuperdeskApiError.badRequestError(
+                    message='Cannot disable content profile as following desks are referencing: {}'.
+                    format(profile_desk_names))
+
+    def _update_template_fields(self, updates, original):
+        """
+        Finds the templates that are referencing the given
+        content profile an clears the disabled fields
+        """
+        templates = list(superdesk.get_resource_service('content_templates').
+                         get_templates_by_profile_id(original.get('_id')))
+
+        for template in templates:
+            data = deepcopy(template.get('data', {}))
+            schema = updates.get('schema', {})
+            processed = False
+            for field, params in schema.items():
+                if not params or not params.get('enabled', True):
+                    data.pop(field, None)
+                    processed = True
+            if processed:
+                superdesk.get_resource_service('content_templates').patch(template.get('_id'), {'data': data})
 
     def find_one(self, req, **lookup):
         doc = super().find_one(req, **lookup)

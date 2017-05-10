@@ -10,6 +10,7 @@
 
 import re
 import superdesk
+from superdesk.services import BaseService
 from superdesk import Resource, Service, config, get_resource_service
 from superdesk.utils import SuperdeskBaseEnum
 from superdesk.resource import build_custom_hateoas
@@ -156,7 +157,7 @@ class ContentTemplatesResource(Resource):
                   'DELETE': CONTENT_TEMPLATE_PRIVILEGE}
 
 
-class ContentTemplatesService(Service):
+class ContentTemplatesService(BaseService):
 
     def on_create(self, docs):
         for doc in docs:
@@ -187,6 +188,15 @@ class ContentTemplatesService(Service):
             updates['next_run'] = get_next_run(original_schedule)
         self._validate_template_desks(updates, original)
 
+        profile_id = updates.get('data', {}).get('profile')
+        if profile_id and str(profile_id) != str(original.get('data', {}).get('profile', '')):
+            # if profile is changed remove unnecessary fields from template
+            original_template = deepcopy(original)
+            original_template.update(updates)
+            profile = get_resource_service('content_types').find_one(req=None, _id=profile_id)
+            data, _ = self._reset_fields(original_template, profile)
+            updates['data'] = data
+
     def on_delete(self, doc):
         if doc.get('template_type') == TemplateType.KILL.value:
             raise SuperdeskApiError.badRequestError('Kill templates can not be deleted.')
@@ -199,6 +209,64 @@ class ContentTemplatesService(Service):
         """
         query = {'next_run': {'$lte': now}, 'schedule.is_active': True}
         return self.find(query)
+
+    def get_templates_by_profile_id(self, profile_id):
+        """Get all templates by profile id"""
+        templates = self.get(req=None, lookup=None)
+        return [t for t in templates if str(t.get('data', {}).get('profile', '')) == str(profile_id)]
+
+    def update_template_profile(self, updates, profile_id, templates=None):
+        """
+        Finds the templates that are referencing the given
+        content profile an clears the disabled fields
+        :param updates: changed data for the content profile
+        :param profile_id: id of the profile in string
+        :param templates: list of templates to process
+        """
+        if not templates:
+            templates = list(self.get_templates_by_profile_id(profile_id))
+
+        for template in templates:
+            data, processed = self._reset_fields(template, updates)
+            if processed:
+                self.patch(template.get(config.ID_FIELD), {'data': data})
+
+    def _reset_fields(self, template, profile_data):
+        """
+        Removes fields from template which is disabled or doesn't exist in profile
+        """
+        fields_to_keep = ['profile', 'type', 'flags', 'format', 'pubstatus', 'language', 'usageterms', 'company_codes',
+                          'keywords', 'target_regions', 'target_types', 'target_subscribers']
+        data = deepcopy(template.get('data', {}))
+        schema = profile_data.get('schema', {})
+        processed = False
+
+        # Reset fields that are disabled or doesn't exist in content profile
+        fields_to_remove = []
+        for field, params in data.items():
+            if field not in schema or not schema.get(field) or \
+                    not schema.get(field, {}).get('enabled', True):
+                fields_to_remove.append(field)
+
+        for field in fields_to_remove:
+            if field not in fields_to_keep:
+                if field in metadata_schema:
+                    if metadata_schema.get(field, {}).get('nullable'):
+                        data[field] = None
+                    else:
+                        if metadata_schema.get(field, {}).get('type') == 'list':
+                            data[field] = []
+                        if metadata_schema.get(field, {}).get('type') == 'string':
+                            data[field] = ''
+                        if metadata_schema.get(field, {}).get('type') == 'integer':
+                            data[field] = 0
+                        if metadata_schema.get(field, {}).get('type') == 'dict':
+                            data[field] = {}
+                else:
+                    data[field] = None
+                processed = True
+
+        return data, processed
 
     def get_template_by_name(self, template_name):
         """Get the template by name
@@ -374,7 +442,7 @@ def set_template_timestamps(template, now):
         'next_run': get_next_run(template.get('schedule'), now),
     }
     service = superdesk.get_resource_service('content_templates')
-    service.update(template['_id'], updates, template)
+    service.update(template[config.ID_FIELD], updates, template)
 
 
 def get_item_from_template(template):
@@ -454,7 +522,19 @@ def create_template_for_profile(items):
             templates.append({
                 'template_name': profile.get('label'),
                 'is_public': True,
-                'data': {'profile': profile.get('_id')}
+                'data': {'profile': str(profile.get(config.ID_FIELD))}
             })
     if templates:
         superdesk.get_resource_service(CONTENT_TEMPLATE_RESOURCE).post(templates)
+
+
+def remove_profile_from_templates(item):
+    """Removes the profile data from templates that are using the profile
+
+    :param item: deleted content profile
+    """
+    templates = list(superdesk.get_resource_service(CONTENT_TEMPLATE_RESOURCE).
+                     get_templates_by_profile_id(item.get(config.ID_FIELD)))
+    for template in templates:
+        template.get('data', {}).pop('profile', None)
+        superdesk.get_resource_service(CONTENT_TEMPLATE_RESOURCE).patch(template[config.ID_FIELD], template)
