@@ -107,6 +107,10 @@ def get_app(config=None, media_storage=None, config_object=None):
         """
         return send_response(None, (error.to_dict(), None, None, error.status_code))
 
+    @app.errorhandler(403)
+    def server_forbidden_handler(error):
+        return send_response(None, ({'code': 403, 'error': error.response}, None, None, 403))
+
     @app.errorhandler(500)
     def server_error_handler(error):
         """Log server errors."""
