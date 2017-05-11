@@ -102,14 +102,17 @@ class ANPAFeedParser(FileFeedParser):
                         item['slugline'] = m.group(1)
 
                 # ednote
-                for line in header_lines:
-                    m = re.search("EDITOR'S NOTE _(.*)", line)
-                    if m:
-                        item['ednote'] = m.group(1).strip()
+                self._parse_ednote(header_lines, item)
 
             return item
         except Exception as ex:
             raise ParserError.anpaParseFileError(file_path, ex)
+
+    def _parse_ednote(self, header_lines, item):
+        for line in header_lines:
+            m = re.search("EDITOR'S NOTE _(.*)", line)
+            if m:
+                item['ednote'] = m.group(1).strip()
 
     def map_priority(self, source_priority):
         mapping = {
