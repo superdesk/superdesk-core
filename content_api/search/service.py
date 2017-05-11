@@ -33,6 +33,8 @@ class SearchService(ItemsService):
         'aggregations'
     }
 
+    excluded_fields_from_response = {}
+
     def _filter_empty_vals(self, data):
         """Filter out `None` values from a given dict."""
         return dict(filter(lambda x: x[1], data.items()))
@@ -77,3 +79,16 @@ class SearchService(ItemsService):
         if response.count() > 0:
             return self._map_response(response)
         return response
+
+    def _process_fetched_object(self, document):
+        """Does some processing on the raw document fetched from database.
+
+        It sets the item's `uri` field and removes all the fields added by the
+        `Eve` framework that are not part of the NINJS standard (except for
+        the HATEOAS `_links` object).
+        It also sets the URLs for all externally referenced media content.
+
+        :param dict document: MongoDB document to process
+        """
+        self._process_item_renditions(document)
+        self._process_item_associations(document)
