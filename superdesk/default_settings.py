@@ -612,3 +612,6 @@ TEMP_FILE_EXPIRY_HOURS = int(env('TEMP_FILE_EXPIRY_HOURS', 24))
 
 #: The number of days before content api items are removed. Defaults to 0 which means no purging occurs
 CONTENT_API_EXPIRY_DAYS = int(env('CONTENT_API_EXPIRY_DAYS', 0))
+
+GOOGLE_CLIENT_ID = env('GOOGLE_CLIENT_ID', '')
+GOOGLE_CLIENT_SECRET = env('GOOGLE_CLIENT_SECRET', '')
