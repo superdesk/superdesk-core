@@ -76,7 +76,6 @@ def update_config(conf):
     conf['VERSION'] = '_current_version'
     conf['SECRET_KEY'] = 'test-secret'
     conf['JSON_SORT_KEYS'] = True
-    conf['ELASTICSEARCH_BACKUPS_PATH'] = '/tmp/es-backups'
     conf['ELASTICSEARCH_INDEXES'] = {
         'archived': 'sptest_archived',
         'archive': 'sptest_archive',
@@ -217,7 +216,7 @@ def snapshot_es(app, name):
 
     def create():
         es.snapshot.delete(*backup, ignore=[404])
-        es.indices.open(indices, expand_wildcards='closed')
+        es.indices.open(indices, expand_wildcards='closed', ignore=[404])
         es.snapshot.create(*backup, wait_for_completion=True, body={
             'indices': indices,
             'allow_no_indices': False,
