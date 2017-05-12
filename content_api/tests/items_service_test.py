@@ -61,6 +61,7 @@ class ItemsServiceTestCase(ApiTestCase):
 
     def _make_one(self, *args, **kwargs):
         """Create a new instance of the class under test."""
+        kwargs['datasource'] = 'items'
         return self._get_target_class()(*args, **kwargs)
 
 
@@ -186,10 +187,11 @@ class GetMethodTestCase(ItemsServiceTestCase):
 
         expected_whitelist = sorted([
             'start_date', 'end_date',
-            'exclude_fields', 'include_fields',
-            'max_results', 'page',
-            'where',
-            'version'
+            'include_fields', 'exclude_fields',
+            'max_results', 'page', 'version', 'where',
+            'q', 'default_operator', 'filter',
+            'service', 'subject', 'genre', 'urgency',
+            'priority', 'type', 'item_source'
         ])
 
         whitelist_arg = kwargs.get('whitelist')
@@ -310,7 +312,8 @@ class GetMethodTestCase(ItemsServiceTestCase):
         args, _ = fake_super_get.call_args
         self.assertGreater(len(args), 0)
 
-        date_filter = json.loads(args[0].args['filter']).get('range', {}).get('versioncreated', {})
+        filters = json.loads(args[0].args['filter'])['bool']['must']
+        date_filter = filters[0].get('range', {}).get('versioncreated', {})
         expected_filter = {
             'gte': '2012-08-21',
             'lte': '2012-08-26'
@@ -332,7 +335,8 @@ class GetMethodTestCase(ItemsServiceTestCase):
         args, _ = fake_super_get.call_args
         self.assertGreater(len(args), 0)
 
-        date_filter = json.loads(args[0].args['filter']).get('range', {}).get('versioncreated', {})
+        filters = json.loads(args[0].args['filter'])['bool']['must']
+        date_filter = filters[0].get('range', {}).get('versioncreated', {})
         expected_filter = {
             'gte': '2012-08-21',
             'lte': '2014-07-15'
@@ -351,7 +355,8 @@ class GetMethodTestCase(ItemsServiceTestCase):
         args, _ = fake_super_get.call_args
         self.assertGreater(len(args), 0)
 
-        date_filter = json.loads(args[0].args['filter']).get('range', {}).get('versioncreated', {})
+        filters = json.loads(args[0].args['filter'])['bool']['must']
+        date_filter = filters[0].get('range', {}).get('versioncreated', {})
         expected_filter = {
             'gte': '2012-08-14',
             'lte': '2012-08-21'
@@ -375,7 +380,8 @@ class GetMethodTestCase(ItemsServiceTestCase):
         args, _ = fake_super_get.call_args
         self.assertGreater(len(args), 0)
 
-        date_filter = json.loads(args[0].args['filter']).get('range', {}).get('versioncreated', {})
+        filters = json.loads(args[0].args['filter'])['bool']['must']
+        date_filter = filters[0].get('range', {}).get('versioncreated', {})
         expected_filter = {
             'gte': '2014-07-08',
             'lte': '2014-07-15'
@@ -397,7 +403,8 @@ class GetMethodTestCase(ItemsServiceTestCase):
         args, _ = fake_super_get.call_args
         self.assertGreater(len(args), 0)
 
-        date_filter = json.loads(args[0].args['filter']).get('range', {}).get('versioncreated', {})
+        filters = json.loads(args[0].args['filter'])['bool']['must']
+        date_filter = filters[0].get('range', {}).get('versioncreated', {})
         expected_filter = {
             'gte': '2010-09-17',
             'lte': '2010-09-17'
@@ -445,6 +452,86 @@ class GetMethodTestCase(ItemsServiceTestCase):
             "End date (2007-10-31) must not be set in the future "
             "(current server date (UTC): 2007-10-30)"
         )
+
+    def test_raises_error_for_invalid_parameter_for_service(self):
+        request = MagicMock()
+        request.args = MultiDict([('service', '')])
+        lookup = {}
+
+        from content_api.errors import BadParameterValueError
+        instance = self._make_one()
+
+        with self.assertRaises(BadParameterValueError) as context:
+            instance.get(request, lookup)
+
+        ex = context.exception
+        self.assertEqual(
+            ex.payload,
+            'Bad parameter value for Parameter ({})'.format('service')
+        )
+
+    def test_set_filter_for_service(self):
+        request = MagicMock()
+        request.args = MultiDict([('service', 'i')])
+        lookup = {}
+
+        instance = self._make_one()
+        instance.get(request, lookup)
+
+        self.assertTrue(fake_super_get.called)
+        args, _ = fake_super_get.call_args
+        self.assertGreater(len(args), 0)
+
+        filters = json.loads(args[0].args['filter'])['bool']['must']
+        self.assertEqual(filters[0], {'terms': {'service.code': ['i']}})
+
+    def test_raises_error_for_invalid_parameter_for_urgency(self):
+        request = MagicMock()
+        request.args = MultiDict([('urgency', '')])
+        lookup = {}
+
+        from content_api.errors import BadParameterValueError
+        instance = self._make_one()
+
+        with self.assertRaises(BadParameterValueError) as context:
+            instance.get(request, lookup)
+
+        ex = context.exception
+        self.assertEqual(
+            ex.payload,
+            'Bad parameter value for Parameter ({})'.format('urgency')
+        )
+
+    def test_set_filter_for_urgency(self):
+        request = MagicMock()
+        request.args = MultiDict([('urgency', 1)])
+        lookup = {}
+
+        instance = self._make_one()
+        instance.get(request, lookup)
+
+        self.assertTrue(fake_super_get.called)
+        args, _ = fake_super_get.call_args
+        self.assertGreater(len(args), 0)
+
+        filters = json.loads(args[0].args['filter'])['bool']['must']
+        self.assertEqual(filters[0], {'terms': {'urgency': [1]}})
+
+    def test_set_filter_for_q(self):
+        expected = '(foo OR bar) AND headline:test'
+        request = MagicMock()
+        request.args = MultiDict([('q', expected)])
+        lookup = {}
+
+        instance = self._make_one()
+        instance.get(request, lookup)
+
+        self.assertTrue(fake_super_get.called)
+        args, _ = fake_super_get.call_args
+        self.assertGreater(len(args), 0)
+
+        q = args[0].args['q']
+        self.assertEqual(q, expected)
 
 
 class ParseIsoDateMethodTestCase(ItemsServiceTestCase):
@@ -643,7 +730,7 @@ class FindOneMethodTestCase(ItemsServiceTestCase):
         args, kwargs = fake_super_find_one.call_args
         self.assertEqual(len(args), 1)
         self.assertIs(args[0], request)
-        self.assertEqual(kwargs, lookup)
+        self.assertEqual(kwargs['_id'], lookup['_id'])
 
     def test_provides_request_object_to_superclass_if_not_given(self):
         lookup = {'_id': 'my_item'}

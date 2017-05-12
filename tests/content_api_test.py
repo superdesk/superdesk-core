@@ -83,6 +83,26 @@ class ContentAPITestCase(TestCase):
             audit_entries = superdesk.get_resource_service('api_audit').get(req=None, lookup={})
             self.assertEqual(2, audit_entries.count())
 
+    def test_content_filtering_by_arguments(self):
+        subscriber = {'_id': 'sub1'}
+        headers = self._auth_headers(subscriber)
+
+        self.content_api.publish({'_id': 'foo', 'guid': 'foo', 'urgency': '3', 'type': 'text'}, [subscriber])
+        self.content_api.publish({'_id': 'bar', 'guid': 'bar', 'urgency': '4', 'type': 'text'}, [subscriber])
+
+        with self.capi.test_client() as c:
+            response = c.get('items')
+            self.assertEqual(401, response.status_code)
+            response = c.get('items', headers=headers)
+            self.assertEqual(200, response.status_code)
+            data = json.loads(response.data)
+            self.assertEqual(2, len(data['_items']))
+
+            response = c.get('items?filter=[{"term":{"urgency": 3}}]', headers=headers)
+            self.assertEqual(200, response.status_code)
+            data = json.loads(response.data)
+            self.assertEqual(1, len(data['_items']))
+
     def test_content_api_picture(self):
         self.content_api.publish({
             '_id': 'foo', 'guid': 'foo', 'type': 'picture', 'headline': 'foo',
@@ -167,8 +187,8 @@ class ContentAPITestCase(TestCase):
             self.assertNotIn('http://localhost:5000/api/upload/', data['body_html'])
 
     def test_content_filtering(self):
-        self.content_api.publish({'guid': 'u3', 'type': 'text', 'urgency': 3}, [self.subscriber])
-        self.content_api.publish({'guid': 'u2', 'type': 'text', 'urgency': 2}, [self.subscriber])
+        self.content_api.publish({'guid': 'u3', 'type': 'text', 'source': 'foo', 'urgency': 3}, [self.subscriber])
+        self.content_api.publish({'guid': 'u2', 'type': 'text', 'source': 'bar', 'urgency': 2}, [self.subscriber])
 
         headers = self._auth_headers()
 
@@ -179,7 +199,27 @@ class ContentAPITestCase(TestCase):
             self.assertEqual(3, data['_items'][0]['urgency'])
 
             response = c.get('items?q=urgency:3', headers=headers)
-            self.assertEqual(400, response.status_code)
+            data = json.loads(response.data)
+            self.assertEqual(1, data['_meta']['total'])
+            self.assertEqual(3, data['_items'][0]['urgency'])
+
+            response = c.get('items?urgency=3', headers=headers)
+            data = json.loads(response.data)
+            self.assertEqual(1, data['_meta']['total'])
+            self.assertEqual(3, data['_items'][0]['urgency'])
+
+            response = c.get('items?urgency=[3,2]', headers=headers)
+            data = json.loads(response.data)
+            self.assertEqual(2, data['_meta']['total'])
+
+            response = c.get('items?item_source=foo', headers=headers)
+            data = json.loads(response.data)
+            self.assertEqual(1, data['_meta']['total'])
+            self.assertEqual('foo', data['_items'][0]['source'])
+
+            response = c.get('items?item_source=["foo","bar"]', headers=headers)
+            data = json.loads(response.data)
+            self.assertEqual(2, data['_meta']['total'])
 
     def test_generate_token_service(self):
         service = superdesk.get_resource_service('subscriber_token')
@@ -324,7 +364,7 @@ class ContentAPITestCase(TestCase):
         self.assertEqual(['foo', 'bar'], fun.get('ancestors', []))
         self.assertEqual('bar', fun.get('evolvedfrom'))
 
-    def test_search_api(self):
+    def test_search_capi(self):
         subscriber = {'_id': 'sub1'}
 
         self.content_api.publish({'_id': 'foo', 'guid': 'foo', 'type': 'text',
@@ -332,7 +372,7 @@ class ContentAPITestCase(TestCase):
                                   'headline': 'Man bites dog'}, [subscriber])
         self.content_api.publish({'_id': 'bar', 'guid': 'bar', 'type': 'text'}, [{'_id': 'sub2'}])
 
-        test = superdesk.get_resource_service('search_api')
+        test = superdesk.get_resource_service('search_capi')
         req = ParsedRequest()
         req.args = MultiDict([('subscribers', 'sub1')])
         resp = test.get(req=req, lookup=None)
@@ -347,7 +387,55 @@ class ContentAPITestCase(TestCase):
         resp = test.get(req=req, lookup=None)
         self.assertEqual(resp.count(), 1)
 
-    def test_search_api_aggregations(self):
+    def test_search_capi_filter(self):
+        subscriber = {'_id': 'sub1'}
+
+        self.content_api.publish({'_id': 'foo', 'guid': 'foo', 'type': 'text',
+                                  'anpa_category': [{'qcode': 'i', 'name': 'International News'}],
+                                  'headline': 'Man bites dog'}, [subscriber])
+        self.content_api.publish({'_id': 'bar', 'guid': 'bar',
+                                  'anpa_category': [{'qcode': 'i', 'name': 'International News'}],
+                                  'type': 'text'}, [{'_id': 'sub2'}])
+        self.content_api.publish({'_id': 'nat', 'guid': 'nat',
+                                  'anpa_category': [{'qcode': 'a', 'name': 'National News'}],
+                                  'type': 'text'}, [{'_id': 'sub2'}])
+
+        test = superdesk.get_resource_service('search_capi')
+        req = ParsedRequest()
+        req.args = MultiDict([('filter', '[{"term": {"service.code": "i"}}]')])
+        resp = test.get(req=req, lookup=None)
+        self.assertEqual(resp.count(), 2)
+        self.assertEqual(resp.docs[0].get('anpa_category')[0].get('qcode'), 'i')
+        self.assertEqual(resp.docs[1].get('anpa_category')[0].get('qcode'), 'i')
+
+        req = ParsedRequest()
+        req.args = MultiDict([('service', 'i')])
+        resp = test.get(req=req, lookup=None)
+        self.assertEqual(resp.count(), 2)
+        self.assertEqual(resp.docs[0].get('anpa_category')[0].get('qcode'), 'i')
+        self.assertEqual(resp.docs[1].get('anpa_category')[0].get('qcode'), 'i')
+
+        req = ParsedRequest()
+        req.args = MultiDict([('service', '["a"]')])
+        resp = test.get(req=req, lookup=None)
+        self.assertEqual(resp.count(), 1)
+        self.assertEqual(resp.docs[0].get('anpa_category')[0].get('qcode'), 'a')
+
+        req = ParsedRequest()
+        req.args = MultiDict([('service', 'i'), ('subscribers', 'sub1')])
+        resp = test.get(req=req, lookup=None)
+        self.assertEqual(resp.count(), 1)
+        self.assertEqual(resp.docs[0].get('anpa_category')[0].get('qcode'), 'i')
+        self.assertEqual(resp.docs[0].get('subscribers')[0], 'sub1')
+
+        req = ParsedRequest()
+        req.args = MultiDict([('subscribers', 'sub2')])
+        resp = test.get(req=req, lookup=None)
+        self.assertEqual(resp.count(), 2)
+        self.assertEqual(resp.docs[0].get('subscribers')[0], 'sub2')
+        self.assertEqual(resp.docs[1].get('subscribers')[0], 'sub2')
+
+    def test_search_capi_aggregations(self):
         self.content_api.publish({'_id': '1', 'guid': '1', 'type': 'text',
                                   'anpa_category': [{'qcode': 'i', 'name': 'International News'}],
                                   'headline': 'Man bites dog', 'source': 'AAA', 'urgency': 1}, [])
@@ -355,9 +443,11 @@ class ContentAPITestCase(TestCase):
                                   'anpa_category': [{'qcode': 'i', 'name': 'International News'}],
                                   'headline': 'Man bites cat', 'source': 'BBB', 'urgency': 2}, [])
 
-        test = superdesk.get_resource_service('search_api')
-        resp = test.get(req=None, lookup=None)
-        self.assertEqual(resp.hits['aggregations']['anpa_category']['buckets'][0]['doc_count'], 2)
+        test = superdesk.get_resource_service('search_capi')
+        req = ParsedRequest()
+        req.args = MultiDict([('aggregations', 1)])
+        resp = test.get(req=req, lookup=None)
+        self.assertEqual(resp.hits['aggregations']['category']['buckets'][0]['doc_count'], 2)
 
     def test_associated_item_filter_by_subscriber(self):
         item = {

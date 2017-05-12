@@ -43,9 +43,10 @@ class ItemsService(BaseService):
     allowed_params = {
         'start_date', 'end_date',
         'include_fields', 'exclude_fields',
-        'max_results', 'page',
-        'where',
-        'version'
+        'max_results', 'page', 'version', 'where',
+        'q', 'default_operator', 'filter',
+        'service', 'subject', 'genre', 'urgency',
+        'priority', 'type', 'item_source'
     }
 
     excluded_fields_from_response = {
@@ -74,6 +75,11 @@ class ItemsService(BaseService):
 
         self._set_fields_filter(req)  # Eve's "projection"
 
+        # if subscribers is not allowed it is an external API request that should be filtered by the user
+        if self._is_internal_api():
+            # in case there is no subscriber set by auth return nothing
+            lookup['subscribers'] = g.get('user')
+
         return super().find_one(req, **lookup)
 
     def get(self, req, lookup):
@@ -92,21 +98,23 @@ class ItemsService(BaseService):
         orig_request_params = getattr(req, 'args', MultiDict())
 
         self._check_for_unknown_params(req, whitelist=self.allowed_params)
+        self._set_search_field(internal_req.args, orig_request_params)
 
-        # set the date range filter
-        start_date, end_date = self._get_date_range(orig_request_params)
-        date_filter = self._create_date_range_filter(start_date, end_date)
+        # combine elastic search filter for args as args.get('filter')
+        self._set_filter_for_arguments(internal_req, orig_request_params)
 
-        internal_req.args['filter'] = json.dumps(date_filter)
+        # projections
+        internal_req.args['exclude_fields'] = orig_request_params.get('exclude_fields')
+        internal_req.args['include_fields'] = orig_request_params.get('include_fields')
         self._set_fields_filter(internal_req)  # Eve's "projection"
 
         # if subscribers is not allowed it is an external API request that should be filtered by the user
-        if 'subscribers' not in self.allowed_params:
+        if self._is_internal_api():
             # in case there is no subscriber set by auth return nothing
             lookup['subscribers'] = g.get('user')
 
         if 'aggregations' in self.allowed_params:
-            internal_req.args.add('aggregations', 1)
+            internal_req.args['aggregations'] = orig_request_params.get('aggregations', 0)
 
         try:
             res = super().get(internal_req, lookup)
@@ -201,6 +209,13 @@ class ItemsService(BaseService):
             last_id = items[-1]['_id']
             yield items
 
+    def _is_internal_api(self):
+        """Check if request is for internal search_capi endpoint or external items endpoint
+
+        :return bool:
+        """
+        return self.datasource == 'items' or self.datasource == 'packages'
+
     def _process_fetched_object(self, document):
         """Does some processing on the raw document fetched from database.
 
@@ -239,7 +254,7 @@ class ItemsService(BaseService):
         if item.get('associations'):
             for _k, v in item.get('associations', {}).items():
                 # only allow subscribers
-                if g.get('user') in v.get('subscribers', []):
+                if (g.get('subscriber') or g.get('user')) in v.get('subscribers', []):
                     hrefs.update(self._process_item_renditions(v))
                     v.pop('subscribers', None)
                     allowed_items[_k] = v
@@ -310,6 +325,57 @@ class ItemsService(BaseService):
                 desc = "Multiple values received for parameter ({})"
                 raise UnexpectedParameterError(desc=desc.format(param_name))
 
+    def _set_filter_for_arguments(self, req, orig_request_params):
+        """Based on arguments creates elastic search filters and
+        assign to `filter` argument of the `req` object.
+
+        :param req: object representing the HTTP request
+        :type req: `eve.utils.ParsedRequest`
+        :param dict orig_request_params: request parameter names and their
+            corresponding values
+        """
+        # request argments and elasticsearch fields
+        argument_fields = {
+            'service': 'service.code',
+            'subject': 'subject.code',
+            'urgency': 'urgency',
+            'priority': 'priority',
+            'genre': 'genre.code',
+            'item_source': 'source'
+        }
+
+        try:
+            filters = json.loads(orig_request_params.get('filter')) \
+                if orig_request_params and orig_request_params.get('filter') else []
+        except:
+            raise BadParameterValueError("Bad parameter value for Parameter (filter)")
+
+        for argument_name, field_name in argument_fields.items():
+            if argument_name not in orig_request_params or orig_request_params.get(argument_name) is None:
+                continue
+
+            filter_value = orig_request_params.get(argument_name)
+            try:
+                filter_value = json.loads(orig_request_params.get(argument_name))
+            except:
+                pass
+
+            if not filter_value:
+                raise BadParameterValueError("Bad parameter value for Parameter ({})".format(argument_name))
+
+            if not isinstance(filter_value, list):
+                filter_value = [filter_value]
+
+            filters.append({'terms': {field_name: filter_value}})
+
+        # set the date range filter
+        start_date, end_date = self._get_date_range(orig_request_params)
+        date_filter = self._create_date_range_filter(start_date, end_date)
+        if date_filter:
+            filters.append(date_filter)
+        if filters:
+            req.args['filter'] = json.dumps({'bool': {'must': filters}})
+
     def _get_date_range(self, request_params):
         """Extract the start and end date limits from request parameters.
 
@@ -373,11 +439,12 @@ class ItemsService(BaseService):
                 desc="Start date must not be greater than end date")
 
         # set default date range values if missing...
-        if end_date is None:
-            end_date = today
+        if self._is_internal_api():
+            if end_date is None:
+                end_date = today
 
-        if start_date is None:
-            start_date = end_date - timedelta(days=7)  # get last 7 days by default
+            if start_date is None:
+                start_date = end_date - timedelta(days=7)  # get last 7 days by default
 
         return start_date, end_date
 
@@ -408,6 +475,18 @@ class ItemsService(BaseService):
 
         return date_filter
 
+    def _set_filter_parameter(self, req, filter, original_filter_param):
+        elastic_filter = []
+        try:
+            elastic_filter = json.loads(original_filter_param) if original_filter_param else []
+            if not isinstance(elastic_filter, list):
+                raise BadParameterValueError(desc='Invalid Parameter value for filter')
+        except:
+            raise BadParameterValueError(desc='Invalid Parameter value for filter')
+
+        elastic_filter.append(filter)
+        req.args['filter'] = json.dumps(elastic_filter)
+
     def _set_fields_filter(self, req):
         """Set content fields filter on the request object (the "projection")
         based on the request parameters.
@@ -417,14 +496,23 @@ class ItemsService(BaseService):
 
         :param req: object representing the HTTP request
         :type req: `eve.utils.ParsedRequest`
+        :param dict original_request_params: request parameter names and their
+            corresponding values
         """
         request_params = req.args or {}
 
-        include_fields, exclude_fields = \
-            self._get_field_filter_params(request_params)
+        include_fields, exclude_fields = self._get_field_filter_params(request_params)
         projection = self._create_field_filter(include_fields, exclude_fields)
 
         req.projection = json.dumps(projection)
+
+    def _set_search_field(self, internal_request_params, original_request_params):
+        if internal_request_params is None:
+            internal_request_params = MultiDict()
+
+        for key, value in original_request_params.items():
+            if key in {'q', 'default_operator', 'df', 'filter'}:
+                internal_request_params[key] = value
 
     def _get_field_filter_params(self, request_params):
         """Extract the list of content fields to keep in or remove from
