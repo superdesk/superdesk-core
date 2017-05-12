@@ -48,6 +48,13 @@ class ItemsService(BaseService):
         'version'
     }
 
+    excluded_fields_from_response = {
+        '_etag', '_created',
+        '_updated', 'subscribers',
+        '_current_version', '_latest_version',
+        'ancestors'
+    }
+
     def find_one(self, req, **lookup):
         """Retrieve a specific item.
 
@@ -208,8 +215,7 @@ class ItemsService(BaseService):
 
         _id = document.pop('_id')
 
-        for field_name in ('_etag', '_created', '_updated', 'subscribers',
-                           '_current_version', '_latest_version', 'ancestors'):
+        for field_name in self.excluded_fields_from_response:
             document.pop(field_name, None)
 
         self._process_item_renditions(document)

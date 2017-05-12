@@ -9,9 +9,16 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk.resource import Resource
-from superdesk.metadata.item import metadata_schema
+from superdesk.metadata.item import metadata_schema, not_analyzed
 from content_api import MONGO_PREFIX, ELASTIC_PREFIX
 
+code_mapping = {
+    'type': 'object',
+    'properties': {
+        'name': not_analyzed,
+        'code': not_analyzed
+    }
+}
 
 schema = {
     '_id': metadata_schema['_id'],
@@ -19,7 +26,7 @@ schema = {
     'body_html': {'type': 'string'},
     'body_text': {'type': 'string'},
     'byline': {'type': 'string'},
-    'copyrightnotice': {'type': 'string'},
+    'copyrightnotice': metadata_schema['copyrightnotice'],
     'copyrightholder': {'type': 'string'},
     'description_html': {'type': 'string'},
     'description_text': {'type': 'string'},
@@ -33,10 +40,10 @@ schema = {
     'profile': {'type': 'string'},
     'pubstatus': metadata_schema['pubstatus'],
     'renditions': {'type': 'dict'},
-    'service': {'type': 'list'},
-    'slugline': Resource.not_analyzed_field(),
+    'service': {'type': 'list', 'mapping': code_mapping},
+    'slugline': {'type': 'string'},
     'source': metadata_schema['source'],
-    'subject': metadata_schema['subject'],
+    'subject': {'type': 'list', 'mapping': code_mapping},
     'keywords': metadata_schema['keywords'],
     'type': metadata_schema['type'],
     'urgency': {'type': 'integer'},
@@ -47,11 +54,21 @@ schema = {
     'versioncreated': {'type': 'datetime', 'required': True},
     'firstcreated': {'type': 'datetime'},
     'evolvedfrom': Resource.not_analyzed_field(),
-    'subscribers': {'type': 'list'},
+    'subscribers': Resource.not_analyzed_field('list'),
     'ednote': {'type': 'string'},
-    'signal': metadata_schema['signal'],
-    'genre': metadata_schema['genre'],
-    'ancestors': {'type': 'list'},
+    'signal': {
+        'type': 'list',
+        'mapping': {
+            'type': 'object',
+            'properties': {
+                'code': not_analyzed,
+                'name': not_analyzed,
+                'scheme': not_analyzed
+            }
+        }
+    },
+    'genre': {'type': 'list', 'mapping': code_mapping},
+    'ancestors': Resource.not_analyzed_field('list'),
 }
 
 

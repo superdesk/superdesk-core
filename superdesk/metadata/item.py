@@ -123,7 +123,8 @@ metadata_schema = {
     },
     'copyrightnotice': {
         'type': 'string',
-        'nullable': True
+        'nullable': True,
+        'mapping': not_indexed
     },
     'copyrightholder': {
         'type': 'string',
@@ -145,6 +146,7 @@ metadata_schema = {
     'subject': {
         'type': 'list',
         'mapping': {
+            'type': 'object',
             'properties': {
                 'qcode': not_analyzed,
                 'name': not_analyzed
@@ -264,8 +266,15 @@ metadata_schema = {
         'nullable': True,
     },
     'signal': {
-        'type': 'string',
-        'mapping': not_analyzed
+        'type': 'list',
+        'mapping': {
+            'type': 'object',
+            'properties': {
+                'qcode': not_analyzed,
+                'name': not_analyzed,
+                'scheme': not_analyzed
+            }
+        }
     },
 
     BYLINE: {
