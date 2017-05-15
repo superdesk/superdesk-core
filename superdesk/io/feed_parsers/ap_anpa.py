@@ -117,7 +117,7 @@ class AP_ANPAFeedParser(ANPAFeedParser):
             html = item.get('body_html')
             if html:
                 parsed = parse_html(html, content='html')
-                for par in parsed.xpath('/html/div/child::*'):
+                for par in parsed.xpath('/html/body/child::*'):
                     if not par.text:
                         continue
                     city, source, the_rest = par.text.partition(' (AP) _ ')
