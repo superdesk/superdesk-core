@@ -13,6 +13,7 @@ import logging
 from flask import current_app as app
 from eve.validation import ValidationError
 from superdesk.utils import save_error_data
+from elasticsearch.exceptions import ConnectionTimeout  # noqa
 
 
 logger = logging.getLogger(__name__)
