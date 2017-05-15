@@ -29,7 +29,7 @@ from eve.utils import parse_request, config, date_to_str, ParsedRequest
 from superdesk.services import BaseService
 from superdesk.users.services import current_user_has_privilege, is_admin
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, CONTENT_TYPE, ITEM_TYPE, EMBARGO, \
-    PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, SIGN_OFF, ASSOCIATIONS, MEDIA_TYPES
+    PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, SIGN_OFF, ASSOCIATIONS, MEDIA_TYPES, INGEST_ID
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, RESIDREF, SEQUENCE, PACKAGE_TYPE, TAKES_PACKAGE
 from apps.common.components.utils import get_component
 from apps.item_autosave.components.item_autosave import ItemAutosave
@@ -183,6 +183,8 @@ class ArchiveService(BaseService):
         for doc in docs:
             if doc.get('body_footer') and is_normal_package(doc):
                 raise SuperdeskApiError.badRequestError("Package doesn't support Public Service Announcements")
+
+            self._test_readonly_stage(doc)
 
             doc['version_creator'] = doc['original_creator']
             remove_unwanted(doc)
@@ -653,6 +655,17 @@ class ArchiveService(BaseService):
 
             self.packageService.check_if_any_item_in_package_has_embargo(item)
 
+    def _test_readonly_stage(self, item):
+        """If item is created or updated on readonly stage abort it.
+
+        :param item: edited/new item
+        """
+        orig_stage_id = item.get('task', {}).get('stage')
+        if orig_stage_id:
+            orig_stage = superdesk.get_resource_service('stages').find_one(req=None, _id=orig_stage_id)
+            if orig_stage.get('local_readonly') and get_user() and not item.get(INGEST_ID):
+                flask.abort(403, response={'readonly': True})
+
     def _validate_updates(self, original, updates, user):
         """Validates updates to the article for the below conditions.
 
@@ -669,6 +682,7 @@ class ArchiveService(BaseService):
             10. Does article has a valid Embargo?
             11. Make sure that there are no duplicate anpa_category codes in the article.
             12. Make sure there are no duplicate subjects in the upadte
+            13. Item is on readonly stage.
 
         :raises:
             SuperdeskApiError.forbiddenError()
@@ -680,6 +694,8 @@ class ArchiveService(BaseService):
         """
         updated = original.copy()
         updated.update(updates)
+
+        self._test_readonly_stage(original)
 
         lock_user = original.get('lock_user', None)
         force_unlock = updates.get('force_unlock', False)

@@ -235,3 +235,54 @@ Feature: Stages
         """
         {"_status": "ERR", "_message": "Cannot delete a Incoming Stage."}
         """
+
+    @auth
+    Scenario: Content can not be created on readonly stage
+        When we post to "/stages"
+        """
+        {"name": "show my content", "desk": "#desks._id#", "local_readonly": true}
+        """
+        And we post to "/archive"
+        """
+        {"_id": "item-1", "slugline": "first task", "type": "text", "task": {"desk":"#desks._id#", "stage" :"#stages._id#"}}
+        """
+        Then we get error 403
+        """
+        {"error": {"readonly": true}}
+        """
+
+    @auth
+    Scenario: Content can be fetched to readonly stage
+        When we post to "/stages"
+        """
+        {"name": "show my content", "desk": "#desks._id#", "local_readonly": true}
+        """
+        And we post to "/archive"
+        """
+        {"_id": "item-1", "slugline": "first task", "type": "text", "task": {"desk":"#desks._id#", "stage" :"#stages._id#"},
+         "ingest_id": "foo"}
+        """
+        Then we get new resource
+
+    @auth
+    Scenario: Content on readonly stage is not editable
+        When we post to "/stages"
+        """
+        {"name": "show my content", "desk": "#desks._id#", "local_readonly": false}
+        """
+        And we post to "archive"
+        """
+        [{"_id": "item-1", "slugline": "first task", "type": "text", "task": {"desk":"#desks._id#", "stage" :"#stages._id#"}}]
+        """
+        When we patch "/stages/#stages._id#"
+        """
+        {"local_readonly": true}
+        """
+        And we patch "/archive/item-1"
+        """
+        {"headline": "foo"}
+        """
+        Then we get error 403
+        """
+        {"error": {"readonly": true}}
+        """
