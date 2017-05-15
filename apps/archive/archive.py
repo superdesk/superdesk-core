@@ -695,7 +695,8 @@ class ArchiveService(BaseService):
             raise SuperdeskApiError.badRequestError("Package doesn't support Public Service Announcements")
 
         if 'unique_name' in updates and not is_admin(user) \
-                and (user['active_privileges'].get('metadata_uniquename', 0) == 0):
+                and (user['active_privileges'].get('metadata_uniquename', 0) == 0) \
+                and not force_unlock:
             raise SuperdeskApiError.forbiddenError("Unauthorized to modify Unique Name")
 
         # if broadcast then update to genre is not allowed.

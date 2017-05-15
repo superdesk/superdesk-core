@@ -219,7 +219,7 @@ Feature: Content Locking
 
         When we post to "/archive_autosave"
         """
-        {"_id": "item-1", "guid": "item-1", "body_html": "autosaved"}
+        {"_id": "item-1", "guid": "item-1", "body_html": "autosaved", "unique_name": "foo"}
         """
         Then we get new resource
 
@@ -235,7 +235,8 @@ Feature: Content Locking
             "guid": "item-1",
             "headline": "test",
             "body_html": "autosaved",
-            "_current_version": 3
+            "_current_version": 3,
+            "unique_name": "foo"
         }
         """
         And item "item-1" is unlocked
