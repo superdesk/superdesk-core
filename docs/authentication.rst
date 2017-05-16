@@ -63,3 +63,23 @@ Following functions can be used:
 
 .. automodule:: apps.auth
     :members:
+
+
+Google Authentication
+---------------------
+
+.. versionadded:: 1.8
+
+You can use Google for authentication, first you have to create credentials in `Google API console <https://console.developers.google.com/apis/credentials>`_:
+
+- set your client URL as *Authorized JavaScript origins*::
+
+    https://example.com
+
+- set server URL + ``/login/google_authorized`` as *Authorized redirect URIs*::
+
+    https://example.com/login/google_authorized
+
+Once configured you will find there *Client ID* and *Client secret*, use both to populate :ref:`settings.google_oauth`.
+
+On client enable google auth via ``{auth: {google: true}}`` in ``superdesk.config.js``.
