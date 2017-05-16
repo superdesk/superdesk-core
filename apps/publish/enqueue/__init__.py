@@ -10,8 +10,9 @@
 
 import cProfile
 import logging
-from superdesk import get_resource_service
 import superdesk
+
+from superdesk import get_resource_service
 from superdesk.celery_task_utils import get_lock_id
 from superdesk.lock import lock, unlock
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS
@@ -28,6 +29,7 @@ from superdesk.celery_app import celery
 from superdesk.utc import utcnow
 from superdesk.profiling import ProfileManager
 from apps.content import push_content_notification
+from superdesk.errors import ConnectionTimeout
 
 
 logger = logging.getLogger(__name__)
@@ -130,6 +132,10 @@ def enqueue_item(published_item):
         error_updates = {QUEUE_STATE: PUBLISH_STATE.ERROR, ERROR_MESSAGE: str(key_error)}
         published_service.patch(published_item_id, error_updates)
         logger.exception('No enqueue service found for operation %s', published_item[ITEM_OPERATION])
+    except ConnectionTimeout as error:  # recoverable, set state to pending and retry next time
+        error_updates = {QUEUE_STATE: PUBLISH_STATE.PENDING, ERROR_MESSAGE: str(error)}
+        published_service.patch(published_item_id, error_updates)
+        raise
     except Exception as error:
         error_updates = {QUEUE_STATE: PUBLISH_STATE.ERROR, ERROR_MESSAGE: str(error)}
         published_service.patch(published_item_id, error_updates)
@@ -172,7 +178,6 @@ def enqueue_items(published_items):
             logger.exception('Failed to queue item {}'.format(queue_item.get('_id')))
             failed_items[str(queue_item.get('_id'))] = queue_item
 
-    # mark failed items as pending so that Celery tasks will try again
     if len(failed_items) > 0:
         logger.error('Failed to publish the following items: {}'.format(failed_items.keys()))
 
