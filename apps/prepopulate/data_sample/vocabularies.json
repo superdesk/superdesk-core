@@ -31,7 +31,12 @@
             {"is_active": true, "name": "Special Events (olympics/ Aus elections)", "qcode": "x"},
             {"is_active": false, "name": "Special Events (obsolete/unused)", "qcode": "y"},
             {"is_active": false, "name": "Supplementary Traffic", "qcode": "z"}
-        ]
+        ],
+        "schema": {
+            "name": {},
+            "qcode": {},
+            "subject": {}
+        }
     },
     {
         "_id": "default_categories",
@@ -46,7 +51,10 @@
             {"is_active": true, "qcode": "s"},
             {"is_active": true, "qcode": "t"},
             {"is_active": true, "qcode": "v"}
-        ]
+        ],
+        "schema": {
+            "qcode": {}
+        }
     },
     {
         "_id": "genre",
@@ -76,7 +84,11 @@
             {"is_active": true, "name": "Market Report", "qcode": "Market Report"},
             {"is_active": true, "name": "Review", "qcode": "Review"},
             {"is_active": true, "name": "Preview", "qcode": "Preview"}
-        ]
+        ],
+        "schema": {
+            "name": {},
+            "qcode": {}
+        }
     },
     {
         "_id": "urgency",
@@ -89,7 +101,13 @@
             {"is_active": true, "name": "3", "qcode": 3},
             {"is_active": true, "name": "4", "qcode": 4},
             {"is_active": true, "name": "5", "qcode": 5}
-        ]
+        ],
+        "schema": {
+            "name": {},
+            "qcode": {},
+            "color": {"type": "color"},
+            "short": {"type": "short", "label": "List Name", "maxlength": 2}
+        }
     },
     {
         "_id": "priority",
@@ -105,7 +123,13 @@
             {"is_active": false, "name": "7", "qcode": 7},
             {"is_active": false, "name": "8", "qcode": 8},
             {"is_active": false, "name": "9", "qcode": 9}
-        ]
+        ],
+        "schema": {
+            "name": {},
+            "qcode": {},
+            "color": {"type": "color"},
+            "short": {"type": "short", "label": "List Name", "maxlength": 2}
+        }
     },
     {
         "_id": "type",
@@ -152,7 +176,13 @@
                 "copyrightNotice": "AAP content is owned by or licensed to Australian Associated Press Pty Limited (AAP) and is\r\ncopyright protected.  AAP content is published on an \"as is\" basis for personal use only and\r\nmust not be copied, republished, rewritten, resold or redistributed, whether by caching,\r\nframing or similar means, without AAP's prior written permission.  AAP and its licensors\r\nare not liable for any loss, through negligence or otherwise, resulting from errors or\r\nomissions in or reliance on AAP content.  The globe symbol and \"AAP\" are registered trade marks.\r\nFurther this AAP content is supplied to the direct recipient pursuant to an Information Supply\r\nAgreement with AAP (AAP Information Supply Agreement).  The direct recipient has a non-exclusive,\r\nnon-transferable right to display this AAP content in accordance with and subject to the\r\nterms of the AAP Information Supply Agreement.",
                 "usageTerms": "The direct recipient must comply with the limitations specified in the AAP Information\r\nSupply Agreement relating to the AAP content including, without limitation, not permitting\r\nredistribution and storage of the content (outside the terms of the Agreement) and not\r\npermitting deep hyperlinking to the content, framing of the content on a web site,\r\nposting the content to usenet newsgroups or facilitating such actions."
             }
-        ]
+        ],
+        "schema": {
+            "name": {},
+            "copyrightHolder": {"label": "Copyright Holder"},
+            "copyrightNotice": {"label": "Copyright Notice"},
+            "usageTerms": {"label": "Usage Terms"}
+        }
     },
     {
         "_id": "geographical_restrictions",
@@ -168,7 +198,11 @@
             {"is_active": true, "name": "Western Australia", "qcode": "WA"},
             {"is_active": true, "name": "Northern Territory", "qcode": "NT"},
             {"is_active": true, "name": "New Zealand", "qcode": "NZ"}
-        ]
+        ],
+        "schema": {
+            "name": {},
+            "qcode": {}
+        }
     },
     {
         "_id": "subscriber_types",
@@ -186,7 +220,7 @@
     {
         "_id": "locators",
         "display_name": "Locators",
-        "type": "unmanageable",
+        "type": "manageable",
         "items": [
             {"is_active": true, "name": "ACT", "qcode": "ACT", "state": "Australian Capital Territory", "country": "Australia", "world_region": "Oceania", "group": "Australia"},
             {"is_active": true, "name": "ADV", "qcode": "ADV", "group": ""},
@@ -212,7 +246,15 @@
             {"is_active": true, "name": "US", "qcode": "US", "state": "", "country": "United States Of America", "world_region": "North America", "group": "Rest Of World"},
             {"is_active": true, "name": "VIC", "qcode": "VIC", "state": "Victoria", "country": "Australia", "world_region": "Oceania", "group": "Australia"},
             {"is_active": true, "name": "WA", "qcode": "WA", "state": "Western Australia", "country": "Australia", "world_region": "Oceania", "group": "Australia"}
-        ]
+        ],
+        "schema": {
+            "name": {},
+            "qcode": {},
+            "state": {},
+            "country": {},
+            "world_region": {},
+            "group": {}
+        }
     },
     {
         "_id": "crop_sizes",
@@ -222,7 +264,12 @@
         "items": [
             {"is_active": true, "name": "4-3", "width": 800, "height": 600},
             {"is_active": true, "name": "16-9", "width": 1280, "height": 720}
-        ]
+        ],
+        "schema": {
+            "name": {},
+            "width": {"type": "int"},
+            "height": {"type": "int"}
+        }
     },
     {
         "_id": "keywords",
@@ -260,7 +307,11 @@
                 "name": "Property",
                 "qcode": "Property"
             }
-        ]
+        ],
+        "schema": {
+            "name": {},
+            "qcode": {}
+        }
     },
     {
         "_id": "desk_types",
@@ -294,7 +345,12 @@
             {"name" : "News 8", "category" : "i", "qcode" : "14000000", "is_active" : true},
             {"name" : "News 9", "category" : "i", "qcode" : "16000000", "is_active" : true},
             {"name" : "Weather", "category" : "b", "qcode" : "17000000", "is_active" : true}
-        ]
+        ],
+        "schema": {
+            "name": {},
+            "category": {},
+            "qcode": {}
+        }
     },
     {
         "_id": "footers",
@@ -305,7 +361,11 @@
             {"is_active": true, "name": "Suicide", "value": "Readers seeking support and information about suicide prevention can contact Lifeline on 13 11 14.<br>Suicide Call Back Service 1300 659 467<br>MensLine Australia 1300 78 99 78<br>Multicultural Mental Health Australia www.mmha.org.au<br>Local Aboriginal Medical Service available from www.vibe.com.au"},
             {"is_active": true, "name": "Children", "value": "Kids Helpline 1800 55 1800 (for young people aged 5 to 25)"},
             {"is_active": true, "name": "Domestic Violence", "value": "National domestic violence helpline: 1800 737 732  or 1800RESPECT. In an emergency call triple-zero."}
-        ]
+        ],
+        "schema": {
+            "name": {},
+            "value": {}
+        }
     },
     {
         "_id": "company_codes",
@@ -2526,7 +2586,12 @@
             {"is_active": true, "name": "ZIPMONEY LTD", "qcode": "ZML", "security_exchange": "ASX"},
             {"is_active": true, "name": "ZIPTEL LIMITED", "qcode": "ZIP", "security_exchange": "ASX"},
             {"is_active": true, "name": "ZYL LIMITED", "qcode": "ZYL", "security_exchange": "ASX"}
-        ]
+        ],
+        "schema": {
+            "name": {},
+            "qcode": {},
+            "security_exchange": {}
+        }
     },
     {
         "_id": "replace_words",
@@ -2627,7 +2692,11 @@
             {"is_active": true, "existing": "normalcy", "replacement": "normality"},
             {"is_active": true, "existing": "temblor", "replacement": "tremor"},
             {"is_active": true, "existing": "ax", "replacement": "axe"}
-        ]
+        ],
+        "schema": {
+            "existing": {},
+            "replacement": {}
+        }
     },
     {
         "_id": "product_types",

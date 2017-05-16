@@ -6,7 +6,12 @@
         "unique_field": "qcode",
         "items": [
             {"is_active": true, "name": "FIXME", "qcode": "f", "subject": ""}
-        ]
+        ],
+        "schema": {
+            "name": {},
+            "qcode": {},
+            "subject": {}
+        }
     },
     {
         "_id": "default_categories",
@@ -21,7 +26,10 @@
             {"is_active": true, "qcode": "s"},
             {"is_active": true, "qcode": "t"},
             {"is_active": true, "qcode": "v"}
-        ]
+        ],
+        "schema": {
+            "qcode": {}
+        }
     },
     {
         "_id": "genre",
@@ -51,7 +59,11 @@
             {"is_active": true, "name": "Market Report", "qcode": "Market Report"},
             {"is_active": true, "name": "Review", "qcode": "Review"},
             {"is_active": true, "name": "Preview", "qcode": "Preview"}
-        ]
+        ],
+        "schema": {
+            "name": {},
+            "qcode": {}
+        }
     },
     {
         "_id": "urgency",
@@ -64,7 +76,13 @@
             {"is_active": true, "name": "3", "qcode": 3},
             {"is_active": true, "name": "4", "qcode": 4},
             {"is_active": true, "name": "5", "qcode": 5}
-        ]
+        ],
+        "schema": {
+            "name": {},
+            "qcode": {},
+            "color": {"type": "color"},
+            "short": {"type": "short", "label": "List Name", "maxlength": 2}
+        }
     },
     {
         "_id": "priority",
@@ -80,7 +98,13 @@
             {"is_active": false, "name": "7", "qcode": 7},
             {"is_active": false, "name": "8", "qcode": 8},
             {"is_active": false, "name": "9", "qcode": 9}
-        ]
+        ],
+        "schema": {
+            "name": {},
+            "qcode": {},
+            "color": {"type": "color"},
+            "short": {"type": "short", "label": "List Name", "maxlength": 2}
+        }
     },
     {
         "_id": "type",
@@ -120,7 +144,13 @@
                 "copyrightNotice": "",
                 "usageTerms": ""
             }
-        ]
+        ],
+        "schema": {
+            "name": {},
+            "copyrightHolder": {"label": "Copyright Holder"},
+            "copyrightNotice": {"label": "Copyright Notice"},
+            "usageTerms": {"label": "Usage Terms"}
+        }
     },
     {
         "_id": "subscriber_types",
@@ -153,7 +183,12 @@
         "unique_field": "name",
         "items": [
             {"is_active": true, "name": "FIXME", "width": 800, "height": 600}
-        ]
+        ],
+        "schema": {
+            "name": {},
+            "width": {"type": "int"},
+            "height": {"type": "int"}
+        }
     },
     {
         "_id": "desk_types",
@@ -170,15 +205,27 @@
         "type": "manageable",
         "items": [
             {"is_active": true, "existing": "FIXME", "replacement": ""}
-        ]
+        ],
+        "schema": {
+            "existing": {},
+            "replacement": {}
+        }
     },
     {
         "_id": "locators",
         "display_name": "Locators",
-        "type": "unmanageable",
+        "type": "manageable",
         "items": [
             {"is_active": true, "name": "NSW", "qcode": "NSW"}
-        ]
+        ],
+        "schema": {
+            "name": {},
+            "qcode": {},
+            "state": {},
+            "country": {},
+            "world_region": {},
+            "group": {}
+        }
     },
     {
         "_id": "product_types",

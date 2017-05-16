@@ -81,7 +81,10 @@ class VocabulariesResource(Resource):
             'type': 'string',
             'required': False,
             'nullable': True
-        }
+        },
+        'schema': {
+            'type': 'dict'
+        },
     }
 
     item_url = 'regex("[\w]+")'
