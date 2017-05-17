@@ -87,6 +87,11 @@ Feature: Content Profile
                 "slugline": {
                     "sdWidth": "full",
                     "enabled": true,
+                    "order": 0
+                },
+                "keywords": {
+                    "sdWidth": "full",
+                    "enabled": false,
                     "order": 1
                 },
                 "headline": {
@@ -270,7 +275,7 @@ Feature: Content Profile
                 "slugline": {"maxlength": 24, "type": "string"}
             },
             "editor": {
-                "slugline": {"order": 1, "sdWidth": "full", "enabled": true}
+                "slugline": {"order": 0, "sdWidth": "full", "enabled": true}
             }
         }
         """
@@ -286,7 +291,7 @@ Feature: Content Profile
                 "slugline": {"maxlength": 24, "type": "string"}
             },
             "editor": {
-                "slugline": {"order": 1, "sdWidth": "full", "enabled": true}
+                "slugline": {"order": 0, "sdWidth": "full", "enabled": true}
             }
         }
         """
@@ -475,6 +480,11 @@ Feature: Content Profile
                 },
                 "slugline": {
                     "enabled": true,
+                    "order": 0,
+                    "sdWidth": "full"
+                },
+                "keywords": {
+                    "enabled": false,
                     "order": 1,
                     "sdWidth": "full"
                 },
@@ -708,9 +718,14 @@ Feature: Content Profile
                     "enabled": true
                 },
                 "slugline": {
-                    "order": 1,
+                    "order": 0,
                     "sdWidth": "full",
                     "enabled": true
+                },
+                "keywords": {
+                    "order": 1,
+                    "sdWidth": "full",
+                    "enabled": false
                 },
                 "category": {
                     "field_name": "NTB Category",
@@ -810,7 +825,7 @@ Feature: Content Profile
                 "slugline": {"maxlength": 24, "type": "string"}
             },
             "editor": {
-                "slugline": {"order": 1, "sdWidth": "full", "enabled": true}
+                "slugline": {"order": 0, "sdWidth": "full", "enabled": true}
             }
         }
         """
@@ -826,7 +841,7 @@ Feature: Content Profile
                 "slugline": {"maxlength": 24, "type": "string"}
             },
             "editor": {
-                "slugline": {"order": 1, "sdWidth": "full", "enabled": true}
+                "slugline": {"order": 0, "sdWidth": "full", "enabled": true}
             }
         }
         """
@@ -889,8 +904,13 @@ Feature: Content Profile
                 },
                 "slugline": {
                     "sdWidth": "full",
-                    "order": 1,
+                    "order": 0,
                     "enabled": true
+                },
+                "keywords": {
+                    "sdWidth": "full",
+                    "order": 1,
+                    "enabled": false
                 },
                 "headline": {
                     "formatOptions": ["underline", "anchor", "bold", "removeFormat"],
