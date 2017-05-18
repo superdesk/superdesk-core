@@ -73,6 +73,14 @@ class FTPFeedingService(FeedingService):
         config = provider.get('config', {})
         last_updated = provider.get('last_updated')
         crt_last_updated = None
+        if config.get('move', False):
+            try:
+                move_dest_path = os.path.join(config.get('path', ''), config['move_path'])
+            except KeyError:
+                logger.warning('missing move_path')
+                move_dest_path = None
+        else:
+            move_dest_path = None
 
         if 'dest_path' not in config:
             config['dest_path'] = tempfile.mkdtemp(prefix='superdesk_ingest_')
@@ -120,6 +128,15 @@ class FTPFeedingService(FeedingService):
                         parsed = [parsed]
 
                     items.append(parsed)
+                    if move_dest_path is not None:
+                        move_dest_file_path = os.path.join(move_dest_path, filename)
+                        try:
+                            ftp.rename(filename, move_dest_file_path)
+                        except ftplib.all_errors as e:
+                            logger.warning("Can't move file from {src} to {dest}: {reason}".format(
+                                src=filename,
+                                dest=move_dest_file_path,
+                                reason=e))
             if crt_last_updated:
                 update[LAST_UPDATED] = crt_last_updated
             return items
