@@ -5,6 +5,7 @@ from apps.tasks import send_to
 from superdesk import register_resource, item_published, get_resource_service, privilege
 from superdesk.services import Service
 from superdesk.resource import Resource
+from superdesk.metadata.item import PUBLISH_SCHEDULE, SCHEDULE_SETTINGS
 
 
 NAME = 'internal_destinations'
@@ -52,7 +53,8 @@ def handle_item_published(sender, item, **extra):
         if dest.get('desk'):
             send_to(new_item, desk_id=dest['desk'], stage_id=dest.get('stage'))
 
-        archive_service.duplicate_content(new_item, state='routed')
+        extra_fields = [PUBLISH_SCHEDULE, SCHEDULE_SETTINGS]
+        archive_service.duplicate_content(new_item, state='routed', extra_fields=extra_fields)
 
 
 def init_app(app):
