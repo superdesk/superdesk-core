@@ -423,7 +423,7 @@ class ArchiveService(BaseService):
         doc.update(old)
         return item_id
 
-    def duplicate_content(self, original_doc, state=None):
+    def duplicate_content(self, original_doc, state=None, extra_fields=None):
         """
         Duplicates the 'original_doc' including it's version history. Copy and Duplicate actions use this method.
 
@@ -439,9 +439,9 @@ class ArchiveService(BaseService):
                             item, _item_id, _endpoint = self.packageService.get_associated_item(assoc)
                             assoc[RESIDREF] = assoc['guid'] = self.duplicate_content(item)
 
-        return self._duplicate_item(original_doc, state)
+        return self._duplicate_item(original_doc, state, extra_fields)
 
-    def _duplicate_item(self, original_doc, state=None):
+    def _duplicate_item(self, original_doc, state=None, extra_fields=None):
         """Duplicates an item.
 
         Duplicates the 'original_doc' including it's version history. If the article being duplicated is contained
@@ -451,7 +451,7 @@ class ArchiveService(BaseService):
         """
 
         new_doc = original_doc.copy()
-        self._remove_after_copy(new_doc)
+        self._remove_after_copy(new_doc, extra_fields)
         on_duplicate_item(new_doc, original_doc)
         resolve_document_version(new_doc, SOURCE, 'PATCH', new_doc)
 
@@ -470,8 +470,11 @@ class ArchiveService(BaseService):
 
         return new_doc['guid']
 
-    def _remove_after_copy(self, copied_item):
+    def _remove_after_copy(self, copied_item, extra_fields=None):
         """Removes the properties which doesn't make sense to have for an item after copy.
+
+        :param copied_item: item to copy
+        :param extra_fields: extra fields to copy besides content fields
         """
         # get the archive schema keys
         archive_schema_keys = list(app.config['DOMAIN'][SOURCE]['schema'].keys())
@@ -483,6 +486,9 @@ class ArchiveService(BaseService):
         keys_to_delete.extend([config.ID_FIELD, 'guid', LINKED_IN_PACKAGES, EMBARGO, PUBLISH_SCHEDULE,
                                SCHEDULE_SETTINGS, 'lock_time', 'lock_action', 'lock_session', 'lock_user', SIGN_OFF,
                                'rewritten_by', 'rewrite_of', 'rewrite_sequence', 'highlights', '_type', 'event_id'])
+
+        if extra_fields:
+            keys_to_delete = [key for key in keys_to_delete if key not in extra_fields]
 
         for key in keys_to_delete:
             copied_item.pop(key, None)
