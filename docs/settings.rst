@@ -505,8 +505,10 @@ Default: ``http://localhost:9200``
 
 Default: ``contentapi``
 
-OAuth2 Settings
----------------
+.. _settings.google_oauth:
+
+Google OAuth Settings
+---------------------
 
 .. versionadded:: 1.8
 
