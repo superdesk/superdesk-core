@@ -25,7 +25,12 @@ Feature: Internal Destinations
             "pubstatus": "usable",
             "subject":[{"qcode": "17004000", "name": "Statistics"}],
             "anpa_category": [{"qcode": "A", "name": "Sport"}],
-            "anpa_take_key": "Take"
+            "anpa_take_key": "Take",
+            "publish_schedule": "2017-05-19T10:15:00",
+            "schedule_settings": {
+                "time_zone": "Europe/London",
+                "utc_publish_schedule": "2017-05-19T09:15:00+0000"
+            }
         }]
         """
 
@@ -49,6 +54,11 @@ Feature: Internal Destinations
             "state": "routed",
             "family_id": "#archive._id#",
             "task": {"desk": "#desks._id#"},
-            "body_html": "Body $10 (CAD 20)"
+            "body_html": "Body $10 (CAD 20)",
+            "publish_schedule": "2017-05-19T10:15:00+0000",
+            "schedule_settings": {
+                "time_zone": "Europe/London",
+                "utc_publish_schedule": "2017-05-19T09:15:00+0000"
+            }
         }]}
         """
