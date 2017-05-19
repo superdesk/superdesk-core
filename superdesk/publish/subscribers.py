@@ -22,6 +22,7 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.publish import subscriber_types, SUBSCRIBER_TYPES  # NOQA
 from flask import current_app as app
 from superdesk.metadata.utils import ProductTypes
+from superdesk.notification import push_notification
 
 
 logger = logging.getLogger(__name__)
@@ -133,11 +134,17 @@ class SubscribersService(BaseService):
             self._validate_seq_num_settings(doc)
             self._validate_products_destinations(doc)
 
+    def on_created(self, docs):
+        push_notification('subscriber:create', _id=[doc.get(config.ID_FIELD) for doc in docs])
+
     def on_update(self, updates, original):
         self._validate_seq_num_settings(updates)
         subscriber = deepcopy(original)
         subscriber.update(updates)
         self._validate_products_destinations(subscriber)
+
+    def on_updated(self, updates, original):
+        push_notification('subscriber:update', _id=[original.get(config.ID_FIELD)])
 
     def on_deleted(self, doc):
         get_resource_service('sequences').delete(lookup={
