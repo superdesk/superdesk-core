@@ -1,6 +1,6 @@
 Feature: Subscribers
 
-  @auth
+  @auth @notification
   Scenario: Add a new subscriber
     Given empty "subscribers"
     When we get "/subscribers"
@@ -20,7 +20,12 @@ Feature: Subscribers
       "destinations":[{"name":"destination1","format": "nitf", "delivery_type":"FTP","config":{"ip":"144.122.244.55","password":"xyz"}}]
     }
     """
-    And we get "/subscribers"
+    Then we get OK response
+    Then we get notifications
+    """
+    [{"event": "subscriber:create", "extra": {"_id": ["#subscribers._id#"]}}]
+    """
+    When we get "/subscribers"
     Then we get list with 1 items
     """
     {"_items":[{"name":"News1", "is_targetable": true}]}
@@ -79,7 +84,7 @@ Feature: Subscribers
     Then we get response code 201
 
 
-  @auth
+  @auth @notification
   Scenario: Update a subscriber
     Given empty "subscribers"
     When we post to "/products" with success
@@ -96,13 +101,25 @@ Feature: Subscribers
       "destinations":[{"name":"destination1","format": "nitf", "delivery_type":"FTP","config":{"ip":"144.122.244.55","password":"xyz"}}]
     }
     """
-    And we patch latest
+    Then we get OK response
+    Then we get notifications
+    """
+    [{"event": "subscriber:create", "extra": {"_id": ["#subscribers._id#"]}}]
+    """
+    When we patch latest
     """
     {"destinations":[{"name":"destination2", "format": "nitf", "delivery_type":"email", "config":{"recipients":"abc@abc.com"}}]}
     """
     Then we get updated response
     """
     {"destinations":[{"name":"destination2", "format": "nitf", "delivery_type":"email", "config":{"recipients":"abc@abc.com"}}]}
+    """
+    Then we get notifications
+    """
+    [
+     {"event": "subscriber:create", "extra": {"_id": ["#subscribers._id#"]}},
+     {"event": "subscriber:update", "extra": {"_id": ["#subscribers._id#"]}}
+    ]
     """
 
   @auth
