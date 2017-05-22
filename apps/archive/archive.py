@@ -487,7 +487,8 @@ class ArchiveService(BaseService):
         keys_to_delete = [key for key in copied_item.keys() if key not in archive_schema_keys]
         keys_to_delete.extend([config.ID_FIELD, 'guid', LINKED_IN_PACKAGES, EMBARGO, PUBLISH_SCHEDULE,
                                SCHEDULE_SETTINGS, 'lock_time', 'lock_action', 'lock_session', 'lock_user', SIGN_OFF,
-                               'rewritten_by', 'rewrite_of', 'rewrite_sequence', 'highlights', '_type', 'event_id'])
+                               'rewritten_by', 'rewrite_of', 'rewrite_sequence', 'highlights', 'marked_desks',
+                               '_type', 'event_id'])
 
         if extra_fields:
             keys_to_delete = [key for key in keys_to_delete if key not in extra_fields]

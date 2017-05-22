@@ -373,7 +373,7 @@ Feature: Duplication of Content
       Then the field "event_id" value is not "abc123"
 
     @auth
-    Scenario: Duplicate an Updated and Highlighted Item
+    Scenario: Duplicate an Updated, Highlighted and Marked Item
       When we rewrite "123"
       """
       {"desk_id": "#desks._id#"}
@@ -387,17 +387,22 @@ Feature: Duplication of Content
       """
       {"name": "highlight1", "desks": ["#desks._id#"]}
       """
-      When we post to "marked_for_highlights"
+      And we post to "marked_for_highlights"
       """
       [{"highlights": "#highlights._id#", "marked_item": "123"}]
       """
-      When we post to "/archive/123/duplicate" with success
+      And we post to "/marked_for_desks" with success
+      """
+      [{"marked_desk": "#desks._id#", "marked_item": "#archive._id#"}]
+      """
+      And we post to "/archive/123/duplicate" with success
       """
       {"desk": "#desks._id#","type": "archive"}
       """
       And we get "/archive/#duplicate._id#"
       Then there is no "rewritten_by" in response
       Then there is no "highlights" in response
+      Then there is no "marked_desks" in response
       When we post to "/archive/#REWRITE_ID#/duplicate" with success
       """
       {"desk": "#desks._id#","type": "archive"}
