@@ -25,8 +25,10 @@ class OAuthResource(AuthResource):
 def configure_oauth(app):
     superdesk.register_resource('oauth', OAuthResource, OAuthService)
     oauth = OAuth(app)
+    app.client_config['google_auth'] = False
     if app.config.get('GOOGLE_CLIENT_ID') and app.config.get('GOOGLE_CLIENT_SECRET'):
         configure_google(app, oauth)
+        app.client_config['google_auth'] = True
 
 
 def configure_google(app, oauth):
