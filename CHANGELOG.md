@@ -1,5 +1,86 @@
 # Superdesk Server Changelog
 
+## [1.7] 2017-05-23
+
+### Fixed
+
+- Keep item schedule when using internal destinations.
+- Set pending state on items when there is an error during enqueue in order to try again next time.
+- Fix unlock requiring privileges to modify unique name.
+- Update mapping for associations to enable searching for featuremedia.
+- Fix ap anpa parser throwing exception in dateline parsing.
+- Update embedded image caption using associations metadata.
+- Fix pydocstyle version.
+- Fix renditions generator when crop is missing.
+- Fix rewrites missing `_current_version` field.
+- Fix `first_paragraph` template filter.
+- Avoid dynamic elastic mapping.
+- Fix image renditions being few pixels shorter than specified width.
+- Add mongo index on `guid` for `archive_versions` resource.
+- Remove highlights info and marked for desk status from archived items.
+- Optimize content filtering for global block filters.
+- Content filter referenced by api product sould not be deletable.
+- Non required fields in content profile should have minlenght set to `0`.
+- Fix update ingest when scheme is missing.
+- Fix Correct and Kill buttons missing when workqueue item is opened.
+- Handle newlines in kill template body.
+- Fix resending of published item to digital subscribers.
+- Update session `_updated` time on autosave.
+- Use item `_id` when adding to highlights instead of `guid`.
+- Fix history for highlights.
+- Validate updated content when checking marked not for publication.
+- Fix search results highlighting with elastic 2.x.
+- Previous versions of killed item should not be visible in Content API.
+- Use self-closed html elements for empty fields in NewsMLG2 formatter.
+- Fix handling of existing digital package if takes are disabled.
+- Apply specified stage when getting items from external source.
+- Remove obsolete Public API auth module.
+- Avoid elastic index initialization in rest/work processes.
+- Handle `<br />` in NITF formatter.
+- Remove fields excluded from profile in output.
+- Fix missing html part in email output when dateline was missing.
+- Preserve `\r` char when parsing content.
+- Fix validate exception catching in validate service.
+- Use `superdesk.macros` as a default value for `MACROS_MODULE` config.
+- Ingest supports items with predefined ids.
+
+### Added
+
+- Push notification when subscriber is added/updated.
+- Push notification when scheduled item gets published.
+- Purge content from Content API when expired.
+- Purge exported files from storage.
+- Add filter condition for *embargo* field.
+- Allow search provider to specify label.
+- Add `fix_html_void_elements` to `superdesk.etree` and use it in NewsMLG2 formatter.
+- Provide distinct caption and description for images.
+- Allow duplication to different desk/stage.
+- Add product types to products.
+- Add internal destinations feature.
+- Allow ingest triggering via webhook.
+- Add item versioning to Content API.
+- Add Wufoo service provider and parser.
+- Keep audit of items/assets retrieved from Content API.
+- Add export feature for items.
+- Add support for elastic 2.x.
+- Display instance registration form on first login.
+
+### Changed
+
+- Start using signature version 4 on S3.
+- When unlocking an item save existing autosave as a new item version.
+- Remove groups.
+- Don't put default ednote for embargoed stories.
+- Stop generating custom crops on upload, only create system renditions.
+- Use headline for kill email subject.
+- Remove Reuters provider from init data.
+- Update NINJS superdesk output.
+- Update dependencies (eve, hachoir3, pillow, arrow).
+- Change `search_providers_proxy` privilege to `archive`.
+- Separate history from item versions.
+- Move analytics into its own repository.
+- Switch from `ElementTree` and `BeautifulSoup` to `lxml` library.
+
 ## [1.6.2] 2017-03-01
 
 ### Fixed
