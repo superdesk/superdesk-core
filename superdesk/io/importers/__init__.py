@@ -13,6 +13,7 @@ from superdesk import get_resource_service
 from superdesk.io import registry
 from lxml import etree
 import sys
+from superdesk.metadata.item import ITEM_STATE
 
 
 class ImportCommand(superdesk.Command):
@@ -44,12 +45,15 @@ class ImportCommand(superdesk.Command):
         with open(path, 'rb') as f:
             buf = f.read()
             buf = buf.replace(b'\r', b'&#13;')
-            parser = etree.XMLParser(recover=True)
-            parsed = etree.fromstring(buf, parser)
+            xml_parser = etree.XMLParser(recover=True)
+            parsed = etree.fromstring(buf, xml_parser)
         articles = feed_parser.parse(parsed)
+        updates = {ITEM_STATE: 'published'}
         if profile is not None:
-            for article in articles:
-                article['profile'] = profile_id
+            updates['profile'] = profile_id
+        for article in articles:
+            article.update(updates)
+            article.setdefault('source', parser)
         archived_service = get_resource_service("archived")
         archived_service.post(articles)
 
