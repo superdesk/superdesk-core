@@ -54,7 +54,7 @@ class Formatter(metaclass=FormatterRegistry):
         :return: body with public service announcements.
         """
         try:
-            article['body_html'].replace('<br>', '<br/>')
+            article['body_html'] = article['body_html'].replace('<br>', '<br/>')
         except KeyError:
             pass
 
@@ -116,8 +116,8 @@ class Formatter(metaclass=FormatterRegistry):
 
         for p in root.xpath('//p'):
             para = etree.SubElement(element, 'p')
-            if len(p.xpath('//br')) > 0:
-                for br in p.xpath('//br'):
+            if len(p.xpath('.//br')) > 0:
+                for br in p.xpath('.//br'):
                     etree.SubElement(para, 'br').text = br.text
             para.text = etree.tostring(p, encoding="unicode", method="text")
 
