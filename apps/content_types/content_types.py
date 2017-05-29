@@ -20,7 +20,7 @@ class DefaultSchema(schema.Schema):
     """Default schema."""
 
     #: keywords
-    keywords = schema.StringField()
+    keywords = schema.ListField()
 
     #: slugline
     slugline = schema.StringField(maxlength=24)
