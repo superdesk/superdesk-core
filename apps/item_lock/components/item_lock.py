@@ -76,11 +76,13 @@ class ItemLock(BaseComponent):
 
                 superdesk.get_resource_service('tasks').assign_user(item[config.ID_FIELD], item[TASK])
                 self.app.on_item_locked(item, user_id)
+                item = item_model.find_one(item_filter)
                 push_notification('item:lock',
                                   item=str(item.get(config.ID_FIELD)),
                                   item_version=str(item.get(config.VERSION)),
                                   user=str(user_id), lock_time=updates['lock_time'],
-                                  lock_session=str(session_id))
+                                  lock_session=str(session_id),
+                                  _etag=item.get(config.ETAG))
             else:
                 raise SuperdeskApiError.forbiddenError(message=error_message)
 
@@ -104,6 +106,7 @@ class ItemLock(BaseComponent):
 
         if can_user_unlock:
             self.app.on_item_unlock(item, user_id)
+            updates = {}
 
             # delete the item if nothing is saved so far
             # version 0 created on lock item
@@ -128,17 +131,18 @@ class ItemLock(BaseComponent):
                     insert_versioning_documents('archive', item)
                 else:
                     item_model.update(item_filter, updates)
+                    item = item_model.find_one(item_filter)
                 self.app.on_item_unlocked(item, user_id)
 
             push_notification('item:unlock',
                               item=str(item_filter.get(config.ID_FIELD)),
                               item_version=str(item.get(config.VERSION)),
                               state=item.get(ITEM_STATE),
-                              user=str(user_id), lock_session=str(session_id))
+                              user=str(user_id), lock_session=str(session_id),
+                              _etag=item.get(config.ETAG))
         else:
             raise SuperdeskApiError.forbiddenError(message=error_message)
 
-        item = item_model.find_one(item_filter)
         return item
 
     def unlock_session(self, user_id, session_id):
