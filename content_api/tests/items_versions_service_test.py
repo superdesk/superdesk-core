@@ -41,7 +41,7 @@ class ItemDeleteTestCase(TestCase):
 
         items_service.delete_action(lookup={'_id': {'$in': item_ids}})
         for item_id in item_ids:
-            item = items_service.find_one(req=None, _ia=item_id)
+            item = items_service.find_one(req=None, _id=item_id)
             self.assertIsNone(item)
 
         for ver_id in ver_ids:

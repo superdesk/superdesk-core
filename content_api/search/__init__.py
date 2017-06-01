@@ -14,6 +14,7 @@ from .resource import SearchResource
 
 
 def init_app(app):
-    endpoint_name = 'search_api'
+    endpoint_name = 'search_capi'
     service = SearchService(endpoint_name, backend=superdesk.get_backend())
     SearchResource(endpoint_name, app=app, service=service)
+    superdesk.privilege(name=endpoint_name, label='Content API Search', description='Content API Search')

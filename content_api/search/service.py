@@ -9,28 +9,33 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from content_api.items.service import ItemsService
+from flask import g
+
+from superdesk import get_resource_privileges
+from superdesk.errors import SuperdeskApiError
 
 
 class SearchService(ItemsService):
-    """This class wraps the external Items API endpoint implimented by ItemsService but will allow the filtering by
-    subsciber and the return of aggregates
+    """This class wraps the external Items API endpoint implemented by ItemsService but will allow the filtering by
+    subscriber and the return of aggregates
     """
 
-    # Uasge is something like :-
-    #  http://localhost:5000/api/search_api?where={"headline":"muppets"}&start_date=1975-12-31
+    # Usage is something like :-
+    #  http://localhost:5000/api/search_capi?where={"headline":"muppets"}&start_date=1975-12-31
     #        &subscribers=558384d31d41c849d9614500
     #
     #    or for all subscribers
-    #    http://localhost:5000/api/search_api?where={"headline":"muppets"}&start_date=1975-12-31
+    #    http://localhost:5000/api/search_capi?where={"headline":"muppets"}&start_date=1975-12-31
 
     allowed_params = {
         'start_date', 'end_date',
         'include_fields', 'exclude_fields',
         'max_results', 'page',
-        'where',
-        'version',
-        'subscribers',
-        'aggregations'
+        'where', 'version',
+        'subscribers', 'aggregations',
+        'q', 'default_operator', 'sort', 'filter',
+        'service', 'subject', 'genre', 'urgency',
+        'priority', 'type', 'item_source'
     }
 
     excluded_fields_from_response = {}
@@ -51,30 +56,52 @@ class SearchService(ItemsService):
         :param response:
         :return:
         """
+        if not response:
+            return None
+
         for item in response:
-            if item.get('service'):
-                item['anpa_category'] = [self._format_cv_item(item) for item in item.get('service', [])]
-                item.pop('service')
+            self._map_item(item)
 
-            if item.get('subject'):
-                item['subject'] = [self._format_cv_item(item) for item in item.get('subject', [])]
+        return response
 
-            if item.get('genre'):
-                item['genre'] = [self._format_cv_item(item) for item in item.get('genre', [])]
+    def _map_item(self, item):
+        """Maps the associations.
+        :param dict item:
+        :return:
+        """
+        if not item:
+            return
 
-            if item.get('place'):
-                item['place'] = [self._format_cv_item(item) for item in item.get('place', [])]
+        if item.get('service'):
+            item['anpa_category'] = [self._format_cv_item(item) for item in (item.get('service') or [])]
+            item.pop('service')
 
-        if response.hits.get('aggregations') and 'category' in response.hits.get('aggregations', {}):
-            response.hits.get('aggregations')['anpa_category'] = response.hits.get('aggregations').get('category', {})
-            response.hits.get('aggregations').pop('category')
+        if item.get('subject'):
+            item['subject'] = [self._format_cv_item(item) for item in (item.get('subject') or [])]
 
+        if item.get('genre'):
+            item['genre'] = [self._format_cv_item(item) for item in (item.get('genre') or [])]
+
+        if item.get('place'):
+            item['place'] = [self._format_cv_item(item) for item in (item.get('place') or [])]
+
+        if item.get('signal'):
+            item['flags'] = {'marked_for_legal': True for signal in item.get('signal')
+                             if signal.get('code') == 'cwarn'}
+
+    def find_one(self, req, **lookup):
+        self.check_get_access_privilege()
+        response = super().find_one(req, **lookup)
+        self._map_item(response)
         return response
 
     def get(self, req, lookup):
         # if there is a subscriber argumment map it into the lookup
+        self.check_get_access_privilege()
         if req and req.args and req.args.get('subscribers'):
             lookup = {'subscribers': req.args.get('subscribers')}
+            g.subscriber = req.args.get('subscribers')
+
         response = super().get(req, lookup)
         if response.count() > 0:
             return self._map_response(response)
@@ -92,3 +119,35 @@ class SearchService(ItemsService):
         """
         self._process_item_renditions(document)
         self._process_item_associations(document)
+        self._map_associations(document)
+
+    def _map_associations(self, item):
+        """Map association response.
+
+        :param dict item:
+        """
+        allowed_items = {}
+        if item.get('associations'):
+            for _k, v in item.get('associations', {}).items():
+                self._map_item(v)
+                v['_id'] = v.get('guid', v.get('_id'))
+                allowed_items[_k] = v
+
+        item['associations'] = allowed_items
+
+    def check_get_access_privilege(self):
+        """Checks if user is authorized to perform get operation on search api.
+
+        If authorized then request is
+        forwarded otherwise throws forbidden error.
+
+        :raises: SuperdeskApiError.forbiddenError() if user is unauthorized to access the Legal Archive resources.
+        """
+
+        if not hasattr(g, 'user'):
+            return
+
+        privileges = g.user.get('active_privileges', {})
+        resource_privileges = get_resource_privileges(self.datasource).get('GET', None)
+        if privileges.get(resource_privileges, 0) == 0:
+            raise SuperdeskApiError.forbiddenError()
