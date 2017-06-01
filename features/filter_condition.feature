@@ -122,5 +122,5 @@ Feature: Filter Condition
     When we delete "/filter_conditions/#filter_conditions._id#"
     Then we get error 400
     """
-    {"_status": "ERR", "_message": "Filter condition has been referenced in pf:soccer"}
+    {"_status": "ERR", "_message": "Filter condition has been referenced in content filter: soccer"}
     """

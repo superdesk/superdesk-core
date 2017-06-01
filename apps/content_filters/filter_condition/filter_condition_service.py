@@ -31,7 +31,8 @@ class FilterConditionService(BaseService):
         referenced_filters = self._get_referenced_filter_conditions(lookup.get('_id'))
         if referenced_filters.count() > 0:
             references = ','.join([pf['name'] for pf in referenced_filters])
-            raise SuperdeskApiError.badRequestError('Filter condition has been referenced in pf:{}'.format(references))
+            raise SuperdeskApiError.badRequestError('Filter condition has been referenced in content filter: {}'
+                                                    .format(references))
         return super().delete(lookup)
 
     def _get_referenced_filter_conditions(self, id):
