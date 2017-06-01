@@ -91,6 +91,11 @@ def get_app(config=None, media_storage=None, config_object=None):
 
     app.jinja_options = {'autoescape': False}
 
+    # init client_config with default config
+    app.client_config = {
+        'no_takes': app.config.get('NO_TAKES', False),
+    }
+
     superdesk.app = app
 
     custom_loader = jinja2.ChoiceLoader([

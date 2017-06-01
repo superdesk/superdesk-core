@@ -329,6 +329,7 @@ CORE_APPS = [
     'superdesk.backend_meta',
     'superdesk.server_config',
     'superdesk.internal_destinations',
+    'apps.client_config',
 ]
 
 #: Specify what modules should be enabled
