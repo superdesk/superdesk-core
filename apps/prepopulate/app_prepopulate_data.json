@@ -387,6 +387,100 @@
     },
 
     {
+        "data": {
+            "_id": "urgency",
+            "display_name": "Urgency",
+            "type": "manageable",
+            "unique_field": "qcode",
+            "items": [
+                {"is_active": true, "name": "1", "qcode": 1},
+                {"is_active": true, "name": "2", "qcode": 2},
+                {"is_active": true, "name": "3", "qcode": 3},
+                {"is_active": true, "name": "4", "qcode": 4},
+                {"is_active": true, "name": "5", "qcode": 5}
+            ]
+        },
+        "resource": "vocabularies",
+		"id_name": "-id vocabularies urgency-"
+    },
+
+    {
+        "data": {
+            "_id": "priority",
+            "display_name": "Priority",
+            "type": "manageable",
+            "items": [
+                {"is_active": true, "name": "1", "qcode": 1},
+                {"is_active": true, "name": "2", "qcode": 2},
+                {"is_active": true, "name": "3", "qcode": 3},
+                {"is_active": true, "name": "4", "qcode": 4},
+                {"is_active": true, "name": "5", "qcode": 5},
+                {"is_active": true, "name": "6", "qcode": 6},
+                {"is_active": false, "name": "7", "qcode": 7},
+                {"is_active": false, "name": "8", "qcode": 8},
+                {"is_active": false, "name": "9", "qcode": 9}
+            ]
+        },
+        "resource": "vocabularies",
+		"id_name": "-id vocabularies priority-"
+    },
+
+    {
+        "data": {
+            "_id": "type",
+            "display_name": "Article Type",
+            "type": "unmanageable",
+            "items": [
+                {"is_active": true, "name": "text", "qcode": "text"},
+                {"is_active": true, "name": "preformatted", "qcode": "preformatted"},
+                {"is_active": true, "name": "audio", "qcode": "audio"},
+                {"is_active": true, "name": "video", "qcode": "video"},
+                {"is_active": true, "name": "picture", "qcode": "picture"},
+                {"is_active": true, "name": "graphic", "qcode": "graphic"},
+                {"is_active": true, "name": "composite", "qcode": "composite"}
+            ]
+        },
+        "resource": "vocabularies",
+		"id_name": "-id vocabularies priority-"
+    },
+
+    {
+        "data": {
+            "_id": "locators",
+            "display_name": "Locators",
+            "type": "unmanageable",
+            "items": [
+                {"is_active": true, "name": "ACT", "qcode": "ACT", "state": "Australian Capital Territory", "country": "Australia", "world_region": "Oceania", "group": "Australia"},
+                {"is_active": true, "name": "ADV", "qcode": "ADV", "group": ""},
+                {"is_active": true, "name": "AFR", "qcode": "AFR", "state": "", "country": "", "world_region": "Africa", "group": "Rest Of World"},
+                {"is_active": true, "name": "ASIA", "qcode": "ASIA", "state": "", "country": "", "world_region": "Asia", "group": "Rest Of World"},
+                {"is_active": true, "name": "CAN", "qcode": "CAN", "state": "", "country": "Canada", "world_region": "North America", "group": "Rest Of World"},
+                {"is_active": true, "name": "CHN", "qcode": "CHN", "state": "", "country": "China", "world_region": "Asia", "group": "Rest Of World"},
+                {"is_active": true, "name": "CIS", "qcode": "CIS", "state": "", "country": "", "world_region": "Commonwealth of Independent States", "group": "Rest Of World"},
+                {"is_active": true, "name": "EUR", "qcode": "EUR", "state": "", "country": "", "world_region": "Europe", "group": "Rest Of World"},
+                {"is_active": true, "name": "FED", "qcode": "FED", "state": "", "country": "Australia", "world_region": "Oceania", "group": "Australia"},
+                {"is_active": true, "name": "IRE", "qcode": "IRE", "state": "", "country": "Ireland", "world_region": "Europe", "group": "Rest Of World"},
+                {"is_active": true, "name": "JPN", "qcode": "JPN", "state": "", "country": "Japan", "world_region": "Asia", "group": "Rest Of World"},
+                {"is_active": true, "name": "MID", "qcode": "MID", "state": "", "country": "", "world_region": "Middle East", "group": "Rest Of World"},
+                {"is_active": true, "name": "NSW", "qcode": "NSW", "state": "New South Wales", "country": "Australia", "world_region": "Oceania", "group": "Australia"},
+                {"is_active": true, "name": "NT", "qcode": "NT", "state": "Northern Territory", "country": "Australia", "world_region": "Oceania", "group": "Australia"},
+                {"is_active": true, "name": "NZ", "qcode": "NZ", "state": "", "country": "New Zealand", "world_region": "Oceania", "group": "Rest Of World"},
+                {"is_active": true, "name": "PAC", "qcode": "PAC", "state": "", "country": "", "world_region": "Pacific Island Nations", "group": "Rest Of World"},
+                {"is_active": true, "name": "QLD", "qcode": "QLD", "state": "Queensland", "country": "Australia", "world_region": "Oceania", "group": "Australia"},
+                {"is_active": true, "name": "SA", "qcode": "SA", "state": "South Australia", "country": "Australia", "world_region": "Oceania", "group": "Australia"},
+                {"is_active": true, "name": "SAM", "qcode": "SAM", "group": "Rest Of World"},
+                {"is_active": true, "name": "TAS", "qcode": "TAS", "state": "Tasmania", "country": "Australia", "world_region": "Oceania", "group": "Australia"},
+                {"is_active": true, "name": "UK", "qcode": "UK", "state": "", "country": "", "world_region": "Europe", "group": "Rest Of World"},
+                {"is_active": true, "name": "US", "qcode": "US", "state": "", "country": "United States Of America", "world_region": "North America", "group": "Rest Of World"},
+                {"is_active": true, "name": "VIC", "qcode": "VIC", "state": "Victoria", "country": "Australia", "world_region": "Oceania", "group": "Australia"},
+                {"is_active": true, "name": "WA", "qcode": "WA", "state": "Western Australia", "country": "Australia", "world_region": "Oceania", "group": "Australia"}
+            ]
+        },
+        "resource": "vocabularies",
+		"id_name": "-id vocabularies priority-"
+    },
+
+    {
         "resource":"ingest_providers",
         "username": "admin",
         "id_name": "-id Ingest Provider-",
@@ -823,7 +917,7 @@
             "original_creator": "-id user admin-",
             "state": "in_progress",
             "pubstatus": "usable",
-            "urgency": 1,
+            "urgency": 3,
             "operation": "create",
             "subject": [{"name": "university", "parent": "05000000", "qcode": "05007000"}],
             "anpa_category": [{"qcode": "A", "name": "General News"}],
