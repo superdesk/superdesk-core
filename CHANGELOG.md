@@ -1,5 +1,41 @@
 # Superdesk Server Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- Remove `pf:` from content filter messages.
+- Handle deleted/disabled content profiles.
+- Fix clean images command not working with 1000+ images on S3.
+- Fix mapping for content api items to match superdesk resources.
+- Fix `iunieuq` filter when `search_backend` is configured on resource.
+- Make legal archive optional.
+- Set celery timezone to UTC.
+- Change default settings to not contain AAP info.
+
+### Added
+
+- Add `client_config` resource for exposing some config to client.
+- Add option to move ingested files via FTP to another path.
+- Support `keywords` field in content profile editor.
+- Let vocabularies specify schema.
+- Implement google oauth2 authentication.
+- Internal resource for content api items.
+- Add full elastic reindex from mongodb.
+- Test ingest config when creating/updating provider.
+- Add option for relative media urls.
+- Add Wordpress WXR parser.
+- Allow filtering of associated items by products.
+- Add `source` field to NINJS output.
+- Add extract html macro from NTB.
+- Create new template when new content profile is created.
+
+### Changed
+
+- Remove mark desk flag when item is duplicated.
+- Prevent changes to items on readonly stage.
+- Create mongo indexes and elastic mapping only during `app:initialize_data` action.
+
 ## [1.7] 2017-05-23
 
 ### Fixed
