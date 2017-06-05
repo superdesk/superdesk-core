@@ -1,5 +1,12 @@
 # Superdesk Server Changelog
 
+## [1.7.1] 2017-06-05
+
+### Fixed
+
+- Add `_etag` to `item:lock` and `item:unlock` notifications.
+- Fix NITF formatter inserting too many line breaks.
+
 ## [1.7] 2017-05-23
 
 ### Fixed
