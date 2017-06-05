@@ -1,10 +1,10 @@
 Feature: Content Locking
 
-    @auth
+    @auth @notification
     Scenario: Lock item and edit
         Given "archive"
         """
-        [{"_id": "item-1", "guid": "item-1", "headline": "test"}]
+        [{"_id": "item-1", "guid": "item-1", "headline": "test", "_current_version": 2}]
         """
         When we post to "/archive/item-1/lock"
         """
@@ -15,6 +15,21 @@ Feature: Content Locking
         {"_id": "item-1", "guid": "item-1", "headline": "test", "lock_user": "#CONTEXT_USER_ID#"}
         """
         And item "item-1" is assigned
+        And we get notifications
+        """
+        [
+            {
+                "event": "item:lock",
+                "extra": {
+                    "item": "item-1",
+                    "item_version": "2",
+                    "user": "#CONTEXT_USER_ID#",
+                    "lock_session": "__any_value__",
+                    "_etag": "#lock._etag#"
+                }
+            }
+        ]
+        """
         When we patch "/archive/item-1"
         """
         {"headline": "test 2"}
@@ -49,8 +64,8 @@ Feature: Content Locking
         And we get "/archive/item-1"
         Then we get error 404
 
-    @auth
-    Scenario: Unlocking version 1+ item unlockes the item
+    @auth @notification
+    Scenario: Unlocking version 1+ item unlocks the item
         Given "archive"
         """
         [{"_id": "item-1", "guid": "item-1", "headline": "test", "_current_version": 1}]
@@ -63,12 +78,56 @@ Feature: Content Locking
         """
         {"_id": "item-1", "guid": "item-1", "headline": "test", "lock_user": "#CONTEXT_USER_ID#"}
         """
-
+        And we get notifications
+        """
+        [
+            {
+                "event": "item:lock",
+                "extra": {
+                    "item": "item-1",
+                    "item_version": "1",
+                    "user": "#CONTEXT_USER_ID#",
+                    "lock_session": "__any_value__",
+                    "_etag": "#lock._etag#"
+                }
+            }
+        ]
+        """
         When we post to "/archive/item-1/unlock"
         """
         {}
         """
-        And we get "/archive/item-1"
+        Then we get new resource
+        """
+        {"_id": "item-1", "guid": "item-1", "headline": "test", "lock_user": null}
+        """
+        And we get notifications
+        """
+        [
+            {
+                "event": "item:lock",
+                "extra": {
+                    "item": "item-1",
+                    "item_version": "1",
+                    "user": "#CONTEXT_USER_ID#",
+                    "lock_session": "__any_value__",
+                    "_etag": "#lock._etag#"
+                }
+            },
+            {
+                "event": "item:unlock",
+                "extra": {
+                    "item": "item-1",
+                    "item_version": "1",
+                    "state": "#unlock.state#",
+                    "user": "#CONTEXT_USER_ID#",
+                    "lock_session": "__any_value__",
+                    "_etag": "#unlock._etag#"
+                }
+            }
+        ]
+        """
+        When we get "/archive/item-1"
         Then we get response code 200
 
         When we get "/workqueue?source={"filter": {"term": {"lock_user": "#CONTEXT_USER_ID#"}}}"
