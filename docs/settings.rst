@@ -270,6 +270,13 @@ Celery settings
 
 Default: ``'redis://localhost:6379'``
 
+``CELERY_WORKER_CONCURRENCY``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``None``
+
+If not set it will be the number of CPUs available.
+
 .. _settings.monitoring:
 
 Monitoring settings
