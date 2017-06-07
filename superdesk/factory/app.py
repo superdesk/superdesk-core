@@ -9,17 +9,18 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import importlib
 import os
 import eve
 import flask
 import jinja2
+import importlib
 import superdesk
 
+from flask_mail import Mail
 from eve.auth import TokenAuth
 from eve.io.mongo import MongoJSONEncoder, create_index
 from eve.render import send_response
-from flask_mail import Mail
+
 from superdesk.celery_app import init_celery
 from superdesk.datalayer import SuperdeskDataLayer  # noqa
 from superdesk.errors import SuperdeskError, SuperdeskApiError
@@ -28,7 +29,6 @@ from superdesk.io import registered_feeding_services
 from superdesk.logging import configure_logging
 from superdesk.storage import AmazonMediaStorage, SuperdeskGridFSMediaStorage
 from superdesk.validator import SuperdeskValidator
-from superdesk.oauth import configure_oauth
 
 
 class SuperdeskEve(eve.Eve):
@@ -165,6 +165,5 @@ def get_app(config=None, media_storage=None, config_object=None):
         registered_feeding_services[key] = provider() if isinstance(provider, type) else provider
 
     configure_logging(app.config['LOG_CONFIG_FILE'])
-    configure_oauth(app)
 
     return app
