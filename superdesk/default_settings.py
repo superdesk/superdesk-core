@@ -187,6 +187,7 @@ CELERY_WORKER_DISABLE_RATE_LIMITS = True
 CELERY_WORKER_TASK_SOFT_TIME_LIMIT = 300
 CELERY_WORKER_LOG_FORMAT = '%(message)s level=%(levelname)s process=%(processName)s'
 CELERY_WORKER_TASK_LOG_FORMAT = ' '.join([CELERY_WORKER_LOG_FORMAT, 'task=%(task_name)s task_id=%(task_id)s'])
+CELERY_WORKER_CONCURRENCY = env('CELERY_WORKER_CONCURRENCY') or None
 
 CELERY_TASK_DEFAULT_QUEUE = celery_queue('default')
 CELERY_TASK_DEFAULT_EXCHANGE = celery_queue('default')
