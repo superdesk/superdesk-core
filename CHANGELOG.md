@@ -15,6 +15,7 @@
 
 ### Added
 
+- Add `CELERY_WORKER_CONCURRENCY` setting.
 - Add `client_config` resource for exposing some config to client.
 - Add option to move ingested files via FTP to another path.
 - Support `keywords` field in content profile editor.
