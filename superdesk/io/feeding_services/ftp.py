@@ -31,6 +31,8 @@ except ImportError:
     from urlparse import urlparse
 
 logger = logging.getLogger(__name__)
+DEFAULT_SUCCESS_PATH = "_PROCESSED"
+DEFAULT_FAILURE_PATH = "_ERROR"
 
 
 class FTPFeedingService(FeedingService):
@@ -69,74 +71,122 @@ class FTPFeedingService(FeedingService):
         except Exception as ex:
             raise IngestFtpError.ftpError(ex, provider)
 
+    def _move(self, ftp, src, dest):
+        """Move distant file
+
+        :param ftp: FTP instance to use
+        :type ftp: ftplib.FTP
+        :param src: source path of the file to move
+        :type src: str
+        :param dest: dest path of the file to move
+        :type dest: str
+        """
+        try:
+            ftp.rename(src, dest)
+        except ftplib.all_errors as e:
+            logger.warning("Can't move file from {src} to {dest}: {reason}".format(
+                src=src,
+                dest=dest,
+                reason=e))
+
+    def _create_if_missing(self, ftp, path):
+        """Check if a dir exists, and create it else
+
+        :param ftp: FTP instance to use
+        :type ftp: ftplib.FTP
+        :param src: dir path to check
+        :type src: str
+        """
+        base_path = ftp.pwd()
+        try:
+            ftp.cwd(path)
+        except ftplib.all_errors:
+            # path probably doesn't exist
+            # catching all_errors is a bit overkill,
+            # but ftplib doesn't really have precise error
+            # for missing directory
+            ftp.mkd(path)
+        finally:
+            ftp.cwd(base_path)
+
     def _update(self, provider, update):
         config = provider.get('config', {})
         last_updated = provider.get('last_updated')
         crt_last_updated = None
         if config.get('move', False):
-            try:
-                move_dest_path = os.path.join(config.get('path', ''), config['move_path'])
-            except KeyError:
-                logger.warning('missing move_path')
-                move_dest_path = None
+            do_move = True
+            if not config.get('move_path'):
+                logger.debug('missing move_path, default will be used')
+            move_dest_path = os.path.join(config.get('path', ''), config.get('move_path') or DEFAULT_SUCCESS_PATH)
+            if not config.get('move_path_error'):
+                logger.debug('missing move_path_error, default will be used')
+            move_dest_path_error = os.path.join(config.get('path', ''),
+                                                config.get('move_path_error') or DEFAULT_FAILURE_PATH)
         else:
-            move_dest_path = None
+            do_move = False
 
         if 'dest_path' not in config:
             config['dest_path'] = tempfile.mkdtemp(prefix='superdesk_ingest_')
 
         try:
             with ftp_connect(config) as ftp:
+                if do_move:
+                    try:
+                        self._create_if_missing(ftp, move_dest_path)
+                        self._create_if_missing(ftp, move_dest_path_error)
+                    except ftplib.all_errors as e:
+                        logger.warning("Can't create move directory, files will not be moved: {reason}".format(
+                            reason=e))
+                        do_move = False
                 items = []
                 for filename, facts in ftp.mlsd():
                     if facts.get('type', '') != 'file':
                         continue
-
-                    if not filename.lower().endswith(self.FILE_SUFFIX):
-                        continue
-
-                    if last_updated:
-                        item_last_updated = datetime.strptime(facts['modify'], self.DATE_FORMAT).replace(tzinfo=utc)
-                        if item_last_updated < last_updated:
-                            continue
-                        elif not crt_last_updated or item_last_updated > crt_last_updated:
-                            crt_last_updated = item_last_updated
-
-                    local_file_path = os.path.join(config['dest_path'], filename)
                     try:
-                        with open(local_file_path, 'xb') as f:
-                            try:
-                                ftp.retrbinary('RETR %s' % filename, f.write)
-                            except ftplib.all_errors as ex:
-                                os.remove(local_file_path)
-                                logger.exception('Exception retrieving file from FTP server (%s)', filename)
+                        if not filename.lower().endswith(self.FILE_SUFFIX):
+                            raise
+
+                        if last_updated:
+                            item_last_updated = datetime.strptime(facts['modify'], self.DATE_FORMAT).replace(tzinfo=utc)
+                            if item_last_updated < last_updated:
                                 continue
-                    except FileExistsError:
-                        logger.error('Exception retrieving from FTP server, file already exists (%s)', local_file_path)
-                        continue
+                            elif not crt_last_updated or item_last_updated > crt_last_updated:
+                                crt_last_updated = item_last_updated
 
-                    registered_parser = self.get_feed_parser(provider)
-                    if isinstance(registered_parser, XMLFeedParser):
-                        xml = etree.parse(local_file_path).getroot()
-                        parser = self.get_feed_parser(provider, xml)
-                        parsed = parser.parse(xml, provider)
-                    else:
-                        parser = self.get_feed_parser(provider, local_file_path)
-                        parsed = parser.parse(local_file_path, provider)
-
-                    if isinstance(parsed, dict):
-                        parsed = [parsed]
-
-                    items.append(parsed)
-                    if move_dest_path is not None:
-                        move_dest_file_path = os.path.join(move_dest_path, filename)
+                        local_file_path = os.path.join(config['dest_path'], filename)
                         try:
-                            ftp.rename(filename, move_dest_file_path)
-                        except ftplib.all_errors as e:
-                            logger.warning("Can't move file from {src} to {dest}: {reason}".format(
-                                src=filename,
-                                dest=move_dest_file_path,
-                                reason=e))
+                            with open(local_file_path, 'xb') as f:
+                                try:
+                                    ftp.retrbinary('RETR %s' % filename, f.write)
+                                except ftplib.all_errors as ex:
+                                    os.remove(local_file_path)
+                                    raise Exception('Exception retrieving file from FTP server ({filename})'.format(
+                                                    filename=filename))
+                        except FileExistsError as e:
+                            raise Exception('Exception retrieving from FTP server, file already exists ({filename])'
+                                            .format(filename=local_file_path))
+
+                        registered_parser = self.get_feed_parser(provider)
+                        if isinstance(registered_parser, XMLFeedParser):
+                            xml = etree.parse(local_file_path).getroot()
+                            parser = self.get_feed_parser(provider, xml)
+                            parsed = parser.parse(xml, provider)
+                        else:
+                            parser = self.get_feed_parser(provider, local_file_path)
+                            parsed = parser.parse(local_file_path, provider)
+
+                        if isinstance(parsed, dict):
+                            parsed = [parsed]
+
+                        items.append(parsed)
+                        if do_move:
+                            move_dest_file_path = os.path.join(move_dest_path, filename)
+                            self._move(ftp, filename, move_dest_file_path)
+                    except Exception as e:
+                        logger.error("Error while parsing {filename}: {msg}".format(filename=filename, msg=e))
+                        if do_move:
+                            move_dest_file_path_error = os.path.join(move_dest_path_error, filename)
+                            self._move(ftp, filename, move_dest_file_path_error)
             if crt_last_updated:
                 update[LAST_UPDATED] = crt_last_updated
             return items
