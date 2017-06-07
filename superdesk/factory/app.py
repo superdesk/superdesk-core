@@ -94,6 +94,8 @@ def get_app(config=None, media_storage=None, config_object=None):
     # init client_config with default config
     app.client_config = {
         'no_takes': app.config.get('NO_TAKES', False),
+        'content_expiry_minutes': app.config.get('CONTENT_EXPIRY_MINUTES', 0),
+        'ingest_expiry_minutes': app.config.get('INGEST_EXPIRY_MINUTES', 0)
     }
 
     superdesk.app = app
