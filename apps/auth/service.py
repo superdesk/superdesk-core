@@ -27,6 +27,9 @@ class AuthService(BaseService):
         :return: authenticated user
         :raise: CredentialsAuthError if authentication is invalid
         """
+        # TODO: remove after full adoption
+        if app.config.get('LEGACY_AUTH_DB', False):
+            return get_resource_service('auth_db').authenticate(document)
         raise NotImplementedError()
 
     def on_create(self, docs):
