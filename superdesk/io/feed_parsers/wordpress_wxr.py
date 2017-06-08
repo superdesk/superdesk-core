@@ -15,6 +15,7 @@ from email.utils import parsedate_to_datetime
 from superdesk import etree as sd_etree
 from superdesk import get_resource_service
 from superdesk.upload import url_for_media
+from superdesk.metadata.item import ITEM_TYPE
 from xml.sax.saxutils import quoteattr
 from lxml import etree
 import copy
@@ -83,6 +84,18 @@ class WPWXRFeedParser(XMLFeedParser):
                 data.setdefault('headline', item['headline'])
                 data.setdefault('alt_text', ' ')
                 data.setdefault('description_text', ' ')
+            if (len(item['associations']) == 1 and
+               not item['body_html'] and
+               'featuremedia' in item.get('associations', {})):
+                # if the item only contains a feature media, we convert it to picture
+                featuremedia = item['associations']['featuremedia']
+                item['renditions'] = featuremedia['renditions']
+                item[ITEM_TYPE] = featuremedia[ITEM_TYPE]
+                item['_id'] = featuremedia['_id']
+                item['alt_text'] = item['headline']
+                item['media'] = item['renditions']['original']['media']
+                item['mimetype'] = item['renditions']['original']['mimetype']
+                del item['associations']
         return item
 
     def _add_image(self, item, url):
