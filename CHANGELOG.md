@@ -1,6 +1,6 @@
 # Superdesk Server Changelog
 
-## [Unreleased]
+## [1.8] 2017-06-09
 
 ### Fixed
 
