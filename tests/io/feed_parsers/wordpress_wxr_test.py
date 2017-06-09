@@ -101,6 +101,7 @@ class WPWXRTestCase(TestCase):
                           {'qcode': 'Economy', 'qname': 'Economy'}])
 
     def test_attachments(self):
+        # in self.articles[1] there is a body, so image should be in associations
         expected = {'_id': 'http://example.net/image.png',
                     'ingest_provider': 'wpwxr',
                     'headline': 'test2',
@@ -123,6 +124,28 @@ class WPWXRTestCase(TestCase):
                                                  'width': 200}},
                     'type': 'picture'}
         self.assertEqual(self.articles[1]['associations']['featuremedia'], expected)
+
+    def test_attachments_no_body(self):
+        # in self.articles[1] there is no body, so item should be an image
+        # cf. SDTS-29
+        expected = {'original': {'height': 256,
+                                 'href': 'http://test',
+                                 'media': '590099f1cc3a2d2349a785ee',
+                                 'mimetype': 'image/jpeg',
+                                 'width': 642},
+                    'thumbnail': {'height': 23,
+                                  'href': 'http://test',
+                                  'media': '590099f1cc3a2d2349a785f0',
+                                  'mimetype': 'image/jpeg',
+                                  'width': 60},
+                    'viewImage': {'height': 79,
+                                  'href': 'http://test',
+                                  'media': '590099f1cc3a2d2349a785f2',
+                                  'mimetype': 'image/jpeg',
+                                  'width': 200}}
+        self.assertNotIn('associations', self.articles[3])
+        self.assertEqual(self.articles[3]['renditions'], expected)
+        self.assertEqual(self.articles[3]['type'], 'picture')
 
     def test_clrf(self):
         expected = ('<p>By Tester</p><p>Harare, July 19 (The SDNewTester) - Cash-strapped'
