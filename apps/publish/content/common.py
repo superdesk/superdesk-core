@@ -236,8 +236,7 @@ class BasePublishService(BaseService):
                     Exception("Previous takes are not published."))
 
             update_schedule_settings(updated, PUBLISH_SCHEDULE, updated.get(PUBLISH_SCHEDULE))
-            validate_schedule(updated.get(SCHEDULE_SETTINGS, {}).get('utc_{}'.format(PUBLISH_SCHEDULE)),
-                              takes_package.get(SEQUENCE, 1) if takes_package else 1)
+            validate_schedule(updated.get(SCHEDULE_SETTINGS, {}).get('utc_{}'.format(PUBLISH_SCHEDULE)))
 
         if original[ITEM_TYPE] != CONTENT_TYPE.COMPOSITE and updates.get(EMBARGO):
             update_schedule_settings(updated, EMBARGO, updated.get(EMBARGO))

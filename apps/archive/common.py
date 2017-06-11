@@ -598,11 +598,10 @@ def get_flag(doc, flag_name):
     return doc.get('flags', {}).get(flag_name, False)
 
 
-def validate_schedule(schedule, package_sequence=1):
+def validate_schedule(schedule):
     """Validates the publish schedule.
 
     :param datetime schedule: schedule datetime
-    :param int package_sequence: takes package sequence.
     :raises: SuperdeskApiError.badRequestError if following cases
         - Not a valid datetime
         - Less than current utc time
@@ -615,8 +614,6 @@ def validate_schedule(schedule, package_sequence=1):
             raise SuperdeskApiError.badRequestError("Schedule date is not recognized")
         if schedule < utcnow():
             raise SuperdeskApiError.badRequestError("Schedule cannot be earlier than now")
-        if package_sequence > 1:
-            raise SuperdeskApiError.badRequestError("Takes cannot be scheduled.")
 
 
 def update_schedule_settings(updates, field_name, value):

@@ -104,7 +104,6 @@ def before_feature(context, feature):
     # set the MAX_TRANSMIT_RETRY_ATTEMPT to zero so that transmit does not retry
     config['MAX_TRANSMIT_RETRY_ATTEMPT'] = 0
     os.environ['BEHAVE_TESTING'] = '1'
-    # config['NO_TAKES'] = False
     tests.setup(context, config, app_factory=app_factory)
 
     if 'tobefixed' in feature.tags:

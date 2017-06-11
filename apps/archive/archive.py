@@ -174,8 +174,8 @@ class ArchiveService(BaseService):
         for item in items:
             handle_existing_data(item)
 
-        if not app.config.get('NO_TAKES', False):
-            self.takesService.enhance_items_with_takes_packages(items)
+        # if not app.config.get('NO_TAKES', False):
+        #     self.takesService.enhance_items_with_takes_packages(items)
 
     def on_create(self, docs):
         on_create_item(docs)
@@ -249,16 +249,16 @@ class ArchiveService(BaseService):
         user = get_user()
         self._validate_updates(original, updates, user)
 
-        if PUBLISH_SCHEDULE in updates and original[ITEM_STATE] == CONTENT_STATE.SCHEDULED:
-            # check if there is a takes package and deschedule the takes package.
-            takes_service = TakesPackageService()
-            package = takes_service.get_take_package(original)
-            if package and package.get(ITEM_STATE) == CONTENT_STATE.SCHEDULED:
-                get_resource_service('published').delete_by_article_id(package.get(config.ID_FIELD))
-                self.delete_by_article_ids([package.get(config.ID_FIELD)])
-                updates[LINKED_IN_PACKAGES] = [package for package in original.get(LINKED_IN_PACKAGES, [])
-                                               if package.get(PACKAGE_TYPE) != TAKES_PACKAGE]
-            return
+        # if PUBLISH_SCHEDULE in updates and original[ITEM_STATE] == CONTENT_STATE.SCHEDULED:
+        #     # check if there is a takes package and deschedule the takes package.
+        #     takes_service = TakesPackageService()
+        #     package = takes_service.get_take_package(original)
+        #     if package and package.get(ITEM_STATE) == CONTENT_STATE.SCHEDULED:
+        #         get_resource_service('published').delete_by_article_id(package.get(config.ID_FIELD))
+        #         self.delete_by_article_ids([package.get(config.ID_FIELD)])
+        #         updates[LINKED_IN_PACKAGES] = [package for package in original.get(LINKED_IN_PACKAGES, [])
+        #                                        if package.get(PACKAGE_TYPE) != TAKES_PACKAGE]
+        #     return
 
         if self.__is_req_for_save(updates):
             update_state(original, updates)
@@ -650,9 +650,9 @@ class ArchiveService(BaseService):
                             and embargo <= utcnow():
                         raise SuperdeskApiError.badRequestError("Embargo cannot be earlier than now")
 
-                    package = TakesPackageService().get_take_package(item)
-                    if package and package.get(SEQUENCE, 1) > 1:
-                        raise SuperdeskApiError.badRequestError("Takes doesn't support Embargo")
+                    # package = TakesPackageService().get_take_package(item)
+                    # if package and package.get(SEQUENCE, 1) > 1:
+                    #     raise SuperdeskApiError.badRequestError("Takes doesn't support Embargo")
 
                     if item.get('rewrite_of'):
                         raise SuperdeskApiError.badRequestError("Rewrites doesn't support Embargo")
@@ -746,12 +746,11 @@ class ArchiveService(BaseService):
                 raise SuperdeskApiError.badRequestError(
                     'This item is in a package and it needs to be removed before the item can be scheduled!')
 
-            package = TakesPackageService().get_take_package(original) or {}
+            # package = TakesPackageService().get_take_package(original) or {}
             update_schedule_settings(updated, PUBLISH_SCHEDULE, updated.get(PUBLISH_SCHEDULE))
 
             if updates.get(PUBLISH_SCHEDULE):
-                validate_schedule(updated.get(SCHEDULE_SETTINGS, {}).get('utc_{}'.format(PUBLISH_SCHEDULE)),
-                                  package.get(SEQUENCE, 1))
+                validate_schedule(updated.get(SCHEDULE_SETTINGS, {}).get('utc_{}'.format(PUBLISH_SCHEDULE)))
 
             updates[SCHEDULE_SETTINGS] = updated.get(SCHEDULE_SETTINGS, {})
 
