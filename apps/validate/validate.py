@@ -159,6 +159,17 @@ class ValidateService(superdesk.Service):
                     # fails for json fields like subject, genre
                     pass
 
+    def _process_media(self, doc):
+        """If feature media is required it should be present for validation on doc not only on associations
+        If media_description is required it should be present for validation on doc not only on
+        associations->featuremedia
+        :param doc: Article to be validated
+        """
+        if 'associations' in doc and 'featuremedia' in doc['associations']:
+            doc['feature_media'] = doc['associations']['featuremedia']
+            if 'description_text' in doc['associations']['featuremedia']:
+                doc['media_description'] = doc['associations']['featuremedia']['description_text']
+
     def _get_validator_schema(self, validator):
         """Get schema for given validator.
 
@@ -171,6 +182,7 @@ class ValidateService(superdesk.Service):
         validators = self._get_validators(doc)
         for validator in validators:
             self._sanitize_fields(doc['validate'], validator)
+            self._process_media(doc['validate'])
             v = SchemaValidator()
             v.allow_unknown = True
             try:
