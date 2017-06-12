@@ -662,16 +662,26 @@ class ArchiveService(BaseService):
 
             self.packageService.check_if_any_item_in_package_has_embargo(item)
 
-    def _test_readonly_stage(self, item):
+    def _test_readonly_stage(self, item, updates=None):
         """If item is created or updated on readonly stage abort it.
 
         :param item: edited/new item
+        :param updates: item updates
         """
-        orig_stage_id = item.get('task', {}).get('stage')
-        if orig_stage_id:
-            orig_stage = superdesk.get_resource_service('stages').find_one(req=None, _id=orig_stage_id)
-            if orig_stage.get('local_readonly') and get_user() and not item.get(INGEST_ID):
+
+        def abort_if_readonly_stage(stage_id):
+            stage = superdesk.get_resource_service('stages').find_one(req=None, _id=stage_id)
+            if stage.get('local_readonly'):
                 flask.abort(403, response={'readonly': True})
+
+        orig_stage_id = item.get('task', {}).get('stage')
+        if orig_stage_id and get_user() and not item.get(INGEST_ID):
+            abort_if_readonly_stage(orig_stage_id)
+
+        if updates:
+            dest_stage_id = updates.get('task', {}).get('stage')
+            if dest_stage_id and get_user() and not item.get(INGEST_ID):
+                abort_if_readonly_stage(dest_stage_id)
 
     def _validate_updates(self, original, updates, user):
         """Validates updates to the article for the below conditions.
@@ -702,7 +712,7 @@ class ArchiveService(BaseService):
         updated = original.copy()
         updated.update(updates)
 
-        self._test_readonly_stage(original)
+        self._test_readonly_stage(original, updates)
 
         lock_user = original.get('lock_user', None)
         force_unlock = updates.get('force_unlock', False)

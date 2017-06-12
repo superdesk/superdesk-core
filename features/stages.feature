@@ -265,6 +265,23 @@ Feature: Stages
         Then we get new resource
 
     @auth
+    Scenario: Content can not be send to readonly stage
+    When we post to "/stages"
+        """
+        {"name": "show my content", "desk": "#desks._id#", "local_readonly": true}
+        """
+        And we post to "/archive"
+        """
+        {"_id": "item-1", "slugline": "first task", "type": "text"}
+        """
+        Then we get new resource
+        When we patch "/archive/item-1"
+        """
+        {"task": {"desk":"#desks._id#", "stage" :"#stages._id#"}}
+        """
+        Then we get error 403
+
+    @auth
     Scenario: Content on readonly stage is not editable
         When we post to "/stages"
         """
