@@ -67,10 +67,10 @@ published_item_fields = {
     ERROR_MESSAGE: {
         'type': 'string'
     },
-    'is_take_item': {
-        'type': 'boolean',
-        'default': False,
-    },
+    # 'is_take_item': {
+    #     'type': 'boolean',
+    #     'default': False,
+    # },
     'digital_item_id': {
         'type': 'string'
     },
@@ -200,8 +200,8 @@ class PublishedItemService(BaseService):
                 archive_items = list(superdesk.get_resource_service(ARCHIVE)
                                      .get_from_mongo(req=archive_req, lookup=query))
 
-                takes_service = TakesPackageService()
-                takes_service.enhance_items_with_takes_packages(archive_items)
+                # takes_service = TakesPackageService()
+                # takes_service.enhance_items_with_takes_packages(archive_items)
                 for item in archive_items:
                     handle_existing_data(item)
                     archive_lookup[item[config.ID_FIELD]] = item
@@ -267,24 +267,24 @@ class PublishedItemService(BaseService):
         except:
             return []
 
-    def get_rewritten_take_packages_per_event(self, event_id):
-        """Returns all the published and rewritten take stories for the same event"""
-        try:
-            query = {'query':
-                     {'filtered':
-                      {'filter':
-                       {'bool':
-                        {'must': [
-                            {'term': {'package_type': 'takes'}},
-                            {'term': {'event_id': event_id}},
-                            {'exists': {'field': 'rewritten_by'}}
-                        ]}}}}}
-
-            request = ParsedRequest()
-            request.args = {'source': json.dumps(query)}
-            return super().get(req=request, lookup=None)
-        except:
-            return []
+    # def get_rewritten_take_packages_per_event(self, event_id):
+    #     """Returns all the published and rewritten take stories for the same event"""
+    #     try:
+    #         query = {'query':
+    #                  {'filtered':
+    #                   {'filter':
+    #                    {'bool':
+    #                     {'must': [
+    #                         {'term': {'package_type': 'takes'}},
+    #                         {'term': {'event_id': event_id}},
+    #                         {'exists': {'field': 'rewritten_by'}}
+    #                     ]}}}}}
+    #
+    #         request = ParsedRequest()
+    #         request.args = {'source': json.dumps(query)}
+    #         return super().get(req=request, lookup=None)
+    #     except:
+    #         return []
 
     def get_rewritten_items_by_event_story(self, event_id, rewrite_id, rewrite_field):
         """Returns all the rewritten stories from published and archive for a given event and rewrite_id.

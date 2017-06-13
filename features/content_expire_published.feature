@@ -119,196 +119,168 @@ Feature: Content Expiry Published Items
     {"_current_version": 1, "state": "fetched", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
     """
 
-  @auth  
-  Scenario: Item on a desk is published and expired
-    When we publish "#archive._id#" with "publish" type and "published" state
-    Then we get OK response
-    And we get existing resource
-    """
-    {"_current_version": 2, "state": "published", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
-    """
-    When we get "/published"
-    Then we get list with 2 items
-    """
-    {"_items" : [
-      {"package_type": "takes", "_id": "#archive.123.take_package#",
-       "state": "published", "type": "composite", "_current_version": 2},
-      {"_id": "123", "_current_version": 1, "state": "published", "type": "text", "_current_version": 2}
-      ]
-    }
-    """
-    When we enqueue published
-    When we get "/publish_queue"
-    Then we get list with 2 items
-    When we transmit items
-    And run import legal publish queue
-    When we get "/archive_history?where=item_id==%22123%22"
-    Then we get list with 2 items
-    """
-    {"_items": [
-      {"version": 1, "operation": "create"},
-      {"version": 2, "operation": "publish"}
-    ]}
-    """
-    When we expire items
-    """
-    ["123"]
-    """
-    And we get "/published"
-    Then we get list with 2 items
-    When we expire items
-    """
-    ["#archive.123.take_package#"]
-    """
-    And we get "/published"
-    Then we get list with 0 items
-    When we enqueue published
-    When we get "/publish_queue"
-    Then we get list with 0 items
-    When we get "/archive_history?where=item_id==%22123%22"
-    Then we get list with 0 items
-    When we get "/archived"
-    Then we get list with 2 items
-    """
-    {"_items" : [
-      {"package_type": "takes", "item_id": "#archive.123.take_package#",
-       "state": "published", "type": "composite", "_current_version": 2},
-      {"item_id": "123", "_current_version": 1, "state": "published", "type": "text", "_current_version": 2}
-      ]
-    }
-    """
-
-  @auth
-  Scenario: Highlights and mark desks are removed from archived
-    When we post to "marked_for_highlights"
-    """
-    [{"highlights": "#highlights._id#", "marked_item": "#archive._id#"}]
-    """
-    Then we get new resource
-    """
-    {"highlights": "#highlights._id#", "marked_item": "#archive._id#"}
-    """
-    When we post to "/marked_for_desks" with success
-    """
-    [{"marked_desk": "#desks._id#", "marked_item": "#archive._id#"}]
-    """
-    Then we get new resource
-    """
-    {"marked_desk": "#desks._id#", "marked_item": "#archive._id#"}
-    """
-    When we publish "#archive._id#" with "publish" type and "published" state
-    Then we get OK response
-    And we get existing resource
-    """
-    {"_current_version": 2, "state": "published",
-    "highlights": ["#highlights._id#"],
-    "marked_desks": [{"desk_id": "#desks._id#"}],
-    "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
-    """
-    When we get "/published"
-    Then we get list with 2 items
-    """
-    {"_items" : [
-      {"package_type": "takes", "_id": "#archive.123.take_package#",
-       "state": "published", "type": "composite", "_current_version": 2},
-      {"_id": "123", "_current_version": 1, "state": "published", "type": "text", "_current_version": 2}
-      ]
-    }
-    """
-    When we enqueue published
-    When we get "/publish_queue"
-    Then we get list with 2 items
-    When we transmit items
-    And run import legal publish queue
-    When we expire items
-    """
-    ["123"]
-    """
-    And we get "/published"
-    Then we get list with 2 items
-    When we expire items
-    """
-    ["#archive.123.take_package#"]
-    """
-    When we get "/archived"
-    Then we get "highlights" does not exist
-    Then we get "marked_desks" does not exist
-
-  @auth
-  Scenario: Item in a package is published and expired
-    When we publish "#archive._id#" with "publish" type and "published" state
-    Then we get OK response
-    And we get existing resource
-    """
-    {"_current_version": 2, "state": "published", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
-    """
-    When we get "/published"
-    Then we get list with 2 items
-    """
-    {"_items" : [
-      {"package_type": "takes", "_id": "#archive.123.take_package#",
-       "state": "published", "type": "composite", "_current_version": 2},
-      {"_id": "123", "_current_version": 1, "state": "published", "type": "text", "_current_version": 2}
-      ]
-    }
-    """
-    When we enqueue published
-    When we transmit items
-    And run import legal publish queue
-    When we get "/publish_queue"
-    Then we get list with 2 items
-    When we post to "/archive" with "package" and success
-    """
-    {
-      "guid": "package", "type": "composite", "headline": "test package", "state": "fetched",
-      "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
-      "subject":[{"qcode": "17004000", "name": "Statistics"}],
-      "body_html": "Test Package",
-      "groups": [
-                  {"id": "root", "refs": [{"idRef": "main"}], "role": "grpRole:NEP"},
-                  {
-                    "id": "main",
-                    "refs": [
-                      {
-                          "headline": "Test Document body",
-                          "residRef": "123",
-                          "slugline": ""
-                      }
-                    ],
-                    "role": "grpRole:Main"
-                  }
-      ]
-    }
-    """
-    When we publish "#package#" with "publish" type and "published" state
-    Then we get OK response
-    When we expire items
-    """
-    ["123"]
-    """
-    When we get "published"
-    Then we get list with 3 items
-    When we enqueue published
-    When we transmit items
-    And run import legal publish queue
-    When we get "publish_queue"
-    Then we get list with 3 items
-    When we expire items
-    """
-    ["#archive.123.take_package#"]
-    """
-    When we get "published"
-    Then we get list with 3 items
-    When we get "publish_queue"
-    Then we get list with 3 items
-    When we expire items
-    """
-    ["#package#"]
-    """
-    When we get "published"
-    Then we get list with 0 items
-    When we get "publish_queue"
-    Then we get list with 0 items
+#  @auth
+#  Scenario: Item on a desk is published and expired
+#    When we publish "#archive._id#" with "publish" type and "published" state
+#    Then we get OK response
+#    And we get existing resource
+#    """
+#    {"_current_version": 2, "state": "published", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
+#    """
+#    When we get "/published"
+#    Then we get list with 1 items
+#    """
+#    {"_items" : [
+#      {"_id": "123", "_current_version": 1, "state": "published", "type": "text", "_current_version": 2}
+#      ]
+#    }
+#    """
+#    When we enqueue published
+#    When we get "/publish_queue"
+#    Then we get list with 2 items
+#    When we transmit items
+#    And run import legal publish queue
+#    When we get "/archive_history?where=item_id==%22123%22"
+#    Then we get list with 2 items
+#    """
+#    {"_items": [
+#      {"version": 1, "operation": "create"},
+#      {"version": 2, "operation": "publish"}
+#    ]}
+#    """
+#    When we expire items
+#    """
+#    ["123"]
+#    """
+#    And we get "/published"
+#    Then we get list with 0 items
+#    When we enqueue published
+#    When we get "/publish_queue"
+#    Then we get list with 0 items
+#    When we get "/archive_history?where=item_id==%22123%22"
+#    Then we get list with 0 items
+#    When we get "/archived"
+#    Then we get list with 1 items
+#    """
+#    {"_items" : [
+#      {"item_id": "123", "_current_version": 1, "state": "published", "type": "text", "_current_version": 2}
+#      ]
+#    }
+#    """
+#
+#  @auth
+#  Scenario: Highlights and mark desks are removed from archived
+#    When we post to "marked_for_highlights"
+#    """
+#    [{"highlights": "#highlights._id#", "marked_item": "#archive._id#"}]
+#    """
+#    Then we get new resource
+#    """
+#    {"highlights": "#highlights._id#", "marked_item": "#archive._id#"}
+#    """
+#    When we post to "/marked_for_desks" with success
+#    """
+#    [{"marked_desk": "#desks._id#", "marked_item": "#archive._id#"}]
+#    """
+#    Then we get new resource
+#    """
+#    {"marked_desk": "#desks._id#", "marked_item": "#archive._id#"}
+#    """
+#    When we publish "#archive._id#" with "publish" type and "published" state
+#    Then we get OK response
+#    And we get existing resource
+#    """
+#    {"_current_version": 2, "state": "published",
+#    "highlights": ["#highlights._id#"],
+#    "marked_desks": [{"desk_id": "#desks._id#"}],
+#    "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
+#    """
+#    When we get "/published"
+#    Then we get list with 1 items
+#    """
+#    {"_items" : [
+#      {"_id": "123", "_current_version": 1, "state": "published", "type": "text", "_current_version": 2}
+#      ]
+#    }
+#    """
+#    When we enqueue published
+#    When we get "/publish_queue"
+#    Then we get list with 2 items
+#    When we transmit items
+#    And run import legal publish queue
+#    When we expire items
+#    """
+#    ["123"]
+#    """
+#    When we get "/archived"
+#    Then we get "highlights" does not exist
+#    Then we get "marked_desks" does not exist
+#
+#  @auth
+#  Scenario: Item in a package is published and expired
+#    When we publish "#archive._id#" with "publish" type and "published" state
+#    Then we get OK response
+#    And we get existing resource
+#    """
+#    {"_current_version": 2, "state": "published", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
+#    """
+#    When we get "/published"
+#    Then we get list with 1 items
+#    """
+#    {"_items" : [
+#      {"_id": "123", "_current_version": 1, "state": "published", "type": "text", "_current_version": 2}
+#      ]
+#    }
+#    """
+#    When we enqueue published
+#    When we transmit items
+#    And run import legal publish queue
+#    When we get "/publish_queue"
+#    Then we get list with 2 items
+#    When we post to "/archive" with "package" and success
+#    """
+#    {
+#      "guid": "package", "type": "composite", "headline": "test package", "state": "fetched",
+#      "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+#      "subject":[{"qcode": "17004000", "name": "Statistics"}],
+#      "body_html": "Test Package",
+#      "groups": [
+#                  {"id": "root", "refs": [{"idRef": "main"}], "role": "grpRole:NEP"},
+#                  {
+#                    "id": "main",
+#                    "refs": [
+#                      {
+#                          "headline": "Test Document body",
+#                          "residRef": "123",
+#                          "slugline": ""
+#                      }
+#                    ],
+#                    "role": "grpRole:Main"
+#                  }
+#      ]
+#    }
+#    """
+#    When we publish "#package#" with "publish" type and "published" state
+#    Then we get OK response
+#    When we expire items
+#    """
+#    ["123"]
+#    """
+#    When we get "published"
+#    Then we get list with 2 items
+#    When we enqueue published
+#    When we transmit items
+#    And run import legal publish queue
+#    When we get "publish_queue"
+#    Then we get list with 3 items
+#    When we expire items
+#    """
+#    ["#package#"]
+#    """
+#    When we get "published"
+#    Then we get list with 0 items
+#    When we get "publish_queue"
+#    Then we get list with 0 items
 
   @auth 
   Scenario: Item in multiple packages is published and expired
@@ -319,11 +291,9 @@ Feature: Content Expiry Published Items
     {"_current_version": 2, "state": "published", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
     """
     When we get "/published"
-    Then we get list with 2 items
+    Then we get list with 1 items
     """
     {"_items" : [
-      {"package_type": "takes", "_id": "#archive.123.take_package#",
-       "state": "published", "type": "composite", "_current_version": 2},
       {"_id": "123", "_current_version": 1, "state": "published", "type": "text", "_current_version": 2}
       ]
     }
@@ -402,15 +372,14 @@ Feature: Content Expiry Published Items
     And run import legal publish queue
     And we expire items
     """
-    ["123", "#archive.123.take_package#"]
+    ["123"]
     """
     When we get "published"
-    Then we get list with 5 items
+    Then we get list with 3 items
     """
     {
       "_items": [
-        {"_id": "123"}, {"_id": "456"}, {"_id": "#package1#"},
-         {"_id": "#archive.123.take_package#"}, {"_id": "#archive.456.take_package#"}
+        {"_id": "123"}, {"_id": "456"}, {"_id": "#package1#"}
       ]
     }
     """
@@ -430,15 +399,14 @@ Feature: Content Expiry Published Items
     Then we get list with 0 items
     When we expire items
     """
-    ["456", "#archive.456.take_package#"]
+    ["456"]
     """
     When we get "published"
-    Then we get list with 5 items
+    Then we get list with 3 items
     """
     {
       "_items": [
-        {"_id": "123"}, {"_id": "456"}, {"_id": "#package1#"},
-         {"_id": "#archive.123.take_package#"}, {"_id": "#archive.456.take_package#"}
+        {"_id": "123"}, {"_id": "456"}, {"_id": "#package1#"}
       ]
     }
     """
@@ -460,12 +428,11 @@ Feature: Content Expiry Published Items
     ["#package1#"]
     """
     When we get "published"
-    Then we get list with 5 items
+    Then we get list with 3 items
     """
     {
       "_items": [
-        {"_id": "123"}, {"_id": "456"}, {"_id": "#package1#"},
-        {"_id": "#archive.123.take_package#"}, {"_id": "#archive.456.take_package#"}
+        {"_id": "123"}, {"_id": "456"}, {"_id": "#package1#"}
       ]
     }
     """
@@ -493,12 +460,11 @@ Feature: Content Expiry Published Items
     When we get "archive"
     Then we get list with 0 items
     When we get "archived"
-    Then we get list with 5 items
+    Then we get list with 3 items
     """
     {
       "_items": [
-         {"item_id": "123"}, {"item_id": "456"}, {"item_id": "#package1#"},
-         {"item_id": "#archive.123.take_package#"}, {"item_id": "#archive.456.take_package#"}
+         {"item_id": "123"}, {"item_id": "456"}, {"item_id": "#package1#"}
       ]
     }
     """
@@ -791,12 +757,12 @@ Feature: Content Expiry Published Items
     And run import legal publish queue
     When we expire items
     """
-    ["123", "#archive.123.take_package#"]
+    ["123"]
     """
     And we get "archive"
     Then we get list with 2 items
     When we get "published"
-    Then we get list with 3 items
+    Then we get list with 2 items
     When we get "publish_queue"
     Then we get list with 4 items
     When we get "archived"
@@ -812,9 +778,9 @@ Feature: Content Expiry Published Items
     When we get "publish_queue"
     Then we get list with 0 items
     When we get "archived"
-    Then we get list with 3 items
+    Then we get list with 2 items
     """
-    {"_items":[{"item_id": "123"}, {"item_id": "#broadcast1#"}, {"item_id": "#archive.123.take_package#"}]}
+    {"_items":[{"item_id": "123"}, {"item_id": "#broadcast1#"}]}
     """
 
   @auth @vocabulary
@@ -884,7 +850,7 @@ Feature: Content Expiry Published Items
     """
     When we expire items
     """
-    ["123", "#archive.123.take_package#"]
+    ["123"]
     """
     And we get "archive"
     Then we get list with 3 items
@@ -904,9 +870,9 @@ Feature: Content Expiry Published Items
     When we get "publish_queue"
     Then we get list with 0 items
     When we get "archived"
-    Then we get list with 3 items
+    Then we get list with 2 items
     """
-    {"_items":[{"item_id": "123"}, {"item_id": "#broadcast1#"}, {"item_id": "#archive.123.take_package#"}]}
+    {"_items":[{"item_id": "123"}, {"item_id": "#broadcast1#"}]}
     """
 
   @auth @vocabulary
@@ -935,14 +901,14 @@ Feature: Content Expiry Published Items
     When we get "archive"
     Then we get list with 0 items
     When we get "published"
-    Then we get list with 6 items
+    Then we get list with 3 items
     When we get "publish_queue"
     Then we get list with 6 items
     When we get "archived"
     Then we get list with 0 items
     When we expire items
     """
-    ["123", "#archive.123.take_package#"]
+    ["123"]
     """
     And we get "archive"
     Then we get list with 0 items
@@ -963,21 +929,21 @@ Feature: Content Expiry Published Items
     When we get "/legal_archive/123"
     Then we get OK response
     When we get "/legal_publish_queue?where=item_id==%22123%22"
-    Then we get list with 1 items
+    Then we get list with 2 items
     """
     {"_items" : [
         {"item_id": "123", "item_version": 2, "state": "success", "content_type": "text"}
       ]
     }
     """
-    When we get "/legal_publish_queue?where=item_id==%22#archive.123.take_package#%22"
-    Then we get list with 1 items
-    """
-    {"_items" : [
-        {"item_id": "#archive.123.take_package#", "item_version": 2, "state": "success", "content_type": "composite"}
-      ]
-    }
-    """
+#    When we get "/legal_publish_queue?where=item_id==%22#archive.123.take_package#%22"
+#    Then we get list with 1 items
+#    """
+#    {"_items" : [
+#        {"item_id": "#archive.123.take_package#", "item_version": 2, "state": "success", "content_type": "composite"}
+#      ]
+#    }
+#    """
     When we post to "/archive" with success
     """
     [{"guid": "456", "type": "text", "headline": "test", "state": "fetched", "slugline": "slugline",
@@ -992,11 +958,11 @@ Feature: Content Expiry Published Items
     And we transmit items
     When we get "/legal_publish_queue?where=item_id==%22456%22"
     Then we get list with 0 items
-    When we get "/legal_publish_queue?where=item_id==%22#archive.456.take_package#%22"
-    Then we get list with 0 items
+#    When we get "/legal_publish_queue?where=item_id==%22#archive.456.take_package#%22"
+#    Then we get list with 0 items
     When we expire items
     """
-    ["123", "#archive.123.take_package#", "456", "#archive.456.take_package#"]
+    ["123", "456"]
     """
     And we get "/archive/456"
     Then we get OK response
@@ -1004,38 +970,38 @@ Feature: Content Expiry Published Items
     """
     {"_id": "456", "type": "text", "expiry_status": "invalid"}
     """
-    When we get "/archive/#archive.456.take_package#"
-    Then we get OK response
-    And we get existing resource
-    """
-    {"_id": "#archive.456.take_package#", "type": "composite", "expiry_status": "invalid"}
-    """
+#    When we get "/archive/#archive.456.take_package#"
+#    Then we get OK response
+#    And we get existing resource
+#    """
+#    {"_id": "#archive.456.take_package#", "type": "composite", "expiry_status": "invalid"}
+#    """
     When we get "/archive/123"
     Then we get error 404
-    When we get "/archive/#archive.123.take_package#"
-    Then we get error 404
+#    When we get "/archive/#archive.123.take_package#"
+#    Then we get error 404
     When we expire items
     """
-    ["456", "#archive.456.take_package#"]
+    ["456"]
     """
     And we get "/archive/456"
     Then we get OK response
-    When we get "/archive/#archive.456.take_package#"
-    Then we get OK response
+#    When we get "/archive/#archive.456.take_package#"
+#    Then we get OK response
     When run import legal publish queue
     And we run import legal archive command
     And we expire items
     """
-    ["456", "#archive.456.take_package#"]
+    ["456"]
     """
     And we get "/archive/456"
     Then we get error 404
-    When we get "/archive/#archive.456.take_package#"
-    Then we get error 404
+#    When we get "/archive/#archive.456.take_package#"
+#    Then we get error 404
     When we get "/legal_archive/456"
     Then we get OK response
-    When we get "/legal_archive/#archive.456.take_package#"
-    Then we get OK response
+#    When we get "/legal_archive/#archive.456.take_package#"
+#    Then we get OK response
 
   @auth @vocabulary
   Scenario: Only entertainment articles are archived
@@ -1047,21 +1013,21 @@ Feature: Content Expiry Published Items
     When we get "/legal_archive/123"
     Then we get OK response
     When we get "/legal_publish_queue?where=item_id==%22123%22"
-    Then we get list with 1 items
+    Then we get list with 2 items
     """
     {"_items" : [
         {"item_id": "123", "item_version": 2, "state": "success", "content_type": "text"}
       ]
     }
     """
-    When we get "/legal_publish_queue?where=item_id==%22#archive.123.take_package#%22"
-    Then we get list with 1 items
-    """
-    {"_items" : [
-        {"item_id": "#archive.123.take_package#", "item_version": 2, "state": "success", "content_type": "composite"}
-      ]
-    }
-    """
+#    When we get "/legal_publish_queue?where=item_id==%22#archive.123.take_package#%22"
+#    Then we get list with 1 items
+#    """
+#    {"_items" : [
+#        {"item_id": "#archive.123.take_package#", "item_version": 2, "state": "success", "content_type": "composite"}
+#      ]
+#    }
+#    """
     When we post to "/archive" with success
     """
     [{"guid": "456", "type": "text", "headline": "test", "state": "fetched", "slugline": "slugline",
@@ -1078,7 +1044,7 @@ Feature: Content Expiry Published Items
     When we get "/legal_archive/456"
     Then we get OK response
     When we get "/legal_publish_queue?where=item_id==%22456%22"
-    Then we get list with 1 items
+    Then we get list with 2 items
     When we post to "/archive" with success
     """
     [{"guid": "789", "type": "text", "headline": "test", "state": "fetched", "slugline": "slugline",
@@ -1095,7 +1061,7 @@ Feature: Content Expiry Published Items
     When we get "/legal_archive/789"
     Then we get OK response
     When we get "/legal_publish_queue?where=item_id==%22789%22"
-    Then we get list with 1 items
+    Then we get list with 2 items
     When we post to "/filter_conditions" with success
     """
     [{"name": "international sport", "field": "anpa_category", "operator": "in", "value": "s"}]
@@ -1131,18 +1097,16 @@ Feature: Content Expiry Published Items
     Then we get OK response
     When we expire items
     """
-    ["123", "#archive.123.take_package#",
-     "456", "#archive.456.take_package#",
-     "789", "#archive.789.take_package#"]
+    ["123",
+     "456",
+     "789"]
     """
     And we get "/archived"
-    Then we get list with 2 items
+    Then we get list with 1 items
     """
     {
       "_items": [
-        {"item_id": "123", "type": "text", "anpa_category" : [{"qcode" : "e", "name" : "Entertainment"}]},
-        {"item_id": "#archive.123.take_package#", "type": "composite",
-        "anpa_category" : [{"qcode" : "e", "name" : "Entertainment"}]}
+        {"item_id": "123", "type": "text", "anpa_category" : [{"qcode" : "e", "name" : "Entertainment"}]}
       ]
     }
     """
@@ -1150,10 +1114,10 @@ Feature: Content Expiry Published Items
     Then we get error 404
     When we get "/archive/789"
     Then we get error 404
-    When we get "/archive/#archive.456.take_package#"
-    Then we get error 404
-    When we get "/archive/#archive.789.take_package#"
-    Then we get error 404
+#    When we get "/archive/#archive.456.take_package#"
+#    Then we get error 404
+#    When we get "/archive/#archive.789.take_package#"
+#    Then we get error 404
 
   @auth @vocabulary
   Scenario: Published a story with associated picture and expire the items
@@ -1197,19 +1161,19 @@ Feature: Content Expiry Published Items
       And we transmit items
       And run import legal publish queue
       When we get "/legal_archive"
-      Then we get list with 2 items
+      Then we get list with 1 items
       When we expire items
       """
-      ["123", "#archive.123.take_package#"]
+      ["123"]
       """
       And we get "/archived"
       Then we get list with 0 items
       When we expire items
       """
-      ["123", "#archive.123.take_package#", "bike"]
+      ["123", "bike"]
       """
       And we get "/archived"
-      Then we get list with 2 items
+      Then we get list with 1 items
       When we get "/archive"
       Then we get list with 0 items
       And we fetch a file "#rendition.4-3.href#"
@@ -1260,7 +1224,7 @@ Feature: Content Expiry Published Items
       Then we get OK response
       And we get spiked content "bike"
       When we get "/legal_archive"
-      Then we get list with 2 items
+      Then we get list with 1 items
       When we expire items
       """
       ["bike"]
@@ -1269,10 +1233,10 @@ Feature: Content Expiry Published Items
       Then we get list with 0 items
       When we expire items
       """
-      ["123", "#archive.123.take_package#", "bike"]
+      ["123", "bike"]
       """
       And we get "/archived"
-      Then we get list with 2 items
+      Then we get list with 1 items
       When we get "/archive"
       Then we get list with 0 items
       And we fetch a file "#rendition.4-3.href#"

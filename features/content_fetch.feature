@@ -466,24 +466,6 @@ Feature: Fetch Items from Ingest
                 "alt_name" : ""
             }
           }
-        },
-        {
-          "_id": "#archive.take_package#", "_current_version": 2, "state": "published", "type": "composite", "source": "reuters",
-          "dateline": {
-            "date": "2017-01-05T04:00:00+0000",
-            "text": "SYDNEY, Jan 5 reuters -",
-            "located" : {
-                "city" : "Sydney",
-                "state" : "NSW",
-                "tz" : "Australia/Sydney",
-                "country" : "Australia",
-                "city_code" : "Sydney",
-                "country_code" : "AU",
-                "state_code" : "AU.02",
-                "dateline" : "city",
-                "alt_name" : ""
-            }
-          }
         }
         ]}
       """

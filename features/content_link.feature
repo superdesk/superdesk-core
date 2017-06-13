@@ -1251,7 +1251,7 @@ Feature: Link content in takes
         """
         {
             "_id": "#REWRITE_ID#",
-            "rewrite_of": "#archive.123.take_package#",
+            "rewrite_of": "123",
             "headline": "test1",
             "rewrite_sequence": 1,
             "anpa_take_key": "update"
@@ -1490,6 +1490,6 @@ Feature: Link content in takes
         When we delete link "archive/456/link"
         Then we get error 400
         """
-        {"_message": "Only takes and updates can be unlinked!"}
+        {"_message": "Only updates can be unlinked!"}
         """
 

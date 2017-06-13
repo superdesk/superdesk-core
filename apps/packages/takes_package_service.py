@@ -241,32 +241,32 @@ class TakesPackageService():
 
         return True
 
-    def process_killed_takes_package(self, doc):
-        """If the takes packages is killed then spike the unpublished item
-
-        :param dict doc: killed item
-        """
-        takes_package = self.get_take_package(doc)
-
-        if takes_package:
-            spike_service = get_resource_service('archive_spike')
-            groups = takes_package.get('groups', [])
-            if groups:
-                refs = next(group.get('refs') for group in groups if group['id'] == MAIN_GROUP)
-                for sequence in range(takes_package.get(SEQUENCE, 0), 0, -1):
-                    try:
-                        ref = next(ref for ref in refs if ref.get(SEQUENCE) == sequence)
-                        updates = {ITEM_STATE: CONTENT_STATE.SPIKED}
-                        spike_service.patch(ref[RESIDREF], updates)
-                    except InvalidStateTransitionError:
-                        # for published items it will InvalidStateTransitionError
-                        break
-                    except SuperdeskApiError:
-                        # if not the last take
-                        break
-                    except:
-                        logger.exception("Unexpected error while spiking items of takes package")
-                        break
+    # def process_killed_takes_package(self, doc):
+    #     """If the takes packages is killed then spike the unpublished item
+    #
+    #     :param dict doc: killed item
+    #     """
+    #     takes_package = self.get_take_package(doc)
+    #
+    #     if takes_package:
+    #         spike_service = get_resource_service('archive_spike')
+    #         groups = takes_package.get('groups', [])
+    #         if groups:
+    #             refs = next(group.get('refs') for group in groups if group['id'] == MAIN_GROUP)
+    #             for sequence in range(takes_package.get(SEQUENCE, 0), 0, -1):
+    #                 try:
+    #                     ref = next(ref for ref in refs if ref.get(SEQUENCE) == sequence)
+    #                     updates = {ITEM_STATE: CONTENT_STATE.SPIKED}
+    #                     spike_service.patch(ref[RESIDREF], updates)
+    #                 except InvalidStateTransitionError:
+    #                     # for published items it will InvalidStateTransitionError
+    #                     break
+    #                 except SuperdeskApiError:
+    #                     # if not the last take
+    #                     break
+    #                 except:
+    #                     logger.exception("Unexpected error while spiking items of takes package")
+    #                     break
 
     def get_take_by_take_no(self, item, take_no=1, package=None):
         """Returns the id of the take in the takes package by take number.

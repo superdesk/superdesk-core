@@ -23,8 +23,8 @@ class EnqueueCorrectedService(EnqueueService):
         """Get the subscribers for this document based on the target_media_type for article Correction.
 
         1. The article is sent to Subscribers (digital and wire) who has received the article previously.
-        2. For subsequent takes, only published to previously published wire clients. Digital clients don't get
-           individual takes but digital client takes package.
+        # 2. For subsequent takes, only published to previously published wire clients. Digital clients don't get
+        #    individual takes but digital client takes package.
         3. Fetch Active Subscribers. After fetching exclude those who received the article previously from
            active subscribers list.
         4. If article has 'targeted_for' property then exclude subscribers of type Internet from Subscribers list.
@@ -47,14 +47,14 @@ class EnqueueCorrectedService(EnqueueService):
         subscribers, subscriber_codes, previous_associations = self._get_subscribers_for_previously_sent_items(query)
 
         if subscribers:
-            # step 2
-            if not self.takes_package_service.get_take_package_id(doc):
-                # Step 3
-                query = {'is_active': True}
-                active_subscribers = list(get_resource_service('subscribers').get(req=None, lookup=query))
-                subscribers_yet_to_receive = [a for a in active_subscribers
-                                              if not any(a[config.ID_FIELD] == s[config.ID_FIELD]
-                                                         for s in subscribers)]
+            # # step 2
+            # if not self.takes_package_service.get_take_package_id(doc):
+            # Step 3
+            query = {'is_active': True}
+            active_subscribers = list(get_resource_service('subscribers').get(req=None, lookup=query))
+            subscribers_yet_to_receive = [a for a in active_subscribers
+                                          if not any(a[config.ID_FIELD] == s[config.ID_FIELD]
+                                                     for s in subscribers)]
 
             if len(subscribers_yet_to_receive) > 0:
                 # Step 4

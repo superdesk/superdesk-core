@@ -455,11 +455,9 @@ Feature: Duplication of Content
       {"_current_version": 2, "state": "published", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
       """
       When we get "/published"
-      Then we get list with 2 items
+      Then we get list with 1 items
       """
       {"_items" : [
-        {"package_type": "takes", "_id": "#archive.123.take_package#",
-         "state": "published", "type": "composite", "_current_version": 2},
         {"_id": "123", "_current_version": 1, "state": "published", "type": "text", "_current_version": 2}
         ]
       }
@@ -472,22 +470,14 @@ Feature: Duplication of Content
       ["123"]
       """
       And we get "/published"
-      Then we get list with 2 items
-      When we expire items
-      """
-      ["#archive.123.take_package#"]
-      """
-      And we get "/published"
       Then we get list with 0 items
       When we enqueue published
       When we get "/publish_queue"
       Then we get list with 0 items
       When we get "/archived"
-      Then we get list with 2 items
+      Then we get list with 1 items
       """
       {"_items" : [
-        {"package_type": "takes", "item_id": "#archive.123.take_package#",
-         "state": "published", "type": "composite", "_current_version": 2},
         {"item_id": "123", "_current_version": 1, "state": "published", "type": "text", "_current_version": 2}
         ]
       }
@@ -509,10 +499,9 @@ Feature: Duplication of Content
       When we publish "#duplicate._id#" with "publish" type and "published" state
       Then we get OK response
       When we get "/published"
-      Then we get list with 2 items
+      Then we get list with 1 items
       """
       {"_items" : [
-        {"package_type": "takes", "state": "published", "type": "composite", "_current_version": 2},
         {"_current_version": 4, "state": "published", "type": "text"}]
       }
       """

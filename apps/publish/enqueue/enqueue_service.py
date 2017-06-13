@@ -62,12 +62,12 @@ class EnqueueService:
                 return self.publish(doc=item_to_queue, target_media_type=SUBSCRIBER_TYPES.DIGITAL)
             else:
                 return queued
-        elif item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
-            return self._publish_package_items(item_to_queue)
+        # elif item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
+        #     return self._publish_package_items(item_to_queue)
         elif item[ITEM_TYPE] not in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
             return self.publish(item_to_queue, SUBSCRIBER_TYPES.DIGITAL)
         else:
-            return self.publish(item_to_queue, SUBSCRIBER_TYPES.WIRE if item.get('is_take_item') else None)
+            return self.publish(item_to_queue, None)
 
     def _publish_package_items(self, package):
         """Publishes all items of a package recursively then publishes the package itself
@@ -280,13 +280,13 @@ class EnqueueService:
 
         if len(digital_subscribers) > 0:
             package = None
-            if not app.config.get('NO_TAKES', False) or self.takes_package_service.get_take_package_id(doc):
-                package = self.takes_package_service.get_take_package(doc)
-                package['item_id'] = package[config.ID_FIELD]
-                associations = self._resend_associations_to_subscribers(package, subscribers)
-                self._resend_to_subscribers(package, digital_subscribers, subscriber_codes, associations)
-            else:
-                self._resend_to_subscribers(doc, digital_subscribers, subscriber_codes, associations)
+            # if not app.config.get('NO_TAKES', False) or self.takes_package_service.get_take_package_id(doc):
+            #     package = self.takes_package_service.get_take_package(doc)
+            #     package['item_id'] = package[config.ID_FIELD]
+            #     associations = self._resend_associations_to_subscribers(package, subscribers)
+            #     self._resend_to_subscribers(package, digital_subscribers, subscriber_codes, associations)
+            # else:
+            self._resend_to_subscribers(doc, digital_subscribers, subscriber_codes, associations)
 
             self.publish_content_api(package or doc,
                                      [subscriber for subscriber in digital_subscribers
@@ -486,20 +486,20 @@ class EnqueueService:
         :return list: List of subscribers
         :return string: Digital item id if there's one otherwise None
         """
-        if package_item[ITEM_TYPE] not in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
-            query = {'$and': [{'item_id': package_item[config.ID_FIELD]},
-                              {'publishing_action': package_item[ITEM_STATE]}]}
-        else:
-            package_item_takes_package = package_item
-            if not app.config.get('NO_TAKES', False):
-                package_item_takes_package = self.takes_package_service.get_take_package(package_item)
-                if not package_item_takes_package:
-                    # this item has not been published to digital subscribers so
-                    # the list of subscribers are empty
-                    return [], {}, {}
-
-            query = {'$and': [{'item_id': package_item_takes_package[config.ID_FIELD]},
-                              {'publishing_action': package_item_takes_package[ITEM_STATE]}]}
+        #if package_item[ITEM_TYPE] not in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
+        query = {'$and': [{'item_id': package_item[config.ID_FIELD]},
+                          {'publishing_action': package_item[ITEM_STATE]}]}
+        # else:
+        #     package_item_takes_package = package_item
+        #     # if not app.config.get('NO_TAKES', False):
+        #     #     package_item_takes_package = self.takes_package_service.get_take_package(package_item)
+        #     #     if not package_item_takes_package:
+        #     #         # this item has not been published to digital subscribers so
+        #     #         # the list of subscribers are empty
+        #     #         return [], {}, {}
+        #
+        #     query = {'$and': [{'item_id': package_item_takes_package[config.ID_FIELD]},
+        #                       {'publishing_action': package_item_takes_package[ITEM_STATE]}]}
 
         return self._get_subscribers_for_previously_sent_items(query)
 

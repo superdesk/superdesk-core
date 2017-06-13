@@ -173,10 +173,6 @@ Feature: Publish Queue
                 "type": "text",
                 "queue_state": "error",
                 "error_message": "400: Key is missing on article to be published: 'qcode'"
-            },
-            {
-                "type": "composite",
-                "queue_state": "queued_not_transmitted"
             }
         ]
     }
@@ -244,9 +240,9 @@ Feature: Publish Queue
       "_items": [
         {
           "state": "pending",
-          "content_type": "composite",
+          "content_type": "text",
           "subscriber_id": "#subscribers._id#",
-          "item_id": "#archive.123.take_package#",
+          "item_id": "123",
           "item_version": 2,
           "codes": ["abc", "xyz", "def", "ptr", "axx"]
         }
@@ -385,7 +381,7 @@ Feature: Publish Queue
       ]
       """
       And we publish "#archive._id#" with "publish" type and "published" state
-      Then we get "publish_sequence_no" in "/published/#archive.123.take_package#"
+      Then we get "publish_sequence_no" in "/published/123"
 
   @auth @notification
   Scenario: Creating a new publish queue entry should add published sequence number

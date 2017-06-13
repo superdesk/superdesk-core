@@ -183,7 +183,7 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     Then we check if article has Embargo
     When we enqueue published
     When we get "/publish_queue"
-    Then we get list with 2 items
+    Then we get list with 3 items
     """
     {"_items": [
       {"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
@@ -198,7 +198,7 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     Then we get OK response
     When we enqueue published
     When we get "/publish_queue"
-    Then we get list with 4 items
+    Then we get list with 6 items
     """
     {"_items": [{"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
                 {"subscriber_id": "123", "publishing_action": "corrected", "content_type": "text", "destination":{"name":"email"}},
@@ -212,7 +212,7 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     Then we get OK response
     When we enqueue published
     When we get "/publish_queue"
-    Then we get list with 6 items
+    Then we get list with 9 items
     """
     {"_items": [{"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
                 {"subscriber_id": "123", "publishing_action": "corrected", "content_type": "text", "destination":{"name":"email"}},
@@ -255,10 +255,11 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     And we check if article has Embargo
     When we enqueue published
     When we get "/publish_queue"
-    Then we get list with 2 items
+    Then we get list with 3 items
     """
     {"_items": [
-    {"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
+    {"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "item_id": "123"},
+    {"subscriber_id": "321", "publishing_action": "published", "content_type": "text", "item_id": "123"},
     {"subscriber_id": "456"}]}
     """
     When we enqueue published
@@ -266,15 +267,13 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     Then we get OK response
     When we enqueue published
     When we get "/publish_queue"
-    Then we get list with 4 items
+    Then we get list with 6 items
     """
-    {"_items": [{"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
-                {"subscriber_id": "123", "publishing_action": "corrected", "content_type": "text", "destination":{"name":"email"}},
+    {"_items": [{"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "item_id": "123"},
+                {"subscriber_id": "123", "publishing_action": "corrected", "content_type": "text", "item_id": "123"},
                 {"subscriber_id": "456", "publishing_action": "published"},
                 {"subscriber_id": "456", "publishing_action": "corrected"}]}
     """
-    When we get "/archive/#archive.123.take_package#"
-    Then we check if article has Embargo
     When we get "/published"
     Then we validate the published item expiry to be after publish expiry set in desk settings 4320
 
@@ -311,9 +310,10 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     And we check if article has Embargo
     When we enqueue published
     When we get "/publish_queue"
-    Then we get list with 2 items
+    Then we get list with 3 items
     """
-    {"_items": [{"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
+    {"_items": [{"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "item_id": "123"},
+                {"subscriber_id": "321", "publishing_action": "published", "content_type": "text", "item_id": "123"},
                 {"subscriber_id": "456"}]}
     """
     When embargo lapses for "#archive._id#"
@@ -321,14 +321,14 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     Then we get OK response
     When we enqueue published
     When we get "/publish_queue"
-    Then we get list with 4 items
+    Then we get list with 6 items
     """
     {"_items": [{"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
                 {"subscriber_id": "123", "publishing_action": "corrected", "content_type": "text", "destination":{"name":"email"}},
                 {"subscriber_id": "456", "publishing_action": "published"},
                 {"subscriber_id": "456", "publishing_action": "corrected"}]}
     """
-    When we get "/archive/#archive.123.take_package#"
+    When we get "/archive/123"
     """
     {"ednote": ""}
     """
@@ -368,9 +368,10 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     And we check if article has Embargo
     When we enqueue published
     When we get "/publish_queue"
-    Then we get list with 2 items
+    Then we get list with 3 items
     """
-    {"_items": [{"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
+    {"_items": [{"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "item_id": "123"},
+                {"subscriber_id": "321", "publishing_action": "published", "content_type": "text", "item_id": "123"},
                 {"subscriber_id": "456"}]}
     """
     When we publish "#archive._id#" with "correct" type and "corrected" state
@@ -380,7 +381,7 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     Then we get OK response
     When we enqueue published
     When we get "/publish_queue"
-    Then we get list with 4 items
+    Then we get list with 6 items
     """
     {"_items": [{"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
                 {"subscriber_id": "123", "publishing_action": "corrected", "content_type": "text", "destination":{"name":"email"}},
@@ -398,7 +399,7 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     When we enqueue published
     When we get "/published"
     Then we validate the published item expiry to be after publish expiry set in desk settings 4320
-    When we get "/archive/#archive.123.take_package#"
+    When we get "/archive/123"
     """
     {"ednote": ""}
     """
@@ -642,17 +643,16 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     """
     {"state": "scheduled", "_id": "123"}
     """
-    When we get "/archive/#archive.123.take_package#"
+    When we get "/archive/123"
     Then we get existing resource
     """
-    {"state": "scheduled", "_id": "#archive.123.take_package#"}
+    {"state": "scheduled", "_id": "123"}
     """
     When we get "/published"
-    Then we get list with 2 items
+    Then we get list with 1 items
     """
     {"_items": [
-      {"state": "scheduled", "_id": "123", "type": "text"},
-      {"state": "scheduled", "_id": "#archive.123.take_package#", "type": "composite"}
+      {"state": "scheduled", "_id": "123", "type": "text"}
     ]}
     """
     When we enqueue published
@@ -678,8 +678,8 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     """
     {"state": "in_progress", "_id": "123", "publish_schedule": "__none__"}
     """
-    When we get "/archive/#TAKE_PACKAGE#"
-    Then we get error 404
+#    When we get "/archive/#TAKE_PACKAGE#"
+#    Then we get error 404
     When we get "/published"
     Then we get list with 0 items
     When we get "/publish_queue"
@@ -697,9 +697,10 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     Then we check if article has Embargo
     When we enqueue published
     When we get "/publish_queue"
-    Then we get list with 2 items
+    Then we get list with 3 items
     """
-    {"_items": [{"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
+    {"_items": [{"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "item_id":"123"},
+                {"subscriber_id": "321", "publishing_action": "published", "content_type": "text", "item_id":"123"},
                 {"subscriber_id": "456"}]}
     """
 
@@ -726,7 +727,7 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     {"_items": [
       {"subscriber_id": "123", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}},
       {"subscriber_id": "456"},
-      {"subscriber_id": "321", "publishing_action": "published", "content_type": "composite", "destination":{"name":"email"}}
+      {"subscriber_id": "321", "publishing_action": "published", "content_type": "text", "destination":{"name":"email"}}
      ]
     }
     """

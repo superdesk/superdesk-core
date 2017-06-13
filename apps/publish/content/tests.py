@@ -173,110 +173,6 @@ class ArchivePublishTestCase(TestCase):
                           'expiry': utcnow() + timedelta(minutes=20),
                           ITEM_TYPE: CONTENT_TYPE.TEXT,
                           'unique_name': '#3'},
-                         {'guid': 'tag:localhost:2015:69b961ab-2816-4b8a-a584-a7b402fed4fb',
-                          '_id': '4',
-                          'last_version': 3,
-                          config.VERSION: 4,
-                          'body_html': 'Take-1 body',
-                          'urgency': 4,
-                          'headline': 'Take-1 headline',
-                          'abstract': 'Abstract for take-1',
-                          'anpa_category': [{'qcode': 'A', 'name': 'Sport'}],
-                          'pubstatus': 'done',
-                          'firstcreated': utcnow(),
-                          'byline': 'By Alan Karben',
-                          'dateline': {'located': {'city': 'Sydney'}},
-                          'slugline': 'taking takes',
-                          'keywords': ['Student', 'Crime', 'Police', 'Missing'],
-                          'subject': [{'qcode': '17004000', 'name': 'Statistics'},
-                                      {'qcode': '04001002', 'name': 'Weather'}],
-                          'task': {'user': '1', 'desk': '123456789ABCDEF123456789'},
-                          ITEM_STATE: CONTENT_STATE.PROGRESS,
-                          'expiry': utcnow() + timedelta(minutes=20),
-                          ITEM_TYPE: CONTENT_TYPE.TEXT,
-                          'linked_in_packages': [{"package": "7", "package_type": "takes"}],
-                          'unique_name': '#4'},
-                         {'guid': 'tag:localhost:2015:69b961ab-2816-4b8a-a584-a7b402fed4fg',
-                          '_id': '5',
-                          'last_version': 3,
-                          config.VERSION: 4,
-                          'body_html': 'Take-2 body',
-                          'urgency': 4,
-                          'headline': 'Take-2 headline',
-                          'abstract': 'Abstract for take-1',
-                          'anpa_category': [{'qcode': 'A', 'name': 'Sport'}],
-                          'pubstatus': 'done',
-                          'firstcreated': utcnow(),
-                          'byline': 'By Alan Karben',
-                          'dateline': {'located': {'city': 'Sydney'}},
-                          'slugline': 'taking takes',
-                          'linked_in_packages': [{"package": "7", "package_type": "takes"}],
-                          'keywords': ['Student', 'Crime', 'Police', 'Missing'],
-                          'subject': [{'qcode': '17004000', 'name': 'Statistics'},
-                                      {'qcode': '04001002', 'name': 'Weather'}],
-                          'task': {'user': '1', 'desk': '123456789ABCDEF123456789'},
-                          ITEM_STATE: CONTENT_STATE.PROGRESS,
-                          'expiry': utcnow() + timedelta(minutes=20),
-                          ITEM_TYPE: CONTENT_TYPE.TEXT,
-                          'unique_name': '#5'},
-                         {'guid': 'tag:localhost:2015:69b961ab-2816-4b8a-a584-a7b402fed4fc',
-                          '_id': '6',
-                          'last_version': 2,
-                          config.VERSION: 3,
-                          ITEM_TYPE: CONTENT_TYPE.COMPOSITE,
-                          'task': {'user': '1', 'desk': '123456789ABCDEF123456789'},
-                          'groups': [{'id': 'root', 'refs': [{'idRef': 'main'}], 'role': 'grpRole:NEP'},
-                                     {
-                                         'id': 'main',
-                                         'refs': [
-                                             {
-                                                 'location': ARCHIVE,
-                                                 'guid': '5',
-                                                 ITEM_TYPE: CONTENT_TYPE.TEXT,
-                                                 RESIDREF: '5'
-                                             },
-                                             {
-                                                 'location': ARCHIVE,
-                                                 'guid': '4',
-                                                 ITEM_TYPE: CONTENT_TYPE.TEXT,
-                                                 RESIDREF: '4'
-                                             }
-                                         ],
-                                         'role': 'grpRole:main'}],
-                          'firstcreated': utcnow(),
-                          'expiry': utcnow() + timedelta(minutes=20),
-                          'unique_name': '#6',
-                          ITEM_STATE: CONTENT_STATE.PROGRESS},
-                         {'guid': 'tag:localhost:2015:ab-69b961-2816-4b8a-a584-a7b402fed4fc',
-                          '_id': '7',
-                          'last_version': 2,
-                          config.VERSION: 3,
-                          ITEM_TYPE: CONTENT_TYPE.COMPOSITE,
-                          'package_type': 'takes',
-                          'task': {'user': '1', 'desk': '123456789ABCDEF123456789'},
-                          'groups': [{'id': 'root', 'refs': [{'idRef': 'main'}], 'role': 'grpRole:NEP'},
-                                     {
-                                         'id': 'main',
-                                         'refs': [
-                                             {
-                                                 'location': ARCHIVE,
-                                                 'guid': '5',
-                                                 'sequence': 1,
-                                                 ITEM_TYPE: CONTENT_TYPE.TEXT
-                                             },
-                                             {
-                                                 'location': ARCHIVE,
-                                                 'guid': '4',
-                                                 'sequence': 2,
-                                                 ITEM_TYPE: CONTENT_TYPE.TEXT
-                                             }
-                                         ],
-                                         'role': 'grpRole:main'}],
-                          'firstcreated': utcnow(),
-                          'expiry': utcnow() + timedelta(minutes=20),
-                          'sequence': 2,
-                          'state': 'draft',
-                          'unique_name': '#7'},
                          {'guid': '8',
                           '_id': '8',
                           'last_version': 3,
@@ -490,7 +386,7 @@ class ArchivePublishTestCase(TestCase):
         self.app.data.insert('archive_versions', self.article_versions)
 
         # Publishing an Article
-        doc = self.articles[7]
+        doc = self.articles[3]
         original = doc.copy()
 
         published_version_number = original[config.VERSION] + 1
@@ -520,7 +416,7 @@ class ArchivePublishTestCase(TestCase):
     def test_queue_transmission_for_item_scheduled_future(self):
         self._is_publish_queue_empty()
 
-        doc = copy(self.articles[9])
+        doc = copy(self.articles[5])
         doc['item_id'] = doc['_id']
         schedule_date = utcnow() + timedelta(hours=2)
         updates = {
@@ -538,7 +434,7 @@ class ArchivePublishTestCase(TestCase):
     def test_queue_transmission_for_item_scheduled_elapsed(self):
         self._is_publish_queue_empty()
 
-        doc = copy(self.articles[9])
+        doc = copy(self.articles[5])
         doc['item_id'] = doc['_id']
         schedule_date = utcnow() + timedelta(minutes=10)
         updates = {
@@ -642,7 +538,7 @@ class ArchivePublishTestCase(TestCase):
     def test_delete_from_queue_by_article_id(self):
         self._is_publish_queue_empty()
 
-        doc = copy(self.articles[7])
+        doc = copy(self.articles[3])
         doc['item_id'] = doc['_id']
 
         archive_publish = get_resource_service(ARCHIVE_PUBLISH)
@@ -650,12 +546,12 @@ class ArchivePublishTestCase(TestCase):
 
         enqueue_published()
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
-        self.assertEqual(7, queue_items.count())
+        self.assertEqual(6, queue_items.count())
 
         # this will delete queue transmission for the wire article not the takes package.
         publish_queue.PublishQueueService(PUBLISH_QUEUE, get_backend()).delete_by_article_id(doc['_id'])
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
-        self.assertEqual(2, queue_items.count())
+        self.assertEqual(0, queue_items.count())
 
     def test_conform_target_regions(self):
         doc = {'headline': 'test'}
@@ -689,11 +585,11 @@ class ArchivePublishTestCase(TestCase):
         product = self.products[0]
         self._add_content_filters(product, is_global=False)
 
-        can_it = EnqueueService().conforms_content_filter(product, self.articles[8])
+        can_it = EnqueueService().conforms_content_filter(product, self.articles[4])
         self.assertFalse(can_it)
         product['content_filter']['filter_type'] = 'permitting'
 
-        can_it = EnqueueService().conforms_content_filter(product, self.articles[8])
+        can_it = EnqueueService().conforms_content_filter(product, self.articles[4])
         self.assertTrue(can_it)
         product.pop('content_filter')
 
@@ -707,7 +603,7 @@ class ArchivePublishTestCase(TestCase):
         req.args = {'is_global': True}
         global_filters = list(service.get(req=req, lookup=None))
         enqueue_service = EnqueueService()
-        enqueue_service.conforms_global_filter(global_filters, self.articles[8])
+        enqueue_service.conforms_global_filter(global_filters, self.articles[4])
         can_it = enqueue_service.conforms_subscriber_global_filter(subscriber, global_filters)
         self.assertFalse(can_it)
 
@@ -732,13 +628,13 @@ class ArchivePublishTestCase(TestCase):
     def test_targeted_for_includes_digital_subscribers(self):
         ValidatorsPopulateCommand().run(self.filename)
         updates = {'target_regions': [{'qcode': 'NSW', 'name': 'New South Wales', 'allow': True}]}
-        doc_id = self.articles[9][config.ID_FIELD]
+        doc_id = self.articles[5][config.ID_FIELD]
         get_resource_service(ARCHIVE).patch(id=doc_id, updates=updates)
 
         get_resource_service(ARCHIVE_PUBLISH).patch(id=doc_id, updates={ITEM_STATE: CONTENT_STATE.PUBLISHED})
         enqueue_published()
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
-        self.assertEqual(7, queue_items.count())
+        self.assertEqual(6, queue_items.count())
         expected_subscribers = ['1', '2', '3', '4', '5']
         for item in queue_items:
             self.assertIn(item["subscriber_id"], expected_subscribers, 'item {}'.format(item))
@@ -763,17 +659,17 @@ class ArchivePublishTestCase(TestCase):
         enqueue_published()
 
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
-        self.assertEqual(2, queue_items.count())
+        self.assertEqual(1, queue_items.count())
         request = ParsedRequest()
         request.args = {'aggregations': 0}
         published_items = self.app.data.find(PUBLISHED, request, None)
-        self.assertEqual(2, published_items.count())
-        published_digital_doc = next((item for item in published_items
-                                      if item.get(PACKAGE_TYPE) == TAKES_PACKAGE), None)
+        self.assertEqual(1, published_items.count())
+        # published_digital_doc = next((item for item in published_items
+        #                               if item.get(PACKAGE_TYPE) == TAKES_PACKAGE), None)
         published_doc = next((item for item in published_items
                               if item.get('item_id') == doc[config.ID_FIELD]), None)
         self.assertEqual(published_doc[LAST_PUBLISHED_VERSION], True)
-        self.assertEqual(published_digital_doc[LAST_PUBLISHED_VERSION], True)
+        # self.assertEqual(published_digital_doc[LAST_PUBLISHED_VERSION], True)
 
         get_resource_service(ARCHIVE_CORRECT).patch(id=doc[config.ID_FIELD],
                                                     updates={ITEM_STATE: CONTENT_STATE.CORRECTED})
@@ -781,11 +677,11 @@ class ArchivePublishTestCase(TestCase):
         enqueue_published()
 
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
-        self.assertEqual(4, queue_items.count())
+        self.assertEqual(2, queue_items.count())
         published_items = self.app.data.find(PUBLISHED, request, None)
-        self.assertEqual(4, published_items.count())
-        last_published_digital = get_publish_items(published_digital_doc['item_id'], True)
-        self.assertEqual(1, last_published_digital.count())
+        self.assertEqual(2, published_items.count())
+        # last_published_digital = get_publish_items(published_digital_doc['item_id'], True)
+        # self.assertEqual(1, last_published_digital.count())
         last_published = get_publish_items(published_doc['item_id'], True)
         self.assertEqual(1, last_published.count())
 

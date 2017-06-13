@@ -51,7 +51,7 @@ class ArchiveBroadcastResource(Resource):
 
 class ArchiveBroadcastService(BaseService):
 
-    takesService = TakesPackageService()
+    #takesService = TakesPackageService()
     packageService = PackageService()
 
     def create(self, docs):
@@ -86,7 +86,7 @@ class ArchiveBroadcastService(BaseService):
         doc['broadcast'] = {
             'status': '',
             'master_id': item_id,
-            'takes_package_id': self.takesService.get_take_package_id(item),
+            #'takes_package_id': self.takesService.get_take_package_id(item),
             'rewrite_id': item.get('rewritten_by')
         }
 
@@ -135,10 +135,7 @@ class ArchiveBroadcastService(BaseService):
                     'filter': {
                         'bool': {
                             'must': {'term': {'genre.name': BROADCAST_GENRE}},
-                            'should': [
-                                {'terms': {'broadcast.master_id': ids}},
-                                {'terms': {'broadcast.takes_package_id': ids}}
-                            ]
+                            'should': {'terms': {'broadcast.master_id': ids}}
                         }
                     }
                 }
@@ -164,8 +161,8 @@ class ArchiveBroadcastService(BaseService):
             return []
 
         ids = [str(item.get(config.ID_FIELD))]
-        if self.takesService.get_take_package_id(item):
-            ids.append(str(self.takesService.get_take_package_id(item)))
+        # if self.takesService.get_take_package_id(item):
+        #     ids.append(str(self.takesService.get_take_package_id(item)))
 
         return list(self._get_broadcast_items(ids, include_archived_repo))
 
@@ -185,11 +182,11 @@ class ArchiveBroadcastService(BaseService):
         if not item or is_genre(item, BROADCAST_GENRE):
             return
 
-        if item_event == ITEM_CREATE and takes_package_id:
-            if RE_OPENS.lower() in str(item.get('anpa_take_key', '')).lower():
-                status = 'Story Re-opened'
-            else:
-                status = 'New Take Created'
+        # if item_event == ITEM_CREATE and takes_package_id:
+        #     if RE_OPENS.lower() in str(item.get('anpa_take_key', '')).lower():
+        #         status = 'Story Re-opened'
+        #     else:
+        #         status = 'New Take Created'
 
         elif item_event == ITEM_CREATE and rewrite_id:
             status = 'Master Story Re-written'
@@ -216,8 +213,8 @@ class ArchiveBroadcastService(BaseService):
                 if status:
                     updates['broadcast']['status'] = status
 
-                if not updates['broadcast']['takes_package_id'] and takes_package_id:
-                    updates['broadcast']['takes_package_id'] = takes_package_id
+                # if not updates['broadcast']['takes_package_id'] and takes_package_id:
+                #     updates['broadcast']['takes_package_id'] = takes_package_id
 
                 if not updates['broadcast']['rewrite_id'] and rewrite_id:
                     updates['broadcast']['rewrite_id'] = rewrite_id

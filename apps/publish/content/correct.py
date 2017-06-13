@@ -57,7 +57,7 @@ class CorrectPublishService(BasePublishService):
     def on_updated(self, updates, original):
         """Runs on update
 
-        Locates the published or corrected non-take packages containing the corrected item
+        Locates the published or corrected packages containing the corrected item
         and corrects them
 
         :param updates: correction

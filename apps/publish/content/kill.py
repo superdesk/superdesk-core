@@ -39,7 +39,7 @@ class KillPublishService(BasePublishService):
         super().__init__(datasource=datasource, backend=backend)
 
     def on_update(self, updates, original):
-        # check if we are trying to kill and item that is contained in normal non takes package
+        # check if we are trying to kill and item that is contained in package
         # and the package itself is not killed.
 
         packages = self.package_service.get_packages(original[config.ID_FIELD])
@@ -55,7 +55,7 @@ class KillPublishService(BasePublishService):
 
         super().on_update(updates, original)
         updates[ITEM_OPERATION] = ITEM_KILL
-        self.takes_package_service.process_killed_takes_package(original)
+        #self.takes_package_service.process_killed_takes_package(original)
         get_resource_service('archive_broadcast').spike_item(original)
 
     def update(self, id, updates, original):
@@ -95,10 +95,10 @@ class KillPublishService(BasePublishService):
         self.apply_kill_override(original_copy, updates)
         self.broadcast_kill_email(original, updates)
         super().update(id, updates, original)
-        self._publish_kill_for_takes(updates_copy, original_copy)
+        #self._publish_kill_for_takes(updates_copy, original_copy)
         updated = deepcopy(original)
         updated.update(updates)
-        self._process_takes_package(original, updated, updates_copy)
+        #self._process_takes_package(original, updated, updates_copy)
         get_resource_service('archive_broadcast').kill_broadcast(updates_copy, original_copy)
 
     def broadcast_kill_email(self, original, updates):
@@ -121,31 +121,31 @@ class KillPublishService(BasePublishService):
         kill_article['city'] = get_dateline_city(kill_article.get('dateline'))
         send_article_killed_email(kill_article, recipients, utcnow())
 
-    def _publish_kill_for_takes(self, updates, original):
-        """Kill all the takes in a takes package.
-
-        :param updates: Updates of the original document
-        :param original: Document to kill
-        """
-        package = self.takes_package_service.get_take_package(original)
-        last_updated = updates.get(config.LAST_UPDATED, utcnow())
-        if package:
-            for ref in[ref for group in package.get('groups', []) if group['id'] == 'main'
-                       for ref in group.get('refs')]:
-                if ref[GUID_FIELD] != original[config.ID_FIELD]:
-                    updates_data = deepcopy(updates)
-                    original_data = super().find_one(req=None, _id=ref[GUID_FIELD])
-                    original_data_copy = deepcopy(original_data)
-                    self.apply_kill_override(original_data_copy, updates_data)
-                    '''
-                    Popping out the config.VERSION as Take referenced by original and Take referenced by original_data
-                    might have different and if not popped out then it might jump the versions.
-                    '''
-                    updates_data.pop(config.VERSION, None)
-                    self._set_updates(original_data, updates_data, last_updated)
-                    self._update_archive(original=original_data, updates=updates_data,
-                                         should_insert_into_versions=True)
-                    self.update_published_collection(published_item_id=original_data['_id'])
+    # def _publish_kill_for_takes(self, updates, original):
+    #     """Kill all the takes in a takes package.
+    #
+    #     :param updates: Updates of the original document
+    #     :param original: Document to kill
+    #     """
+    #     package = self.takes_package_service.get_take_package(original)
+    #     last_updated = updates.get(config.LAST_UPDATED, utcnow())
+    #     if package:
+    #         for ref in[ref for group in package.get('groups', []) if group['id'] == 'main'
+    #                    for ref in group.get('refs')]:
+    #             if ref[GUID_FIELD] != original[config.ID_FIELD]:
+    #                 updates_data = deepcopy(updates)
+    #                 original_data = super().find_one(req=None, _id=ref[GUID_FIELD])
+    #                 original_data_copy = deepcopy(original_data)
+    #                 self.apply_kill_override(original_data_copy, updates_data)
+    #                 '''
+    #                 Popping out the config.VERSION as Take referenced by original and Take referenced by original_data
+    #                 might have different and if not popped out then it might jump the versions.
+    #                 '''
+    #                 updates_data.pop(config.VERSION, None)
+    #                 self._set_updates(original_data, updates_data, last_updated)
+    #                 self._update_archive(original=original_data, updates=updates_data,
+    #                                      should_insert_into_versions=True)
+    #                 self.update_published_collection(published_item_id=original_data['_id'])
 
     def kill_item(self, updates, original):
         """Kill the item after applying the template.

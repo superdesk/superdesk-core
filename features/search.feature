@@ -184,7 +184,7 @@ Feature: Search Feature
         And we publish "#archive._id#" with "publish" type and "published" state
         Then we get OK response
         When we get "/published"
-        Then we get list with 2 items
+        Then we get list with 1 items
         When we get "/archive/#archive._id#"
         Then we get response code 200
         When we login as user "foo" with password "bar" and user type "user"

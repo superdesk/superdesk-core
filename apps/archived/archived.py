@@ -88,16 +88,16 @@ class ArchivedService(BaseService):
             doc['archived_id'] = self._get_archived_id(doc.get('item_id'), doc.get(config.VERSION))
 
             if doc.get(ITEM_TYPE) == CONTENT_TYPE.COMPOSITE:
-                is_takes_package = doc.get(PACKAGE_TYPE) == TAKES_PACKAGE
+                # is_takes_package = doc.get(PACKAGE_TYPE) == TAKES_PACKAGE
                 for ref in package_service.get_item_refs(doc):
                     ref['location'] = 'archived'
 
-                    if is_takes_package and not ref.get('is_published'):
-                        # if take is not published
-                        package_service.remove_ref_from_inmem_package(doc, ref.get(RESIDREF))
+                    # if is_takes_package and not ref.get('is_published'):
+                    #     # if take is not published
+                    #     package_service.remove_ref_from_inmem_package(doc, ref.get(RESIDREF))
 
-                if is_takes_package:
-                    doc[SEQUENCE] = len(package_service.get_item_refs(doc))
+                # if is_takes_package:
+                #     doc[SEQUENCE] = len(package_service.get_item_refs(doc))
 
     def validate_delete_action(self, doc, allow_all_types=False):
         """Runs on delete of archive item.

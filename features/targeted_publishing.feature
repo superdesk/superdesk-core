@@ -108,11 +108,10 @@ Feature: Targeted Publishing
     When we publish "#archive._id#" with "publish" type and "published" state
     Then we get OK response
     When we get "/published"
-    Then we get list with 2 items
+    Then we get list with 1 items
     """
     {"_items" :
-      [{"_id": "123", "state": "published", "type": "text", "_current_version": 2},
-       {"type": "composite"}]}
+      [{"_id": "123", "state": "published", "type": "text", "_current_version": 2}]}
     """
     When we enqueue published
     And we get "/publish_queue"
@@ -146,7 +145,7 @@ Feature: Targeted Publishing
     When we publish "#archive._id#" with "publish" type and "published" state
     Then we get OK response
     When we get "/published"
-    Then we get list with 2 items
+    Then we get list with 1 items
     """
     {"_items" : [{"_id": "123", "state": "published", "type": "text", "_current_version": 2}]}
     """
@@ -189,7 +188,7 @@ Feature: Targeted Publishing
     When we publish "#archive._id#" with "publish" type and "published" state
     Then we get OK response
     When we get "/published"
-    Then we get list with 2 items
+    Then we get list with 1 items
     """
     {"_items" : [{"_id": "123", "state": "published", "type": "text", "_current_version": 2}]}
     """
@@ -215,7 +214,7 @@ Feature: Targeted Publishing
     When we publish "#archive._id#" with "publish" type and "published" state
     Then we get OK response
     When we get "/published"
-    Then we get list with 2 items
+    Then we get list with 1 items
     """
     {"_items" : [{"_id": "123", "state": "published", "type": "text", "_current_version": 2}]}
     """
@@ -251,7 +250,7 @@ Feature: Targeted Publishing
     When we publish "#archive._id#" with "publish" type and "published" state
     Then we get OK response
     When we get "/published"
-    Then we get list with 2 items
+    Then we get list with 1 items
     """
     {"_items" : [{"_id": "123", "state": "published", "type": "text", "_current_version": 2}]}
     """
@@ -285,7 +284,7 @@ Feature: Targeted Publishing
     When we publish "#archive._id#" with "publish" type and "published" state
     Then we get OK response
     When we get "/published"
-    Then we get list with 2 items
+    Then we get list with 1 items
     """
     {"_items" : [{"_id": "123", "state": "published", "type": "text", "_current_version": 2}]}
     """
@@ -322,7 +321,7 @@ Feature: Targeted Publishing
     When we publish "#archive._id#" with "publish" type and "published" state
     Then we get OK response
     When we get "/published"
-    Then we get list with 2 items
+    Then we get list with 1 items
     """
     {"_items" : [{"_id": "123", "state": "published", "type": "text", "_current_version": 2}]}
     """
@@ -360,7 +359,7 @@ Feature: Targeted Publishing
     When we publish "#archive._id#" with "publish" type and "published" state
     Then we get OK response
     When we get "/published"
-    Then we get list with 2 items
+    Then we get list with 1 items
     """
     {"_items" : [{"_id": "123", "state": "published", "type": "text", "_current_version": 2}]}
     """
@@ -404,12 +403,12 @@ Feature: Targeted Publishing
     Then we get OK response
     When we enqueue published
     And we get "/publish_queue"
-    Then we get list with 9 items
+    Then we get list with 10 items
     """
     {
       "_items":
         [
-          {"subscriber_id": "sub-1", "codes": ["Aaa", "abc", "xyz"], "headline": "corrected2"},
+          {"subscriber_id": "sub-1", "codes": ["Aaa", "abc", "xyz", "klm"], "headline": "corrected2"},
           {"subscriber_id": "sub-4", "headline": "corrected"},
           {"subscriber_id": "sub-5", "codes": ["ptk", "rst"], "headline": "corrected2"}
         ]

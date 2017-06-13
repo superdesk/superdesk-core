@@ -141,9 +141,9 @@ ARCHIVE_SCHEMA_FIELDS = {
     SEQUENCE: {
         'type': 'integer'
     },
-    ASSOCIATED_TAKE_SEQUENCE: {
-        'type': 'integer'
-    },
+    # ASSOCIATED_TAKE_SEQUENCE: {
+    #     'type': 'integer'
+    # },
     EMBARGO: {
         'type': 'datetime',
         'nullable': True
@@ -154,7 +154,7 @@ ARCHIVE_SCHEMA_FIELDS = {
         'schema': {
             'status': {'type': 'string'},
             'master_id': {'type': 'string', 'mapping': not_analyzed},
-            'takes_package_id': {'type': 'string', 'mapping': not_analyzed},
+            #'takes_package_id': {'type': 'string', 'mapping': not_analyzed},
             'rewrite_id': {'type': 'string', 'mapping': not_analyzed}
         }
     },
@@ -273,8 +273,8 @@ def set_default_source(doc):
     """
 
     # source is already set for takes package.
-    if doc.get(PACKAGE_TYPE) == TAKES_PACKAGE:
-        return
+    # if doc.get(PACKAGE_TYPE) == TAKES_PACKAGE:
+    #     return
 
     # If the item has been ingested and the source for the provider is not the same as the system default source
     # the source must be preserved as the item has been ingested from an external agency
@@ -557,10 +557,10 @@ def update_state(original, updates):
 
     original_state = original.get(ITEM_STATE)
     if original_state not in {CONTENT_STATE.INGESTED, CONTENT_STATE.PROGRESS, CONTENT_STATE.SCHEDULED}:
-        if original.get(PACKAGE_TYPE) == TAKES_PACKAGE:
-            # skip any state transition validation for takes packages
-            # also don't change the stage of the package
-            return
+        # if original.get(PACKAGE_TYPE) == TAKES_PACKAGE:
+        #     # skip any state transition validation for takes packages
+        #     # also don't change the stage of the package
+        #     return
         if not is_workflow_state_transition_valid('save', original_state):
             raise superdesk.errors.InvalidStateTransitionError()
         elif is_assigned_to_a_desk(original):
@@ -605,7 +605,6 @@ def validate_schedule(schedule):
     :raises: SuperdeskApiError.badRequestError if following cases
         - Not a valid datetime
         - Less than current utc time
-        - if more than 1 takes exist in the package.
     """
     if schedule:
         if not isinstance(schedule, datetime):
@@ -667,10 +666,10 @@ def item_schema(extra=None):
 
 
 def is_item_in_package(item):
-    """Checks if the passed item is a member of a non-takes package.
+    """Checks if the passed item is a member of a package.
 
     :param item:
-    :return: True if the item belongs to a non-takes package
+    :return: True if the item belongs to a package
     """
     return item.get(LINKED_IN_PACKAGES, None) \
         and sum(1 for x in item.get(LINKED_IN_PACKAGES, []) if x.get(PACKAGE_TYPE, '') == '')
@@ -751,7 +750,7 @@ def copy_metadata_from_user_preferences(doc, repo_type=ARCHIVE):
                                    'located': located,
                                    'text': format_dateline_to_locmmmddsrc(located, dateline_ts, source)}
 
-            if doc.get(PACKAGE_TYPE) != TAKES_PACKAGE and BYLINE not in doc and user and user.get(BYLINE):
+            if BYLINE not in doc and user and user.get(BYLINE):
                 doc[BYLINE] = user[BYLINE]
 
             if 'place' not in doc and user:

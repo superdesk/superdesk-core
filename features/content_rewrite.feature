@@ -99,13 +99,12 @@ Feature: Rewrite content
       When we get "/published"
       Then we get existing resource
       """
-      {"_items" : [{"_id": "123", "rewritten_by": "#REWRITE_ID#"},
-                   {"package_type": "takes", "rewritten_by": "#REWRITE_ID#"}]}
+      {"_items" : [{"_id": "123", "rewritten_by": "#REWRITE_ID#"}]}
       """
       When we get "/archive"
       Then we get existing resource
       """
-      {"_items" : [{"_id": "#REWRITE_ID#", "anpa_take_key": "update", "rewrite_of": "#archive.123.take_package#",
+      {"_items" : [{"_id": "#REWRITE_ID#", "anpa_take_key": "update", "rewrite_of": "123",
         "task": {"desk": "#desks._id#", "stage": "#desks.working_stage#"}, "genre": [{"name": "Article", "qcode": "Article"}],
         "flags": {"marked_for_legal": true, "marked_for_sms": false}, "priority": 2, "urgency": 2, "rewrite_sequence": 1,
         "body_footer": "Suicide Call Back Service 1300 659 467",
@@ -121,11 +120,11 @@ Feature: Rewrite content
       """
       When we publish "#REWRITE_ID#" with "publish" type and "published" state
       Then we get OK response
-      When we get "/archive/#archive.take_package#"
-      Then we get existing resource
-      """
-      {"_id": "#archive.take_package#", "rewrite_of": "#archive.123.take_package#", "rewrite_sequence": 1}
-      """
+#      When we get "/archive/#archive.take_package#"
+#      Then we get existing resource
+#      """
+#      {"_id": "#archive.take_package#", "rewrite_of": "#archive.123.take_package#", "rewrite_sequence": 1}
+#      """
       When we rewrite "#REWRITE_ID#"
       """
       {"desk_id": "#desks._id#"}
@@ -135,7 +134,7 @@ Feature: Rewrite content
       Then we get OK response
       And we get existing resource
       """
-      {"_id": "#REWRITE_ID#", "rewrite_of": "#archive.take_package#",
+      {"_id": "#REWRITE_ID#", "rewrite_of": "#REWRITE_OF#",
       "rewrite_sequence": 2, "anpa_take_key": "2nd update", "_current_version": 1}
       """
 
@@ -222,11 +221,11 @@ Feature: Rewrite content
       {"_id": "#REWRITE_ID#", "state": "published",
         "rewrite_sequence": 1}
       """
-      When we get "/archive/#archive.take_package#"
+      When we get "/archive/#REWRITE_ID#"
       Then we get OK response
       And we get existing resource
       """
-      {"state": "published", "rewrite_of": "#archive.123.take_package#",
+      {"state": "published", "rewrite_of": "123",
         "rewrite_sequence": 1}
       """
 
@@ -510,7 +509,6 @@ Feature: Rewrite content
         Then we get existing resource
         """
         {"_items" : [{"_id": "123", "rewritten_by": "#REWRITE_ID#"},
-                     {"package_type": "takes", "rewritten_by": "#REWRITE_ID#"},
                      {"_id": "#REWRITE_ID#", "anpa_take_key": "update", "rewrite_sequence": 1}]}
         """
         When we rewrite "#REWRITE_ID#"
@@ -587,13 +585,12 @@ Feature: Rewrite content
       When we get "/published"
       Then we get existing resource
       """
-      {"_items" : [{"_id": "123", "rewritten_by": "#REWRITE_ID#"},
-                   {"package_type": "takes", "rewritten_by": "#REWRITE_ID#"}]}
+      {"_items" : [{"_id": "123", "rewritten_by": "#REWRITE_ID#"}]}
       """
       When we get "/archive"
       Then we get existing resource
       """
-      {"_items" : [{"_id": "#REWRITE_ID#", "anpa_take_key": "update", "rewrite_of": "#archive.123.take_package#",
+      {"_items" : [{"_id": "#REWRITE_ID#", "anpa_take_key": "update", "rewrite_of": "123",
         "task": {"desk": "#desks._id#"}, "rewrite_sequence": 1}]}
       """
       When we spike "#REWRITE_ID#"
@@ -663,7 +660,6 @@ Feature: Rewrite content
       Then we get existing resource
       """
       {"_items" : [{"_id": "123", "rewritten_by": "#REWRITE_ID#"},
-                   {"package_type": "takes", "rewritten_by": "#REWRITE_ID#"},
                    {"_id": "#REWRITE_ID#", "anpa_take_key": "update", "rewrite_sequence": 1}]}
       """
       When we rewrite "#REWRITE_ID#"
@@ -929,14 +925,13 @@ Feature: Rewrite content
       When we get "/published"
       Then we get existing resource
       """
-      {"_items" : [{"_id": "123", "rewritten_by": "456"},
-                   {"package_type": "takes", "rewritten_by": "456"}]}
+      {"_items" : [{"_id": "123", "rewritten_by": "456"}]}
       """
       When we get "/archive/456"
       Then we get existing resource
       """
       {"_id": "456", "anpa_take_key": "update", "priority": 2,
-       "rewrite_of": "#archive.123.take_package#", "rewrite_sequence": 1,
+       "rewrite_of": "123", "rewrite_sequence": 1,
        "subject":[{"qcode": "17004000", "name": "Statistics"},
        {"qcode": "01000000", "name": "arts, culture and entertainment"}]}
       """
@@ -1404,15 +1399,15 @@ Feature: Rewrite content
         Then we get OK response
         When we publish "123" with "publish" type and "published" state
         Then we get OK response
-        And we store "take_package1" with value "#archive.take_package#" to context
+        #And we store "take_package1" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
         Then we get list with 2 items
         """
         {
             "_items": [
-              {"state": "pending", "content_type": "composite",
-              "subscriber_id": "#digital#", "item_id": "#take_package1#", "item_version": 2},
+              {"state": "pending", "content_type": "text",
+              "subscriber_id": "#digital#", "item_id": "123", "item_version": 2},
               {"state": "pending", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "123", "item_version": 2}
             ]
@@ -1420,19 +1415,15 @@ Feature: Rewrite content
         """
         When we publish "#REWRITE_ID#" with "publish" type and "published" state
         Then we get OK response
-        And we store "take_package2" with value "#archive.take_package#" to context
+        #And we store "take_package2" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
         Then we get list with 4 items
         """
         {
             "_items": [
-              {"state": "pending", "content_type": "composite",
-              "subscriber_id": "#digital#", "item_id": "#take_package1#", "item_version": 2},
               {"state": "pending", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "123", "item_version": 2},
-              {"state": "pending", "content_type": "composite", "item_id": "#take_package2#",
-              "subscriber_id": "#digital#", "item_version": 2},
               {"state": "pending", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "#REWRITE_ID#", "item_version": 3}
             ]
@@ -1518,15 +1509,15 @@ Feature: Rewrite content
         """
         When we publish "123" with "publish" type and "published" state
         Then we get OK response
-        And we store "take_package1" with value "#archive.take_package#" to context
+        #And we store "take_package1" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
         Then we get list with 2 items
         """
         {
             "_items": [
-              {"state": "pending", "content_type": "composite",
-              "subscriber_id": "#digital#", "item_id": "#archive.123.take_package#", "item_version": 2},
+              {"state": "pending", "content_type": "text",
+              "subscriber_id": "#digital#", "item_id": "123", "item_version": 2},
               {"state": "pending", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "123", "item_version": 2}
             ]
@@ -1545,19 +1536,15 @@ Feature: Rewrite content
         Then we get OK response
         When we publish "#REWRITE_ID#" with "publish" type and "published" state
         Then we get OK response
-        And we store "take_package2" with value "#archive.take_package#" to context
+        #And we store "take_package2" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
         Then we get list with 4 items
         """
         {
             "_items": [
-              {"state": "pending", "content_type": "composite",
-              "subscriber_id": "#digital#", "item_id": "#take_package1#", "item_version": 2},
               {"state": "pending", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "123", "item_version": 2},
-              {"state": "pending", "content_type": "composite", "item_id": "#take_package2#",
-              "subscriber_id": "#digital#", "item_version": 2},
               {"state": "pending", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "#REWRITE_ID#", "item_version": 3}
             ]
@@ -1664,15 +1651,15 @@ Feature: Rewrite content
         """
         When we publish "123" with "publish" type and "published" state
         Then we get OK response
-        And we store "take_package1" with value "#archive.take_package#" to context
+        #And we store "take_package1" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
         Then we get list with 1 items
         """
         {
             "_items": [
-              {"state": "pending", "content_type": "composite",
-              "subscriber_id": "#digital#", "item_id": "#archive.123.take_package#", "item_version": 2}
+              {"state": "pending", "content_type": "text",
+              "subscriber_id": "#digital#", "item_id": "123", "item_version": 2}
             ]
         }
         """
@@ -1689,17 +1676,15 @@ Feature: Rewrite content
         Then we get OK response
         When we publish "#REWRITE_ID#" with "publish" type and "published" state
         Then we get OK response
-        And we store "take_package2" with value "#archive.take_package#" to context
+        #And we store "take_package2" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
         Then we get list with 3 items
         """
         {
             "_items": [
-              {"state": "pending", "content_type": "composite",
-              "subscriber_id": "#digital#", "item_id": "#take_package1#", "item_version": 2},
-              {"state": "pending", "content_type": "composite", "item_id": "#take_package2#",
-              "subscriber_id": "#digital#", "item_version": 2},
+              {"state": "pending", "content_type": "text",
+              "subscriber_id": "#digital#", "item_id": "123", "item_version": 2},
               {"state": "pending", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "#REWRITE_ID#", "item_version": 3}
             ]
@@ -1831,7 +1816,7 @@ Feature: Rewrite content
         Then we get OK response
         When we publish "#REWRITE_ID#" with "publish" type and "published" state
         Then we get OK response
-        And we store "take_package2" with value "#archive.take_package#" to context
+        #And we store "take_package2" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
         Then we get list with 3 items
@@ -1840,8 +1825,8 @@ Feature: Rewrite content
             "_items": [
               {"state": "pending", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "123", "item_version": 2},
-              {"state": "pending", "content_type": "composite", "item_id": "#take_package2#",
-              "subscriber_id": "#digital#", "item_version": 2},
+              {"state": "pending", "content_type": "text", "item_id": "#REWRITE_ID#",
+              "subscriber_id": "#digital#", "item_version": 3},
               {"state": "pending", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "#REWRITE_ID#", "item_version": 3}
             ]
@@ -1948,7 +1933,7 @@ Feature: Rewrite content
         """
         When we publish "123" with "publish" type and "published" state
         Then we get OK response
-        And we store "take_package1" with value "#archive.take_package#" to context
+        #And we store "take_package1" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
         Then we get list with 1 items
@@ -1974,7 +1959,7 @@ Feature: Rewrite content
         And we store "rewrite1" with value "#REWRITE_ID#" to context
         When we publish "#REWRITE_ID#" with "publish" type and "published" state
         Then we get OK response
-        And we store "take_package2" with value "#archive.take_package#" to context
+        #And we store "take_package2" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
         Then we get list with 3 items
@@ -1983,8 +1968,8 @@ Feature: Rewrite content
             "_items": [
               {"state": "pending", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "123", "item_version": 2},
-              {"state": "pending", "content_type": "composite", "item_id": "#take_package2#",
-              "subscriber_id": "#digital#", "item_version": 2},
+              {"state": "pending", "content_type": "text", "item_id": "#rewrite1#",
+              "subscriber_id": "#digital#", "item_version": 3},
               {"state": "pending", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "#rewrite1#", "item_version": 3}
             ]
@@ -2004,7 +1989,7 @@ Feature: Rewrite content
         And we store "rewrite2" with value "#REWRITE_ID#" to context
         When we publish "#rewrite2#" with "publish" type and "published" state
         Then we get OK response
-        And we store "take_package3" with value "#archive.take_package#" to context
+        #And we store "take_package3" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
         Then we get list with 5 items
@@ -2013,12 +1998,12 @@ Feature: Rewrite content
             "_items": [
               {"state": "pending", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "123", "item_version": 2},
-              {"state": "pending", "content_type": "composite",
-              "item_id": "#take_package2#", "subscriber_id": "#digital#", "item_version": 2},
+              {"state": "pending", "content_type": "text",
+              "item_id": "#rewrite1#", "subscriber_id": "#digital#", "item_version": 3},
               {"state": "pending", "content_type": "text", "subscriber_id": "#wire#",
               "item_id": "#rewrite1#", "item_version": 3},
-              {"state": "pending", "content_type": "composite", "item_id": "#take_package3#",
-              "subscriber_id": "#digital#", "item_version": 2},
+              {"state": "pending", "content_type": "text", "item_id": "#rewrite2#",
+              "subscriber_id": "#digital#", "item_version": 3},
               {"state": "pending", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "#rewrite2#", "item_version": 3}
             ]
@@ -2199,14 +2184,13 @@ Feature: Rewrite content
       When we get "/published"
       Then we get existing resource
       """
-      {"_items" : [{"_id": "123", "rewritten_by": "456"},
-                   {"package_type": "takes", "rewritten_by": "456"}]}
+      {"_items" : [{"_id": "123", "rewritten_by": "456"}]}
       """
       When we get "/archive/456"
       Then we get existing resource
       """
       {"_id": "456", "anpa_take_key": "update",
-       "rewrite_of": "#archive.123.take_package#", "priority": 6,
+       "rewrite_of": "123", "priority": 6,
        "subject":[{"qcode": "17004000", "name": "Statistics"},
        {"qcode": "01000000", "name": "arts, culture and entertainment"}]}
       """

@@ -80,7 +80,7 @@ Feature: Kill a content item in the (dusty) archive
     When we publish "#archive._id#" with "publish" type and "published" state
     Then we get OK response
     When we get "/published"
-    Then we get list with 2 items
+    Then we get list with 1 items
     """
     {"_items" : [{"_id": "123", "state": "published", "type": "text", "_current_version": 2}]}
     """
@@ -110,7 +110,7 @@ Feature: Kill a content item in the (dusty) archive
     """
     When we expire items
     """
-    ["123", "#archive.123.take_package#"]
+    ["123"]
     """
     And we get "/published"
     Then we get list with 0 items
@@ -118,7 +118,7 @@ Feature: Kill a content item in the (dusty) archive
     And we get "/publish_queue"
     Then we get list with 0 items
     When we get "/archived"
-    Then we get list with 2 items
+    Then we get list with 1 items
     """
     {"_items" : [{"item_id": "123", "state": "published", "type": "text", "_current_version": 2}]}
     """
@@ -129,9 +129,9 @@ Feature: Kill a content item in the (dusty) archive
     {"body_html": "Killed body."}
     """
     Then we get OK response
-    And we get 2 emails
+    And we get 1 emails
     When we get "/published"
-    Then we get list with 2 items
+    Then we get list with 1 items
     """
     {"_items" : [{"_id": "123", "state": "killed", "type": "text", "_current_version": 3, "queue_state": "queued"}]}
     """
@@ -168,7 +168,7 @@ Feature: Kill a content item in the (dusty) archive
     Then we get list with 3 items
     When we expire items
     """
-    ["123", "#archive.123.take_package#"]
+    ["123"]
     """
     And we get "/published"
     Then we get list with 0 items
@@ -209,15 +209,9 @@ Feature: Kill a content item in the (dusty) archive
     When we publish "#archive._id#" with "publish" type and "published" state
     Then we get OK response
     When we get "/published"
-    Then we get list with 2 items
+    Then we get list with 1 items
     """
     {"_items" : [
-      {"sequence": 1,
-       "package_type": "takes",
-       "state": "published",
-       "type": "composite",
-       "_current_version": 2
-      },
       {"state": "published",
        "type": "text",
        "_current_version": 2}
@@ -231,17 +225,16 @@ Feature: Kill a content item in the (dusty) archive
     And run import legal publish queue
     And we expire items
     """
-    ["123", "#archive.123.take_package#"]
+    ["123"]
     """
     And we get "/published"
     Then we get list with 0 items
     When we get "/publish_queue"
     Then we get list with 0 items
     When we get "/archived"
-    Then we get list with 2 items
+    Then we get list with 1 items
     """
     {"_items" : [
-      {"package_type": "takes", "item_id": "#archive.123.take_package#", "state": "published", "type": "composite", "_current_version": 2},
       {"item_id": "123", "state": "published", "type": "text", "_current_version": 2}
       ]
     }
@@ -253,17 +246,15 @@ Feature: Kill a content item in the (dusty) archive
     {"body_html": "Killed body"}
     """
     Then we get OK response
-    And we get 2 emails
+    And we get 1 emails
     When we get "/published"
-    Then we get list with 2 items
+    Then we get list with 1 items
     When we get "/publish_queue"
     Then we get list with 2 items
     When we get "/archive/123"
     Then we get OK response
     And we get text "Please kill story slugged slugline" in response field "body_html"
     And we get text "Killed body" in response field "body_html"
-    When we get "/archive/#archive.123.take_package#"
-    Then we get OK response
     And we get text "Please kill story slugged slugline" in response field "body_html"
     And we get text "Killed body" in response field "body_html"
     When we get "/archived"
@@ -277,136 +268,130 @@ Feature: Kill a content item in the (dusty) archive
     """
     When we get "/legal_archive/123?version=all"
     Then we get list with 3 items
-    When we get "/legal_archive/#archive.123.take_package#"
-    Then we get existing resource
-    """
-    {"_id": "#archive.123.take_package#", "type": "composite", "_current_version": 3, "state": "killed", "pubstatus": "canceled", "operation": "kill"}
-    """
-    When we get "/legal_archive/#archive.123.take_package#?version=all"
-    Then we get list with 2 items
     When we get "/legal_publish_queue"
     Then we get list with 4 items
     When we expire items
     """
-    ["123", "#archive.123.take_package#"]
+    ["123"]
     """
     And we get "/published"
     Then we get list with 0 items
 
-  @auth @notification
-  Scenario: Killing Take in Dusty Archive will kill other takes including the Digital Story
-    When we post to "/archive" with success
-    """
-    [{"guid": "123", "type": "text", "abstract": "test", "state": "fetched", "slugline": "slugline",
-      "headline": "headline", "anpa_category" : [{"qcode" : "e", "name" : "Entertainment"}],
-      "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
-      "subject":[{"qcode": "17004000", "name": "Statistics"}], "body_html": "Test Document body"}]
-    """
-    Then we get OK response
-    When we post to "archive/123/link"
-    """
-    [{"desk": "#desks._id#"}]
-    """
-    Then we get next take as "take1"
-    """
-    {"_id": "#take1#"}
-    """
-    When we patch "/archive/#take1#"
-    """
-    {"abstract": "Take 1", "headline": "Take 1", "body_html": "Take 1"}
-    """
-    And we post to "archive/#take1#/link"
-    """
-    [{"desk": "#desks._id#"}]
-    """
-    Then we get next take as "take2"
-    """
-    {"_id": "#take2#"}
-    """
-    When we patch "/archive/#take2#"
-    """
-    {"abstract": "Take 2", "headline": "Take 2", "body_html": "Take 2"}
-    """
-    When we publish "123" with "publish" type and "published" state
-    Then we get OK response
-    When we publish "123" with "correct" type and "corrected" state
-    """
-    {"body_html": "Corrected", "slugline": "corrected", "headline": "corrected"}
-    """
-    Then we get OK response
-    When we publish "#take1#" with "publish" type and "published" state
-    Then we get OK response
-    When we publish "#take2#" with "publish" type and "published" state
-    Then we get OK response
-    When we get "/published"
-    Then we get list with 8 items
-    When we enqueue published
-    When we get "/publish_queue"
-    Then we get list with 8 items
-    When we transmit items
-    And run import legal publish queue
-    And we expire items
-    """
-    ["123", "#take1#", "#take2#", "#archive.123.take_package#"]
-    """
-    And we get "/published"
-    Then we get list with 0 items
-    When we enqueue published
-    When we get "/publish_queue"
-    Then we get list with 0 items
-    When we get "/archived"
-    Then we get list with 8 items
-    When we enqueue published
-    When we get "/legal_publish_queue"
-    Then we get list with 8 items
-    When we patch "/archived/123:2"
-    """
-    {}
-    """
-    Then we get OK response
-    And we get 4 emails
-    When we get "/published"
-    Then we get list with 4 items
-    When we get "/publish_queue"
-    Then we get list with 4 items
-    When we get "/archived"
-    Then we get list with 0 items
-    When we transmit items
-    And run import legal publish queue
-    When we get "/legal_archive/123"
-    Then we get existing resource
-    """
-    {"_id": "123", "type": "text", "_current_version": 4, "state": "killed", "pubstatus": "canceled", "operation": "kill"}
-    """
-    When we get "/legal_archive/123?version=all"
-    Then we get list with 4 items
-    When we get "/legal_archive/#archive.123.take_package#"
-    Then we get existing resource
-    """
-    {"_id": "#archive.123.take_package#", "type": "composite", "_current_version": 7, "state": "killed", "pubstatus": "canceled", "operation": "kill"}
-    """
-    When we get "/legal_archive/#archive.123.take_package#?version=all"
-    Then we get list with 7 items
-    When we get "/legal_archive/#take1#"
-    Then we get existing resource
-    """
-    {"_id": "#take1#", "type": "text", "_current_version": 4, "state": "killed", "pubstatus": "canceled", "operation": "kill"}
-    """
-    When we get "/legal_archive/#take1#?version=all"
-    Then we get list with 4 items
-    When we get "/legal_archive/#take2#"
-    Then we get existing resource
-    """
-    {"_id": "#take2#", "type": "text", "_current_version": 4, "state": "killed", "pubstatus": "canceled", "operation": "kill"}
-    """
-    When we get "/legal_archive/#take2#?version=all"
-    Then we get list with 4 items
-    When we expire items
-    """
-    ["123", "#take1#", "#take2#", "#archive.123.take_package#"]
-    """
-    And we get "/published"
-    Then we get list with 0 items
+#  #### WE WANT TO KEEP THIS #####
+#  @auth @notification
+#  Scenario: Killing Take in Dusty Archive will kill other takes including the Digital Story
+#    When we post to "/archive" with success
+#    """
+#    [{"guid": "123", "type": "text", "abstract": "test", "state": "fetched", "slugline": "slugline",
+#      "headline": "headline", "anpa_category" : [{"qcode" : "e", "name" : "Entertainment"}],
+#      "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+#      "subject":[{"qcode": "17004000", "name": "Statistics"}], "body_html": "Test Document body"}]
+#    """
+#    Then we get OK response
+#    When we post to "archive/123/link"
+#    """
+#    [{"desk": "#desks._id#"}]
+#    """
+#    Then we get next take as "take1"
+#    """
+#    {"_id": "#take1#"}
+#    """
+#    When we patch "/archive/#take1#"
+#    """
+#    {"abstract": "Take 1", "headline": "Take 1", "body_html": "Take 1"}
+#    """
+#    And we post to "archive/#take1#/link"
+#    """
+#    [{"desk": "#desks._id#"}]
+#    """
+#    Then we get next take as "take2"
+#    """
+#    {"_id": "#take2#"}
+#    """
+#    When we patch "/archive/#take2#"
+#    """
+#    {"abstract": "Take 2", "headline": "Take 2", "body_html": "Take 2"}
+#    """
+#    When we publish "123" with "publish" type and "published" state
+#    Then we get OK response
+#    When we publish "123" with "correct" type and "corrected" state
+#    """
+#    {"body_html": "Corrected", "slugline": "corrected", "headline": "corrected"}
+#    """
+#    Then we get OK response
+#    When we publish "#take1#" with "publish" type and "published" state
+#    Then we get OK response
+#    When we publish "#take2#" with "publish" type and "published" state
+#    Then we get OK response
+#    When we get "/published"
+#    Then we get list with 8 items
+#    When we enqueue published
+#    When we get "/publish_queue"
+#    Then we get list with 8 items
+#    When we transmit items
+#    And run import legal publish queue
+#    And we expire items
+#    """
+#    ["123", "#take1#", "#take2#", "#archive.123.take_package#"]
+#    """
+#    And we get "/published"
+#    Then we get list with 0 items
+#    When we enqueue published
+#    When we get "/publish_queue"
+#    Then we get list with 0 items
+#    When we get "/archived"
+#    Then we get list with 8 items
+#    When we enqueue published
+#    When we get "/legal_publish_queue"
+#    Then we get list with 8 items
+#    When we patch "/archived/123:2"
+#    """
+#    {}
+#    """
+#    Then we get OK response
+#    And we get 4 emails
+#    When we get "/published"
+#    Then we get list with 4 items
+#    When we get "/publish_queue"
+#    Then we get list with 4 items
+#    When we get "/archived"
+#    Then we get list with 0 items
+#    When we transmit items
+#    And run import legal publish queue
+#    When we get "/legal_archive/123"
+#    Then we get existing resource
+#    """
+#    {"_id": "123", "type": "text", "_current_version": 4, "state": "killed", "pubstatus": "canceled", "operation": "kill"}
+#    """
+#    When we get "/legal_archive/123?version=all"
+#    Then we get list with 4 items
+#    When we get "/legal_archive/#archive.123.take_package#"
+#    Then we get existing resource
+#    """
+#    {"_id": "#archive.123.take_package#", "type": "composite", "_current_version": 7, "state": "killed", "pubstatus": "canceled", "operation": "kill"}
+#    """
+#    When we get "/legal_archive/#archive.123.take_package#?version=all"
+#    Then we get list with 7 items
+#    When we get "/legal_archive/#take1#"
+#    Then we get existing resource
+#    """
+#    {"_id": "#take1#", "type": "text", "_current_version": 4, "state": "killed", "pubstatus": "canceled", "operation": "kill"}
+#    """
+#    When we get "/legal_archive/#take1#?version=all"
+#    Then we get list with 4 items
+#    When we get "/legal_archive/#take2#"
+#    Then we get existing resource
+#    """
+#    {"_id": "#take2#", "type": "text", "_current_version": 4, "state": "killed", "pubstatus": "canceled", "operation": "kill"}
+#    """
+#    When we get "/legal_archive/#take2#?version=all"
+#    Then we get list with 4 items
+#    When we expire items
+#    """
+#    ["123", "#take1#", "#take2#", "#archive.123.take_package#"]
+#    """
+#    And we get "/published"
+#    Then we get list with 0 items
 
   @auth
   Scenario: Killing an article other than Text isn't allowed
@@ -680,7 +665,7 @@ Feature: Kill a content item in the (dusty) archive
     When we publish "#archive._id#" with "publish" type and "published" state
     Then we get OK response
     When we get "/published"
-    Then we get list with 2 items
+    Then we get list with 1 items
     """
     {"_items" : [{"_id": "123", "state": "published", "type": "text", "_current_version": 2}]}
     """
@@ -698,13 +683,13 @@ Feature: Kill a content item in the (dusty) archive
     {"_items" : [
         {"item_id": "123", "subscriber_id":"Channel 2", "content_type": "text",
         "item_version": 2, "publishing_action": "published"},
-        {"item_id": "#archive.123.take_package#", "subscriber_id":"Channel 1", "content_type": "composite",
+        {"item_id": "123", "subscriber_id":"Channel 1", "content_type": "text",
         "item_version": 2, "publishing_action": "published"}
      ]}
     """
     When we expire items
     """
-    ["123", "#archive.123.take_package#"]
+    ["123"]
     """
     And we get "/published"
     Then we get list with 0 items
@@ -712,7 +697,7 @@ Feature: Kill a content item in the (dusty) archive
     And we get "/publish_queue"
     Then we get list with 0 items
     When we get "/archived"
-    Then we get list with 2 items
+    Then we get list with 1 items
     """
     {"_items" : [{"item_id": "123", "state": "published", "type": "text", "_current_version": 2}]}
     """
@@ -727,9 +712,9 @@ Feature: Kill a content item in the (dusty) archive
     {"body_html": "Killed body."}
     """
     Then we get OK response
-    And we get 2 emails
+    And we get 1 emails
     When we get "/published"
-    Then we get list with 2 items
+    Then we get list with 1 items
     """
     {"_items" : [{"_id": "123", "state": "killed", "type": "text", "_current_version": 3, "queue_state": "queued"}]}
     """
@@ -741,11 +726,11 @@ Feature: Kill a content item in the (dusty) archive
     {"_items" : [
         {"item_id": "123", "subscriber_id":"Channel 2", "content_type": "text",
         "item_version": 2, "publishing_action": "published"},
-        {"item_id": "#archive.123.take_package#", "subscriber_id":"Channel 1", "content_type": "composite",
-        "item_version": 2, "publishing_action": "published"},
         {"item_id": "123", "subscriber_id":"Channel 2", "content_type": "text",
         "item_version": 3, "publishing_action": "killed"},
-        {"item_id": "#archive.123.take_package#", "subscriber_id":"Channel 1", "content_type": "composite",
+        {"item_id": "123", "subscriber_id":"Channel 1", "content_type": "text",
+        "item_version": 2, "publishing_action": "published"},
+        {"item_id": "123", "subscriber_id":"Channel 1", "content_type": "text",
         "item_version": 3, "publishing_action": "killed"}
      ]}
     """
@@ -766,7 +751,7 @@ Feature: Kill a content item in the (dusty) archive
     Then we get list with 3 items
     When we expire items
     """
-    ["123", "#archive.123.take_package#"]
+    ["123"]
     """
     And we get "/published"
     Then we get list with 0 items
