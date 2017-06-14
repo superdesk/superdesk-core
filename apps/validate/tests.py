@@ -123,3 +123,54 @@ class ValidateMandatoryInListTest(TestCase):
         ])
 
         self.assertEqual(errors, [['SUBJECT is a required field']])
+
+    def test_validate_field_required_feature_media(self):
+        self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
+            'slugline': None,
+            'feature_media': {'required': True},
+        }}])
+        service = ValidateService()
+        errors = service.create([
+            {
+                'act': 'test',
+                'type': 'test',
+                'validate': {'profile': 'foo', 'slugline': 'foo'},
+            },
+        ])
+        self.assertEqual(['FEATURE_MEDIA is a required field'], errors[0])
+
+    def test_validate_field_required_media_description(self):
+        self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
+            'slugline': None,
+            'feature_media': {'required': True},
+            'media_description': {'required': True},
+        }}])
+        service = ValidateService()
+        errors = service.create([
+            {
+                'act': 'test',
+                'type': 'test',
+                'validate': {'profile': 'foo', 'slugline': 'foo', 'associations': {'featuremedia': {}}},
+            },
+        ])
+        self.assertEqual(['MEDIA_DESCRIPTION is a required field'], errors[0])
+
+    def test_validate_field_feature_media_and_media_description(self):
+        self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
+            'slugline': None,
+            'feature_media': {'required': True},
+            'media_description': {'required': True},
+        }}])
+        service = ValidateService()
+        errors = service.create([
+            {
+                'act': 'test',
+                'type': 'test',
+                'validate': {
+                    'profile': 'foo',
+                    'slugline': 'foo',
+                    'associations': {'featuremedia': {'description_text': 'test'}}
+                },
+            },
+        ])
+        self.assertEqual(errors, [[]])
