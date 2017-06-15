@@ -40,23 +40,41 @@ FAKE_MEDIA_DATA = {'_created': datetime.datetime(2017, 4, 26, 13, 0, 33, tzinfo=
                                                 'width': 200}}}
 
 
-class FakeUploadService(object):
+class FakeArchiveService(object):
 
     def post(self, items):
-        # we use URL as object_id so we can check the value easily
-        return [items[0]['URL']]
+        return
 
-    def get(self, req, lookup):
-        media_data = FAKE_MEDIA_DATA
-        media_data['_id'] = lookup['_id']
-        return iter([media_data])
+
+def fake_update_renditions(item, url, _):
+    update = {
+        # we use URL as _id so we can check the value easily
+        '_id': url,
+        'renditions': {'original': {'height': 256,
+                                    'href': 'http://test',
+                                    'media': '590099f1cc3a2d2349a785ee',
+                                    'mimetype': 'image/jpeg',
+                                    'width': 642},
+                       'thumbnail': {'height': 23,
+                                     'href': 'http://test',
+                                     'media': '590099f1cc3a2d2349a785f0',
+                                     'mimetype': 'image/jpeg',
+                                     'width': 60},
+                       'viewImage': {'height': 79,
+                                     'href': 'http://test',
+                                     'media': '590099f1cc3a2d2349a785f2',
+                                     'mimetype': 'image/jpeg',
+                                     'width': 200}},
+        'mimetype': 'image/jpeg'}
+    item.update(update)
 
 
 class WPWXRTestCase(TestCase):
 
     filename = 'wordpress_wxr.xml'
 
-    @mock.patch.object(wordpress_wxr, 'get_resource_service', lambda _: FakeUploadService())
+    @mock.patch.object(wordpress_wxr, 'get_resource_service', lambda _: FakeArchiveService())
+    @mock.patch.object(wordpress_wxr, 'update_renditions', fake_update_renditions)
     def __init__(self, methodname):
         super().__init__(methodname)
         dirname = os.path.dirname(os.path.realpath(__file__))
@@ -107,6 +125,7 @@ class WPWXRTestCase(TestCase):
                     'headline': 'test2',
                     'alt_text': ' ',
                     'description_text': ' ',
+                    'mimetype': 'image/jpeg',
                     'renditions': {'original': {'height': 256,
                                                 'href': 'http://test',
                                                 'media': '590099f1cc3a2d2349a785ee',
