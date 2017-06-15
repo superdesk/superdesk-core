@@ -10,8 +10,6 @@
 
 from superdesk import get_resource_service
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, CONTENT_STATE
-from superdesk.metadata.packages import PACKAGE_TYPE, TAKES_PACKAGE
-from superdesk.metadata.utils import is_takes_package
 from eve.utils import config
 from apps.publish.enqueue.enqueue_service import EnqueueService
 

@@ -18,7 +18,6 @@ from superdesk.celery_task_utils import get_lock_id
 from superdesk.utc import utcnow
 from .archive import SOURCE as ARCHIVE
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTENT_TYPE, ASSOCIATIONS, MEDIA_TYPES
-from superdesk.metadata.packages import PACKAGE_TYPE, TAKES_PACKAGE
 from superdesk.lock import lock, unlock, remove_locks
 from superdesk.notification import push_notification
 from superdesk import get_resource_service

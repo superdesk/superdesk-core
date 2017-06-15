@@ -161,9 +161,6 @@ Item metadata
 
     Item type. One of ``text|composite|picture|audio|video``.
 
-``package_type`` *string*
-
-    Package type. Either ``takes`` for takes packages or empty.
 
 ``language`` *string*
 

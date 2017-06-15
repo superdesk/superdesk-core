@@ -10,7 +10,7 @@
 
 from collections import namedtuple
 from superdesk.resource import Resource, not_analyzed, not_indexed
-from .packages import PACKAGE_TYPE, TAKES_PACKAGE, LINKED_IN_PACKAGES, PACKAGE
+from .packages import LINKED_IN_PACKAGES, PACKAGE
 from eve.utils import config
 from superdesk.utils import SuperdeskBaseEnum
 
@@ -183,9 +183,9 @@ metadata_schema = {
         'default': 'text',
         'mapping': not_analyzed
     },
-    PACKAGE_TYPE: {
+    'package_type': {  # deprecated
         'type': 'string',
-        'allowed': [TAKES_PACKAGE]
+        'allowed': ['takes']
     },
     'language': {
         'type': 'string',
@@ -391,9 +391,9 @@ metadata_schema = {
             'type': 'dict',
             'schema': {
                 PACKAGE: Resource.rel('archive'),
-                PACKAGE_TYPE: {
+                'package_type': { # deprecated
                     'type': 'string',
-                    'allowed': [TAKES_PACKAGE]
+                    'allowed': ['takes']
                 }
             }
         }

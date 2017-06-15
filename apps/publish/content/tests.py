@@ -29,7 +29,7 @@ from apps.publish.enqueue.enqueue_service import EnqueueService
 from apps.publish.published_item import LAST_PUBLISHED_VERSION
 from apps.validators import ValidatorsPopulateCommand
 from superdesk import get_resource_service, get_backend
-from superdesk.metadata.item import TAKES_PACKAGE, PACKAGE_TYPE, ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTENT_TYPE
+from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTENT_TYPE
 from superdesk.metadata.packages import RESIDREF
 from superdesk.publish import init_app, publish_queue
 from superdesk.publish.subscribers import SUBSCRIBER_TYPES

@@ -494,7 +494,7 @@ Feature: Kill a content item in the (dusty) archive
     When we delete "/archived/123:2"
     Then we get error 400
     """
-    {"_message": "Can't kill as Digital Story is part of a Package"}
+    {"_message": "Can't kill as article is part of a Package"}
     """
 
   @auth
@@ -533,7 +533,7 @@ Feature: Kill a content item in the (dusty) archive
     When we delete "/archived/123:2"
     Then we get error 400
     """
-    {"_message": "Can't Kill as Take(s) are still available in production"}
+    {"_message": "Can't kill as article is part of a Package"}
     """
 
   @auth
@@ -557,7 +557,7 @@ Feature: Kill a content item in the (dusty) archive
     When we delete "/archived/123:2"
     Then we get error 400
     """
-    {"_message": "One of Take(s) not found in Archived repo"}
+    {"_message": "Can't kill as article is part of a Package"}
     """
 
   @auth
@@ -591,7 +591,7 @@ Feature: Kill a content item in the (dusty) archive
     When we delete "/archived/123:2"
     Then we get error 400
     """
-    {"_message": "Can't kill as one of Take(s) is part of a Package"}
+    {"_message": "Can't kill as article is part of a Package"}
     """
 
   @auth

@@ -11,9 +11,8 @@
 from eve.versioning import resolve_document_version
 from .common import BasePublishService, BasePublishResource, ITEM_KILL
 from eve.utils import config
-from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE, GUID_FIELD, PUB_STATUS, EMBARGO, SCHEDULE_SETTINGS, \
+from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE, PUB_STATUS, EMBARGO, SCHEDULE_SETTINGS, \
     PUBLISH_SCHEDULE
-from superdesk.metadata.packages import PACKAGE_TYPE
 from superdesk import get_resource_service
 from superdesk.utc import utcnow
 import logging
@@ -45,7 +44,7 @@ class KillPublishService(BasePublishService):
         packages = self.package_service.get_packages(original[config.ID_FIELD])
         if packages and packages.count() > 0:
             for package in packages:
-                if package[ITEM_STATE] != CONTENT_STATE.KILLED and package.get(PACKAGE_TYPE, '') == '':
+                if package[ITEM_STATE] != CONTENT_STATE.KILLED:
                     raise SuperdeskApiError.badRequestError(message='This item is in a package. '
                                                                     'It needs to be removed '
                                                                     'before the item can be killed')

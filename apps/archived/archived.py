@@ -28,7 +28,7 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.metadata.utils import aggregations
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, not_analyzed, GUID_FIELD, ITEM_STATE, CONTENT_STATE, \
     PUB_STATUS
-from superdesk.metadata.packages import PACKAGE_TYPE, TAKES_PACKAGE, RESIDREF, SEQUENCE
+from superdesk.metadata.packages import RESIDREF
 from superdesk.notification import push_notification
 from apps.archive.common import get_user, item_schema, is_genre, BROADCAST_GENRE, ITEM_OPERATION, is_item_in_package, \
     insert_into_versions
@@ -40,7 +40,10 @@ from superdesk.utc import utcnow
 from apps.publish.content.kill import KillPublishService
 
 logger = logging.getLogger(__name__)
-
+PACKAGE_TYPE = 'package_type'
+TAKES_PACKAGE = 'takes'
+SEQUENCE = 'sequence'
+LAST_TAKE = 'last_take'
 
 class ArchivedResource(Resource):
     datasource = {

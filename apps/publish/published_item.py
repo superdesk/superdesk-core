@@ -67,11 +67,11 @@ published_item_fields = {
     ERROR_MESSAGE: {
         'type': 'string'
     },
-    # 'is_take_item': {
-    #     'type': 'boolean',
-    #     'default': False,
-    # },
-    'digital_item_id': {
+    'is_take_item': { #deprecated
+        'type': 'boolean',
+        'default': False,
+    },
+    'digital_item_id': { #deprecated
         'type': 'string'
     },
     'publish_sequence_no': {

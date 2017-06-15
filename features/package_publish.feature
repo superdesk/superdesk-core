@@ -4294,7 +4294,7 @@ Feature: Package Publishing
       """
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 8 items
+      Then we get list with 9 items
       """
       {"_items" : [{"headline": "item-1 headline", "subscriber_id": "sub-1"},
                    {"headline": "item-2 headline", "subscriber_id": "sub-1"},
@@ -4302,6 +4302,7 @@ Feature: Package Publishing
                    {"headline": "item-2 headline", "subscriber_id": "sub-2"},
                    {"headline": "item-3 headline", "subscriber_id": "sub-2"},
                    {"headline": "item-3 headline", "subscriber_id": "sub-3"},
+                   {"headline": "test package", "subscriber_id": "sub-1"},
                    {"headline": "test package", "subscriber_id": "sub-2"},
                    {"headline": "test package", "subscriber_id": "sub-3"}]
       }
@@ -4361,9 +4362,10 @@ Feature: Package Publishing
       """
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 10 items
+      Then we get list with 12 items
       """
-      {"_items" : [{"headline": "test package", "publishing_action": "corrected", "subscriber_id": "sub-2"},
+      {"_items" : [{"headline": "test package", "publishing_action": "corrected", "subscriber_id": "sub-1"},
+                   {"headline": "test package", "publishing_action": "corrected", "subscriber_id": "sub-2"},
                    {"headline": "test package", "publishing_action": "corrected", "subscriber_id": "sub-3"}]
       }
       """

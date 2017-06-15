@@ -29,7 +29,6 @@ from superdesk.metadata.item import metadata_schema, ITEM_STATE, CONTENT_STATE, 
     ASSOCIATIONS
 from superdesk.workflow import set_default_state, is_workflow_state_transition_valid
 from superdesk.metadata.item import GUID_NEWSML, GUID_FIELD, GUID_TAG, not_analyzed
-from superdesk.metadata.packages import PACKAGE_TYPE, TAKES_PACKAGE, SEQUENCE, ASSOCIATED_TAKE_SEQUENCE
 from superdesk.metadata.utils import generate_guid
 from superdesk.errors import SuperdeskApiError, IdentifierGenerationError
 from superdesk.logging import logger
@@ -138,12 +137,12 @@ ARCHIVE_SCHEMA_FIELDS = {
         'mapping': not_analyzed,
         'nullable': True
     },
-    SEQUENCE: {
+    SEQUENCE: { #deprecated
         'type': 'integer'
     },
-    # ASSOCIATED_TAKE_SEQUENCE: {
-    #     'type': 'integer'
-    # },
+    ASSOCIATED_TAKE_SEQUENCE: { #deprecated
+        'type': 'integer'
+    },
     EMBARGO: {
         'type': 'datetime',
         'nullable': True
@@ -672,7 +671,7 @@ def is_item_in_package(item):
     :return: True if the item belongs to a package
     """
     return item.get(LINKED_IN_PACKAGES, None) \
-        and sum(1 for x in item.get(LINKED_IN_PACKAGES, []) if x.get(PACKAGE_TYPE, '') == '')
+        and sum(1 for x in item.get(LINKED_IN_PACKAGES, []))
 
 
 def convert_task_attributes_to_objectId(doc):

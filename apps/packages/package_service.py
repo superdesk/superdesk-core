@@ -18,8 +18,8 @@ from eve.validation import ValidationError
 from superdesk.errors import SuperdeskApiError
 from superdesk import get_resource_service
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO
-from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE_TYPE, TAKES_PACKAGE, PACKAGE, LAST_TAKE, \
-    REFS, RESIDREF, GROUPS, ID_REF, MAIN_GROUP, SEQUENCE, ROOT_GROUP, ROLE, ROOT_ROLE, MAIN_ROLE, GROUP_ID
+from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE, \
+    REFS, RESIDREF, GROUPS, ID_REF, MAIN_GROUP, ROOT_GROUP, ROLE, ROOT_ROLE, MAIN_ROLE, GROUP_ID
 from apps.archive.common import insert_into_versions, ITEM_UNLINK
 from apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.utc import utcnow
@@ -219,7 +219,6 @@ class PackageService():
         if assoc.get(ID_REF):
             return
         package_id = package[config.ID_FIELD]
-        package_type = package.get(PACKAGE_TYPE)
 
         item, item_id, endpoint = self.get_associated_item(assoc, not delete)
         if not item and delete:
@@ -230,10 +229,7 @@ class PackageService():
 
         if not delete:
             data = {PACKAGE: package_id}
-            if package_type:
-                data.update({PACKAGE_TYPE: package_type})
             two_way_links.append(data)
-            assert len([p for p in two_way_links if p.get(PACKAGE_TYPE) == TAKES_PACKAGE]) < 2, '2 takes packages!'
 
         updates = {LINKED_IN_PACKAGES: two_way_links}
         get_resource_service(endpoint).system_update(item_id, updates, item)
@@ -363,8 +359,6 @@ class PackageService():
         """Removes residRef referenced by ref_id_to_remove from the package associations and returns the package id.
 
         Before removing checks if the package has been processed. If processed the package is skipped.
-        In case of takes package, sequence is decremented and last_take field is updated.
-        If sequence is zero then the takes package is deleted.
 
         :return: package[config.ID_FIELD]
         """
@@ -381,35 +375,12 @@ class PackageService():
                 return self.remove_refs_in_package(sub_package, ref_id_to_remove)
 
         new_groups = self.remove_group_ref(package, ref_id_to_remove)
-
         updates = {config.LAST_UPDATED: utcnow(), GROUPS: new_groups}
 
-        # if takes package then adjust the reference.
-        # safe to do this as take can only be in one takes package.
-        delete_package = False
-        if package.get(PACKAGE_TYPE) == TAKES_PACKAGE:
-            new_sequence = package[SEQUENCE] - 1
-            if new_sequence == 0:
-                # remove the takes package.
-                get_resource_service(ARCHIVE).delete_action({config.ID_FIELD: package[config.ID_FIELD]})
-                delete_package = True
-            else:
-                updates[SEQUENCE] = new_sequence
-                last_take_group = next(reference for reference in
-                                       next(new_group.get(REFS) for new_group in new_groups if
-                                            new_group[GROUP_ID] == MAIN_GROUP)
-                                       if reference.get(SEQUENCE) == new_sequence)
-
-                if last_take_group:
-                    updates[LAST_TAKE] = last_take_group.get(RESIDREF)
-                    last_take_item = get_resource_service(ARCHIVE).find_one(req=None, _id=updates[LAST_TAKE])
-                    app.on_archive_item_updated({}, last_take_item, ITEM_UNLINK)
-
-        if not delete_package:
-            resolve_document_version(updates, ARCHIVE, 'PATCH', package)
-            get_resource_service(ARCHIVE).patch(package[config.ID_FIELD], updates)
-            app.on_archive_item_updated(updates, package, ITEM_UNLINK)
-            insert_into_versions(id_=package[config.ID_FIELD])
+        resolve_document_version(updates, ARCHIVE, 'PATCH', package)
+        get_resource_service(ARCHIVE).patch(package[config.ID_FIELD], updates)
+        app.on_archive_item_updated(updates, package, ITEM_UNLINK)
+        insert_into_versions(id_=package[config.ID_FIELD])
 
         sub_package_ids.append(package[config.ID_FIELD])
         return sub_package_ids
@@ -469,7 +440,7 @@ class PackageService():
         return [ref for group in package.get(GROUPS, []) for ref in group.get(REFS, []) if RESIDREF in ref]
 
     def get_linked_in_package_ids(self, item):
-        """Returns all linked in package ids for an item (including takes package)
+        """Returns all linked in package ids for an item
 
         :param dict item:
         :return list: list of package ids
@@ -477,7 +448,7 @@ class PackageService():
         return [package_link.get(PACKAGE) for package_link in item.get(LINKED_IN_PACKAGES, []) or []]
 
     def get_linked_in_packages(self, item):
-        """Returns all linked in packages for an item (including takes package)
+        """Returns all linked in packages for an item
 
         :param dict item:
         :return list: list of package ids

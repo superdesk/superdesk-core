@@ -16,8 +16,8 @@ from eve.versioning import resolve_document_version
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from superdesk import get_resource_service
 from apps.archive.archive import SOURCE as ARCHIVE
-from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE_TYPE, TAKES_PACKAGE, PACKAGE, \
-    LAST_TAKE, REFS, MAIN_GROUP, SEQUENCE, RESIDREF, ASSOCIATED_TAKE_SEQUENCE
+from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE, \
+    REFS, MAIN_GROUP, RESIDREF, ASSOCIATED_TAKE_SEQUENCE
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, PUBLISH_STATES, ITEM_STATE, \
     CONTENT_STATE, EMBARGO, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, ASSOCIATIONS
 from apps.archive.common import insert_into_versions, ITEM_CREATE, RE_OPENS, \
@@ -25,7 +25,10 @@ from apps.archive.common import insert_into_versions, ITEM_CREATE, RE_OPENS, \
 from .package_service import get_item_ref, create_root_group
 
 logger = logging.getLogger(__name__)
-
+PACKAGE_TYPE = 'package_type'
+TAKES_PACKAGE = 'takes'
+SEQUENCE = 'sequence'
+LAST_TAKE = 'last_take'
 
 class TakesPackageService():
     # metadata field of take

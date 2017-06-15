@@ -25,7 +25,7 @@ from apps.content_types.content_types import DEFAULT_SCHEMA
 from superdesk.errors import InvalidStateTransitionError, SuperdeskApiError, PublishQueueError
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, GUID_FIELD, ITEM_STATE, CONTENT_STATE, \
     PUBLISH_STATES, EMBARGO, PUB_STATUS, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, ASSOCIATIONS, MEDIA_TYPES
-from superdesk.metadata.packages import SEQUENCE, LINKED_IN_PACKAGES, GROUPS, PACKAGE, RESIDREF
+from superdesk.metadata.packages import LINKED_IN_PACKAGES, GROUPS, PACKAGE, RESIDREF
 from superdesk.metadata.utils import item_url
 from superdesk.notification import push_notification
 from superdesk.publish import SUBSCRIBER_TYPES

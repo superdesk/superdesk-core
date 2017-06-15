@@ -594,12 +594,6 @@ EMAIL_TIMEOUT = 10
 #: This setting is used to overide the desk/stage expiry for items when spiked
 SPIKE_EXPIRY_MINUTES = None
 
-NO_TAKES = False
-"""toggle on/off takes packages creation
-
-.. versionadded:: 1.3
-"""
-
 SECRET_KEY = env('SECRET_KEY', '')
 
 #: secure login

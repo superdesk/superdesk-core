@@ -19,8 +19,7 @@ from flask import current_app as app
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError, SuperdeskPublishError
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, PUBLISH_SCHEDULE, ASSOCIATIONS
-from superdesk.metadata.packages import SEQUENCE, PACKAGE_TYPE, GROUPS,\
-    ROOT_GROUP, GROUP_ID, REFS, RESIDREF
+from superdesk.metadata.packages import GROUPS, ROOT_GROUP, GROUP_ID, REFS, RESIDREF
 from superdesk.notification import push_notification
 from superdesk.publish import SUBSCRIBER_TYPES
 from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
@@ -54,9 +53,7 @@ class EnqueueService:
 
     def _enqueue_item(self, item):
         item_to_queue = deepcopy(item)
-        if item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and item.get(PACKAGE_TYPE):
-            return self.publish(doc=item_to_queue, target_media_type=SUBSCRIBER_TYPES.DIGITAL)
-        elif item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and app.config.get('NO_TAKES'):
+        if item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
             queued = self._publish_package_items(item_to_queue)
             if not queued:  # this was only published to subscribers with config.packaged on
                 return self.publish(doc=item_to_queue, target_media_type=SUBSCRIBER_TYPES.DIGITAL)
@@ -96,7 +93,7 @@ class EnqueueService:
                         "Package item with id: {} has not been published.".format(guid))
 
                 subscribers, subscriber_codes, associations = self._get_subscribers_for_package_item(package_item)
-                digital_item_id = BasePublishService().get_digital_id_for_package_item(package_item)
+                digital_item_id = package_item[config.ID_FIELD]
                 self._extend_subscriber_items(subscriber_items,
                                               subscribers,
                                               package_item,
@@ -197,9 +194,9 @@ class EnqueueService:
         # Step 1
         subscribers, subscriber_codes, associations = self.get_subscribers(doc, target_media_type)
 
-        # Step 2
-        if target_media_type == SUBSCRIBER_TYPES.WIRE:
-            self._update_headline_sequence(doc)
+        # # Step 2
+        # if target_media_type == SUBSCRIBER_TYPES.WIRE:
+        #     self._update_headline_sequence(doc)
 
         # Step 3
         no_formatters, queued = self.queue_transmission(deepcopy(doc), subscribers, subscriber_codes, associations)
@@ -392,13 +389,12 @@ class EnqueueService:
 
                     for destination in self.get_destinations(subscriber):
                         embed_package_items = doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and \
-                            PACKAGE_TYPE not in doc and (destination.get('config') or {}).get('packaged', False)
+                            (destination.get('config') or {}).get('packaged', False)
                         if embed_package_items:
                             doc = self._embed_package_items(doc)
 
                         if doc.get(PUBLISHED_IN_PACKAGE) and \
-                                (destination.get('config') or {}).get('packaged', False) and \
-                                app.config.get('NO_TAKES'):
+                                (destination.get('config') or {}).get('packaged', False):
                             continue
 
                         # Step 2(a)
@@ -474,10 +470,10 @@ class EnqueueService:
                 ref['package_item'] = package_item
         return package
 
-    def _update_headline_sequence(self, doc):
-        """Updates the headline of the text story if there's any sequence value in it."""
-        if doc.get(SEQUENCE):
-            doc['headline'] = '{}={}'.format(doc['headline'], doc.get(SEQUENCE))
+    # def _update_headline_sequence(self, doc):
+    #     """Updates the headline of the text story if there's any sequence value in it."""
+    #     if doc.get(SEQUENCE):
+    #         doc['headline'] = '{}={}'.format(doc['headline'], doc.get(SEQUENCE))
 
     def _get_subscribers_for_package_item(self, package_item):
         """Finds the list of subscribers for a given item in a package
@@ -560,9 +556,9 @@ class EnqueueService:
 
         for subscriber in subscribers:
             if target_media_type and subscriber.get('subscriber_type', '') != SUBSCRIBER_TYPES.ALL:
-                can_send_takes_packages = subscriber['subscriber_type'] == SUBSCRIBER_TYPES.DIGITAL
-                if target_media_type == SUBSCRIBER_TYPES.WIRE and can_send_takes_packages or \
-                        target_media_type == SUBSCRIBER_TYPES.DIGITAL and not can_send_takes_packages:
+                can_send_digital = subscriber['subscriber_type'] == SUBSCRIBER_TYPES.DIGITAL
+                if target_media_type == SUBSCRIBER_TYPES.WIRE and can_send_digital or \
+                        target_media_type == SUBSCRIBER_TYPES.DIGITAL and not can_send_digital:
                     continue
 
             conforms, skip_filters = self.conforms_subscriber_targets(subscriber, doc)

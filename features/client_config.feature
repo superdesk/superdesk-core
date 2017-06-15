@@ -6,7 +6,6 @@ Feature: Client Config
         """
         {
             "config": {
-                "no_takes": false,
                 "xmpp_auth": false,
                 "google_auth": false
             }

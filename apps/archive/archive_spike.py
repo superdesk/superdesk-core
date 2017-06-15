@@ -16,8 +16,7 @@ from flask import current_app as app
 import superdesk
 from superdesk import get_resource_service, config
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
-from superdesk.metadata.item import ITEM_STATE, CONTENT_TYPE, ITEM_TYPE, PUBLISH_STATES, GUID_FIELD, GUID_TAG
-from superdesk.metadata.packages import SEQUENCE, PACKAGE_TYPE
+from superdesk.metadata.item import ITEM_STATE, CONTENT_TYPE, ITEM_TYPE, GUID_FIELD, GUID_TAG
 from superdesk.notification import push_notification
 from superdesk.services import BaseService
 from superdesk.metadata.utils import item_url, generate_guid
@@ -25,7 +24,7 @@ from .common import get_user, get_expiry, item_operations, ITEM_OPERATION, set_s
 from superdesk.workflow import is_workflow_state_transition_valid
 from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
 from apps.archive.common import ITEM_EVENT_ID, ITEM_UNLINK
-from apps.packages import PackageService, TakesPackageService
+from apps.packages import PackageService
 from apps.archive.archive_rewrite import ArchiveRewriteService
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE
 from superdesk.utc import get_expiry_date
@@ -85,7 +84,7 @@ class ArchiveSpikeService(BaseService):
         :param original:
         :raise: An exception or nothing
         """
-        packages = [x.get(PACKAGE) for x in original.get(LINKED_IN_PACKAGES, []) if not x.get(PACKAGE_TYPE)]
+        packages = [x.get(PACKAGE) for x in original.get(LINKED_IN_PACKAGES, [])]
         if packages:
             query = {'$and': [{config.ID_FIELD: {'$in': packages}}]}
             cursor = get_resource_service(ARCHIVE).get_from_mongo(req=None, lookup=query)

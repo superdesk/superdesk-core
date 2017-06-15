@@ -14,7 +14,6 @@ from flask import current_app as app
 
 from superdesk.utils import SuperdeskBaseEnum
 from .item import GUID_TAG, GUID_NEWSML, GUID_FIELD, ITEM_TYPE, CONTENT_TYPE
-from .packages import PACKAGE_TYPE, TAKES_PACKAGE
 
 
 item_url = 'regex("[\w,.:_-]+")'
@@ -93,22 +92,12 @@ def generate_tag(domain, id):
 
 def is_normal_package(doc):
     """
-    Returns True if the passed doc is a package and not a takes package. Otherwise, returns False.
+    Returns True if the passed doc is a package. Otherwise, returns False.
 
-    :return: True if it's a Package and not a Takes Package, False otherwise.
+    :return: True if it's a Package, False otherwise.
     """
 
-    return doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and doc.get(PACKAGE_TYPE, '') != TAKES_PACKAGE
-
-
-def is_takes_package(doc):
-    """
-    Returns True if the passed doc is a takes package. Otherwise, returns False.
-
-    :return: True if it's a Takes Package, False otherwise.
-    """
-
-    return doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and doc.get(PACKAGE_TYPE, '') == TAKES_PACKAGE
+    return doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE
 
 
 class ProductTypes(SuperdeskBaseEnum):
