@@ -5,6 +5,7 @@ from flask import current_app as app, json
 from superdesk.utils import get_random_string
 from superdesk.media.media_operations import crop_image, process_image, encode_metadata
 from apps.search_providers.proxy import PROXY_ENDPOINT
+from superdesk.media.image import fix_orientation
 
 
 def get_file(rendition, item):
@@ -66,6 +67,7 @@ class PictureCropService(superdesk.Service):
             if ok:
                 metadata = encode_metadata(process_image(orig_file))
                 metadata.update({'length': json.dumps(len(output.getvalue()))})
+                output = fix_orientation(output)
                 media = app.media.put(output, filename, orig['mimetype'], metadata=metadata)
                 doc['href'] = app.media.url_for_media(media, orig['mimetype'])
                 doc['width'] = output.width
