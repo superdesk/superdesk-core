@@ -23,18 +23,15 @@ from superdesk.errors import ProviderError
 from superdesk.io.registry import registered_feeding_services, registered_feed_parsers
 from superdesk.io.iptc import subject_codes
 from superdesk.lock import lock, unlock
-from superdesk.media.media_operations import download_file_from_url, process_file
-from superdesk.media.renditions import generate_renditions, get_renditions_spec
+from superdesk.media.renditions import update_renditions
 from superdesk.metadata.item import GUID_NEWSML, GUID_FIELD, FAMILY_ID, ITEM_TYPE, CONTENT_TYPE, CONTENT_STATE, \
     ITEM_STATE
 from superdesk.metadata.utils import generate_guid
 from superdesk.notification import push_notification
 from superdesk.stats import stats
-from superdesk.upload import url_for_media
 from superdesk.utc import utcnow, get_expiry_date
 from superdesk.workflow import set_default_state
 from copy import deepcopy
-from superdesk.filemeta import set_filemeta
 
 UPDATE_SCHEDULE_DEFAULT = {'minutes': 5}
 LAST_UPDATED = 'last_updated'
@@ -503,48 +500,6 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
         logger.exception(ex)
         return False
     return True, items_ids
-
-
-def update_renditions(item, href, old_item):
-    """Update renditions for an item.
-
-    If the old_item has renditions uploaded in to media then the old rendition details are
-    assigned to the item, this avoids repeatedly downloading the same image and leaving the media entries orphaned.
-    If there is no old_item the original is downloaded and renditions are
-    generated.
-    :param item: parsed item from source
-    :param href: reference to original
-    :param old_item: the item that we have already ingested, if it exists
-    :return: item with renditions
-    """
-    inserted = []
-    try:
-        # If there is an existing set of renditions we keep those
-        if old_item:
-            media = old_item.get('renditions', {}).get('original', {}).get('media', {})
-            if media:
-                item['renditions'] = old_item['renditions']
-                item['mimetype'] = old_item.get('mimetype')
-                item['filemeta'] = old_item.get('filemeta')
-                item['filemeta_json'] = old_item.get('filemeta_json')
-                return
-
-        content, filename, content_type = download_file_from_url(href)
-        file_type, ext = content_type.split('/')
-        metadata = process_file(content, file_type)
-        file_guid = app.media.put(content, filename, content_type, metadata)
-        inserted.append(file_guid)
-        rendition_spec = get_renditions_spec()
-        renditions = generate_renditions(content, file_guid, inserted, file_type,
-                                         content_type, rendition_spec, url_for_media)
-        item['renditions'] = renditions
-        item['mimetype'] = content_type
-        set_filemeta(item, metadata)
-    except Exception as e:
-        logger.exception(e)
-        for file_id in inserted:
-            app.media.delete(file_id)
-        raise
 
 
 superdesk.command('ingest:update', UpdateIngest())
