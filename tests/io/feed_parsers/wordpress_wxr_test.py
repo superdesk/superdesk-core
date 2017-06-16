@@ -40,12 +40,6 @@ FAKE_MEDIA_DATA = {'_created': datetime.datetime(2017, 4, 26, 13, 0, 33, tzinfo=
                                                 'width': 200}}}
 
 
-class FakeArchiveService(object):
-
-    def post(self, items):
-        return
-
-
 def fake_update_renditions(item, url, _):
     update = {
         # we use URL as _id so we can check the value easily
@@ -73,7 +67,6 @@ class WPWXRTestCase(TestCase):
 
     filename = 'wordpress_wxr.xml'
 
-    @mock.patch.object(wordpress_wxr, 'get_resource_service', lambda _: FakeArchiveService())
     @mock.patch.object(wordpress_wxr, 'update_renditions', fake_update_renditions)
     def __init__(self, methodname):
         super().__init__(methodname)
