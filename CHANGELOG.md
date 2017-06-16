@@ -1,5 +1,12 @@
 # Superdesk Server Changelog
 
+## [1.8.1] 2017-06-16
+
+### Fixed
+
+- Fix wordpress import - upload image to archive and generate renditions.
+- Fix publish when feature media or media description is required
+
 ## [1.8] 2017-06-09
 
 ### Fixed
