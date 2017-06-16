@@ -13,7 +13,6 @@ from superdesk.io.registry import register_feed_parser
 from superdesk.io.feed_parsers import XMLFeedParser
 from email.utils import parsedate_to_datetime
 from superdesk import etree as sd_etree
-from superdesk import get_resource_service
 from superdesk.upload import url_for_media
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
 from superdesk.media.renditions import update_renditions
@@ -91,7 +90,6 @@ class WPWXRFeedParser(XMLFeedParser):
                 featuremedia = item['associations']['featuremedia']
                 item['renditions'] = featuremedia['renditions']
                 item[ITEM_TYPE] = featuremedia[ITEM_TYPE]
-                item['_id'] = featuremedia['_id']
                 item['alt_text'] = item['headline']
                 item['media'] = item['renditions']['original']['media']
                 item['mimetype'] = item['renditions']['original']['mimetype']
@@ -100,12 +98,10 @@ class WPWXRFeedParser(XMLFeedParser):
 
     def _add_image(self, item, url):
         associations = item.setdefault('associations', {})
-        as_item = {
+        association = {
             ITEM_TYPE: CONTENT_TYPE.PICTURE,
             'ingest_provider': self.NAME}
-        update_renditions(as_item, url, None)
-        archive_service = get_resource_service("archive")
-        archive_service.post([as_item])
+        update_renditions(association, url, None)
 
         # we use featuremedia for the first image, then embeddedX
         if 'featuremedia' not in associations:
@@ -113,8 +109,8 @@ class WPWXRFeedParser(XMLFeedParser):
         else:
             key = 'embedded' + str(len(associations) - 1)
 
-        associations[key] = as_item
-        return key, as_item
+        associations[key] = association
+        return key, association
 
     def body_hook(self, item, html):
         """Copy content to body_html
