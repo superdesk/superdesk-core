@@ -92,7 +92,7 @@ class BasePublishService(BaseService):
     non_digital = partial(filter, lambda s: s.get('subscriber_type', '') == SUBSCRIBER_TYPES.WIRE)
     digital = partial(filter, lambda s: (s.get('subscriber_type', '') in {SUBSCRIBER_TYPES.DIGITAL,
                                                                           SUBSCRIBER_TYPES.ALL}))
-    takes_package_service = TakesPackageService()
+    #takes_package_service = TakesPackageService()
     package_service = PackageService()
 
     def on_update(self, updates, original):

@@ -17,11 +17,11 @@ from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from superdesk import get_resource_service
 from apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE, \
-    REFS, MAIN_GROUP, RESIDREF, ASSOCIATED_TAKE_SEQUENCE
+    REFS, MAIN_GROUP, RESIDREF
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, PUBLISH_STATES, ITEM_STATE, \
     CONTENT_STATE, EMBARGO, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, ASSOCIATIONS
-from apps.archive.common import insert_into_versions, ITEM_CREATE, RE_OPENS, \
-    ITEM_OPERATION, ITEM_TAKE, ITEM_LINK, ITEM_REOPEN
+from apps.archive.common import insert_into_versions, ITEM_CREATE, \
+    ITEM_OPERATION, ITEM_LINK, ITEM_REOPEN
 from .package_service import get_item_ref, create_root_group
 
 logger = logging.getLogger(__name__)
@@ -29,6 +29,10 @@ PACKAGE_TYPE = 'package_type'
 TAKES_PACKAGE = 'takes'
 SEQUENCE = 'sequence'
 LAST_TAKE = 'last_take'
+ASSOCIATED_TAKE_SEQUENCE = 'associated_take_sequence'
+ITEM_TAKE = 'take'
+RE_OPENS = 'reopens'
+
 
 class TakesPackageService():
     # metadata field of take

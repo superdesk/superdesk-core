@@ -444,282 +444,279 @@ Feature: Publish content to the public API
         """
         {"guid": "compositeitem", "_current_version": 2, "state": "published"}
         """
-############REVISIT THIS
-#  @auth
-#  @notification
-#  Scenario: Publish a composite item with embedded items
-#    Given config update
-#    """
-#    {"NO_TAKES": true}
-#    """
-#    Given empty "archive"
-#    Given "desks"
-#        """
-#        [{"name": "test_desk1"}]
-#        """
-#    And the "validators"
-#        """
-#        [
-#            {"_id": "publish_composite", "act": "publish", "type": "composite", "schema":{}},
-#            {"_id": "publish_text", "act": "publish", "type": "text", "schema":{}},
-#            {"_id": "publish_picture", "act": "publish", "type": "picture", "schema":{}},
-#            {"_id": "publish_embedded", "act": "publish", "type": "picture", "embedded": true, "schema": {}}
-#        ]
-#        """
-#    And the "vocabularies"
-#        """
-#        [{"_id": "crop_sizes", "items": [{"is_active": true, "name": "4-3", "width": 800, "height": 600}]}]
-#        """
-#    When we post to "archive" with success
-#        """
-#        [
-#            {
-#                "guid": "embedded",
-#                "type": "picture",
-#                "state": "submitted",
-#                "pubstatus": "usable",
-#                "mimetype": "image/jpeg",
-#                "slugline": "foo",
-#                "renditions": {}
-#            },
-#            {
-#                "headline" : "text item with embedded pic",
-#                "guid" : "item1",
-#                "state" : "submitted",
-#                "type" : "text",
-#                "body_html": "item content",
-#                "task": {
-#                    "user": "#CONTEXT_USER_ID#",
-#                    "status": "todo",
-#                    "stage": "#desks.incoming_stage#",
-#                    "desk": "#desks._id#"
-#                },
-#                "associations": {
-#                    "embedded1": {
-#                        "guid": "embedded",
-#                        "type": "picture",
-#                        "state": "submitted",
-#                        "pubstatus": "usable",
-#                        "mimetype": "image/jpeg",
-#                        "slugline": "foo"
-#                    }
-#                }
-#            }
-#        ]
-#        """
-#    When we post to "archive" with success
-#      """
-#      [{
-#            "original_source" : "AAP Image/AAP",
-#            "description_text" : "A test picture",
-#            "state" : "submitted",
-#            "headline" : "ABC SHOP CLOSURES",
-#            "byline" : "PAUL MILLER",
-#            "source" : "AAP Image",
-#            "mimetype" : "image/jpeg",
-#            "type" : "picture",
-#            "pubstatus" : "usable",
-#            "task": {
-#                "user": "#CONTEXT_USER_ID#",
-#                "status": "todo",
-#                "stage": "#desks.incoming_stage#",
-#                "desk": "#desks._id#"
-#            },
-#            "guid" : "item2",
-#            "renditions" : {
-#                "original_source" : {
-#                    "href" : "https://one-api.aap.com.au/api/v3/Assets/20150723001158639795/Original/download",
-#                    "mimetype" : "image/jpeg"
-#                },
-#                "original" : {
-#                    "height" : 4176,
-#                    "media" : "55b078b21d41c8e974d17ec5",
-#                    "href" : "http://localhost:5000/api/upload/55b078b21d41c8e974d17ec5/raw?_schema=http",
-#                    "mimetype" : "image/jpeg",
-#                    "width" : 2784
-#                },
-#                "thumbnail" : {
-#                    "height" : 120,
-#                    "media" : "55b078b41d41c8e974d17ed3",
-#                    "href" : "http://localhost:5000/api/upload/55b078b41d41c8e974d17ed3/raw?_schema=http",
-#                    "mimetype" : "image/jpeg",
-#                    "width" : 80
-#                },
-#                "viewImage" : {
-#                    "height" : 640,
-#                    "media" : "55b078b31d41c8e974d17ed1",
-#                    "href" : "http://localhost:5000/api/upload/55b078b31d41c8e974d17ed1/raw?_schema=http",
-#                    "mimetype" : "image/jpeg",
-#                    "width" : 426
-#                },
-#                "baseImage" : {
-#                    "height" : 1400,
-#                    "media" : "55b078b31d41c8e974d17ecf",
-#                    "href" : "http://localhost:5000/api/upload/55b078b31d41c8e974d17ecf/raw?_schema=http",
-#                    "mimetype" : "image/jpeg",
-#                    "width" : 933
-#                }
-#            },
-#            "slugline" : "ABC SHOP CLOSURES"
-#      }]
-#      """
-#    When we post to "archive" with success
-#        """
-#        [{
-#            "groups": [
-#            {
-#                "id": "root",
-#                "refs": [
-#                    {
-#                        "idRef": "main"
-#                    },
-#                    {
-#                        "idRef": "sidebars"
-#                    }
-#                ],
-#                "role": "grpRole:NEP"
-#            },
-#            {
-#                "id": "main",
-#                "refs": [
-#                    {
-#                        "renditions": {},
-#                        "slugline": "Boat",
-#                        "guid": "item1",
-#                        "headline": "WA:Navy steps in with WA asylum-seeker boat",
-#                        "location": "archive",
-#                        "type": "text",
-#                        "itemClass": "icls:text",
-#                        "residRef": "item1"
-#                    }
-#                ],
-#                "role": "grpRole:main"
-#            },
-#            {
-#                "id": "sidebars",
-#                "refs": [
-#                    {
-#                        "renditions": {
-#                            "original_source": {
-#                                "href": "https://one-api.aap.com.au/api/v3/Assets/20150723001158639795/Original/download",
-#                                "mimetype": "image/jpeg"
-#                            },
-#                            "original": {
-#                                "width": 2784,
-#                                "height": 4176,
-#                                "href": "http://localhost:5000/api/upload/55b078b21d41c8e974d17ec5/raw?_schema=http",
-#                                "mimetype": "image/jpeg",
-#                                "media": "55b078b21d41c8e974d17ec5"
-#                            },
-#                            "thumbnail": {
-#                                "width": 80,
-#                                "height": 120,
-#                                "href": "http://localhost:5000/api/upload/55b078b41d41c8e974d17ed3/raw?_schema=http",
-#                                "mimetype": "image/jpeg",
-#                                "media": "55b078b41d41c8e974d17ed3"
-#                            },
-#                            "viewImage": {
-#                                "width": 426,
-#                                "height": 640,
-#                                "href": "http://localhost:5000/api/upload/55b078b31d41c8e974d17ed1/raw?_schema=http",
-#                                "mimetype": "image/jpeg",
-#                                "media": "55b078b31d41c8e974d17ed1"
-#                            },
-#                            "baseImage": {
-#                                "width": 933,
-#                                "height": 1400,
-#                                "href": "http://localhost:5000/api/upload/55b078b31d41c8e974d17ecf/raw?_schema=http",
-#                                "mimetype": "image/jpeg",
-#                                "media": "55b078b31d41c8e974d17ecf"
-#                            }
-#                        },
-#                        "slugline": "ABC SHOP CLOSURES",
-#                        "type": "picture",
-#                        "guid": "item2",
-#                        "headline": "ABC SHOP CLOSURES",
-#                        "location": "archive",
-#                        "itemClass": "icls:picture",
-#                        "residRef": "item2"
-#                    }
-#                ],
-#                "role": "grpRole:sidebars"
-#            }],
-#            "task": {
-#                "user": "#CONTEXT_USER_ID#",
-#                "status": "todo",
-#                "stage": "#desks.incoming_stage#",
-#                "desk": "#desks._id#"
-#            },
-#            "guid" : "compositeitem",
-#            "headline" : "WA:Navy steps in with WA asylum-seeker boat",
-#            "state" : "submitted",
-#            "type" : "composite"
-#        }]
-#        """
-#    When we post to "/products" with success
-#      """
-#      {
-#        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
-#      }
-#      """
-#    And we post to "/subscribers" with success
-#        """
-#        {
-#        "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-#        "products": ["#products._id#"],
-#        "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com", "packaged": true}}]
-#        }
-#        """
-#    And we publish "compositeitem" with "publish" type and "published" state
-#    Then we get OK response
-#    And we get existing resource
-#        """
-#        {"_current_version": 2, "state": "published", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
-#        """
-#    And we get notifications
-#        """
-#        [{"event": "item:publish", "extra": {"item": "compositeitem"}}]
-#        """
-#    When we enqueue published
-#    When we get "/publish_queue"
-#    Then we get list with 0 items
-#        """
-#        {"_items":
-#        	[
-#        		{"item_id" : "compositeitem", "state": "pending", "content_type": "composite"}
-#        	]
-#        }
-#        """
-#    When we get "/published/compositeitem"
-#    Then we get existing resource
-#        """
-#        {"guid": "compositeitem", "_current_version": 2, "state": "published"}
-#        """
-#    When we get "/publish_queue/compositeitem"
-#    Then we get formatted item
-#	"""
-#	{
-#		"guid": "compositeitem",
-#		"type": "composite",
-#		"associations": {
-#			"main": {
-#                "body_html": "item content",
-#					"headline": "text item with embedded pic",
-#					"type": "text",
-#                "associations": {
-#                    "embedded1": {
-#                        "type": "picture",
-#                        "slugline": "foo",
-#                        "pubstatus": "usable"
-#                    }
-#                }
-#            },
-#			"sidebars": {
-#					"guid": "item2",
-#					"type": "picture",
-#					"headline": "ABC SHOP CLOSURES",
-#					"renditions": {
-#						"original": {"mimetype": "image/jpeg"}}}
-#		}
-#	}
-#	"""
+
+
+  @auth
+  @notification
+  Scenario: Publish a composite item with embedded items
+    Given empty "archive"
+    Given "desks"
+        """
+        [{"name": "test_desk1"}]
+        """
+    And the "validators"
+        """
+        [
+            {"_id": "publish_composite", "act": "publish", "type": "composite", "schema":{}},
+            {"_id": "publish_text", "act": "publish", "type": "text", "schema":{}},
+            {"_id": "publish_picture", "act": "publish", "type": "picture", "schema":{}},
+            {"_id": "publish_embedded", "act": "publish", "type": "picture", "embedded": true, "schema": {}}
+        ]
+        """
+    And the "vocabularies"
+        """
+        [{"_id": "crop_sizes", "items": [{"is_active": true, "name": "4-3", "width": 800, "height": 600}]}]
+        """
+    When we post to "archive" with success
+        """
+        [
+            {
+                "guid": "embedded",
+                "type": "picture",
+                "state": "submitted",
+                "pubstatus": "usable",
+                "mimetype": "image/jpeg",
+                "slugline": "foo",
+                "renditions": {}
+            },
+            {
+                "headline" : "text item with embedded pic",
+                "guid" : "item1",
+                "state" : "submitted",
+                "type" : "text",
+                "body_html": "item content",
+                "task": {
+                    "user": "#CONTEXT_USER_ID#",
+                    "status": "todo",
+                    "stage": "#desks.incoming_stage#",
+                    "desk": "#desks._id#"
+                },
+                "associations": {
+                    "embedded1": {
+                        "guid": "embedded",
+                        "type": "picture",
+                        "state": "submitted",
+                        "pubstatus": "usable",
+                        "mimetype": "image/jpeg",
+                        "slugline": "foo"
+                    }
+                }
+            }
+        ]
+        """
+    When we post to "archive" with success
+      """
+      [{
+            "original_source" : "AAP Image/AAP",
+            "description_text" : "A test picture",
+            "state" : "submitted",
+            "headline" : "ABC SHOP CLOSURES",
+            "byline" : "PAUL MILLER",
+            "source" : "AAP Image",
+            "mimetype" : "image/jpeg",
+            "type" : "picture",
+            "pubstatus" : "usable",
+            "task": {
+                "user": "#CONTEXT_USER_ID#",
+                "status": "todo",
+                "stage": "#desks.incoming_stage#",
+                "desk": "#desks._id#"
+            },
+            "guid" : "item2",
+            "renditions" : {
+                "original_source" : {
+                    "href" : "https://one-api.aap.com.au/api/v3/Assets/20150723001158639795/Original/download",
+                    "mimetype" : "image/jpeg"
+                },
+                "original" : {
+                    "height" : 4176,
+                    "media" : "55b078b21d41c8e974d17ec5",
+                    "href" : "http://localhost:5000/api/upload/55b078b21d41c8e974d17ec5/raw?_schema=http",
+                    "mimetype" : "image/jpeg",
+                    "width" : 2784
+                },
+                "thumbnail" : {
+                    "height" : 120,
+                    "media" : "55b078b41d41c8e974d17ed3",
+                    "href" : "http://localhost:5000/api/upload/55b078b41d41c8e974d17ed3/raw?_schema=http",
+                    "mimetype" : "image/jpeg",
+                    "width" : 80
+                },
+                "viewImage" : {
+                    "height" : 640,
+                    "media" : "55b078b31d41c8e974d17ed1",
+                    "href" : "http://localhost:5000/api/upload/55b078b31d41c8e974d17ed1/raw?_schema=http",
+                    "mimetype" : "image/jpeg",
+                    "width" : 426
+                },
+                "baseImage" : {
+                    "height" : 1400,
+                    "media" : "55b078b31d41c8e974d17ecf",
+                    "href" : "http://localhost:5000/api/upload/55b078b31d41c8e974d17ecf/raw?_schema=http",
+                    "mimetype" : "image/jpeg",
+                    "width" : 933
+                }
+            },
+            "slugline" : "ABC SHOP CLOSURES"
+      }]
+      """
+    When we post to "archive" with success
+        """
+        [{
+            "groups": [
+            {
+                "id": "root",
+                "refs": [
+                    {
+                        "idRef": "main"
+                    },
+                    {
+                        "idRef": "sidebars"
+                    }
+                ],
+                "role": "grpRole:NEP"
+            },
+            {
+                "id": "main",
+                "refs": [
+                    {
+                        "renditions": {},
+                        "slugline": "Boat",
+                        "guid": "item1",
+                        "headline": "WA:Navy steps in with WA asylum-seeker boat",
+                        "location": "archive",
+                        "type": "text",
+                        "itemClass": "icls:text",
+                        "residRef": "item1"
+                    }
+                ],
+                "role": "grpRole:main"
+            },
+            {
+                "id": "sidebars",
+                "refs": [
+                    {
+                        "renditions": {
+                            "original_source": {
+                                "href": "https://one-api.aap.com.au/api/v3/Assets/20150723001158639795/Original/download",
+                                "mimetype": "image/jpeg"
+                            },
+                            "original": {
+                                "width": 2784,
+                                "height": 4176,
+                                "href": "http://localhost:5000/api/upload/55b078b21d41c8e974d17ec5/raw?_schema=http",
+                                "mimetype": "image/jpeg",
+                                "media": "55b078b21d41c8e974d17ec5"
+                            },
+                            "thumbnail": {
+                                "width": 80,
+                                "height": 120,
+                                "href": "http://localhost:5000/api/upload/55b078b41d41c8e974d17ed3/raw?_schema=http",
+                                "mimetype": "image/jpeg",
+                                "media": "55b078b41d41c8e974d17ed3"
+                            },
+                            "viewImage": {
+                                "width": 426,
+                                "height": 640,
+                                "href": "http://localhost:5000/api/upload/55b078b31d41c8e974d17ed1/raw?_schema=http",
+                                "mimetype": "image/jpeg",
+                                "media": "55b078b31d41c8e974d17ed1"
+                            },
+                            "baseImage": {
+                                "width": 933,
+                                "height": 1400,
+                                "href": "http://localhost:5000/api/upload/55b078b31d41c8e974d17ecf/raw?_schema=http",
+                                "mimetype": "image/jpeg",
+                                "media": "55b078b31d41c8e974d17ecf"
+                            }
+                        },
+                        "slugline": "ABC SHOP CLOSURES",
+                        "type": "picture",
+                        "guid": "item2",
+                        "headline": "ABC SHOP CLOSURES",
+                        "location": "archive",
+                        "itemClass": "icls:picture",
+                        "residRef": "item2"
+                    }
+                ],
+                "role": "grpRole:sidebars"
+            }],
+            "task": {
+                "user": "#CONTEXT_USER_ID#",
+                "status": "todo",
+                "stage": "#desks.incoming_stage#",
+                "desk": "#desks._id#"
+            },
+            "guid" : "compositeitem",
+            "headline" : "WA:Navy steps in with WA asylum-seeker boat",
+            "state" : "submitted",
+            "type" : "composite"
+        }]
+        """
+    When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+      }
+      """
+    And we post to "/subscribers" with success
+        """
+        {
+        "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
+        "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"PublicArchive","config":{"recipients":"test@test.com", "packaged": true}}]
+        }
+        """
+    And we publish "compositeitem" with "publish" type and "published" state
+    Then we get OK response
+    And we get existing resource
+        """
+        {"_current_version": 2, "state": "published", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
+        """
+    And we get notifications
+        """
+        [{"event": "item:publish", "extra": {"item": "compositeitem"}}]
+        """
+    When we enqueue published
+    When we get "/publish_queue"
+    Then we get list with 1 items
+        """
+        {"_items":
+        	[
+        		{"item_id" : "compositeitem", "state": "pending", "content_type": "composite"}
+        	]
+        }
+        """
+    When we get "/published/compositeitem"
+    Then we get existing resource
+        """
+        {"guid": "compositeitem", "_current_version": 2, "state": "published"}
+        """
+    When we get "/publish_queue/compositeitem"
+    Then we get formatted item
+	"""
+	{
+		"guid": "compositeitem",
+		"type": "composite",
+		"associations": {
+			"main": {
+                "body_html": "item content",
+					"headline": "text item with embedded pic",
+					"type": "text",
+                "associations": {
+                    "embedded1": {
+                        "type": "picture",
+                        "slugline": "foo",
+                        "pubstatus": "usable"
+                    }
+                }
+            },
+			"sidebars": {
+					"guid": "item2",
+					"type": "picture",
+					"headline": "ABC SHOP CLOSURES",
+					"renditions": {
+						"original": {"mimetype": "image/jpeg"}}}
+		}
+	}
+	"""

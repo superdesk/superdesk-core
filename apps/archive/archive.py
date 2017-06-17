@@ -157,7 +157,7 @@ def update_word_count(update, original=None):
 
 class ArchiveService(BaseService):
     packageService = PackageService()
-    takesService = TakesPackageService()
+    # takesService = TakesPackageService()
     mediaService = ArchiveMediaService()
     cropService = CropService()
 

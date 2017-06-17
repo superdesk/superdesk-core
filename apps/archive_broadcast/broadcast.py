@@ -15,7 +15,7 @@ from eve.utils import ParsedRequest
 from eve.versioning import resolve_document_version
 from flask import request
 from apps.archive.common import CUSTOM_HATEOAS, insert_into_versions, get_user, \
-    ITEM_CREATE, BROADCAST_GENRE, is_genre, RE_OPENS
+    ITEM_CREATE, BROADCAST_GENRE, is_genre
 from apps.packages import TakesPackageService, PackageService
 from superdesk.metadata.packages import GROUPS
 from superdesk.resource import Resource, build_custom_hateoas

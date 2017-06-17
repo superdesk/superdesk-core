@@ -12,26 +12,23 @@ Feature: Kill a content item in the (dusty) archive
      {"schema": {}, "type": "text", "act": "kill", "_id": "kill_text"}]
     """
     When we post to "/products" with success
-      """
-      {
-        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
-      }
-      """
-    And we post to "/subscribers" with "digital" and success
     """
     {
-      "name":"Channel 1", "media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-      "products": ["#products._id#"],
-      "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      "name":"prod-1","codes":"abc,xyz", "product_type": "both"
     }
     """
-    And we post to "/subscribers" with "wire" and success
+    Given "subscribers"
     """
+    [{
+      "name":"Channel 1", "media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+      "products": ["#products._id#"], "_id": "s-d",
+      "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+    },
     {
       "name":"Channel 2", "media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-      "products": ["#products._id#"],
+      "products": ["#products._id#"], "_id": "s-w",
       "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
-    }
+    }]
     """
     When we post to "content_templates"
     """
@@ -197,64 +194,64 @@ Feature: Kill a content item in the (dusty) archive
 
   @auth @notification
   Scenario: Kill a Text Article also kills the Digital Story in the Dusty Archive
-    When we post to "/archive" with success
+    Given "archived"
     """
-    [{"guid": "123", "type": "text", "abstract": "test", "state": "fetched", "slugline": "slugline",
-      "headline": "headline", "anpa_category" : [{"qcode" : "e", "name" : "Entertainment"}],
+    [{"item_id": "123", "guid": "123", "type": "text", "abstract": "test", "slugline": "slugline",
+      "headline": "headline", "anpa_category" : [{"qcode" : "e", "name" : "Entertainment"}], "state": "published",
       "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
-      "subject":[{"qcode": "17004000", "name": "Statistics"}],
-      "body_html": "Test Document body"}]
+      "linked_in_packages": [{"package" : "234", "package_type" : "takes"}], "is_take_item" : true,
+      "subject":[{"qcode": "17004000", "name": "Statistics"}], "body_html": "Test Document body", "_current_version": 2},
+     {"groups": [{"id": "root", "refs": [{"idRef": "main"}]},
+                {"id": "main", "refs": [{"headline": "headline", "slugline": "slugline", "residRef": "123"}]}
+               ],
+      "item_id": "234", "guid": "234", "type": "composite", "_current_version": 2, "state": "published",
+      "package_type" : "takes", "is_take_item" : false,
+      "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}
+    ]
     """
-    Then we get OK response
-    When we publish "#archive._id#" with "publish" type and "published" state
-    Then we get OK response
-    When we get "/published"
-    Then we get list with 1 items
+    And "legal_archive"
     """
-    {"_items" : [
-      {"state": "published",
-       "type": "text",
-       "_current_version": 2}
-      ]
-    }
+    [{"_id" : "123", "type" : "text", "guid" : "123", "_current_version" : 2,
+      "linked_in_packages" : [{"package_type" : "takes", "package" : "234"}],
+      "operation" : "publish", "state": "published", "pubstatus" : "usable"},
+      {"_id" : "234", "type" : "composite", "guid" : "123", "_current_version" : 2,
+      "groups" : [
+        {"id" : "root", "role" : "grpRole:NEP", "refs" : [{"idRef" : "main"}]},
+        {"id" : "main", "role" : "grpRole:main", "refs" : [{"renditions" : {}, "guid" : "123", "is_published" : true,
+        "location" : "legal_archive", "itemClass" : "icls:text", "_current_version" : 2, "slugline" : "slugline",
+        "headline" : "headline", "residRef" : "123", "type" : "text", "sequence" : 1}]}],
+      "operation" : "publish", "state": "published", "pubstatus" : "usable"}
+    ]
     """
-    When we enqueue published
-    When we get "/publish_queue"
-    Then we get list with 2 items
-    When we transmit items
-    And run import legal publish queue
-    And we expire items
+    And "legal_publish_queue"
     """
-    ["123"]
+    [
+        {"item_id": "123", "subscriber_id":"Channel 2", "content_type": "text",
+        "item_version": 2, "publishing_action": "published", "_subscriber_id": "s-w"},
+        {"item_id": "234", "subscriber_id":"Channel 1", "content_type": "text",
+        "item_version": 2, "publishing_action": "published", "_subscriber_id": "s-d"}
+     ]
     """
-    And we get "/published"
-    Then we get list with 0 items
-    When we get "/publish_queue"
-    Then we get list with 0 items
-    When we get "/archived"
-    Then we get list with 1 items
+    And "legal_archive_versions" with objectid
     """
-    {"_items" : [
-      {"item_id": "123", "state": "published", "type": "text", "_current_version": 2}
-      ]
-    }
+    [
+        {"_id": "56aad5a61d41c8aa98ddd015", "_id_document" : "234", "guid" : "234", "_current_version" : 2},
+        {"_id": "56aad5a61d41c8aa98ddd017", "_id_document" : "123", "guid" : "123", "_current_version" : 1},
+        {"_id": "56aad5a61d41c8aa98ddd019", "_id_document" : "123", "guid" : "123", "_current_version" : 2}
+     ]
     """
-    When we get "/legal_publish_queue"
-    Then we get list with 2 items
     When we patch "/archived/123:2"
     """
     {"body_html": "Killed body"}
     """
     Then we get OK response
-    And we get 1 emails
+    And we get 2 emails
     When we get "/published"
-    Then we get list with 1 items
+    Then we get list with 2 items
     When we get "/publish_queue"
     Then we get list with 2 items
     When we get "/archive/123"
     Then we get OK response
-    And we get text "Please kill story slugged slugline" in response field "body_html"
-    And we get text "Killed body" in response field "body_html"
     And we get text "Please kill story slugged slugline" in response field "body_html"
     And we get text "Killed body" in response field "body_html"
     When we get "/archived"
@@ -272,126 +269,602 @@ Feature: Kill a content item in the (dusty) archive
     Then we get list with 4 items
     When we expire items
     """
-    ["123"]
+    ["123", "234"]
     """
     And we get "/published"
     Then we get list with 0 items
 
-#  #### WE WANT TO KEEP THIS #####
-#  @auth @notification
-#  Scenario: Killing Take in Dusty Archive will kill other takes including the Digital Story
-#    When we post to "/archive" with success
-#    """
-#    [{"guid": "123", "type": "text", "abstract": "test", "state": "fetched", "slugline": "slugline",
-#      "headline": "headline", "anpa_category" : [{"qcode" : "e", "name" : "Entertainment"}],
-#      "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
-#      "subject":[{"qcode": "17004000", "name": "Statistics"}], "body_html": "Test Document body"}]
-#    """
-#    Then we get OK response
-#    When we post to "archive/123/link"
-#    """
-#    [{"desk": "#desks._id#"}]
-#    """
-#    Then we get next take as "take1"
-#    """
-#    {"_id": "#take1#"}
-#    """
-#    When we patch "/archive/#take1#"
-#    """
-#    {"abstract": "Take 1", "headline": "Take 1", "body_html": "Take 1"}
-#    """
-#    And we post to "archive/#take1#/link"
-#    """
-#    [{"desk": "#desks._id#"}]
-#    """
-#    Then we get next take as "take2"
-#    """
-#    {"_id": "#take2#"}
-#    """
-#    When we patch "/archive/#take2#"
-#    """
-#    {"abstract": "Take 2", "headline": "Take 2", "body_html": "Take 2"}
-#    """
-#    When we publish "123" with "publish" type and "published" state
-#    Then we get OK response
-#    When we publish "123" with "correct" type and "corrected" state
-#    """
-#    {"body_html": "Corrected", "slugline": "corrected", "headline": "corrected"}
-#    """
-#    Then we get OK response
-#    When we publish "#take1#" with "publish" type and "published" state
-#    Then we get OK response
-#    When we publish "#take2#" with "publish" type and "published" state
-#    Then we get OK response
-#    When we get "/published"
-#    Then we get list with 8 items
-#    When we enqueue published
-#    When we get "/publish_queue"
-#    Then we get list with 8 items
-#    When we transmit items
-#    And run import legal publish queue
-#    And we expire items
-#    """
-#    ["123", "#take1#", "#take2#", "#archive.123.take_package#"]
-#    """
-#    And we get "/published"
-#    Then we get list with 0 items
-#    When we enqueue published
-#    When we get "/publish_queue"
-#    Then we get list with 0 items
-#    When we get "/archived"
-#    Then we get list with 8 items
-#    When we enqueue published
-#    When we get "/legal_publish_queue"
-#    Then we get list with 8 items
-#    When we patch "/archived/123:2"
-#    """
-#    {}
-#    """
-#    Then we get OK response
-#    And we get 4 emails
-#    When we get "/published"
-#    Then we get list with 4 items
-#    When we get "/publish_queue"
-#    Then we get list with 4 items
-#    When we get "/archived"
-#    Then we get list with 0 items
-#    When we transmit items
-#    And run import legal publish queue
-#    When we get "/legal_archive/123"
-#    Then we get existing resource
-#    """
-#    {"_id": "123", "type": "text", "_current_version": 4, "state": "killed", "pubstatus": "canceled", "operation": "kill"}
-#    """
-#    When we get "/legal_archive/123?version=all"
-#    Then we get list with 4 items
-#    When we get "/legal_archive/#archive.123.take_package#"
-#    Then we get existing resource
-#    """
-#    {"_id": "#archive.123.take_package#", "type": "composite", "_current_version": 7, "state": "killed", "pubstatus": "canceled", "operation": "kill"}
-#    """
-#    When we get "/legal_archive/#archive.123.take_package#?version=all"
-#    Then we get list with 7 items
-#    When we get "/legal_archive/#take1#"
-#    Then we get existing resource
-#    """
-#    {"_id": "#take1#", "type": "text", "_current_version": 4, "state": "killed", "pubstatus": "canceled", "operation": "kill"}
-#    """
-#    When we get "/legal_archive/#take1#?version=all"
-#    Then we get list with 4 items
-#    When we get "/legal_archive/#take2#"
-#    Then we get existing resource
-#    """
-#    {"_id": "#take2#", "type": "text", "_current_version": 4, "state": "killed", "pubstatus": "canceled", "operation": "kill"}
-#    """
-#    When we get "/legal_archive/#take2#?version=all"
-#    Then we get list with 4 items
-#    When we expire items
-#    """
-#    ["123", "#take1#", "#take2#", "#archive.123.take_package#"]
-#    """
-#    And we get "/published"
-#    Then we get list with 0 items
+  @auth @notification
+  Scenario: Killing Take in Dusty Archive will kill other takes including the Digital Story
+    Given "archived"
+    """
+    [
+      {
+        "_current_version" : 3,
+        "item_id" : "234",
+        "state" : "published",
+        "groups" : [
+            {
+                "id" : "root",
+                "role" : "grpRole:NEP",
+                "refs" : [
+                    {
+                        "idRef" : "main"
+                    }
+                ]
+            },
+            {
+                "id" : "main",
+                "role" : "grpRole:main",
+                "refs" : [
+                    {
+                        "headline" : "headline",
+                        "renditions" : {},
+                        "residRef" : "123",
+                        "slugline" : "slugline",
+                        "type" : "text",
+                        "is_published" : true,
+                        "location" : "archived",
+                        "sequence" : 1,
+                        "_current_version" : 2,
+                        "guid" : "123",
+                        "itemClass" : "icls:text"
+                    }
+                ]
+            }
+        ],
+        "guid" : "234",
+        "headline" : "headline",
+        "publish_sequence_no" : 1,
+        "sequence" : 1,
+        "type" : "composite",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "digital_item_id" : "234"
+    },{
+        "item_id" : "123",
+        "state" : "published",
+        "guid" : "123",
+        "headline" : "headline",
+        "linked_in_packages" : [
+            {
+                "package" : "234",
+                "package_type" : "takes"
+            }
+        ],
+        "publish_sequence_no" : 2,
+        "sequence" : 1,
+        "type" : "text",
+        "digital_item_id" : "234",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "_current_version" : 2
+    },{
+        "_current_version" : 4,
+        "item_id" : "234",
+        "state" : "corrected",
+        "groups" : [
+            {
+                "id" : "root",
+                "role" : "grpRole:NEP",
+                "refs" : [
+                    {
+                        "idRef" : "main"
+                    }
+                ]
+            },
+            {
+                "id" : "main",
+                "role" : "grpRole:main",
+                "refs" : [
+                    {
+                        "headline" : "corrected",
+                        "renditions" : {},
+                        "residRef" : "123",
+                        "slugline" : "corrected",
+                        "type" : "text",
+                        "location" : "archived",
+                        "sequence" : 1,
+                        "_current_version" : 3,
+                        "itemClass" : "icls:text",
+                        "guid" : "123",
+                        "is_published" : true
+                    }
+                ]
+            }
+        ],
+        "guid" : "234",
+        "headline" : "corrected",
+        "publish_sequence_no" : 3,
+        "sequence" : 1,
+        "type" : "composite",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "digital_item_id" : "234"
+    },{
+        "item_id" : "123",
+        "state" : "corrected",
+        "guid" : "123",
+        "headline" : "corrected",
+        "linked_in_packages" : [
+            {
+                "package" : "234",
+                "package_type" : "takes"
+            }
+        ],
+        "publish_sequence_no" : 4,
+        "sequence" : 1,
+        "type" : "text",
+        "digital_item_id" : "234",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "_current_version" : 3
+    },{
+        "_current_version" : 5,
+        "item_id" : "234",
+        "state" : "corrected",
+        "groups" : [
+            {
+                "id" : "root",
+                "role" : "grpRole:NEP",
+                "refs" : [
+                    {
+                        "idRef" : "main"
+                    }
+                ]
+            },
+            {
+                "id" : "main",
+                "role" : "grpRole:main",
+                "refs" : [
+                    {
+                        "headline" : "corrected",
+                        "renditions" : {},
+                        "residRef" : "123",
+                        "slugline" : "corrected",
+                        "type" : "text",
+                        "is_published" : true,
+                        "location" : "archived",
+                        "sequence" : 1,
+                        "_current_version" : 3,
+                        "guid" : "123",
+                        "itemClass" : "icls:text"
+                    },
+                    {
+                        "headline" : "Take 1",
+                        "renditions" : {},
+                        "residRef" : "456",
+                        "slugline" : "slugline",
+                        "type" : "text",
+                        "is_published" : true,
+                        "location" : "archived",
+                        "sequence" : 2,
+                        "_current_version" : 3,
+                        "guid" : "456",
+                        "itemClass" : "icls:text"
+                    }
+                ]
+            }
+        ],
+        "guid" : "234",
+        "headline" : "Take 1",
+        "publish_sequence_no" : 5,
+        "sequence" : 2,
+        "type" : "composite",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "digital_item_id" : "234"
+    },{
+        "_current_version" : 3,
+        "item_id" : "456",
+        "state" : "published",
+        "guid" : "456",
+        "headline" : "Take 1",
+        "linked_in_packages" : [
+            {
+                "package" : "234",
+                "package_type" : "takes"
+            }
+        ],
+        "publish_sequence_no" : 6,
+        "sequence" : 2,
+        "type" : "text",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "digital_item_id" : "234"
+    },{
+        "_current_version" : 6,
+        "item_id" : "234",
+        "state" : "corrected",
+        "groups" : [
+            {
+                "id" : "root",
+                "role" : "grpRole:NEP",
+                "refs" : [
+                    {
+                        "idRef" : "main"
+                    }
+                ]
+            },
+            {
+                "id" : "main",
+                "role" : "grpRole:main",
+                "refs" : [
+                    {
+                        "headline" : "corrected",
+                        "renditions" : {},
+                        "residRef" : "123",
+                        "slugline" : "corrected",
+                        "type" : "text",
+                        "location" : "archived",
+                        "sequence" : 1,
+                        "_current_version" : 3,
+                        "itemClass" : "icls:text",
+                        "guid" : "123",
+                        "is_published" : true
+                    },
+                    {
+                        "headline" : "Take 1",
+                        "renditions" : {},
+                        "residRef" : "456",
+                        "slugline" : "slugline",
+                        "type" : "text",
+                        "location" : "archived",
+                        "sequence" : 2,
+                        "_current_version" : 3,
+                        "itemClass" : "icls:text",
+                        "guid" : "456",
+                        "is_published" : true
+                    },
+                    {
+                        "headline" : "Take 2",
+                        "renditions" : {},
+                        "residRef" : "789",
+                        "slugline" : "slugline",
+                        "type" : "text",
+                        "is_published" : true,
+                        "location" : "archived",
+                        "sequence" : 3,
+                        "_current_version" : 3,
+                        "guid" : "789",
+                        "itemClass" : "icls:text"
+                    }
+                ]
+            }
+        ],
+        "guid" : "234",
+        "headline" : "Take 2",
+        "publish_sequence_no" : 7,
+        "sequence" : 3,
+        "type" : "composite",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "digital_item_id" : "234"
+    },{
+        "_current_version" : 3,
+        "item_id" : "789",
+        "state" : "published",
+        "guid" : "789",
+        "headline" : "Take 2",
+        "linked_in_packages" : [
+            {
+                "package" : "234",
+                "package_type" : "takes"
+            }
+        ],
+        "publish_sequence_no" : 8,
+        "sequence" : 3,
+        "type" : "text",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "digital_item_id" : "234"
+    }
+    ]
+    """
+    And "legal_archive"
+    """
+    [
+      {
+        "_id" : "234",
+        "headline" : "Take 2",
+        "operation" : "publish",
+        "_current_version" : 6,
+        "sequence" : 3,
+        "type" : "composite",
+        "groups" : [
+            {
+                "id" : "root",
+                "role" : "grpRole:NEP",
+                "refs" : [
+                    {
+                        "idRef" : "main"
+                    }
+                ]
+            },
+            {
+                "id" : "main",
+                "role" : "grpRole:main",
+                "refs" : [
+                    {
+                        "headline" : "corrected",
+                        "renditions" : {},
+                        "residRef" : "123",
+                        "slugline" : "corrected",
+                        "type" : "text",
+                        "location" : "legal_archive",
+                        "sequence" : 1,
+                        "_current_version" : 3,
+                        "itemClass" : "icls:text",
+                        "guid" : "123",
+                        "is_published" : true
+                    },
+                    {
+                        "headline" : "Take 1",
+                        "renditions" : {},
+                        "residRef" : "456",
+                        "slugline" : "slugline",
+                        "type" : "text",
+                        "location" : "legal_archive",
+                        "sequence" : 2,
+                        "_current_version" : 3,
+                        "itemClass" : "icls:text",
+                        "guid" : "456",
+                        "is_published" : true
+                    },
+                    {
+                        "headline" : "Take 2",
+                        "renditions" : {},
+                        "residRef" : "789",
+                        "slugline" : "slugline",
+                        "type" : "text",
+                        "is_published" : true,
+                        "location" : "legal_archive",
+                        "sequence" : 3,
+                        "_current_version" : 3,
+                        "guid" : "789",
+                        "itemClass" : "icls:text"
+                    }
+                ]
+            }
+        ],
+        "guid" : "234",
+        "state" : "corrected",
+        "pubstatus" : "usable"
+    },{
+        "_id" : "123",
+        "headline" : "corrected",
+        "linked_in_packages" : [
+            {
+                "package" : "234",
+                "package_type" : "takes"
+            }
+        ],
+        "operation" : "correct",
+        "_current_version" : 3,
+        "state" : "corrected",
+        "sequence" : 1,
+        "type" : "text",
+        "pubstatus" : "usable",
+        "guid" : "123"
+    },{
+        "_id" : "456",
+        "headline" : "Take 1",
+        "linked_in_packages" : [
+            {
+                "package" : "234",
+                "package_type" : "takes"
+            }
+        ],
+        "operation" : "publish",
+        "_current_version" : 3,
+        "sequence" : 2,
+        "type" : "text",
+        "guid" : "456",
+        "state" : "published",
+        "pubstatus" : "usable"
+    },{
+        "_id" : "789",
+        "headline" : "Take 2",
+        "linked_in_packages" : [
+            {
+                "package" : "234",
+                "package_type" : "takes"
+            }
+        ],
+        "operation" : "publish",
+        "_current_version" : 3,
+        "sequence" : 3,
+        "type" : "text",
+        "guid" : "789",
+        "state" : "published",
+        "pubstatus" : "usable"
+    }
+    ]
+    """
+    And "legal_publish_queue"
+    """
+    [
+      {
+          "subscriber_id" : "Channel 1",
+          "_subscriber_id" : "s-d",
+          "content_type" : "composite",
+          "publishing_action" : "published",
+          "item_id" : "234",
+          "item_version" : 3
+      },{
+          "subscriber_id" : "Channel 2",
+          "_subscriber_id" : "s-w",
+          "content_type" : "text",
+          "publishing_action" : "published",
+          "item_id" : "123",
+          "item_version" : 2
+      },{
+          "subscriber_id" : "Channel 1",
+          "_subscriber_id" : "s-d",
+          "content_type" : "composite",
+          "publishing_action" : "corrected",
+          "item_id" : "234",
+          "item_version" : 4
+      },{
+          "subscriber_id" : "Channel 2",
+          "_subscriber_id" : "s-w",
+          "content_type" : "text",
+          "publishing_action" : "corrected",
+          "item_id" : "123",
+          "item_version" : 3
+      },{
+          "subscriber_id" : "Channel 1",
+          "_subscriber_id" : "s-d",
+          "content_type" : "composite",
+          "publishing_action" : "published",
+          "item_id" : "234",
+          "item_version" : 5
+      },{
+          "subscriber_id" : "Channel 2",
+          "_subscriber_id" : "s-w",
+          "content_type" : "text",
+          "publishing_action" : "published",
+          "item_id" : "456",
+          "item_version" : 3
+      },{
+          "subscriber_id" : "Channel 1",
+          "_subscriber_id" : "s-d",
+          "content_type" : "composite",
+          "publishing_action" : "published",
+          "item_id" : "234",
+          "item_version" : 6
+      },{
+          "subscriber_id" : "Channel 2",
+          "_subscriber_id" : "s-w",
+          "content_type" : "text",
+          "publishing_action" : "published",
+          "item_id" : "789",
+          "item_version" : 3
+      }
+    ]
+    """
+    And "legal_archive_versions" with objectid
+    """
+    [
+        {
+            "_id" : "59447e781d41c8818c61f3dc",
+            "_current_version" : 3,
+            "_id_document" : "234",
+            "guid" : "234"
+        },{
+            "_id" : "59447e771d41c8818c61f3c6",
+            "_current_version" : 1,
+            "_id_document" : "234",
+            "guid" : "234"
+        },{
+            "_id" : "59447e771d41c8818c61f3d3",
+            "_current_version" : 2,
+            "_id_document" : "234",
+            "guid" : "234"
+        },{
+            "_id" : "59447e781d41c8818c61f3e4",
+            "_current_version" : 2,
+            "_id_document" : "123",
+            "guid" : "123"
+        },{
+            "_id" : "59447e771d41c8818c61f3bd",
+            "_current_version" : 1,
+            "_id_document" : "123",
+            "guid" : "123"
+        },{
+            "_id" : "59447e781d41c8818c61f3e7",
+            "_current_version" : 4,
+            "_id_document" : "234",
+            "guid" : "234"
+        },{
+            "_id" : "59447e791d41c8818c61f3ef",
+            "_current_version" : 3,
+            "_id_document" : "123",
+            "guid" : "123"
+        },{
+            "_id" : "59447e791d41c8818c61f3f2",
+            "_current_version" : 5,
+            "_id_document" : "234",
+            "guid" : "234"
+        },{
+            "_id" : "59447e791d41c8818c61f3fa",
+            "_current_version" : 3,
+            "_id_document" : "456",
+            "guid" : "456"
+        },{
+            "_id" : "59447e771d41c8818c61f3c8",
+            "_current_version" : 1,
+            "_id_document" : "456",
+            "guid" : "456"
+        },{
+            "_id" : "59447e771d41c8818c61f3ca",
+            "_current_version" : 2,
+            "_id_document" : "456",
+            "guid" : "456"
+        },{
+            "_id" : "59447e791d41c8818c61f3fd",
+            "_current_version" : 6,
+            "_id_document" : "234",
+            "guid" : "234"
+        },{
+            "_id" : "59447e791d41c8818c61f405",
+            "_current_version" : 3,
+            "_id_document" : "789",
+            "guid" : "789"
+        },{
+            "_id" : "59447e781d41c8818c61f3d7",
+            "_current_version" : 2,
+            "_id_document" : "789",
+            "guid" : "789"
+        },{
+            "_id" : "59447e771d41c8818c61f3d5",
+            "_current_version" : 1,
+            "_id_document" : "789",
+            "guid" : "789"
+        }
+     ]
+    """
+    When we patch "/archived/123:2"
+    """
+    {}
+    """
+    Then we get OK response
+    And we get 4 emails
+    When we get "/published"
+    Then we get list with 4 items
+    When we get "/publish_queue"
+    Then we get list with 4 items
+    When we get "/archived"
+    Then we get list with 0 items
+    When we transmit items
+    And run import legal publish queue
+    When we get "/legal_archive/123"
+    Then we get existing resource
+    """
+    {"_id": "123", "type": "text", "_current_version": 4, "state": "killed", "pubstatus": "canceled", "operation": "kill"}
+    """
+    When we get "/legal_archive/123?version=all"
+    Then we get list with 4 items
+    When we get "/legal_archive/234"
+    Then we get existing resource
+    """
+    {"_id": "234", "type": "composite", "_current_version": 7, "state": "killed", "pubstatus": "canceled", "operation": "kill"}
+    """
+    When we get "/legal_archive/234#?version=all"
+    Then we get list with 7 items
+    When we get "/legal_archive/456"
+    Then we get existing resource
+    """
+    {"_id": "456", "type": "text", "_current_version": 4, "state": "killed", "pubstatus": "canceled", "operation": "kill"}
+    """
+    When we get "/legal_archive/456?version=all"
+    Then we get list with 4 items
+    When we get "/legal_archive/789"
+    Then we get existing resource
+    """
+    {"_id": "789", "type": "text", "_current_version": 4, "state": "killed", "pubstatus": "canceled", "operation": "kill"}
+    """
+    When we get "/legal_archive/789?version=all"
+    Then we get list with 4 items
+    When we expire items
+    """
+    ["123", "456", "789", "234"]
+    """
+    And we get "/published"
+    Then we get list with 0 items
+
 
   @auth
   Scenario: Killing an article other than Text isn't allowed
@@ -703,10 +1176,6 @@ Feature: Kill a content item in the (dusty) archive
     """
     When we get "/legal_publish_queue"
     Then we get list with 2 items
-    Given config update
-    """
-    {"NO_TAKES": true}
-    """
     When we patch "/archived/123:2"
     """
     {"body_html": "Killed body."}

@@ -42,7 +42,7 @@ class ArchiveLinkResource(Resource):
 
 
 class ArchiveLinkService(Service):
-    packageService = TakesPackageService()
+    #packageService = TakesPackageService()
 
     # def create(self, docs, **kwargs):
     #     target_id = request.view_args['target_id']

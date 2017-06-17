@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk.tests import TestCase
-from superdesk.metadata.packages import ASSOCIATED_TAKE_SEQUENCE
+#from superdesk.metadata.packages import ASSOCIATED_TAKE_SEQUENCE
 from .package_service import PackageService
 from .takes_package_service import TakesPackageService
 

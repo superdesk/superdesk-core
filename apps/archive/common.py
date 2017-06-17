@@ -46,7 +46,6 @@ ITEM_REWRITE = 'rewrite'
 ITEM_RESTORE = 'restore'
 ITEM_LINK = 'link'
 ITEM_UNLINK = 'unlink'
-ITEM_TAKE = 'take'
 ITEM_REOPEN = 'reopen'
 ITEM_DUPLICATE = 'duplicate'
 ITEM_DUPLICATED_FROM = 'duplicated_from'
@@ -59,13 +58,12 @@ ITEM_CREATE_HIGHLIGHT = 'create_highlight'
 ITEM_EVENT_ID = 'event_id'
 item_operations = [ITEM_CREATE, ITEM_FETCH, ITEM_UPDATE, ITEM_RESTORE,
                    ITEM_DUPLICATE, ITEM_DUPLICATED_FROM, ITEM_DESCHEDULE,
-                   ITEM_REWRITE, ITEM_LINK, ITEM_UNLINK, ITEM_TAKE, ITEM_MARK, ITEM_UNMARK, ITEM_RESEND,
+                   ITEM_REWRITE, ITEM_LINK, ITEM_UNLINK, ITEM_MARK, ITEM_UNMARK, ITEM_RESEND,
                    ITEM_EXPORT_HIGHLIGHT, ITEM_CREATE_HIGHLIGHT]
 # part the task dict
 LAST_AUTHORING_DESK = 'last_authoring_desk'
 LAST_PRODUCTION_DESK = 'last_production_desk'
 BROADCAST_GENRE = 'Broadcast Script'
-RE_OPENS = 'reopens'
 
 # these fields are not available in ingest but available in archive, published, archived
 ARCHIVE_SCHEMA_FIELDS = {
@@ -137,10 +135,10 @@ ARCHIVE_SCHEMA_FIELDS = {
         'mapping': not_analyzed,
         'nullable': True
     },
-    SEQUENCE: { #deprecated
+    'sequence': { #deprecated
         'type': 'integer'
     },
-    ASSOCIATED_TAKE_SEQUENCE: { #deprecated
+    'associated_take_sequence': { #deprecated
         'type': 'integer'
     },
     EMBARGO: {

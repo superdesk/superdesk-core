@@ -379,10 +379,6 @@ Feature: Resend
       ]
     }
     """
-    Given config update
-    """
-    {"NO_TAKES": true}
-    """
     When we post to "/archive/#archive._id#/resend"
     """
     {
@@ -494,10 +490,6 @@ Feature: Resend
         "subscriber_id": "#subscribers._id#", "item_version": 4}
       ]
     }
-    """
-    Given config update
-    """
-    {"NO_TAKES": true}
     """
     When we post to "/archive/#archive._id#/resend"
     """
@@ -646,11 +638,7 @@ Feature: Resend
   @auth
   @vocabulary
   Scenario: Resend a published text story to a digital or all subscriber type with No Takes
-    Given config update
-    """
-    {"NO_TAKES": true}
-    """
-    And the "validators"
+    Given the "validators"
     """
     [{"_id": "publish_text", "act": "publish", "type": "text", "schema":{}},
     {"_id": "correct_text", "act": "correct", "type": "text", "schema":{}}]

@@ -40,10 +40,6 @@ def setup_before_scenario(context, scenario, config, app_factory):
 
     tests.setup(context, config, app_factory, bool(config))
 
-    # if context.app:
-    #     # reset to False.
-    #     context.app.config.update({'NO_TAKES': False})
-
     context.headers = [
         ('Content-Type', 'application/json'),
         ('Origin', 'localhost')

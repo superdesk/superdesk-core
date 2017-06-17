@@ -528,43 +528,6 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     {"_issues": {"validator exception": "400: Embargo can't be set after publishing"}}
     """
 
-#  @auth
-#  Scenario: Cannot set Embargo for a Take
-#    When we post to "archive/123/link"
-#    """
-#    [{}]
-#    """
-#    Then we get next take as "TAKE2"
-#    """
-#    {"_id": "#TAKE2#", "type": "text", "headline": "test", "anpa_take_key": "Take=2",
-#     "state": "draft", "original_creator": "#CONTEXT_USER_ID#",
-#     "takes": {"_id": "#TAKE_PACKAGE#", "package_type": "takes", "type": "composite"},
-#     "linked_in_packages": [{"package_type" : "takes","package" : "#TAKE_PACKAGE#"}]
-#    }
-#    """
-#    When we patch "/archive/123"
-#    """
-#    {"embargo": "#DATE+1#"}
-#    """
-#    Then we get error 400
-#    """
-#    {"_issues": {"validator exception": "400: Takes doesn't support Embargo"}}
-#    """
-
-#  @auth
-#  Scenario: Cannot create a Take for an article which has Embargo
-#    When we patch "/archive/123"
-#    """
-#    {"embargo": "#DATE+1#"}
-#    """
-#    And we post to "archive/123/link"
-#    """
-#    [{}]
-#    """
-#    Then we get error 400
-#    """
-#    {"_message": "Takes can't be created for an Item having Embargo"}
-#    """
 
   @auth
   Scenario: Cannot rewrite an article which has Embargo
@@ -678,8 +641,6 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     """
     {"state": "in_progress", "_id": "123", "publish_schedule": "__none__"}
     """
-#    When we get "/archive/#TAKE_PACKAGE#"
-#    Then we get error 404
     When we get "/published"
     Then we get list with 0 items
     When we get "/publish_queue"
