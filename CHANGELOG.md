@@ -1,5 +1,17 @@
 # Superdesk Server Changelog
 
+## [1.8.3] 2017-06-19
+
+### Fixed
+
+- Fix wordpress parser image embeds.
+
+## [1.8.2] 2017-06-16
+
+### Fixed
+
+- Fix wordpress parser image handling.
+
 ## [1.8.1] 2017-06-16
 
 ### Fixed
