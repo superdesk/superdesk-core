@@ -47,7 +47,7 @@ def generate_renditions(original, media_id, inserted, file_type, content_type,
     if file_type != 'image':
         return renditions
 
-    original.seek(0)
+    original = fix_orientation(original)
     img = Image.open(original)
     width, height = img.size
     rend.update({'width': width})
@@ -67,7 +67,6 @@ def generate_renditions(original, media_id, inserted, file_type, content_type,
         cropping_data = {}
         # reset
         original.seek(0)
-        fix_orientation(original)
         # create the rendition (can be based on ratio or pixels)
         if rsize.get('width') or rsize.get('height'):
             resized, width, height = _resize_image(original, (rsize.get('width'), rsize.get('height')), ext)
