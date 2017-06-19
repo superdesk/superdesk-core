@@ -13,7 +13,6 @@ from superdesk.io.registry import register_feed_parser
 from superdesk.io.feed_parsers import XMLFeedParser
 from email.utils import parsedate_to_datetime
 from superdesk import etree as sd_etree
-from superdesk.upload import url_for_media
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
 from superdesk.media.renditions import update_renditions
 from xml.sax.saxutils import quoteattr
@@ -135,8 +134,7 @@ class WPWXRFeedParser(XMLFeedParser):
                     logger.error(e)
                     img.getparent().remove(img)
                     continue
-                _id = media_data['_id']
-                url = url_for_media(_id)
+                url = media_data['renditions']['original']['href']
                 img.set("src", url)
                 if key == 'featuremedia':
                     # no need to embed the image for featuremedia
@@ -167,8 +165,7 @@ class WPWXRFeedParser(XMLFeedParser):
                 continue
             embed_start = "<!--" + embed_TPL.format('START', key) + "-->"
             embed_end = "<!--" + embed_TPL.format('END', key) + "-->"
-            _id = media_data['_id']
-            new_url = url_for_media(_id)
+            new_url = media_data['renditions']['original']['href']
             img = '<img src={src} height="{height}" width="{width}">'.format(
                 src=quoteattr(new_url),
                 height=media_data['renditions']['original']['height'],
