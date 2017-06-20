@@ -545,3 +545,67 @@ Feature: Duplication of Content
        "original_id": "123", "headline": "test2"}
       """
       Then we ensure that archived schema extra fields are not present in duplicated item
+
+    @auth
+    Scenario: Item can be duplicated to a different desk and stage with a desk source
+      When we post to "/desks"
+      """
+      [{"name": "Finance", "source": "XXX"}]
+      """
+      And we post to "/stages"
+      """
+      [
+        {
+        "name": "another stage",
+        "description": "another stage",
+        "task_status": "in_progress",
+        "desk": "#desks._id#"
+        }
+      ]
+      """
+      And we post to "/archive/123/duplicate"
+      """
+      {"desk": "#desks._id#","stage": "#stages._id#","type": "archive"}
+      """
+      Then we get OK response
+      When we get "/archive/#duplicate._id#"
+      Then we get existing resource
+      """
+      { "task": {"desk": "#desks._id#", "stage": "#stages._id#", "user": "#CONTEXT_USER_ID#"}, "source": "XXX"}
+      """
+
+    @auth
+    Scenario: Ingested agency item can be duplicated to a different desk and stage with a desk source keeps original source
+      Given "ingest_providers"
+      """
+      [{"name": "agency", "source": "YYY"}]
+      """
+      When we patch "/archive/123"
+      """
+      {"ingest_provider": "#ingest_providers._id#", "source": "YYY"}
+      """
+      And we post to "/desks"
+      """
+      [{"name": "Finance", "source": "XXX"}]
+      """
+      And we post to "/stages"
+      """
+      [
+        {
+        "name": "another stage",
+        "description": "another stage",
+        "task_status": "in_progress",
+        "desk": "#desks._id#"
+        }
+      ]
+      """
+      And we post to "/archive/123/duplicate"
+      """
+      {"desk": "#desks._id#","stage": "#stages._id#","type": "archive"}
+      """
+      Then we get OK response
+      When we get "/archive/#duplicate._id#"
+      Then we get existing resource
+      """
+      { "task": {"desk": "#desks._id#", "stage": "#stages._id#", "user": "#CONTEXT_USER_ID#"}, "source": "YYY"}
+      """

@@ -465,6 +465,54 @@ class ArchiveTestCase(TestCase):
         self.assertEqual(doc['dateline']['source'], source)
         self.assertEqual(doc['dateline']['text'], 'SYDNEY, %s %s -' % (formatted_date, source))
 
+    def test_if_ingest_provider_source_is_preserved(self):
+        desk = {'name': 'sports', 'source': 'FOO'}
+        self.app.data.insert('desks', [desk])
+        ingest_provider = {'_id': 1, 'source': 'ABC'}
+        self.app.data.insert('ingest_providers', [ingest_provider])
+        located, formatted_date, current_ts = self._get_located_and_current_utc_ts()
+        doc = {
+            '_id': '123',
+            'task': {
+                'desk': desk['_id'],
+                'stage': desk['working_stage']
+            },
+            'dateline': {
+                'located': located,
+                'date': current_ts
+            },
+            'ingest_provider': 1
+        }
+
+        set_default_source(doc)
+        self.assertEqual(doc['source'], 'ABC')
+        self.assertEqual(doc['dateline']['source'], 'ABC')
+        self.assertEqual(doc['dateline']['text'], 'SYDNEY, %s %s -' % (formatted_date, 'ABC'))
+
+    def test_if_ingest_provider_source_is_not_preserved_for_default_ingest(self):
+        desk = {'name': 'sports', 'source': 'FOO'}
+        self.app.data.insert('desks', [desk])
+        ingest_provider = {'_id': 1, 'source': 'AAP'}
+        self.app.data.insert('ingest_providers', [ingest_provider])
+        located, formatted_date, current_ts = self._get_located_and_current_utc_ts()
+        doc = {
+            '_id': '123',
+            'task': {
+                'desk': desk['_id'],
+                'stage': desk['working_stage']
+            },
+            'dateline': {
+                'located': located,
+                'date': current_ts
+            },
+            'ingest_provider': 1
+        }
+
+        set_default_source(doc)
+        self.assertEqual(doc['source'], 'FOO')
+        self.assertEqual(doc['dateline']['source'], 'FOO')
+        self.assertEqual(doc['dateline']['text'], 'SYDNEY, %s %s -' % (formatted_date, 'FOO'))
+
     def test_if_image_caption_is_updated(self):
         body = """
         "body_html" : "<p>test 33</p>\n<!-- EMBED START Image {id: \"embedded9127149191\"} -->\n
