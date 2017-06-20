@@ -22,10 +22,10 @@ from apps.templates.content_templates import render_content_template_by_name
 from superdesk import get_resource_service
 from apps.content import push_content_notification
 from apps.content_types.content_types import DEFAULT_SCHEMA
-from superdesk.errors import InvalidStateTransitionError, SuperdeskApiError, PublishQueueError
-from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, GUID_FIELD, ITEM_STATE, CONTENT_STATE, \
+from superdesk.errors import InvalidStateTransitionError, SuperdeskApiError
+from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, CONTENT_STATE, \
     PUBLISH_STATES, EMBARGO, PUB_STATUS, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, ASSOCIATIONS, MEDIA_TYPES
-from superdesk.metadata.packages import LINKED_IN_PACKAGES, GROUPS, PACKAGE, RESIDREF
+from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE
 from superdesk.metadata.utils import item_url
 from superdesk.notification import push_notification
 from superdesk.publish import SUBSCRIBER_TYPES
@@ -41,12 +41,11 @@ from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
 from apps.archive.common import get_user, insert_into_versions, item_operations, \
     FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM
 from apps.archive.common import validate_schedule, ITEM_OPERATION, update_schedule_settings, \
-    convert_task_attributes_to_objectId, is_genre, \
-    BROADCAST_GENRE, get_expiry, get_utc_schedule, get_dateline_city, get_expiry_date
+    convert_task_attributes_to_objectId, \
+    get_expiry, get_utc_schedule, get_dateline_city, get_expiry_date
 from apps.common.components.utils import get_component
 from apps.item_autosave.components.item_autosave import ItemAutosave
 from apps.legal_archive.commands import import_into_legal_archive
-from apps.packages import TakesPackageService
 from apps.packages.package_service import PackageService
 from apps.publish.published_item import LAST_PUBLISHED_VERSION, PUBLISHED,\
     PUBLISHED_IN_PACKAGE
@@ -92,7 +91,6 @@ class BasePublishService(BaseService):
     non_digital = partial(filter, lambda s: s.get('subscriber_type', '') == SUBSCRIBER_TYPES.WIRE)
     digital = partial(filter, lambda s: (s.get('subscriber_type', '') in {SUBSCRIBER_TYPES.DIGITAL,
                                                                           SUBSCRIBER_TYPES.ALL}))
-    #takes_package_service = TakesPackageService()
     package_service = PackageService()
 
     def on_update(self, updates, original):
@@ -136,13 +134,6 @@ class BasePublishService(BaseService):
                 if updates.get(ASSOCIATIONS):
                     self._refresh_associated_items(updated)  # updates got lost with update
 
-                # process takes package for published or corrected items
-                # if no_takes is true but takes package exists then process takes package.
-                # if self.published_state != CONTENT_STATE.KILLED and \
-                #         (not app.config.get('NO_TAKES', False) or
-                #          self.takes_package_service.get_take_package_id(updated)):
-                #     self._process_takes_package(original, updated, updates)
-
                 self._update_archive(original, updates, should_insert_into_versions=auto_publish)
                 self.update_published_collection(published_item_id=original[config.ID_FIELD], updated=updated)
 
@@ -162,44 +153,6 @@ class BasePublishService(BaseService):
             )
         except Exception as e:
             raise SuperdeskApiError.internalError(message="Failed to publish the item: {}".format(str(id)), exception=e)
-
-    # def _process_takes_package(self, original, updated, updates):
-    #     if original[ITEM_TYPE] in {CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED} \
-    #             and not is_genre(original, BROADCAST_GENRE):
-    #         # check if item is in a digital package
-    #         last_updated = updates.get(config.LAST_UPDATED, utcnow())
-    #         package = self.takes_package_service.get_take_package(original)
-    #         if not package:
-    #             '''
-    #             If type of the item is text or preformatted then item need to be sent to
-    #             digital subscribers, so package the item as a take.
-    #             '''
-    #             package_id = self.takes_package_service.package_story_as_a_take(updated, {}, None)
-    #             package = get_resource_service(ARCHIVE).find_one(req=None, _id=package_id)
-    #             updates[LINKED_IN_PACKAGES] = updated[LINKED_IN_PACKAGES]
-    #
-    #         package_id = package[config.ID_FIELD]
-    #
-    #         package_updates = self.process_takes(updates_of_take_to_be_published=updates,
-    #                                              original_of_take_to_be_published=original,
-    #                                              package=package)
-    #
-    #         # If the original package is corrected then the next take shouldn't change it
-    #         # back to 'published'
-    #         preserve_state = package.get(ITEM_STATE, '') == CONTENT_STATE.CORRECTED and \
-    #             updates.get(ITEM_OPERATION, ITEM_PUBLISH) == ITEM_PUBLISH
-    #         self._set_updates(package, package_updates, last_updated, preserve_state)
-    #         package_updates.setdefault(ITEM_OPERATION, updates.get(ITEM_OPERATION, ITEM_PUBLISH))
-    #
-    #         if self.published_state == CONTENT_STATE.KILLED:
-    #             package_copy = deepcopy(package)
-    #             package_copy.update(package_updates)
-    #             self.apply_kill_override(package_copy, package_updates)
-    #
-    #         self._update_archive(package, package_updates)
-    #         package.update(package_updates)
-    #         self.update_published_collection(published_item_id=package_id)
-    #         self._import_into_legal_archive(package)
 
     def is_targeted(self, article, target=None):
         """Checks if article is targeted.
@@ -226,15 +179,7 @@ class BasePublishService(BaseService):
 
         self.raise_if_not_marked_for_publication(updated)
 
-        #takes_package = self.takes_package_service.get_take_package(original)
-
         if self.publish_type == 'publish':
-            # validate if take can be published
-            # if takes_package and not self.takes_package_service.can_publish_take(
-            #         takes_package, updates.get(SEQUENCE, original.get(SEQUENCE, 1))):
-            #     raise PublishQueueError.previous_take_not_published_error(
-            #         Exception("Previous takes are not published."))
-
             update_schedule_settings(updated, PUBLISH_SCHEDULE, updated.get(PUBLISH_SCHEDULE))
             validate_schedule(updated.get(SCHEDULE_SETTINGS, {}).get('utc_{}'.format(PUBLISH_SCHEDULE)))
 
@@ -251,7 +196,6 @@ class BasePublishService(BaseService):
                 raise SuperdeskApiError.badRequestError("Dateline can't be modified after publishing")
 
         if self.publish_type == ITEM_PUBLISH and updated.get('rewritten_by'):
-            # if update is published then user cannot publish the takes
             rewritten_by = get_resource_service(ARCHIVE).find_one(req=None, _id=updated.get('rewritten_by'))
             if rewritten_by and rewritten_by.get(ITEM_STATE) in PUBLISH_STATES:
                 raise SuperdeskApiError.badRequestError("Cannot publish the story after Update is published.!")
@@ -296,20 +240,6 @@ class BasePublishService(BaseService):
                 "Can't {} as either package state or one of the items state is {}"
             raise InvalidStateTransitionError(error_message.format(self.publish_type, original[ITEM_STATE]))
 
-    # def get_digital_id_for_package_item(self, package_item):
-    #     """Finds the digital item id for a given item in a package.
-    #
-    #     :param package_item: item in a package
-    #     :return string: Digital item id if there's one otherwise id of package_item
-    #     """
-    #     if package_item[ITEM_TYPE] not in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
-    #         return package_item[config.ID_FIELD]
-    #     else:
-    #         package_item_takes_package_id = self.takes_package_service.get_take_package_id(package_item)
-    #         if not package_item_takes_package_id:
-    #             return package_item[config.ID_FIELD]
-    #         return package_item_takes_package_id
-
     def _process_publish_updates(self, original, updates):
         """Common updates for published items."""
         desk = None
@@ -338,116 +268,6 @@ class BasePublishService(BaseService):
             updates['expiry'] = get_expiry_date(app.settings['PUBLISHED_CONTENT_EXPIRY_MINUTES'], offset=offset)
         else:
             updates['expiry'] = get_expiry(desk_id, stage_id, offset=offset)
-
-    # def _is_take_item(self, item):
-    #     """Returns True if the item was a take."""
-    #     return item[ITEM_TYPE] != CONTENT_TYPE.COMPOSITE and \
-    #         (not (self.is_targeted(item) or is_genre(item, BROADCAST_GENRE)))
-
-    # def process_takes(self, updates_of_take_to_be_published, package, original_of_take_to_be_published=None):
-    #     """Process takes for publishing
-    #
-    #     Primary rule for publishing a Take in Takes Package is: all previous takes must be published before a take
-    #     can be published.
-    #
-    #     Also, generates body_html of the takes package and make sure the metadata for the package is the same as the
-    #     metadata of the take to be published.
-    #
-    #     :param dict updates_of_take_to_be_published: updates for the take to be published
-    #     :param dict package: Takes package to publish
-    #     :param dict original_of_take_to_be_published: original of the take to be published
-    #     :return: Takes Package Updates
-    #     """
-    #
-    #     takes = self.takes_package_service.get_published_takes(package)
-    #     body_html = updates_of_take_to_be_published.get('body_html',
-    #                                                     original_of_take_to_be_published.get('body_html', ''))
-    #     package_updates = {}
-    #
-    #     groups = package.get(GROUPS, [])
-    #     if groups:
-    #         take_refs = [ref for group in groups if group['id'] == 'main' for ref in group.get('refs')]
-    #         sequence_num_of_take_to_be_published = 0
-    #         take_article_id = updates_of_take_to_be_published.get(
-    #             config.ID_FIELD, original_of_take_to_be_published[config.ID_FIELD])
-    #
-    #         for r in take_refs:
-    #             if r[GUID_FIELD] == take_article_id:
-    #                 sequence_num_of_take_to_be_published = r[SEQUENCE]
-    #                 r['is_published'] = True
-    #                 break
-    #
-    #         if takes and self.published_state != 'killed':
-    #             body_html_list = [take.get('body_html', '') for take in takes]
-    #             if self.published_state == CONTENT_STATE.PUBLISHED:
-    #                 body_html_list.append(body_html)
-    #             else:
-    #                 body_html_list[sequence_num_of_take_to_be_published - 1] = body_html
-    #
-    #             package_updates['body_html'] = '<br>'.join(body_html_list)
-    #         else:
-    #             package_updates['body_html'] = body_html
-    #
-    #         metadata_tobe_copied = self.takes_package_service.fields_for_creating_take.copy()
-    #         metadata_tobe_copied.extend([PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, 'byline', EMBARGO])
-    #         if 'auto_publish' in updates_of_take_to_be_published:
-    #             metadata_tobe_copied.extend(['auto_publish'])
-    #         updated_take = original_of_take_to_be_published.copy()
-    #         updated_take.update(updates_of_take_to_be_published)
-    #         metadata_from = updated_take
-    #
-    #         # only the copy the abstract from the take when there is a change in abstract or it is non-empty.
-    #         if metadata_from.get('abstract', '') != '' and \
-    #                 metadata_from.get('abstract') != package.get('abstract'):
-    #             metadata_tobe_copied.append('abstract')
-    #
-    #         # this rules has changed to use the last published metadata
-    #         # per ticket SD-3885
-    #         # if self.published_state == 'corrected' and len(takes) > 1:
-    #         #     # get the last take metadata only if there are more than one takes
-    #         #     metadata_from = takes[-1]
-    #
-    #         for metadata in metadata_tobe_copied:
-    #             if metadata in metadata_from:
-    #                 package_updates[metadata] = metadata_from.get(metadata)
-    #
-    #         # rewire the takes_package to the take_packages of 'rewrite_of' item
-    #         if sequence_num_of_take_to_be_published == 1 and \
-    #                 original_of_take_to_be_published.get('rewrite_of'):
-    #             rewrite_of = self.find_one(req=None,
-    #                                        _id=original_of_take_to_be_published.get('rewrite_of'))
-    #             if rewrite_of:
-    #                 rewrite_package = self.takes_package_service.get_take_package(rewrite_of)
-    #
-    #                 if rewrite_package:
-    #                     package_updates['rewrite_of'] = rewrite_package.get(config.ID_FIELD)
-    #
-    #         if self.published_state == CONTENT_STATE.KILLED:
-    #             # if published then update the groups in the take
-    #             # to reflect the correct version, headline and slugline
-    #             package_updates[ASSOCIATIONS] = None
-    #             archive_service = get_resource_service(ARCHIVE)
-    #             for ref in take_refs:
-    #                 if ref.get(RESIDREF) != take_article_id:
-    #                     archive_item = archive_service.find_one(req=None, _id=ref.get(RESIDREF))
-    #                     ref['headline'] = archive_item.get('headline')
-    #                     ref['slugline'] = archive_item.get('slugline')
-    #                     ref[config.VERSION] = archive_item.get(config.VERSION)
-    #         else:
-    #             # update association for takes.
-    #             self.takes_package_service.update_associations(package_updates, package, metadata_from)
-    #
-    #         take_ref = next((ref for ref in take_refs if ref.get(RESIDREF) == take_article_id), None)
-    #         if take_ref:
-    #             # for published take update the version, headline and slugline
-    #             take_ref['headline'] = updated_take.get('headline')
-    #             take_ref['slugline'] = updated_take.get('slugline')
-    #             take_ref[config.VERSION] = updated_take.get(config.VERSION)
-    #
-    #         package_updates[GROUPS] = groups
-    #         self._set_item_expiry(package_updates, package)
-    #
-    #     return package_updates
 
     def _publish_package_items(self, package, updates):
         """Publishes all items of a package recursively then publishes the package itself.
@@ -529,9 +349,6 @@ class BasePublishService(BaseService):
         published_item = copy(published_item)
         if updated:
             published_item.update(updated)
-        # published_item['is_take_item'] = self.takes_package_service.get_take_package_id(published_item) is not None
-        # if not published_item.get('digital_item_id'):
-        #     published_item['digital_item_id'] = self.get_digital_id_for_package_item(published_item)
         get_resource_service(PUBLISHED).update_published_items(published_item_id, LAST_PUBLISHED_VERSION, False)
         return get_resource_service(PUBLISHED).post([published_item])
 

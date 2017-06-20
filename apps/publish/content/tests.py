@@ -548,7 +548,7 @@ class ArchivePublishTestCase(TestCase):
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(6, queue_items.count())
 
-        # this will delete queue transmission for the wire article not the takes package.
+        # this will delete queue transmission for the wire article
         publish_queue.PublishQueueService(PUBLISH_QUEUE, get_backend()).delete_by_article_id(doc['_id'])
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(0, queue_items.count())
@@ -664,12 +664,9 @@ class ArchivePublishTestCase(TestCase):
         request.args = {'aggregations': 0}
         published_items = self.app.data.find(PUBLISHED, request, None)
         self.assertEqual(1, published_items.count())
-        # published_digital_doc = next((item for item in published_items
-        #                               if item.get(PACKAGE_TYPE) == TAKES_PACKAGE), None)
         published_doc = next((item for item in published_items
                               if item.get('item_id') == doc[config.ID_FIELD]), None)
         self.assertEqual(published_doc[LAST_PUBLISHED_VERSION], True)
-        # self.assertEqual(published_digital_doc[LAST_PUBLISHED_VERSION], True)
 
         get_resource_service(ARCHIVE_CORRECT).patch(id=doc[config.ID_FIELD],
                                                     updates={ITEM_STATE: CONTENT_STATE.CORRECTED})

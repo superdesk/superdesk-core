@@ -135,10 +135,10 @@ ARCHIVE_SCHEMA_FIELDS = {
         'mapping': not_analyzed,
         'nullable': True
     },
-    'sequence': { #deprecated
+    'sequence': {  # deprecated
         'type': 'integer'
     },
-    'associated_take_sequence': { #deprecated
+    'associated_take_sequence': {  # deprecated
         'type': 'integer'
     },
     EMBARGO: {
@@ -151,7 +151,6 @@ ARCHIVE_SCHEMA_FIELDS = {
         'schema': {
             'status': {'type': 'string'},
             'master_id': {'type': 'string', 'mapping': not_analyzed},
-            #'takes_package_id': {'type': 'string', 'mapping': not_analyzed},
             'rewrite_id': {'type': 'string', 'mapping': not_analyzed}
         }
     },
@@ -268,10 +267,6 @@ def set_default_source(doc):
 
     :param {dict} doc: doc where source is defined
     """
-
-    # source is already set for takes package.
-    # if doc.get(PACKAGE_TYPE) == TAKES_PACKAGE:
-    #     return
 
     # If the item has been ingested and the source for the provider is not the same as the system default source
     # the source must be preserved as the item has been ingested from an external agency
@@ -554,10 +549,6 @@ def update_state(original, updates):
 
     original_state = original.get(ITEM_STATE)
     if original_state not in {CONTENT_STATE.INGESTED, CONTENT_STATE.PROGRESS, CONTENT_STATE.SCHEDULED}:
-        # if original.get(PACKAGE_TYPE) == TAKES_PACKAGE:
-        #     # skip any state transition validation for takes packages
-        #     # also don't change the stage of the package
-        #     return
         if not is_workflow_state_transition_valid('save', original_state):
             raise superdesk.errors.InvalidStateTransitionError()
         elif is_assigned_to_a_desk(original):

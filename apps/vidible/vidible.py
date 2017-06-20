@@ -43,7 +43,9 @@ def get_vidible_metadata(bcid, pid):
             # we use the video id in order to get additional metadata, like width, height, mimeType and more...
             video_meta_resp = requests.get('http://api.vidible.tv/search?bcid={bcid}&query={video_id}'.format(
                                            video_id=video_id, bcid=bcid))
-            vidible_metadata.update(video_meta_resp.json()[0])
+            video_result = video_meta_resp.json()
+            if video_result and len(video_result) > 0:
+                vidible_metadata.update(video_meta_resp.json()[0])
     return vidible_metadata
 
 

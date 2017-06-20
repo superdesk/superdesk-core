@@ -637,7 +637,7 @@ Feature: Resend
 
   @auth
   @vocabulary
-  Scenario: Resend a published text story to a digital or all subscriber type with No Takes
+  Scenario: Resend a published text story to a digital or all subscriber type
     Given the "validators"
     """
     [{"_id": "publish_text", "act": "publish", "type": "text", "schema":{}},

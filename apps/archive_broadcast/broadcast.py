@@ -16,7 +16,7 @@ from eve.versioning import resolve_document_version
 from flask import request
 from apps.archive.common import CUSTOM_HATEOAS, insert_into_versions, get_user, \
     ITEM_CREATE, BROADCAST_GENRE, is_genre
-from apps.packages import TakesPackageService, PackageService
+from apps.packages import PackageService
 from superdesk.metadata.packages import GROUPS
 from superdesk.resource import Resource, build_custom_hateoas
 from superdesk.services import BaseService
@@ -51,7 +51,6 @@ class ArchiveBroadcastResource(Resource):
 
 class ArchiveBroadcastService(BaseService):
 
-    #takesService = TakesPackageService()
     packageService = PackageService()
 
     def create(self, docs):
@@ -86,7 +85,6 @@ class ArchiveBroadcastService(BaseService):
         doc['broadcast'] = {
             'status': '',
             'master_id': item_id,
-            #'takes_package_id': self.takesService.get_take_package_id(item),
             'rewrite_id': item.get('rewritten_by')
         }
 
@@ -123,7 +121,7 @@ class ArchiveBroadcastService(BaseService):
     def _get_broadcast_items(self, ids, include_archived_repo=False):
         """Returns list of broadcast items.
 
-        Get the broadcast items for the master_id and takes_package_id
+        Get the broadcast items for the master_id
 
         :param list ids: list of item ids
         :param include_archived_repo True if archived repo needs to be included in search, default is False
@@ -161,32 +159,21 @@ class ArchiveBroadcastService(BaseService):
             return []
 
         ids = [str(item.get(config.ID_FIELD))]
-        # if self.takesService.get_take_package_id(item):
-        #     ids.append(str(self.takesService.get_take_package_id(item)))
-
         return list(self._get_broadcast_items(ids, include_archived_repo))
 
-    def on_broadcast_master_updated(self, item_event, item,
-                                    takes_package_id=None, rewrite_id=None):
+    def on_broadcast_master_updated(self, item_event, item, rewrite_id=None):
         """Runs when master item is updated.
 
-        This event is called when the master story is corrected, published, re-written, new take/re-opened
+        This event is called when the master story is corrected, published, re-written
 
         :param str item_event: Item operations
         :param dict item: item on which operation performed.
-        :param str takes_package_id: takes_package_id.
         :param str rewrite_id: re-written story id.
         """
         status = ''
 
         if not item or is_genre(item, BROADCAST_GENRE):
             return
-
-        # if item_event == ITEM_CREATE and takes_package_id:
-        #     if RE_OPENS.lower() in str(item.get('anpa_take_key', '')).lower():
-        #         status = 'Story Re-opened'
-        #     else:
-        #         status = 'New Take Created'
 
         elif item_event == ITEM_CREATE and rewrite_id:
             status = 'Master Story Re-written'
@@ -212,9 +199,6 @@ class ArchiveBroadcastService(BaseService):
 
                 if status:
                     updates['broadcast']['status'] = status
-
-                # if not updates['broadcast']['takes_package_id'] and takes_package_id:
-                #     updates['broadcast']['takes_package_id'] = takes_package_id
 
                 if not updates['broadcast']['rewrite_id'] and rewrite_id:
                     updates['broadcast']['rewrite_id'] = rewrite_id

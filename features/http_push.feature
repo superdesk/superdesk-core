@@ -2,7 +2,7 @@ Feature: HTTP Push publishing
 
     @auth
     @http_mock_adapter
-    Scenario: Publish a text item without takes package
+    Scenario: Publish a text item
         Given "products"
         """
         [{"name": "all"}]

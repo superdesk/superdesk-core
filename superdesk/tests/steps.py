@@ -1851,7 +1851,6 @@ def step_impl_when_publish_url(context, item_id, pub_type, state):
     context.response = context.client.patch(get_prefixed_url(context.app, '/archive/{}/{}'.format(pub_type, item_id)),
                                             data=data, headers=headers)
     store_placeholder(context, 'archive_{}'.format(pub_type))
-    resp = parse_json_response(context.response)
 
 
 @then('the ingest item is routed based on routing scheme and rule "{rule_name}"')
@@ -2053,7 +2052,6 @@ def embargo_lapses(context, item_id):
     updates = {'embargo': (utcnow() - timedelta(minutes=10)),
                'schedule_settings': {'utc_embargo': (utcnow() - timedelta(minutes=10))}}
 
-    linked_packages = item.get('linked_in_packages', [])
     with context.app.test_request_context(context.app.config['URL_PREFIX']):
         get_resource_service('archive').system_update(id=item['_id'], original=item, updates=updates)
 

@@ -1,4 +1,4 @@
-Feature: Link content in takes
+Feature: Link content
 
 
     @auth @test

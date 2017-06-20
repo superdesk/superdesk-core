@@ -391,9 +391,8 @@ metadata_schema = {
             'type': 'dict',
             'schema': {
                 PACKAGE: Resource.rel('archive'),
-                'package_type': { # deprecated
-                    'type': 'string',
-                    'allowed': ['takes']
+                'package_type': {  # deprecated
+                    'type': 'string'
                 }
             }
         }

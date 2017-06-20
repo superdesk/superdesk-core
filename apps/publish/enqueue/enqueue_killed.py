@@ -30,9 +30,7 @@ class EnqueueKilledService(EnqueueService):
         Kill is sent to all subscribers that have received the item previously (published or corrected)
 
         :param doc: Document to kill
-        :param target_media_type: dictate if the doc being queued is a Takes Package or an Individual Article.
-                Valid values are - Wire, Digital. If Digital then the doc being queued is a Takes Package and if Wire
-                then the doc being queued is an Individual Article.
+        :param target_media_type: Valid values are - Wire, Digital.
         :return: (list, dict, dict) List of filtered subscribers, product codes per subscriber,
                 associations per subscriber
         """

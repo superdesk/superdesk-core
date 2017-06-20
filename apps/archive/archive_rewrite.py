@@ -20,7 +20,6 @@ from apps.archive.common import CUSTOM_HATEOAS, ITEM_CREATE, ARCHIVE, BROADCAST_
 from superdesk.metadata.utils import item_url
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
-from apps.packages.takes_package_service import TakesPackageService
 from apps.tasks import send_to
 
 logger = logging.getLogger(__name__)
@@ -50,7 +49,6 @@ class ArchiveRewriteService(Service):
         original = archive_service.find_one(req=None, _id=original_id)
         self._validate_rewrite(original, update_document)
 
-        # digital = TakesPackageService().get_take_package(original)
         rewrite = self._create_rewrite_article(original,
                                                existing_item=update_document,
                                                desk_id=doc.get('desk_id'))
@@ -100,9 +98,6 @@ class ArchiveRewriteService(Service):
 
         if not is_workflow_state_transition_valid('rewrite', original[ITEM_STATE]):
             raise InvalidStateTransitionError()
-
-        # if not TakesPackageService().is_last_takes_package_item(original):
-        #     raise SuperdeskApiError.badRequestError(message="Only last take of the package can be rewritten.")
 
         if original.get('rewrite_of') and not (original.get(ITEM_STATE) in PUBLISH_STATES):
             raise SuperdeskApiError.badRequestError(message="Rewrite is not published. Cannot rewrite the story again.")

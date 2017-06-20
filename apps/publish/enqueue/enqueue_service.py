@@ -28,7 +28,6 @@ from apps.publish.content.common import BasePublishService
 from copy import deepcopy
 from eve.utils import config, ParsedRequest
 from apps.archive.common import get_user, get_utc_schedule
-from apps.packages import TakesPackageService
 from apps.packages.package_service import PackageService
 from apps.publish.published_item import PUBLISH_STATE, QUEUE_STATE
 from apps.content_types import apply_schema
@@ -48,7 +47,6 @@ class EnqueueService:
     non_digital = partial(filter, lambda s: s.get('subscriber_type', '') == SUBSCRIBER_TYPES.WIRE)
     digital = partial(filter, lambda s: (s.get('subscriber_type', '') in {SUBSCRIBER_TYPES.DIGITAL,
                                                                           SUBSCRIBER_TYPES.ALL}))
-    #takes_package_service = TakesPackageService()
     package_service = PackageService()
 
     def _enqueue_item(self, item):
@@ -165,9 +163,7 @@ class EnqueueService:
         Override this method in the ArchivePublishService, ArchiveCorrectService and ArchiveKillService
 
         :param doc: Document to publish/correct/kill
-        :param target_media_type: dictate if the doc being queued is a Takes Package or an Individual Article.
-                Valid values are - Wire, Digital. If Digital then the doc being queued is a Takes Package and if Wire
-                then the doc being queues is an Individual Article.
+        :param target_media_type: Valid values are - Wire, Digital.
         :return: (list, list) List of filtered subscriber,
                 List of subscribers that have not received item previously (empty list in this case).
         """
@@ -184,9 +180,7 @@ class EnqueueService:
         6. Publish the content to content api.
 
         :param dict doc: document to publish
-        :param str target_media_type: dictate if the doc being queued is a Takes Package or an Individual Article.
-                Valid values are - Wire, Digital. If Digital then the doc being queued is a Takes Package and if Wire
-                then the doc being queues is an Individual Article.
+        :param str target_media_type: Valid values are - Wire, Digital.
         :return bool: if content is queued then True else False
         :raises PublishQueueError.item_not_queued_error:
                 If the nothing is queued.
@@ -277,12 +271,6 @@ class EnqueueService:
 
         if len(digital_subscribers) > 0:
             package = None
-            # if not app.config.get('NO_TAKES', False) or self.takes_package_service.get_take_package_id(doc):
-            #     package = self.takes_package_service.get_take_package(doc)
-            #     package['item_id'] = package[config.ID_FIELD]
-            #     associations = self._resend_associations_to_subscribers(package, subscribers)
-            #     self._resend_to_subscribers(package, digital_subscribers, subscriber_codes, associations)
-            # else:
             self._resend_to_subscribers(doc, digital_subscribers, subscriber_codes, associations)
 
             self.publish_content_api(package or doc,
@@ -323,7 +311,7 @@ class EnqueueService:
                              format(doc[config.ID_FIELD], 'resend'))
 
     def publish_package(self, package, target_subscribers):
-        """Publishes a given non-take package to given subscribers.
+        """Publishes a given package to given subscribers.
 
         For each subscriber updates the package definition with the wanted_items for that subscriber
         and removes unwanted_items that doesn't supposed to go that subscriber.
@@ -480,22 +468,9 @@ class EnqueueService:
 
         :param package_item: item in a package
         :return list: List of subscribers
-        :return string: Digital item id if there's one otherwise None
         """
-        #if package_item[ITEM_TYPE] not in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
         query = {'$and': [{'item_id': package_item[config.ID_FIELD]},
                           {'publishing_action': package_item[ITEM_STATE]}]}
-        # else:
-        #     package_item_takes_package = package_item
-        #     # if not app.config.get('NO_TAKES', False):
-        #     #     package_item_takes_package = self.takes_package_service.get_take_package(package_item)
-        #     #     if not package_item_takes_package:
-        #     #         # this item has not been published to digital subscribers so
-        #     #         # the list of subscribers are empty
-        #     #         return [], {}, {}
-        #
-        #     query = {'$and': [{'item_id': package_item_takes_package[config.ID_FIELD]},
-        #                       {'publishing_action': package_item_takes_package[ITEM_STATE]}]}
 
         return self._get_subscribers_for_previously_sent_items(query)
 
@@ -537,9 +512,7 @@ class EnqueueService:
 
         :param doc: Document to publish/kill/correct
         :param subscribers: List of Subscribers that might potentially get this document
-        :param target_media_type: dictate if the doc being queued is a Takes Package or an Individual Article.
-                Valid values are - Wire, Digital. If Digital then the doc being queued is a Takes Package and if Wire
-                then the doc being queues is an Individual Article.
+        :param target_media_type: Valid values are - Wire, Digital.
         :return: List of of filtered subscribers and list of product codes per subscriber.
         """
         filtered_subscribers = []
@@ -642,9 +615,7 @@ class EnqueueService:
         :param list subscribers: list of subscriber that are going to receive parent item.
         :param dict doc: item with associations
         :param dict existing_associations: existing associations
-        :param target_media_type: dictate if the doc being queued is a Takes Package or an Individual Article.
-                Valid values are - Wire, Digital. If Digital then the doc being queued is a Takes Package and if Wire
-                then the doc being queues is an Individual Article.
+        :param target_media_type: Valid values are - Wire, Digital.
         """
         associations = {}
 

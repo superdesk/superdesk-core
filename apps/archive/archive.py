@@ -41,7 +41,7 @@ import superdesk
 import logging
 from apps.common.models.utils import get_model
 from apps.item_lock.models.item import ItemModel
-from apps.packages import PackageService, TakesPackageService
+from apps.packages import PackageService
 from .archive_media import ArchiveMediaService
 from superdesk.utc import utcnow
 import datetime
@@ -157,7 +157,6 @@ def update_word_count(update, original=None):
 
 class ArchiveService(BaseService):
     packageService = PackageService()
-    # takesService = TakesPackageService()
     mediaService = ArchiveMediaService()
     cropService = CropService()
 
@@ -173,9 +172,6 @@ class ArchiveService(BaseService):
     def enhance_items(self, items):
         for item in items:
             handle_existing_data(item)
-
-        # if not app.config.get('NO_TAKES', False):
-        #     self.takesService.enhance_items_with_takes_packages(items)
 
     def on_create(self, docs):
         on_create_item(docs)
@@ -239,26 +235,14 @@ class ArchiveService(BaseService):
     def on_update(self, updates, original):
         """Runs on archive update.
 
-        Overridden to validate the updates to the article and take necessary actions depending on the updates. In brief,
-        it does the following:
+        Overridden to validate the updates to the article and takes necessary actions depending on the updates.
+        In brief, it does the following:
             1. Sets state, item operation, version created, version creator, sign off and word count.
             2. Resets Item Expiry
-            3. If the request is to de-schedule then checks and de-schedules the associated Takes Package also.
-            4. Creates Crops if article is a picture
+            3. Creates Crops if article is a picture
         """
         user = get_user()
         self._validate_updates(original, updates, user)
-
-        # if PUBLISH_SCHEDULE in updates and original[ITEM_STATE] == CONTENT_STATE.SCHEDULED:
-        #     # check if there is a takes package and deschedule the takes package.
-        #     takes_service = TakesPackageService()
-        #     package = takes_service.get_take_package(original)
-        #     if package and package.get(ITEM_STATE) == CONTENT_STATE.SCHEDULED:
-        #         get_resource_service('published').delete_by_article_id(package.get(config.ID_FIELD))
-        #         self.delete_by_article_ids([package.get(config.ID_FIELD)])
-        #         updates[LINKED_IN_PACKAGES] = [package for package in original.get(LINKED_IN_PACKAGES, [])
-        #                                        if package.get(PACKAGE_TYPE) != TAKES_PACKAGE]
-        #     return
 
         if self.__is_req_for_save(updates):
             update_state(original, updates)
@@ -633,7 +617,7 @@ class ArchiveService(BaseService):
         """Validates the embargo of the item.
 
         Following are checked:
-            1. Item can't be a package or a take or a re-write of another story
+            1. Item can't be a package or a re-write of another story
             2. Publish Schedule and Embargo are mutually exclusive
             3. Always a future date except in case of Corrected and Killed.
         :raises: SuperdeskApiError.badRequestError() if the validation fails
@@ -649,10 +633,6 @@ class ArchiveService(BaseService):
                     if (item[ITEM_STATE] not in {CONTENT_STATE.KILLED, CONTENT_STATE.SCHEDULED}) \
                             and embargo <= utcnow():
                         raise SuperdeskApiError.badRequestError("Embargo cannot be earlier than now")
-
-                    # package = TakesPackageService().get_take_package(item)
-                    # if package and package.get(SEQUENCE, 1) > 1:
-                    #     raise SuperdeskApiError.badRequestError("Takes doesn't support Embargo")
 
                     if item.get('rewrite_of'):
                         raise SuperdeskApiError.badRequestError("Rewrites doesn't support Embargo")
@@ -746,7 +726,6 @@ class ArchiveService(BaseService):
                 raise SuperdeskApiError.badRequestError(
                     'This item is in a package and it needs to be removed before the item can be scheduled!')
 
-            # package = TakesPackageService().get_take_package(original) or {}
             update_schedule_settings(updated, PUBLISH_SCHEDULE, updated.get(PUBLISH_SCHEDULE))
 
             if updates.get(PUBLISH_SCHEDULE):

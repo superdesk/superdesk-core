@@ -1198,7 +1198,6 @@ Feature: Rewrite content
         """
         When we publish "123" with "publish" type and "published" state
         Then we get OK response
-        And we store "take_package1" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
         Then we get list with 1 items
