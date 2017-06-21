@@ -206,7 +206,7 @@ def on_create_item(docs, repo_type=ARCHIVE):
         set_default_state(doc, CONTENT_STATE.DRAFT)
         doc.setdefault(config.ID_FIELD, doc[GUID_FIELD])
 
-        if repo_type == ARCHIVE and not doc.get('ingest_provider'):
+        if repo_type == ARCHIVE:
             # set the source for the article
             set_default_source(doc)
 
@@ -267,12 +267,26 @@ def set_default_source(doc):
 
     If desk level source is specified then use that source else default from global settings.
 
+    If the item has been ingested from another source ensure that source is preserved
+
     :param {dict} doc: doc where source is defined
     """
 
     # source is already set for takes package.
     if doc.get(PACKAGE_TYPE) == TAKES_PACKAGE:
         return
+
+    # If the item has been ingested and the source for the provider is not the same as the system default source
+    # the source must be preserved as the item has been ingested from an external agency
+    if 'ingest_provider' in doc:
+        ingest_provider_service = superdesk.get_resource_service('ingest_providers')
+        provider = ingest_provider_service.find_one(req=None, _id=doc.get('ingest_provider'))
+        if provider and provider.get('source', '') != get_default_source():
+            if not doc.get('source'):
+                doc['source'] = provider.get('source')
+            if doc.get('dateline'):
+                set_dateline(doc, {})
+            return
 
     # set the source for the article as default
     source = get_default_source()

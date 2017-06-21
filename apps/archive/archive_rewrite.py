@@ -140,7 +140,7 @@ class ArchiveRewriteService(Service):
         """
         rewrite = dict()
 
-        fields = ['family_id', 'event_id', 'flags', 'language', ASSOCIATIONS]
+        fields = ['family_id', 'event_id', 'flags', 'language', ASSOCIATIONS, 'ingest_provider', 'source']
 
         if existing_item:
             # for associate an existing file as update merge subjects
