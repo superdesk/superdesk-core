@@ -11,6 +11,7 @@
 import cProfile
 import logging
 import superdesk
+from flask import current_app as app
 
 from superdesk import get_resource_service
 from superdesk.celery_task_utils import get_lock_id
@@ -105,6 +106,8 @@ def enqueue_item(published_item):
             archive_service.system_update(published_item['item_id'], item_updates, archive_item)
             # insert into version.
             insert_into_versions(published_item['item_id'], doc=None)
+            # update archive history
+            app.on_archive_item_updated(item_updates, archive_item, ITEM_PUBLISH)
             # import to legal archive
             import_into_legal_archive.apply_async(countdown=3, kwargs={'item_id': published_item['item_id']})
             logger.info('Modified the version of scheduled item: {}'.format(published_item_id))
