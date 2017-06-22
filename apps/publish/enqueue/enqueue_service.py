@@ -57,8 +57,6 @@ class EnqueueService:
                 return self.publish(doc=item_to_queue, target_media_type=SUBSCRIBER_TYPES.DIGITAL)
             else:
                 return queued
-        # elif item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
-        #     return self._publish_package_items(item_to_queue)
         elif item[ITEM_TYPE] not in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
             return self.publish(item_to_queue, SUBSCRIBER_TYPES.DIGITAL)
         else:
@@ -91,21 +89,21 @@ class EnqueueService:
                         "Package item with id: {} has not been published.".format(guid))
 
                 subscribers, subscriber_codes, associations = self._get_subscribers_for_package_item(package_item)
-                digital_item_id = package_item[config.ID_FIELD]
+                package_item_id = package_item[config.ID_FIELD]
                 self._extend_subscriber_items(subscriber_items,
                                               subscribers,
                                               package_item,
-                                              digital_item_id,
+                                              package_item_id,
                                               subscriber_codes)
 
             for removed_id in removed_items:
                 package_item = archive_service.find_one(req=None, _id=removed_id)
                 subscribers, subscriber_codes, associations = self._get_subscribers_for_package_item(package_item)
-                digital_item_id = None
+                package_item_id = None
                 self._extend_subscriber_items(subscriber_items,
                                               subscribers,
                                               package_item,
-                                              digital_item_id,
+                                              package_item_id,
                                               subscriber_codes)
 
             queued = self.publish_package(package, target_subscribers=subscriber_items)
@@ -173,11 +171,10 @@ class EnqueueService:
         """Queue the content for publishing.
 
         1. Get the subscribers.
-        2. Update the headline of wire stories with the sequence
-        3. Queue the content for subscribers
-        4. Sends notification if no formatter has found for any of the formats configured in Subscriber.
-        5. If not queued and not formatters then raise exception.
-        6. Publish the content to content api.
+        2. Queue the content for subscribers
+        3. Sends notification if no formatter has found for any of the formats configured in Subscriber.
+        4. If not queued and not formatters then raise exception.
+        5. Publish the content to content api.
 
         :param dict doc: document to publish
         :param str target_media_type: Valid values are - Wire, Digital.
@@ -188,22 +185,18 @@ class EnqueueService:
         # Step 1
         subscribers, subscriber_codes, associations = self.get_subscribers(doc, target_media_type)
 
-        # # Step 2
-        # if target_media_type == SUBSCRIBER_TYPES.WIRE:
-        #     self._update_headline_sequence(doc)
-
-        # Step 3
+        # Step 2
         no_formatters, queued = self.queue_transmission(deepcopy(doc), subscribers, subscriber_codes, associations)
 
-        # Step 4
+        # Step 3
         self._push_formatter_notification(doc, no_formatters)
 
-        # Step 5
+        # Step 4
         if not target_media_type and not queued:
             logger.error('Nothing is saved to publish queue for story: {} for action: {}'.
                          format(doc[config.ID_FIELD], self.publish_type))
 
-        # Step 6
+        # Step 5
         self.publish_content_api(doc, [s for s in subscribers if s.get('api_enabled')])
 
         return queued
@@ -457,11 +450,6 @@ class EnqueueService:
                 package_item[config.ID_FIELD] = package_item['item_id']
                 ref['package_item'] = package_item
         return package
-
-    # def _update_headline_sequence(self, doc):
-    #     """Updates the headline of the text story if there's any sequence value in it."""
-    #     if doc.get(SEQUENCE):
-    #         doc['headline'] = '{}={}'.format(doc['headline'], doc.get(SEQUENCE))
 
     def _get_subscribers_for_package_item(self, package_item):
         """Finds the list of subscribers for a given item in a package
@@ -788,19 +776,19 @@ class EnqueueService:
                     return False
         return True
 
-    def _extend_subscriber_items(self, subscriber_items, subscribers, item, digital_item_id, subscriber_codes):
+    def _extend_subscriber_items(self, subscriber_items, subscribers, item, package_item_id, subscriber_codes):
         """Extends the subscriber_items with the given list of subscribers for the item
 
         :param subscriber_items: The existing list of subscribers
         :param subscribers: New subscribers that item has been published to - to be added
         :param item: item that has been published
-        :param digital_item_id: digital_item_id
+        :param package_item_id: package_item_id
         """
         item_id = item[config.ID_FIELD]
         for subscriber in subscribers:
             sid = subscriber[config.ID_FIELD]
             item_list = subscriber_items.get(sid, {}).get('items', {})
-            item_list[item_id] = digital_item_id
+            item_list[item_id] = package_item_id
             subscriber_items[sid] = {'subscriber': subscriber,
                                      'items': item_list,
                                      'codes': subscriber_codes.get(sid, [])}

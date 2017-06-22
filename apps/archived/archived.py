@@ -18,7 +18,6 @@ from eve.versioning import resolve_document_version
 
 from apps.legal_archive.commands import import_into_legal_archive
 from apps.legal_archive.resource import LEGAL_PUBLISH_QUEUE_NAME
-from apps.packages.takes_package_service import TakesPackageService
 from apps.publish.content.common import ITEM_KILL
 from apps.publish.enqueue import get_enqueue_service
 from apps.publish.published_item import published_item_fields, QUEUE_STATE, PUBLISH_STATE
@@ -28,7 +27,7 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.metadata.utils import aggregations
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, not_analyzed, GUID_FIELD, ITEM_STATE, CONTENT_STATE, \
     PUB_STATUS
-from superdesk.metadata.packages import RESIDREF
+from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE, MAIN_GROUP, RESIDREF
 from superdesk.notification import push_notification
 from apps.archive.common import get_user, item_schema, is_genre, BROADCAST_GENRE, ITEM_OPERATION, is_item_in_package, \
     insert_into_versions
@@ -136,8 +135,7 @@ class ArchivedService(BaseService):
         if not allow_all_types and is_item_in_package(doc):
             raise bad_req_error(message="Can't kill as article is part of a Package")
 
-        takes_package_service = TakesPackageService()
-        takes_package_id = takes_package_service.get_take_package_id(doc)
+        takes_package_id = self._get_take_package_id(doc)
         if takes_package_id:
             if get_resource_service(ARCHIVE).find_one(req=None, _id=takes_package_id):
                 raise bad_req_error(message="Can't Kill as the Digital Story is still available in production")
@@ -152,7 +150,7 @@ class ArchivedService(BaseService):
             if not allow_all_types and is_item_in_package(takes_package):
                 raise bad_req_error(message="Can't kill as Digital Story is part of a Package")
 
-            for takes_ref in takes_package_service.get_package_refs(takes_package):
+            for takes_ref in self._get_package_refs(takes_package):
                 if takes_ref[RESIDREF] != doc[GUID_FIELD]:
                     if get_resource_service(ARCHIVE).find_one(req=None, _id=takes_ref[RESIDREF]):
                         raise bad_req_error(message="Can't Kill as Take(s) are still available in production")
@@ -271,11 +269,10 @@ class ArchivedService(BaseService):
     def get_archived_takes_package(self, package_id, take_id, version, include_other_takes=True):
         req = ParsedRequest()
         req.sort = '[("%s", -1)]' % config.VERSION
-        takes_package_service = TakesPackageService()
         take_packages = list(self.get(req=req, lookup={'item_id': package_id}))
 
         for take_package in take_packages:
-            for ref in takes_package_service.get_package_refs(take_package):
+            for ref in self._get_package_refs(take_package):
                 if ref[RESIDREF] == take_id and (include_other_takes or ref['_current_version'] == version):
                     return take_package
 
@@ -299,8 +296,7 @@ class ArchivedService(BaseService):
         req.sort = '[("%s", -1)]' % config.VERSION
         archived_doc = list(self.get(req=req, lookup={'item_id': archived_doc['item_id']}))[0]
         articles_to_kill = [archived_doc]
-        takes_package_service = TakesPackageService()
-        takes_package_id = takes_package_service.get_take_package_id(archived_doc)
+        takes_package_id = self._get_take_package_id(archived_doc)
         if takes_package_id:
             takes_package = self.get_archived_takes_package(takes_package_id,
                                                             archived_doc['item_id'],
@@ -309,7 +305,7 @@ class ArchivedService(BaseService):
             articles_to_kill.append(takes_package)
 
             if include_other_takes:
-                for takes_ref in takes_package_service.get_package_refs(takes_package):
+                for takes_ref in self._get_package_refs(takes_package):
                     if takes_ref[RESIDREF] != archived_doc[GUID_FIELD]:
                         take = list(self.get(req=req, lookup={'item_id': takes_ref[RESIDREF]}))[0]
                         articles_to_kill.append(take)
@@ -354,6 +350,31 @@ class ArchivedService(BaseService):
                                    if item.get('item_id', item.get(config.ID_FIELD)) == ref[RESIDREF]]
                 ref['location'] = ARCHIVE
                 ref[config.VERSION] = item_in_package[0][config.VERSION]
+
+    def _get_take_package_id(self, item):
+        """Checks if the item is in a 'takes' package and returns the package id
+
+        :return: _id of the package or None
+        """
+        takes_package = [package.get(PACKAGE) for package in item.get(LINKED_IN_PACKAGES, [])
+                         if package.get(PACKAGE_TYPE) == TAKES_PACKAGE]
+        if len(takes_package) > 1:
+            message = 'Multiple takes found for item: {0}'.format(item[config.ID_FIELD])
+            logger.error(message)
+        return takes_package[0] if takes_package else None
+
+    def _get_package_refs(self, package):
+        """Get refs from the takes package
+
+        :param dict package: takes package
+        :return: return refs from the takes package. If not takes package or no refs found then None
+        """
+        refs = None
+        if package:
+            groups = package.get('groups', [])
+            refs = next((group.get('refs') for group in groups if group['id'] == MAIN_GROUP), None)
+
+        return refs
 
 
 superdesk.privilege(name='archived', label='Archived Management', description='User can remove items from the archived')

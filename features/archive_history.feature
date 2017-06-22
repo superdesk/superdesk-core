@@ -594,7 +594,7 @@ Feature: Archive history
       """
       When the publish schedule lapses
       """
-      ["123", "#archive.123.take_package#"]
+      ["123"]
       """
       When we enqueue published
       When we get "/archive_history?where=item_id==%22123%22"

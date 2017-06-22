@@ -677,8 +677,6 @@ class ArchivePublishTestCase(TestCase):
         self.assertEqual(2, queue_items.count())
         published_items = self.app.data.find(PUBLISHED, request, None)
         self.assertEqual(2, published_items.count())
-        # last_published_digital = get_publish_items(published_digital_doc['item_id'], True)
-        # self.assertEqual(1, last_published_digital.count())
         last_published = get_publish_items(published_doc['item_id'], True)
         self.assertEqual(1, last_published.count())
 
