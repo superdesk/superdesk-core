@@ -496,6 +496,10 @@ class ArchiveService(BaseService):
         for key in keys_to_delete:
             copied_item.pop(key, None)
 
+        # Copy should not preseve the SMS flag
+        if copied_item.get('flags', {}).get('marked_for_sms', False):
+            copied_item['flags']['marked_for_sms'] = False
+
         task = copied_item.get('task', {})
         task.pop(LAST_PRODUCTION_DESK, None)
         task.pop(LAST_AUTHORING_DESK, None)
