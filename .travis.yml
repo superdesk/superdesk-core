@@ -1,59 +1,39 @@
 language: python
 
-sudo: required
 dist: trusty
+sudo: required
+
+python:
+    - "3.4"
+    - "3.5"
 
 services:
+    - mongodb
     - redis-server
-    - elasticsearch
 
-matrix:
-    include:
-        - env: ELASTIC2X
-          python: "3.5"
-          addons:
-              apt:
-                  sources:
-                      - elasticsearch-2.x
-                      - mongodb-3.0-precise
-                  packages:
-                      - elasticsearch
-                      - mongodb-org-server
-
-        - env: ELASTIC17
-          python: "3.4"
-          addons:
-              apt:
-                  sources:
-                      - elasticsearch-1.7
-                      - mongodb-3.0-precise
-                  packages:
-                      - elasticsearch
-                      - mongodb-org-server
-
-
-        - env: ELASTIC17
-          python: "3.5"
-          addons:
-              apt:
-                  sources:
-                      - elasticsearch-1.7
-                      - mongodb-3.0-precise
-                  packages:
-                      - elasticsearch
-                      - mongodb-org-server
+addons:
+    apt:
+        sources:
+            - elasticsearch-2.x
+        packages:
+            - elasticsearch
 
 cache:
   - pip
+
+before_install:
+    - sudo apt-get -qq update
+    - sudo apt-get purge elasticsearch
+    - sudo apt-get install -t stable elasticsearch
 
 install:
     - pip install .
     - pip install -r dev-requirements.txt
 
 before_script: >
-    df -h
-    && sudo sed -i 's\enabled: true\enabled: false\' /etc/mongod.conf
+    sudo sed -i 's\enabled: true\enabled: false\' /etc/mongod.conf
     && sudo service mongod restart
+    && sudo service elasticsearch restart
 
 script:
     - flake8
