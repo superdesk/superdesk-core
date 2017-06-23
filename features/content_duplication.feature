@@ -609,3 +609,20 @@ Feature: Duplication of Content
       """
       { "task": {"desk": "#desks._id#", "stage": "#stages._id#", "user": "#CONTEXT_USER_ID#"}, "source": "YYY"}
       """
+
+    @auth @test
+    Scenario: Duplicated item with SMS flag will have be cleared
+      When we patch given
+      """
+      {"flags": {"marked_for_sms": true}, "sms_message": "Test SMS"}
+      """
+      When we post to "/archive/123/duplicate" with success
+      """
+      {"desk": "#desks._id#","type": "archive"}
+      """
+      When we get "/archive/#duplicate._id#"
+      Then we get existing resource
+      """
+      { "flags": {"marked_for_sms" : false}}
+      """
+
