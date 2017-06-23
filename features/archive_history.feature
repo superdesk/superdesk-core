@@ -802,3 +802,163 @@ Feature: Archive history
       {"version": 4, "operation": "resend", "update":{"subscribers":["#subscribers._id#"]}}
     ]}
     """
+
+  @auth
+  @vocabulary
+  Scenario: History of schedule item
+      Given the "validators"
+      """
+      [{"_id": "publish_text", "act": "publish", "type": "text", "schema":{}},
+      {"_id": "correct_text", "act": "correct", "type": "text", "schema":{}},
+      {"_id": "kill_text", "act": "kill", "type": "text", "schema":{}}]
+      """
+      And "desks"
+      """
+      [{"name": "Sports", "members":[{"user":"#CONTEXT_USER_ID#"}]}]
+      """
+      When we post to "/archive" with success
+      """
+      [{"guid": "123", "headline": "test", "state": "fetched",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "subject":[{"qcode": "17004000", "name": "Statistics"}],
+        "slugline": "test",
+        "publish_schedule":"#DATE+2#",
+        "body_html": "Test Document body"}]
+      """
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+      }
+      """
+      And we post to "/subscribers" with success
+      """
+      {
+        "name":"Channel 3","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
+      And we publish "#archive._id#" with "publish" type and "published" state
+      Then we get OK response
+      When we get "/legal_archive/123"
+      Then we get error 404
+      When we get "/archive_history?where=item_id==%22123%22"
+      Then we get list with 2 items
+      """
+      {"_items": [
+        {"version": 1, "operation": "create"},
+        {"version": 2, "operation": "publish", "update": {"state": "scheduled"}}
+      ]}
+      """
+      When the publish schedule lapses
+      """
+      ["123", "#archive.123.take_package#"]
+      """
+      When we enqueue published
+      When we get "/archive_history?where=item_id==%22123%22"
+      Then we get list with 3 items
+      """
+      {"_items": [
+        {"version": 1, "operation": "create"},
+        {"version": 2, "operation": "publish", "update": {"state": "scheduled"}},
+        {"version": 3, "operation": "publish", "update": {"state": "published"}}
+      ]}
+      """
+      When we get "/legal_archive/123"
+      Then we get OK response
+      And we get existing resource
+      """
+      {"_current_version": 3, "state": "published"}
+      """
+      When we get "/legal_archive_history?where=item_id==%22123%22"
+      Then we get list with 3 items
+      """
+      {"_items": [
+        {"version": 1, "operation": "create"},
+        {"version": 2, "operation": "publish", "update": {"state": "scheduled"}},
+        {"version": 3, "operation": "publish", "update": {"state": "published"}}
+      ]}
+      """
+
+  @auth
+  @vocabulary
+  Scenario: History of deschedule item
+      Given the "validators"
+      """
+      [{"_id": "publish_text", "act": "publish", "type": "text", "schema":{}},
+      {"_id": "correct_text", "act": "correct", "type": "text", "schema":{}},
+      {"_id": "kill_text", "act": "kill", "type": "text", "schema":{}}]
+      """
+      And "desks"
+      """
+      [{"name": "Sports", "members":[{"user":"#CONTEXT_USER_ID#"}]}]
+      """
+      When we post to "/archive" with success
+      """
+      [{"guid": "123", "headline": "test", "state": "fetched",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "subject":[{"qcode": "17004000", "name": "Statistics"}],
+        "slugline": "test",
+        "publish_schedule":"#DATE+2#",
+        "body_html": "Test Document body"}]
+      """
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+      }
+      """
+      And we post to "/subscribers" with success
+      """
+      {
+        "name":"Channel 3","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
+      And we publish "#archive._id#" with "publish" type and "published" state
+      Then we get OK response
+      When we get "/legal_archive/123"
+      Then we get error 404
+      When we get "/archive_history?where=item_id==%22123%22"
+      Then we get list with 2 items
+      """
+      {"_items": [
+        {"version": 1, "operation": "create"},
+        {"version": 2, "operation": "publish", "update": {"state": "scheduled"}}
+      ]}
+      """
+      When we patch "/archive/123"
+      """
+      {"publish_schedule": null}
+      """
+      And we get "/archive"
+      Then we get existing resource
+      """
+      {
+          "_items": [
+              {
+                  "_current_version": 3,
+                  "state": "in_progress",
+                  "type": "text",
+                  "_id": "123"
+
+              }
+          ]
+      }
+      """
+      When we enqueue published
+      When we get "/publish_queue"
+      Then we get list with 0 items
+      When we get "/published"
+      Then we get list with 0 items
+      When we get "/archive_history?where=item_id==%22123%22"
+      Then we get list with 3 items
+      """
+      {"_items": [
+        {"version": 1, "operation": "create"},
+        {"version": 2, "operation": "publish", "update": {"state": "scheduled"}},
+        {"version": 3, "operation": "update", "update": {"operation": "deschedule"}}
+      ]}
+      """
