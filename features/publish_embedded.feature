@@ -193,7 +193,7 @@ Feature: Publish embedded items feature
         """
         Then we get OK response
         When we get "published"
-        Then we get list with 2 items
+        Then we get list with 1 items
         When we get "publish_queue"
         Then we get list with 3 items
         """
@@ -253,7 +253,7 @@ Feature: Publish embedded items feature
         """
         Then we get OK response
         When we get "published"
-        Then we get list with 2 items
+        Then we get list with 1 items
         When we get "publish_queue"
         Then we get list with 3 items
         """
@@ -281,7 +281,7 @@ Feature: Publish embedded items feature
         """
         Then we get OK response
         When we get "published"
-        Then we get list with 4 items
+        Then we get list with 2 items
         When we get "publish_queue"
         Then we get list with 6 items
         When we get "/items/foo"
@@ -334,7 +334,7 @@ Feature: Publish embedded items feature
         """
         Then we get OK response
         When we get "published"
-        Then we get list with 2 items
+        Then we get list with 1 items
         When we get "publish_queue"
         Then we get list with 3 items
         """

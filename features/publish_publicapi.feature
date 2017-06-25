@@ -445,13 +445,10 @@ Feature: Publish content to the public API
         {"guid": "compositeitem", "_current_version": 2, "state": "published"}
         """
 
+
   @auth
   @notification
   Scenario: Publish a composite item with embedded items
-    Given config update
-    """
-    {"NO_TAKES": true}
-    """
     Given empty "archive"
     Given "desks"
         """
@@ -697,29 +694,29 @@ Feature: Publish content to the public API
         """
     When we get "/publish_queue/compositeitem"
     Then we get formatted item
-	"""		
-	{		
-		"guid": "compositeitem",		
-		"type": "composite",		
-		"associations": {		
-			"main": {		
-                "body_html": "item content",		
+	"""
+	{
+		"guid": "compositeitem",
+		"type": "composite",
+		"associations": {
+			"main": {
+                "body_html": "item content",
 					"headline": "text item with embedded pic",
 					"type": "text",
-                "associations": {		
-                    "embedded1": {		
-                        "type": "picture",		
-                        "slugline": "foo",		
-                        "pubstatus": "usable"		
-                    }		
-                }		
-            },		
-			"sidebars": {		
+                "associations": {
+                    "embedded1": {
+                        "type": "picture",
+                        "slugline": "foo",
+                        "pubstatus": "usable"
+                    }
+                }
+            },
+			"sidebars": {
 					"guid": "item2",
 					"type": "picture",
 					"headline": "ABC SHOP CLOSURES",
 					"renditions": {
 						"original": {"mimetype": "image/jpeg"}}}
-		}		
-	}		
-	"""    
+		}
+	}
+	"""

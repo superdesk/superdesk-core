@@ -11,7 +11,6 @@
 import logging
 from lxml import etree
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, FORMATS, FORMAT
-from superdesk.metadata.utils import is_takes_package
 from superdesk.etree import parse_html, get_text
 
 formatters = []
@@ -59,7 +58,7 @@ class Formatter(metaclass=FormatterRegistry):
             pass
 
         body = ''
-        if article[ITEM_TYPE] in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED] or is_takes_package(article):
+        if article[ITEM_TYPE] in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
             body = article.get('body_html', '')
         elif article[ITEM_TYPE] in [CONTENT_TYPE.AUDIO, CONTENT_TYPE.PICTURE, CONTENT_TYPE.VIDEO]:
             body = article.get('description', '')

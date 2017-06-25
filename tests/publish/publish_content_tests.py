@@ -18,6 +18,7 @@ from superdesk.utc import utcnow
 
 from superdesk.errors import PublishHTTPPushServerError, PublishHTTPPushClientError
 from apps.publish.enqueue import enqueue_service
+from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
 from superdesk.publish import publish_queue
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE
 
@@ -286,9 +287,10 @@ class QueueItemsTestCase(TestCase):
         fake_post = publish_queue.post
         service = enqueue_service.EnqueueService()
         fake_formatter = get_formatter.return_value
-        doc_dict = {ITEM_TYPE: CONTENT_TYPE.TEXT}
+        doc_dict = {ITEM_TYPE: CONTENT_TYPE.TEXT, PUBLISHED_IN_PACKAGE: False}
         fake_doc = MagicMock()
         fake_doc.__getitem__ = lambda s, k: doc_dict.get(k, MagicMock())
+        fake_doc.get = doc_dict.get
         fake_destination = MagicMock()
         fake_subscriber = MagicMock()
         subs_dict = {'destinations': [fake_destination], 'api_enabled': False}

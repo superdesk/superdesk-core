@@ -91,18 +91,6 @@ Feature: Content Publishing
        }
       """
       And we get "byline" does not exist
-      When we get "/archive/#archive.take_package#"
-      Then we get OK response
-      And we get existing resource
-      """
-      {
-        "_current_version": 2,
-        "type": "composite",
-        "state": "published",
-        "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}
-       }
-      """
-      And we get "byline" does not exist
       When we get "/published"
       Then we get existing resource
       """
@@ -117,8 +105,8 @@ Feature: Content Publishing
       """
       {
         "_items": [
-          {"state": "pending", "content_type": "composite",
-          "subscriber_id": "#digital#", "item_id": "#archive.123.take_package#",
+          {"state": "pending", "content_type": "text",
+          "subscriber_id": "#digital#", "item_id": "123",
           "item_version": 2, "ingest_provider": "__none__",
           "destination": {
             "delivery_type": "email"
@@ -145,41 +133,8 @@ Feature: Content Publishing
         {"_id": "123", "guid": "123", "headline": "test", "_current_version": 2, "state": "published",
          "task": {"desk": "Sports", "stage": "Incoming Stage", "user": "test_user"},
          "slugline": "test",
-         "body_html": "Test Document body", "subject":[{"qcode": "17004000", "name": "Statistics"}]},
-        {"headline": "test", "_current_version": 2, "state": "published", "type": "composite",
-         "package_type": "takes", "task": {"desk": "Sports", "stage": "Incoming Stage", "user": "test_user"},
-         "sequence": 1,
-         "slugline": "test",
-         "groups" : [
-            {
-                "id" : "root",
-                "refs" : [
-                    {
-                        "idRef" : "main"
-                    }
-                ],
-                "role" : "grpRole:NEP"
-            },
-            {
-                "id" : "main",
-                "refs" : [
-                    {
-                        "sequence" : 1,
-                        "renditions" : {},
-                        "type" : "text",
-                        "location" : "legal_archive",
-                        "slugline" : "test",
-                        "itemClass" : "icls:text",
-                        "residRef" : "123",
-                        "headline" : "test",
-                        "guid" : "123",
-                        "_current_version" : 2
-                    }
-                ],
-                "role" : "grpRole:main"
-            }
-         ],
          "body_html": "Test Document body", "subject":[{"qcode": "17004000", "name": "Statistics"}]}
+
         ]
       }
       """
@@ -194,17 +149,6 @@ Feature: Content Publishing
        ]
       }
       """
-      When we get "/legal_archive/#archive.123.take_package#?version=all"
-      Then we get list with 1 items
-      """
-      {"_items" : [
-
-        {"_id": "#archive.123.take_package#", "headline": "test", "_current_version": 2,
-         "state": "published", "type": "composite", "package_type": "takes",
-         "task": {"desk": "Sports", "stage": "Incoming Stage", "user": "test_user"}}
-       ]
-      }
-      """
       When we transmit items
       And run import legal publish queue
       When we enqueue published
@@ -213,8 +157,8 @@ Feature: Content Publishing
       """
       {
         "_items": [
-          {"state": "success", "content_type": "composite",
-          "subscriber_id": "Channel 1", "item_id": "#archive.123.take_package#", "item_version": 2},
+          {"state": "success", "content_type": "text",
+          "subscriber_id": "Channel 1", "item_id": "123", "item_version": 2},
           {"state": "success", "content_type": "text",
           "subscriber_id": "Channel 2", "item_id": "123", "item_version": 2}
         ]
@@ -295,9 +239,9 @@ Feature: Content Publishing
           {"state": "pending", "content_type": "text", "destination": {"delivery_type": "email"},
           "subscriber_id": "#wire#", "item_id": "#_id#", "item_version": 2,
           "ingest_provider": "#providers.aap#"},
-          {"state": "pending", "content_type": "composite", "destination": {"delivery_type": "email"},
-          "subscriber_id": "#digital#", "item_version": 2, "item_id": "#archive.take_package#",
-          "ingest_provider": "__none__"}
+          {"state": "pending", "content_type": "text", "destination": {"delivery_type": "email"},
+          "subscriber_id": "#digital#", "item_version": 2, "item_id": "#_id#",
+          "ingest_provider": "#providers.aap#"}
         ]
       }
       """
@@ -451,13 +395,10 @@ Feature: Content Publishing
       {"_current_version": 2, "state": "published", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
       """
       When we get "/published"
-      Then we get existing resource
+      Then we get list with 1 items
       """
       {"_items" : [
         {"_id": "123", "headline": "publish via direct", "_current_version": 2, "state": "published",
-        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}},
-        {"_id": "#archive.123.take_package#", "headline": "publish via direct", "_current_version": 2,
-        "state": "published",
         "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}
       ]}
       """
@@ -477,18 +418,12 @@ Feature: Content Publishing
       When we publish "456" with "publish" type and "published" state
       Then we get OK response
       When we get "/published"
-      Then we get list with 4 items
+      Then we get list with 2 items
       """
       {"_items" : [
         {"_id": "123", "headline": "publish via direct", "_current_version": 2, "state": "published",
         "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}},
-        {"_id": "#archive.123.take_package#", "headline": "publish via direct", "_current_version": 2,
-        "state": "published",
-        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}},
         {"_id": "456", "headline": "publish via api", "_current_version": 2, "state": "published",
-        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}},
-        {"_id": "#archive.456.take_package#", "headline": "publish via api", "_current_version": 2,
-        "state": "published",
         "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}
       ]}
       """
@@ -802,18 +737,13 @@ Feature: Content Publishing
       """
       And we get expiry for schedule and embargo content 60 minutes after "#archive_publish.publish_schedule#"
       When we get "/published"
-      Then we get list with 2 items
+      Then we get list with 1 items
       """
       {
         "_items": [
           {
             "_id": "123", "type": "text", "state": "scheduled",
             "_current_version": 2, "operation": "publish", "queue_state": "pending"
-          },
-          {
-            "_id": "#archive.123.take_package#", "type": "composite",
-            "state": "scheduled", "_current_version": 2, "operation": "publish",
-            "queue_state": "pending"
           }
         ]
       }
@@ -829,22 +759,17 @@ Feature: Content Publishing
       Then we get error 404
       When the publish schedule lapses
       """
-      ["123", "#archive.123.take_package#"]
+      ["123"]
       """
       When we enqueue published
       And we get "/published"
-      Then we get list with 2 items
+      Then we get list with 1 items
       """
       {
         "_items": [
           {
             "_id": "123", "type": "text", "state": "published",
-            "_current_version": 3, "operation": "publish", "queue_state": "queued_not_transmitted"
-          },
-          {
-            "_id": "#archive.123.take_package#", "type": "composite",
-            "state": "published", "_current_version": 3, "operation": "publish",
-            "queue_state": "queued"
+            "_current_version": 3, "operation": "publish", "queue_state": "queued"
           }
         ]
       }
@@ -861,15 +786,15 @@ Feature: Content Publishing
             "_id": "123", "type": "text", "state": "published", "_current_version": 3
           }
       """
-      When we get "/legal_archive/#archive.123.take_package#"
+      When we get "/legal_archive/123"
       Then we get OK response
       And we get existing resource
       """
-      {"_current_version": 3, "state": "published", "type": "composite", "task":{"desk": "#desks.name#"}}
+      {"_current_version": 3, "state": "published", "type": "text", "task":{"desk": "#desks.name#"}}
       """
       When we expire items
       """
-      ["123", "#archive.123.take_package#"]
+      ["123"]
       """
       And we get "/published"
       Then we get list with 0 items
@@ -877,11 +802,9 @@ Feature: Content Publishing
       When we get "/publish_queue"
       Then we get list with 0 items
       When we get "/archived"
-      Then we get list with 2 items
+      Then we get list with 1 items
       """
       {"_items" : [
-        {"package_type": "takes", "item_id": "#archive.123.take_package#",
-         "state": "published", "type": "composite", "_current_version": 3},
         {"item_id": "123", "state": "published", "type": "text", "_current_version": 3}
         ]
       }
@@ -1277,8 +1200,6 @@ Feature: Content Publishing
       Then we get OK response
       When we get "/legal_archive/123?version=all"
       Then we get OK response
-      When we get "/legal_archive/#archive.123.take_package#"
-      Then we get OK response
       When we transmit items
       And run import legal publish queue
       And we get "/legal_publish_queue"
@@ -1311,8 +1232,6 @@ Feature: Content Publishing
       When we get "/legal_archive/123"
       Then we get OK response
       When we get "/legal_archive/123?version=all"
-      Then we get OK response
-      When we get "/legal_archive/#archive.123.take_package#"
       Then we get OK response
       When we transmit items
       And run import legal publish queue
@@ -2182,78 +2101,6 @@ Feature: Content Publishing
         "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}]}
       """
 
-    @auth
-    Scenario: User should be able to create a new take after the publish schedule passes
-      Given "products"
-      """
-      [{
-        "_id": "1", "name":"prod-1", "codes":"abc,xyz"
-      }]
-      """
-      And "subscribers"
-      """
-      [{"name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-       "products": ["1"],
-       "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
-      }]
-      """
-      And "desks"
-      """
-      [{"name": "Sports", "content_expiry": 60, "members": [{"user": "#CONTEXT_USER_ID#"}]}]
-      """
-      And the "validators"
-      """
-      [{"_id": "publish_text", "act": "publish", "type": "text", "schema":{}}]
-      """
-      And "archive"
-      """
-      [{"guid": "123", "headline": "test", "_current_version": 1, "state": "fetched",
-        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
-        "publish_schedule":"#DATE+1#", "subject":[{"qcode": "17004000", "name": "Statistics"}],
-        "slugline": "test", "body_html": "Test Document body"}]
-      """
-      When we publish "#archive._id#" with "publish" type and "published" state
-      Then we get OK response
-      And we get existing resource
-      """
-      {"_current_version": 2, "state": "scheduled", "operation": "publish"}
-      """
-      When we get "/published"
-      Then we get list with 2 items
-      When the publish schedule lapses
-      """
-      ["123", "#archive.123.take_package#"]
-      """
-      When we enqueue published
-      And we get "/published"
-      Then we get list with 2 items
-      """
-      {
-        "_items": [
-          {
-            "_id": "123", "type": "text", "state": "published"
-          },
-          {
-            "_id": "#archive.123.take_package#", "type": "composite", "state": "published"
-          }
-        ]
-      }
-      """
-      When we get "/publish_queue"
-      Then we get list with 1 items
-      When we post to "/archive/123/link"
-      """
-      [{"desk": "#desks._id#"}]
-      """
-      Then we get OK response
-      When we get takes package "/archive/123" and validate
-      """
-      {"type": "composite", "package_type": "takes",
-       "groups" : [{"refs" : [{"guid" : "123", "sequence" : 1}, {"sequence" : 2}],
-                    "role" : "grpRole:main", "id" : "main"}]
-      }
-      """
-
 
     @auth
     Scenario: Publish item with custom subject fields
@@ -2526,8 +2373,6 @@ Feature: Content Publishing
       When we get "/archive/123"
       Then we get OK response
       And we get content expiry 180
-      When we get "/archive/#archive.123.take_package#"
-      Then we get OK response
       And we get content expiry 180
       And we set published item expiry 60
       When we post to "/archive" with success
@@ -2545,18 +2390,12 @@ Feature: Content Publishing
       When we get "/archive/456"
       Then we get OK response
       And we get content expiry 60
-      When we get "/archive/#archive.456.take_package#"
-      Then we get OK response
       And we get content expiry 60
       When we get "/published/123"
       Then we get OK response
       And we get content expiry 180
-      When we get "/published/#archive.123.take_package#"
-      Then we get OK response
       And we get content expiry 180
       When we get "/published/456"
       Then we get OK response
       And we get content expiry 60
-      When we get "/published/#archive.456.take_package#"
-      Then we get OK response
       And we get content expiry 60

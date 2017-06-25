@@ -18,7 +18,6 @@ from superdesk.celery_task_utils import get_lock_id
 from superdesk.utc import utcnow
 from .archive import SOURCE as ARCHIVE
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTENT_TYPE, ASSOCIATIONS, MEDIA_TYPES
-from superdesk.metadata.packages import PACKAGE_TYPE, TAKES_PACKAGE
 from superdesk.lock import lock, unlock, remove_locks
 from superdesk.notification import push_notification
 from superdesk import get_resource_service
@@ -188,8 +187,7 @@ class RemoveExpiredContent(superdesk.Command):
             # Get the item references for is package
             item_refs = package_service.get_residrefs(item)
 
-        if item.get(PACKAGE_TYPE) == TAKES_PACKAGE or \
-           item.get(ITEM_TYPE) in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
+        if item.get(ITEM_TYPE) in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
             broadcast_items = get_resource_service('archive_broadcast').get_broadcast_items_from_master_story(item)
             # If master story expires then check if broadcast item is included in a package.
             # If included in a package then check the package expiry.

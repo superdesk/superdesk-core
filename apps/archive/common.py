@@ -29,7 +29,6 @@ from superdesk.metadata.item import metadata_schema, ITEM_STATE, CONTENT_STATE, 
     ASSOCIATIONS
 from superdesk.workflow import set_default_state, is_workflow_state_transition_valid
 from superdesk.metadata.item import GUID_NEWSML, GUID_FIELD, GUID_TAG, not_analyzed
-from superdesk.metadata.packages import PACKAGE_TYPE, TAKES_PACKAGE, SEQUENCE, ASSOCIATED_TAKE_SEQUENCE
 from superdesk.metadata.utils import generate_guid
 from superdesk.errors import SuperdeskApiError, IdentifierGenerationError
 from superdesk.logging import logger
@@ -47,7 +46,6 @@ ITEM_REWRITE = 'rewrite'
 ITEM_RESTORE = 'restore'
 ITEM_LINK = 'link'
 ITEM_UNLINK = 'unlink'
-ITEM_TAKE = 'take'
 ITEM_REOPEN = 'reopen'
 ITEM_DUPLICATE = 'duplicate'
 ITEM_DUPLICATED_FROM = 'duplicated_from'
@@ -60,13 +58,12 @@ ITEM_CREATE_HIGHLIGHT = 'create_highlight'
 ITEM_EVENT_ID = 'event_id'
 item_operations = [ITEM_CREATE, ITEM_FETCH, ITEM_UPDATE, ITEM_RESTORE,
                    ITEM_DUPLICATE, ITEM_DUPLICATED_FROM, ITEM_DESCHEDULE,
-                   ITEM_REWRITE, ITEM_LINK, ITEM_UNLINK, ITEM_TAKE, ITEM_MARK, ITEM_UNMARK, ITEM_RESEND,
+                   ITEM_REWRITE, ITEM_LINK, ITEM_UNLINK, ITEM_MARK, ITEM_UNMARK, ITEM_RESEND,
                    ITEM_EXPORT_HIGHLIGHT, ITEM_CREATE_HIGHLIGHT]
 # part the task dict
 LAST_AUTHORING_DESK = 'last_authoring_desk'
 LAST_PRODUCTION_DESK = 'last_production_desk'
 BROADCAST_GENRE = 'Broadcast Script'
-RE_OPENS = 'reopens'
 
 # these fields are not available in ingest but available in archive, published, archived
 ARCHIVE_SCHEMA_FIELDS = {
@@ -138,10 +135,10 @@ ARCHIVE_SCHEMA_FIELDS = {
         'mapping': not_analyzed,
         'nullable': True
     },
-    SEQUENCE: {
+    'sequence': {  # deprecated
         'type': 'integer'
     },
-    ASSOCIATED_TAKE_SEQUENCE: {
+    'associated_take_sequence': {  # deprecated
         'type': 'integer'
     },
     EMBARGO: {
@@ -154,7 +151,6 @@ ARCHIVE_SCHEMA_FIELDS = {
         'schema': {
             'status': {'type': 'string'},
             'master_id': {'type': 'string', 'mapping': not_analyzed},
-            'takes_package_id': {'type': 'string', 'mapping': not_analyzed},
             'rewrite_id': {'type': 'string', 'mapping': not_analyzed}
         }
     },
@@ -271,10 +267,6 @@ def set_default_source(doc):
 
     :param {dict} doc: doc where source is defined
     """
-
-    # source is already set for takes package.
-    if doc.get(PACKAGE_TYPE) == TAKES_PACKAGE:
-        return
 
     # If the item has been ingested and the source for the provider is not the same as the system default source
     # the source must be preserved as the item has been ingested from an external agency
@@ -557,10 +549,6 @@ def update_state(original, updates):
 
     original_state = original.get(ITEM_STATE)
     if original_state not in {CONTENT_STATE.INGESTED, CONTENT_STATE.PROGRESS, CONTENT_STATE.SCHEDULED}:
-        if original.get(PACKAGE_TYPE) == TAKES_PACKAGE:
-            # skip any state transition validation for takes packages
-            # also don't change the stage of the package
-            return
         if not is_workflow_state_transition_valid('save', original_state):
             raise superdesk.errors.InvalidStateTransitionError()
         elif is_assigned_to_a_desk(original):
@@ -598,15 +586,13 @@ def get_flag(doc, flag_name):
     return doc.get('flags', {}).get(flag_name, False)
 
 
-def validate_schedule(schedule, package_sequence=1):
+def validate_schedule(schedule):
     """Validates the publish schedule.
 
     :param datetime schedule: schedule datetime
-    :param int package_sequence: takes package sequence.
     :raises: SuperdeskApiError.badRequestError if following cases
         - Not a valid datetime
         - Less than current utc time
-        - if more than 1 takes exist in the package.
     """
     if schedule:
         if not isinstance(schedule, datetime):
@@ -615,8 +601,6 @@ def validate_schedule(schedule, package_sequence=1):
             raise SuperdeskApiError.badRequestError("Schedule date is not recognized")
         if schedule < utcnow():
             raise SuperdeskApiError.badRequestError("Schedule cannot be earlier than now")
-        if package_sequence > 1:
-            raise SuperdeskApiError.badRequestError("Takes cannot be scheduled.")
 
 
 def update_schedule_settings(updates, field_name, value):
@@ -670,13 +654,13 @@ def item_schema(extra=None):
 
 
 def is_item_in_package(item):
-    """Checks if the passed item is a member of a non-takes package.
+    """Checks if the passed item is a member of a package.
 
     :param item:
-    :return: True if the item belongs to a non-takes package
+    :return: True if the item belongs to a package
     """
     return item.get(LINKED_IN_PACKAGES, None) \
-        and sum(1 for x in item.get(LINKED_IN_PACKAGES, []) if x.get(PACKAGE_TYPE, '') == '')
+        and sum(1 for x in item.get(LINKED_IN_PACKAGES, []))
 
 
 def convert_task_attributes_to_objectId(doc):
@@ -754,7 +738,7 @@ def copy_metadata_from_user_preferences(doc, repo_type=ARCHIVE):
                                    'located': located,
                                    'text': format_dateline_to_locmmmddsrc(located, dateline_ts, source)}
 
-            if doc.get(PACKAGE_TYPE) != TAKES_PACKAGE and BYLINE not in doc and user and user.get(BYLINE):
+            if BYLINE not in doc and user and user.get(BYLINE):
                 doc[BYLINE] = user[BYLINE]
 
             if 'place' not in doc and user:

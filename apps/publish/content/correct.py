@@ -12,7 +12,6 @@ import logging
 from superdesk import get_resource_service
 from superdesk.media.crop import CropService
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, EMBARGO, SCHEDULE_SETTINGS
-from superdesk.metadata.packages import PACKAGE_TYPE
 from superdesk.utc import utcnow
 from eve.utils import config
 from apps.archive.common import set_sign_off, ITEM_OPERATION, insert_into_versions
@@ -57,7 +56,7 @@ class CorrectPublishService(BasePublishService):
     def on_updated(self, updates, original):
         """Runs on update
 
-        Locates the published or corrected non-take packages containing the corrected item
+        Locates the published or corrected packages containing the corrected item
         and corrects them
 
         :param updates: correction
@@ -73,7 +72,6 @@ class CorrectPublishService(BasePublishService):
             processed_packages = []
             for package in packages:
                 if package[ITEM_STATE] in [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED] and \
-                        package.get(PACKAGE_TYPE, '') == '' and \
                         str(package[config.ID_FIELD]) not in processed_packages:
                     original_updates['groups'] = package['groups']
 

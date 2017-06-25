@@ -550,7 +550,6 @@ class PublishQueueError(SuperdeskPublishError):
         9002: 'Item format could not be recognized',
         9004: 'Schedule information could not be processed',
         9005: 'State of the content item could not be updated',
-        9007: 'Previous take is either not published or killed',
         9008: 'A post-publish action has happened on item',
         9009: 'Item could not be queued'
     }
@@ -570,10 +569,6 @@ class PublishQueueError(SuperdeskPublishError):
     @classmethod
     def content_update_error(cls, exception=None, destination=None):
         return PublishQueueError(9005, exception, destination)
-
-    @classmethod
-    def previous_take_not_published_error(cls, exception=None, destination=None):
-        return PublishQueueError(9007, exception, destination)
 
     @classmethod
     def post_publish_exists_error(cls, exception=None, destination=None):

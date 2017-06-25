@@ -859,15 +859,6 @@ def step_impl_then_get_new(context):
         return test_json(context)
 
 
-@then('we get next take as "{new_take}"')
-def step_impl_then_get_next_take(context, new_take):
-    step_impl_we_get_latest(context)
-    data = get_json_data(context.response)
-    set_placeholder(context, new_take, data['_id'])
-    set_placeholder(context, 'TAKE_PACKAGE', data['takes']['_id'])
-    test_json(context)
-
-
 @then('we get error {code}')
 def step_impl_then_get_error(context, code):
     expect_status(context.response, int(code))
@@ -1860,26 +1851,6 @@ def step_impl_when_publish_url(context, item_id, pub_type, state):
     context.response = context.client.patch(get_prefixed_url(context.app, '/archive/{}/{}'.format(pub_type, item_id)),
                                             data=data, headers=headers)
     store_placeholder(context, 'archive_{}'.format(pub_type))
-    resp = parse_json_response(context.response)
-    linked_packages = resp.get('linked_in_packages', [])
-    if linked_packages:
-        take_package = linked_packages[0].get('package', '')
-        set_placeholder(context, 'archive.{}.take_package'.format(item_id), take_package)
-        set_placeholder(context, 'archive.take_package'.format(item_id), take_package)
-
-
-@when('we get digital item of "{item_id}"')
-def step_impl_when_we_get_digital(context, item_id):
-    item_id = apply_placeholders(context, item_id)
-    context.response = context.client.get(get_prefixed_url(context.app, '/archive/{}'.format(item_id)),
-                                          headers=context.headers)
-    resp = parse_json_response(context.response)
-    linked_packages = resp.get('linked_in_packages', [])
-    for lp in linked_packages:
-        if lp.get('package_type', '') == 'takes':
-            take_package = lp.get('package', '')
-            set_placeholder(context, 'archive.{}.take_package'.format(item_id), take_package)
-            set_placeholder(context, 'archive.take_package'.format(item_id), take_package)
 
 
 @then('the ingest item is routed based on routing scheme and rule "{rule_name}"')
@@ -2081,13 +2052,8 @@ def embargo_lapses(context, item_id):
     updates = {'embargo': (utcnow() - timedelta(minutes=10)),
                'schedule_settings': {'utc_embargo': (utcnow() - timedelta(minutes=10))}}
 
-    linked_packages = item.get('linked_in_packages', [])
     with context.app.test_request_context(context.app.config['URL_PREFIX']):
         get_resource_service('archive').system_update(id=item['_id'], original=item, updates=updates)
-        if len(linked_packages) > 0 and linked_packages[0]['package_type'] == 'takes':
-            package = get_resource_service('archive').find_one(req=None, _id=linked_packages[0]['package'])
-            get_resource_service('archive').system_update(id=linked_packages[0]['package'],
-                                                          original=package, updates=updates)
 
 
 @then('we validate the published item expiry to be after publish expiry set in desk settings {publish_expiry_in_desk}')
@@ -2170,20 +2136,6 @@ def run_overdue_schedule_jobs(context):
             get_resource_service('published').update_published_items(item_id, 'publish_schedule', lapse_time)
             get_resource_service('published').update_published_items(item_id, 'schedule_settings.utc_publish_schedule',
                                                                      lapse_time)
-
-
-@when('we get takes package "{url}" and validate')
-def we_get_takes_package_and_validate(context, url):
-    with context.app.test_request_context(context.app.config['URL_PREFIX']):
-        url = apply_placeholders(context, url)
-        response_data = get_res(url, context)
-
-        from apps.packages.takes_package_service import TakesPackageService
-        response_data = TakesPackageService().get_take_package(response_data)
-
-        context_data = json.loads(apply_placeholders(context, context.text))
-        assert_equal(json_match(context_data, response_data), True,
-                     msg=str(context_data) + '\n != \n' + str(response_data))
 
 
 @when('we transmit items')

@@ -15,7 +15,6 @@ from copy import deepcopy
 
 import superdesk
 from apps.tasks import send_to, apply_onstage_rule
-from apps.packages.takes_package_service import TakesPackageService
 from apps.desks import DeskTypes
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
@@ -87,13 +86,6 @@ class MoveService(BaseService):
 
         self._validate(archived_doc, doc)
         self._move(archived_doc, doc)
-
-        # move the takes package where the first take is located.
-        takes_service = TakesPackageService()
-        takes_package = takes_service.get_take_package(archived_doc)
-        if takes_package and \
-                takes_service.get_take_by_take_no(archived_doc, package=takes_package) == id:
-            self._move(takes_package, doc)
 
         # get the recent updates again
         archived_doc = archive_service.find_one(req=None, _id=id)

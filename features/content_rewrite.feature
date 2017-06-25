@@ -99,13 +99,12 @@ Feature: Rewrite content
       When we get "/published"
       Then we get existing resource
       """
-      {"_items" : [{"_id": "123", "rewritten_by": "#REWRITE_ID#"},
-                   {"package_type": "takes", "rewritten_by": "#REWRITE_ID#"}]}
+      {"_items" : [{"_id": "123", "rewritten_by": "#REWRITE_ID#"}]}
       """
       When we get "/archive"
       Then we get existing resource
       """
-      {"_items" : [{"_id": "#REWRITE_ID#", "anpa_take_key": "update", "rewrite_of": "#archive.123.take_package#",
+      {"_items" : [{"_id": "#REWRITE_ID#", "anpa_take_key": "update", "rewrite_of": "123",
         "task": {"desk": "#desks._id#", "stage": "#desks.working_stage#"}, "genre": [{"name": "Article", "qcode": "Article"}],
         "flags": {"marked_for_legal": true, "marked_for_sms": false}, "priority": 2, "urgency": 2, "rewrite_sequence": 1,
         "body_footer": "Suicide Call Back Service 1300 659 467",
@@ -121,11 +120,6 @@ Feature: Rewrite content
       """
       When we publish "#REWRITE_ID#" with "publish" type and "published" state
       Then we get OK response
-      When we get "/archive/#archive.take_package#"
-      Then we get existing resource
-      """
-      {"_id": "#archive.take_package#", "rewrite_of": "#archive.123.take_package#", "rewrite_sequence": 1}
-      """
       When we rewrite "#REWRITE_ID#"
       """
       {"desk_id": "#desks._id#"}
@@ -135,7 +129,7 @@ Feature: Rewrite content
       Then we get OK response
       And we get existing resource
       """
-      {"_id": "#REWRITE_ID#", "rewrite_of": "#archive.take_package#",
+      {"_id": "#REWRITE_ID#", "rewrite_of": "#REWRITE_OF#",
       "rewrite_sequence": 2, "anpa_take_key": "2nd update", "_current_version": 1}
       """
 
@@ -222,235 +216,14 @@ Feature: Rewrite content
       {"_id": "#REWRITE_ID#", "state": "published",
         "rewrite_sequence": 1}
       """
-      When we get "/archive/#archive.take_package#"
+      When we get "/archive/#REWRITE_ID#"
       Then we get OK response
       And we get existing resource
       """
-      {"state": "published", "rewrite_of": "#archive.123.take_package#",
+      {"state": "published", "rewrite_of": "123",
         "rewrite_sequence": 1}
       """
 
-
-    @auth
-    Scenario: Rewrite the non-last take fails
-        Given the "validators"
-        """
-        [{"_id": "publish_text", "act": "publish", "type": "text", "schema":{}}]
-        """
-    	And empty "ingest"
-    	And "desks"
-        """
-        [{"name": "Sports"}]
-        """
-        When we post to "/products" with success
-        """
-        {
-          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
-        }
-        """
-        And we post to "/subscribers" with success
-        """
-        {
-          "name":"News1","media_type":"media", "subscriber_type": "digital",
-          "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-          "products": ["#products._id#"],
-          "destinations":[{"name":"destination1","format": "nitf", "delivery_type":"FTP","config":{"ip":"144.122.244.55","password":"xyz"}}]
-        }
-        """
-    	And we post to "archive" with success
-        """
-        [{
-            "guid": "123",
-            "type": "text",
-            "headline": "Take-1 headline",
-            "abstract": "Take-1 abstract",
-            "task": {
-                "user": "#CONTEXT_USER_ID#"
-            },
-            "body_html": "Take-1",
-            "state": "draft",
-            "slugline": "Take-1 slugline",
-            "urgency": "4",
-            "pubstatus": "usable",
-            "subject":[{"qcode": "17004000", "name": "Statistics"}],
-            "anpa_category": [{"qcode": "A", "name": "Sport"}],
-            "anpa_take_key": "Take"
-        }]
-        """
-        And we post to "/archive/123/move"
-        """
-        [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
-        """
-        Then we get OK response
-        When we post to "archive/123/link"
-        """
-        [{}]
-        """
-        Then we get next take as "TAKE"
-        """
-        {
-            "_id": "#TAKE#",
-            "type": "text",
-            "headline": "Take-1 headline",
-            "slugline": "Take-1 slugline",
-            "anpa_take_key": "Take=2",
-            "state": "draft",
-            "original_creator": "#CONTEXT_USER_ID#",
-            "takes": {
-                "_id": "#TAKE_PACKAGE#",
-                "package_type": "takes",
-                "type": "composite"
-            },
-            "linked_in_packages": [{"package_type" : "takes","package" : "#TAKE_PACKAGE#"}]
-        }
-        """
-        When we patch "/archive/#TAKE#"
-        """
-        {"body_html": "Take-2", "abstract": "Take-1 abstract changed"}
-        """
-        And we post to "/archive/#TAKE#/move"
-        """
-        [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
-        """
-		And we get "/archive"
-        Then we get list with 3 items
-        When we publish "123" with "publish" type and "published" state
-        Then we get OK response
-        When we post to "archive/#TAKE#/link"
-        """
-        [{}]
-        """
-        Then we get next take as "TAKE2"
-        """
-        {
-            "_id": "#TAKE2#",
-            "type": "text",
-            "headline": "Take-1 headline",
-            "slugline": "Take-1 slugline",
-            "anpa_take_key": "Take=3",
-            "state": "draft",
-            "original_creator": "#CONTEXT_USER_ID#",
-            "takes": {
-                "_id": "#TAKE_PACKAGE#",
-                "package_type": "takes",
-                "type": "composite"
-            },
-            "linked_in_packages": [{"package_type" : "takes","package" : "#TAKE_PACKAGE#"}]
-        }
-        """
-        When we rewrite "123"
-        """
-        {"desk_id": "#desks._id#"}
-        """
-        Then we get error 400
-        """
-        {"_message": "Only last take of the package can be rewritten."}
-        """
-
-    @auth
-    Scenario: Rewrite the last take succeeds
-        Given the "validators"
-        """
-        [{"_id": "publish_text", "act": "publish", "type": "text", "schema":{}}]
-        """
-    	And empty "ingest"
-    	And "desks"
-        """
-        [{"name": "Sports"}]
-        """
-        When we post to "/products" with success
-        """
-        {
-          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
-        }
-        """
-        And we post to "/subscribers" with success
-        """
-        {
-          "name":"News1","media_type":"media", "subscriber_type": "digital",
-          "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-          "products": ["#products._id#"],
-          "destinations":[{"name":"destination1","format": "nitf", "delivery_type":"FTP","config":{"ip":"144.122.244.55","password":"xyz"}}]
-        }
-        """
-    	And we post to "archive" with success
-        """
-        [{
-            "guid": "123",
-            "type": "text",
-            "headline": "Take-1 headline",
-            "abstract": "Take-1 abstract",
-            "task": {
-                "user": "#CONTEXT_USER_ID#"
-            },
-            "body_html": "Take-1",
-            "state": "draft",
-            "slugline": "Take-1 slugline",
-            "urgency": "4",
-            "pubstatus": "usable",
-            "subject":[{"qcode": "17004000", "name": "Statistics"}],
-            "anpa_category": [{"qcode": "A", "name": "Sport"}],
-            "anpa_take_key": "Take"
-        }]
-        """
-        And we post to "/archive/123/move"
-        """
-        [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
-        """
-        Then we get OK response
-        When we post to "archive/123/link"
-        """
-        [{}]
-        """
-        Then we get next take as "TAKE"
-        """
-        {
-            "_id": "#TAKE#",
-            "type": "text",
-            "headline": "Take-1 headline",
-            "slugline": "Take-1 slugline",
-            "anpa_take_key": "Take=2",
-            "state": "draft",
-            "original_creator": "#CONTEXT_USER_ID#",
-            "takes": {
-                "_id": "#TAKE_PACKAGE#",
-                "package_type": "takes",
-                "type": "composite"
-            },
-            "linked_in_packages": [{"package_type" : "takes","package" : "#TAKE_PACKAGE#"}]
-        }
-        """
-        When we patch "/archive/#TAKE#"
-        """
-        {"body_html": "Take-2", "abstract": "Take-1 abstract changed"}
-        """
-        And we post to "/archive/#TAKE#/move"
-        """
-        [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
-        """
-		And we get "/archive"
-        Then we get list with 3 items
-        When we publish "123" with "publish" type and "published" state
-        Then we get OK response
-        When we publish "#TAKE#" with "publish" type and "published" state
-        Then we get OK response
-        When we rewrite "#TAKE#"
-        """
-        {"desk_id": "#desks._id#"}
-        """
-        When we get "/published"
-        Then we get existing resource
-        """
-        {"_items" : [{"_id": "123"},
-                     {"package_type": "takes", "rewritten_by": "#REWRITE_ID#"},
-                     {"_id": "#TAKE#", "rewritten_by": "#REWRITE_ID#"}]}
-        """
-        When we get "/archive"
-        Then we get existing resource
-        """
-        {"_items" : [{"_id": "#REWRITE_ID#", "anpa_take_key": "update", "rewrite_of": "#archive.123.take_package#",
-          "task": {"desk": "#desks._id#"}, "rewrite_sequence": 1}]}
-        """
 
     @auth
       Scenario: Rewrite of a rewritten published content
@@ -510,7 +283,6 @@ Feature: Rewrite content
         Then we get existing resource
         """
         {"_items" : [{"_id": "123", "rewritten_by": "#REWRITE_ID#"},
-                     {"package_type": "takes", "rewritten_by": "#REWRITE_ID#"},
                      {"_id": "#REWRITE_ID#", "anpa_take_key": "update", "rewrite_sequence": 1}]}
         """
         When we rewrite "#REWRITE_ID#"
@@ -587,13 +359,12 @@ Feature: Rewrite content
       When we get "/published"
       Then we get existing resource
       """
-      {"_items" : [{"_id": "123", "rewritten_by": "#REWRITE_ID#"},
-                   {"package_type": "takes", "rewritten_by": "#REWRITE_ID#"}]}
+      {"_items" : [{"_id": "123", "rewritten_by": "#REWRITE_ID#"}]}
       """
       When we get "/archive"
       Then we get existing resource
       """
-      {"_items" : [{"_id": "#REWRITE_ID#", "anpa_take_key": "update", "rewrite_of": "#archive.123.take_package#",
+      {"_items" : [{"_id": "#REWRITE_ID#", "anpa_take_key": "update", "rewrite_of": "123",
         "task": {"desk": "#desks._id#"}, "rewrite_sequence": 1}]}
       """
       When we spike "#REWRITE_ID#"
@@ -663,7 +434,6 @@ Feature: Rewrite content
       Then we get existing resource
       """
       {"_items" : [{"_id": "123", "rewritten_by": "#REWRITE_ID#"},
-                   {"package_type": "takes", "rewritten_by": "#REWRITE_ID#"},
                    {"_id": "#REWRITE_ID#", "anpa_take_key": "update", "rewrite_sequence": 1}]}
       """
       When we rewrite "#REWRITE_ID#"
@@ -686,159 +456,6 @@ Feature: Rewrite content
       {"_items": [{"_id": "123", "rewritten_by": "#REWRITE_OF#"}]}
       """
 
-    @auth
-      Scenario: A new take on a rewritten story fails
-        Given the "validators"
-        """
-          [
-          {
-              "schema": {},
-              "type": "text",
-              "act": "publish",
-              "_id": "publish_text"
-          },
-          {
-              "_id": "publish_composite",
-              "act": "publish",
-              "type": "composite",
-              "schema": {}
-          }
-          ]
-        """
-        And "desks"
-        """
-        [{"name": "Sports"}]
-        """
-        And "archive"
-        """
-        [{"guid": "123", "type": "text", "headline": "test", "_current_version": 1, "state": "fetched",
-          "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
-          "subject":[{"qcode": "17004000", "name": "Statistics"}],
-          "body_html": "Test Document body"}]
-        """
-        When we post to "/products" with success
-        """
-        {
-          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
-        }
-        """
-        And we post to "/subscribers" with success
-        """
-        {
-          "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-          "products": ["#products._id#"],
-          "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
-        }
-        """
-        And we publish "#archive._id#" with "publish" type and "published" state
-        When we rewrite "123"
-        """
-        {"desk_id": "#desks._id#"}
-        """
-        And we patch "archive/#REWRITE_ID#"
-        """
-        {"abstract": "test", "body_html": "Test Document body"}
-        """
-        When we publish "#REWRITE_ID#" with "publish" type and "published" state
-        When we get "/published"
-        Then we get existing resource
-        """
-        {"_items" : [{"_id": "123", "rewritten_by": "#REWRITE_ID#"},
-                     {"package_type": "takes", "rewritten_by": "#REWRITE_ID#"},
-                     {"_id": "#REWRITE_ID#", "anpa_take_key": "update"}]}
-        """
-        When we post to "archive/123/link"
-        """
-        [{}]
-        """
-        Then we get error 400
-        """
-        {"_message": "Article has been rewritten before !"}
-        """
-
-    @auth
-    Scenario: A new take on a published rewrite succeeds
-        Given the "validators"
-        """
-          [
-          {
-              "schema": {},
-              "type": "text",
-              "act": "publish",
-              "_id": "publish_text"
-          },
-          {
-              "_id": "publish_composite",
-              "act": "publish",
-              "type": "composite",
-              "schema": {}
-          }
-          ]
-        """
-        And "desks"
-        """
-        [{"name": "Sports"}]
-        """
-        And "archive"
-        """
-        [{"guid": "123", "type": "text", "headline": "test", "_current_version": 1, "state": "fetched",
-          "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
-          "subject":[{"qcode": "17004000", "name": "Statistics"}],
-          "body_html": "Test Document body"}]
-        """
-        When we post to "/products" with success
-        """
-        {
-          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
-        }
-        """
-        And we post to "/subscribers" with success
-        """
-        {
-          "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-          "products": ["#products._id#"],
-          "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
-        }
-        """
-        And we publish "#archive._id#" with "publish" type and "published" state
-        When we rewrite "123"
-        """
-        {"desk_id": "#desks._id#"}
-        """
-        And we patch "archive/#REWRITE_ID#"
-        """
-        {"abstract": "test", "body_html": "Test Document body", "headline": "RETAKE", "slugline": "RETAKE"}
-        """
-        When we publish "#REWRITE_ID#" with "publish" type and "published" state
-        When we get "/published"
-        Then we get existing resource
-        """
-        {"_items" : [{"_id": "123", "rewritten_by": "#REWRITE_ID#"},
-                     {"package_type": "takes", "rewritten_by": "#REWRITE_ID#"},
-                     {"_id": "#REWRITE_ID#", "anpa_take_key": "update"}]}
-        """
-        When we post to "archive/#REWRITE_ID#/link"
-        """
-        [{}]
-        """
-        Then we get next take as "TAKE"
-        """
-        {
-            "_id": "#TAKE#",
-            "type": "text",
-            "headline": "RETAKE",
-            "slugline": "RETAKE",
-            "anpa_take_key": "update (reopens)=2",
-            "state": "draft",
-            "original_creator": "#CONTEXT_USER_ID#",
-            "takes": {
-                "_id": "#TAKE_PACKAGE#",
-                "package_type": "takes",
-                "type": "composite"
-            },
-            "linked_in_packages": [{"package_type" : "takes","package" : "#TAKE_PACKAGE#"}]
-        }
-        """
 
     @auth
     Scenario: Associate a story as update
@@ -929,14 +546,13 @@ Feature: Rewrite content
       When we get "/published"
       Then we get existing resource
       """
-      {"_items" : [{"_id": "123", "rewritten_by": "456"},
-                   {"package_type": "takes", "rewritten_by": "456"}]}
+      {"_items" : [{"_id": "123", "rewritten_by": "456"}]}
       """
       When we get "/archive/456"
       Then we get existing resource
       """
       {"_id": "456", "anpa_take_key": "update", "priority": 2,
-       "rewrite_of": "#archive.123.take_package#", "rewrite_sequence": 1,
+       "rewrite_of": "123", "rewrite_sequence": 1,
        "subject":[{"qcode": "17004000", "name": "Statistics"},
        {"qcode": "01000000", "name": "arts, culture and entertainment"}]}
       """
@@ -1011,214 +627,6 @@ Feature: Rewrite content
          "_issues": {"validator exception": "400: Cannot publish the story after Update is published.!"}}
         """
 
-    @auth
-    Scenario: Fail to publish last take after rewrite is published
-        Given the "validators"
-        """
-          [
-          {
-              "schema": {},
-              "type": "text",
-              "act": "publish",
-              "_id": "publish_text"
-          },
-          {
-              "_id": "publish_composite",
-              "act": "publish",
-              "type": "composite",
-              "schema": {}
-          }
-          ]
-        """
-        And "desks"
-        """
-        [{"name": "Sports"}]
-        """
-        And "archive"
-        """
-        [{"guid": "123", "type": "text", "headline": "test", "_current_version": 1, "state": "fetched",
-          "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
-          "subject":[{"qcode": "17004000", "name": "Statistics"}],
-          "body_html": "Test Document body"}]
-        """
-        When we post to "/products" with success
-        """
-        {
-          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
-        }
-        """
-        And we post to "/subscribers" with success
-        """
-        {
-          "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-          "products": ["#products._id#"],
-          "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
-        }
-        """
-        Then we get OK response
-        When we post to "archive/123/link"
-        """
-        [{}]
-        """
-        Then we get next take as "TAKE"
-        """
-        {
-            "_id": "#TAKE#",
-            "type": "text",
-            "headline": "test",
-            "anpa_take_key": "=2",
-            "state": "draft",
-            "original_creator": "#CONTEXT_USER_ID#",
-            "takes": {
-                "_id": "#TAKE_PACKAGE#",
-                "package_type": "takes",
-                "type": "composite"
-            },
-            "linked_in_packages": [{"package_type" : "takes","package" : "#TAKE_PACKAGE#"}]
-        }
-        """
-        When we patch "/archive/#TAKE#"
-        """
-        {"body_html": "Take-2", "abstract": "Take-1 abstract changed"}
-        """
-        And we post to "/archive/#TAKE#/move"
-        """
-        [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
-        """
-		And we get "/archive"
-        Then we get list with 3 items
-        When we rewrite "#TAKE#"
-        """
-        {"desk_id": "#desks._id#"}
-        """
-        And we patch "archive/#REWRITE_ID#"
-        """
-        {"abstract": "test", "body_html": "Test Document body", "headline": "RETAKE", "slugline": "RETAKE"}
-        """
-        Then we get OK response
-        When we publish "123" with "publish" type and "published" state
-        Then we get OK response
-        When we publish "#REWRITE_ID#" with "publish" type and "published" state
-        Then we get OK response
-        When we publish "#TAKE#" with "publish" type and "published" state
-        Then we get error 400
-        """
-        {"_status": "ERR",
-         "_issues": {"validator exception": "400: Cannot publish the story after Update is published.!"}}
-        """
-
-    @auth
-    Scenario: Link the rewrite to the 2nd last take if the last take is spiked
-        Given the "validators"
-        """
-          [
-          {
-              "schema": {},
-              "type": "text",
-              "act": "publish",
-              "_id": "publish_text"
-          },
-          {
-              "_id": "publish_composite",
-              "act": "publish",
-              "type": "composite",
-              "schema": {}
-          }
-          ]
-        """
-        And "desks"
-        """
-        [{"name": "Sports"}]
-        """
-        And "archive"
-        """
-        [{"guid": "123", "type": "text", "headline": "test", "_current_version": 1, "state": "fetched",
-          "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
-          "subject":[{"qcode": "17004000", "name": "Statistics"}],
-          "body_html": "Test Document body"}]
-        """
-        When we post to "/products" with success
-        """
-        {
-          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
-        }
-        """
-        And we post to "/subscribers" with success
-        """
-        {
-          "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-          "products": ["#products._id#"],
-          "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
-        }
-        """
-        Then we get OK response
-        When we post to "archive/123/link"
-        """
-        [{}]
-        """
-        Then we get next take as "TAKE"
-        """
-        {
-            "_id": "#TAKE#",
-            "type": "text",
-            "headline": "test",
-            "anpa_take_key": "=2",
-            "state": "draft",
-            "original_creator": "#CONTEXT_USER_ID#",
-            "takes": {
-                "_id": "#TAKE_PACKAGE#",
-                "package_type": "takes",
-                "type": "composite"
-            },
-            "linked_in_packages": [{"package_type" : "takes","package" : "#TAKE_PACKAGE#"}]
-        }
-        """
-        When we patch "/archive/#TAKE#"
-        """
-        {"body_html": "Take-2", "abstract": "Take-1 abstract changed"}
-        """
-        And we post to "/archive/#TAKE#/move"
-        """
-        [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
-        """
-        Then we get OK response
-        When we rewrite "#TAKE#"
-        """
-        {"desk_id": "#desks._id#"}
-        """
-        And we patch "archive/#REWRITE_ID#"
-        """
-        {"abstract": "test", "body_html": "Test Document body",
-         "headline": "RETAKE", "slugline": "RETAKE", "rewrite_of": "#TAKE_PACKAGE#"}
-        """
-        Then we get OK response
-        When we get "/archive/#TAKE#"
-        Then we get existing resource
-        """
-        {"_id": "#TAKE#", "rewritten_by": "#REWRITE_ID#"}
-        """
-        When we get "/archive/#TAKE_PACKAGE#"
-        Then we get existing resource
-        """
-        {"_id": "#TAKE_PACKAGE#", "rewritten_by": "#REWRITE_ID#"}
-        """
-        When we get "/archive/123"
-        Then we get no "rewritten_by"
-        When we spike "#TAKE#"
-        Then we get OK response
-        And we get spiked content "#TAKE#"
-        And we get "rewritten_by" not populated
-        When we get "/archive/123"
-        Then we get existing resource
-        """
-        {"_id": "123", "rewritten_by": "#REWRITE_ID#"}
-        """
-        When we get "archive/#REWRITE_ID#"
-        Then we get existing resource
-        """
-        {"abstract": "test", "body_html": "Test Document body",
-         "headline": "RETAKE", "slugline": "RETAKE", "rewrite_of": "#TAKE_PACKAGE#"}
-        """
 
     @auth
     Scenario: Cannot create rewrite of a rewrite if the original rewrite is not published
@@ -1404,15 +812,14 @@ Feature: Rewrite content
         Then we get OK response
         When we publish "123" with "publish" type and "published" state
         Then we get OK response
-        And we store "take_package1" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
         Then we get list with 2 items
         """
         {
             "_items": [
-              {"state": "pending", "content_type": "composite",
-              "subscriber_id": "#digital#", "item_id": "#take_package1#", "item_version": 2},
+              {"state": "pending", "content_type": "text",
+              "subscriber_id": "#digital#", "item_id": "123", "item_version": 2},
               {"state": "pending", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "123", "item_version": 2}
             ]
@@ -1420,19 +827,14 @@ Feature: Rewrite content
         """
         When we publish "#REWRITE_ID#" with "publish" type and "published" state
         Then we get OK response
-        And we store "take_package2" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
         Then we get list with 4 items
         """
         {
             "_items": [
-              {"state": "pending", "content_type": "composite",
-              "subscriber_id": "#digital#", "item_id": "#take_package1#", "item_version": 2},
               {"state": "pending", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "123", "item_version": 2},
-              {"state": "pending", "content_type": "composite", "item_id": "#take_package2#",
-              "subscriber_id": "#digital#", "item_version": 2},
               {"state": "pending", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "#REWRITE_ID#", "item_version": 3}
             ]
@@ -1518,15 +920,14 @@ Feature: Rewrite content
         """
         When we publish "123" with "publish" type and "published" state
         Then we get OK response
-        And we store "take_package1" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
         Then we get list with 2 items
         """
         {
             "_items": [
-              {"state": "pending", "content_type": "composite",
-              "subscriber_id": "#digital#", "item_id": "#archive.123.take_package#", "item_version": 2},
+              {"state": "pending", "content_type": "text",
+              "subscriber_id": "#digital#", "item_id": "123", "item_version": 2},
               {"state": "pending", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "123", "item_version": 2}
             ]
@@ -1545,19 +946,14 @@ Feature: Rewrite content
         Then we get OK response
         When we publish "#REWRITE_ID#" with "publish" type and "published" state
         Then we get OK response
-        And we store "take_package2" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
         Then we get list with 4 items
         """
         {
             "_items": [
-              {"state": "pending", "content_type": "composite",
-              "subscriber_id": "#digital#", "item_id": "#take_package1#", "item_version": 2},
               {"state": "pending", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "123", "item_version": 2},
-              {"state": "pending", "content_type": "composite", "item_id": "#take_package2#",
-              "subscriber_id": "#digital#", "item_version": 2},
               {"state": "pending", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "#REWRITE_ID#", "item_version": 3}
             ]
@@ -1664,15 +1060,14 @@ Feature: Rewrite content
         """
         When we publish "123" with "publish" type and "published" state
         Then we get OK response
-        And we store "take_package1" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
         Then we get list with 1 items
         """
         {
             "_items": [
-              {"state": "pending", "content_type": "composite",
-              "subscriber_id": "#digital#", "item_id": "#archive.123.take_package#", "item_version": 2}
+              {"state": "pending", "content_type": "text",
+              "subscriber_id": "#digital#", "item_id": "123", "item_version": 2}
             ]
         }
         """
@@ -1689,17 +1084,14 @@ Feature: Rewrite content
         Then we get OK response
         When we publish "#REWRITE_ID#" with "publish" type and "published" state
         Then we get OK response
-        And we store "take_package2" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
         Then we get list with 3 items
         """
         {
             "_items": [
-              {"state": "pending", "content_type": "composite",
-              "subscriber_id": "#digital#", "item_id": "#take_package1#", "item_version": 2},
-              {"state": "pending", "content_type": "composite", "item_id": "#take_package2#",
-              "subscriber_id": "#digital#", "item_version": 2},
+              {"state": "pending", "content_type": "text",
+              "subscriber_id": "#digital#", "item_id": "123", "item_version": 2},
               {"state": "pending", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "#REWRITE_ID#", "item_version": 3}
             ]
@@ -1806,7 +1198,6 @@ Feature: Rewrite content
         """
         When we publish "123" with "publish" type and "published" state
         Then we get OK response
-        And we store "take_package1" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
         Then we get list with 1 items
@@ -1831,7 +1222,6 @@ Feature: Rewrite content
         Then we get OK response
         When we publish "#REWRITE_ID#" with "publish" type and "published" state
         Then we get OK response
-        And we store "take_package2" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
         Then we get list with 3 items
@@ -1840,8 +1230,8 @@ Feature: Rewrite content
             "_items": [
               {"state": "pending", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "123", "item_version": 2},
-              {"state": "pending", "content_type": "composite", "item_id": "#take_package2#",
-              "subscriber_id": "#digital#", "item_version": 2},
+              {"state": "pending", "content_type": "text", "item_id": "#REWRITE_ID#",
+              "subscriber_id": "#digital#", "item_version": 3},
               {"state": "pending", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "#REWRITE_ID#", "item_version": 3}
             ]
@@ -1948,7 +1338,6 @@ Feature: Rewrite content
         """
         When we publish "123" with "publish" type and "published" state
         Then we get OK response
-        And we store "take_package1" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
         Then we get list with 1 items
@@ -1974,7 +1363,6 @@ Feature: Rewrite content
         And we store "rewrite1" with value "#REWRITE_ID#" to context
         When we publish "#REWRITE_ID#" with "publish" type and "published" state
         Then we get OK response
-        And we store "take_package2" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
         Then we get list with 3 items
@@ -1983,8 +1371,8 @@ Feature: Rewrite content
             "_items": [
               {"state": "pending", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "123", "item_version": 2},
-              {"state": "pending", "content_type": "composite", "item_id": "#take_package2#",
-              "subscriber_id": "#digital#", "item_version": 2},
+              {"state": "pending", "content_type": "text", "item_id": "#rewrite1#",
+              "subscriber_id": "#digital#", "item_version": 3},
               {"state": "pending", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "#rewrite1#", "item_version": 3}
             ]
@@ -2004,7 +1392,6 @@ Feature: Rewrite content
         And we store "rewrite2" with value "#REWRITE_ID#" to context
         When we publish "#rewrite2#" with "publish" type and "published" state
         Then we get OK response
-        And we store "take_package3" with value "#archive.take_package#" to context
         When we enqueue published
         And we get "/publish_queue"
         Then we get list with 5 items
@@ -2013,12 +1400,12 @@ Feature: Rewrite content
             "_items": [
               {"state": "pending", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "123", "item_version": 2},
-              {"state": "pending", "content_type": "composite",
-              "item_id": "#take_package2#", "subscriber_id": "#digital#", "item_version": 2},
+              {"state": "pending", "content_type": "text",
+              "item_id": "#rewrite1#", "subscriber_id": "#digital#", "item_version": 3},
               {"state": "pending", "content_type": "text", "subscriber_id": "#wire#",
               "item_id": "#rewrite1#", "item_version": 3},
-              {"state": "pending", "content_type": "composite", "item_id": "#take_package3#",
-              "subscriber_id": "#digital#", "item_version": 2},
+              {"state": "pending", "content_type": "text", "item_id": "#rewrite2#",
+              "subscriber_id": "#digital#", "item_version": 3},
               {"state": "pending", "content_type": "text",
               "subscriber_id": "#wire#", "item_id": "#rewrite2#", "item_version": 3}
             ]
@@ -2199,14 +1586,13 @@ Feature: Rewrite content
       When we get "/published"
       Then we get existing resource
       """
-      {"_items" : [{"_id": "123", "rewritten_by": "456"},
-                   {"package_type": "takes", "rewritten_by": "456"}]}
+      {"_items" : [{"_id": "123", "rewritten_by": "456"}]}
       """
       When we get "/archive/456"
       Then we get existing resource
       """
       {"_id": "456", "anpa_take_key": "update",
-       "rewrite_of": "#archive.123.take_package#", "priority": 6,
+       "rewrite_of": "123", "priority": 6,
        "subject":[{"qcode": "17004000", "name": "Statistics"},
        {"qcode": "01000000", "name": "arts, culture and entertainment"}]}
       """

@@ -19,8 +19,7 @@ from flask import current_app as app
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError, SuperdeskPublishError
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, PUBLISH_SCHEDULE, ASSOCIATIONS
-from superdesk.metadata.packages import SEQUENCE, PACKAGE_TYPE, GROUPS,\
-    ROOT_GROUP, GROUP_ID, REFS, RESIDREF
+from superdesk.metadata.packages import GROUPS, ROOT_GROUP, GROUP_ID, REFS, RESIDREF
 from superdesk.notification import push_notification
 from superdesk.publish import SUBSCRIBER_TYPES
 from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
@@ -29,7 +28,6 @@ from apps.publish.content.common import BasePublishService
 from copy import deepcopy
 from eve.utils import config, ParsedRequest
 from apps.archive.common import get_user, get_utc_schedule
-from apps.packages import TakesPackageService
 from apps.packages.package_service import PackageService
 from apps.publish.published_item import PUBLISH_STATE, QUEUE_STATE
 from apps.content_types import apply_schema
@@ -49,25 +47,20 @@ class EnqueueService:
     non_digital = partial(filter, lambda s: s.get('subscriber_type', '') == SUBSCRIBER_TYPES.WIRE)
     digital = partial(filter, lambda s: (s.get('subscriber_type', '') in {SUBSCRIBER_TYPES.DIGITAL,
                                                                           SUBSCRIBER_TYPES.ALL}))
-    takes_package_service = TakesPackageService()
     package_service = PackageService()
 
     def _enqueue_item(self, item):
         item_to_queue = deepcopy(item)
-        if item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and item.get(PACKAGE_TYPE):
-            return self.publish(doc=item_to_queue, target_media_type=SUBSCRIBER_TYPES.DIGITAL)
-        elif item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and app.config.get('NO_TAKES'):
+        if item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
             queued = self._publish_package_items(item_to_queue)
             if not queued:  # this was only published to subscribers with config.packaged on
                 return self.publish(doc=item_to_queue, target_media_type=SUBSCRIBER_TYPES.DIGITAL)
             else:
                 return queued
-        elif item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
-            return self._publish_package_items(item_to_queue)
         elif item[ITEM_TYPE] not in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
             return self.publish(item_to_queue, SUBSCRIBER_TYPES.DIGITAL)
         else:
-            return self.publish(item_to_queue, SUBSCRIBER_TYPES.WIRE if item.get('is_take_item') else None)
+            return self.publish(item_to_queue, None)
 
     def _publish_package_items(self, package):
         """Publishes all items of a package recursively then publishes the package itself
@@ -96,21 +89,21 @@ class EnqueueService:
                         "Package item with id: {} has not been published.".format(guid))
 
                 subscribers, subscriber_codes, associations = self._get_subscribers_for_package_item(package_item)
-                digital_item_id = BasePublishService().get_digital_id_for_package_item(package_item)
+                package_item_id = package_item[config.ID_FIELD]
                 self._extend_subscriber_items(subscriber_items,
                                               subscribers,
                                               package_item,
-                                              digital_item_id,
+                                              package_item_id,
                                               subscriber_codes)
 
             for removed_id in removed_items:
                 package_item = archive_service.find_one(req=None, _id=removed_id)
                 subscribers, subscriber_codes, associations = self._get_subscribers_for_package_item(package_item)
-                digital_item_id = None
+                package_item_id = None
                 self._extend_subscriber_items(subscriber_items,
                                               subscribers,
                                               package_item,
-                                              digital_item_id,
+                                              package_item_id,
                                               subscriber_codes)
 
             queued = self.publish_package(package, target_subscribers=subscriber_items)
@@ -168,9 +161,7 @@ class EnqueueService:
         Override this method in the ArchivePublishService, ArchiveCorrectService and ArchiveKillService
 
         :param doc: Document to publish/correct/kill
-        :param target_media_type: dictate if the doc being queued is a Takes Package or an Individual Article.
-                Valid values are - Wire, Digital. If Digital then the doc being queued is a Takes Package and if Wire
-                then the doc being queues is an Individual Article.
+        :param target_media_type: Valid values are - Wire, Digital.
         :return: (list, list) List of filtered subscriber,
                 List of subscribers that have not received item previously (empty list in this case).
         """
@@ -180,16 +171,13 @@ class EnqueueService:
         """Queue the content for publishing.
 
         1. Get the subscribers.
-        2. Update the headline of wire stories with the sequence
-        3. Queue the content for subscribers
-        4. Sends notification if no formatter has found for any of the formats configured in Subscriber.
-        5. If not queued and not formatters then raise exception.
-        6. Publish the content to content api.
+        2. Queue the content for subscribers
+        3. Sends notification if no formatter has found for any of the formats configured in Subscriber.
+        4. If not queued and not formatters then raise exception.
+        5. Publish the content to content api.
 
         :param dict doc: document to publish
-        :param str target_media_type: dictate if the doc being queued is a Takes Package or an Individual Article.
-                Valid values are - Wire, Digital. If Digital then the doc being queued is a Takes Package and if Wire
-                then the doc being queues is an Individual Article.
+        :param str target_media_type: Valid values are - Wire, Digital.
         :return bool: if content is queued then True else False
         :raises PublishQueueError.item_not_queued_error:
                 If the nothing is queued.
@@ -198,21 +186,17 @@ class EnqueueService:
         subscribers, subscriber_codes, associations = self.get_subscribers(doc, target_media_type)
 
         # Step 2
-        if target_media_type == SUBSCRIBER_TYPES.WIRE:
-            self._update_headline_sequence(doc)
-
-        # Step 3
         no_formatters, queued = self.queue_transmission(deepcopy(doc), subscribers, subscriber_codes, associations)
 
-        # Step 4
+        # Step 3
         self._push_formatter_notification(doc, no_formatters)
 
-        # Step 5
+        # Step 4
         if not target_media_type and not queued:
             logger.error('Nothing is saved to publish queue for story: {} for action: {}'.
                          format(doc[config.ID_FIELD], self.publish_type))
 
-        # Step 6
+        # Step 5
         self.publish_content_api(doc, [s for s in subscribers if s.get('api_enabled')])
 
         return queued
@@ -280,13 +264,7 @@ class EnqueueService:
 
         if len(digital_subscribers) > 0:
             package = None
-            if not app.config.get('NO_TAKES', False) or self.takes_package_service.get_take_package_id(doc):
-                package = self.takes_package_service.get_take_package(doc)
-                package['item_id'] = package[config.ID_FIELD]
-                associations = self._resend_associations_to_subscribers(package, subscribers)
-                self._resend_to_subscribers(package, digital_subscribers, subscriber_codes, associations)
-            else:
-                self._resend_to_subscribers(doc, digital_subscribers, subscriber_codes, associations)
+            self._resend_to_subscribers(doc, digital_subscribers, subscriber_codes, associations)
 
             self.publish_content_api(package or doc,
                                      [subscriber for subscriber in digital_subscribers
@@ -326,7 +304,7 @@ class EnqueueService:
                              format(doc[config.ID_FIELD], 'resend'))
 
     def publish_package(self, package, target_subscribers):
-        """Publishes a given non-take package to given subscribers.
+        """Publishes a given package to given subscribers.
 
         For each subscriber updates the package definition with the wanted_items for that subscriber
         and removes unwanted_items that doesn't supposed to go that subscriber.
@@ -392,13 +370,12 @@ class EnqueueService:
 
                     for destination in self.get_destinations(subscriber):
                         embed_package_items = doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and \
-                            PACKAGE_TYPE not in doc and (destination.get('config') or {}).get('packaged', False)
+                            (destination.get('config') or {}).get('packaged', False)
                         if embed_package_items:
                             doc = self._embed_package_items(doc)
 
                         if doc.get(PUBLISHED_IN_PACKAGE) and \
-                                (destination.get('config') or {}).get('packaged', False) and \
-                                app.config.get('NO_TAKES'):
+                                (destination.get('config') or {}).get('packaged', False):
                             continue
 
                         # Step 2(a)
@@ -474,32 +451,14 @@ class EnqueueService:
                 ref['package_item'] = package_item
         return package
 
-    def _update_headline_sequence(self, doc):
-        """Updates the headline of the text story if there's any sequence value in it."""
-        if doc.get(SEQUENCE):
-            doc['headline'] = '{}={}'.format(doc['headline'], doc.get(SEQUENCE))
-
     def _get_subscribers_for_package_item(self, package_item):
         """Finds the list of subscribers for a given item in a package
 
         :param package_item: item in a package
         :return list: List of subscribers
-        :return string: Digital item id if there's one otherwise None
         """
-        if package_item[ITEM_TYPE] not in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
-            query = {'$and': [{'item_id': package_item[config.ID_FIELD]},
-                              {'publishing_action': package_item[ITEM_STATE]}]}
-        else:
-            package_item_takes_package = package_item
-            if not app.config.get('NO_TAKES', False):
-                package_item_takes_package = self.takes_package_service.get_take_package(package_item)
-                if not package_item_takes_package:
-                    # this item has not been published to digital subscribers so
-                    # the list of subscribers are empty
-                    return [], {}, {}
-
-            query = {'$and': [{'item_id': package_item_takes_package[config.ID_FIELD]},
-                              {'publishing_action': package_item_takes_package[ITEM_STATE]}]}
+        query = {'$and': [{'item_id': package_item[config.ID_FIELD]},
+                          {'publishing_action': package_item[ITEM_STATE]}]}
 
         return self._get_subscribers_for_previously_sent_items(query)
 
@@ -541,9 +500,7 @@ class EnqueueService:
 
         :param doc: Document to publish/kill/correct
         :param subscribers: List of Subscribers that might potentially get this document
-        :param target_media_type: dictate if the doc being queued is a Takes Package or an Individual Article.
-                Valid values are - Wire, Digital. If Digital then the doc being queued is a Takes Package and if Wire
-                then the doc being queues is an Individual Article.
+        :param target_media_type: Valid values are - Wire, Digital.
         :return: List of of filtered subscribers and list of product codes per subscriber.
         """
         filtered_subscribers = []
@@ -560,9 +517,9 @@ class EnqueueService:
 
         for subscriber in subscribers:
             if target_media_type and subscriber.get('subscriber_type', '') != SUBSCRIBER_TYPES.ALL:
-                can_send_takes_packages = subscriber['subscriber_type'] == SUBSCRIBER_TYPES.DIGITAL
-                if target_media_type == SUBSCRIBER_TYPES.WIRE and can_send_takes_packages or \
-                        target_media_type == SUBSCRIBER_TYPES.DIGITAL and not can_send_takes_packages:
+                can_send_digital = subscriber['subscriber_type'] == SUBSCRIBER_TYPES.DIGITAL
+                if target_media_type == SUBSCRIBER_TYPES.WIRE and can_send_digital or \
+                        target_media_type == SUBSCRIBER_TYPES.DIGITAL and not can_send_digital:
                     continue
 
             conforms, skip_filters = self.conforms_subscriber_targets(subscriber, doc)
@@ -646,9 +603,7 @@ class EnqueueService:
         :param list subscribers: list of subscriber that are going to receive parent item.
         :param dict doc: item with associations
         :param dict existing_associations: existing associations
-        :param target_media_type: dictate if the doc being queued is a Takes Package or an Individual Article.
-                Valid values are - Wire, Digital. If Digital then the doc being queued is a Takes Package and if Wire
-                then the doc being queues is an Individual Article.
+        :param target_media_type: Valid values are - Wire, Digital.
         """
         associations = {}
 
@@ -821,19 +776,19 @@ class EnqueueService:
                     return False
         return True
 
-    def _extend_subscriber_items(self, subscriber_items, subscribers, item, digital_item_id, subscriber_codes):
+    def _extend_subscriber_items(self, subscriber_items, subscribers, item, package_item_id, subscriber_codes):
         """Extends the subscriber_items with the given list of subscribers for the item
 
         :param subscriber_items: The existing list of subscribers
         :param subscribers: New subscribers that item has been published to - to be added
         :param item: item that has been published
-        :param digital_item_id: digital_item_id
+        :param package_item_id: package_item_id
         """
         item_id = item[config.ID_FIELD]
         for subscriber in subscribers:
             sid = subscriber[config.ID_FIELD]
             item_list = subscriber_items.get(sid, {}).get('items', {})
-            item_list[item_id] = digital_item_id
+            item_list[item_id] = package_item_id
             subscriber_items[sid] = {'subscriber': subscriber,
                                      'items': item_list,
                                      'codes': subscriber_codes.get(sid, [])}

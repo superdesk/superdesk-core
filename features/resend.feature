@@ -374,14 +374,10 @@ Feature: Resend
       "_items": [
         {"state": "pending", "content_type": "text", "destination": {"delivery_type": "email"},
         "subscriber_id": "sub-1", "item_id": "123", "item_version": 4},
-        {"state": "pending", "content_type": "composite", "destination": {"delivery_type": "email"},
-        "subscriber_id": "#subscribers._id#", "item_id": "#archive.123.take_package#", "item_version": 2}
+        {"state": "pending", "content_type": "text", "destination": {"delivery_type": "email"},
+        "subscriber_id": "#subscribers._id#", "item_id": "123", "item_version": 4}
       ]
     }
-    """
-    Given config update
-    """
-    {"NO_TAKES": true}
     """
     When we post to "/archive/#archive._id#/resend"
     """
@@ -398,10 +394,10 @@ Feature: Resend
       "_items": [
         {"state": "pending", "content_type": "text", "destination": {"delivery_type": "email"},
         "subscriber_id": "sub-1", "item_id": "123", "item_version": 4},
-        {"state": "pending", "content_type": "composite", "destination": {"delivery_type": "email"},
-        "subscriber_id": "#subscribers._id#", "item_id": "#archive.123.take_package#", "item_version": 2},
-        {"state": "pending", "content_type": "composite", "destination": {"delivery_type": "email"},
-        "subscriber_id": "#subscribers._id#", "item_id": "#archive.123.take_package#", "item_version": 2}
+        {"state": "pending", "content_type": "text", "destination": {"delivery_type": "email"},
+        "subscriber_id": "#subscribers._id#", "item_id": "123", "item_version": 4},
+        {"state": "pending", "content_type": "text", "destination": {"delivery_type": "email"},
+        "subscriber_id": "#subscribers._id#", "item_id": "123", "item_version": 4}
       ]
     }
     """
@@ -490,14 +486,10 @@ Feature: Resend
     """
     {
       "_items": [
-        {"state": "pending", "content_type": "composite",
-        "subscriber_id": "#subscribers._id#", "item_version": 2}
+        {"state": "pending", "content_type": "text",
+        "subscriber_id": "#subscribers._id#", "item_version": 4}
       ]
     }
-    """
-    Given config update
-    """
-    {"NO_TAKES": true}
     """
     When we post to "/archive/#archive._id#/resend"
     """
@@ -599,10 +591,10 @@ Feature: Resend
       "_items": [
         {"state": "pending", "content_type": "text", "destination": {"delivery_type": "email"},
         "subscriber_id": "sub-1", "item_id": "123", "item_version": 4},
-        {"state": "pending", "content_type": "composite", "destination": {"delivery_type": "email"},
-        "subscriber_id": "#sub2#", "item_id": "#archive.123.take_package#", "item_version": 2},
-        {"state": "success", "content_type": "composite", "destination": {"delivery_type": "content_api"},
-        "subscriber_id": "#sub2#", "item_id": "#archive.123.take_package#", "item_version": 2}
+        {"state": "pending", "content_type": "text", "destination": {"delivery_type": "email"},
+        "subscriber_id": "#sub2#", "item_id": "123", "item_version": 4},
+        {"state": "success", "content_type": "text", "destination": {"delivery_type": "content_api"},
+        "subscriber_id": "#sub2#", "item_id": "123", "item_version": 4}
       ]
     }
     """
@@ -632,25 +624,21 @@ Feature: Resend
       "_items": [
         {"state": "pending", "content_type": "text", "destination": {"delivery_type": "email"},
         "subscriber_id": "sub-1", "item_id": "123", "item_version": 4},
-        {"state": "pending", "content_type": "composite", "destination": {"delivery_type": "email"},
-        "subscriber_id": "#sub2#", "item_id": "#archive.123.take_package#", "item_version": 2},
-        {"state": "success", "content_type": "composite", "destination": {"delivery_type": "content_api"},
-        "subscriber_id": "#sub3#", "item_id": "#archive.123.take_package#", "item_version": 2}
+        {"state": "pending", "content_type": "text", "destination": {"delivery_type": "email"},
+        "subscriber_id": "#sub2#", "item_id": "123", "item_version": 4},
+        {"state": "success", "content_type": "text", "destination": {"delivery_type": "content_api"},
+        "subscriber_id": "#sub3#", "item_id": "123", "item_version": 4}
       ]
     }
     """
-    And we assert the content api item "#archive.123.take_package#" is published to subscriber "#sub2#"
-    And we assert the content api item "#archive.123.take_package#" is published to subscriber "#sub3#"
-    And we assert the content api item "#archive.123.take_package#" is not published to subscriber "sub-1"
+    And we assert the content api item "123" is published to subscriber "#sub2#"
+    And we assert the content api item "123" is published to subscriber "#sub3#"
+    And we assert the content api item "123" is not published to subscriber "sub-1"
 
   @auth
   @vocabulary
-  Scenario: Resend a published text story to a digital or all subscriber type with No Takes
-    Given config update
-    """
-    {"NO_TAKES": true}
-    """
-    And the "validators"
+  Scenario: Resend a published text story to a digital or all subscriber type
+    Given the "validators"
     """
     [{"_id": "publish_text", "act": "publish", "type": "text", "schema":{}},
     {"_id": "correct_text", "act": "correct", "type": "text", "schema":{}}]

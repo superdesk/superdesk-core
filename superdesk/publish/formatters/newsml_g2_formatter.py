@@ -22,7 +22,7 @@ from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, FORMATS, F
 from superdesk.utc import utcnow
 from superdesk.errors import FormatterError
 from superdesk.publish.formatters.nitf_formatter import NITFFormatter
-from superdesk.metadata.packages import PACKAGE_TYPE, REFS, RESIDREF, ROLE, GROUPS, GROUP_ID, ID_REF
+from superdesk.metadata.packages import REFS, RESIDREF, ROLE, GROUPS, GROUP_ID, ID_REF
 from superdesk.filemeta import get_filemeta
 from apps.archive.common import ARCHIVE, get_utc_schedule
 
@@ -85,7 +85,7 @@ class NewsMLG2Formatter(Formatter):
         :param artcile:
         :return: True is package
         """
-        return article[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and article.get(PACKAGE_TYPE, '') == ''
+        return article[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE
 
     def _format_header(self, article, news_message, pub_seq_num):
         """Creates the header element of the newsMessage.

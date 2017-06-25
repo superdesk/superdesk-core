@@ -36,7 +36,7 @@ Feature: News Items Archive
 
         When we patch given
         """
-        {"headline": "TEST 2", "urgency": 2, "more_coming": true}
+        {"headline": "TEST 2", "urgency": 2}
         """
 
         And we patch latest

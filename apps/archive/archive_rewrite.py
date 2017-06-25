@@ -20,7 +20,6 @@ from apps.archive.common import CUSTOM_HATEOAS, ITEM_CREATE, ARCHIVE, BROADCAST_
 from superdesk.metadata.utils import item_url
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
-from apps.packages.takes_package_service import TakesPackageService
 from apps.tasks import send_to
 
 logger = logging.getLogger(__name__)
@@ -50,8 +49,7 @@ class ArchiveRewriteService(Service):
         original = archive_service.find_one(req=None, _id=original_id)
         self._validate_rewrite(original, update_document)
 
-        digital = TakesPackageService().get_take_package(original)
-        rewrite = self._create_rewrite_article(original, digital,
+        rewrite = self._create_rewrite_article(original,
                                                existing_item=update_document,
                                                desk_id=doc.get('desk_id'))
 
@@ -70,7 +68,7 @@ class ArchiveRewriteService(Service):
 
             app.on_archive_item_updated({'rewrite_of': rewrite.get('rewrite_of')}, rewrite, ITEM_LINK)
 
-        self._add_rewritten_flag(original, digital, rewrite)
+        self._add_rewritten_flag(original, rewrite)
         get_resource_service('archive_broadcast').on_broadcast_master_updated(ITEM_CREATE,
                                                                               item=original,
                                                                               rewrite_id=ids[0])
@@ -101,9 +99,6 @@ class ArchiveRewriteService(Service):
         if not is_workflow_state_transition_valid('rewrite', original[ITEM_STATE]):
             raise InvalidStateTransitionError()
 
-        if not TakesPackageService().is_last_takes_package_item(original):
-            raise SuperdeskApiError.badRequestError(message="Only last take of the package can be rewritten.")
-
         if original.get('rewrite_of') and not (original.get(ITEM_STATE) in PUBLISH_STATES):
             raise SuperdeskApiError.badRequestError(message="Rewrite is not published. Cannot rewrite the story again.")
 
@@ -130,11 +125,10 @@ class ArchiveRewriteService(Service):
                 raise SuperdeskApiError.badRequestError("Rewrite item content profile does "
                                                         "not match with Original item.")
 
-    def _create_rewrite_article(self, original, digital, existing_item=None, desk_id=None):
-        """Creates a new story and sets the metadata from original and digital.
+    def _create_rewrite_article(self, original, existing_item=None, desk_id=None):
+        """Creates a new story and sets the metadata from original.
 
         :param dict original: original story
-        :param dict digital: digital version of the story
         :param dict existing_item: existing story that is being re-written
         :return:new story
         """
@@ -179,12 +173,8 @@ class ArchiveRewriteService(Service):
             # if True then reset to the default priority value.
             rewrite['priority'] = int(config.DEFAULT_PRIORITY_VALUE_FOR_MANUAL_ARTICLES)
 
-        if digital:  # check if there's digital
-            rewrite['rewrite_of'] = digital[config.ID_FIELD]
-            rewrite['rewrite_sequence'] = (digital.get('rewrite_sequence') or 0) + 1
-        else:  # if not use original's id
-            rewrite['rewrite_of'] = original[config.ID_FIELD]
-            rewrite['rewrite_sequence'] = (original.get('rewrite_sequence') or 0) + 1
+        rewrite['rewrite_of'] = original[config.ID_FIELD]
+        rewrite['rewrite_sequence'] = (original.get('rewrite_sequence') or 0) + 1
 
         if not existing_item:
             # send the document to the desk only if a new rewrite is created
@@ -192,31 +182,20 @@ class ArchiveRewriteService(Service):
 
             # if we are rewriting a published item then copy the body_html
             if original.get('state', '') in (CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED):
-                if digital:
-                    rewrite['body_html'] = digital.get('body_html', '')
-                else:
-                    rewrite['body_html'] = original.get('body_html', '')
+                rewrite['body_html'] = original.get('body_html', '')
 
         rewrite[ITEM_STATE] = CONTENT_STATE.PROGRESS
         self._set_take_key(rewrite)
         return rewrite
 
-    def _add_rewritten_flag(self, original, digital, rewrite):
+    def _add_rewritten_flag(self, original, rewrite):
         """Adds rewritten_by field to the existing published items.
 
         :param dict original: item on which rewrite is triggered
-        :param dict digital: digital item
         :param dict rewrite: rewritten document
         """
         get_resource_service('published').update_published_items(original[config.ID_FIELD],
                                                                  'rewritten_by', rewrite[config.ID_FIELD])
-        if digital:
-            # update the rewritten_by for digital
-            get_resource_service('published').update_published_items(digital[config.ID_FIELD], 'rewritten_by',
-                                                                     rewrite[config.ID_FIELD])
-            get_resource_service(ARCHIVE).system_update(digital[config.ID_FIELD],
-                                                        {'rewritten_by': rewrite[config.ID_FIELD]}, digital)
-            app.on_archive_item_updated({'rewritten_by': rewrite[config.ID_FIELD]}, digital, ITEM_REWRITE)
 
         # modify the original item as well.
         get_resource_service(ARCHIVE).system_update(original[config.ID_FIELD],

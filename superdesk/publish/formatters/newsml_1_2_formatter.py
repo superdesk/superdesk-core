@@ -19,7 +19,7 @@ from superdesk.errors import FormatterError
 from superdesk.etree import parse_html
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, ITEM_STATE, CONTENT_STATE,\
     GUID_FIELD
-from superdesk.metadata.packages import PACKAGE_TYPE, GROUP_ID, REFS, RESIDREF, ROLE, ROOT_GROUP
+from superdesk.metadata.packages import GROUP_ID, REFS, RESIDREF, ROLE, ROOT_GROUP
 from superdesk.utc import utcnow
 from flask import current_app as app
 from apps  .archive.common import get_utc_schedule
@@ -182,7 +182,7 @@ class NewsML12Formatter(Formatter):
             SubElement(metadata, 'Property', attrib={'FormalName': 'Exchange',
                                                      'Value': company.get('security_exchange', '')})
 
-        if article.get(ITEM_TYPE) == CONTENT_TYPE.COMPOSITE and article.get(PACKAGE_TYPE, '') == '':
+        if article.get(ITEM_TYPE) == CONTENT_TYPE.COMPOSITE:
             self._format_package(article, main_news_component)
         elif article.get(ITEM_TYPE) in {CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED, CONTENT_TYPE.COMPOSITE}:
             self._format_abstract(article, main_news_component)

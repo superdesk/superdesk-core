@@ -16,8 +16,7 @@ from flask import current_app as app
 import superdesk
 from superdesk import get_resource_service, config
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
-from superdesk.metadata.item import ITEM_STATE, CONTENT_TYPE, ITEM_TYPE, PUBLISH_STATES, GUID_FIELD, GUID_TAG
-from superdesk.metadata.packages import SEQUENCE, PACKAGE_TYPE
+from superdesk.metadata.item import ITEM_STATE, CONTENT_TYPE, ITEM_TYPE, GUID_FIELD, GUID_TAG
 from superdesk.notification import push_notification
 from superdesk.services import BaseService
 from superdesk.metadata.utils import item_url, generate_guid
@@ -25,7 +24,7 @@ from .common import get_user, get_expiry, item_operations, ITEM_OPERATION, set_s
 from superdesk.workflow import is_workflow_state_transition_valid
 from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
 from apps.archive.common import ITEM_EVENT_ID, ITEM_UNLINK
-from apps.packages import PackageService, TakesPackageService
+from apps.packages import PackageService
 from apps.archive.archive_rewrite import ArchiveRewriteService
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE
 from superdesk.utc import get_expiry_date
@@ -72,20 +71,19 @@ class ArchiveSpikeService(BaseService):
     def on_update(self, updates, original):
         updates[ITEM_OPERATION] = ITEM_SPIKE
         self._validate_item(original)
-        self._validate_take(original)
         self.update_rewrite(original)
         set_sign_off(updates, original=original)
 
     def _validate_item(self, original):
         """Validates that an item can be deleted.
 
-        Raises an exception if the item is linked in a non-take package, the idea being that you don't whant to
+        Raises an exception if the item is linked in a package, the idea being that you don't want to
         inadvertently remove the item from the packages, this force that to be done as a conscious action.
 
         :param original:
         :raise: An exception or nothing
         """
-        packages = [x.get(PACKAGE) for x in original.get(LINKED_IN_PACKAGES, []) if not x.get(PACKAGE_TYPE)]
+        packages = [x.get(PACKAGE) for x in original.get(LINKED_IN_PACKAGES, [])]
         if packages:
             query = {'$and': [{config.ID_FIELD: {'$in': packages}}]}
             cursor = get_resource_service(ARCHIVE).get_from_mongo(req=None, lookup=query)
@@ -94,11 +92,6 @@ class ArchiveSpikeService(BaseService):
                     message="The item \"{}\" is in a package".format(original.get('slugline', '')) +
                             " it needs to be removed before the item can be spiked")
 
-    def _validate_take(self, original):
-        takes_service = TakesPackageService()
-        if not takes_service.is_last_takes_package_item(original):
-            raise SuperdeskApiError.badRequestError(message="Only last take of the package can be spiked.")
-
     def update_rewrite(self, original):
         """Removes the reference from the rewritten story in published collection."""
         rewrite_service = ArchiveRewriteService()
@@ -106,45 +99,13 @@ class ArchiveSpikeService(BaseService):
             rewrite_service._clear_rewritten_flag(original.get(ITEM_EVENT_ID),
                                                   original[config.ID_FIELD], 'rewritten_by')
 
-        # write the rewritten_by to the take before spiked
+        # write the rewritten_by to the story before spiked
         archive_service = get_resource_service(ARCHIVE)
-        published_service = get_resource_service('published')
-        takes_service = TakesPackageService()
-        takes_package = takes_service.get_take_package(original)
 
-        if takes_package and takes_package.get(SEQUENCE, 0) > 1 and original.get('rewritten_by'):
-            # get the rewritten by
-            rewritten_by = archive_service.find_one(req=None, _id=original.get('rewritten_by'))
-            # get the take
-            take_id = takes_service.get_take_by_take_no(original,
-                                                        take_no=takes_package.get(SEQUENCE) - 1,
-                                                        package=takes_package)
-            take = archive_service.find_one(req=None, _id=take_id)
-
-            # update the take and takes package with rewritten_by
-            if take.get('rewritten_by') != rewritten_by[config.ID_FIELD]:
-                if take.get(ITEM_STATE) in PUBLISH_STATES:
-                    published_service.update_published_items(take_id, 'rewritten_by', rewritten_by[config.ID_FIELD])
-
-                archive_service.system_update(take[config.ID_FIELD],
-                                              {'rewritten_by': rewritten_by[config.ID_FIELD]}, take)
-
-            if takes_package.get('rewritten_by') != rewritten_by[config.ID_FIELD]:
-                if takes_package.get(ITEM_STATE) in PUBLISH_STATES:
-                    published_service.update_published_items(takes_package.get(config.ID_FIELD),
-                                                             'rewritten_by', rewritten_by[config.ID_FIELD])
-
-                archive_service.system_update(takes_package[config.ID_FIELD],
-                                              {'rewritten_by': rewritten_by[config.ID_FIELD]}, takes_package)
-
-            if rewritten_by.get('rewrite_of') != takes_package.get(config.ID_FIELD):
-                archive_service.system_update(rewritten_by[config.ID_FIELD],
-                                              {'rewrite_of': takes_package.get(config.ID_FIELD)},
-                                              rewritten_by)
-        elif original.get('rewritten_by') or (takes_package and takes_package.get('rewritten_by')):
+        if original.get('rewritten_by'):
             # you are spike the story from which the rewrite was triggered.
             # in this case both rewrite_of and rewritten_by are published.
-            rewrite_id = original.get('rewritten_by') or takes_package.get('rewritten_by')
+            rewrite_id = original.get('rewritten_by')
             rewritten_by = archive_service.find_one(req=None, _id=rewrite_id)
             archive_service.system_update(rewrite_id, {'rewrite_of': None, 'rewrite_sequence': 0}, rewritten_by)
             app.on_archive_item_updated({'rewrite_of': None, 'rewrite_sequence': 0}, original, ITEM_UNLINK)

@@ -146,13 +146,6 @@ Default: ``'Short name for your organisation'``
 .. versionchanged:: 1.8
     Change default value to ``'Short name for your organisation'``.
 
-``NO_TAKES``
-^^^^^^^^^^^^
-
-Default: ``False``
-
-Disable creation of takes packages.
-
 ``MAX_TRANSMIT_RETRY_ATTEMPT``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
