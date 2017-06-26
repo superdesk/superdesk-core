@@ -176,3 +176,14 @@ Feature: Vocabularies
     """
     {"items": [{"width": 300, "height": 200}]}
     """
+
+  @auth
+  Scenario: Create new vocabulary
+    When we post to "vocabularies"
+    """
+    {"_id": "foo", "type": "manageable", "display_name": "Foo", "items": []}
+    """
+    Then we get new resource
+    """
+    {"service": {"all": true}}
+    """
