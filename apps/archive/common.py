@@ -329,6 +329,31 @@ def set_dateline(updates, original):
                                                                  updates['dateline'].get('date'), source)
 
 
+def clear_rewritten_flag(event_id, rewrite_id, rewrite_field):
+    """Clears rewritten_by or rewrite_of field from the existing published and archive items.
+
+    :param str event_id: event id of the document
+    :param str rewrite_id: rewrite id of the document
+    :param str rewrite_field: field name 'rewrite_of' or 'rewritten_by'
+    """
+    publish_service = get_resource_service('published')
+    archive_service = get_resource_service(ARCHIVE)
+
+    published_rewritten_stories = publish_service.get_rewritten_items_by_event_story(event_id,
+                                                                                     rewrite_id,
+                                                                                     rewrite_field)
+    processed_items = set()
+    for doc in published_rewritten_stories:
+        doc_id = doc.get(config.ID_FIELD)
+        publish_service.update_published_items(doc_id, rewrite_field, None)
+        if doc_id not in processed_items:
+            # clear the flag from the archive as well.
+            archive_item = archive_service.find_one(req=None, _id=doc_id)
+            archive_service.system_update(doc_id, {rewrite_field: None}, archive_item)
+            processed_items.add(doc_id)
+            app.on_archive_item_updated({rewrite_field: None}, archive_item, ITEM_UNLINK)
+
+
 def update_dates_for(doc):
     for item in ['firstcreated', 'versioncreated']:
         doc.setdefault(item, utcnow())
