@@ -27,11 +27,9 @@ from .archive_lock import ArchiveLockResource, ArchiveUnlockResource, ArchiveLoc
 from .archive_spike import ArchiveUnspikeResource, ArchiveSpikeService, ArchiveSpikeResource, ArchiveUnspikeService
 from apps.common.components.utils import register_component
 from apps.item_lock.components.item_lock import ItemLock
-from apps.item_lock.components.item_hold import ItemHold
 from apps.common.models.utils import register_model
 from apps.item_lock.models.item import ItemModel
 from apps.common.models.io.eve_proxy import EveProxy
-from .archive_link import ArchiveLinkResource, ArchiveLinkService
 from .archive_rewrite import ArchiveRewriteResource, ArchiveRewriteService
 
 logger = logging.getLogger(__name__)
@@ -71,10 +69,6 @@ def init_app(app):
     service = UserContentService(endpoint_name, backend=superdesk.get_backend())
     UserContentResource(endpoint_name, app=app, service=service)
 
-    endpoint_name = 'archive_link'
-    service = ArchiveLinkService(endpoint_name, backend=superdesk.get_backend())
-    ArchiveLinkResource(endpoint_name, app=app, service=service)
-
     endpoint_name = 'archive_rewrite'
     service = ArchiveRewriteService(endpoint_name, backend=superdesk.get_backend())
     ArchiveRewriteResource(endpoint_name, app=app, service=service)
@@ -86,7 +80,6 @@ def init_app(app):
     from apps.item_autosave.components.item_autosave import ItemAutosave
     from apps.item_autosave.models.item_autosave import ItemAutosaveModel
     register_component(ItemLock(app))
-    register_component(ItemHold(app))
     register_model(ItemModel(EveProxy(superdesk.get_backend())))
     register_component(ItemAutosave(app))
     register_model(ItemAutosaveModel(EveProxy(superdesk.get_backend())))
@@ -102,7 +95,6 @@ def init_app(app):
     superdesk.privilege(name='rewrite', label='Update', description='Update a published content')
 
     superdesk.intrinsic_privilege(ArchiveUnlockResource.endpoint_name, method=['POST'])
-    superdesk.intrinsic_privilege(ArchiveLinkResource.endpoint_name, method=['POST', 'DELETE'])
 
 
 @celery.task(soft_time_limit=600)

@@ -43,7 +43,7 @@ Feature: Link content
             "rewritten_by": "#REWRITE_ID#"
         }
         """
-        When we delete link "archive/#REWRITE_ID#/link"
+        When we delete link "archive/#REWRITE_ID#/rewrite"
         Then we get response code 204
         When we get "/archive/#REWRITE_ID#"
         Then we get "rewrite_of" not populated
@@ -113,7 +113,7 @@ Feature: Link content
             "rewritten_by": "#REWRITE_ID#"
         }
         """
-        When we delete link "archive/#REWRITE_ID#/link"
+        When we delete link "archive/#REWRITE_ID#/rewrite"
         Then we get response code 204
         When we get "/archive/#REWRITE_ID#"
         Then we get "rewrite_of" not populated
@@ -164,7 +164,7 @@ Feature: Link content
             "task": {"user": "#user._id#", "desk": "#desks._id#"}
         }
         """
-        When we delete link "archive/456/link"
+        When we delete link "archive/456/rewrite"
         Then we get error 400
         """
         {"_message": "Only updates can be unlinked!"}

@@ -40,10 +40,10 @@ ITEM_URGENCY = 'urgency'
 
 #: item internal states
 content_state = ['draft', 'ingested', 'routed', 'fetched', 'submitted', 'in_progress', 'spiked',
-                 'published', 'killed', 'corrected', 'scheduled', 'on_hold']
+                 'published', 'killed', 'corrected', 'scheduled']
 CONTENT_STATE = namedtuple('CONTENT_STATE', ['DRAFT', 'INGESTED', 'ROUTED', 'FETCHED', 'SUBMITTED', 'PROGRESS',
                                              'SPIKED', 'PUBLISHED', 'KILLED', 'CORRECTED',
-                                             'SCHEDULED', 'HOLD'])(*content_state)
+                                             'SCHEDULED'])(*content_state)
 PUBLISH_STATES = {CONTENT_STATE.PUBLISHED, CONTENT_STATE.SCHEDULED, CONTENT_STATE.CORRECTED, CONTENT_STATE.KILLED}
 
 FORMAT = 'format'

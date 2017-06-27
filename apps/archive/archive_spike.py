@@ -23,9 +23,8 @@ from superdesk.metadata.utils import item_url, generate_guid
 from .common import get_user, get_expiry, item_operations, ITEM_OPERATION, set_sign_off
 from superdesk.workflow import is_workflow_state_transition_valid
 from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
-from apps.archive.common import ITEM_EVENT_ID, ITEM_UNLINK
+from apps.archive.common import ITEM_EVENT_ID, ITEM_UNLINK, clear_rewritten_flag
 from apps.packages import PackageService
-from apps.archive.archive_rewrite import ArchiveRewriteService
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE
 from superdesk.utc import get_expiry_date
 
@@ -94,10 +93,8 @@ class ArchiveSpikeService(BaseService):
 
     def update_rewrite(self, original):
         """Removes the reference from the rewritten story in published collection."""
-        rewrite_service = ArchiveRewriteService()
         if original.get('rewrite_of') and original.get(ITEM_EVENT_ID):
-            rewrite_service._clear_rewritten_flag(original.get(ITEM_EVENT_ID),
-                                                  original[config.ID_FIELD], 'rewritten_by')
+            clear_rewritten_flag(original.get(ITEM_EVENT_ID), original[config.ID_FIELD], 'rewritten_by')
 
         # write the rewritten_by to the story before spiked
         archive_service = get_resource_service(ARCHIVE)

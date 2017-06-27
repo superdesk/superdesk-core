@@ -9,17 +9,20 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+from apps.auth import get_user
 from eve.versioning import resolve_document_version
 from flask import request, current_app as app
+from apps.archive import ArchiveSpikeService
 from superdesk import get_resource_service, Service, config
 from superdesk.metadata.item import ITEM_STATE, EMBARGO, CONTENT_STATE, CONTENT_TYPE, \
-    ITEM_TYPE, PUBLISH_STATES, ASSOCIATIONS
+    ITEM_TYPE, PUBLISH_STATES, ASSOCIATIONS, GUID_TAG
 from superdesk.resource import Resource, build_custom_hateoas
 from apps.archive.common import CUSTOM_HATEOAS, ITEM_CREATE, ARCHIVE, BROADCAST_GENRE, ITEM_REWRITE, \
     ITEM_UNLINK, ITEM_LINK, insert_into_versions
-from superdesk.metadata.utils import item_url
+from superdesk.metadata.utils import item_url, generate_guid
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
+from superdesk.notification import push_notification
 from apps.tasks import send_to
 
 logger = logging.getLogger(__name__)
@@ -35,8 +38,8 @@ class ArchiveRewriteResource(Resource):
     }
 
     url = 'archive/<{0}:original_id>/rewrite'.format(item_url)
-    resource_methods = ['POST']
-    privileges = {'POST': 'rewrite'}
+    resource_methods = ['POST', 'DELETE']
+    privileges = {'POST': 'rewrite', 'DELETE': 'rewrite'}
 
 
 class ArchiveRewriteService(Service):
@@ -202,30 +205,6 @@ class ArchiveRewriteService(Service):
                                                     {'rewritten_by': rewrite[config.ID_FIELD]}, original)
         app.on_archive_item_updated({'rewritten_by': rewrite[config.ID_FIELD]}, original, ITEM_REWRITE)
 
-    def _clear_rewritten_flag(self, event_id, rewrite_id, rewrite_field):
-        """Clears rewritten_by or rewrite_of field from the existing published and archive items.
-
-        :param str event_id: event id of the document
-        :param str rewrite_id: rewrite id of the document
-        :param str rewrite_field: field name 'rewrite_of' or 'rewritten_by'
-        """
-        publish_service = get_resource_service('published')
-        archive_service = get_resource_service(ARCHIVE)
-
-        published_rewritten_stories = publish_service.get_rewritten_items_by_event_story(event_id,
-                                                                                         rewrite_id,
-                                                                                         rewrite_field)
-        processed_items = set()
-        for doc in published_rewritten_stories:
-            doc_id = doc.get(config.ID_FIELD)
-            publish_service.update_published_items(doc_id, rewrite_field, None)
-            if doc_id not in processed_items:
-                # clear the flag from the archive as well.
-                archive_item = archive_service.find_one(req=None, _id=doc_id)
-                archive_service.system_update(doc_id, {rewrite_field: None}, archive_item)
-                processed_items.add(doc_id)
-                app.on_archive_item_updated({rewrite_field: None}, archive_item, ITEM_UNLINK)
-
     def _set_take_key(self, rewrite):
         """Sets the anpa take key of the rewrite with ordinal.
 
@@ -244,3 +223,36 @@ class ArchiveRewriteService(Service):
             return str(n) + 'th'
         else:
             return str(n) + {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, "th")
+
+    def delete(self, lookup):
+        target_id = request.view_args['original_id']
+        archive_service = get_resource_service(ARCHIVE)
+        target = archive_service.find_one(req=None, _id=target_id)
+        updates = {}
+
+        if target.get('rewrite_of'):
+            # remove the rewrite info
+            ArchiveSpikeService().update_rewrite(target)
+
+        if not target.get('rewrite_of'):
+            # there is nothing to do
+            raise SuperdeskApiError.badRequestError("Only updates can be unlinked!")
+
+        if target.get('rewrite_of'):
+            updates['rewrite_of'] = None
+
+        if target.get('anpa_take_key'):
+            updates['anpa_take_key'] = None
+
+        if target.get('rewrite_sequence'):
+            updates['rewrite_sequence'] = None
+
+        if target.get('sequence'):
+            updates['sequence'] = None
+
+        updates['event_id'] = generate_guid(type=GUID_TAG)
+
+        archive_service.system_update(target_id, updates, target)
+        user = get_user(required=True)
+        push_notification('item:unlink', item=target_id, user=str(user.get(config.ID_FIELD)))
+        app.on_archive_item_updated(updates, target, ITEM_UNLINK)
