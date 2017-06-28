@@ -64,22 +64,17 @@ Following functions can be used:
 .. automodule:: apps.auth
     :members:
 
+Superdesk OAuth
+---------------
 
-Google Authentication
----------------------
+.. automodule:: superdesk.auth
 
-.. versionadded:: 1.8
+Superdesk Google OAuth
+----------------------
 
-You can use Google for authentication, first you have to create credentials in `Google API console <https://console.developers.google.com/apis/credentials>`_:
+.. automodule:: superdesk.auth.oauth
 
-- set your client URL as *Authorized JavaScript origins*::
+Superdesk SAML Auth
+-------------------
 
-    https://example.com
-
-- set server URL + ``/login/google_authorized`` as *Authorized redirect URIs*::
-
-    https://example.com/login/google_authorized
-
-Once configured you will find there *Client ID* and *Client secret*, use both to populate :ref:`settings.google_oauth`.
-
-On client enable google auth via ``{auth: {google: true}}`` in ``superdesk.config.js``.
+.. automodule:: superdesk.auth.saml

@@ -521,3 +521,22 @@ Default: ``''``
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Default: ``''``
+
+SAML Auth Settings
+------------------
+
+.. versionadded:: 1.9
+
+.. _settings.saml_path:
+
+``SAML_PATH``
+^^^^^^^^^^^^^
+
+Default: ``None``
+
+``SAML_LABEL``
+^^^^^^^^^^^^^^
+
+Default: ``'Single Sign On'``
+
+Label on auth button for SAML.

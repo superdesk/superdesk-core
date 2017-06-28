@@ -6,8 +6,7 @@ Feature: Client Config
         """
         {
             "config": {
-                "xmpp_auth": false,
-                "google_auth": false
+                "xmpp_auth": false
             }
         }
         """
