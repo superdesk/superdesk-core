@@ -480,7 +480,7 @@ def init_subject_schema(schema, default, mandatory, allowed, fields_map):
     schema[subject]['default'] = default
     schema[subject]['mandatory_in_list']['scheme'] = mandatory
     schema[subject]['schema']['schema']['scheme']['allowed'] = allowed
-    schema[subject]['required'] = mandatory['subject'] is not None
+    schema[subject]['required'] = mandatory.get('subject') is not None
 
 
 def init_editor_required(editor, schema):

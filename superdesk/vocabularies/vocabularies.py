@@ -54,7 +54,7 @@ class VocabulariesResource(Resource):
         'type': {
             'type': 'string',
             'required': True,
-            'allowed': ['manageable', 'unmanageable']
+            'allowed': ['manageable', 'unmanageable'],
         },
         'items': {
             'type': 'list',
@@ -73,6 +73,7 @@ class VocabulariesResource(Resource):
         },
         'service': {
             'type': 'dict',
+            'default': {'all': True},
         },
         'priority': {
             'type': 'integer'
@@ -89,8 +90,8 @@ class VocabulariesResource(Resource):
 
     item_url = 'regex("[\w]+")'
     item_methods = ['GET', 'PATCH']
-    resource_methods = ['GET']
-    privileges = {'PATCH': 'vocabularies', }
+    resource_methods = ['GET', 'POST']
+    privileges = {'PATCH': 'vocabularies', 'POST': 'vocabularies'}
 
 
 class VocabulariesService(BaseService):
