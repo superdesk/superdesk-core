@@ -174,3 +174,49 @@ class ValidateMandatoryInListTest(TestCase):
             },
         ])
         self.assertEqual(errors, [[]])
+
+    def test_validate_field_sms(self):
+        self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
+            'sms': {
+                "minlength": 10,
+                "required": True,
+                "enabled": True,
+                "type": "string",
+                "maxlength": 160,
+                "nullable": True
+            }}}])
+        service = ValidateService()
+        errors = service.create([
+            {
+                'act': 'test',
+                'type': 'test',
+                'validate': {'profile': 'foo',
+                             'flags': {'marked_for_sms': True},
+                             'sms_message': 'short'
+                             },
+            },
+        ])
+        self.assertEqual(['SMS is too short'], errors[0])
+
+    def test_validate_field_sms_not_enabled(self):
+        self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
+            'sms': {
+                "minlength": 10,
+                "required": True,
+                "enabled": True,
+                "type": "string",
+                "maxlength": 160,
+                "nullable": True
+            }}}])
+        service = ValidateService()
+        errors = service.create([
+            {
+                'act': 'test',
+                'type': 'test',
+                'validate': {'profile': 'foo',
+                             'flags': {'marked_for_sms': False},
+                             'sms_message': 'short'
+                             },
+            },
+        ])
+        self.assertEqual(errors, [[]])

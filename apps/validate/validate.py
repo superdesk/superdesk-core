@@ -172,6 +172,18 @@ class ValidateService(superdesk.Service):
             if 'description_text' in doc['associations']['featuremedia']:
                 doc['media_description'] = doc['associations']['featuremedia']['description_text']
 
+    def _process_sms(self, doc, schema):
+        """Apply the SMS validation to the sms_message value if the document is flagged for SMS
+        :param doc:
+        :param schema:
+        :return:
+        """
+        if doc.get('flags', {}).get('marked_for_sms', False):
+            doc['sms'] = doc.get('sms_message', '')
+        else:
+            # remove it from the valiadation it is not required
+            schema.pop('sms', None)
+
     def _get_validator_schema(self, validator):
         """Get schema for given validator.
 
@@ -183,12 +195,14 @@ class ValidateService(superdesk.Service):
         use_headline = kwargs and 'headline' in kwargs
         validators = self._get_validators(doc)
         for validator in validators:
+            validation_schema = self._get_validator_schema(validator)
             self._sanitize_fields(doc['validate'], validator)
             self._process_media(doc['validate'])
+            self._process_sms(doc['validate'], validation_schema)
             v = SchemaValidator()
             v.allow_unknown = True
             try:
-                v.validate(doc['validate'], self._get_validator_schema(validator))
+                v.validate(doc['validate'], validation_schema)
             except TypeError as e:
                 logger.exception('Invalid validator schema value "%s" for ' % str(e))
             error_list = v.errors
