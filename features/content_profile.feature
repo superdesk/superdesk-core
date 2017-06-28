@@ -94,6 +94,11 @@ Feature: Content Profile
                     "enabled": false,
                     "order": 1
                 },
+                "language": {
+                    "sdWidth": "half",
+                    "enabled": false,
+                    "order": 1
+                },
                 "headline": {
                     "formatOptions": ["underline", "anchor", "bold", "removeFormat"],
                     "enabled": true,
@@ -487,6 +492,11 @@ Feature: Content Profile
                     "enabled": false,
                     "order": 1,
                     "sdWidth": "full"
+                },
+                "language": {
+                    "enabled": false,
+                    "order": 1,
+                    "sdWidth": "half"
                 },
                 "dateline": {
                     "enabled": false,
@@ -909,6 +919,11 @@ Feature: Content Profile
                 },
                 "keywords": {
                     "sdWidth": "full",
+                    "order": 1,
+                    "enabled": false
+                },
+                "language": {
+                    "sdWidth": "half",
                     "order": 1,
                     "enabled": false
                 },
