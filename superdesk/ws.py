@@ -11,7 +11,8 @@
 
 
 import logging
-import logging.handlers
+
+from superdesk.factory import get_app
 from superdesk.websockets_comms import SocketCommunication
 
 logger = logging.getLogger(__name__)
@@ -33,9 +34,5 @@ def create_server(config):
 
 
 if __name__ == '__main__':
-    config = {
-        'WS_HOST': '0.0.0.0',
-        'WS_PORT': '5100',
-        'BROKER_URL': 'redis://localhost:6379'
-    }
-    create_server(config)
+    app = get_app()
+    create_server(app.config)

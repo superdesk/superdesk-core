@@ -12,17 +12,18 @@ import datetime
 import traceback
 import superdesk
 import requests
+import logging
+
 from flask import current_app as app
 
 from superdesk.errors import IngestApiError
 from superdesk.etree import etree, ParseError
 from superdesk.io.registry import register_feeding_service
 from superdesk.io.feeding_services.http_service import HTTPFeedingService
-from superdesk.logging import logger
 from superdesk.utc import utcnow
 from urllib.parse import urlparse, urlunparse
 
-
+logger = logging.getLogger(__name__)
 requests.packages.urllib3.disable_warnings()
 
 
