@@ -4,12 +4,10 @@ import hermes
 import hermes.backend
 import hermes.backend.dict
 import hermes.backend.redis
-import logging
 
 from flask import current_app as app
 from superdesk import json_utils
-
-logger = logging.getLogger(__name__)
+from superdesk.logging import logger
 
 
 class SuperdeskRedisBackend(hermes.backend.redis.Backend):

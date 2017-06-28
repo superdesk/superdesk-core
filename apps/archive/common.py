@@ -31,11 +31,11 @@ from superdesk.workflow import set_default_state, is_workflow_state_transition_v
 from superdesk.metadata.item import GUID_NEWSML, GUID_FIELD, GUID_TAG, not_analyzed
 from superdesk.metadata.utils import generate_guid
 from superdesk.errors import SuperdeskApiError, IdentifierGenerationError
+from superdesk.logging import logger
 from apps.auth import get_user
 
 
 logger = logging.getLogger(__name__)
-
 ARCHIVE = 'archive'
 CUSTOM_HATEOAS = {'self': {'title': 'Archive', 'href': '/archive/{_id}'}}
 ITEM_OPERATION = 'operation'

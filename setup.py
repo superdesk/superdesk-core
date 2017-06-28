@@ -16,7 +16,7 @@ LONG_DESCRIPTION = "Superdesk Server Core"
 install_requires = [
     'eve>=0.6,<=0.7.2',
     'eve-elastic==2.1',
-    'flask>=0.10,<=0.12',
+    'flask>=0.10,<0.13',
     'flask-oauthlib>=0.9.3,<0.10',
     'flask-mail>=0.9,<0.10',
     'flask-script>=2.0.5,<3.0',
@@ -72,7 +72,6 @@ setup(
     package_data=package_data,
     include_package_data=True,
     install_requires=install_requires,
-    entry_points={'console_scripts': ['superdesk=superdesk.cli:main']},
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Web Environment',

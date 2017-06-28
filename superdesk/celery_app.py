@@ -16,10 +16,8 @@ Created on May 29, 2014
 
 import redis
 import arrow
-import logging
 import werkzeug
 import superdesk
-
 from bson import ObjectId
 from celery import Celery
 from kombu.serialization import register
@@ -27,8 +25,9 @@ from eve.io.mongo import MongoJSONEncoder
 from eve.utils import str_to_date
 from flask import json, current_app as app
 from superdesk.errors import SuperdeskError
+from superdesk.logging import logger
 
-logger = logging.getLogger(__name__)
+
 celery = Celery(__name__)
 TaskBase = celery.Task
 

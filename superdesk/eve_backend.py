@@ -9,28 +9,16 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-import logging
 import eve.io.base
 
 from flask import current_app as app, json
 from eve.utils import document_etag, config, ParsedRequest
 from eve.io.mongo import MongoJSONEncoder
 from superdesk.utc import utcnow
+from superdesk.logging import logger, item_msg
 from eve.methods.common import resolve_document_etag
 from elasticsearch.exceptions import RequestError, NotFoundError
 from superdesk.errors import SuperdeskApiError
-
-
-logger = logging.getLogger(__name__)
-
-
-def item_msg(msg, item):
-    """Return a message with item id appended.
-
-    :param msg: Original message
-    :param item: Item object
-    """
-    return '{} item={}'.format(msg, str(item.get('_id', item.get('guid'))))
 
 
 class EveBackend():

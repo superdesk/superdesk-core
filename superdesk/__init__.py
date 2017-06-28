@@ -10,36 +10,20 @@
 
 """Superdesk"""
 
-import os
-
-
-# this should run early so that new relic can patch further imports
-if os.environ.get('NEW_RELIC_LICENSE_KEY'):
-    try:
-        import newrelic.agent
-        if os.path.exists('newrelic.ini'):
-            newrelic.agent.initialize('newrelic.ini')
-        else:
-            newrelic.agent.initialize()
-    except ImportError:
-        pass
-
-
-import blinker  # noqa
-
+import blinker
+import logging as logging_lib
 from flask import abort, json, Blueprint, current_app as app  # noqa
 from flask_script import Command as BaseCommand, Option  # noqa
-from werkzeug.exceptions import HTTPException  # noqa
+from werkzeug.exceptions import HTTPException
 from eve.utils import config  # noqa
 from eve.methods.common import document_link  # noqa
 
-from .eve_backend import EveBackend  # noqa
+from .eve_backend import EveBackend
 from .datalayer import SuperdeskDataLayer  # noqa
 from .services import BaseService as Service  # noqa
 from .resource import Resource  # noqa
 from .privilege import privilege, intrinsic_privilege, get_intrinsic_privileges  # noqa
 from .workflow import *  # noqa
-from .logging_config import logger  # noqa
 
 __version__ = '1.9-dev'
 
@@ -55,6 +39,7 @@ eve_backend = EveBackend()
 default_user_preferences = dict()
 default_session_preferences = dict()
 signals = blinker.Namespace()
+logger = logging_lib.getLogger(__name__)
 
 # core signals
 item_published = signals.signal('item:published')
