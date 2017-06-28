@@ -11,16 +11,19 @@
 
 import arrow
 import magic
+import base64
 import hashlib
 import logging
 import requests
+import requests.exceptions
+
+from urllib.parse import urljoin
 from bson import ObjectId
 from io import BytesIO
 from PIL import Image
-from flask import json
+from flask import json, url_for
 from .image import get_meta, fix_orientation
 from .video import get_meta as video_meta
-import base64
 from superdesk.errors import SuperdeskApiError
 
 logger = logging.getLogger(__name__)
@@ -39,7 +42,17 @@ def get_file_name(file):
 
 
 def download_file_from_url(url):
-    rv = requests.get(url, timeout=15)
+    """Download file from given url.
+
+    In case url is relative it will prefix it with current host.
+
+    :param url: file url
+    """
+    try:
+        rv = requests.get(url, timeout=15)
+    except requests.exceptions.MissingSchema:  # any route will do here, we only need host
+        rv = requests.get(urljoin(url_for('static', filename='x', _external=True), url), timeout=15)
+
     if rv.status_code not in (200, 201):
         raise SuperdeskApiError.internalError('Failed to retrieve file from URL: %s' % url)
 
