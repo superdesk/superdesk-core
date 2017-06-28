@@ -8,9 +8,8 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import logging
 import superdesk
-
+from superdesk.logging import logger
 from superdesk.utc import utcnow
 from superdesk.notification import push_notification
 from apps.content import push_expired_notification
@@ -18,9 +17,6 @@ from superdesk.errors import ProviderError
 from superdesk.stats import stats
 from superdesk.lock import lock, unlock
 from superdesk.io.registry import registered_feeding_services
-
-
-logger = logging.getLogger(__name__)
 
 
 class RemoveExpiredContent(superdesk.Command):

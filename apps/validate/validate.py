@@ -8,16 +8,14 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import logging
 import superdesk
 
 from eve.io.mongo import Validator
 from superdesk.metadata.item import ITEM_TYPE
+from superdesk.logging import logger
 from superdesk.etree import get_text
 
 REQUIRED_FIELD = 'is a required field'
-
-logger = logging.getLogger(__name__)
 
 
 def check_json(doc, field, value):

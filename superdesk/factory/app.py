@@ -26,7 +26,7 @@ from superdesk.datalayer import SuperdeskDataLayer  # noqa
 from superdesk.errors import SuperdeskError, SuperdeskApiError
 from superdesk.factory.sentry import SuperdeskSentry
 from superdesk.io import registered_feeding_services
-from superdesk.logging_config import configure_logging
+from superdesk.logging import configure_logging
 from superdesk.storage import AmazonMediaStorage, SuperdeskGridFSMediaStorage
 from superdesk.validator import SuperdeskValidator
 
@@ -51,26 +51,18 @@ class SuperdeskEve(eve.Eve):
                 create_index(self, resource, name, list_of_keys, index_options)
 
 
-def get_app(config=None, media_storage=None, config_object=None, settings='settings'):
+def get_app(config=None, media_storage=None, config_object=None):
     """App factory.
 
     :param config: configuration that can override config from ``default_settings.py``
     :param media_storage: media storage class to use
     :param config_object: config object to load (can be module name, module or an object)
-    :param settings: settings module name
     :return: a new SuperdeskEve app instance
     """
 
     abs_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     app_config = flask.Config(abs_path)
     app_config.from_object('superdesk.default_settings')
-
-    try:
-        if settings:
-            app_config.from_object(settings)
-    except ImportError:
-        pass
-
     app_config.setdefault('APP_ABSPATH', abs_path)
     app_config.setdefault('DOMAIN', {})
     app_config.setdefault('SOURCES', {})

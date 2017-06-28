@@ -2,19 +2,17 @@
 import os
 import re
 import socket
-import logging
 
 from mongolock import MongoLock
 from werkzeug.local import LocalProxy
 from flask import current_app as app
+from superdesk.logging import logger
 
 
 _lock_resource_settings = {
     'internal_resource': True,
     'versioning': False,
 }
-
-logger = logging.getLogger(__name__)
 
 
 class SuperdeskMongoLock(MongoLock):

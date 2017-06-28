@@ -8,11 +8,9 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import yaml
 import logging
-
-from logging.config import dictConfig
-
+import logging.config
+import yaml
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('superdesk')
@@ -27,6 +25,15 @@ logging.getLogger('superdesk').setLevel(logging.INFO)
 logging.getLogger('superdesk.websockets_comms').setLevel(logging.WARNING)
 
 
+def item_msg(msg, item):
+    """Return a message with item id appended.
+
+    :param msg: Original message
+    :param item: Item object
+    """
+    return '{} item={}'.format(msg, str(item.get('_id', item.get('guid'))))
+
+
 def configure_logging(file_path):
     """
     Configure logging.
@@ -39,6 +46,7 @@ def configure_logging(file_path):
     try:
         with open(file_path, 'r') as f:
             logging_dict = yaml.load(f)
-        dictConfig(logging_dict)
-    except (FileNotFoundError, yaml.MarkedYAMLError):
+
+        logging.config.dictConfig(logging_dict)
+    except:
         logger.warn('Cannot load logging config. File: %s', file_path)
