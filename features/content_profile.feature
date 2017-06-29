@@ -175,6 +175,11 @@ Feature: Content Profile
                 "sms": {
                     "enabled": false,
                     "order": 12
+                },
+                "usageterms": {
+                	"order": 1,
+                	"enabled": false,
+                	"sdWidth": "full"
                 }
             },
             "schema": {
@@ -775,6 +780,11 @@ Feature: Content Profile
                     "order": 11,
                     "enabled": true,
                     "formatOptions": ["underline", "anchor", "bold", "removeFormat"]
+                },
+                "usageterms": {
+                	"order": 1,
+                	"enabled": false,
+                	"sdWidth": "full"
                 }
             }
         }
@@ -976,6 +986,11 @@ Feature: Content Profile
                 "byline": {
                     "order": 14,
                     "enabled": false
+                },
+                "usageterms": {
+                	"order": 1,
+                	"enabled": false,
+                	"sdWidth": "full"
                 }
             },
             "schema": {
