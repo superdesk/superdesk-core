@@ -22,6 +22,9 @@ class DefaultSchema(schema.Schema):
     #: keywords
     keywords = schema.ListField()
 
+    #: language
+    language = schema.StringField()
+
     #: slugline
     slugline = schema.StringField(maxlength=24)
 
@@ -105,6 +108,7 @@ DEFAULT_SCHEMA = dict(DefaultSchema)
 DEFAULT_EDITOR = {
     'slugline': {'order': 0, 'sdWidth': 'full', 'enabled': True},
     'keywords': {'order': 1, 'sdWidth': 'full', 'enabled': False},
+    'language': {'order': 1, 'sdWidth': 'half', 'enabled': False},
     'genre': {'order': 2, 'sdWidth': 'half', 'enabled': True},
     'anpa_take_key': {'order': 3, 'sdWidth': 'half', 'enabled': False},
     'place': {'order': 4, 'sdWidth': 'half', 'enabled': True},
