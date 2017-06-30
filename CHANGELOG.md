@@ -1,5 +1,15 @@
 # Superdesk Server Changelog
 
+## [1.8.4] 2017-06-30
+
+### Fixed
+
+- Fix bad field type in Wordpress import.
+- Fix fetching media from relative URLs.
+- Remove SMS flag on duplication.
+- Fix item history for scheduled items.
+- Ingested content should preserve its source on duplication/rewrite. 
+
 ## [1.8.3] 2017-06-19
 
 ### Fixed
