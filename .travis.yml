@@ -33,6 +33,7 @@ before_script: >
     df -h
     && sudo sed -i 's\enabled: true\enabled: false\' /etc/mongod.conf
     && sudo service mongod restart
+    && sudo service elasticsearch restart
 
 script:
     - flake8
