@@ -45,7 +45,7 @@ class WPWXRFeedParser(XMLFeedParser):
         self.default_mapping = OrderedDict([
             ('guid', 'guid'),
             ('item_id', 'guid'),
-            ('_current_version', lambda _: "1"),
+            ('_current_version', lambda _: 1),
             ('versioncreated', {'xpath': 'pubDate/text()',
                                 'filter': parsedate_to_datetime}),
             ('author', 'dc:creator'),
