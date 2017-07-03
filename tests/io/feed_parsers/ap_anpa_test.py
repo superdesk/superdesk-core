@@ -59,3 +59,8 @@ class ANPATestCase(TestCase):
         item = self.open('ap_anpa-4.tst')
         self.assertEqual(item['ednote'], '(Minor edits. A longer version of this story is available. '
                                          'With AP Photos. With BC-AS--China-Lawyer Trial.)')
+
+    def test_alert(self):
+        item = self.open('ap_anpa-5.tst')
+        self.assertTrue(item['headline'], 'Hawaii files court challenge to Trump administration''s definition of '
+                                          'close U.S. relationship needed to avoid travel ban.')

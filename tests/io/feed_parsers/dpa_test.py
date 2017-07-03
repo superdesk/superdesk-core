@@ -43,3 +43,11 @@ class DPAIptcTestCase(TestCase):
             self.assertTrue(item['ednote'].find('## Editorial contacts'))
             self.assertEqual(item['dateline']['source'], 'dpa')
             self.assertEqual(item['dateline']['located']['city'], 'Berlin')
+
+    def test_open_dpa_copyright(self):
+        with self.app.app_context():
+            item = self.open('dpa_copyright.txt')
+            self.assertEqual('text', item['type'])
+            self.assertEqual('rs', item['anpa_category'][0]['qcode'])
+            self.assertEqual('(Achtung)', item['headline'])
+            self.assertEqual('Impressum', item['slugline'])
