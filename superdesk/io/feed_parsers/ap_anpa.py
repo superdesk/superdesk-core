@@ -67,6 +67,8 @@ class AP_ANPAFeedParser(ANPAFeedParser):
         self.ap_derive_dateline(item)
         self.map_category_codes(item)
         self.map_sluglines_to_subjects(item)
+        if 'headline' not in item:
+            self._fix_headline(item)
         return item
 
     def map_category_codes(self, item):
@@ -158,6 +160,26 @@ class AP_ANPAFeedParser(ANPAFeedParser):
                 if m:
                     item['ednote'] = m.group(0).strip()[:-1].replace('Eds: ', '')
                     break
+
+    def _fix_headline(self, item):
+        """
+        AP Alerts do not get a healdine parsed out so pick up the first par of the content and put it in the headline
+        :param item:
+        :return:
+        """
+        try:
+            html = item.get('body_html')
+            if html:
+                parsed = parse_html(html, content='html')
+                pars = parsed.xpath('/html/div/child::*')
+                if pars and len(pars) > 0:
+                    city, source, the_rest = pars[0].text.partition(' (AP) _ ')
+                    if the_rest:
+                        item['headline'] = the_rest
+                    else:
+                        item['headline'] = pars[0].text
+        except:
+            pass
 
 
 register_feed_parser(AP_ANPAFeedParser.NAME, AP_ANPAFeedParser())

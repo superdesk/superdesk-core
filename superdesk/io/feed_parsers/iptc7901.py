@@ -35,7 +35,8 @@ class IPTC7901FeedParser(FileFeedParser):
         try:
             with open(file_path, 'rb') as f:
                 lines = [line for line in f]
-                return re.match(b'\x01([a-zA-Z]*)([0-9]*) (.) (.) ([0-9]*) ([a-zA-Z0-9 ]*)', lines[0], flags=re.I)
+                return re.match(b'\x01([a-zA-Z]*)([0-9]*) (.) ([A-Z]{1,3}) ([0-9]*) ([a-zA-Z0-9 ]*)',
+                                lines[0], flags=re.I)
         except:
             return False
 
@@ -47,7 +48,7 @@ class IPTC7901FeedParser(FileFeedParser):
             with open(file_path, 'rb') as f:
                 lines = [line for line in f]
             # parse first header line
-            m = re.match(b'\x01([a-zA-Z]*)([0-9]*) (.) (.) ([0-9]*) ([a-zA-Z0-9 ]*)', lines[0], flags=re.I)
+            m = re.match(b'\x01([a-zA-Z]*)([0-9]*) (.) ([A-Z]{1,3}) ([0-9]*) ([a-zA-Z0-9 ]*)', lines[0], flags=re.I)
             if m:
                 item['original_source'] = m.group(1).decode('latin-1', 'replace')
                 item['ingest_provider_sequence'] = m.group(2).decode()
