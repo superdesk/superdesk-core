@@ -534,6 +534,8 @@ def apply_schema(item):
 
     :param item: item to apply schema to
     """
+    if item.get('type') == 'event':
+        return item.copy()
     try:
         profile = get_resource_service('content_types').find_one(req=None, _id=item['profile'])
         schema = profile['schema']

@@ -9,11 +9,9 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
-
-from bson import ObjectId
-
 import superdesk
 
+from bson import ObjectId
 from flask import current_app as app
 from superdesk import get_resource_service, config
 from superdesk.utc import utcnow

@@ -162,6 +162,14 @@ class Resource():
         }
 
     @staticmethod
+    def int(required=False, nullable=False):
+        return {
+            'type': 'integer',
+            'required': required,
+            'nullable': nullable,
+        }
+
+    @staticmethod
     def not_analyzed_field(type='string'):
         return {
             'type': type,

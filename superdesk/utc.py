@@ -62,14 +62,16 @@ def local_to_utc(local_tz_name, local_datetime):
 
 def utc_to_local(local_tz_name, utc_datetime):
     """
-    COnverts utc datetime to local
+    Converts utc datetime to local
     :param local_tz_name: Name of the local timezone
     :param utc_datetime: Value of the utc datetime
     :return: local datetime
     """
     if utc_datetime and local_tz_name:
+        if not utc_datetime.tzinfo:
+            utc_datetime = utc_datetime.replace(tzinfo=pytz.utc)
         local_tz = pytz.timezone(local_tz_name)
-        local_dt = utc_datetime.replace(tzinfo=pytz.utc).astimezone(local_tz)
+        local_dt = utc_datetime.astimezone(local_tz)
         return local_tz.normalize(local_dt)
 
 

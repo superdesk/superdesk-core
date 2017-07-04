@@ -49,7 +49,7 @@ class EnqueueService:
                                                                           SUBSCRIBER_TYPES.ALL}))
     package_service = PackageService()
 
-    def _enqueue_item(self, item):
+    def _enqueue_item(self, item, content_type=None):
         item_to_queue = deepcopy(item)
         if item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
             queued = self._publish_package_items(item_to_queue)
@@ -57,6 +57,8 @@ class EnqueueService:
                 return self.publish(doc=item_to_queue, target_media_type=SUBSCRIBER_TYPES.DIGITAL)
             else:
                 return queued
+        elif content_type:
+            self.publish(item_to_queue, None, content_type)
         elif item[ITEM_TYPE] not in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
             return self.publish(item_to_queue, SUBSCRIBER_TYPES.DIGITAL)
         else:
@@ -139,13 +141,15 @@ class EnqueueService:
         else:
             return [], []
 
-    def enqueue_item(self, item):
+    def enqueue_item(self, item, content_type=None):
         """Creates the corresponding entries in the publish queue for the given item
 
+        :param item: Item to enqueue
+        :param content_type: item content type
         :return bool: True if item is queued else false.
         """
         try:
-            return self._enqueue_item(item)
+            return self._enqueue_item(item, content_type)
         except SuperdeskApiError as e:
             raise e
         except KeyError as e:
@@ -167,7 +171,7 @@ class EnqueueService:
         """
         raise NotImplementedError()
 
-    def publish(self, doc, target_media_type=None):
+    def publish(self, doc, target_media_type=None, content_type=None):
         """Queue the content for publishing.
 
         1. Get the subscribers.
@@ -178,6 +182,7 @@ class EnqueueService:
 
         :param dict doc: document to publish
         :param str target_media_type: Valid values are - Wire, Digital.
+        :param str content_type: doc content type, None for content
         :return bool: if content is queued then True else False
         :raises PublishQueueError.item_not_queued_error:
                 If the nothing is queued.
@@ -197,7 +202,8 @@ class EnqueueService:
                          format(doc[config.ID_FIELD], self.publish_type))
 
         # Step 5
-        self.publish_content_api(doc, [s for s in subscribers if s.get('api_enabled')])
+        if not content_type:
+            self.publish_content_api(doc, [s for s in subscribers if s.get('api_enabled')])
 
         return queued
 
@@ -218,7 +224,7 @@ class EnqueueService:
         if len(no_formatters) > 0:
             user = get_user()
             push_notification('item:publish:wrong:format',
-                              item=str(doc[config.ID_FIELD]), unique_name=doc['unique_name'],
+                              item=str(doc[config.ID_FIELD]), unique_name=doc.get('unique_name'),
                               desk=str(doc.get('task', {}).get('desk', '')),
                               user=str(user.get(config.ID_FIELD, '')),
                               formats=no_formatters)

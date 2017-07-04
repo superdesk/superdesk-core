@@ -8,6 +8,12 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+"""Superdesk Publish
+
+This module handles transmission of items to respective destinations.
+Items must be inserted to publish queue in order to get transmitted.
+"""
+
 import logging
 from collections import namedtuple
 
