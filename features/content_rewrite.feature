@@ -1683,3 +1683,114 @@ Feature: Rewrite content
         "source": "YYY"
       }
       """
+
+    @auth
+    Scenario: Associate an update preserves original source
+      Given "desks"
+      """
+      [{"name": "Sports"}]
+      """
+      And "ingest_providers"
+      """
+      [
+        { "_id": "1", "name": "agency", "source": "YYY"},
+        { "_id": "2", "name": "agency", "source": "XXX"}
+      ]
+      """
+      And the "validators"
+      """
+        [
+        {
+            "schema": {},
+            "type": "text",
+            "act": "publish",
+            "_id": "publish_text"
+        },
+        {
+            "_id": "publish_composite",
+            "act": "publish",
+            "type": "composite",
+            "schema": {}
+        }
+        ]
+      """
+      And "archive"
+      """
+      [{"guid": "123", "type": "text", "headline": "test", "_current_version": 1, "state": "fetched",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "subject":[{"qcode": "17004000", "name": "Statistics"}],
+        "body_html": "Test Document body", "genre": [{"name": "Article", "qcode": "Article"}],
+        "flags": {"marked_for_legal": true},
+        "body_footer": "Suicide Call Back Service 1300 659 467",
+        "place": [{"qcode" : "ACT", "world_region" : "Oceania", "country" : "Australia",
+        "name" : "ACT", "state" : "Australian Capital Territory"}],
+        "target_subscribers": [{"_id": "abc"}],
+        "company_codes" : [{"qcode" : "1PG", "security_exchange" : "ASX", "name" : "1-PAGE LIMITED"}],
+        "ingest_provider": "1", "source": "YYY"
+      },
+      {"guid": "456", "type": "text", "headline": "test", "_current_version": 1, "state": "fetched",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "subject":[{"qcode": "17004000", "name": "Statistics"}],
+        "body_html": "Test Document body", "genre": [{"name": "Article", "qcode": "Article"}],
+        "flags": {"marked_for_legal": true},
+        "body_footer": "Suicide Call Back Service 1300 659 467",
+        "place": [{"qcode" : "ACT", "world_region" : "Oceania", "country" : "Australia",
+        "name" : "ACT", "state" : "Australian Capital Territory"}],
+        "target_subscribers": [{"_id": "abc"}],
+        "company_codes" : [{"qcode" : "1PG", "security_exchange" : "ASX", "name" : "1-PAGE LIMITED"}],
+        "ingest_provider": "2", "source": "XXX"
+      }
+      ]
+      """
+      When we post to "/stages"
+      """
+      [
+        {
+        "name": "another stage",
+        "description": "another stage",
+        "task_status": "in_progress",
+        "desk": "#desks._id#"
+        }
+      ]
+      """
+      When we rewrite "123"
+      """
+      {
+        "update": {"_id": "456", "type": "text", "headline": "test", "_current_version": 1, "state": "fetched",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "subject":[{"qcode": "17004000", "name": "Statistics"}],
+        "body_html": "Test Document body", "genre": [{"name": "Article", "qcode": "Article"}],
+        "flags": {"marked_for_legal": true},
+        "body_footer": "Suicide Call Back Service 1300 659 467",
+        "place": [{"qcode" : "ACT", "world_region" : "Oceania", "country" : "Australia",
+        "name" : "ACT", "state" : "Australian Capital Territory"}],
+        "target_subscribers": [{"_id": "abc"}],
+        "company_codes" : [{"qcode" : "1PG", "security_exchange" : "ASX", "name" : "1-PAGE LIMITED"}],
+        "ingest_provider": "2", "source": "XXX"
+        }
+      }
+      """
+      When we get "/archive/#REWRITE_ID#"
+      Then we get existing resource
+      """
+      {
+        "_id": "#REWRITE_ID#",
+        "rewrite_of": "123",
+        "headline": "test",
+        "rewrite_sequence": 1,
+        "_current_version": 1,
+        "source": "XXX",
+        "ingest_provider": "2", "source": "XXX"
+      }
+      """
+      When we get "/archive/123"
+      Then we get existing resource
+      """
+      {
+        "_id": "123",
+        "rewritten_by": "#REWRITE_ID#",
+        "place": [{"qcode" : "ACT"}],
+        "target_subscribers": [{"_id": "abc"}],
+        "ingest_provider": "1", "source": "YYY"
+      }
+      """
