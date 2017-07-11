@@ -185,5 +185,5 @@ Feature: Vocabularies
     """
     Then we get new resource
     """
-    {"service": {"all": true}}
+    {"_id": "foo", "type": "manageable", "display_name": "Foo", "items": []}
     """
