@@ -10,10 +10,10 @@
 
 import logging
 import json
-import mimetypes
 import bson
 import gridfs
 from eve.io.mongo.media import GridFSMediaStorage
+from superdesk.utils import sha
 
 
 logger = logging.getLogger(__name__)
@@ -34,15 +34,24 @@ class SuperdeskGridFSMediaStorage(GridFSMediaStorage):
                     logger.exception('Failed to load metadata for file: %s with key: %s and value: %s', _id, k, v)
         return media_file
 
+    def media_id(self, filename, content_type=None, version=True):
+        """Get media id for given filename.
+
+        It can be used by async task to first generate id upload file later.
+
+        :param filename: unique file name
+        """
+        try:
+            return bson.ObjectId(str(filename)[:24])  # keep content hash
+        except bson.errors.InvalidId:
+            return bson.ObjectId(sha(str(filename))[:24])
+
     def url_for_media(self, media_id, content_type=None):
         """Return url for given media id.
 
         :param media_id: media id from media_id method
         """
-        ext = mimetypes.guess_extension(content_type or '') or ''
-        if ext in ('.jpe', '.jpeg'):
-            ext = '.jpg'
-        return self.app.upload_url(str(media_id) + ext)
+        return self.app.upload_url(str(media_id))
 
     def url_for_download(self, media_id, content_type=None):
         """Return url for download.

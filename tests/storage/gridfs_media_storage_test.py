@@ -8,7 +8,6 @@ from superdesk.upload import bp, upload_url
 from superdesk.datalayer import SuperdeskDataLayer
 from superdesk.storage import SuperdeskGridFSMediaStorage
 from superdesk.utc import utcnow
-from superdesk.utils import sha
 from datetime import timedelta
 
 
@@ -24,18 +23,17 @@ class GridFSMediaStorageTestCase(unittest.TestCase):
         self.app.register_blueprint(bp)
         self.app.upload_url = upload_url
 
+    def test_media_id(self):
+        filename = 'some-file'
+        media_id = self.media.media_id(filename)
+        self.assertIsInstance(media_id, bson.ObjectId)
+        self.assertEqual(media_id, self.media.media_id(filename))
+
     def test_url_for_media(self):
-        _id = bson.ObjectId(sha('test')[:24])
+        _id = self.media.media_id('test')
         with self.app.app_context():
             url = self.media.url_for_media(_id)
         self.assertEqual('http://localhost/upload-raw/%s' % _id, url)
-
-    def test_url_for_media_content_type(self):
-        _id_str = '1' * 24
-        _id = bson.ObjectId(_id_str)
-        with self.app.app_context():
-            url = self.media.url_for_media(_id, "image/jpeg")
-        self.assertEqual('http://localhost/upload-raw/{}.jpg'.format(_id_str), url)
 
     def test_put_media_with_id(self):
         data = io.StringIO("test data")
