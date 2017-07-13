@@ -59,7 +59,7 @@ class PublishQueueResource(Resource):
             'type': 'integer'
         },
         # publish_schedule is to indicate the item schedule datetime.
-        # entries in the queue are created after schedule has elasped.
+        # entries in the queue are created after schedule has elapsed.
         'publish_schedule': {
             'type': 'datetime'
         },

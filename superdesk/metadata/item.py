@@ -27,10 +27,10 @@ pub_status = ['usable', 'withhold', 'canceled']
 PUB_STATUS = namedtuple('PUBSTATUS', ['USABLE', 'HOLD', 'CANCELED'])(*pub_status)
 
 ITEM_TYPE = 'type'
-content_type = ['text', 'preformatted', 'audio', 'video', 'picture', 'graphic', 'composite']
+content_type = ['text', 'preformatted', 'audio', 'video', 'picture', 'graphic', 'composite', 'event']
 CONTENT_TYPE = namedtuple('CONTENT_TYPE',
                           ['TEXT', 'PREFORMATTED', 'AUDIO', 'VIDEO',
-                           'PICTURE', 'GRAPHIC', 'COMPOSITE'])(*content_type)
+                           'PICTURE', 'GRAPHIC', 'COMPOSITE', 'EVENT'])(*content_type)
 
 MEDIA_TYPES = ('audio', 'video', 'picture', 'graphic')
 

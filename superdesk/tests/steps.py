@@ -2292,3 +2292,8 @@ def we_assert_that_associated_item_for_subscriber(context, item_id, embedded_id,
         assert embedded_id in (item.get('associations') or {}), '{} association not found.'.format(embedded_id)
         assert subscriber not in (item['associations'][embedded_id] or {}).get('subscribers', []), \
             '{} subscriber found in associations {}'.format(subscriber, embedded_id)
+
+
+@then('file exists "{path}"')
+def then_file_exists(context, path):
+    assert os.path.isfile(path), '{} is not a file'.format(path)
