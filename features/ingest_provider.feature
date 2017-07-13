@@ -31,7 +31,7 @@ Feature: Ingest Provider
         Then we get notifications
         """
         [
-          {"event": "create", "extra": {"_dest": [{"user_id": "#CONTEXT_USER_ID#", "read": false}]}},
+          {"event": "activity", "extra": {"_dest": [{"user_id": "#CONTEXT_USER_ID#", "read": false}]}},
           {"event": "ingest_provider:create", "extra": {"provider_id": "#ingest_providers._id#"}}
         ]
         """
@@ -99,7 +99,7 @@ Feature: Ingest Provider
          """
         Then we get notifications
         """
-        [{"event": "update", "extra": {"_dest": [{"user_id": "#CONTEXT_USER_ID#", "read": false}]}},
+        [{"event": "activity", "extra": {"_dest": [{"user_id": "#CONTEXT_USER_ID#", "read": false}]}},
          {"event": "ingest_provider:create", "extra": {"provider_id": "#ingest_providers._id#"}},
          {"event": "ingest_provider:update", "extra": {"provider_id": "#ingest_providers._id#"}}]
         """
@@ -153,7 +153,7 @@ Feature: Ingest Provider
          """
         And we get notifications
         """
-        [{"event": "create", "extra": {"_dest": [{"user_id": "#CONTEXT_USER_ID#", "read": false}]}},
+        [{"event": "activity", "extra": {"_dest": [{"user_id": "#CONTEXT_USER_ID#", "read": false}]}},
          {"event": "ingest_provider:create", "extra": {"provider_id": "#ingest_providers._id#"}},
          {"event": "ingest_provider:update", "extra": {"provider_id": "#ingest_providers._id#"}}]
         """
@@ -239,7 +239,7 @@ Feature: Ingest Provider
         And we get notifications
         """
         [
-          {"event": "delete", "extra": {"_dest": [{"user_id": "#CONTEXT_USER_ID#", "read": false}]}},
+          {"event": "activity", "extra": {"_dest": [{"user_id": "#CONTEXT_USER_ID#", "read": false}]}},
           {"event": "ingest_provider:delete", "extra": {"provider_id": "#ingest_providers._id#"}}
         ]
         """

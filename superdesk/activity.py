@@ -186,8 +186,6 @@ def add_activity(activity_name, msg, resource=None, item=None, notify=None, noti
         'resource': resource
     }
 
-    name = ActivityResource.endpoint_name
-
     user = getattr(g, 'user', None)
     if user:
         activity['user'] = user.get('_id')
@@ -197,11 +195,9 @@ def add_activity(activity_name, msg, resource=None, item=None, notify=None, noti
 
     if notify:
         activity['recipients'] = [{'user_id': ObjectId(_id), 'read': False} for _id in notify]
-        name = activity_name
 
     if notify_desks:
         activity['recipients'].extend([{'desk_id': ObjectId(_id), 'read': False} for _id in notify_desks])
-        name = activity_name
 
     if item:
         activity['item'] = str(item.get('guid', item.get('_id')))
@@ -212,7 +208,7 @@ def add_activity(activity_name, msg, resource=None, item=None, notify=None, noti
     get_resource_service(ActivityResource.endpoint_name).post([activity])
 
     if can_push_notification:
-        push_notification(name, _dest=activity['recipients'])
+        push_notification(ActivityResource.endpoint_name, _dest=activity['recipients'], activity=activity)
 
     return activity
 
