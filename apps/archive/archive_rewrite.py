@@ -137,7 +137,7 @@ class ArchiveRewriteService(Service):
         """
         rewrite = dict()
 
-        fields = ['family_id', 'event_id', 'flags', 'language', ASSOCIATIONS, 'ingest_provider', 'source']
+        fields = ['family_id', 'event_id', 'flags', 'language', ASSOCIATIONS]
 
         if existing_item:
             # for associate an existing file as update merge subjects
@@ -147,6 +147,9 @@ class ArchiveRewriteService(Service):
                                   if subject.get('qcode') not in unique_subjects]
             rewrite['subject'].extend(subjects)
         else:
+            # ingest provider and source to be retained for new item
+            fields.extend(['ingest_provider', 'source'])
+
             if original.get('profile'):
                 content_type = get_resource_service('content_types').find_one(req=None, _id=original['profile'])
                 extended_fields = list(content_type['schema'].keys())
