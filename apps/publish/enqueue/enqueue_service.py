@@ -58,7 +58,7 @@ class EnqueueService:
             else:
                 return queued
         elif content_type:
-            self.publish(item_to_queue, None, content_type)
+            return self.publish(item_to_queue, None, content_type)
         elif item[ITEM_TYPE] not in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
             return self.publish(item_to_queue, SUBSCRIBER_TYPES.DIGITAL)
         else:
