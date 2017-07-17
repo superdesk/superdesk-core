@@ -10,6 +10,7 @@
 
 """Upload module"""
 import logging
+import os.path
 import superdesk
 from eve.utils import config
 from superdesk.errors import SuperdeskApiError
@@ -38,6 +39,7 @@ def get_upload_as_data_uri_bc(media_id):
 
 @bp.route('/upload-raw/<path:media_id>', methods=['GET'])
 def get_upload_as_data_uri(media_id):
+    media_id, _ = os.path.splitext(media_id)
     media_file = app.media.get(media_id, 'upload')
     if media_file:
         data = wrap_file(request.environ, media_file, buffer_size=1024 * 256)
