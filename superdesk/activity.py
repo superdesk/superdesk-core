@@ -76,6 +76,13 @@ class ActivityResource(Resource):
         'label': 'Send notifications via email',
         'category': 'notifications',
     })
+    superdesk.register_default_user_preference('desktop:notification', {
+        'type': 'bool',
+        'enabled': True,
+        'default': False,
+        'label': 'Allow Desktop Notifications',
+        'category': 'notifications',
+    })
 
 
 class ActivityService(BaseService):
