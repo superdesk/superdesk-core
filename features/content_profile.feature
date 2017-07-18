@@ -1142,7 +1142,8 @@ Feature: Content Profile
             "schema": {
                 "genre": {
                     "type": "list",
-                    "required": false
+                    "required": false,
+                    "nullable": true
                 },
                 "subject": {
                     "schema": {
@@ -1150,7 +1151,8 @@ Feature: Content Profile
                             "scheme": {
                                 "allowed": ["category"],
                                 "required": true,
-                                "type": "string"
+                                "type": "string",
+                                "nullable": true
                             }
                         },
                         "type": "dict"
