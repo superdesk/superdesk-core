@@ -58,6 +58,7 @@ class DefaultSchema(schema.Schema):
             'scheme': {
                 'type': 'string',
                 'required': True,
+                'nullable': True,
                 'allowed': []
             },
             'service': {'nullable': True},
@@ -493,7 +494,7 @@ def init_subject_schema(schema, default, mandatory, allowed, fields_map):
 
 def init_editor_required(editor, schema):
     for field in schema:
-        if editor[field] is not None and schema[field] is not None and schema[field].get('required') is not None:
+        if editor.get(field) and schema.get(field) and schema[field].get('required') is not None:
             editor[field]['required'] = schema[field]['required']
             if schema[field]['required']:
                 if (schema[field].get('minlength', 0) or 0) == 0:
