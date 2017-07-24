@@ -58,6 +58,7 @@ class NinjsFormatterTest(TestCase):
             'company_codes': [{'name': 'YANCOAL AUSTRALIA LIMITED', 'qcode': 'YAL', 'security_exchange': 'ASX'}],
             'genre': [{'name': 'Article', 'qcode': 'article'}],
             'flags': {'marked_for_legal': True},
+            'extra': {'foo': 'test'},
         }
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
         expected = {
@@ -85,6 +86,7 @@ class NinjsFormatterTest(TestCase):
                               'symbols': [{'ticker': 'YAL', 'exchange': 'ASX'}]}],
             'genre': [{'name': 'Article', 'code': 'article'}],
             'signal': [{'name': 'Content Warning', 'code': 'cwarn', 'scheme': 'http://cv.iptc.org/newscodes/signal/'}],
+            'extra': {'foo': 'test'},
         }
         self.assertEqual(json.loads(doc), expected)
 

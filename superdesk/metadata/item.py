@@ -506,6 +506,10 @@ metadata_schema = {
             'enabled': False,
         }
     },
+
+    'extra': {
+        'type': 'dict',
+    }
 }
 
 metadata_schema['lock_user']['versioned'] = False

@@ -187,3 +187,14 @@ Feature: Vocabularies
     """
     {"_id": "foo", "type": "manageable", "display_name": "Foo", "items": []}
     """
+
+  @auth
+  Scenario: Create new custom field with system field id
+    When we post to "vocabularies"
+    """
+    {"_id": "headline", "field_type": "text", "type": "manageable", "display_name": "Foo", "items": []}
+    """
+    Then we get error 400
+    """
+    {"_issues": {"_id": {"conflict": 1}}}
+    """
