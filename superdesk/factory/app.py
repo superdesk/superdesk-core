@@ -51,12 +51,13 @@ class SuperdeskEve(eve.Eve):
                 create_index(self, resource, name, list_of_keys, index_options)
 
 
-def get_app(config=None, media_storage=None, config_object=None):
+def get_app(config=None, media_storage=None, config_object=None, init_elastic=None):
     """App factory.
 
     :param config: configuration that can override config from ``default_settings.py``
     :param media_storage: media storage class to use
     :param config_object: config object to load (can be module name, module or an object)
+    :param init_elastic: obsolete config - kept there for BC
     :return: a new SuperdeskEve app instance
     """
 
