@@ -6,7 +6,9 @@ Feature: Client Config
         """
         {
             "config": {
-                "xmpp_auth": false
+                "xmpp_auth": false,
+                "attachments_max_files": 10,
+                "attachments_max_size": 8388608
             }
         }
         """

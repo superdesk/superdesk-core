@@ -509,7 +509,18 @@ metadata_schema = {
 
     'extra': {
         'type': 'dict',
-    }
+    },
+
+    'attachments': {
+        'type': 'list',
+        'nullable': True,
+        'schema': {
+            'type': 'dict',
+            'schema': {
+                'attachment': Resource.rel('attachments', nullable=False),
+            },
+        },
+    },
 }
 
 metadata_schema['lock_user']['versioned'] = False
