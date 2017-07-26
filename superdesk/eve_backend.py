@@ -35,6 +35,8 @@ class EveBackend():
         item = backend.find_one(endpoint_name, req=req, **lookup)
         search_backend = self._lookup_backend(endpoint_name, fallback=True)
         if search_backend:
+            # set the parent for the parent child in elastic search
+            self._set_parent(endpoint_name, item, lookup)
             item_search = search_backend.find_one(endpoint_name, req=req, **lookup)
             if item is None and item_search:
                 item = item_search
@@ -195,7 +197,9 @@ class EveBackend():
             if not backend.find_one(endpoint_name, req=None, _id=id) and search_backend:
                 # item is in elastic, not in mongo - not good
                 logger.warn("Item is missing in mongo resource=%s id=%s".format(endpoint_name, id))
-                self.remove_from_search(endpoint_name, id)
+                item = search_backend.find_one(endpoint_name, req=None, _id=id)
+                if item:
+                    self.remove_from_search(endpoint_name, item)
                 raise SuperdeskApiError.notFoundError()
             else:
                 # item is there, but no change was done - ok
@@ -204,10 +208,13 @@ class EveBackend():
                 return updates
 
         if search_backend:
+
             doc = backend.find_one(endpoint_name, req=None, _id=id)
             if not doc:  # there is no doc in mongo, remove it from elastic
                 logger.warn("Item is missing in mongo resource=%s id=%s".format(endpoint_name, id))
-                self.remove_from_search(endpoint_name, id)
+                item = search_backend.find_one(endpoint_name, req=None, _id=id)
+                if item:
+                    self.remove_from_search(endpoint_name, item)
                 raise SuperdeskApiError.notFoundError()
             search_backend.update(endpoint_name, id, doc)
 
@@ -278,34 +285,37 @@ class EveBackend():
         """
         backend = self._backend(endpoint_name)
         search_backend = self._lookup_backend(endpoint_name)
-        docs = self.get_from_mongo(endpoint_name, lookup=lookup, req=ParsedRequest())
+        docs = list(self.get_from_mongo(endpoint_name, lookup=lookup, req=ParsedRequest()))
         ids = [doc[config.ID_FIELD] for doc in docs]
         removed_ids = ids
         logger.info("total documents to be removed {}".format(len(ids)))
         if search_backend and ids:
             removed_ids = []
             # first remove it from search backend, so it won't show up. when this is done - remove it from mongo
-            for _id in ids:
+            for doc in docs:
                 try:
-                    self.remove_from_search(endpoint_name, _id)
-                    removed_ids.append(_id)
+                    self.remove_from_search(endpoint_name, doc)
+                    removed_ids.append(doc[config.ID_FIELD])
                 except NotFoundError:
-                    logger.warning('item missing from elastic _id=%s' % (_id, ))
-                    removed_ids.append(_id)
+                    logger.warning('item missing from elastic _id=%s' % (doc[config.ID_FIELD], ))
+                    removed_ids.append(doc[config.ID_FIELD])
                 except:
-                    logger.exception('item can not be removed from elastic _id=%s' % (_id, ))
+                    logger.exception('item can not be removed from elastic _id=%s' % (doc[config.ID_FIELD], ))
         backend.remove(endpoint_name, {config.ID_FIELD: {'$in': removed_ids}})
         logger.info("Removed {} documents from {}.".format(len(ids), endpoint_name))
         if not ids:
             logger.warn("No documents for {} resource were deleted using lookup {}".format(endpoint_name, lookup))
 
-    def remove_from_search(self, endpoint_name, _id):
+    def remove_from_search(self, endpoint_name, doc):
         """Remove document from search backend.
 
         :param endpoint_name
-        :param _id
+        :param dict doc: Document to delete
         """
-        app.data._search_backend(endpoint_name).remove(endpoint_name, {'_id': str(_id)})
+        search_backend = app.data._search_backend(endpoint_name)
+        search_backend.remove(endpoint_name,
+                              {'_id': doc.get(config.ID_FIELD)},
+                              search_backend.get_parent_id(endpoint_name, doc))
 
     def _datasource(self, endpoint_name):
         return app.data._datasource(endpoint_name)[0]
@@ -324,3 +334,11 @@ class EveBackend():
         now = utcnow()
         doc.setdefault(config.DATE_CREATED, now)
         doc.setdefault(config.LAST_UPDATED, now)
+
+    def _set_parent(self, endpoint_name, doc, lookup):
+        """Set the parent id for parent child document in elastic"""
+        search_backend = self._lookup_backend(endpoint_name)
+        if search_backend:
+            parent = search_backend.get_parent_id(endpoint_name, doc)
+            if parent:
+                lookup['parent'] = parent
