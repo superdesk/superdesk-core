@@ -23,6 +23,7 @@ from superdesk.services import BaseService
 from superdesk.users import get_user_from_request
 from superdesk.utc import utcnow
 from superdesk.errors import SuperdeskApiError
+from superdesk.default_schema import DEFAULT_SCHEMA, DEFAULT_EDITOR
 
 logger = logging.getLogger(__name__)
 
@@ -85,6 +86,13 @@ class VocabulariesResource(Resource):
         'schema': {
             'type': 'dict'
         },
+        'field_type': {
+            'type': 'string',
+            'nullable': True,
+        },
+        'field_options': {
+            'type': 'dict',
+        },
     }
 
     item_url = 'regex("[\w]+")'
@@ -94,6 +102,16 @@ class VocabulariesResource(Resource):
 
 
 class VocabulariesService(BaseService):
+
+    system_keys = set(DEFAULT_SCHEMA.keys()).union(set(DEFAULT_EDITOR.keys()))
+
+    def on_create(self, docs):
+        for doc in docs:
+            if doc.get('field_type') and doc['_id'] in self.system_keys:
+                raise SuperdeskApiError(
+                    message='{} is in use'.format(doc['_id']),
+                    payload={'_id': {'conflict': 1}})
+
     def on_replace(self, document, original):
         document[app.config['LAST_UPDATED']] = utcnow()
         document[app.config['DATE_CREATED']] = original[app.config['DATE_CREATED']] if original else utcnow()

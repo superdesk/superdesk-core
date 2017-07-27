@@ -138,7 +138,7 @@ Available schema fields
 
 These are fields you can use in your content profile:
 
-.. autoclass:: apps.content_types.content_types.DefaultSchema
+.. autoclass:: superdesk.default_schema.DefaultSchema
     :members:
 
 Plain text profile
