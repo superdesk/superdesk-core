@@ -159,12 +159,12 @@ class BaseService():
         """
         return self.backend.search(self.datasource, source)
 
-    def remove_from_search(self, _id):
-        """Remove item from search by its id.
+    def remove_from_search(self, item):
+        """Remove item from search.
 
-        :param _id: item id
+        :param dict item: item
         """
-        return self.backend.remove_from_search(self.datasource, _id)
+        return self.backend.remove_from_search(self.datasource, item)
 
 
 class Service(BaseService):

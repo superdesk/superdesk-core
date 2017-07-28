@@ -99,7 +99,7 @@ def remove_expired_from_elastic(ingest_collection):
         logger.warning('there are expired items in elastic (%d)' % (items.count(), ))
         for item in items:
             logger.debug('doc only in elastic item=%s' % (item, ))
-            ingest.remove_from_search(item.get('_id'))
+            ingest.remove_from_search(item)
 
 
 def get_expired_items(provider_id, ingest_collection):
