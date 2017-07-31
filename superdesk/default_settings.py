@@ -332,6 +332,7 @@ CORE_APPS = [
     'superdesk.internal_destinations',
     'apps.client_config',
     'superdesk.auth',
+    'superdesk.attachments',
 ]
 
 #: Specify what modules should be enabled
@@ -433,6 +434,7 @@ RESOURCE_METHODS = ['GET', 'POST']
 ITEM_METHODS = ['GET', 'PATCH', 'PUT', 'DELETE']
 EXTENDED_MEDIA_INFO = ['content_type', 'name', 'length']
 RETURN_MEDIA_AS_BASE64_STRING = False
+RETURN_MEDIA_AS_URL = True
 VERSION = '_current_version'
 
 #: uses for generation of media url ``(<media_prefix>/<media_id>)``::
