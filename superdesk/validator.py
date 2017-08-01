@@ -77,7 +77,8 @@ class SuperdeskValidator(Validator):
             query = {field: value}
             self._set_id_query(query)
 
-            if superdesk.get_resource_service(self.resource).find_one(req=None, **query):
+            cursor = superdesk.get_resource_service(self.resource).get_from_mongo(req=None, lookup=query)
+            if cursor.count():
                 self._error(field, ERROR_UNIQUE)
 
     def _set_id_query(self, query):
