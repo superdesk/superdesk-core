@@ -1,5 +1,18 @@
 # Superdesk Server Changelog
 
+## [1.8.5] 2017-08-02
+
+### Fixed
+
+- Fix unique validator when search backend is configured.
+- Fix AP and DPA parsers.
+- Validate the SMS message when SMS is enabled.
+- Source is preserved when the story is rewritten
+
+### Changed
+
+- Make displaying crops for featured media config option.
+
 ## [1.8.4] 2017-06-30
 
 ### Fixed
