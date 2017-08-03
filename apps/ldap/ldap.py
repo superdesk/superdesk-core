@@ -10,7 +10,8 @@
 
 import logging
 import re
-from ldap3 import Server, Connection, SEARCH_SCOPE_WHOLE_SUBTREE, LDAPException
+from ldap3 import Server, Connection, SUBTREE
+from ldap3.core.exceptions import LDAPException
 from apps.auth.service import AuthService
 from superdesk.users.services import UsersService
 from superdesk import get_resource_service
@@ -116,7 +117,7 @@ class ADAuth:
             logger.info('base filter:{} user filter:{}'.format(self.base_filter, user_filter))
 
             with ldap_conn:
-                result = ldap_conn.search(self.base_filter, user_filter, SEARCH_SCOPE_WHOLE_SUBTREE,
+                result = ldap_conn.search(self.base_filter, user_filter, search_scope=SUBTREE,
                                           attributes=list(self.profile_attrs.keys()))
 
                 if not result:

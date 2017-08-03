@@ -30,7 +30,7 @@ install_requires = [
     'hachoir3>=3.0a1,<=3.0a2',
     'HermesCache>=0.6.0,<0.7.0',
     'python-magic>=0.4,<0.5',
-    'python3-ldap>=0.9.8,<0.9.9',
+    'ldap3>=2.2.4,<2.2.5',
     'pytz>=2015.4',
     'tzlocal>=1.2.2,<1.4',
     'raven[flask]>=5.10,<6.0',
