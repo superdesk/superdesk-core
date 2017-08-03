@@ -197,6 +197,9 @@ class NINJSFormatter(Formatter):
         if article.get('flags', {}).get('marked_for_legal'):
             ninjs['signal'] = self._format_signal_cwarn()
 
+        if article.get('attachments'):
+            ninjs['attachments'] = self._format_attachments(article)
+
         return ninjs
 
     def _generate_renditions(self, article):
@@ -289,6 +292,23 @@ class NINJSFormatter(Formatter):
 
     def _format_signal_cwarn(self):
         return [{'name': 'Content Warning', 'code': 'cwarn', 'scheme': 'http://cv.iptc.org/newscodes/signal/'}]
+
+    def _format_attachments(self, article):
+        output = []
+        attachments_service = superdesk.get_resource_service('attachments')
+        for attachment_ref in article['attachments']:
+            attachment = attachments_service.find_one(req=None, _id=attachment_ref['attachment'])
+            output.append({
+                'id': str(attachment['_id']),
+                'title': attachment['title'],
+                'description': attachment['description'],
+                'filename': attachment['filename'],
+                'mimetype': attachment['mimetype'],
+                'length': attachment.get('length'),
+                'media': str(attachment['media']),
+                'href': '/assets/{}'.format(str(attachment['media'])),
+            })
+        return output
 
     def export(self, item):
         if self.can_format(self.format_type, item):

@@ -116,9 +116,15 @@ class HTTPPushService(PublishService):
                 rendition.pop('href', None)
                 rendition.setdefault('mimetype', rendition.get('original', {}).get('mimetype', item.get('mimetype')))
                 media[rendition['media']] = rendition
+            for attachment in item.get('attachments', []):
+                media.update({attachment['media']: {
+                    'mimetype': attachment['mimetype'],
+                    'resource': 'attachments',
+                }})
             return media
 
         media = {}
+        media.update(parse_media(item))
 
         for assoc in item.get('associations', {}).values():
             media.update(parse_media(assoc))
@@ -127,7 +133,7 @@ class HTTPPushService(PublishService):
 
         for media_id, rendition in media.items():
             if not self._media_exists(media_id, destination):
-                binary = app.media.get(media_id, resource='upload')
+                binary = app.media.get(media_id, resource=rendition.get('resource', 'upload'))
                 mimetype = rendition.get('mimetype', getattr(binary, 'content_type', 'image/jpeg'))
                 files = {'media': (media_id, binary, mimetype)}
                 response = requests.post(assets_url, files=files, data={'media_id': media_id})

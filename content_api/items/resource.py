@@ -69,6 +69,12 @@ schema = {
     },
     'genre': {'type': 'list', 'mapping': code_mapping},
     'ancestors': Resource.not_analyzed_field('list'),
+    'attachments': {
+        'type': 'list',
+        'schema': {
+            'type': 'dict',
+        },
+    },
 }
 
 
