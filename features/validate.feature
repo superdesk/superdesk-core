@@ -1,4 +1,3 @@
-
 Feature: Validate
 
   @auth
@@ -28,7 +27,7 @@ Feature: Validate
       """
     Then we get existing resource
     """
-    {"errors": []}
+    {"errors": "__empty__"}
     """
 
   @auth
@@ -108,7 +107,7 @@ Feature: Validate
       """
     Then we get existing resource
     """
-    {"errors": []}
+    {"errors": "__empty__"}
     """
 
   @auth
@@ -152,7 +151,7 @@ Feature: Validate
       """
     Then we get existing resource
     """
-    {"errors": []}
+    {"errors": "__empty__"}
     """
   @auth
   Scenario: Missing validator
@@ -166,7 +165,7 @@ Feature: Validate
       """
     Then we get existing resource
     """
-    {"errors": []}
+    {"errors": "__empty__"}
     """
 
   @auth
@@ -188,3 +187,34 @@ Feature: Validate
       """
       {"errors": ["FOO is a required field"]}
       """
+
+  @auth
+  Scenario: Validate custom field
+    Given "vocabularies"
+    """
+    [{"_id": "custom", "field_type": "text", "label": "Test"}]
+    """
+    And "content_types"  
+    """
+    [{"_id": "foo", "schema": {
+      "custom": {"required": true}
+    }}]
+    """
+
+    When we post to "/validate"
+    """
+    {"act": "publish", "type": "text", "validate": {"profile": "foo"}}
+    """
+    Then we get existing resource
+    """
+    {"errors": ["CUSTOM is a required field"]}
+    """
+
+    When we post to "/validate"
+    """
+    {"act": "publish", "type": "text", "validate": {"profile": "foo", "extra": {"custom": "foo"}}}
+    """
+    Then we get existing resource
+    """
+    {"errors": "__empty__"}
+    """
