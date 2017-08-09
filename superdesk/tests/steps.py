@@ -134,7 +134,10 @@ def json_match(context_data, response_data):
                 continue
             if context_data[key] == "__now__":
                 assert_is_now(response_data[key], key)
-                return True
+                continue
+            if context_data[key] == "__empty__":
+                assert len(response_data[key]) == 0, '%s is not empty' % key
+                continue
             if not json_match(context_data[key], response_data[key]):
                 return False
         return True

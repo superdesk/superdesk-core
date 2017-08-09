@@ -16,6 +16,7 @@ from superdesk.logging import logger
 from superdesk.etree import get_text
 
 REQUIRED_FIELD = 'is a required field'
+REQUIRED_ERROR = '{} is a required field'
 
 
 def check_json(doc, field, value):
@@ -134,6 +135,16 @@ class ValidateService(superdesk.Service):
             # not use profile for auto publishing via routing.
             content_type = superdesk.get_resource_service('content_types').find_one(req=None, _id=profile)
             if content_type:
+                extra_fields = superdesk.get_resource_service('vocabularies').get_extra_fields()
+                schema = content_type.get('schema', {})
+                schema['extra'] = {'type': 'dict', 'schema': {}}
+                for extra_field in extra_fields:
+                    if schema.get(extra_field['_id']):
+                        rules = schema.pop(extra_field['_id'])
+                        rules.setdefault('type', 'string')
+                        schema['extra']['schema'].update({extra_field['_id']: get_validator_schema(rules)})
+                content_type['schema'] = schema
+                doc['validate'].setdefault('extra', {})  # make sure extra is there so it will validate its fields
                 return [content_type]
         lookup = {'act': doc['act'], 'type': doc[ITEM_TYPE]}
         if doc.get('embedded'):
@@ -212,11 +223,17 @@ class ValidateService(superdesk.Service):
                 elif doc.get('act', None) == 'kill' and doc['validate'].get('profile', None) and \
                         e in ('headline', 'abstract', 'body_html'):
                     continue
+                elif e == 'extra':
+                    for field in error_list[e]:
+                        if 'required' in error_list[e][field]:
+                            message = REQUIRED_ERROR.format(field.upper())
+                        else:
+                            message = '{} {}'.format(field.upper(), error_list[e][field])
                 elif error_list[e] == 'required field' or type(error_list[e]) is dict or \
                         type(error_list[e]) is list:
-                    message = '{} is a required field'.format(e.upper())
+                    message = REQUIRED_ERROR.format(e.upper())
                 elif 'min length is 1' == error_list[e]:
-                    message = '{} is a required field'.format(e.upper())
+                    message = REQUIRED_ERROR.format(e.upper())
                 elif 'min length is' in error_list[e]:
                     message = '{} is too short'.format(e.upper())
                 elif 'max length is' in error_list[e]:

@@ -99,6 +99,7 @@ class VocabulariesResource(Resource):
     item_methods = ['GET', 'PATCH', 'DELETE']
     resource_methods = ['GET', 'POST']
     privileges = {'PATCH': 'vocabularies', 'POST': 'vocabularies', 'DELETE': 'vocabularies'}
+    mongo_indexes = {'field_type': [('field_type', 1)]}
 
 
 class VocabulariesService(BaseService):
@@ -228,3 +229,6 @@ class VocabulariesService(BaseService):
             }
         else:
             return {}
+
+    def get_extra_fields(self):
+        return list(self.get(req=None, lookup={'field_type': {'$exists': True}}))
