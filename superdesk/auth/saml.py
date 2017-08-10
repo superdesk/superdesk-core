@@ -32,15 +32,17 @@ Service provider config for superdesk in ``settings.json`` file example::
 """
 
 import superdesk
+import logging
 
 from urllib.parse import urlparse
 
-from flask import current_app as app, request, redirect, make_response, session
+from flask import current_app as app, request, redirect, make_response, session, jsonify
 from onelogin.saml2.auth import OneLogin_Saml2_Auth
 from superdesk.auth import auth_user
 
 
 bp = superdesk.Blueprint('saml', __name__)
+logger = logging.getLogger(__name__)
 
 
 def init_app(app):
@@ -89,6 +91,13 @@ def index():
             session['samlUserdata'] = auth.get_attributes()
             session['samlNameId'] = auth.get_nameid()
             session['samlSessionIndex'] = auth.get_session_index()
+        else:
+            logger.error('SAML %s reason=%s', errors, auth.get_last_error_reason())
+            return jsonify({
+                'req': req,
+                'errors': errors,
+                'error_reason': auth.get_last_error_reason(),
+            })
     elif 'sls' in request.args:
         def dscb():
             session.clear()
