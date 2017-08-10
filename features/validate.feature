@@ -218,3 +218,12 @@ Feature: Validate
     """
     {"errors": "__empty__"}
     """
+
+    When we post to "/validate"
+    """
+    {"act": "publish", "type": "text", "validate": {"profile": "foo", "extra": {"custom": "<p></p>"}}}
+    """
+    Then we get existing resource
+    """
+    {"errors": ["CUSTOM is a required field"]}
+    """

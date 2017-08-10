@@ -1524,3 +1524,48 @@ Feature: Content Profile
         }
         """
         And there is no "headline" in data
+
+    @auth
+    Scenario: Add custom fields on edit
+        Given "vocabularies"
+        """
+        [
+            {"_id": "foo", "display_name": "Foo", "field_type": "text"},
+            {"_id": "bar", "display_name": "Bar", "service": {"all": 1}}
+        ]
+        """
+        And "content_types"
+        """
+        [{"_id": "profile"}]
+        """
+        When we get "/content_types/profile?edit=true"
+        Then we get existing resource
+        """
+        {
+            "schema": {
+                "foo": {
+                    "type": "string",
+                    "required": false
+                }
+            },
+            "editor": {
+                "foo": {
+                    "enabled": false
+                }
+            }
+        }
+        """
+        When we patch "/content_types/profile"
+        """
+        {
+            "editor": {"foo": {"enabled": true}},
+            "schema": {"foo": {"required": true, "type": "string"}}
+        }
+        """
+        And we get "/content_types/profile?edit=true"
+        Then we get existing resource
+        """
+        {
+            "editor": {"foo": {"enabled": true}}
+        }
+        """

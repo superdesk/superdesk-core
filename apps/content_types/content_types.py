@@ -182,6 +182,21 @@ def prepare_for_edit_content_type(doc):
     init_custom(editor, schema, fields_map)
     expand_subject(editor, schema, fields_map)
     set_field_name(editor, field_names)
+    init_extra_fields(editor, schema)
+
+
+def init_extra_fields(editor, schema):
+    fields = get_resource_service('vocabularies').get_extra_fields()
+    for field in fields:
+        schema.setdefault(field['_id'], {
+            'type': 'string',
+            'required': False
+        })
+        if field['_id'] in editor:
+            editor[field['_id']]['enabled'] = True
+        else:
+            editor[field['_id']] = {'enabled': False}
+        editor[field['_id']]['display_name'] = field['display_name']
 
 
 def get_allowed_list(schema):
@@ -196,7 +211,7 @@ def get_mandatory_list(schema):
 
 
 def get_fields_map_and_names():
-    vocabularies = get_resource_service('vocabularies').find({'service': {'$exists': True}})
+    vocabularies = get_resource_service('vocabularies').get_custom_vocabularies()
     fields_map = {}
     field_names = {}
 
@@ -271,8 +286,11 @@ def set_enabled_for_custom(editor, allowed, fields_map):
 def set_required_for_custom(editor, schema, mandatory, fields_map):
     for field, value in mandatory.items():
         if field == value or field == 'subject':
-            editor[fields_map.get(field, field)]['required'] = value is not None
-            schema[fields_map.get(field, field)]['required'] = value is not None
+            try:
+                editor[fields_map.get(field, field)]['required'] = value is not None
+                schema[fields_map.get(field, field)]['required'] = value is not None
+            except KeyError:
+                continue
 
 
 def set_default_for_custom(schema, default_values, fields_map):
@@ -325,7 +343,7 @@ def delete_disabled_fields(editor, schema):
 
 def clean_editor(editor):
     valid_attributes = ['order', 'sdWidth', 'required', 'hideDate', 'showCrops',
-                        'formatOptions', 'editor3', 'default', 'cleanPastedHTML']
+                        'formatOptions', 'editor3', 'default', 'cleanPastedHTML', 'imageTitle']
     for field_value in editor.values():
         if not field_value:
             continue
