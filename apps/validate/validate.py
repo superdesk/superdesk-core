@@ -75,6 +75,8 @@ class SchemaValidator(Validator):
         super()._validate_empty(empty, field, value)
         if isinstance(value, list) and not value:
             self._error(field, REQUIRED_FIELD)
+        if isinstance(value, str) and value == '<p></p>':  # default value for editor3
+            self._error(field, REQUIRED_FIELD)
 
     def _validate_enabled(self, *args):
         """Ignore ``enabled`` in the schema."""

@@ -232,3 +232,9 @@ class VocabulariesService(BaseService):
 
     def get_extra_fields(self):
         return list(self.get(req=None, lookup={'field_type': {'$exists': True}}))
+
+    def get_custom_vocabularies(self):
+        return list(self.get(req=None, lookup={
+            'field_type': {'$exists': False},
+            'service': {'$exists': True},
+        }))
