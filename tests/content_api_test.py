@@ -3,13 +3,14 @@ import superdesk
 
 from bson import ObjectId
 from copy import copy
-from flask import json
+from flask import json, request
 from datetime import timedelta
 from superdesk.tests import TestCase
 from superdesk.utc import utcnow
 from content_api.publish import MONGO_PREFIX
 from content_api.app import get_app
 from eve.utils import ParsedRequest
+from eve.methods.common import store_media_files
 from werkzeug.datastructures import MultiDict
 
 
@@ -474,3 +475,43 @@ class ContentAPITestCase(TestCase):
             data = json.loads(response.data)
             self.assertIn('items/foo', data['uri'])
             self.assertNotIn('featuremedia', data['associations'])
+
+    def test_publish_item_with_attachments(self):
+        media = io.BytesIO(b'content')
+        data = {'media': (media, 'media.txt')}
+        attachment = {'title': 'Test', 'description': 'test'}
+        with self.app.test_request_context('attachments', method='POST', data=data):
+            attachment['media'] = request.files['media']
+            store_media_files(attachment, 'attachments')  # this would happen automatically otherwise
+            superdesk.get_resource_service('attachments').post([attachment])
+        self.assertIn('_id', attachment)
+        self.assertIsInstance(attachment['media'], ObjectId)
+
+        item = {
+            'guid': 'foo',
+            'type': 'text',
+            'attachments': [{'attachment': attachment['_id']}],
+            'body_html': '<p><a data-attachment="{}">download</a></p>'.format(str(attachment['_id']))
+        }
+
+        subscriber = {'_id': 'sub'}
+        self.content_api.publish(item, [subscriber])
+        with self.capi.test_client() as c:
+            response = c.get('items/foo', headers=self._auth_headers(subscriber))
+            data = json.loads(response.data)
+
+        self.assertIn('attachments', data)
+        attachments = data['attachments']
+        self.assertEqual(1, len(attachments))
+        self.assertEqual('Test', attachments[0]['title'])
+        self.assertEqual('test', attachments[0]['description'])
+        self.assertEqual('media.txt', attachments[0]['filename'])
+        self.assertEqual('text/plain', attachments[0]['mimetype'])
+        self.assertEqual(7, attachments[0]['length'])
+        self.assertIn('href', attachments[0])
+        self.assertIn('media', attachments[0])
+        self.assertIn('data-attachment="{}"'.format(attachments[0]['id']), data['body_html'])
+
+        with self.capi.test_client() as c:
+            response = c.get(attachments[0]['href'], headers=self._auth_headers(subscriber))
+            self.assertEqual(200, response.status_code, attachments[0]['href'])

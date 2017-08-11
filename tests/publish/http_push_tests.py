@@ -182,3 +182,27 @@ class HTTPPushPublishTestCase(unittest.TestCase):
             post_mock.assert_any_call('http://example.com',
                                       files={'media': (media, app_mock.media.get.return_value, 'image/jpeg')},
                                       data={'media_id': media})
+
+    @mock.patch('superdesk.publish.transmitters.http_push.app')
+    @mock.patch('requests.post', return_value=CreatedResponse)
+    @mock.patch('requests.get', return_value=NotFoundResponse)
+    def test_push_attachments(self, get_mock, post_mock, app_mock):
+        app_mock.media.get.return_value = 'bin'
+
+        dest = {'config': {'assets_url': 'http://example.com'}}
+        item = {
+            'type': 'text',
+            'attachments': [
+                {'id': 'foo', 'media': 'media-id', 'mimetype': 'text/plain'},
+            ]
+        }
+
+        service = HTTPPushService()
+        service._copy_published_media_files(item, dest)
+
+        app_mock.media.get.assert_called_with('media-id', resource='attachments')
+        get_mock.assert_called_with('http://example.com/media-id')
+        post_mock.assert_called_with(
+            'http://example.com',
+            files={'media': ('media-id', app_mock.media.get.return_value, 'text/plain')},
+            data={'media_id': 'media-id'})
