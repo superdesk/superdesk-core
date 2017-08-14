@@ -432,9 +432,8 @@ CORE_APPS.extend([
 
 RESOURCE_METHODS = ['GET', 'POST']
 ITEM_METHODS = ['GET', 'PATCH', 'PUT', 'DELETE']
-EXTENDED_MEDIA_INFO = ['content_type', 'name', 'length']
+EXTENDED_MEDIA_INFO = ['content_type', 'name', 'length', '_id']
 RETURN_MEDIA_AS_BASE64_STRING = False
-RETURN_MEDIA_AS_URL = True
 VERSION = '_current_version'
 
 #: uses for generation of media url ``(<media_prefix>/<media_id>)``::

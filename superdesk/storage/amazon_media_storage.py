@@ -49,6 +49,7 @@ class AmazonObjectWrapper(BytesIO):
         self.metadata = metadata
         self.upload_date = s3_object['LastModified']
         self.md5 = s3_object['ETag'][1:-1]
+        self._id = name
 
 
 def _guess_extension(content_type):
