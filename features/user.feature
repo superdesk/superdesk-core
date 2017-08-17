@@ -302,7 +302,7 @@ Feature: User Resource
         When we get "/users/#users._id#"
         Then we get existing resource
         """
-        {"username": "foobar", "display_name": "foobar", "user_type": "user",
+        {"username": "foobar", "display_name": "foobar", "user_type": "author",
         "session_preferences": {}}
         """
 

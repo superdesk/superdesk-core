@@ -20,7 +20,7 @@ class UsersResource(Resource):
         self.readonly = True if app.config.get('LDAP_SERVER', None) else False
 
         self.additional_lookup = {
-            'url': 'regex("[\w]+")',
+            'url': r'regex("[\w]+")',
             'field': 'username'
         }
 
@@ -55,6 +55,14 @@ class UsersResource(Resource):
                 'type': 'string',
                 'nullable': True
             },
+            'job_title': {
+                'type': 'string',
+                'required': False,
+            },
+            'biography': {
+                'type': 'string',
+                'required': False,
+            },
             'jid': {
                 'unique': True,
                 'type': 'string',
@@ -80,8 +88,8 @@ class UsersResource(Resource):
             },
             'user_type': {
                 'type': 'string',
-                'allowed': ['user', 'administrator'],
-                'default': 'user'
+                'allowed': ['user', 'author', 'administrator'],
+                'default': 'author'
             },
             'is_active': {
                 'type': 'boolean',
