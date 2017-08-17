@@ -306,6 +306,19 @@ class EveBackend():
         if not ids:
             logger.warn("No documents for {} resource were deleted using lookup {}".format(endpoint_name, lookup))
 
+    def delete_ids_from_mongo(self, endpoint_name, ids):
+        """Delete the passed ids from mongo without searching or checking
+
+        :param ids:
+        :return:
+        """
+        backend = self._backend(endpoint_name)
+        search_backend = self._lookup_backend(endpoint_name)
+        if search_backend:
+            raise SuperdeskApiError.forbiddenError(message='Can not remove from endpoint with a defined search')
+        backend.remove(endpoint_name, {config.ID_FIELD: {'$in': ids}})
+        return len(ids)
+
     def remove_from_search(self, endpoint_name, doc):
         """Remove document from search backend.
 

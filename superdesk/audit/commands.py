@@ -30,11 +30,11 @@ class PurgeAudit(superdesk.Command):
         "archive_unlock",
         "fetch",
         "archive",
-        "archive_autosave",
         "move",
         "publish_queue",
         "archive_publish",
         "archive_resend",
+        "archive_rewrite",
         "duplicate",
         "archive_link",
         "item_comments",
@@ -46,20 +46,11 @@ class PurgeAudit(superdesk.Command):
     ]
 
     # A query that identifies the entries in the audit collection that relate to content items.
-    item_entry_query = {'$and': [{'resource': {'$in': item_resources}}, {'extra': {'$exists': True}},
-                                 {'$or': [{'extra.guid': {'$exists': True}},
-                                          {'extra._id': {'$exists': True}},
-                                          {'extra.item_id': {'$exists': True}},
-                                          {'extra.item': {'$exists': True}}
-                                          ]}]}
+    item_entry_query = {'$and': [{'resource': {'$in': item_resources}},
+                                 {'audit_id': {'$ne': None}}, {'audit_id': {'$ne': ''}}]}
 
-    not_item_entry_query = {'$or': [{'resource': {'$nin': item_resources}}, {'extra': {'$exists': False}},
-                                    {'$and': [{'extra': {'$exists': True}},
-                                              {'extra.guid': {'$exists': False}},
-                                              {'extra._id': {'$exists': False}},
-                                              {'extra.item_id': {'$exists': False}},
-                                              {'extra.item': {'$exists': False}}
-                                              ]}]}
+    not_item_entry_query = {'$or': [{'resource': {'$nin': item_resources}},
+                                    {'audit_id': {'$eq': None}}, {'audit_id': {'$eq': ''}}]}
 
     option_list = (
         superdesk.Option('--expiry_minutes', '-e', dest='expiry', required=False),
@@ -74,8 +65,8 @@ class PurgeAudit(superdesk.Command):
                 return
             self.expiry = utcnow() - datetime.timedelta(minutes=config.AUDIT_EXPIRY_MINUTES)
         logger.info("Starting audit purge for items older than {}".format(self.expiry))
-        self.purge_old_entries()
         self.purge_orphaned_item_audits()
+        self.purge_old_entries()
         logger.info("Completed audit purge")
 
     def _get_archive_ids(self, ids):
@@ -92,25 +83,6 @@ class PurgeAudit(superdesk.Command):
         existing = list([item['_id'] for item in archive_ids])
         return set(existing)
 
-    def _extract_item_id(self, item):
-        """
-        Given an audit item try to extract the id of the item that it relates to
-        :param item:
-        :return:
-        """
-        try:
-            if 'guid' in item['extra']:
-                return item['extra']['guid']
-            elif '_id' in item['extra']:
-                return item['extra']['_id']
-            elif 'item_id' in item['extra']:
-                return item['extra']['item_id']
-            elif 'item' in item['extra']:
-                return item['extra']['item']
-        except:
-            return None
-        return None
-
     def purge_orphaned_item_audits(self):
         """
         Purge the audit items that do not have associated entries existing in archive
@@ -118,6 +90,7 @@ class PurgeAudit(superdesk.Command):
         """
         service = superdesk.get_resource_service('audit')
         current_id = None
+        logger.info('Starting to purge audit logs of content items not in archive at {}'.format(utcnow()))
 
         # Scan the audit collection for items to delete
         while True:
@@ -127,19 +100,22 @@ class PurgeAudit(superdesk.Command):
                 query['$and'].append({'_id': {'$gt': current_id}})
             req = ParsedRequest()
             req.sort = '[("_id", 1)]'
-            req.projection = '{"_id": 1, "extra.guid": 1, "extra._id": 1, "extra.item_id": 1, "extra.item": 1}'
+            req.projection = '{"_id": 1, "audit_id":1}'
             req.max_results = 1000
             audits = service.get_from_mongo(req=req, lookup=query)
-            if audits.count() == 0:
-                break
-            items = list([(item['_id'], self._extract_item_id(item)) for item in audits])
+            items = list([(item['_id'], item['audit_id']) for item in audits])
+            if len(items) == 0:
+                logger.info('Finished purging audit logs of content items not in archive at {}'.format(utcnow()))
+                return
+            logger.info('Found {} orphaned audit items at {}'.format(len(items), utcnow()))
             current_id = items[len(items) - 1][0]
 
             batch_ids = set([i[1] for i in items])
             archive_ids = self._get_archive_ids(batch_ids)
             ids = (batch_ids - archive_ids)
             audit_ids = [i[0] for i in items if i[1] in ids]
-            service.delete({'_id': {'$in': audit_ids}})
+            logger.info('Deleting {} orphaned audit items at {}'.format(len(audit_ids), utcnow()))
+            service.delete_ids_from_mongo(audit_ids)
 
     def purge_old_entries(self):
         """
@@ -147,22 +123,26 @@ class PurgeAudit(superdesk.Command):
         :return:
         """
         service = superdesk.get_resource_service('audit')
-        current_date = None
+        current_id = None
+        logger.info('Starting to purge audit logs of none content items at {}'.format(utcnow()))
 
         while True:
             lookup = {'$and': [self.not_item_entry_query, {'_updated': {'$lte': date_to_str(self.expiry)}}]}
-            if current_date:
-                lookup['$and'].append({'_updated': {'$gte': current_date}})
+            if current_id:
+                lookup['$and'].append({'_id': {'$gt': current_id}})
             req = ParsedRequest()
-            req.sort = '[("_updated", 1)]'
-            req.projection = '{"_id": 1, "_updated": 1}'
+            req.sort = '[("_id", 1)]'
+            req.projection = '{"_id": 1}'
             req.max_results = 1000
             audits = service.get_from_mongo(req=req, lookup=lookup)
-            if audits.count() == 0:
-                break
-            items = list([(item['_id'], item['_updated']) for item in audits])
-            current_date = items[len(items) - 1][1]
-            service.delete({'_id': {'$in': [i[0] for i in items]}})
+            items = list(item.get('_id') for item in audits)
+            if len(items) == 0:
+                logger.info('Finished purging audit logs of none content items at {}'.format(utcnow()))
+                return
+            logger.info('Found {} audit items at {}'.format(len(items), utcnow()))
+            current_id = items[len(items) - 1]
+            logger.info('Deleting {} old audit items'.format(len(items)))
+            service.delete_ids_from_mongo(items)
 
 
 superdesk.command('audit:purge', PurgeAudit())
