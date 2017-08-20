@@ -11,9 +11,9 @@
 from superdesk.resource import Resource
 
 
-class ClientsResource(Resource):
+class CompaniesResource(Resource):
     """
-    Clients schema
+    Company schema
     """
 
     schema = {
@@ -22,9 +22,12 @@ class ClientsResource(Resource):
             'unique': True,
             'required': True
         },
-        'client_type': {
-            'type': 'string',
-            'required': True
+        'sd_subscriber_id': {
+            'type': 'string'
+        },
+        'is_enabled': {
+            'type': 'boolean',
+            'default': True
         }
     }
     item_methods = ['GET', 'PATCH', 'PUT']
