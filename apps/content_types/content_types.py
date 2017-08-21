@@ -196,7 +196,7 @@ def init_extra_fields(editor, schema):
             editor[field['_id']]['enabled'] = True
         else:
             editor[field['_id']] = {'enabled': False}
-        editor[field['_id']]['display_name'] = field['display_name']
+        editor[field['_id']]['field_name'] = field['display_name']
 
 
 def get_allowed_list(schema):
