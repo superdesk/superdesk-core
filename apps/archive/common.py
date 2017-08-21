@@ -488,6 +488,10 @@ def remove_media_files(doc):
             except Exception:
                 logger.exception('Failed to remove Media Id: {} from item: {}'.format(media, doc.get(config.ID_FIELD)))
 
+    for attachment in doc.get('attachments', []):
+        lookup = {'_id': attachment['attachment']}
+        get_resource_service('attachments').delete_action(lookup)
+
 
 def is_assigned_to_a_desk(doc):
     """Returns True if the 'doc' is being submitted to a desk. False otherwise.

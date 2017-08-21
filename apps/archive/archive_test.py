@@ -316,6 +316,19 @@ class RemoveSpikedContentTestCase(TestCase):
             remove_media_files(item)
             self.assertEqual(0, media_delete.call_count)
 
+    def test_remove_media_files_for_attachments(self):
+        attachments = self.app.data.insert('attachments', [{'media': 'foo'}])
+        item = {
+            '_id': 'test',
+            'type': 'text',
+            'attachments': [
+                {'attachment': attachments[0]},
+            ]
+        }
+        with patch.object(self.app.media, 'delete') as media_delete:
+            remove_media_files(item)
+        media_delete.assert_any_call('foo', 'attachments')
+
     def test_delete_by_ids(self):
         ids = self.app.data.insert(ARCHIVE, self.articles)
         archive_service = get_resource_service(ARCHIVE)
