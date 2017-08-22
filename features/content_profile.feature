@@ -1550,7 +1550,8 @@ Feature: Content Profile
             },
             "editor": {
                 "foo": {
-                    "enabled": false
+                    "enabled": false,
+                    "field_name": "Foo"
                 }
             }
         }
