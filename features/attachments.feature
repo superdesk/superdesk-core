@@ -21,3 +21,6 @@ Feature: Attachments
         {"title": "Bike", "description": "bike"}
         """
         Then we get updated response
+
+        When we delete latest
+        Then we get error 405
