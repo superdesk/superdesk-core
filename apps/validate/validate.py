@@ -167,7 +167,7 @@ class ValidateService(superdesk.Service):
         """
         if 'associations' in doc and 'featuremedia' in doc['associations']:
             doc['feature_media'] = doc['associations']['featuremedia']
-            if 'description_text' in doc['associations']['featuremedia']:
+            if doc['feature_media'] and 'description_text' in doc['feature_media']:
                 doc['media_description'] = doc['associations']['featuremedia']['description_text']
 
     def _process_sms(self, doc, schema):
