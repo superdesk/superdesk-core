@@ -139,7 +139,7 @@ class ValidateMandatoryInListTest(TestCase):
         ])
         self.assertEqual(['FEATURE_MEDIA is a required field'], errors[0])
 
-    def test_validate_field_required_media_description(self):
+    def test_validate_field_required_media_description_empty(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
             'slugline': None,
             'feature_media': {'required': True},
@@ -154,6 +154,57 @@ class ValidateMandatoryInListTest(TestCase):
             },
         ])
         self.assertEqual(['MEDIA_DESCRIPTION is a required field'], errors[0])
+
+    def test_validate_field_required_media_description_null(self):
+        self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
+            'slugline': None,
+            'feature_media': {'required': True},
+            'media_description': {'required': True},
+        }}])
+        service = ValidateService()
+        errors = service.create([
+            {
+                'act': 'test',
+                'type': 'test',
+                'validate': {'profile': 'foo', 'slugline': 'foo', 'associations': {'featuremedia': None}},
+            },
+        ])
+        self.assertIn('FEATURE_MEDIA null value not allowed', errors[0])
+        self.assertIn('MEDIA_DESCRIPTION is a required field', errors[0])
+
+    def test_validate_field_required_media_description_required_false(self):
+        self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
+            'slugline': None,
+            'feature_media': {'required': False},
+            'media_description': {'required': False},
+        }}])
+        service = ValidateService()
+        errors = service.create([
+            {
+                'act': 'test',
+                'type': 'test',
+                'validate': {'profile': 'foo', 'slugline': 'foo', 'associations': {'featuremedia': None}},
+            },
+        ])
+
+        self.assertIn('FEATURE_MEDIA null value not allowed', errors[0])
+
+    def test_validate_field_required_media_description_required_false_null_true(self):
+        self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
+            'slugline': None,
+            'feature_media': {'required': False, 'nullable': True},
+            'media_description': {'required': False, 'nullable': True},
+        }}])
+        service = ValidateService()
+        errors = service.create([
+            {
+                'act': 'test',
+                'type': 'test',
+                'validate': {'profile': 'foo', 'slugline': 'foo', 'associations': {'featuremedia': None}},
+            },
+        ])
+
+        self.assertEqual([], errors[0])
 
     def test_validate_field_feature_media_and_media_description(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
