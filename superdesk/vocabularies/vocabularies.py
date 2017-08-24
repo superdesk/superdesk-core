@@ -52,6 +52,10 @@ class VocabulariesResource(Resource):
             'type': 'string',
             'required': True
         },
+        'helper_text': {
+            'type': 'string',
+            'maxlength': 120
+        },
         'type': {
             'type': 'string',
             'required': True,
