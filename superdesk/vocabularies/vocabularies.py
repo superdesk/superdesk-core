@@ -115,7 +115,8 @@ class VocabulariesService(BaseService):
 
     def on_replace(self, document, original):
         document[app.config['LAST_UPDATED']] = utcnow()
-        document[app.config['DATE_CREATED']] = original[app.config['DATE_CREATED']] if original else utcnow()
+        document[app.config['DATE_CREATED']] = original.get(app.config['DATE_CREATED'],
+                                                            utcnow()) if original else utcnow()
         logger.info("updating vocabulary item: %s", document["_id"])
 
     def on_fetched(self, doc):
