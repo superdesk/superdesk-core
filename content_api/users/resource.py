@@ -46,6 +46,10 @@ class UsersResource(Resource):
             'allowed': ['administrator', 'internal', 'public'],
             'default': 'public'
         },
+        'is_validated': {
+            'type': 'boolean',
+            'default': False
+        },
         'is_enabled': {
             'type': 'boolean',
             'default': True

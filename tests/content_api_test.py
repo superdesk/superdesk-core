@@ -27,6 +27,16 @@ class ContentAPITestCase(TestCase):
         self.capi.testing = True
         self.subscriber = {'_id': 'sub1'}
 
+    def _auth_headers(self, sub=None):
+        if sub is None:
+            sub = self.subscriber
+        service = superdesk.get_resource_service('company_token')
+        payload = {'company': sub.get('_id')}
+        service.create([payload])
+        token = payload['_id']
+        headers = {'Authorization': 'Token ' + token}
+        return headers
+
     def test_publish_to_content_api(self):
         item = {'guid': 'foo', 'type': 'text', 'task': {'desk': 'foo'}, 'rewrite_of': 'bar'}
         self.content_api.publish(item)
@@ -223,8 +233,8 @@ class ContentAPITestCase(TestCase):
             self.assertEqual(2, data['_meta']['total'])
 
     def test_generate_token_service(self):
-        service = superdesk.get_resource_service('subscriber_token')
-        payload = {'subscriber': 'foo'}
+        service = superdesk.get_resource_service('company_token')
+        payload = {'company': 'foo'}
         ids = service.create([payload])
         token = payload['_id']
         self.assertEqual('foo', self.capi.auth.check_auth(token, [], 'items', 'get'))
@@ -233,21 +243,11 @@ class ContentAPITestCase(TestCase):
         service.delete({'_id': ids[0]})
         self.assertFalse(self.capi.auth.check_auth(token, [], 'items', 'get'))
 
-        payload = {'subscriber': 'foo', 'expiry': utcnow() - timedelta(days=1)}
+        payload = {'company': 'foo', 'expiry': utcnow() - timedelta(days=1)}
         service.create([payload])
         token = payload['_id']
         self.assertFalse(self.capi.auth.check_auth(token, [], 'items', 'get'))
         self.assertIsNone(service.find_one(None, _id=token))
-
-    def _auth_headers(self, sub=None):
-        if sub is None:
-            sub = self.subscriber
-        service = superdesk.get_resource_service('subscriber_token')
-        payload = {'subscriber': sub.get('_id')}
-        service.create([payload])
-        token = payload.get('_id')
-        headers = {'Authorization': 'Token ' + token}
-        return headers
 
     def test_api_block(self):
         self.app.data.insert('filter_conditions', [{'_id': 1, 'operator': 'eq', 'field': 'source',
