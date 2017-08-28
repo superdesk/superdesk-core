@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk.resource import Resource
+from content_api import MONGO_PREFIX
 
 
 class UsersResource(Resource):
@@ -17,18 +18,50 @@ class UsersResource(Resource):
     """
 
     schema = {
-        'username': {
-            'type': 'string',
-            'unique': True,
-            'required': True,
-            'minlength': 1
-        },
         'password': {
             'type': 'string',
-            'required': True,
             'minlength': 8
         },
-        'client': Resource.rel('clients')
+        'name': {
+            'type': 'string'
+        },
+        'email': {
+            'unique': True,
+            'type': 'string',
+            'required': True
+        },
+        'phone': {
+            'type': 'string',
+            'nullable': True
+        },
+        'signup_details': {
+            'type': 'dict'
+        },
+        'country': {
+            'type': 'string'
+        },
+        'company': Resource.rel('companies', embeddable=True, required=False),
+        'user_type': {
+            'type': 'string',
+            'allowed': ['administrator', 'internal', 'public'],
+            'default': 'public'
+        },
+        'is_enabled': {
+            'type': 'boolean',
+            'default': True
+        },
+        'is_approved': {
+            'type': 'boolean',
+            'default': False
+        }
     }
+
     item_methods = ['GET', 'PATCH', 'PUT']
     resource_methods = ['GET', 'POST']
+    mongo_prefix = MONGO_PREFIX
+    datasource = {
+        'source': 'users'
+    }
+    mongo_indexes = {
+        'email': ([('email', 1)], {'unique': True})
+    }
