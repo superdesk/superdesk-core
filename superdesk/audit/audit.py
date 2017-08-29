@@ -23,10 +23,11 @@ class AuditResource(Resource):
     schema = {
         'resource': {'type': 'string'},
         'action': {'type': 'string'},
+        'audit_id': {'type': 'string'},
         'extra': {'type': 'dict'},
         'user': Resource.rel('users', False)
     }
-    exclude = {endpoint_name, 'activity', 'dictionaries', 'macros', 'archive_history'}
+    exclude = {endpoint_name, 'activity', 'dictionaries', 'macros', 'archive_history', 'formatters'}
 
 
 class AuditService(BaseService):
@@ -50,7 +51,8 @@ class AuditService(BaseService):
             'user': user_id,
             'resource': resource,
             'action': 'created',
-            'extra': docs[0]
+            'extra': docs[0],
+            'audit_id': self._extract_doc_id(docs[0])
         }
 
         self.post([audit])
@@ -67,7 +69,8 @@ class AuditService(BaseService):
             'user': user.get('_id'),
             'resource': resource,
             'action': 'updated',
-            'extra': doc
+            'extra': doc,
+            'audit_id': self._extract_doc_id(doc) if self._extract_doc_id(doc) else self._extract_doc_id(original)
         }
         if '_id' not in doc:
             audit['extra']['_id'] = original.get('_id', None)
@@ -85,6 +88,24 @@ class AuditService(BaseService):
             'user': user.get('_id'),
             'resource': resource,
             'action': 'deleted',
-            'extra': doc
+            'extra': doc,
+            'audit_id': self._extract_doc_id(doc)
         }
         self.post([audit])
+
+    def _extract_doc_id(self, doc):
+        """
+        Given an audit item try to extract the id of the item that it relates to
+        :param item:
+        :return:
+        """
+        try:
+            id = doc.get('_id', doc.get('guid', doc.get('item_id', doc.get('item', None))))
+            # do not return an id for items that have a dictionary id
+            if not isinstance(id, dict):
+                return id
+            else:
+                None
+        except:
+            return None
+        return None
