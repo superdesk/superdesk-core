@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk.resource import Resource
+from content_api import MONGO_PREFIX
 
 
 class CompaniesResource(Resource):
@@ -28,7 +29,17 @@ class CompaniesResource(Resource):
         'is_enabled': {
             'type': 'boolean',
             'default': True
+        },
+        'contact_name': {
+            'type': 'string'
+        },
+        'phone': {
+            'type': 'string'
+        },
+        'country': {
+            'type': 'string'
         }
     }
     item_methods = ['GET', 'PATCH', 'PUT']
     resource_methods = ['GET', 'POST']
+    mongo_prefix = MONGO_PREFIX
