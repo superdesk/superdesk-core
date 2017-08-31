@@ -23,7 +23,7 @@ ASSOCIATIONS = 'associations'
 
 
 #: item public states
-pub_status = ['usable', 'withhold', 'canceled']
+pub_status = ['usable', 'withheld', 'canceled']
 PUB_STATUS = namedtuple('PUBSTATUS', ['USABLE', 'HOLD', 'CANCELED'])(*pub_status)
 
 ITEM_TYPE = 'type'

@@ -1,19 +1,19 @@
 {
-  "$schema": "http://superdesk.org",
-	"id" : "http://www.iptc.org/std/ninjs/ninjs-schema_1.1.json#",
+  "$schema": "http://json-schema.org/draft-03/schema#",
+	"id" : "https://github.com/superdesk/superdesk-core/blob/master/docs/superdesk-ninjs-schema.json#",
 	"type" : "object",
 	"title" : "Superdesk extension of IPTC ninjs - News in JSON - version 1.1 (approved, 2016-??-??) / document revision of 2016-04-11: initial submit",
 	"description" : "A news item as JSON object -- copyright 2016 Sourcefabric - www.sourcefabric.org - This document is published under the Creative Commons Attribution 3.0 license, see  http://creativecommons.org/licenses/by/3.0/  $$comment: as of 2014-03-13 ",
 	"additionalProperties" : false,
 	"patternProperties" : {
 		"^description_[a-zA-Z0-9_]+" : {
-		"description" : "A free-form textual description of the content of the item. (The string appended to description_ in the property name should reflect the format of the text)",
-		"type" : "string"
+			"description" : "A free-form textual description of the content of the item. (The string appended to description_ in the property name should reflect the format of the text)",
+			"type" : "string"
 		},
 		"^body_[a-zA-Z0-9_]+" : {
-		"description" : "The textual content of the news object. (The string appended to body_ in the property name should reflect the format of the text)",
-		"type" : "string"
-  	}
+			"description" : "The textual content of the news object. (The string appended to body_ in the property name should reflect the format of the text)",
+			"type" : "string"
+  		}
 	},
 	"properties" : {
 		"guid" : {
@@ -44,7 +44,7 @@
 			"format" : "date-time"
 		},
 		"firstcreated" : {
-			"description" : "The date and time when the item was created",
+			"description" : "The date and time when the first version of the item was created",
 			"type" : "string",
 			"format" : "date-time"
 		},
@@ -73,7 +73,7 @@
 				"type" : "object",
 				"additionalProperties" : false,
 				"properties" : {
-					"qcode" : {
+					"code" : {
 						"description" : "The qualified code of the category",
 						"type" : "string"
 					},
@@ -84,8 +84,48 @@
 				}
 			}
 		},
+		"genre": {
+			"description" : "The item genre",
+			"type" : "array",
+			"items": {
+				"type" : "object",
+				"additionalProperties" : false,
+				"properties" : {
+					"code" : {
+						"description" : "The qualified code of the genre",
+						"type" : "string"
+					},
+					"name" : {
+						"description" : "The name of the genre",
+						"type" : "string"
+					}
+				}
+			}
+		},
+		"signal": {
+			"description" : "Warning signal for legal action",
+			"type" : "array",
+			"items": {
+				"type" : "object",
+				"additionalProperties" : false,
+				"properties" : {
+					"code" : {
+						"description" : "The qualified code of the signal",
+						"type" : "string"
+					},
+					"name" : {
+						"description" : "The name of the signal",
+						"type" : "string"
+					}
+				}
+			}
+		},
 		"copyrightholder" : {
 			"description" : "The person or organisation claiming the intellectual property for the content.",
+			"type" : "string"
+		},
+		"copyrightnotice" : {
+			"description" : "Any necessary copyright notice for claiming the intellectual property for the content.",
 			"type" : "string"
 		},
 		"usageterms" : {
@@ -109,15 +149,6 @@
 					},
 					"rel" : {
 						"description" : "The relationship of the content of the news object to the organisation",
-						"type" : "string"
-					},
-					"scheme" : {
-						"description" : "The identifier of a scheme (= controlled vocabulary) which includes a code for the organisation",
-						"type" : "string",
-						"format" : "uri"
-					},
-					"code" : {
-						"description": "The code for the organisation in a scheme (= controlled vocabulary) which is identified by the scheme property",
 						"type" : "string"
 					},
 					"symbols" : {
@@ -147,25 +178,10 @@
 			"items" : {
 				"type" : "object",
 				"additionalProperties" : false,
-				"patternProperties" : {
-					"^geometry_[a-zA-Z0-9_]+" : {
-			     "description" : "An object holding geo data of this place. Could be of any relevant geo data JSON object definition.",
-			     "type" : "object"
-			  	}
-			  },
 				"properties" : {
 					"name" : {
 						"description" : "The name of the place",
 						"type" : "string"
-					},
-									"rel" : {
-						"description" : "The relationship of the content of the news object to the place",
-						"type" : "string"
-					},
-					"scheme" : {
-						"description" : "The identifier of a scheme (= controlled vocabulary) which includes a code for the place",
-						"type" : "string",
-						"format" : "uri"
 					},
 					"code" : {
 						"description": "The code for the place in a scheme (= controlled vocabulary) which is identified by the scheme property",
@@ -185,15 +201,6 @@
 						"description" : "The name of the subject",
 						"type" : "string"
 					},
-					"rel" : {
-						"description" : "The relationship of the content of the news object to the subject",
-						"type" : "string"
-					},
-					"scheme" : {
-						"description" : "The identifier of a scheme (= controlled vocabulary) which includes a code for the subject",
-						"type" : "string",
-						"format" : "uri"
-					},
 					"code" : {
 						"description": "The code for the subject in a scheme (= controlled vocabulary) which is identified by the scheme property",
 						"type" : "string"
@@ -203,6 +210,10 @@
 		},
 		"byline" : {
 			"description" : "The name(s) of the creator(s) of the content",
+			"type" : "string"
+		},
+		"source" : {
+			"description" : "The source from which the item was ingested",
 			"type" : "string"
 		},
 		"slugline": {
@@ -223,7 +234,10 @@
 			"items" : {
 				"type" : "string"
 			}
-			
+		},
+		"ednote" : {
+			"description" : "Editor notes",
+			"type" : "string"
 		},
 		"renditions" : {
 			"description" : "Wrapper for different renditions of non-textual content of the news object",
@@ -242,10 +256,6 @@
 						},
 						"mimetype" : {
 							"description" : "A MIME type which applies to the rendition",
-							"type" : "string"
-						},
-						"title" : {
-							"description" : "A title for the link to the rendition resource",
 							"type" : "string"
 						},
 						"height" : {
@@ -269,6 +279,10 @@
 									"type": "integer"
 								}
 							}
+						},
+						"media" : {
+							"description" : "Media identifier in Superdesk",
+							"type" : "string"
 						}
 					}
 				}
@@ -279,12 +293,67 @@
 			"type": "object",
 			"additionalProperties" : false,
 			"patternProperties" : {
-				"^[a-zA-Z0-9]+" :  { "$ref": "http://url.to.be.defined#" }
+				"^[a-zA-Z0-9]+" :  { "$ref": "https://github.com/superdesk/superdesk-core/blob/master/docs/superdesk-ninjs-schema.json#" }
+			}
+		},
+		"extra" : {
+			"description" : "Extra metadata",
+			"type": "object",
+			"additionalProperties" : false,
+			"patternProperties" : {
+				"^[a-zA-Z0-9]+" :  {}
+			}
+		},
+		"evolvedfrom": {
+			"description" : "The content of this item has evolved from related item with this guid.",
+			"type" : "string"
+		},
+		"attachments" : {
+			"description" : "Wrapper for different attachments of non-textual content of the news object",
+			"type" : "object",
+			"additionalProperties" : false,
+			"patternProperties" : {
+				"^[a-zA-Z0-9]+" : {
+					"description" : "A specific attachment of a non-textual content of the news object.",
+					"type" : "object",
+  					"additionalProperties" : false,
+					"properties" : {
+						"id" : {
+							"description" : "The attachment identifier",
+							"type" : "string"
+						},
+						"title" : {
+							"description" : "A title for the link to the attachment resource",
+							"type" : "string"
+						},
+						"description" : {
+							"description" : "A description for the link to the attachment resource",
+							"type" : "string"
+						},
+						"filename" : {
+							"description" : "The attachment file name",
+							"type" : "string"
+						},
+						"mimetype" : {
+							"description" : "A MIME type which applies to the rendition",
+							"type" : "string"
+						},
+						"length" : {
+							"description" : "The attachment file size",
+							"type" : "number"
+						},
+						"media" : {
+							"description" : "Media identifier in Superdesk",
+							"type" : "string"
+						},
+						"href" : {
+							"description" : "The URL for accessing the rendition as a resource",
+							"type" : "string",
+							"format" : "uri"
+						}
+					}
+				}
 			}
 		}
-	},
-	"evolvedfrom" : {
-		"description" : "The content of this item has evolved from related item with this guid.",
-		"type" : "string"
 	}
 }
