@@ -58,6 +58,16 @@ class DefaultSchema(schema.Schema):
     #: editorial note
     ednote = schema.StringField()
 
+    #: authors
+    authors = schema.ListField(schema={
+        'type': 'dict',
+        'schema': {
+            'name': {'type': 'string'},
+            'parent': {'type': 'string'},
+            'role': {'type': 'string'},
+        }
+    })
+
     #: headline
     headline = schema.StringField(maxlength=64)
 
@@ -109,24 +119,25 @@ DEFAULT_EDITOR = {
     'subject': {'order': 11, 'sdWidth': 'full', 'enabled': True},
     'company_codes': {'order': 12, 'sdWidth': 'full', 'enabled': False},
     'ednote': {'order': 13, 'sdWidth': 'full', 'enabled': True},
-    'headline': {'order': 14, 'formatOptions': ['underline', 'anchor', 'bold', 'removeFormat'], 'enabled': True},
-    'sms': {'order': 15, 'enabled': False},
+    'authors': {'order': 14, 'sdWidth': 'full', 'enabled': True},
+    'headline': {'order': 15, 'formatOptions': ['underline', 'anchor', 'bold', 'removeFormat'], 'enabled': True},
+    'sms': {'order': 16, 'enabled': False},
     'abstract': {
-        'order': 16,
+        'order': 17,
         'formatOptions': ['bold', 'italic', 'underline', 'anchor', 'removeFormat'],
         'enabled': True
     },
-    'byline': {'order': 17, 'enabled': True},
-    'dateline': {'order': 18, 'enabled': True},
+    'byline': {'order': 18, 'enabled': True},
+    'dateline': {'order': 19, 'enabled': True},
     'body_html': {
-        'order': 19,
+        'order': 20,
         'formatOptions': ['h2', 'bold', 'italic', 'underline', 'quote', 'anchor', 'embed', 'picture', 'removeFormat'],
         'cleanPastedHTML': False,
         'enabled': True
     },
-    'footer': {'order': 20, 'enabled': False},
-    'body_footer': {'order': 21, 'enabled': False},
-    'sign_off': {'order': 22, 'enabled': True},
+    'footer': {'order': 21, 'enabled': False},
+    'body_footer': {'order': 22, 'enabled': False},
+    'sign_off': {'order': 23, 'enabled': True},
     'feature_media': {'enabled': True},
     'media_description': {'enabled': True},
 }

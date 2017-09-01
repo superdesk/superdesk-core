@@ -285,6 +285,19 @@ metadata_schema = {
         'type': 'string',
         'nullable': True,
     },
+    'authors': {
+        'type': 'list',
+        'nullable': True,
+        'mapping': {
+            'type': 'object',
+            'properties': {
+                'parent': not_analyzed,
+                'name': not_analyzed,
+                'role': not_analyzed
+            }
+
+        }
+    },
     'description_text': {
         'type': 'string',
         'nullable': True

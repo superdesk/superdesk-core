@@ -23,8 +23,8 @@ def get_mentions(text):
     Returns the names of desks and users from a given text
     User names starts with '@' and desk names starts with '#'
     """
-    user_pattern = re.compile("(^|\s)\@([\w.-]+)")
-    desk_pattern = re.compile("(^|\s)\#([\w.-]+)")
+    user_pattern = re.compile(r"(^|\s)\@([\w.-]+)")
+    desk_pattern = re.compile(r"(^|\s)\#([\w.-]+)")
     raw_user_names = set(username for match in re.finditer(user_pattern, text) for username in match.groups())
     raw_desk_names = set(deskname for match in re.finditer(desk_pattern, text) for deskname in match.groups())
     desk_names = [d.replace('_', ' ') for d in raw_desk_names if d.strip()]
