@@ -390,6 +390,7 @@ CORE_APPS.extend([
     'superdesk.commands',
     'superdesk.locators',
     'superdesk.media',
+    'superdesk.system_settings',
 
     'apps.auth',
     'apps.archive',
