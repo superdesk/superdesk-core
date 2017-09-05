@@ -88,17 +88,13 @@ LOG_SERVER_PORT = int(env('LOG_SERVER_PORT', 5555))
 
 #: application name - used in email footers, ``APP_NAME`` env
 APPLICATION_NAME = env('APP_NAME', 'Superdesk')
-server_url = urlparse(env('SUPERDESK_URL', 'http://localhost:5000/api'))
 #: public client url - used to create links within emails etc, ``SUPERDESK_CLIENT_URL`` env
 CLIENT_URL = env('SUPERDESK_CLIENT_URL', 'http://localhost:9000')
-URL_PROTOCOL = server_url.scheme or None
 
-#: public server url (not proxy), ``SUPERDESK_URL`` env
-SERVER_NAME = server_url.netloc or None
+SERVER_URL = env('SUPERDESK_URL', 'http://localhost:5000/api')
+server_url = urlparse(SERVER_URL)
 SERVER_DOMAIN = server_url.netloc or 'localhost'
-URL_PREFIX = server_url.path.lstrip('/') or ''
-if SERVER_NAME.endswith(':80'):
-    SERVER_NAME = SERVER_NAME[:-3]
+URL_PREFIX = env('URL_PREFIX', server_url.path.lstrip('/')) or ''
 
 VALIDATION_ERROR_STATUS = 400
 JSON_SORT_KEYS = False
@@ -437,7 +433,7 @@ RETURN_MEDIA_AS_BASE64_STRING = False
 VERSION = '_current_version'
 
 #: uses for generation of media url ``(<media_prefix>/<media_id>)``::
-MEDIA_PREFIX = env('MEDIA_PREFIX', '')
+MEDIA_PREFIX = env('MEDIA_PREFIX', '%s/upload-raw' % SERVER_URL.rstrip('/'))
 MEDIA_PREFIXES_TO_FIX = None
 
 #: amazon access key
@@ -464,8 +460,6 @@ RENDITIONS = {
         'viewImage': {'width': 200, 'height': 200},
     }
 }
-
-SERVER_DOMAIN = 'localhost'
 
 
 #: BCRYPT work factor

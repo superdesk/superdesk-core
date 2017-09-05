@@ -21,8 +21,8 @@ class ContentAPITestCase(TestCase):
         self.app.config['SECRET_KEY'] = 'secret'
         config = copy(self.app.config)
         config['AMAZON_CONTAINER_NAME'] = None  # force gridfs
-        config['SERVER_NAME'] = 'localhost:5400'
         config['URL_PREFIX'] = ''
+        config['MEDIA_PREFIX'] = '/assets'
         self.capi = get_app(config)
         self.capi.testing = True
         self.subscriber = {'_id': 'sub1'}
