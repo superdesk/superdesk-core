@@ -14,7 +14,6 @@ from superdesk.utc import utcnow
 from superdesk.notification import push_notification
 from apps.content import push_expired_notification
 from superdesk.errors import ProviderError
-from superdesk.stats import stats
 from superdesk.lock import lock, unlock
 from superdesk.io.registry import registered_feeding_services
 
@@ -84,7 +83,6 @@ def remove_expired_data(provider):
         logger.info('Deleting file: %s' % file_id)
         superdesk.app.media.delete(file_id)
 
-    stats.incr('ingest.expired_items', len(ids))
     logger.info('Removed expired content for provider: {0} count: {1}'
                 .format(provider.get('_id', 'Detached items'), len(ids)))
 

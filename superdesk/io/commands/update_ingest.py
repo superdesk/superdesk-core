@@ -28,7 +28,6 @@ from superdesk.metadata.item import GUID_NEWSML, GUID_FIELD, FAMILY_ID, ITEM_TYP
     ITEM_STATE
 from superdesk.metadata.utils import generate_guid
 from superdesk.notification import push_notification
-from superdesk.stats import stats
 from superdesk.utc import utcnow, get_expiry_date
 from superdesk.workflow import set_default_state
 from copy import deepcopy
@@ -223,7 +222,6 @@ def update_provider(provider, rule_set=None, routing_scheme=None):
 
         for items in feeding_service.update(provider, update):
             ingest_items(items, provider, feeding_service, rule_set, routing_scheme)
-            stats.incr('ingest.ingested_items', len(items))
             if items:
                 update[LAST_ITEM_UPDATE] = utcnow()
 
