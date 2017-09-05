@@ -1,0 +1,163 @@
+{
+    "versioncreated": "2017-08-24T01:58:40+0000",
+    "associations": {
+        "featuremedia": {
+            "versioncreated": "2017-08-24T01:56:56+0000",
+            "priority": 3,
+            "version": "2",
+            "urgency": 3,
+            "guid": "20170809001313906811",
+            "description_text": "Oil prices edged up on Monday, supported by the first fall in US drilling activity in month.",
+            "subject": [
+                {
+                    "code": "04005004",
+                    "name": "oil and gas - upstream activities"
+                }
+            ],
+            "type": "picture",
+            "copyrightnotice": "Copyright",
+            "headline": "Financial Markets",
+            "language": "en",
+            "byline": "Bebeto Matthews",
+            "copyrightholder": "Australian Associated Press",
+            "ednote": "WEDNESDAY, JULY 8, 2015, FILE PHOTO",
+            "mimetype": "image/jpeg",
+            "firstcreated": "2015-07-08T15:46:07+0000",
+            "renditions": {
+                "thumbnail": {
+                    "poi": {
+                        "y": 62,
+                        "x": 111
+                    },
+                    "href": "http://localhost:5000/api/upload-raw/599e31ed1d41c833e0b8a83e?_schema=http",
+                    "mimetype": "image/jpeg",
+                    "media": "599e31ed1d41c833e0b8a83e",
+                    "width": 182,
+                    "height": 120
+                },
+                "original": {
+                    "poi": {
+                        "y": 1193,
+                        "x": 2128
+                    },
+                    "href": "http://localhost:5000/api/upload-raw/599e31ec1d41c833e0b8a830.jpg",
+                    "mimetype": "image/jpeg",
+                    "media": "599e31ec1d41c833e0b8a830",
+                    "width": 3489,
+                    "height": 2296
+                },
+                "16-9": {
+                    "poi": {
+                        "y": 1118,
+                        "x": 2078
+                    },
+                    "href": "http://localhost:5000/api/upload-raw/599e32681d41c833e0b8a850.jpg",
+                    "mimetype": "image/jpeg",
+                    "media": "599e32681d41c833e0b8a850",
+                    "width": 1280,
+                    "height": 720
+                },
+                "baseImage": {
+                    "poi": {
+                        "y": 478,
+                        "x": 854
+                    },
+                    "href": "http://localhost:5000/api/upload-raw/599e31ed1d41c833e0b8a840?_schema=http",
+                    "mimetype": "image/jpeg",
+                    "media": "599e31ed1d41c833e0b8a840",
+                    "width": 1400,
+                    "height": 921
+                },
+                "viewImage": {
+                    "poi": {
+                        "y": 218,
+                        "x": 390
+                    },
+                    "href": "http://localhost:5000/api/upload-raw/599e31ec1d41c833e0b8a83c?_schema=http",
+                    "mimetype": "image/jpeg",
+                    "media": "599e31ec1d41c833e0b8a83c",
+                    "width": 640,
+                    "height": 421
+                },
+                "4-3": {
+                    "poi": {
+                        "y": 1193,
+                        "x": 1704
+                    },
+                    "href": "http://localhost:5000/api/upload-raw/599e32671d41c833e0b8a84d.jpg",
+                    "mimetype": "image/jpeg",
+                    "media": "599e32671d41c833e0b8a84d",
+                    "width": 800,
+                    "height": 600
+                }
+            },
+            "genre": [
+                {
+                    "code": "Article",
+                    "name": "Article (news)"
+                }
+            ],
+            "description_html": "<p>Oil prices edged up on Monday, supported by the first fall in US drilling activity in month.</p>",
+            "slugline": "GLOBAL-OIL",
+            "service": [
+                {
+                    "code": "f",
+                    "name": "Finance"
+                }
+            ],
+            "body_text": "Oil markets something",
+            "usageterms": "The direct recipient must comply with the limitations specified in the AAP Information\r\nSupply Agreement relating to the AAP content including, without limitation, not permitting\r\nredistribution and storage of the content (outside the terms of the Agreement) and not\r\npermitting deep hyperlinking to the content, framing of the content on a web site,\r\nposting the content to usenet newsgroups or facilitating such actions.",
+            "source": "AAP",
+            "place": [
+                {
+                    "code": "US",
+                    "name": "US"
+                }
+            ],
+            "pubstatus": "usable"
+        }
+    },
+    "version": "4",
+    "byline": "By Henning Gloystein",
+    "body_html": "<p>Oil prices edged up on Monday,\nsupported by the first autumn in US drilling activity in months,\nalthough rising output from OPEC despite a pledge to cut\nsupplies capped gains.<br/></p><p>Brent crude futures added 6 cents or 0.1 per cent to\n$48.83 per barrel by 0137 GMT, after jumping 5 per cent last week\nfor the first gain in six weeks.</p><p>US West Texas Intermediate (WTI) crude futures rose\n15 cents, or 0.3 per cent, to $46.19 per barrel after a more than\n7 per cent gain last week from depressed levels.</p><p>Traders said US prices were relatively stronger than Brent\nafter US drilling activity fell for the first time since\nJanuary. Sentiment for the global Brent benchmark was more\nsubdued due to rising output from within the the Organisation of\nthe Petroleum Exporting Countries (OPEC).</p><p>\"For the first time in 23 weeks, the number of drill rigs\noperating in the US fell, down 2 to 756,\" ANZ bank said on\nMonday, but added that \"this exuberance may be tempered by news\nover the weekend that Libya oil production hit another record.\"</p><p>Despite the drop, the total rig count was still more than\ndouble the 341 rigs in the same week a year ago, according to\nenergy services firm Baker Hughes Inc.</p><p>The slight cut in US drilling for new production was met\nby a rise in output from within OPEC in June, up by 280,000\nbarrels per day (bpd) to an estimated 2017 high of 32.72 million\nbpd despite the group's pledge to hold back production in an\neffort to tighten the market.</p><p>OPEC's high output is largely down to rising production from\nmembers Nigeria and Libya, which were exempted from the output\ncuts, and whose surge in supplies has undermined efforts by\nother members like Saudi Arabia to restrict supplies.</p><p>(Reporting by Henning Gloystein; Editing by Richard Pullin)</p>",
+    "priority": 3,
+    "guid": "tag:localhost:2017:7ca07622-3b19-4d61-8daf-18500412d46b",
+    "description_text": "Oil prices edged up on Monday, supported by the first fall in US drilling activity in month.",
+    "subject": [
+        {
+            "code": "04005004",
+            "name": "oil and gas - upstream activities"
+        }
+    ],
+    "type": "text",
+    "copyrightnotice": "Copyright",
+    "headline": "Oil prices edge up on first drop in US drilling in months",
+    "genre": [
+        {
+            "code": "Article",
+            "name": "Article (news)"
+        }
+    ],
+    "profile": "ContentProfile",
+    "slugline": "GLOBAL-OIL",
+    "copyrightholder": "Australian Associated Press",
+    "place": [
+        {
+            "code": "US",
+            "name": "US"
+        }
+    ],
+    "firstcreated": "2017-07-03T01:38:13+0000",
+    "urgency": 3,
+    "description_html": "<p>Oil prices edged up on Monday, supported by the first fall in US drilling activity in month.</p>",
+    "service": [
+        {
+            "code": "f",
+            "name": "Finance"
+        }
+    ],
+    "usageterms": "Usage",
+    "source": "Reuters",
+    "located": "Singapore",
+    "pubstatus": "usable"
+}

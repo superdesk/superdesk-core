@@ -23,7 +23,7 @@ from superdesk.errors import ProviderError
 from superdesk.io.registry import registered_feeding_services, registered_feed_parsers
 from superdesk.io.iptc import subject_codes
 from superdesk.lock import lock, unlock
-from superdesk.media.renditions import update_renditions
+from superdesk.media.renditions import update_renditions, transfer_renditions
 from superdesk.metadata.item import GUID_NEWSML, GUID_FIELD, FAMILY_ID, ITEM_TYPE, CONTENT_TYPE, CONTENT_STATE, \
     ITEM_STATE
 from superdesk.metadata.utils import generate_guid
@@ -472,6 +472,17 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
             if baseImageRend:
                 href = feeding_service.prepare_href(baseImageRend['href'], rend.get('mimetype'))
                 update_renditions(item, href, old_item)
+
+        # if the item has associated media
+        if 'featuremedia' in item.get('associations', {}):
+            transfer_renditions(item.get('associations').get('featuremedia').get('renditions', {}))
+            # wire up the id of the associated feature media to the ingested one
+            guid = item.get('associations').get('featuremedia').get('guid')
+            if guid:
+                lookup = {'guid': guid}
+                featuremedia = ingest_service.get_from_mongo(req=None, lookup=lookup)
+                if featuremedia.count() >= 1:
+                    item.get('associations').get('featuremedia')['_id'] = featuremedia[0]['_id']
 
         new_version = True
         items_ids = []
