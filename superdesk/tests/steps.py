@@ -493,7 +493,7 @@ def fetch_from_provider(context, provider_name, guid, routing_scheme=None, desk_
     provider_service = registered_feeding_services[provider['feeding_service']]
     provider_service = provider_service.__class__()
 
-    if provider.get('name', '').lower() in ('aap', 'dpa'):
+    if provider.get('name', '').lower() in ('aap', 'dpa', 'ninjs'):
         file_path = os.path.join(provider.get('config', {}).get('path', ''), guid)
         feeding_parser = provider_service.get_feed_parser(provider)
         if isinstance(feeding_parser, XMLFeedParser):
@@ -501,7 +501,8 @@ def fetch_from_provider(context, provider_name, guid, routing_scheme=None, desk_
                 xml_string = etree.etree.fromstring(f.read())
                 items = [feeding_parser.parse(xml_string, provider)]
         else:
-            items = [feeding_parser.parse(file_path, provider)]
+            parsed = feeding_parser.parse(file_path, provider)
+            items = [parsed] if not isinstance(parsed, list) else parsed
     else:
         provider_service.provider = provider
         provider_service.URL = provider.get('config', {}).get('url')

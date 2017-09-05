@@ -1,0 +1,47 @@
+{
+    "versioncreated": "2017-08-24T04:38:34+0000",
+    "priority": 6,
+    "version": "2",
+    "urgency": 3,
+    "body_html": "<p>The story so far.</p>",
+    "guid": "urn:newsml:localhost:2017-08-24T14:37:19.783611:c044162e-7f40-4d04-b700-49b6a66e652c",
+    "description_text": "abstract",
+    "subject": [
+        {
+            "code": "01000000",
+            "name": "arts, culture and entertainment"
+        }
+    ],
+    "type": "text",
+    "copyrightnotice": "Copyright",
+    "headline": "headline",
+    "genre": [
+        {
+            "code": "Article",
+            "name": "Article (news)"
+        }
+    ],
+    "profile": "ContentProfile",
+    "byline": "Peter and Jane",
+    "copyrightholder": "Australian Associated Press",
+    "ednote": "ed note",
+    "firstcreated": "2017-08-24T04:37:19+0000",
+    "description_html": "<p>abstract</p>",
+    "slugline": "slugline",
+    "service": [
+        {
+            "code": "i",
+            "name": "International News"
+        }
+    ],
+    "usageterms": "Usage",
+    "source": "AAP",
+    "place": [
+        {
+            "code": "NSW",
+            "name": "NSW"
+        }
+    ],
+    "pubstatus": "usable",
+    "located": "Milton Keynes"
+}
