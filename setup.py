@@ -35,7 +35,6 @@ install_requires = [
     'tzlocal>=1.2.2,<1.4',
     'raven[flask]>=5.10,<6.0',
     'requests>=2.7.0,<=2.13',
-    'statsd>=3.1,<3.3',
     'httmock>=1.2.3,<1.3',
     'boto3>=1.1.4,<1.5',
     'websockets>=3.0,<3.3',
