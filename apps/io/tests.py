@@ -45,6 +45,8 @@ def setup_providers(context):
             {'name': 'DPA', 'source': 'DPA', 'feeding_service': 'file', 'feed_parser': 'dpa_iptc7901',
              'is_closed': False, 'config': {'path': path_to_fixtures}},
             {'name': 'AP', 'source': 'AP', 'feeding_service': 'file', 'feed_parser': 'ap_anpa1312',
+             'is_closed': False, 'config': {'path': path_to_fixtures}},
+            {'name': 'ninjs', 'source': 'NINJS', 'feeding_service': 'file', 'feed_parser': 'ninjs',
              'is_closed': False, 'config': {'path': path_to_fixtures}}
         ]
 

@@ -462,3 +462,103 @@ Feature: Fetch From Ingest
 
         When we get "/ingest"
         Then we get list with 0 items
+
+    @auth
+    @provider
+    Scenario: Ingest ninjs
+        Given empty "ingest"
+        When we fetch from "ninjs" ingest "ninjs2.json"
+        And we get "/ingest"
+        Then we get existing resource
+        """
+        {
+           "_items":[
+              {
+                 "type":"picture",
+                 "state":"ingested",
+                 "renditions":{
+                    "baseImage":{
+                       "width":1400
+                    },
+                    "thumbnail":{
+
+                    },
+                    "original":{
+
+                    },
+                    "viewImage":{
+                    }
+                 }
+              },
+              {
+                 "type":"text",
+                 "state":"ingested",
+                 "associations":{
+                    "featuremedia":{
+                       "renditions":{
+                          "baseImage":{
+                             "width":1400
+                          },
+                          "original":{
+                          }
+                       }
+                    }
+                 }
+              }
+           ]
+        }
+        """
+
+    @auth
+    @provider
+    Scenario: Ingest ninjs text
+        Given empty "ingest"
+        When we fetch from "ninjs" ingest "ninjs1.json"
+        And we get "/ingest"
+        Then we get existing resource
+        """
+        {
+           "_items":[{"type": "text", "headline": "headline"}]
+        }
+        """
+
+    @auth
+    @provider
+    Scenario: Ingest ninjs picture
+        Given empty "ingest"
+        When we fetch from "ninjs" ingest "ninjs3.json"
+        And we get "/ingest"
+        Then we get existing resource
+        """
+        {
+           "_items":[
+              {
+                 "type":"picture",
+                 "headline":"German Air Force Museum",
+                 "state":"ingested",
+                 "renditions":{
+                    "baseImage" : {
+                       "width" : 1400,
+                       "height" : 1074,
+                       "mimetype" : "image/jpeg"
+                    },
+                    "thumbnail" : {
+                        "width":156,
+                        "height":120,
+                        "mimetype" : "image/jpeg"
+                    },
+                    "original" : {
+                       "width" : 800,
+                       "height" : 614,
+                       "mimetype" : "image/jpeg"
+                    },
+                    "viewImage":{
+                        "width" : 640,
+                        "height" : 491,
+                        "mimetype" : "image/jpeg"
+                    }
+                 }
+              }
+           ]
+        }
+        """

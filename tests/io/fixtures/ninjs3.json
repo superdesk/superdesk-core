@@ -1,0 +1,107 @@
+{
+    "guid": "20170825001315282180",
+    "source": "AAP",
+    "subject": [
+        {
+            "code": "01000000",
+            "name": "arts, culture and entertainment"
+        }
+    ],
+    "priority": 6,
+    "description_text": "A Casa 2.111, a Spanish reconstruction of the Heinkel He 111",
+    "byline": "A3576/_Maurizio Gambarini",
+    "body_text": "German Air Force Museum",
+    "copyrightnotice": "Copyright",
+    "usageterms": "Usage",
+    "renditions": {
+        "thumbnail": {
+            "poi": {
+                "y": 49,
+                "x": 100
+            },
+            "media": "599faa341d41c8fdc696d902",
+            "width": 179,
+            "height": 120,
+            "mimetype": "image/jpeg",
+            "href": "http://localhost:5000/api/upload-raw/599faa341d41c8fdc696d902?_schema=http"
+        },
+        "viewImage": {
+            "poi": {
+                "y": 175,
+                "x": 358
+            },
+            "media": "599faa371d41c8fdc696d906",
+            "width": 640,
+            "height": 427,
+            "mimetype": "image/jpeg",
+            "href": "http://localhost:5000/api/upload-raw/599faa371d41c8fdc696d906?_schema=http"
+        },
+        "16-9": {
+            "poi": {
+                "y": 1646,
+                "x": 3368
+            },
+            "media": "599faa771d41c8fdc696d912",
+            "width": 1280,
+            "height": 720,
+            "mimetype": "image/jpeg",
+            "href": "http://localhost:5000/api/upload-raw/599faa771d41c8fdc696d912.jpg"
+        },
+        "4-3": {
+            "poi": {
+                "y": 1646,
+                "x": 2680
+            },
+            "media": "599faa741d41c8fdc696d90f",
+            "width": 800,
+            "height": 600,
+            "mimetype": "image/jpeg",
+            "href": "http://localhost:5000/api/upload-raw/599faa741d41c8fdc696d90f.jpg"
+        },
+        "baseImage": {
+            "poi": {
+                "y": 382,
+                "x": 784
+            },
+            "media": "599faa351d41c8fdc696d904",
+            "width": 1400,
+            "height": 934,
+            "mimetype": "image/jpeg",
+            "href": "http://localhost:5000/api/upload-raw/599faa351d41c8fdc696d904?_schema=http"
+        },
+        "original": {
+            "poi": {
+                "y": 1646,
+                "x": 3368
+            },
+            "media": "599faa331d41c8fdc696d8b4",
+            "width": 6016,
+            "height": 4016,
+            "mimetype": "image/jpeg",
+            "href": "http://localhost:5000/api/upload-raw/599faa331d41c8fdc696d8b4.jpg"
+        }
+    },
+    "genre": [
+        {
+            "code": "Article",
+            "name": "Article (news)"
+        }
+    ],
+    "language": "en",
+    "version": "3",
+    "versioncreated": "2017-08-25T04:41:35+0000",
+    "service": [
+        {
+            "code": "i",
+            "name": "International News"
+        }
+    ],
+    "urgency": 3,
+    "pubstatus": "usable",
+    "type": "picture",
+    "headline": "German Air Force Museum",
+    "copyrightholder": "Australian Associated Press",
+    "mimetype": "image/jpeg",
+    "firstcreated": "2017-08-18T02:57:43+0000",
+    "slugline": "German Air Force Museum"
+}
