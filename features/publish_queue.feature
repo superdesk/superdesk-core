@@ -438,3 +438,51 @@ Feature: Publish Queue
     When we get "/publish_queue"
     Then we get list ordered by _id with 4 items
 
+  @auth
+  Scenario: Expire published queue items
+    Given empty "subscribers"
+    And config update
+    """
+    {"PUBLISH_QUEUE_EXPIRY_MINUTES": -1}
+    """
+    When we post to "/archive" with success
+    """
+    [{"guid": "123", "headline": "test"}]
+    """
+    When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+      }
+      """
+    And we post to "/subscribers" with success
+    """
+    {
+      "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+      "products": ["#products._id#"],
+      "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+    }
+    """
+    And we post to "/publish_queue" with success
+    """
+    {
+       "item_id":"#archive._id#","publish_schedule": "2016-05-30T10:00:00+00:00", "subscriber_id":"#subscribers._id#",
+       "destination":{"name":"Test","format": "nitf","delivery_type":"email","config":{"recipients":"test@test.com"}}
+    }
+    """
+    And we get "/publish_queue"
+    Then we get list with 1 items
+    """
+    {
+      "_items":
+        [
+          {"destination":{"name":"Test"}}
+        ]
+    }
+    """
+    When we expire items
+    """
+    []
+    """
+    And we get "/publish_queue"
+    Then we get list with 0 items
