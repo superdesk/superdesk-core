@@ -17,7 +17,7 @@ from superdesk.errors import SuperdeskApiError
 from werkzeug.wsgi import wrap_file
 from .resource import Resource
 from .services import BaseService
-from flask import url_for, request, current_app as app, redirect
+from flask import request, current_app as app, redirect
 from superdesk.media.renditions import generate_renditions, delete_file_on_error
 from superdesk.media.media_operations import (
     download_file_from_url, download_file_from_encoded_str,
@@ -67,10 +67,8 @@ def url_for_media(media_id, mimetype=None):
 
 
 def upload_url(media_id, view='upload_raw.get_upload_as_data_uri'):
-    media_prefix = app.config.get('MEDIA_PREFIX')
-    if media_prefix:
-        return '%s/%s' % (media_prefix.rstrip('/'), media_id)
-    return url_for(view, media_id=media_id, _external=True)
+    media_prefix = app.config.get('MEDIA_PREFIX').rstrip('/')
+    return '%s/%s' % (media_prefix, media_id)
 
 
 def init_app(app):

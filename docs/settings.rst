@@ -8,7 +8,7 @@ We use ``flask.app.config``, so to use it do::
 
     from flask import current_app as app
 
-    print(app.config['SERVER_NAME'])
+    print(app.config['SERVER_DOMAIN'])
 
 Configuration is combination of default settings module and settings module
 in `application repo <https://github.com/superdesk/superdesk/blob/master/server/settings.py>`_.
@@ -22,11 +22,6 @@ Default settings
 ^^^^^^^^^^^^^^^^^^^^
 
 Default: ``'Superdesk'``
-
-``SERVER_NAME``
-^^^^^^^^^^^^^^^
-
-Default: ``'localhost:5000'``
 
 ``CLIENT_URL``
 ^^^^^^^^^^^^^^

@@ -16,7 +16,7 @@ class GridFSMediaStorageTestCase(unittest.TestCase):
 
     def setUp(self):
         self.app = eve.Eve(__name__, {'DOMAIN': {}})
-        self.app.config['SERVER_NAME'] = 'localhost'
+        self.app.config['MEDIA_PREFIX'] = 'http://localhost/upload-raw'
         self.app.config['DOMAIN'] = {'upload': {}}
         self.app.config['MONGO_DBNAME'] = 'sptests'
         self.app.data = SuperdeskDataLayer(self.app)

@@ -9,7 +9,7 @@ class SuperdeskSentry():
 
     def __init__(self, app):
         if app.config.get('SENTRY_DSN'):
-            app.config.setdefault('SENTRY_NAME', app.config.get('SERVER_NAME'))
+            app.config.setdefault('SENTRY_NAME', app.config.get('SERVER_DOMAIN'))
             self.sentry = Sentry(app, register_signal=False, wrap_wsgi=False, logging=True, level=logging.WARNING)
             register_logger_signal(self.sentry.client)
             register_signal(self.sentry.client)
