@@ -283,3 +283,20 @@ def update_renditions(item, href, old_item):
         for file_id in inserted:
             app.media.delete(file_id)
         raise
+
+
+def transfer_renditions(renditions):
+    """Transfer the passed renditions to localy held renditions
+
+    Download the renditions as passed and upload them to this instances storage
+    Adjust the rendition references
+    :param renditions:
+    :return: Updated renditions
+    """
+    for rend in iter(renditions.values()):
+        content, filename, content_type = download_file_from_url(rend.get('href'))
+        file_type, ext = content_type.split('/')
+        metadata = process_file(content, file_type)
+        file_guid = app.media.put(content, filename, content_type, metadata)
+        rend['href'] = app.media.url_for_media(file_guid, content_type)
+        rend['media'] = file_guid

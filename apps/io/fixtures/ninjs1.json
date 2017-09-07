@@ -1,0 +1,47 @@
+{
+    "versioncreated": "2017-08-24T04:38:34+0000",
+    "priority": 6,
+    "version": "2",
+    "urgency": 3,
+    "body_html": "<p>The story so far.</p>",
+    "guid": "urn:newsml:localhost:2017-08-24T14:37:19.783611:c044162e-7f40-4d04-b700-49b6a66e652c",
+    "description_text": "abstract",
+    "subject": [
+        {
+            "code": "01000000",
+            "name": "arts, culture and entertainment"
+        }
+    ],
+    "type": "text",
+    "copyrightnotice": "AAP content is owned by or licensed to Australian Associated Press Pty Limited (AAP) and is\r\ncopyright protected.  AAP content is published on an \"as is\" basis for personal use only and\r\nmust not be copied, republished, rewritten, resold or redistributed, whether by caching,\r\nframing or similar means, without AAP's prior written permission.  AAP and its licensors\r\nare not liable for any loss, through negligence or otherwise, resulting from errors or\r\nomissions in or reliance on AAP content.  The globe symbol and \"AAP\" are registered trade marks.\r\nFurther this AAP content is supplied to the direct recipient pursuant to an Information Supply\r\nAgreement with AAP (AAP Information Supply Agreement).  The direct recipient has a non-exclusive,\r\nnon-transferable right to display this AAP content in accordance with and subject to the\r\nterms of the AAP Information Supply Agreement.",
+    "headline": "headline",
+    "genre": [
+        {
+            "code": "Article",
+            "name": "Article (news)"
+        }
+    ],
+    "profile": "ContentProfile",
+    "byline": "Peter and Jane",
+    "copyrightholder": "Australian Associated Press",
+    "ednote": "ed note",
+    "firstcreated": "2017-08-24T04:37:19+0000",
+    "description_html": "<p>abstract</p>",
+    "slugline": "slugline",
+    "service": [
+        {
+            "code": "i",
+            "name": "International News"
+        }
+    ],
+    "usageterms": "The direct recipient must comply with the limitations specified in the AAP Information\r\nSupply Agreement relating to the AAP content including, without limitation, not permitting\r\nredistribution and storage of the content (outside the terms of the Agreement) and not\r\npermitting deep hyperlinking to the content, framing of the content on a web site,\r\nposting the content to usenet newsgroups or facilitating such actions.",
+    "source": "AAP",
+    "place": [
+        {
+            "code": "NSW",
+            "name": "NSW"
+        }
+    ],
+    "pubstatus": "usable",
+    "located": "Milton Keynes"
+}
