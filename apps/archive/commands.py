@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
+from flask import current_app as app
 import superdesk
 import logging
 from eve.utils import config, ParsedRequest
@@ -21,6 +22,8 @@ from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTEN
 from superdesk.lock import lock, unlock, remove_locks
 from superdesk.notification import push_notification
 from superdesk import get_resource_service
+from bson.objectid import ObjectId
+from datetime import timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +43,7 @@ class RemoveExpiredContent(superdesk.Command):
         try:
             logger.info('{} Removing expired content for expiry.'.format(self.log_msg))
             self._remove_expired_items(now)
+            self._remove_expired_publish_queue_items()
         finally:
             unlock(lock_name)
 
@@ -47,6 +51,14 @@ class RemoveExpiredContent(superdesk.Command):
         logger.info('{} Completed remove expired content.'.format(self.log_msg))
 
         remove_locks()
+
+    def _remove_expired_publish_queue_items(self):
+        expire_interval = app.config.get('PUBLISH_QUEUE_EXPIRY_MINUTES', 0)
+        if expire_interval:
+            expire_time = utcnow() - timedelta(minutes=expire_interval)
+            logger.info('{} Removing publish queue items created before {}'.format(self.log_msg, str(expire_time)))
+
+            get_resource_service('publish_queue').delete({'_id': {'$lte': ObjectId.from_datetime(expire_time)}})
 
     def _remove_expired_items(self, expiry_datetime):
         """Remove the expired items.
