@@ -57,6 +57,12 @@ class UsersResource(Resource):
         'is_approved': {
             'type': 'boolean',
             'default': False
+        },
+        'token': {
+            'type': 'string',
+        },
+        'token_expiry_date': {
+            'type': 'datetime',
         }
     }
 
@@ -64,7 +70,8 @@ class UsersResource(Resource):
     resource_methods = ['GET', 'POST']
     mongo_prefix = MONGO_PREFIX
     datasource = {
-        'source': 'users'
+        'source': 'users',
+        'default_sort': [('name', 1)]
     }
     mongo_indexes = {
         'email': ([('email', 1)], {'unique': True})
