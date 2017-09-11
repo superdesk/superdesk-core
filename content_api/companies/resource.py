@@ -40,6 +40,10 @@ class CompaniesResource(Resource):
             'type': 'string'
         }
     }
+    datasource = {
+        'source': 'companies',
+        'default_sort': [('name', 1)]
+    }
     item_methods = ['GET', 'PATCH', 'PUT']
     resource_methods = ['GET', 'POST']
     mongo_prefix = MONGO_PREFIX
