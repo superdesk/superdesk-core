@@ -79,7 +79,7 @@ Feature: Content Profile
                 "abstract": {
                     "formatOptions": ["bold", "italic", "underline", "anchor", "removeFormat"],
                     "enabled": true,
-                    "order": 16
+                    "order": 17
                 },
                 "feature_media": {
                     "enabled": true
@@ -102,19 +102,19 @@ Feature: Content Profile
                 "headline": {
                     "formatOptions": ["underline", "anchor", "bold", "removeFormat"],
                     "enabled": true,
-                    "order": 14
+                    "order": 15
                 },
                 "body_footer": {
                     "enabled": false,
-                    "order": 21
+                    "order": 22
                 },
                 "sign_off": {
                     "enabled": true,
-                    "order": 22
+                    "order": 23
                 },
                 "footer": {
                     "enabled": false,
-                    "order": 20
+                    "order": 21
                 },
                 "anpa_category": {
                     "sdWidth": "full",
@@ -123,12 +123,17 @@ Feature: Content Profile
                 },
                 "dateline": {
                     "enabled": true,
-                    "order": 18
+                    "order": 19
                 },
                 "ednote": {
                     "sdWidth": "full",
                     "enabled": true,
                     "order": 13
+                },
+                "authors": {
+                    "sdWidth": "full",
+                    "enabled": true,
+                    "order": 14
                 },
                 "anpa_take_key": {
                     "sdWidth": "half",
@@ -163,18 +168,18 @@ Feature: Content Profile
                 "body_html": {
                     "formatOptions": ["h2", "bold", "italic", "underline", "quote", "anchor", "embed", "picture", "removeFormat"],
                     "enabled": true,
-                    "order": 19
+                    "order": 20
                 },
                 "byline": {
                     "enabled": true,
-                    "order": 17
+                    "order": 18
                 },
                 "media_description": {
                     "enabled": true
                 },
                 "sms": {
                     "enabled": false,
-                    "order": 15
+                    "order": 16
                 },
                 "usageterms": {
                 	"order": 4,
@@ -201,6 +206,24 @@ Feature: Content Profile
                 "ednote": {
                     "type": "string",
                     "required": false
+                },
+                "authors": {
+                    "required": false,
+                    "schema": {
+                        "schema": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "parent": {
+                                "type": "string"
+                            },
+                            "role": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "dict"
+                    },
+                    "type": "list"
                 },
                 "sign_off": {
                     "type": "string",
@@ -320,6 +343,24 @@ Feature: Content Profile
                     "required": false,
                     "type": "string"
                 },
+                "authors": {
+                    "required": false,
+                    "schema": {
+                        "schema": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "parent": {
+                                "type": "string"
+                            },
+                            "role": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "dict"
+                    },
+                    "type": "list"
+                },
                 "priority": {
                     "type": "integer",
                     "required": false
@@ -407,6 +448,11 @@ Feature: Content Profile
                     "order": 13,
                     "sdWidth": "full"
                 },
+                "authors": {
+                    "enabled": false,
+                    "sdWidth": "full",
+                    "order": 14
+                },
                 "priority": {
                     "enabled": false,
                     "order": 8,
@@ -424,7 +470,7 @@ Feature: Content Profile
                 },
                 "body_html": {
                     "enabled": false,
-                    "order": 19,
+                    "order": 20,
                     "formatOptions": ["h2", "bold", "italic", "underline", "quote", "anchor", "embed", "picture", "removeFormat"]
                 },
                 "anpa_category": {
@@ -442,7 +488,7 @@ Feature: Content Profile
                 },
                 "abstract": {
                     "enabled": false,
-                    "order": 16,
+                    "order": 17,
                     "formatOptions": ["bold", "italic", "underline", "anchor", "removeFormat"]
                 },
                 "media_description": {
@@ -450,7 +496,7 @@ Feature: Content Profile
                 },
                 "headline": {
                     "enabled": false,
-                    "order": 14,
+                    "order": 15,
                     "formatOptions": ["underline", "anchor", "bold", "removeFormat"]
                 },
                 "place": {
@@ -460,19 +506,19 @@ Feature: Content Profile
                 },
                 "byline": {
                     "enabled": false,
-                    "order": 17
+                    "order": 18
                 },
                 "sms": {
                     "enabled": false,
-                    "order": 15
+                    "order": 16
                 },
                 "footer": {
                     "enabled": false,
-                    "order": 20
+                    "order": 21
                 },
                 "body_footer": {
                     "enabled": false,
-                    "order": 21
+                    "order": 22
                 },
                 "genre": {
                     "enabled": false,
@@ -486,7 +532,7 @@ Feature: Content Profile
                 },
                 "sign_off": {
                     "enabled": false,
-                    "order": 22
+                    "order": 23
                 },
                 "slugline": {
                     "enabled": true,
@@ -505,7 +551,7 @@ Feature: Content Profile
                 },
                 "dateline": {
                     "enabled": false,
-                    "order": 18
+                    "order": 19
                 }
             }
         }
@@ -609,6 +655,24 @@ Feature: Content Profile
                     "type": "string",
                     "required": false
                 },
+                "authors": {
+                    "required": false,
+                    "schema": {
+                        "schema": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "parent": {
+                                "type": "string"
+                            },
+                            "role": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "dict"
+                    },
+                    "type": "list"
+                },
                 "abstract": {
                     "type": "string",
                     "maxlength": 160,
@@ -676,7 +740,7 @@ Feature: Content Profile
             },
             "editor": {
                 "dateline": {
-                    "order": 18,
+                    "order": 19,
                     "enabled": true
                 },
                 "media_description": {
@@ -704,7 +768,7 @@ Feature: Content Profile
                     "enabled": false
                 },
                 "abstract": {
-                    "order": 16,
+                    "order": 17,
                     "enabled": true,
                     "formatOptions": ["bold", "italic", "underline", "anchor", "removeFormat"]
                 },
@@ -714,11 +778,11 @@ Feature: Content Profile
                     "enabled": true
                 },
                 "sign_off": {
-                    "order": 22,
+                    "order": 23,
                     "enabled": true
                 },
                 "body_footer": {
-                    "order": 21,
+                    "order": 22,
                     "enabled": false
                 },
                 "genre_custom": {
@@ -731,6 +795,11 @@ Feature: Content Profile
                     "order": 13,
                     "sdWidth": "full",
                     "enabled": true
+                },
+                "authors": {
+                    "sdWidth": "full",
+                    "enabled": true,
+                    "order": 14
                 },
                 "slugline": {
                     "order": 1,
@@ -747,16 +816,16 @@ Feature: Content Profile
                     "enabled": false
                 },
                 "byline": {
-                    "order": 17,
+                    "order": 18,
                     "enabled": true
                 },
                 "body_html": {
-                    "order": 19,
+                    "order": 20,
                     "enabled": true,
                     "formatOptions": ["h2", "bold", "italic", "underline", "quote", "anchor", "embed", "picture", "removeFormat"]
                 },
                 "footer": {
-                    "order": 20,
+                    "order": 21,
                     "enabled": false
                 },
                 "company_codes": {
@@ -768,7 +837,7 @@ Feature: Content Profile
                     "enabled": true
                 },
                 "sms": {
-                    "order": 15,
+                    "order": 16,
                     "enabled": false
                 },
                 "anpa_category": {
@@ -777,7 +846,7 @@ Feature: Content Profile
                     "enabled": true
                 },
                 "headline": {
-                    "order": 14,
+                    "order": 15,
                     "enabled": true,
                     "formatOptions": ["underline", "anchor", "bold", "removeFormat"]
                 },
@@ -877,11 +946,11 @@ Feature: Content Profile
             "updated_by": "#CONTEXT_USER_ID#",
             "editor": {
                 "footer": {
-                    "order": 20,
+                    "order": 21,
                     "enabled": false
                 },
                 "body_footer": {
-                    "order": 21,
+                    "order": 22,
                     "enabled": false
                 },
                 "ednote": {
@@ -889,16 +958,21 @@ Feature: Content Profile
                     "order": 13,
                     "enabled": false
                 },
+                "authors": {
+                    "sdWidth": "full",
+                    "enabled": false,
+                    "order": 14
+                },
                 "media_description": {
                     "enabled": false
                 },
                 "body_html": {
                     "formatOptions": ["h2", "bold", "italic", "underline", "quote", "anchor", "embed", "picture", "removeFormat"],
                     "enabled": false,
-                    "order": 19
+                    "order": 20
                 },
                 "dateline": {
-                    "order": 18,
+                    "order": 19,
                     "enabled": false
                 },
                 "feature_media": {
@@ -919,7 +993,7 @@ Feature: Content Profile
                     "enabled": false
                 },
                 "sign_off": {
-                    "order": 22,
+                    "order": 23,
                     "enabled": false
                 },
                 "slugline": {
@@ -940,7 +1014,7 @@ Feature: Content Profile
                 "headline": {
                     "formatOptions": ["underline", "anchor", "bold", "removeFormat"],
                     "enabled": false,
-                    "order": 14
+                    "order": 15
                 },
                 "subject_custom": {
                     "sdWidth": "full",
@@ -949,13 +1023,13 @@ Feature: Content Profile
                     "enabled": false
                 },
                 "sms": {
-                    "order": 15,
+                    "order": 16,
                     "enabled": false
                 },
                 "abstract": {
                     "formatOptions": ["bold", "italic", "underline", "anchor", "removeFormat"],
                     "enabled": false,
-                    "order": 16
+                    "order": 17
                 },
                 "company_codes": {
                     "sdWidth": "full",
@@ -984,7 +1058,7 @@ Feature: Content Profile
                     "enabled": false
                 },
                 "byline": {
-                    "order": 17,
+                    "order": 18,
                     "enabled": false
                 },
                 "usageterms": {
@@ -997,6 +1071,24 @@ Feature: Content Profile
                 "ednote": {
                     "type": "string",
                     "required": false
+                },
+                "authors": {
+                    "required": false,
+                    "schema": {
+                        "schema": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "parent": {
+                                "type": "string"
+                            },
+                            "role": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "dict"
+                    },
+                    "type": "list"
                 },
                 "media_description": {},
                 "body_html": {

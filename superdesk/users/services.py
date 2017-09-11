@@ -346,6 +346,18 @@ class UsersService(BaseService):
     def set_privileges(self, user, role):
         user['active_privileges'] = get_privileges(user, role)
 
+    def get(self, req, lookup):
+        try:
+            is_author = req.args['is_author']
+        except (AttributeError, TypeError, KeyError):
+            pass
+        else:
+            if is_author in ('0', '1'):
+                lookup['is_author'] = bool(int(is_author))
+            else:
+                logger.warn('bad value of is_author argument ({value})'.format(value=is_author))
+        return super().get(req, lookup)
+
     def get_users_by_user_type(self, user_type='user'):
         return list(self.get(req=None, lookup={'user_type': user_type}))
 
