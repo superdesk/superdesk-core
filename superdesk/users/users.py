@@ -111,6 +111,7 @@ class UsersResource(Resource):
             SIGN_OFF: {  # Used for putting a sign-off on the content when it's created/updated except kill
                 'type': 'string',
                 'required': False,
+                'nullable': True,
                 'regex': '^[a-zA-Z0-9]+$'
             },
             BYLINE: {
