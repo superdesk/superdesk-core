@@ -305,7 +305,7 @@
 			}
 		},
 		"evolvedfrom": {
-			"description" : "The content of this item has evolved from related item with this guid.",
+			"description" : "Stores the original published item for which and update was published.",
 			"type" : "string"
 		},
 		"attachments" : {
