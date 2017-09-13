@@ -97,10 +97,12 @@ def set_sign_off(user):
     Set sign_off property on user if it's not set already.
     """
 
-    if SIGN_OFF not in user:
+    if SIGN_OFF not in user or user[SIGN_OFF] is None:
         sign_off_mapping = app.config.get('SIGN_OFF_MAPPING', None)
         if sign_off_mapping and sign_off_mapping in user:
             user[SIGN_OFF] = user[sign_off_mapping]
+        elif SIGN_OFF in user and user[SIGN_OFF] is None:
+            user[SIGN_OFF] = ''
         elif 'first_name' not in user or 'last_name' not in user:
             user[SIGN_OFF] = user['username'][:3].upper()
         else:
@@ -122,7 +124,7 @@ def get_sign_off(user):
     Gets sign_off property on user if it's not set already.
     """
 
-    if SIGN_OFF not in user:
+    if SIGN_OFF not in user or user[SIGN_OFF] is None:
         set_sign_off(user)
 
     return user[SIGN_OFF]
