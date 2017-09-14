@@ -513,6 +513,9 @@ AUDIT_EXPIRY_MINUTES = int(env('AUDIT_EXPIRY_MINUTES', 0))
 #: The number records to be fetched for expiry.
 MAX_EXPIRY_QUERY_LIMIT = int(env('MAX_EXPIRY_QUERY_LIMIT', 100))
 
+#: The number of minutes before Publish Queue is purged
+PUBLISH_QUEUE_EXPIRY_MINUTES = int(env('PUBLISH_QUEUE_EXPIRY_MINUTES', 0))
+
 # This setting can be used to apply a limit on the elastic search queries, it is a limit per shard.
 # A value of -1 indicates that no limit will be applied.
 # If for example the elastic has 5 shards and you wish to limit the number of search results to 1000 then set the value
@@ -612,5 +615,3 @@ GOOGLE_CLIENT_SECRET = env('GOOGLE_CLIENT_SECRET')
 # SAML Auth settings
 SAML_PATH = env('SAML_PATH')
 SAML_LABEL = env('SAML_LABEL', 'Single Sign On')
-
-PUBLISH_QUEUE_EXPIRY_MINUTES = env('PUBLISH_QUEUE_EXPIRY_TIME', 0)

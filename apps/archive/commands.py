@@ -8,10 +8,10 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-
-from flask import current_app as app
-import superdesk
+import functools as ft
 import logging
+import superdesk
+from flask import current_app as app
 from eve.utils import config, ParsedRequest
 from copy import deepcopy
 from apps.packages import PackageService
@@ -28,6 +28,16 @@ from datetime import timedelta
 logger = logging.getLogger(__name__)
 
 
+def log_exeption(fn):
+    @ft.wraps(fn)
+    def inner(*a, **kw):
+        try:
+            return fn(*a, **kw)
+        except Exception as e:
+            logger.exception(e)
+    return inner
+
+
 class RemoveExpiredContent(superdesk.Command):
     log_msg = ''
 
@@ -40,18 +50,20 @@ class RemoveExpiredContent(superdesk.Command):
         if not lock(lock_name, expire=610):
             logger.info('{} Remove expired content task is already running.'.format(self.log_msg))
             return
-        try:
-            logger.info('{} Removing expired content for expiry.'.format(self.log_msg))
-            self._remove_expired_items(now)
-            self._remove_expired_publish_queue_items()
-        finally:
-            unlock(lock_name)
+
+        logger.info('{} Removing expired content for expiry.'.format(self.log_msg))
+        # both functions should be called, even the first one throw exception,
+        # so they are wrapped with log_exeption
+        self._remove_expired_publish_queue_items()
+        self._remove_expired_items(now)
+        unlock(lock_name)
 
         push_notification('content:expired')
         logger.info('{} Completed remove expired content.'.format(self.log_msg))
 
         remove_locks()
 
+    @log_exeption
     def _remove_expired_publish_queue_items(self):
         expire_interval = app.config.get('PUBLISH_QUEUE_EXPIRY_MINUTES', 0)
         if expire_interval:
@@ -60,6 +72,7 @@ class RemoveExpiredContent(superdesk.Command):
 
             get_resource_service('publish_queue').delete({'_id': {'$lte': ObjectId.from_datetime(expire_time)}})
 
+    @log_exeption
     def _remove_expired_items(self, expiry_datetime):
         """Remove the expired items.
 
