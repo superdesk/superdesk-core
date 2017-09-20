@@ -30,8 +30,8 @@ class ContentAPITestCase(TestCase):
     def _auth_headers(self, sub=None):
         if sub is None:
             sub = self.subscriber
-        service = superdesk.get_resource_service('company_token')
-        payload = {'company': sub.get('_id')}
+        service = superdesk.get_resource_service('subscriber_token')
+        payload = {'subscriber': sub.get('_id')}
         service.create([payload])
         token = payload['_id']
         headers = {'Authorization': 'Token ' + token}
@@ -233,8 +233,8 @@ class ContentAPITestCase(TestCase):
             self.assertEqual(2, data['_meta']['total'])
 
     def test_generate_token_service(self):
-        service = superdesk.get_resource_service('company_token')
-        payload = {'company': 'foo'}
+        service = superdesk.get_resource_service('subscriber_token')
+        payload = {'subscriber': 'foo'}
         ids = service.create([payload])
         token = payload['_id']
         self.assertEqual('foo', self.capi.auth.check_auth(token, [], 'items', 'get'))
@@ -243,7 +243,7 @@ class ContentAPITestCase(TestCase):
         service.delete({'_id': ids[0]})
         self.assertFalse(self.capi.auth.check_auth(token, [], 'items', 'get'))
 
-        payload = {'company': 'foo', 'expiry': utcnow() - timedelta(days=1)}
+        payload = {'subscriber': 'foo', 'expiry': utcnow() - timedelta(days=1)}
         service.create([payload])
         token = payload['_id']
         self.assertFalse(self.capi.auth.check_auth(token, [], 'items', 'get'))
