@@ -16,7 +16,7 @@ from lxml import etree
 from superdesk.errors import ParserError
 from superdesk.utc import utc
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, FORMAT, FORMATS
-from superdesk.etree import get_word_count
+from superdesk.text_utils import get_word_count
 from superdesk.io.iptc import subject_codes
 from superdesk.errors import SkipValue
 import re

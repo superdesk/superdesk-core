@@ -13,7 +13,8 @@ import unittest
 
 from datetime import timedelta
 from superdesk.utc import utcnow
-from superdesk.etree import etree, get_word_count, get_char_count
+from superdesk.etree import etree
+from superdesk.text_utils import get_word_count, get_char_count
 from superdesk.io.registry import registered_feed_parsers
 from superdesk.io.feed_parsers.newsml_1_2 import NewsMLOneFeedParser
 from superdesk.io.feed_parsers.newsml_2_0 import NewsMLTwoFeedParser

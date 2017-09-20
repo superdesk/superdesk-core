@@ -21,7 +21,7 @@ from enum import Enum
 from importlib import import_module
 from eve.utils import config
 from superdesk.default_settings import ELASTIC_DATE_FORMAT
-from superdesk.etree import get_text
+from superdesk.text_utils import get_text
 
 
 required_string = {'type': 'string', 'required': True, 'nullable': False, 'empty': False}

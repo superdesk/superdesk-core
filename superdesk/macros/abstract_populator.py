@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import re
-from superdesk.etree import get_text
+from superdesk.text_utils import get_text
 
 p = re.compile('(?i)(?<=[.?!])\\S+(?=[a-z])')
 

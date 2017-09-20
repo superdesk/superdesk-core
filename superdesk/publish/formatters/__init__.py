@@ -11,7 +11,8 @@
 import logging
 from lxml import etree
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, FORMATS, FORMAT
-from superdesk.etree import parse_html, get_text
+from superdesk.etree import parse_html
+from superdesk.text_utils import get_text
 
 formatters = []
 logger = logging.getLogger(__name__)

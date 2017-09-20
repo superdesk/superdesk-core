@@ -16,7 +16,7 @@ from superdesk.io.registry import register_feed_parser
 from superdesk.errors import ParserError
 from superdesk.metadata.item import ITEM_TYPE
 from superdesk.io.iptc import subject_codes
-from superdesk.etree import get_word_count
+from superdesk.text_utils import get_word_count
 
 
 class ScoopNewsMLTwoFeedParser(NewsMLTwoFeedParser):

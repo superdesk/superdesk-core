@@ -34,7 +34,7 @@ from superdesk.metadata.packages import LINKED_IN_PACKAGES, RESIDREF
 from apps.common.components.utils import get_component
 from apps.item_autosave.components.item_autosave import ItemAutosave
 from apps.common.models.base_model import InvalidEtag
-from superdesk.etree import get_word_count
+from superdesk.text_utils import get_word_count
 from apps.content import push_content_notification, push_expired_notification
 from copy import copy, deepcopy
 import superdesk

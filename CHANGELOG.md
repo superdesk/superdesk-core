@@ -1,5 +1,15 @@
 # Superdesk Server Changelog
 
+## [UNRELEASED]
+
+### Added
+
+- Added reading time to ninjs output (`readtime` property)
+
+### Changed
+
+- Moved non etree releated methods from `etree` module to the new `text_utils` one
+
 ## [1.8.4] 2017-06-30
 
 ### Fixed
@@ -8,7 +18,7 @@
 - Fix fetching media from relative URLs.
 - Remove SMS flag on duplication.
 - Fix item history for scheduled items.
-- Ingested content should preserve its source on duplication/rewrite. 
+- Ingested content should preserve its source on duplication/rewrite.
 
 ## [1.8.3] 2017-06-19
 

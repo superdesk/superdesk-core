@@ -33,7 +33,7 @@ from superdesk.users.errors import UserNotRegisteredException
 from superdesk.utc import utcnow, get_date
 from apps.archive.common import format_dateline_to_locmmmddsrc
 from superdesk.filemeta import set_filemeta
-from superdesk.etree import sanitize_html
+from superdesk.text_utils import sanitize_html
 
 
 logger = logging.getLogger(__name__)
