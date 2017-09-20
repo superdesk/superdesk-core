@@ -25,7 +25,7 @@ from eve import Eve
 from eve.render import send_response
 from eve.io.mongo.mongo import MongoJSONEncoder
 
-from content_api.tokens import CompanyTokenAuth
+from content_api.tokens import SubscriberTokenAuth
 from superdesk.datalayer import SuperdeskDataLayer
 from superdesk.errors import SuperdeskError, SuperdeskApiError
 from superdesk.storage import SuperdeskGridFSMediaStorage
@@ -94,7 +94,7 @@ def get_app(config=None):
         media_storage = AmazonMediaStorage
 
     app = Eve(
-        auth=CompanyTokenAuth,
+        auth=SubscriberTokenAuth,
         settings=app_config,
         data=SuperdeskDataLayer,
         media=media_storage,

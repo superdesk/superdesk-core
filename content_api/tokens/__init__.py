@@ -13,14 +13,21 @@ import superdesk
 from flask import current_app as app, g
 from eve.auth import TokenAuth
 from superdesk.utc import utcnow
-from content_api.tokens.resource import CompanyTokenResource
-from content_api.tokens.service import CompanyTokenService
+from superdesk.publish.subscriber_token import SubscriberTokenResource, SubscriberTokenService
+
+from content_api.tokens.resource import CompanyTokenResource  # noqa
+from content_api.tokens.service import CompanyTokenService  # noqa
 
 
-TOKEN_RESOURCE = 'company_token'
+TOKEN_RESOURCE = 'subscriber_token'
 
 
-class CompanyTokenAuth(TokenAuth):
+class AuthSubscriberTokenResource(SubscriberTokenResource):
+    item_methods = []
+    resource_methods = []
+
+
+class SubscriberTokenAuth(TokenAuth):
 
     def check_auth(self, token, allowed_roles, resource, method):
         """Try to find auth token and if valid put subscriber id into ``g.user``."""
@@ -31,9 +38,9 @@ class CompanyTokenAuth(TokenAuth):
         if data.get('expiry') < now:
             app.data.mongo.remove(TOKEN_RESOURCE, {'_id': token})
             return False
-        g.user = str(data.get('company'))
+        g.user = str(data.get('subscriber'))
         return g.user
 
 
 def init_app(app):
-    superdesk.register_resource(TOKEN_RESOURCE, CompanyTokenResource, CompanyTokenService, _app=app)
+    superdesk.register_resource(TOKEN_RESOURCE, AuthSubscriberTokenResource, SubscriberTokenService, _app=app)
