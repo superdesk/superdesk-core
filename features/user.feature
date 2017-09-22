@@ -16,6 +16,21 @@ Feature: User Resource
         And we get activation email
 
     @auth
+    @dbauth
+    Scenario: Create a user with @bwh.harvard.edu
+        Given empty "users"
+        When we create a new user
+        """
+        {"username": "foo", "password": "barbar", "email": "fb@bwh.harvard.edu", "sign_off": "fb"}
+        """
+        Then we get new resource
+        """
+        {"username": "foo", "display_name": "foo", "email": "fb@bwh.harvard.edu", "is_active": true, "needs_activation": true}
+        """
+        And we get no "password"
+        And we get activation email
+
+    @auth
     Scenario: Test email validation
         Given empty "users"
         When we post to "/users"
