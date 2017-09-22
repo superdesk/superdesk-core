@@ -2707,5 +2707,41 @@
             {"is_active": true, "name": "Direct", "qcode": "direct"},
             {"is_active": true, "name": "Both", "qcode": "both"}
         ]
+    },
+    {
+        "_id": "knowledge_base",
+        "display_name": "Knowledge Base",
+        "type": "unmanageable",
+        "items": [
+            {"is_active": true, "name": "Contacts", "concept_type": "contact"}
+        ],
+        "schema": {
+            "name": {},
+            "concept_type": {}
+        }
+    },
+    {
+        "_id": "contact_job_titles",
+        "display_name": "Contact Job titles/roles",
+        "type": "manageable",
+        "items": [
+            {"is_active": true, "name": "Director", "qcode": "director"},
+            {"is_active": true, "name": "Media Advisor", "qcode": "media_advisor"},
+            {"is_active": true, "name": "Publicity Officer", "qcode": "publicity_officer"},
+            {"is_active": true, "name": "Spokesperson", "qcode": "spokesperson"},
+            {"is_active": true, "name": "Spokeswoman", "qcode": "spokeswoman"},
+            {"is_active": true, "name": "President", "qcode": "president"},
+            {"is_active": true, "name": "CEO", "qcode": "ceo"},
+            {"is_active": true, "name": "Vice President", "qcode": "vice_presedent"},
+            {"is_active": true, "name": "Chairman", "qcode": "chairman"},
+            {"is_active": true, "name": "Carer", "qcode": "carer"},
+            {"is_active": true, "name": "General Secretary", "qcode": "general_secretary"},
+            {"is_active": true, "name": "Media Officer", "qcode": "media_officer"},
+            {"is_active": true, "name": "Mayor", "qcode": "mayor"},
+            {"is_active": true, "name": "Lord Mayor", "qcode": "lord_mayor"},
+            {"is_active": true, "name": "Director of Media", "qcode": "director_of_media"},
+            {"is_active": true, "name": "Media Contact", "qcode": "media_contact"},
+            {"is_active": true, "name": "Spokesman", "qcode": "spokesman"}
+        ]
     }
 ]
