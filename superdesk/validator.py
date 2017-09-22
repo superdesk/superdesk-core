@@ -48,9 +48,14 @@ class SuperdeskValidator(Validator):
         :param field: field name.
         :param value: field value.
         """
-        regex = "^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@" \
-                "(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+(?:\.[a-z0-9](?:[a-z0-9-]{0,4}[a-z0-9])?)*$"
-        if not re.match(regex, value, re.IGNORECASE):
+        # it's tricky to write proper regex for email validation, so we
+        # should use simple one, or use libraries like
+        # - https://pypi.python.org/pypi/email_validator
+        # - https://pypi.python.org/pypi/pyIsEmail
+        # given that admins are usually create users, not users by themself,
+        # probably just check for @ is enough
+        # https://davidcel.is/posts/stop-validating-email-addresses-with-regex/
+        if not re.match('.+@.+', value, re.IGNORECASE):
             self._error(field, ERROR_PATTERN)
 
     def _validate_type_file(self, field, value):
