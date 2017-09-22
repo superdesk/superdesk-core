@@ -12,7 +12,7 @@
 from superdesk.services import Service
 
 
-class ConceptService(Service):
+class ContactsService(Service):
 
     def get(self, req, lookup):
 

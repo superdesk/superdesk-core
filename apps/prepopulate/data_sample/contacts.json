@@ -1,0 +1,29 @@
+[
+    {
+        "job_title": "Media office",
+        "organisation": "Victoria Police",
+        "phone": [
+            {
+                "number": "03 9247 5206",
+                "usage": "Business hours only"
+            }
+        ],
+        "email": "policemedia@police.vic.gov.au",
+        "twitter": "@VictoriaPolice",
+        "notes": "Media office"
+    },
+    {
+        "organisation": "Tasmania Police",
+        "phone": [
+            {
+                "number": "03 6173 2424"
+            }
+        ],
+        "notes": "Business hours media contact"
+    },
+    {
+        "organisation": "Tasmania Fire Service",
+        "twitter": "@TasFireService",
+        "facebook": "https://www.facebook.com/TasmaniaFireService"
+    }
+]

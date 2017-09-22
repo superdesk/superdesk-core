@@ -2709,18 +2709,6 @@
         ]
     },
     {
-        "_id": "knowledge_base",
-        "display_name": "Knowledge Base",
-        "type": "unmanageable",
-        "items": [
-            {"is_active": true, "name": "Contacts", "concept_type": "contact"}
-        ],
-        "schema": {
-            "name": {},
-            "concept_type": {}
-        }
-    },
-    {
         "_id": "contact_job_titles",
         "display_name": "Contact Job titles/roles",
         "type": "manageable",

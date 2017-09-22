@@ -10,14 +10,14 @@
 
 import logging
 import superdesk
-from .service import ConceptService
-from .resource import ConceptResource, CONCEPT_PRIVILEGE
+from .service import ContactsService
+from .resource import ContactsResource, CONTACTS_PRIVILEDGE
 
 logger = logging.getLogger(__name__)
 
 
 def init_app(app):
-    endpoint_name = 'concept'
-    service = ConceptService(endpoint_name, backend=superdesk.get_backend())
-    ConceptResource(endpoint_name, app=app, service=service)
-    superdesk.privilege(name=CONCEPT_PRIVILEGE, label='Manage Concepts', description='Manage Concepts')
+    endpoint_name = 'contacts'
+    service = ContactsService(endpoint_name, backend=superdesk.get_backend())
+    ContactsResource(endpoint_name, app=app, service=service)
+    superdesk.privilege(name=CONTACTS_PRIVILEDGE, label='Manage Contacts', description='Manage Contacts')
