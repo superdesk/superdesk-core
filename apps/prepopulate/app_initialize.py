@@ -168,7 +168,8 @@ __entities__ = OrderedDict([
         [('item', pymongo.ASCENDING), ('_created', pymongo.DESCENDING)]
     ], True)),
     ('audit', (None, [[('_updated', pymongo.ASCENDING)],
-                      [('_id', pymongo.ASCENDING), ('_updated', pymongo.ASCENDING)]], False))
+                      [('_id', pymongo.ASCENDING), ('_updated', pymongo.ASCENDING)]], False)),
+    ('contacts', ('contacts.json', '', False))
 ])
 INIT_DATA_PATH = Path(__file__).resolve().parent / 'data_init'
 
