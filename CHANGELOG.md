@@ -1,5 +1,25 @@
 # Superdesk Server Changelog
 
+## [1.6.3] 2017-09-25
+
+### Fixed
+
+- Fix user email validation to allow subdomains.
+
+## [1.6.2] 2017-03-01
+
+### Fixed
+
+- Fix city names in locators vocabulary.
+- Fix again "Fix email formatter to preserve line breaks in text version".
+
+## [1.6.1] 2017-02-28
+
+### Fixed
+
+- Fix email formatter to preserve line breaks in text version.
+- Make archived items published from invisible stages visible.
+
 ## [1.6.0] 2017-02-16
 
 ### Fixed
