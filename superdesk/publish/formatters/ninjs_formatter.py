@@ -40,7 +40,7 @@ from superdesk.metadata.packages import RESIDREF, GROUP_ID, GROUPS, ROOT_GROUP, 
 from superdesk.utils import json_serialize_datetime_objectId
 from superdesk.media.renditions import get_renditions_spec
 from apps.archive.common import get_utc_schedule
-from superdesk.etree import get_text
+from superdesk import text_utils
 
 
 def filter_empty_vals(data):
@@ -173,7 +173,7 @@ class NINJSFormatter(Formatter):
         if article.get('abstract'):
             abstract = article.get('abstract', '')
             ninjs['description_html'] = abstract
-            ninjs['description_text'] = get_text(abstract)
+            ninjs['description_text'] = text_utils.get_text(abstract)
         elif article.get('description_text'):
             ninjs['description_text'] = article.get('description_text')
 
@@ -199,6 +199,13 @@ class NINJSFormatter(Formatter):
 
         if article.get('attachments'):
             ninjs['attachments'] = self._format_attachments(article)
+
+        if ninjs['type'] == CONTENT_TYPE.TEXT and ('body_html' in ninjs or 'body_text' in ninjs):
+            if 'body_html' in ninjs:
+                word_count = text_utils.get_word_count(ninjs.get('body_html'))
+            else:
+                word_count = text_utils.get_text_word_count(ninjs['body_text'])
+            ninjs['readtime'] = text_utils.get_reading_time(word_count)
 
         return ninjs
 

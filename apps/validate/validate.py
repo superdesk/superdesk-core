@@ -13,7 +13,7 @@ import superdesk
 from eve.io.mongo import Validator
 from superdesk.metadata.item import ITEM_TYPE
 from superdesk.logging import logger
-from superdesk.etree import get_text
+from superdesk.text_utils import get_text
 
 REQUIRED_FIELD = 'is a required field'
 REQUIRED_ERROR = '{} is a required field'

@@ -87,6 +87,7 @@ class NinjsFormatterTest(TestCase):
             'genre': [{'name': 'Article', 'code': 'article'}],
             'signal': [{'name': 'Content Warning', 'code': 'cwarn', 'scheme': 'http://cv.iptc.org/newscodes/signal/'}],
             'extra': {'foo': 'test'},
+            'readtime': 0,
         }
         self.assertEqual(json.loads(doc), expected)
 
@@ -370,6 +371,7 @@ class NinjsFormatterTest(TestCase):
             "slugline": "slugline",
             "priority": 5,
             'source': 'AAP',
+            'readtime': 0,
             'associations': {
                 "embedded5346670761": {
                     "guid": "56ba77bde4b0568f54a1ce68",
@@ -422,3 +424,31 @@ class NinjsFormatterTest(TestCase):
         self.assertEqual('copyright holder', data['copyrightholder'])
         self.assertEqual('copyright notice', data['copyrightnotice'])
         self.assertEqual('', data['usageterms'])
+
+    def test_body_html(self):
+        article = {
+            '_id': 'urn:bar',
+            '_current_version': 1,
+            'guid': 'urn:bar',
+            'type': 'text',
+            'body_html': (250 * 6 - 40) * "word "
+        }
+
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        data = json.loads(doc)
+
+        self.assertEqual(data['readtime'], 6)
+
+    def test_body_text(self):
+        article = {
+            '_id': 'urn:bar',
+            '_current_version': 1,
+            'guid': 'urn:bar',
+            'type': 'text',
+            'body_text': (250 * 7 - 40) * "word "
+        }
+
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        data = json.loads(doc)
+
+        self.assertEqual(data['readtime'], 7)

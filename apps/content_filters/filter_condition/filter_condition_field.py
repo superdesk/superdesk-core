@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 from enum import Enum
 from lxml import etree
-from superdesk.etree import get_text
+from superdesk.text_utils import get_text
 from superdesk.utc import utcnow
 
 

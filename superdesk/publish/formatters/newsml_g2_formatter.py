@@ -15,6 +15,7 @@ from lxml import etree
 from lxml.etree import SubElement
 
 from superdesk import etree as sd_etree
+from superdesk import text_utils
 from flask import current_app as app
 
 from superdesk.publish.formatters import Formatter
@@ -161,7 +162,7 @@ class NewsMLG2Formatter(Formatter):
         """
         content_set = SubElement(news_item, 'contentSet')
         if article.get(FORMAT) == FORMATS.PRESERVED:
-            inline_data = sd_etree.get_text(self.append_body_footer(article))
+            inline_data = text_utils.get_text(self.append_body_footer(article))
             SubElement(content_set, 'inlineData',
                        attrib={'contenttype': 'text/plain'}).text = inline_data
         elif article[ITEM_TYPE] in [CONTENT_TYPE.TEXT, CONTENT_TYPE.COMPOSITE]:

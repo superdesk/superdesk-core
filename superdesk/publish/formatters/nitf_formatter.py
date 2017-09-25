@@ -16,7 +16,7 @@ from superdesk.publish.formatters import Formatter
 from superdesk.errors import FormatterError
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, FORMAT, FORMATS
 from apps.archive.common import get_utc_schedule
-from superdesk.etree import get_text
+from superdesk.text_utils import get_text
 
 
 class NITFFormatter(Formatter):

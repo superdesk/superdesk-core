@@ -354,6 +354,10 @@
 					}
 				}
 			}
+		},
+		"readtime" : {
+			"description" : "Estimated time (in minutes) to read the body of the item",
+			"type": "number"
 		}
 	}
 }
