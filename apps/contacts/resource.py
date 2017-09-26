@@ -130,7 +130,7 @@ class ContactsResource(Resource):
         'source': 'contacts',
         'search_backend': 'elastic'
     }
-    item_url = 'regex("[\w]+")'
+    item_url = r'regex("[\w]+")'
     privileges = {'POST': CONTACTS_PRIVILEDGE,
                   'PATCH': CONTACTS_PRIVILEDGE,
                   'DELETE': CONTACTS_PRIVILEDGE}

@@ -239,11 +239,21 @@
     },
     {
         "_id": "author_roles",
-        "display_name": "Author roles",
+        "display_name": "Author Roles",
         "type": "manageable",
         "items": [
             {"is_active": true, "name": "Writer", "qcode": "writer"}
         ],
+        "schema": {
+            "name": {},
+            "qcode": {}
+        }
+    },
+    {
+        "_id": "job_titles",
+        "display_name": "Job Titles",
+        "type": "manageable",
+        "items": [],
         "schema": {
             "name": {},
             "qcode": {}
