@@ -31,6 +31,7 @@
 
 import json
 import superdesk
+import logging
 
 from eve.utils import config
 from superdesk.publish.formatters import Formatter
@@ -41,6 +42,9 @@ from superdesk.utils import json_serialize_datetime_objectId
 from superdesk.media.renditions import get_renditions_spec
 from apps.archive.common import get_utc_schedule
 from superdesk import text_utils
+
+
+logger = logging.getLogger(__name__)
 
 
 def filter_empty_vals(data):
@@ -207,6 +211,9 @@ class NINJSFormatter(Formatter):
                 word_count = text_utils.get_text_word_count(ninjs['body_text'])
             ninjs['readtime'] = text_utils.get_reading_time(word_count)
 
+        if article.get('authors'):
+            ninjs['authors'] = self._format_authors(article)
+
         return ninjs
 
     def _generate_renditions(self, article):
@@ -316,6 +323,24 @@ class NINJSFormatter(Formatter):
                 'href': '/assets/{}'.format(str(attachment['media'])),
             })
         return output
+
+    def _format_authors(self, article):
+        users_service = superdesk.get_resource_service('users')
+        authors = []
+        for author in article['authors']:
+            user_id = author['parent']
+            try:
+                user = next(users_service.find({'_id': user_id}))
+            except StopIteration:
+                logger.warn("unknow user: {user_id}".format(user_id=user_id))
+                continue
+            authors.append({
+                "name": user['display_name'],
+                "role": author['role'],
+                "jobtitle": user.get('job_title', ''),
+                "biography": user.get('biography', '')
+            })
+        return authors
 
     def export(self, item):
         if self.can_format(self.format_type, item):

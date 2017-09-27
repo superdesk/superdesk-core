@@ -5,6 +5,7 @@
 ### Added
 
 - Added reading time to ninjs output (`readtime` property)
+- Added authors to ninjs output (`authors` property)
 
 ### Changed
 

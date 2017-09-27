@@ -358,6 +358,31 @@
 		"readtime" : {
 			"description" : "Estimated time (in minutes) to read the body of the item",
 			"type": "number"
+		},
+		"authors": {
+			"description" : "Authors of the document",
+			"type" : "array",
+			"items": {
+				"type" : "object",
+				"properties" : {
+					"name" : {
+						"description" : "The full name of the author",
+						"type" : "string"
+					},
+					"role" : {
+						"description" : "What the author did for this resource",
+						"type" : "string"
+					},
+					"jobtitle" : {
+						"description" : "author's Job Title qcode",
+						"type" : "string"
+					},
+					"biography" : {
+						"description" : "Author's biography",
+						"type" : "string"
+					}
+				}
+			}
 		}
 	}
 }

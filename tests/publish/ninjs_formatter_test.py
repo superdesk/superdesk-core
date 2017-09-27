@@ -452,3 +452,66 @@ class NinjsFormatterTest(TestCase):
         data = json.loads(doc)
 
         self.assertEqual(data['readtime'], 7)
+
+    def test_authors(self):
+        self.app.data.insert('users', [
+            {
+                "_id": "test_id",
+                "username": "author 1",
+                "display_name": "author 1",
+                "is_author": True,
+                "job_title": "job_title_1",
+                "biography": "bio 1"
+            },
+            {
+                "_id": "test_id_2",
+                "username": "author 2",
+                "display_name": "author 2",
+                "is_author": True,
+                "job_title": "job_title_2",
+                "biography": "bio 2"
+            }
+        ])
+        article = {
+            '_id': 'urn:bar',
+            '_current_version': 1,
+            'guid': 'urn:bar',
+            'type': 'text',
+            'authors': [
+                {
+                    '_id': [
+                        'test_id',
+                        'writer'
+                    ],
+                    'role': 'writer',
+                    'name': 'Writer',
+                    'parent': 'test_id',
+                    'sub_label': 'author 1',
+                },
+                {
+                    '_id': [
+                        'test_id_2',
+                        'writer'
+                    ],
+                    'role': 'photographer',
+                    'name': 'photographer',
+                    'parent': 'test_id_2',
+                    'sub_label': 'author 2',
+                }
+            ],
+
+        }
+
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        data = json.loads(doc)
+
+        expected = [
+            {'name': 'author 1',
+             'role': 'writer',
+             'jobtitle': 'job_title_1',
+             'biography': 'bio 1'},
+            {'name': 'author 2',
+             'role': 'photographer',
+             'jobtitle': 'job_title_2',
+             'biography': 'bio 2'}]
+        self.assertEqual(data['authors'], expected)
