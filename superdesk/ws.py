@@ -26,7 +26,8 @@ def create_server(config):
         host = config['WS_HOST']
         port = int(config['WS_PORT'])
         broker_url = config['BROKER_URL']
-        comms = SocketCommunication(host, port, broker_url)
+        exchange_name = config.get('WEBSOCKET_EXCHANGE')
+        comms = SocketCommunication(host, port, broker_url, exchange_name)
         comms.run_server()
     except:
         logger.exception('Failed to start the WebSocket server.')
