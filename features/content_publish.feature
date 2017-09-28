@@ -2399,3 +2399,75 @@ Feature: Content Publishing
       Then we get OK response
       And we get content expiry 60
       And we get content expiry 60
+
+    @auth
+    @vocabulary
+    Scenario: Publish with required user defined vocabulary
+      Given "desks"
+      """
+      [{"name": "News", "content_expiry": 180}]
+      """
+      And "vocabularies"
+      """
+      [{
+      	"_id": "vocabulary1",
+      	"display_name": "Vocabulary 1",
+      	"field_type": null,
+      	"schema": {"name" : {}, "qcode": {}, "parent": {}},
+      	"service": {"all": 1},
+      	"type": "manageable",
+      	"items": [{"name": "Option 1", "qcode": "o1", "is_active": true}, {"name": "Option 2", "qcode": "o2", "is_active": true}]
+      },{
+      	"_id": "custom_field_1",
+      	"display_name": "Custom Field 1",
+      	"field_type": "text",
+      	"schema": {"name" : {}, "qcode": {}, "parent": {}},
+      	"service": {"all": 1},
+      	"type": "manageable",
+      	"items": [],
+      	"field_options": {"single": true}
+      }]
+      """
+      And "content_types"
+      """
+      [{
+      	"enabled": true, "priority": 0, "label": "Profile 1",
+      	"schema": {
+      		"vocabulary1": {"type": "string", "required": true, "enabled": true},
+      		"custom_field_1": {"type": "string", "required": true, "enabled": true}
+      	}
+      }]
+      """
+      And "archive"
+      """
+      [{
+      	"type": "text", "profile": "#content_types._id#", "state": "in_progress",
+      	"subject": [{"scheme": "vocabulary1", "name": "Option 1", "qcode": "o1"}],
+      	"extra": {"custom_field_1": "some text"}
+      }]
+      """
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+      }
+      """
+      And we post to "/subscribers" with "digital" and success
+      """
+      {
+        "name":"Channel 1","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
+      When we publish "#archive._id#" with "publish" type and "published" state
+      Then we get OK response
+      And we get existing resource
+      """
+      {
+        "_current_version": 2,
+        "type": "text",
+        "state": "published",
+        "pubstatus": "usable"
+       }
+      """
