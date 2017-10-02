@@ -28,7 +28,6 @@ from flask import json
 
 
 logger = logging.getLogger(__name__)
-exchange_name = celery_queue('socket_notification')
 
 
 class SocketBrokerClient:
@@ -38,11 +37,12 @@ class SocketBrokerClient:
 
     connection = None
 
-    def __init__(self, url):
+    def __init__(self, url, exchange_name=None):
         self.url = url
         self.connect()
+        self.exchange_name = exchange_name if exchange_name else celery_queue('socket_notification')
         self.channel = self.connection.channel()
-        self.socket_exchange = Exchange(exchange_name, type='fanout', channel=self.channel)
+        self.socket_exchange = Exchange(self.exchange_name, type='fanout', channel=self.channel)
         self.socket_exchange.declare()
 
     def open(self):
@@ -73,13 +73,11 @@ class SocketBrokerClient:
 
 
 class SocketMessageProducer(SocketBrokerClient):
+    """Used by backeend processes to send messages."""
+
     """
     Publishes messages to a exchange (fanout).
     """
-
-    def __init__(self, url):
-        super().__init__(url)
-
     def send(self, message):
         """
         Publishes the message to an exchange
@@ -99,14 +97,14 @@ class SocketMessageConsumer(SocketBrokerClient, ConsumerMixin):
     Consumer of the message.
     """
 
-    def __init__(self, url, callback):
+    def __init__(self, url, callback, exchange_name=None):
         """Create consumer.
 
         :param string url: Broker URL
         :param string host: host name running the websocket server
         :param callback: callback function to call on message arrival
         """
-        super().__init__(url)
+        super().__init__(url, exchange_name)
         self.callback = callback
         self.queue_name = 'socket_consumer_{}'.format(get_random_string())
         # expire message after 10 seconds and queue after 60 seconds
@@ -158,10 +156,11 @@ class SocketCommunication:
 
     clients = set()
 
-    def __init__(self, host, port, broker_url):
+    def __init__(self, host, port, broker_url, exchange_name=None):
         self.host = host
         self.port = port
         self.broker_url = broker_url
+        self.exchange_name = exchange_name
         self.messages = {}
         self.event_interval = {
             'ingest:update': 5,
@@ -271,7 +270,7 @@ class SocketCommunication:
             logger.info('listening on %s:%s' % (self.host, self.port))
             consumer = None
             # create socket message consumer
-            consumer = SocketMessageConsumer(self.broker_url, self.broadcast)
+            consumer = SocketMessageConsumer(self.broker_url, self.broadcast, self.exchange_name)
             consumer_thread = Thread(target=consumer.run)
             consumer_thread.start()
             loop.run_forever()
