@@ -140,13 +140,14 @@ class ValidateService(superdesk.Service):
                 extra_fields = superdesk.get_resource_service('vocabularies').get_extra_fields()
                 schema = content_type.get('schema', {})
                 schema['extra'] = {'type': 'dict', 'schema': {}}
+                doc['validate'].setdefault('extra', {})  # make sure extra is there so it will validate its fields
                 for extra_field in extra_fields:
                     if schema.get(extra_field['_id']):
                         rules = schema.pop(extra_field['_id'])
                         rules.setdefault('type', 'string')
                         schema['extra']['schema'].update({extra_field['_id']: get_validator_schema(rules)})
+                        self._populate_extra(doc['validate'], extra_field['_id'])
                 content_type['schema'] = schema
-                doc['validate'].setdefault('extra', {})  # make sure extra is there so it will validate its fields
                 return [content_type]
         lookup = {'act': doc['act'], 'type': doc[ITEM_TYPE]}
         if doc.get('embedded'):
@@ -154,6 +155,17 @@ class ValidateService(superdesk.Service):
         else:
             lookup['$or'] = [{'embedded': {'$exists': False}}, {'embedded': False}]
         return superdesk.get_resource_service('validators').get(req=None, lookup=lookup)
+
+    def _populate_extra(self, doc, schema):
+        """Populates the extra field in the document with fields stored in subject. Used
+        for user defined vocabularies.
+
+        :param doc: Article to be validated
+        :param schema: Vocabulary identifier
+        """
+        for subject in doc.get('subject', []):
+            if subject.get('scheme', '') == schema:
+                doc['extra'][schema] = subject.get('qcode', '')
 
     def _sanitize_fields(self, doc, validator):
         """If maxlength or minlength is specified in the validator then remove any markups from that field
