@@ -22,7 +22,10 @@ class UsersResource(Resource):
             'type': 'string',
             'minlength': 8
         },
-        'name': {
+        'first_name': {
+            'type': 'string'
+        },
+        'last_name': {
             'type': 'string'
         },
         'email': {
@@ -71,6 +74,7 @@ class UsersResource(Resource):
     mongo_prefix = MONGO_PREFIX
     datasource = {
         'source': 'users',
+        'projection': {'password': 0},
         'default_sort': [('name', 1)]
     }
     mongo_indexes = {
