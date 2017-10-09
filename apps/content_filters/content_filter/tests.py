@@ -33,8 +33,23 @@ class ContentFilterTests(TestCase):
                              {'_id': '3', 'urgency': 3, 'headline': 'creator', 'state': 'fetched'},
                              {'_id': '4', 'urgency': 4, 'state': 'fetched'},
                              {'_id': '5', 'urgency': 2, 'state': 'fetched'},
-                             {'_id': '6', 'state': 'fetched'}]
+                             {'_id': '6', 'state': 'fetched'},
+                             {'_id': '7', 'subject': [{'scheme': 'my_vocabulary', 'qcode': 'MV:01'}]},
+                             {'_id': '8', 'extra': {'custom_text': 'my text'}}]
             self.app.data.insert('archive', self.articles)
+
+            self.app.data.insert('vocabularies',
+                                 [{'_id': 'my_vocabulary',
+                                   'display_name': 'My Vocabulary',
+                                   'type': 'manageable',
+                                   'field_type': None,
+                                   'schema': {'name': {}, 'qcode': {}, 'parent': {}},
+                                   'items': [{'name': 'option 1', 'qcode': 'MV:01', 'is_active': True}]
+                                   },
+                                  {'_id': 'custom_text',
+                                   'display_name': 'Custom Text',
+                                   'type': 'manageable',
+                                   'field_type': 'text'}])
 
             self.app.data.insert('filter_conditions',
                                  [{'_id': 1,
@@ -66,6 +81,18 @@ class ContentFilterTests(TestCase):
                                    'operator': 'startswith',
                                    'value': 'sto',
                                    'name': 'test-5'}])
+            self.app.data.insert('filter_conditions',
+                                 [{'_id': 6,
+                                   'field': 'my_vocabulary',
+                                   'operator': 'in',
+                                   'value': 'MV:01',
+                                   'name': 'test-6'}])
+            self.app.data.insert('filter_conditions',
+                                 [{'_id': 7,
+                                   'field': 'custom_text',
+                                   'operator': 'eq',
+                                   'value': 'my text',
+                                   'name': 'test-7'}])
 
             self.app.data.insert('content_filters',
                                  [{"_id": 1,
@@ -86,6 +113,16 @@ class ContentFilterTests(TestCase):
                                  [{"_id": 4,
                                    "content_filter": [{"expression": {"fc": [3]}}, {"expression": {"fc": [5]}}],
                                    "name": "soccer-only4"}])
+
+            self.app.data.insert('content_filters',
+                                 [{"_id": 5,
+                                   "content_filter": [{"expression": {"fc": [6]}}],
+                                   "name": "my-vocabulary"}])
+
+            self.app.data.insert('content_filters',
+                                 [{"_id": 6,
+                                   "content_filter": [{"expression": {"fc": [7]}}],
+                                   "name": "custom-text"}])
 
             self.app.data.insert('products',
                                  [{"_id": 1,
@@ -309,7 +346,7 @@ class RetrievingDataTests(ContentFilterTests):
             self.assertEqual(1, docs.count())
             self.assertTrue('3' in doc_ids)
 
-    def test_build_elastic_query_using_like_filter_multi_content_filter4(self):
+    def test_build_elastic_query_using_like_filter_multi_content_filter5(self):
         doc = {'content_filter': [{"expression": {"pf": [4], "fc": [4]}}], 'name': 'pf-1'}
         with self.app.app_context():
             query = {'query': {'filtered': {'query': self.f._get_elastic_query(doc)}}}
@@ -325,6 +362,13 @@ class FilteringDataTests(ContentFilterTests):
     def test_does_match_returns_true_for_nonexisting_filter(self):
         for article in self.articles:
             self.assertTrue(self.f.does_match(None, article))
+
+    def test_does_match_custom_vocabularies(self):
+        doc1 = {'content_filter': [{"expression": {"fc": [6]}}], 'name': 'mv-1'}
+        doc2 = {'content_filter': [{"expression": {"fc": [7]}}], 'name': 'ct-1'}
+        with self.app.app_context():
+            self.assertTrue(self.f.does_match(doc1, self.articles[6]))
+            self.assertTrue(self.f.does_match(doc2, self.articles[7]))
 
     def test_does_match_using_like_filter_single_fc(self):
         doc = {'content_filter': [{"expression": {"fc": [1]}}], 'name': 'pf-1'}

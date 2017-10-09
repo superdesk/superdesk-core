@@ -11,6 +11,8 @@ from enum import Enum
 from lxml import etree
 from superdesk.text_utils import get_text
 from superdesk.utc import utcnow
+from superdesk import get_resource_service
+from superdesk.errors import SuperdeskApiError
 
 
 class FilterConditionFieldsEnum(Enum):
@@ -38,6 +40,14 @@ class FilterConditionField:
 
     @staticmethod
     def factory(field):
+        if field not in FilterConditionFieldsEnum.__members__:
+            vocabulary = get_resource_service('vocabularies').find_one(req=None, _id=field)
+            if vocabulary:
+                if vocabulary['field_type'] == 'text':
+                    return FilterConditionCustomTextField(field)
+                else:
+                    return FilterConditionControlledVocabularyField(field)
+            raise SuperdeskApiError.internalError('Invalid filter conditions field %s' % field)
         if FilterConditionFieldsEnum[field] == FilterConditionFieldsEnum.desk:
             return FilterConditionDeskField(field)
         elif FilterConditionFieldsEnum[field] == FilterConditionFieldsEnum.stage:
@@ -205,3 +215,29 @@ class FilterConditionEmbargoField(FilterConditionField):
 
     def get_mongo_query(self):
         return {'schedule_settings.utc_embargo': {'$gt': utcnow()}}
+
+
+class FilterConditionControlledVocabularyField(FilterConditionField):
+    def __init__(self, field):
+        self.field = type('_ControlledVocabulary', (object,), {'name': field})()
+        self.entity_name = 'subject.qcode'
+        self.field_type = str
+
+    def is_in_article(self, article):
+        return any([self.field.name == subject['scheme'] for subject in article.get('subject', [])])
+
+    def get_value(self, article):
+        return [s['qcode'] for s in article['subject']]
+
+
+class FilterConditionCustomTextField(FilterConditionField):
+    def __init__(self, field):
+        self.field = type('_CustomTextField', (object,), {'name': field})()
+        self.entity_name = 'extra'
+        self.field_type = str
+
+    def is_in_article(self, article):
+        return self.field.name in article.get('extra', {})
+
+    def get_value(self, article):
+        return article['extra'].get(self.field.name, '')

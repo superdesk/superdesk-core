@@ -65,6 +65,7 @@ class Resource():
     authentication = None
     elastic_prefix = None
     query_objectid_as_string = None
+    on_init = None
 
     def __init__(self, endpoint_name, app, service, endpoint_schema=None):
         self.endpoint_name = endpoint_name

@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 from superdesk.resource import Resource
+from superdesk import get_resource_service, config
 
 
 class FilterConditionResource(Resource):
@@ -75,3 +76,7 @@ class FilterConditionResource(Resource):
     privileges = {'POST': 'content_filters',
                   'PATCH': 'content_filters',
                   'DELETE': 'content_filters'}
+
+    def on_init(self):
+        for vocabulary in get_resource_service('vocabularies').get(req=None, lookup={}):
+            self.schema['field']['allowed'].append(vocabulary[config.ID_FIELD])
