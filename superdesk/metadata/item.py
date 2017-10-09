@@ -534,6 +534,12 @@ metadata_schema = {
             },
         },
     },
+
+    # references assignment related to the coverage
+    'assignment_id': {
+        'type': 'string',
+        'mapping': not_analyzed
+    }
 }
 
 metadata_schema['lock_user']['versioned'] = False
