@@ -1,5 +1,13 @@
 # Superdesk Server Changelog
 
+## [1.8.6] 2017-10-11
+
+### Fixed
+
+- Fix parsing of ANSA NewsmlG2 feed.
+- Add nijs parser to ingest both text and feature media.
+- Fix issue where user cannot publish after removing feature media.
+
 ## [1.8.5] 2017-08-02
 
 ### Fixed
