@@ -47,3 +47,10 @@ class ResutersResultsTestCase(BaseNewMLTwoTestCase):
     def test_results(self):
         self.assertTrue(self.item[0].get('body_html').startswith(
             '<p>Jan 30 (Gracenote) - Results and standings from the Turkish championship matches on Monday <br/>'))
+
+
+class ANSATestCase(BaseNewMLTwoTestCase):
+    filename = 'ansa-newsmlg2-text.xml'
+
+    def test_language(self):
+        self.assertEqual('it', self.item[0]['language'])

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+        <newsMessage xmlns:x="http://www.w3.org/1999/xhtml" xmlns:rtr="http://www.reuters.com/ns/2003/08/content" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://iptc.org/std/nar/2006-10-01/">
+<header>
+<sent>2017-10-11T10:41:00+0100</sent>
+<sender>ansa.it</sender>
+<transmitId>tag:ansa.it,2017-10-11:40e5fb1034e7e2b21942ea09718fc85a</transmitId>
+<priority>5</priority>
+<destination>QBX</destination>
+<channel>TXT</channel>
+</header>
+<itemSet>
+<newsItem standard="NewsML-G2" standardversion="2.4" conformance="power" guid="tag:ansa.it,2017-10-11:40e5fb1034e7e2b21942ea09718fc85a" version="1" xml:lang="it-IT" xsi:schemaLocation="http://iptc.org/std/nar/2006-10-01/ http://www.iptc.org/std/NewsML-G2/2.4/specification/NewsML-G2_2.4-spec-NewsItem-Power.xsd">
+<catalogRef href="http://www.iptc.org/std/catalog/catalog.IPTC-G2-Standards_11.xml"/>
+<catalogRef href="http://www.ansa.it/std/catalog/catalog.ANSA_1.xml"/>
+<rightsInfo>
+<copyrightHolder literal="ANSA"/>
+<copyrightNotice xml:lang="en">(c) Copyright ANSA 2017. Click For Restrictions - http://www.ansa.it/sito/static/copyright.html</copyrightNotice>
+</rightsInfo>
+<itemMeta>
+<itemClass qcode="icls:text" rtr:msgType="S"/>
+<provider literal="ansa.it"/>
+<versionCreated>2017-10-11T10:41:00+0100</versionCreated>
+<firstCreated>2017-10-11T10:41:00+0100</firstCreated>
+<pubStatus qcode="stat:usable"/>
+<signal qcode="db:superdesk"/>
+<signal qcode="sig:routing">
+<name>R ALR AMZ 1311 A058</name>
+</signal>
+</itemMeta>
+<contentMeta>
+<urgency>5</urgency>
+<contentCreated>2017-10-11T10:41:00+0100</contentCreated>
+<located type="cptype:city" literal="Rome"/>
+<creator literal="VRG">
+<name>VRG</name>
+</creator>
+<language tag="it"/>
+<subject type="cptype:cat" literal="ALR"/>
+<subject type="cptype:subcat" literal="Catalan independence declaration unacceptable - Alfano"/>
+<headline>Catalan independence declaration unacceptable - Alfano</headline>
+<headline role="hld:subHeadline">Foreign minister expresses faith in Spanish government</headline>
+</contentMeta>
+<contentSet>
+<remoteContent contenttype="image/jpeg" rendition="rnd:highRes" href="tag:ansa.it,2017-10-11:200400bfd17a98e68ea9597546e5ec93.jpg"/>
+<inlineData contenttype="text/plain" rendition="rnd:original" wordcount="0"><![CDATA[
+<p>
+            
+            (ANSA) - Rome, October 11 - Italian Foreign Minister Angelino
+Alfano has said that the Catalan independence declaration is
+unacceptable.
+   "Unacceptable Catalan unilateral independence declaration,"
+Alfano said via his @angealfa Twitter account.
+   "Our faith in the Spanish government, which will know how to
+guarantee the rights of all citizens". 
+   Catalan leader Carles Puigdemont signed a declaration of
+independence on Tuesday, but halted implementation to allow for
+negotiations.
+          </p>]]></inlineData>
+</contentSet>
+</newsItem>
+</itemSet>
+</newsMessage>
