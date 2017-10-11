@@ -153,6 +153,17 @@ class Resource():
         app.register_resource(self.endpoint_name, endpoint_schema)
         superdesk.resources[self.endpoint_name] = self
 
+        prefixes = {'on_created_': 'on_inserted_', 'on_updated_': 'on_updated_',
+                    'on_deleted_': 'on_deleted_item_'}
+        for attr in self.__dir__():
+            for method_prefix, event_prefix in prefixes.items():
+                if attr.startswith(method_prefix):
+                    hook_event_name = event_prefix + attr[len(method_prefix):]
+                    hook_event = getattr(app, hook_event_name)
+                    hook_method = getattr(self, attr)
+                    hook_event -= hook_method
+                    hook_event += hook_method
+
     @staticmethod
     def rel(resource, embeddable=True, required=False, type='objectid', nullable=False):
         return {

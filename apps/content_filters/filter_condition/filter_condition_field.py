@@ -224,7 +224,7 @@ class FilterConditionControlledVocabularyField(FilterConditionField):
         self.field_type = str
 
     def is_in_article(self, article):
-        return any([self.field.name == subject['scheme'] for subject in article.get('subject', [])])
+        return any([self.field.name == subject.get('scheme') for subject in article.get('subject', [])])
 
     def get_value(self, article):
         return [s['qcode'] for s in article['subject']]

@@ -12,7 +12,7 @@ import json
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.utils import ListCursor
-from superdesk import get_resource_service, config
+from superdesk import get_resource_service, config, app
 from superdesk.io.subjectcodes import get_subjectcodeitems
 from eve.utils import ParsedRequest
 
@@ -109,8 +109,11 @@ class FilterConditionParametersService(BaseService):
         return ListCursor(fields)
 
     def _get_vocabulary_fields(self, values):
+        excluded_vocabularies = [vocabulary.strip() for vocabulary in
+                                 app.config.get('EXCLUDED_VOCABULARY_FIELDS', '').split(',')]
         for vocabulary in get_resource_service('vocabularies').get(req=None, lookup=None):
-            if vocabulary[config.ID_FIELD] not in values and vocabulary['type'] == 'manageable':
+            if vocabulary[config.ID_FIELD] not in values and vocabulary['type'] == 'manageable' \
+                    and vocabulary[config.ID_FIELD] not in excluded_vocabularies:
                 field = {'field': vocabulary[config.ID_FIELD], 'label': vocabulary['display_name']}
                 if vocabulary.get('field_type', '') == 'text':
                     field['operators'] = ['in', 'nin', 'eq', 'ne', 'like', 'notlike', 'startswith', 'endswith']
