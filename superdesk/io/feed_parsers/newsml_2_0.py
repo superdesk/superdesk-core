@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
+import arrow
 import datetime
 import logging
 
@@ -237,7 +238,7 @@ class NewsMLTwoFeedParser(XMLFeedParser):
 
     def parse_remote_content(self, tree):
         content = dict()
-        content['residRef'] = tree.attrib['residref']
+        content['residRef'] = tree.attrib.get('residref')
         content['sizeinbytes'] = int(tree.attrib.get('size', '0'))
         content['rendition'] = tree.attrib['rendition'].split(':')[1]
         content['mimetype'] = tree.attrib['contenttype']
@@ -245,7 +246,10 @@ class NewsMLTwoFeedParser(XMLFeedParser):
         return content
 
     def datetime(self, string):
-        return datetime.datetime.strptime(string, '%Y-%m-%dT%H:%M:%S.000Z')
+        try:
+            return datetime.datetime.strptime(string, '%Y-%m-%dT%H:%M:%S.000Z')
+        except ValueError:
+            return arrow.get(string).datetime
 
     def get_literal_name(self, item):
         """Get name for item with fallback to literal attribute if name is not provided."""
