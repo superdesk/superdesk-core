@@ -11,6 +11,7 @@
 import json
 import logging
 import requests
+import hmac
 
 from superdesk import app
 from superdesk.publish import register_transmitter
@@ -67,9 +68,12 @@ class HTTPPushService(PublishService):
         metadata extracted from binary. Differs based on binary type, eg. could be exif for pictures.
 
     The response status code is checked - on success it should be ``201 Created``.
+    If secret_token is set for destination the x-superdesk-signature header will be added
+    for both json and multipart POST requests.
     """
 
     headers = {"Content-type": "application/json", "Accept": "application/json"}
+    hash_header = 'x-superdesk-signature'
 
     def _transmit(self, queue_item, subscriber):
         """
@@ -85,7 +89,8 @@ class HTTPPushService(PublishService):
 
     def _push_item(self, destination, data):
         resource_url = self._get_resource_url(destination)
-        response = requests.post(resource_url, data=data, headers=self.headers)
+        headers = self._get_headers(data, destination, self.headers)
+        response = requests.post(resource_url, data=data, headers=headers)
 
         # need to rethrow exception as a superdesk exception for now for notifiers.
         try:
@@ -135,7 +140,8 @@ class HTTPPushService(PublishService):
             if not self._media_exists(media_id, destination):
                 binary = app.media.get(media_id, resource=rendition.get('resource', 'upload'))
                 mimetype = rendition.get('mimetype', getattr(binary, 'content_type', 'image/jpeg'))
-                files = {'media': (media_id, binary, mimetype)}
+                headers = self._get_headers(binary, destination, {})
+                files = {'media': (media_id, binary, mimetype, headers)}
                 response = requests.post(assets_url, files=files, data={'media_id': media_id})
                 if response.status_code != requests.codes.created:  # @UndefinedVariable
                     self._raise_publish_error(
@@ -168,6 +174,25 @@ class HTTPPushService(PublishService):
                 destination
             )
         return response.status_code == requests.codes.ok  # @UndefinedVariable
+
+    def _get_headers(self, data, destination, current_headers):
+        secret_token = self._get_secret_token(destination)
+        if not secret_token:
+            return current_headers
+        data_hash = self._get_data_hash(data, secret_token)
+        headers = current_headers.copy()
+        headers[self.hash_header] = data_hash
+        return headers
+
+    def _get_data_hash(self, data, secret_token):
+        encoded_data = data
+        if isinstance(data, str):
+            encoded_data = str.encode(data)
+        mac = hmac.new(str.encode(secret_token), msg=encoded_data, digestmod='sha1')
+        return 'sha1=' + str(mac.hexdigest())
+
+    def _get_secret_token(self, destination):
+        return destination.get('config', {}).get('secret_token', None)
 
     def _get_assets_url(self, destination):
         return destination.get('config', {}).get('assets_url', None)
