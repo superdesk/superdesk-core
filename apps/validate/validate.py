@@ -14,6 +14,7 @@ from eve.io.mongo import Validator
 from superdesk.metadata.item import ITEM_TYPE
 from superdesk.logging import logger
 from superdesk.text_utils import get_text
+from superdesk import get_resource_service
 
 REQUIRED_FIELD = 'is a required field'
 REQUIRED_ERROR = '{} is a required field'
@@ -214,6 +215,12 @@ class ValidateService(superdesk.Service):
         """
         return {field: get_validator_schema(schema) for field, schema in validator['schema'].items() if schema}
 
+    def _get_vocabulary_display_name(self, vocabulary_id):
+        vocabulary = get_resource_service('vocabularies').find_one(req=None, _id=vocabulary_id)
+        if vocabulary and 'display_name' in vocabulary:
+            return vocabulary['display_name']
+        return vocabulary_id
+
     def _validate(self, doc, **kwargs):
         use_headline = kwargs and 'headline' in kwargs
         validators = self._get_validators(doc)
@@ -240,7 +247,7 @@ class ValidateService(superdesk.Service):
                 elif e == 'extra':
                     for field in error_list[e]:
                         if 'required' in error_list[e][field]:
-                            message = REQUIRED_ERROR.format(field.upper())
+                            message = REQUIRED_ERROR.format(self._get_vocabulary_display_name(field).upper())
                         else:
                             message = '{} {}'.format(field.upper(), error_list[e][field])
                 elif error_list[e] == 'required field' or type(error_list[e]) is dict or \
