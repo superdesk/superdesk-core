@@ -48,12 +48,15 @@ class HTTPPushPublishTestCase(unittest.TestCase):
         else:
             self.resource_url = os.environ['HTTP_PUSH_RESOURCE_URL']
 
-        self.subscribers = [{"_id": "1", "name": "Test", "media_type": "media",
-                             "subscriber_type": SUBSCRIBER_TYPES.DIGITAL, "is_active": True,
-                             "sequence_num_settings": {"max": 10, "min": 1},
-                             "destinations": [{"name": "test", "delivery_type": "http_push", "format": "ninjs",
-                                               "config": {"resource_url": self.resource_url}
-                                               }]}]
+        self.subscribers = [{
+            "_id": "1", "name": "Test", "media_type": "media",
+            "subscriber_type": SUBSCRIBER_TYPES.DIGITAL, "is_active": True,
+            "sequence_num_settings": {"max": 10, "min": 1},
+            "destinations": [{
+                "name": "test", "delivery_type": "http_push", "format": "ninjs",
+                "config": {"resource_url": self.resource_url, "secret_token": "123456789"}
+            }]
+        }]
         self.formatted_item1 = {"_id": "item1",
                                 "headline": "headline",
                                 "versioncreated": "2015-03-09T16:32:23",
@@ -70,7 +73,7 @@ class HTTPPushPublishTestCase(unittest.TestCase):
                      'published_seq_num': 1,
                      'formatted_item': json.dumps(self.formatted_item1),
                      'destination': {"name": "test", "delivery_type": "http_push", "format": "ninjs",
-                                     "config": {"resource_url": self.resource_url}
+                                     "config": {"resource_url": self.resource_url, "secret_token": "123456789"}
                                      }}
 
         self.destination = self.item.get('destination', {})
@@ -105,6 +108,15 @@ class HTTPPushPublishTestCase(unittest.TestCase):
     def test_get_resource_url(self):
         service = HTTPPushService()
         self.assertEqual(service._get_resource_url(self.destination), self.resource_url)
+
+    def test_get_secret_token(self):
+        service = HTTPPushService()
+        self.assertEqual(service._get_secret_token(self.destination), "123456789")
+
+    def test_get_headers(self):
+        service = HTTPPushService()
+        headers = service._get_headers('test payload', self.destination, {})
+        self.assertEqual('sha1=8be62a607898504f87559cb52dc23f9ebee65a21', headers[service.hash_header])
 
     def test_publish_an_item(self):
         if not getattr(self, 'resource_url', None):
@@ -180,7 +192,7 @@ class HTTPPushPublishTestCase(unittest.TestCase):
         for media in images:
             get_mock.assert_any_call('http://example.com/%s' % media)
             post_mock.assert_any_call('http://example.com',
-                                      files={'media': (media, app_mock.media.get.return_value, 'image/jpeg')},
+                                      files={'media': (media, app_mock.media.get.return_value, 'image/jpeg', {})},
                                       data={'media_id': media})
 
     @mock.patch('superdesk.publish.transmitters.http_push.app')
@@ -204,5 +216,5 @@ class HTTPPushPublishTestCase(unittest.TestCase):
         get_mock.assert_called_with('http://example.com/media-id')
         post_mock.assert_called_with(
             'http://example.com',
-            files={'media': ('media-id', app_mock.media.get.return_value, 'text/plain')},
+            files={'media': ('media-id', app_mock.media.get.return_value, 'text/plain', {})},
             data={'media_id': 'media-id'})
