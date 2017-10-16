@@ -280,3 +280,29 @@ Feature: Content Filter
     """
     And we get "/filter_conditions"
     Then we get list with 2 items
+
+  @auth
+  @vocabulary
+  Scenario: Update allowed fields on vocabulary add/delete
+    Given empty "filter_conditions"
+    When we post to "vocabularies" with success
+    """
+    [{"_id": "my_custom_field", "display_name": "My Custom Field", "type": "manageable", "field_type": "text", "items": []}]
+    """
+    And we post to "/filter_conditions" with success
+    """
+    [{"name": "water", "field": "my_custom_field", "operator": "eq", "value": "some_value"}]
+    """
+    And we get "/filter_conditions"
+    Then we get list with 1 items
+
+    When we delete "/vocabularies/my_custom_field"
+    Then we get OK response
+    When we post to "/filter_conditions"
+    """
+    [{"name": "other", "field": "my_custom_field", "operator": "eq", "value": "some_value"}]
+    """
+    Then we get error 400
+    """
+    {"_issues": {"field": "unallowed value my_custom_field"}, "_status": "ERR"}
+    """
