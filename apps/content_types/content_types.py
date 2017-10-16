@@ -188,8 +188,11 @@ def prepare_for_edit_content_type(doc):
 def init_extra_fields(editor, schema):
     fields = get_resource_service('vocabularies').get_extra_fields()
     for field in fields:
+        field_type = 'string'
+        if field.get('field_type', None) == 'media':
+            field_type = field.get('field_options', {}).get('media_type', None)
         schema.setdefault(field['_id'], {
-            'type': 'string',
+            'type': field_type,
             'required': False
         })
         if field['_id'] in editor:
