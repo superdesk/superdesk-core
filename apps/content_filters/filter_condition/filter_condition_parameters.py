@@ -111,17 +111,17 @@ class FilterConditionParametersService(BaseService):
     def _get_vocabulary_fields(self, values):
         excluded_vocabularies = [vocabulary.strip() for vocabulary in
                                  app.config.get('EXCLUDED_VOCABULARY_FIELDS', '').split(',')]
-        for vocabulary in get_resource_service('vocabularies').get(req=None, lookup=None):
-            if vocabulary[config.ID_FIELD] not in values and vocabulary['type'] == 'manageable' \
-                    and vocabulary[config.ID_FIELD] not in excluded_vocabularies:
-                field = {'field': vocabulary[config.ID_FIELD], 'label': vocabulary['display_name']}
-                if vocabulary.get('field_type', '') == 'text':
-                    field['operators'] = ['in', 'nin', 'eq', 'ne', 'like', 'notlike', 'startswith', 'endswith']
-                else:
-                    field['values'] = vocabulary['items']
-                    field['operators'] = ['in', 'nin']
-                    field['value_field'] = 'qcode'
-                yield field
+        excluded_vocabularies.extend(values)
+        lookup = {'_id': {'$nin': excluded_vocabularies}, 'type': 'manageable'}
+        for vocabulary in get_resource_service('vocabularies').get(req=None, lookup=lookup):
+            field = {'field': vocabulary[config.ID_FIELD], 'label': vocabulary['display_name']}
+            if vocabulary.get('field_type', '') == 'text':
+                field['operators'] = ['in', 'nin', 'eq', 'ne', 'like', 'notlike', 'startswith', 'endswith']
+            else:
+                field['values'] = vocabulary['items']
+                field['operators'] = ['in', 'nin']
+                field['value_field'] = 'qcode'
+            yield field
 
     def _get_field_values(self):
         values = {}
