@@ -77,16 +77,10 @@ class FilterConditionResource(Resource):
                   'PATCH': 'content_filters',
                   'DELETE': 'content_filters'}
 
-    def on_init(self):
+    def pre_request_get(self, request, lookup):
         excluded_vocabularies = [vocabulary.strip() for vocabulary in
                                  app.config.get('EXCLUDED_VOCABULARY_FIELDS', '').split(',')]
-        for vocabulary in get_resource_service('vocabularies').get(req=None, lookup={}):
-            if vocabulary[config.ID_FIELD] not in excluded_vocabularies:
-                self.schema['field']['allowed'].append(vocabulary[config.ID_FIELD])
-
-    def on_created_vocabularies(self, docs):
-        for doc in docs:
-            self.schema['field']['allowed'].append(doc[config.ID_FIELD])
-
-    def on_deleted_vocabularies(self, doc):
-        self.schema['field']['allowed'].remove(doc[config.ID_FIELD])
+        excluded_vocabularies.extend(self.schema['field']['allowed'])
+        lookup = {'_id': {'$nin': excluded_vocabularies}, 'type': 'manageable'}
+        for vocabulary in get_resource_service('vocabularies').get(req=None, lookup=lookup):
+            self.schema['field']['allowed'].append(vocabulary[config.ID_FIELD])

@@ -65,7 +65,6 @@ class Resource():
     authentication = None
     elastic_prefix = None
     query_objectid_as_string = None
-    on_init = None
 
     def __init__(self, endpoint_name, app, service, endpoint_schema=None):
         self.endpoint_name = endpoint_name
@@ -153,12 +152,10 @@ class Resource():
         app.register_resource(self.endpoint_name, endpoint_schema)
         superdesk.resources[self.endpoint_name] = self
 
-        prefixes = {'on_created_': 'on_inserted_', 'on_updated_': 'on_updated_',
-                    'on_deleted_': 'on_deleted_item_'}
         for attr in self.__dir__():
-            for method_prefix, event_prefix in prefixes.items():
-                if attr.startswith(method_prefix):
-                    hook_event_name = event_prefix + attr[len(method_prefix):]
+            for request_method in ['GET', 'POST', 'PATCH', 'PUT', 'DELETE']:
+                if attr == 'pre_request_' + request_method.lower():
+                    hook_event_name = 'on_pre_' + request_method + '_' + self.endpoint_name
                     hook_event = getattr(app, hook_event_name)
                     hook_method = getattr(self, attr)
                     hook_event -= hook_method

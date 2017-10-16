@@ -158,12 +158,6 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
     for resource in superdesk.DOMAIN:
         app.register_resource(resource, superdesk.DOMAIN[resource])
 
-    with app.app_context():
-        for resource_name, resource in superdesk.resources.items():
-            if hasattr(resource, 'on_init') and callable(resource.on_init):
-                resource.on_init()
-                app.register_resource(resource_name, resource.endpoint_schema)
-
     for name, jinja_filter in superdesk.JINJA_FILTERS.items():
         app.jinja_env.filters[name] = jinja_filter
 
