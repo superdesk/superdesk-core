@@ -2412,7 +2412,6 @@ Feature: Content Publishing
       [{
       	"_id": "vocabulary1",
       	"display_name": "Vocabulary 1",
-      	"field_type": null,
       	"schema": {"name" : {}, "qcode": {}, "parent": {}},
       	"service": {"all": 1},
       	"type": "manageable",
@@ -2433,8 +2432,30 @@ Feature: Content Publishing
       [{
       	"enabled": true, "priority": 0, "label": "Profile 1",
       	"schema": {
-      		"vocabulary1": {"type": "string", "required": true, "enabled": true},
-      		"custom_field_1": {"type": "string", "required": true, "enabled": true}
+      		"custom_field_1": {"type": "string", "required": true, "enabled": true},
+      		"subject": {
+                "schema": {
+                    "schema": {
+                        "qcode": {},
+                        "parent": {"nullable" : true},
+                        "name": {},
+                        "service": {"nullable" : true},
+                        "scheme": {
+                            "nullable": true,
+                            "required": true,
+                            "allowed": ["vocabulary1"],
+                            "type": "string"
+                        }
+                    },
+                    "type": "dict"
+                },
+                "mandatory_in_list": {"scheme": {"subject": "vocabulary1"}},
+                "default": [],
+                "nullable": false,
+                "required": true,
+                "type": "list",
+                "minlength": 1
+            }
       	}
       }]
       """

@@ -1636,7 +1636,7 @@ Feature: Content Profile
         {
             "schema": {
                 "foo": {
-                    "type": "string",
+                    "type": "text",
                     "required": false
                 }
             },
@@ -1652,7 +1652,7 @@ Feature: Content Profile
         """
         {
             "editor": {"foo": {"enabled": true}},
-            "schema": {"foo": {"required": true, "type": "string"}}
+            "schema": {"foo": {"required": true, "type": "text"}}
         }
         """
         And we get "/content_types/profile?edit=true"
