@@ -142,7 +142,7 @@ class ValidateMandatoryInListTest(TestCase):
     def test_validate_field_required_media_description_empty(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
             'slugline': None,
-            'feature_media': {'required': True},
+            'feature_media': {'required': True, 'type': 'picture'},
             'media_description': {'required': True},
         }}])
         service = ValidateService()
@@ -169,13 +169,13 @@ class ValidateMandatoryInListTest(TestCase):
                 'validate': {'profile': 'foo', 'slugline': 'foo', 'associations': {'featuremedia': None}},
             },
         ])
-        self.assertIn('FEATURE_MEDIA null value not allowed', errors[0])
+        self.assertIn('FEATURE_MEDIA is a required field', errors[0])
         self.assertIn('MEDIA_DESCRIPTION is a required field', errors[0])
 
     def test_validate_field_required_media_description_required_false(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
             'slugline': None,
-            'feature_media': {'required': False},
+            'feature_media': {'required': False, 'type': 'picture'},
             'media_description': {'required': False},
         }}])
         service = ValidateService()
@@ -187,12 +187,12 @@ class ValidateMandatoryInListTest(TestCase):
             },
         ])
 
-        self.assertIn('FEATURE_MEDIA null value not allowed', errors[0])
+        self.assertIn('FEATURE_MEDIA is a required field', errors[0])
 
     def test_validate_field_required_media_description_required_false_null_true(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
             'slugline': None,
-            'feature_media': {'required': False, 'nullable': True},
+            'feature_media': {'required': False, 'nullable': True, 'type': 'picture'},
             'media_description': {'required': False, 'nullable': True},
         }}])
         service = ValidateService()
@@ -209,7 +209,7 @@ class ValidateMandatoryInListTest(TestCase):
     def test_validate_field_feature_media_and_media_description(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
             'slugline': None,
-            'feature_media': {'required': True},
+            'feature_media': {'required': True, 'type': 'picture'},
             'media_description': {'required': True},
         }}])
         service = ValidateService()
