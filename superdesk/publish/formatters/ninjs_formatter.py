@@ -57,6 +57,7 @@ def format_cv_item(item):
     return filter_empty_vals({
         'code': item.get('qcode'),
         'name': item.get('name'),
+        'scheme': item.get('scheme')
     })
 
 
