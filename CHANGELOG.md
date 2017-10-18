@@ -11,6 +11,33 @@
 
 - Moved non etree releated methods from `etree` module to the new `text_utils` one
 
+## [1.8.6] 2017-10-11
+
+### Fixed
+
+- Fix parsing of ANSA NewsmlG2 feed.
+- Add nijs parser to ingest both text and feature media.
+- Fix issue where user cannot publish after removing feature media.
+
+## [1.6.3] 2017-09-25
+
+### Fixed
+
+- Fix user email validation to allow subdomains.
+
+## [1.8.5] 2017-08-02
+
+### Fixed
+
+- Fix unique validator when search backend is configured.
+- Fix AP and DPA parsers.
+- Validate the SMS message when SMS is enabled.
+- Source is preserved when the story is rewritten
+
+### Changed
+
+- Make displaying crops for featured media config option.
+
 ## [1.8.4] 2017-06-30
 
 ### Fixed
