@@ -39,7 +39,7 @@ CONTENTAPI_DOMAIN = {}
 
 # NOTE: no trailing slash for the CONTENTAPI_URL setting!
 CONTENTAPI_URL = env('CONTENTAPI_URL', 'http://localhost:5400')
-MEDIA_PREFIX = '%s/assets' % CONTENTAPI_URL.rstrip('/')
+MEDIA_PREFIX = env('MEDIA_PREFIX', '%s/assets' % CONTENTAPI_URL.rstrip('/'))
 server_url = urlparse(CONTENTAPI_URL)
 URL_PREFIX = env('CONTENTAPI_URL_PREFIX', server_url.path.strip('/')) or ''
 VERSION = '_current_version'
