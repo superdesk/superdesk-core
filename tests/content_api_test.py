@@ -355,6 +355,8 @@ class ContentAPITestCase(TestCase):
         bar = self.db.items.find_one({'_id': 'bar'})
         self.assertEqual(['foo'], bar.get('ancestors', []))
         self.assertEqual('foo', bar.get('evolvedfrom'))
+        foo = self.db.items.find_one({'_id': 'foo'})
+        self.assertEqual('bar', foo['nextversion'])
 
         item['guid'] = 'fun'
         item['rewrite_of'] = 'bar'
