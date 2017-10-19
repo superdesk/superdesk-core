@@ -58,7 +58,10 @@ class PublishService(BaseService):
 
             self._assign_associations(item, doc)
             logger.info('publishing %s to %s' % (doc['guid'], subscribers))
-            return self._create_doc(doc)
+            _id = self._create_doc(doc)
+            if 'evolvedfrom' in doc and parent_item:
+                self.system_update(parent_item['_id'], {'nextversion': _id}, parent_item)
+            return _id
         else:
             return None
 
