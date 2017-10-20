@@ -152,6 +152,14 @@ class Resource():
         app.register_resource(self.endpoint_name, endpoint_schema)
         superdesk.resources[self.endpoint_name] = self
 
+        for request_method in ['GET', 'POST', 'PATCH', 'PUT', 'DELETE']:
+            if hasattr(self, 'pre_request_' + request_method.lower()):
+                hook_event_name = 'on_pre_' + request_method + '_' + self.endpoint_name
+                hook_event = getattr(app, hook_event_name)
+                hook_method = getattr(self, 'pre_request_' + request_method.lower())
+                hook_event -= hook_method
+                hook_event += hook_method
+
     @staticmethod
     def rel(resource, embeddable=True, required=False, type='objectid', nullable=False):
         return {
