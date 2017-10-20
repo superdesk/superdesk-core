@@ -17,6 +17,7 @@ from superdesk.text_utils import get_text
 from superdesk import get_resource_service
 
 REQUIRED_FIELD = 'is a required field'
+STRING_FIELD = 'require a string value'
 REQUIRED_ERROR = '{} is a required field'
 
 
@@ -57,6 +58,11 @@ class SchemaValidator(Validator):
     def _validate_type_picture(self, field, value):
         """Allow type picture in schema."""
         pass
+
+    def _validate_type_text(self, field, value):
+        """Validate type text in schema."""
+        if value and not isinstance(value, str):
+            self._error(field, STRING_FIELD)
 
     def _validate_mandatory_in_list(self, mandatory, field, value):
         """Validates if all elements from mandatory are presented in the list"""
@@ -143,7 +149,7 @@ class ValidateService(superdesk.Service):
                 schema['extra'] = {'type': 'dict', 'schema': {}}
                 doc['validate'].setdefault('extra', {})  # make sure extra is there so it will validate its fields
                 for extra_field in extra_fields:
-                    if schema.get(extra_field['_id']):
+                    if schema.get(extra_field['_id']) and extra_field.get('field_type', None) == 'text':
                         rules = schema.pop(extra_field['_id'])
                         rules.setdefault('type', 'string')
                         schema['extra']['schema'].update({extra_field['_id']: get_validator_schema(rules)})
@@ -185,16 +191,21 @@ class ValidateService(superdesk.Service):
                     # fails for json fields like subject, genre
                     pass
 
-    def _process_media(self, doc):
-        """If feature media is required it should be present for validation on doc not only on associations
+    def _process_media(self, doc, validation_schema):
+        """If media field(feature media or custom media field) is required it should be present for
+        validation on doc not only on associations
         If media_description is required it should be present for validation on doc not only on
-        associations->featuremedia
+        associations->featuremedia (or custom media field)
         :param doc: Article to be validated
+        :param schema: Schema to validate the article
         """
-        if 'associations' in doc and 'featuremedia' in doc['associations']:
-            doc['feature_media'] = doc['associations']['featuremedia']
-            if doc['feature_media'] and 'description_text' in doc['feature_media']:
-                doc['media_description'] = doc['associations']['featuremedia']['description_text']
+        for field_schema in validation_schema:
+            field_associations = field_schema if field_schema != 'feature_media' else 'featuremedia'
+            field_type = validation_schema.get(field_schema, {}).get('type', None)
+            if field_type == 'picture' and 'associations' in doc and field_associations in doc['associations']:
+                doc[field_schema] = doc['associations'][field_associations]
+                if not doc.get('feature_media', None) is None and 'description_text' in doc['feature_media']:
+                    doc['media_description'] = doc['associations']['featuremedia']['description_text']
 
     def _process_sms(self, doc, schema):
         """Apply the SMS validation to the sms_message value if the document is flagged for SMS
@@ -227,7 +238,7 @@ class ValidateService(superdesk.Service):
         for validator in validators:
             validation_schema = self._get_validator_schema(validator)
             self._sanitize_fields(doc['validate'], validator)
-            self._process_media(doc['validate'])
+            self._process_media(doc['validate'], validation_schema)
             self._process_sms(doc['validate'], validation_schema)
             v = SchemaValidator()
             v.allow_unknown = True
@@ -253,7 +264,7 @@ class ValidateService(superdesk.Service):
                 elif error_list[e] == 'required field' or type(error_list[e]) is dict or \
                         type(error_list[e]) is list:
                     message = REQUIRED_ERROR.format(e.upper())
-                elif 'min length is 1' == error_list[e]:
+                elif 'min length is 1' == error_list[e] or 'null value not allowed' in error_list[e]:
                     message = REQUIRED_ERROR.format(e.upper())
                 elif 'min length is' in error_list[e]:
                     message = '{} is too short'.format(e.upper())
