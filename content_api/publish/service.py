@@ -51,6 +51,7 @@ class PublishService(BaseService):
                 if parent_item:
                     doc['ancestors'] = copy(parent_item.get('ancestors', []))
                     doc['ancestors'].append(doc['evolvedfrom'])
+                    doc['bookmarks'] = parent_item.get('bookmarks', [])
                 else:
                     logger.warning("Failed to find evolvedfrom item '{}' for '{}'".format(
                         doc['evolvedfrom'], doc['guid'])

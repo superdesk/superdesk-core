@@ -76,6 +76,7 @@ schema = {
             'type': 'dict',
         },
     },
+    'bookmarks': Resource.not_analyzed_field('list'),
 }
 
 

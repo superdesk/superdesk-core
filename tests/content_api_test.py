@@ -342,7 +342,7 @@ class ContentAPITestCase(TestCase):
             self.assertEqual(404, response._status_code)
 
     def test_publish_item_with_ancestors(self):
-        item = {'guid': 'foo', 'type': 'text', 'task': {'desk': 'foo'}}
+        item = {'guid': 'foo', 'type': 'text', 'task': {'desk': 'foo'}, 'bookmarks': [ObjectId()]}
         self.content_api.publish(item)
         self.assertEqual(1, self.db.items.count())
         self.assertNotIn('ancestors', self.db.items.find_one({'_id': 'foo'}))
@@ -366,6 +366,18 @@ class ContentAPITestCase(TestCase):
         fun = self.db.items.find_one({'_id': 'fun'})
         self.assertEqual(['foo', 'bar'], fun.get('ancestors', []))
         self.assertEqual('bar', fun.get('evolvedfrom'))
+
+    def test_sync_bookmarks_on_publish(self):
+        item = {'guid': 'foo', 'type': 'text', 'task': {'desk': 'foo'}}
+        self.content_api.publish(item)
+        self.db.items.update_one({'_id': 'foo'}, {'$set': {'bookmarks': [ObjectId()]}})
+
+        item['guid'] = 'bar'
+        item['rewrite_of'] = 'foo'
+        self.content_api.publish(item)
+
+        bar = self.db.items.find_one({'_id': 'bar'})
+        self.assertEqual(1, len(bar['bookmarks']))
 
     def test_search_capi(self):
         subscriber = {'_id': 'sub1'}
