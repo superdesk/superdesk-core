@@ -617,6 +617,6 @@ GOOGLE_CLIENT_SECRET = env('GOOGLE_CLIENT_SECRET')
 SAML_PATH = env('SAML_PATH')
 SAML_LABEL = env('SAML_LABEL', 'Single Sign On')
 
-EXCLUDED_VOCABULARY_FIELDS = env('EXCLUDED_VOCABULARY_FIELDS', 'default_categories,signal,rightsinfo,'
-                                 'subscriber_types,crop_sizes,desk_types,replace_words,locators,'
-                                 'product_types,author_roles,job_titles')
+EXCLUDED_VOCABULARY_FIELDS = ['default_categories', 'signal', 'rightsinfo', 'subscriber_types',
+                              'crop_sizes', 'desk_types', 'replace_words', 'locators',
+                              'product_types', 'author_roles', 'job_titles']

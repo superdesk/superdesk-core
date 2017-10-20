@@ -90,9 +90,7 @@ class FilterConditionResource(Resource):
 
     def _init_allowed_filters(self):
         self.schema['field']['allowed'] = copy.copy(default_allowed_filters)
-        excluded_vocabularies = [vocabulary.strip() for vocabulary in
-                                 app.config.get('EXCLUDED_VOCABULARY_FIELDS', '').split(',')]
-        excluded_vocabularies.extend(self.schema['field']['allowed'])
-        lookup = {'_id': {'$nin': excluded_vocabularies}, 'type': 'manageable'}
+        self.schema['field']['allowed'].extend(app.config.get('EXCLUDED_VOCABULARY_FIELDS', []))
+        lookup = {'_id': {'$nin': self.schema['field']['allowed']}, 'type': 'manageable'}
         for vocabulary in get_resource_service('vocabularies').get(req=None, lookup=lookup):
             self.schema['field']['allowed'].append(vocabulary[config.ID_FIELD])

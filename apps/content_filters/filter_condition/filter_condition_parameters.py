@@ -15,6 +15,7 @@ from superdesk.utils import ListCursor
 from superdesk import get_resource_service, config, app
 from superdesk.io.subjectcodes import get_subjectcodeitems
 from eve.utils import ParsedRequest
+import copy
 
 
 class FilterConditionParametersResource(Resource):
@@ -109,8 +110,7 @@ class FilterConditionParametersService(BaseService):
         return ListCursor(fields)
 
     def _get_vocabulary_fields(self, values):
-        excluded_vocabularies = [vocabulary.strip() for vocabulary in
-                                 app.config.get('EXCLUDED_VOCABULARY_FIELDS', '').split(',')]
+        excluded_vocabularies = copy.copy(app.config.get('EXCLUDED_VOCABULARY_FIELDS', []))
         excluded_vocabularies.extend(values)
         lookup = {'_id': {'$nin': excluded_vocabularies}, 'type': 'manageable'}
         for vocabulary in get_resource_service('vocabularies').get(req=None, lookup=lookup):
