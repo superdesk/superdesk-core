@@ -6,7 +6,8 @@ Feature: Contacts
         When we post to "/contacts"
         """
         {
-            "first_name": "Albert", "last_name": "Foo", "mobile": [{"number": "1234", "usage": "After hours"}]
+            "first_name": "Albert", "last_name": "Foo", "mobile": [{"number": "1234", "usage": "After hours",
+            "public": true}]
         }
         """
         Then we get response code 201
@@ -16,7 +17,8 @@ Feature: Contacts
           {
             "_items" :
               [{
-              "last_name" : "Foo", "first_name" : "Albert", "mobile": [{"number": "1234", "usage": "After hours"}]}
+              "last_name" : "Foo", "first_name" : "Albert", "mobile": [{"number": "1234", "usage": "After hours",
+              "public": true}]}
               ]
           }
           """

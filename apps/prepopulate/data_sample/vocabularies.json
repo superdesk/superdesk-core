@@ -2731,5 +2731,57 @@
             {"is_active": true, "name": "Media Contact", "qcode": "media_contact"},
             {"is_active": true, "name": "Spokesman", "qcode": "spokesman"}
         ]
+    },
+    {
+        "_id": "contact_mobile_usage",
+        "display_name": "Contact mobile usage",
+        "type": "manageable",
+        "unique_field": "qcode",
+        "items": [
+            {"is_active": true, "qcode": "Confidential", "name": "Confidential number", "public": false},
+            {"is_active": true, "qcode": "Business", "name": "Business number", "public": true}
+        ],
+        "schema": {
+            "name": {},
+            "qcode": {},
+            "public": {"type": "bool", "label": "Make public"}
+        },
+        "helper_text": "Indicates if the contact mobile number is to be made public outside the system"
+    },
+    {
+        "_id": "contact_phone_usage",
+        "display_name": "Contact phone usage",
+        "type": "manageable",
+        "unique_field": "qcode",
+        "items": [
+            {"is_active": true, "qcode": "Confidential", "name": "Confidential number", "public": false},
+            {"is_active": true, "qcode": "Business", "name": "Business number", "public": true}
+        ],
+        "schema": {
+            "name": {},
+            "qcode": {},
+            "public": {"type": "bool", "label": "Make public"}
+        },
+        "helper_text": "Indicates if the contact phone number is to be made public outside the system"
+    },
+    {
+        "_id" : "contact_states",
+        "items" : [
+            {"is_active" : true, "qcode" : "NSW", "name" : "NSW"},
+            {"is_active" : true, "qcode" : "VIC", "name" : "VIC"},
+            {"is_active" : true, "qcode" : "TAS", "name" : "TAS"},
+            {"is_active" : true, "qcode" : "WA", "name" : "WA"},
+            {"is_active" : true, "qcode" : "QLD", "name" : "QLD"},
+            {"is_active" : true, "qcode" : "NT", "name" : "NT"},
+            {"is_active" : true, "qcode" : "ACT", "name" : "ACT"}
+        ],
+        "type" : "manageable",
+        "unique_field": "qcode",
+        "schema" : {
+            "name" : {},
+            "qcode" : {}
+        },
+        "display_name" : "Contact States",
+        "helper_text": "The administrative state for the address of a contact"
     }
 ]

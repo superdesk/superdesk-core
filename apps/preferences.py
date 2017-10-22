@@ -160,6 +160,15 @@ class PreferencesResource(Resource):
         'default': True
     })
 
+    superdesk.register_default_user_preference('contacts:view', {
+        'type': 'string',
+        'allowed': ['mgrid', 'compact'],
+        'view': 'mgrid',
+        'default': 'mgrid',
+        'label': 'Users contacts view format',
+        'category': 'contacts'
+    })
+
     superdesk.register_default_user_preference('destination:active', {})
 
     superdesk.register_default_session_preference('scratchpad:items', [])

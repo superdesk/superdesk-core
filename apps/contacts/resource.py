@@ -11,6 +11,7 @@
 from superdesk.resource import Resource
 
 CONTACTS_PRIVILEDGE = 'contacts'
+VIEW_CONTACTS = 'view_contacts'
 
 
 class ContactsResource(Resource):
@@ -60,7 +61,9 @@ class ContactsResource(Resource):
                 'schema': {
                     'number': {'type': 'string'},
                     # usage may provide information as to the usage of the number e.g. Business hours only
-                    'usage': {'type': 'string'}
+                    'usage': {'type': 'string'},
+                    # If public is true then the number can be made public, if false it is only visible in the system
+                    'public': {'type': 'boolean', 'default': True}
                 }
             }
         },
@@ -70,7 +73,9 @@ class ContactsResource(Resource):
                 'type': 'dict',
                 'schema': {
                     'number': {'type': 'string'},
-                    'usage': {'type': 'string'}
+                    'usage': {'type': 'string'},
+                    # If public is true then the number can be made public, if false it is only visible in the system
+                    'public': {'type': 'boolean', 'default': True}
                 }
             }
         },
@@ -112,11 +117,19 @@ class ContactsResource(Resource):
             'type': 'string',
             'required': False
         },
+        'city': {
+            'type': 'string',
+            'required': False
+        },
         'state': {
             'type': 'string',
             'required': False
         },
         'postcode': {
+            'type': 'string',
+            'required': False
+        },
+        'country': {
             'type': 'string',
             'required': False
         },
