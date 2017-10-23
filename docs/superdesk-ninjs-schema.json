@@ -204,6 +204,10 @@
 					"code" : {
 						"description": "The code for the subject in a scheme (= controlled vocabulary) which is identified by the scheme property",
 						"type" : "string"
+					},
+					"scheme": {
+						"description" : "The controlled vocabulary (scheme) identifier",
+						"type" : "string"
 					}
 				}
 			}
@@ -301,7 +305,10 @@
 			"type": "object",
 			"additionalProperties" : false,
 			"patternProperties" : {
-				"^[a-zA-Z0-9]+" :  {}
+				"^[a-zA-Z0-9]+" : {
+					"description" : "Metadata field name",
+					"type" : "string"
+				}
 			}
 		},
 		"evolvedfrom": {
