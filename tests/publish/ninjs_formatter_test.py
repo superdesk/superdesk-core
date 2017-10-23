@@ -460,7 +460,7 @@ class NinjsFormatterTest(TestCase):
                 "username": "author 1",
                 "display_name": "author 1",
                 "is_author": True,
-                "job_title": "job_title_1",
+                "job_title": "writer_code",
                 "biography": "bio 1"
             },
             {
@@ -468,10 +468,38 @@ class NinjsFormatterTest(TestCase):
                 "username": "author 2",
                 "display_name": "author 2",
                 "is_author": True,
-                "job_title": "job_title_2",
+                "job_title": "reporter_code",
                 "biography": "bio 2"
             }
         ])
+
+        self.app.data.insert('vocabularies', [
+            {
+                "_id": "job_titles",
+                "display_name": "Job Titles",
+                "type": "manageable",
+                "unique_field": "qcode",
+                "items": [
+                    {
+                        "is_active": True,
+                        "name": "Writer",
+                        "qcode": "writer_code"
+                    },
+                    {
+                        "is_active": True,
+                        "name": "Reporter",
+                        "qcode": "reporter_code"
+                    }
+                ],
+                "schema": {
+                    "name": {
+                    },
+                    "qcode": {
+                    }
+                },
+            }
+        ])
+
         article = {
             '_id': 'urn:bar',
             '_current_version': 1,
@@ -508,10 +536,12 @@ class NinjsFormatterTest(TestCase):
         expected = [
             {'name': 'author 1',
              'role': 'writer',
-             'jobtitle': 'job_title_1',
+             'jobtitle': {'qcode': 'writer_code',
+                          'name': 'Writer'},
              'biography': 'bio 1'},
             {'name': 'author 2',
              'role': 'photographer',
-             'jobtitle': 'job_title_2',
+             'jobtitle': {'qcode': 'reporter_code',
+                          'name': 'Reporter'},
              'biography': 'bio 2'}]
         self.assertEqual(data['authors'], expected)
