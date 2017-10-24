@@ -64,7 +64,7 @@ class RFC822JsonFormatter(TestCase):
         try:
             with self.assertRaises(IngestEmailError) as exc_context:
                 self.items = parser.parse([(1, bytes)], self.provider)
-        except:
+        except Exception:
             self.fail('Expected exception type was not raised.')
 
         ex = exc_context.exception

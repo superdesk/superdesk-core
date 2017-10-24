@@ -88,7 +88,7 @@ class SocketMessageProducer(SocketBrokerClient):
             with producers[self.connection].acquire(block=True) as producer:
                 producer.publish(message, exchange=self.socket_exchange)
                 logger.debug('message:{} published to broker:{}.'.format(message, self.url))
-        except:
+        except Exception:
             logger.exception('Failed to publish message {} to broker.'.format(message))
 
 
@@ -125,16 +125,16 @@ class SocketMessageConsumer(SocketBrokerClient, ConsumerMixin):
         try:
             try:
                 loop = asyncio.get_event_loop()
-            except:
+            except Exception:
                 loop = asyncio.new_event_loop()
 
             logger.info('Queue: {}. Broadcasting message {}'.format(self.queue_name, body))
             loop.run_until_complete(self.callback(body))
-        except:
+        except Exception:
             logger.exception('Dropping event. Failed to send message {}.'.format(body))
         try:
             message.ack()
-        except:
+        except Exception:
             logger.exception('Failed to ack message {} on queue {}.'.format(body, self.queue_name))
 
     def close(self):
@@ -214,7 +214,7 @@ class SocketCommunication:
             try:
                 if websocket.open:
                     yield from websocket.send(message)
-            except:
+            except Exception:
                 yield
 
     @asyncio.coroutine

@@ -347,7 +347,7 @@ class ItemsService(BaseService):
         try:
             filters = json.loads(orig_request_params.get('filter')) \
                 if orig_request_params and orig_request_params.get('filter') else []
-        except:
+        except Exception:
             raise BadParameterValueError("Bad parameter value for Parameter (filter)")
 
         for argument_name, field_name in argument_fields.items():
@@ -357,7 +357,7 @@ class ItemsService(BaseService):
             filter_value = orig_request_params.get(argument_name)
             try:
                 filter_value = json.loads(orig_request_params.get(argument_name))
-            except:
+            except Exception:
                 pass
 
             if not filter_value:
@@ -481,7 +481,7 @@ class ItemsService(BaseService):
             elastic_filter = json.loads(original_filter_param) if original_filter_param else []
             if not isinstance(elastic_filter, list):
                 raise BadParameterValueError(desc='Invalid Parameter value for filter')
-        except:
+        except Exception:
             raise BadParameterValueError(desc='Invalid Parameter value for filter')
 
         elastic_filter.append(filter)

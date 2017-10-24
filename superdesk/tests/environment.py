@@ -128,7 +128,7 @@ def after_scenario(context, scenario):
         try:
             os.remove(get_macro_path('behave_macro.py'))
             os.remove(get_macro_path('validate_headline_macro.py'))
-        except:
+        except Exception:
             pass
 
 
@@ -141,7 +141,7 @@ def before_step(context, step):
                 [{k: json_obj[k] for k in json_obj.keys() if k not in readonly_fields} for json_obj in step_text_json]
 
             step.text = json.dumps(step_text_json)
-        except:
+        except Exception:
             pass
 
 

@@ -261,7 +261,7 @@ class PublishedItemService(BaseService):
             request = ParsedRequest()
             request.args = {'source': json.dumps(query)}
             return super().get(req=request, lookup=None)
-        except:
+        except Exception:
             return []
 
     def get_rewritten_items_by_event_story(self, event_id, rewrite_id, rewrite_field):
@@ -284,7 +284,7 @@ class PublishedItemService(BaseService):
             request = ParsedRequest()
             request.args = {'source': json.dumps(query), 'repo': 'archive,published'}
             return list(get_resource_service('search').get(req=request, lookup=None))
-        except:
+        except Exception:
             return []
 
     def is_rewritten_before(self, item_id):
@@ -301,7 +301,7 @@ class PublishedItemService(BaseService):
         for item in items:
             try:
                 super().system_update(ObjectId(item[config.ID_FIELD]), {field: state}, item)
-            except:
+            except Exception:
                 # This part is used in unit testing
                 super().system_update(item[config.ID_FIELD], {field: state}, item)
 
@@ -342,7 +342,7 @@ class PublishedItemService(BaseService):
             try:
                 if item.get(config.VERSION) <= version and not item.get('moved_to_legal', False):
                     super().system_update(ObjectId(item.get(config.ID_FIELD)), {'moved_to_legal': status}, item)
-            except:
+            except Exception:
                 logger.exception('Failed to set the moved_to_legal flag '
                                  'for item {} and version {}'.format(item_id, version))
 
@@ -371,7 +371,7 @@ class PublishedItemService(BaseService):
                 request = ParsedRequest()
                 request.args = {'source': json.dumps(query)}
                 return list(super().get(req=request, lookup=None))
-            except:
+            except Exception:
                 logger.exception('Failed to get published items '
                                  'by moved to legal: {} -- ids: {}.'.format(move_to_legal, item_ids))
 

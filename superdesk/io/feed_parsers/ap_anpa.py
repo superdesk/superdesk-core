@@ -143,7 +143,7 @@ class AP_ANPAFeedParser(ANPAFeedParser):
                         break
 
             return item
-        except:
+        except Exception:
             logging.exception('AP dateline extraction exception')
 
     def _parse_ednote(self, header_lines, item):
@@ -178,7 +178,7 @@ class AP_ANPAFeedParser(ANPAFeedParser):
                         item['headline'] = the_rest
                     else:
                         item['headline'] = pars[0].text
-        except:
+        except Exception:
             pass
 
 

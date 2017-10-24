@@ -33,7 +33,7 @@ class ANPAFeedParser(FileFeedParser):
             with open(file_path, 'rb') as f:
                 lines = [line for line in f]
                 return re.match(b'\x16\x16\x01([a-z])([0-9]{4})\x1f([a-z0-9-]+)', lines[0], flags=re.I)
-        except:
+        except Exception:
             return False
 
     def parse(self, file_path, provider=None):

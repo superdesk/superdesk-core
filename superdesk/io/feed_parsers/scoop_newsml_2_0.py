@@ -33,7 +33,7 @@ class ScoopNewsMLTwoFeedParser(NewsMLTwoFeedParser):
                 origin = header.find(self.qname('origin')).text
                 if origin == 'BusinessDesk':
                     return True
-            except:
+            except Exception:
                 return False
         return False
 

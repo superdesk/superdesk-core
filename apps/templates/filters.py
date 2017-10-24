@@ -38,7 +38,7 @@ def format_datetime_filter(date_or_string, timezone_string=None, date_format=Non
         else:
             return str(date_time)
 
-    except:
+    except Exception:
         logger.warning('Failed to convert datetime. Arguments: Date - {} Timezone - {} format - {}.'.format(
             date_or_string, timezone_string, date_format
         ))

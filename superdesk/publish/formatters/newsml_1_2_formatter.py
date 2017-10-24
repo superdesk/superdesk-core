@@ -418,7 +418,7 @@ class NewsML12Formatter(Formatter):
         try:
             ts = time.strptime(duration, '%H:%M:%S.%f')
             total_seconds = ts.tm_sec + (ts.tm_min * 60) + (ts.tm_hour * 60 * 60)
-        except:
+        except Exception:
             logger.error('Failed to get total seconds for duration:{}'.format(duration))
         return total_seconds
 

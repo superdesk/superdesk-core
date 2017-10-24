@@ -152,7 +152,7 @@ class UpdateMethodTestCase(RssIngestServiceTest):
         try:
             with self.assertRaises(FakeIngestApiError):
                 self.instance._update({}, {})
-        except:
+        except Exception:
             self.fail('Expected exception type was not raised.')
 
     def test_raises_ingest_error_on_parse_error(self):
@@ -299,7 +299,7 @@ class FetchDataMethodTestCase(RssIngestServiceTest):
 
         try:
             self.instance._update(fake_provider, {})
-        except:
+        except Exception:
             pass
 
         self.assertEqual(
@@ -336,7 +336,7 @@ class FetchDataMethodTestCase(RssIngestServiceTest):
         try:
             with self.assertRaises(RssError) as exc_context:
                 self.instance._fetch_data(config, self.fake_provider)
-        except:
+        except Exception:
             self.fail('Expected exception type was not raised.')
 
         ex = exc_context.exception
@@ -352,7 +352,7 @@ class FetchDataMethodTestCase(RssIngestServiceTest):
         try:
             with self.assertRaises(RssError) as exc_context:
                 self.instance._fetch_data(config, self.fake_provider)
-        except:
+        except Exception:
             self.fail('Expected exception type was not raised.')
 
         ex = exc_context.exception
@@ -368,7 +368,7 @@ class FetchDataMethodTestCase(RssIngestServiceTest):
         try:
             with self.assertRaises(RssError) as exc_context:
                 self.instance._fetch_data(config, self.fake_provider)
-        except:
+        except Exception:
             self.fail('Expected exception type was not raised.')
 
         ex = exc_context.exception
@@ -384,7 +384,7 @@ class FetchDataMethodTestCase(RssIngestServiceTest):
         try:
             with self.assertRaises(RssError) as exc_context:
                 self.instance._fetch_data(config, self.fake_provider)
-        except:
+        except Exception:
             self.fail('Expected exception type was not raised.')
 
         ex = exc_context.exception

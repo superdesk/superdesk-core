@@ -36,7 +36,7 @@ class EmailPublishService(PublishService):
                 item = json.loads(queue_item['formatted_item'])
                 if 'message_subject' not in item:
                     item = {}
-            except:
+            except Exception:
                 item = {}
 
             admins = app.config['ADMINS']

@@ -299,7 +299,7 @@ class EveBackend():
                 except NotFoundError:
                     logger.warning('item missing from elastic _id=%s' % (doc[config.ID_FIELD], ))
                     removed_ids.append(doc[config.ID_FIELD])
-                except:
+                except Exception:
                     logger.exception('item can not be removed from elastic _id=%s' % (doc[config.ID_FIELD], ))
         backend.remove(endpoint_name, {config.ID_FIELD: {'$in': removed_ids}})
         logger.info("Removed {} documents from {}.".format(len(ids), endpoint_name))

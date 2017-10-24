@@ -513,7 +513,7 @@ class BasePublishService(BaseService):
                 kill_header[key] = html.unescape(value)
 
             updates.update(kill_header)
-        except:
+        except Exception:
             logger.exception('Failed to apply kill header template to item {}.'.format(item))
 
     def _refresh_associated_items(self, original):

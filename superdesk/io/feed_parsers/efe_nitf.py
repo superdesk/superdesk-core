@@ -99,7 +99,7 @@ class EFEFeedParser(NITFFeedParser):
                                                                               source=item.get('original_source',
                                                                                               'EFE'))
                 item.pop('place')
-        except:
+        except Exception:
             logging.exception('EFE dateline extraction exception')
 
     def get_slugline(self, docdata):

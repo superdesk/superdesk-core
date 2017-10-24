@@ -90,7 +90,7 @@ class SuperdeskValidator(Validator):
             if self._id:
                 try:
                     query[config.ID_FIELD] = {'$ne': ObjectId(self._id)}
-                except:
+                except Exception:
                     query[config.ID_FIELD] = {'$ne': self._id}
 
     def _validate_iunique(self, unique, field, value):

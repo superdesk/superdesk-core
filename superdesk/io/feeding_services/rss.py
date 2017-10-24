@@ -305,7 +305,7 @@ class RSSFeedingService(FeedingService):
             ):
                 try:
                     item['body_html'] = data.content[0].value
-                except:
+                except Exception:
                     pass  # content either non-existent or parsed differently
 
         if not data.get('guidislink') and data.get('link'):

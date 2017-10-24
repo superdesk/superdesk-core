@@ -216,7 +216,7 @@ class EnqueueService:
         try:
             if content_api.is_enabled():
                 get_resource_service('content_api').publish(doc, subscribers)
-        except:
+        except Exception:
             logger.exception('Failed to queue item to API for item: {} for action {}'.
                              format(doc[config.ID_FIELD], self.publish_type))
 
@@ -432,12 +432,12 @@ class EnqueueService:
                             publish_queue_item.pop(ITEM_STATE, None)
                             get_resource_service('publish_queue').post([publish_queue_item])
                             queued = True
-                except:
+                except Exception:
                     logger.exception("Failed to queue item for id {} with headline {} for subscriber {}."
                                      .format(doc.get(config.ID_FIELD), doc.get('headline'), subscriber.get('name')))
 
             return no_formatters, queued
-        except:
+        except Exception:
             raise
 
     def _embed_package_items(self, package):

@@ -177,7 +177,7 @@ def enqueue_items(published_items):
     for queue_item in published_items:
         try:
             enqueue_item(queue_item)
-        except:
+        except Exception:
             logger.exception('Failed to queue item {}'.format(queue_item.get('_id')))
             failed_items[str(queue_item.get('_id'))] = queue_item
 

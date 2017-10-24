@@ -29,7 +29,7 @@ def create_server(config):
         exchange_name = config.get('WEBSOCKET_EXCHANGE')
         comms = SocketCommunication(host, port, broker_url, exchange_name)
         comms.run_server()
-    except:
+    except Exception:
         logger.exception('Failed to start the WebSocket server.')
 
 

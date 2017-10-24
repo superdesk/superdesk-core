@@ -100,7 +100,7 @@ def get_timezone_offset(local_tz_name, utc_datetime):
     try:
         local_dt = utc_to_local(local_tz_name, utc_datetime)
         return local_dt.strftime('%z')
-    except:
+    except Exception:
         return utcnow().strftime('%z')
 
 

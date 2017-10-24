@@ -176,7 +176,7 @@ class RemoveExpiredContent(superdesk.Command):
                     published_service.delete_by_article_id(item_id)
                     logger.info('{} Deleting killed item from published. {}'.format(self.log_msg, msg))
                     items_to_remove.add(item_id)
-                except:
+                except Exception:
                     logger.exception('{} Failed to delete killed item from published. {}'.format(self.log_msg, msg))
 
             if items_to_remove:
@@ -188,7 +188,7 @@ class RemoveExpiredContent(superdesk.Command):
                 try:
                     archive_service.system_update(item.get(config.ID_FIELD), {'expiry_status': 'invalid'}, item)
                     logger.info('{} Setting item expiry status. {}'.format(self.log_msg, msg))
-                except:
+                except Exception:
                     logger.exception('{} Failed to set expiry status for item. {}'.format(self.log_msg, msg))
 
             logger.info('{} Deleting killed from archive.'.format(self.log_msg))
@@ -318,7 +318,7 @@ class RemoveExpiredContent(superdesk.Command):
 
             archive_service.delete_by_article_ids([item_id])
             logger.info('{} Deleted archive item. {}'.format(self.log_msg, item_id))
-        except:
+        except Exception:
             failed_items = [item.get(config.ID_FIELD) for item in published_items]
             logger.exception('{} Failed to move to archived. {}'.format(self.log_msg, failed_items))
 
@@ -358,7 +358,7 @@ class RemoveExpiredContent(superdesk.Command):
                 logger.warning('{} deleting spiked items: {}.'.format(self.log_msg, spiked_ids))
                 get_resource_service('archive').delete_by_article_ids(spiked_ids)
             logger.info('{} deleted spiked items. Count: {}.'.format(self.log_msg, len(spiked_ids)))
-        except:
+        except Exception:
             logger.exception('{} Failed to delete spiked items.'.format(self.log_msg))
 
     def check_if_items_imported_to_legal_archive(self, items_to_expire):

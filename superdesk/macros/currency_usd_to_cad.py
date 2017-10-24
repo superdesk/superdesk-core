@@ -19,7 +19,7 @@ def get_rate():
     """Get USD to CAD rate."""
     try:
         return currency_base.get_rate('USD', 'CAD')
-    except:
+    except Exception:
         return USD_TO_CAD
 
 

@@ -38,7 +38,7 @@ class ExportService(BaseService):
                             filename = re.sub(r'[\\/*?:"<>|]', '', item.get('slugline', '')) +\
                                 '_' + str(item.get('unique_id')) + '.txt'
                             zip.writestr(filename, contents.encode("UTF-8"))
-                        except:
+                        except Exception:
                             unsuccessful_exports += 1
                     else:
                         unsuccessful_exports += 1
