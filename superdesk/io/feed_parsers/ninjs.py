@@ -44,7 +44,7 @@ class NINJSFeedParser(FeedParser):
                 ninjs = json.load(f)
                 if ninjs.get('uri') or ninjs.get('guid'):
                     return True
-        except:
+        except Exception:
             pass
         return False
 

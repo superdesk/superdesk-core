@@ -59,7 +59,7 @@ def publish():
             if len(retry_items) > 0:
                 transmit_items(retry_items)
 
-        except:
+        except Exception:
             logger.exception('Task: {} failed.'.format(lock_name))
         finally:
             unlock(lock_name)
@@ -135,7 +135,7 @@ def transmit_subscriber_items(queue_items, subscriber):
                         updates['state'] = QueueState.FAILED.value
 
                     publish_queue_service.system_update(orig_item.get(config.ID_FIELD), updates, orig_item)
-                except:
+                except Exception:
                     logger.error('Failed to set the state for failed publish queue item {}.'.format(queue_item['_id']))
     finally:
         unlock(lock_name)

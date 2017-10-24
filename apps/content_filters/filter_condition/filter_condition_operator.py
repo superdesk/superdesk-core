@@ -151,7 +151,7 @@ class ComparisonOperator(FilterConditionOperator):
                 article_value = self.get_lower_case(article_value).strip()
                 filter_value = self.get_lower_case(filter_value).strip()
             return self.operator_func(article_value, filter_value)
-        except:
+        except Exception:
             return False
 
 

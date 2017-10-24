@@ -265,7 +265,7 @@ def apply_placeholders(context, text):
         elif placeholder not in placeholders:
             try:
                 resource_name, field_name = placeholder.split('.', maxsplit=1)
-            except:
+            except Exception:
                 continue
             resource = getattr(context, resource_name, None)
             for name in field_name.split('.'):
@@ -919,7 +919,7 @@ def step_impl_then_get_formatted_output_as_story(context, value, group, sub):
 
         try:
             formatted_data = json.loads(item['formatted_item'])
-        except:
+        except Exception:
             continue
 
         associations = formatted_data.get('associations', {})
@@ -943,7 +943,7 @@ def step_impl_then_get_formatted_output_pck(context, value, group, sub, pck):
 
         try:
             formatted_data = json.loads(item['formatted_item'])
-        except:
+        except Exception:
             continue
 
         associations = formatted_data.get('associations', {})
@@ -963,7 +963,7 @@ def step_impl_then_get_formatted_output_pck_version(context, value, group, sub, 
             if item['subscriber_id'] == sub and str(item['item_version']) == v:
                 try:
                     formatted_data = json.loads(item['formatted_item'])
-                except:
+                except Exception:
                     continue
 
                 associations = formatted_data.get('associations', {})

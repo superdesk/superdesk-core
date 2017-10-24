@@ -324,7 +324,7 @@ class PreferencesService(BaseService):
         for user in role_users:
             try:
                 self.system_update(user[config.ID_FIELD], {config.LAST_UPDATED: utcnow()}, user)
-            except:
+            except Exception:
                 logger.warn('On_Role_Privileges_Revoked:Failed to update user:{} with role:{}.'.
                             format(user.get(config.ID_FIELD), role.get(config.ID_FIELD)), exc_info=True)
 

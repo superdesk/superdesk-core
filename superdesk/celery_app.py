@@ -40,10 +40,10 @@ def try_cast(v):
     try:
         str_to_date(v)  # try if it matches format
         return arrow.get(v).datetime  # return timezone aware time
-    except:
+    except Exception:
         try:
             return ObjectId(v)
-        except:
+        except Exception:
             return v
 
 

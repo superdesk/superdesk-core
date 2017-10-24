@@ -429,6 +429,6 @@ def apply_schema(item):
     try:
         profile = get_resource_service('content_types').find_one(req=None, _id=item['profile'])
         schema = profile['schema']
-    except:
+    except Exception:
         schema = DEFAULT_SCHEMA
     return {key: val for key, val in item.items() if is_enabled(key, schema)}

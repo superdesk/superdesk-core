@@ -27,7 +27,7 @@ class DataUpdate(DataUpdate):
         try:
             create_index(app=app, resource=self.resource, name='audit_id', list_of_keys=[('audit_id', 1)],
                          index_options={'background': True})
-        except:
+        except Exception:
             print('create index failed')
 
     def backwards(self, mongodb_collection, mongodb_database):

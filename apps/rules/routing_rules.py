@@ -330,14 +330,14 @@ class RoutingRuleSchemeService(BaseService):
             if schedule.get('hour_of_day_from') or schedule.get('hour_of_day_to'):
                 try:
                     from_time = datetime.strptime(schedule.get('hour_of_day_from'), '%H:%M:%S')
-                except:
+                except Exception:
                     raise SuperdeskApiError.badRequestError(message="Invalid value for from time.")
 
                 to_time = schedule.get('hour_of_day_to', '')
                 if to_time:
                     try:
                         to_time = datetime.strptime(to_time, '%H:%M:%S')
-                    except:
+                    except Exception:
                         raise SuperdeskApiError.badRequestError(
                             message="Invalid value for hour_of_day_to "
                                     "(expected %H:%M:%S).")
@@ -438,7 +438,7 @@ class RoutingRuleSchemeService(BaseService):
 
                 archive_items.append(item_id)
                 logger.info('Fetched item %s to desk %s' % (ingest_item.get('guid'), destination))
-            except:
+            except Exception:
                 logger.exception("Failed to fetch item %s to desk %s" % (ingest_item.get('guid'), destination))
 
         return archive_items
@@ -471,7 +471,7 @@ class RoutingRuleSchemeService(BaseService):
                 self._set_default_values(item)
                 get_resource_service('archive_publish').patch(item, {'auto_publish': True})
                 logger.info('Published item %s' % (ingest_item.get('guid')))
-            except:
+            except Exception:
                 logger.exception("Failed to publish item %s." % item)
 
     def _set_default_values(self, item):

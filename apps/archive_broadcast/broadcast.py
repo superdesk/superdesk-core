@@ -207,7 +207,7 @@ class ArchiveBroadcastService(BaseService):
                     self._update_broadcast_status(broadcast_item, updates)
                     # list of ids that are processed.
                     processed_ids.add(broadcast_item.get(config.ID_FIELD))
-            except:
+            except Exception:
                 logger.exception('Failed to update status for the broadcast item {}'.
                                  format(broadcast_item.get(config.ID_FIELD)))
 
@@ -262,7 +262,7 @@ class ArchiveBroadcastService(BaseService):
                     updates['broadcast']['status'] = ''
 
                 self._update_broadcast_status(broadcast_item, updates)
-            except:
+            except Exception:
                 logger.exception('Failed to remove rewrite id for the broadcast item {}'.
                                  format(broadcast_item.get(config.ID_FIELD)))
 
@@ -298,7 +298,7 @@ class ArchiveBroadcastService(BaseService):
                 resolve_document_version(updates, SOURCE, 'PATCH', item)
                 spike_service.patch(id_, updates)
                 insert_into_versions(id_=id_)
-            except:
+            except Exception:
                 logger.exception(message="Failed to spike the related broadcast item {}.".format(id_))
 
         if original.get('rewrite_of') and original.get(ITEM_STATE) not in PUBLISH_STATES:
@@ -345,7 +345,7 @@ class ArchiveBroadcastService(BaseService):
                                                                                   item_id, processed_packages)
 
                         processed_packages = processed_packages.union(set(package_list))
-                except:
+                except Exception:
                     logger.exception('Failed to remove the broadcast item {} from package {}'.format(
                         item_id, package.get(config.ID_FIELD)
                     ))

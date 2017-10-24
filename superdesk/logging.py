@@ -48,5 +48,5 @@ def configure_logging(file_path):
             logging_dict = yaml.load(f)
 
         logging.config.dictConfig(logging_dict)
-    except:
+    except Exception:
         logger.warn('Cannot load logging config. File: %s', file_path)

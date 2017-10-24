@@ -176,7 +176,7 @@ class LegalArchiveImport:
             self._set_moved_to_legal(doc)
 
             logger.info('Upsert completed for article ' + log_msg)
-        except:
+        except Exception:
             logger.exception('Failed to import into legal archive {}.'.format(item_id))
             raise
 
@@ -284,7 +284,7 @@ class LegalArchiveImport:
                 try:
                     self.process_queue_items(items, force_move)
                     logger.info('Imported publish queue items {} into legal publish queue.'.format(len(items)))
-                except:
+                except Exception:
                     logger.exception('Failed to import into legal publish queue via command')
 
         logger.info('Completed importing of publish queue items.')
@@ -305,7 +305,7 @@ class LegalArchiveImport:
         for queue_item in queue_items:
             try:
                 self._upsert_into_legal_archive_publish_queue(queue_item, subscribers, force_move)
-            except:
+            except Exception:
                 logger.exception("Failed to import publish queue item. {}".format(queue_item.get(config.ID_FIELD)))
 
     def _upsert_into_legal_archive_publish_queue(self, queue_item, subscribers, force_move):
@@ -353,7 +353,7 @@ class LegalArchiveImport:
                 get_resource_service('publish_queue').system_update(queue_item.get(config.ID_FIELD),
                                                                     updates, queue_item)
                 logger.info('Queue item moved to legal. {}'.format(log_msg))
-            except:
+            except Exception:
                 logger.exception('Failed to set moved to legal flag for queue item {}.'.format(log_msg))
 
         logger.info('Processed queue item: {}'.format(log_msg))
@@ -486,7 +486,7 @@ class ImportLegalArchiveCommand(superdesk.Command):
                 try:
                     for items in legal_archive_import.get_publish_queue_items(page_size, list(expired_items)):
                         legal_archive_import.process_queue_items(items, True)
-                except:
+                except Exception:
                     logger.exception('Failed to import into legal publish queue via command')
 
             # reset the expiry status
@@ -496,9 +496,9 @@ class ImportLegalArchiveCommand(superdesk.Command):
                     item = archive_service.find_one(req=None, _id=item_id)
                     if item:
                         archive_service.system_update(item_id, {'expiry_status': ''}, item)
-                except:
+                except Exception:
                     logger.exception('Failed to reset expiry status for item id: {}.'.format(item_id))
-        except:
+        except Exception:
             logger.exception('Failed to import into legal archive.')
         finally:
             unlock(lock_name)
@@ -511,7 +511,7 @@ class ImportLegalArchiveCommand(superdesk.Command):
             get_resource_service('published').set_moved_to_legal(item_id,
                                                                  item_version, True)
             expired_items.add(item_id)
-        except:
+        except Exception:
             logger.exception('Failed to import into legal archive via command {}.'.format(item_id))
 
     def get_expired_items(self, page_size):

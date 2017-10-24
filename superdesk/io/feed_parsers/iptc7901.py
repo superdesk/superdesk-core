@@ -37,7 +37,7 @@ class IPTC7901FeedParser(FileFeedParser):
                 lines = [line for line in f]
                 return re.match(b'\x01([a-zA-Z]*)([0-9]*) (.) ([A-Z]{1,3}) ([0-9]*) ([a-zA-Z0-9 ]*)',
                                 lines[0], flags=re.I)
-        except:
+        except Exception:
             return False
 
     def parse(self, file_path, provider=None):

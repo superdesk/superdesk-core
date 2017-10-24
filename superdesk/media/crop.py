@@ -214,7 +214,7 @@ class CropService():
         except Exception as ex:
             try:
                 superdesk.app.media.delete(file_id)
-            except:
+            except Exception:
                 pass
             raise SuperdeskApiError.internalError('Generating crop failed: {}'.format(str(ex)), exception=ex)
 
@@ -225,7 +225,7 @@ class CropService():
         """
         try:
             superdesk.app.media.delete(file_id)
-        except:
+        except Exception:
             logger.exception("Crop File cannot be deleted. File_Id {}".format(file_id))
 
     def create_multiple_crops(self, updates, original):
@@ -357,7 +357,7 @@ class CropService():
                                                                         'media_id': media,
                                                                         'associated_id': associated_id,
                                                                         'published': False}])
-                    except:
+                    except Exception:
                         logger.exception('Failed to insert media reference item {} media {}'.format(item_id, media))
 
         # item is publish
@@ -371,6 +371,6 @@ class CropService():
             try:
                 get_resource_service('media_references').patch(ref.get(config.ID_FIELD),
                                                                updates={'published': True})
-            except:
+            except Exception:
                 logger.exception('Failed to update media '
                                  'reference item {} media {}'.format(ref.get("item_id"), ref.get("media_id")))

@@ -231,10 +231,10 @@ class EMailRFC822FeedParser(EmailFeedParser):
                 parsed_field = hdr[0][0].decode(encoding)
             else:
                 parsed_field = hdr[0][0]
-        except:
+        except Exception:
             try:
                 parsed_field = str(field)
-            except:
+            except Exception:
                 parsed_field = 'Unknown'
             pass
         return parsed_field

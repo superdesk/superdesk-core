@@ -106,7 +106,7 @@ class ErrorsTestCase(TestCase):
             try:
                 ex = Exception("Testing general API error")
                 raise ex
-            except:
+            except Exception:
                 raise IngestApiError.apiGeneralError(ex, self.provider)
 
         exception = error_context.exception
@@ -131,7 +131,7 @@ class ErrorsTestCase(TestCase):
             try:
                 ex = Exception("Testing apiRequestError")
                 raise ex
-            except:
+            except Exception:
                 raise IngestApiError.apiRequestError(ex, self.provider)
         exception = error_context.exception
         self.assertTrue(exception.code == 4003)
@@ -148,7 +148,7 @@ class ErrorsTestCase(TestCase):
             try:
                 ex = Exception("Testing apiTimeoutError")
                 raise ex
-            except:
+            except Exception:
                 raise IngestApiError.apiTimeoutError(ex, self.provider)
         exception = error_context.exception
         self.assertTrue(exception.code == 4001)
@@ -165,7 +165,7 @@ class ErrorsTestCase(TestCase):
             try:
                 ex = Exception("Testing apiRedirectError")
                 raise ex
-            except:
+            except Exception:
                 raise IngestApiError.apiRedirectError(ex, self.provider)
         exception = error_context.exception
         self.assertTrue(exception.code == 4002)
@@ -182,7 +182,7 @@ class ErrorsTestCase(TestCase):
             try:
                 ex = Exception("Testing apiUnicodeError")
                 raise ex
-            except:
+            except Exception:
                 raise IngestApiError.apiUnicodeError(ex, self.provider)
         exception = error_context.exception
         self.assertTrue(exception.code == 4004)
@@ -199,7 +199,7 @@ class ErrorsTestCase(TestCase):
             try:
                 ex = Exception("Testing apiParseError")
                 raise ex
-            except:
+            except Exception:
                 raise IngestApiError.apiParseError(ex, self.provider)
         exception = error_context.exception
         self.assertTrue(exception.code == 4005)
@@ -216,7 +216,7 @@ class ErrorsTestCase(TestCase):
             try:
                 ex = Exception("Testing apiNotFoundError")
                 raise ex
-            except:
+            except Exception:
                 raise IngestApiError.apiNotFoundError(ex, self.provider)
         exception = error_context.exception
         self.assertTrue(exception.code == 4006)
@@ -233,7 +233,7 @@ class ErrorsTestCase(TestCase):
             try:
                 ex = Exception("Testing API authorization error")
                 raise ex
-            except:
+            except Exception:
                 raise IngestApiError.apiAuthError(ex, self.provider)
 
         exception = error_context.exception
@@ -258,7 +258,7 @@ class ErrorsTestCase(TestCase):
             try:
                 ex = Exception("Testing folderCreateError")
                 raise ex
-            except:
+            except Exception:
                 raise IngestFileError.folderCreateError(ex, self.provider)
         exception = error_context.exception
         self.assertTrue(exception.code == 3001)
@@ -275,7 +275,7 @@ class ErrorsTestCase(TestCase):
             try:
                 ex = Exception("Testing fileMoveError")
                 raise ex
-            except:
+            except Exception:
                 raise IngestFileError.fileMoveError(ex, self.provider)
         exception = error_context.exception
         self.assertTrue(exception.code == 3002)
@@ -292,7 +292,7 @@ class ErrorsTestCase(TestCase):
             try:
                 ex = Exception("Testing parseMessageError")
                 raise ex
-            except:
+            except Exception:
                 raise ParserError.parseMessageError(ex, self.provider)
         exception = error_context.exception
         self.assertTrue(exception.code == 1001)

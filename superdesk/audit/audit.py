@@ -106,6 +106,6 @@ class AuditService(BaseService):
                 return id
             else:
                 None
-        except:
+        except Exception:
             return None
         return None

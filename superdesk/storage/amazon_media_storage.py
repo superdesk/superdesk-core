@@ -131,7 +131,7 @@ class AmazonMediaStorage(MediaStorage):
             if obj:
                 metadata = self.extract_metadata_from_headers(obj['Metadata'])
                 return AmazonObjectWrapper(obj, id_or_filename, metadata)
-        except:
+        except Exception:
             return None
         return None
 

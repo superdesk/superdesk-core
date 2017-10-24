@@ -82,7 +82,7 @@ def get_meta(file_stream):
             else:
                 value = v.decode('UTF-8') if isinstance(v, bytes) else v
                 exif_meta[key] = value
-        except:
+        except Exception:
             # ignore fields we can't store in db
             pass
     # Remove this as it's too long to send in headers

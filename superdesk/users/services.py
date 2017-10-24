@@ -404,7 +404,7 @@ class UsersService(BaseService):
             self.system_update(user.get(config.ID_FIELD), {'invisible_stages': stages}, user)
             user['invisible_stages'] = stages
             logger.info('Updated Stage Visibility for user {}.'.format(user.get(config.ID_FIELD)))
-        except:
+        except Exception:
             logger.exception('Failed to update the stage visibility '
                              'for user: {}'.format(user.get(config.ID_FIELD)))
 

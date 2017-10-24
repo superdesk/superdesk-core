@@ -28,7 +28,7 @@ def load_macros(path, package_prefix='superdesk.macros'):
                 imp.reload(m)
             else:
                 importlib.import_module(module)
-        except:
+        except Exception:
             pass
 
 
