@@ -5,6 +5,7 @@ import bson
 from superdesk.tests import TestCase
 from unittest import mock
 from apps.content_types import content_types, apply_schema
+from apps.content_types.content_types import compose_subject_schema
 
 
 class MockService():
@@ -45,6 +46,17 @@ class ContentTypesTestCase(TestCase):
         updates['schema']['body_html']['minlength'] = '99'
         content_types.ContentTypesService().on_update(updates, original)
         self.assertEqual(updates['schema']['body_html']['minlength'], '99')
+
+    def test_subject_allowed_values(self):
+        """
+        """
+        test_schema = {'subject_custom': {'mandatory_in_list': {'scheme': {}},
+                                          'default': [],
+                                          'required': True,
+                                          'schema': {},
+                                          'type': 'list'}}
+        compose_subject_schema(test_schema, {'subject': 'subject_custom'})
+        self.assertEqual(test_schema['subject_custom']['schema']['schema']['scheme']['allowed'], [])
 
     def test_get_output_name(self):
         _id = bson.ObjectId()
