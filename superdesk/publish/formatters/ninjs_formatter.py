@@ -327,6 +327,10 @@ class NINJSFormatter(Formatter):
 
     def _format_authors(self, article):
         users_service = superdesk.get_resource_service('users')
+        vocabularies_service = superdesk.get_resource_service("vocabularies")
+        job_titles_voc = vocabularies_service.find_one(None, _id='job_titles')
+        job_titles_map = {v['qcode']: v['name'] for v in job_titles_voc['items']} if job_titles_voc is not None else {}
+
         authors = []
         for author in article['authors']:
             user_id = author['parent']
@@ -335,12 +339,17 @@ class NINJSFormatter(Formatter):
             except StopIteration:
                 logger.warn("unknow user: {user_id}".format(user_id=user_id))
                 continue
-            authors.append({
+            author = {
                 "name": user['display_name'],
                 "role": author['role'],
-                "jobtitle": user.get('job_title', ''),
                 "biography": user.get('biography', '')
-            })
+            }
+            job_title_qcode = user.get('job_title')
+            if job_title_qcode is not None:
+                author['jobtitle'] = {'qcode': job_title_qcode,
+                                      'name': job_titles_map.get(job_title_qcode, '')}
+
+            authors.append(author)
         return authors
 
     def export(self, item):

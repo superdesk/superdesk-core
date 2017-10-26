@@ -382,7 +382,15 @@
 					},
 					"jobtitle" : {
 						"description" : "author's Job Title qcode",
-						"type" : "string"
+						"type" : "object",
+						"properies" :  {
+							"qcode": {
+								"type" : "string"
+							},
+							"name": {
+								"type" : "string"
+							}
+						}
 					},
 					"biography" : {
 						"description" : "Author's biography",
