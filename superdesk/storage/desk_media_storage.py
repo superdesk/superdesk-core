@@ -19,12 +19,21 @@ from eve.io.mongo.media import GridFSMediaStorage
 logger = logging.getLogger(__name__)
 
 
-class SuperdeskGridFSMediaStorage(GridFSMediaStorage):
+def format_id(_id):
+    try:
+        return bson.ObjectId(_id)
+    except bson.errors.InvalidId:
+        return _id
 
+
+class SuperdeskGridFSMediaStorage(GridFSMediaStorage):
     def get(self, _id, resource=None):
         logger.debug('Getting media file with id= %s' % _id)
-        _id = bson.ObjectId(_id)
-        media_file = super().get(_id, resource)
+        _id = format_id(_id)
+        try:
+            media_file = self.fs(resource).get(_id)
+        except Exception:
+            media_file = None
         if media_file and media_file.metadata:
             for k, v in media_file.metadata.items():
                 try:
@@ -66,7 +75,7 @@ class SuperdeskGridFSMediaStorage(GridFSMediaStorage):
         :return str: The ID that was generated for this object
         """
         if '_id' in kwargs:
-            kwargs['_id'] = bson.ObjectId(kwargs['_id'])
+            kwargs['_id'] = format_id(kwargs['_id'])
 
         if folder:
             if folder[-1] == '/':
