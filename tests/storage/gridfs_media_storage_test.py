@@ -94,6 +94,13 @@ class GridFSMediaStorageTestCase(unittest.TestCase):
             self.media.find()
             gridfs.find.assert_called_with({})
 
+    def test_custom_id(self):
+        data = b'foo'
+        with self.app.app_context():
+            self.media.put(data, _id='foo')
+            _file = self.media.get('foo')
+            assert data == _file.read()
+
     def _mock_gridfs(self):
         gridfs = Mock()
         gridfs.put = Mock(return_value='y')
