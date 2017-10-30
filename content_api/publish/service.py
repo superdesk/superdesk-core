@@ -69,7 +69,7 @@ class PublishService(BaseService):
     def create(self, docs, **kwargs):
         ids = []
         for doc in docs:
-            ids.extend(self._create_doc(doc, **kwargs))
+            ids.append(self._create_doc(doc, **kwargs))
         return ids
 
     def _create_doc(self, doc, **kwargs):
