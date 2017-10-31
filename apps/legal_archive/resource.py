@@ -49,6 +49,7 @@ class LegalArchiveHistoryResource(LegalResource, ArchiveHistoryResource):
     resource_title = endpoint_name
 
     datasource = {'source': LEGAL_ARCHIVE_HISTORY_NAME}
+    mongo_indexes = {'item_id': ([('item_id', 1)], {'background': True})}
 
 
 class LegalPublishQueueResource(LegalResource, PublishQueueResource):

@@ -35,6 +35,8 @@ class ArchiveHistoryResource(Resource):
         'version': {'type': 'integer'}
     }
 
+    mongo_indexes = {'item_id': ([('item_id', 1)], {'background': True})}
+
 
 class ArchiveHistoryService(BaseService):
 
