@@ -13,6 +13,15 @@ Feature: Vocabularies
       """
 
   @auth
+  Scenario: Add vocabulary with invalid identifer
+    Given empty "vocabularies"
+    When we post to "vocabularies"
+    """
+    {"_id": "foo$", "type": "manageable", "display_name": "Foo", "items": []}
+    """
+    Then we get response code 400
+
+  @auth
   Scenario: List default preferred categories vocabulary
     Given the "vocabularies"
       """
