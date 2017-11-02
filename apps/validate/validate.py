@@ -201,8 +201,7 @@ class ValidateService(superdesk.Service):
         """
         for field_schema in validation_schema:
             field_associations = field_schema if field_schema != 'feature_media' else 'featuremedia'
-            field_type = validation_schema.get(field_schema, {}).get('type', None)
-            if field_type == 'picture' and 'associations' in doc and field_associations in doc['associations']:
+            if field_associations in doc.get('associations', {}):
                 doc[field_schema] = doc['associations'][field_associations]
                 if not doc.get('feature_media', None) is None and 'description_text' in doc['feature_media']:
                     doc['media_description'] = doc['associations']['featuremedia']['description_text']

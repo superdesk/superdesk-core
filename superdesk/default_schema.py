@@ -96,10 +96,10 @@ class DefaultSchema(schema.Schema):
     sign_off = schema.StringField()
 
     #: embedded media in the item
-    feature_media = schema.SchemaField()
+    feature_media = schema.MediaField()
 
     #: embedded media description
-    media_description = schema.SchemaField()
+    media_description = schema.StringField()
 
 
 DEFAULT_SCHEMA = dict(DefaultSchema)
