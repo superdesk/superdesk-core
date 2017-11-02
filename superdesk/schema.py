@@ -94,6 +94,18 @@ class DictField(SchemaField):
         self.schema['required'] = required
 
 
+class MediaField(SchemaField):
+    """Media schema field."""
+
+    def __repr__(self):
+        return 'media'
+
+    def __init__(self, required=False, schema=None):
+        super().__init__()
+        self.schema['type'] = 'media'
+        self.schema['required'] = required
+
+
 class StringField(SchemaField):
     """String schema field."""
 
