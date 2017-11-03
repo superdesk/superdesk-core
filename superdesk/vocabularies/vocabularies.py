@@ -46,7 +46,8 @@ class VocabulariesResource(Resource):
         '_id': {
             'type': 'string',
             'required': True,
-            'unique': True
+            'unique': True,
+            'regex': '^[a-zA-Z0-9-_]+$'
         },
         'display_name': {
             'type': 'string',
