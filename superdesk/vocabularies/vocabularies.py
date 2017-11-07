@@ -96,14 +96,6 @@ class VocabulariesResource(Resource):
         },
         'field_options': {
             'type': 'dict',
-        },
-        'embed': {
-            'type': 'string',
-            'nullable': True
-        },
-        'description': {
-            'type': 'string',
-            'nullable': True
         }
     }
 
