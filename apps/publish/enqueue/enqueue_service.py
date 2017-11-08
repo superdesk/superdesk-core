@@ -345,6 +345,13 @@ class EnqueueService:
             if temp_queued:
                 queued = temp_queued
 
+            delivery_types = [d['delivery_type'] for d in self.get_destinations(subscriber)]
+            is_content_api_delivery = 'content_api' in delivery_types
+            # packages for content_api will not be transmitted
+            # so we need to publish them here
+            if is_content_api_delivery and subscriber.get('api_enabled'):
+                self.publish_content_api(package, [subscriber])
+
         return queued
 
     def get_destinations(self, subscriber):
@@ -430,13 +437,6 @@ class EnqueueService:
                                 binary = io.BytesIO(encoded_item)
                                 publish_queue_item['encoded_item_id'] = app.storage.put(binary)
                             publish_queue_item.pop(ITEM_STATE, None)
-
-                            is_package = doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE
-                            is_content_api_delivery = destination.get('delivery_type') == 'content_api'
-                            # packages for content_api will not be transmitted
-                            # so we need to publish them here
-                            if is_package and is_content_api_delivery and subscriber.get('api_enabled'):
-                                self.publish_content_api(doc, [subscriber])
 
                             # content api delivery will be marked as SUCCESS in queue
                             get_resource_service('publish_queue').post([publish_queue_item])
