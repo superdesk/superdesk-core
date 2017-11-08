@@ -97,7 +97,7 @@ class VocabulariesResource(Resource):
         },
         'field_options': {
             'type': 'dict',
-        },
+        }
     }
 
     item_url = 'regex("[\w]+")'
