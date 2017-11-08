@@ -17,7 +17,7 @@ from superdesk.utc import utcnow
 from superdesk.services import BaseService
 from superdesk.publish.formatters.ninjs_formatter import NINJSFormatter
 from superdesk import get_resource_service
-from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
+from superdesk.metadata.item import ASSOCIATIONS
 
 logger = logging.getLogger('superdesk')
 
@@ -45,6 +45,8 @@ class PublishService(BaseService):
             doc.setdefault('firstcreated', now)
             doc.setdefault('versioncreated', now)
             doc.setdefault(config.VERSION, item.get(config.VERSION, 1))
+            for _, assoc in doc.get(ASSOCIATIONS, {}).items():
+                assoc.setdefault('subscribers', [str(subscriber[config.ID_FIELD]) for subscriber in subscribers])
             doc['subscribers'] = [str(sub['_id']) for sub in subscribers]
             if 'evolvedfrom' in doc:
                 parent_item = self.find_one(req=None, _id=doc['evolvedfrom'])
@@ -144,9 +146,6 @@ class PublishService(BaseService):
         :param dict item: item being published
         :param dit doc: ninjs documents
         """
-        if item[ITEM_TYPE] != CONTENT_TYPE.TEXT:
-            return
-
         for assoc, assoc_item in (item.get('associations') or {}).items():
             if not assoc_item:
                 continue
@@ -160,9 +159,6 @@ class PublishService(BaseService):
         :param original:
         :return:
         """
-        if updates[ITEM_TYPE] != CONTENT_TYPE.TEXT:
-            return
-
         subscribers = updates.get('subscribers') or []
         for assoc, update_assoc in (updates.get('associations') or {}).items():
             if not update_assoc:
