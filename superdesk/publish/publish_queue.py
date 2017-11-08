@@ -108,7 +108,7 @@ class PublishQueueResource(Resource):
     }
 
     additional_lookup = {
-        'url': 'regex("[\w,.:-]+")',
+        'url': r'regex("[\w,.:-]+")',
         'field': 'item_id'
     }
 
