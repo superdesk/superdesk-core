@@ -522,6 +522,9 @@ metadata_schema = {
 
     'extra': {
         'type': 'dict',
+        'mapping': {
+            'type': 'object',
+        }
     },
 
     'attachments': {
