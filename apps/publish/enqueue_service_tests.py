@@ -10,6 +10,32 @@
 
 from superdesk.tests import TestCase
 from .enqueue.enqueue_service import EnqueueService
+from apps.packages.package_service import PackageService
+from unittest import mock
+from apps.archive.archive import ArchiveService
+from content_api.publish.service import PublishService
+
+
+def _fake_extend_subscriber_items(self,
+                                  subscriber_items,
+                                  subscribers,
+                                  package_item,
+                                  package_item_id,
+                                  subscriber_codes):
+    subscriber_items.clear()
+    subscriber_items.update({'8': {'subscriber': {
+        '_id': 'toto',
+        'is_targetable': True,
+        'products': [],
+        'api_products': ['570e04e23c5e9f89fe95366e'],
+        'name': 'content_api',
+        'subscriber_type': 'all',
+        'destinations': [],
+        'is_active': True,
+        'sequence_num_settings': {'min': 1, 'max': 999},
+        'api_enabled': True},
+        'items': {'8': '8'},
+        'codes': []}})
 
 
 class EnqueueServiceTest(TestCase):
@@ -170,6 +196,32 @@ class EnqueueServiceTest(TestCase):
             "publishing_action": "published"
         }
     ]
+    content_api_package = {
+        "_id": "10",
+        "destination": {
+            "delivery_type": "content_api",
+            "format": "ninjs",
+            "config": {},
+            "name": "destination1"
+        },
+        "_etag": "f28b9af64f169072fb171ec7f316fc03d5826d6b",
+        "version": "2",
+        "type": "composite",
+        "headline": "test headline",
+        "urgency": 3,
+        "pubstatus": "usable",
+        "slugline": "test slugline",
+        "source": "foo",
+        "associations": {"main-0": {"guid": "toto", "type": "text"},
+                         "main-1": {"guid": "titi", "type": "text"}},
+        "priority": 6,
+        "subject": [{"code": "03003000", "name": "famine"}],
+        "service": [{"code": "f", "name": "FIXME"}],
+        "copyrightholder": "",
+        "copyrightnotice": "",
+        "usageterms": "",
+        "state": "published",
+        "genre": [{"name": "Article (news)", "code": "Article"}]}
 
     def setUp(self):
         with self.app.app_context():
@@ -208,3 +260,15 @@ class EnqueueServiceTest(TestCase):
         subscribers, subscriber_codes, associated_items = \
             service._get_subscribers_for_previously_sent_items({'item_id': '5'})
         self.assertEqual(len(associated_items.keys()), 0)
+
+    @mock.patch.object(PackageService, 'get_residrefs', lambda self, package: ['8', '9'])
+    @mock.patch.object(ArchiveService, 'find_one', lambda self, req, **lookup: EnqueueServiceTest.content_api_package)
+    @mock.patch.object(EnqueueService, '_extend_subscriber_items', _fake_extend_subscriber_items)
+    @mock.patch.object(EnqueueService, 'queue_transmission', lambda *a, **kw: ([], True))
+    @mock.patch.object(PublishService, 'publish')
+    def test_content_api_package_publishing(self, content_api_publish):
+        service = EnqueueService()
+        service.enqueue_item(self.content_api_package)
+        # Mock.assert_called_once is only available in Python 3.6
+        # so we emulate it by counting the number of calls
+        assert content_api_publish.call_count == 1
