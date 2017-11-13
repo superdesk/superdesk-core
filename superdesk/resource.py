@@ -65,6 +65,7 @@ class Resource():
     authentication = None
     elastic_prefix = None
     query_objectid_as_string = None
+    soft_delete = None
 
     def __init__(self, endpoint_name, app, service, endpoint_schema=None):
         self.endpoint_name = endpoint_name
@@ -111,6 +112,8 @@ class Resource():
                 endpoint_schema.update({'elastic_prefix': self.elastic_prefix})
             if self.query_objectid_as_string:
                 endpoint_schema.update({'query_objectid_as_string': self.query_objectid_as_string})
+            if self.soft_delete:
+                endpoint_schema.update({'soft_delete': self.soft_delete})
             if self.mongo_indexes:
                 # used in app:initialize_data
                 endpoint_schema['mongo_indexes__init'] = self.mongo_indexes
@@ -159,6 +162,30 @@ class Resource():
                 hook_method = getattr(self, 'pre_request_' + request_method.lower())
                 hook_event -= hook_method
                 hook_event += hook_method
+
+        # Register callbacks for operations on other resources
+        # The callback format is: on_<operation>_res_<other_resource>
+        # where <operation> can be: fetched, fetched_item, create, created, update
+        # updated, delete, deleted
+        operations_events = {'fetched': 'fetched_resource',
+                             'fetched_item': 'fetched_item',
+                             'create': 'insert',
+                             'created': 'inserted',
+                             'update': 'update',
+                             'updated': 'updated',
+                             'delete': 'delete_item',
+                             'deleted': 'deleted_item'}
+        for method in [method for method in dir(service) if method.startswith('on_')]:
+            for operation, eve_event in operations_events.items():
+                method_prefix = 'on_%s_res_' % operation
+                service_method = getattr(service, method)
+                if method.startswith(method_prefix) and callable(service_method):
+                    foreign_endpoint_name = method[len(method_prefix):]
+                    if foreign_endpoint_name not in superdesk.resources:
+                        raise RuntimeError('Invalid hook "%s" in service "%s"' % (method, type(service)))
+                    eve_hook = getattr(app, 'on_%s_%s' % (eve_event, foreign_endpoint_name))
+                    eve_hook -= service_method
+                    eve_hook += service_method
 
     @staticmethod
     def rel(resource, embeddable=True, required=False, type='objectid', nullable=False):

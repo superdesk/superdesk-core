@@ -1662,3 +1662,36 @@ Feature: Content Profile
             "editor": {"foo": {"enabled": true}}
         }
         """
+
+    @auth
+    Scenario: Remove custom vocabulary when used in a content type
+        Given "vocabularies"
+        """
+        [
+            {"_id": "foo", "display_name": "Foo", "field_type": "text", "items": []}
+        ]
+        """
+        And "content_types"
+        """
+        [{"_id": "profile",
+          "label": "Profile",
+          "editor": {"foo": {"enabled": true}},
+          "schema": {"foo": {"required": true, "type": "text"}}
+        }]
+        """
+		When we delete "/vocabularies/foo"
+	    Then we get error 400
+	    """
+	    {"_message": "Vocabulary \"Foo\" is used in 1 content type(s)",
+	     "_status": "ERR",
+	     "_issues": {
+	     	"content_types": [{
+	     		"_id": "profile",
+	     		"label": "Profile",
+	     		"_links": {
+	     			"self": {"href": "__any_value__"}
+	     		}
+	     	}]
+	     }
+	    }
+	    """

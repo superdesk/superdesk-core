@@ -3,6 +3,7 @@ import re
 import bson
 import superdesk
 
+from eve.utils import config
 from copy import deepcopy
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
@@ -11,6 +12,7 @@ from apps.auth import get_user_id
 from apps.templates.content_templates import remove_profile_from_templates
 from apps.desks import remove_profile_from_desks
 from eve.utils import ParsedRequest
+from superdesk.resource import build_custom_hateoas
 
 
 CONTENT_TYPE_PRIVILEGE = 'content_type'
@@ -85,6 +87,20 @@ class ContentTypesService(superdesk.Service):
         self._set_updated_by(updates)
         prepare_for_save_content_type(original, updates)
         self._update_template_fields(updates, original)
+
+    def on_delete_res_vocabularies(self, doc):
+        req = ParsedRequest()
+        req.projection = '{"label": 1}'
+        res = self.get(req=req, lookup={'schema.' + doc[config.ID_FIELD]: {'$type': 3}})
+        if res.count():
+            payload = {'content_types': [doc_hateoas for doc_hateoas in map(self._build_hateoas, res)]}
+            message = 'Vocabulary "%s" is used in %d content type(s)' % \
+                (doc.get('display_name'), res.count())
+            raise SuperdeskApiError.badRequestError(message, payload)
+
+    def _build_hateoas(self, doc):
+        build_custom_hateoas({'self': {'title': 'Content Profile', 'href': '/content_types/{_id}'}}, doc)
+        return doc
 
     def _validate_disable(self, updates, original):
         """
@@ -186,9 +202,10 @@ def prepare_for_edit_content_type(doc):
 
 
 def init_extra_fields(editor, schema):
+    field_type_to_schema = {'embed': 'dict'}
     fields = get_resource_service('vocabularies').get_extra_fields()
     for field in fields:
-        field_type = field.get('field_type', 'text')
+        field_type = field_type_to_schema.get(field.get('field_type'), 'text')
         schema.setdefault(field['_id'], {
             'type': field_type,
             'required': False
