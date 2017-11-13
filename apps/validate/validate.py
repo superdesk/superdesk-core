@@ -10,6 +10,7 @@
 
 import superdesk
 
+from flask import current_app as app
 from eve.io.mongo import Validator
 from superdesk.metadata.item import ITEM_TYPE
 from superdesk.logging import logger
@@ -161,6 +162,9 @@ class ValidateService(superdesk.Service):
             lookup['embedded'] = doc['embedded']
         else:
             lookup['$or'] = [{'embedded': {'$exists': False}}, {'embedded': False}]
+        custom_schema = app.config.get('SCHEMA', {}).get(doc[ITEM_TYPE])
+        if custom_schema:
+            return [{'schema': custom_schema}]
         return superdesk.get_resource_service('validators').get(req=None, lookup=lookup)
 
     def _populate_extra(self, doc, schema):

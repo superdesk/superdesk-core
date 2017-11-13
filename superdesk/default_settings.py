@@ -620,3 +620,8 @@ SAML_LABEL = env('SAML_LABEL', 'Single Sign On')
 EXCLUDED_VOCABULARY_FIELDS = ['default_categories', 'signal', 'rightsinfo', 'subscriber_types',
                               'crop_sizes', 'desk_types', 'replace_words', 'locators',
                               'product_types', 'author_roles', 'job_titles']
+
+
+#: allows overriding default schema by type, use picture/composite/text keys
+SCHEMA = {}
+EDITOR = {}

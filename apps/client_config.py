@@ -22,3 +22,7 @@ class ClientConfigService(superdesk.Service):
 
 def init_app(app):
     superdesk.register_resource('client_config', ClientConfigResource, ClientConfigService, _app=app)
+    app.client_config.update({
+        'schema': app.config.get('SCHEMA'),
+        'editor': app.config.get('EDITOR'),
+    })
