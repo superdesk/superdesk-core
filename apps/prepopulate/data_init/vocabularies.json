@@ -238,6 +238,19 @@
         ]
     },
     {
+        "_id": "annotation_types",
+        "display_name": "Annotation Types",
+        "type": "manageable",
+        "schema" : {
+            "name" : {},
+            "qcode" : {}
+        },
+        "items": [
+            {"is_active": true, "name": "Regular", "qcode": "regular"},
+            {"is_active": true, "name": "Remark", "qcode": "remark"}
+        ]
+    },
+    {
         "_id": "author_roles",
         "display_name": "Author Roles",
         "type": "manageable",
