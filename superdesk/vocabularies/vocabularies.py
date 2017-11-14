@@ -97,9 +97,10 @@ class VocabulariesResource(Resource):
         },
         'field_options': {
             'type': 'dict',
-        },
+        }
     }
 
+    soft_delete = True
     item_url = 'regex("[-_\w]+")'
     item_methods = ['GET', 'PATCH', 'DELETE']
     resource_methods = ['GET', 'POST']
@@ -163,6 +164,13 @@ class VocabulariesService(BaseService):
         Overriding this to send notification about the replacement
         """
         self._send_notification(document)
+
+    def on_delete(self, doc):
+        """
+        Overriding to validate vocabulary deletion
+        """
+        if 'field_type' not in doc:
+            raise SuperdeskApiError.badRequestError('Default vocabularies cannot be deleted')
 
     def _check_uniqueness(self, items, unique_field):
         """Checks the uniqueness if a unique field is defined

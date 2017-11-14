@@ -207,3 +207,20 @@ Feature: Vocabularies
     """
     {"_issues": {"_id": {"conflict": 1}}}
     """
+
+  @auth
+  Scenario: Create and remove vocabularies
+    Given the "vocabularies"
+	"""
+	[{"_id": "categories", "items": [{"name": "National", "value": "A", "is_active": true}]},
+	 {"_id": "text1", "type": "manageable", "field_type": "text", "items": []}]
+	"""
+	When we delete "/vocabularies/categories"
+    Then we get error 400
+    """
+    {"_message": "Default vocabularies cannot be deleted", "_status": "ERR"}
+    """
+	When we delete "/vocabularies/text1"
+    Then we get response code 204
+    When we get "/vocabularies/text1"
+    Then we get error 404
