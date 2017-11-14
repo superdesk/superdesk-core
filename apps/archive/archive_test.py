@@ -18,7 +18,7 @@ from unittest.mock import MagicMock, patch
 from bson import ObjectId
 from pytz import timezone
 
-from apps.archive.archive import SOURCE as ARCHIVE, update_image_caption
+from apps.archive.archive import SOURCE as ARCHIVE, update_image_caption, update_associations
 from apps.archive.common import (
     validate_schedule, remove_media_files,
     format_dateline_to_locmmmddsrc, convert_task_attributes_to_objectId,
@@ -541,6 +541,53 @@ class ArchiveTestCase(TestCase):
         """
         body = update_image_caption(body, 'embedded9127149191', 'new caption')
         self.assertEqual(body, changed_body)
+
+    def test_update_associations(self):
+        doc = {
+            'editor_state': {
+                'entityMap': {
+                    '1': {
+                        'mutability': 'MUTABLE',
+                        'type': 'MEDIA',
+                        'data': {
+                            'media': {
+                                'guid': 'guid1',
+                                'type': 'picture',
+                                'alt_text': 'media 1'
+                            }
+                        }
+                    },
+                    '0': {
+                        'mutability': 'MUTABLE',
+                        'type': 'MEDIA',
+                        'data': {
+                            'media': {
+                                'guid': 'guid0',
+                                'type': 'picture',
+                                'alt_text': 'media 0'
+                            }
+                        }
+                    },
+                    '2': {
+                        'mutability': 'MUTABLE',
+                        'type': 'MEDIA',
+                        'data': {
+                            'media': {
+                                'guid': 'guid2',
+                                'type': 'picture',
+                                'alt_text': 'media 2'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        update_associations(doc)
+
+        self.assertEqual(doc['associations']['guid0'], {'guid': 'guid0', 'type': 'picture', 'alt_text': 'media 0'})
+        self.assertEqual(doc['associations']['guid1'], {'guid': 'guid1', 'type': 'picture', 'alt_text': 'media 1'})
+        self.assertEqual(doc['associations']['guid2'], {'guid': 'guid2', 'type': 'picture', 'alt_text': 'media 2'})
 
     def test_get_dateline_city_None(self):
         self.assertEqual(get_dateline_city(None), '')
