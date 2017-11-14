@@ -175,7 +175,7 @@ Feature: Validate
       [{"_id": "snap", "schema": {
         "headline": {"enabled": true},
         "foo": {"required": true},
-        "image": {"type": "picture"},
+        "image": {"type": "media"},
         "genre": {"genre": {"value": "foo"}, "type": "string"}
       }}]
       """

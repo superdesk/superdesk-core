@@ -55,6 +55,10 @@ def get_validator_schema(schema):
 
 
 class SchemaValidator(Validator):
+    def _validate_type_media(self, field, value):
+        """Allow type media in schema."""
+        pass
+
     def _validate_type_picture(self, field, value):
         """Allow type picture in schema."""
         pass
