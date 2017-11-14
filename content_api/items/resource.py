@@ -53,6 +53,7 @@ schema = {
     'version': {'type': 'string', 'required': True, 'empty': False, 'nullable': False},
     'versioncreated': {'type': 'datetime', 'required': True},
     'firstcreated': {'type': 'datetime'},
+    'firstpublished': {'type': 'datetime', 'required': False},
     'evolvedfrom': Resource.not_analyzed_field(),
     'nextversion': Resource.not_analyzed_field(),
     'subscribers': Resource.not_analyzed_field('list'),

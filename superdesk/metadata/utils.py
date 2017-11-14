@@ -16,9 +16,9 @@ from superdesk.utils import SuperdeskBaseEnum
 from .item import GUID_TAG, GUID_NEWSML, GUID_FIELD, ITEM_TYPE, CONTENT_TYPE
 
 
-item_url = 'regex("[\w,.:_-]+")'
+item_url = r'regex("[\w,.:_-]+")'
 
-extra_response_fields = [GUID_FIELD, 'headline', 'firstcreated', 'versioncreated', 'archived']
+extra_response_fields = [GUID_FIELD, 'headline', 'firstcreated', 'versioncreated', 'firstpublished', 'archived']
 
 aggregations = {
     'type': {'terms': {'field': 'type'}},

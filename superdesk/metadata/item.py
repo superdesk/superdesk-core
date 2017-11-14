@@ -101,6 +101,10 @@ metadata_schema = {
     'versioncreated': {
         'type': 'datetime'
     },
+    'firstpublished': {
+        'type': 'datetime',
+        'required': False
+    },
 
     # Ingest Details
     'ingest_provider': Resource.rel('ingest_providers'),

@@ -90,7 +90,7 @@ class NINJSFormatter(Formatter):
     direct_copy_properties = ('versioncreated', 'usageterms', 'language', 'headline', 'copyrightnotice',
                               'urgency', 'pubstatus', 'mimetype', 'copyrightholder', 'ednote',
                               'body_text', 'body_html', 'slugline', 'keywords',
-                              'firstcreated', 'source', 'extra')
+                              'firstcreated', 'firstpublished', 'source', 'extra')
 
     rendition_properties = ('href', 'width', 'height', 'mimetype', 'poi', 'media')
     vidible_fields = {field: field for field in rendition_properties}
