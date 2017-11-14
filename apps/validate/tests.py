@@ -142,7 +142,7 @@ class ValidateMandatoryInListTest(TestCase):
     def test_validate_field_required_media_description_empty(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
             'slugline': None,
-            'feature_media': {'required': True, 'type': 'picture'},
+            'feature_media': {'required': True, 'type': 'media'},
             'media_description': {'required': True},
         }}])
         service = ValidateService()
@@ -175,7 +175,7 @@ class ValidateMandatoryInListTest(TestCase):
     def test_validate_field_required_media_description_required_false(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
             'slugline': None,
-            'feature_media': {'required': False, 'type': 'picture'},
+            'feature_media': {'required': False, 'type': 'media'},
             'media_description': {'required': False},
         }}])
         service = ValidateService()
@@ -192,7 +192,7 @@ class ValidateMandatoryInListTest(TestCase):
     def test_validate_field_required_media_description_required_false_null_true(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
             'slugline': None,
-            'feature_media': {'required': False, 'nullable': True, 'type': 'picture'},
+            'feature_media': {'required': False, 'nullable': True, 'type': 'media'},
             'media_description': {'required': False, 'nullable': True},
         }}])
         service = ValidateService()
@@ -209,7 +209,7 @@ class ValidateMandatoryInListTest(TestCase):
     def test_validate_field_feature_media_and_media_description(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
             'slugline': None,
-            'feature_media': {'required': True, 'type': 'picture'},
+            'feature_media': {'required': True, 'type': 'media'},
             'media_description': {'required': True},
         }}])
         service = ValidateService()
