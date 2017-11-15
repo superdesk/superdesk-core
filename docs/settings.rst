@@ -535,3 +535,42 @@ Default: ``None``
 Default: ``'Single Sign On'``
 
 Label on auth button for SAML.
+
+
+Schema and Editor
+-----------------
+
+.. versionadded:: 1.9
+
+Allows updating schema and editor settings for item types ``text``, ``picture`` and ``composite``.
+
+
+``SCHEMA``
+^^^^^^^^^^
+
+Default: ``{}``
+
+Example::
+
+    SCHEMA = {
+        'composite': {
+            'headline': {'type': 'text', 'required': True, 'maxlength': 200},
+            ...
+        }
+    }
+
+
+``EDITOR``
+^^^^^^^^^^
+
+Default: ``{}``
+
+Example::
+
+    EDITOR = {
+        'composite': {
+            'headline': {'order': 1, formatOptions: ['bold']},
+            ...
+        }
+    }
+
