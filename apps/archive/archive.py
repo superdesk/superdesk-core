@@ -100,6 +100,19 @@ def update_image_caption(body, name, caption):
     return body[0:startDescription + len('<figcaption>')] + caption + body[endDescription:]
 
 
+def update_associations(doc):
+    if 'editor_state' not in doc:
+        return
+    entityMap = doc['editor_state'].get('entityMap', {})
+    mediaList = {
+        entity['data']['media']['guid']: entity['data']['media']
+        for entity in entityMap.values()
+        if entity.get('type', None) == 'MEDIA'
+    }
+    doc[ASSOCIATIONS] = doc.get(ASSOCIATIONS, {})
+    doc[ASSOCIATIONS].update(mediaList)
+
+
 class ArchiveVersionsResource(Resource):
     schema = item_schema()
     extra_response_fields = extra_response_fields
@@ -194,6 +207,8 @@ class ArchiveService(BaseService):
             update_schedule_settings(doc, EMBARGO, doc.get(EMBARGO))
             self.validate_embargo(doc)
 
+            update_associations(doc)
+
             if doc.get('media'):
                 self.mediaService.on_create([doc])
 
@@ -253,6 +268,7 @@ class ArchiveService(BaseService):
         self._handle_media_updates(updates, original, user)
 
     def _handle_media_updates(self, updates, original, user):
+        update_associations(updates)
 
         if original[ITEM_TYPE] == CONTENT_TYPE.PICTURE:  # create crops
             self.cropService.create_multiple_crops(updates, original)
