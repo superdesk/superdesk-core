@@ -227,3 +227,20 @@ Feature: Validate
     """
     {"errors": ["CUSTOM is a required field"]}
     """
+
+  @auth
+  Scenario: Validate using custom package schema
+    Given config update
+    """
+    {"SCHEMA": {"composite": {"headline": {"type": "text", "required": true}}}}
+    """
+
+    When we post to "/validate"
+    """
+    {"act": "publish", "type": "composite", "validate": {"slugline": "foo"}}
+    """
+
+    Then we get existing resource
+    """
+    {"errors": ["HEADLINE is a required field"]}
+    """
