@@ -100,8 +100,8 @@ class VocabulariesResource(Resource):
         }
     }
 
-    soft_delete = True
-    item_url = 'regex("[-_\w]+")'
+    soft_delete = False
+    item_url = r'regex("[-_\w]+")'
     item_methods = ['GET', 'PATCH', 'DELETE']
     resource_methods = ['GET', 'POST']
     privileges = {'PATCH': 'vocabularies', 'POST': 'vocabularies', 'DELETE': 'vocabularies'}
