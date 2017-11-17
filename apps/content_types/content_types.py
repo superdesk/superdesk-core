@@ -202,10 +202,9 @@ def prepare_for_edit_content_type(doc):
 
 
 def init_extra_fields(editor, schema):
-    field_type_to_schema = {'embed': 'dict'}
     fields = get_resource_service('vocabularies').get_extra_fields()
     for field in fields:
-        field_type = field_type_to_schema.get(field.get('field_type'), 'text')
+        field_type = field.get('field_type')
         schema.setdefault(field['_id'], {
             'type': field_type,
             'required': False
