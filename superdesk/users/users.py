@@ -128,6 +128,19 @@ class UsersResource(Resource):
                 'type': 'list',
                 'required': False,
                 'nullable': True
+            },
+            # If Slack notifications are configured and enabled for the user
+            # the Slack username is stored here.
+            'slack_username': {
+                'type': 'string',
+                'required': False,
+                'nullable': True
+            },
+            # The Slack user id is stored here, to avoid repeatedly having to look it up
+            'slack_user_id': {
+                'type': 'string',
+                'required': False,
+                'nullable': True
             }
         }
 
