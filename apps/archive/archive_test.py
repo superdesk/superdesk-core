@@ -580,14 +580,21 @@ class ArchiveTestCase(TestCase):
                         }
                     }
                 }
+            },
+            'associations': {
+                'editor_1': {'guid': 'guid10', 'type': 'picture10', 'alt_text': 'media 10'},
+                'editor_7': {'guid': 'guid7', 'type': 'picture7', 'alt_text': 'media 7'},
+                'featuremedia': {'guid': 'guid11', 'type': 'picture11'}
             }
         }
 
         update_associations(doc)
 
-        self.assertEqual(doc['associations']['guid0'], {'guid': 'guid0', 'type': 'picture', 'alt_text': 'media 0'})
-        self.assertEqual(doc['associations']['guid1'], {'guid': 'guid1', 'type': 'picture', 'alt_text': 'media 1'})
-        self.assertEqual(doc['associations']['guid2'], {'guid': 'guid2', 'type': 'picture', 'alt_text': 'media 2'})
+        self.assertEqual(len(doc['associations']), 4)
+        self.assertEqual(doc['associations']['editor_0'], {'guid': 'guid0', 'type': 'picture', 'alt_text': 'media 0'})
+        self.assertEqual(doc['associations']['editor_1'], {'guid': 'guid1', 'type': 'picture', 'alt_text': 'media 1'})
+        self.assertEqual(doc['associations']['editor_2'], {'guid': 'guid2', 'type': 'picture', 'alt_text': 'media 2'})
+        self.assertEqual(doc['associations']['featuremedia'], {'guid': 'guid11', 'type': 'picture11'})
 
     def test_get_dateline_city_None(self):
         self.assertEqual(get_dateline_city(None), '')

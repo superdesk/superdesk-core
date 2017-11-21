@@ -46,7 +46,7 @@ from .archive_media import ArchiveMediaService
 from superdesk.utc import utcnow
 import datetime
 
-
+EDITOR_KEY_PREFIX = 'editor_'
 logger = logging.getLogger(__name__)
 
 
@@ -104,12 +104,15 @@ def update_associations(doc):
     if 'editor_state' not in doc:
         return
     entityMap = doc['editor_state'].get('entityMap', {})
+    associations = doc.get(ASSOCIATIONS, {})
+    doc[ASSOCIATIONS] = {k: v for k, v in associations.items() if not k.startswith(EDITOR_KEY_PREFIX)}
+
     mediaList = {
-        entity['data']['media']['guid']: entity['data']['media']
-        for entity in entityMap.values()
+        EDITOR_KEY_PREFIX + key: entity['data']['media']
+        for key, entity in entityMap.items()
         if entity.get('type', None) == 'MEDIA'
     }
-    doc[ASSOCIATIONS] = doc.get(ASSOCIATIONS, {})
+
     doc[ASSOCIATIONS].update(mediaList)
 
 
