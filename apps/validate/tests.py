@@ -10,6 +10,7 @@
 
 from apps.validate.validate import SchemaValidator, ValidateService
 from superdesk.tests import TestCase
+from superdesk.metadata.item import ITEM_TYPE
 
 
 class ValidateMandatoryInListTest(TestCase):
@@ -225,6 +226,57 @@ class ValidateMandatoryInListTest(TestCase):
             },
         ])
         self.assertEqual(errors, [[]])
+
+    def test_validate_custom_fields(self):
+        self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
+            'embed1': {
+                "required": True,
+                "enabled": True,
+                "type": "embed",
+                "nullable": False
+            },
+            'text1': {
+                "minlength": 10,
+                "required": True,
+                "enabled": True,
+                "type": "text",
+                "maxlength": 160,
+                "nullable": False
+            }
+        }}])
+        self.app.data.insert('vocabularies', [
+            {'_id': 'embed1', 'type': 'manageable', 'field_type': 'embed'},
+            {'_id': 'text1', 'type': 'manageable', 'field_type': 'text'}
+        ])
+        service = ValidateService()
+        doc = {
+            'act': 'test',
+            ITEM_TYPE: 'test',
+            'validate': {
+                'profile': 'foo'
+            }
+        }
+        schema = {'extra': {
+            'schema': {
+                'embed1': {
+                    'required': True,
+                    'enabled': True,
+                    'nullable': False,
+                    'empty': False,
+                    'type': 'dict'
+                },
+                'text1': {
+                    'enabled': True,
+                    'required': True,
+                    'nullable': False,
+                    'minlength': 10,
+                    'maxlength': 160,
+                    'type': 'string'
+                }
+            },
+            'type': 'dict'
+        }}
+        self.assertEqual(service._get_validators(doc)[0]['schema'], schema)
 
     def test_validate_field_sms(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {

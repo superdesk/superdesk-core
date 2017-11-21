@@ -148,6 +148,7 @@ class ValidateService(superdesk.Service):
         In case there is profile defined for item with respective content type it will
         use its schema for validations, otherwise it will fall back to action/item_type filter.
         """
+        extra_field_types = {'text': 'string', 'embed': 'dict'}
         profile = doc['validate'].get('profile')
         if profile and doc['act'] != 'auto_publish':
             # not use profile for auto publishing via routing.
@@ -158,9 +159,10 @@ class ValidateService(superdesk.Service):
                 schema['extra'] = {'type': 'dict', 'schema': {}}
                 doc['validate'].setdefault('extra', {})  # make sure extra is there so it will validate its fields
                 for extra_field in extra_fields:
-                    if schema.get(extra_field['_id']) and extra_field.get('field_type', None) == 'text':
+                    if schema.get(extra_field['_id']) and \
+                            extra_field.get('field_type', None) in extra_field_types:
                         rules = schema.pop(extra_field['_id'])
-                        rules.setdefault('type', 'string')
+                        rules['type'] = extra_field_types.get(extra_field['field_type'], 'string')
                         schema['extra']['schema'].update({extra_field['_id']: get_validator_schema(rules)})
                         self._populate_extra(doc['validate'], extra_field['_id'])
                 content_type['schema'] = schema
