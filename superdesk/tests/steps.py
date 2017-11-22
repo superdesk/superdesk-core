@@ -45,7 +45,7 @@ from superdesk import tests
 from superdesk.io import registered_feeding_services
 from superdesk.io.commands.update_ingest import LAST_ITEM_UPDATE
 from superdesk import default_user_preferences, get_resource_service, utc, etree
-from superdesk.io.feed_parsers import XMLFeedParser
+from superdesk.io.feed_parsers import XMLFeedParser, EMailRFC822FeedParser
 from superdesk.utc import utcnow, get_expiry_date
 from superdesk.tests import get_prefixed_url, set_placeholder
 from apps.dictionaries.resource import DICTIONARY_FILE
@@ -493,13 +493,17 @@ def fetch_from_provider(context, provider_name, guid, routing_scheme=None, desk_
     provider_service = registered_feeding_services[provider['feeding_service']]
     provider_service = provider_service.__class__()
 
-    if provider.get('name', '').lower() in ('aap', 'dpa', 'ninjs'):
+    if provider.get('name', '').lower() in ('aap', 'dpa', 'ninjs', 'email'):
         file_path = os.path.join(provider.get('config', {}).get('path', ''), guid)
         feeding_parser = provider_service.get_feed_parser(provider)
         if isinstance(feeding_parser, XMLFeedParser):
             with open(file_path, 'rb') as f:
                 xml_string = etree.etree.fromstring(f.read())
                 items = [feeding_parser.parse(xml_string, provider)]
+        elif isinstance(feeding_parser, EMailRFC822FeedParser):
+            with open(file_path, 'rb') as f:
+                data = f.read()
+                items = feeding_parser.parse([(1, data)], provider)
         else:
             parsed = feeding_parser.parse(file_path, provider)
             items = [parsed] if not isinstance(parsed, list) else parsed

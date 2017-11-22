@@ -47,7 +47,9 @@ def setup_providers(context):
             {'name': 'AP', 'source': 'AP', 'feeding_service': 'file', 'feed_parser': 'ap_anpa1312',
              'is_closed': False, 'config': {'path': path_to_fixtures}},
             {'name': 'ninjs', 'source': 'NINJS', 'feeding_service': 'file', 'feed_parser': 'ninjs',
-             'is_closed': False, 'config': {'path': path_to_fixtures}}
+             'is_closed': False, 'config': {'path': path_to_fixtures}},
+            {'name': 'email', 'source': 'Email', 'feeding_service': 'file', 'feed_parser': 'email_rfc822',
+             'is_closed': False, 'config': {'path': path_to_fixtures, 'formatted': True}}
         ]
 
         result = superdesk.get_resource_service('ingest_providers').post(providers)
@@ -56,6 +58,7 @@ def setup_providers(context):
         context.providers['teletype'] = result[2]
         context.providers['dpa'] = result[3]
         context.providers['ap'] = result[4]
+        context.providers['email'] = result[5]
 
 
 def teardown_providers(context):
