@@ -61,9 +61,9 @@ Feature: Archive history
       Then we get list with 4 items
       """
       {"_items": [
-        {"version": 1, "operation": "create"},
-        {"version": 2, "operation": "update"},
-        {"version": 3, "operation": "update"},
+        {"version": 1, "operation": "create", "original_item_id": "123"},
+        {"version": 2, "operation": "update", "original_item_id": "123"},
+        {"version": 3, "operation": "update", "original_item_id": "123"},
         {"version": 4, "operation": "duplicated_from"}
       ]}
       """
@@ -701,5 +701,96 @@ Feature: Archive history
         {"version": 1, "operation": "create"},
         {"version": 2, "operation": "publish", "update": {"state": "scheduled"}},
         {"version": 3, "operation": "update", "update": {"operation": "deschedule"}}
+      ]}
+      """
+
+
+    @auth
+    @provider
+    @vocabulary
+    Scenario: History of the routed item
+    Given the "validators"
+    """
+    [{"_id": "publish_text", "act": "publish", "type": "text", "schema":{}},
+    {"_id": "correct_text", "act": "correct", "type": "text", "schema":{}},
+    {"_id": "kill_text", "act": "kill", "type": "text", "schema":{}}]
+    """
+    And "desks"
+    """
+    [{"name": "Sports", "members":[{"user":"#CONTEXT_USER_ID#"}]}]
+    """
+    And "users"
+    """
+    [{
+        "username": "foo",
+        "display_name": "foo",
+        "email": "mock@mail.com.au",
+        "is_active": true,
+        "needs_activation": true
+    }]
+    """
+    When we post to "/desks"
+    """
+      {
+        "name": "Finance Desk", "members": [{"user": "#CONTEXT_USER_ID#"}]
+      }
+    """
+    Then we get response code 201
+    When we post to "/routing_schemes"
+    """
+    [
+      {
+        "name": "routing rule scheme 1",
+        "rules": [
+          {
+            "name": "Finance Rule 1",
+            "filter": null,
+            "actions": {
+              "fetch": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}],
+              "publish": [],
+              "exit": true
+            }
+          }
+        ]
+      }
+    ]
+    """
+    Then we get response code 201
+    When we ingest with routing scheme "email" "json-email.txt"
+    """
+    #routing_schemes._id#
+    """
+    When we get "/ingest"
+    Then we get list with 1 items
+    """
+    {
+        "_items": [
+            {
+                "headline": "Headline-2",
+                "slugline": "Slugline-2",
+                "original_creator": "#users._id#"
+            }
+        ]
+    }
+    """
+    When we get "/archive"
+    Then we get list with 1 items
+    """
+    {
+        "_items": [
+            {
+                "headline": "Headline-2",
+                "slugline": "Slugline-2",
+                "original_creator": "#users._id#"
+            }
+        ]
+    }
+    """
+    When we get "/archive_history"
+    Then we get list with 2 items
+      """
+      {"_items": [
+        {"version": 1, "operation": "create"},
+        {"version": 1, "operation": "fetch"}
       ]}
       """
