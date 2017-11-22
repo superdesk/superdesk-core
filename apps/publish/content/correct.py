@@ -15,6 +15,7 @@ from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, EMBARGO, SCHEDULE
 from superdesk.utc import utcnow
 from eve.utils import config
 from apps.archive.common import set_sign_off, ITEM_OPERATION, insert_into_versions
+from apps.archive.archive import update_associations
 from .common import BasePublishService, BasePublishResource, ITEM_CORRECT
 
 
@@ -52,6 +53,7 @@ class CorrectPublishService(BasePublishService):
         updates['versioncreated'] = utcnow()
         updates['correction_sequence'] = original.get('correction_sequence', 1) + 1
         set_sign_off(updates, original)
+        update_associations(updates)
 
     def on_updated(self, updates, original):
         """Runs on update
