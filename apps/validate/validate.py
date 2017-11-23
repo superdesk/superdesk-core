@@ -196,14 +196,18 @@ class ValidateService(superdesk.Service):
         :return: updated article
         """
         fields_to_check = ['minlength', 'maxlength']
-        schema = validator.get('schema', {})
-        for field in schema:
-            if doc.get(field) and schema.get(field) and any(k in schema[field] for k in fields_to_check):
-                try:
-                    doc[field] = get_text(doc[field])
-                except (ValueError, TypeError):
-                    # fails for json fields like subject, genre
-                    pass
+        item_schema = validator.get('schema', {})
+        extra_schema = item_schema.get('extra', {}).get('schema', {})
+        schemes_docs = [(item_schema, doc), (extra_schema, doc.get('extra', {}))]
+        for schema, content in schemes_docs:
+            for field in schema:
+                if content.get(field) and schema.get(field) and type(content[field]) is str and \
+                        any(k in schema[field] for k in fields_to_check):
+                    try:
+                        content[field] = get_text(content[field])
+                    except (ValueError, TypeError):
+                        # fails for json fields like subject, genre
+                        pass
 
     def _process_media(self, doc, validation_schema):
         """If media field(feature media or custom media field) is required it should be present for
