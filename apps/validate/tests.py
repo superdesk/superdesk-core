@@ -278,6 +278,32 @@ class ValidateMandatoryInListTest(TestCase):
         }}
         self.assertEqual(service._get_validators(doc)[0]['schema'], schema)
 
+    def test_sanitize_text_fields(self):
+        item = {
+            'headline': '<p>headline</p>',
+            'extra': {'text1': '<p>text 1</p>'}
+        }
+        sanitized_item = {
+            'headline': 'headline',
+            'extra': {'text1': 'text 1'}
+        }
+        validator = {
+            'schema': {
+                'headline': {
+                    'maxlength': 64, 'nullable': True, 'required': False, 'type': 'string'
+                },
+                'extra': {
+                    'schema': {
+                        'text1': {
+                            'maxlength': 10, 'nullable': True, 'required': False, 'type': 'string'
+                        }
+                    }
+                }
+            }
+        }
+        ValidateService()._sanitize_fields(item, validator)
+        self.assertEqual(item, sanitized_item)
+
     def test_validate_field_sms(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
             'sms': {
