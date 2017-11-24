@@ -10,6 +10,8 @@
 
 
 from superdesk.services import Service
+from superdesk.notification import push_notification
+from eve.utils import config
 
 
 class ContactsService(Service):
@@ -21,3 +23,28 @@ class ContactsService(Service):
             lookup['is_active'] = True
             lookup['public'] = True
         return super().get(req, lookup)
+
+    def on_created(self, docs):
+        """
+        Send notification to clients that new contact(s) have been created
+        :param docs:
+        :return:
+        """
+        push_notification('contacts:create', _id=[doc.get(config.ID_FIELD) for doc in docs])
+
+    def on_updated(self, updates, original):
+        """
+        Send notifification to clients that a contact has been updated
+        :param updates:
+        :param original:
+        :return:
+        """
+        push_notification('contacts:update', _id=[original.get(config.ID_FIELD)])
+
+    def on_deleted(self, doc):
+        """
+        Send a notification to clients that a contact has been deleted
+        :param doc:
+        :return:
+        """
+        push_notification('contacts:deleted', _id=[doc.get(config.ID_FIELD)])
