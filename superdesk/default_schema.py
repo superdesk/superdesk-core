@@ -120,18 +120,18 @@ DEFAULT_EDITOR = {
     'company_codes': {'order': 12, 'sdWidth': 'full', 'enabled': False},
     'ednote': {'order': 13, 'sdWidth': 'full', 'enabled': True},
     'authors': {'order': 14, 'sdWidth': 'full', 'enabled': True},
-    'headline': {'order': 15, 'formatOptions': ['underline', 'anchor', 'bold', 'removeFormat'], 'enabled': True},
+    'headline': {'order': 15, 'formatOptions': ['underline', 'link', 'bold'], 'enabled': True},
     'sms': {'order': 16, 'enabled': False},
     'abstract': {
         'order': 17,
-        'formatOptions': ['bold', 'italic', 'underline', 'anchor', 'removeFormat'],
+        'formatOptions': ['bold', 'italic', 'underline', 'link'],
         'enabled': True
     },
     'byline': {'order': 18, 'enabled': True},
     'dateline': {'order': 19, 'enabled': True},
     'body_html': {
         'order': 20,
-        'formatOptions': ['h2', 'bold', 'italic', 'underline', 'quote', 'anchor', 'embed', 'picture', 'removeFormat'],
+        'formatOptions': ['h2', 'bold', 'italic', 'underline', 'quote', 'link', 'embed', 'media'],
         'cleanPastedHTML': False,
         'enabled': True
     },
