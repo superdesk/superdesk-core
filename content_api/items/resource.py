@@ -77,6 +77,10 @@ schema = {
         },
     },
     'bookmarks': Resource.not_analyzed_field('list'),
+    'downloads': Resource.not_analyzed_field('list'),  # list of user ids who downloaded this item
+    'shares': Resource.not_analyzed_field('list'),  # list of user ids who shared this item
+    'prints': Resource.not_analyzed_field('list'),  # list of user ids who printed this item
+    'copies': Resource.not_analyzed_field('list'),  # list of user ids who copied this item
     'extra': metadata_schema['extra'],
 }
 
