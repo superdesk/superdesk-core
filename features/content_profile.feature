@@ -77,7 +77,7 @@ Feature: Content Profile
                     "order": 7
                 },
                 "abstract": {
-                    "formatOptions": ["bold", "italic", "underline", "anchor", "removeFormat"],
+                    "formatOptions": ["bold", "italic", "underline", "link"],
                     "enabled": true,
                     "order": 17
                 },
@@ -100,7 +100,7 @@ Feature: Content Profile
                     "order": 3
                 },
                 "headline": {
-                    "formatOptions": ["underline", "anchor", "bold", "removeFormat"],
+                    "formatOptions": ["underline", "link", "bold"],
                     "enabled": true,
                     "order": 15
                 },
@@ -166,7 +166,7 @@ Feature: Content Profile
                     "order": 9
                 },
                 "body_html": {
-                    "formatOptions": ["h2", "bold", "italic", "underline", "quote", "anchor", "embed", "picture", "removeFormat"],
+                    "formatOptions": ["h2", "bold", "italic", "underline", "quote", "link", "embed", "media"],
                     "enabled": true,
                     "order": 20
                 },
@@ -471,7 +471,7 @@ Feature: Content Profile
                 "body_html": {
                     "enabled": false,
                     "order": 20,
-                    "formatOptions": ["h2", "bold", "italic", "underline", "quote", "anchor", "embed", "picture", "removeFormat"]
+                    "formatOptions": ["h2", "bold", "italic", "underline", "quote", "link", "embed", "media"]
                 },
                 "anpa_category": {
                     "enabled": false,
@@ -489,7 +489,7 @@ Feature: Content Profile
                 "abstract": {
                     "enabled": false,
                     "order": 17,
-                    "formatOptions": ["bold", "italic", "underline", "anchor", "removeFormat"]
+                    "formatOptions": ["bold", "italic", "underline", "link"]
                 },
                 "media_description": {
                     "enabled": false
@@ -497,7 +497,7 @@ Feature: Content Profile
                 "headline": {
                     "enabled": false,
                     "order": 15,
-                    "formatOptions": ["underline", "anchor", "bold", "removeFormat"]
+                    "formatOptions": ["underline", "link", "bold"]
                 },
                 "place": {
                     "enabled": false,
@@ -770,7 +770,7 @@ Feature: Content Profile
                 "abstract": {
                     "order": 17,
                     "enabled": true,
-                    "formatOptions": ["bold", "italic", "underline", "anchor", "removeFormat"]
+                    "formatOptions": ["bold", "italic", "underline", "link"]
                 },
                 "place": {
                     "order": 7,
@@ -822,7 +822,7 @@ Feature: Content Profile
                 "body_html": {
                     "order": 20,
                     "enabled": true,
-                    "formatOptions": ["h2", "bold", "italic", "underline", "quote", "anchor", "embed", "picture", "removeFormat"]
+                    "formatOptions": ["h2", "bold", "italic", "underline", "quote", "link", "embed", "media"]
                 },
                 "footer": {
                     "order": 21,
@@ -848,7 +848,7 @@ Feature: Content Profile
                 "headline": {
                     "order": 15,
                     "enabled": true,
-                    "formatOptions": ["underline", "anchor", "bold", "removeFormat"]
+                    "formatOptions": ["underline", "link", "bold"]
                 },
                 "usageterms": {
                 	"order": 4,
@@ -967,7 +967,7 @@ Feature: Content Profile
                     "enabled": false
                 },
                 "body_html": {
-                    "formatOptions": ["h2", "bold", "italic", "underline", "quote", "anchor", "embed", "picture", "removeFormat"],
+                    "formatOptions": ["h2", "bold", "italic", "underline", "quote", "link", "embed", "media"],
                     "enabled": false,
                     "order": 20
                 },
@@ -1012,7 +1012,7 @@ Feature: Content Profile
                     "enabled": false
                 },
                 "headline": {
-                    "formatOptions": ["underline", "anchor", "bold", "removeFormat"],
+                    "formatOptions": ["underline", "link", "bold"],
                     "enabled": false,
                     "order": 15
                 },
@@ -1027,7 +1027,7 @@ Feature: Content Profile
                     "enabled": false
                 },
                 "abstract": {
-                    "formatOptions": ["bold", "italic", "underline", "anchor", "removeFormat"],
+                    "formatOptions": ["bold", "italic", "underline", "link"],
                     "enabled": false,
                     "order": 17
                 },
