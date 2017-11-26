@@ -27,6 +27,18 @@ class NinjsFormatterTest(TestCase):
         self.maxDiff = None
 
     def test_text_formatter(self):
+        self.app.data.insert('vocabularies', [
+            {
+                "_id": "locators",
+                "display_name": "Locators",
+                "type": "unmanageable",
+                "unique_field": "qcode",
+                "items": [
+                    {"is_active": True, "name": "NSW", "qcode": "NSW", "state": "New South Wales",
+                     "country": "Australia", "world_region": "Oceania", "group": "Australia"},
+                ],
+            }
+        ])
         embargo_ts = (utcnow() + timedelta(days=2))
         article = {
             '_id': 'tag:aap.com.au:20150613:12345',
@@ -52,7 +64,7 @@ class NinjsFormatterTest(TestCase):
             'creditline': 'sample creditline',
             'keywords': ['traffic'],
             'abstract': '<p>sample <b>abstract</b></p>',
-            'place': [{'name': 'Australia', 'qcode': 'NSW'}],
+            'place': [{'name': 'NSW', 'qcode': 'NSW'}],
             'embargo': embargo_ts,
             'body_footer': '<p>call helpline 999 if you are planning to quit smoking</p>',
             'company_codes': [{'name': 'YANCOAL AUSTRALIA LIMITED', 'qcode': 'YAL', 'security_exchange': 'ASX'}],
@@ -63,7 +75,7 @@ class NinjsFormatterTest(TestCase):
         expected = {
             "guid": "tag:aap.com.au:20150613:12345",
             "version": "1",
-            "place": [{'name': 'Australia', 'code': 'NSW'}],
+            "place": [{"code": "NSW", "name": "New South Wales"}],
             "pubstatus": "usable",
             "body_html": "The story body<p>call helpline 999 if you are planning to quit smoking</p>",
             "type": "text",
@@ -420,3 +432,58 @@ class NinjsFormatterTest(TestCase):
         self.assertEqual('copyright holder', data['copyrightholder'])
         self.assertEqual('copyright notice', data['copyrightnotice'])
         self.assertEqual('', data['usageterms'])
+
+    def test_place(self):
+        self.app.data.insert('vocabularies', [
+            {
+                "_id": "locators",
+                "display_name": "Locators",
+                "type": "unmanageable",
+                "unique_field": "qcode",
+                "items": [
+                    {"is_active": True, "name": "JPN", "qcode": "JPN", "state": "", "country": "Japan",
+                     "world_region": "Asia", "group": "Rest Of World"},
+                    {"is_active": True, "name": "SAM", "qcode": "SAM", "group": "Rest Of World"},
+                    {"is_active": True, "name": "UK", "qcode": "UK", "state": "", "country": "",
+                     "world_region": "Europe", "group": "Rest Of World"},
+                ],
+            }
+        ])
+        article = {
+            '_id': 'urn:bar',
+            '_current_version': 1,
+            'guid': 'urn:bar',
+            'type': 'text',
+            'place': [{'name': 'JPN', 'qcode': 'JPN'}]
+        }
+
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        data = json.loads(doc)
+
+        self.assertEqual(data['place'], [{"code": "JPN", "name": "Japan"}])
+
+        article = {
+            '_id': 'urn:bar',
+            '_current_version': 1,
+            'guid': 'urn:bar',
+            'type': 'text',
+            'place': [{'name': 'SAM', 'qcode': 'SAM'}]
+        }
+
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        data = json.loads(doc)
+
+        self.assertEqual(data['place'], [{"code": "SAM", "name": "Rest Of World"}])
+
+        article = {
+            '_id': 'urn:bar',
+            '_current_version': 1,
+            'guid': 'urn:bar',
+            'type': 'text',
+            'place': [{'name': 'UK', 'qcode': 'UK'}]
+        }
+
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        data = json.loads(doc)
+
+        self.assertEqual(data['place'], [{"code": "UK", "name": "Europe"}])
