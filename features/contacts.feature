@@ -1,6 +1,7 @@
 Feature: Contacts
 
     @auth
+    @notification
     Scenario: Create a contact
         Given empty "contacts"
         When we post to "/contacts"
@@ -22,6 +23,10 @@ Feature: Contacts
               ]
           }
           """
+        Then we get notifications
+        """
+        [{"event": "contacts:create", "extra": {"_id": ["#contacts._id#"]}}]
+        """
 
     @auth
     Scenario: Get contacts
@@ -96,6 +101,7 @@ Feature: Contacts
           """
 
     @auth
+    @notification
     Scenario: Delete a contact
         Given "contacts"
         """
@@ -105,8 +111,13 @@ Feature: Contacts
         Then we get response code 204
         When we get "/contacts?all=1"
         Then We get list with 0 items
+        Then we get notifications
+        """
+        [{"event": "contacts:deleted", "extra": {"_id": ["#contacts._id#"]}}]
+        """
 
     @auth
+    @notification
     Scenario: Update a contact
         Given "contacts"
         """
@@ -123,6 +134,10 @@ Feature: Contacts
               "last_name" : "Foo", "first_name" : "Mary"
           }
           """
+        Then we get notifications
+        """
+        [{"event": "contacts:update", "extra": {"_id": ["#contacts._id#"]}}]
+        """
 
     @auth
     Scenario: Update a contact without permission
