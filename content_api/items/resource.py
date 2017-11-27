@@ -78,6 +78,7 @@ schema = {
     },
     'bookmarks': Resource.not_analyzed_field('list'),
     'extra': metadata_schema['extra'],
+    'authors': metadata_schema['authors'],
 }
 
 
