@@ -398,6 +398,28 @@
 					}
 				}
 			}
+		},
+		"annotations" : {
+			"description" : "Small messages linked to parts of the body",
+			"type" : "array",
+			"items" : {
+				"type" : "object",
+				"additionalProperties" : false,
+				"properties" : {
+					"id" : {
+						"description" : "The id of the annotation, same id as used in annotation-id attribute of <span> element in body_html",
+						"type" : "number"
+					},
+					"type" : {
+						"description": "Annotation type",
+						"type" : "string"
+					},
+					"body": {
+						"description" : "Content of the annotation, formatted with HTML",
+						"type" : "string"
+					}
+				}
+			}
 		}
 	}
 }

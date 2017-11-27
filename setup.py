@@ -41,6 +41,7 @@ install_requires = [
     'mongolock>=1.3.4,<1.4',
     'PyYAML>=3.11,<3.13',
     'lxml>=3.8,<3.9',
+    'draftjs_exporter[lxml]',
 ]
 
 package_data = {

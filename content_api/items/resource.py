@@ -76,6 +76,17 @@ schema = {
             'type': 'dict',
         },
     },
+    'annotations': {
+        'type': 'list',
+        'mapping': {
+            'type': 'object',
+            'properties': {
+                'id': not_analyzed,
+                'type': not_analyzed,
+                'body': not_analyzed
+            }
+        }
+    },
     'bookmarks': Resource.not_analyzed_field('list'),
     'downloads': Resource.not_analyzed_field('list'),  # list of user ids who downloaded this item
     'shares': Resource.not_analyzed_field('list'),  # list of user ids who shared this item
@@ -94,7 +105,7 @@ class ItemsResource(Resource):
     #     "tag:example.com,0000:newsml_BRE9A605"
     #     "tag:localhost:2015:f4b35e12-559b-4a2b-b1f2-d5e64048bde8"
     #
-    item_url = 'regex("[\w,.:-]+")'
+    item_url = r'regex("[\w,.:-]+")'
     schema = schema
 
     datasource = {
