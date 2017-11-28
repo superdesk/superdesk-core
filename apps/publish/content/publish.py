@@ -14,6 +14,7 @@ from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, CONTENT
 
 from apps.archive.common import set_sign_off, ITEM_OPERATION
 from apps.archive.archive import update_word_count
+from superdesk.utc import utcnow
 
 from .common import BasePublishService, BasePublishResource, ITEM_PUBLISH
 
@@ -39,6 +40,8 @@ class ArchivePublishService(BasePublishService):
                 raise SuperdeskApiError.badRequestError("Empty package cannot be published!")
 
     def on_update(self, updates, original):
+        if 'firstpublished' not in original:
+            updates.setdefault('firstpublished', utcnow())
         updates[ITEM_OPERATION] = ITEM_PUBLISH
         super().on_update(updates, original)
         set_sign_off(updates, original)
@@ -50,7 +53,6 @@ class ArchivePublishService(BasePublishService):
         :param dict original: original document
         :param dict updates: updates related to original document
         """
-
         updates.setdefault(ITEM_OPERATION, ITEM_PUBLISH)
         if original.get(PUBLISH_SCHEDULE) or updates.get(PUBLISH_SCHEDULE):
             updates[ITEM_STATE] = CONTENT_STATE.SCHEDULED

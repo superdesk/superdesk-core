@@ -11,6 +11,7 @@
 
 import copy
 import unittest
+import superdesk
 
 from datetime import timedelta, datetime
 from unittest.mock import MagicMock, patch
@@ -19,6 +20,7 @@ from bson import ObjectId
 from pytz import timezone
 
 from apps.archive.archive import SOURCE as ARCHIVE, update_image_caption, update_associations
+from superdesk.metadata.item import CONTENT_STATE
 from apps.archive.common import (
     validate_schedule, remove_media_files,
     format_dateline_to_locmmmddsrc, convert_task_attributes_to_objectId,
@@ -30,6 +32,10 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.media.crop import CropService
 from superdesk.tests import TestCase
 from superdesk.utc import get_expiry_date, utcnow
+from apps.publish.content import publish
+from unittest import mock
+
+NOW = utcnow()
 
 
 class RemoveSpikedContentTestCase(TestCase):
@@ -622,6 +628,34 @@ class ArchiveTestCase(TestCase):
 
     def test_get_dateline_city_from_text_with_city_state(self):
         self.assertEqual(get_dateline_city({'located': None, 'text': 'City, State, 9 July AAP'}), 'City, State')
+
+    def test_firstpublished(self):
+        """Check that "firstpublihed" field is set correctly
+
+        the test create a story, check firstpublished field, then correct it
+        and check again that correction is done and firstpublished has not changed
+        """
+        archive_service = superdesk.get_resource_service('archive')
+        correct_service = superdesk.get_resource_service('archive_correct')
+        publish_service = superdesk.get_resource_service('archive_publish')
+        item = {'_id': 'foo',
+                'guid': 'foo',
+                'unique_name': 'foo',
+                'type': 'text',
+                'state': CONTENT_STATE.SUBMITTED,
+                '_current_version': 1,
+                'rewrite_of': 'bar'}
+        archive_service.create([item])
+        with mock.patch.object(publish, 'utcnow', lambda: NOW):
+            publish_service.patch('foo', {'body_html': 'original'})
+        created = publish_service.find_one(None, _id='foo')
+        self.assertEqual(NOW, created['firstpublished'])
+        correct_service.patch('foo', {'body_html': 'corrected'})
+        # we try to update to check that "firstpublished" is not modified
+        # note that utcnow MUST NOT be mocked here, else the test would be pointless
+        corrected = publish_service.find_one(None, _id='foo')
+        self.assertEqual('corrected', corrected['body_html'])
+        self.assertEqual(NOW, corrected['firstpublished'])
 
 
 class ArchiveCommonTestCase(unittest.TestCase):
