@@ -149,7 +149,7 @@ class NINJSFormatter(Formatter):
             ninjs['description_html'] = self.append_body_footer(article)
 
         if article.get('place'):
-            ninjs['place'] = self._format_qcodes(article['place'])
+            ninjs['place'] = self._format_place(article['place'])
 
         if article.get('profile'):
             ninjs['profile'] = self._format_profile(article['profile'])
@@ -309,6 +309,21 @@ class NINJSFormatter(Formatter):
 
     def _format_qcodes(self, items):
         return [{'name': item.get('name'), 'code': item.get('qcode')} for item in items]
+
+    def _format_place(self, items):
+        locator_map = superdesk.get_resource_service('vocabularies').find_one(req=None, _id='locators')
+
+        def getLabel(item):
+            locators = [l for l in locator_map.get('items', []) if l['qcode'] == item.get('qcode')]
+            if locators and len(locators) == 1:
+                return locators[0].get('state') or \
+                    locators[0].get('country') or \
+                    locators[0].get('world_region') or \
+                    locators[0].get('group')
+            else:
+                return item.get('name')
+
+        return [{'name': getLabel(item), 'code': item.get('qcode')} for item in items]
 
     def _format_profile(self, profile):
         return superdesk.get_resource_service('content_types').get_output_name(profile)
