@@ -532,7 +532,12 @@ class BasePublishService(BaseService):
                 else:
                     updates = super().find_one(req=None, _id=item[config.ID_FIELD]) or {}
 
-                update_item_data(item, updates, keys)
+                try:
+                    is_db_item_bigger_ver = updates['_current_version'] > original['_current_version']
+                except KeyError:
+                    update_item_data(item, updates, keys)
+                else:
+                    update_item_data(item, updates, keys, keep_existing=is_db_item_bigger_ver)
 
     def _mark_media_item_as_used(self, updates, original):
         if ASSOCIATIONS not in updates or not updates.get(ASSOCIATIONS):
@@ -569,12 +574,20 @@ def get_crop(rendition):
     return {field: rendition[field] for field in fields if field in rendition}
 
 
-def update_item_data(item, data, keys=DEFAULT_SCHEMA.keys()):
+def update_item_data(item, data, keys=DEFAULT_SCHEMA.keys(), keep_existing=False):
     """Update main item data, so only keys from default schema.
+
+    :param dict item: item to update
+    :param dict data: update date
+    :param list keys: keys of item to update
+    :param bool keep_existing: if True, will only set non existing values
     """
     for key in keys:
         if data.get(key):
-            item[key] = data[key]
+            if keep_existing:
+                item.setdefault(key, data[key])
+            else:
+                item[key] = data[key]
 
 
 superdesk.workflow_state('published')
