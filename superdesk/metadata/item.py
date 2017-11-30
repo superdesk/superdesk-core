@@ -524,6 +524,17 @@ metadata_schema = {
         }
     },
 
+    'annotations': {
+        'type': 'list',
+        'schema': {
+            'type': 'dict',
+            'mapping': {
+                'type': 'object',
+                'enabled': False,
+            },
+        },
+    },
+
     'extra': {
         'type': 'dict',
         'mapping': {
