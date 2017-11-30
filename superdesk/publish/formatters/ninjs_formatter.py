@@ -394,6 +394,10 @@ class NINJSFormatter(Formatter):
     def _render_link(self, props):
         return DOM.create_element('a', {'href': props.get('link', {}).get('href', '')}, props['children'])
 
+    def _render_embed(self, props):
+        elt = DOM.parse_html(props['data']['html'])
+        return DOM.create_element('div', {'class': 'embed-block'}, elt)
+
     def _parse_editor_state(self, article, ninjs):
         """Parse editor_state (DraftJs internals) to retrieve annotations
 
@@ -411,7 +415,7 @@ class NINJSFormatter(Formatter):
             'entity_decorators': {
                 ENTITY_TYPES.LINK: self._render_link,
                 ENTITY_TYPES.HORIZONTAL_RULE: lambda props: DOM.create_element('hr'),
-                ENTITY_TYPES.EMBED: None,
+                ENTITY_TYPES.EMBED: self._render_embed,
                 MEDIA: self._render_media,
                 ANNOTATION: self._render_annotation}}
         renderer = HTML(config)
@@ -472,7 +476,9 @@ class NINJSFormatter(Formatter):
                                 inline['length'] = len(block['text'])
         # HTML rendering
         # now we have annotation ready, we can render HTML
-        article['body_html'] = renderer.render(article['editor_state'])
+        # we change body_html if and only if we have annotations to render
+        if ninjs.get('annotations'):
+            article['body_html'] = renderer.render(article['editor_state'])
 
     def export(self, item):
         if self.can_format(self.format_type, item):
