@@ -537,7 +537,7 @@ class BasePublishService(BaseService):
                 except KeyError:
                     update_item_data(item, updates, keys)
                 else:
-                    update_item_data(item, updates, keys, keep_existing=is_db_item_bigger_ver)
+                    update_item_data(item, updates, keys, keep_existing=not is_db_item_bigger_ver)
 
     def _mark_media_item_as_used(self, updates, original):
         if ASSOCIATIONS not in updates or not updates.get(ASSOCIATIONS):
