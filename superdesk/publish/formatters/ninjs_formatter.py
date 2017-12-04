@@ -389,7 +389,8 @@ class NINJSFormatter(Formatter):
                                                'alt': media_props.get('alt_text'),
                                                'width': '100%',
                                                'height': '100%'}, props['children'])
-        return DOM.create_element('div', {'class': 'media-block'}, elt)
+        desc = DOM.create_element('span', {'class': 'media-block__description'}, media_props.get('description_text'))
+        return DOM.create_element('div', {'class': 'media-block'}, [elt, desc])
 
     def _render_link(self, props):
         return DOM.create_element('a', {'href': props.get('link', {}).get('href', '')}, props['children'])
@@ -476,9 +477,7 @@ class NINJSFormatter(Formatter):
                                 inline['length'] = len(block['text'])
         # HTML rendering
         # now we have annotation ready, we can render HTML
-        # we change body_html if and only if we have annotations to render
-        if ninjs.get('annotations'):
-            article['body_html'] = renderer.render(article['editor_state'])
+        article['body_html'] = renderer.render(article['editor_state'])
 
     def export(self, item):
         if self.can_format(self.format_type, item):
