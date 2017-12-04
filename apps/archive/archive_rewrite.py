@@ -24,6 +24,7 @@ from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from superdesk.notification import push_notification
 from apps.tasks import send_to
+from apps.archive.archive import update_associations
 
 logger = logging.getLogger(__name__)
 
@@ -137,7 +138,7 @@ class ArchiveRewriteService(Service):
         """
         rewrite = dict()
 
-        fields = ['family_id', 'event_id', 'flags', 'language', ASSOCIATIONS]
+        fields = ['family_id', 'event_id', 'flags', 'language', ASSOCIATIONS, 'extra']
 
         if existing_item:
             # for associate an existing file as update merge subjects
@@ -189,6 +190,9 @@ class ArchiveRewriteService(Service):
             # if we are rewriting a published item then copy the body_html
             if original.get('state', '') in (CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED):
                 rewrite['body_html'] = original.get('body_html', '')
+                if 'editor_state' in original:
+                    rewrite['editor_state'] = original['editor_state']
+                update_associations(rewrite)
 
         rewrite[ITEM_STATE] = CONTENT_STATE.PROGRESS
         self._set_take_key(rewrite)
