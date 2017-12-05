@@ -5,10 +5,11 @@
         "type": "manageable",
         "unique_field": "qcode",
         "items": [
-            {"is_active": true, "name": "FIXME", "qcode": "f", "subject": ""}
+            {"is_active": true, "name": "FIXME1", "qcode": "f", "subject": "", "translations": {"name": {"fr": "FIXME1-fr", "es": "FIXME1-es"}}},
+            {"is_active": true, "name": "FIXME2", "qcode": "f", "subject": "", "translations": {"name": {"fr": "FIXME2-fr", "es": "FIXME2-es"}}}
         ],
         "schema": {
-            "name": {},
+            "name": {"translate": true},
             "qcode": {},
             "subject": {}
         }
@@ -61,7 +62,7 @@
             {"is_active": true, "name": "Preview", "qcode": "Preview"}
         ],
         "schema": {
-            "name": {},
+            "name": {"translate": true},
             "qcode": {}
         }
     },
@@ -78,10 +79,10 @@
             {"is_active": true, "name": "5", "qcode": 5}
         ],
         "schema": {
-            "name": {},
+            "name": {"translate": true},
             "qcode": {},
             "color": {"type": "color"},
-            "short": {"type": "short", "label": "List Name", "maxlength": 2}
+            "short": {"type": "short", "label": "List Name", "maxlength": 2, "translate": true}
         }
     },
     {
@@ -100,10 +101,10 @@
             {"is_active": false, "name": "9", "qcode": 9}
         ],
         "schema": {
-            "name": {},
+            "name": {"translate": true},
             "qcode": {},
             "color": {"type": "color"},
-            "short": {"type": "short", "label": "List Name", "maxlength": 2}
+            "short": {"type": "short", "label": "List Name", "maxlength": 2, "translate": true}
         }
     },
     {
@@ -146,10 +147,10 @@
             }
         ],
         "schema": {
-            "name": {},
-            "copyrightHolder": {"label": "Copyright Holder"},
-            "copyrightNotice": {"label": "Copyright Notice"},
-            "usageTerms": {"label": "Usage Terms"}
+            "name": {"translate": true},
+            "copyrightHolder": {"label": "Copyright Holder", "translate": true},
+            "copyrightNotice": {"label": "Copyright Notice", "translate": true},
+            "usageTerms": {"label": "Usage Terms", "translate": true}
         }
     },
     {
@@ -219,11 +220,11 @@
             {"is_active": true, "name": "NSW", "qcode": "NSW"}
         ],
         "schema": {
-            "name": {},
+            "name": {"translate": true},
             "qcode": {},
-            "state": {},
-            "country": {},
-            "world_region": {},
+            "state": {"translate": true},
+            "country": {"translate": true},
+            "world_region": {"translate": true},
             "group": {}
         }
     },
@@ -241,14 +242,14 @@
         "_id": "annotation_types",
         "display_name": "Annotation Types",
         "type": "manageable",
-        "schema" : {
-            "name" : {},
-            "qcode" : {}
-        },
         "items": [
             {"is_active": true, "name": "Regular", "qcode": "regular"},
             {"is_active": true, "name": "Remark", "qcode": "remark"}
-        ]
+        ],
+        "schema" : {
+            "name" : {},
+            "qcode" : {}
+        }
     },
     {
         "_id": "author_roles",
@@ -259,7 +260,7 @@
             {"is_active": true, "name": "Writer", "qcode": "writer"}
         ],
         "schema": {
-            "name": {},
+            "name": {"translate": true},
             "qcode": {}
         }
     },
@@ -270,7 +271,7 @@
         "unique_field": "qcode",
         "items": [],
         "schema": {
-            "name": {},
+            "name": {"translate": true},
             "qcode": {}
         }
     }
