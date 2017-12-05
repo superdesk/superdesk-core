@@ -101,11 +101,11 @@ def update_image_caption(body, name, caption):
 
 
 def update_associations(doc):
-    if 'editor_state' not in doc:
+    if 'editor_state' not in doc or not doc['editor_state']:
         return
     entityMap = doc['editor_state'].get('entityMap', {})
     associations = doc.get(ASSOCIATIONS, {})
-    doc[ASSOCIATIONS] = {k: v for k, v in associations.items() if not k.startswith(EDITOR_KEY_PREFIX)}
+    doc[ASSOCIATIONS] = {k: None if k.startswith(EDITOR_KEY_PREFIX) else v for k, v in associations.items()}
 
     mediaList = {
         EDITOR_KEY_PREFIX + key: entity['data']['media']
