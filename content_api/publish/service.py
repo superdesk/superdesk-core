@@ -147,9 +147,6 @@ class PublishService(BaseService):
         :param dit doc: ninjs documents
         """
         for assoc, assoc_item in (item.get('associations') or {}).items():
-            if not assoc_item:
-                continue
-
             doc.get('associations', {}).get(assoc)['subscribers'] = list(map(str, assoc_item.get('subscribers') or []))
 
     def _process_associations(self, updates, original):
