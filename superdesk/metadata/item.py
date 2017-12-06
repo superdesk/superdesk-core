@@ -516,7 +516,7 @@ metadata_schema = {
 
     # draft-js editor state
     'editor_state': {
-        'type': 'dict',
+        'type': 'list',
         'nullable': True,
         'mapping': {
             'type': 'object',
