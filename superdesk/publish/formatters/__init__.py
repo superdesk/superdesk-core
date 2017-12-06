@@ -146,3 +146,4 @@ from .ninjs_formatter import NINJSFormatter  # NOQA
 from .newsml_1_2_formatter import NewsML12Formatter  # NOQA
 from .newsml_g2_formatter import NewsMLG2Formatter  # NOQA
 from .email_formatter import EmailFormatter  # NOQA
+from .ninjs_newsroom_formatter import NewsroomNinjsFormatter  # NOQA

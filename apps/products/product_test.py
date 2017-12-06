@@ -55,10 +55,10 @@ class ProductTestService(BaseService):
         doc['_items'] = results
         return [article_id]
 
-    def test_products(self, article):
+    def test_products(self, article, lookup=None):
         req = ParsedRequest()
         results = []
-        products = list(get_resource_service('products').get(req=req, lookup=None))
+        products = list(get_resource_service('products').get(req=req, lookup=lookup))
         for product in products:
             result = {'product_id': product['_id'], 'matched': True}
             reason = ''
