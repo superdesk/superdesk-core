@@ -407,7 +407,7 @@ class NINJSFormatter(Formatter):
         :param article: item to modify, must contain "editor_state" data
         :param ninjs: ninjs item which will be formatted
         """
-        blocks = article['editor_state']['blocks']
+        blocks = article['editor_state'][0]['blocks']
         blocks_map = {}
         ann_idx = 0
         data = {}
@@ -434,7 +434,7 @@ class NINJSFormatter(Formatter):
                      'type': data_block['annotationType'],
                      'body': renderer.render(json.loads(data_block['msg']))})
                 entity_key = '_annotation_{}'.format(ann_idx)
-                article['editor_state']['entityMap'][entity_key] = {
+                article['editor_state'][0]['entityMap'][entity_key] = {
                     'type': ANNOTATION,
                     'data': {'id': ann_idx}}
                 ann_idx += 1
@@ -477,7 +477,7 @@ class NINJSFormatter(Formatter):
                                 inline['length'] = len(block['text'])
         # HTML rendering
         # now we have annotation ready, we can render HTML
-        article['body_html'] = renderer.render(article['editor_state'])
+        article['body_html'] = renderer.render(article['editor_state'][0])
 
     def export(self, item):
         if self.can_format(self.format_type, item):

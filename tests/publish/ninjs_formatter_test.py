@@ -580,7 +580,7 @@ class NinjsFormatterTest(TestCase):
             '_id': 'test:annotations',
             'abstract': '<p>test</p>',
             'body_html': '<p>bla bla</p><p>1 2 3</p><p>ceci est un test</p>',
-            'editor_state': {
+            'editor_state': [{
                 'blocks': [{'data': {
                     '{"anchorKey":"5lipn","anchorOffset":4,'
                     '"focusKey":"5lipn","focusOffset":7,'
@@ -624,7 +624,7 @@ class NinjsFormatterTest(TestCase):
                      'key': '8ssph',
                      'text': 'ceci est un test',
                      'type': 'unstyled'}],
-                'entityMap': {}},
+                'entityMap': {}}],
             'format': 'HTML',
             'guid': 'test_annotation',
             'headline': 'test',
@@ -657,45 +657,57 @@ class NinjsFormatterTest(TestCase):
             '_current_version': 1,
             'body_html': '<p>paragraph1 - line 1\nline 2\nline 3\n\nparagraph2 '
             '- line 1\nline 2\nline 3\n\nparagraph3 - line 1\nline 2\nline 3</p>',
-            'editor_state': {'blocks': [{'data': {'{"anchorKey":"btrsm","anchorOffset":20,"focusKey":"btrsm",'
-                                                  '"focusOffset":61,"isBackward":false,"hasFocus":false}':
-                                                  {'annotationType': 'Regular',
-                                                   'author': 'first name last name',
-                                                   'date': '2017-11-24T15:08:55.990Z',
-                                                   'email': 'a@a.com',
-                                                   'msg': '{"entityMap":{},"blocks":[{"key":"aveeg","text":'
-                                                   '"this annotation use bold and must start on paragraph '
-                                                   'line 2 and finish on paragraph 2 line 2","type":"unstyled"'
-                                                   ',"depth":0,"inlineStyleRanges":[{"offset":20,"length":4,'
-                                                   '"style":"BOLD"}],"entityRanges":[],"data":{}}]}',
-                                                   'type': 'ANNOTATION'},
-                                                  '{"anchorKey":"btrsm","anchorOffset":90,"focusKey":"btrsm",'
-                                                  '"focusOffset":94,"isBackward":false,"hasFocus":false}':
-                                                  {'annotationType': 'Regular',
-                                                   'author': 'first name last name',
-                                                   'date': '2017-11-24T15:10:34.880Z',
-                                                   'email': 'a@a.com',
-                                                   'msg': '{"entityMap":{"0":{"type":"LINK","mutability":'
-                                                           '"MUTABLE","data":{"link":{"href":"https://www'
-                                                           '.sourcefabric.org/"}}}},"blocks":[{"key":"5juv0"'
-                                                           ',"text":"this annotation use a link and must only'
-                                                           ' span around the word \\"line\\" on paragraph 3 -'
-                                                           ' line 2","type":"unstyled","depth":0,"inlineStyleR'
-                                                           'anges":[],"entityRanges":[{"offset":22,"length":4,'
-                                                           '"key":0}],"data":{}}]}',
-                                                   'type': 'ANNOTATION'}},
-                                         'depth': 0,
-                                         'entityRanges': [],
-                                         'inlineStyleRanges': [],
-                                         'key': 'btrsm',
-                                         'text': 'paragraph1 - line 1\nline 2\nline 3\n\nparagraph2 -'
-                                         ' line 1\nline 2\nline 3\n\nparagraph3 - line 1\nline 2\nline 3',
-                                         'type': 'unstyled'}],
-                             'entityMap': {}},
+            'editor_state': [{
+                'blocks': [
+                    {
+                        'data': {
+                            '{"anchorKey":"btrsm","anchorOffset":20,"focusKey":"btrsm",'
+                            '"focusOffset":61,"isBackward":false,"hasFocus":false}': {
+                                'annotationType': 'Regular',
+                                'author': 'first name last name',
+                                'date': '2017-11-24T15:08:55.990Z',
+                                'email': 'a@a.com',
+                                'msg': '{"entityMap":{},"blocks":[{"key":"aveeg","text":'
+                                '"this annotation use bold and must start on paragraph '
+                                'line 2 and finish on paragraph 2 line 2","type":"unstyled"'
+                                ',"depth":0,"inlineStyleRanges":[{"offset":20,"length":4,'
+                                '"style":"BOLD"}],"entityRanges":[],"data":{}}]}',
+                                'type': 'ANNOTATION'
+                            },
+                            '{"anchorKey":"btrsm","anchorOffset":90,"focusKey":"btrsm",'
+                            '"focusOffset":94,"isBackward":false,"hasFocus":false}': {
+                                'annotationType': 'Regular',
+                                'author': 'first name last name',
+                                'date': '2017-11-24T15:10:34.880Z',
+                                'email': 'a@a.com',
+                                'msg':
+                                '{"entityMap":{"0":{"type":"LINK","mutability":'
+                                '"MUTABLE","data":{"link":{"href":"https://www'
+                                '.sourcefabric.org/"}}}},"blocks":[{"key":"5juv0"'
+                                ',"text":"this annotation use a link and must only'
+                                ' span around the word \\"line\\" on paragraph 3 -'
+                                ' line 2","type":"unstyled","depth":0,"inlineStyleR'
+                                'anges":[],"entityRanges":[{"offset":22,"length":4,'
+                                '"key":0}],"data":{}}]}',
+                                'type': 'ANNOTATION'
+                            }
+                        },
+                        'depth': 0,
+                        'entityRanges': [],
+                        'inlineStyleRanges': [],
+                        'key': 'btrsm',
+                        'text': 'paragraph1 - line 1\nline 2\nline 3\n\nparagraph2 -'
+                        ' line 1\nline 2\nline 3\n\nparagraph3 - line 1\nline 2\nline 3',
+                        'type': 'unstyled'
+                    }
+                ],
+                'entityMap': {}
+            }],
             'format': 'HTML',
             'guid': 'test_annotation2',
             'item_id': 'test_annotation2',
-            'type': 'text'}
+            'type': 'text'
+        }
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
         expected = {
             'guid': 'test_annotation2',
