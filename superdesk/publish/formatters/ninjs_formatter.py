@@ -183,7 +183,7 @@ class NINJSFormatter(Formatter):
             ninjs['renditions'] = self._generate_renditions(article)
 
         # SDPA-317
-        if article.get('abstract'):
+        if 'abstract' in article:
             abstract = article.get('abstract', '')
             ninjs['description_html'] = abstract
             ninjs['description_text'] = text_utils.get_text(abstract)

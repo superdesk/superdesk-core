@@ -465,6 +465,21 @@ class NinjsFormatterTest(TestCase):
 
         self.assertEqual(data['readtime'], 7)
 
+    def test_empty_amstract(self):
+        article = {
+            '_id': 'urn:bar',
+            '_current_version': 1,
+            'guid': 'urn:bar',
+            'type': 'text',
+            'abstract': ''
+        }
+
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        data = json.loads(doc)
+
+        self.assertEqual(data['description_html'], '')
+        self.assertEqual(data['description_text'], '')
+
     def test_authors(self):
         self.app.data.insert('users', [
             {
