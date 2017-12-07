@@ -77,6 +77,11 @@ class ArchiveRewriteService(Service):
                                                                               item=original,
                                                                               rewrite_id=ids[0])
 
+        if 'body_html' in rewrite:
+            if 'editor_state' in original:
+                rewrite['editor_state'] = original['editor_state']
+            update_associations(rewrite)
+
         doc.clear()
         doc.update(rewrite)
         return ids
@@ -190,9 +195,6 @@ class ArchiveRewriteService(Service):
             # if we are rewriting a published item then copy the body_html
             if original.get('state', '') in (CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED):
                 rewrite['body_html'] = original.get('body_html', '')
-                if 'editor_state' in original:
-                    rewrite['editor_state'] = original['editor_state']
-                update_associations(rewrite)
 
         rewrite[ITEM_STATE] = CONTENT_STATE.PROGRESS
         self._set_take_key(rewrite)

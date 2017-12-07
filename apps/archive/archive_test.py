@@ -550,7 +550,7 @@ class ArchiveTestCase(TestCase):
 
     def test_update_associations(self):
         doc = {
-            'editor_state': {
+            'editor_state': [{
                 'entityMap': {
                     '1': {
                         'mutability': 'MUTABLE',
@@ -586,7 +586,7 @@ class ArchiveTestCase(TestCase):
                         }
                     }
                 }
-            },
+            }],
             'associations': {
                 'editor_1': {'guid': 'guid10', 'type': 'picture10', 'alt_text': 'media 10'},
                 'editor_7': {'guid': 'guid7', 'type': 'picture7', 'alt_text': 'media 7'},
