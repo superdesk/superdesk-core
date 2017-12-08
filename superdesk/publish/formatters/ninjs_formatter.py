@@ -274,6 +274,8 @@ class NINJSFormatter(Formatter):
         for key, item in (article.get(ASSOCIATIONS) or {}).items():
             if item:
                 associations[key] = self._transform_to_ninjs(item, subscriber)
+            else:
+                associations[key] = None
         return associations
 
     def _get_subject(self, article):

@@ -253,6 +253,8 @@ class ItemsService(BaseService):
         allowed_items = {}
         if item.get('associations'):
             for _k, v in item.get('associations', {}).items():
+                if not v:
+                    continue
                 # only allow subscribers
                 if (g.get('subscriber') or g.get('user')) in v.get('subscribers', []):
                     hrefs.update(self._process_item_renditions(v))
