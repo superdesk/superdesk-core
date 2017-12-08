@@ -120,7 +120,7 @@ class NinjsFormatterTest(TestCase):
             'signal': [{'name': 'Content Warning', 'code': 'cwarn', 'scheme': 'http://cv.iptc.org/newscodes/signal/'}],
             'extra': {'foo': 'test'},
             'readtime': 0,
-            'products': [1]
+            'products': [{'code': 1, 'name': 'p-1'}]
         }
         self.assertEqual(json.loads(doc), expected)
         article['urgency'] = 1
