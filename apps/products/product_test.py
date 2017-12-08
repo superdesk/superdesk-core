@@ -60,7 +60,7 @@ class ProductTestService(BaseService):
         results = []
         products = list(get_resource_service('products').get(req=req, lookup=lookup))
         for product in products:
-            result = {'product_id': product['_id'], 'matched': True}
+            result = {'product_id': product['_id'], 'matched': True, 'name': product.get('name', '')}
             reason = ''
             if not EnqueueService().conforms_product_targets(product, article):
                 # Here it fails to match due to geo restriction
