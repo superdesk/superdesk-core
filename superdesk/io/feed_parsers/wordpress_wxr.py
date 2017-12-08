@@ -77,14 +77,15 @@ class WPWXRFeedParser(XMLFeedParser):
         self.do_mapping(item, item_xml, namespaces=nsmap)
         if "associations" in item:
             for _, data in item['associations'].items():
+                if data is None:
+                    continue
                 # these 3 fields are mandatory in default setup
                 # we use a space for that to avoid issue when publishing
                 data.setdefault('headline', item['headline'])
                 data.setdefault('alt_text', ' ')
                 data.setdefault('description_text', ' ')
-            if (len(item['associations']) == 1 and
-               not item['body_html'] and
-               'featuremedia' in item.get('associations', {})):
+            if (len(item['associations']) == 1 and not item['body_html'] and
+               item.get('associations', {}).get('featuremedia')):
                 # if the item only contains a feature media, we convert it to picture
                 featuremedia = item['associations']['featuremedia']
                 item['renditions'] = featuremedia['renditions']

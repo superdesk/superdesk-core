@@ -341,6 +341,23 @@ class NinjsFormatterTest(TestCase):
         self.assertEqual('image/jpeg', rendition['mimetype'])
         self.assertNotIn('CropLeft', rendition)
 
+    def test_item_with_empty_associations(self):
+        article = {
+            '_id': 'urn:bar',
+            'guid': 'urn:bar',
+            '_current_version': 1,
+            'type': 'text',
+            'associations': {
+                'image': None
+            }
+        }
+
+        _, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        formatted = json.loads(doc)
+        self.assertIn('associations', formatted)
+        self.assertIn('image', formatted['associations'])
+        self.assertEqual(formatted['associations']['image'], None)
+
     def test_vidible_formatting(self):
         article = {
             '_id': 'tag:aap.com.au:20150613:12345',

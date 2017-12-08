@@ -132,8 +132,12 @@ class HTTPPushService(PublishService):
         media.update(parse_media(item))
 
         for assoc in item.get('associations', {}).values():
+            if assoc is None:
+                continue
             media.update(parse_media(assoc))
             for assoc2 in assoc.get('associations', {}).values():
+                if assoc2 is None:
+                    continue
                 media.update(parse_media(assoc2))
 
         for media_id, rendition in media.items():

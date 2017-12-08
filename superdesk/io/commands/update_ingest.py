@@ -472,7 +472,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
                 update_renditions(item, href, old_item)
 
         # if the item has associated media
-        if 'featuremedia' in item.get('associations', {}):
+        if item.get('associations', {}).get('featuremedia'):
             transfer_renditions(item.get('associations').get('featuremedia').get('renditions', {}))
             # wire up the id of the associated feature media to the ingested one
             guid = item.get('associations').get('featuremedia').get('guid')

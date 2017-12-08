@@ -86,9 +86,10 @@ class NINJSFeedParser(FeedParser):
 
         if ninjs.get('associations', {}).get('featuremedia'):
             child_ninjs = ninjs.get('associations', {}).get('featuremedia')
-            self.items.append(self._transform_from_ninjs(child_ninjs))
-            if child_ninjs.get('type') == 'picture' and child_ninjs.get('body_text'):
-                child_ninjs['alt_text'] = child_ninjs.get('body_text')
+            if child_ninjs:
+                self.items.append(self._transform_from_ninjs(child_ninjs))
+                if child_ninjs.get('type') == 'picture' and child_ninjs.get('body_text'):
+                    child_ninjs['alt_text'] = child_ninjs.get('body_text')
             item['associations'] = deepcopy(ninjs.get('associations'))
 
         if ninjs.get('renditions', {}).get('baseImage'):

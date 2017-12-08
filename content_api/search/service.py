@@ -128,10 +128,12 @@ class SearchService(ItemsService):
         """
         allowed_items = {}
         if item.get('associations'):
-            for _k, v in item.get('associations', {}).items():
+            for k, v in item.get('associations', {}).items():
+                if v is None:
+                    continue
                 self._map_item(v)
                 v['_id'] = v.get('guid', v.get('_id'))
-                allowed_items[_k] = v
+                allowed_items[k] = v
 
         item['associations'] = allowed_items
 
