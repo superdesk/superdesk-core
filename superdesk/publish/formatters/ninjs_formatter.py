@@ -149,7 +149,7 @@ class NINJSFormatter(Formatter):
             ninjs['description_html'] = self.append_body_footer(article)
 
         if article.get('place'):
-            ninjs['place'] = self._format_place(article['place'])
+            ninjs['place'] = self._format_place(article)
 
         if article.get('profile'):
             ninjs['profile'] = self._format_profile(article['profile'])
@@ -310,8 +310,12 @@ class NINJSFormatter(Formatter):
     def _format_qcodes(self, items):
         return [{'name': item.get('name'), 'code': item.get('qcode')} for item in items]
 
-    def _format_place(self, items):
-        locator_map = superdesk.get_resource_service('vocabularies').find_one(req=None, _id='locators')
+    def _format_place(self, article):
+        vocabularies_service = superdesk.get_resource_service('vocabularies')
+        locator_map = vocabularies_service.find_one(req=None, _id='locators')
+        if locator_map and 'items' in locator_map:
+            locator_map['items'] = vocabularies_service.get_locale_vocabulary(
+                locator_map.get('items'), article.get('language'))
 
         def getLabel(item):
             locators = [l for l in locator_map.get('items', []) if l['qcode'] == item.get('qcode')]
@@ -323,7 +327,7 @@ class NINJSFormatter(Formatter):
             else:
                 return item.get('name')
 
-        return [{'name': getLabel(item), 'code': item.get('qcode')} for item in items]
+        return [{'name': getLabel(item), 'code': item.get('qcode')} for item in article['place']]
 
     def _format_profile(self, profile):
         return superdesk.get_resource_service('content_types').get_output_name(profile)
@@ -350,8 +354,11 @@ class NINJSFormatter(Formatter):
 
     def _format_authors(self, article):
         users_service = superdesk.get_resource_service('users')
-        vocabularies_service = superdesk.get_resource_service("vocabularies")
+        vocabularies_service = superdesk.get_resource_service('vocabularies')
         job_titles_voc = vocabularies_service.find_one(None, _id='job_titles')
+        if job_titles_voc and 'items' in job_titles_voc:
+            job_titles_voc['items'] = vocabularies_service.get_locale_vocabulary(
+                job_titles_voc.get('items'), article.get('language'))
         job_titles_map = {v['qcode']: v['name'] for v in job_titles_voc['items']} if job_titles_voc is not None else {}
 
         authors = []
