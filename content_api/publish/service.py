@@ -46,7 +46,8 @@ class PublishService(BaseService):
             doc.setdefault('versioncreated', now)
             doc.setdefault(config.VERSION, item.get(config.VERSION, 1))
             for _, assoc in doc.get(ASSOCIATIONS, {}).items():
-                assoc.setdefault('subscribers', [str(subscriber[config.ID_FIELD]) for subscriber in subscribers])
+                if assoc:
+                    assoc.setdefault('subscribers', [str(subscriber[config.ID_FIELD]) for subscriber in subscribers])
             doc['subscribers'] = [str(sub['_id']) for sub in subscribers]
             if 'evolvedfrom' in doc:
                 parent_item = self.find_one(req=None, _id=doc['evolvedfrom'])

@@ -47,13 +47,13 @@ class CorrectPublishService(BasePublishService):
             super().set_state(original, updates)
 
     def on_update(self, updates, original):
+        update_associations(updates)
         CropService().validate_multiple_crops(updates, original)
         super().on_update(updates, original)
         updates[ITEM_OPERATION] = ITEM_CORRECT
         updates['versioncreated'] = utcnow()
         updates['correction_sequence'] = original.get('correction_sequence', 1) + 1
         set_sign_off(updates, original)
-        update_associations(updates)
 
     def on_updated(self, updates, original):
         """Runs on update
