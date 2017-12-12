@@ -50,6 +50,7 @@ logger = logging.getLogger(__name__)
 
 ANNOTATION = 'ANNOTATION'
 MEDIA = 'MEDIA'
+TABLE = 'TABLE'
 
 
 def filter_empty_vals(data):
@@ -408,6 +409,13 @@ class NINJSFormatter(Formatter):
         elt = DOM.parse_html(props['data']['html'])
         return DOM.create_element('div', {'class': 'embed-block'}, elt)
 
+    def _render_table(self, props):
+        # This code just fix the crash when the text contains tables. It will be fixed by processing
+        # of annotation on frontend
+        td = DOM.create_element('td', {}, 'Table not supported')
+        tr = DOM.create_element('tr', {}, td)
+        return DOM.create_element('table', {}, tr)
+
     def _parse_editor_state(self, article, ninjs):
         """Parse editor_state (DraftJs internals) to retrieve annotations
 
@@ -427,7 +435,11 @@ class NINJSFormatter(Formatter):
                 ENTITY_TYPES.HORIZONTAL_RULE: lambda props: DOM.create_element('hr'),
                 ENTITY_TYPES.EMBED: self._render_embed,
                 MEDIA: self._render_media,
-                ANNOTATION: self._render_annotation}}
+                ANNOTATION: self._render_annotation,
+                TABLE: self._render_table,
+            }
+        }
+
         renderer = HTML(config)
 
         for block in blocks:
