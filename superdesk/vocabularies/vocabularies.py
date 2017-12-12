@@ -228,6 +228,7 @@ class VocabulariesService(BaseService):
         if not all_rights or not all_rights.get('items'):
             return {}
         try:
+            all_rights['items'] = self.get_locale_vocabulary(all_rights.get('items'), item.get('language'))
             default_rights = next(info for info in all_rights['items'] if info['name'] == 'default')
         except StopIteration:
             default_rights = None
@@ -252,3 +253,18 @@ class VocabulariesService(BaseService):
             'field_type': None,
             'service': {'$exists': True},
         }))
+
+    def get_locale_vocabulary(self, vocabulary, language):
+        if not vocabulary or not language:
+            return vocabulary
+        locale_vocabulary = []
+        for item in vocabulary:
+            if 'translations' not in item:
+                locale_vocabulary.append(item)
+                continue
+            new_item = item.copy()
+            locale_vocabulary.append(new_item)
+            for field, values in new_item.get('translations', {}).items():
+                if field in new_item and language in values:
+                    new_item[field] = values[language]
+        return locale_vocabulary
