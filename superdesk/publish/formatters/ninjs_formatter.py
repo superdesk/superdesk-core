@@ -45,6 +45,8 @@ from superdesk import text_utils
 from draftjs_exporter.html import HTML
 from draftjs_exporter.dom import DOM
 from draftjs_exporter.constants import ENTITY_TYPES
+from superdesk import etree as sd_etree
+from functools import partial
 
 logger = logging.getLogger(__name__)
 
@@ -405,9 +407,11 @@ class NINJSFormatter(Formatter):
     def _render_link(self, props):
         return DOM.create_element('a', {'href': props.get('link', {}).get('href', '')}, props['children'])
 
-    def _render_embed(self, props):
-        elt = DOM.parse_html(props['data']['html'])
-        return DOM.create_element('div', {'class': 'embed-block'}, elt)
+    def _render_embed(self, embeds, props):
+        try:
+            return embeds.pop(0)
+        except IndexError:
+            return ""
 
     def _render_table(self, props):
         # This code just fix the crash when the text contains tables. It will be fixed by processing
@@ -425,15 +429,18 @@ class NINJSFormatter(Formatter):
         :param ninjs: ninjs item which will be formatted
         """
         blocks = article['editor_state'][0]['blocks']
+
         blocks_map = {}
         ann_idx = 0
         data = {}
+        body_html_elt = sd_etree.parse_html(article['body_html'], 'html')
+        embeds = body_html_elt.xpath('//div[@class="embed-block"]')
         config = {
             'engine': 'lxml',
             'entity_decorators': {
                 ENTITY_TYPES.LINK: self._render_link,
                 ENTITY_TYPES.HORIZONTAL_RULE: lambda props: DOM.create_element('hr'),
-                ENTITY_TYPES.EMBED: self._render_embed,
+                ENTITY_TYPES.EMBED: partial(self._render_embed, embeds),
                 MEDIA: self._render_media,
                 ANNOTATION: self._render_annotation,
                 TABLE: self._render_table,
