@@ -25,4 +25,5 @@ def init_app(app):
     app.client_config.update({
         'schema': app.config.get('SCHEMA'),
         'editor': app.config.get('EDITOR'),
+        'feedback_url': app.config.get('FEEDBACK_URL'),
     })
