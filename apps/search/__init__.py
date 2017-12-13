@@ -63,7 +63,7 @@ class SearchService(superdesk.Service):
         elif repo == 'archived':
             query = {'and': [{'term': {'_type': 'archived'}}]}
 
-        if invisible_stages and (repo == 'archive' or repo == 'published'):
+        if invisible_stages and repo != 'ingest':
             query['and'].append({'not': {'terms': {'task.stage': invisible_stages}}})
 
         return query

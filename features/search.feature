@@ -89,29 +89,31 @@ Feature: Search Feature
         Then we get response code 403
 
     @auth
-    Scenario: Search returns archived items in Invisible stages without desk membership
-        Given "users"
+    Scenario: Search archived items in Invisible stages
+        Given "desks"
         """
-        [{"username": "foo", "email": "foo@bar.com", "is_active": true, "sign_off": "abc"}]
-        """
-        And "desks"
-        """
-        [{"name": "Sports Desk", "members": [{"user": "#users._id#"}]}]
+        [{"name": "Sports Desk", "members": [{"user": "#CONTEXT_USER_ID#"}]}]
         """
         And "archived"
             """
             [{"item_id": "123", "guid": "123", "type": "text", "headline": "test", "slugline": "slugline",
               "genre": [{"name": "Broadcast Script", "qcode": "Broadcast Script"}], "headline": "headline",
               "anpa_category" : [{"qcode" : "e", "name" : "Entertainment"}], "state": "published",
-              "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#users._id#"},
-              "subject":[{"qcode": "17004000", "name": "Statistics"}], "body_html": "Test Document body", "_current_version": 2}]
+              "task": {
+                "desk": "#desks._id#",
+                "stage": "#desks.incoming_stage#",
+                "user": "#CONTEXT_USER_ID#"
+                },
+              "subject":[{"qcode": "17004000", "name": "Statistics"}],
+              "body_html": "Test Document body", "_current_version": 2}]
             """
         When we post to "/archive"
             """
             [{"guid": "item1", "state": "in_progress", "task": {"desk": "#desks._id#",
-            "stage": "#desks.incoming_stage#", "user": "#users._id#"}}]
+            "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}]
             """
         Then we get response code 201
+        And we store "current_user" with value "#CONTEXT_USER_ID#" to context
         When we get "/search"
         Then we get list with 2 items
         When we patch "/stages/#desks.incoming_stage#"
@@ -120,12 +122,25 @@ Feature: Search Feature
             """
         Then we get response code 200
         When we get "/search"
-        Then we get list with 1 items
+        Then we get list with 2 items
+        When we get "/archive/#archive._id#"
+        Then we get response code 200
+        When we login as user "foo" with password "bar" and user type "user"
+        When we get "/search"
+        Then we get list with 0 items
         When we get "/archive/#archive._id#"
         Then we get response code 403
+        When we patch "desks/#desks._id#"
+        """
+        { "members": [{"user": "#CONTEXT_USER_ID#"}, {"user": "#current_user#"}]}
+        """
+        Then we get response code 200
+        When we get "/search"
+        Then we get list with 2 items
+        When we get "/archive/#archive._id#"
+        Then we get response code 200
 
-
-    @auth @test
+    @auth
     Scenario: Search Invisible stages with desk membership
         Given empty "desks"
         And the "validators"
