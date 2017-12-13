@@ -210,9 +210,11 @@
         "type": "unmanageable",
         "items": [
             {"is_active": true, "name": "All", "qcode": "all",
-                "formats": [{"name": "NINJS", "qcode": "ninjs"}, {"name": "NewsML G2", "qcode": "newsmlg2"}]},
+                "formats": [{"name": "NINJS", "qcode": "ninjs"}, {"name": "NewsML G2", "qcode": "newsmlg2"},
+                {"name": "Newsroom NINJS", "qcode": "newsroom ninjs"}]},
             {"is_active": true, "name": "Digital/Internet", "qcode": "digital",
-                "formats": [{"name": "NINJS", "qcode": "ninjs"}, {"name": "NewsML G2", "qcode": "newsmlg2"}]},
+                "formats": [{"name": "NINJS", "qcode": "ninjs"}, {"name": "NewsML G2", "qcode": "newsmlg2"},
+                {"name": "Newsroom NINJS", "qcode": "newsroom ninjs"}]},
             {"is_active": true, "name": "Wire/Paper", "qcode": "wire",
                 "formats": [{"name": "NITF", "qcode": "nitf"}]}
         ]
