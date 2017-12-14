@@ -57,6 +57,11 @@ class ArchiveRewriteService(Service):
                                                existing_item=update_document,
                                                desk_id=doc.get('desk_id'))
 
+        if 'body_html' in rewrite:
+            if 'editor_state' in original:
+                rewrite['editor_state'] = original['editor_state']
+            update_associations(rewrite)
+
         if update_document:
             # process the existing story
             archive_service.patch(update_document[config.ID_FIELD], rewrite)
@@ -76,11 +81,6 @@ class ArchiveRewriteService(Service):
         get_resource_service('archive_broadcast').on_broadcast_master_updated(ITEM_CREATE,
                                                                               item=original,
                                                                               rewrite_id=ids[0])
-
-        if 'body_html' in rewrite:
-            if 'editor_state' in original:
-                rewrite['editor_state'] = original['editor_state']
-            update_associations(rewrite)
 
         doc.clear()
         doc.update(rewrite)
