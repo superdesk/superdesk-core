@@ -1,15 +1,69 @@
 # Superdesk Server Changelog
 
-## [UNRELEASED]
+## [1.9] 2017-12-14
+
+### Fixed
+
+- Reset description when abstract is empty in NINJS format.
+- Fix update of editor state, extra fields and associations on rewrite.
+- Avoid overwriting assocations data if there was no update on the associated item.
+- Fix the update of image metadata on correction.
+- Set Flask version to match Eve.
+- Fix `MEDIA_PREFIX` setting for Content API.
+- Fix Superdesk NINJS Schema.
+- Refactor purging of audit collection.
+- Reorder fields on default content profile.
+- Fix parsers for AP and DPA.
+- Validate SMS message when SMS is enabled.
+- Fix image upload for images requiring a rotation.
+- Abort sending items to readonly stage.
 
 ### Added
 
+- Add annotations field to item schema.
+- Add support for vocabulary items translations.
+- Add `firstpublished` field to NINJS format.
+- Add Slack channel name to desks and Slack user name to users.
+- Add setting for basic content type schema and editor.
+- Add annotations types vocabulary.
+- Add custom embed field support.
+- Add custom media field support.
+- Add mongo index to `archive_history` and `legal_archive_history`.
+- Add support for extra fields in filter conditions.
+- Add support for extra fields in content profile.
+- Add support for signatures to HTTP Push output.
+- Add Authors to NINJS format.
+- Add Job title vocabulary.
+- Add time to read into NINJS.
+- Add Contacts resource.
+- Add Author roles vocabulary.
+- Add setting for Publish Queue expiry.
+- Add NINJS parser for ingesting of text with featuremedia.
+- Add helper text for custom fields.
+- Add author flag to users.
+- Add attachments resource with NINJS output support.
+- Allow extra fields in item schema.
+- Add desktop notifications to user preferences.
+- Add publisher Livesite Editor privilege.
+- Enable events publishing.
+- Add support for language in content profile.
+- Add SAML Auth method.
+- Allow creation of new Vocabularies.
 - Added reading time to ninjs output (`readtime` property)
 - Added authors to ninjs output (`authors` property)
 
 ### Changed
 
+- Make websocket exchange name configurable.
+- Simplify email validation.
+- Make user sign-off field nullable.
+- Remove `SERVER_NAME` and `URL_PROTOCOL` settings.
+- Upgrade LDAP package.
+- Add file extension to urls for local media storage.
+- Enable DELETE for vocabularies.
 - Moved non etree releated methods from `etree` module to the new `text_utils` one
+- Improved error handling in FTP ingest.
+- Takes are removed from core.
 
 ## [1.8.6] 2017-10-11
 
