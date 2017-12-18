@@ -686,6 +686,14 @@ class CreateItemMethodTestCase(RssIngestServiceTest):
         self.assertEqual('tag:www.nrk.no:1.13362571', items[0]['guid'])
         self.assertIn(items[0]['uri'], items[0]['body_html'])
 
+    def test_guid_not_set(self):
+        provider = {'config': {'url': 'http://example.com/rss'}}
+        response = RssResponse()
+        response.content = nrk_xml.replace('<guid isPermaLink="false">1.13362571</guid>', '')
+        with mock.patch('superdesk.io.feeding_services.rss.requests.get', return_value=response):
+            items = self.instance._update(provider, None)[0]
+        self.assertEqual('tag:www.nrk.no:finnmark:stanset-ikke-for-fotgjenger-1.13362571', items[0]['guid'])
+
 
 class CreateImageItemsMethodTestCase(RssIngestServiceTest):
     """Tests for the _create_image_items() method."""

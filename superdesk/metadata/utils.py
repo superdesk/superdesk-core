@@ -12,6 +12,11 @@ from datetime import datetime
 from uuid import uuid4
 from flask import current_app as app
 
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
+
 from superdesk.utils import SuperdeskBaseEnum
 from .item import GUID_TAG, GUID_NEWSML, GUID_FIELD, ITEM_TYPE, CONTENT_TYPE
 
@@ -88,6 +93,15 @@ def generate_tag(domain, id):
     :param id: local id
     """
     return 'tag:{}:{}'.format(domain, id)
+
+
+def generate_tag_from_url(url):
+    """Generate tag from given url.
+
+    :param url
+    """
+    parsed = urlparse(url)
+    return generate_tag(parsed.netloc, parsed.path.lstrip('/').replace('/', ':'))
 
 
 def is_normal_package(doc):
