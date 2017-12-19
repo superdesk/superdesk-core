@@ -270,7 +270,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'session:gc': {
         'task': 'apps.auth.session_purge',
-        'schedule': timedelta(minutes=20)
+        'schedule': timedelta(minutes=5)
     },
     'content:gc': {
         'task': 'apps.archive.content_expiry',

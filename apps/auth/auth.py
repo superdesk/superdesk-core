@@ -10,12 +10,15 @@
 
 import flask
 import logging
+import superdesk
+
+from datetime import timedelta
+from flask import request, current_app as app
 from eve.auth import TokenAuth
-from flask import request
 from superdesk.resource import Resource
 from superdesk.errors import SuperdeskApiError
 from superdesk import get_resource_service, get_resource_privileges, get_intrinsic_privileges
-import superdesk
+from superdesk.utc import utcnow
 
 
 logger = logging.getLogger(__name__)
@@ -62,11 +65,13 @@ class AuthResource(Resource):
         },
         'user': Resource.rel('users', True)
     }
+
     resource_methods = ['POST']
     item_methods = ['GET', 'DELETE']
     public_methods = ['POST', 'DELETE']
     extra_response_fields = ['user', 'token', 'username']
     datasource = {'source': 'auth'}
+    mongo_indexes = {'token': ([('token', 1)], {'background': True})}
 
 
 superdesk.intrinsic_privilege('auth', method=['DELETE'])
@@ -126,14 +131,23 @@ class SuperdeskTokenAuth(TokenAuth):
         raise SuperdeskApiError.forbiddenError()
 
     def check_auth(self, token, allowed_roles, resource, method):
-        """Check if given token is valid"""
-        auth_token = get_resource_service('auth').find_one(token=token, req=None)
+        """Check if given token is valid.
+
+        If token is valid it updates session and checks permissions.
+        """
+        auth_service = get_resource_service('auth')
+        user_service = get_resource_service('users')
+        auth_token = auth_service.find_one(token=token, req=None)
         if auth_token:
             user_id = str(auth_token['user'])
-            flask.g.user = get_resource_service('users').find_one(req=None, _id=user_id)
-            flask.g.role = get_resource_service('users').get_role(flask.g.user)
+            flask.g.user = user_service.find_one(req=None, _id=user_id)
+            flask.g.role = user_service.get_role(flask.g.user)
             flask.g.auth = auth_token
             flask.g.auth_value = auth_token['user']
+            if method in ('POST', 'PUT', 'PATCH') or method == 'GET' and not request.args.get('auto'):
+                now = utcnow()
+                if auth_token[app.config['LAST_UPDATED']] + timedelta(seconds=30) < now:  # update once per 30s max
+                    auth_service.update_session({app.config['LAST_UPDATED']: now})
             return self.check_permissions(resource, method, flask.g.user)
 
     def authorized(self, allowed_roles, resource, method):

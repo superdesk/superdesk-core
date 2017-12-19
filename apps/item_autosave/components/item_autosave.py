@@ -13,7 +13,6 @@ from apps.common.components.base_component import BaseComponent
 from apps.common.models.utils import get_model
 from apps.item_lock.models.item import ItemModel
 from superdesk.errors import SuperdeskApiError
-from superdesk import get_resource_service
 
 
 class ItemAutosave(BaseComponent):
@@ -44,7 +43,6 @@ class ItemAutosave(BaseComponent):
             autosave_model.update({'_id': item_id}, item, etag)
         self.app.on_item_autosaved(item)
         updates.update(item)
-        get_resource_service('auth').update_session()
         return updates
 
     def clear(self, item_id):
