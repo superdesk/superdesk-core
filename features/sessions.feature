@@ -12,5 +12,3 @@ Feature: Sessions
     Scenario: Fetch single session by session id
         Given we have sessions "/sessions"
         Then we get session by id
-
-
