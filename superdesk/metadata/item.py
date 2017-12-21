@@ -103,7 +103,8 @@ metadata_schema = {
     },
     'firstpublished': {
         'type': 'datetime',
-        'required': False
+        'required': False,
+        'nullable': True,
     },
 
     # Ingest Details

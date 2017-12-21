@@ -17,7 +17,10 @@ Feature: Duplication of Content
           "original_creator": "#CONTEXT_USER_ID#",
           "state": "submitted", "source": "REUTERS", "subject":[{"qcode": "17004000", "name": "Statistics"}],
           "body_html": "Test Document body",
-          "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}]
+          "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+          "firstcreated": "2017-10-10T10:10:10+0000",
+          "firstpublished": "2017-10-10T12:12:12+0000"
+      }]
       """
 
     @auth @notification
@@ -46,7 +49,11 @@ Feature: Duplication of Content
       """
       {"state": "submitted", "_current_version": 4, "source": "AAP",
        "task": {"desk": "#desks._id#", "stage": "#desks.working_stage#", "user": "#CONTEXT_USER_ID#"},
-       "original_id": "123"}
+       "original_id": "123",
+       "firstcreated": "__now__",
+       "versioncreated": "__now__",
+       "firstpublished": null
+      }
       """
       Then there is no "last_production_desk" in task
       And there is no "last_authoring_desk" in task

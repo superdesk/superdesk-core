@@ -40,7 +40,7 @@ class ArchivePublishService(BasePublishService):
                 raise SuperdeskApiError.badRequestError("Empty package cannot be published!")
 
     def on_update(self, updates, original):
-        if 'firstpublished' not in original:
+        if not original.get('firstpublished'):
             updates.setdefault('firstpublished', utcnow())
         updates[ITEM_OPERATION] = ITEM_PUBLISH
         super().on_update(updates, original)
