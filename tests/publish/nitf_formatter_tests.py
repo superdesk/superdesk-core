@@ -310,6 +310,52 @@ class NitfFormatterTest(TestCase):
             </div>""")
         self.assertEqual(etree.tostring(nitf, encoding='unicode'), expected)
 
+    def test_html2nitf_style_cleaning(self):
+        """Check that <style> element and style attribute are removed from HTML"""
+        html = etree.fromstring(dedent("""\
+            <div>
+                <style type="text/css">
+                    p { margin-bottom: 0.25cm; line-height: 120%; }a:link {  }
+                </style>
+                <p style="margin-bottom: 0cm; line-height: 100%">Test bla bla bla</p>
+                <p style="margin-bottom: 0cm; line-height: 100%">
+                    <br/>
+                </p>
+                <p style="margin-bottom: 0cm; line-height: 100%">
+                    <font face="DejaVu Sans, sans-serif">
+                        <font style="font-size: 14pt" size="4">
+                            <i>
+                                <u>
+                                    <b>test</b>
+                                </u>
+                            </i>
+                        </font>
+                    </font>
+                </p>
+                <p style="margin-bottom: 0cm; line-height: 100%">toto</p>
+                <p style="margin-bottom: 0cm; line-height: 100%">titi</p>
+            </div>
+            """))
+
+        nitf = self.formatter.html2nitf(html, attr_remove=['style'])
+
+        expected = dedent("""\
+            <div>
+                <p>Test bla bla bla</p>
+                <p>
+                </p>
+                <p>
+                    <em class="italic">
+                        <em class="underscore">
+                            <em class="bold">test</em>
+                        </em>
+                    </em>
+                </p>
+                <p>toto</p>
+                <p>titi</p>
+            </div>""").replace('\n', '').replace(' ', '')
+        self.assertEqual(etree.tostring(nitf, encoding='unicode').replace('\n', '').replace(' ', ''), expected)
+
     def test_table(self):
         html_raw = """
         <div>
