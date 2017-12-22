@@ -191,9 +191,9 @@ class BasePublishService(BaseService):
             if updates.get(EMBARGO) and not original.get(EMBARGO):
                 raise SuperdeskApiError.badRequestError("Embargo can't be set after publishing")
 
-        if self.publish_type in [ITEM_CORRECT, ITEM_KILL]:
+        if self.publish_type == ITEM_KILL:
             if updates.get('dateline'):
-                raise SuperdeskApiError.badRequestError("Dateline can't be modified after publishing")
+                raise SuperdeskApiError.badRequestError("Dateline can't be modified on kill")
 
         if self.publish_type == ITEM_PUBLISH and updated.get('rewritten_by'):
             rewritten_by = get_resource_service(ARCHIVE).find_one(req=None, _id=updated.get('rewritten_by'))
