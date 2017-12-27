@@ -19,6 +19,10 @@ from apps.archive.common import get_utc_schedule
 from superdesk.text_utils import get_text
 
 
+class EraseElement(Exception):
+    """Remove entirely element"""
+
+
 class NITFFormatter(Formatter):
     """NITF Formatter for Superdesk
 
@@ -135,6 +139,7 @@ class NITFFormatter(Formatter):
             'tr': {},
             'td': {},
             'th': {},
+            'style': {'nitf': EraseElement},  # <style> may be there in case of bad paste
         }
 
     def format(self, article, subscriber, codes=None):
@@ -215,6 +220,11 @@ class NITFFormatter(Formatter):
 
                 # and we continue with the same index, so new children are parsed
                 continue
+            except EraseElement:
+                # the element need to be fully erased (itself and its children)
+                html_elem.remove(child)
+                children.remove(child)
+                continue
             idx += 1
 
         return html_elem
@@ -241,6 +251,8 @@ class NITFFormatter(Formatter):
         if nitf_elem is not None:
             if nitf_elem == '':
                 raise ValueError("Element need to be removed")
+            elif nitf_elem == EraseElement:
+                raise EraseElement("Element need to be erased")
             html_elem.tag = nitf_elem
 
         if attr_remove is not None:
