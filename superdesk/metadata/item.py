@@ -558,6 +558,9 @@ metadata_schema = {
     'assignment_id': {
         'type': 'string',
         'mapping': not_analyzed
+    },
+    'destination': {
+        'type': 'list'
     }
 }
 
