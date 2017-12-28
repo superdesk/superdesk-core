@@ -60,11 +60,15 @@ def filter_empty_vals(data):
     return dict(filter(lambda x: x[1], data.items()))
 
 
-def format_cv_item(item):
+def get_locale_name(item, language):
+    return item.get('translations', {}).get('name', {}).get(language, None) or item.get('name', '')
+
+
+def format_cv_item(item, language):
     """Format item from controlled vocabulary for output."""
     return filter_empty_vals({
         'code': item.get('qcode'),
-        'name': item.get('name'),
+        'name': get_locale_name(item, language),
         'scheme': item.get('scheme')
     })
 
@@ -283,14 +287,14 @@ class NINJSFormatter(Formatter):
 
     def _get_subject(self, article):
         """Get subject list for article."""
-        return [format_cv_item(item) for item in article.get('subject', [])]
+        return [format_cv_item(item, article.get('language', '')) for item in article.get('subject', [])]
 
     def _get_service(self, article):
         """Get service list for article.
 
         It's using `anpa_category` to populate service field for now.
         """
-        return [format_cv_item(item) for item in article.get('anpa_category', [])]
+        return [format_cv_item(item, article.get('language', '')) for item in article.get('anpa_category', [])]
 
     def _get_renditions(self, article):
         """Get renditions for article."""
