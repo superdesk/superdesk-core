@@ -12,7 +12,6 @@
 
 import superdesk
 
-from os import path
 from lxml import etree
 from lxml.etree import SubElement
 
@@ -124,7 +123,20 @@ class NewsMLG2Formatter(Formatter):
         SubElement(item, 'catalogRef',
                    attrib={'href': 'http://www.iptc.org/std/catalog/catalog.IPTC-G2-Standards_25.xml'})
         self._format_rights(item, article)
+
         item_meta = SubElement(item, 'itemMeta')
+        self._format_item_meta(article, item_meta, item)
+
+        content_meta = SubElement(item, 'contentMeta')
+        self._format_content_meta(article, content_meta, item)
+
+        if article[ITEM_TYPE] in {CONTENT_TYPE.PICTURE, CONTENT_TYPE.AUDIO, CONTENT_TYPE.VIDEO}:
+            self._format_description(article, content_meta)
+            self._format_creditline(article, content_meta)
+
+        return item
+
+    def _format_item_meta(self, article, item_meta, item):
         self._format_itemClass(article, item_meta)
         self._format_provider(item_meta)
         self._format_versioncreated(article, item_meta)
@@ -138,9 +150,8 @@ class NewsMLG2Formatter(Formatter):
         # optional properties
         self._format_ednote(article, item_meta)
         self._format_signal(article, item_meta)
-        self._format_related(article, item_meta)
 
-        content_meta = SubElement(item, 'contentMeta')
+    def _format_content_meta(self, article, content_meta, item):
         SubElement(content_meta, 'urgency').text = str(article.get('urgency', 5))
         self._format_timestamps(article, content_meta)
         self._format_creator(article, content_meta)
@@ -152,12 +163,6 @@ class NewsMLG2Formatter(Formatter):
         self._format_place(article, content_meta)
         self._format_category(article, content_meta)
         self._format_company_codes(article, content_meta, item)
-        self._format_highlights(article, content_meta)
-
-        if article[ITEM_TYPE] in {CONTENT_TYPE.PICTURE, CONTENT_TYPE.AUDIO, CONTENT_TYPE.VIDEO}:
-            self._format_description(article, content_meta)
-            self._format_creditline(article, content_meta)
-        return item
 
     def _format_content(self, article, news_item, nitf):
         """Adds the content set to the xml
@@ -248,31 +253,6 @@ class NewsMLG2Formatter(Formatter):
         else:
             SubElement(item_meta, 'signal', attrib={'qcode': 'sig:update'})
 
-    def _format_related(self, article, item_meta):
-        featured = article.get('associations', {}).get('featuremedia')
-        if featured:
-            orig = featured.get('renditions', {}).get('original')
-            if orig:
-                SubElement(item_meta, 'link', attrib={
-                    'rel': 'irel:seeAlso',
-                    'mimetype': orig.get('mimetype', featured.get('mimetype')),
-                    'href': self._publish_media(orig.get('media')),
-                })
-
-    def _publish_media(self, media):
-        binary = app.media.get(media, 'upload')
-        if binary:
-            filename = '%s.jpg' % str(media)
-            for dest in self.subscriber.get('destinations', []):
-                if dest.get('config', {}).get('file_path'):
-                    file_path = dest['config']['file_path']
-                    if not path.isabs(file_path):
-                        file_path = "/" + file_path
-                    with open(path.join(file_path, filename), 'wb') as output:
-                        output.write(binary.read())
-                        binary.seek(0)
-            return filename
-
     def _format_ednote(self, article, item_meta):
         """Appends the edNote element to the item_meta element.
 
@@ -314,20 +294,6 @@ class NewsMLG2Formatter(Formatter):
                     subj = SubElement(content_meta, 'subject',
                                       attrib={'type': 'cpnat:abstract', 'qcode': 'subj:' + s['qcode']})
                     SubElement(subj, 'name', attrib={XML_LANG: 'en'}).text = s['name']
-
-    def _format_highlights(self, article, content_meta):
-        """Adds highlights id as subject."""
-        names = {}
-        for highlight in article.get('highlights', []):
-            highlight_id = str(highlight)
-            if not names.get(highlight_id):
-                names[highlight_id] = superdesk.get_resource_service('highlights') \
-                    .find_one(req=None, _id=highlight_id) \
-                    .get('name')
-            highlight_name = names.get(highlight_id)
-            attrib = {'type': 'highlight', 'id': highlight_id}
-            subject = SubElement(content_meta, 'subject', attrib=attrib)
-            SubElement(subject, 'name').text = highlight_name
 
     def _format_genre(self, article, content_meta):
         """Appends the genre element to the contentMeta element

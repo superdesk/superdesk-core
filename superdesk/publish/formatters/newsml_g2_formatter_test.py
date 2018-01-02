@@ -947,23 +947,3 @@ class NewsMLG2FormatterTest(TestCase):
                                             'subject[@qcode="loctyp:CountryArea"]'))
         self.assertIsNone(content_meta.find('{http://iptc.org/std/nar/2006-10-01/}'
                                             'subject[@qcode="loctyp:Country"]'))
-
-    def test_highlights(self):
-
-        ids = self.app.data.insert('highlights', [
-            {'name': 'Sports highlights'},
-            {'name': 'Finance highlights'},
-        ])
-
-        article = self.article.copy()
-        article['highlights'] = ids
-        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
-        xml = etree.fromstring(doc.encode('utf-8'))
-        content_meta = xml.find('{http://iptc.org/std/nar/2006-10-01/}itemSet'
-                                '/{http://iptc.org/std/nar/2006-10-01/}newsItem/'
-                                '{http://iptc.org/std/nar/2006-10-01/}contentMeta')
-        subjects = content_meta.findall('{http://iptc.org/std/nar/2006-10-01/}subject[@type="highlight"]')
-        self.assertEqual(2, len(subjects))
-        self.assertEqual(subjects[0].attrib.get('id'), str(ids[0]))
-        name = subjects[0].find('{http://iptc.org/std/nar/2006-10-01/}name')
-        self.assertEqual('Sports highlights', name.text)
