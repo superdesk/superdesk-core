@@ -43,6 +43,7 @@ logger = logging_lib.getLogger(__name__)
 
 # core signals
 item_published = signals.signal('item:published')
+item_update = signals.signal('item:update')
 
 
 class Command(BaseCommand):

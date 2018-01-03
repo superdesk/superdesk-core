@@ -12,8 +12,8 @@ from flask import g, current_app as app
 from superdesk.resource import Resource
 from superdesk.notification import push_notification
 from superdesk.services import BaseService
-from .user_mentions import get_users, get_desks, get_mentions, notify_mentioned_users, notify_mentioned_desks
 from superdesk.errors import SuperdeskApiError
+from .user_mentions import get_users, get_desks, get_mentions, notify_mentioned_users, notify_mentioned_desks
 
 comments_schema = {
     'text': {

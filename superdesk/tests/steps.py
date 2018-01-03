@@ -149,7 +149,7 @@ def json_match(context_data, response_data):
                     found = True
                     break
             if not found:
-                print(item_context, ' not in ', response_data)
+                print(item_context, ' not in ', json.dumps(response_data, indent=2))
                 return False
         return True
     elif not isinstance(context_data, dict):
@@ -1701,20 +1701,30 @@ def step_set_limit(context):
 def step_we_get_email(context):
     data = json.loads(context.text)
     for email in data:
-        assert check_if_email_sent(context, email['body'])
+        assert check_if_email_sent(context, email)
 
 
 @then('we get {count} emails')
 def step_we_get_no_email(context, count):
     assert len(context.outbox) == int(count)
+    if context.text:
+        step_we_get_email(context)
 
 
-def check_if_email_sent(context, body):
+def check_if_email_sent(context, spec):
     if context.outbox:
-        for email in context.outbox:
-            if body in email.body:
-                return True
-        return False
+        for key in spec:
+            found = False
+            values = [getattr(email, key) for email in context.outbox]
+            for value in values:
+                if spec[key] in value:
+                    found = True
+            if not found:
+                print('%s:%s not found in %s' % (key, spec[key], json.dumps(values, indent=2)))
+                return False
+        return True
+    print('no email sent')
+    return False
 
 
 @then('we get activity')

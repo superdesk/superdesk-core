@@ -141,3 +141,115 @@ Feature: News Items Archive Comments
         """
         [{"event": "item:comment", "extra": {"item": "xyz"}, "_created": "__any_value__"}, {"event": "activity"}]
         """
+
+    @auth
+    Scenario: Send notifications on mentions in inline comments
+        Given "users"
+        """
+        [{"username": "foo", "email": "foo@example.com"}]
+        """
+        And "archive"
+        """
+        [{"_id": "xyz", "guid": "testid", "headline": "test"}]
+        """
+
+        When we patch "/archive/xyz"
+        """
+        {"editor_state": [
+            {"blocks": [
+                {"data": {
+                    "ot4i": {
+                        "type": "COMMENT",
+                        "msg": "hello @[foo](user:#users._id#)"
+                    }
+                }}
+            ]}
+        ]}
+        """
+        Then we get updated response
+        """
+        {"editor_state": [
+            {"blocks": [
+                {"data": {
+                    "ot4i": {
+                        "type": "COMMENT",
+                        "msg": "hello @[foo](user:#users._id#)",
+                        "notified": true
+                    }
+                }}
+            ]}
+        ]}
+        """
+
+        Then we get 1 emails
+        """
+        [
+            {
+                "subject": "You were mentioned in a comment by test_user",
+                "body": "hello foo"
+            }
+        ]
+        """
+
+        When we get "/archive/xyz"
+        Then we get existing resource
+        """
+        {"editor_state": [
+            {"blocks": [
+                {"data": {
+                    "ot4i": {
+                        "type": "COMMENT",
+                        "msg": "hello @[foo](user:#users._id#)",
+                        "notified": true
+                    }
+                }}
+            ]}
+        ]}
+        """
+
+        When we patch "/archive/xyz"
+        """
+        {"editor_state": [
+            {"blocks": [
+                {"data": {
+                    "ot4i": {
+                        "type": "COMMENT",
+                        "msg": "hello @[foo](user:#users._id#)",
+                        "notified": true
+                    }
+                }}
+            ]}
+        ]}
+        """
+
+        Then we get 0 emails
+
+        When we patch "/archive/xyz"
+        """
+        {"editor_state": [
+            {"blocks": [
+                {"data": {
+                    "ot4i": {
+                        "type": "COMMENT",
+                        "msg": "hello @[foo](user:#users._id#)",
+                        "notified": true,
+                        "replies": [
+                            {
+                                "msg": "second @[foo](user:#users._id#)"
+                            }
+                        ]
+                    }
+                }}
+            ]}
+        ]}
+        """
+
+        Then we get 1 emails
+        """
+        [
+            {
+                "subject": "You were mentioned in a comment by test_user",
+                "body": "second foo"
+            }
+        ]
+        """
