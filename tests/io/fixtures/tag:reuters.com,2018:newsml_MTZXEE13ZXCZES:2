@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<newsMessage xmlns="http://iptc.org/std/nar/2006-10-01/" xmlns:rtr="http://www.reuters.com/ns/2003/08/content" xmlns:x="http://www.w3.org/1999/xhtml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <header>
+        <sent>2018-01-03T20:13:08.000Z</sent>
+        <sender>reuters.com</sender>
+        <transmitId>
+            tag:reuters.com,2018:newsml_MTZXEE13ZXCZES:2
+        </transmitId>
+        <priority>
+            4
+        </priority>    <!-- destination is repeatable -->
+        <destination>OPTAG</destination>
+        <channel>
+            TXT
+        </channel>
+    </header>
+
+    <itemSet>
+        <newsItem conformance="power" guid="tag:reuters.com,2018:newsml_MTZXEE13ZXCZES" standard="NewsML-G2"
+                  standardversion="2.10" version="2" xml:lang="en-US">
+            <catalogRef
+                    href="http://www.iptc.org/std/catalog/catalog.IPTC-G2-Standards_22.xml"/>
+            <rightsInfo>
+                <copyrightHolder literal="Opta Sports Data"/>
+                <copyrightNotice xml:lang="en-GB">(c)
+                    Copyright Opta Sports Data 2018. All Rights Reserved
+                </copyrightNotice>
+            </rightsInfo>
+
+            <itemMeta>
+                <itemClass qcode="icls:text" rtr:msgType="R"/>
+                <provider literal="reuters.com"/>
+                <versionCreated>2018-01-03T20:13:08.000Z</versionCreated>
+                <firstCreated>
+                    2018-01-03T20:13:08.000Z
+                </firstCreated>        <!-- <embargoed></embargoed> -->
+                <pubStatus
+                        qcode="stat:usable"/>
+                <role qcode="itemRole:N"/>
+                <fileName>
+                    2018-01-03T201308Z_2_MTZXEE13ZXCZES_RTRFIPT_0_SOCCER-PORTUGAL-RESULTS-UPDATE-2.XML
+                </fileName>
+                <generator
+                        versioninfo="00.02.00">FIPus3
+                </generator>
+                <profile versioninfo="00.00.01">
+                    SNI-Text
+                </profile>
+                <service qcode="svc:RTR_TNS"/>
+                <title dir="ltr">UPDATE 2-Primeira Liga
+                    Results
+                </title>
+                <edNote dir="ltr"/>
+                <memberOf creator="trRule:rule15" modified="2018-01-03T20:13:11.000Z" literal="Sports">
+                    <name>Sports</name>
+                </memberOf>
+                <signal qcode="prodId:TXT"/>
+                <signal qcode="var:binMod"/>
+                <signal qcode="edStat:U"/>
+                <signal
+                        qcode="pmt:text"/>
+                <signal qcode="sic:TABLE"/>
+                <rtr:versionedId
+                        guid="tag:reuters.com,2018:newsml_MTZXEE13ZXCZES:2"/>
+            </itemMeta>
+
+            <contentMeta>
+                <urgency>4</urgency>
+                <infoSource literal="Opta Sports Data" qcode="NS:OPTA"
+                            role="cRole:origProv"/>
+                <infoSource
+                        literal="Opta Sports Data" qcode="NS:OPTA" role="cRole:source"/>
+                <infoSource literal="Reuters"
+                            role="cRole:enhancer"/>
+                <infoSource literal="Reuters" role="cRole:redistributor"/>
+                <creator literal="Opta Sports Data"
+                         qcode="NS:OPTA"
+                         role="cRole:source"/>
+                <altId rtr:isOriginal="1" type="idType:USN">MTZXEE13ZXCZES</altId>
+                <language tag="en-US"/>
+                <!-- genre qcode="N2:RSLT" / -->
+                <subject qcode="MCC:SPO"/>
+                <subject qcode="MCCL:SPO"/>
+                <subject qcode="N2:SOC">
+                    <name>Soccer</name>
+                </subject>
+
+                <subject qcode="N2:SOCC">
+                    <name>Soccer</name>
+                </subject>
+
+                <subject qcode="N2:SPO">
+                    <name>Sport</name>
+                </subject>
+                <subject qcode="a1312cat:s"/>
+                <subject qcode="subj:15000000"/>
+                <subject qcode="subj:15054000"/>
+                <slugline
+                        separator="-">SOCCER-PORTUGAL/RESULTS (UPDATE 2)
+                </slugline>
+                <headline dir="ltr">UPDATE
+                    2-Primeira Liga Results
+                </headline>
+                <creditline>Opta Sports
+                    Data
+                </creditline>
+                <description role="descRole:caption">SOCCER-PORTUGAL/RESULTS (UPDATE
+                    2):UPDATE 2-Primeira Liga Results
+                </description>
+                <dateline>2018-01-03 20:13:08
+                    GMT+00:00
+                </dateline>
+            </contentMeta>
+
+            <contentSet>
+                <inlineXML contenttype="application/xhtml+html" wordcount="845">
+                    <html xmlns="http://www.w3.org/1999/xhtml" dir="ltr">
+                        <head>
+                            <title/>
+                        </head>
+                        <body dir="ltr">Jan 3 (OPTA) - Results and fixtures for the Primeira Liga on Wednesday
+                         Desportivo Aves (0) 1 Moreirense (2) 2
+                          Mar&#237;timo (0) 1 Chaves (1) 2
+
+
+                            Thursday, January 4 fixtures (WET/GMT) Vit&#243;ria Set&#250;bal v Estoril (1815/1815)
+                            Portimonense v Belenenses (2015/2015) Saturday, January 6 fixtures (WET/GMT) Sporting
+                            Braga v Rio Ave (2030/2030) Sunday, January 7 fixtures (WET/GMT) Chaves v Desportivo
+                            Aves (1145/1145) Moreirense v Benfica (1600/1600) Sporting CP v Mar&#237;timo
+                            (1800/1800) Porto v Vit&#243;ria Guimar&#227;es (2015/2015) Monday, January 8 fixtures
+                            (WET/GMT) Pa&#231;os de Ferreira v Portimonense (1900/1900) Estoril v Feirense
+                            (2100/2100)
+                        </body>
+                    </html>
+
+                </inlineXML>
+
+            </contentSet>
+
+        </newsItem>
+
+    </itemSet>
+
+</newsMessage>
