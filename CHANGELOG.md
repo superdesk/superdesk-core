@@ -1,5 +1,16 @@
 # Superdesk Server Changelog
 
+## [1.10] 2018-01-05
+
+### Fixed
+
+- Fix NITF Formatter - remove `<styule>` element.
+- Fix RSS ingest for feeds with missing guid field.
+
+### Added
+
+- Add feedback url to client config.
+
 ## [1.9] 2017-12-14
 
 ### Fixed
