@@ -54,3 +54,11 @@ class ANSATestCase(BaseNewMLTwoTestCase):
 
     def test_language(self):
         self.assertEqual('it', self.item[0]['language'])
+
+
+class ReutersOptaTestCase(BaseNewMLTwoTestCase):
+    filename = 'tag:reuters.com,2018:newsml_MTZXEE13ZXCZES:2'
+
+    def test_body(self):
+        self.assertTrue(self.item[0].get('body_html').startswith('<pre>Jan 3 (OPTA) - Results and fixtures for the '
+                                                                 'Primeira'))

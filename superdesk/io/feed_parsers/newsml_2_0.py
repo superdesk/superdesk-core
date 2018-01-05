@@ -17,7 +17,7 @@ from superdesk.errors import ParserError
 from superdesk.io.registry import register_feed_parser
 from superdesk.io.feed_parsers import XMLFeedParser
 from superdesk.io.iptc import subject_codes
-from superdesk.metadata.item import ITEM_TYPE
+from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
 from superdesk.metadata.utils import is_normal_package
 
 XMLNS = 'http://iptc.org/std/nar/2006-10-01/'
@@ -211,6 +211,8 @@ class NewsMLTwoFeedParser(XMLFeedParser):
                 item['word_count'] = int(content.attrib['wordcount'])
                 content = self.parse_inline_content(content)
                 item['body_html'] = content.get('content')
+                if 'format' in content:
+                    item['format'] = content.get('format')
             elif content.tag == self.qname('inlineData'):
                 item['body_html'] = content.text
                 item['word_count'] = int(content.attrib['wordcount'])
@@ -233,7 +235,11 @@ class NewsMLTwoFeedParser(XMLFeedParser):
 
         content = dict()
         content['contenttype'] = tree.attrib['contenttype']
-        content['content'] = "\n".join(elements)
+        if len(elements) > 0:
+            content['content'] = "\n".join(elements)
+        elif body.text:
+            content['content'] = '<pre>' + body.text + '</pre>'
+            content['format'] = CONTENT_TYPE.PREFORMATTED
         return content
 
     def parse_remote_content(self, tree):
