@@ -554,7 +554,7 @@ Feature: Fetch From Ingest
                     },
                     "viewImage":{
                         "width" : 640,
-                        "height" : 491,
+                        "height" : 490,
                         "mimetype" : "image/jpeg"
                     }
                  }

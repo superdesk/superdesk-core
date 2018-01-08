@@ -11,6 +11,7 @@
 """NewsML G2 Superdesk formatter"""
 
 import superdesk
+
 from lxml import etree
 from lxml.etree import SubElement
 
@@ -25,6 +26,7 @@ from superdesk.errors import FormatterError
 from superdesk.publish.formatters.nitf_formatter import NITFFormatter
 from superdesk.metadata.packages import REFS, RESIDREF, ROLE, GROUPS, GROUP_ID, ID_REF
 from superdesk.filemeta import get_filemeta
+from superdesk import etree as sd_etree
 from apps.archive.common import ARCHIVE, get_utc_schedule
 
 XML_LANG = "{http://www.w3.org/XML/1998/namespace}lang"
@@ -58,6 +60,7 @@ class NewsMLG2Formatter(Formatter):
         :raises FormatterError: if the formatter fails to format an article
         """
         try:
+            self.subscriber = subscriber
             pub_seq_num = superdesk.get_resource_service('subscribers').generate_sequence_number(subscriber)
             is_package = self._is_package(article)
             news_message = etree.Element('newsMessage', attrib=self._debug_message_extra, nsmap=self._message_nsmap)
@@ -120,7 +123,20 @@ class NewsMLG2Formatter(Formatter):
         SubElement(item, 'catalogRef',
                    attrib={'href': 'http://www.iptc.org/std/catalog/catalog.IPTC-G2-Standards_25.xml'})
         self._format_rights(item, article)
+
         item_meta = SubElement(item, 'itemMeta')
+        self._format_item_meta(article, item_meta, item)
+
+        content_meta = SubElement(item, 'contentMeta')
+        self._format_content_meta(article, content_meta, item)
+
+        if article[ITEM_TYPE] in {CONTENT_TYPE.PICTURE, CONTENT_TYPE.AUDIO, CONTENT_TYPE.VIDEO}:
+            self._format_description(article, content_meta)
+            self._format_creditline(article, content_meta)
+
+        return item
+
+    def _format_item_meta(self, article, item_meta, item):
         self._format_itemClass(article, item_meta)
         self._format_provider(item_meta)
         self._format_versioncreated(article, item_meta)
@@ -135,7 +151,7 @@ class NewsMLG2Formatter(Formatter):
         self._format_ednote(article, item_meta)
         self._format_signal(article, item_meta)
 
-        content_meta = SubElement(item, 'contentMeta')
+    def _format_content_meta(self, article, content_meta, item):
         SubElement(content_meta, 'urgency').text = str(article.get('urgency', 5))
         self._format_timestamps(article, content_meta)
         self._format_creator(article, content_meta)
@@ -147,11 +163,6 @@ class NewsMLG2Formatter(Formatter):
         self._format_place(article, content_meta)
         self._format_category(article, content_meta)
         self._format_company_codes(article, content_meta, item)
-
-        if article[ITEM_TYPE] in {CONTENT_TYPE.PICTURE, CONTENT_TYPE.AUDIO, CONTENT_TYPE.VIDEO}:
-            self._format_description(article, content_meta)
-            self._format_creditline(article, content_meta)
-        return item
 
     def _format_content(self, article, news_item, nitf):
         """Adds the content set to the xml
@@ -392,7 +403,8 @@ class NewsMLG2Formatter(Formatter):
         :param article:
         :param content_meta:
         """
-        SubElement(content_meta, 'description', attrib={'role': 'drol:caption'}).text = article.get('description', '')
+        text = article.get('description_text', article.get('description', ''))
+        SubElement(content_meta, 'description', attrib={'role': 'drol:caption'}).text = text
 
     def _format_creditline(self, article, content_meta):
         """Append the creditLine to the contentMeta for a picture
@@ -411,8 +423,9 @@ class NewsMLG2Formatter(Formatter):
         """
         groupSet = SubElement(item, 'groupSet', attrib={'root': 'root'})
         for group in article.get(GROUPS, []):
-            group_Elem = SubElement(groupSet, 'group', attrib={'id': group.get(GROUP_ID),
-                                                               'role': group.get(ROLE)})
+            attrib = {'id': group.get(GROUP_ID),
+                      'role': group.get(ROLE, 'grpRole:%s' % group.get(GROUP_ID))}
+            group_Elem = SubElement(groupSet, 'group', attrib=attrib)
             for ref in group.get(REFS, []):
                 if ID_REF in ref:
                     SubElement(group_Elem, 'groupRef', attrib={'idref': ref.get(ID_REF)})
@@ -422,13 +435,16 @@ class NewsMLG2Formatter(Formatter):
                         archive_item = superdesk.get_resource_service(ARCHIVE).find_one(req=None,
                                                                                         _id=ref.get(RESIDREF))
                         if archive_item:
-                            itemRef = SubElement(group_Elem, 'itemRef',
-                                                 attrib={'residref': ref.get(RESIDREF),
-                                                         'contenttype': 'application/vnd.iptc.g2.newsitem+xml'})
-                            SubElement(itemRef, 'itemClass', attrib={'qcode': 'ninat:' + ref.get(ITEM_TYPE, 'text')})
-                            self._format_pubstatus(archive_item, itemRef)
-                            self._format_headline(archive_item, itemRef)
-                            self._format_slugline(archive_item, itemRef)
+                            self._format_itemref(group_Elem, ref, archive_item)
+
+    def _format_itemref(self, group, ref, item):
+        attrib = {'residref': ref.get(RESIDREF), 'contenttype': 'application/vnd.iptc.g2.newsitem+xml'}
+        itemRef = SubElement(group, 'itemRef', attrib=attrib)
+        SubElement(itemRef, 'itemClass', attrib={'qcode': 'ninat:' + ref.get(ITEM_TYPE, 'text')})
+        self._format_pubstatus(item, itemRef)
+        self._format_headline(item, itemRef)
+        self._format_slugline(item, itemRef)
+        return itemRef
 
     def _format_contentset(self, article, item):
         """Constructs the contentSet element in a picture, video and audio newsItem.

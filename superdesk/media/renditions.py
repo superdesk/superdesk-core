@@ -63,7 +63,12 @@ def generate_renditions(original, media_id, inserted, file_type, content_type,
     if ext in ('JPG', 'jpg'):
         ext = 'jpeg'
     ext = ext if ext in ('jpeg', 'gif', 'tiff', 'png') else 'png'
-    for rendition, rsize in rendition_config.items():
+    # make baseImage rendition first
+    base_image = rendition_config.pop('baseImage', None)
+    specs = list(rendition_config.items())
+    if base_image:
+        specs.insert(0, ('baseImage', base_image))
+    for rendition, rsize in specs:
         cropping_data = {}
         # reset
         original.seek(0)
@@ -83,6 +88,8 @@ def generate_renditions(original, media_id, inserted, file_type, content_type,
                                  'mimetype': 'image/%s' % ext, 'width': width, 'height': height}
         # add the cropping data if exist
         renditions[rendition].update(cropping_data)
+        if rendition == 'baseImage':  # use baseImage for other renditions once we have it
+            original = resized
     return renditions
 
 
@@ -237,8 +244,8 @@ def get_renditions_spec(without_internal_renditions=False, no_custom_crops=False
         custom_crops = get_resource_service('vocabularies').find_one(req=None, _id='crop_sizes')
         if custom_crops:
             for crop in custom_crops.get('items'):
-                # complete list of wanted renditions
-                rendition_spec[crop['name']] = crop
+                if crop.get('is_active'):
+                    rendition_spec[crop['name']] = crop
     return rendition_spec
 
 
