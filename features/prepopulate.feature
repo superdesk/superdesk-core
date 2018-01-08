@@ -31,11 +31,13 @@ Feature: Prepopulate
         When we find for "users" the id as "user_admin4" by "where={"username": "admin4"}"
 
         And we get "/desks"
-        Then we get list with 2 items
+        Then we get list with 3 items
         """
-        {"_items": [{"members": [{"user": "#user_admin#"}, {"user": "#user_admin1#"}, {"user": "#user_admin2#"}, {"user": "#user_admin3#"}], "name": "Sports Desk"},
-                    {"members": [{"user": "#user_admin#"}, {"user": "#user_admin4#"}, {"user": "#user_admin1#"}], "name": "Politic Desk"}
-                   ]}
+        {"_items": [
+            {"members": [{"user": "#user_admin#"}, {"user": "#user_admin1#"}, {"user": "#user_admin2#"}, {"user": "#user_admin3#"}], "name": "Sports Desk"},
+            {"members": [{"user": "#user_admin#"}, {"user": "#user_admin4#"}, {"user": "#user_admin1#"}], "name": "Politic Desk"},
+            {"name": "XEditor3 Desk"}
+        ]}
         """
 
         When we get "/roles"

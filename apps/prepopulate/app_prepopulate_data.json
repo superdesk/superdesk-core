@@ -4,25 +4,25 @@
     	"resource": "roles",
     	"id_name": "-id Editor role-"
     },
-    
+
     {
     	"data": {"name": "Writer", "privileges": {"ingest": {"read": 1}}},
     	"resource": "roles",
     	"id_name": "-id Writer role-"
     },
-    
+
     {
     	"data": {"name": "Superadmin", "privileges": {"ingest": {"read": 1}}},
     	"resource": "roles",
     	"id_name": "-id Superadmin role-"
     },
-    
+
     {
     	"data": {"name": "admin", "privileges": {"ingest": {"read": 1}}},
     	"resource": "roles",
     	"id_name": "-id admin role-"
     },
-    
+
     {
         "data": {
             "email": "a@a.com",
@@ -51,7 +51,7 @@
         "id_name": "-id user admin-",
         "resource": "users"
     },
-    
+
     {
         "data": {
             "email": "a4@a.com",
@@ -73,7 +73,7 @@
         "id_name": "-id user admin4-",
         "resource": "users"
     },
-    
+
     {
         "data": {
             "email": "a3@a.com",
@@ -95,7 +95,7 @@
         "id_name": "-id user admin3-",
         "resource": "users"
     },
-    
+
     {
         "data": {
             "email": "a2@a.com",
@@ -117,7 +117,7 @@
         "id_name": "-id user admin2-",
         "resource": "users"
     },
-    
+
     {
         "data": {
             "email": "a1@a.com",
@@ -155,6 +155,58 @@
     },
 
     {
+        "data": {
+            "label": "editor3",
+            "enabled": true,
+            "schema": {
+                "headline": {},
+                "body_html": {}
+            },
+            "editor": {
+                "headline": {
+                    "editor3": true,
+                    "order": 10,
+                    "formatOptions": ["underline", "link", "bold"]
+                },
+                "body_html": {
+                    "editor3": true,
+                    "order": 14,
+                    "formatOptions": ["h2", "bold", "italic", "link", "comments", "annotation", "table"]
+                }
+            }
+        },
+        "resource": "content_types",
+        "username": "admin",
+        "id_name": "-id profile editor3-"
+    },
+
+    {
+        "data": {
+            "is_public": true,
+            "template_name": "editor3 template",
+            "content_type": "create",
+            "data": {
+                "profile": "-id profile editor3-"
+            }
+        },
+        "resource": "content_templates",
+        "username": "admin",
+        "id_name": "-id template editor3-"
+    },
+
+    {
+        "data": {
+            "members": [{"user": "-id user admin-"}],
+            "name": "XEditor3 Desk",
+            "desk_type": "production",
+            "default_content_template": "-id template editor3-"
+        },
+        "resource": "desks",
+        "username": "admin",
+        "id_name": "-id desk Editor3 Desks-"
+    },
+
+    {
         "data":   {
 		    "default_incoming" : false,
 		    "desk" : "-id desk Sports Desks-",
@@ -168,7 +220,7 @@
         "username": "admin",
         "id_name": "-id stage one Sports Desks-"
     },
-    
+
     {
         "data":   {
 		    "default_incoming" : false,
@@ -183,7 +235,7 @@
         "username": "admin",
         "id_name": "-id stage two Sports Desks-"
     },
-    
+
     {
         "data":   {
 		    "default_incoming" : false,
@@ -198,7 +250,7 @@
         "username": "admin",
         "id_name": "-id stage three Sports Desks-"
     },
-    
+
     {
         "data":   {
 		    "default_incoming" : false,
@@ -213,7 +265,7 @@
         "username": "admin",
         "id_name": "-id stage one Politic Desks-"
     },
-    
+
     {
         "data":   {
 		    "default_incoming" : false,
@@ -228,7 +280,7 @@
         "username": "admin",
         "id_name": "-id stage two Politic Desks-"
     },
-    
+
     {
         "data":   {
 		    "default_incoming" : false,
@@ -243,7 +295,7 @@
         "username": "admin",
         "id_name": "-id stage three Politic Desks-"
     },
-    
+
     {
     	"data": {
 		    "_id" : "publish",
@@ -259,7 +311,7 @@
 		        "type" : {
 		            "type" : "string",
 		            "required" : "true",
-		            "allowed" : [ 
+		            "allowed" : [
 		                "text"
 		            ]
 		        },
@@ -673,14 +725,14 @@
     	"username": "admin",
     	"id_name": "-id subscriber Public API-"
     },
-	
+
 	{
         "data": {
-            "template_name": "custom_highlight", "template_type": "highlights", 
+            "template_name": "custom_highlight", "template_type": "highlights",
             "data": {
                 "body_html": "<b>custom highlight template</b>\n{% for item in items %} <h2>{{ item.headline }}</h2> {{ item.body_html }} <p></p> {% endfor %}"
             }
-        }, 
+        },
         "resource": "content_templates",
         "id_name": "-id content template-"
     },
@@ -700,29 +752,29 @@
     },
 
     {
-    	"data": {"name": "Highlight one", "desks": ["-id desk Sports Desks-"], "groups": ["main"], "template": "-id content template-"}, 
+    	"data": {"name": "Highlight one", "desks": ["-id desk Sports Desks-"], "groups": ["main"], "template": "-id content template-"},
     	"resource": "highlights",
     	"id_name": "-id highlight one-"
     },
-    
-    {	
-    	"data": {"name": "Highlight two", "desks": ["-id desk Sports Desks-", "-id desk Politic Desks-"], "groups": ["one", "two"]}, 
+
+    {
+    	"data": {"name": "Highlight two", "desks": ["-id desk Sports Desks-", "-id desk Politic Desks-"], "groups": ["one", "two"]},
     	"resource": "highlights",
     	"id_name": "-id highlight two-"
     },
-    
-    {	
-    	"data": {"name": "Highlight three", "desks": ["-id desk Politic Desks-"], "groups": ["main"]}, 
+
+    {
+    	"data": {"name": "Highlight three", "desks": ["-id desk Politic Desks-"], "groups": ["main"]},
     	"resource": "highlights",
     	"id_name": "-id highlight three-"
     },
-    
-    {	
-    	"data": {"name": "Highlight four", "desks": ["-id desk Politic Desks-"], "groups": ["main"]}, 
+
+    {
+    	"data": {"name": "Highlight four", "desks": ["-id desk Politic Desks-"], "groups": ["main"]},
     	"resource": "highlights",
     	"id_name": "-id highlight four-"
     },
-    
+
     {
         "resource": "archive",
         "username": "admin",
