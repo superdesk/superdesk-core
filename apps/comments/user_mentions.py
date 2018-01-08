@@ -60,11 +60,12 @@ def get_desks(desk_names):
     return desks
 
 
-def notify_mentioned_users(docs, origin):
+def notify_mentioned_users(docs, origin, item=None):
     for doc in docs:
         mentioned_users = doc.get('mentioned_users', {}).values()
         if len(mentioned_users) > 0:
-            item = superdesk.get_resource_service('archive').find_one(req=None, _id=doc['item'])
+            if not item:
+                item = superdesk.get_resource_service('archive').find_one(req=None, _id=doc['item'])
             add_activity('user:mention', '', resource=None, type='comment', item=item,
                          comment=doc.get('text'), comment_id=str(doc.get('_id')),
                          notify=mentioned_users)

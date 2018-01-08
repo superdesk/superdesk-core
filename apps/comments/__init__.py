@@ -12,8 +12,9 @@
 
 import superdesk
 
-from apps.comments.comments import CommentsService, CommentsResource, comments_schema  # noqa
-from apps.comments.user_mentions import on_activity_updated
+from .comments import CommentsService, CommentsResource, comments_schema  # noqa
+from .user_mentions import on_activity_updated
+from .inline_comments import handle_inline_mentions
 
 
 def init_app(app):
@@ -23,3 +24,5 @@ def init_app(app):
 
     app.on_updated_activity -= on_activity_updated
     app.on_updated_activity += on_activity_updated
+
+    superdesk.item_update.connect(handle_inline_mentions)

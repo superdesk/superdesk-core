@@ -8,8 +8,11 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import json
 import flask
+import logging
+import datetime
+import superdesk
+
 from superdesk.resource import Resource
 from superdesk.metadata.utils import extra_response_fields, item_url, aggregations, \
     is_normal_package, get_elastic_highlight_query
@@ -20,7 +23,7 @@ from .common import remove_unwanted, update_state, set_item_expiry, remove_media
     ITEM_DESCHEDULE, ARCHIVE as SOURCE, LAST_PRODUCTION_DESK, LAST_AUTHORING_DESK, ITEM_FETCH, \
     convert_task_attributes_to_objectId, BROADCAST_GENRE, set_dateline
 from superdesk.media.crop import CropService
-from flask import current_app as app
+from flask import current_app as app, json
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
 from eve.versioning import resolve_document_version, versioned_id_field
@@ -37,14 +40,11 @@ from apps.common.models.base_model import InvalidEtag
 from superdesk.text_utils import get_word_count
 from apps.content import push_content_notification, push_expired_notification
 from copy import copy, deepcopy
-import superdesk
-import logging
 from apps.common.models.utils import get_model
 from apps.item_lock.models.item import ItemModel
 from apps.packages import PackageService
 from .archive_media import ArchiveMediaService
 from superdesk.utc import utcnow
-import datetime
 
 EDITOR_KEY_PREFIX = 'editor_'
 logger = logging.getLogger(__name__)
@@ -269,6 +269,9 @@ class ArchiveService(BaseService):
         self._add_system_updates(original, updates, user)
         self._add_desk_metadata(updates, original)
         self._handle_media_updates(updates, original, user)
+
+        # send signal
+        superdesk.item_update.send(self, updates=updates, original=original)
 
     def _handle_media_updates(self, updates, original, user):
         update_associations(updates)

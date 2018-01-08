@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import hashlib
+import logging
 import email.policy
 
 from datetime import timedelta
@@ -19,6 +20,8 @@ from flask_mail import Message
 from superdesk.celery_app import celery
 from flask import current_app as app, render_template, render_template_string
 from superdesk import get_resource_service
+
+logger = logging.getLogger(__name__)
 
 
 class SuperdeskMessage(Message):
@@ -95,7 +98,7 @@ def send_reset_password_email(doc, token_ttl):
 
 
 def send_user_mentioned_email(recipients, user_name, doc, url):
-    print('sending mention email to:', recipients)
+    logging.info('sending mention email to: %s', recipients)
     admins = app.config['ADMINS']
     app_name = app.config['APPLICATION_NAME']
     subject = render_template("user_mention_subject.txt", username=user_name)
