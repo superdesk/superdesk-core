@@ -192,9 +192,9 @@ Feature: Validate
   Scenario: Validate custom field
     Given "vocabularies"
     """
-    [{"_id": "custom", "field_type": "text", "label": "Test"}]
+    [{"_id": "custom", "field_type": "text", "display_name": "Test"}]
     """
-    And "content_types"  
+    And "content_types"
     """
     [{"_id": "foo", "schema": {
       "custom": {"required": true}
@@ -207,7 +207,7 @@ Feature: Validate
     """
     Then we get existing resource
     """
-    {"errors": ["CUSTOM is a required field"]}
+    {"errors": ["Test is a required field"]}
     """
 
     When we post to "/validate"
@@ -225,7 +225,7 @@ Feature: Validate
     """
     Then we get existing resource
     """
-    {"errors": ["CUSTOM is a required field"]}
+    {"errors": ["Test is a required field"]}
     """
 
   @auth
