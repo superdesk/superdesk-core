@@ -10,6 +10,7 @@
 
 import superdesk
 
+from copy import deepcopy
 from flask import current_app as app
 from eve.io.mongo import Validator
 from superdesk.metadata.item import ITEM_TYPE
@@ -138,7 +139,8 @@ class ValidateService(superdesk.Service):
 
     def create(self, docs, **kwargs):
         for doc in docs:
-            doc['errors'] = self._validate(doc, **kwargs)
+            test_doc = deepcopy(doc)
+            doc['errors'] = self._validate(test_doc, **kwargs)
 
         return [doc['errors'] for doc in docs]
 
