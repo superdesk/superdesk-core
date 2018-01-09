@@ -295,6 +295,20 @@ Feature: Content Profile
         }
         """
 
+        When we patch "/content_types/#content_types._id#"
+        """
+        {"schema": {"headline": {
+            "required": false,
+            "minlength": 5
+        }}}
+        """
+
+        And we get "/content_types/#content_types._id#"
+        Then we get existing resource
+        """
+        {"schema": {"headline": {"minlength": 5}}}
+        """
+
 
     @auth
     Scenario: User can get profile with extended values
