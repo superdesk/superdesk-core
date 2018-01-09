@@ -274,10 +274,11 @@ class ValidateService(superdesk.Service):
                     continue
                 elif e == 'extra':
                     for field in error_list[e]:
+                        display_name = self._get_vocabulary_display_name(field)
                         if 'required' in error_list[e][field]:
-                            message = REQUIRED_ERROR.format(self._get_vocabulary_display_name(field).upper())
+                            message = REQUIRED_ERROR.format(display_name)
                         else:
-                            message = '{} {}'.format(field.upper(), error_list[e][field])
+                            message = '{} {}'.format(display_name, error_list[e][field])
                 elif error_list[e] == 'required field' or type(error_list[e]) is dict or \
                         type(error_list[e]) is list:
                     message = REQUIRED_ERROR.format(e.upper())
