@@ -1418,6 +1418,10 @@ Feature: Content Profile
 
     @auth
     Scenario: Validate using content profile when publishing
+        Given "vocabularies"
+        """
+        [{"_id": "foo", "field_type": "text"}]
+        """
         Given "content_types"
         """
         [{
@@ -1441,6 +1445,10 @@ Feature: Content Profile
                     "required" : true,
                     "maxlength" : 24,
                     "type" : "string"
+                },
+                "foo": {
+                    "required": true,
+                    "maxlength": 20
                 }
             }
         }]
@@ -1458,11 +1466,17 @@ Feature: Content Profile
 
         When we patch "/archive/#archive._id#"
         """
-        {"body_html": "body", "headline": "head", "slugline": "slug"}
+        {"body_html": "body", "headline": "head", "slugline": "slug", "extra": {"foo": "<b>test</b>"}}
         """
 
         And we publish "#archive._id#" with "publish" type and "published" state
         Then we get OK response
+
+        When we get "/published/#archive._id#"
+        Then we get existing resource
+        """
+        {"extra": {"foo": "<b>test</b>"}}
+        """
 
     @auth
     Scenario: Mark profile when used and prevent delete
