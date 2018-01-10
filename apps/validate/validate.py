@@ -11,6 +11,7 @@
 import superdesk
 
 from copy import deepcopy
+from datetime import datetime
 from flask import current_app as app
 from eve.io.mongo import Validator
 from superdesk.metadata.item import ITEM_TYPE
@@ -20,6 +21,7 @@ from superdesk import get_resource_service
 
 REQUIRED_FIELD = 'is a required field'
 STRING_FIELD = 'require a string value'
+DATE_FIELD = 'require a date value'
 REQUIRED_ERROR = '{} is a required field'
 
 
@@ -64,6 +66,12 @@ class SchemaValidator(Validator):
     def _validate_type_embed(self, field, value):
         """Allow type media in schema."""
         pass
+
+    def _validate_type_date(self, field, value):
+        try:
+            datetime.strptime(value or '', '%Y/%m/%d')
+        except ValueError:
+            self._error(field, DATE_FIELD)
 
     def _validate_type_picture(self, field, value):
         """Allow type picture in schema."""
@@ -150,7 +158,7 @@ class ValidateService(superdesk.Service):
         In case there is profile defined for item with respective content type it will
         use its schema for validations, otherwise it will fall back to action/item_type filter.
         """
-        extra_field_types = {'text': 'string', 'embed': 'dict'}
+        extra_field_types = {'text': 'string', 'embed': 'dict', 'date': 'date'}
         profile = doc['validate'].get('profile')
         if profile and doc['act'] != 'auto_publish':
             # not use profile for auto publishing via routing.
