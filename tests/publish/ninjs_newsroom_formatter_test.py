@@ -119,6 +119,8 @@ class NinjsFormatterTest(TestCase):
             'genre': [{'name': 'Article', 'code': 'article'}],
             'signal': [{'name': 'Content Warning', 'code': 'cwarn', 'scheme': 'http://cv.iptc.org/newscodes/signal/'}],
             'extra': {'foo': 'test'},
+            'charcount': 67,
+            'wordcount': 13,
             'readtime': 0,
             'products': [{'code': 1, 'name': 'p-1'}]
         }
@@ -151,6 +153,8 @@ class NinjsFormatterTest(TestCase):
             'genre': [{'name': 'Article', 'code': 'article'}],
             'signal': [{'name': 'Content Warning', 'code': 'cwarn', 'scheme': 'http://cv.iptc.org/newscodes/signal/'}],
             'extra': {'foo': 'test'},
+            'charcount': 67,
+            'wordcount': 13,
             'readtime': 0,
             'products': []
         }

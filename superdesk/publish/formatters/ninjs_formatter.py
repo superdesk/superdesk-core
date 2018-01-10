@@ -222,9 +222,15 @@ class NINJSFormatter(Formatter):
 
         if ninjs['type'] == CONTENT_TYPE.TEXT and ('body_html' in ninjs or 'body_text' in ninjs):
             if 'body_html' in ninjs:
-                word_count = text_utils.get_word_count(ninjs.get('body_html'))
+                body_html = ninjs['body_html']
+                word_count = text_utils.get_word_count(body_html)
+                char_count = text_utils.get_char_count(body_html)
             else:
+                body_text = ninjs['body_text']
                 word_count = text_utils.get_text_word_count(ninjs['body_text'])
+                char_count = len(body_text)
+            ninjs['charcount'] = char_count
+            ninjs['wordcount'] = word_count
             ninjs['readtime'] = text_utils.get_reading_time(word_count)
 
         if article.get('authors'):

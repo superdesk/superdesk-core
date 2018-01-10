@@ -367,6 +367,14 @@
 				}
 			}
 		},
+		"charcount" : {
+			"description" : "Number of characters in the item",
+			"type": "number"
+		},
+		"wordcount" : {
+			"description" : "Number of words in the item",
+			"type": "number"
+		},
 		"readtime" : {
 			"description" : "Estimated time (in minutes) to read the body of the item",
 			"type": "number"

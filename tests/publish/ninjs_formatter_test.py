@@ -99,6 +99,8 @@ class NinjsFormatterTest(TestCase):
             'genre': [{'name': 'Article', 'code': 'article'}],
             'signal': [{'name': 'Content Warning', 'code': 'cwarn', 'scheme': 'http://cv.iptc.org/newscodes/signal/'}],
             'extra': {'foo': 'test'},
+            'charcount': 67,
+            'wordcount': 13,
             'readtime': 0,
         }
         self.assertEqual(json.loads(doc), expected)
@@ -400,6 +402,8 @@ class NinjsFormatterTest(TestCase):
             "slugline": "slugline",
             "priority": 5,
             'source': 'AAP',
+            'charcount': 14,
+            'wordcount': 3,
             'readtime': 0,
             'associations': {
                 "embedded5346670761": {
@@ -466,6 +470,8 @@ class NinjsFormatterTest(TestCase):
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
         data = json.loads(doc)
 
+        self.assertEqual(data['charcount'], 7300)
+        self.assertEqual(data['wordcount'], 1460)
         self.assertEqual(data['readtime'], 6)
 
     def test_body_text(self):
@@ -480,6 +486,8 @@ class NinjsFormatterTest(TestCase):
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
         data = json.loads(doc)
 
+        self.assertEqual(data['charcount'], 8550)
+        self.assertEqual(data['wordcount'], 1710)
         self.assertEqual(data['readtime'], 7)
 
     def test_empty_amstract(self):
@@ -664,6 +672,8 @@ class NinjsFormatterTest(TestCase):
             'priority': 5,
             'description_html': '<p>test</p>',
             'description_text': 'test',
+            'charcount': 28,
+            'wordcount': 7,
             'readtime': 0}
         self.assertEqual(json.loads(doc), expected)
 
@@ -743,6 +753,8 @@ class NinjsFormatterTest(TestCase):
                                      'link</a> and must only span around the word "line" on paragraph 3'
                                      ' - line 2</p>'}],
             'priority': 5,
+            'charcount': 103,
+            'wordcount': 21,
             'readtime': 0}
         self.assertEqual(json.loads(doc), expected)
 
