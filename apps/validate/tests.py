@@ -53,6 +53,18 @@ class ValidateMandatoryInListTest(TestCase):
         service._sanitize_fields(doc, schema)
         self.assertEqual('test', doc['body_html'])
 
+    def test_validate_date_with_success(self):
+        validator = SchemaValidator()
+        validator._validate_type_date('test1', '2017/11/22')
+
+        self.assertEqual(validator._errors, {})
+
+    def test_validate_date_with_error(self):
+        validator = SchemaValidator()
+        validator._validate_type_date('test1', '2017/11/33')
+
+        self.assertEqual(validator._errors, {'test1': 'require a date value'})
+
     def test_validate_field_without_schema(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
             'slugline': None,
@@ -242,11 +254,18 @@ class ValidateMandatoryInListTest(TestCase):
                 "type": "text",
                 "maxlength": 160,
                 "nullable": False
+            },
+            'date1': {
+                "required": True,
+                "enabled": True,
+                "type": "date",
+                "nullable": False
             }
         }}])
         self.app.data.insert('vocabularies', [
             {'_id': 'embed1', 'type': 'manageable', 'field_type': 'embed'},
-            {'_id': 'text1', 'type': 'manageable', 'field_type': 'text'}
+            {'_id': 'text1', 'type': 'manageable', 'field_type': 'text'},
+            {'_id': 'date1', 'type': 'manageable', 'field_type': 'date'}
         ])
         service = ValidateService()
         doc = {
@@ -272,7 +291,14 @@ class ValidateMandatoryInListTest(TestCase):
                     'minlength': 10,
                     'maxlength': 160,
                     'type': 'string'
-                }
+                },
+                'date1': {
+                    'required': True,
+                    'enabled': True,
+                    'nullable': False,
+                    'empty': False,
+                    'type': 'date'
+                },
             },
             'type': 'dict'
         }}
