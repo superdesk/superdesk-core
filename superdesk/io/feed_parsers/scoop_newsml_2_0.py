@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8; -*-
 #
 # This file is part of Superdesk.
@@ -11,12 +10,16 @@
 
 import pytz
 import datetime
+import superdesk
 from .newsml_2_0 import NewsMLTwoFeedParser
 from superdesk.io.registry import register_feed_parser
 from superdesk.errors import ParserError
 from superdesk.metadata.item import ITEM_TYPE
 from superdesk.io.iptc import subject_codes
 from superdesk.etree import get_word_count
+from flask import current_app as app
+from dateutil.parser import parse as date_parser
+from superdesk.etree import parse_html, to_string
 
 
 class ScoopNewsMLTwoFeedParser(NewsMLTwoFeedParser):
@@ -41,16 +44,46 @@ class ScoopNewsMLTwoFeedParser(NewsMLTwoFeedParser):
         self.root = xml
         items = []
         try:
-            header = self.parse_header(xml)
             for item_set in xml.findall(self.qname('itemSet')):
                 for item_tree in item_set:
                     # Ignore the packageItem, it has no guid
                     if 'guid' in item_tree.attrib:
                         item = self.parse_item(item_tree)
-                        item['priority'] = header['priority']
+                        item['priority'] = 6
                         item['anpa_category'] = [{'qcode': 'f'}]
                         item['subject'] = [{'qcode': '04000000', 'name': subject_codes['04000000']}]
                         item.setdefault('word_count', get_word_count(item['body_html']))
+                        # Hard code the urgency
+                        item['urgency'] = 3
+                        # Dateline is always Wellington in NZ
+                        located = [c for c in app.locators.find_cities(country_code='NZ', state_code='NZ.G2') if
+                                   c.get('city', '').lower() == 'wellington']
+                        if len(located) == 1:
+                            item['dateline'] = dict()
+                            item['dateline']['located'] = located[0]
+
+                        if item.get('body_html') and item['dateline']:
+                            parsed = parse_html(item.get('body_html'), content='xml')
+                            pars = parsed.xpath('//p')
+                            for par in pars:
+                                if not par.text:
+                                    continue
+                                # check the first par for a byline
+                                if pars.index(par) == 0 and par.text.startswith('By '):
+                                    item['byline'] = par.text.replace('By ', '')
+                                    par.getparent().remove(par)
+                                date, source, the_rest = par.text.partition(' (BusinessDesk) - ')
+                                if source:
+                                    item['dateline']['date'] = date_parser(date, fuzzy=True)
+                                    par.text = the_rest
+                                # remove the signoff if in the last par
+                                if par.text == '(BusinessDesk)' and pars.index(par) + 1 == len(pars):
+                                    par.getparent().remove(par)
+                            item['body_html'] = to_string(parsed, remove_root_div=True)
+                        locator_map = superdesk.get_resource_service('vocabularies').find_one(req=None, _id='locators')
+                        if locator_map:
+                            item['place'] = [x for x in locator_map.get('items', []) if x['qcode'].upper() == 'NZ']
+
                         items.append(item)
             return items
         except Exception as ex:
