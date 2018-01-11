@@ -67,8 +67,7 @@ class FilterConditionParametersService(BaseService):
                    'operators': ['in', 'nin', 'eq', 'ne', 'like', 'notlike', 'startswith', 'endswith']
                    },
                   {'field': 'headline',
-                   'operators': ['in', 'nin', 'eq', 'ne', 'eq',
-                                 'ne', 'like', 'notlike', 'startswith', 'endswith']
+                   'operators': ['in', 'nin', 'eq', 'ne', 'like', 'notlike', 'startswith', 'endswith']
                    },
                   {'field': 'ednote',
                    'operators': ['in', 'nin', 'eq', 'ne', 'like', 'notlike', 'startswith', 'endswith']
