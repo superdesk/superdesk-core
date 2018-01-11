@@ -302,7 +302,7 @@
 			"type": "object",
 			"additionalProperties" : false,
 			"patternProperties" : {
-				"^[a-zA-Z0-9]+" :  { "$ref": "https://github.com/superdesk/superdesk-core/blob/master/docs/superdesk-ninjs-schema.json#" }
+				"^[a-zA-Z0-9]+[a-zA-Z0-9-]*" :  { "$ref": "https://github.com/superdesk/superdesk-core/blob/master/docs/superdesk-ninjs-schema.json#" }
 			}
 		},
 		"extra" : {
