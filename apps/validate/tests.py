@@ -55,14 +55,12 @@ class ValidateMandatoryInListTest(TestCase):
 
     def test_validate_date_with_success(self):
         validator = SchemaValidator()
-        validator._validate_type_date('test1', '2017/11/22')
-
+        validator._validate_type_date('test1', '2017-11-22T22:11:33+0000')
         self.assertEqual(validator._errors, {})
 
     def test_validate_date_with_error(self):
         validator = SchemaValidator()
-        validator._validate_type_date('test1', '2017/11/33')
-
+        validator._validate_type_date('test1', '2017-11-33T22:11:33+0000')
         self.assertEqual(validator._errors, {'test1': 'require a date value'})
 
     def test_validate_field_without_schema(self):

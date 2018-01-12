@@ -69,7 +69,7 @@ class SchemaValidator(Validator):
 
     def _validate_type_date(self, field, value):
         try:
-            datetime.strptime(value or '', '%Y/%m/%d')
+            datetime.strptime(value or '', '%Y-%m-%dT%H:%M:%S+%f')
         except ValueError:
             self._error(field, DATE_FIELD)
 
