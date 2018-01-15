@@ -574,3 +574,24 @@ Example::
         }
     }
 
+
+``OVERRIDE_EDNOTE_FOR_CORRECTIONS``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``True``
+
+Set to False to disable editor note overriding on correction.
+
+``OVERRIDE_EDNOTE_TEMPLATE``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``None``
+
+Template to use to override editor note (ignored if ``OVERRIDE_EDNOTE_FOR_CORRECTIONS`` is ``False``).
+If not set, default template will be used.
+In your template, you can use ``{date}`` to insert current date or ``{slugline}`` for slugline.
+
+Example::
+
+    OVERRIDE_EDNOTE_FOR_CORRECTIONS = True
+    OVERRIDE_EDNOTE_TEMPLATE = 'Story "{slugline}" corrected on {date}'

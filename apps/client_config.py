@@ -26,4 +26,6 @@ def init_app(app):
         'schema': app.config.get('SCHEMA'),
         'editor': app.config.get('EDITOR'),
         'feedback_url': app.config.get('FEEDBACK_URL'),
+        'override_ednote_for_corrections': app.config.get('OVERRIDE_EDNOTE_FOR_CORRECTIONS', True),
+        'override_ednote_template': app.config.get('OVERRIDE_EDNOTE_TEMPLATE'),
     })

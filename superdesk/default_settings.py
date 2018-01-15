@@ -625,3 +625,10 @@ EXCLUDED_VOCABULARY_FIELDS = ['default_categories', 'signal', 'rightsinfo', 'sub
 #: allows overriding default schema by type, use picture/composite/text keys
 SCHEMA = {}
 EDITOR = {}
+
+# editor note overriding
+#: set to False if you don't want overriding on correction
+OVERRIDE_EDNOTE_FOR_CORRECTIONS = True
+#: template to use for overriding, you can use {date} and {slugline} placeholders
+#: if not set, a default template will be used
+# OVERRIDE_EDNOTE_TEMPLATE = 'Story "{slugline}" corrected on {date}'
