@@ -20,7 +20,7 @@ from apps.content_filters.filter_condition.filter_condition import FilterConditi
 from apps.content_filters.filter_condition.filter_condition_operator import FilterConditionOperator
 from superdesk import get_resource_service
 from superdesk.tests import TestCase
-from superdesk.vocabularies.command import VocabulariesPopulateCommand
+from superdesk.vocabularies.commands import VocabulariesPopulateCommand
 
 
 class FilterConditionTests(TestCase):

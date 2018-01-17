@@ -17,7 +17,7 @@ from superdesk import get_backend, get_resource_service
 from superdesk.errors import SuperdeskApiError
 from superdesk.publish import SubscribersService
 from superdesk.tests import TestCase
-from superdesk.vocabularies.command import VocabulariesPopulateCommand
+from superdesk.vocabularies.commands import VocabulariesPopulateCommand
 
 
 class ContentFilterTests(TestCase):

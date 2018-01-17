@@ -15,7 +15,7 @@ from unittest.mock import patch
 from superdesk.tests import TestCase
 from superdesk import get_resource_service
 from superdesk.vocabularies import VocabulariesService
-from superdesk.vocabularies.command import VocabulariesPopulateCommand
+from superdesk.vocabularies.commands import VocabulariesPopulateCommand
 from superdesk.errors import SuperdeskApiError
 
 
