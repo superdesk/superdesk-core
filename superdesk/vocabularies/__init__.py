@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from .vocabularies import VocabulariesResource, VocabulariesService
-from .command import VocabulariesPopulateCommand  # noqa
+from .commands import VocabulariesPopulateCommand, UpdateVocabulariesInItemsCommand # noqa
 import superdesk
 
 
