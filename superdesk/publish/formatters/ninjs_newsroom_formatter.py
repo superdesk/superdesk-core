@@ -26,7 +26,7 @@ class NewsroomNinjsFormatter(NINJSFormatter):
         :param article:
         :return:
         """
-        result = superdesk.get_resource_service('product_tests').test_products(article, lookup={'product_type': 'api'})
+        result = superdesk.get_resource_service('product_tests').test_products(article, lookup=None)
         return [{'code': p['product_id'], 'name': p.get('name')} for p in result if p.get('matched', False)]
 
     def _transform_to_ninjs(self, article, subscriber, recursive=True):
