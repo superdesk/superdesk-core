@@ -15,7 +15,7 @@ from apps.io.tests import setup_providers, teardown_providers
 from superdesk import tests
 from superdesk.factory.app import get_app
 from superdesk.tests import setup_auth_user
-from superdesk.vocabularies.command import VocabulariesPopulateCommand
+from superdesk.vocabularies.commands import VocabulariesPopulateCommand
 from superdesk.tests.mocks import TestSearchProvider
 from superdesk.tests.steps import get_macro_path
 

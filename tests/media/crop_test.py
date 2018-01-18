@@ -14,7 +14,7 @@ from ..media import get_picture_fixture
 from superdesk.tests import TestCase
 from superdesk.media.crop import CropService
 from superdesk.errors import SuperdeskApiError
-from superdesk.vocabularies.command import populate_table_json
+from superdesk.vocabularies.commands import populate_table_json
 from superdesk.media.media_operations import crop_image
 from superdesk.media.renditions import _resize_image, get_renditions_spec, can_generate_custom_crop_from_original
 
