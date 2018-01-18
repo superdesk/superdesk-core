@@ -17,6 +17,11 @@ from superdesk.resource import build_custom_hateoas
 
 CONTENT_TYPE_PRIVILEGE = 'content_type'
 
+# Fields that might not be in the schema but should be still available in formatter/output
+REQUIRED_FIELDS = (
+    'language',
+)
+
 
 class ContentTypesResource(superdesk.Resource):
     schema = {
@@ -425,7 +430,7 @@ def is_enabled(field, schema):
     :param field: field name
     :param schema: schema dict
     """
-    return schema.get(field) or schema.get(field) == {} or field not in DEFAULT_SCHEMA
+    return schema.get(field) or schema.get(field) == {} or field not in DEFAULT_SCHEMA or field in REQUIRED_FIELDS
 
 
 def apply_schema(item):
