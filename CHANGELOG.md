@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.10.1] 2018-01-19
+
+### Added
+
+- Add sync vocabulary item names/translations command.
+
 ## [1.10] 2018-01-05
 
 ### Fixed
