@@ -70,7 +70,7 @@ Feature: HTTP Push publishing
         When we transmit published
         Then we pushed 1 item
         """
-        [{"guid": "#archive.guid#", "profile": "foo", "type": "text", "byline": "__no_value__", "headline": "__no_value__", "body_html": "body", "version": "3", "copyrightholder": "copyright holder", "copyrightnotice": "copyright notice"}]
+        [{"guid": "#archive.guid#", "profile": "foo", "type": "text", "byline": "__no_value__", "headline": "__no_value__", "body_html": "body", "version": "3", "copyrightholder": "copyright holder", "copyrightnotice": "copyright notice", "language": "en"}]
         """
 
         When we publish "#archive._id#" with "correct" type and "corrected" state
