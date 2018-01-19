@@ -1,5 +1,23 @@
 # Superdesk Server Changelog
 
+## [1.11] 2018-01-19
+
+### Fixed
+
+- Fixed language missing in output when not enabled in profile.
+- Removing duplicate operators for headline filter parameters.
+- Fix markup removed from custom field on validation.
+- Use field name for custom fields in validation error messages.
+- Fix saving of minlength in content profile.
+
+### Added
+
+- Add settings to control editor note overriding.
+- Add charcount and wordcount to ninjs output.
+- Add support for custom date fields.
+- Send notifications to users mentioned in inline comments.
+- Add e2e test data for editor3.
+
 ## [1.10] 2018-01-05
 
 ### Fixed
