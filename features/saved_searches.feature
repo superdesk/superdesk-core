@@ -166,6 +166,26 @@ Feature: Saved Searches
         """
         Then we get response code 405
 
+	@auth
+    Scenario: Update a global Saved Search with success
+        Given empty "saved_searches"
+        When we post to "/saved_searches"
+        """
+        {
+        "name": "cricket",
+        "filter": {"query": {"q": "cricket"}},
+        "is_global": true
+        }
+        """
+        Then we get response code 201
+        When we patch "/saved_searches/#saved_searches._id#"
+        """
+        {
+        "filter": {"query": {"q": "baseball"}}
+        }
+        """
+        Then we get response code 200
+
     @auth
     @provider
     Scenario: Create a Saved Search and retrieve content
