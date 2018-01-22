@@ -54,3 +54,12 @@ class WordCountTestCase(unittest.TestCase):
         at its Kennecott mine in the US and no supplies from the Grasberg joint venture in Indonesia.</p><p>It has
         forecast a wide guidance range of 525,000 to 665,000 tonnes for 2017.</p><p>The miner topped production
         forecasts for bauxite and coking coal, while aluminium output jumped 10 per cent in 2016.</p>"""))
+
+    def test_word_count_html(self):
+        # If you change the following text, please change it in client too at
+        # superdesk-client-core/scripts/apps/authoring/authoring/tests/WordCount.spec.js
+        text = """
+        <p>This is a test text with numbers (1 000 000 and 1,000,000 and 1.000.000)
+        and <strong>compound word (two-done)</strong> and <em>abbreviation (Washington D.C.)</p>
+        <p>it should be the same word count as in client and backend</p>"""
+        self.assertEqual(32, text_utils.get_word_count(text))

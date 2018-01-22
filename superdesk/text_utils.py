@@ -18,6 +18,7 @@ from lxml.html import clean
 
 # This pattern matches http(s) links, numbers (1.000.000 or 1,000,000 or 1 000 000), regulars words,
 # compound words (e.g. "two-done") or abbreviation (e.g. D.C.)
+# If you modify please keep in sync with superdesk-client/core/scripts/apps/authoring/authoring/directives/WordCount.js
 WORD_PATTERN = re.compile(r'https?:[^ ]*|([0-9]+[,. ]?)+|([\w]\.)+|[\w][\w-]*')
 
 
@@ -67,6 +68,20 @@ def get_word_count(markup, no_html=False):
         return get_text_word_count(get_text(markup, content='xml', space_on_elements=True))
     else:
         return get_text_word_count(get_text(markup, content='html', lf_on_block=True))
+
+
+def update_word_count(update, original=None):
+    """Update word count if there was change in content.
+
+    :param update: created/updated document
+    :param original: original document if updated
+    """
+    if update.get('body_html'):
+        update.setdefault('word_count', get_word_count(update.get('body_html')))
+    else:
+        # If the body is removed then set the count to zero
+        if original and 'word_count' in original and 'body_html' in update:
+            update['word_count'] = 0
 
 
 def get_char_count(html):

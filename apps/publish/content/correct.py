@@ -11,6 +11,7 @@
 from superdesk.media.crop import CropService
 from superdesk.metadata.item import ITEM_STATE, EMBARGO, SCHEDULE_SETTINGS
 from superdesk.utc import utcnow
+from superdesk.text_utils import update_word_count
 from apps.archive.common import set_sign_off, ITEM_OPERATION
 from apps.archive.archive import update_associations
 from .common import BasePublishService, BasePublishResource, ITEM_CORRECT
@@ -48,6 +49,7 @@ class CorrectPublishService(BasePublishService):
         updates['versioncreated'] = utcnow()
         updates['correction_sequence'] = original.get('correction_sequence', 1) + 1
         set_sign_off(updates, original)
+        update_word_count(updates, original)
 
     def update(self, id, updates, original):
         CropService().create_multiple_crops(updates, original)

@@ -37,7 +37,7 @@ from superdesk.metadata.packages import LINKED_IN_PACKAGES, RESIDREF
 from apps.common.components.utils import get_component
 from apps.item_autosave.components.item_autosave import ItemAutosave
 from apps.common.models.base_model import InvalidEtag
-from superdesk.text_utils import get_word_count
+from superdesk.text_utils import update_word_count
 from apps.content import push_content_notification, push_expired_notification
 from copy import copy, deepcopy
 from apps.common.models.utils import get_model
@@ -155,20 +155,6 @@ class ArchiveResource(Resource):
     item_methods = ['GET', 'PATCH', 'PUT']
     versioning = True
     privileges = {'POST': SOURCE, 'PATCH': SOURCE, 'PUT': SOURCE}
-
-
-def update_word_count(update, original=None):
-    """Update word count if there was change in content.
-
-    :param update: created/updated document
-    :param original: original document if updated
-    """
-    if update.get('body_html'):
-        update.setdefault('word_count', get_word_count(update.get('body_html')))
-    else:
-        # If the body is removed then set the count to zero
-        if original and 'word_count' in original and 'body_html' in update:
-            update['word_count'] = 0
 
 
 class ArchiveService(BaseService):
