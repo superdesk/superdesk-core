@@ -61,11 +61,17 @@ class VocabulariesPopulateCommand(superdesk.Command):
 
 
 def update_items(vocabularies, fields, service):
-    for item in service.get(req=None, lookup=None):
+    ids = list(item.get('_id') for item in service.get_from_mongo(req=None, lookup=None))
+    count = 0
+    print(service, ' items to be checked: ', len(ids))
+    for _id in ids:
+        item = service.find_one(_id=_id, req=None)
         updates = update_item(item, vocabularies, fields)
         if updates:
-            print(service, ' update: ', updates, ' for item:', item)
+            print(service, ' update: ', updates, ' for item with id:', _id)
             service.system_update(item['_id'], updates, item)
+            count = count + 1
+    print(service, ' updated: ', count, '/', len(ids))
 
 
 def get_vocabularies(vocabularies_list):
