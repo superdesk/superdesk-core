@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.10.2] 2018-01-23
+
+### Fixed
+
+- Fix the sync vocabulary command.
+
 ## [1.10.1] 2018-01-19
 
 ### Added
