@@ -513,7 +513,8 @@ class NinjsFormatterTest(TestCase):
                 "display_name": "author 1",
                 "is_author": True,
                 "job_title": "writer_code",
-                "biography": "bio 1"
+                "biography": "bio 1",
+                "picture_url": "http://example.com",
             },
             {
                 "_id": "test_id_2",
@@ -521,7 +522,7 @@ class NinjsFormatterTest(TestCase):
                 "display_name": "author 2",
                 "is_author": True,
                 "job_title": "reporter_code",
-                "biography": "bio 2"
+                "biography": "bio 2",
             }
         ])
 
@@ -590,7 +591,8 @@ class NinjsFormatterTest(TestCase):
              'role': 'writer',
              'jobtitle': {'qcode': 'writer_code',
                           'name': 'Writer'},
-             'biography': 'bio 1'},
+             'biography': 'bio 1',
+             'avatar_url': 'http://example.com'},
             {'name': 'author 2',
              'role': 'photographer',
              'jobtitle': {'qcode': 'reporter_code',
