@@ -387,8 +387,12 @@ class NINJSFormatter(Formatter):
             author = {
                 "name": user['display_name'],
                 "role": author['role'],
-                "biography": user.get('biography', '')
+                "biography": user.get('biography', ''),
             }
+
+            if user.get('picture_url'):
+                author['avatar_url'] = user['picture_url']
+
             job_title_qcode = user.get('job_title')
             if job_title_qcode is not None:
                 author['jobtitle'] = {'qcode': job_title_qcode,
