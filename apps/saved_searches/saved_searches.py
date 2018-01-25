@@ -204,8 +204,9 @@ class SavedSearchesService(BaseService):
 
     def _validate_user(self, doc_user_id, doc_is_global):
         session_user = get_user(required=True)
-        if str(session_user['_id']) != doc_user_id and \
-                not (current_user_has_privilege('global_saved_searches') and doc_is_global):
+        if str(session_user['_id']) != doc_user_id and not doc_is_global:
+            raise SuperdeskApiError.forbiddenError('Unauthorized to modify other user\'s local search.')
+        if doc_is_global and not current_user_has_privilege('global_saved_searches'):
             raise SuperdeskApiError.forbiddenError('Unauthorized to modify global search.')
 
 
