@@ -814,3 +814,81 @@ class NinjsFormatterTest(TestCase):
         data = json.loads(doc)
 
         self.assertEqual(data['place'], [{"code": "UK", "name": "Europe"}])
+
+    def test_translations(self):
+        """Check that fields are correctly translated"""
+        article = {
+            "_id": "5a68a134cc3a2d4bd6399177",
+            "type": "text",
+            "guid": "test",
+            "genre": [
+                {
+                    "name": "Education",
+                    "qcode": "genre_custom:Education",
+                    "translations": {
+                        "name": {
+                            "de": "Weiterbildung",
+                            "it": "Educazione finanziaria",
+                            "ja": "トレーニング用教材"
+                        }
+                    },
+                    "scheme": "genre_custom"
+                }
+            ],
+            "language": "ja",
+            "headline": "test",
+            "body_html": "<p>test ter</p>",
+            "subject": [
+                {
+                    "name": "Outcome orientated solutions",
+                    "parent": "subject:01000000",
+                    "qcode": "subject:01000002",
+                    "translations": {
+                        "name": {
+                            "de": "Ergebnisorientiert",
+                            "it": "Orientato ai risultati ",
+                            "ja": "アウトカム・オリエンティッド"
+                        }
+                    },
+                    "scheme": "subject_custom"
+                },
+                {
+                    "name": "Austria",
+                    "qcode": "country_custom:1001002",
+                    "translations": {
+                        "name": {
+                            "de": "\u00d6sterreich",
+                            "it": "Austria",
+                            "ja": "オーストリア"
+                        }
+                    },
+                    "scheme": "country_custom"
+                },
+                {
+                    "name": "Asia ex Japan",
+                    "qcode": "region_custom:Asia ex Japan",
+                    "translations": {
+                        "name": {
+                            "de": "Asien exkl. Japan",
+                            "it": "Asia escl. Giappone",
+                            "ja": "日本除くアジア"
+                        }
+                    },
+                    "scheme": "region_custom"
+                }]}
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        ninjs = json.loads(doc)
+        expected_genre = [{'code': 'genre_custom:Education',
+                           'name': 'トレーニング用教材',
+                           'scheme': 'genre_custom'}]
+        self.assertEqual(ninjs['genre'], expected_genre)
+        expected_subject = [{'code': 'subject:01000002',
+                             'name': 'アウトカム・オリエンティッド',
+                             'scheme': 'subject_custom'},
+                            {'code': 'country_custom:1001002',
+                             'name': 'オーストリア',
+                             'scheme': 'country_custom'},
+                            {'code': 'region_custom:Asia ex Japan',
+                             'name': '日本除くアジア',
+                             'scheme': 'region_custom'}]
+        self.assertEqual(ninjs['subject'], expected_subject)
