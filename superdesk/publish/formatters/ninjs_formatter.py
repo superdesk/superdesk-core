@@ -211,8 +211,8 @@ class NINJSFormatter(Formatter):
         if not ninjs.get('copyrightholder') and not ninjs.get('copyrightnotice') and not ninjs.get('usageterms'):
             ninjs.update(superdesk.get_resource_service('vocabularies').get_rightsinfo(article))
 
-        if article.get('genre'):
-            ninjs['genre'] = self._format_qcodes(article['genre'])
+        if 'genre' in article:
+            ninjs['genre'] = self._get_genre(article)
 
         if article.get('flags', {}).get('marked_for_legal'):
             ninjs['signal'] = self._format_signal_cwarn()
@@ -285,6 +285,10 @@ class NINJSFormatter(Formatter):
                 associations[key] = None
         return associations
 
+    def _get_genre(self, article):
+        lang = article.get('language', '')
+        return [format_cv_item(item, lang) for item in article['genre']]
+
     def _get_subject(self, article):
         """Get subject list for article."""
         return [format_cv_item(item, article.get('language', '')) for item in article.get('subject', [])]
@@ -315,9 +319,6 @@ class NINJSFormatter(Formatter):
     def _format_rendition(self, rendition):
         """Format single rendition using fields whitelist."""
         return {field: rendition[field] for field in self.rendition_properties if field in rendition}
-
-    def _format_qcodes(self, items):
-        return [{'name': item.get('name'), 'code': item.get('qcode')} for item in items]
 
     def _format_place(self, article):
         vocabularies_service = superdesk.get_resource_service('vocabularies')
