@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.11.1] NOT RELEASED YET
+
+- Fix the genre translation.
+
+### Fixed
+
 ## [1.11] 2018-01-19
 
 ### Fixed
