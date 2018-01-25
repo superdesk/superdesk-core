@@ -1,10 +1,10 @@
 # Superdesk Server Changelog
 
-## [1.11.1] NOT RELEASED YET
-
-- Fix the genre translation.
+## [1.11.1] 2018-01-25
 
 ### Fixed
+
+- Fix translation for the `genre` metadata field.
 
 ## [1.11] 2018-01-19
 
