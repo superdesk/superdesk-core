@@ -147,6 +147,7 @@ class TwitterFeedingService(FeedingService):
                 ITEM_TYPE: CONTENT_TYPE.PICTURE,
                 'versioncreated': text_item.get('versioncreated'),
                 'firstcreated': text_item.get('firstcreated'),
+                'headline': text_item.get('headline', ''),
                 'renditions': {
                     'baseImage': {
                         'href': image_url
