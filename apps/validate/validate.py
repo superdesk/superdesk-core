@@ -276,6 +276,7 @@ class ValidateService(superdesk.Service):
             error_list = v.errors
             response = []
             for e in error_list:
+                messages = []
                 # Ignore dateline if item is corrected because it can't be changed after the item is published
                 if doc.get('act', None) == 'correct' and e == 'dateline':
                     continue
@@ -286,26 +287,28 @@ class ValidateService(superdesk.Service):
                     for field in error_list[e]:
                         display_name = self._get_vocabulary_display_name(field)
                         if 'required' in error_list[e][field]:
-                            message = REQUIRED_ERROR.format(display_name)
+                            messages.append(REQUIRED_ERROR.format(display_name))
                         else:
-                            message = '{} {}'.format(display_name, error_list[e][field])
+                            messages.append('{} {}'.format(display_name, error_list[e][field]))
                 elif error_list[e] == 'required field' or type(error_list[e]) is dict or \
                         type(error_list[e]) is list:
-                    message = REQUIRED_ERROR.format(e.upper())
+                    messages.append(REQUIRED_ERROR.format(e.upper()))
                 elif 'min length is 1' == error_list[e] or 'null value not allowed' in error_list[e]:
-                    message = REQUIRED_ERROR.format(e.upper())
+                    messages.append(REQUIRED_ERROR.format(e.upper()))
                 elif 'min length is' in error_list[e]:
-                    message = '{} is too short'.format(e.upper())
+                    messages.append('{} is too short'.format(e.upper()))
                 elif 'max length is' in error_list[e]:
-                    message = '{} is too long'.format(e.upper())
+                    messages.append('{} is too long'.format(e.upper()))
                 else:
-                    message = '{} {}'.format(e.upper(), error_list[e])
+                    messages.append('{} {}'.format(e.upper(), error_list[e]))
 
-                if use_headline:
-                    response.append('{}: {}'.format(doc['validate'].get('headline',
-                                                                        doc['validate'].get('_id')), message))
-                else:
-                    response.append(message)
+                for message in messages:
+                    if use_headline:
+                        headline = '{}: {}'.format(doc['validate'].get('headline',
+                                                                       doc['validate'].get('_id')), message)
+                        response.append(headline)
+                    else:
+                        response.append(message)
             return response
         else:
             logger.warn('validator was not found for {}'.format(doc['act']))
