@@ -2,7 +2,7 @@
 #
 # This file is part of Superdesk.
 #
-# Copyright 2013, 2014 Sourcefabric z.u. and contributors.
+# Copyright 2013 - 2018 Sourcefabric z.u. and contributors.
 #
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
@@ -171,9 +171,10 @@ class NewsMLTwoFeedParser(XMLFeedParser):
     def parse_rights_info(self, tree, item):
         """Parse Rights Info tag"""
         info = tree.find(self.qname('rightsInfo'))
-        item['usageterms'] = getattr(info.find(self.qname('usageTerms')), 'text', '')
-        # item['copyrightholder'] = info.find(self.qname('copyrightHolder')).attrib['literal']
-        # item['copyrightnotice'] = getattr(info.find(self.qname('copyrightNotice')), 'text', None)
+        if info is not None:
+            item['usageterms'] = getattr(info.find(self.qname('usageTerms')), 'text', '')
+            # item['copyrightholder'] = info.find(self.qname('copyrightHolder')).attrib['literal']
+            # item['copyrightnotice'] = getattr(info.find(self.qname('copyrightNotice')), 'text', None)
 
     def parse_group_set(self, tree, item):
         item['groups'] = []
@@ -208,21 +209,27 @@ class NewsMLTwoFeedParser(XMLFeedParser):
         item['renditions'] = {}
         for content in tree.find(self.qname('contentSet')):
             if content.tag == self.qname('inlineXML'):
-                item['word_count'] = int(content.attrib['wordcount'])
+                try:
+                    item['word_count'] = int(content.attrib['wordcount'])
+                except KeyError:
+                    pass
                 content = self.parse_inline_content(content)
                 item['body_html'] = content.get('content')
                 if 'format' in content:
                     item['format'] = content.get('format')
             elif content.tag == self.qname('inlineData'):
                 item['body_html'] = content.text
-                item['word_count'] = int(content.attrib['wordcount'])
+                try:
+                    item['word_count'] = int(content.attrib['wordcount'])
+                except KeyError:
+                    pass
             else:
                 rendition = self.parse_remote_content(content)
                 item['renditions'][rendition['rendition']] = rendition
 
-    def parse_inline_content(self, tree):
-        html = tree.find(self.qname('html', XHTML))
-        body = html[1]
+    def parse_inline_content(self, tree, ns=XHTML):
+        html = tree.find(self.qname('html', ns))
+        body = html.find(self.qname('body', ns))
         elements = []
         for elem in body:
             if elem.text:
