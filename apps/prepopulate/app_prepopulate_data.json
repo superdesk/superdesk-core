@@ -533,6 +533,22 @@
     },
 
     {
+        "data": {
+            "_id": "package-story-labels",
+            "display_name": "Package Story Labels",
+            "type": "manageable",
+            "unique_field": "qcode",
+            "items": [
+                {"is_active": true, "name": "Featured", "qcode": "story-label:featured"},
+                {"is_active": true, "name": "Top Story", "qcode": "story-label:top-story"},
+                {"is_active": true, "name": "Side Story", "qcode": "story-label:side-story"}
+            ]
+        },
+        "resource": "vocabularies",
+		"id_name": "-id vocabularies priority-"
+    },
+
+    {
         "resource":"ingest_providers",
         "username": "admin",
         "id_name": "-id Ingest Provider-",

@@ -220,7 +220,8 @@ class VocabulariesService(BaseService):
 
         user = get_user_from_request()
         push_notification('vocabularies:updated', vocabulary=updated_vocabulary.get('display_name'),
-                          user=str(user[config.ID_FIELD]) if user else None)
+                          user=str(user[config.ID_FIELD]) if user else None,
+                          vocabulary_id=updated_vocabulary['_id'])
 
     def get_rightsinfo(self, item):
         rights_key = item.get('source', item.get('original_source', 'default'))
