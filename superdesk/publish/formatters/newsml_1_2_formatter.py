@@ -34,8 +34,6 @@ class NewsML12Formatter(Formatter):
     """
 
     XML_ROOT = '<?xml version="1.0"?><!DOCTYPE NewsML SYSTEM "http://www.provider.com/dtd/NewsML_1.2.dtd">'
-    now = utcnow()
-    string_now = now.strftime('%Y%m%dT%H%M%S+0000')
     newml_content_type = {
         CONTENT_TYPE.PICTURE: 'Photo',
         CONTENT_TYPE.AUDIO: 'Audio',
@@ -59,6 +57,8 @@ class NewsML12Formatter(Formatter):
         """
         try:
             pub_seq_num = superdesk.get_resource_service('subscribers').generate_sequence_number(subscriber)
+            self.now = utcnow()
+            self.string_now = self.now.strftime('%Y%m%dT%H%M%S+0000')
 
             newsml = etree.Element("NewsML")
             SubElement(newsml, "Catalog", {'Href': 'http://www.iptc.org/std/catalog/catalog.IptcMasterCatalog.xml'})
