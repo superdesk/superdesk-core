@@ -276,5 +276,19 @@
             "name": {"translate": true},
             "qcode": {}
         }
+    },
+    {
+        "_id": "package-story-labels",
+        "display_name": "Package Story Labels",
+        "type": "manageable",
+        "unique_field": "qcode",
+        "items": [
+            {"is_active": true, "qcode": "story-label:featured", "name": "Featured"}
+        ],
+        "schema": {
+            "qcode": {},
+            "name": {},
+            "is_active": {}
+        }
     }
 ]

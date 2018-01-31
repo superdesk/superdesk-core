@@ -303,6 +303,12 @@
 			"additionalProperties" : false,
 			"patternProperties" : {
 				"^[a-zA-Z0-9]+[a-zA-Z0-9-]*" :  { "$ref": "https://github.com/superdesk/superdesk-core/blob/master/docs/superdesk-ninjs-schema.json#" }
+			},
+			"properties" : {
+				"label" : {
+					"description" : "The label identifier (qcode) associated with the item in this package",
+					"type" : "string"
+				}
 			}
 		},
 		"extra" : {
