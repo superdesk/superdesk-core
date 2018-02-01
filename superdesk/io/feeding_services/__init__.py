@@ -184,6 +184,7 @@ class FeedingService(metaclass=ABCMeta):
 from superdesk.io.feeding_services.email import EmailFeedingService  # NOQA
 from superdesk.io.feeding_services.file_service import FileFeedingService  # NOQA
 from superdesk.io.feeding_services.ftp import FTPFeedingService  # NOQA
+from superdesk.io.feeding_services.ritzau import RitzauFeedingService  # NOQA
 from superdesk.io.feeding_services.http_service import HTTPFeedingService  # NOQA
 from superdesk.io.feeding_services.rss import RSSFeedingService  # NOQA
 from superdesk.io.feeding_services.twitter import TwitterFeedingService  # NOQA
