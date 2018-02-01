@@ -10,11 +10,12 @@
 
 from abc import ABCMeta, abstractmethod
 
-from superdesk.etree import etree
+from superdesk.etree import etree as sd_etree
 from superdesk.errors import SkipValue
 from flask import current_app as app
 from superdesk.metadata.item import Priority
 from collections import OrderedDict
+from lxml import etree
 import superdesk
 import logging
 
@@ -146,6 +147,9 @@ class XMLFeedParser(FeedParser, metaclass=ABCMeta):
             list: a bool which indicate if a list is expected
                   if False (default), only first value is used
             filter: callable to be used with found element/value
+                value returned by the callable will be used
+                if None is returned, value will be ignored
+                In case of multiple values (i.e. if "list" is set), filter is called on each item
             default_attr: value if element exist but attribute is missing
                 this works actually for all values, if it is not found parent element is checked
                 and default_attr is used only if parent element exists
@@ -218,7 +222,12 @@ class XMLFeedParser(FeedParser, metaclass=ABCMeta):
                 values = item_xml.xpath(xpath, namespaces=namespaces)
                 list_ = mapping.get('list', False)
                 if not list_:
-                    values = values[:1]
+                    if isinstance(values, list):
+                        values = values[:1]
+                    else:
+                        # result was not a list, can happen if a function
+                        # has been used
+                        values = [values]
                 if not values:
                     # nothing found, we check default
                     try:
@@ -236,18 +245,26 @@ class XMLFeedParser(FeedParser, metaclass=ABCMeta):
                             continue
                 else:
                     for idx, current_value in enumerate(values):
-                        if isinstance(current_value, str):
-                            if 'filter' in mapping:
-                                values[idx] = mapping['filter'](current_value)
-                        else:
-                            # we have an element,
+
+                        if isinstance(current_value, etree._Element):
                             # do we want a filter or the content?
                             try:
                                 # filter
-                                values[idx] = mapping['filter'](current_value)
+                                filter_cb = mapping['filter']
                             except KeyError:
                                 # content
                                 values[idx] = ''.join(current_value.itertext())
+                            else:
+                                values[idx] = filter_cb(current_value)
+                        else:
+                            if 'filter' in mapping:
+                                values[idx] = mapping['filter'](current_value)
+
+                    if None in values:
+                        # filter can return None to skip a value
+                        values = [v for v in values if v is not None]
+                        if not values and not list_:
+                            continue
 
             value = values if list_ else values[0]
             if 'key_hook' in mapping:
@@ -274,7 +291,7 @@ class XMLFeedParser(FeedParser, metaclass=ABCMeta):
         elif ns is not None and ns == 'xml':
             ns = 'http://www.w3.org/XML/1998/namespace'
 
-        return str(etree.QName(ns, tag))
+        return str(sd_etree.QName(ns, tag))
 
 
 class FileFeedParser(FeedParser, metaclass=ABCMeta):
