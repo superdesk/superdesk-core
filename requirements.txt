@@ -12,5 +12,4 @@ sphinxcontrib-plantuml
 docutils==0.12
 requests-mock
 responses
-python-twitter
 -e .
