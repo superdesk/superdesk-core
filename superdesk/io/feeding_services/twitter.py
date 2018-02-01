@@ -43,6 +43,9 @@ class TwitterFeedingService(FeedingService):
         access_token_key = config.get('access_token_key', '')
         access_token_secret = config.get('access_token_secret', '')
         screen_names = config.get('screen_names', '')
+        status_count = 100
+        # how many statuses to get, 200 should be max
+
         new_items = []
         api = twitter.Api(consumer_key=consumer_key,
                           consumer_secret=consumer_secret,
@@ -60,10 +63,10 @@ class TwitterFeedingService(FeedingService):
             try:
                 # hashtag search
                 if screen_name.startswith('#'):
-                    statuses = api.GetSearch(screen_name.lstrip('#'), count=200)
+                    statuses = api.GetSearch(screen_name.lstrip('#'), count=status_count)
                 # user search
                 else:
-                    statuses = api.GetUserTimeline(screen_name=screen_name, count=200)
+                    statuses = api.GetUserTimeline(screen_name=screen_name, count=status_count)
             except twitter.error.TwitterError as exc:
                 if exc.message[0].get('code') == 34:
                     # that page does not exist
