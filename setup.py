@@ -42,7 +42,7 @@ install_requires = [
     'PyYAML>=3.11,<3.13',
     'lxml>=3.8,<3.9',
     'draftjs_exporter[lxml]>=1.1.0,<2.0',
-    'python-twitter>=3.3',
+    'python-twitter==3.3',
 ]
 
 package_data = {
