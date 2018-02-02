@@ -1,5 +1,19 @@
 # Superdesk Server Changelog
 
+## [1.12] 2018-02-02
+
+### Fixed
+
+- Fix default values in `categories` vocabulary.
+- An error message should be displayed for all custom required fields when missing.
+- Revisiting saved search and marking it as global throws an error.
+- Update `word_count` on correction.
+
+### Added
+
+- Add package item labels support.
+- Add author `avatar_url` to ninjs output.
+
 ## [1.11] 2018-01-19
 
 ### Fixed
