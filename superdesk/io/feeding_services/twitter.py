@@ -96,8 +96,8 @@ class TwitterFeedingService(FeedingService):
                                   '[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',
                                   status.text)
                 if urls:
-                    item['body_html'] += '<p><a href="%s" target="_blank">%s'
-                    '</a></p>' % (urls[0], urls[0])
+                    item['body_html'] += '<p><a href="%s"' \
+                        ' target="_blank">%s</a></p>' % (urls[0], urls[0])
 
                 # on hashtag search we don't want retweets
                 if not (screen_name.startswith('#') and status.text
