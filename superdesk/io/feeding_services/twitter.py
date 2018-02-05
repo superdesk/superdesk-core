@@ -31,7 +31,8 @@ class TwitterFeedingService(FeedingService):
     label = 'Twitter'
 
     ERRORS = [IngestTwitterError.TwitterLoginError().get_error_description(),
-              IngestTwitterError.TwitterNoScreenNamesError().get_error_description()]
+              IngestTwitterError.TwitterNoScreenNamesError().
+              get_error_description()]
 
     def _test(self, provider):
         self._update(provider, update=None, test=True)
@@ -57,16 +58,18 @@ class TwitterFeedingService(FeedingService):
             raise IngestTwitterError.TwitterNoScreenNamesError(ex, provider)
 
         if not screen_names:
-            raise IngestTwitterError.TwitterNoScreenNamesError(ex, provider)
+            raise IngestTwitterError.TwitterNoScreenNamesError(provider)
         for screen_name in screen_names:
             screen_name = screen_name.replace(' ', '')
             try:
                 # hashtag search
                 if screen_name.startswith('#'):
-                    statuses = api.GetSearch(screen_name.lstrip('#'), count=status_count)
+                    statuses = api.GetSearch(screen_name.lstrip('#'),
+                                             count=status_count)
                 # user search
                 else:
-                    statuses = api.GetUserTimeline(screen_name=screen_name, count=status_count)
+                    statuses = api.GetUserTimeline(screen_name=screen_name,
+                                                   count=status_count)
             except twitter.error.TwitterError as exc:
                 if exc.message[0].get('code') == 34:
                     # that page does not exist
@@ -76,7 +79,8 @@ class TwitterFeedingService(FeedingService):
 
             for status in statuses:
                 d = parser.parse(status.created_at)
-                guid_hash = hashlib.sha1(status.text.encode('utf8')).hexdigest()
+                guid_hash = hashlib.sha1(status.text.
+                                         encode('utf8')).hexdigest()
                 guid = generate_guid(type=GUID_TAG, id=guid_hash)
                 headline = "%s: %s" % (status.user.screen_name, status.text)
                 item = {}
@@ -88,25 +92,32 @@ class TwitterFeedingService(FeedingService):
 
                 item['body_html'] = status.text
                 # include URL on body
-                urls = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', status.text)
+                urls = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|'
+                                  '[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',
+                                  status.text)
                 if urls:
-                    item['body_html'] += '<p><a href="%s" target="_blank">%s</a></p>' % (urls[0], urls[0])
+                    item['body_html'] += '<p><a href="%s" target="_blank">%s'
+                    '</a></p>' % (urls[0], urls[0])
 
                 # on hashtag search we don't want retweets
-                if not (screen_name.startswith('#') and status.text.startswith('RT ')):
+                if not (screen_name.startswith('#') and status.text
+                        .startswith('RT ')):
                     new_items.append(item)
                     if status.media:
                         image_urls = []
                         for media_item in status.media:
-                            if media_item.type in ['photo', 'animated', 'video']:
+                            if media_item.type in ['photo', 'animated',
+                                                   'video']:
                                 image_urls.append(media_item.media_url)
                         try:
-                            # eg can fail while fetching image
-                            image_items = self._create_image_items(image_urls, item)
+                            # Eg can fail while fetching image
+                            image_items = self._create_image_items(image_urls,
+                                                                   item)
                             new_items.extend(image_items)
-                            package_item = self._create_package(item, image_items)
+                            package_item = self._create_package(item,
+                                                                image_items)
                             new_items.append(package_item)
-                        except:
+                        except Exception as ex:
                             pass
         return [new_items]
 
@@ -115,7 +126,8 @@ class TwitterFeedingService(FeedingService):
         """
         package = {
             ITEM_TYPE: CONTENT_TYPE.COMPOSITE,
-            'guid': generate_guid(type=GUID_TAG, id=text_item.get('guid') + '-package'),
+            'guid': generate_guid(type=GUID_TAG,
+                                  id=text_item.get('guid') + '-package'),
             'versioncreated': text_item['versioncreated'],
             'firstcreated': text_item.get('firstcreated'),
             'headline': text_item.get('headline', ''),
@@ -146,7 +158,9 @@ class TwitterFeedingService(FeedingService):
         for image_url in image_links:
             guid_hash = hashlib.sha1(image_url.encode('utf8')).hexdigest()
             img_item = {
-                'guid': generate_guid(type=GUID_TAG, id=text_item.get('guid') + guid_hash + '-image'),
+                'guid': generate_guid(type=GUID_TAG,
+                                      id=text_item.get('guid') +
+                                      guid_hash + '-image'),
                 ITEM_TYPE: CONTENT_TYPE.PICTURE,
                 'versioncreated': text_item.get('versioncreated'),
                 'firstcreated': text_item.get('firstcreated'),
@@ -161,4 +175,6 @@ class TwitterFeedingService(FeedingService):
 
         return image_items
 
-register_feeding_service(TwitterFeedingService.NAME, TwitterFeedingService(), TwitterFeedingService.ERRORS)
+
+register_feeding_service(TwitterFeedingService.NAME, TwitterFeedingService(),
+                         TwitterFeedingService.ERRORS)

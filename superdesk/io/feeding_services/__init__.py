@@ -186,4 +186,4 @@ from superdesk.io.feeding_services.file_service import FileFeedingService  # NOQ
 from superdesk.io.feeding_services.ftp import FTPFeedingService  # NOQA
 from superdesk.io.feeding_services.http_service import HTTPFeedingService  # NOQA
 from superdesk.io.feeding_services.rss import RSSFeedingService  # NOQA
-from superdesk.io.feeding_services.twitter import TwitterFeedingService
+from superdesk.io.feeding_services.twitter import TwitterFeedingService  # NOQA
