@@ -136,7 +136,7 @@ def json_match(context_data, response_data):
                 assert_is_now(response_data[key], key)
                 continue
             if context_data[key] == "__empty__":
-                assert len(response_data[key]) == 0, '%s is not empty' % key
+                assert len(response_data[key]) == 0, '%s is not empty (%s)' % (key, response_data[key])
                 continue
             if not json_match(context_data[key], response_data[key]):
                 return False
