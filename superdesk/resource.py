@@ -18,6 +18,7 @@ log = logging.getLogger(__name__)
 
 not_indexed = {'type': 'string', 'index': 'no'}  # noqa
 not_analyzed = {'type': 'string', 'index': 'not_analyzed'}
+not_enabled = {'type': 'object', 'enabled': False}  # noqa
 
 
 def build_custom_hateoas(hateoas, doc, **values):
