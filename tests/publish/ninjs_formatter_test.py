@@ -599,6 +599,52 @@ class NinjsFormatterTest(TestCase):
              'biography': 'bio 2'}]
         self.assertEqual(data['authors'], expected)
 
+    def test_author_missing_parent(self):
+        """Test that older items with missing parent don't make the formatter crashing"""
+        article = {
+            '_id': 'urn:bar',
+            '_current_version': 1,
+            'guid': 'urn:bar',
+            'type': 'text',
+            'authors': [
+                {
+                    '_id': [
+                        'test_id',
+                        'writer'
+                    ],
+                    'role': 'writer',
+                    'name': 'Writer',
+                    'sub_label': 'author 1',
+                },
+                {
+                    '_id': [
+                        'test_id_2',
+                        'writer'
+                    ],
+                    'role': 'photographer',
+                    'name': 'photographer',
+                    'sub_label': 'author 2',
+                }
+            ],
+
+        }
+
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        data = json.loads(doc)
+
+        expected = {'guid': 'urn:bar',
+                    'version': '1',
+                    'type': 'text',
+                    'priority': 5,
+                    'authors': [{'name': 'Writer',
+                                 'role': 'writer',
+                                 'biography': ''},
+                                {'name': 'photographer',
+                                 'role': 'photographer',
+                                 'biography': ''}]}
+
+        self.assertEqual(data, expected)
+
     def test_annotations(self):
         """Test parsing of simple annotations using editor_state"""
         article = {
