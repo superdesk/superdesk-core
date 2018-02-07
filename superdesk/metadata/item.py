@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from collections import namedtuple
-from superdesk.resource import Resource, not_analyzed, not_indexed
+from superdesk.resource import Resource, not_analyzed, not_indexed, not_enabled
 from .packages import LINKED_IN_PACKAGES, PACKAGE
 from eve.utils import config
 from superdesk.utils import SuperdeskBaseEnum
@@ -298,9 +298,9 @@ metadata_schema = {
             'properties': {
                 'parent': not_analyzed,
                 'name': not_analyzed,
-                'role': not_analyzed
+                'role': not_analyzed,
+                'jobtitle': not_enabled,
             }
-
         }
     },
     'description_text': {
@@ -519,20 +519,14 @@ metadata_schema = {
     'editor_state': {
         'type': 'list',
         'nullable': True,
-        'mapping': {
-            'type': 'object',
-            'enabled': False,
-        }
+        'mapping': not_enabled,
     },
 
     'annotations': {
         'type': 'list',
         'schema': {
             'type': 'dict',
-            'mapping': {
-                'type': 'object',
-                'enabled': False,
-            },
+            'mapping': not_enabled,
         },
     },
 
