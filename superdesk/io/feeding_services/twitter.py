@@ -75,6 +75,7 @@ class TwitterFeedingService(FeedingService):
                     # that page does not exist
                     continue
                 elif exc.message[0].get('code') == 32:
+                    # invalid credentials
                     raise IngestTwitterError.TwitterLoginError(exc, provider)
 
             for status in statuses:
@@ -122,7 +123,8 @@ class TwitterFeedingService(FeedingService):
         return [new_items]
 
     def _create_package(self, text_item, image_items):
-        """from rss.py
+        """
+        Create a new content package from given content items.
         """
         package = {
             ITEM_TYPE: CONTENT_TYPE.COMPOSITE,
