@@ -357,8 +357,7 @@ class NinjsFormatterTest(TestCase):
         _, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
         formatted = json.loads(doc)
         self.assertIn('associations', formatted)
-        self.assertIn('image', formatted['associations'])
-        self.assertEqual(formatted['associations']['image'], None)
+        self.assertNotIn('image', formatted['associations'])
 
     def test_vidible_formatting(self):
         article = {

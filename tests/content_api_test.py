@@ -184,7 +184,7 @@ class ContentAPITestCase(TestCase):
                         }
                     },
                     'subscribers': ['sub1']
-                }
+                },
             }
         }, [subscriber])
 
@@ -196,6 +196,38 @@ class ContentAPITestCase(TestCase):
             renditions = data['associations']['foo']['renditions']
             self.assertIn('assets/bar', renditions['original']['href'])
             self.assertNotIn('http://localhost:5000/api/upload/', data['body_html'])
+
+    def test_association_reset(self):
+        subscriber = {'_id': 'sub1'}
+        self.content_api.publish({
+            'guid': 'text',
+            'type': 'text',
+            'body_html': '',
+            'version': 1,
+            'associations': {
+                'foo': {
+                    'guid': 'foo',
+                    'type': 'text',
+                    'body_html': '<p>Foo</p>',
+                },
+            },
+        }, [subscriber])
+
+        self.content_api.publish({
+            'guid': 'text',
+            'type': 'text',
+            'body_html': 'updated',
+            'version': 2,
+            'assocations': {
+                'foo': None,
+            },
+        })
+
+        headers = self._auth_headers(subscriber)
+        with self.capi.test_client() as c:
+            response = c.get('items/text', headers=headers)
+            data = json.loads(response.data)
+            self.assertEqual({}, data['associations'])
 
     def test_content_filtering(self):
         self.content_api.publish({'guid': 'u3', 'type': 'text', 'source': 'foo', 'urgency': 3}, [self.subscriber])

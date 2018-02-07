@@ -61,7 +61,7 @@ Feature: HTTP Push publishing
 
         When we patch "archive/#archive._id#"
         """
-        {"slugline": "slug", "body_html": "body", "headline": "Foo"}
+        {"slugline": "slug", "body_html": "body", "headline": "Foo", "associations": {"embedded123": null}}
         """
 
         When we publish "#archive._id#" with "publish" type and "published" state
@@ -70,7 +70,19 @@ Feature: HTTP Push publishing
         When we transmit published
         Then we pushed 1 item
         """
-        [{"guid": "#archive.guid#", "profile": "foo", "type": "text", "byline": "__no_value__", "headline": "__no_value__", "body_html": "body", "version": "3", "copyrightholder": "copyright holder", "copyrightnotice": "copyright notice", "language": "en"}]
+        [{
+            "guid": "#archive.guid#",
+            "profile": "foo",
+            "type": "text",
+            "byline": "__no_value__",
+            "headline": "__no_value__",
+            "body_html": "body",
+            "version": "3",
+            "copyrightholder": "copyright holder",
+            "copyrightnotice": "copyright notice",
+            "language": "en",
+            "associations": "__empty__"
+        }]
         """
 
         When we publish "#archive._id#" with "correct" type and "corrected" state
