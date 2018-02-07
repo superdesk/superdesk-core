@@ -381,14 +381,24 @@ class NINJSFormatter(Formatter):
 
         authors = []
         for author in article['authors']:
-            user_id = author['parent']
             try:
-                user = next(users_service.find({'_id': user_id}))
-            except StopIteration:
-                logger.warn("unknow user: {user_id}".format(user_id=user_id))
-                continue
+                user_id = author['parent']
+            except KeyError:
+                # XXX: in some older items, parent may be missing, we try to find user with name in this case
+                try:
+                    user = next(users_service.find({'display_name': author['name']}))
+                except (StopIteration, KeyError):
+                    logger.warn("unknown user")
+                    user = {}
+            else:
+                try:
+                    user = next(users_service.find({'_id': user_id}))
+                except StopIteration:
+                    logger.warn("unknown user: {user_id}".format(user_id=user_id))
+                    user = {}
+
             author = {
-                "name": user['display_name'],
+                "name": user.get('display_name', author.get('name', '')),
                 "role": author['role'],
                 "biography": user.get('biography', ''),
             }
