@@ -240,3 +240,30 @@ Feature: Content Spiking
         """
         {"_id": "item-1", "state": "spiked", "sign_off": "abc"}
         """
+
+    @auth
+    @notification
+    Scenario: Spike locked item
+        Given "archive"
+        """
+        [{"_id": "item-1", "guid": "item-1", "headline": "test",
+        "_current_version": 1, "state": "draft", "event_id": "abc123"}]
+        """
+
+        When we post to "/archive/item-1/lock"
+        """
+        {"lock_action": "edit"}
+        """
+
+        When we spike "item-1"
+        Then we get OK response
+        And we get notifications
+        """
+        [{"event": "item:unlock", "extra": {"item": "item-1", "user": "#CONTEXT_USER_ID#"}}]
+        """
+
+        When we get "/archive/item-1"
+        Then we get existing resource
+        """
+        {"_id": "item-1", "state": "spiked", "sign_off": "abc", "lock_user": null}
+        """

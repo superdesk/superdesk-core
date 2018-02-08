@@ -73,6 +73,12 @@ def get_user_id(required=False):
     return user.get(config.ID_FIELD)
 
 
+def get_auth():
+    """Get authenticated session data."""
+    auth = flask.g.get('auth', {})
+    return auth
+
+
 def is_current_user_admin(required=False):
     """Test if current user is administrator.
 

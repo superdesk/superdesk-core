@@ -35,6 +35,18 @@ TASK = 'task'
 logger = logging.getLogger(__name__)
 
 
+def push_unlock_notification(item, user_id, session_id):
+    push_notification(
+        'item:unlock',
+        item=str(item.get(config.ID_FIELD)),
+        item_version=str(item.get(config.VERSION)),
+        state=item.get(ITEM_STATE),
+        user=str(user_id),
+        lock_session=str(session_id),
+        _etag=item.get(config.ETAG)
+    )
+
+
 class ItemLock(BaseComponent):
     def __init__(self, app):
         self.app = app
@@ -134,12 +146,7 @@ class ItemLock(BaseComponent):
                     item = item_model.find_one(item_filter)
                 self.app.on_item_unlocked(item, user_id)
 
-            push_notification('item:unlock',
-                              item=str(item_filter.get(config.ID_FIELD)),
-                              item_version=str(item.get(config.VERSION)),
-                              state=item.get(ITEM_STATE),
-                              user=str(user_id), lock_session=str(session_id),
-                              _etag=item.get(config.ETAG))
+            push_unlock_notification(item, user_id, session_id)
         else:
             raise SuperdeskApiError.forbiddenError(message=error_message)
 
