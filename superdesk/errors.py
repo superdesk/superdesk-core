@@ -454,6 +454,21 @@ class IngestEmailError(SuperdeskIngestError):
         return IngestEmailError(6005, exception, provider)
 
 
+class IngestTwitterError(SuperdeskIngestError):
+    _codes = {
+        6100: "Twitter authentication failure",
+        6200: "No Screen names specified",
+    }
+
+    @classmethod
+    def TwitterLoginError(cls, exception=None, provider=None):
+        return IngestTwitterError(6100, exception, provider)
+
+    @classmethod
+    def TwitterNoScreenNamesError(cls, exception=None, provider=None):
+        return IngestTwitterError(6200, exception, provider)
+
+
 class SuperdeskPublishError(SuperdeskError):
     def __init__(self, code, exception, destination=None):
         super().__init__(code)
