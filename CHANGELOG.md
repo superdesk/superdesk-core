@@ -1,5 +1,12 @@
 # Superdesk Server Changelog
 
+## [1.12.1] 2018-02-09
+
+### Fixed
+
+- Fix crash in NINJS formatter when author parent is missing.
+- Fix authors.jobtitle items mapping.
+
 ## [1.12] 2018-02-02
 
 ### Fixed
