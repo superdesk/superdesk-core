@@ -1,4 +1,5 @@
-<p>Your {{app_name}} account is <strong>{{status}}</strong>.</p>
+{% extends "email_layout.html" %}
 
-<p>Regards,</p>
-<p>The <em>{{app_name}}</em> Team</p>
+{% block content %}
+<p>Your {{app_name}} account is <strong>{{status}}</strong>.</p>
+{% endblock %}

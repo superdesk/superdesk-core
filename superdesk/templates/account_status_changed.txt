@@ -1,4 +1,5 @@
-Your {{app_name}} account is {{status}}.
+{% extends "email_layout.txt" %}
 
-Regards,
-The {{app_name}} Team
+{% block content %}
+Your {{app_name}} account is {{status}}.
+{% endblock %}
