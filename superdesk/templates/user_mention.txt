@@ -1,7 +1,7 @@
+{% extends "email_layout.txt" %}
+
+{% block content %}
 {{username}} mentioned you in a comment to the following article: {{link}}.
 Comment: 
 {{text}}
-
-Regards,
-
-The {{app_name}} Team
+{% endblock %}

@@ -1,7 +1,9 @@
+{% extends "email_layout.html" %}
+
+{% block content %}
 <p>{{place}}:Kill/Takedown Notice Kill/Takedown Notice</p>
 <p>**KILL/TAKEDOWN NOTICE**  **KILL/TAKEDOWN NOTICE**</p>
 
     {{body | safe}}
 
-<p>Regards,</p>
-<p>The <em>{{app_name}}</em> Team</p>
+{% endblock %}

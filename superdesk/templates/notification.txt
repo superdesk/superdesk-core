@@ -1,5 +1,5 @@
-{{notification}}
+{% extends "email_layout.txt" %}
 
-Regards,
-
-The {{app_name}} Team
+{% block content %}
+{{ notification }}
+{% endblock %}
