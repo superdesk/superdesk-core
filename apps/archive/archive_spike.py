@@ -20,13 +20,14 @@ from superdesk.metadata.item import ITEM_STATE, CONTENT_TYPE, ITEM_TYPE, GUID_FI
 from superdesk.notification import push_notification
 from superdesk.services import BaseService
 from superdesk.metadata.utils import item_url, generate_guid
-from .common import get_user, get_expiry, item_operations, ITEM_OPERATION, set_sign_off
+from .common import get_user, get_expiry, item_operations, ITEM_OPERATION, set_sign_off, get_auth
 from superdesk.workflow import is_workflow_state_transition_valid
 from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
 from apps.archive.common import ITEM_EVENT_ID, ITEM_UNLINK, clear_rewritten_flag
 from apps.packages import PackageService
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE
 from superdesk.utc import get_expiry_date
+from apps.item_lock.components.item_lock import push_unlock_notification
 
 logger = logging.getLogger(__name__)
 
@@ -156,6 +157,12 @@ class ArchiveSpikeService(BaseService):
         # remove any relation with linked items
         updates[ITEM_EVENT_ID] = generate_guid(type=GUID_TAG)
 
+        # remove lock
+        updates.update({
+            'lock_user': None,
+            'lock_session': None,
+        })
+
         if original[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
             # remove links from items in the package
             package_service = PackageService()
@@ -184,6 +191,10 @@ class ArchiveSpikeService(BaseService):
 
     def on_updated(self, updates, original):
         get_resource_service('archive_broadcast').spike_item(original)
+        if original.get('lock_user'):
+            user = get_user()
+            auth = get_auth()
+            push_unlock_notification(original, user['_id'], auth['_id'])
 
 
 class ArchiveUnspikeService(BaseService):

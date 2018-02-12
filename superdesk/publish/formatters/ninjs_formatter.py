@@ -333,17 +333,17 @@ class NINJSFormatter(Formatter):
             locator_map['items'] = vocabularies_service.get_locale_vocabulary(
                 locator_map.get('items'), article.get('language'))
 
-        def getLabel(item):
-            locators = [l for l in locator_map.get('items', []) if l['qcode'] == item.get('qcode')]
-            if locators and len(locators) == 1:
-                return locators[0].get('state') or \
-                    locators[0].get('country') or \
-                    locators[0].get('world_region') or \
-                    locators[0].get('group')
-            else:
-                return item.get('name')
+        def get_label(item):
+            if locator_map:
+                locators = [l for l in locator_map.get('items', []) if l['qcode'] == item.get('qcode')]
+                if locators and len(locators) == 1:
+                    return locators[0].get('state') or \
+                        locators[0].get('country') or \
+                        locators[0].get('world_region') or \
+                        locators[0].get('group')
+            return item.get('name')
 
-        return [{'name': getLabel(item), 'code': item.get('qcode')} for item in article['place']]
+        return [{'name': get_label(item), 'code': item.get('qcode')} for item in article['place']]
 
     def _format_profile(self, profile):
         return superdesk.get_resource_service('content_types').get_output_name(profile)

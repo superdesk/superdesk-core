@@ -10,7 +10,6 @@
 
 from bson import ObjectId
 
-import flask
 import logging
 from eve.utils import config
 from datetime import datetime
@@ -32,7 +31,7 @@ from superdesk.metadata.item import GUID_NEWSML, GUID_FIELD, GUID_TAG, not_analy
 from superdesk.metadata.utils import generate_guid
 from superdesk.errors import SuperdeskApiError, IdentifierGenerationError
 from superdesk.logging import logger
-from apps.auth import get_user
+from apps.auth import get_user, get_auth  # noqa
 
 
 logger = logging.getLogger(__name__)
@@ -357,11 +356,6 @@ def clear_rewritten_flag(event_id, rewrite_id, rewrite_field):
 def update_dates_for(doc):
     for item in ['firstcreated', 'versioncreated']:
         doc.setdefault(item, utcnow())
-
-
-def get_auth():
-    auth = flask.g.get('auth', {})
-    return auth
 
 
 def set_original_creator(doc):
