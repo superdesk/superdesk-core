@@ -22,6 +22,21 @@ REQUIRED_FIELDS = (
     'language',
 )
 
+# Valid editor keys
+EDITOR_ATTRIBUTES = (
+    'order',
+    'sdWidth',
+    'required',
+    'hideDate',
+    'showCrops',
+    'formatOptions',
+    'editor3',
+    'default',
+    'cleanPastedHTML',
+    'imageTitle',
+    'sourceField',
+)
+
 
 class ContentTypesResource(superdesk.Resource):
     schema = {
@@ -364,13 +379,11 @@ def delete_disabled_fields(editor, schema):
 
 
 def clean_editor(editor):
-    valid_attributes = ['order', 'sdWidth', 'required', 'hideDate', 'showCrops',
-                        'formatOptions', 'editor3', 'default', 'cleanPastedHTML', 'imageTitle']
     for field_value in editor.values():
         if not field_value:
             continue
         for attribute in list(field_value.keys()):
-            if attribute not in valid_attributes:
+            if attribute not in EDITOR_ATTRIBUTES:
                 del field_value[attribute]
 
 
