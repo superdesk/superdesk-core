@@ -87,7 +87,9 @@ class NewsMLTwoFeedParser(XMLFeedParser):
         meta = tree.find(self.qname('itemMeta'))
         item[ITEM_TYPE] = meta.find(self.qname('itemClass')).attrib['qcode'].split(':')[1]
         item['versioncreated'] = self.datetime(meta.find(self.qname('versionCreated')).text)
-        item['firstcreated'] = self.datetime(meta.find(self.qname('firstCreated')).text)
+        firstcreated_elt = meta.find(self.qname('firstCreated'))
+        if firstcreated_elt is not None:
+            item['firstcreated'] = self.datetime(firstcreated_elt.text)
         item['pubstatus'] = (meta.find(self.qname('pubStatus')).attrib['qcode'].split(':')[1]).lower()
         item['ednote'] = meta.find(self.qname('edNote')).text if meta.find(self.qname('edNote')) is not None else ''
 
