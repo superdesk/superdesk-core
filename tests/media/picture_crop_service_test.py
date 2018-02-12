@@ -82,4 +82,22 @@ class PictureCropServiceTest(TestCase):
         crop_ratio = crop_height / crop_width
         size_ratio = crop_data['height'] / crop_data['width']
 
-        self.assertEqual(crop_ratio, size_ratio)
+        self.assertEqual(round(crop_ratio, 3), round(size_ratio, 3))
+
+    def test_get_crop_size_uses_full_picture(self):
+        crop_data = {
+            'width': 1290,
+            'height': 490,
+            'CropTop': 59,
+            'CropRight': 1300,
+            'CropBottom': 554,
+            'CropLeft': 0,
+        }
+
+        crop_size = get_crop_size(crop_data)
+        self.assertEqual(1290, crop_size['width'])
+        self.assertEqual(490, crop_size['height'])
+        self.assertEqual(0, crop_data['CropLeft'])
+        self.assertEqual(1300, crop_data['CropRight'])
+        self.assertEqual(59, crop_data['CropTop'])
+        self.assertGreaterEqual(554, crop_data['CropBottom'])
