@@ -36,7 +36,7 @@ schema = {
     'mimetype': metadata_schema['mimetype'],
     'organization': {'type': 'list'},
     'person': {'type': 'list'},
-    'place': {'type': 'list'},
+    'place': Resource.not_analyzed_field('list'),
     'profile': {'type': 'string'},
     'pubstatus': metadata_schema['pubstatus'],
     'renditions': {'type': 'dict'},
