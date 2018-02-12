@@ -298,3 +298,43 @@ Feature: Validate
     """
     {"errors": "__empty__"}
     """
+
+  @auth
+  Scenario: Validate subject field with missing scheme
+  Given "content_types"
+    """
+    [{"_id": "test", "schema": {
+      "subject": {
+        "mandatory_in_list": {"scheme": {"01": "01", "destination": null}},
+        "type": "list",
+        "nullable": true,
+        "required": false,
+        "schema": {
+          "type": "dict",
+          "schema": {
+            "scheme": {
+              "allowed": ["01"],
+              "nullable": true,
+              "required": true,
+              "type": "string"
+            }
+          }
+        }
+      }
+    }}]
+    """
+
+    When we post to "/validate"
+    """
+    {
+      "act": "publish", "type": "text",
+      "validate": {
+        "profile": "test",
+        "subject": [{"name": "foo", "qcode": "foo"}, {"name": "01", "qcode": "01", "scheme": "01"}]
+      }
+    }
+    """
+    Then we get existing resource
+    """
+    {"errors": "__empty__"}
+    """
