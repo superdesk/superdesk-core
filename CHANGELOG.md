@@ -1,5 +1,13 @@
 # Superdesk Server Changelog
 
+## [1.12.2] 2018-02-13
+
+### Fixed
+
+- Fix picture crop adding dark border to crops.
+- Fix validate to allow subject values without scheme.
+- Fix content api elastic schema.
+
 ## [1.12.1] 2018-02-09
 
 ### Fixed
