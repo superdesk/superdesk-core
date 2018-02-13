@@ -259,12 +259,18 @@ class ValidateService(superdesk.Service):
             return vocabulary['display_name']
         return vocabulary_id
 
+    def _set_default_subject_scheme(self, item):
+        if item.get('subject'):
+            for subject in item['subject']:
+                subject.setdefault('scheme', None)
+
     def _validate(self, doc, **kwargs):
         use_headline = kwargs and 'headline' in kwargs
         validators = self._get_validators(doc)
         for validator in validators:
             validation_schema = self._get_validator_schema(validator)
             self._sanitize_fields(doc['validate'], validator)
+            self._set_default_subject_scheme(doc['validate'])
             self._process_media(doc['validate'], validation_schema)
             self._process_sms(doc['validate'], validation_schema)
             v = SchemaValidator()
