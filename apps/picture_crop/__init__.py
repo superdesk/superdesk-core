@@ -31,18 +31,17 @@ def get_crop_size(crop):
         'height': crop.get('height', crop_height)
     }
 
-    crop_ratio = crop_height / crop_width
-    size_ratio = size['height'] / size['width']
+    crop_ratio = crop_width / crop_height
+    size_ratio = size['width'] / size['height']
 
     # Keep crop data proportional to the size provided
     # i.e. if the rendition is 4x3, make sure the crop data is also a 4x3 aspect ratio
-    if crop_ratio != size_ratio:
-        crop_width = int(crop_height / size_ratio)
-        crop_height = int(crop_width * size_ratio)
-
-        # Calculating from the top-left, re-assign the cropping coordinates
-        # based on the new aspect ratio of the crop
+    # but make sure it won't exceed picture boundaries
+    if round(crop_ratio, 2) > round(size_ratio, 2):
+        crop_width = int(crop_height * size_ratio)
         crop['CropRight'] = crop['CropLeft'] + crop_width
+    elif round(crop_ratio, 2) < round(size_ratio, 2):
+        crop_height = int(crop_width / size_ratio)
         crop['CropBottom'] = crop['CropTop'] + crop_height
 
     return size
