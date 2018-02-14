@@ -32,6 +32,14 @@ from superdesk.validator import SuperdeskValidator
 
 
 class SuperdeskEve(eve.Eve):
+
+    def __getattr__(self, name):
+        """Workaround for https://github.com/pyeve/eve/issues/1087"""
+        if name in {"im_self", "im_func"}:
+            raise AttributeError("type object '%s' has no attribute '%s'" %
+                                 (self.__class__.__name__, name))
+        return super(SuperdeskEve, self).__getattr__(name)
+
     def init_indexes(self):
         for resource, resource_config in self.config['DOMAIN'].items():
             mongo_indexes = resource_config.get('mongo_indexes__init')
