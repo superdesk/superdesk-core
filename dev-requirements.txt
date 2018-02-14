@@ -11,3 +11,4 @@ sphinx-autobuild
 sphinxcontrib-plantuml
 docutils==0.12
 requests-mock
+-r requirements.txt
