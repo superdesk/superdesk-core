@@ -1,15 +1,1 @@
-flake8
-flake8-docstrings
-nose
-pep8
-pyflakes
-pydocstyle
-httmock
-wooper
-sphinx
-sphinx-autobuild
-sphinxcontrib-plantuml
-docutils==0.12
-requests-mock
-responses
--e .
+-r dev-requirements.txt

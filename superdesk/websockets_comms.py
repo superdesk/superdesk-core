@@ -23,7 +23,7 @@ from kombu.mixins import ConsumerMixin
 from kombu.pools import producers
 from superdesk.utc import utcnow
 from superdesk.utils import get_random_string
-from superdesk.default_settings import celery_queue
+from superdesk.default_settings import celery_queue, WS_HEART_BEAT
 from flask import json
 
 
@@ -57,7 +57,7 @@ class SocketBrokerClient:
     def connect(self):
         self._close()
         logger.info('Connecting to broker {}'.format(self.url))
-        self.connection = Connection(self.url)
+        self.connection = Connection(self.url, heartbeat=WS_HEART_BEAT)
         self.connection.connect()
         logger.info('Connected to broker {}'.format(self.url))
 

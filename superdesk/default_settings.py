@@ -175,16 +175,22 @@ CACHE_URL = env('SUPERDESK_CACHE_URL', REDIS_URL)
 #: celery broker
 BROKER_URL = env('CELERY_BROKER_URL', REDIS_URL)
 CELERY_BROKER_URL = BROKER_URL
+
+#: celery task config
 CELERY_TASK_ALWAYS_EAGER = (env('CELERY_ALWAYS_EAGER', False) == 'True')
 CELERY_TASK_SERIALIZER = 'json'
-CELERY_TASK_IGNORE_RESULT = True
 CELERY_TASK_PROTOCOL = 1
+CELERY_TASK_IGNORE_RESULT = True
+CELERY_TASK_SEND_EVENTS = False
+
+#: celery worker config
 CELERY_WORKER_DISABLE_RATE_LIMITS = True
 CELERY_WORKER_TASK_SOFT_TIME_LIMIT = 300
 CELERY_WORKER_LOG_FORMAT = '%(message)s level=%(levelname)s process=%(processName)s'
 CELERY_WORKER_TASK_LOG_FORMAT = ' '.join([CELERY_WORKER_LOG_FORMAT, 'task=%(task_name)s task_id=%(task_id)s'])
 CELERY_WORKER_CONCURRENCY = env('CELERY_WORKER_CONCURRENCY') or None
 
+#: celery routing config
 CELERY_TASK_DEFAULT_QUEUE = celery_queue('default')
 CELERY_TASK_DEFAULT_EXCHANGE = celery_queue('default')
 CELERY_TASK_DEFAULT_ROUTING_KEY = 'default'
@@ -251,6 +257,7 @@ CELERY_TASK_ROUTES = {
     }
 }
 
+#: celery beat config
 CELERY_BEAT_SCHEDULE_FILENAME = env('CELERYBEAT_SCHEDULE_FILENAME', './celerybeatschedule.db')
 CELERY_BEAT_SCHEDULE = {
     'ingest:update': {
@@ -532,6 +539,9 @@ MACROS_MODULE = env('MACROS_MODULE', 'superdesk.macros')
 
 WS_HOST = env('WSHOST', '0.0.0.0')
 WS_PORT = env('WSPORT', '5100')
+
+# Used by the  Kombu Connection. Only valid for the AMQP protocol
+WS_HEART_BEAT = int(env('WS_HEARTBEAT', '0'))
 
 #: Defines the maximum value of Publish Sequence Number after which the value will start from 1
 MAX_VALUE_OF_PUBLISH_SEQUENCE = int(env('MAX_VALUE_OF_PUBLISH_SEQUENCE', 9999))
