@@ -533,6 +533,9 @@ MACROS_MODULE = env('MACROS_MODULE', 'superdesk.macros')
 WS_HOST = env('WSHOST', '0.0.0.0')
 WS_PORT = env('WSPORT', '5100')
 
+# Used by the  Kombu Connection. Only valid for the AMQP protocol
+WS_HEART_BEAT = int(env('WS_HEARTBEAT', '0'))
+
 #: Defines the maximum value of Publish Sequence Number after which the value will start from 1
 MAX_VALUE_OF_PUBLISH_SEQUENCE = int(env('MAX_VALUE_OF_PUBLISH_SEQUENCE', 9999))
 
