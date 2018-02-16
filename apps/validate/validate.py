@@ -219,6 +219,21 @@ class ValidateService(superdesk.Service):
                         # fails for json fields like subject, genre
                         pass
 
+    def _get_media_field(self, field_schema, field_associations, doc,):
+        """Returns the field name in associations. For multiple valued media fields
+        the field asssociations name is different from the field schema name.
+        :param field_schema: Field schema name
+        :param field_associations: Field associations name
+        :param doc: Article to be validated
+        """
+        if field_associations in doc.get('associations', {}):
+            return field_associations
+        media_multivalue_field = field_schema + '--'
+        for media_field in doc.get('associations', {}):
+            if media_field.startswith(media_multivalue_field):
+                return media_field
+        return None
+
     def _process_media(self, doc, validation_schema):
         """If media field(feature media or custom media field) is required it should be present for
         validation on doc not only on associations
@@ -229,8 +244,9 @@ class ValidateService(superdesk.Service):
         """
         for field_schema in validation_schema:
             field_associations = field_schema if field_schema != 'feature_media' else 'featuremedia'
-            if field_associations in doc.get('associations', {}):
-                doc[field_schema] = doc['associations'][field_associations]
+            media_field = self._get_media_field(field_schema, field_associations, doc)
+            if media_field:
+                doc[field_schema] = doc['associations'][media_field]
                 if not doc.get('feature_media', None) is None and 'description_text' in doc['feature_media']:
                     doc['media_description'] = doc['associations']['featuremedia']['description_text']
 

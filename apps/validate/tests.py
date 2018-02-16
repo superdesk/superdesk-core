@@ -373,3 +373,18 @@ class ValidateMandatoryInListTest(TestCase):
             },
         ])
         self.assertEqual(errors, [[]])
+
+    def test_validate_process_media(self):
+        item = {
+            'associations': {
+                'media1--1': {
+                    'headline': 'media 1'
+                }
+            }
+        }
+        validation_schema = {
+            'media1': {'required': True}
+        }
+        ValidateService()._process_media(item, validation_schema)
+        self.assertIn('media1', item)
+        self.assertEqual(item['associations']['media1--1'], item['media1'])
