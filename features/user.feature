@@ -481,3 +481,13 @@ Feature: User Resource
         """
         When we get "/archive/item2"
         Then we get response code 404
+
+    @auth
+    Scenario: We can search api using $regex query
+        Given "users"
+        """
+        [{"username": "foo", "email": "foo@bar.com", "is_active": true}]
+        """
+
+        When we get "users/?where={"$or":[{"username":{"$regex":"fo","$options":"-i"}}]}"
+        Then we get list with 1 items
