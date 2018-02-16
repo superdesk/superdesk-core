@@ -50,7 +50,7 @@ class PurgeAudit(superdesk.Command):
                                  {'audit_id': {'$ne': None}}, {'audit_id': {'$ne': ''}}]}
 
     not_item_entry_query = {'$or': [{'resource': {'$nin': item_resources}},
-                                    {'audit_id': {'$eq': None}}, {'audit_id': {'$eq': ''}}]}
+                                    {'audit_id': {'$in': [None, '']}}]}
 
     option_list = (
         superdesk.Option('--expiry_minutes', '-e', dest='expiry', required=False),
