@@ -111,6 +111,9 @@ MONGO_DBNAME = env('MONGO_DBNAME', 'superdesk')
 #: full mongodb connection uri, overrides ``MONGO_DBNAME`` if set
 MONGO_URI = env('MONGO_URI', 'mongodb://localhost/%s' % MONGO_DBNAME)
 
+#: allow all mongo queries
+MONGO_QUERY_BLACKLIST = []
+
 #: legal archive switch
 LEGAL_ARCHIVE = env('LEGAL_ARCHIVE', None)
 
@@ -498,6 +501,7 @@ _MAIL_FROM = env('MAIL_FROM', MAIL_USERNAME)
 #: list of admin emails - get error notifications by default
 ADMINS = [_MAIL_FROM]
 
+DEBUG = bool(env('SUPERDESK_DEBUG', ''))
 SUPERDESK_TESTING = (env('SUPERDESK_TESTING', 'false').lower() == 'true')
 
 #: Set the timezone celery functions to UTC to avoid daylight savings issues SDESK-1057
