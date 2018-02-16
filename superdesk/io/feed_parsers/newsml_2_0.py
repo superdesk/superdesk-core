@@ -215,7 +215,7 @@ class NewsMLTwoFeedParser(XMLFeedParser):
                     item['word_count'] = int(content.attrib['wordcount'])
                 except KeyError:
                     pass
-                content = self.parse_inline_content(content)
+                content = self.parse_inline_content(content, item=item)
                 item['body_html'] = content.get('content')
                 if 'format' in content:
                     item['format'] = content.get('format')
@@ -229,7 +229,7 @@ class NewsMLTwoFeedParser(XMLFeedParser):
                 rendition = self.parse_remote_content(content)
                 item['renditions'][rendition['rendition']] = rendition
 
-    def parse_inline_content(self, tree, ns=XHTML):
+    def parse_inline_content(self, tree, item, ns=XHTML):
         html = tree.find(self.qname('html', ns))
         body = html.find(self.qname('body', ns))
         elements = []
