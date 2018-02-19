@@ -646,3 +646,7 @@ OVERRIDE_EDNOTE_FOR_CORRECTIONS = True
 #: template to use for overriding, you can use {date} and {slugline} placeholders
 #: if not set, a default template will be used
 # OVERRIDE_EDNOTE_TEMPLATE = 'Story "{slugline}" corrected on {date}'
+
+#: allowed HTML tag in client
+HTML_TAGS_WHITELIST = ('h1', 'h2', 'h3', 'h4', 'h6', 'blockquote', 'pre', 'figure', 'ul', 'ol', 'li', 'div', 'p', 'em',
+                       'strong', 'i', 'b')
