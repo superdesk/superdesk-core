@@ -1,5 +1,25 @@
 # Superdesk Server Changelog
 
+## [1.13] 2018-02-19
+
+### Fixed
+
+- Fix error on publishing that custom media is required even if not empty.
+- Fix NewsML2 parser crash when `firstCreated` is missing.
+- Fix mapping for place in content api.
+- Fix unlock item when spiking.
+- Fix empty associations in ninjs output.
+
+### Added
+
+- Add source field for sms config to content profile editor.
+- Add twitter ingest support.
+
+### Changed
+
+- Update dependencies.
+- Use layout for emails.
+
 ## [1.12] 2018-02-02
 
 ### Fixed
