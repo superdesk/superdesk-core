@@ -61,7 +61,10 @@ def filter_empty_vals(data):
 
 
 def get_locale_name(item, language):
-    return item.get('translations', {}).get('name', {}).get(language, None) or item.get('name', '')
+    try:
+        return item['translations']['name'][language]
+    except (KeyError, TypeError):
+        return item.get('name', '')
 
 
 def format_cv_item(item, language):
