@@ -11,6 +11,8 @@
 
 from lxml import etree  # noqa
 from lxml.etree import ParseError  # noqa
+from lxml import html
+from superdesk import config
 
 # from https://developer.mozilla.org/en-US/docs/Web/HTML/Block-level_elements
 BLOCK_ELEMENTS = (
@@ -147,3 +149,20 @@ def to_string(elem, encoding="unicode", method="xml", remove_root_div=True):
         if string.startswith(div_start) and string.endswith(div_end):
             return string[len(div_start):-len(div_end)]
     return string
+
+
+def clean_html(elem):
+    """Clean HTML element by removing unknown or unsafe elements/attributes
+
+    use config.HTML_TAGS_WHITELIST as list of known tags (i.e. tags understood by client)
+    :param etree._Element elem: element to clean (will be converted to HtmlElement if it is not already one
+    :return html.HtmlElement: cleaned element
+    """
+    if not isinstance(elem, html.HtmlElement):
+        elem = html.fromstring(etree.tostring(elem))
+    safe_attrs = set(html.defs.safe_attrs)
+    safe_attrs.remove('class')
+    cleaner = html.clean.Cleaner(allow_tags=config.HTML_TAGS_WHITELIST,
+                                 remove_unknown_tags=False,
+                                 safe_attrs=safe_attrs)
+    return cleaner.clean_html(elem)
