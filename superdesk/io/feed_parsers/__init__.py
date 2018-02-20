@@ -309,3 +309,4 @@ from superdesk.io.feed_parsers.pa_nitf import PAFeedParser  # NOQA
 from superdesk.io.feed_parsers.efe_nitf import EFEFeedParser  # NOQA
 from superdesk.io.feed_parsers.wordpress_wxr import WPWXRFeedParser  # NOQA
 from superdesk.io.feed_parsers.ninjs import NINJSFeedParser  # NOQA
+from superdesk.io.feed_parsers.stt_newsml import STTNewsMLFeedParser  # NOQA
