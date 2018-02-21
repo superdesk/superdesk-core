@@ -14,7 +14,7 @@ from nose.tools import assert_raises
 from eve.utils import ParsedRequest
 
 import superdesk.io.commands.update_ingest as ingest
-from .tests import setup_providers, teardown_providers
+from apps.io.tests import setup_providers, teardown_providers
 from superdesk import etree, get_resource_service
 from superdesk.celery_task_utils import mark_task_as_not_running, is_task_running
 from superdesk.errors import SuperdeskApiError, ProviderError
