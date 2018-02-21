@@ -21,6 +21,7 @@ class SearchProviderResource(Resource):
             'allowed': allowed_search_providers
         },
         'source': required_string,
+        'name': {'type': 'string'},
         'is_closed': {
             'type': 'boolean',
             'default': False
