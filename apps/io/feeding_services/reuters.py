@@ -44,6 +44,8 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
 
     label = 'Reuters Feed API'
 
+    session = None
+
     def _update(self, provider, update):
         updated = utcnow()
 
@@ -98,23 +100,33 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
         payload['token'] = self._get_auth_token(self.provider, update=True)
         url = self._get_absolute_url(endpoint)
 
-        try:
-            response = requests.get(url, params=payload, timeout=15)
-        except requests.exceptions.Timeout as ex:
-            # Maybe set up for a retry, or continue in a retry loop
-            raise IngestApiError.apiTimeoutError(ex, self.provider)
-        except requests.exceptions.TooManyRedirects as ex:
-            # Tell the user their URL was bad and try a different one
-            raise IngestApiError.apiRedirectError(ex, self.provider)
-        except requests.exceptions.RequestException as ex:
-            # catastrophic error. bail.
-            raise IngestApiError.apiRequestError(ex, self.provider)
-        except Exception as error:
-            traceback.print_exc()
-            raise IngestApiError.apiGeneralError(error, self.provider)
+        if not self.session:
+            self.session = requests.Session()
 
-        if response.status_code == 404:
-            raise LookupError('Not found %s' % payload)
+        retries = 0
+        while True:
+            try:
+                response = self.session.get(url, params=payload, timeout=(30, 15))
+            except requests.exceptions.Timeout as ex:
+                if retries < 3:
+                    logger.warn('Reuters API timeout retrying, retries {}'.format(retries))
+                    retries += 1
+                    continue
+                raise IngestApiError.apiTimeoutError(ex, self.provider)
+            except requests.exceptions.TooManyRedirects as ex:
+                # Tell the user their URL was bad and try a different one
+                raise IngestApiError.apiRedirectError(ex, self.provider)
+            except requests.exceptions.RequestException as ex:
+                # catastrophic error. bail.
+                raise IngestApiError.apiRequestError(ex, self.provider)
+            except Exception as error:
+                traceback.print_exc()
+                raise IngestApiError.apiGeneralError(error, self.provider)
+
+            if response.status_code == 404:
+                raise LookupError('Not found %s' % payload)
+
+            break
 
         try:
             return etree.fromstring(response.content)  # workaround for http mock lib
