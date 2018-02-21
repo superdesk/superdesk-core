@@ -93,13 +93,20 @@ def get_char_count(html):
     return len(get_text(html))
 
 
-def get_reading_time(word_count):
+def get_reading_time(html, word_count=None, language=None):
     """Get estimanted number of minutes to read a text
 
     Check https://dev.sourcefabric.org/browse/SDFID-118 for details
+
+    :param str html: html content
     :param int word_count: number of words in the text
+    :param str language: language of the text
     :return int: estimated number of minute to read the text
     """
+    if language and language.startswith('jp'):
+        return round(len(re.sub('[\s]', '', get_text(html))) / 240)
+    if not word_count:
+        word_count = get_word_count(html)
     reading_time_float = word_count / 250
     reading_time_minutes = int(reading_time_float)
     reading_time_rem_sec = int((reading_time_float - reading_time_minutes) * 60)
