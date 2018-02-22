@@ -1,0 +1,122 @@
+<?xml version="1.0"?>
+<XMLNewsQueuedResponse xmlns="http://tempuri.org/">
+  <XMLNewsQueuedResult xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+    <error xmlns="">0</error>
+    <errormsg xmlns=""/>
+    <ListOfRBNews xmlns="">
+      <RBNews>
+        <NewsID>83e4e779-e3b7-46da-b061-34ab92bc6ec4</NewsID>
+        <PublishDate>2018-02-01T18:44:52.973</PublishDate>
+        <Topstory>0</Topstory>
+        <strapline>---PRESSEMEDDELELSE---</strapline>
+        <headline>PR / Spire Global, Inc.</headline>
+        <subtitle>UK Space Agency Backs Spire&amp;apos;s Proposal to European Space Agency as Space Mission Provider</subtitle>
+        <town>K&#xF8;benhavn</town>
+        <origin>Via Ritzau</origin>
+        <sectionID>42</sectionID>
+        <section>Int. Pressemed.</section>
+        <sectionShort>Y</sectionShort>
+        <version>1</version>
+        <Replaces i:nil="true"/>
+        <format>inpublic</format>
+        <content>&lt;P&gt;&lt;/P&gt;&#xD;
+	&lt;P&gt;GLASGOW, Scotland, Feb. 01, 2018 (GLOBE NEWSWIRE) -- The UK Space Agency has awarded more than &#xC2;&#xA3;4 million to Spire Global, a satellite powered data company, to demonstrate cutting-edge space technology including &amp;amp;apos;parallel super-computing&amp;amp;apos;, UK Government ministers Lord Henley and Lord Duncan announced today.&#xD;
+&lt;/P&gt;&#xD;
+	&lt;P&gt;Today&amp;amp;apos;s announcement gives the green light to missions designed to showcase the technology and put UK companies into orbit faster and at a lower cost. The UK is the largest funder of the European Space Agency&amp;amp;apos;s Advanced Research in Telecommunications Satellites (ARTES) programme, which transforms research into successful commercial projects.&#xD;
+&lt;/P&gt;&#xD;
+	&lt;P&gt;The funding from the UK Space Agency was announced by Lord Henley, Parliamentary Under-Secretary of State at the Department for Business, Energy and Industrial Strategy, on a visit to Spire&amp;amp;apos;s UK base in Glasgow, where the company intends to create new jobs to add to its existing workforce.&#xD;
+&lt;/P&gt;&#xD;
+	&lt;P&gt;Business Minister, the Rt. Hon. Lord Henley, said:&#xD;
+&lt;/P&gt;&#xD;
+	&lt;P&gt;&amp;amp;quot;Thanks to this new funding, Spire will be able to cement its activities in the UK, develop new technologies and use space data to provide new services to consumers that will allow businesses to access space quicker and at a lower cost - offering an exciting opportunity for the UK to thrive in the commercial space age.&#xD;
+&lt;/P&gt;&#xD;
+	&lt;P&gt;&amp;amp;quot;Through the government&amp;amp;apos;s Industrial Strategy, we are encouraging other high-tech British businesses to pursue more commercial opportunities with the aim of growing the UK&amp;amp;apos;s share of the global space market to 10% by 2030.&amp;amp;quot;&#xD;
+&lt;/P&gt;&#xD;
+	&lt;P&gt;UK Government Minister for Scotland Lord Duncan said:&#xD;
+&lt;/P&gt;&#xD;
+	&lt;P&gt;&amp;amp;quot;Spire Global is at the cutting edge of technology, using satellite data to track ships, planes and weather in some of the world&amp;amp;apos;s most remote regions. They&amp;amp;apos;re also an important employer in Glasgow, investing in the area and recognising the talent of Scotland&amp;amp;apos;s world class engineers and scientists. We know that the space industry is important to Scotland&amp;amp;apos;s economy and this UK Government funding will help companies like Spire stay at the forefront of this field.&amp;amp;quot;&#xD;
+&lt;/P&gt;&#xD;
+	&lt;P&gt;The ARTES Pioneer programme is designed to support industry by funding the demonstration of advanced technologies, systems, services and applications in a representative space environment. Part of this is to support one or more Space Mission Providers, which could provide commercial services to private companies or public bodies.&#xD;
+&lt;/P&gt;&#xD;
+	&lt;P&gt;&amp;amp;quot;Spire&amp;amp;apos;s infrastructure, capabilities, and competencies all support our submission to this program. For the launch of our 50+ satellite constellation, we quickly became our own best customer,&amp;amp;quot; said Theresa Condor, Spire&amp;amp;apos;s EVP of Corporate Development. &amp;amp;quot;We&amp;amp;apos;re looking forward to demonstrating our end-to-end service and infrastructure on this series of validation missions. &amp;amp;apos;Space as a Service&amp;amp;apos; means going from mission technical architecture to customer data/service verification, along with the ongoing development of critical enabling technologies.&amp;amp;quot;&#xD;
+&lt;/P&gt;&#xD;
+	&lt;P&gt;One validation mission will develop parallel super-computing in space - a core component for future computationally intensive missions. A second, exploitation of Global Navigation Satellite System (GNSS) for weather applications, will leverage Galileo signals for GNSS Radio Occultation. Radio occultation is a key data input for the improvement of weather forecasts. Upon completion, the GNSS-RO technology can be immediately commercialized.&#xD;
+&lt;/P&gt;&#xD;
+	&lt;P&gt;Spire Release Contact:&#xD;
+Nick Allain,hugin" href="mailto:Nick@spire.com" rel="nofollow" target="_blank: Nick@spire.com&#xD;
+, +44-(0)744-916-8302 / +1 (628)221-5333&#xD;
+&lt;/P&gt;&#xD;
+	&lt;P&gt;UK Space Agency Contact:&#xD;
+Gareth Bethell,hugin" href="mailto:Gareth.bethell@ukspaceagency.bis.gsi.gov.uk" rel="nofollow" target="_blank: Gareth.bethell@ukspaceagency.bis.gsi.gov.uk&#xD;
+, 07925 891 949&#xD;
+&lt;/P&gt;&#xD;
+	&lt;P&gt;&#xD;
+WEB:&lt;/P&gt;&#xD;
+	&lt;P&gt;&#xD;
+** Ovenst&#xE5;ende pressemeddelelse er videreformidlet af Ritzau p&#xE5; vegne af tredjepart. Ritzau er derfor ikke ansvarlig for indholdet **&#xD;
+&lt;/P&gt;</content>
+        <formatID>32</formatID>
+        <HistID i:nil="true"/>
+        <Priority>5</Priority>
+        <IPTCList xmlns:a="http://schemas.microsoft.com/2003/10/Serialization/Arrays"/>
+        <MultimedieList/>
+        <ISIN xmlns:a="http://schemas.microsoft.com/2003/10/Serialization/Arrays"/>
+        <Related i:nil="true"/>
+        <replacedID i:nil="true"/>
+        <Annuleret>false</Annuleret>
+        <NyVersion>false</NyVersion>
+        <Korrektion>false</Korrektion>
+        <InfoFlash>false</InfoFlash>
+        <byLine i:nil="true"/>
+        <byLineEmail i:nil="true"/>
+        <byLinePhone i:nil="true"/>
+        <SubjectKeyword xmlns:a="http://schemas.microsoft.com/2003/10/Serialization/Arrays"/>
+        <TopWeb>false</TopWeb>
+        <TilRedaktionen i:nil="true"/>
+        <Companies/>
+        <Status>New news</Status>
+        <ContentShort>PR / Spire Global, Inc.</ContentShort>
+      </RBNews>
+      <RBNews>
+        <NewsID>4b9c198d-d6ec-4a7f-a4e9-551d9a5cba13</NewsID>
+        <PublishDate>2018-02-01T18:38:49.417</PublishDate>
+        <Topstory>0</Topstory>
+        <strapline>PRINT/NOTE/SPORT-3</strapline>
+        <headline>Kort om sport</headline>
+        <subtitle i:nil="true"/>
+        <town>K&#xF8;benhavn</town>
+        <origin>/ritzau/</origin>
+        <sectionID>7</sectionID>
+        <section>Sport</section>
+        <sectionShort>S</sectionShort>
+        <version>1</version>
+        <Replaces i:nil="true"/>
+        <format>Print</format>
+        <content>&lt;p&gt;Den danske cykelrytter Jakob Fuglsang (Astana) blev torsdag nummer tre p&#xE5; 2. etape af Volta a la Comunitat Valenciana. Fuglsang kom af sted i et tremandsudbrud n&#xE6;r m&#xE5;l, men han m&#xE5;tte se rutinerede Alejandro Valverde (Movistar) k&#xF8;re f&#xF8;rst over m&#xE5;lstregen, mens Fuglsangs holdkammerat Luis Le&#xF3;n Sanchez blev nummer to. If&#xF8;lge cykelmediet feltet.dk k&#xF8;rte Fuglsang ikke for etapesejren til sidst, men for at hj&#xE6;lpe Luis Le&#xF3;n Sanchez til at sl&#xE5; sin spanske landsmand. /ritzau/&lt;/p&gt;</content>
+        <formatID>6</formatID>
+        <HistID>MLM-1836529</HistID>
+        <Priority>4</Priority>
+        <IPTCList xmlns:a="http://schemas.microsoft.com/2003/10/Serialization/Arrays">
+          <a:int>15000000</a:int>
+        </IPTCList>
+        <MultimedieList/>
+        <ISIN xmlns:a="http://schemas.microsoft.com/2003/10/Serialization/Arrays"/>
+        <Related i:nil="true"/>
+        <replacedID i:nil="true"/>
+        <Annuleret>false</Annuleret>
+        <NyVersion>false</NyVersion>
+        <Korrektion>false</Korrektion>
+        <InfoFlash>false</InfoFlash>
+        <byLine>Mikkel Lundby Madsen</byLine>
+        <byLineEmail>plus@ritzau.dk</byLineEmail>
+        <byLinePhone>33300300</byLinePhone>
+        <SubjectKeyword xmlns:a="http://schemas.microsoft.com/2003/10/Serialization/Arrays"/>
+        <TopWeb>false</TopWeb>
+        <TilRedaktionen i:nil="true"/>
+        <Companies/>
+        <Status>New news</Status>
+        <ContentShort>Kort om sport</ContentShort>
+      </RBNews>
+    </ListOfRBNews>
+  </XMLNewsQueuedResult>
+</XMLNewsQueuedResponse>

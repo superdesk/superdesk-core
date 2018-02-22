@@ -166,3 +166,14 @@ def clean_html(elem):
                                  remove_unknown_tags=False,
                                  safe_attrs=safe_attrs)
     return cleaner.clean_html(elem)
+
+
+def clean_html_str(html_str):
+    """Clean HTML like clean_html but using a string as input
+
+    :param str html_str: raw HTML to clean
+    :return str: cleaned HTML
+    """
+    html_elt = parse_html(html_str, 'html')
+    html_elt = clean_html(html_elt)
+    return to_string(html_elt, method='html')

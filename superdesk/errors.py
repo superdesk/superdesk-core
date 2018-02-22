@@ -198,7 +198,8 @@ class InvalidStateTransitionError(SuperdeskApiError):
 
 class SuperdeskIngestError(SuperdeskError):
     _codes = {
-        2000: 'Configured Feed Parser either not found or not registered with the application'
+        2000: 'Configured Feed Parser either not found or not registered with the application',
+        2001: 'Configuration of the feeding service is missing or incomplete'
     }
 
     def __init__(self, code, exception, provider=None, data=None, extra=None):
@@ -226,6 +227,10 @@ class SuperdeskIngestError(SuperdeskError):
     @classmethod
     def parserNotFoundError(cls, exception=None, provider=None):
         return SuperdeskIngestError(2000, exception, provider)
+
+    @classmethod
+    def notConfiguredError(cls, exception=None, provider=None):
+        return SuperdeskIngestError(2001, exception, provider)
 
 
 class ProviderError(SuperdeskIngestError):
