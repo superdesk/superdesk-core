@@ -11,13 +11,13 @@ Feature: Search Provider Feature
         Given empty "search_providers"
         When we post to "search_providers"
 	    """
-        [{"search_provider": "testsearch", "source": "testsearch", "config": {"password":"", "username":""}}]
+        [{"search_provider": "testsearch", "source": "testsearch", "config": {"password":"", "username":""}, "name": "test"}]
 	    """
         Then we get new resource
         When we get "/search_providers"
         Then we get list with 1 items
 	    """
-        {"_items": [{"search_provider": "testsearch", "source": "testsearch", "is_closed": false, "config": {"password":"", "username":""}}]}
+        {"_items": [{"search_provider": "testsearch", "source": "testsearch", "is_closed": false, "config": {"password":"", "username":""}, "name": "test"}]}
 	    """
 
     @auth
