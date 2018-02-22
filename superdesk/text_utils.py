@@ -103,7 +103,7 @@ def get_reading_time(html, word_count=None, language=None):
     :param str language: language of the text
     :return int: estimated number of minute to read the text
     """
-    if language and language.startswith('jp'):
+    if language and language.startswith('ja'):
         return round(len(re.sub('[\s]', '', get_text(html))) / 240)
     if not word_count:
         word_count = get_word_count(html)
