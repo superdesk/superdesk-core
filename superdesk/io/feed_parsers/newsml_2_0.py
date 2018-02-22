@@ -34,6 +34,7 @@ class NewsMLTwoFeedParser(XMLFeedParser):
     NAME = 'newsml2'
 
     label = 'News ML 2.0 Parser'
+    SUBJ_QCODE_PREFIXES = ('subj',)
 
     def can_parse(self, xml):
         return xml.tag.endswith('newsMessage')
@@ -151,7 +152,7 @@ class NewsMLTwoFeedParser(XMLFeedParser):
         item['subject'] = []
         for subject in tree.findall(self.qname('subject')):
             qcode_parts = subject.get('qcode', '').split(':')
-            if len(qcode_parts) == 2 and qcode_parts[0] == 'subj':
+            if len(qcode_parts) == 2 and qcode_parts[0] in self.SUBJ_QCODE_PREFIXES:
                 try:
                     item['subject'].append({
                         'qcode': qcode_parts[1],

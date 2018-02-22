@@ -144,7 +144,9 @@ class FTPFeedingService(FeedingService):
                         continue
                     try:
                         if not filename.lower().endswith(self.FILE_SUFFIX):
-                            raise
+                            logger.info('ignoring file {filename} because of file extension (should be {ext})'.format(
+                                filename=filename, ext=self.FILE_SUFFIX))
+                            continue
 
                         if last_updated:
                             item_last_updated = datetime.strptime(facts['modify'], self.DATE_FORMAT).replace(tzinfo=utc)
