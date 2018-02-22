@@ -482,12 +482,25 @@ class NinjsFormatterTest(TestCase):
             'body_text': (250 * 7 - 40) * "word "
         }
 
-        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
-        data = json.loads(doc)
+        data = self._format(article)
 
         self.assertEqual(data['charcount'], 8550)
         self.assertEqual(data['wordcount'], 1710)
         self.assertEqual(data['readtime'], 7)
+
+        # check japanese
+        article['language'] = 'jp'
+        article['body_text'] = 500 * 'x'
+        data = self._format(article)
+        self.assertEqual(data['readtime'], 2)
+
+        article['body_text'] = 500 * ' '
+        data = self._format(article)
+        self.assertEqual(data['readtime'], 0)
+
+    def _format(self, article):
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        return json.loads(doc)
 
     def test_empty_amstract(self):
         article = {
