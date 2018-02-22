@@ -920,7 +920,15 @@ class NinjsFormatterTest(TestCase):
                         }
                     },
                     "scheme": "region_custom"
-                }]}
+                },
+                {
+                    "name": "no translations",
+                    "qcode": "test",
+                    "translations": None,
+                    "scheme": "test"
+                }
+            ]
+        }
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
         ninjs = json.loads(doc)
         expected_genre = [{'code': 'genre_custom:Education',
@@ -935,5 +943,9 @@ class NinjsFormatterTest(TestCase):
                              'scheme': 'country_custom'},
                             {'code': 'region_custom:Asia ex Japan',
                              'name': '日本除くアジア',
-                             'scheme': 'region_custom'}]
+                             'scheme': 'region_custom'},
+                            {'code': 'test',
+                             'name': 'no translations',
+                             'scheme': 'test',
+                             }]
         self.assertEqual(ninjs['subject'], expected_subject)
