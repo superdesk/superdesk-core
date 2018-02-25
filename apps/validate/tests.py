@@ -154,7 +154,7 @@ class ValidateMandatoryInListTest(TestCase):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
             'slugline': None,
             'feature_media': {'required': True, 'type': 'media'},
-            'media_description': {'required': True},
+            'media_description': {'required': True}
         }}])
         service = ValidateService()
         errors = service.create([
@@ -162,7 +162,7 @@ class ValidateMandatoryInListTest(TestCase):
                 'act': 'test',
                 'type': 'test',
                 'validate': {'profile': 'foo', 'slugline': 'foo', 'associations': {'featuremedia': {}}},
-            },
+            }
         ])
         self.assertEqual(['MEDIA_DESCRIPTION is a required field'], errors[0])
 

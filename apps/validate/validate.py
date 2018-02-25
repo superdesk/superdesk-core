@@ -18,6 +18,7 @@ from superdesk.metadata.item import ITEM_TYPE
 from superdesk.logging import logger
 from superdesk.text_utils import get_text
 from superdesk import get_resource_service
+from _collections_abc import MutableMapping
 
 REQUIRED_FIELD = 'is a required field'
 STRING_FIELD = 'require a string value'
@@ -230,7 +231,8 @@ class ValidateService(superdesk.Service):
             return field_associations
         media_multivalue_field = field_schema + '--'
         for media_field in doc.get('associations', {}):
-            if media_field.startswith(media_multivalue_field):
+            if media_field.startswith(media_multivalue_field) and \
+                    doc.get('associations', {}).get(media_field):
                 return media_field
         return None
 
@@ -245,7 +247,7 @@ class ValidateService(superdesk.Service):
         for field_schema in validation_schema:
             field_associations = field_schema if field_schema != 'feature_media' else 'featuremedia'
             media_field = self._get_media_field(field_schema, field_associations, doc)
-            if media_field:
+            if media_field and isinstance(doc['associations'][media_field], MutableMapping):
                 doc[field_schema] = doc['associations'][media_field]
                 if not doc.get('feature_media', None) is None and 'description_text' in doc['feature_media']:
                     doc['media_description'] = doc['associations']['featuremedia']['description_text']

@@ -153,10 +153,9 @@ class BasePublishService(BaseService):
                 updated = deepcopy(original)
                 updated.update(deepcopy(updates))
 
-                if updates.get(ASSOCIATIONS):
-                    self._refresh_associated_items(updated)  # updates got lost with update
+                self._refresh_associated_items(updated, publish=True)  # updates got lost with update
 
-                self._update_archive(original, updates, should_insert_into_versions=auto_publish)
+                self._update_archive(original, updated, should_insert_into_versions=auto_publish)
                 self.update_published_collection(published_item_id=original[config.ID_FIELD], updated=updated)
 
             from apps.publish.enqueue import enqueue_published
@@ -538,12 +537,13 @@ class BasePublishService(BaseService):
         except Exception:
             logger.exception('Failed to apply kill header template to item {}.'.format(item))
 
-    def _refresh_associated_items(self, original):
+    def _refresh_associated_items(self, original, publish=False):
         """Refresh associated items before publishing
 
         Any further updates made to basic metadata done after item was associated will be carried on and
         used when validating those items.
         """
+        archive_publish = get_resource_service('archive_publish')
         associations = original.get(ASSOCIATIONS) or {}
         for _, item in associations.items():
             if type(item) == dict and item.get(config.ID_FIELD):
@@ -560,6 +560,11 @@ class BasePublishService(BaseService):
                     update_item_data(item, updates, keys)
                 else:
                     update_item_data(item, updates, keys, keep_existing=not is_db_item_bigger_ver)
+
+                if publish and item['type'] in MEDIA_TYPES and item['state'] not in PUBLISH_STATES:
+                    if item.get('task', {}).get('stage', None):
+                        del item['task']['stage']
+                    archive_publish.patch(id=item.pop(config.ID_FIELD), updates=item)
 
     def _mark_media_item_as_used(self, updates, original):
         if ASSOCIATIONS not in updates or not updates.get(ASSOCIATIONS):

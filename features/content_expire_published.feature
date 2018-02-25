@@ -883,7 +883,7 @@ Feature: Content Expiry Published Items
       And we transmit items
       And run import legal publish queue
       When we get "/legal_archive"
-      Then we get list with 1 items
+      Then we get list with 2 items
       When we expire items
       """
       ["123"]
@@ -895,7 +895,7 @@ Feature: Content Expiry Published Items
       ["123", "bike"]
       """
       And we get "/archived"
-      Then we get list with 1 items
+      Then we get list with 2 items
       When we get "/archive"
       Then we get list with 0 items
       And we fetch a file "#rendition.4-3.href#"
@@ -943,10 +943,9 @@ Feature: Content Expiry Published Items
       And we transmit items
       And run import legal publish queue
       When we spike "bike"
-      Then we get OK response
-      And we get spiked content "bike"
+      Then we get error 400
       When we get "/legal_archive"
-      Then we get list with 1 items
+      Then we get list with 2 items
       When we expire items
       """
       ["bike"]
@@ -958,8 +957,9 @@ Feature: Content Expiry Published Items
       ["123", "bike"]
       """
       And we get "/archived"
-      Then we get list with 1 items
+      Then we get list with 2 items
       When we get "/archive"
       Then we get list with 0 items
       And we fetch a file "#rendition.4-3.href#"
       And we get OK response
+  

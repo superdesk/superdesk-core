@@ -1645,6 +1645,12 @@ def we_get_stage_filled_in(context):
     assert data['task']['stage']
 
 
+@then('we get null stage')
+def we_get_null_stage(context):
+    data = json.loads(context.response.get_data())
+    assert data['task'].get('stage', None) is None
+
+
 @given('we have sessions "{url}"')
 def we_have_sessions_get_id(context, url):
     when_we_get_url(context, url)
