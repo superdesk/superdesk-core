@@ -67,7 +67,7 @@ class ContactsResource(Resource):
                 }
             }
         },
-        'phone': {
+        'contact_phone': {
             'type': 'list',
             'schema': {
                 'type': 'dict',
@@ -83,7 +83,7 @@ class ContactsResource(Resource):
             'type': 'string',
             'required': False
         },
-        'email': {
+        'contact_email': {
             'type': 'list',
             'required': False,
             'schema': {
@@ -106,7 +106,7 @@ class ContactsResource(Resource):
             'type': 'string',
             'required': False
         },
-        'address': {
+        'contact_address': {
             'type': 'list',
             'schema': {
                 'type': 'string',
@@ -121,7 +121,7 @@ class ContactsResource(Resource):
             'type': 'string',
             'required': False
         },
-        'state': {
+        'contact_state': {
             'type': 'string',
             'required': False
         },
