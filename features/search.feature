@@ -125,10 +125,18 @@ Feature: Search Feature
         Then we get list with 2 items
         When we get "/archive/#archive._id#"
         Then we get response code 200
+        When we get "/archived"
+        Then we get list with 1 items
+        When we get "/archived/123:2"
+        Then we get response code 200
         When we login as user "foo" with password "bar" and user type "user"
         When we get "/search"
         Then we get list with 0 items
         When we get "/archive/#archive._id#"
+        Then we get response code 403
+        When we get "/archived"
+        Then we get list with 0 items
+        When we get "/archived/123:2"
         Then we get response code 403
         When we patch "desks/#desks._id#"
         """
@@ -138,6 +146,10 @@ Feature: Search Feature
         When we get "/search"
         Then we get list with 2 items
         When we get "/archive/#archive._id#"
+        Then we get response code 200
+        When we get "/archived"
+        Then we get list with 1 items
+        When we get "/archived/123:2"
         Then we get response code 200
 
     @auth
@@ -351,3 +363,18 @@ Feature: Search Feature
         And we get "body_html" does not exist
         And we get "state" does not exist
         And we get "headline" does exist
+
+    @auth
+    Scenario: Search archived items without task information
+        Given "archived"
+            """
+            [{"item_id": "123", "guid": "123", "type": "text", "headline": "test", "slugline": "slugline",
+              "genre": [{"name": "Broadcast Script", "qcode": "Broadcast Script"}], "headline": "headline",
+              "anpa_category" : [{"qcode" : "e", "name" : "Entertainment"}], "state": "published",
+              "subject":[{"qcode": "17004000", "name": "Statistics"}],
+              "body_html": "Test Document body", "_current_version": 2}]
+            """
+        When we get "archived/123:2"
+        Then we get response code 200
+        When we get "archived"
+        Then we get list with 1 items
