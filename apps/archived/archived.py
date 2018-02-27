@@ -20,7 +20,7 @@ from apps.legal_archive.commands import import_into_legal_archive
 from apps.legal_archive.resource import LEGAL_PUBLISH_QUEUE_NAME
 from apps.publish.content.common import ITEM_KILL
 from apps.publish.enqueue import get_enqueue_service
-from apps.publish.published_item import published_item_fields, QUEUE_STATE, PUBLISH_STATE
+from apps.publish.published_item import published_item_fields, QUEUE_STATE, PUBLISH_STATE, get_content_filter
 from apps.packages import PackageService
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
@@ -50,6 +50,7 @@ class ArchivedResource(Resource):
         'search_backend': 'elastic',
         'aggregations': aggregations,
         'default_sort': [('_updated', -1)],
+        'elastic_filter_callback': get_content_filter,
         'projection': {
             'old_version': 0,
             'last_version': 0
@@ -175,6 +176,15 @@ class ArchivedService(BaseService):
 
     def command_delete(self, lookup):
         super().delete(lookup)
+
+    def find_one(self, req, **lookup):
+        item = super().find_one(req, **lookup)
+
+        if item and str(item.get('task', {}).get('stage', '')) in \
+                get_resource_service('users').get_invisible_stages_ids(get_user().get('_id')):
+            raise SuperdeskApiError.forbiddenError("User does not have permissions to read the item.")
+
+        return item
 
     def update(self, id, updates, original):
         """Runs on update of archive item.
