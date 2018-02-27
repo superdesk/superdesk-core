@@ -28,4 +28,5 @@ def init_app(app):
         'feedback_url': app.config.get('FEEDBACK_URL'),
         'override_ednote_for_corrections': app.config.get('OVERRIDE_EDNOTE_FOR_CORRECTIONS', True),
         'override_ednote_template': app.config.get('OVERRIDE_EDNOTE_TEMPLATE'),
+        'default_genre': app.config.get('DEFAULT_GENRE_VALUE_FOR_MANUAL_ARTICLES'),
     })
