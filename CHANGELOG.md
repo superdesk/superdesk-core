@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.13.1] 2018-02-28
+
+### Fixed
+
+- Fix ninjs formatting for new category cv items.
+
 ## [1.13] 2018-02-19
 
 ### Fixed
