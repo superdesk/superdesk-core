@@ -7,8 +7,10 @@
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
+
 import os
 
+from unittest.mock import patch
 from datetime import timedelta, datetime
 from nose.tools import assert_raises
 from eve.utils import ParsedRequest
@@ -21,6 +23,7 @@ from superdesk.errors import SuperdeskApiError, ProviderError
 from superdesk.io.registry import register_feeding_service, registered_feeding_services
 from superdesk.io.commands.remove_expired_content import get_expired_items, RemoveExpiredContent
 from superdesk.io.feeding_services import FeedingService
+from superdesk.io.feeding_services.file_service import FileFeedingService
 from superdesk.tests import TestCase
 from superdesk.utc import utcnow
 
@@ -586,3 +589,36 @@ class UpdateIngestTest(TestCase):
             mongo_item = ingest_service.get_from_mongo(None, lookup)[0]
             elastic_item = ingest_service.get(None, lookup)[0]
             self.assertEqual(mongo_item['_etag'], elastic_item['_etag'], mongo_item['guid'])
+
+    def test_ingest_associated_item_renditions(self):
+        provider = {'feeding_service': 'ninjs', '_id': self.providers['ninjs']}
+        provider_service = FileFeedingService()
+        item = {
+            'guid': 'foo',
+            'type': 'text',
+            'versioncreated': utcnow(),
+            'associations': {
+                'featuremedia': {
+                    'guid': 'bar',
+                    'type': 'picture',
+                    'versioncreated': utcnow(),
+                    'renditions': {
+                        'original': {
+                            'href': 'https://farm8.staticflickr.com/7300/9203849352_297ea4207d_z_d.jpg',
+                            'mimetype': 'image/jpeg',
+                            'width': 640,
+                            'height': 426,
+                        }
+                    }
+                }
+            }
+        }
+
+        # avoid transfer_renditions call which would store the picture locally
+        # and it would fetch it using superdesk url which doesn't work in test
+        with patch('superdesk.io.commands.update_ingest.transfer_renditions'):
+            status, ids = ingest.ingest_item(item, provider, provider_service)
+
+        self.assertTrue(status)
+        self.assertEqual(2, len(ids))
+        self.assertIn('thumbnail', item['associations']['featuremedia']['renditions'])

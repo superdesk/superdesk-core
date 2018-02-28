@@ -429,6 +429,7 @@ def ingest_items(items, provider, feeding_service, rule_set=None, routing_scheme
 
 
 def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=None):
+    items_ids = []
     try:
         ingest_collection = feeding_service.service if hasattr(feeding_service, 'service') else 'ingest'
         ingest_service = superdesk.get_resource_service(ingest_collection)
@@ -480,16 +481,24 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
                 lookup = {'guid': guid}
                 featuremedia = ingest_service.get_from_mongo(req=None, lookup=lookup)
                 if featuremedia.count() >= 1:
-                    item.get('associations').get('featuremedia')['_id'] = featuremedia[0]['_id']
+                    item['associations']['featuremedia']['_id'] = featuremedia[0]['_id']
+                    for rendition in featuremedia[0].get('renditions', {}):  # add missing renditions
+                        item['associations']['featuremedia']['renditions'].setdefault(
+                            rendition,
+                            featuremedia[0]['renditions'][rendition])
+                else:  # there is no such item in the system - ingest it
+                    status, ids = ingest_item(item['associations']['featuremedia'], provider, feeding_service, rule_set)
+                    if status:
+                        item['associations']['featuremedia']['_id'] = ids[0]
+                        items_ids.extend(ids)
 
         new_version = True
-        items_ids = []
         if old_item:
             updates = deepcopy(item)
             ingest_service.patch_in_mongo(old_item[superdesk.config.ID_FIELD], updates, old_item)
             item.update(old_item)
             item.update(updates)
-            items_ids = [item['_id']]
+            items_ids.append(item['_id'])
             # if the feed is versioned and this is not a new version
             if 'version' in item and 'version' in old_item and item.get('version') == old_item.get('version'):
                 new_version = False
@@ -497,7 +506,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
             if item.get('ingest_provider_sequence') is None:
                 ingest_service.set_ingest_provider_sequence(item, provider)
             try:
-                items_ids = ingest_service.post_in_mongo([item])
+                items_ids.extend(ingest_service.post_in_mongo([item]))
             except HTTPException as e:
                 logger.error('Exception while persisting item in %s collection: %s', ingest_collection, e)
 
@@ -507,7 +516,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
 
     except Exception as ex:
         logger.exception(ex)
-        return False
+        return False, []
     return True, items_ids
 
 
