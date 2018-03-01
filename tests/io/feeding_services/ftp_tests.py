@@ -46,13 +46,19 @@ def _exception(*args, **kwargs):
     raise Exception('Test exception')
 
 
+def ftp_file(filename):
+    facts = mock.Mock()
+    facts.get.return_value = 'file'
+    facts.__getitem__ = mock.Mock(return_value="20170517164739")
+    return [filename, facts]
+
+
 class FakeFTP(mock.MagicMock):
 
+    files = [ftp_file('filename.xml')]
+
     def mlsd(self, path=""):
-        facts = mock.Mock()
-        facts.get.return_value = 'file'
-        facts.__getitem__ = mock.Mock(return_value="20170517164739")
-        return iter([['filename.xml', facts]])
+        return iter(self.files)
 
     def cwd(self, path):
         pass
@@ -160,3 +166,13 @@ class FTPTestCase(unittest.TestCase):
         mock_ftp = ftp_connect.return_value.__enter__.return_value
         dest_path = os.path.join(ftp.DEFAULT_FAILURE_PATH, "filename.xml")
         mock_ftp.rename.assert_called_once_with('filename.xml', dest_path)
+
+    def test_allowed_suffix_json(self):
+        """Check that json files are allowed for ingestion."""
+        service = ftp.FTPFeedingService()
+        self.assertFalse(service._is_allowed('foo.jpg'))
+        self.assertTrue(service._is_allowed('foo.xml'))
+        self.assertTrue(service._is_allowed('foo.json'))
+        self.assertTrue(service._is_allowed('foo.JSON'))
+        self.assertFalse(service._is_allowed('foojson'))
+        self.assertFalse(service._is_allowed('foo.json.tar.gz'))

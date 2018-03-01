@@ -44,8 +44,8 @@ class FTPFeedingService(FeedingService):
     ERRORS = [IngestFtpError.ftpUnknownParserError().get_error_description(),
               IngestFtpError.ftpError().get_error_description()]
 
-    FILE_SUFFIX = '.xml'
     DATE_FORMAT = '%Y%m%d%H%M%S'
+    ALLOWED_EXT = {'.json', '.xml'}
 
     def config_from_url(self, url):
         """
@@ -109,6 +109,11 @@ class FTPFeedingService(FeedingService):
         finally:
             ftp.cwd(base_path)
 
+    def _is_allowed(self, filename):
+        """Test if given file is allowed to be ingested."""
+        _, ext = os.path.splitext(filename)
+        return ext.lower() in self.ALLOWED_EXT
+
     def _update(self, provider, update):
         config = provider.get('config', {})
         last_updated = provider.get('last_updated')
@@ -143,9 +148,8 @@ class FTPFeedingService(FeedingService):
                     if facts.get('type', '') != 'file':
                         continue
                     try:
-                        if not filename.lower().endswith(self.FILE_SUFFIX):
-                            logger.info('ignoring file {filename} because of file extension (should be {ext})'.format(
-                                filename=filename, ext=self.FILE_SUFFIX))
+                        if not self._is_allowed(filename):
+                            logger.info('ignoring file {filename} because of file extension'.format(filename=filename))
                             continue
 
                         if last_updated:
