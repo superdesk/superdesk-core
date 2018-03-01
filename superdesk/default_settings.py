@@ -434,7 +434,8 @@ CORE_APPS.extend([
     'apps.search_providers',
     'apps.feature_preview',
     'apps.workqueue',
-    'apps.contacts'
+    'apps.contacts',
+    'apps.monitoring',
 ])
 
 RESOURCE_METHODS = ['GET', 'POST']
