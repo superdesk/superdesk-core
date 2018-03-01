@@ -1,0 +1,405 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<newsMessage xmlns="http://iptc.org/std/nar/2006-10-01/"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <header><sent>2018-03-01T18:34:39.924Z
+              </sent>
+              <sender>ap.org</sender>
+              <transmitId>
+                17610869
+              </transmitId>
+              
+                      <channel>Automated Insights - Earnings</channel>
+
+
+              <timestamp role="minDateTime">
+                2018-02-26T18:34:39.909Z
+              </timestamp>
+              <timestamp role="maxDateTime">
+                2018-03-01T18:34:39.909Z
+              </timestamp>
+            </header>
+            <itemSet><newsItem guid="tag:ap.org,2011:5e565888b587889c5c8bd62b6164118c-text" version="2" standard="NewsML-G2" standardversion="2.15" conformance="power" xmlns="http://iptc.org/std/nar/2006-10-01/">
+  <catalogRef href="http://www.iptc.org/std/catalog/catalog.IPTC-G2-Standards_6.xml" />
+  <catalogRef href="http://cv.ap.org/customer/cv/catalog4customers-1.xml" />
+  <rightsInfo>
+    <copyrightHolder literal="Automated Insights" />
+    <copyrightNotice>Automated Insights</copyrightNotice>
+  </rightsInfo>
+  <itemMeta>
+    <itemClass qcode="ninat:text" />
+    <provider qcode="approviderid:z01122">
+      <name>Automated Insights</name>
+    </provider>
+    <versionCreated>2018-02-26T21:20:34Z</versionCreated>
+    <firstCreated>2018-02-26T21:20:36Z</firstCreated>
+    <pubStatus qcode="stat:usable" />
+    <generator versioninfo="4.0.0.0" role="apgen:runtime">APPL_2_NEWSML_ENTRY</generator>
+    <generator versioninfo="7286" role="apgen:tagging">AP Subject</generator>
+    <generator versioninfo="7288" role="apgen:tagging">AP Company</generator>
+    <edNote>Eds: Adds full-year results.</edNote>
+    <signal qcode="apsig:consumerready" />
+  </itemMeta>
+  <contentMeta>
+    <urgency>4</urgency>
+    <contentCreated>2018-02-26T21:20:11Z</contentCreated>
+    <contentModified>2018-02-26T21:20:11Z</contentModified>
+    <located type="cptype:city">
+      <name>Pittsburgh</name>
+      <broader type="cptype:statprov">
+        <name>Pennsylvania</name>
+      </broader>
+      <broader type="cptype:country">
+        <name>United States</name>
+      </broader>
+      <geoAreaDetails>
+        <position latitude="40.44062" longitude="-79.99589" />
+      </geoAreaDetails>
+    </located>
+    <infoSource role="crole:source" type="apsourcetype:ThirdParty" qcode="apsourceid:z01122">
+      <name>Automated Insights</name>
+    </infoSource>
+    <altId type="ap:friendlyKey">4522803691818989</altId>
+    <altId type="ap:recordSequenceNumber">1</altId>
+    <altId type="ap:itemId">5e565888b587889c5c8bd62b6164118c</altId>
+    <altId type="ap:itemIdSequence">5e565888b587889c5c8bd62b6164118c.1</altId>
+    <altId type="ap:recordId">383fe651346a7553812226c74c09ce98</altId>
+    <altId type="ap:editorialId">urn:publicid:20100512:automatedinsights.com:8f04e8793213a32021b41ed8791e40a3</altId>
+    <language tag="en" />
+    <keyword role="krole:index">Nutrisystem</keyword>
+    <keyword role="krole:index">Earnings Report</keyword>
+    <keyword role="krole:index">Pennsylvania</keyword>
+    <subject type="cpnat:abstract" qcode="apcategorycode:f">
+      <name>f</name>
+    </subject>
+    <subject type="cpnat:abstract" qcode="apsubject:5235a7a088e910048f29f8851349f9bd" why="why:direct" creator="apsubcreator:Teragram">
+      <name>Corporate stock</name>
+      <broader qcode="apsubject:4d3302d8857510048d06ff2260dd383e">
+        <name>Corporate news</name>
+      </broader>
+    </subject>
+    <subject type="cpnat:abstract" qcode="apsubject:4d3302d8857510048d06ff2260dd383e" why="why:ancestor" creator="apsubcreator:Teragram">
+      <name>Corporate news</name>
+      <broader qcode="apsubject:c8e409f8858510048872ff2260dd383e">
+        <name>Business</name>
+      </broader>
+    </subject>
+    <subject type="cpnat:abstract" qcode="apsubject:c8e409f8858510048872ff2260dd383e" why="why:ancestor" creator="apsubcreator:Teragram">
+      <name>Business</name>
+    </subject>
+    <subject type="cpnat:abstract" qcode="apsubject:11494c9888fc10048d50ba0a2b2ca13e" why="why:direct" creator="apsubcreator:Teragram">
+      <name>Earnings reports</name>
+      <broader qcode="apsubject:523620b888e910048f3af8851349f9bd">
+        <name>Earnings</name>
+      </broader>
+    </subject>
+    <subject type="cpnat:abstract" qcode="apsubject:523620b888e910048f3af8851349f9bd" why="why:ancestor" creator="apsubcreator:Teragram">
+      <name>Earnings</name>
+      <broader qcode="apsubject:5234f3f088e910048f18f8851349f9bd">
+        <name>Financial performance</name>
+      </broader>
+    </subject>
+    <subject type="cpnat:abstract" qcode="apsubject:5234f3f088e910048f18f8851349f9bd" why="why:ancestor" creator="apsubcreator:Teragram">
+      <name>Financial performance</name>
+      <broader qcode="apsubject:4d3302d8857510048d06ff2260dd383e">
+        <name>Corporate news</name>
+      </broader>
+    </subject>
+    <subject type="cpnat:organisation" qcode="apcompany:792af22b8f0b4133ba38fcf117561e66" why="why:direct" creator="apsubcreator:Teragram">
+      <name>NutriSystem Inc</name>
+    </subject>
+    <slugline>BC-US--Earns-Nutrisystem, 1st Ld-Writethru</slugline>
+    <headline>Nutrisystem beats 4Q earnings and revenue expectations</headline>
+    <dateline>FORT WASHINGTON, Pa.</dateline>
+  </contentMeta>
+  <contentSet>
+    <inlineXML contenttype="application/nitf+xml" wordcount="233">
+      <nitf version="-//IPTC//DTD NITF 3.4//EN" xmlns="http://iptc.org/std/NITF/2006-10-18/">
+        <body>
+          <body.head>
+            <headline>
+              <hl1>Nutrisystem beats 4Q earnings and revenue expectations</hl1>
+            </headline>
+          </body.head>
+          <body.content>
+            <block>
+              <p>FORT WASHINGTON, Pa. (AP) _ Nutrisystem Inc. (NTRI) on Monday reported fourth-quarter net income of $10.9 million.</p>
+              <p>On a per-share basis, the Fort Washington, Pennsylvania-based company said it had profit of 36 cents. Earnings, adjusted for non-recurring costs, were 42 cents per share.</p>
+              <p>The results beat Wall Street expectations. The average estimate of four analysts surveyed by Zacks Investment Research was for earnings of 41 cents per share.</p>
+              <p>The weight-loss company posted revenue of $131.2 million in the period, also exceeding Street forecasts. Four analysts surveyed by Zacks expected $129.1 million.</p>
+              <p>For the year, the company reported profit of $57.9 million, or $1.90 per share. Revenue was reported as $697 million.</p>
+              <p>For the current quarter ending in April, Nutrisystem said it expects revenue in the range of $204 million to $209 million.</p>
+              <p>The company expects full-year earnings to be $1.99 to $2.09 per share, with revenue ranging from $685 million to $705 million.</p>
+              <p>Nutrisystem shares have decreased 24 percent since the beginning of the year. In the final minutes of trading on Monday, shares hit $39.90, a climb of almost 5 percent in the last 12 months.</p>
+              <p>_____</p>
+              <p>This story was generated by <a href="http://www.automatedinsights.com/ap">Automated Insights</a> (http://automatedinsights.com/ap) using data from Zacks Investment Research. Access a <a href="https://www.zacks.com/ap/NTRI">Zacks stock report on NTRI</a> at https://www.zacks.com/ap/NTRI</p>
+            </block>
+          </body.content>
+        </body>
+      </nitf>
+    </inlineXML>
+  </contentSet>
+</newsItem>
+<newsItem guid="tag:ap.org,2011:b6d5d4eb781939b5fe8722f3fba28ee2-text" version="2" standard="NewsML-G2" standardversion="2.15" conformance="power" xmlns="http://iptc.org/std/nar/2006-10-01/">
+  <catalogRef href="http://www.iptc.org/std/catalog/catalog.IPTC-G2-Standards_6.xml" />
+  <catalogRef href="http://cv.ap.org/customer/cv/catalog4customers-1.xml" />
+  <rightsInfo>
+    <copyrightHolder literal="Automated Insights" />
+    <copyrightNotice>Automated Insights</copyrightNotice>
+  </rightsInfo>
+  <itemMeta>
+    <itemClass qcode="ninat:text" />
+    <provider qcode="approviderid:z01122">
+      <name>Automated Insights</name>
+    </provider>
+    <versionCreated>2018-02-26T21:22:17Z</versionCreated>
+    <firstCreated>2018-02-26T21:22:18Z</firstCreated>
+    <pubStatus qcode="stat:usable" />
+    <generator versioninfo="4.0.0.0" role="apgen:runtime">APPL_2_NEWSML_ENTRY</generator>
+    <generator versioninfo="7286" role="apgen:tagging">AP Subject</generator>
+    <generator versioninfo="7059" role="apgen:tagging">AP Geography</generator>
+    <edNote>Eds: Adds full-year results.</edNote>
+    <signal qcode="apsig:consumerready" />
+  </itemMeta>
+  <contentMeta>
+    <urgency>4</urgency>
+    <contentCreated>2018-02-26T21:22:09Z</contentCreated>
+    <contentModified>2018-02-26T21:22:09Z</contentModified>
+    <located type="cptype:city">
+      <name>Bethesda</name>
+      <broader type="cptype:statprov">
+        <name>Maryland</name>
+      </broader>
+      <broader type="cptype:country">
+        <name>United States</name>
+      </broader>
+      <geoAreaDetails>
+        <position latitude="38.98067" longitude="-77.10026" />
+      </geoAreaDetails>
+    </located>
+    <infoSource role="crole:source" type="apsourcetype:ThirdParty" qcode="apsourceid:z01122">
+      <name>Automated Insights</name>
+    </infoSource>
+    <altId type="ap:friendlyKey">8492116917229029</altId>
+    <altId type="ap:recordSequenceNumber">1</altId>
+    <altId type="ap:itemId">b6d5d4eb781939b5fe8722f3fba28ee2</altId>
+    <altId type="ap:itemIdSequence">b6d5d4eb781939b5fe8722f3fba28ee2.1</altId>
+    <altId type="ap:recordId">473b00e17d1b7212b4f069e9b009023f</altId>
+    <altId type="ap:editorialId">urn:publicid:20100512:automatedinsights.com:c6eaf8dd8b4d15ac5f9a294507535b30</altId>
+    <language tag="en" />
+    <keyword role="krole:index">DiamondRock Hospitality</keyword>
+    <keyword role="krole:index">Earnings Report</keyword>
+    <keyword role="krole:index">Maryland</keyword>
+    <subject type="cpnat:abstract" qcode="apcategorycode:f">
+      <name>f</name>
+    </subject>
+    <subject type="cpnat:abstract" qcode="apsubject:11494c9888fc10048d50ba0a2b2ca13e" why="why:direct" creator="apsubcreator:Teragram">
+      <name>Earnings reports</name>
+      <broader qcode="apsubject:523620b888e910048f3af8851349f9bd">
+        <name>Earnings</name>
+      </broader>
+    </subject>
+    <subject type="cpnat:abstract" qcode="apsubject:523620b888e910048f3af8851349f9bd" why="why:ancestor" creator="apsubcreator:Teragram">
+      <name>Earnings</name>
+      <broader qcode="apsubject:5234f3f088e910048f18f8851349f9bd">
+        <name>Financial performance</name>
+      </broader>
+    </subject>
+    <subject type="cpnat:abstract" qcode="apsubject:5234f3f088e910048f18f8851349f9bd" why="why:ancestor" creator="apsubcreator:Teragram">
+      <name>Financial performance</name>
+      <broader qcode="apsubject:4d3302d8857510048d06ff2260dd383e">
+        <name>Corporate news</name>
+      </broader>
+    </subject>
+    <subject type="cpnat:abstract" qcode="apsubject:4d3302d8857510048d06ff2260dd383e" why="why:ancestor" creator="apsubcreator:Teragram">
+      <name>Corporate news</name>
+      <broader qcode="apsubject:c8e409f8858510048872ff2260dd383e">
+        <name>Business</name>
+      </broader>
+    </subject>
+    <subject type="cpnat:abstract" qcode="apsubject:c8e409f8858510048872ff2260dd383e" why="why:ancestor" creator="apsubcreator:Teragram">
+      <name>Business</name>
+    </subject>
+    <subject type="cpnat:abstract" qcode="apsubject:5235a7a088e910048f29f8851349f9bd" why="why:direct" creator="apsubcreator:Teragram">
+      <name>Corporate stock</name>
+      <broader qcode="apsubject:4d3302d8857510048d06ff2260dd383e">
+        <name>Corporate news</name>
+      </broader>
+    </subject>
+    <subject type="cpnat:geoArea" qcode="apgeography:b0fa317082b3100484dbdf092526b43e" why="why:direct" creator="apsubcreator:Teragram">
+      <name>Maryland</name>
+      <broader qcode="apgeography:661e48387d5b10048291c076b8e3055c">
+        <name>United States</name>
+      </broader>
+    </subject>
+    <subject type="cpnat:geoArea" qcode="apgeography:661e48387d5b10048291c076b8e3055c" why="why:ancestor" creator="apsubcreator:Teragram">
+      <name>United States</name>
+      <broader qcode="apgeography:661850e07d5b100481f7c076b8e3055c">
+        <name>North America</name>
+      </broader>
+    </subject>
+    <subject type="cpnat:geoArea" qcode="apgeography:661850e07d5b100481f7c076b8e3055c" why="why:ancestor" creator="apsubcreator:Teragram">
+      <name>North America</name>
+    </subject>
+    <subject type="cpnat:geoArea" qcode="apgeography:c01d179082c610048813df092526b43e" why="why:direct" creator="apsubcreator:Teragram">
+      <name>North Carolina</name>
+      <broader qcode="apgeography:661e48387d5b10048291c076b8e3055c">
+        <name>United States</name>
+      </broader>
+    </subject>
+    <slugline>BC-US--Earns-DiamondRock Hospitality, 1st Ld-Writethru</slugline>
+    <headline>DiamondRock Hospitality posts 4Q FFO of $50.7 million, results top expectations</headline>
+    <dateline>BETHESDA, Md.</dateline>
+  </contentMeta>
+  <contentSet>
+    <inlineXML contenttype="application/nitf+xml" wordcount="254">
+      <nitf version="-//IPTC//DTD NITF 3.4//EN" xmlns="http://iptc.org/std/NITF/2006-10-18/">
+        <body>
+          <body.head>
+            <headline>
+              <hl1>DiamondRock Hospitality posts 4Q FFO of $50.7 million, results top expectations</hl1>
+            </headline>
+          </body.head>
+          <body.content>
+            <block>
+              <p>BETHESDA, Md. (AP) _ DiamondRock Hospitality Co. (DRH) on Monday reported a key measure of profitability in its fourth quarter. The results topped Wall Street expectations.</p>
+              <p>The Bethesda, Maryland-based real estate investment trust said it had funds from operations of $50.7 million, or 25 cents per share, in the period.</p>
+              <p>The average estimate of 10 analysts surveyed by Zacks Investment Research was for funds from operations of 23 cents per share.</p>
+              <p>Funds from operations is a closely watched measure in the REIT industry. It takes net income and adds back items such as depreciation and amortization.</p>
+              <p>The company said it had net income of $24.8 million, or 12 cents per share.</p>
+              <p>The hotel and resort real estate investment trust posted revenue of $207 million in the period, also exceeding Street forecasts. Seven analysts surveyed by Zacks expected $203.5 million.</p>
+              <p>For the year, the company reported funds from operations of $201 million, or $1 per share. Revenue was reported as $870 million.</p>
+              <p>DiamondRock Hospitality expects full-year funds from operations in the range of 96 cents to $1.01 per share.</p>
+              <p>The company's shares have declined roughly 4 percent since the beginning of the year. In the final minutes of trading on Monday, shares hit $10.88, a drop of 2.5 percent in the last 12 months.</p>
+              <p>_____</p>
+              <p>This story was generated by <a href="http://www.automatedinsights.com/ap">Automated Insights</a> (http://automatedinsights.com/ap) using data from Zacks Investment Research. Access a <a href="https://www.zacks.com/ap/DRH">Zacks stock report on DRH</a> at https://www.zacks.com/ap/DRH</p>
+            </block>
+          </body.content>
+        </body>
+      </nitf>
+    </inlineXML>
+  </contentSet>
+</newsItem>
+<newsItem guid="tag:ap.org,2011:4db5f9c37aac8924db872ba5a7e287e6-text" version="1" standard="NewsML-G2" standardversion="2.15" conformance="power" xmlns="http://iptc.org/std/nar/2006-10-01/">
+  <catalogRef href="http://www.iptc.org/std/catalog/catalog.IPTC-G2-Standards_6.xml" />
+  <catalogRef href="http://cv.ap.org/customer/cv/catalog4customers-1.xml" />
+  <rightsInfo>
+    <copyrightHolder literal="Automated Insights" />
+    <copyrightNotice>Automated Insights</copyrightNotice>
+  </rightsInfo>
+  <itemMeta>
+    <itemClass qcode="ninat:text" />
+    <provider qcode="approviderid:z01122">
+      <name>Automated Insights</name>
+    </provider>
+    <versionCreated>2018-02-26T21:27:09Z</versionCreated>
+    <firstCreated>2018-02-26T21:27:10Z</firstCreated>
+    <pubStatus qcode="stat:usable" />
+    <generator versioninfo="4.0.0.0" role="apgen:runtime">APPL_2_NEWSML_ENTRY</generator>
+    <generator versioninfo="7286" role="apgen:tagging">AP Subject</generator>
+    <generator versioninfo="7288" role="apgen:tagging">AP Company</generator>
+    <generator versioninfo="7059" role="apgen:tagging">AP Geography</generator>
+    <signal qcode="apsig:consumerready" />
+  </itemMeta>
+  <contentMeta>
+    <urgency>4</urgency>
+    <contentCreated>2018-02-26T21:26:10Z</contentCreated>
+    <contentModified>2018-02-26T21:26:10Z</contentModified>
+    <located type="cptype:city" />
+    <infoSource role="crole:source" type="apsourcetype:ThirdParty" qcode="apsourceid:z01122">
+      <name>Automated Insights</name>
+    </infoSource>
+    <altId type="ap:friendlyKey">366388692891051</altId>
+    <altId type="ap:recordSequenceNumber">0</altId>
+    <altId type="ap:itemId">4db5f9c37aac8924db872ba5a7e287e6</altId>
+    <altId type="ap:itemIdSequence">4db5f9c37aac8924db872ba5a7e287e6.0</altId>
+    <altId type="ap:recordId">f779ee1a705e6565f2aead5d013b5ca7</altId>
+    <altId type="ap:editorialId">urn:publicid:20100512:automatedinsights.com:6d7fa76534cd6249667744cecec4c03c</altId>
+    <language tag="en" />
+    <keyword role="krole:index">Scripps Networks</keyword>
+    <keyword role="krole:index">Earnings Report</keyword>
+    <keyword role="krole:index">Tennessee</keyword>
+    <subject type="cpnat:abstract" qcode="apcategorycode:f">
+      <name>f</name>
+    </subject>
+    <subject type="cpnat:abstract" qcode="apsubject:11494c9888fc10048d50ba0a2b2ca13e" why="why:direct" creator="apsubcreator:Teragram">
+      <name>Earnings reports</name>
+      <broader qcode="apsubject:523620b888e910048f3af8851349f9bd">
+        <name>Earnings</name>
+      </broader>
+    </subject>
+    <subject type="cpnat:abstract" qcode="apsubject:523620b888e910048f3af8851349f9bd" why="why:ancestor" creator="apsubcreator:Teragram">
+      <name>Earnings</name>
+      <broader qcode="apsubject:5234f3f088e910048f18f8851349f9bd">
+        <name>Financial performance</name>
+      </broader>
+    </subject>
+    <subject type="cpnat:abstract" qcode="apsubject:5234f3f088e910048f18f8851349f9bd" why="why:ancestor" creator="apsubcreator:Teragram">
+      <name>Financial performance</name>
+      <broader qcode="apsubject:4d3302d8857510048d06ff2260dd383e">
+        <name>Corporate news</name>
+      </broader>
+    </subject>
+    <subject type="cpnat:abstract" qcode="apsubject:4d3302d8857510048d06ff2260dd383e" why="why:ancestor" creator="apsubcreator:Teragram">
+      <name>Corporate news</name>
+      <broader qcode="apsubject:c8e409f8858510048872ff2260dd383e">
+        <name>Business</name>
+      </broader>
+    </subject>
+    <subject type="cpnat:abstract" qcode="apsubject:c8e409f8858510048872ff2260dd383e" why="why:ancestor" creator="apsubcreator:Teragram">
+      <name>Business</name>
+    </subject>
+    <subject type="cpnat:organisation" qcode="apcompany:1864e32059c14d468b2dc7f6bda2ec49" why="why:direct" creator="apsubcreator:Teragram">
+      <name>Scripps Networks Interactive Inc</name>
+    </subject>
+    <subject type="cpnat:geoArea" qcode="apgeography:62532b5882c7100488cedf092526b43e" why="why:direct" creator="apsubcreator:Teragram">
+      <name>Tennessee</name>
+      <broader qcode="apgeography:661e48387d5b10048291c076b8e3055c">
+        <name>United States</name>
+      </broader>
+    </subject>
+    <subject type="cpnat:geoArea" qcode="apgeography:661e48387d5b10048291c076b8e3055c" why="why:ancestor" creator="apsubcreator:Teragram">
+      <name>United States</name>
+      <broader qcode="apgeography:661850e07d5b100481f7c076b8e3055c">
+        <name>North America</name>
+      </broader>
+    </subject>
+    <subject type="cpnat:geoArea" qcode="apgeography:661850e07d5b100481f7c076b8e3055c" why="why:ancestor" creator="apsubcreator:Teragram">
+      <name>North America</name>
+    </subject>
+    <subject type="cpnat:geoArea" qcode="apgeography:6fa40c6a63664d80bf3e0bc5cedd887f" why="why:direct" creator="apsubcreator:Teragram">
+      <name>Knoxville</name>
+      <broader qcode="apgeography:62532b5882c7100488cedf092526b43e">
+        <name>Tennessee</name>
+      </broader>
+    </subject>
+    <slugline>BC-US--Earns-Scripps Networks</slugline>
+    <headline>Scripps Networks tops 4Q profit and revenue expectations</headline>
+    <dateline>KNOXVILLE, Tenn.</dateline>
+  </contentMeta>
+  <contentSet>
+    <inlineXML contenttype="application/nitf+xml" wordcount="190">
+      <nitf version="-//IPTC//DTD NITF 3.4//EN" xmlns="http://iptc.org/std/NITF/2006-10-18/">
+        <body>
+          <body.head>
+            <headline>
+              <hl1>Scripps Networks tops 4Q profit and revenue expectations</hl1>
+            </headline>
+          </body.head>
+          <body.content>
+            <block>
+              <p>KNOXVILLE, Tenn. (AP) _ Scripps Networks Interactive Inc. (SNI) on Monday reported fourth-quarter earnings of $65.9 million.</p>
+              <p>The Knoxville, Tennessee-based company said it had profit of 50 cents per share. Earnings, adjusted for pretax expenses and costs related to mergers and acquisitions, came to $1.38 per share.</p>
+              <p>The results exceeded Wall Street expectations. The average estimate of six analysts surveyed by Zacks Investment Research was for earnings of $1.21 per share.</p>
+              <p>The owner of cable channels HGTV, Food Network and Travel Channel posted revenue of $956.1 million in the period, also beating Street forecasts. Four analysts surveyed by Zacks expected $912.8 million.</p>
+              <p>Scripps Networks shares have climbed nearly 4 percent since the beginning of the year, while the Standard &amp; Poor's 500 index has risen 4 percent. In the final minutes of trading on Monday, shares hit $88.51, a climb of roughly 10 percent in the last 12 months.</p>
+              <p>_____</p>
+              <p>This story was generated by <a href="http://www.automatedinsights.com/ap">Automated Insights</a> (http://automatedinsights.com/ap) using data from Zacks Investment Research. Access a <a href="https://www.zacks.com/ap/SNI">Zacks stock report on SNI</a> at https://www.zacks.com/ap/SNI</p>
+            </block>
+          </body.content>
+        </body>
+      </nitf>
+    </inlineXML>
+  </contentSet>
+</newsItem>
+</itemSet>
+</newsMessage>
