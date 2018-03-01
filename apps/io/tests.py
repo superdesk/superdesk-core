@@ -58,7 +58,8 @@ def setup_providers(context):
         context.providers['teletype'] = result[2]
         context.providers['dpa'] = result[3]
         context.providers['ap'] = result[4]
-        context.providers['email'] = result[5]
+        context.providers['ninjs'] = result[5]
+        context.providers['email'] = result[6]
 
 
 def teardown_providers(context):
