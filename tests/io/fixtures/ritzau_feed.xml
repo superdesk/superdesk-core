@@ -76,6 +76,7 @@ WEB:&lt;/P&gt;&#xD;
         <Companies/>
         <Status>New news</Status>
         <ContentShort>PR / Spire Global, Inc.</ContentShort>
+        <ServiceQueueId>123</ServiceQueueId>
       </RBNews>
       <RBNews>
         <NewsID>4b9c198d-d6ec-4a7f-a4e9-551d9a5cba13</NewsID>
@@ -116,6 +117,7 @@ WEB:&lt;/P&gt;&#xD;
         <Companies/>
         <Status>New news</Status>
         <ContentShort>Kort om sport</ContentShort>
+        <ServiceQueueId>456</ServiceQueueId>
       </RBNews>
     </ListOfRBNews>
   </XMLNewsQueuedResult>
