@@ -186,8 +186,8 @@ class ValidateMandatoryInListTest(TestCase):
     def test_validate_field_required_media_description_required_false(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
             'slugline': None,
-            'feature_media': {'required': False, 'type': 'media'},
-            'media_description': {'required': False},
+            'feature_media': {'required': True, 'type': 'media'},
+            'media_description': {'required': False}
         }}])
         service = ValidateService()
         errors = service.create([
