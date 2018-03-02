@@ -42,12 +42,11 @@ def _format_comment_text(comment):
 def _get_inline_comments(updates):
     try:
         comments = []
-        data = updates['editor_state'][0]['blocks'][0]['data']
-        for val in data.values():
-            if val.get('type') == 'COMMENT':
-                comments.append(val)
-                for reply in val.get('replies', []):
-                    comments.append(reply)
+        data = updates['editor_state'][0]['blocks'][0]['data'].get('__PUBLIC_API__comments', [])
+        for val in data:
+            comments.append(val)
+            for reply in val.get('replies', []):
+                comments.append(reply)
         return comments
     except (KeyError, IndexError):
         return []
