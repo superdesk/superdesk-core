@@ -1,5 +1,26 @@
 # Superdesk Server Changelog
 
+## [1.14] 2018-03-05
+
+### Fixed
+
+- Allow json files ingestion via ftp.
+- Ingest featuremedia items from ninjs if not present.
+- Rename conflicting field names in contacts.
+- Fix readtime for japanese content.
+
+### Added
+
+- Add monitoring view preferences.
+- Add name field to search providers.
+- Add Ritzau feed parser.
+- Add STT NewsML ingest parser.
+- Add method to clean HTML content in ingest.
+
+### Changed
+
+- Expose server default genre to client.
+
 ## [1.13] 2018-02-19
 
 ### Fixed
