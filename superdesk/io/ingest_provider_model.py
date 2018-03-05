@@ -184,9 +184,12 @@ class IngestProviderService(BaseService):
 
     def on_create(self, docs):
         for doc in docs:
-            if doc.get('content_expiry', 0) == 0:
+            content_expiry = doc.get('content_expiry', 0)
+            if content_expiry == 0:
                 doc['content_expiry'] = app.config['INGEST_EXPIRY_MINUTES']
                 self._set_provider_status(doc, doc.get('last_closed', {}).get('message', ''))
+            elif content_expiry < 0:
+                doc['content_expiry'] = None
             self._test_config(doc)
 
     def on_created(self, docs):
@@ -199,8 +202,16 @@ class IngestProviderService(BaseService):
         logger.info("Created Ingest Channel. Data:{}".format(docs))
 
     def on_update(self, updates, original):
-        if updates.get('content_expiry') == 0:
-            updates['content_expiry'] = app.config['INGEST_EXPIRY_MINUTES']
+        try:
+            content_expiry = updates['content_expiry']
+        except KeyError:
+            content_expiry = None
+        else:
+            if content_expiry == 0:
+                content_expiry = app.config['INGEST_EXPIRY_MINUTES']
+            elif content_expiry < 0:
+                content_expiry = None
+            updates['content_expiry'] = content_expiry
         if 'is_closed' in updates and original.get('is_closed', False) != updates.get('is_closed'):
             self._set_provider_status(updates, updates.get('last_closed', {}).get('message', ''))
         if 'config' in updates:
