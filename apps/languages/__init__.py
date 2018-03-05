@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk import get_backend
+from superdesk.metadata.utils import aggregations
 from apps.languages.service import LanguagesService
 from apps.languages.resource import LanguagesResource
 
@@ -21,3 +22,8 @@ def init_app(app):
     languages = app.config.get('LANGUAGES', [])
     for language in languages:
         language['_id'] = language['language']
+
+    # add language to aggregations
+    aggregations.update({
+        'language': {'terms': {'field': 'language'}},
+    })
