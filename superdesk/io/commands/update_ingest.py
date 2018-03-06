@@ -101,7 +101,7 @@ def filter_expired_items(provider, items):
                 value=provider['content_expiry']))
             del provider['content_expiry']
             content_expiry = None
-        except KeyError:
+        except (TypeError, KeyError):
             content_expiry = None
         else:
             if content_expiry < 0:
