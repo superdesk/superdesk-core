@@ -490,11 +490,11 @@ class NinjsFormatterTest(TestCase):
 
         # check japanese
         article['language'] = 'ja'
-        article['body_text'] = 500 * 'x'
+        article['body_text'] = 5000 * 'x'
         data = self._format(article)
-        self.assertEqual(data['readtime'], 2)
+        self.assertEqual(data['readtime'], 8)
 
-        article['body_text'] = 500 * ' '
+        article['body_text'] = 5000 * ' '
         data = self._format(article)
         self.assertEqual(data['readtime'], 0)
 
