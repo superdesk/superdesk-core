@@ -651,3 +651,6 @@ OVERRIDE_EDNOTE_FOR_CORRECTIONS = True
 #: allowed HTML tag in client
 HTML_TAGS_WHITELIST = ('h1', 'h2', 'h3', 'h4', 'h6', 'blockquote', 'pre', 'figure', 'ul', 'ol', 'li', 'div', 'p', 'em',
                        'strong', 'i', 'b')
+
+# Japanese reading speed
+JAPANESE_CHARACTERS_PER_MINUTE = 600

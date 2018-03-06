@@ -9,6 +9,7 @@ Feature: Client Config
                 "xmpp_auth": false,
                 "attachments_max_files": 10,
                 "attachments_max_size": 8388608,
+                "japanese_characters_per_minute": 600,
                 "schema": {},
                 "editor": {}
             }
