@@ -94,7 +94,21 @@ def filter_expired_items(provider, items):
         return False
 
     try:
-        delta = timedelta(minutes=provider.get('content_expiry', app.config['INGEST_EXPIRY_MINUTES']))
+        try:
+            content_expiry = int(provider['content_expiry'])
+        except ValueError:
+            logger.warning('invalid content_expiry: content_expiry={value}'.format(
+                value=provider['content_expiry']))
+            del provider['content_expiry']
+            content_expiry = None
+        except KeyError:
+            content_expiry = None
+        else:
+            if content_expiry < 0:
+                del provider['content_expiry']
+                content_expiry = None
+
+        delta = timedelta(minutes=content_expiry or app.config['INGEST_EXPIRY_MINUTES'])
         filtered_items = [item for item in items if is_not_expired(item) and
                           item.get(ITEM_TYPE, 'text') in provider.get('content_types', [])]
 
