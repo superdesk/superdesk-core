@@ -458,7 +458,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
         item['ingest_provider'] = str(provider[superdesk.config.ID_FIELD])
         item.setdefault('source', provider.get('source', ''))
         set_default_state(item, CONTENT_STATE.INGESTED)
-        item['expiry'] = get_expiry_date(provider.get('content_expiry', app.config['INGEST_EXPIRY_MINUTES']),
+        item['expiry'] = get_expiry_date(provider.get('content_expiry') or app.config['INGEST_EXPIRY_MINUTES'],
                                          item.get('versioncreated'))
 
         if 'anpa_category' in item:
