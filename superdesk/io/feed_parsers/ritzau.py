@@ -53,7 +53,6 @@ class RitzauFeedParser(XMLFeedParser):
                          'filter': lambda v: list(filter(None, v.split('/')))},
             'abstract': '//subtitle',
             'byline': '//origin',
-            'place': '//town',
             'version': {'xpath': '//version/text()',
                         'filter': int},
             'ednote': '//Tilredaktionen/text()',
