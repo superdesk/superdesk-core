@@ -158,10 +158,9 @@ Feature: News Items Archive Comments
         {"editor_state": [
             {"blocks": [
                 {"data": {
-                    "ot4i": {
-                        "type": "COMMENT",
+                    "__PUBLIC_API__comments": [{
                         "msg": "hello @[foo](user:#users._id#)"
-                    }
+                    }]
                 }}
             ]}
         ]}
@@ -171,11 +170,10 @@ Feature: News Items Archive Comments
         {"editor_state": [
             {"blocks": [
                 {"data": {
-                    "ot4i": {
-                        "type": "COMMENT",
+                    "__PUBLIC_API__comments": [{
                         "msg": "hello @[foo](user:#users._id#)",
                         "notified": true
-                    }
+                    }]
                 }}
             ]}
         ]}
@@ -197,11 +195,10 @@ Feature: News Items Archive Comments
         {"editor_state": [
             {"blocks": [
                 {"data": {
-                    "ot4i": {
-                        "type": "COMMENT",
+                    "__PUBLIC_API__comments": [{
                         "msg": "hello @[foo](user:#users._id#)",
                         "notified": true
-                    }
+                    }]
                 }}
             ]}
         ]}
@@ -212,11 +209,10 @@ Feature: News Items Archive Comments
         {"editor_state": [
             {"blocks": [
                 {"data": {
-                    "ot4i": {
-                        "type": "COMMENT",
+                    "__PUBLIC_API__comments": [{
                         "msg": "hello @[foo](user:#users._id#)",
                         "notified": true
-                    }
+                    }]
                 }}
             ]}
         ]}
@@ -229,8 +225,7 @@ Feature: News Items Archive Comments
         {"editor_state": [
             {"blocks": [
                 {"data": {
-                    "ot4i": {
-                        "type": "COMMENT",
+                    "__PUBLIC_API__comments": [{
                         "msg": "hello @[foo](user:#users._id#)",
                         "notified": true,
                         "replies": [
@@ -238,7 +233,7 @@ Feature: News Items Archive Comments
                                 "msg": "second @[foo](user:#users._id#)"
                             }
                         ]
-                    }
+                    }]
                 }}
             ]}
         ]}
