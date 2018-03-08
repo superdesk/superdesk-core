@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.14.1] 2018-03-08
+
+### Fixed
+
+- Fix japanese readtime speed param.
+
 ## [1.14] 2018-03-05
 
 ### Fixed
