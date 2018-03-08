@@ -14,6 +14,7 @@ from lxml import etree  # noqa
 from superdesk import etree as sd_etree
 from lxml import html as lxml_html
 from lxml.html import clean
+from flask import current_app as app
 
 
 # This pattern matches http(s) links, numbers (1.000.000 or 1,000,000 or 1 000 000), regulars words,
@@ -104,7 +105,7 @@ def get_reading_time(html, word_count=None, language=None):
     :return int: estimated number of minute to read the text
     """
     if language and language.startswith('ja'):
-        return round(len(re.sub('[\s]', '', get_text(html))) / 240)
+        return round(len(re.sub('[\s]', '', get_text(html))) / app.config['JAPANESE_CHARACTERS_PER_MINUTE'])
     if not word_count:
         word_count = get_word_count(html)
     reading_time_float = word_count / 250
