@@ -543,13 +543,14 @@ class BasePublishService(BaseService):
             logger.exception('Failed to apply kill header template to item {}.'.format(item))
 
     def _publish_associated_items(self, original, updates={}, publish=False):
-        """Refresh associated items before publishing
+        """Refresh and publish associated items before publishing. The publishing is done if the setting
+        PUBLISH_ASSOCIATED_ITEMS was true.
 
         Any further updates made to basic metadata done after item was associated will be carried on and
         used when validating those items.
         """
         publish_service = None
-        if publish_services.get(self.publish_type):
+        if config.PUBLISH_ASSOCIATED_ITEMS and publish_services.get(self.publish_type):
             publish_service = get_resource_service(publish_services[self.publish_type])
 
         associations = original.get(ASSOCIATIONS) or {}
@@ -562,12 +563,7 @@ class BasePublishService(BaseService):
                 else:
                     original_item = super().find_one(req=None, _id=item[config.ID_FIELD]) or {}
 
-                try:
-                    is_db_item_bigger_ver = original_item['_current_version'] > original['_current_version']
-                except KeyError:
-                    update_item_data(item, original_item, keys)
-                else:
-                    update_item_data(item, original_item, keys, keep_existing=not is_db_item_bigger_ver)
+                update_item_data(item, original_item, keys)
 
                 if publish_service and publish and item['type'] in MEDIA_TYPES:
                     if item.get('task', {}).get('stage', None):
