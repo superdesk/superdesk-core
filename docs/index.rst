@@ -21,7 +21,7 @@ deeper into the system :ref:`reference`.
 For technical documentation on the Superdesk client web application, have a look
 `here <https://github.com/superdesk/superdesk-client-core>`_.
 
-.. admonition: Looking for non-technical user documentation?
+.. hint:: Looking for non-technical user documentation?
 
     We've got you covered. Check out the following links:
 
