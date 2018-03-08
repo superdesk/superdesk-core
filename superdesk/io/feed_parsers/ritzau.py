@@ -37,26 +37,25 @@ class RitzauFeedParser(XMLFeedParser):
         super().__init__()
 
         self.default_mapping = {
-            'id': '//NewsID/text()',
-            'guid': '//NewsID/text()',
-            'body_html': {'xpath': '//content/text()',
+            'guid': 'NewsID/text()',
+            'body_html': {'xpath': 'content/text()',
                           'filter': sd_etree.clean_html_str},
-            'firstcreated': {'xpath': '//PublishDate/text()',
+            'firstcreated': {'xpath': 'PublishDate/text()',
                              'filter': self._publish_date_filter,
                              },
-            'versioncreated': {'xpath': '//PublishDate/text()',
+            'versioncreated': {'xpath': 'PublishDate/text()',
                                'filter': self._publish_date_filter,
                                },
-            'headline': '//headline/text()',
-            'priority': '//Priority/text()',
-            'keywords': {'xpath': '//strapline/text()',
+            'headline': 'headline/text()',
+            'priority': 'Priority/text()',
+            'keywords': {'xpath': 'strapline/text()',
                          'filter': lambda v: list(filter(None, v.split('/')))},
-            'abstract': '//subtitle',
-            'byline': '//origin',
-            'version': {'xpath': '//version/text()',
+            'abstract': 'subtitle',
+            'byline': 'origin',
+            'version': {'xpath': 'version/text()',
                         'filter': int},
-            'ednote': '//Tilredaktionen/text()',
-            'subject': {'xpath': '//IPTCList/a:int/text()',
+            'ednote': 'Tilredaktionen/text()',
+            'subject': {'xpath': 'IPTCList/a:int/text()',
                         'list': True,
                         'filter': self._subject_filter}}
 
@@ -86,7 +85,6 @@ class RitzauFeedParser(XMLFeedParser):
         return dateutil.parser.parse(value)
 
     def _subject_filter(self, qcode):
-        self.subjects_map
         try:
             subject = self.subjects_map[qcode]
         except KeyError:
