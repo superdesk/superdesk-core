@@ -6,7 +6,7 @@
 ==================================
 Welcome to Superdesk documentation
 ==================================
-*At Sourcefabric, we develop open-source software for journalism!*
+*At Sourcefabric, we develop open-source software for journalism*
 
 .. image:: _static/logo.svg
    :width: 400px
@@ -21,7 +21,7 @@ deeper into the system :ref:`reference`.
 For technical documentation on the Superdesk client web application, have a look
 `here <https://github.com/superdesk/superdesk-client-core>`_.
 
-.. admonition:: Looking for non-technical user documentation?
+.. hint:: Looking for non-technical user documentation?
 
     We've got you covered. Check out the following links:
 
