@@ -160,17 +160,13 @@ class FTPFeedingService(FeedingService):
                                 crt_last_updated = item_last_updated
 
                         local_file_path = os.path.join(config['dest_path'], filename)
-                        try:
-                            with open(local_file_path, 'xb') as f:
-                                try:
-                                    ftp.retrbinary('RETR %s' % filename, f.write)
-                                except ftplib.all_errors as ex:
-                                    os.remove(local_file_path)
-                                    raise Exception('Exception retrieving file from FTP server ({filename})'.format(
-                                                    filename=filename))
-                        except FileExistsError as e:
-                            raise Exception('Exception retrieving from FTP server, file already exists ({filename])'
-                                            .format(filename=local_file_path))
+                        with open(local_file_path, 'wb') as f:
+                            try:
+                                ftp.retrbinary('RETR %s' % filename, f.write)
+                            except ftplib.all_errors as ex:
+                                os.remove(local_file_path)
+                                raise Exception('Exception retrieving file from FTP server ({filename})'.format(
+                                                filename=filename))
 
                         registered_parser = self.get_feed_parser(provider)
                         if isinstance(registered_parser, XMLFeedParser):
