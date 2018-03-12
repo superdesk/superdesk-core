@@ -66,3 +66,49 @@ Feature: Translate Content
       {"type":"text", "headline": "test1", "state": "submitted", "sign_off": "abc", "language": "de", "source": "AAP", 
        "subject":[{"qcode": "17004000", "name": "Statistics"}], "body_html": "Test Document body"}
       """
+
+    @auth
+    Scenario: Translate package
+      Given "desks"
+      """
+      [{"name": "test"}]
+      """
+      Given "archive"
+      """
+      [
+        {"type": "text", "headline": "text-item", "guid": "text-item", "state": "submitted", "language": "en", "original_creator": "#CONTEXT_USER_ID#"},
+        {"type": "picture", "headline": "picture-item", "guid": "picture-item", "state": "submitted", "language": "en", "original_creator": "#CONTEXT_USER_ID#"}
+      ]
+      """
+
+      When we post to "archive"
+      """
+      {
+        "type": "composite", "headline": "package", "guid": "package", "language": "en", "groups": [
+          {"id": "root", "refs": [{"idRef": "main"}]},
+          {"id": "main", "refs": [
+            {"residRef": "text-item"},
+            {"residRef": "picture-item"}
+          ]}
+        ],
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}
+      }
+      """
+      Then we get new resource
+      When we post to "/archive/translate"
+      """
+      {"guid": "package", "language": "de", "desk": "#desks._id#"}
+      """
+  
+      When we get "/archive/#translate._id#"
+      Then we get existing resource
+      """
+      {"translated_from": "package", "operation": "translate", "task": {"stage": "#desks.working_stage#"}}
+      """
+      And we get package items
+      """
+      [
+        {"type": "text", "language": "de", "translated_from": "text-item"},
+        {"type": "picture", "language": "de", "translated_from": "picture-item"}
+      ]
+      """
