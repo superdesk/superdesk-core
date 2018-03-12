@@ -21,11 +21,11 @@ deeper into the system :ref:`reference`.
 For technical documentation on the Superdesk client web application, have a look
 `here <https://github.com/superdesk/superdesk-client-core>`_.
 
-.. hint:: Looking for non-technical user documentation?
+.. note::
 
-    We've got you covered. Check out the following links:
+    Looking for non-technical user documentation?
 
-    * `User Manual <http://>`_
+    We've got you covered. Check out the `User Manual <https://www.superdesk.org/uploads/superdeskmastermanual.pdf>`_.
 
 First steps 
 -----------
@@ -33,11 +33,7 @@ First steps
 New to Superdesk? This is the best place to start. Here you will get the big picture of
 how the Superdesk server works.
 
-.. toctree::
-    :maxdepth: 2
-
-    overview
-    installation
+* `Installation <https://www.superdesk.org/news/installing-superdesk-publisher>`_
 
 .. _reference:
 
