@@ -121,7 +121,7 @@ Feature: Publish embedded items feature
       "_id": "58f6110d88ea94d000369a2f",
       "name":"Channel 1",
       "media_type": "media",
-      "subscriber_type": "wire",
+      "subscriber_type": "all",
       "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
       "products": ["text-source-foo"],
       "codes": "Aaa",
@@ -132,7 +132,7 @@ Feature: Publish embedded items feature
       "_id": "58f6113988ea94d000369a30",
       "name":"Channel 2",
       "media_type":"media",
-      "subscriber_type": "wire",
+      "subscriber_type": "all",
       "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
       "products": ["pic-source-aap"],
       "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
@@ -141,9 +141,9 @@ Feature: Publish embedded items feature
       "_id": "58f6115b88ea94d000369a31",
       "name":"Channel 3",
       "media_type":"media",
-      "subscriber_type": "wire",
+      "subscriber_type": "all",
       "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-      "api_products": ["58f6120488ea94d000369a32", "pic-source-aap"]
+      "api_products": ["58f6120488ea94d000369a32", "type-picture"]
     }]
     """
     And "vocabularies"
@@ -153,13 +153,21 @@ Feature: Publish embedded items feature
 
     @auth
     @vocabulary
-    Scenario: Publish embedded picture together with text item
+    Scenario: Publish embedded picture together with text item - no other ops
         When we post to "archive"
         """
         {"type": "text", "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}, "guid": "foo"}
         """
         Then we get OK response
         When we upload a file "bike.jpg" to "archive"
+        And we patch "/archive/#archive._id#"
+        """
+        {"task": {"desk": "#desks._id#"}}
+        """
+        And we patch "/archive/#archive._id#"
+        """
+        {"state": "in_progress"}
+        """
         Then we get OK response
 
         When we patch "archive/foo"
@@ -171,7 +179,7 @@ Feature: Publish embedded items feature
         {"_id": "#archive._id#",
          "type": "picture",
          "headline": "test",
-         "state": "draft"}}}
+         "state": "in_progress"}}}
         """
         Then we get OK response
 
@@ -189,18 +197,19 @@ Feature: Publish embedded items feature
 
         When we publish "foo" with "publish" type and "published" state
         """
-        {"headline": "foo", "associations": {"embedded1": {"_id": "#archive._id#", "type": "picture", "headline": "test", "state": "draft"}}}
+        {"headline": "foo", "associations": {"embedded1": {"_id": "#archive._id#", "type": "picture", "headline": "test", "state": "in_progress"}}}
         """
         Then we get OK response
         When we get "published"
-        Then we get list with 1 items
+        Then we get list with 2 items
         When we get "publish_queue"
-        Then we get list with 3 items
+        Then we get list with 4 items
         """
         {"_items": [
-        {"subscriber_id": "58f6115b88ea94d000369a31", "destination": {"delivery_type" : "content_api"}},
-        {"subscriber_id": "58f6110d88ea94d000369a2f", "destination": {"delivery_type" : "content_api"}},
-        {"subscriber_id": "58f6110d88ea94d000369a2f", "destination": {"delivery_type" : "email"}}
+        {"subscriber_id": "58f6115b88ea94d000369a31", "headline": "test", "destination": {"delivery_type" : "content_api"}},
+        {"subscriber_id": "58f6115b88ea94d000369a31", "item_id": "foo", "destination": {"delivery_type" : "content_api"}},
+        {"subscriber_id": "58f6110d88ea94d000369a2f", "item_id": "foo", "destination": {"delivery_type" : "content_api"}},
+        {"subscriber_id": "58f6110d88ea94d000369a2f", "item_id": "foo", "destination": {"delivery_type" : "email"}}
         ]}
         """
         When we get "/items/foo"
@@ -220,6 +229,14 @@ Feature: Publish embedded items feature
         """
         Then we get OK response
         When we upload a file "bike.jpg" to "archive"
+        And we patch "/archive/#archive._id#"
+        """
+        {"task": {"desk": "#desks._id#"}}
+        """
+        And we patch "/archive/#archive._id#"
+        """
+        {"state": "in_progress"}
+        """
         Then we get OK response
 
         When we patch "archive/foo"
@@ -231,7 +248,7 @@ Feature: Publish embedded items feature
         {"_id": "#archive._id#",
          "type": "picture",
          "headline": "test",
-         "state": "draft"}}}
+         "state": "in_progress"}}}
         """
         Then we get OK response
 
@@ -249,18 +266,19 @@ Feature: Publish embedded items feature
 
         When we publish "foo" with "publish" type and "published" state
         """
-        {"headline": "foo", "associations": {"embedded1": {"_id": "#archive._id#", "type": "picture", "headline": "test", "state": "draft"}}}
+        {"headline": "foo", "associations": {"embedded1": {"_id": "#archive._id#", "type": "picture", "headline": "test", "state": "in_progress"}}}
         """
         Then we get OK response
         When we get "published"
-        Then we get list with 1 items
+        Then we get list with 2 items
         When we get "publish_queue"
-        Then we get list with 3 items
+        Then we get list with 4 items
         """
         {"_items": [
-        {"subscriber_id": "58f6115b88ea94d000369a31", "destination": {"delivery_type" : "content_api"}},
-        {"subscriber_id": "58f6110d88ea94d000369a2f", "destination": {"delivery_type" : "content_api"}},
-        {"subscriber_id": "58f6110d88ea94d000369a2f", "destination": {"delivery_type" : "email"}}
+        {"subscriber_id": "58f6115b88ea94d000369a31", "headline": "test", "destination": {"delivery_type" : "content_api"}},
+        {"subscriber_id": "58f6115b88ea94d000369a31", "item_id": "foo", "destination": {"delivery_type" : "content_api"}},
+        {"subscriber_id": "58f6110d88ea94d000369a2f", "item_id": "foo", "destination": {"delivery_type" : "content_api"}},
+        {"subscriber_id": "58f6110d88ea94d000369a2f", "item_id": "foo", "destination": {"delivery_type" : "email"}}
         ]}
         """
         When we get "/items/foo"
@@ -281,9 +299,9 @@ Feature: Publish embedded items feature
         """
         Then we get OK response
         When we get "published"
-        Then we get list with 2 items
+        Then we get list with 4 items
         When we get "publish_queue"
-        Then we get list with 6 items
+        Then we get list with 8 items
         When we get "/items/foo"
         Then we get OK response
         Then we assert the content api item "foo" is published to subscriber "58f6110d88ea94d000369a2f"
@@ -301,6 +319,14 @@ Feature: Publish embedded items feature
         """
         Then we get OK response
         When we upload a file "bike.jpg" to "archive"
+        And we patch "/archive/#archive._id#"
+        """
+        {"task": {"desk": "#desks._id#"}}
+        """
+        And we patch "/archive/#archive._id#"
+        """
+        {"state": "in_progress"}
+        """
         Then we get OK response
 
         When we patch "archive/foo"
@@ -312,7 +338,7 @@ Feature: Publish embedded items feature
         {"_id": "#archive._id#",
          "type": "picture",
          "headline": "test",
-         "state": "draft"}}}
+         "state": "in_progress"}}}
         """
         Then we get OK response
 
@@ -330,18 +356,19 @@ Feature: Publish embedded items feature
 
         When we publish "foo" with "publish" type and "published" state
         """
-        {"headline": "foo", "associations": {"embedded1": {"_id": "#archive._id#", "type": "picture", "headline": "test", "state": "draft"}}}
+        {"headline": "foo", "associations": {"embedded1": {"_id": "#archive._id#", "type": "picture", "headline": "test", "state": "in_progress"}}}
         """
         Then we get OK response
         When we get "published"
-        Then we get list with 1 items
+        Then we get list with 2 items
         When we get "publish_queue"
-        Then we get list with 3 items
+        Then we get list with 4 items
         """
         {"_items": [
-        {"subscriber_id": "58f6115b88ea94d000369a31", "destination": {"delivery_type" : "content_api"}},
-        {"subscriber_id": "58f6110d88ea94d000369a2f", "destination": {"delivery_type" : "content_api"}},
-        {"subscriber_id": "58f6110d88ea94d000369a2f", "destination": {"delivery_type" : "email"}}
+        {"subscriber_id": "58f6115b88ea94d000369a31", "headline": "test", "destination": {"delivery_type" : "content_api"}},
+        {"subscriber_id": "58f6115b88ea94d000369a31", "item_id": "foo", "destination": {"delivery_type" : "content_api"}},
+        {"subscriber_id": "58f6110d88ea94d000369a2f", "item_id": "foo", "destination": {"delivery_type" : "content_api"}},
+        {"subscriber_id": "58f6110d88ea94d000369a2f", "item_id": "foo", "destination": {"delivery_type" : "email"}}
         ]}
         """
         When we get "/items/foo"
@@ -390,11 +417,19 @@ Feature: Publish embedded items feature
         Then we get OK response
 
         When we upload a file "bike.jpg" to "archive"
+        And we patch "/archive/#archive._id#"
+        """
+        {"task": {"desk": "#desks._id#"}}
+        """
+        And we patch "/archive/#archive._id#"
+        """
+        {"state": "in_progress"}
+        """
         Then we get OK response
 
         When we patch "archive/foo"
         """
-        {"headline": "foo", "slugline": "bar", "state": "in_progress", "associations": {"embedded1": {"_id": "#archive._id#", "type": "picture", "headline": "test", "state": "draft"}}}
+        {"headline": "foo", "slugline": "bar", "state": "in_progress", "associations": {"embedded1": {"_id": "#archive._id#", "type": "picture", "headline": "test", "state": "in_progress"}}}
         """
         Then we get OK response
 
@@ -406,7 +441,7 @@ Feature: Publish embedded items feature
         Then we set copy metadata from parent flag
         When we publish "foo" with "publish" type and "published" state
         """
-        {"headline": "foo", "associations": {"embedded1": {"_id": "#archive._id#", "slugline": "text item slugline", "type": "picture", "headline": "test", "state": "draft"}}}
+        {"headline": "foo", "associations": {"embedded1": {"_id": "#archive._id#", "slugline": "test", "type": "picture", "headline": "test", "state": "in_progress"}}}
         """
         Then we get OK response
 

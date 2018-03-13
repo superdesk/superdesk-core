@@ -654,3 +654,5 @@ HTML_TAGS_WHITELIST = ('h1', 'h2', 'h3', 'h4', 'h6', 'blockquote', 'pre', 'figur
 
 # Japanese reading speed
 JAPANESE_CHARACTERS_PER_MINUTE = 600
+
+PUBLISH_ASSOCIATED_ITEMS = True

@@ -2492,3 +2492,94 @@ Feature: Content Publishing
         "pubstatus": "usable"
        }
       """
+
+    @auth
+    Scenario: Publish associated items and move them to the output stage on main item publish
+      Given "vocabularies"
+      """
+      [{
+      	"_id": "media1", "field_type": "media",
+      	"display_name": "Media 1", "type": "manageable",
+      	"service": {"all": 1}, "items": [],
+      	"field_options": {"allowed_types": {"picture": true}},
+      	"schema": {"parent": {}, "name": {}, "qcode": {}}
+      }]
+      """
+      And "content_types"
+      """
+      [{
+      	"_id": "profile1", "label": "Profile 1",
+      	"is_used": true, "enabled": true, "priority": 0, "editor": {},
+      	"schema": {"media1": {"required": true, "nullable": false, "enabled": true, "type": "media"}}
+      }]
+      """
+	  And "validators"
+	  """
+	  [
+	  	{"_id": "publish_picture", "act": "publish", "type": "picture", "schema":{}},
+	  	{"_id": "publish_text", "act": "publish", "type": "text", "schema":{}}
+	  ]
+	  """
+      And "desks"
+      """
+      [{"name": "Sports"}]
+      """
+      When we post to "/products" with success
+      """
+      {
+      	"name":"prod-1","codes":"abc,xyz", "product_type": "both"
+      }
+      """
+      And we post to "/subscribers" with success
+      """
+      {
+        "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
+      And we post to "archive" with success
+      """
+      [
+      	{
+       	    "guid": "234", "type": "picture", "slugline": "234", "headline": "234", "state": "in_progress",
+        	"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+       	    "renditions": {}
+        },
+      	{
+      		"guid": "123", "type": "text", "headline": "test", "state": "in_progress",
+        	"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        	"subject":[{"qcode": "17004000", "name": "Statistics"}], "body_html": "Test Document body",
+        	"associations": {
+        		"media--1": {"_id": "234", "guid": "234", "type": "picture", "slugline": "234",
+        		"headline": "234", "state": "in_progress", "renditions": {},
+	        	"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}
+        		}
+        	}
+       	}
+      ]
+      """
+      And we publish "123" with "publish" type and "published" state
+      Then we get OK response
+      And we get existing resource
+      """
+      {
+        "_current_version": 2,
+        "type": "text",
+        "state": "published",
+        "associations": {
+        	"media--1": {"state": "published"}
+        },
+        "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}
+      }
+      """
+      When we get "/archive/234"
+      Then we get existing resource
+      """
+      {
+      	"guid": "234",
+      	"state": "published",
+      	"task":{"desk": "#desks._id#"}
+      }
+      """
+      And we get null stage

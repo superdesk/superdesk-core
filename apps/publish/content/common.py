@@ -58,6 +58,11 @@ ITEM_PUBLISH = 'publish'
 ITEM_CORRECT = 'correct'
 ITEM_KILL = 'kill'
 item_operations.extend([ITEM_PUBLISH, ITEM_CORRECT, ITEM_KILL])
+publish_services = {
+    ITEM_PUBLISH: 'archive_publish',
+    ITEM_CORRECT: 'archive_correct',
+    ITEM_KILL: 'archive_kill'
+}
 
 
 class BasePublishResource(ArchiveResource):
@@ -94,7 +99,7 @@ class BasePublishService(BaseService):
     package_service = PackageService()
 
     def on_update(self, updates, original):
-        self._refresh_associated_items(original)
+        self._publish_associated_items(original)
         self._validate(original, updates)
         self._set_updates(original, updates, updates.get(config.LAST_UPDATED, utcnow()))
         convert_task_attributes_to_objectId(updates)  # ???
@@ -149,12 +154,11 @@ class BasePublishService(BaseService):
                 self._publish_package_items(original, updates)
                 self._update_archive(original, updates, should_insert_into_versions=auto_publish)
             else:
-                self._refresh_associated_items(original)
+                self._publish_associated_items(original, updates, publish=True)
                 updated = deepcopy(original)
                 updated.update(deepcopy(updates))
 
-                if updates.get(ASSOCIATIONS):
-                    self._refresh_associated_items(updated)  # updates got lost with update
+                self._publish_associated_items(updated, updates)  # updates got lost with update
 
                 self._update_archive(original, updates, should_insert_into_versions=auto_publish)
                 self.update_published_collection(published_item_id=original[config.ID_FIELD], updated=updated)
@@ -538,28 +542,42 @@ class BasePublishService(BaseService):
         except Exception:
             logger.exception('Failed to apply kill header template to item {}.'.format(item))
 
-    def _refresh_associated_items(self, original):
-        """Refresh associated items before publishing
+    def _publish_associated_items(self, original, updates={}, publish=False):
+        """Refresh and publish associated items before publishing. The publishing is done if the setting
+        PUBLISH_ASSOCIATED_ITEMS was true.
 
         Any further updates made to basic metadata done after item was associated will be carried on and
         used when validating those items.
         """
+        publish_service = None
+        if config.PUBLISH_ASSOCIATED_ITEMS and publish_services.get(self.publish_type):
+            publish_service = get_resource_service(publish_services[self.publish_type])
+
         associations = original.get(ASSOCIATIONS) or {}
-        for _, item in associations.items():
+        for associations_key, item in associations.items():
             if type(item) == dict and item.get(config.ID_FIELD):
                 keys = DEFAULT_SCHEMA.keys()
                 if app.settings.get('COPY_METADATA_FROM_PARENT') and item.get(ITEM_TYPE) in MEDIA_TYPES:
-                    updates = original
+                    original_item = original
                     keys = FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM
                 else:
-                    updates = super().find_one(req=None, _id=item[config.ID_FIELD]) or {}
+                    original_item = super().find_one(req=None, _id=item[config.ID_FIELD]) or {}
 
-                try:
-                    is_db_item_bigger_ver = updates['_current_version'] > original['_current_version']
-                except KeyError:
-                    update_item_data(item, updates, keys)
-                else:
-                    update_item_data(item, updates, keys, keep_existing=not is_db_item_bigger_ver)
+                update_item_data(item, original_item, keys)
+
+                if publish_service and publish and item['type'] in MEDIA_TYPES:
+                    if item.get('task', {}).get('stage', None):
+                        del item['task']['stage']
+                    if item['state'] not in PUBLISH_STATES:
+                        get_resource_service('archive_publish').patch(id=item.pop(config.ID_FIELD), updates=item)
+                    else:
+                        publish_service.patch(id=item.pop(config.ID_FIELD), updates=item)
+                    item['state'] = self.published_state
+                    original[ASSOCIATIONS][associations_key]['state'] = self.published_state
+                    original[ASSOCIATIONS][associations_key]['operation'] = self.publish_type
+                    if ASSOCIATIONS not in updates:
+                        updates[ASSOCIATIONS] = original[ASSOCIATIONS]
+                    updates[ASSOCIATIONS][associations_key] = original[ASSOCIATIONS][associations_key]
 
     def _mark_media_item_as_used(self, updates, original):
         if ASSOCIATIONS not in updates or not updates.get(ASSOCIATIONS):

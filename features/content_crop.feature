@@ -414,6 +414,17 @@ Feature: Cropping the Image Articles
       """
       [{"name": "Sports", "content_expiry": 60}]
       """
+      And "vocabularies"
+      """
+      [{
+      	"_id": "crop_sizes",
+      	"unique_field": "name",
+      	"items": [
+      		{"is_active": true, "name": "4-3", "width": 800, "height": 600},
+      		{"is_active": true, "name": "16-9", "width": 1280, "height": 720}
+      	]
+      }]
+      """
       When we post to "/archive" with success
       """
       [{"guid": "123", "type": "text", "headline": "test", "state": "fetched", "slugline": "slugline",
