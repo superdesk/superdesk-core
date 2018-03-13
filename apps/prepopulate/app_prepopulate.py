@@ -53,11 +53,13 @@ def get_default_user():
     return user
 
 
-def prepopulate_data(file_name, default_user=get_default_user()):
+def prepopulate_data(file_name, default_user=get_default_user(), directory=None):
+    if not directory:
+        directory = os.path.abspath(os.path.dirname(__file__))
     placeholders = {'NOW()': date_to_str(utcnow())}
     users = {default_user['username']: default_user['password']}
     default_username = default_user['username']
-    file = os.path.join(os.path.abspath(os.path.dirname(__file__)), file_name)
+    file = os.path.join(directory, file_name)
     with open(file, 'rt', encoding='utf8') as app_prepopulation:
         json_data = json.load(app_prepopulation)
         for item in json_data:
@@ -176,14 +178,15 @@ class PrepopulateService(BaseService):
 class AppPrepopulateCommand(superdesk.Command):
 
     option_list = [
-        superdesk.Option('--file', '-f', dest='prepopulate_file', default='app_prepopulate_data.json')
+        superdesk.Option('--file', '-f', dest='prepopulate_file', default='app_prepopulate_data.json'),
+        superdesk.Option('--dir', '-d', dest='directory', default=None),
     ]
 
-    def run(self, prepopulate_file):
+    def run(self, prepopulate_file, directory=None):
         user = get_resource_service('users').find_one(username=get_default_user()['username'], req=None)
         if not user:
             get_resource_service('users').post([get_default_user()])
-        prepopulate_data(prepopulate_file, get_default_user())
+        prepopulate_data(prepopulate_file, get_default_user(), directory)
 
 
 superdesk.command('app:prepopulate', AppPrepopulateCommand())
