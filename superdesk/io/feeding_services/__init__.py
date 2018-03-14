@@ -188,3 +188,4 @@ from superdesk.io.feeding_services.ritzau import RitzauFeedingService  # NOQA
 from superdesk.io.feeding_services.http_service import HTTPFeedingService  # NOQA
 from superdesk.io.feeding_services.rss import RSSFeedingService  # NOQA
 from superdesk.io.feeding_services.twitter import TwitterFeedingService  # NOQA
+from superdesk.io.feeding_services.ap import APFeedingService  # NOQA

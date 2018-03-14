@@ -40,6 +40,7 @@ class IngestProviderResource(Resource):
     :param allow_remove_ingested: allow deleting of items from ingest
     :param content_expiry: ttl for ingested items in minutes
     :param config: provider specific config
+    :param private: can contain any data useful for provider (e.g. to manage feeds position)
     :param ingested_count: number of items ingested so far
     :param tokens: auth tokens used by provider
     :param is_closed: provider closed status
@@ -88,6 +89,9 @@ class IngestProviderResource(Resource):
                 'default': app.config['INGEST_EXPIRY_MINUTES']
             },
             'config': {
+                'type': 'dict'
+            },
+            'private': {
                 'type': 'dict'
             },
             'ingested_count': {

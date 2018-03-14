@@ -13,15 +13,19 @@ import arrow
 import datetime
 import logging
 
+from superdesk import etree as sd_etree
 from superdesk.errors import ParserError
 from superdesk.io.registry import register_feed_parser
 from superdesk.io.feed_parsers import XMLFeedParser
 from superdesk.io.iptc import subject_codes
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
 from superdesk.metadata.utils import is_normal_package
+from lxml import etree
 
-XMLNS = 'http://iptc.org/std/nar/2006-10-01/'
-XHTML = 'http://www.w3.org/1999/xhtml'
+NITF = 'application/nitf+xml'
+NS = {'iptc': 'http://iptc.org/std/NITF/2006-10-18',
+      'nitf': 'http://iptc.org/std/NITF/2006-10-18/',
+      'xhtml': 'http://www.w3.org/1999/xhtml'}
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +83,9 @@ class NewsMLTwoFeedParser(XMLFeedParser):
         header = tree.find(self.qname('header'))
         priority = 5
         if header is not None:
-            priority = self.map_priority(header.find(self.qname('priority')).text)
+            priority_elt = header.find(self.qname('priority'))
+            if priority_elt is not None:
+                priority = self.map_priority(priority_elt.text)
 
         return {'priority': priority}
 
@@ -230,26 +236,32 @@ class NewsMLTwoFeedParser(XMLFeedParser):
                 rendition = self.parse_remote_content(content)
                 item['renditions'][rendition['rendition']] = rendition
 
-    def parse_inline_content(self, tree, item, ns=XHTML):
-        html = tree.find(self.qname('html', ns))
-        body = html.find(self.qname('body', ns))
-        elements = []
-        for elem in body:
-            if elem.text:
-                tag = elem.tag.rsplit('}')[1]
-                elements.append('<%s>%s</%s>' % (tag, elem.text, tag))
+    def parse_inline_content(self, tree, item, ns=NS['xhtml']):
+        if tree.get('contenttype') == NITF:
+            body_content = tree.xpath('.//nitf:body.content/nitf:block/*', namespaces=NS)
+            elements = [etree.tostring(sd_etree.clean_html(e), encoding='unicode', method='html') for e in body_content]
+            content = {'contenttype': NITF,
+                       'content': '\n'.join(elements)}
+        else:
+            html = tree.find(self.qname('html', ns))
+            body = html.find(self.qname('body', ns))
+            elements = []
+            for elem in body:
+                if elem.text:
+                    tag = elem.tag.rsplit('}')[1]
+                    elements.append('<%s>%s</%s>' % (tag, elem.text, tag))
 
-        # If there is a single p tag then replace the line feeds with breaks
-        if len(elements) == 1 and body[0].tag.rsplit('}')[1] == 'p':
-            elements[0] = elements[0].replace('\n    ', '</p><p>').replace('\n', '<br/>')
+            # If there is a single p tag then replace the line feeds with breaks
+            if len(elements) == 1 and body[0].tag.rsplit('}')[1] == 'p':
+                elements[0] = elements[0].replace('\n    ', '</p><p>').replace('\n', '<br/>')
 
-        content = dict()
-        content['contenttype'] = tree.attrib['contenttype']
-        if len(elements) > 0:
-            content['content'] = "\n".join(elements)
-        elif body.text:
-            content['content'] = '<pre>' + body.text + '</pre>'
-            content['format'] = CONTENT_TYPE.PREFORMATTED
+            content = dict()
+            content['contenttype'] = tree.attrib['contenttype']
+            if len(elements) > 0:
+                content['content'] = "\n".join(elements)
+            elif body.text:
+                content['content'] = '<pre>' + body.text + '</pre>'
+                content['format'] = CONTENT_TYPE.PREFORMATTED
         return content
 
     def parse_remote_content(self, tree):
