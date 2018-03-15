@@ -12,7 +12,9 @@
 
 import io
 from PIL import Image, ExifTags
+from PIL import IptcImagePlugin
 from flask import json
+from .iim_codes import iim_codes
 
 ORIENTATIONS = {
     1: ("Normal", 0),
@@ -89,3 +91,35 @@ def get_meta(file_stream):
     exif_meta.pop('UserComment', None)
 
     return exif_meta
+
+
+def get_meta_iptc(file_stream):
+    """Returns the image IPTC metadata in a dictionary of tag:value pairs.
+
+    @param file_stream: stream
+    """
+    file_stream.seek(0)
+    img = Image.open(file_stream)
+    iptc_raw = IptcImagePlugin.getiptcinfo(img)
+    metadata = {}
+
+    if iptc_raw is None:
+        return metadata
+
+    for code, value in iptc_raw.items():
+        try:
+            tag = iim_codes[code]
+        except KeyError:
+            continue
+        if isinstance(value, list):
+            try:
+                value = [v.decode('utf-8') for v in value]
+            except UnicodeDecodeError:
+                pass
+        elif isinstance(value, bytes):
+            try:
+                value = value.decode('utf-8')
+            except UnicodeDecodeError:
+                pass
+        metadata[tag] = value
+    return metadata

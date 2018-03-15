@@ -41,11 +41,6 @@ PROVIDER = {
 }
 
 
-def _exception(*args, **kwargs):
-    """Raise an exception on call, for testing purpose"""
-    raise Exception('Test exception')
-
-
 def ftp_file(filename):
     facts = mock.Mock()
     facts.get.return_value = 'file'
@@ -62,6 +57,19 @@ class FakeFTP(mock.MagicMock):
 
     def cwd(self, path):
         pass
+
+
+class FakeFeedParser(mock.MagicMock):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        del self.ALLOWED_EXT
+
+
+class FailingFakeFeedParser(FakeFeedParser):
+
+    def parse(self, *args, **kwargs):
+        raise Exception('Test exception')
 
 
 class FTPTestCase(unittest.TestCase):
@@ -93,7 +101,7 @@ class FTPTestCase(unittest.TestCase):
             shutil.rmtree(folder)
 
     @mock.patch.object(ftp, 'ftp_connect', new_callable=FakeFTP)
-    @mock.patch.object(ftp.FTPFeedingService, 'get_feed_parser', mock.Mock())
+    @mock.patch.object(ftp.FTPFeedingService, 'get_feed_parser', FakeFeedParser())
     @mock.patch('builtins.open', mock.mock_open())
     def test_move_ingested(self, ftp_connect):
         """Check that ingested file is moved if "move" is set
@@ -107,7 +115,7 @@ class FTPTestCase(unittest.TestCase):
         mock_ftp.rename.assert_called_once_with('filename.xml', 'dest_move/filename.xml')
 
     @mock.patch.object(ftp, 'ftp_connect', new_callable=FakeFTP)
-    @mock.patch.object(ftp.FTPFeedingService, 'get_feed_parser', mock.Mock())
+    @mock.patch.object(ftp.FTPFeedingService, 'get_feed_parser', FakeFeedParser())
     @mock.patch('builtins.open', mock.mock_open())
     def test_move_ingested_default(self, ftp_connect):
         """Check that ingested file is moved to default path if "move" is empty string
@@ -123,7 +131,7 @@ class FTPTestCase(unittest.TestCase):
         mock_ftp.rename.assert_called_once_with('filename.xml', dest_path)
 
     @mock.patch.object(ftp, 'ftp_connect', new_callable=FakeFTP)
-    @mock.patch.object(ftp.FTPFeedingService, 'get_feed_parser', mock.Mock())
+    @mock.patch.object(ftp.FTPFeedingService, 'get_feed_parser', FakeFeedParser())
     @mock.patch('builtins.open', mock.mock_open())
     def test_move_ingested_no_move(self, ftp_connect):
         """Check that ingested file is not moved if "move" is not set
@@ -138,7 +146,7 @@ class FTPTestCase(unittest.TestCase):
         mock_ftp.rename.assert_not_called()
 
     @mock.patch.object(ftp, 'ftp_connect', new_callable=FakeFTP)
-    @mock.patch.object(ftp.FTPFeedingService, 'get_feed_parser', _exception)
+    @mock.patch.object(ftp.FTPFeedingService, 'get_feed_parser', FailingFakeFeedParser())
     @mock.patch('builtins.open', mock.mock_open())
     def test_move_error(self, ftp_connect):
         """Check that error on ingestion moves item if "move_path_error" is set
@@ -152,7 +160,7 @@ class FTPTestCase(unittest.TestCase):
         mock_ftp.rename.assert_called_once_with('filename.xml', 'error/filename.xml')
 
     @mock.patch.object(ftp, 'ftp_connect', new_callable=FakeFTP)
-    @mock.patch.object(ftp.FTPFeedingService, 'get_feed_parser', _exception)
+    @mock.patch.object(ftp.FTPFeedingService, 'get_feed_parser', FailingFakeFeedParser())
     @mock.patch('builtins.open', mock.mock_open())
     def test_move_error_default(self, ftp_connect):
         """Check that error on ingestion use default path if "move_path_error" is empty string
@@ -170,9 +178,10 @@ class FTPTestCase(unittest.TestCase):
     def test_allowed_suffix_json(self):
         """Check that json files are allowed for ingestion."""
         service = ftp.FTPFeedingService()
-        self.assertFalse(service._is_allowed('foo.jpg'))
-        self.assertTrue(service._is_allowed('foo.xml'))
-        self.assertTrue(service._is_allowed('foo.json'))
-        self.assertTrue(service._is_allowed('foo.JSON'))
-        self.assertFalse(service._is_allowed('foojson'))
-        self.assertFalse(service._is_allowed('foo.json.tar.gz'))
+        allowed = ftp.FTPFeedingService.ALLOWED_EXT_DEFAULT
+        self.assertFalse(service._is_allowed('foo.jpg', allowed))
+        self.assertTrue(service._is_allowed('foo.xml', allowed))
+        self.assertTrue(service._is_allowed('foo.json', allowed))
+        self.assertTrue(service._is_allowed('foo.JSON', allowed))
+        self.assertFalse(service._is_allowed('foojson', allowed))
+        self.assertFalse(service._is_allowed('foo.json.tar.gz', allowed))
