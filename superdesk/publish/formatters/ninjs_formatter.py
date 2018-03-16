@@ -418,7 +418,7 @@ class NINJSFormatter(Formatter):
         return authors
 
     def _render_annotation(self, props):
-        return DOM.create_element('span', {'annotation-id': props['id']}, props['children'])
+        return props['children']
 
     def _render_media(self, props):
         media_props = props['media']
