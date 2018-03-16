@@ -553,6 +553,11 @@ metadata_schema = {
         'type': 'string',
         'mapping': not_analyzed
     },
+
+    "translated_from": {
+        'type': 'string',
+        'mapping': not_analyzed,
+    },
 }
 
 metadata_schema['lock_user']['versioned'] = False

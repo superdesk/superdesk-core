@@ -2321,3 +2321,28 @@ def we_assert_that_associated_item_for_subscriber(context, item_id, embedded_id,
 @then('file exists "{path}"')
 def then_file_exists(context, path):
     assert os.path.isfile(path), '{} is not a file'.format(path)
+
+
+@then('we get package items')
+def then_we_get_package_item(context):
+    package = json.loads(context.response.get_data())
+    items = []
+    for group in package.get('groups', []):
+        for ref in group.get('refs', []):
+            if ref.get('residRef'):
+                url = get_prefixed_url(context.app, '%s/%s' % (ref.get('location', 'archive'), ref['residRef']))
+                response = context.client.get(url, headers=context.headers)
+                assert response.status_code == 200, response.status_code
+                items.append(json.loads(response.get_data()))
+    context_items = json.loads(context.text)
+    test_items_contain_items(items, context_items)
+
+
+def test_items_contain_items(items, context_items):
+    for context_item in context_items:
+        for item in items:
+            if context_item.items() <= item.items():
+                break
+        else:
+            assert False, 'missing item = %s' % json.dumps(context_item, indent=2)
+    return True

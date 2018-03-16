@@ -9,15 +9,23 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
+import superdesk
+
 from apps.archive.archive import SOURCE as ARCHIVE
 from apps.content import push_content_notification
+from apps.auth import get_user_id
 from superdesk import get_resource_service
-import superdesk
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE
+from superdesk.metadata.packages import RESIDREF
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.workflow import is_workflow_state_transition_valid
+from superdesk.utc import utcnow
+from apps.packages import PackageService
+
+
+package_service = PackageService()
 
 
 class TranslateResource(Resource):
@@ -32,7 +40,8 @@ class TranslateResource(Resource):
         'language': {
             'type': 'string',
             'required': True
-        }
+        },
+        'desk': Resource.rel('desks', nullable=True),
     }
 
     url = 'archive/translate'
@@ -44,31 +53,55 @@ class TranslateResource(Resource):
 
 
 class TranslateService(BaseService):
+
+    def _translate_item(self, guid, language, task=None, service=None, **kwargs):
+        if not service:
+            service = ARCHIVE
+        archive_service = get_resource_service(service)
+        macros_service = get_resource_service('macros')
+
+        item = archive_service.find_one(req=None, _id=guid)
+        if not item:
+            raise SuperdeskApiError.notFoundError('Fail to found item with guid: %s' % guid)
+
+        if not is_workflow_state_transition_valid('translate', item[ITEM_STATE]):
+            raise InvalidStateTransitionError()
+
+        if item.get('language') == language:
+            return guid
+
+        if package_service.is_package(item):
+            refs = package_service.get_item_refs(item)
+            for ref in refs:
+                ref[RESIDREF] = self._translate_item(ref[RESIDREF], language,
+                                                     service=ref.get('location'),
+                                                     task=task)
+
+        macros_service.execute_translation_macro(
+            item, item.get('language', None), language)
+
+        item['language'] = language
+        item['translated_from'] = guid
+        item['versioncreated'] = utcnow()
+        if task:
+            item['task'] = task
+
+        _id = archive_service.duplicate_item(item, operation='translate')
+
+        if kwargs.get('notify', True):
+            push_content_notification([item])
+
+        return _id
+
     def create(self, docs, **kwargs):
-        guid_of_translated_items = []
-
+        ids = []
         for doc in docs:
-            guid_of_item_to_be_translated = doc.get('guid')
-            archive_service = get_resource_service(ARCHIVE)
-
-            archived_doc = archive_service.find_one(req=None, _id=guid_of_item_to_be_translated)
-            if not archived_doc:
-                raise SuperdeskApiError.notFoundError('Fail to found item with guid: %s' %
-                                                      guid_of_item_to_be_translated)
-
-            if not is_workflow_state_transition_valid('translate', archived_doc[ITEM_STATE]):
-                raise InvalidStateTransitionError()
-
-            get_resource_service('macros').execute_translation_macro(
-                archived_doc, archived_doc.get('language', None), doc.get('language'))
-            archived_doc['language'] = doc.get('language')
-            new_guid = archive_service.duplicate_content(archived_doc)
-            guid_of_translated_items.append(new_guid)
-
-            if kwargs.get('notify', True):
-                push_content_notification([archived_doc])
-
-        return guid_of_translated_items
+            task = None
+            if doc.get('desk'):
+                desk = get_resource_service('desks').find_one(req=None, _id=doc['desk']) or {}
+                task = dict(desk=desk.get('_id'), stage=desk.get('working_stage'), user=get_user_id())
+            ids.append(self._translate_item(doc['guid'], doc['language'], task, **kwargs))
+        return ids
 
 
 superdesk.workflow_action(

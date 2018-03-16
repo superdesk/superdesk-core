@@ -433,9 +433,9 @@ class ArchiveService(BaseService):
                             item, _item_id, _endpoint = self.packageService.get_associated_item(assoc)
                             assoc[RESIDREF] = assoc['guid'] = self.duplicate_content(item)
 
-        return self._duplicate_item(original_doc, state, extra_fields)
+        return self.duplicate_item(original_doc, state, extra_fields)
 
-    def _duplicate_item(self, original_doc, state=None, extra_fields=None):
+    def duplicate_item(self, original_doc, state=None, extra_fields=None, operation=None):
         """Duplicates an item.
 
         Duplicates the 'original_doc' including it's version history. If the article being duplicated is contained
@@ -446,7 +446,7 @@ class ArchiveService(BaseService):
 
         new_doc = original_doc.copy()
         self._remove_after_copy(new_doc, extra_fields)
-        on_duplicate_item(new_doc, original_doc)
+        on_duplicate_item(new_doc, original_doc, operation)
         resolve_document_version(new_doc, SOURCE, 'PATCH', new_doc)
 
         if original_doc.get('task', {}).get('desk') is not None and new_doc.get(ITEM_STATE) != CONTENT_STATE.SUBMITTED:
@@ -459,8 +459,8 @@ class ArchiveService(BaseService):
         get_model(ItemModel).create([new_doc])
         self._duplicate_versions(original_doc['_id'], new_doc)
         self._duplicate_history(original_doc['_id'], new_doc)
-        app.on_archive_item_updated({'duplicate_id': new_doc['guid']}, original_doc, ITEM_DUPLICATE)
-        app.on_archive_item_updated({'duplicate_id': original_doc['_id']}, new_doc, ITEM_DUPLICATED_FROM)
+        app.on_archive_item_updated({'duplicate_id': new_doc['guid']}, original_doc, operation or ITEM_DUPLICATE)
+        app.on_archive_item_updated({'duplicate_id': original_doc['_id']}, new_doc, operation or ITEM_DUPLICATED_FROM)
 
         return new_doc['guid']
 

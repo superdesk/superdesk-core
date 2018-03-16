@@ -455,3 +455,10 @@ class PackageService():
         """
 
         return [package for package in item.get(LINKED_IN_PACKAGES, [])]
+
+    def is_package(self, item):
+        """Test if given item is a package
+
+        :param dict item: item to check
+        """
+        return item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE
