@@ -395,7 +395,15 @@ metadata_schema = {
     # aka Locator as per NewML Specification
     'place': {
         'type': 'list',
-        'nullable': True
+        'nullable': True,
+        'mapping': {
+            'type': 'object',
+            'properties': {
+                'qcode': not_analyzed,
+                'code': not_analyzed,  # content api
+                'name': not_analyzed
+            },
+        },
     },
 
     # Not Categorized
