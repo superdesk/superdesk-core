@@ -41,7 +41,6 @@ install_requires = [
     'mongolock>=1.3.4,<1.4',
     'PyYAML>=3.11,<3.13',
     'lxml>=3.8,<4.2',
-    'draftjs_exporter[lxml]>=1.1.0,<2.0',
     'python-twitter==3.3',
 ]
 
