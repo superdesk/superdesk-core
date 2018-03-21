@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.14.2] 2018-03-21
+
+### Fixed
+
+- Fix publication with ninjs (removed annotations)
+
 ## [1.14.1] 2018-03-08
 
 ### Fixed
