@@ -726,8 +726,7 @@ class NinjsFormatterTest(TestCase):
                             'body': '<p>test annotation</p>'}, {'id': 1,
                             'type': 'Remark', 'body': '<p>test remark</p>'}],
             'headline': 'test',
-            'body_html': '<p>bla <span annotation-id="0">bla</span></p><p>1 2 3</p>'
-                         '<p><span annotation-id="1">ceci est un</span> test</p>',
+            'body_html': '<p>bla bla</p><p>1 2 3</p><p>ceci est un test</p>',
             'slugline': 'test',
             'priority': 5,
             'description_html': '<p>test</p>',
@@ -800,9 +799,9 @@ class NinjsFormatterTest(TestCase):
             'guid': 'test_annotation2',
             'version': '1',
             'type': 'text',
-            'body_html': '<p>paragraph1 - line 1\n<span annotation-id="0">line 2\nline 3\n\nparagraph2'
-                         ' - line 1\nline 2</span>\nline 3\n\nparagraph3 - line 1\n<span annotation-id'
-                         '="1">line</span> 2\nline 3</p>',
+            'body_html': '<p>paragraph1 - line 1\nline 2\nline 3\n\nparagraph2'
+                         ' - line 1\nline 2\nline 3\n\nparagraph3 - line 1\n'
+                         'line 2\nline 3</p>',
             'annotations': [{'id': 0,
                              'type': 'Regular',
                              'body': '<p>this annotation use <strong>bold</strong> and must start on'
