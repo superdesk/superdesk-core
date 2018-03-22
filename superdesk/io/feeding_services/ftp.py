@@ -45,7 +45,7 @@ class FTPFeedingService(FeedingService):
               IngestFtpError.ftpError().get_error_description()]
 
     DATE_FORMAT = '%Y%m%d%H%M%S'
-    ALLOWED_EXT = {'.json', '.xml'}
+    ALLOWED_EXT_DEFAULT = {'.json', '.xml'}
 
     def config_from_url(self, url):
         """
@@ -109,14 +109,19 @@ class FTPFeedingService(FeedingService):
         finally:
             ftp.cwd(base_path)
 
-    def _is_allowed(self, filename):
+    def _is_allowed(self, filename, allowed_ext):
         """Test if given file is allowed to be ingested."""
         _, ext = os.path.splitext(filename)
-        return ext.lower() in self.ALLOWED_EXT
+        return ext.lower() in allowed_ext
 
     def _update(self, provider, update):
         config = provider.get('config', {})
         last_updated = provider.get('last_updated')
+        registered_parser = self.get_feed_parser(provider)
+        try:
+            allowed_ext = registered_parser.ALLOWED_EXT
+        except AttributeError:
+            allowed_ext = self.ALLOWED_EXT_DEFAULT
         crt_last_updated = None
         if config.get('move', False):
             do_move = True
@@ -148,13 +153,13 @@ class FTPFeedingService(FeedingService):
                     if facts.get('type', '') != 'file':
                         continue
                     try:
-                        if not self._is_allowed(filename):
+                        if not self._is_allowed(filename, allowed_ext):
                             logger.info('ignoring file {filename} because of file extension'.format(filename=filename))
                             continue
 
                         if last_updated:
                             item_last_updated = datetime.strptime(facts['modify'], self.DATE_FORMAT).replace(tzinfo=utc)
-                            if item_last_updated < last_updated:
+                            if item_last_updated <= last_updated:
                                 continue
                             elif not crt_last_updated or item_last_updated > crt_last_updated:
                                 crt_last_updated = item_last_updated
@@ -168,7 +173,6 @@ class FTPFeedingService(FeedingService):
                                 raise Exception('Exception retrieving file from FTP server ({filename})'.format(
                                                 filename=filename))
 
-                        registered_parser = self.get_feed_parser(provider)
                         if isinstance(registered_parser, XMLFeedParser):
                             xml = etree.parse(local_file_path).getroot()
                             parser = self.get_feed_parser(provider, xml)
