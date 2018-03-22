@@ -37,8 +37,10 @@ class APFeedingService(FeedingService):
             user = config['username']
             password = config['password']
             id_list = config['idList']
+            if not user.strip() or not password.strip() or not id_list.strip():
+                raise KeyError
         except KeyError as e:
-            SuperdeskIngestError.notConfiguredError(Exception('username, password and idList are needed'))
+            raise SuperdeskIngestError.notConfiguredError(Exception('username, password and idList are needed'))
 
         # we remove spaces and empty values from id_list to do a clean list
         id_list = ','.join([id_.strip() for id_ in id_list.split(',') if id_.strip()])
