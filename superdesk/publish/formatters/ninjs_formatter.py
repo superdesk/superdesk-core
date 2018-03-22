@@ -42,11 +42,6 @@ from superdesk.utils import json_serialize_datetime_objectId
 from superdesk.media.renditions import get_renditions_spec
 from apps.archive.common import get_utc_schedule
 from superdesk import text_utils
-from draftjs_exporter.html import HTML
-from draftjs_exporter.dom import DOM
-from draftjs_exporter.constants import ENTITY_TYPES
-from superdesk import etree as sd_etree
-from functools import partial
 
 logger = logging.getLogger(__name__)
 
@@ -131,9 +126,6 @@ class NINJSFormatter(Formatter):
             'version': str(article.get(config.VERSION, 1)),
             'type': self._get_type(article)
         }
-
-        if article.get('editor_state'):
-            self._parse_editor_state(article, ninjs)
 
         if article.get('byline'):
             ninjs['byline'] = article['byline']
@@ -416,126 +408,6 @@ class NINJSFormatter(Formatter):
 
             authors.append(author)
         return authors
-
-    def _render_annotation(self, props):
-        return props['children']
-
-    def _render_media(self, props):
-        media_props = props['media']
-        if media_props.get('type', 'picture') == 'picture':
-            elt = DOM.create_element('img', {'src': media_props['renditions']['original']['href'],
-                                             'alt': media_props.get('alt_text')}, props['children'])
-        else:
-            elt = DOM.create_element('video', {'control': 'control',
-                                               'src': media_props['renditions']['original']['href'],
-                                               'alt': media_props.get('alt_text'),
-                                               'width': '100%',
-                                               'height': '100%'}, props['children'])
-        desc = DOM.create_element('span', {'class': 'media-block__description'}, media_props.get('description_text'))
-        return DOM.create_element('div', {'class': 'media-block'}, [elt, desc])
-
-    def _render_link(self, props):
-        return DOM.create_element('a', {'href': props.get('link', {}).get('href', '')}, props['children'])
-
-    def _render_embed(self, embeds, props):
-        try:
-            return embeds.pop(0)
-        except IndexError:
-            return ""
-
-    def _render_table(self, props):
-        # This code just fix the crash when the text contains tables. It will be fixed by processing
-        # of annotation on frontend
-        td = DOM.create_element('td', {}, 'Table not supported')
-        tr = DOM.create_element('tr', {}, td)
-        return DOM.create_element('table', {}, tr)
-
-    def _parse_editor_state(self, article, ninjs):
-        """Parse editor_state (DraftJs internals) to retrieve annotations
-
-        body_html will be rewritten with HTML generated from DraftJS representation
-        and annotation will be included in <span> elements
-        :param article: item to modify, must contain "editor_state" data
-        :param ninjs: ninjs item which will be formatted
-        """
-        blocks = article['editor_state'][0]['blocks']
-
-        blocks_map = {}
-        ann_idx = 0
-        data = {}
-        body_html_elt = sd_etree.parse_html(article['body_html'], 'html')
-        embeds = body_html_elt.xpath('//div[@class="embed-block"]')
-        config = {
-            'engine': 'lxml',
-            'entity_decorators': {
-                ENTITY_TYPES.LINK: self._render_link,
-                ENTITY_TYPES.HORIZONTAL_RULE: lambda props: DOM.create_element('hr'),
-                ENTITY_TYPES.EMBED: partial(self._render_embed, embeds),
-                MEDIA: self._render_media,
-                ANNOTATION: self._render_annotation,
-                TABLE: self._render_table,
-            }
-        }
-
-        renderer = HTML(config)
-
-        for block in blocks:
-            blocks_map[block['key']] = block
-            data.update(block['data'])
-
-        # we sort data keys to have consistent annotations ids
-        for key in sorted(data):
-            data_block = data[key]
-            if data_block['type'] == ANNOTATION:
-                ninjs.setdefault('annotations', []).append(
-                    {'id': ann_idx,
-                     'type': data_block['annotationType'],
-                     'body': renderer.render(json.loads(data_block['msg']))})
-                entity_key = '_annotation_{}'.format(ann_idx)
-                article['editor_state'][0]['entityMap'][entity_key] = {
-                    'type': ANNOTATION,
-                    'data': {'id': ann_idx}}
-                ann_idx += 1
-                selection = json.loads(key)
-                if selection['isBackward']:
-                    first, second = 'focus', 'anchor'
-                else:
-                    first, second = 'anchor', 'focus'
-                first_key = selection[first + 'Key']
-                second_key = selection[second + 'Key']
-                first_offset = selection[first + 'Offset']
-                second_offset = selection[second + 'Offset']
-                # we want to style annotation with <span>, so we put them as entities
-                if first_key == second_key:
-                    # selection is done in a single block
-                    annotated_block = blocks_map[first_key]
-                    annotated_block.setdefault('entityRanges', []).append(
-                        {'key': entity_key,
-                         'offset': first_offset,
-                         'length': second_offset - first_offset})
-                else:
-                    # selection is done on multiple blocks, we have to select them
-                    started = False
-                    for block in blocks:
-                        if block['key'] == first_key:
-                            started = True
-                            block.setdefault('entityRanges', []).append(
-                                {'key': entity_key,
-                                 'offset': first_offset,
-                                 'length': len(block['text']) - first_offset})
-                        elif started:
-                            inline = {'key': entity_key, 'offset': 0}
-                            block.setdefault('entityRanges', []).append(inline)
-                            if block['key'] == second_key:
-                                # last block, we end the annotation here
-                                inline['length'] = second_offset
-                                break
-                            else:
-                                # intermediate block, we annotate it whole
-                                inline['length'] = len(block['text'])
-        # HTML rendering
-        # now we have annotation ready, we can render HTML
-        article['body_html'] = renderer.render(article['editor_state'][0])
 
     def export(self, item):
         if self.can_format(self.format_type, item):
