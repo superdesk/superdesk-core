@@ -7,10 +7,11 @@
 # Author  : tomas
 # Creation: 2018-03-21 09:28
 
-import os
+import superdesk
 import subprocess
 import json
 from superdesk.commands.data_updates import DataUpdate
+from os.path import realpath, join, dirname
 
 
 def get_updated_editor_state(editor_state):
@@ -19,9 +20,7 @@ def get_updated_editor_state(editor_state):
         p2 = subprocess.Popen(
             [
                 "node",
-                os.path.abspath(
-                    '../env/src/superdesk-core/superdesk/data_updates/00007_20180321-092824_archive.dist.js'
-                )
+                join(dirname(realpath(superdesk.__file__)), "data_updates", "00007_20180321-092824_archive.dist.js")
             ],
             stdin=p1.stdout, stdout=subprocess.PIPE
         )
@@ -40,6 +39,7 @@ class DataUpdate(DataUpdate):
     resource = 'archive'
 
     def forwards(self, mongodb_collection, mongodb_database):
+        return
 
         for item in mongodb_collection.find({'editor_state': {'$exists': True}}):
 
