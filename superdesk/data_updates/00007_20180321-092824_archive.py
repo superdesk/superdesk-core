@@ -12,17 +12,28 @@ import subprocess
 import json
 from superdesk.commands.data_updates import DataUpdate
 
+
 def get_updated_editor_state(editor_state):
     try:
         p1 = subprocess.Popen(["echo", json.dumps(editor_state)], stdout=subprocess.PIPE)
-        p2 = subprocess.Popen(["node", os.path.abspath('../env/src/superdesk-core/superdesk/data_updates/00007_20180321-092824_archive.dist.js')], stdin=p1.stdout, stdout=subprocess.PIPE)
+        p2 = subprocess.Popen(
+            [
+                "node",
+                os.path.abspath(
+                    '../env/src/superdesk-core/superdesk/data_updates/00007_20180321-092824_archive.dist.js'
+                )
+            ],
+            stdin=p1.stdout, stdout=subprocess.PIPE
+        )
+
         p1.stdout.close()  # Allow p1 to receive a SIGPIPE if p2 exits.
-        output,err = p2.communicate()
+        output, err = p2.communicate()
 
         return json.loads(output.decode("utf-8"))
 
-    except Exception as exception:
+    except Exception:
         return editor_state
+
 
 class DataUpdate(DataUpdate):
 
@@ -32,7 +43,7 @@ class DataUpdate(DataUpdate):
 
         for item in mongodb_collection.find({'editor_state': {'$exists': True}}):
 
-        	print(mongodb_collection.update({'_id': item['_id']}, {
+            print(mongodb_collection.update({'_id': item['_id']}, {
                 '$set': {
                     'editor_state': get_updated_editor_state(item['editor_state'])
                 }
