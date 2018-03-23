@@ -553,6 +553,10 @@ class ArchiveService(BaseService):
             get_resource_service('archive_history').post(new_history_items)
 
     def update(self, id, updates, original):
+        if updates.get(ASSOCIATIONS):
+            for association in updates[ASSOCIATIONS].values():
+                remove_unwanted(association)
+
         # this needs to here as resolve_nested_documents (in eve) will add the schedule_settings
         if PUBLISH_SCHEDULE in updates and original[ITEM_STATE] == CONTENT_STATE.SCHEDULED:
             self.deschedule_item(updates, original)  # this is an deschedule action

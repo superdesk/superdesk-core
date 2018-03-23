@@ -39,7 +39,7 @@ from eve.versioning import resolve_document_version
 
 from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
 from apps.archive.common import get_user, insert_into_versions, item_operations, \
-    FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM
+    FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM, remove_unwanted
 from apps.archive.common import validate_schedule, ITEM_OPERATION, update_schedule_settings, \
     convert_task_attributes_to_objectId, \
     get_expiry, get_utc_schedule, get_dateline_city, get_expiry_date
@@ -564,6 +564,7 @@ class BasePublishService(BaseService):
                     original_item = super().find_one(req=None, _id=item[config.ID_FIELD]) or {}
 
                 update_item_data(item, original_item, keys)
+                remove_unwanted(item)
 
                 if publish_service and publish and item['type'] in MEDIA_TYPES:
                     if item.get('task', {}).get('stage', None):

@@ -711,3 +711,19 @@ Feature: News Items Archive
          """
          {"guid": "123", "language": "ro"}
          """
+
+    @auth
+    Scenario: Remove _type field from associated items
+    	When we post to "/archive"
+    	"""
+    	[{"guid": "123", "type": "text", "headline": "test", "state": "in_progress",
+          "associations": {"editor_0": {
+        	"guid": "234", "type": "picture", "slugline": "s234", "state": "in_progress",
+        	"headline": "some headline", "_type": "archive"
+        }}}]
+    	"""
+        Then we get OK response
+        Then we get existing resource
+        """
+        {"guid": "123", "associations": {"_type": "__no_value__"}}
+        """
