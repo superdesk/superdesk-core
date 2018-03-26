@@ -85,6 +85,8 @@ class TwitterFeedingService(FeedingService):
                 guid = generate_guid(type=GUID_TAG, id=guid_hash)
                 headline = "%s: %s" % (status.user.screen_name, status.text)
                 item = {}
+                item['source'] = 'twitter'
+                item['ednote'] = "https://twitter.com/%s/status/%s" % (status.user.screen_name, status.id)
                 item['headline'] = headline
                 item['type'] = 'text'
                 item['guid'] = guid
