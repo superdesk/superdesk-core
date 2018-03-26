@@ -2783,7 +2783,7 @@
             "name" : {},
             "qcode" : {}
         },
-        "display_name" : "Contact States",
-        "helper_text": "The administrative state for the address of a contact"
+        "display_name" : "Contact Region",
+        "helper_text": "The administrative state or region for the address of a contact"
     }
 ]
