@@ -27,7 +27,7 @@ def get_updated_editor_state(editor_state):
 
 class DataUpdate(DataUpdate):
 
-    resource = 'archive' # will use multiple resources, keeping this here so validation passes
+    resource = 'archive'  # will use multiple resources, keeping this here so validation passes
 
     def forwards(self, mongodb_collection, mongodb_database):
         for resource in ['archive', 'archive_autosave', 'published']:
