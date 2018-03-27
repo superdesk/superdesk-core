@@ -317,3 +317,6 @@ class AmazonMediaStorage(MediaStorage):
             next_marker = objects[-1]['Key']
 
         return files
+
+    def getFilename(self, media_id):
+        return media_id

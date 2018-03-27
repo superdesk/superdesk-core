@@ -13,6 +13,7 @@ import json
 import mimetypes
 import bson
 import gridfs
+import os.path
 from eve.io.mongo.media import GridFSMediaStorage
 
 
@@ -144,3 +145,7 @@ class SuperdeskGridFSMediaStorage(GridFSMediaStorage):
             except AttributeError as e:
                 logging.warning('Failed to get file attributes. {}'.format(e))
         return files
+
+    def getFilename(self, media_id):
+        media, _ = os.path.splitext(media_id)
+        return media
