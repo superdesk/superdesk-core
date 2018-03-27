@@ -63,3 +63,9 @@ class WordCountTestCase(unittest.TestCase):
         and <strong>compound word (two-done)</strong> and <em>abbreviation (Washington D.C.)</p>
         <p>it should be the same word count as in client and backend</p>"""
         self.assertEqual(32, text_utils.get_word_count(text))
+
+    def test_decode(self):
+        """Test decoding with encoding detection"""
+        bytes_str = "téstôù".encode('latin-1')
+        decoded = text_utils.decode(bytes_str)
+        self.assertEqual(decoded, "téstôù")

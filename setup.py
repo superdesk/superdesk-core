@@ -42,6 +42,7 @@ install_requires = [
     'PyYAML>=3.11,<3.13',
     'lxml>=3.8,<4.2',
     'python-twitter==3.3',
+    'chardet<4.0'
 ]
 
 package_data = {
