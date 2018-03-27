@@ -107,6 +107,9 @@ class NINJSFeedParser(FeedParser):
         if ninjs.get('place'):
             item['place'] = self._format_qcodes(ninjs['place'])
 
+        if ninjs.get('authors'):
+            item['authors'] = self._parse_authors(ninjs['authors'])
+
         return item
 
     def _format_qcodes(self, items):
@@ -117,6 +120,23 @@ class NINJSFeedParser(FeedParser):
             return datetime.datetime.strptime(string, '%Y-%m-%dT%H:%M:%S+0000')
         except ValueError:
             return datetime.datetime.strptime(string, '%Y:%m:%dT%H:%M:%SZ').replace(tzinfo=utc)
+
+    def _parse_authors(self, authors):
+        return [self._parse_author(author) for author in authors]
+
+    def _parse_author(self, author):
+        parsed = {
+            'name': author['name'],
+            'role': author.get('role', ''),
+        }
+
+        if author.get('avatar_url'):
+            parsed['avatar_url'] = author['avatar_url']
+
+        if author.get('biography'):
+            parsed['biography'] = author['biography']
+
+        return parsed
 
 
 register_feed_parser(NINJSFeedParser.NAME, NINJSFeedParser())

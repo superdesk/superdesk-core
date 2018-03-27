@@ -392,14 +392,16 @@ class NINJSFormatter(Formatter):
                     logger.warn("unknown user: {user_id}".format(user_id=user_id))
                     user = {}
 
+            avatar_url = user.get('picture_url', author.get('avatar_url'))
+
             author = {
                 "name": user.get('display_name', author.get('name', '')),
-                "role": author['role'],
-                "biography": user.get('biography', ''),
+                "role": author.get('role', ''),
+                "biography": user.get('biography', author.get('biography', '')),
             }
 
-            if user.get('picture_url'):
-                author['avatar_url'] = user['picture_url']
+            if avatar_url:
+                author['avatar_url'] = avatar_url
 
             job_title_qcode = user.get('job_title')
             if job_title_qcode is not None:

@@ -43,5 +43,14 @@
         }
     ],
     "pubstatus": "usable",
-    "located": "Milton Keynes"
+    "located": "Milton Keynes",
+    "authors": [
+        {
+            "user": "foo",
+            "name": "John",
+            "role": "writer",
+            "avatar_url": "http://example.com",
+            "biography": "bio"
+        }
+    ]
 }

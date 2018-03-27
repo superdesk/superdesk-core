@@ -33,6 +33,13 @@ class SimpleTestCase(NINJSTestCase):
     def test_headline(self):
         self.assertEqual(self.items[0].get('headline'), "headline")
         self.assertEqual(self.items[0].get('description_text'), "abstract")
+        self.assertEqual(1, len(self.items[0].get('authors')), 'authors')
+        self.assertEqual(self.items[0]['authors'][0], {
+            'name': 'John',
+            'role': 'writer',
+            'avatar_url': 'http://example.com',
+            'biography': 'bio',
+        })
 
 
 class AssociatedTestCase(NINJSTestCase):

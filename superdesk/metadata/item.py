@@ -295,6 +295,7 @@ metadata_schema = {
         'nullable': True,
         'mapping': {
             'type': 'object',
+            'dynamic': False,
             'properties': {
                 'parent': not_analyzed,
                 'name': not_analyzed,
