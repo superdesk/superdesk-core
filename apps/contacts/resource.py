@@ -63,7 +63,7 @@ class ContactsResource(Resource):
                     # usage may provide information as to the usage of the number e.g. Business hours only
                     'usage': {'type': 'string'},
                     # If public is true then the number can be made public, if false it is only visible in the system
-                    'public': {'type': 'boolean', 'default': True}
+                    'public': {'type': 'boolean'}
                 }
             }
         },
@@ -75,7 +75,7 @@ class ContactsResource(Resource):
                     'number': {'type': 'string'},
                     'usage': {'type': 'string'},
                     # If public is true then the number can be made public, if false it is only visible in the system
-                    'public': {'type': 'boolean', 'default': True}
+                    'public': {'type': 'boolean'}
                 }
             }
         },
