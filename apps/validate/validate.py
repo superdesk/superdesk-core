@@ -161,8 +161,7 @@ class ValidateService(superdesk.Service):
         """
         extra_field_types = {'text': 'string', 'embed': 'dict', 'date': 'date'}
         profile = doc['validate'].get('profile')
-        if profile and doc['act'] != 'auto_publish':
-            # not use profile for auto publishing via routing.
+        if profile and (app.config['AUTO_PUBLISH_CONTENT_PROFILE'] or doc['act'] != 'auto_publish'):
             content_type = superdesk.get_resource_service('content_types').find_one(req=None, _id=profile)
             if content_type:
                 extra_fields = superdesk.get_resource_service('vocabularies').get_extra_fields()
