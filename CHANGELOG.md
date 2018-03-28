@@ -1,5 +1,33 @@
 # Superdesk Server Changelog
 
+## [1.15] 2018-03-28
+
+### Fixed
+
+- Use file extension when getting binary from amazon media storage.
+- Parse authors when ingesting ninjs.
+- Fix place elastic mapping to be consistent across resources.
+- Fix ftp not re-ingesting same file.
+- Avoid ssl verification on sentry.
+- Remove place field from Ritzau parser.
+- Fix ingest item expiry handling.
+- Add language to elastic aggregations when `apps.languages` is enabled.
+- Fix exception catching in ingest when content expiry is 0.
+- Remove content expiry from ingest settings if its <0.
+
+### Added
+
+- Add source and ednote with tweet url to twitter ingest.
+- Add image feed ingest.
+- Add AP ingest service.
+- Add `--dir` param to `app:prepopulate` command.
+
+### Changed
+
+- Use content profile for validation on auto-publishing.
+- Remove annotations processing from ninjs formatter.
+- Publish media embedded in item on item publishing.
+
 ## [1.14] 2018-03-05
 
 ### Fixed
