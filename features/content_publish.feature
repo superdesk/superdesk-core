@@ -2583,3 +2583,54 @@ Feature: Content Publishing
       }
       """
       And we get null stage
+
+    @auth
+    Scenario: Publish with success when associated item contains _type field
+      Given the "validators"
+      """
+        [{"_id": "publish_embedded", "type": "picture", "act": "publish", "embedded": true,
+          "schema": {"headline": {"type": "string","required": true}}},
+         {"_id": "publish_text", "type": "text", "act": "publish", "schema": {}}]
+      """
+      And "desks"
+      """
+      [{"name": "Sports"}]
+      """
+      And "archive"
+      """
+      [{"_id": "234", "guid": "234", "type": "picture", "slugline": "s234", "state": "in_progress",
+        "headline": "some headline", "_current_version": 1},
+       {"guid": "123", "type": "text", "headline": "test", "_current_version": 1, "state": "in_progress",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "subject":[{"qcode": "17004000", "name": "Statistics"}], "body_html": "Test Document body",
+        "associations": {"editor_0": {
+        	"_id": "234", "guid": "234", "type": "picture", "slugline": "s234", "state": "in_progress",
+        	"headline": "some headline", "_type": "archive", "_current_version": 1
+        }}}]
+      """
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+      }
+      """
+      And we post to "/subscribers" with success
+      """
+      {
+        "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
+      And we publish "#archive._id#" with "publish" type and "published" state
+      Then we get OK response
+      And we get existing resource
+      """
+      {
+        "guid": "123",
+        "state": "published",
+        "associations": {
+        	"editor_0": {"state": "published"}
+        }
+      }
+      """
