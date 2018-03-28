@@ -995,6 +995,10 @@ Feature: Auto Routing
 
     @auth @provider @vocabulary
     Scenario: Content is ingested and auto published not using content profile
+        Given config update
+        """
+        {"AUTO_PUBLISH_CONTENT_PROFILE": false}
+        """
         Given empty "desks"
         Given the "validators"
         """
@@ -1109,3 +1113,74 @@ Feature: Auto Routing
          {"_issues": {"validator exception": "[['HEADLINE is too long']]"}, "_status": "ERR"}
         """
 
+    @auth @provider @vocabulary
+    Scenario: Content is fetched and published using desk profile
+        Given config update
+        """
+        {"AUTO_PUBLISH_CONTENT_PROFILE": true}
+        """
+        Given "validators"
+        """
+        [
+          {
+            "_id": "auto_publish_text",
+            "act": "auto_publish",
+            "type": "text",
+            "schema": {
+                "headline": {
+                    "type": "string",
+                    "required": true,
+                    "nullable": false,
+                    "empty": false,
+                    "minlength": 10,
+                    "maxlength": 42
+                }
+            }
+          }
+        ]
+        """
+        Given "content_types"
+        """
+        [
+          {"_id": "story", "schema": {"headline": {}, "body_html": {}}}
+        ]
+        """
+        When we post to "/desks"
+        """
+          {
+            "name": "Finance Desk", "members": [{"user": "#CONTEXT_USER_ID#"}],
+            "default_content_profile": "story"
+          }
+        """
+        Then we get response code 201
+        When we post to "/routing_schemes"
+        """
+        [
+          {
+            "name": "publish",
+            "rules": [
+              {
+                "name": "publish",
+                "actions": {
+                  "publish": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}],
+                  "exit": false
+                }
+              }
+            ]
+          }
+        ]
+        """
+        Then we get response code 201
+        When we fetch from "AAP" ingest "aap-finance-lite.xml" using routing_scheme
+        """
+        #routing_schemes._id#
+        """
+        And we get "/published"
+        Then we get list with 1 items
+        """
+        {
+          "_items": [{
+            "profile": "story"
+          }]
+        }
+        """
