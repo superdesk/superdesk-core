@@ -11,6 +11,7 @@
 """Utilities for extractid metadata from image files."""
 
 import io
+from superdesk.text_utils import decode
 from PIL import Image, ExifTags
 from PIL import IptcImagePlugin
 from flask import json
@@ -112,14 +113,8 @@ def get_meta_iptc(file_stream):
         except KeyError:
             continue
         if isinstance(value, list):
-            try:
-                value = [v.decode('utf-8') for v in value]
-            except UnicodeDecodeError:
-                pass
+            value = [decode(v) for v in value]
         elif isinstance(value, bytes):
-            try:
-                value = value.decode('utf-8')
-            except UnicodeDecodeError:
-                pass
+            value = decode(value)
         metadata[tag] = value
     return metadata

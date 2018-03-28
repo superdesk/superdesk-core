@@ -25,7 +25,6 @@ from datetime import datetime
 import dateutil.parser
 import mimetypes
 import logging
-import imghdr
 import os.path
 
 logger = logging.getLogger(__name__)
@@ -53,11 +52,7 @@ class ImageIPTCFeedParser(FileFeedParser):
     def can_parse(self, image_path):
         if not isinstance(image_path, str):
             return False
-        try:
-            return imghdr.what(image_path) == 'jpeg'
-        except Exception as e:
-            logger.warning("Can't detect file type: {exc}".format(exc=e))
-            return False
+        return mimetypes.guess_type(image_path)[0] == 'image/jpeg'
 
     def parse(self, image_path, provider=None):
         try:

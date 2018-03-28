@@ -15,6 +15,7 @@ from superdesk import etree as sd_etree
 from lxml import html as lxml_html
 from lxml.html import clean
 from flask import current_app as app
+import chardet
 
 
 # This pattern matches http(s) links, numbers (1.000.000 or 1,000,000 or 1 000 000), regulars words,
@@ -105,7 +106,7 @@ def get_reading_time(html, word_count=None, language=None):
     :return int: estimated number of minute to read the text
     """
     if language and language.startswith('ja'):
-        return round(len(re.sub('[\s]', '', get_text(html))) / app.config['JAPANESE_CHARACTERS_PER_MINUTE'])
+        return round(len(re.sub(r'[\s]', '', get_text(html))) / app.config['JAPANESE_CHARACTERS_PER_MINUTE'])
     if not word_count:
         word_count = get_word_count(html)
     reading_time_float = word_count / 250
@@ -141,3 +142,18 @@ def sanitize_html(html):
         return ""
 
     return safe_html
+
+
+def decode(bytes_str):
+    """Decode bytes value
+
+    try to decode using UTF-8, or to detect encoding. Will ignore bad chars as a last resort
+    @return (str): decoded string
+    """
+    try:
+        return bytes_str.decode('utf-8')
+    except UnicodeDecodeError:
+        try:
+            return bytes_str.decode(chardet.detect(bytes_str)['encoding'])
+        except Exception:
+            return bytes_str.decode('utf-8', 'ignore')
