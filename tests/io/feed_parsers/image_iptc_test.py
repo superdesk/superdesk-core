@@ -34,7 +34,7 @@ class ImageIPTCTestCase(BaseImageIPTCTestCase):
         self.assertEqual(item['headline'], 'The Headline (ref2017.1)')
         self.assertEqual(item['byline'], 'Creator1 (ref2017.1)')
         self.assertEqual(item['slugline'], 'The Title (ref2017.1)')
-        self.assertEqual(item['abstract'], 'The description aka caption (ref2017.1)',)
+        self.assertEqual(item['description_text'], 'The description aka caption (ref2017.1)',)
         self.assertEqual(item['keywords'], ['Keyword1ref2017.1', 'Keyword2ref2017.1', 'Keyword3ref2017.1'])
         self.assertEqual(item['ednote'], 'An Instruction (ref2017.1)')
         self.assertEqual(item['copyrightnotice'], 'Copyright (Notice) 2017.1 IPTC - www.iptc.org  (ref2017.1)')

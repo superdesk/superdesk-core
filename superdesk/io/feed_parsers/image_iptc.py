@@ -33,7 +33,7 @@ IPTC_MAPPING = {
     TAG.HEADLINE: 'headline',
     TAG.BY_LINE: 'byline',
     TAG.OBJECT_NAME: 'slugline',
-    TAG.CAPTION_ABSTRACT: 'abstract',
+    TAG.CAPTION_ABSTRACT: 'description_text',
     TAG.KEYWORDS: 'keywords',
     TAG.SPECIAL_INSTRUCTIONS: 'ednote',
     TAG.COPYRIGHT_NOTICE: 'copyrightnotice',
