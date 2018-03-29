@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.15.1] 2018-03-29
+
+### Changed
+
+- Set `PUBLISH_ASSOCIATED_ITEMS` to `False` by default.
+
 ## [1.15] 2018-03-28
 
 ### Fixed
