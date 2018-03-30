@@ -8,7 +8,7 @@
 # Creation: 2018-03-29 16:18
 
 from superdesk.commands.data_updates import DataUpdate
-    
+
 
 class DataUpdate(DataUpdate):
 
@@ -31,7 +31,6 @@ class DataUpdate(DataUpdate):
                     '$unset': {
                         'editor_state': 1
                     }
-                    
                 }))
 
     def backwards(self, mongodb_collection, mongodb_database):
