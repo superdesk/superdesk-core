@@ -531,6 +531,13 @@ metadata_schema = {
         'mapping': not_enabled,
     },
 
+    'fields_meta': {
+        'type': 'dict',
+        'mapping': {
+            'type': 'object',
+        }
+    },
+
     'annotations': {
         'type': 'list',
         'schema': {
