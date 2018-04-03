@@ -97,7 +97,10 @@ class VocabulariesResource(Resource):
         },
         'field_options': {
             'type': 'dict',
-        }
+        },
+        'init_version': {
+            'type': 'integer',
+        },
     }
 
     soft_delete = True

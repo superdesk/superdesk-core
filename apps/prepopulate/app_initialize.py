@@ -307,7 +307,7 @@ class AppInitializeWithDataCommand(superdesk.Command):
                             for loaded_item in data:
                                 if '_id' in loaded_item and loaded_item['_id'] == item['_id']:
                                     data.remove(loaded_item)
-                                    if force or item.get('_etag', 'init') == 'init':
+                                    if force or item.get('init_version', 0) < loaded_item.get('init_version', 0):
                                         existing_data.append(loaded_item)
 
                     if data:
