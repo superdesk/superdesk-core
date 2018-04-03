@@ -399,10 +399,13 @@ metadata_schema = {
         'nullable': True,
         'mapping': {
             'type': 'object',
+            'dynamic': False,
             'properties': {
                 'qcode': not_analyzed,
                 'code': not_analyzed,  # content api
-                'name': not_analyzed
+                'name': not_analyzed,
+                'country': not_analyzed,
+                'world_region': not_analyzed,
             },
         },
     },
