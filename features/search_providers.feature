@@ -102,3 +102,23 @@ Feature: Search Provider Feature
         """
         {"_items": [{"search_provider": "testsearch", "label": "Foo"}]}
         """
+
+    @auth
+    Scenario: Let search proxy work for ingest/archive/etc
+        When we post to "archive"
+        """
+        {"guid": "foo", "version": 1, "type": "text"}
+        """
+
+        When we get "search_providers_proxy?repo=archive"
+        Then we get list with 1 items
+        """
+        {"_items": [{
+            "_type": "archive",
+            "guid": "foo",
+            "pubstatus": "usable"
+        }]}
+        """
+
+        When we get "search_providers_proxy?repo=published,ingest"
+        Then we get list with 0 items

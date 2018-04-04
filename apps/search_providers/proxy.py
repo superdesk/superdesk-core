@@ -32,11 +32,15 @@ class SearchProviderProxyService(SearchIngestService):
     Old implementations will get forwarded to its service.
     """
 
-    def get_provider(self, provider_id=None):
+    def get_provider(self, provider_id=None, req=None):
         if not provider_id:
-            provider_id = request.args.get('repo')
+            provider_id = req.args.get('repo') if req else request.args.get('repo')
         if not provider_id:
             abort(400)
+        try:
+            bson.ObjectId(provider_id)
+        except bson.errors.InvalidId:
+            return provider_id
         provider = superdesk.get_resource_service('search_providers').find_one(req=None, _id=provider_id)
         if not provider:
             abort(400)
@@ -45,6 +49,8 @@ class SearchProviderProxyService(SearchIngestService):
         return provider
 
     def _get_service(self, provider):
+        if isinstance(provider, str):
+            return provider if ',' not in provider else 'search'
         provider_data = registered_search_providers[provider['search_provider']]
         try:
             return provider_data['endpoint']
@@ -53,7 +59,7 @@ class SearchProviderProxyService(SearchIngestService):
 
     def get(self, req, lookup):
         """Search using provider."""
-        provider = self.get_provider()
+        provider = self.get_provider(req=req)
         service = self._get_service(provider)
         if isinstance(service, str):
             return superdesk.get_resource_service(service).get(req, lookup)
@@ -85,7 +91,7 @@ class SearchProviderProxyService(SearchIngestService):
 
     def fetch_rendition(self, rendition, item):
         """Fetch binary from provider."""
-        provider = self.get_provider(item.get('ingest_provider'))
+        provider = self.get_provider(provider_id=item.get('ingest_provider'))
         service = self._get_service(provider)
         if isinstance(service, str):
             return superdesk.get_resource_service(service).fetch_rendition(self, rendition)
