@@ -58,8 +58,8 @@ class ArchiveRewriteService(Service):
                                                desk_id=doc.get('desk_id'))
 
         if 'body_html' in rewrite:
-            if 'editor_state' in original:
-                rewrite['editor_state'] = original['editor_state']
+            if 'fields_meta' in original:
+                rewrite['fields_meta'] = original['fields_meta']
             update_associations(rewrite)
 
         if update_document:

@@ -101,9 +101,9 @@ def update_image_caption(body, name, caption):
 
 
 def update_associations(doc):
-    if 'editor_state' not in doc or not doc['editor_state']:
+    if not doc.get('fields_meta', {}).get('body_html'):
         return
-    entityMap = doc['editor_state'][0].get('entityMap', {})
+    entityMap = doc['fields_meta']['body_html']['draftjsState'][0].get('entityMap', {})
     associations = doc.get(ASSOCIATIONS, {})
     doc[ASSOCIATIONS] = {k: None if k.startswith(EDITOR_KEY_PREFIX) else v for k, v in associations.items()}
 

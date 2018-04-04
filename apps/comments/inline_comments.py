@@ -8,7 +8,7 @@ from .user_mentions import notify_mentioned_users
 
 
 # client is using @[display name](type:id)
-USER_MENTIONS_REGEX = re.compile('@\[([^]]+)\]\(user:([a-f0-9]{24})\)')
+USER_MENTIONS_REGEX = re.compile(r'@\[([^]]+)\]\(user:([a-f0-9]{24})\)')
 
 
 def handle_inline_mentions(sender, updates, original):
@@ -42,7 +42,11 @@ def _format_comment_text(comment):
 def _get_inline_comments(updates):
     try:
         comments = []
-        data = updates['editor_state'][0]['blocks'][0]['data'].get('__PUBLIC_API__comments', [])
+        data = (updates['fields_meta']
+                       ['body_html']
+                       ['draftjsState'][0]
+                       ['blocks'][0]
+                       ['data'].get('__PUBLIC_API__comments', []))
         for val in data:
             comments.append(val)
             for reply in val.get('replies', []):

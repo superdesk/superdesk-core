@@ -155,28 +155,39 @@ Feature: News Items Archive Comments
 
         When we patch "/archive/xyz"
         """
-        {"editor_state": [
-            {"blocks": [
-                {"data": {
-                    "__PUBLIC_API__comments": [{
-                        "msg": "hello @[foo](user:#users._id#)"
-                    }]
-                }}
-            ]}
-        ]}
+        {"fields_meta": {
+           "body_html": {
+               "draftjsState": [{
+                   "blocks": [
+                       {"data": {
+                           "__PUBLIC_API__comments": [{
+                               "msg": "hello @[foo](user:#users._id#)"
+                           }]
+                       }}
+                   ]
+               }]
+
+            }
+        }}
         """
+
         Then we get updated response
         """
-        {"editor_state": [
-            {"blocks": [
-                {"data": {
-                    "__PUBLIC_API__comments": [{
-                        "msg": "hello @[foo](user:#users._id#)",
-                        "notified": true
-                    }]
-                }}
-            ]}
-        ]}
+        {"fields_meta": {
+           "body_html": {
+               "draftjsState": [{
+                   "blocks": [
+                       {"data": {
+                           "__PUBLIC_API__comments": [{
+                               "msg": "hello @[foo](user:#users._id#)",
+                               "notified": true
+                           }]
+                       }}
+                   ]
+               }]
+
+            }
+        }}
         """
 
         Then we get 1 emails
@@ -192,51 +203,66 @@ Feature: News Items Archive Comments
         When we get "/archive/xyz"
         Then we get existing resource
         """
-        {"editor_state": [
-            {"blocks": [
-                {"data": {
-                    "__PUBLIC_API__comments": [{
-                        "msg": "hello @[foo](user:#users._id#)",
-                        "notified": true
-                    }]
-                }}
-            ]}
-        ]}
+        {"fields_meta": {
+           "body_html": {
+               "draftjsState": [{
+                   "blocks": [
+                       {"data": {
+                           "__PUBLIC_API__comments": [{
+                               "msg": "hello @[foo](user:#users._id#)",
+                               "notified": true
+                           }]
+                       }}
+                   ]
+               }]
+
+            }
+        }}
         """
 
         When we patch "/archive/xyz"
         """
-        {"editor_state": [
-            {"blocks": [
-                {"data": {
-                    "__PUBLIC_API__comments": [{
-                        "msg": "hello @[foo](user:#users._id#)",
-                        "notified": true
-                    }]
-                }}
-            ]}
-        ]}
+        {"fields_meta": {
+           "body_html": {
+               "draftjsState": [{
+                   "blocks": [
+                       {"data": {
+                           "__PUBLIC_API__comments": [{
+                               "msg": "hello @[foo](user:#users._id#)",
+                               "notified": true
+                           }]
+                       }}
+                   ]
+               }]
+
+            }
+        }}
         """
 
         Then we get 0 emails
 
         When we patch "/archive/xyz"
         """
-        {"editor_state": [
-            {"blocks": [
-                {"data": {
-                    "__PUBLIC_API__comments": [{
-                        "msg": "hello @[foo](user:#users._id#)",
-                        "notified": true,
-                        "replies": [
-                            {
-                                "msg": "second @[foo](user:#users._id#)"
-                            }
-                        ]
-                    }]
-                }}
-            ]}
-        ]}
+        {"fields_meta": {
+           "body_html": {
+               "draftjsState": [{
+                   "blocks": [
+                       {"data": {
+                           "__PUBLIC_API__comments": [{
+                               "msg": "hello @[foo](user:#users._id#)",
+                               "notified": true,
+                               "replies": [
+                                   {
+                                       "msg": "second @[foo](user:#users._id#)"
+                                   }
+                               ]
+                           }]
+                       }}
+                   ]
+               }]
+
+            }
+        }}
         """
 
         Then we get 1 emails
