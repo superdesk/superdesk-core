@@ -183,8 +183,9 @@ class SavedSearchesService(BaseService):
         """
 
         parsed_request = self.init_request(elastic_query)
+        parsed_request.args['repo'] = index
         try:
-            return get_resource_service(index).get(req=parsed_request, lookup={})
+            return get_resource_service('search_providers_proxy').get(req=parsed_request, lookup={})
         except Exception as e:
             logger.exception(e)
             raise SuperdeskApiError.badRequestError('Fail to validate the filter against %s.' % index)
