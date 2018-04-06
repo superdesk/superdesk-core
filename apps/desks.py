@@ -97,6 +97,12 @@ desks_schema = {
         'type': 'string'
     },
 
+    'monitoring_default_view': {
+        'type': 'string',
+        'allowed': ['', 'list', 'swimlane', 'photogrid'],
+        'required': False
+    },
+
     'default_content_profile': Resource.rel('content_types', type='string', nullable=True),
     'default_content_template': Resource.rel('content_templates', nullable=True),
     # name of a Slack channel that may be associated with the desk
