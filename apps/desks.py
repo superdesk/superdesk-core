@@ -97,7 +97,7 @@ desks_schema = {
         'type': 'string'
     },
 
-    'desk_default_view': {
+    'monitoring_default_view': {
         'type': 'string',
         'allowed': ['', 'list', 'swimlane', 'photogrid'],
         'required': False
