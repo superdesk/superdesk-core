@@ -295,7 +295,8 @@ def get_resource_name(url):
 def format_items(items):
     output = ['']  # insert empty line
     for item in items:
-        if item.get('formatted_item'):
+        if item.get('formatted_item') and \
+                item.get('destination', {}).get('format').lower() == 'ninjs':
             item['formatted_item'] = json.loads(item['formatted_item'])
         output.append(json.dumps(item, indent=4, sort_keys=True))
     return ',\n'.join(output)

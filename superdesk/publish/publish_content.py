@@ -86,7 +86,7 @@ def get_queue_items(retries=False):
     return get_resource_service(PUBLISH_QUEUE).get(req=request, lookup=lookup)
 
 
-@celery.task(soft_time_limit=600)
+# @celery.task(soft_time_limit=600)
 def transmit_subscriber_items(queue_items, subscriber):
     lock_name = get_lock_id('Subscriber', 'Transmit', subscriber)
     publish_queue_service = get_resource_service(PUBLISH_QUEUE)
@@ -147,7 +147,8 @@ def transmit_items(queue_items):
     # extract the queued items for each subscriber and transmit them
     for subscriber in subscribers:
         sub_queue_items = [item for item in queue_items if item['subscriber_id'] == subscriber]
-        transmit_subscriber_items.apply_async(kwargs={'queue_items': sub_queue_items, 'subscriber': str(subscriber)})
+        transmit_subscriber_items(queue_items=sub_queue_items, subscriber=str(subscriber))
+#         transmit_subscriber_items.apply_async(kwargs={'queue_items': sub_queue_items, 'subscriber': str(subscriber)})
 
 
 superdesk.command('publish:transmit', PublishContent())

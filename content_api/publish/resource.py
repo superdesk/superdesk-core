@@ -28,4 +28,4 @@ class PublishResource(Resource):
     elastic_prefix = ELASTIC_PREFIX
 
     item_methods = []
-    resource_methods = []
+    resource_methods = ['POST']

@@ -609,7 +609,7 @@ EMAIL_TIMEOUT = 10
 #: This setting is used to overide the desk/stage expiry for items when spiked
 SPIKE_EXPIRY_MINUTES = None
 
-SECRET_KEY = env('SECRET_KEY', '')
+SECRET_KEY = env('SECRET_KEY', 'fUWvHPm69LFVPP9mAdHx3Jm1BPVzpnliGfHfiP9oub6BIGVEQ03IVw==')
 
 #: secure login
 XMPP_AUTH_URL = env('XMPP_AUTH_URL', '')
