@@ -40,6 +40,8 @@ class RitzauTestCase(BaseRitzauTestCase):
         item = self.item
         self.assertEqual(item['version'], 1)
         self.assertEqual(item['byline'], '/ritzau/')
+        self.assertEqual(item['headline'], 'Hollandske forskere har "i årevis" lavet forsøg på både mennesker og '
+                                           'dyr, hvor de har testet effekte')
         self.assertEqual(item['body_html'], '<p>Hollandske forskere har "i årevis" lavet forsøg på både '
                                             'mennesker og dyr, hvor de har testet effekten af at indånde '
                                             'udstødningsgas fra dieselbiler.</p><p>Det fortæller forskerne '

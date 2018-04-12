@@ -13,6 +13,7 @@ from superdesk.io.registry import register_feed_parser
 from superdesk.errors import ParserError
 from superdesk.metadata.item import CONTENT_TYPE
 from superdesk import etree as sd_etree
+from superdesk import text_utils
 import logging
 
 logger = logging.getLogger(__name__)
@@ -35,6 +36,8 @@ class STTNewsMLFeedParser(NewsMLTwoFeedParser):
         self.root = xml
         try:
             item = self.parse_item(xml)
+            if not item.get('headline'):
+                item['headline'] = text_utils.get_text(item.get('body_html', ''), 'html')[:100]
             return [item]
         except Exception as ex:
             raise ParserError.newsmlTwoParserError(ex, provider)
