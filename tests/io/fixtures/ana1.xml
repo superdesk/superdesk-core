@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<NewsML>
+  <NewsEnvelope>
+    <DateAndTime>20180404T175903+0300</DateAndTime>
+    <NewsProduct FormalName="Special English Service"/>
+    <Priority FormalName="5"/>
+  </NewsEnvelope>
+  <NewsItem>
+    <Identification>
+      <NewsIdentifier>
+        <ProviderId>ana-mpe.gr</ProviderId>
+        <DateId>20180404</DateId>
+        <NewsItemId>19336333</NewsItemId>
+        <RevisionId Update="N" PreviousRevision="0">1</RevisionId>
+        <PublicIdentifier>urn:newsml:ana-mpe.gr:20180404:19336333:1</PublicIdentifier>
+      </NewsIdentifier>
+      <NameLabel>
+        <![CDATA[]]>
+      </NameLabel>
+      <DateLabel>4/4/2018 17:59:03</DateLabel>
+    </Identification>
+    <NewsManagement>
+      <NewsItemType FormalName="News"/>
+      <FirstCreated>20180404T175859+0300</FirstCreated>
+      <ThisRevisionCreated>20180404T175859+0300</ThisRevisionCreated>
+      <Status FormalName="Usable"/>
+    </NewsManagement>
+    <NewsComponent Essential="no" EquivalentsList="no">
+      <TopicSet FormalName="NewsSubjects">
+        <Topic>
+          <TopicType FormalName="SubjectMatter" Scheme="IptcTopicType"/>
+          <FormalName Scheme="IptcSubjectCodes">09003000</FormalName>
+          <Description xml:lang="en" Variant="Category">ANE</Description>
+          <Description xml:lang="el" Variant="Name">Απασχόληση/Ανεργία</Description>
+          <Description xml:lang="en" Variant="Name">Employment/Unemployment</Description>
+          <Description xml:lang="fr" Variant="Name">Employment/Unemployment</Description>
+        </Topic>
+        <Topic>
+          <TopicType FormalName="SubjectMatter" Scheme="IptcTopicType"/>
+          <FormalName Scheme="IptcSubjectCodes">09003002</FormalName>
+          <Description xml:lang="en" Variant="Category">JOB</Description>
+          <Description xml:lang="el" Variant="Name">Απολύσεις</Description>
+          <Description xml:lang="en" Variant="Name">Job Layoffs</Description>
+          <Description xml:lang="fr" Variant="Name">Job Layoffs</Description>
+        </Topic>
+        <Topic>
+          <TopicType FormalName="SubjectDetail" Scheme="IptcTopicType"/>
+          <FormalName Scheme="IptcSubjectCodes">04008004</FormalName>
+          <Description xml:lang="el" Variant="Name">Οικονομικοί δείκτες</Description>
+          <Description xml:lang="en" Variant="Name">Economic Indicator</Description>
+          <Description xml:lang="fr" Variant="Name">Economic Indicator</Description>
+        </Topic>
+      </TopicSet>
+      <NewsLines>
+        <HeadLine xml:lang="x-default">
+          <![CDATA[Wage employment balance positive in Jan-March]]>
+        </HeadLine>
+        <SubHeadLine>
+          <![CDATA[Wage employment in the private sector grew in March, recording the best performance since 2001, the Labour ministry said in a report released on Wednesday.]]>
+        </SubHeadLine>
+        <DateLine>4/4/2018</DateLine>
+        <CreditLine>ΑΠΕ-ΜΠΕ</CreditLine>
+        <CopyrightLine>© 2018 ΑΘΗΝΑΪΚΟ ΠΡΑΚΤΟΡΕΙΟ ΕΙΔΗΣΕΩΝ - ΜΑΚΕΔΟΝΙΚΟ ΠΡΑΚΤΟΡΕΙΟ ΕΙΔΗΣΕΩΝ</CopyrightLine>
+      </NewsLines>
+      <AdministrativeMetadata>
+        <FileName>19336333.xml</FileName>
+        <Source>
+          <Party FormalName="ΑΠΕ-ΜΠΕ"/>
+        </Source>
+        <Property FormalName="Department" Value="ΤΜΗΜΑ ΞΕΝΟΓΛΩΣΣΩΝ ΔΕΛΤΙΩΝ"/>
+        <Property FormalName="Domestic_Foreign" Value="Domestic"/>
+      </AdministrativeMetadata>
+      <DescriptiveMetadata>
+        <Language FormalName="EN"/>
+        <Genre FormalName="Current"/>
+        <SubjectCode>
+          <SubjectMatter FormalName="09003000" Scheme="IptcSubjectCodes"/>
+          <SubjectMatter FormalName="09003002" Scheme="IptcSubjectCodes"/>
+          <SubjectDetail FormalName="04008004" Scheme="IptcSubjectCodes"/>
+        </SubjectCode>
+        <Property FormalName="Country" Value="GRC"/>
+        <Property FormalName="City" Value="Athens"/>
+      </DescriptiveMetadata>
+      <NewsComponent Essential="no" EquivalentsList="no">
+        <Role FormalName="Main"/>
+        <ContentItem>
+          <MediaType FormalName="Text"/>
+          <Format FormalName="HTML"/>
+          <Characteristics>
+            <Property FormalName="WordCount" Value="115"/>
+          </Characteristics>
+          <DataContent>
+            <![CDATA[<P>Wage employment in the private sector grew in March, recording the best performance since 2001, the Labour ministry said in a report released on Wednesday.</P>
+<P>The report by the "Ergani" IT system, said that the balance of hirings/dismissals in March was positive by 55,494 new job positions as new hirings totaled 196,142 and dismissals totaled 140,648. In the three-month period from January to March, the balance of hirings/dismissals was positive by 55,580 job positions, the best performance since 2001. New hirings totaled 500,363 and dismisssals totaled 444,783 in the first quarter.</P>
+<P>In the same period last year, the balance was positive by 33,638 job positions.</P>
+<P> </P>
+<P>© ΑΠΕ-ΜΠΕ ΑΕ. Τα πνευματικά δικαιώματα ανήκουν στο ΑΠΕ-ΜΠΕ ΑΕ και παραχωρούνται σε συνδρομητές μόνον για συγκεκριμένη χρήση.</P>]]>
+          </DataContent>
+        </ContentItem>
+      </NewsComponent>
+    </NewsComponent>
+  </NewsItem>
+</NewsML>
