@@ -550,48 +550,49 @@ class ArchiveTestCase(TestCase):
 
     def test_update_associations(self):
         doc = {
-            'editor_state': [{
-                'entityMap': {
-                    '1': {
-                        'mutability': 'MUTABLE',
-                        'type': 'MEDIA',
-                        'data': {
-                            'media': {
-                                'guid': 'guid1',
-                                'type': 'picture',
-                                'alt_text': 'media 1'
+            'fields_meta': {
+                'body_html': {
+                    'draftjsState': [{
+                        'entityMap': {
+                            '1': {
+                                'mutability': 'MUTABLE',
+                                'type': 'MEDIA',
+                                'data': {
+                                    'media': {
+                                        'guid': 'guid1',
+                                        'type': 'picture',
+                                        'alt_text': 'media 1'
+                                    }
+                                }
+                            },
+                            '0': {
+                                'mutability': 'MUTABLE',
+                                'type': 'MEDIA',
+                                'data': {
+                                    'media': {
+                                        'guid': 'guid0',
+                                        'type': 'picture',
+                                        'alt_text': 'media 0'
+                                    }
+                                }
+                            },
+                            '2': {
+                                'mutability': 'MUTABLE',
+                                'type': 'MEDIA',
+                                'data': {
+                                    'media': {
+                                        'guid': 'guid2',
+                                        'type': 'picture',
+                                        'alt_text': 'media 2'
+                                    }
+                                }
                             }
                         }
-                    },
-                    '0': {
-                        'mutability': 'MUTABLE',
-                        'type': 'MEDIA',
-                        'data': {
-                            'media': {
-                                'guid': 'guid0',
-                                'type': 'picture',
-                                'alt_text': 'media 0'
-                            }
-                        }
-                    },
-                    '2': {
-                        'mutability': 'MUTABLE',
-                        'type': 'MEDIA',
-                        'data': {
-                            'media': {
-                                'guid': 'guid2',
-                                'type': 'picture',
-                                'alt_text': 'media 2'
-                            }
-                        }
-                    }
-                }
-            }],
+                    }]}},
             'associations': {
                 'editor_1': {'guid': 'guid10', 'type': 'picture10', 'alt_text': 'media 10'},
                 'editor_7': {'guid': 'guid7', 'type': 'picture7', 'alt_text': 'media 7'},
-                'featuremedia': {'guid': 'guid11', 'type': 'picture11'}
-            }
+                'featuremedia': {'guid': 'guid11', 'type': 'picture11'}}
         }
 
         update_associations(doc)

@@ -527,9 +527,9 @@ metadata_schema = {
         'type': 'boolean'
     },
 
-    # draft-js editor state
-    'editor_state': {
-        'type': 'list',
+    # draft-js internal data
+    'fields_meta': {
+        'type': 'dict',
         'nullable': True,
         'mapping': not_enabled,
     },
