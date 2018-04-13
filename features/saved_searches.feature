@@ -376,3 +376,20 @@ Feature: Saved Searches
         When we switch user
         When we delete "/saved_searches/#saved_searches._id#"
         Then we get response code 204
+
+    @auth
+    Scenario: Add saved search with empty repo
+        When we post to "/saved_searches"
+        """
+        {
+            "name": "foo",
+            "filter": {
+                "query": {
+                    "repo": "",
+                    "q": "headline:test",
+                    "spike": "exclude"
+                }
+            }
+        }
+        """
+        Then we get new resource

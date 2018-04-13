@@ -35,7 +35,7 @@ class SearchProviderProxyService(SearchIngestService):
     def get_provider(self, provider_id=None, req=None):
         if not provider_id:
             provider_id = req.args.get('repo') if req else request.args.get('repo')
-        if not provider_id:
+        if provider_id is None:
             abort(400)
         try:
             bson.ObjectId(provider_id)
@@ -50,7 +50,7 @@ class SearchProviderProxyService(SearchIngestService):
 
     def _get_service(self, provider):
         if isinstance(provider, str):
-            return provider if ',' not in provider else 'search'
+            return provider if ',' not in provider and provider else 'search'
         provider_data = registered_search_providers[provider['search_provider']]
         try:
             return provider_data['endpoint']

@@ -112,7 +112,7 @@ class SearchService(superdesk.Service):
         for repo in repos:
             filters.append(self._get_private_filters(repo, invisible_stages))
 
-        return [{'or': filters}]
+        return [{'or': filters}] if filters else []
 
     def get(self, req, lookup):
         """
@@ -135,7 +135,8 @@ class SearchService(superdesk.Service):
         if not app.settings['MAX_SEARCH_DEPTH'] == -1:
             query['terminate_after'] = app.settings['MAX_SEARCH_DEPTH']
 
-        set_filters(query, filters)
+        if filters:
+            set_filters(query, filters)
 
         params = {}
         if fields:
