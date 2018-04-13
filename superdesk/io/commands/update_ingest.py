@@ -30,6 +30,7 @@ from superdesk.metadata.utils import generate_guid
 from superdesk.notification import push_notification
 from superdesk.utc import utcnow, get_expiry_date
 from superdesk.workflow import set_default_state
+from superdesk.errors import IngestFileError
 from copy import deepcopy
 
 UPDATE_SCHEDULE_DEFAULT = {'minutes': 5}
@@ -257,6 +258,9 @@ def update_provider(provider, rule_set=None, routing_scheme=None):
 
         if LAST_ITEM_UPDATE in update:  # Only push a notification if there has been an update
             push_notification('ingest:update', provider_id=str(provider[superdesk.config.ID_FIELD]))
+    except Exception as e:
+        logger.error("Failed to ingest file: {error}".format(error=e))
+        raise IngestFileError(3000, e, provider)
     finally:
         unlock(lock_name)
 
