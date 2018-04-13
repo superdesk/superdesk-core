@@ -1,5 +1,25 @@
 # Superdesk Server Changelog
 
+## [1.16] 2018-04-13
+
+### Fixed
+
+- Use search providers proxy for saved search validation.
+- Allow contentapi elastic index re-indexing using rebuild command.
+- Map caption to `description_text` in image iptc parser.
+
+### Added
+
+- Add `advanced_search` field to search provider schema.
+- Add `monitoring_default_view` field to desk schema.
+- Add macro to set item in progress when ingesting file with correspoind `assign_id`.
+
+### Changed
+
+- Raise `IngestFileError` on ingest error.
+- Replace `editor_state` by `fields_meta` in item schema.
+- Allow forcing update of specific vocabulary using init command.
+
 ## [1.15] 2018-03-28
 
 ### Fixed
