@@ -131,3 +131,15 @@ class STTTestCase(BaseSTTNewsMLTestCase):
                          'an heti äänestyksen jälkeen.</p>')
 
         self.assertEqual(item['body_html'], expected_body)
+
+
+class STTNoHLTestCase(BaseSTTNewsMLTestCase):
+    """Test case with a source without headline"""
+
+    filename = 'stt_newsml_test_no_hl.xml'
+
+    def test_default_headline(self):
+        """Test that body is used when there is no headline set"""
+        item = self.item[0]
+        self.assertEqual(item['headline'], '*** DISCLAIMER: THIS IS AN AUTOMATED TRANSLATION FROM FINNISH ***'
+                                           '\n\nAlso the unemployment law went th')

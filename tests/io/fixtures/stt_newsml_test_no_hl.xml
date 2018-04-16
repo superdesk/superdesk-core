@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><newsItem xmlns="http://iptc.org/std/nar/2006-10-01/" xmlns:stt="http://www.stt-lehtikuva.fi/NewsML" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" conformance="power" guid="urn:newsml:stt.fi:20171219:101801633" standard="NewsML-G2" standardversion="2.12" stt:formatversion="1.1" version="4" xml:lang="fi-FI" xsi:schemaLocation="http://iptc.org/std/nar/2006-10-01/ http://www.iptc.org/std/NewsML-G2/2.12/specification/NewsML-G2_2.12-spec-All-Power.xsd http://www.stt-lehtikuva.fi/NewsML http://www.stt-lehtikuva.fi/newsml/schema/STT-Lehtikuva_NewsML_G2.xsd"><catalogRef href="http://www.iptc.org/std/catalog/catalog.IPTC-G2-Standards_19.xml"/>
+<catalogRef href="http://www.iptc.org/std/catalog/catalog.IPTC-G2-Standards_18.xml"/>
+<catalogRef href="http://www.stt-lehtikuva.fi/newsml/doc/stt-NewsCodesCatalog_1.xml"/>
+
+<itemMeta>
+
+<itemClass qcode="ninat:text"/>
+<provider literal="STT"/>
+<versionCreated>2017-12-19T11:16:43+02:00</versionCreated>
+<firstCreated>2017-12-19T10:33:04+02:00</firstCreated>
+<pubStatus qcode="stat:usable"/>
+<edNote role="sttnote:private">complemented throughout</edNote>
+<signal qcode="sig:update"/>
+<signal qcode="update:append-major-content"/>
+<link guidref="urn:newsml:stt.fi:20171219:101801633" version="3"/>
+</itemMeta>
+<contentMeta>
+<urgency>3</urgency>
+<contentCreated>2017-12-19T10:33:04+02:00</contentCreated>
+<contentModified>2017-12-19T11:16:43+02:00</contentModified>
+<altId type="sttidtype:textid">114791381</altId>
+<located type="loctyp:City">
+<name>Helsinki</name>
+</located>
+<infoSource qcode="sttsource:1">
+<name>STT</name>
+</infoSource>
+<altId environment="sttcounter:daily" type="sttidtype:runningnumber">stt 107</altId>
+<subject literal="Related topic id" qcode="stt-topics:437036" type="cpnat:abstract"/>
+<subject qcode="sttdepartment:9" type="cpnat:abstract">
+<name>Politics</name>
+</subject>
+<slugline/>
+<dateline>Helsinki</dateline>
+<by/>
+<description role="drol:summary"/>
+<creditline>STT–</creditline>
+
+<genre literal="Pääjuttu" qcode="sttgenre:1" type="sttnat:texttype">
+<name>Pääjuttu</name>
+</genre>
+<genre literal="Pika+" qcode="sttversion:4" type="sttnat:versiontype">
+<name>Pika+</name>
+<related qcode="sttrel:actuallength" value="2626"/>
+</genre>
+</contentMeta>
+<assert qcode="sttlocmeta:default:8975">
+<broader qcode="sttcountry:1" type="cpnat:geoArea">
+<name>Suomi</name>
+</broader>
+<broader qcode="wldreg:150" type="cpnat:geoArea">
+<name>Eurooppa</name>
+</broader>
+</assert>
+<contentSet>
+<inlineXML contenttype="xhtml/xml">
+<html>
+<body><p>*** DISCLAIMER: THIS IS AN AUTOMATED TRANSLATION FROM FINNISH ***</p>
+<h2>Also the unemployment law went through</h2>
+<p>The Parliament has approved the Alcohol Act 124-65. There were two absentee voices and eight MPs absent. As early as Friday, Parliament voted for the percentage of alcohol in the grocery store to rise to 5.5.</p>
+<p>Government parties have previously agreed that the tax on alcohol will be tightened by EUR 100 million, as the maximum percentage of alcoholic beverages sold in the store will increase.</p>
+<p>In addition to the alcohol percentage, the Alcohol Act includes a significant number of reforms. With the new Alcohol Act, the restaurant can, for example, continue to dispense with a notice until 4 o&amp;#39;clock. The restaurant may be open after one hour of serving.</p>
+<p>In the future, food stores may also sell non-fermented alcoholic beverages, so-called limousines. The creatures can be open on weekdays for an hour longer, or at night.</p>
+<p>Parliament also approved the proposal by Hannakaisa Heikkinen (central) that the government should clarify the rules on distance selling of alcohol. The distance selling was left unclear in the bill and in the report on it. The family and basic minister Annika Saarikko (center) has already announced that she will set up a distance marketing team to investigate.</p>
+<p>&amp;quot;The will of the government is that we do not want to break Alko&amp;#39;s monopoly with any of the risk factors that distance selling could include. If the sales of spirits in Finland are limited<Company>Alkoon</Company>, the same applies to foreign journalists, Saarikko said on Friday.</p>
+<p>Distance selling means the purchase of alcohol from another EU Member State so that the seller is responsible for the transport of drinks or the organization of transport to the purchaser.</p>
+<p>Parliament also voted on the government&amp;#39;s confidence. The government gained confidence by 106-80. Seven MPs were absent and six were absent.</p>
+<p/><p>
+<h3>Rinne: Hallitus runnoi läpi työttömiä kurittavan lain</h3>
+</p>
+<p/>
+<p>In the morning&amp;#39;s vote, for example, a controversial unemployed security law passed through 103-90. There were two absentee voices and four MPs absent.</p>
+<p>The opposition has strongly opposed, in particular, the law-related active model, according to which 4.65 percent of the unemployment allowance is reduced if the unemployed person does not qualify for an adequate amount of paid employment or participates in employment promotion services over a period of three months.</p>
+<p>- The government parties are running the unemployed through a law to cure, despite warnings. We do not accept that the unemployed are punished for the fact that there is simply no job. That is why the SDP will change the active model, Rinne said in a briefing after the vote.</p>
+<p/><p>*** DISCLAIMER: DETTA ÄR EN AUTOMATISK ÖVERSÄTTNING FRÅN FINNISH ***</p><p>Parlamentet har godkänt alkohollagen 124-65. Det fanns två frånvarande röster och åtta ledamöter frånvarande. Redan i fredags röstade parlamentet för att andelen alkohol i livsmedelsbutiken skulle stiga till 5,5.</p><p>Regeringspartierna har tidigare kommit överens om att alkoholskatten kommer att stramas med 100 miljoner euro, eftersom den högsta andelen alkoholhaltiga drycker som säljs i affären kommer att öka.</p><p>Förutom alkoholprocenten innehåller alkohollagen ett betydande antal reformer. Med den nya alkohollagen kan restaurangen till exempel fortsätta att meddela ett meddelande till klockan 4. Restaurangen kan vara öppen efter en timmes servering.</p><p>I framtiden kan mataffärer också sälja alkoholfria drycker, så kallade limousiner. Varelserna kan vara öppna på vardagar för en timme längre eller på natten.</p><p>Parlamentet godkände också förslaget från Hannakaisa Heikkinen (central) att regeringen skulle klargöra reglerna för distansförsäljning av alkohol. Distansförsäljningen lämnades oklart i propositionen och rapporten om den. Familjen och grundminister Annika Saarikko (center) har redan meddelat att hon kommer att inrätta ett distansmarknadsföringslag att undersöka.</p><p>&amp;quot;Regeringens vilja är att vi inte vill bryta Alkos monopol med någon av de riskfaktorer som distansförsäljningen kan innefatta. Om försäljningen av sprit i Finland är begränsad</p><p>, detsamma gäller utländska journalister, sa Saarikko på fredag.</p><p>Distansförsäljning innebär inköp av alkohol från en annan EU-medlemsstat så att säljaren är ansvarig för transport av drycker eller transporten till köparen.</p><p>Parlamentet röstade också om regeringens förtroende. Regeringen fick förtroende med 106-80. Sju parlamentsledamöter var frånvarande och sex var frånvarande.</p><p/><p/><p>På morgonens omröstning gick exempelvis en kontroversiell arbetslös säkerhetslag genom 103-90. Det fanns två frånvarande röster och fyra ledamöter frånvarande.</p><p>Oppositionen har starkt motsatt sig, i synnerhet den lagrelaterade aktiva modellen, enligt vilken 4,65 procent av arbetslöshetsersättningen minskas om den arbetslösa inte kvalificerar sig för tillräcklig betald anställning eller deltar i arbetsförmedlingstjänster under en period på tre månader.</p><p>- Regeringspartierna driver de arbetslösa genom en lag att bota, trots varningar. Vi accepterar inte att de arbetslösa straffas för att det bara inte finns något jobb. Det är därför som SDP kommer att ändra den aktiva modellen, sade Rinne i en briefing efter omröstningen.</p><p>*** DISCLAIMER: THIS IS AN AUTOMATED TRANSLATION FROM FINNISH ***</p><p>Eduskunta on hyväksynyt alkoholilain äänin 124–65. Tyhjää äänesti kaksi ja poissa oli kahdeksan kansanedustajaa. Jo perjantaina eduskunta äänesti, että ruokakaupassa myytävän alkoholin prosenttiraja nousee 5,5:een. </p><p> Hallituspuolueet ovat aiemmin sopineet, että alkoholiveroa kiristetään 100 miljoonalla eurolla, kun kaupassa myytävien alkoholijuomien enimmäisprosentti nousee.</p><p>Alkoholilakiin sisältyy alkoholiprosentin lisäksi merkittävä määrä uudistuksia. Uuden alkoholilain myötä ravintola voi esimerkiksi jatkaa anniskelua pelkällä ilmoituksella kello neljään saakka. Ravintola voi olla auki tunnin anniskelun päättymisen jälkeen.</p><p>Jatkossa ruokakaupassa saa myydä myös muutoin kuin käymisteitse valmistettuja alkoholijuomia eli niin sanottuja limuviinoja. Alkot saavat olla arkisin auki tunnin pidempään eli iltayhdeksään.</p><p>Eduskunta hyväksyi lisäksi Hannakaisa Heikkisen (kesk.) lausumaehdotuksen, jonka mukaan hallituksen on selvitettävä alkoholin etämyyntiä koskevat säännökset. Etämyynti jäi lakiesityksessä ja sitä koskevassa mietinnössä epäselväksi. Perhe- ja peruspalveluministeri Annika Saarikko (kesk.) on jo kertonut asettavansa työryhmän etämyyntiä selvittämään.</p><p>– Hallituksen tahdonilmaus on, että emme halua murtaa Alkon monopolia millään riskitekijöillä, joita etämyynti voisi pitää sisällään. Jos Suomessa väkevien alkoholijuomien myynti on rajoitettu </p><p>, sama koskee myös ulkomaisia toimittajia, Saarikko sanoi perjantaina.</p><p>Etämyynti tarkoittaa alkoholin hankintaa toisesta EU:n jäsenvaltiosta siten, että myyjä vastaa juomien kuljetuksesta tai kuljetuksen järjestämisestä ostajalle.</p><p>Eduskunta äänesti myös hallituksen luottamuksesta. Hallitus sai luottamuksen äänin 106–80. Tyhjää äänesti seitsemän kansanedustajaa ja poissa oli kuusi.</p><p>
+</p><p>
+</p><p>Aamupäivän äänestyksissä meni läpi myös esimerkiksi kiistelty työttömyysturvalaki äänin 103–90. Tyhjää äänesti kaksi ja poissa oli neljä kansanedustajaa. </p><p>Oppositio on vastustanut jyrkästi etenkin lakiin liittyvää aktiivimallia, jonka mukaan työttömyyskorvauksesta nipistetään 4,65 prosenttia, jos työtön ei käy riittävää määrää palkkatyössä tai osallistu työllistymistä edistäviin palveluihin kolmen kuukauden aikana.</p><p>–  Hallituspuolueet runnoivat työttömiä kurittavan lain läpi varoituksista huolimatta. Me emme hyväksy sitä, että työttömiä rangaistaan siitä, että työtä ei yksinkertaisesti ole. Siksi SDP tulee muuttamaan aktiivimallin, Rinne sanoi tiedotteessaan heti äänestyksen jälkeen.</p></body>
+</html>
+</inlineXML>
+</contentSet></newsItem>

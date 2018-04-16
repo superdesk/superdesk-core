@@ -13,6 +13,8 @@ from superdesk.io.registry import register_feed_parser
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE
 from superdesk.errors import ParserError
 from superdesk import etree as sd_etree
+from collections import OrderedDict
+from superdesk import text_utils
 import superdesk
 import dateutil.parser
 import logging
@@ -36,28 +38,30 @@ class RitzauFeedParser(XMLFeedParser):
     def __init__(self):
         super().__init__()
 
-        self.default_mapping = {
-            'guid': 'NewsID/text()',
-            'body_html': {'xpath': 'content/text()',
-                          'filter': sd_etree.clean_html_str},
-            'firstcreated': {'xpath': 'PublishDate/text()',
-                             'filter': self._publish_date_filter,
-                             },
-            'versioncreated': {'xpath': 'PublishDate/text()',
-                               'filter': self._publish_date_filter,
-                               },
-            'headline': 'headline/text()',
-            'priority': 'Priority/text()',
-            'keywords': {'xpath': 'strapline/text()',
-                         'filter': lambda v: list(filter(None, v.split('/')))},
-            'abstract': 'subtitle',
-            'byline': 'origin',
-            'version': {'xpath': 'version/text()',
-                        'filter': int},
-            'ednote': 'Tilredaktionen/text()',
-            'subject': {'xpath': 'IPTCList/a:int/text()',
-                        'list': True,
-                        'filter': self._subject_filter}}
+        self.default_mapping = OrderedDict([
+            ('guid', 'NewsID/text()'),
+            ('body_html', {'xpath': 'content/text()',
+                           'filter': sd_etree.clean_html_str}),
+            ('firstcreated', {'xpath': 'PublishDate/text()',
+                              'filter': self._publish_date_filter,
+                              }),
+            ('versioncreated', {'xpath': 'PublishDate/text()',
+                                'filter': self._publish_date_filter,
+                                }),
+            ('headline', {'xpath': 'headline/text()',
+                          'default': '',
+                          'key_hook': self._set_headline}),
+            ('priority', 'Priority/text()'),
+            ('keywords', {'xpath': 'strapline/text()',
+                          'filter': lambda v: list(filter(None, v.split('/')))}),
+            ('abstract', 'subtitle'),
+            ('byline', 'origin'),
+            ('version', {'xpath': 'version/text()',
+                         'filter': int}),
+            ('ednote', 'Tilredaktionen/text()'),
+            ('subject', {'xpath': 'IPTCList/a:int/text()',
+                         'list': True,
+                         'filter': self._subject_filter})])
 
     @property
     def subjects_map(self):
@@ -99,6 +103,13 @@ class RitzauFeedParser(XMLFeedParser):
     def _publish_date_filter(self, date_string):
         dt = dateutil.parser.parse(date_string)
         return dt.replace(tzinfo=timezone('CET'))
+
+    def _set_headline(self, item, value):
+        if not value:
+            # if there is no headline, we use first 100 chars of body
+            # cf. SDNTB-481
+            value = text_utils.get_text(item.get('body_html', ''), 'html')[:100]
+        item['headline'] = value
 
 
 register_feed_parser(RitzauFeedParser.NAME, RitzauFeedParser())
