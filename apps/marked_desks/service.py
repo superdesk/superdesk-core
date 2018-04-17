@@ -57,9 +57,10 @@ class MarkedForDesksService(BaseService):
                 marked_desks_on = False  # highlight toggled off
             else:
                 # there is no existing mark so this is mark action
+                user = get_user() or {}
                 new_mark = {}
                 new_mark['desk_id'] = doc['marked_desk']
-                new_mark['user_marked'] = str(get_user(True).get(config.ID_FIELD, ''))
+                new_mark['user_marked'] = str(user.get(config.ID_FIELD, ''))
                 new_mark['date_marked'] = utcnow()
                 marked_desks.append(new_mark)
                 marked_desks_on = True
