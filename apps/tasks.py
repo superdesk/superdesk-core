@@ -99,7 +99,7 @@ def send_to(doc, update=None, desk_id=None, stage_id=None, user_id=None, default
         task['stage'] = stage_id
 
     if destination_stage:
-        apply_stage_rule(doc, update, destination_stage, MACRO_INCOMING)
+        apply_stage_rule(doc, update, destination_stage, MACRO_INCOMING, desk=desk)
         if destination_stage.get('task_status'):
             task['status'] = destination_stage['task_status']
 
@@ -113,14 +113,14 @@ def send_to(doc, update=None, desk_id=None, stage_id=None, user_id=None, default
         superdesk.get_resource_service('desks').apply_desk_metadata(doc, doc)
 
 
-def apply_stage_rule(doc, update, stage, rule_type):
+def apply_stage_rule(doc, update, stage, rule_type, desk=None):
     macro_type = '{}_macro'.format(rule_type)
 
     if stage.get(macro_type):
         try:
             original_doc = dict(doc)
             macro = get_resource_service('macros').get_macro_by_name(stage.get(macro_type))
-            macro['callback'](doc)
+            macro['callback'](doc, desk=desk, stage=stage)
             if update:
                 modified = compare_dictionaries(original_doc, doc)
                 for i in modified:
