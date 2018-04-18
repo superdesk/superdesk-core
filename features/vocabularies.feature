@@ -131,7 +131,7 @@ Feature: Vocabularies
     Then we get error 400
     """
     {"_status": "ERR",
-    "_issues": {"validator exception": "400: qcode cannot be empty"}}
+    "_issues": {"items": {"0": {"qcode": {"required": 1}}}}}
     """
 
   @auth @vocabulary
@@ -224,3 +224,22 @@ Feature: Vocabularies
     Then we get response code 204
     When we get "/vocabularies/text1"
     Then we get error 404
+
+  @auth
+  Scenario: Create vocabularies with missing name and qcode
+    When we post to "vocabularies"
+    """
+    {"_id": "foo", "type": "manageable", "display_name": "Foo", "items": [{"name": "name"}]}
+    """
+    Then we get error 400
+    """
+    {"_issues": {"items": {"0": {"qcode": {"required": 1}}}}, "_status": "ERR"}
+    """
+    When we post to "vocabularies"
+    """
+    {"_id": "foo", "type": "manageable", "display_name": "Foo", "items": [{"qcode": "qcode"}]}
+    """
+    Then we get error 400
+    """
+    {"_issues": {"items": {"0": {"name": {"required": 1}}}}, "_status": "ERR"}
+    """

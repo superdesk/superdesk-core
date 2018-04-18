@@ -64,7 +64,15 @@ class VocabulariesResource(Resource):
         },
         'items': {
             'type': 'list',
-            'required': True
+            'required': True,
+            'schema': {
+                'type': 'dict',
+                'allow_unknown': True,
+                'schema': {
+                    'name': {'type': 'string', 'required': True, 'nullable': False},
+                    'qcode': {'type': 'string', 'required': True, 'nullable': False}
+                }
+            }
         },
         'single_value': {
             'type': 'boolean',
