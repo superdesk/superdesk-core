@@ -11,6 +11,7 @@
 
 import os
 import json
+import flask
 import unittest
 import requests
 
@@ -77,6 +78,7 @@ class HTTPPushPublishTestCase(unittest.TestCase):
                                      }}
 
         self.destination = self.item.get('destination', {})
+        self.app = flask.Flask(__name__)
 
     def is_item_published(self, item_id):
         """Return True if the item was published, False otherwise.
@@ -136,7 +138,8 @@ class HTTPPushPublishTestCase(unittest.TestCase):
     @mock.patch('superdesk.errors.notifiers')
     @mock.patch('requests.post')
     def test_client_publish_error_thrown(self, fake_post, fake_notifiers):
-        raise_http_exception = Mock(side_effect=PublishHTTPPushClientError.httpPushError(Exception('client 4xx')))
+        with self.app.app_context():
+            raise_http_exception = Mock(side_effect=PublishHTTPPushClientError.httpPushError(Exception('client 4xx')))
 
         fake_post.return_value = Mock(status_code=401, text='client 4xx', raise_for_status=raise_http_exception)
 
@@ -146,12 +149,14 @@ class HTTPPushPublishTestCase(unittest.TestCase):
         service = HTTPPushService()
 
         with self.assertRaises(PublishHTTPPushClientError):
-            service._push_item(self.destination, json.dumps(self.item))
+            with self.app.app_context():
+                service._push_item(self.destination, json.dumps(self.item))
 
     @mock.patch('superdesk.errors.notifiers')
     @mock.patch('requests.post')
     def test_server_publish_error_thrown(self, fake_post, fake_notifiers):
-        raise_http_exception = Mock(side_effect=PublishHTTPPushServerError.httpPushError(Exception('server 5xx')))
+        with self.app.app_context():
+            raise_http_exception = Mock(side_effect=PublishHTTPPushServerError.httpPushError(Exception('server 5xx')))
 
         fake_post.return_value = Mock(status_code=503, text='server 5xx', raise_for_status=raise_http_exception)
 
@@ -161,7 +166,8 @@ class HTTPPushPublishTestCase(unittest.TestCase):
         service = HTTPPushService()
 
         with self.assertRaises(PublishHTTPPushServerError):
-            service._push_item(self.destination, json.dumps(self.item))
+            with self.app.app_context():
+                service._push_item(self.destination, json.dumps(self.item))
 
     @mock.patch('superdesk.publish.transmitters.http_push.app')
     @mock.patch('requests.post', return_value=CreatedResponse)
