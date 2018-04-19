@@ -143,3 +143,12 @@ class STTNoHLTestCase(BaseSTTNewsMLTestCase):
         item = self.item[0]
         self.assertEqual(item['headline'], '*** DISCLAIMER: THIS IS AN AUTOMATED TRANSLATION FROM FINNISH ***'
                                            '\n\nAlso the unemployment law went th')
+
+
+class STTAbstractTestCase(BaseSTTNewsMLTestCase):
+    filename = 'stt_newsml_abstract_test.xml'
+
+    def test_content(self):
+        item = self.item[0]
+        self.assertEqual(item['abstract'], 'Hjallis Harkimo ja Mikael Jungner ovat perustamassa uutta poliittista '
+                                           'liikettä perinteisiä puolueita haastamaan, uutisoi Helsingin Sanomat.')
