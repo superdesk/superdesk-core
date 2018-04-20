@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<newsItem guid="urn:newsml:stt.fi:20180419:102051098" version="1" standardversion="2.12" conformance="power" xml:lang="fi-FI" xmlns:stt="http://www.stt-lehtikuva.fi/NewsML" standard="NewsML-G2" xsi:schemaLocation="http://iptc.org/std/nar/2006-10-01/ http://www.iptc.org/std/NewsML-G2/2.12/specification/NewsML-G2_2.12-spec-All-Power.xsd http://www.stt-lehtikuva.fi/NewsML http://www.stt-lehtikuva.fi/newsml/schema/STT-Lehtikuva_NewsML_G2.xsd" xmlns="http://iptc.org/std/nar/2006-10-01/" stt:formatversion="1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ><catalogRef href="http://www.iptc.org/std/catalog/catalog.IPTC-G2-Standards_19.xml"/>
+<catalogRef href="http://www.iptc.org/std/catalog/catalog.IPTC-G2-Standards_18.xml"/>
+<catalogRef href="http://www.stt-lehtikuva.fi/newsml/doc/stt-NewsCodesCatalog_1.xml"/>
+
+<itemMeta>
+
+<itemClass qcode="ninat:text"/>
+<provider literal="STT"/>
+<versionCreated>2018-04-19T16:41:14+03:00</versionCreated>
+<firstCreated>2018-04-19T16:41:12+03:00</firstCreated>
+<pubStatus qcode="stat:usable"/>
+</itemMeta>
+<contentMeta>
+<urgency>2</urgency>
+<contentCreated>2018-04-19T16:41:12+03:00</contentCreated>
+<contentModified>2018-04-19T16:41:14+03:00</contentModified>
+<altId type="sttidtype:textid">115579386</altId>
+<located type="loctyp:City">
+<name>Helsinki</name>
+</located>
+<infoSource qcode="sttsource:1">
+<name>STT</name>
+</infoSource>
+<altId type="sttidtype:runningnumber" environment="sttcounter:daily">stt 215</altId>
+<rating value="6" scalemin="1" scalemax="9" scaleunit="rscaleunit:number" ratingtype="sttrating:webprio"/>
+<subject type="cpnat:abstract" literal="Related topic id" qcode="stt-topics:450367"/>
+<subject type="cpnat:abstract" qcode="sttdepartment:9">
+<name>Politiikka</name>
+</subject>
+<subject type="cpnat:abstract" qcode="sttsubj:11000000">
+<name>Politiikka</name>
+</subject>
+<subject type="cpnat:abstract" qcode="sttsubj:11009000">
+<name>Eduskunta Parlamentti</name>
+</subject>
+<subject type="cpnat:abstract" qcode="sttsubj:11000000">
+<name>Politiikka</name>
+</subject>
+<subject type="cpnat:abstract" qcode="sttsubj:11010000">
+<name>Puolueet Yhteiskunnalliset liikkeet </name>
+</subject>
+<subject type="cpnat:abstract" qcode="sttsubj:11010999">
+<name>Muut puolueet ja poliittiset ryhmät</name>
+</subject>
+<subject type="cpnat:abstract" qcode="sttsubj:11000000">
+<name>Politiikka</name>
+</subject>
+<subject type="cpnat:abstract" qcode="sttsubj:11010000">
+<name>Puolueet Yhteiskunnalliset liikkeet </name>
+</subject>
+<subject type="cpnat:abstract" qcode="sttsubj:11010992">
+<name>Kokoomus</name>
+</subject>
+<slugline/>
+<dateline>Helsinki</dateline>
+<by/>
+<description role="drol:summary">Hjallis Harkimo ja Mikael Jungner ovat perustamassa uutta poliittista liikettä perinteisiä puolueita haastamaan, uutisoi Helsingin Sanomat.</description>
+<headline/>
+<genre type="sttnat:texttype" qcode="sttgenre:1" literal="Pääjuttu">
+<name>Pääjuttu</name>
+</genre>
+<genre type="sttnat:versiontype" qcode="sttversion:1" literal="Viiva">
+<name>Viiva</name>
+<related qcode="sttrel:actuallength" value="170"/>
+</genre>
+</contentMeta>
+<assert qcode="sttlocmeta:rich:17591">
+<name>Suomi</name>
+<definition/>
+<geoAreaDetails/>
+<POIDetails>
+<address>
+<line> </line>
+<postalCode/>
+</address>
+</POIDetails>
+</assert>
+<contentSet>
+<inlineXML contenttype="xhtml/xml">
+<html>
+<body>
+<p>Kokoomuksen ryhmänjohtaja Jokinen Harkimon erosta: Harmillinen asia, että hän on päätynyt tällaiseen ratkaisuun erota puolueesta ja ettei löytänyt omaa rooliaan ryhmässä.</p></body>
+</html>
+</inlineXML>
+</contentSet></newsItem>

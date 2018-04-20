@@ -38,6 +38,14 @@ class STTNewsMLFeedParser(NewsMLTwoFeedParser):
             item = self.parse_item(xml)
             if not item.get('headline'):
                 item['headline'] = text_utils.get_text(item.get('body_html', ''), 'html')[:100]
+
+            try:
+                abstract = xml.xpath("//iptc:description[@role='drol:summary']", namespaces={'iptc': IPTC_NS})[0].text
+            except IndexError:
+                pass
+            else:
+                if abstract:
+                    item['abstract'] = abstract
             return [item]
         except Exception as ex:
             raise ParserError.newsmlTwoParserError(ex, provider)
