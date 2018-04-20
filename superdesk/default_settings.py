@@ -21,11 +21,19 @@ import tzlocal
 from datetime import timedelta, datetime
 from celery.schedules import crontab
 from kombu import Queue, Exchange
+from distutils.util import strtobool as _strtobool
 
 try:
     from urllib.parse import urlparse
 except ImportError:
     from urlparse import urlparse
+
+
+def strtobool(value):
+    try:
+        return bool(_strtobool(value))
+    except ValueError:
+        return False
 
 
 def env(variable, fallback_value=None):
@@ -180,7 +188,7 @@ BROKER_URL = env('CELERY_BROKER_URL', REDIS_URL)
 CELERY_BROKER_URL = BROKER_URL
 
 #: celery task config
-CELERY_TASK_ALWAYS_EAGER = (env('CELERY_ALWAYS_EAGER', False) == 'True')
+CELERY_TASK_ALWAYS_EAGER = strtobool(env('CELERY_ALWAYS_EAGER', 'false'))
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_TASK_PROTOCOL = 1
 CELERY_TASK_IGNORE_RESULT = True
@@ -487,9 +495,9 @@ MAIL_SERVER = env('MAIL_SERVER', 'localhost')
 #: email server port
 MAIL_PORT = int(env('MAIL_PORT', 25))
 #: use tls connection
-MAIL_USE_TLS = json.loads(env('MAIL_USE_TLS', 'False').lower())
+MAIL_USE_TLS = strtobool(env('MAIL_USE_TLS', 'False'))
 #: use ssl connection
-MAIL_USE_SSL = json.loads(env('MAIL_USE_SSL', 'False').lower())
+MAIL_USE_SSL = strtobool(env('MAIL_USE_SSL', 'False'))
 #: email account username
 MAIL_USERNAME = env('MAIL_USERNAME', '')
 #: email account password
@@ -502,8 +510,8 @@ _MAIL_FROM = env('MAIL_FROM', MAIL_USERNAME)
 #: list of admin emails - get error notifications by default
 ADMINS = [_MAIL_FROM]
 
-DEBUG = bool(env('SUPERDESK_DEBUG', ''))
-SUPERDESK_TESTING = (env('SUPERDESK_TESTING', 'false').lower() == 'true')
+DEBUG = strtobool(env('SUPERDESK_DEBUG', 'false'))
+SUPERDESK_TESTING = strtobool(env('SUPERDESK_TESTING', 'false'))
 
 #: Set the timezone celery functions to UTC to avoid daylight savings issues SDESK-1057
 CELERY_TIMEZONE = 'UTC'
@@ -571,7 +579,7 @@ DEFAULT_PRIORITY_VALUE_FOR_INGESTED_ARTICLES = int(env('DEFAULT_PRIORITY_VALUE_F
 DEFAULT_URGENCY_VALUE_FOR_INGESTED_ARTICLES = int(env('DEFAULT_URGENCY_VALUE_FOR_INGESTED_ARTICLES', 3))
 
 #: Defines default value for Priority to be reset for update articles SD-4595
-RESET_PRIORITY_VALUE_FOR_UPDATE_ARTICLES = json.loads(env('RESET_PRIORITY_VALUE_FOR_UPDATE_ARTICLES', 'False').lower())
+RESET_PRIORITY_VALUE_FOR_UPDATE_ARTICLES = strtobool(env('RESET_PRIORITY_VALUE_FOR_UPDATE_ARTICLES', 'False'))
 
 #: Determines if the ODBC publishing mechanism will be used, If enabled then pyodbc must be installed along with it's
 #: dependencies
@@ -616,7 +624,7 @@ XMPP_AUTH_URL = env('XMPP_AUTH_URL', '')
 XMPP_AUTH_DOMAIN = env('XMPP_AUTH_DOMAIN', 'Superdesk')
 
 #: copies basic metadata from parent of associated items
-COPY_METADATA_FROM_PARENT = (env('COPY_METADATA_FROM_PARENT', 'false').lower() == 'true')
+COPY_METADATA_FROM_PARENT = strtobool(env('COPY_METADATA_FROM_PARENT', 'false'))
 
 #: The number of hours before temporary media files are purged
 TEMP_FILE_EXPIRY_HOURS = int(env('TEMP_FILE_EXPIRY_HOURS', 24))
@@ -659,3 +667,6 @@ PUBLISH_ASSOCIATED_ITEMS = False
 
 # Use content profile for validation when auto-publishing
 AUTO_PUBLISH_CONTENT_PROFILE = True
+
+#: controll error notifications globally
+ERROR_NOTIFICATIONS = strtobool(env('SUPERDESK_ERROR_NOTIFICATIONS', 'true'))

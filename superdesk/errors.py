@@ -63,6 +63,11 @@ def log_exception(message, extra=None, data=None):
         logger.error(message, extra=extra)
 
 
+def notifications_enabled():
+    """Test if notifications are enabled in config."""
+    return app.config.get('ERROR_NOTIFICATIONS', True)
+
+
 class SuperdeskError(ValidationError):
     _codes = {}
     system_exception = None
@@ -209,7 +214,7 @@ class SuperdeskIngestError(SuperdeskError):
         self.provider_name = provider.get('name', 'Unknown provider') if provider else 'Unknown provider'
 
         if exception:
-            if provider.get('notifications', {}).get('on_error', True):
+            if provider.get('notifications', {}).get('on_error', True) and notifications_enabled():
                 exception_msg = str(exception)[-200:]
                 update_notifiers('error',
                                  'Error [%s] on ingest provider {{name}}: %s' % (code, exception_msg),
@@ -483,11 +488,12 @@ class SuperdeskPublishError(SuperdeskError):
 
         if exception:
             exception_msg = str(exception)[-200:]
-            update_notifiers('error',
-                             'Error [%s] on a Subscriber''s destination {{name}}: %s' % (code, exception_msg),
-                             resource='subscribers' if destination else None,
-                             name=self.destination_name,
-                             provider_id=destination.get('_id', ''))
+            if notifications_enabled():
+                update_notifiers('error',
+                                 'Error [%s] on a Subscriber''s destination {{name}}: %s' % (code, exception_msg),
+                                 resource='subscribers' if destination else None,
+                                 name=self.destination_name,
+                                 provider_id=destination.get('_id', ''))
 
             extra = {}
             if destination:
