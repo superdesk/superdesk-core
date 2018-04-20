@@ -29,9 +29,10 @@ class CreateUserCommand(superdesk.Command):
         superdesk.Option('--password', '-p', dest='password', required=True),
         superdesk.Option('--email', '-e', dest='email', required=True),
         superdesk.Option('--admin', '-a', dest='admin', required=False, action='store_true'),
+        superdesk.Option('--support', '-s', dest='support', required=False, action='store_true'),
     )
 
-    def run(self, username, password, email, admin=False):
+    def run(self, username, password, email, admin=False, support=False):
 
         # force type conversion to boolean
         user_type = 'administrator' if admin else 'user'
@@ -42,6 +43,7 @@ class CreateUserCommand(superdesk.Command):
             'email': email,
             'user_type': user_type,
             'is_active': admin,
+            'is_support': support,
             'needs_activation': not admin
         }
 
