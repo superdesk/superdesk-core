@@ -24,6 +24,7 @@ from superdesk.users import get_user_from_request
 from superdesk.utc import utcnow
 from superdesk.errors import SuperdeskApiError
 from superdesk.default_schema import DEFAULT_SCHEMA, DEFAULT_EDITOR
+from copy import deepcopy
 
 logger = logging.getLogger(__name__)
 
@@ -69,8 +70,8 @@ class VocabulariesResource(Resource):
                 'type': 'dict',
                 'allow_unknown': True,
                 'schema': {
-                    'name': {'type': 'string', 'required': True, 'nullable': False},
-                    'qcode': {'type': 'string', 'required': True, 'nullable': False}
+                    'name': {'type': 'string', 'required': False, 'nullable': True},
+                    'qcode': {'type': 'string', 'required': False, 'nullable': True}
                 }
             }
         },
@@ -123,14 +124,24 @@ class VocabulariesService(BaseService):
 
     system_keys = set(DEFAULT_SCHEMA.keys()).union(set(DEFAULT_EDITOR.keys()))
 
+    def _validate_items(self, update):
+        if 'schema' in update and 'items' in update and \
+                ('name' in update['schema'] or 'qcode' in update['schema']):
+            for index, item in enumerate(update['items']):
+                for field in ['name', 'qcode']:
+                    if field in update['schema'] and field not in item:
+                        raise SuperdeskApiError.badRequestError('Required ' + field + ' in item ' + str(index))
+
     def on_create(self, docs):
         for doc in docs:
+            self._validate_items(doc)
             if doc.get('field_type') and doc['_id'] in self.system_keys:
                 raise SuperdeskApiError(
                     message='{} is in use'.format(doc['_id']),
                     payload={'_id': {'conflict': 1}})
 
     def on_replace(self, document, original):
+        self._validate_items(document)
         document[app.config['LAST_UPDATED']] = utcnow()
         document[app.config['DATE_CREATED']] = original.get(app.config['DATE_CREATED'],
                                                             utcnow()) if original else utcnow()
@@ -160,6 +171,10 @@ class VocabulariesService(BaseService):
 
     def on_update(self, updates, original):
         """Checks the duplicates if a unique field is defined"""
+        if 'items' in updates:
+            updated = deepcopy(original)
+            updated.update(updates)
+            self._validate_items(updated)
         unique_field = original.get('unique_field')
         if unique_field:
             self._check_uniqueness(updates.get('items', []), unique_field)

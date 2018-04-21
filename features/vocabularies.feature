@@ -131,7 +131,7 @@ Feature: Vocabularies
     Then we get error 400
     """
     {"_status": "ERR",
-    "_issues": {"items": {"0": {"qcode": {"required": 1}}}}}
+    "_issues": {"validator exception": "400: qcode cannot be empty"}}
     """
 
   @auth @vocabulary
@@ -229,17 +229,35 @@ Feature: Vocabularies
   Scenario: Create vocabularies with missing name and qcode
     When we post to "vocabularies"
     """
-    {"_id": "foo", "type": "manageable", "display_name": "Foo", "items": [{"name": "name"}]}
+    {"_id": "foo", "type": "manageable", "display_name": "Foo", "items": [{"name": "name"}], "schema": {"name": {}, "qcode": {}}}
     """
     Then we get error 400
     """
-    {"_issues": {"items": {"0": {"qcode": {"required": 1}}}}, "_status": "ERR"}
+    {"_message": "Required qcode in item 0", "_status": "ERR"}
     """
     When we post to "vocabularies"
     """
-    {"_id": "foo", "type": "manageable", "display_name": "Foo", "items": [{"qcode": "qcode"}]}
+    {"_id": "foo", "type": "manageable", "display_name": "Foo", "items": [{"qcode": "qcode"}], "schema": {"name": {}, "qcode": {}}}
     """
     Then we get error 400
     """
-    {"_issues": {"items": {"0": {"name": {"required": 1}}}}, "_status": "ERR"}
+    {"_message": "Required name in item 0", "_status": "ERR"}
+    """
+    When we post to "vocabularies"
+    """
+    {"_id": "foo", "type": "manageable", "display_name": "Foo", "items": [{"foo": "bar"}]}
+    """
+    Then we get response code 201
+    When we post to "vocabularies"
+    """
+    {"_id": "bar", "type": "manageable", "display_name": "Bar", "schema": {"name": {}, "qcode": {}}, "items": []}
+    """
+    Then we get response code 201
+    When we patch "/vocabularies/bar"
+    """
+    {"items": [{"name": "Article"}]}
+    """
+    Then we get error 400
+    """
+    {"_issues": {"validator exception": "400: Required qcode in item 0"}, "_status": "ERR"}
     """
