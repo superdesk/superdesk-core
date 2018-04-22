@@ -491,3 +491,15 @@ Feature: User Resource
 
         When we get "users/?where={"$or":[{"username":{"$regex":"fo","$options":"-i"}}]}"
         Then we get list with 1 items
+
+    @auth
+    Scenario: Test email correction
+        Given empty "users"
+        When we post to "/users"
+        """
+        {"username": "foo", "password": "barbar", "email": "SOME@EMAIL.COM", "sign_off": "asd"}
+        """
+        Then we get new resource
+        """
+        {"email": "some@email.com"}
+        """
