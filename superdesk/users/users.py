@@ -91,6 +91,10 @@ class UsersResource(Resource):
                 'allowed': ['user', 'administrator'],
                 'default': 'user'
             },
+            'is_support': {
+                'type': 'boolean',
+                'default': False
+            },
             'is_author': {
                 'type': 'boolean',
                 'default': True
