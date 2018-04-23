@@ -49,7 +49,8 @@ class UsersResource(Resource):
             'email': {
                 'unique': True,
                 'type': 'email',
-                'required': True
+                'required': True,
+                'coerce': lambda s: s.lower()
             },
             'phone': {
                 'type': 'string',
