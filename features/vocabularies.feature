@@ -229,7 +229,10 @@ Feature: Vocabularies
   Scenario: Create vocabularies with missing name and qcode
     When we post to "vocabularies"
     """
-    {"_id": "foo", "type": "manageable", "display_name": "Foo", "items": [{"name": "name"}], "schema": {"name": {}, "qcode": {}}}
+    {
+    	"_id": "foo", "type": "manageable", "display_name": "Foo", "items": [{"name": "name"}],
+    	"schema": {"name": {"required": true}, "qcode": {"required": true}}
+    }
     """
     Then we get error 400
     """
@@ -237,7 +240,10 @@ Feature: Vocabularies
     """
     When we post to "vocabularies"
     """
-    {"_id": "foo", "type": "manageable", "display_name": "Foo", "items": [{"qcode": "qcode"}], "schema": {"name": {}, "qcode": {}}}
+    {
+    	"_id": "foo", "type": "manageable", "display_name": "Foo", "items": [{"qcode": "qcode"}],
+    	"schema": {"name": {"required": true}, "qcode": {"required": true}}
+    }
     """
     Then we get error 400
     """
@@ -250,7 +256,10 @@ Feature: Vocabularies
     Then we get response code 201
     When we post to "vocabularies"
     """
-    {"_id": "bar", "type": "manageable", "display_name": "Bar", "schema": {"name": {}, "qcode": {}}, "items": []}
+    {
+    	"_id": "bar", "type": "manageable", "display_name": "Bar",
+    	"schema": {"name": {"required": true}, "qcode": {"required": true}}, "items": []
+    }
     """
     Then we get response code 201
     When we patch "/vocabularies/bar"

@@ -125,11 +125,10 @@ class VocabulariesService(BaseService):
     system_keys = set(DEFAULT_SCHEMA.keys()).union(set(DEFAULT_EDITOR.keys()))
 
     def _validate_items(self, update):
-        if 'schema' in update and 'items' in update and \
-                ('name' in update['schema'] or 'qcode' in update['schema']):
+        if 'schema' in update and 'items' in update:
             for index, item in enumerate(update['items']):
-                for field in ['name', 'qcode']:
-                    if field in update['schema'] and field not in item:
+                for field, desc in update.get('schema', {}).items():
+                    if desc.get('required', False) and (field not in item or not item[field]):
                         raise SuperdeskApiError.badRequestError('Required ' + field + ' in item ' + str(index))
 
     def on_create(self, docs):
