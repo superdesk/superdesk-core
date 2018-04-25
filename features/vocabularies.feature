@@ -224,3 +224,49 @@ Feature: Vocabularies
     Then we get response code 204
     When we get "/vocabularies/text1"
     Then we get error 404
+
+  @auth
+  Scenario: Create vocabularies with missing name and qcode
+    When we post to "vocabularies"
+    """
+    {
+    	"_id": "foo", "type": "manageable", "display_name": "Foo", "items": [{"name": "name"}],
+    	"schema": {"name": {"required": true}, "qcode": {"required": true}}
+    }
+    """
+    Then we get error 400
+    """
+    {"_message": "Required qcode in item 0", "_status": "ERR"}
+    """
+    When we post to "vocabularies"
+    """
+    {
+    	"_id": "foo", "type": "manageable", "display_name": "Foo", "items": [{"qcode": "qcode"}],
+    	"schema": {"name": {"required": true}, "qcode": {"required": true}}
+    }
+    """
+    Then we get error 400
+    """
+    {"_message": "Required name in item 0", "_status": "ERR"}
+    """
+    When we post to "vocabularies"
+    """
+    {"_id": "foo", "type": "manageable", "display_name": "Foo", "items": [{"foo": "bar"}]}
+    """
+    Then we get response code 201
+    When we post to "vocabularies"
+    """
+    {
+    	"_id": "bar", "type": "manageable", "display_name": "Bar",
+    	"schema": {"name": {"required": true}, "qcode": {"required": true}}, "items": []
+    }
+    """
+    Then we get response code 201
+    When we patch "/vocabularies/bar"
+    """
+    {"items": [{"name": "Article"}]}
+    """
+    Then we get error 400
+    """
+    {"_issues": {"validator exception": "400: Required qcode in item 0"}, "_status": "ERR"}
+    """
