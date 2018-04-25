@@ -62,7 +62,10 @@ class SuperdeskDataLayer(DataLayer):
         return self._backend(resource).find(resource, req, None)
 
     def find_one(self, resource, req, **lookup):
-        return superdesk.get_resource_service(resource).find_one(req=req, **lookup)
+        item = superdesk.get_resource_service(resource).find_one(req=req, **lookup)
+        if item is not None:
+            item.setdefault('_type', self.datasource(resource)[0])
+        return item
 
     def find_one_raw(self, resource, _id):
         return self._backend(resource).find_one_raw(resource, _id)

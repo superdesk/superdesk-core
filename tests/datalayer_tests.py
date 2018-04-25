@@ -45,3 +45,9 @@ class DatalayerTestCase(TestCase):
         ids = service.post([{'resource': 'foo', 'action': 'get', '_etag': 'foo'}])
         item = service.find_one(None, _id=ids[0])
         self.assertEqual('foo', item['_etag'])
+
+    def test_find_one_type(self):
+        self.app.data.insert('archive', [{'guid': 'foo'}])
+        item = self.app.data.find_one('archive', req=None, guid='foo')
+        self.assertIsNotNone(item)
+        self.assertEqual('archive', item.get('_type'))
