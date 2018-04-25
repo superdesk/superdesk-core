@@ -126,6 +126,8 @@ class EveBackend():
         :param endpoint_name: api resource name
         :param docs: list of docs to be inserted
         """
+        for doc in docs:
+            doc.pop('_type', None)
         ids = self.create_in_mongo(endpoint_name, docs, **kwargs)
         self.create_in_search(endpoint_name, docs, **kwargs)
         return ids
@@ -331,7 +333,7 @@ class EveBackend():
                               search_backend.get_parent_id(endpoint_name, doc))
 
     def _datasource(self, endpoint_name):
-        return app.data._datasource(endpoint_name)[0]
+        return app.data.datasource(endpoint_name)[0]
 
     def _backend(self, endpoint_name):
         return app.data._backend(endpoint_name)
