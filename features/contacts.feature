@@ -159,3 +159,31 @@ Feature: Contacts
         {"first_name": "Jane"}
         """
         Then we get error 403
+
+    @auth
+    Scenario: Search for organisation
+        Given "contacts"
+        """
+        [{"_id":"1", "organisation": "Foo shoes"},
+        {"_id":"2", "organisation": "Foo socks"},
+        {"_id":"3", "organisation": "Boo shoes"}]
+        """
+        When we get "/contacts/organisations?q=foo so"
+        Then we get list with 1 items
+        """
+        {"_items": [{"organisation": "Foo socks"}]}
+        """
+
+    @auth
+    Scenario: Search for organisation with no duplicates
+        Given "contacts"
+        """
+        [{"_id":"1", "organisation": "Foo shoes"},
+        {"_id":"2", "organisation": "Foo socks"},
+        {"_id":"3", "organisation": "Foo shoes"}]
+        """
+        When we get "/contacts/organisations?q=foo"
+        Then we get list with 2 items
+        """
+        {"_items": [{"organisation": "Foo socks"}]}
+        """

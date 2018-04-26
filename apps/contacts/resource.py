@@ -147,3 +147,19 @@ class ContactsResource(Resource):
     privileges = {'POST': CONTACTS_PRIVILEDGE,
                   'PATCH': CONTACTS_PRIVILEDGE,
                   'DELETE': CONTACTS_PRIVILEDGE}
+
+
+class OrganisationSearchResource(Resource):
+    """Search for organisation within the contacts collection
+
+    """
+
+    datasource = {
+        'source': 'contacts',
+        'search_backend': 'elastic'
+    }
+
+    resource_methods = ['GET']
+    item_methods = ['GET']
+    url = 'contacts/organisations'
+    resource_title = 'contacts_organisations'
