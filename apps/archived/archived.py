@@ -268,7 +268,7 @@ class ArchivedService(BaseService):
             logger.info('Legal Archive import for article: {}'.format(article[config.ID_FIELD]))
 
             # Step 3(v)
-            kill_service.broadcast_kill_email(article, updates)
+            kill_service.broadcast_kill_email(article, updates_copy)
             logger.info('Broadcast kill email for article: {}'.format(article[config.ID_FIELD]))
 
     def on_updated(self, updates, original):

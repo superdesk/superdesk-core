@@ -155,6 +155,13 @@ Feature: Kill a content item in the (dusty) archive
     Then we get OK response
     And we get text "Please kill story slugged archived" in response field "body_html"
     And we get text "Killed body" in response field "body_html"
+    And we get emails
+    """
+    [
+      {"body": "Please kill story slugged archived"},
+      {"body": "Killed body"}
+    ]
+    """
     When we get "/archived/123:2"
     Then we get error 404
     When we get "/archived"
