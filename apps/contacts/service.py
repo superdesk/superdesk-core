@@ -12,6 +12,7 @@
 from superdesk.services import Service
 from superdesk.notification import push_notification
 from eve.utils import config
+from eve.utils import ParsedRequest
 
 
 class ContactsService(Service):
@@ -48,3 +49,29 @@ class ContactsService(Service):
         :return:
         """
         push_notification('contacts:deleted', _id=[doc.get(config.ID_FIELD)])
+
+
+class OrganisationService(Service):
+    def get(self, req, lookup):
+        """
+        Search for organisation matching the passed q parameter
+        :param req:
+        :param lookup:
+        :return: List of matching organisation strings
+        """
+        new_req = ParsedRequest()
+
+        q_str = 'organisation:' + '* organisation:'.join(req.args.get('q', '').split()) + '*'
+        new_req.args = {'q': q_str, 'default_operator': 'AND', 'projections': '{"organisation": 1}'}
+        ret = super().get(new_req, lookup)
+
+        # Remove any duplicate entries from the response
+        orgs = []
+        de_duped = []
+        for d in ret.docs:
+            if d.get('organisation') not in orgs:
+                orgs.append(d.get('organisation'))
+                de_duped.append(d)
+        ret.docs = de_duped
+        ret.hits['hits']['total'] = len(ret.docs)
+        return ret
