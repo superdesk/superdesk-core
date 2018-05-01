@@ -723,7 +723,37 @@ Feature: News Items Archive
         }}}]
     	"""
         Then we get OK response
-        Then we get existing resource
+        And we get existing resource
         """
-        {"guid": "123", "associations": {"_type": "__no_value__"}}
+        {"guid": "123", "associations": {"editor_0": {"guid": "234", "_type": "__no_value__"}}}
+        """
+
+    @auth
+    Scenario: Set _updated and _created as proper timestamps in associations
+    	Given "archive"
+    	"""
+    	[{"guid": "234", "type": "picture", "headline": "picture", "renditions": {"original": {}}}]
+    	"""
+    	When we post to "/archive"
+    	"""
+    	[{"guid": "123", "type": "text", "headline": "test", "state": "in_progress",
+          "associations": {"editor_0": {
+        	"guid": "234", "type": "picture", "slugline": "s234", "state": "in_progress",
+        	"headline": "some headline", "_updated": "2018-05-01 22:01:46.000Z",
+        	"renditions": {"original": {}}
+        }}}]
+    	"""
+        Then we get OK response
+        And we get existing resource
+        """
+        {"guid": "123", "associations": {"editor_0": {"_updated": "#archive._updated#"}}}
+        """
+		When we patch "/archive/123"
+        """
+        {"associations": {"editor_0": {"_id": "234", "_updated": "2018-05-01 22:01:46.000Z"}}}
+        """
+        Then we get OK response
+        And we get existing resource
+        """
+        {"guid": "123", "associations": {"editor_0": {"_updated": "#archive._updated#"}}}
         """

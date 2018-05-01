@@ -197,6 +197,8 @@ class ArchiveService(BaseService):
             self.validate_embargo(doc)
 
             update_associations(doc)
+            for assoc in doc.get(ASSOCIATIONS, {}).values():
+                assoc[config.LAST_UPDATED] = doc[config.LAST_UPDATED]
 
             if doc.get('media'):
                 self.mediaService.on_create([doc])
@@ -300,6 +302,10 @@ class ArchiveService(BaseService):
                     self.system_update(media_item['_id'], {'used': True}, media_item)
 
                 stored_item['used'] = True
+
+            item_obj[config.LAST_UPDATED] = updates[config.LAST_UPDATED]
+            if config.DATE_CREATED in item_obj:
+                del item_obj[config.DATE_CREATED]
 
             stored_item.update(item_obj)
             updates[ASSOCIATIONS][item_name] = stored_item
