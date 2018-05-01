@@ -56,13 +56,13 @@ DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S%z"
 ANALYTICS_DATETIME_FORMAT = "%Y-%m-%d %H:00:00"
 
 
-def test_json(context):
+def test_json(context, json_fields=[]):
     try:
         response_data = json.loads(context.response.get_data())
     except Exception:
         fail_and_print_body(context.response, 'response is not valid json')
     context_data = json.loads(apply_placeholders(context, context.text))
-    assert_equal(json_match(context_data, response_data), True,
+    assert_equal(json_match(context_data, response_data, json_fields), True,
                  msg=str(context_data) + '\n != \n' + str(response_data))
     return response_data
 
@@ -115,7 +115,7 @@ def assert_is_now(val, key):
     assert val + timedelta(seconds=2) > now, '%s should be now, it is %s' % (key, val)
 
 
-def json_match(context_data, response_data):
+def json_match(context_data, response_data, json_fields=[]):
     if isinstance(context_data, dict):
         if (not isinstance(response_data, dict)):
             return False
@@ -138,14 +138,21 @@ def json_match(context_data, response_data):
             if context_data[key] == "__empty__":
                 assert len(response_data[key]) == 0, '%s is not empty (%s)' % (key, response_data[key])
                 continue
-            if not json_match(context_data[key], response_data[key]):
+            response_field = response_data[key]
+            if key in json_fields:
+                try:
+                    response_field = json.loads(response_data[key])
+                except Exception:
+                    fail_and_print_body(response_data,
+                                        'response does not contain a valid %s field' % key)
+            if not json_match(context_data[key], response_field, json_fields):
                 return False
         return True
     elif isinstance(context_data, list):
         for item_context in context_data:
             found = False
             for item_response in response_data:
-                if json_match(item_context, item_response):
+                if json_match(item_context, item_response, json_fields):
                     found = True
                     break
             if not found:

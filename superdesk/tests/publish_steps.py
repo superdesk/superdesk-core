@@ -13,7 +13,8 @@ import requests_mock
 from flask import json
 from behave import when, then  # @UnresolvedImport
 from apps.publish.enqueue import enqueue_published
-from superdesk.tests.steps import assert_200, apply_placeholders, json_match
+from superdesk.tests.steps import assert_200, apply_placeholders, json_match, \
+    get_json_data, test_json, format_items
 from wooper.general import fail_and_print_body
 from wooper.assertions import assert_equal
 from superdesk.publish import transmit
@@ -35,6 +36,23 @@ def then_we_get_formatted_item(context):
     context_data = json.loads(apply_placeholders(context, context.text))
     assert_equal(json_match(context_data, formatted_item), True,
                  msg=str(context_data) + '\n != \n' + str(formatted_item))
+
+
+@then('we get {total_count} queued items')
+def then_we_get_formatted_items(context, total_count):
+    assert_200(context.response)
+    data = get_json_data(context.response)
+    int_count = int(total_count.replace('+', '').replace('<', ''))
+
+    if '+' in total_count:
+        assert int_count <= data['_meta']['total'], '%d items is not enough' % data['_meta']['total']
+    elif total_count.startswith('<'):
+        assert int_count > data['_meta']['total'], '%d items is too much' % data['_meta']['total']
+    else:
+        assert int_count == data['_meta']['total'], 'got %d: %s' % (data['_meta']['total'],
+                                                                    format_items(data['_items']))
+    if context.text:
+        test_json(context, ['formatted_item'])
 
 
 @then('we pushed 1 item')

@@ -2634,3 +2634,135 @@ Feature: Content Publishing
         }
       }
       """
+
+    @auth
+    @vocabulary
+    Scenario: Compare embedded items for content API and HTTP push destinations
+      Given empty "filter_conditions"
+      Given empty "content_filters"
+      Given empty "products"
+      Given empty "subscribers"
+      Given "desks"
+      """
+      [{"name": "Sports"}]
+      """
+      And "archive"
+      """
+      [{"_id": "234", "guid": "234", "type": "picture", "slugline": "s234", "state": "in_progress",
+        "headline": "some headline", "_current_version": 1,
+        "renditions": {"original": {"mimetype": "audio/mp3", "media": "5ae35d0095cc644f859a94c2",
+        	"href": "http://localhost:5000/api/upload-raw/5ae35d0095cc644f859a94c2"
+        }}},
+       {"guid": "123", "type": "text", "headline": "fc_api", "_current_version": 1, "state": "in_progress",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "subject":[{"qcode": "17004000", "name": "Statistics"}], "body_html": "Test Document body",
+        "associations": {"media--1": {
+        	"_id": "234", "guid": "234", "type": "picture", "slugline": "s234", "state": "in_progress",
+        	"headline": "some headline", "_type": "archive", "_current_version": 1,
+        	"renditions": {"original": {"mimetype": "audio/mp3", "media": "5ae35d0095cc644f859a94c2",
+        		"href": "http://localhost:5000/api/upload-raw/5ae35d0095cc644f859a94c2"
+        }}}}}]
+      """
+      When we post to "/filter_conditions" with "fc_api" and success
+      """
+      [{"name": "fc_api", "field": "headline", "operator": "like", "value": "api"}]
+      """
+      When we post to "/content_filters" with "cf_api" and success
+      """
+      [{"content_filter": [{"expression": {"fc": ["#fc_api#"]}}], "name": "cf_api"}]
+      """
+      And we post to "/products" with "p_api" and success
+	  """
+	  [{
+	    "name":"prod-2","codes":"api",
+	    "content_filter":{"filter_id":"#cf_api#", "filter_type": "permitting"},
+	    "product_type": "api"
+	  }]
+	  """
+      And we post to "/subscribers" with "sub_api" and success
+      """
+      {
+        "name":"Channel API","media_type":"media", "subscriber_type": "wire",  "email": "test@test.com",
+        "sequence_num_settings":{"min" : 1, "max" : 10},
+        "api_products": ["#p_api#"]
+      }
+      """
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+      }
+      """
+      And we post to "/subscribers" with "sub_reg" and success
+      """
+      {
+        "name":"Subscriber 1","media_type":"media", "subscriber_type": "digital",
+        "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
+        "destinations":[{"name":"Test","format": "ninjs", "delivery_type":"http_push","config":{}}]
+      }
+      """
+      And we publish "#archive._id#" with "publish" type and "published" state
+      Then we get OK response
+      And we get existing resource
+      """
+      {
+        "guid": "123", "state": "published",
+        "associations": {"media--1": {"state": "published"}}
+      }
+      """
+      When we enqueue published
+      When we get "/publish_queue"
+      Then we get 3 queued items
+      """
+      {
+        "_items": [
+            {
+                "item_id": "123", "state": "success", "content_type": "text",
+                "subscriber_id": "#sub_api#", "item_version": 2, "ingest_provider": "__none__",
+                "destination": {
+                    "delivery_type": "content_api", "format": "ninjs", "name": "content api"
+                },
+                "formatted_item": {
+                    "guid": "123", "version": "2", "headline": "fc_api", "body_html": "Test Document body",
+                    "language": "en", "pubstatus": "usable", "type": "text",
+                    "associations": {
+                        "media--1": {
+                            "guid": "234", "headline": "some headline", "language": "en",
+                            "slugline": "s234", "pubstatus": "usable", "type": "picture",
+                            "renditions": {
+                                "original": {
+                                    "mimetype": "audio/mp3", "media": "5ae35d0095cc644f859a94c2",
+                                    "href": "http://localhost:5000/api/upload-raw/5ae35d0095cc644f859a94c2"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "item_id": "123", "state": "pending", "content_type": "text",
+                "subscriber_id": "#sub_reg#", "item_version": 2, "ingest_provider": "__none__",
+                "destination": {
+                    "delivery_type": "http_push", "format": "ninjs", "name": "Test"
+                },
+                "formatted_item": {
+                    "guid": "123", "version": "2", "headline": "fc_api", "body_html": "Test Document body",
+                    "language": "en", "pubstatus": "usable", "type": "text",
+                    "associations": {
+                        "media--1": {
+                            "guid": "234", "headline": "some headline", "language": "en",
+                            "slugline": "s234", "pubstatus": "usable", "type": "picture",
+                            "renditions": {
+                                "original": {
+                                    "mimetype": "audio/mp3", "media": "5ae35d0095cc644f859a94c2",
+                                    "href": "http://localhost:5000/api/upload-raw/5ae35d0095cc644f859a94c2"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+      	]
+      }
+      """
