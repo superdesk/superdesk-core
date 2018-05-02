@@ -727,6 +727,15 @@ Feature: News Items Archive
         """
         {"guid": "123", "associations": {"editor_0": {"guid": "234", "_type": "__no_value__"}}}
         """
+		When we patch "/archive/123"
+        """
+        {"associations": {"editor_0": {"guid": "234", "_type": "archive"}}}
+        """
+        Then we get OK response
+        And we get existing resource
+        """
+        {"guid": "123", "associations": {"editor_0": {"guid": "234", "_type": "__no_value__"}}}
+        """
 
     @auth
     Scenario: Set _updated and _created as proper timestamps in associations
