@@ -1,5 +1,27 @@
 # Superdesk Server Changelog
 
+## [1.17] 2018-05-02
+
+### Fixed
+
+- Allow item to be archived if the associated item is not expired.
+- Provide `_type` when fetching single item from api.
+- Empty qcode was not checked for some vocabularies.
+- Parse abstract metadata in STT parser.
+- Use first 100 body characters as headline if no headline is present in Ritzau feed.
+
+### Added
+
+- Add endpoint for auto suggestions for contact organisations names.
+- Add new user type `support`.
+- Add config to toggle off error notification emails globally.
+
+### Changed
+
+- Change email password field not to be case sensitive.
+- Pass destination desk/stage to incoming stage macro.
+- Make user optional when marking for a desk.
+
 ## [1.16] 2018-04-13
 
 ### Fixed
