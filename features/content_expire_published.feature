@@ -1203,17 +1203,17 @@ Feature: Content Expiry Published Items
       ["123", "#archive.123.take_package#"]
       """
       And we get "/archived"
-      Then we get list with 0 items
+      Then we get list with 2 items
       When we expire items
       """
-      ["123", "#archive.123.take_package#", "bike"]
+      ["bike"]
       """
       And we get "/archived"
       Then we get list with 2 items
       When we get "/archive"
       Then we get list with 0 items
       And we fetch a file "#rendition.4-3.href#"
-      And we get OK response      
+      And we get OK response
 
   @auth @vocabulary
   Scenario: Published a story with associated picture and spike the picture
@@ -1263,17 +1263,15 @@ Feature: Content Expiry Published Items
       Then we get list with 2 items
       When we expire items
       """
-      ["bike"]
-      """
-      And we get "/archived"
-      Then we get list with 0 items
-      When we expire items
-      """
-      ["123", "#archive.123.take_package#", "bike"]
+      ["123", "#archive.123.take_package#"]
       """
       And we get "/archived"
       Then we get list with 2 items
-      When we get "/archive"
+      When we expire items
+      """
+      ["bike"]
+      """
+      And we get "/archive"
       Then we get list with 0 items
       And we fetch a file "#rendition.4-3.href#"
       And we get OK response

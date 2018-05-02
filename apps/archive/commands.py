@@ -204,8 +204,6 @@ class RemoveExpiredContent(superdesk.Command):
         # get the list of associated item ids
         if item.get(ITEM_TYPE) in MEDIA_TYPES:
             item_refs.extend(self._get_associated_items(item))
-        else:
-            item_refs.extend(self._get_associated_media_id(item))
 
         # get item reference where this referred
         item_refs.extend(package_service.get_linked_in_package_ids(item))
