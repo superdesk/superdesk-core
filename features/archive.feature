@@ -755,7 +755,7 @@ Feature: News Items Archive
         Then we get OK response
         And we get existing resource
         """
-        {"guid": "123", "associations": {"editor_0": {"_updated": "#archive._updated#"}}}
+        {"guid": "123", "associations": {"editor_0": {"_updated": "__now__"}}}
         """
 		When we patch "/archive/123"
         """
@@ -764,5 +764,5 @@ Feature: News Items Archive
         Then we get OK response
         And we get existing resource
         """
-        {"guid": "123", "associations": {"editor_0": {"_updated": "#archive._updated#"}}}
+        {"guid": "123", "associations": {"editor_0": {"_updated": "__now__"}}}
         """
