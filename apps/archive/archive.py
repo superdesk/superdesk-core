@@ -197,6 +197,9 @@ class ArchiveService(BaseService):
             self.validate_embargo(doc)
 
             update_associations(doc)
+            for assoc in doc.get(ASSOCIATIONS, {}).values():
+                self._set_association_timestamps(assoc, doc)
+                remove_unwanted(assoc)
 
             if doc.get('media'):
                 self.mediaService.on_create([doc])
@@ -300,6 +303,8 @@ class ArchiveService(BaseService):
                     self.system_update(media_item['_id'], {'used': True}, media_item)
 
                 stored_item['used'] = True
+
+            self._set_association_timestamps(item_obj, updates, new=False)
 
             stored_item.update(item_obj)
             updates[ASSOCIATIONS][item_name] = stored_item
@@ -555,6 +560,7 @@ class ArchiveService(BaseService):
     def update(self, id, updates, original):
         if updates.get(ASSOCIATIONS):
             for association in updates[ASSOCIATIONS].values():
+                self._set_association_timestamps(association, updates, new=False)
                 remove_unwanted(association)
 
         # this needs to here as resolve_nested_documents (in eve) will add the schedule_settings
@@ -607,6 +613,14 @@ class ArchiveService(BaseService):
         version_field = versioned_id_field(app.config['DOMAIN']['archive_versions'])
         get_resource_service('archive_versions').delete_action(lookup={version_field: {'$in': ids}})
         super().delete_action({config.ID_FIELD: {'$in': ids}})
+
+    def _set_association_timestamps(self, assoc_item, updates, new=True):
+        if type(assoc_item) == dict:
+            assoc_item[config.LAST_UPDATED] = updates.get(config.LAST_UPDATED, datetime.datetime.now())
+            if new:
+                assoc_item[config.DATE_CREATED] = datetime.datetime.now()
+            elif config.DATE_CREATED in assoc_item:
+                del assoc_item[config.DATE_CREATED]
 
     def __is_req_for_save(self, doc):
         """Checks if doc contains req_for_save key.
