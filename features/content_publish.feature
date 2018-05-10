@@ -2733,7 +2733,8 @@ Feature: Content Publishing
                             "renditions": {
                                 "original": {
                                     "mimetype": "audio/mp3", "media": "5ae35d0095cc644f859a94c2",
-                                    "href": "http://localhost:5000/api/upload-raw/5ae35d0095cc644f859a94c2"
+                                    "href": "http://localhost:5000/api/upload-raw/5ae35d0095cc644f859a94c2",
+                                    "media": "5ae35d0095cc644f859a94c2"
                                 }
                             }
                         }
@@ -2756,7 +2757,8 @@ Feature: Content Publishing
                             "renditions": {
                                 "original": {
                                     "mimetype": "audio/mp3", "media": "5ae35d0095cc644f859a94c2",
-                                    "href": "http://localhost:5000/api/upload-raw/5ae35d0095cc644f859a94c2"
+                                    "href": "http://localhost:5000/api/upload-raw/5ae35d0095cc644f859a94c2",
+                                    "media": "5ae35d0095cc644f859a94c2"
                                 }
                             }
                         }
