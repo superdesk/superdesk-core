@@ -36,6 +36,7 @@
         "_id": "genre",
         "display_name": "Genre",
         "type": "manageable",
+        "unique_field": "qcode",
         "items": [
             {"is_active": true, "name": "Article (news)", "qcode": "Article"},
             {"is_active": true, "name": "Sidebar", "qcode": "Sidebar"},
@@ -89,6 +90,7 @@
         "_id": "priority",
         "display_name": "Priority",
         "type": "manageable",
+        "unique_field": "qcode",
         "items": [
             {"is_active": true, "name": "1", "qcode": 1},
             {"is_active": true, "name": "2", "qcode": 2},
@@ -218,6 +220,7 @@
         "_id": "locators",
         "display_name": "Locators",
         "type": "manageable",
+        "unique_field": "qcode",
         "items": [
             {"is_active": true, "name": "NSW", "qcode": "NSW"}
         ],
@@ -244,6 +247,7 @@
         "_id": "annotation_types",
         "display_name": "Annotation Types",
         "type": "manageable",
+        "unique_field": "qcode",
         "items": [
             {"is_active": true, "name": "Regular", "qcode": "regular"},
             {"is_active": true, "name": "Remark", "qcode": "remark"}
