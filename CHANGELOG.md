@@ -1,5 +1,20 @@
 # Superdesk Server Changelog
 
+## [1.18] 2018-05-11
+
+### Fixed
+
+- Modify json loads to handle arrow `ParserError`.
+- Fix opening published image takes too much time.
+
+### Added
+
+- Add tests for custom media multi-items ninjs output.
+
+### Changed
+
+- Set `qcode` as unique field for `genre`, `priority`, `replace_words` and `annotation_types` cvs.
+
 ## [1.17] 2018-05-02
 
 ### Fixed
