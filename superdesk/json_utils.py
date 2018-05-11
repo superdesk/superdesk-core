@@ -2,6 +2,7 @@
 import arrow
 import superdesk
 
+from arrow.parser import ParserError
 from flask import json
 from bson import ObjectId
 from bson.errors import InvalidId
@@ -24,7 +25,7 @@ def try_cast(v):
     try:
         str_to_date(v)  # try if it matches format
         return arrow.get(v).datetime  # return timezone aware time
-    except ValueError:
+    except (ValueError, ParserError):
         try:
             return ObjectId(v)
         except InvalidId:
