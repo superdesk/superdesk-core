@@ -38,12 +38,45 @@ class RSSFeedingService(FeedingService):
     """
 
     NAME = 'rss'
+
     ERRORS = [IngestApiError.apiAuthError().get_error_description(),
               IngestApiError.apiNotFoundError().get_error_description(),
               IngestApiError.apiGeneralError().get_error_description(),
               ParserError.parseMessageError().get_error_description()]
 
     label = 'RSS'
+
+    fields = [
+        {
+            'id': 'url', 'type': 'text', 'label': 'Host',
+            'placeholder': 'RSS Feed URL', 'required': True,
+            'errors': {4001: 'Connection timed out.', 4006: 'URL not found.',
+                       4009: 'Can\'t connect to host.', 1001: 'Can\'t parse the RSS.'}
+        },
+        {
+            'id': 'auth_required', 'type': 'boolean', 'label': 'Requires Authentication',
+            'placeholder': 'Requires Authentication', 'required': False
+        },
+        {
+            'id': 'username', 'type': 'text', 'label': 'Username',
+            'placeholder': 'Username', 'required_expression': '{auth_required}',
+            'show_expression': '{auth_required}'
+        },
+        {
+            'id': 'password', 'type': 'password', 'label': 'Password',
+            'placeholder': 'Password', 'required_expression': '{auth_required}',
+            'show_expression': '{auth_required}'
+        },
+        {
+            'id': 'field_aliases', 'type': 'tuple-multivalue', 'label': 'Content Field Aliases',
+            'empty_label': 'No field aliases defined.',
+            'first_field_label': 'Content Field Name', 'second_field_label': 'Field Alias',
+            'add_label': 'Add alias', 'remove_label': 'Remove', 'second_field_placeholder': 'Enter field alias',
+            'first_field_options': ['body_text', 'guid', 'published_parsed', 'summary', 'title', 'updated_parsed']
+        }
+    ]
+
+    field_groups = {'auth_data': {'label': 'Authentication Info', 'fields': ['username', 'password']}}
 
     ItemField = namedtuple('ItemField', ['name', 'name_in_data', 'type'])
 
@@ -203,6 +236,8 @@ class RSSFeedingService(FeedingService):
             response = requests.get(url, auth=auth, timeout=30)
         except requests.exceptions.ConnectionError as err:
             raise IngestApiError.apiConnectionError(exception=err)
+        except requests.exceptions.RequestException as err:
+            raise IngestApiError.apiURLError(exception=err)
 
         if response.ok:
             return response.content
@@ -401,4 +436,4 @@ class RSSFeedingService(FeedingService):
         return package
 
 
-register_feeding_service(RSSFeedingService.NAME, RSSFeedingService(), RSSFeedingService.ERRORS)
+register_feeding_service(RSSFeedingService)

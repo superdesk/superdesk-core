@@ -28,7 +28,33 @@ class TwitterFeedingService(FeedingService):
     """
 
     NAME = 'twitter'
+
     label = 'Twitter'
+
+    fields = [
+        {
+            'id': 'consumer_key', 'type': 'text', 'label': 'Twitter Consumer Key',
+            'placeholder': 'Twitter consumer_key', 'required': True,
+            'errors': {6100: 'Twitter authentication failure'}
+        },
+        {
+            'id': 'consumer_secret', 'type': 'password', 'label': 'Twitter Consumer Secret',
+            'placeholder': 'Twitter consumer_secret', 'required': True
+        },
+        {
+            'id': 'access_token_key', 'type': 'text', 'label': 'Twitter Access Token Key',
+            'placeholder': 'Twitter access_token_key', 'required': True
+        },
+        {
+            'id': 'access_token_secret', 'type': 'password', 'label': 'Twitter Access Token Secret',
+            'placeholder': 'Twitter access_token_secret', 'required': True
+        },
+        {
+            'id': 'screen_names', 'type': 'text', 'label': 'Twitter Screen Names',
+            'placeholder': 'Twitter screen_names', 'required': True,
+            'errors': {6200: 'No Screen names specified'}
+        }
+    ]
 
     ERRORS = [IngestTwitterError.TwitterLoginError().get_error_description(),
               IngestTwitterError.TwitterNoScreenNamesError().
@@ -180,5 +206,4 @@ class TwitterFeedingService(FeedingService):
         return image_items
 
 
-register_feeding_service(TwitterFeedingService.NAME, TwitterFeedingService(),
-                         TwitterFeedingService.ERRORS)
+register_feeding_service(TwitterFeedingService)

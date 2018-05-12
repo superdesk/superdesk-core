@@ -28,8 +28,29 @@ class APFeedingService(FeedingService):
     """
 
     NAME = 'ap'
+
     ERRORS = [IngestApiError.apiRequestError().get_error_description(),
               SuperdeskIngestError.notConfiguredError().get_error_description()]
+
+    label = 'AP Feed API'
+
+    fields = [
+        {
+            'id': 'username', 'type': 'text', 'label': 'Username',
+            'placeholder': 'Username', 'required': True
+        },
+        {
+            'id': 'password', 'type': 'password', 'label': 'Password',
+            'placeholder': 'Password', 'required': True
+        },
+        {
+            'id': 'idList', 'type': 'text', 'label': 'Id List',
+            'placeholder': 'use coma separated ids for multiple values', 'required': False
+        }
+    ]
+
+    def config_test(self, provider=None):
+        super().config_test(provider)
 
     def _update(self, provider, update):
         try:
@@ -85,4 +106,4 @@ class APFeedingService(FeedingService):
         return [items]
 
 
-register_feeding_service(APFeedingService.NAME, APFeedingService(), APFeedingService.ERRORS)
+register_feeding_service(APFeedingService)

@@ -34,6 +34,21 @@ class WufooFeedingService(FeedingService):
               IngestApiError.apiRequestError().get_error_description(),
               IngestApiError.apiGeneralError().get_error_description()]
 
+    label = 'wufoo Feed API'
+
+    fields = [
+        {
+            'id': 'wufoo_username', 'type': 'text', 'label': 'Login',
+            'placeholder': 'Wufoo login', 'required': True
+        },
+        {
+            'id': 'wufoo_api_key', 'type': 'password', 'label': 'API key',
+            'placeholder': 'Wufoo API Key', 'required': True
+        }
+    ]
+
+    force_values = {'feed_parser': 'wufoo'}
+
     def __init__(self):
         self.fields_cache = {}
 
@@ -60,4 +75,4 @@ class WufooFeedingService(FeedingService):
         return [items]
 
 
-register_feeding_service(WufooFeedingService.NAME, WufooFeedingService(), WufooFeedingService.ERRORS)
+register_feeding_service(WufooFeedingService)

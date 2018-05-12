@@ -41,10 +41,57 @@ class FTPFeedingService(FeedingService):
     """
 
     NAME = 'ftp'
+
     ERRORS = [IngestFtpError.ftpUnknownParserError().get_error_description(),
               IngestFtpError.ftpError().get_error_description()]
 
+    label = 'FTP feed API'
+
+    fields = [
+        {
+            'id': 'host', 'type': 'text', 'label': 'Host',
+            'placeholder': 'FTP Server URL', 'required': True,
+            'errors': {5003: 'Server not found.'}
+        },
+        {
+            'id': 'username', 'type': 'text', 'label': 'Username',
+            'placeholder': 'Username', 'required': False,
+            'errors': {5002: 'Credentials error.'}
+        },
+        {
+            'id': 'password', 'type': 'password', 'label': 'Password',
+            'placeholder': 'Password', 'required': False
+        },
+        {
+            'id': 'path', 'type': 'text', 'label': 'Path',
+            'placeholder': 'FTP Server Path', 'required': False
+        },
+        {
+            'id': 'dest_path', 'type': 'text', 'label': 'Local Path',
+            'placeholder': 'Local Path', 'required': True
+        },
+        {
+            'id': 'passive', 'type': 'boolean', 'label': 'Passive',
+            'placeholder': 'Passive', 'required': False, 'default': True
+        },
+        {
+            'id': 'move', 'type': 'boolean', 'label': 'Move items after ingestion',
+            'placeholder': 'Move items after ingestion', 'required': False
+        },
+        {
+            'id': 'ftp_move_path', 'type': 'text', 'label': 'Move ingested items to',
+            'placeholder': 'FTP Server Path, keep empty to use default path',
+            'required_expression': '{move}', 'show_expression': '{move}'
+        },
+        {
+            'id': 'move_path_error', 'type': 'text', 'label': 'Move *NOT* ingested items (i.e. on error) to',
+            'placeholder': 'FTP Server Path, keep empty to use default path',
+            'required_expression': '{move}', 'show_expression': '{move}'
+        }
+    ]
+
     DATE_FORMAT = '%Y%m%d%H%M%S'
+
     ALLOWED_EXT_DEFAULT = {'.json', '.xml'}
 
     def config_from_url(self, url):
@@ -202,4 +249,4 @@ class FTPFeedingService(FeedingService):
             raise IngestFtpError.ftpError(ex, provider)
 
 
-register_feeding_service(FTPFeedingService.NAME, FTPFeedingService(), FTPFeedingService.ERRORS)
+register_feeding_service(FTPFeedingService)

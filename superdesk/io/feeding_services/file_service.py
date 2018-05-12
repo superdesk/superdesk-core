@@ -31,6 +31,7 @@ class FileFeedingService(FeedingService):
     """
 
     NAME = 'file'
+
     ERRORS = [
         ParserError.IPTC7901ParserError().get_error_description(),
         ParserError.nitfParserError().get_error_description(),
@@ -40,6 +41,14 @@ class FileFeedingService(FeedingService):
     ]
 
     label = 'File Feed'
+
+    fields = [
+        {
+            'id': 'path', 'type': 'text', 'label': 'Server Folder',
+            'placeholder': 'path to folder', 'required': True,
+            'errors': {3003: 'Path not found on server.', 3004: 'Path should be directory.'}
+        }
+    ]
 
     def _test(self, provider):
         path = provider.get('config', {}).get('path', None)
@@ -158,4 +167,4 @@ class FileFeedingService(FeedingService):
         return last_updated < utcnow() - timedelta(minutes=10)
 
 
-register_feeding_service(FileFeedingService.NAME, FileFeedingService(), FileFeedingService.ERRORS)
+register_feeding_service(FileFeedingService)
