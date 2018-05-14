@@ -18,6 +18,7 @@ thus essentially just a normal `Flask <http://flask.pocoo.org/>`_ application.
     is meant to be used by the Superdesk browser client only.
 """
 
+import os
 import flask
 import importlib
 
@@ -114,3 +115,10 @@ def get_app(config=None):
     app.sentry = SuperdeskSentry(app)
 
     return app
+
+
+if __name__ == '__main__':
+    host = '0.0.0.0'
+    port = int(os.environ.get('PORT', '5400'))
+    app = get_app()
+    app.run(host=host, port=port, debug=True, use_reloader=True)
