@@ -1380,9 +1380,9 @@ def then_we_get_deleted_response(context):
     assert_200(context.response)
 
 
-@when('we post to reset_password we get email with token')
-def we_post_to_reset_password(context):
-    data = {'email': 'foo@bar.org'}
+@when('we post "{email}" to reset_password we get email with token')
+def we_post_to_reset_password(context, email):
+    data = {'email': email}
     headers = [('Content-Type', 'multipart/form-data')]
     headers = unique_headers(headers, context.headers)
     with context.app.mail.record_messages() as outbox:
