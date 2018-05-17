@@ -110,6 +110,9 @@ class VocabulariesResource(Resource):
         'init_version': {
             'type': 'integer',
         },
+        'preffered_items': {
+            'type': 'boolean',
+        },
     }
 
     soft_delete = True
