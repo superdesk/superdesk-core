@@ -34,9 +34,9 @@ class MediaReferencesResource(Resource):
         }
     }
     endpoint_name = 'media_references'
-    internal_resource = True
-    resource_methods = []
-    item_methods = []
+    internal_resource = False
+    resource_methods = ['GET']
+    item_methods = ['GET']
     mongo_indexes = {
         'item_id_1_media_1': [('item_id', 1), ('media_id', 1)],
         'media_1': [('media_id', 1)],
