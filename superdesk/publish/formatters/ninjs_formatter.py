@@ -45,10 +45,6 @@ from superdesk import text_utils
 
 logger = logging.getLogger(__name__)
 
-ANNOTATION = 'ANNOTATION'
-MEDIA = 'MEDIA'
-TABLE = 'TABLE'
-
 
 def filter_empty_vals(data):
     """Filter out `None` values from a given dict."""
@@ -95,7 +91,7 @@ class NINJSFormatter(Formatter):
     direct_copy_properties = ('versioncreated', 'usageterms', 'language', 'headline', 'copyrightnotice',
                               'urgency', 'pubstatus', 'mimetype', 'copyrightholder', 'ednote',
                               'body_text', 'body_html', 'slugline', 'keywords',
-                              'firstcreated', 'firstpublished', 'source', 'extra')
+                              'firstcreated', 'firstpublished', 'source', 'extra', 'annotations')
 
     rendition_properties = ('href', 'width', 'height', 'mimetype', 'poi', 'media')
     vidible_fields = {field: field for field in rendition_properties}

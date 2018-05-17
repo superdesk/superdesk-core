@@ -71,6 +71,9 @@ class NinjsFormatterTest(TestCase):
             'genre': [{'name': 'Article', 'qcode': 'article'}],
             'flags': {'marked_for_legal': True},
             'extra': {'foo': 'test'},
+            'annotations': [
+                {'msg': 'test'},
+            ],
         }
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
         expected = {
@@ -102,6 +105,7 @@ class NinjsFormatterTest(TestCase):
             'charcount': 67,
             'wordcount': 13,
             'readtime': 0,
+            'annotations': article['annotations'],
         }
         self.assertEqual(json.loads(doc), expected)
 
