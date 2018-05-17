@@ -113,7 +113,7 @@ class VocabulariesResource(Resource):
     }
 
     soft_delete = True
-    item_url = 'regex("[-_\w]+")'
+    item_url = r'regex("[-_\w]+")'
     item_methods = ['GET', 'PATCH', 'DELETE']
     resource_methods = ['GET', 'POST']
     privileges = {'PATCH': 'vocabularies', 'POST': 'vocabularies', 'DELETE': 'vocabularies'}
@@ -125,6 +125,13 @@ class VocabulariesService(BaseService):
     system_keys = set(DEFAULT_SCHEMA.keys()).union(set(DEFAULT_EDITOR.keys()))
 
     def _validate_items(self, update):
+        # if we have qcode and not unique_field set, we want it to be qcode
+        try:
+            update['schema']['qcode']
+        except KeyError:
+            pass
+        else:
+            update.setdefault('unique_field', 'qcode')
         if 'schema' in update and 'items' in update:
             for index, item in enumerate(update['items']):
                 for field, desc in update.get('schema', {}).items():
