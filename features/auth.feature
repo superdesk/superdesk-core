@@ -58,7 +58,7 @@ Feature: Authentication
         [{"username": "foo", "password": "bar", "email": "foo@bar.org", "is_active": true}]
         """
 
-        When we post to reset_password we get email with token
+        When we post "foo@bar.org" to reset_password we get email with token
         Then we can check if token is valid
         And we update token to be expired
         Then token is invalid
@@ -69,7 +69,16 @@ Feature: Authentication
         [{"username": "foo", "password": "bar", "email": "foo@bar.org", "is_active": true}]
         """
 
-        When we post to reset_password we get email with token
+        When we post "foo@bar.org" to reset_password we get email with token
+        Then we reset password for user
+
+    Scenario: Reset password existing user - mixed case email
+        Given "users"
+        """
+        [{"username": "foo", "password": "bar", "email": "foo@bar.org", "is_active": true}]
+        """
+
+        When we post "fOo@BAr.oRG" to reset_password we get email with token
         Then we reset password for user
 
     Scenario: Reset password disabled user
@@ -91,7 +100,7 @@ Feature: Authentication
         [{"username": "foo", "password": "bar", "email": "foo@bar.org", "is_active": true}]
         """
 
-        When we post to reset_password we get email with token
+        When we post "foo@bar.org" to reset_password we get email with token
         When we change user status to "enabled but inactive" using "/users/foo"
         """
         {"is_active": false}

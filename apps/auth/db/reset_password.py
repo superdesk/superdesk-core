@@ -71,6 +71,7 @@ class ResetPasswordService(BaseService):
             if key and password:
                 return self.reset_password(doc)
             if email:
+                email = email.lower()
                 return self.initialize_reset_password(doc, email)
             if key:
                 token_req = self.check_if_valid_token(key)
