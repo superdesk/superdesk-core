@@ -766,3 +766,19 @@ Feature: News Items Archive
         """
         {"guid": "123", "associations": {"editor_0": {"_updated": "__now__"}}}
         """
+
+    @auth
+    Scenario: It can save annotations
+        When we post to "/archive"
+        """
+        [{
+            "guid": "123", "type": "text", "headline": "test", "state": "in_progress",
+            "dateline": {
+              "date": "#DATE#"
+            },
+            "annotations": [
+                {"id": "1", "type": "regular", "body": "<p>foo</p>"}
+            ]
+        }]
+        """
+        Then we get OK response

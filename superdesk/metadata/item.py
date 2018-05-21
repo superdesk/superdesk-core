@@ -536,9 +536,14 @@ metadata_schema = {
 
     'annotations': {
         'type': 'list',
+        'mapping': not_enabled,
         'schema': {
             'type': 'dict',
-            'mapping': not_enabled,
+            'schema': {
+                'id': {'type': 'string'},
+                'type': {'type': 'string'},
+                'body': {'type': 'string'},
+            },
         },
     },
 
