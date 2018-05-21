@@ -39,7 +39,7 @@ class APFeedingService(FeedingService):
             id_list = config['idList']
             if not user.strip() or not password.strip() or not id_list.strip():
                 raise KeyError
-        except KeyError as e:
+        except KeyError:
             raise SuperdeskIngestError.notConfiguredError(Exception('username, password and idList are needed'))
 
         # we remove spaces and empty values from id_list to do a clean list
@@ -61,12 +61,12 @@ class APFeedingService(FeedingService):
 
         try:
             r = requests.get(URL, auth=(user, password), params=params)
-        except Exception as e:
+        except Exception:
             raise IngestApiError.apiRequestError(Exception('error while doing the request'))
 
         try:
             root_elt = etree.fromstring(r.content)
-        except Exception as e:
+        except Exception:
             raise IngestApiError.apiRequestError(Exception('error while doing the request'))
 
         parser = self.get_feed_parser(provider)

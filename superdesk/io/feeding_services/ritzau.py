@@ -36,7 +36,7 @@ class RitzauFeedingService(FeedingService):
             config = provider['config']
             user = config['username']
             password = config['password']
-        except KeyError as e:
+        except KeyError:
             SuperdeskIngestError.notConfiguredError(Exception('username and password are needed'))
 
         url_override = config.get('url', '').strip()
@@ -50,19 +50,19 @@ class RitzauFeedingService(FeedingService):
 
         try:
             r = requests.get(url_override or URL, params=params)
-        except Exception as e:
+        except Exception:
             raise IngestApiError.apiRequestError(Exception('error while doing the request'))
 
         try:
             root_elt = etree.fromstring(r.text)
-        except Exception as e:
+        except Exception:
             raise IngestApiError.apiRequestError(Exception('error while parsing the request answer'))
 
         try:
             if root_elt.xpath('(//error/text())[1]')[0] != '0':
                 err_msg = root_elt.xpath('(//errormsg/text())[1]')[0]
                 raise IngestApiError.apiRequestError(Exception('error code returned by API: {msg}'.format(msg=err_msg)))
-        except IndexError as e:
+        except IndexError:
             raise IngestApiError.apiRequestError(Exception('Invalid XML, <error> element not found'))
 
         parser = self.get_feed_parser(provider)
@@ -78,7 +78,7 @@ class RitzauFeedingService(FeedingService):
                 ack_params = {'user': user, 'password': password, 'servicequeueid': queue_id}
                 try:
                     requests.get(URL_ACK, params=ack_params)
-                except Exception as e:
+                except Exception:
                     raise IngestApiError.apiRequestError(Exception('error while doing the request'))
 
         return [items]
