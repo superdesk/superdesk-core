@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.18.1] 2018-05-21
+
+### Fixed
+
+- Use annotations provided by client in NINJS output.
+
 ## [1.18] 2018-05-11
 
 ### Fixed
