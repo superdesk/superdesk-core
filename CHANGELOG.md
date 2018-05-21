@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.18.2] 2018-05-21
+
+### Fixed
+
+- Fix celery version after a new celery release fixing kombu incompatibility.
+
 ## [1.18.1] 2018-05-21
 
 ### Fixed
