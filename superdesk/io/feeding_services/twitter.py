@@ -120,7 +120,7 @@ class TwitterFeedingService(FeedingService):
                             package_item = self._create_package(item,
                                                                 image_items)
                             new_items.append(package_item)
-                        except Exception as ex:
+                        except Exception:
                             pass
         return [new_items]
 
