@@ -135,10 +135,12 @@ class VocabulariesService(BaseService):
             pass
         else:
             update.setdefault('unique_field', 'qcode')
+        unique_field = update.get('unique_field')
         if 'schema' in update and 'items' in update:
             for index, item in enumerate(update['items']):
                 for field, desc in update.get('schema', {}).items():
-                    if desc.get('required', False) and (field not in item or not item[field]):
+                    if ((desc.get('required', False) or unique_field == field) and (
+                            field not in item or not item[field])):
                         raise SuperdeskApiError.badRequestError('Required ' + field + ' in item ' + str(index))
 
     def on_create(self, docs):
