@@ -108,7 +108,12 @@ desks_schema = {
     # name of a Slack channel that may be associated with the desk
     'slack_channel_name': {
         'type': 'string'
-    }
+    },
+
+    # desk prefered vocabulary items
+    'preferred_cv_items': {
+        'type': 'dict',
+    },
 }
 
 
