@@ -170,7 +170,7 @@ class BasePublishService(BaseService):
                               unique_name=original['unique_name'],
                               desk=str(original.get('task', {}).get('desk', '')),
                               user=str(user.get(config.ID_FIELD, '')))
-        except SuperdeskApiError as e:
+        except SuperdeskApiError:
             raise
         except KeyError as e:
             logger.exception(e)
