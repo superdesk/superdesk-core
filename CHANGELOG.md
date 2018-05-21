@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- Use kombu 4.1 to fix celery not starting issue.
 - Use annotations provided by client in NINJS output.
 
 ## [1.18] 2018-05-11
