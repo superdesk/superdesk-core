@@ -9,9 +9,13 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
+import io
 import os
+import hmac
 import json
 import flask
+import gridfs
+import pymongo
 import unittest
 import requests
 
@@ -20,6 +24,7 @@ from superdesk.publish.transmitters.http_push import HTTPPushService
 
 from unittest import mock
 from unittest.mock import Mock
+from superdesk.tests import update_config
 from superdesk.errors import PublishHTTPPushServerError, PublishHTTPPushClientError
 
 
@@ -119,6 +124,29 @@ class HTTPPushPublishTestCase(unittest.TestCase):
         service = HTTPPushService()
         headers = service._get_headers('test payload', self.destination, {})
         self.assertEqual('sha1=8be62a607898504f87559cb52dc23f9ebee65a21', headers[service.hash_header])
+
+    def test_get_data_hash_bytes_io(self):
+        binary = b'foo'
+        payload = io.BytesIO(binary)
+        self.assert_compare_hash(payload, binary)
+
+    def test_get_data_hash_grid_out(self):
+        config = {}
+        update_config(config)
+        db = pymongo.MongoClient(config['MONGO_URI']).db
+        grid = gridfs.GridFS(db)
+        binary = b'foo'
+        media_id = grid.put(binary)
+        payload = grid.get(media_id)
+        self.assert_compare_hash(payload, binary)
+
+    def assert_compare_hash(self, payload, binary, key='secret'):
+        service = HTTPPushService()
+        algo, digest = service._get_data_hash(payload, key).split('=')
+        self.assertTrue(hmac.compare_digest(
+            digest,
+            hmac.new(key.encode(), binary, algo).hexdigest()
+        ))
 
     def test_publish_an_item(self):
         if not getattr(self, 'resource_url', None):
