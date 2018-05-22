@@ -8,7 +8,9 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import io
 import json
+import gridfs
 import logging
 import requests
 import hmac
@@ -189,9 +191,16 @@ class HTTPPushService(PublishService):
         return headers
 
     def _get_data_hash(self, data, secret_token):
-        encoded_data = data
         if isinstance(data, str):
-            encoded_data = str.encode(data)
+            encoded_data = bytes(data, 'utf-8')
+        elif isinstance(data, io.BytesIO):
+            encoded_data = data.getbuffer()
+        elif isinstance(data, gridfs.GridOut):
+            data.seek(0)
+            encoded_data = data.read()
+            data.seek(0)
+        else:
+            encoded_data = data
         mac = hmac.new(str.encode(secret_token), msg=encoded_data, digestmod='sha1')
         return 'sha1=' + str(mac.hexdigest())
 
