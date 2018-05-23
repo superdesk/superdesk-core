@@ -51,3 +51,37 @@ You can integrate UML diagrams using `PlantUML <http://plantuml.com/>`_ syntax, 
     .. uml::
 
         [plantuml diagram]
+
+Formatter
+---------
+
+This is a short how-to to create a formatter.
+
+Generic formatter are put in ``superdesk-core`` repository, you'll find them in ``superdesk/publish/formatters`` directory. Sometimes, we need to do custom version of formatter, in this case they are put in a fork of ``superdesk`` repository, in ``server/[fork_dir]/formatters``.
+
+To create a new formatter, you can either subclass an existing one, or start fresh from ``superdesk.publish.formatters.Formatter``
+
+.. autoclass:: superdesk.publish.formatters.Formatter
+    :members:
+
+The most important method here is ``format`` which is the one called with the article to format. This method must return a list of 2 elements tuples with a publish sequence number and the formatted output.
+You can get publish sequence number using ``subscribers`` service:
+
+.. code:: python
+
+    pub_seq_num = superdesk.get_resource_service('subscribers').generate_sequence_number(subscriber)
+
+You should wrap your ``format`` method in a ``try..except``, and raise a ``FormatterError`` if any problem arise.
+
+.. autoclass:: superdesk.errors.FormatterError
+
+Register formatter
+^^^^^^^^^^^^^^^^^^
+
+To use your formatter, you need to register it. This is done simply by importing your new module in ``superdesk.publish.formatters.__init__``. Here we do it for NITF:
+
+.. code:: python
+
+    from .nitf_formatter import NITFFormatter  # NOQA
+
+Note the ``# NOQA`` which will avoid troubles with flake8 (the module is imported but not used immediately). The registration is done automatically thanks to the ``Formatter`` class.
