@@ -31,6 +31,38 @@ class FeedingService(metaclass=ABCMeta):
         1. `NAME` - unique name under which to register the class.
         2. `ERRORS` - representing a list of <error_number, error_message> pairs that might be raised by the class
                       instances' methods.
+
+    Optional attributes:
+        1. label: service label for UI view
+        2. fields: list of dictionaries; contains the descriptions of configuration fields. All fields must
+            have the following properties:
+                - id: field identifier
+                - type: valid values: text, password, boolean, mapping
+            Optional properties:
+                - label: field label for UI view
+                - required: if true the field is required
+                - errors: dictionary of with key being the error code and value the error description
+                - required_expression: if the evaluation of the expression is true the field is required
+                    on validation. Field values can be referred by enclosing the field identifier in
+                    accolades: {field_id}
+                - show_expression: if the evaluation of the expression is true the field is displayed.
+                    Field values can be referred by enclosing the field identifier in accolades: {field_id}
+            The fields can be of the following types:
+                1. text: has the following properties besides the generic ones:
+                    - placeholder: placeholder text
+                2. password
+                3. boolean
+                4. mapping: defines a mapping from a list of controlled values to values inputed by the user
+                    and has the following properties besides the generic ones:
+                    - add_mapping_label: label for add mapping button
+                    - remove_mapping_label: label for mapping removal button
+                    - empty_label: label to display when the mapping is empty
+                    - first_field_options: dictionary with the following keys:
+                        - label
+                        - values: list of available options
+                    - second_field_options: dictionary with the following keys:
+                        - label
+                        - placeholder
     """
 
     @abstractmethod

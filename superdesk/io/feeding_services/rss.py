@@ -68,11 +68,17 @@ class RSSFeedingService(FeedingService):
             'show_expression': '{auth_required}'
         },
         {
-            'id': 'field_aliases', 'type': 'tuple-multivalue', 'label': 'Content Field Aliases',
+            'id': 'field_aliases', 'type': 'mapping', 'label': 'Content Field Aliases',
+            'add_mapping_label': 'Add alias', 'remove_mapping_label': 'Remove',
             'empty_label': 'No field aliases defined.',
-            'first_field_label': 'Content Field Name', 'second_field_label': 'Field Alias',
-            'add_label': 'Add alias', 'remove_label': 'Remove', 'second_field_placeholder': 'Enter field alias',
-            'first_field_options': ['body_text', 'guid', 'published_parsed', 'summary', 'title', 'updated_parsed']
+            'first_field_options': {
+                'label': 'Content Field Name',
+                'values': ['body_text', 'guid', 'published_parsed', 'summary', 'title', 'updated_parsed']
+            },
+            'second_field_options': {
+                'label': 'Field Alias',
+                'placeholder': 'Enter field alias'
+            }
         }
     ]
 
