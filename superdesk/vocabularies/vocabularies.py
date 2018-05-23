@@ -71,7 +71,6 @@ class VocabulariesResource(Resource):
                 'allow_unknown': True,
                 'schema': {
                     'name': {'type': 'string', 'required': False, 'nullable': True},
-                    'qcode': {'type': 'string', 'required': False, 'nullable': True}
                 }
             }
         },
