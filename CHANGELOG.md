@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.18.4] 2018-05-23
+
+### Fixed
+
+- Fix missing migration scripts from `data_updates` when installing from package.
+
 ## [1.18.3] 2018-05-22
 
 ### Fixed
