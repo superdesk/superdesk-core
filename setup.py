@@ -52,6 +52,8 @@ package_data = {
         'templates/*.html',
         'locators/data/*.json',
         'io/data/*.json',
+        'data_updates/*.py',
+        'data_updates/*.js',
     ],
     'apps': [
         'prepopulate/*.json',
