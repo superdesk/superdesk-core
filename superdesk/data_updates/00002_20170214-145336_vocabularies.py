@@ -28,8 +28,8 @@ class DataUpdate(DataUpdate):
     def forwards(self, mongodb_collection, mongodb_database):
         product_types = get_resource_service(self.resource).find_one(req=None, _id='product_types')
         if product_types:
-            raise Exception('Product Types vocabulary already exists in the system.')
-
+            print('Product Types vocabulary already exists in the system.')
+            return
         get_resource_service(self.resource).post([self.product_types])
 
     def backwards(self, mongodb_collection, mongodb_database):
