@@ -8,7 +8,6 @@
 # Creation: 2017-11-10 17:06
 
 from superdesk.commands.data_updates import DataUpdate
-from superdesk.commands.rebuild_elastic_index import RebuildElasticIndex
 
 
 class DataUpdate(DataUpdate):
@@ -16,7 +15,7 @@ class DataUpdate(DataUpdate):
     resource = 'archive'
 
     def forwards(self, mongodb_collection, mongodb_database):
-        RebuildElasticIndex()()
+        print('Please rebuild elastic index after upgrade')
 
     def backwards(self, mongodb_collection, mongodb_database):
         pass
