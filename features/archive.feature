@@ -777,7 +777,7 @@ Feature: News Items Archive
               "date": "#DATE#"
             },
             "annotations": [
-                {"id": "1", "type": "regular", "body": "<p>foo</p>"}
+                {"id": 1, "type": "regular", "body": "<p>foo</p>"}
             ]
         }]
         """
