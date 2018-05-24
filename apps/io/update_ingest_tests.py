@@ -30,11 +30,15 @@ from superdesk.utc import utcnow
 
 class TestProviderService(FeedingService):
 
+    NAME = 'test'
+
+    ERRORS = [ProviderError.anpaError(None, None).get_error_description()]
+
     def _update(self, provider, update):
         return []
 
 
-register_feeding_service('test', TestProviderService(), [ProviderError.anpaError(None, None).get_error_description()])
+register_feeding_service(TestProviderService)
 
 
 class CeleryTaskRaceTest(TestCase):

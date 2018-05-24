@@ -28,8 +28,26 @@ class RitzauFeedingService(FeedingService):
     """
 
     NAME = 'ritzau'
+
     ERRORS = [IngestApiError.apiRequestError().get_error_description(),
               SuperdeskIngestError.notConfiguredError().get_error_description()]
+
+    label = 'Ritzau feeding API'
+
+    fields = [
+        {
+            'id': 'username', 'type': 'text', 'label': 'Username',
+            'placeholder': 'Username', 'required': True
+        },
+        {
+            'id': 'password', 'type': 'password', 'label': 'Password',
+            'placeholder': 'Password', 'required': True
+        },
+        {
+            'id': 'url', 'type': 'text', 'label': 'URL',
+            'placeholder': 'fill this field only for advanced uses', 'required': False
+        }
+    ]
 
     def _update(self, provider, update):
         try:
@@ -84,4 +102,4 @@ class RitzauFeedingService(FeedingService):
         return [items]
 
 
-register_feeding_service(RitzauFeedingService.NAME, RitzauFeedingService(), RitzauFeedingService.ERRORS)
+register_feeding_service(RitzauFeedingService)

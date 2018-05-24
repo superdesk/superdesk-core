@@ -44,6 +44,27 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
 
     label = 'Reuters Feed API'
 
+    fields = [
+        {
+            'id': 'url', 'type': 'text', 'label': 'Feed URL',
+            'placeholder': 'Feed URL', 'required': True,
+            'default': 'http://rmb.reuters.com/rmd/rest/xml'
+        },
+        {
+            'id': 'auth_url', 'type': 'text', 'label': 'URL for Authentication',
+            'placeholder': 'authentication url', 'required': True,
+            'default': 'https://commerce.reuters.com/rmd/rest/xml/login'
+        },
+        {
+            'id': 'username', 'type': 'text', 'label': 'Username',
+            'placeholder': 'Username', 'required': True
+        },
+        {
+            'id': 'password', 'type': 'password', 'label': 'Password',
+            'placeholder': 'Password', 'required': True
+        }
+    ]
+
     session = None
 
     def _update(self, provider, update):
@@ -278,4 +299,4 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
         return '%s?auth_token=%s' % (new_href, self._get_auth_token(self.provider, update=True))
 
 
-register_feeding_service(ReutersHTTPFeedingService.NAME, ReutersHTTPFeedingService(), ReutersHTTPFeedingService.ERRORS)
+register_feeding_service(ReutersHTTPFeedingService)

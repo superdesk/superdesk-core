@@ -400,6 +400,10 @@ class IngestApiError(SuperdeskIngestError):
         return cls(4007, exception, provider)
 
     @classmethod
+    def apiURLError(cls, exception=None, provider=None):
+        return cls(4008, exception, provider)
+
+    @classmethod
     def apiConnectionError(cls, exception=None, provider=None):
         return cls(4009, exception, provider)
 

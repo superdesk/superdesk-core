@@ -38,12 +38,51 @@ class RSSFeedingService(FeedingService):
     """
 
     NAME = 'rss'
+
     ERRORS = [IngestApiError.apiAuthError().get_error_description(),
               IngestApiError.apiNotFoundError().get_error_description(),
               IngestApiError.apiGeneralError().get_error_description(),
               ParserError.parseMessageError().get_error_description()]
 
     label = 'RSS'
+
+    fields = [
+        {
+            'id': 'url', 'type': 'text', 'label': 'Host',
+            'placeholder': 'RSS Feed URL', 'required': True,
+            'errors': {4001: 'Connection timed out.', 4006: 'URL not found.',
+                       4009: 'Can\'t connect to host.', 1001: 'Can\'t parse the RSS.'}
+        },
+        {
+            'id': 'auth_required', 'type': 'boolean', 'label': 'Requires Authentication',
+            'placeholder': 'Requires Authentication', 'required': False
+        },
+        {
+            'id': 'username', 'type': 'text', 'label': 'Username',
+            'placeholder': 'Username', 'required_expression': '{auth_required}',
+            'show_expression': '{auth_required}'
+        },
+        {
+            'id': 'password', 'type': 'password', 'label': 'Password',
+            'placeholder': 'Password', 'required_expression': '{auth_required}',
+            'show_expression': '{auth_required}'
+        },
+        {
+            'id': 'field_aliases', 'type': 'mapping', 'label': 'Content Field Aliases',
+            'add_mapping_label': 'Add alias', 'remove_mapping_label': 'Remove',
+            'empty_label': 'No field aliases defined.',
+            'first_field_options': {
+                'label': 'Content Field Name',
+                'values': ['body_text', 'guid', 'published_parsed', 'summary', 'title', 'updated_parsed']
+            },
+            'second_field_options': {
+                'label': 'Field Alias',
+                'placeholder': 'Enter field alias'
+            }
+        }
+    ]
+
+    field_groups = {'auth_data': {'label': 'Authentication Info', 'fields': ['username', 'password']}}
 
     ItemField = namedtuple('ItemField', ['name', 'name_in_data', 'type'])
 
@@ -203,6 +242,8 @@ class RSSFeedingService(FeedingService):
             response = requests.get(url, auth=auth, timeout=30)
         except requests.exceptions.ConnectionError as err:
             raise IngestApiError.apiConnectionError(exception=err)
+        except requests.exceptions.RequestException as err:
+            raise IngestApiError.apiURLError(exception=err)
 
         if response.ok:
             return response.content
@@ -401,4 +442,4 @@ class RSSFeedingService(FeedingService):
         return package
 
 
-register_feeding_service(RSSFeedingService.NAME, RSSFeedingService(), RSSFeedingService.ERRORS)
+register_feeding_service(RSSFeedingService)

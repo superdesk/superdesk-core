@@ -23,28 +23,26 @@ feeding_service_errors = {}
 publish_errors = []
 
 
-def register_feeding_service(service_name, service_class, errors):
+def register_feeding_service(service_class):
     """
     Registers the Feeding Service with the application.
 
     :class: `superdesk.io.feeding_services.RegisterFeedingService` uses this function to register the feeding service.
 
-    :param service_name: unique name to identify the Feeding Service class
     :param service_class: Feeding Service class
-    :param errors: list of tuples, where each tuple represents an error that can be raised by a Feeding Service class.
-                   Tuple syntax: (error_code, error_message)
     :raises: AlreadyExistsError if a feeding service with same name already been registered
     """
 
-    if service_name in registered_feeding_services:
+    if service_class.NAME in registered_feeding_services:
         raise AlreadyExistsError('Feeding Service: {} already registered by {}'
-                                 .format(service_name, type(registered_feeding_services[service_name])))
+                                 .format(service_class.NAME,
+                                         type(registered_feeding_services[service_class.NAME])))
 
-    registered_feeding_services[service_name] = service_class
-    allowed_feeding_services.append(service_name)
+    registered_feeding_services[service_class.NAME] = service_class()
+    allowed_feeding_services.append(service_class.NAME)
 
-    errors.append(SuperdeskIngestError.parserNotFoundError().get_error_description())
-    feeding_service_errors[service_name] = dict(errors)
+    service_class.ERRORS.append(SuperdeskIngestError.parserNotFoundError().get_error_description())
+    feeding_service_errors[service_class.NAME] = dict(service_class.ERRORS)
 
 
 def register_feeding_service_error(service_name, error):
@@ -121,7 +119,10 @@ class FeedingServiceAllowedService(Service):
             registered = registered_feeding_services[service_id]
             return {
                 'feeding_service': service_id,
-                'label': getattr(registered, 'label', service_id)
+                'label': getattr(registered, 'label', service_id),
+                'fields': getattr(registered, 'fields', []),
+                'field_groups': getattr(registered, 'field_groups', {}),
+                'force_values': getattr(registered, 'force_values', {})
             }
 
         return ListCursor(

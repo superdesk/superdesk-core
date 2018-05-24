@@ -47,7 +47,7 @@ class TestFeedingService(HTTPFeedingService):
         pass
 
 
-register_feeding_service(TestFeedingService.NAME, TestFeedingService(), TestFeedingService.ERRORS)
+register_feeding_service(TestFeedingService)
 
 
 class ErrorResponseSession(MagicMock):

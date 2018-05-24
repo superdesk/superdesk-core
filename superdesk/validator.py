@@ -30,7 +30,7 @@ class SuperdeskValidator(Validator):
     def _validate_mapping(self, mapping, field, value):
         pass
 
-    def _validate_index(self, field, value):
+    def _validate_index(self, definition, field, value):
         pass
 
     def _validate_type_phone_number(self, field, value):
