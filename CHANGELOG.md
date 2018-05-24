@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.17.1] 2018-05-24
+
+### Fixed
+
+- Fix http push with media when secret key is set.
+
 ## [1.17] 2018-05-02
 
 ### Fixed
