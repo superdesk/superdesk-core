@@ -1,5 +1,12 @@
 # Superdesk Server Changelog
 
+## [1.18.5] 2018-05-25
+
+### Fixed
+
+- Fix `item.annotation.id` schema to be integer type.
+- Fix data upgrade script failing after running data init.
+
 ## [1.18.4] 2018-05-23
 
 ### Fixed
