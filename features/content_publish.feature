@@ -101,7 +101,7 @@ Feature: Content Publishing
       """
       When we enqueue published
       When we get "/publish_queue"
-      Then we get list with 3 items
+      Then we get list with 4 items
       """
       {
         "_items": [
@@ -117,7 +117,13 @@ Feature: Content Publishing
           "destination": {
             "delivery_type": "email"
           }},
-          {"state": "success", "content_type": "text",
+          {"state": "pending", "content_type": "text",
+          "subscriber_id": "#digital#", "item_id": "123",
+          "item_version": 2, "ingest_provider": "__none__",
+          "destination": {
+            "delivery_type": "content_api"
+          }},
+          {"state": "pending", "content_type": "text",
           "subscriber_id": "#wire#", "item_id": "123",
           "item_version": 2, "ingest_provider": "__none__",
           "destination": {
@@ -153,10 +159,14 @@ Feature: Content Publishing
       And run import legal publish queue
       When we enqueue published
       And we get "/legal_publish_queue"
-      Then we get list with 3 items
+      Then we get list with 4 items
       """
       {
         "_items": [
+          {"state": "success", "content_type": "text",
+          "subscriber_id": "Channel 1", "item_id": "123", "item_version": 2},
+          {"state": "success", "content_type": "text",
+          "subscriber_id": "Channel 2", "item_id": "123", "item_version": 2},
           {"state": "success", "content_type": "text",
           "subscriber_id": "Channel 1", "item_id": "123", "item_version": 2},
           {"state": "success", "content_type": "text",
@@ -311,7 +321,7 @@ Feature: Content Publishing
 
     @auth
     @vocabulary
-    Scenario: Publish a user content that use API product
+    Scenario: Publish a user content that uses API product
       Given the "validators"
       """
       [{"_id": "publish_text", "act": "publish", "type": "text", "schema":{}}]
@@ -403,18 +413,22 @@ Feature: Content Publishing
       ]}
       """
       When we enqueue published
-      When we get "/publish_queue"
-      Then we get list with 1 items
+      And we get "/publish_queue"
+      Then we get list with 2 items
       """
       {"_items" : [
         {"item_id": "123", "headline": "publish via direct",
-        "destination": {"format": "nitf", "delivery_type":"email"},
-        "item_version": 2, "content_type": "text", "state": "pending", "publishing_action": "published"}
+         "destination": {"format": "nitf", "delivery_type":"email"},
+         "item_version": 2, "content_type": "text", "state": "pending", "publishing_action": "published"},
+        {"item_id": "123", "headline": "publish via direct",
+         "destination": {"format": "ninjs", "delivery_type": "content_api"},
+         "item_version": 2, "content_type": "text", "state": "pending", "publishing_action": "published"}
       ]}
       """
-      When we get "/items/123"
+      When we transmit items
+      And we get "/items/123"
       Then we get OK response
-      Then we assert the content api item "123" is not published to any subscribers
+      And we assert the content api item "123" is not published to any subscribers
       When we publish "456" with "publish" type and "published" state
       Then we get OK response
       When we get "/published"
@@ -428,21 +442,24 @@ Feature: Content Publishing
       ]}
       """
       When we enqueue published
-      When we get "/publish_queue"
-      Then we get list with 2 items
+      And we transmit items
+      And we get "/publish_queue"
+      Then we get list with 3 items
       """
       {"_items" : [
         {"item_id": "123", "headline": "publish via direct", "subscriber_id": "#sub_direct#",
         "destination": {"format": "nitf", "delivery_type":"email"},
-        "item_version": 2, "content_type": "text", "state": "pending", "publishing_action": "published"},
+        "item_version": 2, "content_type": "text", "state": "success", "publishing_action": "published"},
+        {"item_id": "123", "headline": "publish via direct",
+         "destination": {"format": "ninjs", "delivery_type": "content_api"},
+         "item_version": 2, "content_type": "text", "state": "success", "publishing_action": "published"},
         {"item_id": "456", "headline": "publish via api", "subscriber_id": "#sub_api#",
         "destination": {"format": "ninjs", "delivery_type":"content_api"},
         "item_version": 2, "content_type": "text", "state": "success", "publishing_action": "published"}
       ]}
       """
       Then we assert the content api item "456" is published to subscriber "#sub_api#"
-      Then we assert the content api item "456" is not published to subscriber "#sub_direct#"
-
+	  Then we assert the content api item "456" is not published to subscriber "#sub_direct#"
 
     @auth
     @vocabulary

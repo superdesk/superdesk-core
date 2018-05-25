@@ -191,7 +191,8 @@ class EnqueueService:
         subscribers, subscriber_codes, associations = self.get_subscribers(doc, target_media_type)
 
         # Step 2
-        no_formatters, queued = self.queue_transmission(deepcopy(doc), subscribers, subscriber_codes, associations)
+        no_formatters, queued = self.queue_transmission(deepcopy(doc), subscribers, subscriber_codes,
+                                                        associations, content_type)
 
         # Step 3
         self._push_formatter_notification(doc, no_formatters)
@@ -201,24 +202,7 @@ class EnqueueService:
             logger.error('Nothing is saved to publish queue for story: {} for action: {}'.
                          format(doc[config.ID_FIELD], self.publish_type))
 
-        # Step 5
-        if not content_type:
-            self.publish_content_api(doc, [s for s in subscribers if s.get('api_enabled')])
-
         return queued
-
-    def publish_content_api(self, doc, subscribers):
-        """
-        Publish item to content api
-        :param dict doc: content api item
-        :param list subscribers: list of subscribers
-        """
-        try:
-            if content_api.is_enabled():
-                get_resource_service('content_api').publish(doc, subscribers)
-        except Exception:
-            logger.exception('Failed to queue item to API for item: {} for action {}'.
-                             format(doc[config.ID_FIELD], self.publish_type))
 
     def _push_formatter_notification(self, doc, no_formatters=[]):
         if len(no_formatters) > 0:
@@ -264,17 +248,9 @@ class EnqueueService:
         associations = self._resend_associations_to_subscribers(doc, subscribers)
         if len(wire_subscribers) > 0:
             self._resend_to_subscribers(doc, wire_subscribers, subscriber_codes, associations)
-            self.publish_content_api(doc,
-                                     [subscriber for subscriber in wire_subscribers
-                                      if subscriber.get('api_enabled')])
 
         if len(digital_subscribers) > 0:
-            package = None
             self._resend_to_subscribers(doc, digital_subscribers, subscriber_codes, associations)
-
-            self.publish_content_api(package or doc,
-                                     [subscriber for subscriber in digital_subscribers
-                                      if subscriber.get('api_enabled')])
 
     def _resend_associations_to_subscribers(self, doc, subscribers):
         """
@@ -348,22 +324,15 @@ class EnqueueService:
             if temp_queued:
                 queued = temp_queued
 
-            delivery_types = [d['delivery_type'] for d in self.get_destinations(subscriber)]
-            is_content_api_delivery = 'content_api' in delivery_types
-            # packages for content_api will not be transmitted
-            # so we need to publish them here
-            if is_content_api_delivery and subscriber.get('api_enabled'):
-                self.publish_content_api(package, [subscriber])
-
         return queued
 
-    def get_destinations(self, subscriber):
+    def get_destinations(self, subscriber, content_type=None):
         destinations = subscriber.get('destinations') or []
-        if subscriber.get('api_enabled'):
+        if not content_type:
             destinations.append({'name': 'content api', 'delivery_type': 'content_api', 'format': 'ninjs'})
         return destinations
 
-    def queue_transmission(self, doc, subscribers, subscriber_codes={}, associations={}):
+    def queue_transmission(self, doc, subscribers, subscriber_codes={}, associations={}, content_type=None):
         """Method formats and then queues the article for transmission to the passed subscribers.
 
         ::Important Note:: Format Type across Subscribers can repeat. But we can't have formatted item generated once
@@ -375,7 +344,7 @@ class EnqueueService:
         :return : (list, bool) tuple of list of missing formatters and boolean flag. True if queued else False
         """
         try:
-            queued = False
+            queued = []
             no_formatters = []
             for subscriber in subscribers:
                 try:
@@ -384,7 +353,7 @@ class EnqueueService:
                         # wire subscribers can get only text and preformatted stories
                         continue
 
-                    for destination in self.get_destinations(subscriber):
+                    for destination in self.get_destinations(subscriber, content_type):
                         embed_package_items = doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and \
                             (destination.get('config') or {}).get('packaged', False)
                         if embed_package_items:
@@ -444,7 +413,7 @@ class EnqueueService:
                             # content api delivery will be marked as SUCCESS in queue
                             get_resource_service('publish_queue').post([publish_queue_item])
 
-                            queued = True
+                            queued.append(publish_queue_item)
                 except Exception:
                     logger.exception("Failed to queue item for id {} with headline {} for subscriber {}."
                                      .format(doc.get(config.ID_FIELD), doc.get('headline'), subscriber.get('name')))

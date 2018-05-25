@@ -2,7 +2,7 @@ import io
 import superdesk
 
 from bson import ObjectId
-from copy import copy
+from copy import copy, deepcopy
 from flask import json, request
 from datetime import timedelta
 from superdesk.tests import TestCase
@@ -12,6 +12,7 @@ from content_api.app import get_app
 from eve.utils import ParsedRequest
 from eve.methods.common import store_media_files
 from werkzeug.datastructures import MultiDict
+from superdesk.publish.formatters.ninjs_formatter import NINJSFormatter
 
 
 class ContentAPITestCase(TestCase):
@@ -38,22 +39,19 @@ class ContentAPITestCase(TestCase):
         return headers
 
     def test_publish_to_content_api(self):
-        item = {'guid': 'foo', 'type': 'text', 'task': {'desk': 'foo'}, 'rewrite_of': 'bar'}
+        item = {'guid': 'foo', 'type': 'text', 'evolvedfrom': 'bar'}
         self.content_api.publish(item)
         self.assertEqual(1, self.db.items.count())
-        self.assertNotIn('task', self.db.items.find_one())
         self.assertEqual('foo', self.db.items.find_one()['_id'])
 
-        item['_current_version'] = '2'
+        item['version'] = '2'
         self.content_api.publish(item)
         self.assertEqual(1, self.db.items.count())
 
-        item['_current_version'] = '3'
+        item['version'] = '3'
         item['headline'] = 'foo'
         self.content_api.publish(item)
         self.assertEqual('foo', self.db.items.find_one()['headline'])
-        self.assertEqual('bar', self.db.items.find_one()['evolvedfrom'])
-
         self.assertEqual(3, self.db.items_versions.count())
 
     def test_publish_with_subscriber_ids(self):
@@ -218,7 +216,7 @@ class ContentAPITestCase(TestCase):
             'type': 'text',
             'body_html': 'updated',
             'version': 2,
-            'assocations': {
+            'associations': {
                 'foo': None,
             },
         })
@@ -281,49 +279,17 @@ class ContentAPITestCase(TestCase):
         self.assertFalse(self.capi.auth.check_auth(token, [], 'items', 'get'))
         self.assertIsNone(service.find_one(None, _id=token))
 
-    def test_api_block(self):
-        self.app.data.insert('filter_conditions', [{'_id': 1, 'operator': 'eq', 'field': 'source',
-                                                    'value': 'fred', 'name': 'Fred'}])
-        content_filter = {'_id': 1, 'name': 'fred API Block', 'content_filter': [{"expression": {"fc": [1]}}],
-                          'api_block': True}
-        self.app.data.insert('content_filters', [content_filter])
-
-        self.content_api.publish({'_id': 'foo', 'source': 'fred', 'type': 'text', 'guid': 'foo'})
-        self.assertEqual(0, self.db.items.count())
-        self.content_api.publish({'_id': 'bar', 'source': 'jane', 'type': 'text', 'guid': 'bar'})
-        self.assertEqual(1, self.db.items.count())
-
-    def test_item_versions_api(self):
-        subscriber = {'_id': 'sub1'}
-        headers = self._auth_headers(subscriber)
-
-        item = {'guid': 'foo', 'type': 'text', 'task': {'desk': 'foo'}, 'rewrite_of': 'bar', '_current_version': 1}
-        self.content_api.publish(item, [subscriber])
-        item['_current_version'] = 2
-        self.content_api.publish(item, [subscriber])
-        item['_current_version'] = 3
-        self.content_api.publish(item, [subscriber])
-
-        with self.capi.test_client() as c:
-            response = c.get('items/foo?version=all', headers=headers)
-            data = json.loads(response.data)
-            self.assertEqual(3, data['_meta']['total'])
-
-            response = c.get('items/foo?version=2', headers=headers)
-            data = json.loads(response.data)
-            self.assertEqual(str(2), data['version'])
-
     def test_package_version(self):
         subscriber = {'_id': 'sub1'}
         headers = self._auth_headers(subscriber)
 
-        item = {'_id': 'pkg', 'guid': 'pkg', 'type': 'composite', '_current_version': 1}
+        item = {'_id': 'pkg', 'guid': 'pkg', 'type': 'composite', 'version': 1}
         self.content_api.publish(item, [subscriber])
-        item['_current_version'] = 2
+        item['version'] = 2
         self.content_api.publish(item, [subscriber])
-        item['_current_version'] = 3
+        item['version'] = 3
         self.content_api.publish(item, [subscriber])
-        item = {'guid': 'foo', 'type': 'text', 'task': {'desk': 'foo'}, 'rewrite_of': 'bar', '_current_version': 1}
+        item = {'guid': 'foo', 'type': 'text', 'evolvedfrom': 'bar', 'version': 1}
         self.content_api.publish(item, [subscriber])
 
         with self.capi.test_client() as c:
@@ -343,7 +309,10 @@ class ContentAPITestCase(TestCase):
     def test_publish_kill_to_content_api(self):
         subscriber = {'_id': 'sub1'}
         headers = self._auth_headers(subscriber)
-        item = {'guid': 'foo', 'type': 'text', 'task': {'desk': 'foo'}, 'rewrite_of': 'bar', 'pubstatus': 'usable'}
+        _, item = NINJSFormatter().format({'guid': 'foo', 'type': 'text', 'task': {'desk': 'foo'},
+                                           'rewrite_of': 'bar', 'pubstatus': 'usable', 'version': 1},
+                                          subscriber)[0]
+        item = json.loads(item)
         self.content_api.publish(item, [subscriber])
 
         with self.capi.test_client() as c:
@@ -374,38 +343,36 @@ class ContentAPITestCase(TestCase):
             self.assertEqual(404, response._status_code)
 
     def test_publish_item_with_ancestors(self):
-        item = {'guid': 'foo', 'type': 'text', 'task': {'desk': 'foo'}, 'bookmarks': [ObjectId()]}
+        item = {'guid': 'foo', 'type': 'text', 'bookmarks': [ObjectId()]}
         self.content_api.publish(item)
         self.assertEqual(1, self.db.items.count())
         self.assertNotIn('ancestors', self.db.items.find_one({'_id': 'foo'}))
 
         item['guid'] = 'bar'
-        item['rewrite_of'] = 'foo'
+        item['evolvedfrom'] = 'foo'
         self.content_api.publish(item)
 
         self.assertEqual(2, self.db.items.count())
         bar = self.db.items.find_one({'_id': 'bar'})
         self.assertEqual(['foo'], bar.get('ancestors', []))
-        self.assertEqual('foo', bar.get('evolvedfrom'))
         foo = self.db.items.find_one({'_id': 'foo'})
         self.assertEqual('bar', foo['nextversion'])
 
         item['guid'] = 'fun'
-        item['rewrite_of'] = 'bar'
+        item['evolvedfrom'] = 'bar'
         self.content_api.publish(item)
 
         self.assertEqual(3, self.db.items.count())
         fun = self.db.items.find_one({'_id': 'fun'})
         self.assertEqual(['foo', 'bar'], fun.get('ancestors', []))
-        self.assertEqual('bar', fun.get('evolvedfrom'))
 
     def test_sync_bookmarks_on_publish(self):
-        item = {'guid': 'foo', 'type': 'text', 'task': {'desk': 'foo'}}
+        item = {'guid': 'foo', 'type': 'text'}
         self.content_api.publish(item)
         self.db.items.update_one({'_id': 'foo'}, {'$set': {'bookmarks': [ObjectId()]}})
 
         item['guid'] = 'bar'
-        item['rewrite_of'] = 'foo'
+        item['evolvedfrom'] = 'foo'
         self.content_api.publish(item)
 
         bar = self.db.items.find_one({'_id': 'bar'})
@@ -435,17 +402,24 @@ class ContentAPITestCase(TestCase):
         self.assertEqual(resp.count(), 1)
 
     def test_search_capi_filter(self):
-        subscriber = {'_id': 'sub1'}
+        subscriber1 = {'_id': 'sub1'}
+        subscriber2 = {'_id': 'sub2'}
 
-        self.content_api.publish({'_id': 'foo', 'guid': 'foo', 'type': 'text',
-                                  'anpa_category': [{'qcode': 'i', 'name': 'International News'}],
-                                  'headline': 'Man bites dog'}, [subscriber])
-        self.content_api.publish({'_id': 'bar', 'guid': 'bar',
-                                  'anpa_category': [{'qcode': 'i', 'name': 'International News'}],
-                                  'type': 'text'}, [{'_id': 'sub2'}])
-        self.content_api.publish({'_id': 'nat', 'guid': 'nat',
-                                  'anpa_category': [{'qcode': 'a', 'name': 'National News'}],
-                                  'type': 'text'}, [{'_id': 'sub2'}])
+        _, item1 = NINJSFormatter().format({'_id': 'foo', 'guid': 'foo', 'type': 'text',
+                                            'anpa_category': [{'qcode': 'i', 'name': 'International News'}],
+                                            'headline': 'Man bites dog'}, subscriber1)[0]
+        item1 = json.loads(item1)
+        self.content_api.publish(item1, [subscriber1])
+        _, item2 = NINJSFormatter().format({'_id': 'bar', 'guid': 'bar',
+                                            'anpa_category': [{'qcode': 'i', 'name': 'International News'}],
+                                            'type': 'text'}, subscriber2)[0]
+        item2 = json.loads(item2)
+        self.content_api.publish(item2, [subscriber2])
+        _, item3 = NINJSFormatter().format({'_id': 'nat', 'guid': 'nat',
+                                            'anpa_category': [{'qcode': 'a', 'name': 'National News'}],
+                                            'type': 'text'}, subscriber2)[0]
+        item3 = json.loads(item3)
+        self.content_api.publish(item3, [subscriber2])
 
         test = superdesk.get_resource_service('search_capi')
         req = ParsedRequest()
@@ -483,12 +457,18 @@ class ContentAPITestCase(TestCase):
         self.assertEqual(resp.docs[1].get('subscribers')[0], 'sub2')
 
     def test_search_capi_aggregations(self):
-        self.content_api.publish({'_id': '1', 'guid': '1', 'type': 'text',
-                                  'anpa_category': [{'qcode': 'i', 'name': 'International News'}],
-                                  'headline': 'Man bites dog', 'source': 'AAA', 'urgency': 1}, [])
-        self.content_api.publish({'_id': '2', 'guid': '2', 'type': 'text',
-                                  'anpa_category': [{'qcode': 'i', 'name': 'International News'}],
-                                  'headline': 'Man bites cat', 'source': 'BBB', 'urgency': 2}, [])
+        _, item1 = NINJSFormatter().format({'_id': '1', 'guid': '1', 'type': 'text',
+                                            'anpa_category': [{'qcode': 'i', 'name': 'International News'}],
+                                            'headline': 'Man bites dog', 'source': 'AAA', 'urgency': 1},
+                                           {'_id': ObjectId()})[0]
+        item1 = json.loads(item1)
+        self.content_api.publish(item1, [])
+        _, item2 = NINJSFormatter().format({'_id': '2', 'guid': '2', 'type': 'text',
+                                            'anpa_category': [{'qcode': 'i', 'name': 'International News'}],
+                                            'headline': 'Man bites cat', 'source': 'BBB', 'urgency': 2},
+                                           {'_id': ObjectId()})[0]
+        item2 = json.loads(item2)
+        self.content_api.publish(item2, [])
 
         test = superdesk.get_resource_service('search_capi')
         req = ParsedRequest()
@@ -533,10 +513,15 @@ class ContentAPITestCase(TestCase):
         self.assertIn('_id', attachment)
         self.assertIsInstance(attachment['media'], ObjectId)
 
+        published_attachment = deepcopy(attachment)
+        published_attachment['id'] = published_attachment['_id']
+        del published_attachment['_id']
+        published_attachment['href'] = '/assets/{}'.format(str(attachment['media']))
+
         item = {
             'guid': 'foo',
             'type': 'text',
-            'attachments': [{'attachment': attachment['_id']}],
+            'attachments': [published_attachment],
             'body_html': '<p><a data-attachment="{}">download</a></p>'.format(str(attachment['_id']))
         }
 

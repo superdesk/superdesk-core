@@ -58,4 +58,3 @@ class EnqueueKilledService(EnqueueService):
 
         self.queue_transmission(item, subscribers)
         logger.info('Queued Transmission for article: {}'.format(item[config.ID_FIELD]))
-        self.publish_content_api(item, [subscriber for subscriber in subscribers if subscriber['api_enabled']])

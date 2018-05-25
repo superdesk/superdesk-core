@@ -31,49 +31,57 @@ class PublishService(BaseService):
     formatter = NINJSFormatter()
     subscriber = {'config': {}}
 
-    def publish(self, item, subscribers=[]):
+    def publish(self, doc, archive_item, subscribers=[]):
         """Publish an item to content api.
 
         This must be enabled via ``PUBLISH_TO_CONTENT_API`` setting.
 
         :param item: item to publish
         """
+        now = utcnow()
+        doc.setdefault('firstcreated', now)
+        doc.setdefault('versioncreated', now)
+        doc.setdefault(config.VERSION, doc.get('version', 1))
+        own_subscribers = [str(subscriber[config.ID_FIELD]) for subscriber in subscribers
+                           if subscriber.get('api_enabled')]
+        for _, assoc in doc.get(ASSOCIATIONS, {}).items():
+            if assoc:
+                assoc.setdefault('subscribers', own_subscribers)
+        doc['subscribers'] = own_subscribers
+        if 'evolvedfrom' in doc:
+            parent_item = self.find_one(req=None, _id=doc['evolvedfrom'])
+            if parent_item:
+                doc['ancestors'] = copy(parent_item.get('ancestors', []))
+                doc['ancestors'].append(doc['evolvedfrom'])
+                doc['bookmarks'] = parent_item.get('bookmarks', [])
+            else:
+                logger.warning("Failed to find evolvedfrom item '{}' for '{}'".format(
+                    doc['evolvedfrom'], doc['guid'])
+                )
 
-        if not self._filter_item(item):
-            doc = self.formatter._transform_to_ninjs(item, self.subscriber)
-            now = utcnow()
-            doc.setdefault('firstcreated', now)
-            doc.setdefault('versioncreated', now)
-            doc.setdefault(config.VERSION, item.get(config.VERSION, 1))
-            for _, assoc in doc.get(ASSOCIATIONS, {}).items():
-                if assoc:
-                    assoc.setdefault('subscribers', [str(subscriber[config.ID_FIELD]) for subscriber in subscribers])
-            doc['subscribers'] = [str(sub['_id']) for sub in subscribers]
-            if 'evolvedfrom' in doc:
-                parent_item = self.find_one(req=None, _id=doc['evolvedfrom'])
-                if parent_item:
-                    doc['ancestors'] = copy(parent_item.get('ancestors', []))
-                    doc['ancestors'].append(doc['evolvedfrom'])
-                    doc['bookmarks'] = parent_item.get('bookmarks', [])
-                else:
-                    logger.warning("Failed to find evolvedfrom item '{}' for '{}'".format(
-                        doc['evolvedfrom'], doc['guid'])
-                    )
-
-            self._assign_associations(item, doc)
-            logger.info('publishing %s to %s' % (doc['guid'], subscribers))
-            _id = self._create_doc(doc)
-            if 'evolvedfrom' in doc and parent_item:
-                self.system_update(parent_item['_id'], {'nextversion': _id}, parent_item)
-            return _id
-        else:
-            return None
+        self._assign_associations(archive_item, doc)
+        logger.info('publishing %s to %s' % (doc['guid'], subscribers))
+        _id = self._create_doc(doc)
+        if 'evolvedfrom' in doc and parent_item:
+            self.system_update(parent_item['_id'], {'nextversion': _id}, parent_item)
+        return _id
 
     def create(self, docs, **kwargs):
         ids = []
         for doc in docs:
             ids.append(self._create_doc(doc, **kwargs))
         return ids
+
+    def _assign_associations(self, item, doc):
+        """Assign Associations to published item
+        :param dict item: item being published
+        :param dit doc: ninjs documents
+        """
+        for assoc, assoc_item in (item.get('associations') or {}).items():
+            if not assoc_item:
+                continue
+            doc.get('associations', {}).get(assoc)['subscribers'] = \
+                list(map(str, assoc_item.get('subscribers') or []))
 
     def _create_doc(self, doc, **kwargs):
         """Create a new item or update existing."""
@@ -140,17 +148,6 @@ class PublishService(BaseService):
                 return True
 
         return False
-
-    def _assign_associations(self, item, doc):
-        """Assign Associations to published item
-
-        :param dict item: item being published
-        :param dit doc: ninjs documents
-        """
-        for assoc, assoc_item in (item.get('associations') or {}).items():
-            if not assoc_item:
-                continue
-            doc.get('associations', {}).get(assoc)['subscribers'] = list(map(str, assoc_item.get('subscribers') or []))
 
     def _process_associations(self, updates, original):
         """Update associations using existing published item and ensure that associated item subscribers

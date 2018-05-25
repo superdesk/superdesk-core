@@ -546,7 +546,7 @@ class ArchivePublishTestCase(TestCase):
 
         enqueue_published()
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
-        self.assertEqual(6, queue_items.count())
+        self.assertEqual(11, queue_items.count())
 
         # this will delete queue transmission for the wire article
         publish_queue.PublishQueueService(PUBLISH_QUEUE, get_backend()).delete_by_article_id(doc['_id'])
