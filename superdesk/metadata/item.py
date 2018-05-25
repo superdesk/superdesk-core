@@ -540,7 +540,7 @@ metadata_schema = {
         'schema': {
             'type': 'dict',
             'schema': {
-                'id': {'type': 'string'},
+                'id': {'type': 'integer'},
                 'type': {'type': 'string'},
                 'body': {'type': 'string'},
             },
