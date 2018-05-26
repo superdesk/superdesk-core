@@ -107,7 +107,7 @@ class FTPFeedingService(FeedingService):
                         with open(local_file_path, 'xb') as f:
                             try:
                                 ftp.retrbinary('RETR %s' % filename, f.write)
-                            except ftplib.all_errors as ex:
+                            except ftplib.all_errors:
                                 os.remove(local_file_path)
                                 logger.exception('Exception retrieving file from FTP server (%s)', filename)
                                 continue

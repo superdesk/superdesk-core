@@ -237,7 +237,8 @@ class ArchiveBroadcastService(BaseService):
         :param dict updates: broadcast updates
         """
         # update the published collection as well as archive.
-        if item.get(ITEM_STATE) in [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED, CONTENT_STATE.KILLED]:
+        if item.get(ITEM_STATE) in \
+                {CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED, CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED}:
             get_resource_service('published').update_published_items(item.get(config.ID_FIELD),
                                                                      'broadcast', updates.get('broadcast'))
 
@@ -323,18 +324,19 @@ class ArchiveBroadcastService(BaseService):
         if original.get('rewrite_of') and original.get(ITEM_STATE) not in PUBLISH_STATES:
             self.remove_rewrite_refs(original)
 
-    def kill_broadcast(self, updates, original):
+    def kill_broadcast(self, updates, original, operation):
         """Kill the broadcast items
 
-        :param dict updates:
-        :param dict original:
+        :param dict updates: Updates to the item
+        :param dict original: original item
+        :param str operation: Kill or Takedown operation
         :return:
         """
         broadcast_items = [item for item in self.get_broadcast_items_from_master_story(original)
                            if item.get(ITEM_STATE) in PUBLISH_STATES]
 
         correct_service = get_resource_service('archive_correct')
-        kill_service = get_resource_service('archive_kill')
+        kill_service = get_resource_service('archive_{}'.format(operation))
 
         for item in broadcast_items:
             item_id = item.get(config.ID_FIELD)
@@ -342,7 +344,8 @@ class ArchiveBroadcastService(BaseService):
 
             processed_packages = set()
             for package in packages:
-                if str(package[config.ID_FIELD]) in processed_packages:
+                if str(package[config.ID_FIELD]) in processed_packages or \
+                        package.get(ITEM_STATE) == CONTENT_STATE.RECALLED:
                     continue
                 try:
                     if package.get(ITEM_STATE) in {CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED}:

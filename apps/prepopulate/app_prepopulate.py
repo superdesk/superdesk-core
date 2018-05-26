@@ -103,7 +103,7 @@ def prepopulate_data(file_name, default_user=get_default_user()):
                         doc_versions.append(data.copy())
                         number_of_versions_to_insert -= 1
                 else:
-                    if data[ITEM_STATE] in [CONTENT_STATE.KILLED, CONTENT_STATE.CORRECTED]:
+                    if data[ITEM_STATE] in [CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED, CONTENT_STATE.CORRECTED]:
                         latest_version = data.copy()
                         doc_versions.append(latest_version)
 

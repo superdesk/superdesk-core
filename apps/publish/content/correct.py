@@ -31,6 +31,7 @@ class CorrectPublishResource(BasePublishResource):
 class CorrectPublishService(BasePublishService):
     publish_type = 'correct'
     published_state = 'corrected'
+    item_operation = ITEM_CORRECT
 
     def set_state(self, original, updates):
         updates[ITEM_STATE] = self.published_state
@@ -49,7 +50,7 @@ class CorrectPublishService(BasePublishService):
     def on_update(self, updates, original):
         CropService().validate_multiple_crops(updates, original)
         super().on_update(updates, original)
-        updates[ITEM_OPERATION] = ITEM_CORRECT
+        updates[ITEM_OPERATION] = self.item_operation
         updates['versioncreated'] = utcnow()
         updates['correction_sequence'] = original.get('correction_sequence', 1) + 1
         set_sign_off(updates, original)

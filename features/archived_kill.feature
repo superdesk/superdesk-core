@@ -126,7 +126,7 @@ Feature: Kill a content item in the (dusty) archive
     Then we get list with 2 items
     When we patch "/archived/123:2"
     """
-    {"body_html": "Killed body."}
+    {"body_html": "Killed body.", "operation": "kill"}
     """
     Then we get OK response
     And we get 2 emails
@@ -196,7 +196,7 @@ Feature: Kill a content item in the (dusty) archive
     """
     When we patch "/archived/56aad5a61d41c8aa98ddd015"
     """
-    {}
+    {"operation": "kill"}
     """
     When we get "/archived"
     Then we get list with 0 items
@@ -257,7 +257,7 @@ Feature: Kill a content item in the (dusty) archive
     Then we get list with 2 items
     When we patch "/archived/123:2"
     """
-    {"body_html": "Killed body"}
+    {"body_html": "Killed body", "operation": "kill"}
     """
     Then we get OK response
     And we get 2 emails
@@ -368,7 +368,7 @@ Feature: Kill a content item in the (dusty) archive
     Then we get list with 8 items
     When we patch "/archived/123:2"
     """
-    {}
+    {"operation": "kill"}
     """
     Then we get OK response
     And we get 4 emails
@@ -731,7 +731,7 @@ Feature: Kill a content item in the (dusty) archive
     """
     When we patch "/archived/123:2"
     """
-    {"body_html": "Killed body."}
+    {"body_html": "Killed body.", "operation": "kill"}
     """
     Then we get OK response
     And we get 2 emails
@@ -779,3 +779,167 @@ Feature: Kill a content item in the (dusty) archive
     Then we get list with 0 items
     When we get "/archive"
     Then we get list with 0 items
+
+  @auth @notification @wip
+  Scenario: Takedown a Text Article in the Dusty Archive
+    Given config update
+    """
+    {"NO_TAKES": true}
+    """
+    When we post to "/subscribers" with "api" and success
+    """
+    {
+      "name":"Channel api", "media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+      "api_products": ["#products._id#"]
+    }
+    """
+    And we post to "/archive" with success
+    """
+    [{"guid": "123", "type": "text", "state": "fetched", "slugline": "archived",
+      "headline": "headline", "anpa_category" : [{"qcode" : "e", "name" : "Entertainment"}],
+      "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+      "subject":[{"qcode": "17004000", "name": "Statistics"}],
+      "target_types": [{"qcode": "digital", "allow": false}],
+      "dateline" : {
+        "located" : {
+            "state_code" : "NSW",
+            "city" : "Sydney",
+            "tz" : "Australia/Sydney",
+            "country_code" : "AU",
+            "dateline" : "city",
+            "alt_name" : "",
+            "state" : "New South Wales",
+            "city_code" : "Sydney",
+            "country" : "Australia"
+        },
+        "source" : "AAP",
+        "date" : "2016-04-13T04:29:14",
+        "text" : "SYDNEY April 13 AAP -"
+      },
+      "body_html": "Test Document body"}]
+    """
+    Then we get OK response
+    When we publish "#archive._id#" with "publish" type and "published" state
+    Then we get OK response
+    When we get "/published"
+    Then we get list with 1 items
+    """
+    {"_items" : [{"_id": "123", "state": "published", "type": "text", "_current_version": 2}]}
+    """
+    When we enqueue published
+    And we get "/publish_queue"
+    Then we get list with 2 items
+    When run import legal publish queue
+    And we get "/legal_publish_queue"
+    Then we get list with 1 items
+    """
+    {"_items" : [
+        {"item_id": "123", "subscriber_id":"Channel api", "content_type": "text",
+        "item_version": 2, "publishing_action": "published"}
+     ]}
+    """
+    When we transmit items
+    And run import legal publish queue
+    When we get "/legal_publish_queue"
+    Then we get list with 2 items
+    """
+    {"_items" : [
+        {"item_id": "123", "subscriber_id":"Channel api", "content_type": "text",
+        "item_version": 2, "publishing_action": "published"},
+        {"item_id": "123", "subscriber_id":"Channel 2", "content_type": "text",
+        "item_version": 2, "publishing_action": "published"}
+     ]}
+    """
+    When we expire items
+    """
+    ["123"]
+    """
+    And we get "/published"
+    Then we get list with 0 items
+    When we enqueue published
+    And we get "/publish_queue"
+    Then we get list with 0 items
+    When we get "/archived"
+    Then we get list with 1 items
+    """
+    {"_items" : [{"item_id": "123", "state": "published", "type": "text", "_current_version": 2}]}
+    """
+    When we get "/legal_publish_queue"
+    Then we get list with 2 items
+    When we patch "/archived/123:2"
+    """
+    {"body_html": "Takedown body.", "operation": "takedown"}
+    """
+    Then we get OK response
+    And we get 1 emails
+    When we get "/published"
+    Then we get list with 1 items
+    """
+    {"_items" : [{"_id": "123", "state": "recalled", "type": "text", "_current_version": 3, "queue_state": "queued"}]}
+    """
+    When we transmit items
+    And run import legal publish queue
+    And we get "/legal_publish_queue"
+    Then we get list with 4 items
+    """
+    {"_items" : [
+        {"item_id": "123", "subscriber_id":"Channel api", "content_type": "text",
+        "item_version": 2, "publishing_action": "published"},
+        {"item_id": "123", "subscriber_id":"Channel 2", "content_type": "text",
+        "item_version": 2, "publishing_action": "published"},
+        {"item_id": "123", "subscriber_id":"Channel api", "content_type": "text",
+        "item_version": 3, "publishing_action": "recalled"},
+        {"item_id": "123", "subscriber_id":"Channel 2", "content_type": "text",
+        "item_version": 3, "publishing_action": "recalled"}
+     ]}
+    """
+    When we get "/archive/123"
+    Then we get OK response
+    And we get text "Please takedown story slugged archived" in response field "body_html"
+    And we get text "Takedown body" in response field "body_html"
+    And we get emails
+    """
+    [
+      {"body": "Please takedown story slugged archived"},
+      {"body": "Takedown body"}
+    ]
+    """
+    When we get "/archived/123:2"
+    Then we get error 404
+    When we get "/archived"
+    Then we get list with 0 items
+    When we get "/legal_archive/123"
+    Then we get existing resource
+    """
+    {"_id": "123", "type": "text", "_current_version": 3, "state": "recalled", "pubstatus": "canceled", "operation": "takedown"}
+    """
+    When we get "/legal_archive/123?version=all"
+    Then we get list with 3 items
+    When we expire items
+    """
+    ["123"]
+    """
+    And we get "/published"
+    Then we get list with 0 items
+    When we get "/archive"
+    Then we get list with 0 items
+
+  @auth @notification
+  Scenario: Takedown a Text Article that exists only in Archived
+    Given "archived" with objectid
+    """
+    [{
+      "_id": "56aad5a61d41c8aa98ddd015", "guid": "123", "item_id": "123", "_current_version": "1", "type": "text", "abstract": "test", "state": "fetched", "slugline": "slugline",
+      "headline": "headline", "anpa_category" : [{"qcode" : "e", "name" : "Entertainment"}],
+      "flags" : {"marked_archived_only": true},
+      "subject":[{"qcode": "17004000", "name": "Statistics"}],
+      "body_html": "Test Document body"
+    }]
+    """
+    When we patch "/archived/56aad5a61d41c8aa98ddd015"
+    """
+    {"operation": "takedown"}
+    """
+    When we get "/archived"
+    Then we get list with 0 items
+    And we get 1 emails

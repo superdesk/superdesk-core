@@ -42,11 +42,13 @@ UPDATE_SCHEDULE_DEFAULT = {'seconds': 10}
 ITEM_PUBLISH = 'publish'
 ITEM_CORRECT = 'correct'
 ITEM_KILL = 'kill'
+ITEM_TAKEDOWN = 'takedown'
 
 enqueue_services = {
     ITEM_PUBLISH: EnqueuePublishedService(),
     ITEM_CORRECT: EnqueueCorrectedService(),
-    ITEM_KILL: EnqueueKilledService()
+    ITEM_KILL: EnqueueKilledService(),
+    ITEM_TAKEDOWN: EnqueueKilledService(),
 }
 
 

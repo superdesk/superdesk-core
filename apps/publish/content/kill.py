@@ -34,6 +34,7 @@ class KillPublishResource(BasePublishResource):
 class KillPublishService(BasePublishService):
     publish_type = 'kill'
     published_state = 'killed'
+    item_operation = ITEM_KILL
 
     def __init__(self, datasource=None, backend=None):
         super().__init__(datasource=datasource, backend=backend)
@@ -45,7 +46,8 @@ class KillPublishService(BasePublishService):
         packages = self.package_service.get_packages(original[config.ID_FIELD])
         if packages and packages.count() > 0:
             for package in packages:
-                if package[ITEM_STATE] != CONTENT_STATE.KILLED and package.get(PACKAGE_TYPE, '') == '':
+                if package[ITEM_STATE] not in {CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED} and \
+                        package.get(PACKAGE_TYPE, '') == '':
                     raise SuperdeskApiError.badRequestError(message='This item is in a package. '
                                                                     'It needs to be removed '
                                                                     'before the item can be killed')
@@ -54,7 +56,7 @@ class KillPublishService(BasePublishService):
         updates['versioncreated'] = utcnow()
 
         super().on_update(updates, original)
-        updates[ITEM_OPERATION] = ITEM_KILL
+        updates[ITEM_OPERATION] = self.item_operation
         self.takes_package_service.process_killed_takes_package(original)
         get_resource_service('archive_broadcast').spike_item(original)
 
@@ -99,7 +101,7 @@ class KillPublishService(BasePublishService):
         updated = deepcopy(original)
         updated.update(updates)
         self._process_takes_package(original, updated, updates_copy)
-        get_resource_service('archive_broadcast').kill_broadcast(updates_copy, original_copy)
+        get_resource_service('archive_broadcast').kill_broadcast(updates_copy, original_copy, self.item_operation)
 
     def broadcast_kill_email(self, original, updates):
         """Sends the broadcast email to all subscribers (including in-active subscribers)
@@ -119,6 +121,7 @@ class KillPublishService(BasePublishService):
         kill_article['desk_name'] = get_resource_service('desks').get_desk_name(kill_article.get('task',
                                                                                                  {}).get('desk'))
         kill_article['city'] = get_dateline_city(kill_article.get('dateline'))
+        kill_article['action'] = self.item_operation
         send_article_killed_email(kill_article, recipients, utcnow())
 
     def _publish_kill_for_takes(self, updates, original):
@@ -150,8 +153,8 @@ class KillPublishService(BasePublishService):
     def kill_item(self, updates, original):
         """Kill the item after applying the template.
 
-        :param dict item: Item
-        :param str body_html: body_html of the original item that triggered the kill.
+        :param dict updates:
+        :param dict original:
         """
         # apply the kill template
         original_copy = deepcopy(original)
