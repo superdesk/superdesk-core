@@ -1049,7 +1049,7 @@ Feature: Archive Broadcast
 
 
 
-  @auth @vocabulary
+  @auth @vocabulary @wip
   Scenario: If Master Story is kill then kill published broadcast content and spike unpublished broadcast content.
     Given "desks"
       """
@@ -1967,5 +1967,188 @@ Feature: Archive Broadcast
             "role": "grpRole:main"
         }
       ]
+    }
+    """
+
+  @auth @vocabulary
+  Scenario: If Master Story is taken down then recall published broadcast content and spike unpublished broadcast content.
+    Given "desks"
+      """
+      [{"name": "Sports", "members": [{"user": "#CONTEXT_USER_ID#"}]}]
+      """
+    And the "validators"
+      """
+      [
+        {
+            "schema": {},
+            "type": "text",
+            "act": "publish",
+            "_id": "publish_text"
+        },
+        {
+            "schema": {},
+            "type": "text",
+            "act": "kill",
+            "_id": "kill_text"
+        }
+      ]
+      """
+    When we post to "content_templates"
+      """
+
+          {
+            "data": {
+              "body_html": "<p>This is test story.<\/p>",
+              "type": "text",
+              "abstract": "This article has been removed",
+              "headline": "Takedown notice ~~~ Takedown notice",
+              "urgency": 1, "priority": 1,
+              "anpa_take_key": "TAKEDOWN"
+            },
+            "template_name": "takedown",
+            "template_type": "kill",
+            "is_public": true
+          }
+      """
+    Then we get new resource
+    When we post to "archive"
+      """
+      [{
+          "guid": "123",
+          "type": "text",
+          "headline": "headline",
+          "slugline": "comics",
+          "anpa_take_key": "take key",
+          "anpa_category": [
+                {"name": "Australian General News", "qcode": "a"}
+          ],
+          "state": "in_progress",
+          "subject":[{"qcode": "17004000", "name": "Statistics"}],
+          "task": {
+              "user": "#CONTEXT_USER_ID#",
+              "desk": "#desks._id#",
+              "stage": "#desks.working_stage#"
+          },
+          "genre": [{"name": "Article", "qcode": "Article"}],
+          "urgency": 1,
+          "priority": 3,
+          "family_id": "xyz",
+          "place": [{"qcode": "VIC", "name": "VIC"}],
+          "body_html": "Take-1",
+          "dateline": {
+            "source": "AAP",
+            "text": "Los Angeles, Aug 11 AAP -"
+          }
+      }]
+      """
+    Then we get OK response
+    When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+      }
+      """
+    And we post to "/subscribers" with success
+      """
+      {
+        "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
+    And we publish "#archive._id#" with "publish" type and "published" state
+    Then we get OK response
+    When we post to "archive/123/broadcast" with "BROADCAST_ONE" and success
+    """
+    [{"desk": "#desks._id#"}]
+    """
+    Then we get updated response
+    """
+    {
+      "state": "draft",
+      "_id": "#BROADCAST_ONE#",
+      "_current_version": 1,
+      "broadcast": {
+        "status": "",
+        "master_id": "123"
+      }
+    }
+    """
+    When we patch "archive/#BROADCAST_ONE#"
+    """
+    {
+      "body_html": "TEST",
+      "headline": "TEST",
+      "slugline": "broadcast",
+      "dateline": {
+        "source": "AAP",
+        "text": "New York, Aug 11 AAP -"
+      }
+    }
+    """
+    Then we get OK response
+    When we publish "#BROADCAST_ONE#" with "publish" type and "published" state
+    Then we get updated response
+    """
+      {
+        "_id": "#BROADCAST_ONE#",
+        "_current_version": 3,
+        "state": "published",
+        "slugline": "broadcast",
+        "dateline": {
+          "source": "AAP",
+          "text": "New York, Aug 11 AAP -"
+        }
+      }
+    """
+    When we post to "archive/123/broadcast" with "BROADCAST_TWO" and success
+    """
+    [{"desk": "#desks._id#"}]
+    """
+    Then we get updated response
+    """
+    {
+      "state": "draft",
+      "_id": "#BROADCAST_TWO#",
+      "_current_version": 1,
+      "broadcast": {
+        "status": "",
+        "master_id": "123"
+      }
+    }
+    """
+    Then we get OK response
+    When we publish "123" with "takedown" type and "recalled" state
+    """
+    {"body_html": "<p>Recalled body.<\/p>"}
+    """
+    Then we get OK response
+    And we get "/archive/123" and match
+    """
+    {
+      "state": "recalled",
+      "_id": "123"
+    }
+    """
+    And we get text "Please takedown story slugged comics headlined headline exLos Angeles" in response field "body_html"
+    And we get text "Recalled body" in response field "body_html"
+    When we get "/archive/#BROADCAST_ONE#"
+    Then we get existing resource
+    """
+    {
+      "state": "recalled",
+      "abstract": "This article has been removed",
+      "anpa_take_key": "TAKEDOWN",
+      "urgency": 1, "priority": 1,
+      "_current_version": 4,
+      "headline": "Takedown notice ~~~ Takedown notice"
+    }
+    """
+    And we get text "Please takedown story slugged broadcast headlined TEST exNew York" in response field "body_html"
+    And we get text "Recalled body" in response field "body_html"
+    And we get "/archive/#BROADCAST_TWO#" and match
+    """
+    {
+      "state": "spiked"
     }
     """

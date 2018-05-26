@@ -59,6 +59,7 @@ class SearchService(superdesk.Service):
                              {'terms': {ITEM_STATE: [CONTENT_STATE.SCHEDULED,
                                                      CONTENT_STATE.PUBLISHED,
                                                      CONTENT_STATE.KILLED,
+                                                     CONTENT_STATE.RECALLED,
                                                      CONTENT_STATE.CORRECTED]}}]}
         elif repo == 'archived':
             query = {'and': [{'term': {'_type': 'archived'}}]}

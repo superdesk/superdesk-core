@@ -8,17 +8,14 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import json
-import html
 import logging
 import superdesk
 
 from copy import copy
 from copy import deepcopy
 from functools import partial
-from flask import current_app as app, render_template
+from flask import current_app as app
 
-from apps.templates.content_templates import render_content_template_by_name
 from superdesk import get_resource_service
 from apps.content import push_content_notification
 from apps.content_types.content_types import DEFAULT_SCHEMA
@@ -42,7 +39,7 @@ from apps.archive.common import get_user, insert_into_versions, item_operations,
     FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM, remove_unwanted
 from apps.archive.common import validate_schedule, ITEM_OPERATION, update_schedule_settings, \
     convert_task_attributes_to_objectId, \
-    get_expiry, get_utc_schedule, get_dateline_city, get_expiry_date
+    get_expiry, get_utc_schedule, get_expiry_date
 from apps.common.components.utils import get_component
 from apps.item_autosave.components.item_autosave import ItemAutosave
 from apps.legal_archive.commands import import_into_legal_archive
@@ -57,11 +54,13 @@ logger = logging.getLogger(__name__)
 ITEM_PUBLISH = 'publish'
 ITEM_CORRECT = 'correct'
 ITEM_KILL = 'kill'
-item_operations.extend([ITEM_PUBLISH, ITEM_CORRECT, ITEM_KILL])
+ITEM_TAKEDOWN = 'takedown'
+item_operations.extend([ITEM_PUBLISH, ITEM_CORRECT, ITEM_KILL, ITEM_TAKEDOWN])
 publish_services = {
     ITEM_PUBLISH: 'archive_publish',
     ITEM_CORRECT: 'archive_correct',
-    ITEM_KILL: 'archive_kill'
+    ITEM_KILL: 'archive_kill',
+    ITEM_TAKEDOWN: 'archive_takedown'
 }
 
 
@@ -92,6 +91,7 @@ class BasePublishService(BaseService):
 
     publish_type = 'publish'
     published_state = 'published'
+    item_operation = ITEM_PUBLISH
 
     non_digital = partial(filter, lambda s: s.get('subscriber_type', '') == SUBSCRIBER_TYPES.WIRE)
     digital = partial(filter, lambda s: (s.get('subscriber_type', '') in {SUBSCRIBER_TYPES.DIGITAL,
@@ -110,7 +110,7 @@ class BasePublishService(BaseService):
         original = get_resource_service(ARCHIVE).find_one(req=None, _id=original[config.ID_FIELD])
         updates.update(original)
 
-        if updates[ITEM_OPERATION] != ITEM_KILL and \
+        if updates[ITEM_OPERATION] not in {ITEM_KILL, ITEM_TAKEDOWN} and \
                 original.get(ITEM_TYPE) in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
             get_resource_service('archive_broadcast').on_broadcast_master_updated(updates[ITEM_OPERATION], original)
 
@@ -144,7 +144,7 @@ class BasePublishService(BaseService):
 
     def update(self, id, updates, original):
         """
-        Handles workflow of each Publish, Corrected and Killed.
+        Handles workflow of each Publish, Corrected, Killed and TakeDown.
         """
         try:
             user = get_user()
@@ -219,7 +219,7 @@ class BasePublishService(BaseService):
 
         if self.publish_type == ITEM_KILL:
             if updates.get('dateline'):
-                raise SuperdeskApiError.badRequestError("Dateline can't be modified on kill")
+                raise SuperdeskApiError.badRequestError("Dateline can't be modified on kill or take down")
 
         if self.publish_type == ITEM_PUBLISH and updated.get('rewritten_by'):
             rewritten_by = get_resource_service(ARCHIVE).find_one(req=None, _id=updated.get('rewritten_by'))
@@ -274,7 +274,7 @@ class BasePublishService(BaseService):
         if not original.get('ingest_provider'):
             updates['source'] = desk['source'] if desk and desk.get('source', '') \
                 else app.settings['DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES']
-        updates['pubstatus'] = PUB_STATUS.CANCELED if self.publish_type == 'kill' else PUB_STATUS.USABLE
+        updates['pubstatus'] = PUB_STATUS.CANCELED if self.publish_type == ITEM_KILL else PUB_STATUS.USABLE
         self._set_item_expiry(updates, original)
 
     def _set_item_expiry(self, updates, original):
@@ -379,7 +379,7 @@ class BasePublishService(BaseService):
         return get_resource_service(PUBLISHED).post([published_item])
 
     def set_state(self, original, updates):
-        """Set the state of the document based on the action (publish, correction, kill)
+        """Set the state of the document based on the action (publish, correction, kill, recalled)
 
         :param dict original: original document
         :param dict updates: updates related to document
@@ -448,7 +448,7 @@ class BasePublishService(BaseService):
 
         This function will ensure that the unpublished content validates and none of
         the content is locked by other than the publishing session, also do not allow
-        any killed or spiked content.
+        any killed or recalled or spiked content.
 
         :param package:
         :param validation_errors: validation errors are appended if there are any.
@@ -472,9 +472,10 @@ class BasePublishService(BaseService):
             if original_item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
                 self._validate_associated_items(doc, validation_errors)
 
-            # make sure no items are killed or spiked or scheduled
+            # make sure no items are killed or recalled or spiked or scheduled
             doc_item_state = doc.get(ITEM_STATE, CONTENT_STATE.PUBLISHED)
-            if doc_item_state in (CONTENT_STATE.KILLED, CONTENT_STATE.SPIKED, CONTENT_STATE.SCHEDULED):
+            if doc_item_state in {CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED,
+                                  CONTENT_STATE.SPIKED, CONTENT_STATE.SCHEDULED}:
                 validation_errors.append('Item cannot contain associated {} item'.format(doc[ITEM_STATE]))
 
             if doc.get(EMBARGO):
@@ -507,40 +508,6 @@ class BasePublishService(BaseService):
 
             # countdown=3 is for elasticsearch to be refreshed with archive and published changes
             import_into_legal_archive.apply_async(countdown=3, kwargs=kwargs)  # @UndefinedVariable
-
-    def _apply_kill_template(self, item):
-        # apply the kill template
-        updates = render_content_template_by_name(item, 'kill')
-        return updates
-
-    def apply_kill_override(self, item, updates):
-        """Applies kill override.
-
-        Kill requires content to be generate based on the item getting killed (and not the
-        item that is being actioned on).
-
-        :param dict item: item to kill
-        :param dict updates: updates that needs to be modified based on the template
-        :return:
-        """
-        try:
-            desk_name = get_resource_service('desks').get_desk_name(item.get('task', {}).get('desk'))
-            city = get_dateline_city(item.get('dateline'))
-            kill_header = json.loads(render_template('article_killed_override.json',
-                                                     slugline=item.get('slugline', ''),
-                                                     headline=item.get('headline', ''),
-                                                     desk_name=desk_name,
-                                                     city=city,
-                                                     versioncreated=item.get('versioncreated',
-                                                                             item.get(config.LAST_UPDATED)),
-                                                     body_html=updates.get('body_html', ''),
-                                                     update_headline=updates.get('headline', '')), strict=False)
-            for key, value in kill_header.items():
-                kill_header[key] = html.unescape(value)
-
-            updates.update(kill_header)
-        except Exception:
-            logger.exception('Failed to apply kill header template to item {}.'.format(item))
 
     def _publish_associated_items(self, original, updates={}, publish=False):
         """Refresh and publish associated items before publishing. The publishing is done if the setting
@@ -669,4 +636,11 @@ superdesk.workflow_action(
     name='rewrite',
     exclude_states=['killed', 'spiked', 'scheduled'],
     privileges=['rewrite']
+)
+
+superdesk.workflow_state('recalled')
+superdesk.workflow_action(
+    name='recalled',
+    include_states=['published', 'scheduled', 'corrected'],
+    privileges=['takedown']
 )

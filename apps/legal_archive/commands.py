@@ -70,7 +70,8 @@ class LegalArchiveImport:
             doc.setdefault(config.VERSION, 1)
             doc.setdefault('expiry', utcnow())
 
-            if not doc.get(ITEM_STATE) in {CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED, CONTENT_STATE.KILLED}:
+            if not doc.get(ITEM_STATE) in \
+                    {CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED, CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED}:
                 # at times we have seen that item is published but the item is different in the archive collection
                 # this will notify admins about the issue but proceed to move the item into legal archive.
                 msg = 'Invalid state: {}. Moving the item to legal archive. item: {}'.\
