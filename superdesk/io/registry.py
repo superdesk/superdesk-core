@@ -122,7 +122,7 @@ class FeedingServiceAllowedService(Service):
                 'label': getattr(registered, 'label', service_id),
                 'fields': getattr(registered, 'fields', []),
                 'field_groups': getattr(registered, 'field_groups', {}),
-                'force_values': getattr(registered, 'force_values', {})
+                'restricted_values': getattr(registered, 'restricted_values', {})
             }
 
         return ListCursor(

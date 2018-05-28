@@ -63,6 +63,8 @@ class FeedingService(metaclass=ABCMeta):
                     - second_field_options: dictionary with the following keys:
                         - label
                         - placeholder
+        3. restricted_values: dictionary of field identifiers and the corresponding list of values to which they
+            are restricted
     """
 
     @abstractmethod
@@ -85,7 +87,20 @@ class FeedingService(metaclass=ABCMeta):
 
         :param provider: Ingest Provider Details.
         """
-        return
+        fields_with_errors = []
+        if getattr(self, 'restricted_values', None):
+            for field, values in self.restricted_values.items():
+                if field in provider:
+                    if isinstance(provider[field], (list, dict)):
+                        for value in provider[field]:
+                            if value not in values:
+                                fields_with_errors.append(field)
+                    else:
+                        if provider[field] not in values:
+                            fields_with_errors.append(field)
+        if len(fields_with_errors):
+            raise SuperdeskIngestError.invalidRestrictedValue(provider=provider,
+                                                              restricted_fields=fields_with_errors)
 
     def config_test(self, provider=None):
         """Test provider configuration.
