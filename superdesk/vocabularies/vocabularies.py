@@ -150,6 +150,10 @@ class VocabulariesService(BaseService):
                     message='{} is in use'.format(doc['_id']),
                     payload={'_id': {'conflict': 1}})
 
+    def on_created(self, docs):
+        for doc in docs:
+            self._send_notification(doc, event='vocabularies:created')
+
     def on_replace(self, document, original):
         self._validate_items(document)
         document[app.config['LAST_UPDATED']] = utcnow()
@@ -249,13 +253,13 @@ class VocabulariesService(BaseService):
                 if field in item:
                     item[field] = serialize_value(field_schema['type'], item[field])
 
-    def _send_notification(self, updated_vocabulary):
+    def _send_notification(self, updated_vocabulary, event='vocabularies:updated'):
         """
         Sends notification about the updated vocabulary to all the connected clients.
         """
 
         user = get_user_from_request()
-        push_notification('vocabularies:updated', vocabulary=updated_vocabulary.get('display_name'),
+        push_notification(event, vocabulary=updated_vocabulary.get('display_name'),
                           user=str(user[config.ID_FIELD]) if user else None,
                           vocabulary_id=updated_vocabulary['_id'])
 
