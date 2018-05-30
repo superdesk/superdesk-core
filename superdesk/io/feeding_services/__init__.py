@@ -63,8 +63,7 @@ class FeedingService(metaclass=ABCMeta):
                     - second_field_options: dictionary with the following keys:
                         - label
                         - placeholder
-        3. restricted_values: dictionary of field identifiers and the corresponding list of values to which they
-            are restricted
+        3. parser_restricted_values: list of values to which the feed_parser field is restricted
     """
 
     @abstractmethod
@@ -81,26 +80,23 @@ class FeedingService(metaclass=ABCMeta):
         """
         raise NotImplementedError()
 
+    def _test_feed_parser(self, provider):
+        """
+        Checks if the feed_parser value was in the restricted values list.
+
+        :param provider: ingest provider document
+        """
+        if getattr(self, 'parser_restricted_values', None) and 'feed_parser' in provider and \
+                provider['feed_parser'] not in self.parser_restricted_values:
+            raise SuperdeskIngestError.invalidFeedParserValue(provider=provider)
+
     def _test(self, provider):
         """
         Subclasses should override this method and do specific config test.
 
-        :param provider: Ingest Provider Details.
+        :param provider: ingest provider document
         """
-        fields_with_errors = []
-        if getattr(self, 'restricted_values', None):
-            for field, values in self.restricted_values.items():
-                if field in provider:
-                    if isinstance(provider[field], (list, dict)):
-                        for value in provider[field]:
-                            if value not in values:
-                                fields_with_errors.append(field)
-                    else:
-                        if provider[field] not in values:
-                            fields_with_errors.append(field)
-        if len(fields_with_errors):
-            raise SuperdeskIngestError.invalidRestrictedValue(provider=provider,
-                                                              restricted_fields=fields_with_errors)
+        return
 
     def config_test(self, provider=None):
         """Test provider configuration.
@@ -111,6 +107,7 @@ class FeedingService(metaclass=ABCMeta):
             return
         if self._is_closed(provider):
             return
+        self._test_feed_parser(provider)
         return self._test(provider)
 
     def _is_closed(self, provider):

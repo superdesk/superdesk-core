@@ -47,7 +47,7 @@ class WufooFeedingService(FeedingService):
         }
     ]
 
-    restricted_values = {'feed_parser': ['wufoo']}
+    parser_restricted_values = ['wufoo']
 
     def __init__(self):
         self.fields_cache = {}

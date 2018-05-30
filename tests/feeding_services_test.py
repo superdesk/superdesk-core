@@ -4,7 +4,7 @@ from superdesk.errors import SuperdeskIngestError
 
 
 class TestFeedingService(FeedingService):
-    restricted_values = {'feed_parser': ['ninjs']}
+    parser_restricted_values = ['ninjs']
 
     def _update(self, provider, update):
         pass
@@ -16,9 +16,3 @@ class ContentAPITestCase(TestCase):
 
         with self.assertRaises(SuperdeskIngestError):
             feeding_service.config_test({'feed_parser': 'foo'})
-
-        with self.assertRaises(SuperdeskIngestError):
-            feeding_service.config_test({'feed_parser': ['foo']})
-
-        with self.assertRaises(SuperdeskIngestError):
-            feeding_service.config_test({'feed_parser': {'foo': 'bar'}})

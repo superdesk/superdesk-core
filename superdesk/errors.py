@@ -205,7 +205,7 @@ class SuperdeskIngestError(SuperdeskError):
     _codes = {
         2000: 'Configured Feed Parser either not found or not registered with the application',
         2001: 'Configuration of the feeding service is missing or incomplete',
-        2002: 'Invalid field value'
+        2002: 'Invalid feed parser value'
     }
 
     def __init__(self, code, exception, provider=None, data=None, extra=None, restricted_fields=None):
@@ -242,7 +242,7 @@ class SuperdeskIngestError(SuperdeskError):
         return SuperdeskIngestError(2001, exception, provider)
 
     @classmethod
-    def invalidRestrictedValue(cls, exception=None, provider=None, restricted_fields=None):
+    def invalidFeedParserValue(cls, exception=None, provider=None, restricted_fields=None):
         return SuperdeskIngestError(2002, exception, provider, restricted_fields)
 
 
