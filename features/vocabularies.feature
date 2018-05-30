@@ -186,7 +186,7 @@ Feature: Vocabularies
     {"items": [{"width": 300, "height": 200}]}
     """
 
-  @auth
+  @auth @notification
   Scenario: Create new vocabulary
     When we post to "vocabularies"
     """
@@ -196,6 +196,11 @@ Feature: Vocabularies
     """
     {"_id": "foo", "type": "manageable", "display_name": "Foo", "items": []}
     """
+    And we get notifications
+    """
+    [{"event": "vocabularies:created", "extra": {"vocabulary_id": "foo", "vocabulary": "Foo", "user": "#CONTEXT_USER_ID#"}}]
+    """
+
 
   @auth
   Scenario: Create new custom field with system field id
