@@ -1,0 +1,68 @@
+{
+    "total": 1,
+    "limit": 20,
+    "offset": 0,
+    "item": [
+      {
+        "id": 5678,
+        "uri": "https://example.com/56789",
+        "type": "story",
+        "firstcreated": "2018-05-30T15:14:24",
+        "versioncreated": "2018-05-30T15:14:24",
+        "urgency": 3,
+        "pubstatus": "usable",
+        "language": "en",
+        "headline": "abcdef",
+        "description_text": "ldrs",
+        "body_html": "abcd",
+        "body_text": "abcd",
+        "subject": [
+          {
+            "code": "category:cynllunio",
+            "name": "Cynllunio",
+            "lang": "cy",
+            "rel": "category",
+            "guid": "10fda980-e5e8-4305-827e-5e51035d4e4b"
+          },
+          {
+            "code": "category:cead-dealbhaidh",
+            "name": "Cead-dealbhaidh",
+            "lang": "gd",
+            "rel": "category",
+            "guid": "10fda980-e5e8-4305-827e-5e51035d4e4b"
+          },
+          {
+            "code": "category:leisure",
+            "name": "Leisure",
+            "lang": "en",
+            "rel": "category",
+            "guid": "5259d25f-a024-413e-b776-fe7a547d643e"
+          },
+          {
+            "code": "location:risca",
+            "name": "Risca",
+            "lang": "en",
+            "rel": "location"
+          }
+        ],
+        "byline": "Jane Doe",
+        "associations": [
+          {
+            "id": "featureimage",
+            "headline": "logo-footer.png",
+            "description_text": "abc",
+            "type": "picture",
+            "renditions": {
+              "original": {
+                "href": "https://www.superdesk.org/public/img/logo-footer.png",
+                "mimetype": "image/png",
+                "filename": "logo-footer.png",
+                "width": "172",
+                "height": "57"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }

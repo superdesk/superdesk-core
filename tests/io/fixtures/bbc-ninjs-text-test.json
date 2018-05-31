@@ -1,0 +1,39 @@
+{
+    "total": 1,
+    "limit": 20,
+    "offset": 0,
+    "item": [
+      {
+        "id": 1234,
+        "uri": "https://www.example.com//12345",
+        "type": "advisory",
+        "contracts": [
+          {
+            "id": "628",
+            "name": "Blaenau Gwent County Borough",
+            "guid": "c446a0cf-2cf8-482b-90c1-e14f87a8d930"
+          }
+        ],
+        "firstcreated": "2018-05-28T16:40:08",
+        "versioncreated": "2018-05-28T16:40:08",
+        "urgency": 3,
+        "pubstatus": "usable",
+        "language": "en",
+        "headline": "advisory",
+        "description_text": "LDRS WALES v.1",
+        "body_html": "<p><strong>body</strong></p>",
+        "body_text": "body",
+        "subject": [
+          {
+            "code": "category:planning-permission",
+            "name": "Planning Permission",
+            "lang": "en",
+            "rel": "category",
+            "guid": "10fda980-e5e8-4305-827e-5e51035d4e4b"
+          }
+        ],
+        "byline": "John Doe",
+        "associations": {}
+      }
+    ]
+  }
