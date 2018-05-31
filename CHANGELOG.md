@@ -1,5 +1,27 @@
 # Superdesk Server Changelog
 
+## [1.19] 2018-05-31
+
+### Fixed
+
+- Fix priority and urgency qcodes schema.
+- Fix vocabularies not validating item if unique field is missing.
+
+### Added
+
+- Add event/planning item types to content filters.
+- Add docs how to create an output formatter.
+- Add schema fields for preffered cv items.
+- Add dev server config for content api.
+
+### Changed
+
+- Push notification when new vocabulary is created.
+- Feeding services labels and fields should be set server side, not client.
+- Change email address field not to be case sensitive.
+- Default `unique_field` to `qcode` when suitable in vocabulary.
+- Enable getting image/video item id form image/video url.
+
 ## [1.18] 2018-05-11
 
 ### Fixed
