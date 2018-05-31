@@ -28,7 +28,8 @@ logger = logging.getLogger(__name__)
 
 
 def generate_renditions(original, media_id, inserted, file_type, content_type,
-                        rendition_config, url_for_media, insert_metadata=True):
+                        rendition_config, url_for_media, insert_metadata=True,
+                        temporary=False):
     """Generate system renditions for given media file id.
 
     :param BytesIO original: original image byte stream
@@ -39,6 +40,8 @@ def generate_renditions(original, media_id, inserted, file_type, content_type,
     :param dict rendition_config: rendition config
     :param url_for_media: function to generate url
     :param bool insert_metadata: boolean to inserted metadata or not. For AWS storage it is false.
+    :param bool temporary: put files created in database in "temp" if True
+                           files in "temp" folder will be removed after 24 hours
     :return: dict of renditions
     """
     rend = {'href': app.media.url_for_media(media_id, content_type), 'media': media_id, 'mimetype': content_type}
@@ -62,7 +65,8 @@ def generate_renditions(original, media_id, inserted, file_type, content_type,
     ext = content_type.split('/')[1].lower()
     if ext in ('JPG', 'jpg'):
         ext = 'jpeg'
-    ext = ext if ext in ('jpeg', 'gif', 'tiff', 'png') else 'png'
+    elif ext not in ('jpeg', 'gif', 'tiff', 'png'):
+        ext = 'png'
     # make baseImage rendition first
     base_image = rendition_config.pop('baseImage', None)
     specs = list(rendition_config.items())
@@ -80,8 +84,10 @@ def generate_renditions(original, media_id, inserted, file_type, content_type,
         rend_content_type = 'image/%s' % ext
         file_name, rend_content_type, metadata = process_file_from_stream(resized, content_type=rend_content_type)
         resized.seek(0)
+        folder = 'temp' if temporary else None
         _id = app.media.put(resized, filename=file_name,
                             content_type=rend_content_type,
+                            folder=folder,
                             metadata=metadata if insert_metadata else None)
         inserted.append(_id)
         renditions[rendition] = {'href': url_for_media(_id, rend_content_type), 'media': _id,
