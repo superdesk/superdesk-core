@@ -66,6 +66,7 @@ Learn about other important core aspects of working with the Superdesk server.
 
     cache
     expiry
+    api
 
 Contributing
 ------------
