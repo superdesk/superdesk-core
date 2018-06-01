@@ -8,13 +8,15 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import json
 import logging
+import datetime
+
+from copy import deepcopy
 from superdesk.io.registry import register_feed_parser
 from superdesk.io.feed_parsers import FeedParser
-import datetime
 from superdesk.utc import utc
-import json
-from copy import deepcopy
+from superdesk.metadata.utils import generate_tag_from_url
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +33,7 @@ class NINJSFeedParser(FeedParser):
     direct_copy_properties = ('usageterms', 'language', 'headline', 'copyrightnotice',
                               'urgency', 'pubstatus', 'mimetype', 'copyrightholder', 'ednote',
                               'body_text', 'body_html', 'slugline', 'keywords',
-                              'source', 'extra', 'byline', 'description_text')
+                              'source', 'extra', 'byline', 'description_text', 'profile')
 
     items = []
 
@@ -57,8 +59,12 @@ class NINJSFeedParser(FeedParser):
         return self.items
 
     def _transform_from_ninjs(self, ninjs):
-        item = {'guid': ninjs.get('guid'),
-                'type': ninjs.get('type')}
+        guid = ninjs.get('guid')
+        if not guid and ninjs.get('uri'):
+            guid = generate_tag_from_url(ninjs['uri'], 'urn')
+        item = {'guid': guid,
+                'type': ninjs.get('type'),
+                'uri': ninjs.get('uri')}
 
         for copy_property in self.direct_copy_properties:
             if ninjs.get(copy_property) is not None:
@@ -110,6 +116,9 @@ class NINJSFeedParser(FeedParser):
         if ninjs.get('authors'):
             item['authors'] = self._parse_authors(ninjs['authors'])
 
+        if not item.get('body_html') and ninjs.get('body_xhtml'):
+            item['body_html'] = ninjs['body_xhtml']
+
         return item
 
     def _format_qcodes(self, items):
@@ -119,7 +128,7 @@ class NINJSFeedParser(FeedParser):
         try:
             return datetime.datetime.strptime(string, '%Y-%m-%dT%H:%M:%S+0000')
         except ValueError:
-            return datetime.datetime.strptime(string, '%Y:%m:%dT%H:%M:%SZ').replace(tzinfo=utc)
+            return datetime.datetime.strptime(string, '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=utc)
 
     def _parse_authors(self, authors):
         return [self._parse_author(author) for author in authors]

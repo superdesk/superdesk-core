@@ -41,7 +41,7 @@ class NewsMLTwoFeedParser(XMLFeedParser):
     SUBJ_QCODE_PREFIXES = ('subj',)
 
     def can_parse(self, xml):
-        return xml.tag.endswith('newsMessage')
+        return any([xml.tag.endswith(tag) for tag in ['newsMessage', 'newsItem', 'packageItem']])
 
     def parse(self, xml, provider=None):
         self.root = xml
@@ -52,6 +52,11 @@ class NewsMLTwoFeedParser(XMLFeedParser):
                 for item_tree in item_set:
                     item = self.parse_item(item_tree)
                     item['priority'] = header['priority']
+                    items.append(item)
+            else:
+                if xml.tag.endswith('newsItem') or xml.tag.endswith('packageItem'):
+                    item = self.parse_item(xml)
+                    item.setdefault('priority', header['priority'])
                     items.append(item)
             return items
         except Exception as ex:
@@ -153,6 +158,8 @@ class NewsMLTwoFeedParser(XMLFeedParser):
                 if lang and lang.startswith('en'):
                     item['genre'].append({'name': name_el.text})
 
+        self.parse_authors(meta, item)
+
     def parse_content_subject(self, tree, item):
         """Parse subj type subjects into subject list."""
         item['subject'] = []
@@ -238,10 +245,12 @@ class NewsMLTwoFeedParser(XMLFeedParser):
 
     def parse_inline_content(self, tree, item, ns=NS['xhtml']):
         if tree.get('contenttype') == NITF:
-            body_content = tree.xpath('.//nitf:body.content/nitf:block/*', namespaces=NS)
+            try:
+                body_content = tree.xpath('.//nitf:body.content/nitf:block/*', namespaces=NS)
+            except AttributeError:
+                return {'contenttype': NITF, 'content': ''}
             elements = [etree.tostring(sd_etree.clean_html(e), encoding='unicode', method='html') for e in body_content]
-            content = {'contenttype': NITF,
-                       'content': '\n'.join(elements)}
+            return {'contenttype': NITF, 'content': '\n'.join(elements)}
         else:
             html = tree.find(self.qname('html', ns))
             body = html.find(self.qname('body', ns))
@@ -262,7 +271,7 @@ class NewsMLTwoFeedParser(XMLFeedParser):
             elif body.text:
                 content['content'] = '<pre>' + body.text + '</pre>'
                 content['format'] = CONTENT_TYPE.PREFORMATTED
-        return content
+            return content
 
     def parse_remote_content(self, tree):
         content = dict()
@@ -283,6 +292,16 @@ class NewsMLTwoFeedParser(XMLFeedParser):
         """Get name for item with fallback to literal attribute if name is not provided."""
         name = item.find(self.qname('name'))
         return name.text if name is not None else item.attrib.get('literal')
+
+    def parse_authors(self, meta, item):
+        item['authors'] = []
+        for creator in meta.findall(self.qname('creator')):
+            name = creator.find(self.qname('name'))
+            if name is not None:
+                item['authors'].append({
+                    'uri': creator.get('uri'),
+                    'name': name.text,
+                })
 
 
 register_feed_parser(NewsMLTwoFeedParser.NAME, NewsMLTwoFeedParser())

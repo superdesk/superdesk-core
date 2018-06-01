@@ -72,3 +72,23 @@ class PictureTestCase(NINJSTestCase):
     def test_headline(self):
         self.assertEqual(self.items[0].get('headline'), 'German Air Force Museum')
         self.assertEqual(self.items[0].get('type'), "picture")
+
+
+class IPTCSimpleTextTestCase(NINJSTestCase):
+    filename = 'ninjsExSimpleText1.json'
+
+    def test_simple(self):
+        self.assertEqual(1, len(self.items))
+        item = self.items[0]
+        self.assertEqual('urn:ninjs.example.com:newsitems:20130709simp123', item['guid'])
+        self.assertEqual('2013-07-09T10:37:00+00:00', item['versioncreated'].isoformat())
+        self.assertIn('GROSSETO', item['body_html'])
+
+
+class IPTCMediumTextTestCase(NINJSTestCase):
+    filename = 'ninjsExMediumText1.json'
+
+    def test_medium(self):
+        self.assertEqual(1, len(self.items))
+        self.assertEqual('text-only', self.items[0]['profile'])
+        self.assertEqual('en', self.items[0]['language'])
