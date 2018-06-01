@@ -11,5 +11,18 @@
             "headline": "Kill\/Takedown notice",
             "anpa_take_key": "KILL\/TAKEDOWN"
         }
+    },
+    {
+        "template_name": "takedown",
+        "template_type": "kill",
+        "is_public": true,
+         "data": {
+            "body_html": "FIXME",
+            "type": "text",
+            "ednote": "",
+            "abstract": "",
+            "headline": "Takedown notice",
+            "anpa_take_key": "TAKEDOWN"
+        }
     }
 ]

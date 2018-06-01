@@ -72,7 +72,8 @@ class RemoveExpiredContent(superdesk.Command):
 
             # get killed items
             killed_items = {item.get(config.ID_FIELD): item
-                            for item in expired_items if item.get(ITEM_STATE) in {CONTENT_STATE.KILLED}}
+                            for item in expired_items
+                            if item.get(ITEM_STATE) in {CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED}}
 
             # check if killed items imported to legal
             items_having_issues.update(self.check_if_items_imported_to_legal_archive(killed_items))
@@ -83,7 +84,8 @@ class RemoveExpiredContent(superdesk.Command):
 
             # Get the not killed and spiked items
             not_killed_items = {item.get(config.ID_FIELD): item for item in expired_items
-                                if item.get(ITEM_STATE) not in {CONTENT_STATE.KILLED, CONTENT_STATE.SPIKED}}
+                                if item.get(ITEM_STATE) not in {
+                                    CONTENT_STATE.KILLED, CONTENT_STATE.SPIKED, CONTENT_STATE.RECALLED}}
 
             log_msg_format = "{{'_id': {_id}, 'unique_name': {unique_name}, 'version': {_current_version}, " \
                              "'expired_on': {expiry}}}."
@@ -124,12 +126,12 @@ class RemoveExpiredContent(superdesk.Command):
 
                 # items_to_be_archived might contain killed items
                 for item_id, item in items_to_be_archived.items():
-                    if item.get(ITEM_STATE) == CONTENT_STATE.KILLED:
+                    if item.get(ITEM_STATE) in {CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED}:
                         killed_items[item_id] = item
 
                 # remove killed items from the items_to_be_archived
                 items_to_be_archived = {item_id: item for item_id, item in items_to_be_archived.items()
-                                        if item.get(ITEM_STATE) != CONTENT_STATE.KILLED}
+                                        if item.get(ITEM_STATE) not in {CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED}}
 
             # add killed items to items to expire
             items_to_expire.update(killed_items)

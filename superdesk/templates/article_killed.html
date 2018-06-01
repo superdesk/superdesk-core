@@ -1,5 +1,10 @@
-<p>{{place}}:Kill/Takedown Notice Kill/Takedown Notice</p>
-<p>**KILL/TAKEDOWN NOTICE**  **KILL/TAKEDOWN NOTICE**</p>
+{% if operation == 'kill' %}
+{% set header_prefix = 'Kill/Takedown' %}
+{% else %}
+{% set header_prefix = 'Takedown' %}
+{% endif %}
+<p>{{place}}:{{header_prefix}} Notice {{header_prefix}} Notice</p>
+<p>**{{header_prefix}} NOTICE**  **{{header_prefix}} NOTICE**</p>
 
     {{body | safe}}
 

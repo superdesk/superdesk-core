@@ -646,7 +646,8 @@ class ArchiveService(BaseService):
                     if item.get(PUBLISH_SCHEDULE) or item[ITEM_STATE] == CONTENT_STATE.SCHEDULED:
                         raise SuperdeskApiError.badRequestError("An item can't have both Publish Schedule and Embargo")
 
-                    if (item[ITEM_STATE] not in {CONTENT_STATE.KILLED, CONTENT_STATE.SCHEDULED}) \
+                    if (item[ITEM_STATE] not in {
+                        CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED, CONTENT_STATE.SCHEDULED}) \
                             and embargo <= utcnow():
                         raise SuperdeskApiError.badRequestError("Embargo cannot be earlier than now")
 
@@ -682,7 +683,7 @@ class ArchiveService(BaseService):
 
         If any of these conditions are met then exception is raised:
             1.  Is article locked by another user other than the user requesting for update
-            2.  Is state of the article is Killed?
+            2.  Is state of the article is Killed or Recalled?
             3.  Is user trying to update the package with Public Service Announcements?
             4.  Is user authorized to update unique name of the article?
             5.  Is user trying to update the genre of a broadcast article?
@@ -715,7 +716,7 @@ class ArchiveService(BaseService):
         if lock_user and str(lock_user) != str_user_id and not force_unlock:
             raise SuperdeskApiError.forbiddenError('The item was locked by another user')
 
-        if original.get(ITEM_STATE) == CONTENT_STATE.KILLED:
+        if original.get(ITEM_STATE) in {CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED}:
             raise SuperdeskApiError.forbiddenError("Item isn't in a valid state to be updated.")
 
         if updates.get('body_footer') and is_normal_package(original):

@@ -699,6 +699,20 @@
         "id_name": "-id content template-"
     },
 
+	{
+        "data": {
+            "template_name": "takedown", "template_type": "kill",
+            "data": {
+                "body_html": "This is takedown template. Slugged {{item.slugline}}.",
+                "abstract": "This item is removed.",
+                "headline": "TAKEDOWN NOTICE"
+            },
+            "is_public": true
+        },
+        "resource": "content_templates",
+        "id_name": "-id content template-"
+    },
+
     {
     	"data": {"name": "Highlight one", "desks": ["-id desk Sports Desks-"], "groups": ["main"], "template": "-id content template-"}, 
     	"resource": "highlights",

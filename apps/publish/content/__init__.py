@@ -12,3 +12,4 @@ from .correct import CorrectPublishResource, CorrectPublishService  # NOQA
 from .kill import KillPublishResource, KillPublishService  # NOQA
 from .publish import ArchivePublishResource, ArchivePublishService  # NOQA
 from .resend import ResendResource, ResendService  # NOQA
+from .take_down import TakeDownPublishResource, TakeDownPublishService  # NOQA

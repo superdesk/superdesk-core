@@ -125,7 +125,7 @@ class NewsML12Formatter(Formatter):
         :return: dict
         """
         revision = {'PreviousRevision': '0', 'Update': 'N'}
-        if article.get(ITEM_STATE) in {CONTENT_STATE.CORRECTED, CONTENT_STATE.KILLED}:
+        if article.get(ITEM_STATE) in {CONTENT_STATE.CORRECTED, CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED}:
             revision['PreviousRevision'] = str(article.get(config.VERSION) - 1)
         return revision
 

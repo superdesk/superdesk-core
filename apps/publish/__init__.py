@@ -14,7 +14,7 @@ import superdesk
 
 from apps.publish.content import ArchivePublishResource, ArchivePublishService, \
     KillPublishResource, KillPublishService, CorrectPublishResource, CorrectPublishService, \
-    ResendResource, ResendService
+    ResendResource, ResendService, TakeDownPublishService, TakeDownPublishResource
 from apps.publish.enqueue import EnqueueContent
 from apps.publish.published_item import PublishedItemResource, PublishedItemService
 
@@ -36,6 +36,10 @@ def init_app(app):
     service = CorrectPublishService(endpoint_name, backend=get_backend())
     CorrectPublishResource(endpoint_name, app=app, service=service)
 
+    endpoint_name = 'archive_takedown'
+    service = TakeDownPublishService(endpoint_name, backend=get_backend())
+    TakeDownPublishResource(endpoint_name, app=app, service=service)
+
     endpoint_name = 'published'
     service = PublishedItemService(endpoint_name, backend=get_backend())
     PublishedItemResource(endpoint_name, app=app, service=service)
@@ -51,6 +55,7 @@ def init_app(app):
     superdesk.privilege(name='publish_queue', label='Publish Queue', description='User can update publish queue')
     superdesk.privilege(name='resend', label='Resending Stories', description='User can resend published stories')
     superdesk.privilege(name='embargo', label='Embargo', description='User can set embargo date')
+    superdesk.privilege(name='takedown', label='Take down', description='Take down a published content')
 
 
 def enqueue_content():

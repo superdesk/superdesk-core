@@ -128,6 +128,6 @@ class DuplicateService(BaseService):
 
 superdesk.workflow_action(
     name='duplicate',
-    exclude_states=[CONTENT_STATE.SPIKED, CONTENT_STATE.KILLED],
+    exclude_states=[CONTENT_STATE.SPIKED, CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED],
     privileges=['archive', 'duplicate']
 )

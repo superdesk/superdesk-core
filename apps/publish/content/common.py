@@ -38,8 +38,8 @@ from eve.validation import ValidationError
 from eve.versioning import resolve_document_version
 
 from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
-from apps.archive.common import get_user, insert_into_versions, item_operations, \
-    FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM
+from apps.archive.common import get_user, insert_into_versions, \
+    FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM, item_operations
 from apps.archive.common import validate_schedule, ITEM_OPERATION, update_schedule_settings, \
     convert_task_attributes_to_objectId, is_genre, \
     BROADCAST_GENRE, get_expiry, get_utc_schedule, get_dateline_city, get_expiry_date
@@ -58,7 +58,14 @@ logger = logging.getLogger(__name__)
 ITEM_PUBLISH = 'publish'
 ITEM_CORRECT = 'correct'
 ITEM_KILL = 'kill'
-item_operations.extend([ITEM_PUBLISH, ITEM_CORRECT, ITEM_KILL])
+ITEM_TAKEDOWN = 'takedown'
+item_operations.extend([ITEM_PUBLISH, ITEM_CORRECT, ITEM_KILL, ITEM_TAKEDOWN])
+publish_services = {
+    ITEM_PUBLISH: 'archive_publish',
+    ITEM_CORRECT: 'archive_correct',
+    ITEM_KILL: 'archive_kill',
+    ITEM_TAKEDOWN: 'archive_takedown'
+}
 
 
 class BasePublishResource(ArchiveResource):
@@ -88,6 +95,7 @@ class BasePublishService(BaseService):
 
     publish_type = 'publish'
     published_state = 'published'
+    item_operation = ITEM_PUBLISH
 
     non_digital = partial(filter, lambda s: s.get('subscriber_type', '') == SUBSCRIBER_TYPES.WIRE)
     digital = partial(filter, lambda s: (s.get('subscriber_type', '') in {SUBSCRIBER_TYPES.DIGITAL,
@@ -107,7 +115,7 @@ class BasePublishService(BaseService):
         original = get_resource_service(ARCHIVE).find_one(req=None, _id=original[config.ID_FIELD])
         updates.update(original)
 
-        if updates[ITEM_OPERATION] != ITEM_KILL and \
+        if updates[ITEM_OPERATION] not in {ITEM_KILL, ITEM_TAKEDOWN} and \
                 original.get(ITEM_TYPE) in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
             get_resource_service('archive_broadcast').on_broadcast_master_updated(updates[ITEM_OPERATION], original)
 
@@ -119,7 +127,7 @@ class BasePublishService(BaseService):
 
     def update(self, id, updates, original):
         """
-        Handles workflow of each Publish, Corrected and Killed.
+        Handles workflow of each Publish, Corrected, Killed and TakeDown.
         """
         try:
             user = get_user()
@@ -138,7 +146,7 @@ class BasePublishService(BaseService):
 
                 # process takes package for published or corrected items
                 # if no_takes is true but takes package exists then process takes package.
-                if self.published_state != CONTENT_STATE.KILLED and \
+                if self.published_state not in {CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED} and \
                         (not app.config.get('NO_TAKES', False) or
                          self.takes_package_service.get_take_package_id(updated)):
                     self._process_takes_package(original, updated, updates)
@@ -153,7 +161,7 @@ class BasePublishService(BaseService):
                               unique_name=original['unique_name'],
                               desk=str(original.get('task', {}).get('desk', '')),
                               user=str(user.get(config.ID_FIELD, '')))
-        except SuperdeskApiError as e:
+        except SuperdeskApiError:
             raise
         except KeyError as e:
             logger.exception(e)
@@ -191,7 +199,7 @@ class BasePublishService(BaseService):
             self._set_updates(package, package_updates, last_updated, preserve_state)
             package_updates.setdefault(ITEM_OPERATION, updates.get(ITEM_OPERATION, ITEM_PUBLISH))
 
-            if self.published_state == CONTENT_STATE.KILLED:
+            if self.published_state in {CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED}:
                 package_copy = deepcopy(package)
                 package_copy.update(package_updates)
                 self.apply_kill_override(package_copy, package_updates)
@@ -319,7 +327,7 @@ class BasePublishService(BaseService):
         if not original.get('ingest_provider'):
             updates['source'] = desk['source'] if desk and desk.get('source', '') \
                 else app.settings['DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES']
-        updates['pubstatus'] = PUB_STATUS.CANCELED if self.publish_type == 'kill' else PUB_STATUS.USABLE
+        updates['pubstatus'] = PUB_STATUS.CANCELED if self.publish_type == ITEM_KILL else PUB_STATUS.USABLE
         self._set_item_expiry(updates, original)
 
     def _set_item_expiry(self, updates, original):
@@ -378,7 +386,7 @@ class BasePublishService(BaseService):
                     r['is_published'] = True
                     break
 
-            if takes and self.published_state != 'killed':
+            if takes and self.published_state not in {CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED}:
                 body_html_list = [take.get('body_html', '') for take in takes]
                 if self.published_state == CONTENT_STATE.PUBLISHED:
                     body_html_list.append(body_html)
@@ -423,7 +431,7 @@ class BasePublishService(BaseService):
                     if rewrite_package:
                         package_updates['rewrite_of'] = rewrite_package.get(config.ID_FIELD)
 
-            if self.published_state == CONTENT_STATE.KILLED:
+            if self.published_state in {CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED}:
                 # if published then update the groups in the take
                 # to reflect the correct version, headline and slugline
                 package_updates[ASSOCIATIONS] = None
@@ -537,7 +545,7 @@ class BasePublishService(BaseService):
         return get_resource_service(PUBLISHED).post([published_item])
 
     def set_state(self, original, updates):
-        """Set the state of the document based on the action (publish, correction, kill)
+        """Set the state of the document based on the action (publish, correction, kill, recalled)
 
         :param dict original: original document
         :param dict updates: updates related to document
@@ -606,7 +614,7 @@ class BasePublishService(BaseService):
 
         This function will ensure that the unpublished content validates and none of
         the content is locked by other than the publishing session, also do not allow
-        any killed or spiked content.
+        any killed or recalled or spiked content.
 
         :param package:
         :param takes_package:
@@ -632,9 +640,10 @@ class BasePublishService(BaseService):
                 digital = self.takes_package_service.get_take_package(doc) or {}
                 self._validate_associated_items(doc, digital, validation_errors)
 
-            # make sure no items are killed or spiked or scheduled
+            # make sure no items are killed or recalled or spiked or scheduled
             doc_item_state = doc.get(ITEM_STATE, CONTENT_STATE.PUBLISHED)
-            if doc_item_state in (CONTENT_STATE.KILLED, CONTENT_STATE.SPIKED, CONTENT_STATE.SCHEDULED):
+            if doc_item_state in {CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED,
+                                  CONTENT_STATE.SPIKED, CONTENT_STATE.SCHEDULED}:
                 validation_errors.append('Item cannot contain associated {} item'.format(doc[ITEM_STATE]))
 
             if doc.get(EMBARGO):
@@ -670,7 +679,7 @@ class BasePublishService(BaseService):
 
     def _apply_kill_template(self, item):
         # apply the kill template
-        updates = render_content_template_by_name(item, 'kill')
+        updates = render_content_template_by_name(item, self.item_operation)
         return updates
 
     def apply_kill_override(self, item, updates):
@@ -687,19 +696,22 @@ class BasePublishService(BaseService):
             desk_name = get_resource_service('desks').get_desk_name(item.get('task', {}).get('desk'))
             city = get_dateline_city(item.get('dateline'))
             kill_header = json.loads(render_template('article_killed_override.json',
-                                                     slugline=item.get('slugline', ''),
-                                                     headline=item.get('headline', ''),
-                                                     desk_name=desk_name,
-                                                     city=city,
-                                                     versioncreated=item.get('versioncreated',
-                                                                             item.get(config.LAST_UPDATED)),
-                                                     body_html=updates.get('body_html', ''),
-                                                     update_headline=updates.get('headline', '')), strict=False)
+                                     slugline=item.get('slugline', ''),
+                                     headline=item.get('headline', ''),
+                                     desk_name=desk_name,
+                                     city=city,
+                                     versioncreated=item.get('versioncreated',
+                                                             item.get(config.LAST_UPDATED)),
+                                     body_html=updates.get('body_html', ''),
+                                     update_headline=updates.get('headline', ''),
+                                     item_operation=self.item_operation.lower()),
+                                     strict=False)
+
             for key, value in kill_header.items():
                 kill_header[key] = html.unescape(value)
 
             updates.update(kill_header)
-        except:
+        except Exception:
             logger.exception('Failed to apply kill header template to item {}.'.format(item))
 
     def _refresh_associated_items(self, original):
@@ -801,4 +813,11 @@ superdesk.workflow_action(
     name='rewrite',
     exclude_states=['killed', 'spiked', 'scheduled'],
     privileges=['rewrite']
+)
+
+superdesk.workflow_state('recalled')
+superdesk.workflow_action(
+    name='recalled',
+    include_states=['published', 'scheduled', 'corrected'],
+    privileges=['takedown']
 )

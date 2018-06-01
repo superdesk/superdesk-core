@@ -115,6 +115,7 @@ class ArchiveRewriteService(Service):
             if update.get(ITEM_STATE) in [CONTENT_STATE.PUBLISHED,
                                           CONTENT_STATE.CORRECTED,
                                           CONTENT_STATE.KILLED,
+                                          CONTENT_STATE.RECALLED,
                                           CONTENT_STATE.SCHEDULED,
                                           CONTENT_STATE.SPIKED]:
                 raise InvalidStateTransitionError()

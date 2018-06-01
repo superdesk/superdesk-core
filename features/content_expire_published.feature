@@ -1275,3 +1275,50 @@ Feature: Content Expiry Published Items
       Then we get list with 0 items
       And we fetch a file "#rendition.4-3.href#"
       And we get OK response
+
+  @auth @vocabulary
+  Scenario: Correct/takedown an item and then expire
+    When we publish "123" with "publish" type and "published" state
+    Then we get OK response
+    When we enqueue published
+    And we transmit items
+    And run import legal publish queue
+    When we publish "123" with "correct" type and "corrected" state
+    """
+    {"body_html": "Corrected", "slugline": "corrected", "headline": "corrected"}
+    """
+    Then we get OK response
+    When we enqueue published
+    And we transmit items
+    And run import legal publish queue
+    When we publish "123" with "takedown" type and "recalled" state
+    """
+    {"body_html": "recalled", "slugline": "recalled", "headline": "recalled"}
+    """
+    Then we get OK response
+    """
+    {"state": "recalled", "operation" : "takedown"}
+    """
+    When we enqueue published
+    And we transmit items
+    And run import legal publish queue
+    When we get "archive"
+    Then we get list with 0 items
+    When we get "published"
+    Then we get list with 6 items
+    When we get "publish_queue"
+    Then we get list with 6 items
+    When we get "archived"
+    Then we get list with 0 items
+    When we expire items
+    """
+    ["123", "#archive.123.take_package#"]
+    """
+    And we get "archive"
+    Then we get list with 0 items
+    When we get "published"
+    Then we get list with 0 items
+    When we get "publish_queue"
+    Then we get list with 0 items
+    When we get "archived"
+    Then we get list with 0 items
