@@ -30,6 +30,7 @@ class ArchivePublishResource(BasePublishResource):
 class ArchivePublishService(BasePublishService):
     publish_type = 'publish'
     published_state = 'published'
+    item_operation = ITEM_PUBLISH
 
     def _validate(self, original, updates):
         super()._validate(original, updates)
@@ -42,7 +43,7 @@ class ArchivePublishService(BasePublishService):
     def on_update(self, updates, original):
         if not original.get('firstpublished'):
             updates.setdefault('firstpublished', utcnow())
-        updates[ITEM_OPERATION] = ITEM_PUBLISH
+        updates[ITEM_OPERATION] = self.item_operation
         super().on_update(updates, original)
         set_sign_off(updates, original)
         update_word_count(updates)

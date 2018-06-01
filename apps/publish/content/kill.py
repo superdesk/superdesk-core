@@ -8,7 +8,12 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import json
+import html
+from flask import render_template
+
 from eve.versioning import resolve_document_version
+from apps.templates.content_templates import render_content_template_by_name
 from .common import BasePublishService, BasePublishResource, ITEM_KILL
 from eve.utils import config
 from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE, PUB_STATUS, EMBARGO, SCHEDULE_SETTINGS, \
@@ -33,6 +38,7 @@ class KillPublishResource(BasePublishResource):
 class KillPublishService(BasePublishService):
     publish_type = 'kill'
     published_state = 'killed'
+    item_operation = ITEM_KILL
 
     def __init__(self, datasource=None, backend=None):
         super().__init__(datasource=datasource, backend=backend)
@@ -44,7 +50,7 @@ class KillPublishService(BasePublishService):
         packages = self.package_service.get_packages(original[config.ID_FIELD])
         if packages and packages.count() > 0:
             for package in packages:
-                if package[ITEM_STATE] != CONTENT_STATE.KILLED:
+                if package[ITEM_STATE] not in {CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED}:
                     raise SuperdeskApiError.badRequestError(message='This item is in a package. '
                                                                     'It needs to be removed '
                                                                     'before the item can be killed')
@@ -53,7 +59,7 @@ class KillPublishService(BasePublishService):
         updates['versioncreated'] = utcnow()
 
         super().on_update(updates, original)
-        updates[ITEM_OPERATION] = ITEM_KILL
+        updates[ITEM_OPERATION] = self.item_operation
         get_resource_service('archive_broadcast').spike_item(original)
 
     def update(self, id, updates, original):
@@ -78,7 +84,7 @@ class KillPublishService(BasePublishService):
         super().update(id, updates, original)
         updated = deepcopy(original)
         updated.update(updates)
-        get_resource_service('archive_broadcast').kill_broadcast(updates_copy, original_copy)
+        get_resource_service('archive_broadcast').kill_broadcast(updates_copy, original_copy, self.item_operation)
 
     def broadcast_kill_email(self, original, updates):
         """Sends the broadcast email to all subscribers (including in-active subscribers)
@@ -98,17 +104,18 @@ class KillPublishService(BasePublishService):
         kill_article['desk_name'] = get_resource_service('desks').get_desk_name(kill_article.get('task',
                                                                                                  {}).get('desk'))
         kill_article['city'] = get_dateline_city(kill_article.get('dateline'))
+        kill_article['action'] = self.item_operation
         send_article_killed_email(kill_article, recipients, utcnow())
 
     def kill_item(self, updates, original):
         """Kill the item after applying the template.
 
-        :param dict item: Item
-        :param str body_html: body_html of the original item that triggered the kill.
+        :param dict updates:
+        :param dict original:
         """
         # apply the kill template
         original_copy = deepcopy(original)
-        updates_data = self._apply_kill_template(original_copy)
+        updates_data = self.apply_kill_template(original_copy)
         updates_data['body_html'] = updates.get('body_html', '')
         # resolve the document version
         resolve_document_version(document=updates_data, resource=ARCHIVE, method='PATCH', latest_doc=original)
@@ -116,3 +123,40 @@ class KillPublishService(BasePublishService):
         self.patch(original.get(config.ID_FIELD), updates_data)
         # insert into versions
         insert_into_versions(id_=original[config.ID_FIELD])
+
+    def apply_kill_template(self, item):
+        # apply the kill template
+        updates = render_content_template_by_name(item, self.item_operation)
+        return updates
+
+    def apply_kill_override(self, item, updates):
+        """Applies kill override.
+
+        Kill requires content to be generate based on the item getting killed (and not the
+        item that is being actioned on).
+
+        :param dict item: item to kill
+        :param dict updates: updates that needs to be modified based on the template
+        :return:
+        """
+        try:
+            desk_name = get_resource_service('desks').get_desk_name(item.get('task', {}).get('desk'))
+            city = get_dateline_city(item.get('dateline'))
+            kill_header = json.loads(render_template('article_killed_override.json',
+                                     slugline=item.get('slugline', ''),
+                                     headline=item.get('headline', ''),
+                                     desk_name=desk_name,
+                                     city=city,
+                                     versioncreated=item.get('versioncreated',
+                                                             item.get(config.LAST_UPDATED)),
+                                     body_html=updates.get('body_html', ''),
+                                     update_headline=updates.get('headline', ''),
+                                     item_operation=self.item_operation.lower()),
+                                     strict=False)
+
+            for key, value in kill_header.items():
+                kill_header[key] = html.unescape(value)
+
+            updates.update(kill_header)
+        except Exception:
+            logger.exception('Failed to apply kill header template to item {}.'.format(item))

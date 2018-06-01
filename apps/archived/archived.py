@@ -36,7 +36,7 @@ import superdesk
 from superdesk.services import BaseService
 from superdesk.resource import Resource
 from superdesk.utc import utcnow
-from apps.publish.content.kill import KillPublishService
+from apps.publish.content import KillPublishService, TakeDownPublishService
 
 logger = logging.getLogger(__name__)
 PACKAGE_TYPE = 'package_type'
@@ -189,7 +189,7 @@ class ArchivedService(BaseService):
     def update(self, id, updates, original):
         """Runs on update of archive item.
 
-        Overriding to handle with Kill workflow in the Archived repo:
+        Overriding to handle with Kill/Takedown workflow in the Archived repo:
             1. Check if Article has an associated Digital Story and if Digital Story has more Takes.
                If both Digital Story and more Takes exists then all of them would be killed along with the one requested
             2. If the item is flagged as archived only then it was never created by or published from the system so all
@@ -213,7 +213,7 @@ class ArchivedService(BaseService):
         articles_to_kill = self.find_articles_to_kill({'_id': id})
         logger.info('Fetched articles to kill for id: {}'.format(id))
         articles_to_kill.sort(key=itemgetter(ITEM_TYPE), reverse=True)  # Needed because package has to be inserted last
-        kill_service = KillPublishService()
+        kill_service = KillPublishService() if updates.get(ITEM_OPERATION) == ITEM_KILL else TakeDownPublishService()
 
         updated = original.copy()
 
@@ -342,8 +342,8 @@ class ArchivedService(BaseService):
         for field in ['headline', 'abstract', 'body_html']:
             article[field] = updates.get(field, article.get(field, ''))
 
-        article[ITEM_STATE] = CONTENT_STATE.KILLED
-        article[ITEM_OPERATION] = ITEM_KILL
+        article[ITEM_STATE] = CONTENT_STATE.KILLED if updates[ITEM_OPERATION] == ITEM_KILL else CONTENT_STATE.RECALLED
+        article[ITEM_OPERATION] = updates[ITEM_OPERATION]
         article['pubstatus'] = PUB_STATUS.CANCELED
         article[config.LAST_UPDATED] = utcnow()
 

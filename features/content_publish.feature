@@ -2768,3 +2768,167 @@ Feature: Content Publishing
       	]
       }
       """
+
+    @auth @wip
+    Scenario: We can lock a published content and then correct it and then takedown the article
+      Given the "validators"
+      """
+      [{"_id": "publish_text", "act": "publish", "type": "text", "schema":{}},
+      {"_id": "correct_text", "act": "correct", "type": "text", "schema":{}},
+      {"_id": "kill_text", "act": "kill", "type": "text", "schema":{}}]
+      """
+      And "desks"
+      """
+      [{"name": "Sports", "members":[{"user":"#CONTEXT_USER_ID#"}]}]
+      """
+      When we post to "/archive" with success
+      """
+      [{"guid": "123", "headline": "test", "state": "fetched",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "subject":[{"qcode": "17004000", "name": "Statistics"}],
+        "slugline": "test",
+        "body_html": "Test Document body"}]
+      """
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+      }
+      """
+      And we post to "/subscribers" with success
+      """
+      {
+        "name":"Channel 3","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
+      And we publish "#archive._id#" with "publish" type and "published" state
+      Then we get OK response
+      When we enqueue published
+      When we get "/legal_archive/123"
+      Then we get OK response
+      And we get existing resource
+      """
+      {"_current_version": 2, "state": "published"}
+      """
+      When we get "/legal_archive/123?version=all"
+      Then we get list with 2 items
+      """
+      {
+        "_items":[
+          {"_current_version": 1, "state": "fetched"},
+          {"_current_version": 2, "state": "published"}
+        ]
+      }
+      """
+      When we transmit items
+      And run import legal publish queue
+      And we get "/legal_publish_queue"
+      Then we get list with 1 items
+      """
+      {
+        "_items":[
+          {"item_version": 2, "publishing_action": "published", "item_id": "123"}
+        ]
+      }
+      """
+      When we post to "/archive/#archive._id#/lock"
+      """
+      {}
+      """
+      Then we get OK response
+      When we publish "#archive._id#" with "correct" type and "corrected" state
+      Then we get OK response
+      And we get existing resource
+      """
+      {"_current_version": 3, "state": "corrected", "operation": "correct", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
+      """
+      And we get updated timestamp "versioncreated"
+      When we enqueue published
+      When we post to "/archive/#archive._id#/unlock"
+      """
+      {}
+      """
+      Then we get OK response
+      When we get "/legal_archive/123"
+      Then we get OK response
+      And we get existing resource
+      """
+      {"_current_version": 3, "state": "corrected"}
+      """
+      When we get "/legal_archive/123?version=all"
+      Then we get list with 3 items
+      """
+      {
+        "_items":[
+          {"_current_version": 1, "state": "fetched"},
+          {"_current_version": 2, "state": "published"},
+          {"_current_version": 3, "state": "corrected"}
+        ]
+      }
+      """
+      When we transmit items
+      And run import legal publish queue
+      And we get "/legal_publish_queue"
+      Then we get list with 2 items
+      """
+      {
+        "_items":[
+          {"item_version": 2, "publishing_action": "published", "item_id": "123"},
+          {"item_version": 3, "publishing_action": "corrected", "item_id": "123"}
+        ]
+      }
+      """
+      When we post to "/archive/#archive._id#/lock"
+      """
+      {}
+      """
+      Then we get OK response
+      When we publish "#archive._id#" with "takedown" type and "recalled" state
+      Then we get OK response
+      And we get existing resource
+      """
+      {"_current_version": 4, "state": "recalled", "operation": "takedown", "pubstatus": "canceled", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
+      """
+      And we get updated timestamp "versioncreated"
+      When we enqueue published
+      When we post to "/archive/#archive._id#/unlock"
+      """
+      {}
+      """
+      Then we get OK response
+      When we get "/legal_archive/123"
+      Then we get OK response
+      And we get existing resource
+      """
+      {"_current_version": 4, "state": "recalled"}
+      """
+      When we get "/legal_archive/123?version=all"
+      Then we get list with 4 items
+      """
+      {
+        "_items":[
+          {"_current_version": 1, "state": "fetched"},
+          {"_current_version": 2, "state": "published"},
+          {"_current_version": 3, "state": "corrected"},
+          {"_current_version": 4, "state": "recalled"}
+        ]
+      }
+      """
+      When we transmit items
+      And run import legal publish queue
+      And we get "/legal_publish_queue"
+      Then we get list with 3 items
+      """
+      {
+        "_items":[
+          {"item_version": 2, "publishing_action": "published", "item_id": "123",
+           "destination": {"delivery_type": "email"}},
+          {"item_version": 3, "publishing_action": "corrected", "item_id": "123",
+           "destination": {"delivery_type": "email"}},
+          {"item_version": 4, "publishing_action": "recalled", "item_id": "123",
+           "destination": {"delivery_type": "email"}}
+        ]
+      }
+      """

@@ -11,6 +11,9 @@
 import logging
 
 from eve.utils import config
+
+from apps.archive.common import ITEM_OPERATION
+from apps.publish.content.kill import ITEM_KILL
 from superdesk import get_resource_service
 from superdesk.metadata.item import CONTENT_STATE
 from apps.publish.enqueue.enqueue_service import EnqueueService
@@ -24,6 +27,16 @@ class EnqueueKilledService(EnqueueService):
     publish_type = 'kill'
     published_state = 'killed'
 
+    def set_published_state(self, doc):
+        """Set published state for the document
+
+        :param doc: Document to kill
+        """
+        if doc[ITEM_OPERATION] == ITEM_KILL:
+            self.published_state = CONTENT_STATE.KILLED
+        else:
+            self.published_state = CONTENT_STATE.RECALLED
+
     def get_subscribers(self, doc, target_media_type):
         """Get the subscribers for this document based on the target_media_type for kill.
 
@@ -35,6 +48,7 @@ class EnqueueKilledService(EnqueueService):
                 associations per subscriber
         """
 
+        self.set_published_state(doc)
         query = {'$and': [{'item_id': doc['item_id']},
                           {'publishing_action': {'$in': [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]}}]}
         subscribers, subscriber_codes, associations = self._get_subscribers_for_previously_sent_items(query)
@@ -47,6 +61,7 @@ class EnqueueKilledService(EnqueueService):
         :param dict item: item from the archived collection.
         :param list transmission_details: list of legal publish queue entries
         """
+        self.set_published_state(item)
         subscriber_ids = [transmission_record['_subscriber_id'] for transmission_record in transmission_details]
         api_subscribers = {t['_subscriber_id'] for t in transmission_details if
                            t.get('destination', {}).get('delivery_type') == 'content_api'}
