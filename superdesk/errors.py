@@ -208,11 +208,8 @@ class SuperdeskIngestError(SuperdeskError):
         2002: 'Invalid feed parser value'
     }
 
-    def __init__(self, code, exception, provider=None, data=None, extra=None, restricted_fields=None):
-        desc = None
-        if restricted_fields and len(restricted_fields):
-            desc = 'Invalid values for restricted fields %s' % ','.join(restricted_fields)
-        super().__init__(code, desc)
+    def __init__(self, code, exception, provider=None, data=None, extra=None):
+        super().__init__(code)
         self.system_exception = exception
         provider = provider or {}
         self.provider_name = provider.get('name', 'Unknown provider') if provider else 'Unknown provider'
@@ -242,8 +239,8 @@ class SuperdeskIngestError(SuperdeskError):
         return SuperdeskIngestError(2001, exception, provider)
 
     @classmethod
-    def invalidFeedParserValue(cls, exception=None, provider=None, restricted_fields=None):
-        return SuperdeskIngestError(2002, exception, provider, restricted_fields)
+    def invalidFeedParserValue(cls, exception=None, provider=None):
+        return SuperdeskIngestError(2002, exception, provider)
 
 
 class ProviderError(SuperdeskIngestError):
