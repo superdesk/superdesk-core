@@ -27,6 +27,7 @@ from superdesk.publish.formatters.nitf_formatter import NITFFormatter
 from superdesk.metadata.packages import REFS, RESIDREF, ROLE, GROUPS, GROUP_ID, ID_REF
 from superdesk.filemeta import get_filemeta
 from superdesk import etree as sd_etree
+from superdesk.geonames import get_geonames_country_qcode, get_geonames_state_qcode, get_geonames_qcode
 from apps.archive.common import ARCHIVE, get_utc_schedule
 
 XML_LANG = "{http://www.w3.org/XML/1998/namespace}lang"
@@ -343,7 +344,9 @@ class NewsMLG2Formatter(Formatter):
             return
 
         for place in article.get('place', []):
-            if place.get('state'):
+            if place.get('scheme') == 'geonames':
+                self._format_geonames_place(place, content_meta)
+            elif place.get('state'):
                 subject = self._create_subject_element(content_meta, place.get('state'), 'loctyp:CountryArea')
                 self._create_broader_element(subject, place.get('country'), 'loctyp:Country')
                 self._create_broader_element(subject, place.get('world_region'), 'loctyp:WorldArea')
@@ -352,6 +355,26 @@ class NewsMLG2Formatter(Formatter):
                 self._create_broader_element(subject, place.get('world_region'), 'loctyp:WorldArea')
             elif place.get('world_region'):
                 self._create_subject_element(content_meta, place.get('world_region'), 'loctyp:WorldArea')
+
+    def _format_geonames_place(self, place, content_meta):
+        subject = self._create_subject_element(content_meta, place.get('name', ''),
+                                               get_geonames_qcode(place),
+                                               'cpnat:geoArea')
+        if place.get('state') and place.get('feature_class', '').upper() != 'A':
+            self._create_broader_element(subject, place.get('state'),
+                                         get_geonames_state_qcode(place),
+                                         'cptype:statprov')
+        if place.get('state') or place.get('feature_class', '').upper() != 'A':
+            self._create_broader_element(subject, place.get('country'),
+                                         get_geonames_country_qcode(place),
+                                         'cptype:country')
+        location = place.get('location')
+        if location:
+            geo_area_details = SubElement(subject, 'geoAreaDetails')
+            SubElement(geo_area_details, 'position', attrib={
+                'latitude': str(location.get('lat')),
+                'longitude': str(location.get('lon')),
+            })
 
     def _create_broader_element(self, parent, broader_name, qcode, concept_type='cpnat:abstract'):
         """Create broader element.
@@ -371,8 +394,8 @@ class NewsMLG2Formatter(Formatter):
 
         :param element parent:
         :param str subject_name: value for the name element
-        :param str qcode:
-        :param str concept_type:
+        :param str qcode
+        :param str concept_type
         :return: returns the subject element.
         """
         subject_elm = SubElement(parent, 'subject',

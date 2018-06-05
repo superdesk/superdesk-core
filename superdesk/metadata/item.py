@@ -407,11 +407,17 @@ metadata_schema = {
             'type': 'object',
             'dynamic': False,
             'properties': {
+                'scheme': not_analyzed,
                 'qcode': not_analyzed,
                 'code': not_analyzed,  # content api
                 'name': not_analyzed,
+                'state': not_analyzed,
                 'country': not_analyzed,
                 'world_region': not_analyzed,
+                'state_code': not_analyzed,
+                'country_code': not_analyzed,
+                'feature_class': not_analyzed,
+                'location': {'type': 'geo_point'},
             },
         },
     },

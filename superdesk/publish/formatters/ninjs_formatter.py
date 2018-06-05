@@ -336,7 +336,20 @@ class NINJSFormatter(Formatter):
                         locators[0].get('group')
             return item.get('name')
 
-        return [{'name': get_label(item), 'code': item.get('qcode')} for item in article['place']]
+        places = []
+        for item in article.get('place', []):
+            if item.get('scheme') == 'geonames':
+                places.append(self._format_geonames(item))
+            else:
+                places.append({'name': get_label(item), 'code': item.get('qcode')})
+        return places
+
+    def _format_geonames(self, place):
+        return {
+            'scheme': place['scheme'],
+            'code': place['code'],
+            'name': place['name'],
+        }
 
     def _format_profile(self, profile):
         return superdesk.get_resource_service('content_types').get_output_name(profile)

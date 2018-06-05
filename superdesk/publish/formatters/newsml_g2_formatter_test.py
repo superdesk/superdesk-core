@@ -947,3 +947,95 @@ class NewsMLG2FormatterTest(TestCase):
                                             'subject[@qcode="loctyp:CountryArea"]'))
         self.assertIsNone(content_meta.find('{http://iptc.org/std/nar/2006-10-01/}'
                                             'subject[@qcode="loctyp:Country"]'))
+
+    def testPlaceGeonames(self):
+        article = self.article.copy()
+        article['place'] = [
+            {
+                "name": "Kobeřice",
+                "code": "3073493",
+                "scheme": "geonames",
+                "state": "Moravskoslezský",
+                "country": "Czechia",
+                "state_code": "80",
+                "country_code": "CZ",
+                "feature_class": "P",
+                "location": {
+                    "lat": 49.98548,
+                    "lon": 18.05212,
+                },
+            },
+            {
+                "name": "Moravskoslezsky",
+                "code": "3339573",
+                "scheme": "geonames",
+                "state": "Moravskoslezský",
+                "country": "Czechia",
+                "state_code": "80",
+                "country_code": "CZ",
+                "feature_class": "A",
+                "location": {
+                    "lat": 49.83333,
+                    "lon": 18.0,
+                },
+            },
+            {
+                "name": "Czechia",
+                "code": "3077311",
+                "scheme": "geonames",
+                "state": "",
+                "state_code": None,
+                "country": "Czechia",
+                "country_code": "CZ",
+                "feature_class": "A",
+                "location": {
+                    "lat": 49.75,
+                    "lon": 15.0,
+                },
+            },
+        ]
+
+        _, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        xml = etree.fromstring(doc.encode('utf-8'))
+        content_meta = xml.find(ns('itemSet')).find(ns('newsItem')).find(ns('contentMeta'))
+
+        # test city
+        subject = content_meta.find(ns('subject[@type="cpnat:geoArea"]'))
+        self.assertIsNotNone(subject, etree.tostring(content_meta, pretty_print=True))
+        self.assertEqual(article['place'][0]['name'], subject.find(ns('name')).text)
+
+        broader = subject.findall(ns('broader'))
+        self.assertEqual(2, len(broader))
+        self.assertEqual('iso3166-2:CZ-80', broader[0].get('qcode'))
+        self.assertEqual('cptype:statprov', broader[0].get('type'))
+        self.assertEqual(article['place'][0]['state'], broader[0].find(ns('name')).text)
+        self.assertEqual('iso3166-1a2:CZ', broader[1].get('qcode'))
+        self.assertEqual('cptype:country', broader[1].get('type'))
+        self.assertEqual(article['place'][0]['country'], broader[1].find(ns('name')).text)
+
+        geo_area = subject.find(ns('geoAreaDetails'))
+        self.assertIsNotNone(geo_area)
+        position = geo_area.find(ns('position'))
+        self.assertIsNotNone(position)
+        self.assertEqual('49.98548', position.get('latitude'))
+        self.assertEqual('18.05212', position.get('longitude'))
+
+        subjects = content_meta.findall(ns('subject[@type="cpnat:geoArea"]'))
+        self.assertEqual(3, len(subjects))
+
+        # test state
+        state = subjects[1]
+        self.assertEqual('Moravskoslezsky', state.find(ns('name')).text)
+        self.assertEqual('iso3166-2:CZ-80', state.get('qcode'))
+        broader = state.findall(ns('broader'))
+        self.assertEqual(1, len(broader))
+        self.assertEqual('iso3166-1a2:CZ', broader[0].get('qcode'))
+        self.assertEqual('cptype:country', broader[0].get('type'))
+        self.assertEqual('Czechia', broader[0].find(ns('name')).text)
+
+        # test country
+        country = subjects[2]
+        self.assertEqual('Czechia', country.find(ns('name')).text)
+        self.assertEqual('iso3166-1a2:CZ', country.get('qcode'))
+        broader = country.findall(ns('broader'))
+        self.assertEqual(0, len(broader))
