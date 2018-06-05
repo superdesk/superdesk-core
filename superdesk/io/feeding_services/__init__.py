@@ -63,6 +63,7 @@ class FeedingService(metaclass=ABCMeta):
                     - second_field_options: dictionary with the following keys:
                         - label
                         - placeholder
+        3. parser_restricted_values: list of values to which the feed_parser field is restricted
     """
 
     @abstractmethod
@@ -79,11 +80,21 @@ class FeedingService(metaclass=ABCMeta):
         """
         raise NotImplementedError()
 
+    def _test_feed_parser(self, provider):
+        """
+        Checks if the feed_parser value was in the restricted values list.
+
+        :param provider: ingest provider document
+        """
+        if getattr(self, 'parser_restricted_values', None) and 'feed_parser' in provider and \
+                provider['feed_parser'] not in self.parser_restricted_values:
+            raise SuperdeskIngestError.invalidFeedParserValue(provider=provider)
+
     def _test(self, provider):
         """
         Subclasses should override this method and do specific config test.
 
-        :param provider: Ingest Provider Details.
+        :param provider: ingest provider document
         """
         return
 
@@ -96,6 +107,7 @@ class FeedingService(metaclass=ABCMeta):
             return
         if self._is_closed(provider):
             return
+        self._test_feed_parser(provider)
         return self._test(provider)
 
     def _is_closed(self, provider):
