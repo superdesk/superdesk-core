@@ -169,7 +169,8 @@ __entities__ = OrderedDict([
     ], True)),
     ('audit', (None, [[('_updated', pymongo.ASCENDING)],
                       [('_id', pymongo.ASCENDING), ('_updated', pymongo.ASCENDING)]], False)),
-    ('contacts', ('contacts.json', '', False))
+    ('contacts', ('contacts.json', '', False)),
+    ('planning_types', ('planning_types.json', '', True))
 ])
 INIT_DATA_PATH = Path(__file__).resolve().parent / 'data_init'
 
@@ -200,10 +201,14 @@ def get_filepath(filename, path=None):
 class AppInitializeWithDataCommand(superdesk.Command):
     """Initialize application with predefined data for various entities.
 
-    Entities supported: [roles, users, desks, stages, vocabularies, validators, content_templates].
+    Entities supported: [roles, users, desks, stages, vocabularies, validators, content_templates, content_types,
+    published, activity, archive, archive_versions, ingest, publish_queue, archived, legal_archive,
+    legal_archive_versions, legal_publish_queue, dictionaries, ingest_providers, search_providers, products,
+    subscribers, workspaces, item_comments, audit, contacts, planning_types].
     If no --entity-name parameter is supplied, all the entities are inserted.
-    The entities [vocabularies, validators] will be updated with the predefined data if it already exists,
-    no action will be taken for the other entities.
+    The entities [vocabularies, validators, content_types, dictionaries, ingest_providers, search_providers,
+    products, subscribers, workspaces, item_comments, planning_types] will be updated with the predefined data
+    if it already exists, no action will be taken for the other entities.
     """
 
     option_list = [
