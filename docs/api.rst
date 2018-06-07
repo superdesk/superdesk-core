@@ -21,11 +21,11 @@ So far, the following operations are available:
 - flip (value can be "vertical" or "horizontal")
 - brightness (value is a float)
 - contrast (value is a float)
+- saturation (value is a float)
 - grayscale (value not used)
 
 In the answer, the API will return an `item` object with updated
-renditions. Renditions media are temporary, and will be cleaned after at
-most 24 hours.
+renditions.
 
 Request example:
 

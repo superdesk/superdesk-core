@@ -12,10 +12,9 @@
 from superdesk.resource import Resource, not_analyzed
 from superdesk.services import BaseService
 from superdesk.media.renditions import generate_renditions, get_renditions_spec
-from superdesk.utc import utcnow
 from superdesk import get_resource_service
 from superdesk import errors
-from flask import request, current_app
+from flask import current_app
 from PIL import Image, ImageEnhance
 from io import BytesIO
 from eve.utils import config
@@ -61,63 +60,92 @@ class MediaEditorService(BaseService):
         """
         if operation == 'rotate':
             return im.rotate(int(param), expand=1)
+
         elif operation == 'flip':
             if param == 'vertical':
                 return im.transpose(Image.FLIP_TOP_BOTTOM)
             if param == 'horizontal':
                 return im.transpose(Image.FLIP_LEFT_RIGHT)
+
         elif operation == 'brightness':
             return ImageEnhance.Brightness(im).enhance(float(param))
+
         elif operation == 'contrast':
             return ImageEnhance.Contrast(im).enhance(float(param))
+
         elif operation == 'grayscale':
             return im.convert('L')
+
+        elif operation == 'saturation':
+            return ImageEnhance.Color(im).enhance(float(param))
+
         logger.warning('unhandled operation: {operation} {param}'.format(
             operation=operation,
             param=param))
+
         return im
 
     def create(self, docs):
-        """Apply transformation requested in "edit"
+        """Apply transformation requested in 'edit'"""
+        ids = []
+        archive = get_resource_service('archive')
 
-        an item with updated rendition will be returned.
-        All created files are temporary, meaning they will be deleted after a delay or a cleaning.
-        """
-        try:
-            item = request.json['item']
-        except KeyError:
+        for idx, doc in enumerate(docs):
+            # first we get item and requested edit operations
             try:
-                item_id = request.json['item_id']
+                item = doc.pop('item')
             except KeyError:
-                raise errors.SuperdeskApiError.badRequestError('either item or item_id must be specified')
-            item = next(get_resource_service('archive').find({'_id': item_id}))
-        edit = request.json['edit']
-        rendition = item['renditions']['original']
-        media_id = rendition['media']
-        media = current_app.media.get(media_id)
-        out = im = Image.open(media)
-        for operation, param in edit.items():
-            try:
-                out = self.transform(out, operation, param)
-            except ValueError as e:
-                raise errors.SuperdeskApiError.badRequestError('invalid edit instructions: {msg}'.format(msg=e))
-        buf = BytesIO()
-        out.save(buf, format=im.format)
-        buf.seek(0)
-        content_type = rendition['mimetype']
-        ext = os.path.splitext(rendition['href'])[1]
-        filename = str(uuid.uuid4()) + ext
-        media_id = current_app.media.put(buf, filename=filename, content_type=content_type, folder='temp')
-        buf.seek(0)
-        renditions = generate_renditions(buf,
-                                         media_id,
-                                         [],
-                                         'image',
-                                         content_type,
-                                         get_renditions_spec(),
-                                         current_app.media.url_for_media,
-                                         temporary=True)
-        item['renditions'] = renditions
-        item[config.LAST_UPDATED] = utcnow()
-        docs[:] = [item]
-        return [item['_id']]
+                try:
+                    item_id = doc.pop('item_id')
+                except KeyError:
+                    raise errors.SuperdeskApiError.badRequestError('either item or item_id must be specified')
+                item = next(archive.find({'_id': item_id}))
+            else:
+                item_id = item[config.ID_FIELD]
+            edit = doc.pop('edit')
+
+            # new we retrieve and loag current original media
+            rendition = item['renditions']['original']
+            media_id = rendition['media']
+            media = current_app.media.get(media_id)
+            out = im = Image.open(media)
+
+            # we apply all requested operations on original media
+            for operation, param in edit.items():
+                try:
+                    out = self.transform(out, operation, param)
+                except ValueError as e:
+                    raise errors.SuperdeskApiError.badRequestError('invalid edit instructions: {msg}'.format(msg=e))
+            buf = BytesIO()
+            out.save(buf, format=im.format)
+
+            # we set metadata
+            buf.seek(0)
+            content_type = rendition['mimetype']
+            ext = os.path.splitext(rendition['href'])[1]
+            filename = str(uuid.uuid4()) + ext
+
+            # and save transformed media in database
+            media_id = current_app.media.put(buf, filename=filename, content_type=content_type, folder='temp')
+
+            # now we recreate other renditions based on transformed original media
+            buf.seek(0)
+            # we keep old renditions to later delete old files
+            renditions = generate_renditions(buf,
+                                             media_id,
+                                             [],
+                                             'image',
+                                             content_type,
+                                             get_renditions_spec(),
+                                             current_app.media.url_for_media,
+                                             temporary=True)
+
+            # we update item in db, and the item we'll return to client
+            updates = {'renditions': renditions}
+            ids.append(item_id)
+            archive.update(item_id, updates, item)
+            item.update(updates)
+
+            docs[idx] = item
+
+        return [ids]
