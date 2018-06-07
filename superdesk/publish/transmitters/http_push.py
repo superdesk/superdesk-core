@@ -8,12 +8,10 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import io
 import json
-import gridfs
+import hmac
 import logging
 import requests
-import hmac
 
 from superdesk import app
 from superdesk.publish import register_transmitter
@@ -142,14 +140,20 @@ class HTTPPushService(PublishService):
                     continue
                 media.update(parse_media(assoc2))
 
+        s = requests.Session()
         for media_id, rendition in media.items():
             if not self._media_exists(media_id, destination):
                 binary = app.media.get(media_id, resource=rendition.get('resource', 'upload'))
                 mimetype = rendition.get('mimetype', getattr(binary, 'content_type', 'image/jpeg'))
-                headers = self._get_headers(binary, destination, {})
-                files = {'media': (media_id, binary, mimetype, headers)}
-                response = requests.post(assets_url, files=files, data={'media_id': media_id})
-                if response.status_code != requests.codes.created:  # @UndefinedVariable
+                data = {'media_id': media_id}
+                files = {'media': (media_id, binary, mimetype)}
+                request = requests.Request('POST', assets_url)
+                prepped = request.prepare()
+                prepped.prepare_body(data, files)
+                headers = self._get_headers(prepped.body, destination, prepped.headers)
+                prepped.prepare_headers(headers)
+                response = s.send(prepped)
+                if response.status_code not in (200, 201):
                     self._raise_publish_error(
                         response.status_code,
                         Exception('Error pushing item %s media file %s: %s %s' % (
@@ -170,7 +174,6 @@ class HTTPPushService(PublishService):
         @type assets_url: string
         @return: bool
         """
-
         assets_url = self._get_assets_url(destination)
         response = requests.get('%s/%s' % (assets_url, media_id))
         if response.status_code not in (requests.codes.ok, requests.codes.not_found):  # @UndefinedVariable
@@ -193,12 +196,6 @@ class HTTPPushService(PublishService):
     def _get_data_hash(self, data, secret_token):
         if isinstance(data, str):
             encoded_data = bytes(data, 'utf-8')
-        elif isinstance(data, io.BytesIO):
-            encoded_data = data.getbuffer()
-        elif isinstance(data, gridfs.GridOut):
-            data.seek(0)
-            encoded_data = data.read()
-            data.seek(0)
         else:
             encoded_data = data
         mac = hmac.new(str.encode(secret_token), msg=encoded_data, digestmod='sha1')
