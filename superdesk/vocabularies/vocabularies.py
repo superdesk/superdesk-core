@@ -140,7 +140,9 @@ class VocabulariesService(BaseService):
                 for field, desc in update.get('schema', {}).items():
                     if ((desc.get('required', False) or unique_field == field) and (
                             field not in item or not item[field])):
-                        raise SuperdeskApiError.badRequestError('Required ' + field + ' in item ' + str(index))
+                        msg = 'Required ' + field + ' in item ' + str(index)
+                        payload = {'error': {'required_field': 1}, 'params': {'field': field, 'item': index}}
+                        raise SuperdeskApiError.badRequestError(message=msg, payload=payload)
 
     def on_create(self, docs):
         for doc in docs:
