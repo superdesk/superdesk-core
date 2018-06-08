@@ -81,7 +81,7 @@
         ],
         "schema": {
             "name": {"translate": true},
-            "qcode": {},
+            "qcode": {"type": "integer"},
             "color": {"type": "color"},
             "short": {"type": "short", "label": "List Name", "maxlength": 2, "translate": true}
         }
@@ -104,7 +104,7 @@
         ],
         "schema": {
             "name": {"translate": true},
-            "qcode": {},
+            "qcode": {"type": "integer"},
             "color": {"type": "color"},
             "short": {"type": "short", "label": "List Name", "maxlength": 2, "translate": true}
         }
