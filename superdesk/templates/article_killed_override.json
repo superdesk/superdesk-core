@@ -1,3 +1,3 @@
 {
-    "body_html": "<p>Please {{ item_operation }} story slugged {{ slugline }} headlined {{headline}} ex{{ city }} at {{versioncreated | format_datetime(None, '%d %b %Y %H:%S %Z')}}.</p>{{body_html | escape}}"
+    "body_html": "<p>Please {{ item_operation }} story slugged {{ slugline }} headlined {{headline}} ex{{ city }} at {{versioncreated | format_datetime(None, '%d %b %Y %H:%M %Z')}}.</p>{{body_html | escape}}"
 }

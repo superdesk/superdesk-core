@@ -12,11 +12,13 @@
 from superdesk.resource import Resource, not_analyzed
 from superdesk.services import BaseService
 from superdesk.media.renditions import generate_renditions, get_renditions_spec
+from superdesk.utc import utcnow
 from superdesk import get_resource_service
 from superdesk import errors
 from flask import request, current_app
 from PIL import Image, ImageEnhance
 from io import BytesIO
+from eve.utils import config
 import os.path
 import uuid
 import logging
@@ -116,5 +118,6 @@ class MediaEditorService(BaseService):
                                          current_app.media.url_for_media,
                                          temporary=True)
         item['renditions'] = renditions
+        item[config.LAST_UPDATED] = utcnow()
         docs[:] = [item]
         return [item['_id']]

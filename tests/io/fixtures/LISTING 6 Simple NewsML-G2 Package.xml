@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<packageItem 	
+	xmlns="http://iptc.org/std/nar/2006-10-01/"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://iptc.org/std/nar/2006-10-01/ 
+		./NewsML-G2_2.23-spec-All-Power.xsd"
+ 	standard="NewsML-G2"
+	standardversion="2.23"
+	conformance="power"
+	guid="tag:example.com,2008:UK-NEWS-TOPTEN:UK20081220098658" version="9">
+	<catalogRef
+		href="http://www.iptc.org/std/catalog/catalog.IPTC-G2-Standards_29.xml" />
+	<catalogRef 
+		href="http:/www.example.com/customer/cv/catalog4customers-1.xml" />
+	<itemMeta>
+		<itemClass qcode="ninat:composite" />
+		<provider qcode="nprov:AcmeNews" />
+		<versionCreated>2016-11-17T12:30:00Z</versionCreated>
+		<firstCreated>2008-12-20T12:25:35Z</firstCreated>
+		<pubStatus qcode="stat:usable" />
+		<profile versioninfo="1.0.0.2">simple_text_with_picture.xsl</profile>
+		<service qcode="svc:uktop">
+			<name>Top UK News stories hourly</name>
+		</service>
+		<title>UK-TOPNEWS</title>
+		<edNote>Updates the previous version</edNote>
+		<signal qcode="sig:update" />
+	</itemMeta>
+	<contentMeta>
+		<contributor jobtitle="staffjobs:cpe" qcode="mystaff:MDancer">
+			<name>Maurice Dancer</name>
+			<name>Chief Packaging Editor</name>
+			<definition validto="2016-11-17T17:30:00Z">
+				Duty Packaging Editor
+			</definition>
+			<note validto="2016-11-17T17:30:00Z">
+				Available on +44 207 345 4567 until 17:30 GMT today
+			</note>
+		</contributor>
+ 		<headline xml:lang="en">UK</headline>
+	</contentMeta>
+	<groupSet root="G1">
+		<group id="G1" role="group:main">
+			<itemRef residref="urn:newsml:iptc.org:20081007:tutorial-item-A"
+				contenttype="application/vnd.iptc.g2.newsitem+xml"
+				size="2345">
+				<itemClass qcode="ninat:text" />
+				<provider qcode="nprov:AcmeNews"/>
+				<pubStatus qcode="stat:usable"/>
+				<title>Obama annonce son équipe</title>
+				<description role="drol:summary">Le rachat il y a deux ans de la
+					propriété par Alan Gerry, magnat local de la télévision câblée, a
+					permis l'investissement des 100 millions de dollars qui étaient
+					nécessaires pour le musée et ses annexes, et vise à favoriser le
+					développement touristique d'une région frappée par le chômage.
+				</description>
+			</itemRef>
+			<itemRef residref="urn:newsml:iptc.org:20081007:tutorial—item-B"
+				contenttype="application/vnd.iptc.g2.newsitem+xml"
+				size="300039">
+				<itemClass qcode="ninat:picture" />
+				<provider qcode="nprov:AcmeNews"/>
+				<pubStatus qcode="stat:usable"/>
+				<title>Barack Obama arrive à Washington</title>
+				<description role="drol:caption">Si nous avons aujourd'hui un 
+					afro-américain et une femme dans la course à la présidence.
+				</description>
+			</itemRef>
+		</group>
+	</groupSet> 
+</packageItem>

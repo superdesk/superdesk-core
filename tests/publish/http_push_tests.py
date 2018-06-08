@@ -9,13 +9,10 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-import io
 import os
 import hmac
 import json
 import flask
-import gridfs
-import pymongo
 import unittest
 import requests
 
@@ -24,7 +21,6 @@ from superdesk.publish.transmitters.http_push import HTTPPushService
 
 from unittest import mock
 from unittest.mock import Mock
-from superdesk.tests import update_config
 from superdesk.errors import PublishHTTPPushServerError, PublishHTTPPushClientError
 
 
@@ -44,6 +40,13 @@ class NotFoundResponse():
 
 class CreatedResponse():
     status_code = 201
+
+
+class CreatedResponseSession():
+
+    def send(self, request):
+        self._request = request
+        return CreatedResponse()
 
 
 class HTTPPushPublishTestCase(unittest.TestCase):
@@ -125,29 +128,6 @@ class HTTPPushPublishTestCase(unittest.TestCase):
         headers = service._get_headers('test payload', self.destination, {})
         self.assertEqual('sha1=8be62a607898504f87559cb52dc23f9ebee65a21', headers[service.hash_header])
 
-    def test_get_data_hash_bytes_io(self):
-        binary = b'foo'
-        payload = io.BytesIO(binary)
-        self.assert_compare_hash(payload, binary)
-
-    def test_get_data_hash_grid_out(self):
-        config = {}
-        update_config(config)
-        db = pymongo.MongoClient(config['MONGO_URI']).db
-        grid = gridfs.GridFS(db)
-        binary = b'foo'
-        media_id = grid.put(binary)
-        payload = grid.get(media_id)
-        self.assert_compare_hash(payload, binary)
-
-    def assert_compare_hash(self, payload, binary, key='secret'):
-        service = HTTPPushService()
-        algo, digest = service._get_data_hash(payload, key).split('=')
-        self.assertTrue(hmac.compare_digest(
-            digest,
-            hmac.new(key.encode(), binary, algo).hexdigest()
-        ))
-
     def test_publish_an_item(self):
         if not getattr(self, 'resource_url', None):
             return
@@ -198,9 +178,9 @@ class HTTPPushPublishTestCase(unittest.TestCase):
                 service._push_item(self.destination, json.dumps(self.item))
 
     @mock.patch('superdesk.publish.transmitters.http_push.app')
-    @mock.patch('requests.post', return_value=CreatedResponse)
+    @mock.patch('superdesk.publish.transmitters.http_push.requests.Session.send', return_value=CreatedResponse)
     @mock.patch('requests.get', return_value=NotFoundResponse)
-    def test_push_associated_assets(self, get_mock, post_mock, app_mock):
+    def test_push_associated_assets(self, get_mock, send_mock, app_mock):
         app_mock.media.get.return_value = 'bin'
 
         dest = {'config': {'assets_url': 'http://example.com'}}
@@ -210,7 +190,7 @@ class HTTPPushPublishTestCase(unittest.TestCase):
         service._copy_published_media_files({}, dest)
 
         get_mock.assert_not_called()
-        post_mock.assert_not_called()
+        send_mock.assert_not_called()
 
         service._copy_published_media_files(item, dest)
 
@@ -225,17 +205,14 @@ class HTTPPushPublishTestCase(unittest.TestCase):
 
         for media in images:
             get_mock.assert_any_call('http://example.com/%s' % media)
-            post_mock.assert_any_call('http://example.com',
-                                      files={'media': (media, app_mock.media.get.return_value, 'image/jpeg', {})},
-                                      data={'media_id': media})
 
     @mock.patch('superdesk.publish.transmitters.http_push.app')
-    @mock.patch('requests.post', return_value=CreatedResponse)
+    @mock.patch('superdesk.publish.transmitters.http_push.requests.Session.send', return_value=CreatedResponse)
     @mock.patch('requests.get', return_value=NotFoundResponse)
-    def test_push_attachments(self, get_mock, post_mock, app_mock):
+    def test_push_attachments(self, get_mock, send_mock, app_mock):
         app_mock.media.get.return_value = 'bin'
 
-        dest = {'config': {'assets_url': 'http://example.com'}}
+        dest = {'config': {'assets_url': 'http://example.com', 'secret_token': 'foo'}}
         item = {
             'type': 'text',
             'attachments': [
@@ -248,7 +225,12 @@ class HTTPPushPublishTestCase(unittest.TestCase):
 
         app_mock.media.get.assert_called_with('media-id', resource='attachments')
         get_mock.assert_called_with('http://example.com/media-id')
-        post_mock.assert_called_with(
-            'http://example.com',
-            files={'media': ('media-id', app_mock.media.get.return_value, 'text/plain', {})},
-            data={'media_id': 'media-id'})
+        self.assertIsNotNone(send_mock.call_args)
+        request = send_mock.call_args[0][0]
+        self.assertEqual('http://example.com/', request.url)
+        self.assertEqual('POST', request.method)
+        self.assertIn(b'bin', request.body)
+        self.assertIn(b'media-id', request.body)
+        self.assertIn('x-superdesk-signature', request.headers)
+        self.assertEqual(request.headers['x-superdesk-signature'],
+                         'sha1=%s' % hmac.new(b'foo', request.body, 'sha1').hexdigest())

@@ -26,6 +26,7 @@ from superdesk.emails import send_article_killed_email
 from superdesk.errors import SuperdeskApiError
 from apps.archive.common import ITEM_OPERATION, ARCHIVE, insert_into_versions, get_dateline_city
 from itertools import chain
+from apps.publish.published_item import PUBLISHED, LAST_PUBLISHED_VERSION
 
 logger = logging.getLogger(__name__)
 
@@ -140,18 +141,26 @@ class KillPublishService(BasePublishService):
         :return:
         """
         try:
+            if item.get('_type') == 'archive':
+                # attempt to find the published item as this will have an accurate time of publication
+                published_items = get_resource_service(PUBLISHED).get_last_published_version(item.get(config.ID_FIELD))
+                published_item = [p for p in published_items if p.get(LAST_PUBLISHED_VERSION)][0] \
+                    if published_items.count() > 0 else None
+                versioncreated = published_item.get('versioncreated') if published_item else \
+                    item.get('versioncreated', item.get(config.LAST_UPDATED))
+            else:
+                versioncreated = item.get('versioncreated', item.get(config.LAST_UPDATED))
             desk_name = get_resource_service('desks').get_desk_name(item.get('task', {}).get('desk'))
             city = get_dateline_city(item.get('dateline'))
             kill_header = json.loads(render_template('article_killed_override.json',
-                                     slugline=item.get('slugline', ''),
-                                     headline=item.get('headline', ''),
-                                     desk_name=desk_name,
-                                     city=city,
-                                     versioncreated=item.get('versioncreated',
-                                                             item.get(config.LAST_UPDATED)),
-                                     body_html=updates.get('body_html', ''),
-                                     update_headline=updates.get('headline', ''),
-                                     item_operation=self.item_operation.lower()),
+                                                     slugline=item.get('slugline', ''),
+                                                     headline=item.get('headline', ''),
+                                                     desk_name=desk_name,
+                                                     city=city,
+                                                     versioncreated=versioncreated,
+                                                     body_html=updates.get('body_html', ''),
+                                                     update_headline=updates.get('headline', ''),
+                                                     item_operation=self.item_operation.lower()),
                                      strict=False)
 
             for key, value in kill_header.items():
