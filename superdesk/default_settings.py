@@ -444,6 +444,7 @@ CORE_APPS.extend([
     'apps.workqueue',
     'apps.contacts',
     'apps.monitoring',
+    'superdesk.places',
 ])
 
 RESOURCE_METHODS = ['GET', 'POST']
@@ -670,3 +671,6 @@ AUTO_PUBLISH_CONTENT_PROFILE = True
 
 #: controll error notifications globally
 ERROR_NOTIFICATIONS = strtobool(env('SUPERDESK_ERROR_NOTIFICATIONS', 'true'))
+
+#: geonames credentials
+GEONAMES_USERNAME = env('GEONAMES_USERNAME')

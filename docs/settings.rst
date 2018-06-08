@@ -595,3 +595,15 @@ Example::
 
     OVERRIDE_EDNOTE_FOR_CORRECTIONS = True
     OVERRIDE_EDNOTE_TEMPLATE = 'Story "{slugline}" corrected on {date}'
+
+
+``GEONAMES_USERNAME``
+^^^^^^^^^^^^^^^^^^^^^
+
+.. versionadded:: 1.20
+
+Default: ``None``
+
+When configured it will enable ``/places_autocomplete`` service and client will use it
+for place field searching.
+

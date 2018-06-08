@@ -806,3 +806,33 @@ class NinjsFormatterTest(TestCase):
                              'scheme': 'test',
                              }]
         self.assertEqual(ninjs['subject'], expected_subject)
+
+    def test_place_geonames(self):
+        article = {
+            '_id': 'urn:bar',
+            '_current_version': 1,
+            'guid': 'urn:bar',
+            'type': 'text',
+            'place': [{
+                "name": "Kobeřice",
+                "code": "3073493",
+                "scheme": "geonames",
+                "state": "Moravskoslezský kraj",
+                "country": "Česko",
+                "state_code": "80",
+                "country_code": "CZ",
+                "location": {
+                    "lat": 49.98548,
+                    "lon": 18.05212,
+                },
+            }],
+        }
+
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        ninjs = json.loads(doc)
+
+        self.assertEqual({
+            "name": "Kobeřice",
+            "code": "3073493",
+            "scheme": "geonames",
+        }, ninjs['place'][0])
