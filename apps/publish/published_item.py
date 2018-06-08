@@ -286,6 +286,28 @@ class PublishedItemService(BaseService):
         except:
             return []
 
+    def get_last_published_version(self, _id):
+        """Returns the last published entry for the passed item id
+
+        :param _id:
+        :return:
+        """
+        try:
+            query = {'query':
+                     {'filtered':
+                      {'filter':
+                       {'bool':
+                        {'must': [
+                            {'term': {'item_id': _id}},
+                            {'term': {LAST_PUBLISHED_VERSION: True}}
+                        ]}}}}}
+
+            request = ParsedRequest()
+            request.args = {'source': json.dumps(query), 'repo': 'published'}
+            return get_resource_service('search').get(req=request, lookup=None)
+        except Exception:
+            return None
+
     def get_rewritten_items_by_event_story(self, event_id, rewrite_id, rewrite_field):
         """Returns all the rewritten stories from published and archive for a given event and rewrite_id.
 

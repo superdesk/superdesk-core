@@ -693,6 +693,12 @@ class BasePublishService(BaseService):
         :return:
         """
         try:
+            # attempt to find the published item as this will have an accurate time of publication
+            published_items = get_resource_service(PUBLISHED).get_last_published_version(item.get(config.ID_FIELD))
+            published_item = [p for p in published_items if p.get(LAST_PUBLISHED_VERSION)][0] \
+                if published_items.count() > 0 else None
+            versioncreated = published_item.get('versioncreated') if published_item else \
+                item.get('versioncreated', item.get(config.LAST_UPDATED))
             desk_name = get_resource_service('desks').get_desk_name(item.get('task', {}).get('desk'))
             city = get_dateline_city(item.get('dateline'))
             kill_header = json.loads(render_template('article_killed_override.json',
@@ -700,8 +706,7 @@ class BasePublishService(BaseService):
                                      headline=item.get('headline', ''),
                                      desk_name=desk_name,
                                      city=city,
-                                     versioncreated=item.get('versioncreated',
-                                                             item.get(config.LAST_UPDATED)),
+                                     versioncreated=versioncreated,
                                      body_html=updates.get('body_html', ''),
                                      update_headline=updates.get('headline', ''),
                                      item_operation=self.item_operation.lower()),
