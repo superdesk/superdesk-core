@@ -84,22 +84,24 @@ def generate_guid(**hints):
     return None
 
 
-def generate_tag(domain, id):
+def generate_tag(domain, id, prefix='tag'):
     """Generate tag for given domain and id.
 
     :param domain: domain string
     :param id: local id
+    :param prefix
     """
-    return 'tag:{}:{}'.format(domain, id)
+    return '{}:{}:{}'.format(prefix, domain, id)
 
 
-def generate_tag_from_url(url):
+def generate_tag_from_url(url, prefix='tag'):
     """Generate tag from given url.
 
     :param url
+    :param prefix
     """
     parsed = urlparse(url)
-    return generate_tag(parsed.netloc, parsed.path.lstrip('/').replace('/', ':'))
+    return generate_tag(parsed.netloc, parsed.path.lstrip('/').replace('/', ':'), prefix=prefix)
 
 
 def is_normal_package(doc):

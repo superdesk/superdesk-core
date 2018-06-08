@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<newsItem 
+	xmlns="http://iptc.org/std/nar/2006-10-01/"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://iptc.org/std/nar/2006-10-01/ 
+		./NewsML-G2_2.23-spec-All-Power.xsd"
+	guid="urn:newsml:acmenews.com:20161018:US-FINANCE-FED"
+	version="9" 
+	standard="NewsML-G2" 
+	standardversion="2.23" 
+	conformance="power"
+	xml:lang="en-GB">
+	<catalogRef
+		href="http://www.iptc.org/std/catalog/catalog.IPTC-G2-Standards_29.xml" />	
+	<catalogRef href="http://www.example.com/newsml-g2/catalog.enews_2.xml" />	
+	<rightsInfo>
+		<copyrightHolder uri="http://www.example.com/about.html#copyright" >
+			<name>Example Enews LLP</name>
+		</copyrightHolder>
+		<copyrightNotice>
+			Copyright 2016 Example Enews LLP, all rights reserved
+		</copyrightNotice>
+		<usageTerms>
+			Not for use outside the United States
+		</usageTerms>
+	</rightsInfo>
+	<itemMeta>
+		<itemClass qcode="ninat:text" />
+		<provider qcode="nprov:REUTERS" />
+		<versionCreated>2016-10-21T16:25:32-05:00</versionCreated>
+		<firstCreated>2016-10-18T13:12:21-05:00</firstCreated>
+		<embargoed>2016-10-23T12:00:00Z</embargoed>
+  	<pubStatus qcode="stat:usable" /> 
+		<service qcode="svc:uknews">
+			<name>UK News Service</name>
+		</service>
+		<edNote>
+			Note to editors: STRICTLY EMBARGOED. Not for public release until 12noon 
+			on Friday, October 23, 2016.
+		</edNote>
+		<signal qcode="sig:update" />
+		<link rel="irel:seeAlso" 
+			href="http://www.example.com/video/20081222-PNN-1517-407624/index.html"/>
+	</itemMeta>
+	<contentMeta>
+		<contentCreated>2016-10-18T11:12:00-05:00</contentCreated>
+		<contentModified>2016-10-21T16:22:45-05:00</contentModified>
+		<located type="cptype:city" qcode="geo:345678">
+			<name>Berlin</name>
+			<broader type="cptype:statprov" qcode="prov:2365">
+				<name>Berlin</name>
+			</broader>
+			<broader type="cptype:country" qcode="iso3166-1a2:DE">
+				<name>Germany</name>
+			</broader>
+		</located>
+		<creator uri="http://www.example.com/staff/mjameson" >
+			<name>Meredith Jameson</name>
+		</creator>
+		<infoSource uri="http://www.example.com" />
+		<subject type="cpnat:abstract" qcode="medtop:04000000">
+			<name xml:lang="en-GB">economy, business and finance</name>
+		</subject>
+		<subject type="cpnat:abstract" qcode="medtop:20000523">
+			<name xml:lang="en-GB">labour market</name>
+			<name xml:lang="de">Arbeitsmarkt</name>
+			<broader qcode="medtop:04000000" />
+		</subject>
+		<genre qcode="genre:interview">
+			<name xml:lang="en-GB">Interview</name>
+		</genre>
+		<slugline>US-Finance-Fed</slugline>
+		<headline> Fed to halt QE to avert "bubble"</headline>
+	</contentMeta>
+	<contentSet>
+		<inlineXML contenttype="application/nitf+xml"> <!--  A VALID MIME TYPE  	-->
+			<!--   Inline XML must contain well-formed XML such as NITF or XHTML   	-->
+		</inlineXML>
+	</contentSet>
+</newsItem>

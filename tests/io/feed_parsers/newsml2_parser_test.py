@@ -22,9 +22,9 @@ class BaseNewMLTwoTestCase(unittest.TestCase):
         fixture = os.path.normpath(os.path.join(dirname, '../fixtures', self.filename))
         provider = {'name': 'Test'}
         with open(fixture, 'rb') as f:
-            parser = NewsMLTwoFeedParser()
+            self.parser = NewsMLTwoFeedParser()
             self.xml = ElementTree.parse(f)
-            self.item = parser.parse(self.xml.getroot(), provider)
+            self.item = self.parser.parse(self.xml.getroot(), provider)
 
 
 class ReutersTestCase(BaseNewMLTwoTestCase):
@@ -62,3 +62,28 @@ class ReutersOptaTestCase(BaseNewMLTwoTestCase):
     def test_body(self):
         self.assertTrue(self.item[0].get('body_html').startswith('<pre>Jan 3 (OPTA) - Results and fixtures for the '
                                                                  'Primeira'))
+
+
+class IPTCExampleTextTestCase(BaseNewMLTwoTestCase):
+    filename = 'LISTING 1 A NewsML-G2 News Item.xml'
+
+    def test_news_item_parsing(self):
+        self.assertEqual(1, len(self.item))
+        item = self.item[0]
+        self.assertEqual('urn:newsml:acmenews.com:20161018:US-FINANCE-FED', item['uri'])
+        self.assertEqual('2016-10-21T16:25:32-05:00', item['versioncreated'].isoformat())
+        self.assertIn('STRICTLY EMBARGOED', item['ednote'])
+        self.assertEqual(1, len(item['authors']))
+
+    def test_can_parse(self):
+        self.assertTrue(self.parser.can_parse(self.xml.getroot()))
+
+
+class IPTCExamplePackage(BaseNewMLTwoTestCase):
+    filename = 'LISTING 6 Simple NewsML-G2 Package.xml'
+
+    def test_news_item_parsing(self):
+        self.assertEqual(1, len(self.item))
+
+    def test_can_parse(self):
+        self.assertTrue(self.parser.can_parse(self.xml.getroot()))

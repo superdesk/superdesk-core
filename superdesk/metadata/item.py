@@ -303,6 +303,7 @@ metadata_schema = {
             'type': 'object',
             'dynamic': False,
             'properties': {
+                'uri': not_analyzed,
                 'parent': not_analyzed,
                 'name': not_analyzed,
                 'role': not_analyzed,
@@ -412,6 +413,8 @@ metadata_schema = {
                 'name': not_analyzed,
                 'country': not_analyzed,
                 'world_region': not_analyzed,
+                'rel': not_analyzed,
+                'scheme': not_analyzed,
             },
         },
     },
