@@ -94,3 +94,9 @@ class MediaEditorTestCase(BaseMediaEditorTestCase):
         item = self.do_edit({"contrast": 1.2, "rotate": "90"})
         md5_hash = self.md5_sum(item, 'original')
         self.assertEqual(md5_hash, 'e3bae72827b39918f02211936645822b')
+
+    def test_saturation(self):
+        """Test saturation change"""
+        item = self.do_edit({"saturation": 0})
+        md5_hash = self.md5_sum(item, 'original')
+        self.assertEqual(md5_hash, '9693480b4e15843bed520fa1a159fb5a')
