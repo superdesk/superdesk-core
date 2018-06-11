@@ -1,5 +1,23 @@
 # Superdesk Server Changelog
 
+## [1.20] 2018-06-11
+
+### Fixed
+
+- Specify qcode type in vocabulary schema.
+- Fix newsmlg2/ninjs parsers to handle sample iptc data.
+- Fix error sending on validation error in metadata.
+- Add signature header to assets http push.
+
+### Added
+
+- Add BBC LDRS service and ninjs parser. (by CaerphillyMediaLtd)
+- Add `places_autocomplete` resource for using geonames.
+- Add prepopulate data for planning e2e tests.
+- Add support for `planning_types` in `app:initialize_data` cmd.
+- It should be possible to restrict feed parsers for a service.
+- Add new media editor endpoint.
+
 ## [1.19] 2018-05-31
 
 ### Fixed
