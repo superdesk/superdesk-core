@@ -330,3 +330,4 @@ from superdesk.io.feed_parsers.stt_newsml import STTNewsMLFeedParser  # NOQA
 from superdesk.io.feed_parsers.ritzau import RitzauFeedParser  # NOQA
 from superdesk.io.feed_parsers.image_iptc import ImageIPTCFeedParser  # NOQA
 from superdesk.io.feed_parsers.ana_mpe_newsml import ANANewsMLOneFeedParser  # NOQA
+from superdesk.io.feed_parsers.bbc_ninjs import BBCNINJSFeedParser  # NOQA
