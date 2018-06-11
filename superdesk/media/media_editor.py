@@ -99,9 +99,10 @@ class MediaEditorService(BaseService):
                     item_id = doc.pop('item_id')
                 except KeyError:
                     raise errors.SuperdeskApiError.badRequestError('either item or item_id must be specified')
-                item = next(archive.find({'_id': item_id}))
             else:
                 item_id = item[config.ID_FIELD]
+
+            item = next(archive.find({'_id': item_id}))
             edit = doc.pop('edit')
 
             # new we retrieve and loag current original media
@@ -144,6 +145,7 @@ class MediaEditorService(BaseService):
             updates = {'renditions': renditions}
             ids.append(item_id)
             archive.update(item_id, updates, item)
+            # we keep old renditions to later delete old files
             item.update(updates)
 
             docs[idx] = item

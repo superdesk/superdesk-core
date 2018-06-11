@@ -54,17 +54,25 @@ class BaseMediaEditorTestCase(TestCase):
         archive = get_resource_service('archive')
         archive.post([self.item])
 
-    def do_edit(self, edit):
+    def do_edit(self, edit, item=None):
         """Helper method to test edition on current test media
 
         :param dict edit: edition instructions
         :return dict item: item with modified media
         """
         media_editor = get_resource_service('media_editor')
-        item_id = self.item['_id']
         request_data = {
-            'item_id': item_id,
             'edit': edit}
+        if item is None:
+            item_id = self.item['_id']
+            request_data['item_id'] = item_id
+        else:
+            for k in item:
+                if isinstance(item[k], datetime):
+                    item[k] = item[k].isoformat()
+            for r in item['renditions'].values():
+                r['media'] = str(r['media'])
+            request_data['item'] = item
         docs = [request_data]
         with self.app.test_request_context('media_editor',
                                            method='POST',
@@ -100,3 +108,15 @@ class MediaEditorTestCase(BaseMediaEditorTestCase):
         item = self.do_edit({"saturation": 0})
         md5_hash = self.md5_sum(item, 'original')
         self.assertEqual(md5_hash, '9693480b4e15843bed520fa1a159fb5a')
+
+    def test_update(self):
+        """Test that item is updated correctly"""
+        original_media_id = self.item['renditions']['original']['media']
+        item = self.do_edit({"rotate": "170", "saturation": "0"}, item=self.item)
+        expected_media_id = item['renditions']['original']['media']
+        self.assertNotEqual(original_media_id, expected_media_id)
+        md5_hash = self.md5_sum(item, 'original')
+        self.assertEqual(md5_hash, '4e88727bb595d21ecdc7670a6afb099c')
+        archive_service = get_resource_service('archive')
+        updated_item = next(archive_service.find({'_id': item['_id']}))
+        self.assertEqual(updated_item['renditions']['original']['media'], expected_media_id)
