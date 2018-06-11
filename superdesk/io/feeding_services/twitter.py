@@ -56,6 +56,8 @@ class TwitterFeedingService(FeedingService):
         }
     ]
 
+    parser_restricted_values = None
+
     ERRORS = [IngestTwitterError.TwitterLoginError().get_error_description(),
               IngestTwitterError.TwitterNoScreenNamesError().
               get_error_description()]

@@ -32,7 +32,7 @@ class APFeedingService(FeedingService):
     ERRORS = [IngestApiError.apiRequestError().get_error_description(),
               SuperdeskIngestError.notConfiguredError().get_error_description()]
 
-    label = 'AP Feed API'
+    label = 'AP feed API'
 
     fields = [
         {

@@ -34,7 +34,7 @@ class WufooFeedingService(FeedingService):
               IngestApiError.apiRequestError().get_error_description(),
               IngestApiError.apiGeneralError().get_error_description()]
 
-    label = 'wufoo Feed API'
+    label = 'Wufoo feed API'
 
     fields = [
         {

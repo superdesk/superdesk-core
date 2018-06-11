@@ -42,7 +42,7 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
 
     DATE_FORMAT = '%Y.%m.%d.%H.%M'
 
-    label = 'Reuters Feed API'
+    label = 'Reuters feed API'
 
     fields = [
         {
@@ -64,6 +64,8 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
             'placeholder': 'Password', 'required': True
         }
     ]
+
+    parser_restricted_values = ['newsml2']
 
     session = None
 
