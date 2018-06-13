@@ -62,10 +62,11 @@ class MediaEditorService(BaseService):
             return im.rotate(int(param), expand=1)
 
         elif operation == 'flip':
-            if param == 'vertical':
-                return im.transpose(Image.FLIP_TOP_BOTTOM)
-            if param == 'horizontal':
-                return im.transpose(Image.FLIP_LEFT_RIGHT)
+            if param in ('vertical', 'both'):
+                im = im.transpose(Image.FLIP_TOP_BOTTOM)
+            if param in ('horizontal', 'both'):
+                im = im.transpose(Image.FLIP_LEFT_RIGHT)
+            return im
 
         elif operation == 'brightness':
             return ImageEnhance.Brightness(im).enhance(float(param))

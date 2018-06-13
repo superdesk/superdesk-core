@@ -18,7 +18,7 @@ operations parameters.
 So far, the following operations are available:
 
 - rotate (value are counter clockwise degrees)
-- flip (value can be "vertical" or "horizontal")
+- flip (value can be "vertical", "horizontal" or "both")
 - brightness (value is a float)
 - contrast (value is a float)
 - saturation (value is a float)
