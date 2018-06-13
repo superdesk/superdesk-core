@@ -40,7 +40,7 @@ class FileFeedingService(FeedingService):
         ParserError.parseFileError().get_error_description()
     ]
 
-    label = 'File Feed'
+    label = 'File feed'
 
     fields = [
         {

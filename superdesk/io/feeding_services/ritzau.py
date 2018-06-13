@@ -32,7 +32,7 @@ class RitzauFeedingService(FeedingService):
     ERRORS = [IngestApiError.apiRequestError().get_error_description(),
               SuperdeskIngestError.notConfiguredError().get_error_description()]
 
-    label = 'Ritzau feeding API'
+    label = 'Ritzau feed API'
 
     fields = [
         {
@@ -48,6 +48,8 @@ class RitzauFeedingService(FeedingService):
             'placeholder': 'fill this field only for advanced uses', 'required': False
         }
     ]
+
+    parser_restricted_values = ['ritzau']
 
     def _update(self, provider, update):
         try:

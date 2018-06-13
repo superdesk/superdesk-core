@@ -45,7 +45,7 @@ class FTPFeedingService(FeedingService):
     ERRORS = [IngestFtpError.ftpUnknownParserError().get_error_description(),
               IngestFtpError.ftpError().get_error_description()]
 
-    label = 'FTP feed API'
+    label = 'FTP feed'
 
     fields = [
         {

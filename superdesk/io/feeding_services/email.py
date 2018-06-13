@@ -65,6 +65,8 @@ class EmailFeedingService(FeedingService):
         }
     ]
 
+    parser_restricted_values = ['email_rfc822']
+
     def _test(self, provider):
         self._update(provider, update=None, test=True)
 
