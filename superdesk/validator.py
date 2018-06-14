@@ -190,3 +190,12 @@ class SuperdeskValidator(Validator):
 
         if superdesk.get_resource_service(self.resource).find_one(req=None, **query):
             self._error(field, "Template Name is not unique")
+
+    def _validate_twitter(self, twitter, field, value):
+        """Validator for twitter id e.g `@johnsmith`
+
+        :param field: field name.
+        :param value: field value.
+        """
+        if twitter and not re.match('^@[A-Za-z0-9_]{1,15}$', value, re.IGNORECASE):
+            self._error(field, ERROR_PATTERN)

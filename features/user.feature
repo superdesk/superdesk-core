@@ -31,6 +31,38 @@ Feature: User Resource
         And we get activation email
 
     @auth
+    @dbauth
+    Scenario: Create a user with biography, facebook, twitter and instagram
+        Given empty "users"
+        When we create a new user
+        """
+        {
+            "username": "foo", "password": "barbar", "email": "fb@bwh.harvard.edu", "sign_off": "fb",
+            "biography": "dummy_bio", "facebook": "facebook_dummy", "twitter": "@twitter_dummy",
+            "instagram": "instagram_dummy"
+        }
+        """
+        Then we get new resource
+        """
+        {
+            "username": "foo", "display_name": "foo", "email": "fb@bwh.harvard.edu", "is_active": true,
+            "needs_activation": true, "biography": "dummy_bio", "facebook": "facebook_dummy", "twitter": "@twitter_dummy"
+        }
+        """
+
+    @auth
+    Scenario: Test twitter validation
+        Given empty "users"
+        When we post to "/users"
+        """
+        {"username": "foo", "password": "barbar", "email": "foo@bar.com", "sign_off": "asd", "twitter": "hellou"}
+        """
+        Then we get error 400
+        """
+        {"_status": "ERR", "_issues": {"twitter": {"pattern": 1}}}
+        """
+
+    @auth
     Scenario: Test email validation
         Given empty "users"
         When we post to "/users"

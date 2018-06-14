@@ -530,6 +530,9 @@ class NinjsFormatterTest(TestCase):
                 "is_author": True,
                 "job_title": "writer_code",
                 "biography": "bio 1",
+                "facebook": "johnsmith",
+                "twitter": "@smith_john",
+                "instagram": "john_s",
                 "picture_url": "http://example.com",
             },
             {
@@ -603,17 +606,31 @@ class NinjsFormatterTest(TestCase):
         data = json.loads(doc)
 
         expected = [
-            {'name': 'author 1',
-             'role': 'writer',
-             'jobtitle': {'qcode': 'writer_code',
-                          'name': 'Writer'},
-             'biography': 'bio 1',
-             'avatar_url': 'http://example.com'},
-            {'name': 'author 2',
-             'role': 'photographer',
-             'jobtitle': {'qcode': 'reporter_code',
-                          'name': 'Reporter'},
-             'biography': 'bio 2'}]
+            {
+                'name': 'author 1',
+                'role': 'writer',
+                'jobtitle': {
+                    'qcode': 'writer_code',
+                    'name': 'Writer'
+                },
+                'biography': 'bio 1',
+                'facebook': 'johnsmith',
+                'twitter': '@smith_john',
+                'instagram': 'john_s',
+                'avatar_url': 'http://example.com'
+            },
+            {
+                'name': 'author 2',
+                'role': 'photographer',
+                'jobtitle': {
+                    'qcode': 'reporter_code',
+                    'name': 'Reporter'
+                },
+                'biography': 'bio 2',
+                'facebook': '',
+                'twitter': '',
+                'instagram': ''
+            }]
         self.assertEqual(data['authors'], expected)
 
     def test_author_missing_parent(self):
@@ -653,12 +670,24 @@ class NinjsFormatterTest(TestCase):
                     'version': '1',
                     'type': 'text',
                     'priority': 5,
-                    'authors': [{'name': 'Writer',
-                                 'role': 'writer',
-                                 'biography': ''},
-                                {'name': 'photographer',
-                                 'role': 'photographer',
-                                 'biography': ''}]}
+                    'authors': [
+                        {
+                            'name': 'Writer',
+                            'role': 'writer',
+                            'biography': '',
+                            'facebook': '',
+                            'twitter': '',
+                            'instagram': ''
+                        },
+                        {
+                            'name': 'photographer',
+                            'role': 'photographer',
+                            'biography': '',
+                            'facebook': '',
+                            'twitter': '',
+                            'instagram': ''
+                        }
+                    ]}
 
         self.assertEqual(data, expected)
 

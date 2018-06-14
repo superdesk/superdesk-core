@@ -407,6 +407,9 @@ class NINJSFormatter(Formatter):
                 "name": user.get('display_name', author.get('name', '')),
                 "role": author.get('role', ''),
                 "biography": user.get('biography', author.get('biography', '')),
+                "facebook": user.get('facebook', author.get('facebook', '')),
+                "twitter": user.get('twitter', author.get('twitter', '')),
+                "instagram": user.get('instagram', author.get('instagram', '')),
             }
 
             if avatar_url:

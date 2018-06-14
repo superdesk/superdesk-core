@@ -92,7 +92,8 @@ class ContactsResource(Resource):
         },
         'twitter': {
             'type': 'string',
-            'required': False
+            'required': False,
+            'twitter': True
         },
         'facebook': {
             'type': 'string',
