@@ -406,11 +406,15 @@ class NINJSFormatter(Formatter):
             author = {
                 "name": user.get('display_name', author.get('name', '')),
                 "role": author.get('role', ''),
-                "biography": user.get('biography', author.get('biography', '')),
-                "facebook": user.get('facebook', author.get('facebook', '')),
-                "twitter": user.get('twitter', author.get('twitter', '')),
-                "instagram": user.get('instagram', author.get('instagram', '')),
+                "biography": user.get('biography', author.get('biography', ''))
             }
+
+            # include socials only if they are non-empty
+            socials = ('facebook', 'twitter', 'instagram')
+            for social in socials:
+                social_data = user.get(social, author.get(social, ''))
+                if social_data:
+                    author[social] = social_data
 
             if avatar_url:
                 author['avatar_url'] = avatar_url
