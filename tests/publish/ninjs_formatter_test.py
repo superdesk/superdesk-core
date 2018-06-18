@@ -627,9 +627,6 @@ class NinjsFormatterTest(TestCase):
                     'name': 'Reporter'
                 },
                 'biography': 'bio 2',
-                'facebook': '',
-                'twitter': '',
-                'instagram': ''
             }]
         self.assertEqual(data['authors'], expected)
 
@@ -675,17 +672,11 @@ class NinjsFormatterTest(TestCase):
                             'name': 'Writer',
                             'role': 'writer',
                             'biography': '',
-                            'facebook': '',
-                            'twitter': '',
-                            'instagram': ''
                         },
                         {
                             'name': 'photographer',
                             'role': 'photographer',
                             'biography': '',
-                            'facebook': '',
-                            'twitter': '',
-                            'instagram': ''
                         }
                     ]}
 
