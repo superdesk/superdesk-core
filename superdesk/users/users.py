@@ -63,6 +63,23 @@ class UsersResource(Resource):
             'biography': {
                 'type': 'string',
                 'required': False,
+                'nullable': True,
+            },
+            'facebook': {
+                'type': 'string',
+                'required': False,
+                'nullable': True,
+            },
+            'instagram': {
+                'type': 'string',
+                'required': False,
+                'nullable': True,
+            },
+            'twitter': {
+                'type': 'string',
+                'required': False,
+                'nullable': True,
+                'twitter': True,
             },
             'jid': {
                 'unique': True,
