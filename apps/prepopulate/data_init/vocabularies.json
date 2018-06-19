@@ -168,7 +168,8 @@
                     {"name": "NINJS", "qcode": "ninjs"},
                     {"name": "NewsML G2", "qcode": "newsmlg2"},
                     {"name": "Email", "qcode": "email"},
-                    {"name": "Newsroom NINJS", "qcode": "newsroom ninjs"}
+                    {"name": "Newsroom NINJS", "qcode": "newsroom ninjs"},
+                    {"name": "Adobe InDesign (IDML)", "qcode": "idml"}
                 ]},
             {"is_active": true, "name": "Digital/Internet", "qcode": "digital",
                 "formats": [
