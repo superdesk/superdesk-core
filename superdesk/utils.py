@@ -20,7 +20,8 @@ from bson import ObjectId
 from enum import Enum
 from importlib import import_module
 from eve.utils import config
-from superdesk.default_settings import ELASTIC_DATE_FORMAT
+from superdesk.default_settings import ELASTIC_DATE_FORMAT, \
+    ELASTIC_DATETIME_FORMAT
 from superdesk.text_utils import get_text
 
 
@@ -196,6 +197,10 @@ def plaintext_filter(value):
 
 def format_date(date_string):
     return datetime.strftime(date_string, ELASTIC_DATE_FORMAT)
+
+
+def format_time(datetime_string):
+    return datetime.strftime(datetime_string, ELASTIC_DATETIME_FORMAT)
 
 
 def save_error_data(data, prefix='superdesk-', suffix='.txt'):

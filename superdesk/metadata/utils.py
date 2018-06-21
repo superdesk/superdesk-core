@@ -34,8 +34,21 @@ aggregations = {
     'priority': {'terms': {'field': 'priority'}},
     'legal': {'terms': {'field': 'flags.marked_for_legal'}},
     'sms': {'terms': {'field': 'flags.marked_for_sms'}},
-    'genre': {'terms': {'field': 'genre.name', 'size': 0}},
+    'genre': {'terms': {'field': 'genre.name', 'size': 0}}
 }
+
+
+def add_aggregation(aggregation_id, description):
+    if not isinstance(aggregation_id, str):
+        raise RuntimeError('Invalid aggregation identifier %s' % aggregation_id)
+    if not isinstance(description, dict):
+        raise RuntimeError('Invalid aggregation description for %s' % aggregation_id)
+    aggregations[aggregation_id] = description
+
+
+def remove_aggregation(aggregation_id):
+    if aggregation_id in aggregations:
+        del aggregations[aggregation_id]
 
 
 def get_elastic_highlight_query(query_string):
