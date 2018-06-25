@@ -1,5 +1,19 @@
 # Superdesk Server Changelog
 
+## [1.21] 2018-06-25
+
+### Fixed
+
+- Upgrade script for qumu embeds.
+- Use item from production instead of client in media editor.
+
+### Added
+
+- Add `popup_width` field to vocabularies.
+- Add elastic aggregations management api.
+- Add new contact fields to author profiles.
+- Configure feed parser restrictions on feed services in ingest.
+
 ## [1.20] 2018-06-11
 
 ### Fixed
