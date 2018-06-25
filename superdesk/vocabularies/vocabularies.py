@@ -58,6 +58,10 @@ class VocabulariesResource(Resource):
             'type': 'string',
             'maxlength': 120
         },
+        'popup_width': {
+            'type': 'integer',
+            'nullable': True
+        },
         'type': {
             'type': 'string',
             'required': True,
