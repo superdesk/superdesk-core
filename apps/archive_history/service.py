@@ -39,7 +39,10 @@ class ArchiveHistoryResource(Resource):
         'original_item_id': {'type': 'string'}
     }
 
-    mongo_indexes = {'item_id': ([('item_id', 1)], {'background': True})}
+    mongo_indexes = {
+        'item_id': ([('item_id', 1)], {'background': True}),
+        '_id_document': ([('_id_document', 1)], {'background': True}),
+    }
 
 
 class ArchiveHistoryService(BaseService):
