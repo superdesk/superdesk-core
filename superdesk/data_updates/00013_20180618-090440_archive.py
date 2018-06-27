@@ -51,7 +51,7 @@ class DataUpdate(DataUpdate):
                                 'fields_meta.' + field_meta_name + '.draftjsState.0.entityMap': entity_map
                             }
                         }))
-                except Exception as ex:
+                except: # noqa E722 allow bare except
                     print('Exception occured while running an upgrade script 00013_20180618-090440_archive.py')
                     print('Find the offending item below:\n\n')
                     print(json.dumps(item))
