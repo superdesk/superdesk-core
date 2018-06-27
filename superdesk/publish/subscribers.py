@@ -88,6 +88,7 @@ class SubscribersResource(Resource):
                 'schema': {
                     'name': {'type': 'string', 'required': True, 'empty': False},
                     'format': {'type': 'string', 'required': True},
+                    'preview_endpoint_url': {'type': 'string'},
                     'delivery_type': {'type': 'string', 'required': True},
                     'config': {'type': 'dict'}
                 }
