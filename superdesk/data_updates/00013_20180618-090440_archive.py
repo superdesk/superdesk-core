@@ -22,7 +22,7 @@ class DataUpdate(DataUpdate):
 
             for item in collection.find({'fields_meta': {"$gt": {}}}):
                 for field_meta_name in item.get('fields_meta', {}):
-                    draft_js_state = item['fields_meta'].get(field_meta_name, {}).get('draftjsState', {})
+                    draft_js_state = item['fields_meta'].get(field_meta_name, {}).get('draftjsState', [])
                     entity_map = draft_js_state[0].get('entityMap', {}) if len(draft_js_state) > 0 else {}
 
                     for entity_key in entity_map:
