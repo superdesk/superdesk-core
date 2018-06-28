@@ -8,6 +8,7 @@
 # Creation: 2018-06-18 09:04
 
 from superdesk.commands.data_updates import DataUpdate
+import json
 from superdesk import json_utils
 
 
