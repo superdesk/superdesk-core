@@ -25,8 +25,19 @@ class DataUpdate(DataUpdate):
 
                 try:
                     for field_meta_name in item.get('fields_meta', {}):
-                        draft_js_state = item['fields_meta'].get(field_meta_name, {}).get('draftjsState', [])
-                        entity_map = draft_js_state[0].get('entityMap', {}) if len(draft_js_state) > 0 else {}
+
+                        draft_js_state_wrapper = item['fields_meta'].get(field_meta_name, {}).get('draftjsState')
+
+                        draft_js_state = None
+
+                        if type(draft_js_state_wrapper) is dict:
+                            draft_js_state = draft_js_state_wrapper
+                        elif type(draft_js_state_wrapper) is list and len(draft_js_state_wrapper) == 1:
+                            draft_js_state = draft_js_state_wrapper[0]
+                        else:
+                            continue
+
+                        entity_map = draft_js_state.get('entityMap', {})
 
                         for entity_key in entity_map:
                             entity = entity_map[entity_key]
