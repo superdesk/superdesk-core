@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.21.1] 2018-06-28
+
+### Fixed
+
+- Fix data migration script for qumu embeds editing.
+
 ## [1.21] 2018-06-25
 
 ### Fixed
