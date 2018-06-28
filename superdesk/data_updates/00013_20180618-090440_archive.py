@@ -9,6 +9,7 @@
 
 from superdesk.commands.data_updates import DataUpdate
 import json
+from superdesk import json_utils
 
 
 class DataUpdate(DataUpdate):
@@ -54,7 +55,7 @@ class DataUpdate(DataUpdate):
                 except: # noqa E722 allow bare except
                     print('Exception occured while running an upgrade script 00013_20180618-090440_archive.py')
                     print('Find the offending item below:\n\n')
-                    print(json.dumps(item))
+                    print(json_utils.dumps(item))
                     print('\n\n-- item end --\n\n')
                     raise
 
