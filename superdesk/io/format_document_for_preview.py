@@ -1,4 +1,4 @@
-from flask import Blueprint, request, Response, current_app as app
+from flask import Blueprint, request, Response
 import superdesk
 from superdesk import get_resource_service
 from superdesk.publish.formatters import get_formatter
@@ -6,6 +6,7 @@ from apps.content_types import apply_schema
 
 
 bp = Blueprint('format_document', __name__)
+
 
 def get_mime_type(formatter_qcode):
     if(formatter_qcode == 'newsmlg2'):
@@ -27,8 +28,7 @@ def format_document():
     formatter = get_formatter(formatter_qcode, doc)
     formatted_docs = formatter.format(article=apply_schema(doc),
                                       subscriber=subscriber,
-                                      codes=None) # `codes` doesn't seem to be used in any formatter,
-                                      # can we remove this argument from the function?
+                                      codes=None)
 
     headers = {
         'Access-Control-Allow-Origin': '*',
