@@ -17,7 +17,7 @@ from pytz import utc
 import superdesk
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError, SuperdeskIngestError
-from superdesk.io.registry import registered_feed_parsers
+from superdesk.io.registry import registered_feed_parsers, restricted_feeding_service_parsers
 from superdesk.utc import utcnow
 
 logger = logging.getLogger(__name__)
@@ -63,7 +63,6 @@ class FeedingService(metaclass=ABCMeta):
                     - second_field_options: dictionary with the following keys:
                         - label
                         - placeholder
-        3. parser_restricted_values: list of values to which the feed_parser field is restricted
     """
 
     @abstractmethod
@@ -86,8 +85,11 @@ class FeedingService(metaclass=ABCMeta):
 
         :param provider: ingest provider document
         """
-        if getattr(self, 'parser_restricted_values', None) and 'feed_parser' in provider and \
-                provider['feed_parser'] not in self.parser_restricted_values:
+        feeding_service = provider.get('feeding_service')
+        feed_parser = provider.get('feed_parser')
+
+        if feeding_service and feed_parser and restricted_feeding_service_parsers.get(feeding_service) and \
+                not restricted_feeding_service_parsers.get(feeding_service).get(feed_parser):
             raise SuperdeskIngestError.invalidFeedParserValue(provider=provider)
 
     def _test(self, provider):

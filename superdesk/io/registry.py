@@ -21,6 +21,7 @@ registered_feeding_services = {}
 allowed_feeding_services = []
 feeding_service_errors = {}
 publish_errors = []
+restricted_feeding_service_parsers = {}
 
 
 def register_feeding_service(service_class):
@@ -75,6 +76,19 @@ def register_feed_parser(parser_name, parser_class):
     allowed_feed_parsers.append(parser_name)
 
 
+def register_feeding_service_parser(service_name, parser_name):
+    """
+    Registers the Feed Parser with the Feeding service.
+
+    :param service_name: unique name to identify the Feeding Service class
+    :param parser_name: unique name to identify the Feed Parser class
+    """
+    if not restricted_feeding_service_parsers.get(service_name):
+        restricted_feeding_service_parsers[service_name] = {}
+
+    restricted_feeding_service_parsers[service_name][parser_name] = True
+
+
 def get_feed_parser(parser_name):
     """
     Retrieve registered feed parser class from its name
@@ -117,12 +131,14 @@ class FeedingServiceAllowedService(Service):
     def get(self, req, lookup):
         def service(service_id):
             registered = registered_feeding_services[service_id]
+            restricted_parsers = list(restricted_feeding_service_parsers.get(service_id, {}).keys())
+
             return {
                 'feeding_service': service_id,
                 'label': getattr(registered, 'label', service_id),
                 'fields': getattr(registered, 'fields', []),
                 'field_groups': getattr(registered, 'field_groups', {}),
-                'parser_restricted_values': getattr(registered, 'parser_restricted_values', [])
+                'parser_restricted_values': restricted_parsers
             }
 
         return ListCursor(

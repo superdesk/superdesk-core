@@ -82,8 +82,6 @@ class RSSFeedingService(FeedingService):
         }
     ]
 
-    parser_restricted_values = None
-
     field_groups = {'auth_data': {'label': 'Authentication Info', 'fields': ['username', 'password']}}
 
     ItemField = namedtuple('ItemField', ['name', 'name_in_data', 'type'])

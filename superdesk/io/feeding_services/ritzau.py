@@ -11,7 +11,7 @@
 
 import logging
 
-from superdesk.io.registry import register_feeding_service
+from superdesk.io.registry import register_feeding_service, register_feeding_service_parser
 from superdesk.io.feeding_services import FeedingService
 from superdesk.errors import IngestApiError, SuperdeskIngestError
 from lxml import etree
@@ -48,8 +48,6 @@ class RitzauFeedingService(FeedingService):
             'placeholder': 'fill this field only for advanced uses', 'required': False
         }
     ]
-
-    parser_restricted_values = ['ritzau']
 
     def _update(self, provider, update):
         try:
@@ -105,3 +103,4 @@ class RitzauFeedingService(FeedingService):
 
 
 register_feeding_service(RitzauFeedingService)
+register_feeding_service_parser(RitzauFeedingService.NAME, 'ritzau')

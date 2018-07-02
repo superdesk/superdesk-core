@@ -16,7 +16,7 @@ from flask import current_app as app
 
 from superdesk.errors import IngestApiError
 from superdesk.etree import etree, ParseError
-from superdesk.io.registry import register_feeding_service
+from superdesk.io.registry import register_feeding_service, register_feeding_service_parser
 from superdesk.io.feeding_services.http_service import HTTPFeedingService
 from superdesk.logging import logger
 from superdesk.utc import utcnow
@@ -64,8 +64,6 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
             'placeholder': 'Password', 'required': True
         }
     ]
-
-    parser_restricted_values = ['newsml2']
 
     session = None
 
@@ -302,3 +300,4 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
 
 
 register_feeding_service(ReutersHTTPFeedingService)
+register_feeding_service_parser(ReutersHTTPFeedingService.NAME, 'newsml2')
