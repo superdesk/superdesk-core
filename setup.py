@@ -20,6 +20,7 @@ install_requires = [
     'flask-oauthlib>=0.9.3,<0.10',
     'flask-mail>=0.9,<0.10',
     'flask-script>=2.0.5,<3.0',
+    'flask_pymongo>=0.5.2,<1.0',
     'pillow>=3.0,<=5.0',
     'arrow>=0.4,<=0.13',
     'asyncio>=3.4,<3.5',
@@ -43,7 +44,8 @@ install_requires = [
     'PyYAML>=3.11,<3.13',
     'lxml>=3.8,<4.2',
     'python-twitter==3.3',
-    'chardet<4.0'
+    'chardet<4.0',
+    'pymongo>=0.4,<4.0',
 ]
 
 package_data = {
