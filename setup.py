@@ -23,6 +23,7 @@ install_requires = [
     'kombu>=4.0.2,<4.2',
     'pillow>=3.0,<=4.0',
     'arrow>=0.4,<=0.10',
+    'flask_pymongo>=0.5.2,<1.0',
     'asyncio>=3.4,<3.5',
     'bcrypt>=3.1.1,<3.2',
     'blinker>=1.3,<1.5',
@@ -43,6 +44,7 @@ install_requires = [
     'mongolock>=1.3.4,<1.4',
     'PyYAML>=3.11,<3.13',
     'lxml>=3.7.3,<3.8',
+    'pymongo>=0.4,<4.0',
 ]
 
 package_data = {
