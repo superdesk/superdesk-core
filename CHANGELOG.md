@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.21.2] 2018-07-03
+
+### Fixed
+
+- Fix flask-pymongo version. 
+
 ## [1.21.1] 2018-06-28
 
 ### Fixed
