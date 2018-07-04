@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from superdesk.io.registry import register_feeding_service
+from superdesk.io.registry import register_feeding_service, register_feeding_service_parser
 from superdesk.io.feeding_services import FeedingService
 from superdesk.errors import IngestApiError
 import requests
@@ -47,8 +47,6 @@ class WufooFeedingService(FeedingService):
         }
     ]
 
-    parser_restricted_values = ['wufoo']
-
     def __init__(self):
         self.fields_cache = {}
 
@@ -76,3 +74,4 @@ class WufooFeedingService(FeedingService):
 
 
 register_feeding_service(WufooFeedingService)
+register_feeding_service_parser(WufooFeedingService.NAME, 'wufoo')
