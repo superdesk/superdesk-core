@@ -11,6 +11,7 @@
 from datetime import datetime
 from uuid import uuid4
 from flask import current_app as app
+from contextlib import contextmanager
 
 try:
     from urllib.parse import urlparse
@@ -39,6 +40,12 @@ aggregations = {
 
 
 def add_aggregation(aggregation_id, description):
+    """
+    Add aggregation to elasticsearch aggregations
+
+    :param aggregation_id: string
+    :param description: dict containing the aggregation schema
+    """
     if not isinstance(aggregation_id, str):
         raise RuntimeError('Invalid aggregation identifier %s' % aggregation_id)
     if not isinstance(description, dict):
@@ -47,8 +54,27 @@ def add_aggregation(aggregation_id, description):
 
 
 def remove_aggregation(aggregation_id):
+    """
+    Remove aggregation from elasticsearch aggregations
+
+    :param aggregation_id: string
+    """
     if aggregation_id in aggregations:
         del aggregations[aggregation_id]
+
+
+@contextmanager
+def aggregations_manager(aggregations):
+    """
+    Context manager used for temporarity applying a list of aggregations
+
+    :param aggregations: iterable containing tuples of (aggregation_id, description)
+    """
+    for aggregation_id, description in aggregations:
+        add_aggregation(aggregation_id, description)
+    yield
+    for aggregation_id, description in aggregations:
+        remove_aggregation(aggregation_id)
 
 
 def get_elastic_highlight_query(query_string):
