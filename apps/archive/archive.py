@@ -749,7 +749,7 @@ class ArchiveService(BaseService):
             raise SuperdeskApiError.badRequestError('Cannot change the genre for broadcast content.')
 
         if PUBLISH_SCHEDULE in updates or "schedule_settings" in updates:
-            if is_item_in_package(original):
+            if is_item_in_package(original) and not force_unlock:
                 raise SuperdeskApiError.badRequestError(
                     'This item is in a package and it needs to be removed before the item can be scheduled!')
 
