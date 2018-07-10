@@ -210,3 +210,32 @@ Feature: Dictionaries Upload
             """
             {"_issues": {"user": "missing"}, "_message": "User is required for the abbreviations dictionary."}
             """
+
+    @auth
+    Scenario: Create abbreviations with dotted keys (SDESK-3083)
+        When we post to "/users"
+            """
+            {"username": "foo", "email": "foo@bar.com", "is_active": true, "sign_off": "abc"}
+            """
+        And we post to "/dictionaries"
+            """
+            {"_id": "5b4e1a6ecc3a2d6b4fda7f04", "name": "#users._id#:en", "language_id": "en", "user": "#users._id#",
+             "type": "abbreviations", "content": {"foo.bar": "baz"}}
+            """
+        And we get "/dictionaries/5b4e1a6ecc3a2d6b4fda7f04"
+        Then we get existing resource
+            """
+            {"name": "#users._id#:en", "language_id": "en", "user": "#users._id#", "type": "abbreviations",
+             "content": {"foo.bar": "baz"}}
+            """
+
+        When we patch latest
+        """
+        {"content": {"toto.titi": "tata"}}
+        """
+        And we get "/dictionaries/5b4e1a6ecc3a2d6b4fda7f04"
+        Then we get existing resource
+            """
+            {"name": "#users._id#:en", "language_id": "en", "user": "#users._id#", "type": "abbreviations",
+             "content": {"toto.titi": "tata"}}
+            """
