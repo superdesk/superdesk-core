@@ -13,7 +13,8 @@ import re
 import logging
 import collections
 
-from flask import json, current_app as app
+from flask import json, current_app as app, request
+from simplejson.errors import JSONDecodeError
 from eve.utils import config
 
 from superdesk.errors import SuperdeskApiError
@@ -143,6 +144,16 @@ def read_from_file(doc):
 
 class DictionaryService(BaseService):
     def on_create(self, docs):
+        if len(docs) == 1 and 'content' in docs[0]:
+            # works around Eve behaviour which creates sub-dict on each "." it finds in keys
+            # cf. SDESK-3083
+            # We also test request.data because it is not set in behave tests, and they would fail without it
+            try:
+                docs[0]['content'] = json.loads(request.data.decode('utf-8'))['content']
+            except (KeyError, JSONDecodeError):
+                # request.data is not set during tests, so we ignore those errors
+                pass
+
         for doc in docs:
             if self.find_one(req=None, name=doc['name'],
                              language_id=doc['language_id'],
@@ -223,6 +234,14 @@ class DictionaryService(BaseService):
         return model
 
     def on_update(self, updates, original):
+        if 'content' in updates:
+            # works around Eve behaviour which creates sub-dict on each "." it finds in keys
+            # cf. SDESK-3083
+            try:
+                updates['content'] = json.loads(request.data.decode('utf-8'))['content']
+            except (KeyError, JSONDecodeError):
+                # request.data is not set during tests, so we ignore those errors
+                pass
         # parse json list
         if updates.get('content_list'):
             updates['content'] = json.loads(updates.pop('content_list'))
