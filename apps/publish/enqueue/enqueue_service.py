@@ -401,6 +401,7 @@ class EnqueueService:
                             no_formatters.append(destination['format'])
                             continue
 
+                        formatter.set_destination(destination, subscriber)
                         formatted_docs = formatter.format(apply_schema(doc),
                                                           subscriber,
                                                           subscriber_codes.get(subscriber[config.ID_FIELD]))

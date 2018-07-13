@@ -39,6 +39,10 @@ class PublishServiceBase():
         """
         raise NotImplementedError()
 
+    def _transmit_media(self, media, destination):
+        """Transmit media file. Implement in subclass"""
+        raise NotImplementedError()
+
     def transmit(self, queue_item):
         subscriber = get_resource_service('subscribers').find_one(req=None, _id=queue_item['subscriber_id'])
 
@@ -62,6 +66,10 @@ class PublishServiceBase():
                 self.update_item_status(queue_item, 'error', error)
                 self.close_transmitter(subscriber, error)
                 raise error
+
+    def transmit_media(self, media, subscriber=None, destination=None):
+        if subscriber and destination and subscriber.get('is_active'):
+            return self._transmit_media(media, destination)
 
     def close_transmitter(self, subscriber, error):
         """

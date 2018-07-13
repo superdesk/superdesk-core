@@ -140,28 +140,35 @@ class HTTPPushService(PublishService):
                     continue
                 media.update(parse_media(assoc2))
 
-        s = requests.Session()
         for media_id, rendition in media.items():
             if not self._media_exists(media_id, destination):
                 binary = app.media.get(media_id, resource=rendition.get('resource', 'upload'))
-                mimetype = rendition.get('mimetype', getattr(binary, 'content_type', 'image/jpeg'))
-                data = {'media_id': media_id}
-                files = {'media': (media_id, binary, mimetype)}
-                request = requests.Request('POST', assets_url)
-                prepped = request.prepare()
-                prepped.prepare_body(data, files)
-                headers = self._get_headers(prepped.body, destination, prepped.headers)
-                prepped.prepare_headers(headers)
-                response = s.send(prepped)
-                if response.status_code not in (200, 201):
-                    self._raise_publish_error(
-                        response.status_code,
-                        Exception('Error pushing item %s media file %s: %s %s' % (
-                            item.get("_id", ""), rendition.get('media', ""),
-                            response.status_code, response.text
-                        )),
-                        destination
-                    )
+                self._transmit_media(binary, destination, exists=False)
+
+    def _transmit_media(self, media, destination, exists=None):
+        if exists is None:
+            exists = self._media_exists(media._id, destination)
+        if exists:
+            return
+        mimetype = getattr(media, 'content_type', 'image/jpeg')
+        data = {'media_id': str(media._id)}
+        files = {'media': (str(media._id), media, mimetype)}
+        s = requests.Session()
+        assets_url = self._get_assets_url(destination)
+        request = requests.Request('POST', assets_url)
+        prepped = request.prepare()
+        prepped.prepare_body(data, files)
+        headers = self._get_headers(prepped.body, destination, prepped.headers)
+        prepped.prepare_headers(headers)
+        response = s.send(prepped)
+        if response.status_code not in (200, 201):
+            self._raise_publish_error(
+                response.status_code,
+                Exception('Error pushing media file %s: %s %s' % (
+                    str(media._id), response.status_code, response.text
+                )),
+                destination
+            )
 
     def _media_exists(self, media_id, destination):
         """Returns true if the media with the given id exists at the service identified by assets_url.
@@ -174,8 +181,8 @@ class HTTPPushService(PublishService):
         @type assets_url: string
         @return: bool
         """
-        assets_url = self._get_assets_url(destination)
-        response = requests.get('%s/%s' % (assets_url, media_id))
+        assets_url = self._get_assets_url(destination, media_id)
+        response = requests.get(assets_url)
         if response.status_code not in (requests.codes.ok, requests.codes.not_found):  # @UndefinedVariable
             self._raise_publish_error(
                 response.status_code,
@@ -204,8 +211,11 @@ class HTTPPushService(PublishService):
     def _get_secret_token(self, destination):
         return destination.get('config', {}).get('secret_token', None)
 
-    def _get_assets_url(self, destination):
-        return destination.get('config', {}).get('assets_url', None)
+    def _get_assets_url(self, destination, media_id=None):
+        url = destination.get('config', {}).get('assets_url', None)
+        if media_id is not None:
+            return '/'.join([url, str(media_id)])
+        return url
 
     def _get_resource_url(self, destination):
         return destination.get('config', {}).get('resource_url')
