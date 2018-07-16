@@ -35,6 +35,10 @@ class UsersResource(Resource):
                 'type': 'string',
                 'minlength': 5
             },
+            'password_changed_on': {
+                'type': 'datetime',
+                'nullable': True
+            },
             'first_name': {
                 'type': 'string',
                 'readonly': self.readonly

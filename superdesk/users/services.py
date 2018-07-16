@@ -218,6 +218,7 @@ class UsersService(BaseService):
 
     def on_create(self, docs):
         for user_doc in docs:
+            user_doc.setdefault('password_changed_on', utcnow())
             user_doc.setdefault('display_name', get_display_name(user_doc))
             user_doc.setdefault(SIGN_OFF, set_sign_off(user_doc))
             user_doc.setdefault('role', get_resource_service('roles').get_default_role_id())
@@ -460,6 +461,7 @@ class DBUsersService(UsersService):
             raise UserInactiveError()
 
         updates = {'password': get_hash(password, app.config.get('BCRYPT_GENSALT_WORK_FACTOR', 12)),
+                   'password_changed_on': utcnow(),
                    app.config['LAST_UPDATED']: utcnow()}
 
         if self.user_is_waiting_activation(user):

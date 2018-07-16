@@ -26,6 +26,16 @@ class UserDisabledError(SuperdeskApiError):
     message = 'Account is disabled, access restricted.'
 
 
+class PasswordExpiredError(SuperdeskApiError):
+    """The password of the user has expired
+
+    """
+
+    status_code = 403
+    payload = {'password_is_expired': True}
+    message = 'The password of the user has expired.'
+
+
 class CredentialsAuthError(SuperdeskApiError):
     """Credentials Not Match Auth Exception
 

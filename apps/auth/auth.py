@@ -20,7 +20,6 @@ from superdesk.errors import SuperdeskApiError
 from superdesk import get_resource_service, get_resource_privileges, get_intrinsic_privileges
 from superdesk.utc import utcnow
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -37,6 +36,10 @@ class AuthUsersResource(Resource):
         },
         'password': {
             'type': 'string',
+        },
+        'password_changed_on': {
+            'type': 'datetime',
+            'nullable': True
         },
         'is_active': {
             'type': 'boolean'

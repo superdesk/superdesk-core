@@ -12,12 +12,15 @@ import bcrypt
 from flask import g
 from apps.auth.service import AuthService
 from superdesk import get_resource_service
-from apps.auth.errors import CredentialsAuthError
+from apps.auth.errors import CredentialsAuthError, PasswordExpiredError
+from flask import current_app as app
+from superdesk.utc import utcnow
+import datetime
 
 
 class DbAuthService(AuthService):
 
-    def authenticate(self, credentials):
+    def authenticate(self, credentials, ignore_expire=False):
         user = get_resource_service('auth_users').find_one(req=None, username=credentials.get('username'))
         if not user:
             raise CredentialsAuthError(credentials)
@@ -30,6 +33,12 @@ class DbAuthService(AuthService):
 
         if not bcrypt.checkpw(password, hashed):
             raise CredentialsAuthError(credentials)
+
+        if not ignore_expire and app.settings.get('PASSWORD_EXPIRY_DAYS', 0) > 0:
+            days = app.settings.get('PASSWORD_EXPIRY_DAYS')
+            date = user.get('password_changed_on')
+            if date is None or (date + datetime.timedelta(days=days)) < utcnow():
+                raise PasswordExpiredError()
 
         return user
 

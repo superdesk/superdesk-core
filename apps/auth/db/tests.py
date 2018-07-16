@@ -11,13 +11,14 @@
 from .commands import CreateUserCommand
 from superdesk import get_resource_service
 from superdesk.tests import TestCase
+from superdesk.utc import utcnow
 
 
 class UsersTestCase(TestCase):
 
     def test_create_user_command(self):
         if not self.app.config.get('LDAP_SERVER'):
-            user = {'username': 'foo', 'password': 'bar', 'email': 'baz'}
+            user = {'username': 'foo', 'password': 'bar', 'email': 'baz', 'password_changed_on': utcnow()}
             cmd = CreateUserCommand()
             cmd.run(user['username'], user['password'], user['email'], admin=True)
             auth_user = get_resource_service('auth_db').authenticate(user)
@@ -30,7 +31,7 @@ class UsersTestCase(TestCase):
 
     def test_create_user_command_no_update(self):
         if not self.app.config.get('LDAP_SERVER'):
-            user = {'username': 'foo', 'password': 'bar', 'email': 'baz'}
+            user = {'username': 'foo', 'password': 'bar', 'email': 'baz', 'password_changed_on': utcnow()}
             cmd = CreateUserCommand()
             cmd.run(
                 user['username'], user['password'], user['email'], admin=True
