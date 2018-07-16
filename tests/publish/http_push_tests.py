@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
+import io
 import os
 import hmac
 import json
@@ -47,6 +48,12 @@ class CreatedResponseSession():
     def send(self, request):
         self._request = request
         return CreatedResponse()
+
+
+class TestMedia(io.BytesIO):
+    _id = 'media-id'
+    filename = 'foo.txt'
+    mimetype = 'text/plain'
 
 
 class HTTPPushPublishTestCase(unittest.TestCase):
@@ -181,7 +188,7 @@ class HTTPPushPublishTestCase(unittest.TestCase):
     @mock.patch('superdesk.publish.transmitters.http_push.requests.Session.send', return_value=CreatedResponse)
     @mock.patch('requests.get', return_value=NotFoundResponse)
     def test_push_associated_assets(self, get_mock, send_mock, app_mock):
-        app_mock.media.get.return_value = 'bin'
+        app_mock.media.get.return_value = TestMedia(b'bin')
 
         dest = {'config': {'assets_url': 'http://example.com'}}
         item = get_fixture('package')
@@ -210,7 +217,7 @@ class HTTPPushPublishTestCase(unittest.TestCase):
     @mock.patch('superdesk.publish.transmitters.http_push.requests.Session.send', return_value=CreatedResponse)
     @mock.patch('requests.get', return_value=NotFoundResponse)
     def test_push_attachments(self, get_mock, send_mock, app_mock):
-        app_mock.media.get.return_value = 'bin'
+        app_mock.media.get.return_value = TestMedia(b'bin')
 
         dest = {'config': {'assets_url': 'http://example.com', 'secret_token': 'foo'}}
         item = {
@@ -225,7 +232,7 @@ class HTTPPushPublishTestCase(unittest.TestCase):
 
         app_mock.media.get.assert_called_with('media-id', resource='attachments')
         get_mock.assert_called_with('http://example.com/media-id')
-        self.assertIsNotNone(send_mock.call_args)
+        send_mock.assert_called_once_with(mock.ANY)
         request = send_mock.call_args[0][0]
         self.assertEqual('http://example.com/', request.url)
         self.assertEqual('POST', request.method)
@@ -234,3 +241,16 @@ class HTTPPushPublishTestCase(unittest.TestCase):
         self.assertIn('x-superdesk-signature', request.headers)
         self.assertEqual(request.headers['x-superdesk-signature'],
                          'sha1=%s' % hmac.new(b'foo', request.body, 'sha1').hexdigest())
+
+    @mock.patch('superdesk.publish.transmitters.http_push.requests.Session.send', return_value=CreatedResponse)
+    @mock.patch('requests.get', return_value=NotFoundResponse)
+    def test_push_binaries(self, get_mock, send_mock):
+        media = TestMedia(b'content')
+        dest = {'config': {'assets_url': 'http://example.com', 'secret_token': 'foo'}}
+        service = HTTPPushService()
+        service._transmit_media(media, dest)
+        get_mock.assert_called_with('http://example.com/media-id')
+        send_mock.assert_called_once_with(mock.ANY)
+        request = send_mock.call_args[0][0]
+        self.assertEqual('http://example.com/', request.url)
+        self.assertIn(b'content', request.body)
