@@ -519,7 +519,7 @@ SUPERDESK_TESTING = strtobool(env('SUPERDESK_TESTING', 'false'))
 CELERY_TIMEZONE = 'UTC'
 
 #: The number of days after the user has to change his password
-PASSWORD_EXPIRY_DAYS = int(env('PASSWORD_EXPIRY_DAYS', 90))
+PASSWORD_EXPIRY_DAYS = int(env('PASSWORD_EXPIRY_DAYS', 0))
 
 #: The number of minutes since the last update of the Mongo auth object after which it will be deleted
 SESSION_EXPIRY_MINUTES = int(env('SESSION_EXPIRY_MINUTES', 240))
