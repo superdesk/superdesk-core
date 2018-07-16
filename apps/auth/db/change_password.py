@@ -46,7 +46,7 @@ class ChangePasswordService(BaseService):
             username = doc['username']
             credentials = {'username': username, 'password': doc['old_password']}
             try:
-                get_resource_service('auth_db').authenticate(credentials)
+                get_resource_service('auth_db').authenticate(credentials, True)
             except Exception as e:
                 raise CredentialsAuthError(credentials=credentials, error=e)
 
