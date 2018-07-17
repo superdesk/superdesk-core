@@ -1,5 +1,23 @@
 # Superdesk Server Changelog
 
+## [1.22] 2018-06-17
+
+### Fixed
+
+- Fix unlocking not working due to schedule validation.
+
+### Added
+
+- Add support to expire user password after given period.
+- Allow media transmitting while formatting item. 
+- Create context manager for es aggregations.
+- Add registry for restricted parser on feeding services.
+- Add `preview_endpoint_url` to subscribers schema.
+
+### Changed
+
+- Add mongo index on `_id_document` in `archive_versions` collection.
+
 ## [1.21] 2018-06-25
 
 ### Fixed
