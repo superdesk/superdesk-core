@@ -249,6 +249,10 @@ class ArchiveService(BaseService):
             3. Creates Crops if article is a picture
         """
         user = get_user()
+
+        if ITEM_TYPE in updates:
+            del updates[ITEM_TYPE]
+
         self._validate_updates(original, updates, user)
 
         if self.__is_req_for_save(updates):

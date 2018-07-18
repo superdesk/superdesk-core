@@ -70,6 +70,8 @@ def copy_metadata_from_highlight_template(doc):
         highlight = superdesk.get_resource_service('highlights').find_one(req=None, _id=highlight_id)
         if highlight and 'template' in highlight:
             updates = render_content_template_by_id(doc, highlight.get('template', None))
+            if ITEM_TYPE in updates:
+                del updates[ITEM_TYPE]
             doc.update(updates)
 
 
