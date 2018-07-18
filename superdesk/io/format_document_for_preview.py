@@ -32,7 +32,8 @@ def format_document():
 
     headers = {
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET'
+        'Access-Control-Allow-Methods': 'GET',
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
     }
 
     return Response(formatted_docs[0][1], headers=headers, mimetype=get_mime_type(formatter_qcode))
