@@ -114,6 +114,10 @@ class FilterConditionParametersService(BaseService):
         lookup = {'_id': {'$nin': excluded_vocabularies}, 'type': 'manageable'}
         for vocabulary in get_resource_service('vocabularies').get(req=None, lookup=lookup):
             field = {'field': vocabulary[config.ID_FIELD], 'label': vocabulary['display_name']}
+
+            if vocabulary.get('field_type', '') != '' and vocabulary.get('field_type', '') != 'text':
+                continue
+
             if vocabulary.get('field_type', '') == 'text':
                 field['operators'] = ['in', 'nin', 'eq', 'ne', 'like', 'notlike', 'startswith', 'endswith']
             else:
