@@ -1,5 +1,12 @@
 # Superdesk Server Changelog
 
+## [1.22.1] 2018-07-23
+
+### Fixed
+
+- Work around eve behaviour which creates a sub-dictionary for each field with `.`
+  so words with `.` could not be added to spellcheck dictionary.
+
 ## [1.22] 2018-06-17
 
 ### Fixed
