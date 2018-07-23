@@ -398,6 +398,7 @@ CORE_APPS.extend([
     'superdesk.io.feed_parsers',
     'superdesk.io.webhooks',
     'superdesk.io.subjectcodes',
+    'superdesk.io.format_document_for_preview',
     'superdesk.io.iptc',
     'apps.io',
     'apps.io.feeding_services',
