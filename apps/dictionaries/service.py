@@ -150,7 +150,7 @@ class DictionaryService(BaseService):
             # We also test request.data because it is not set in behave tests, and they would fail without it
             try:
                 docs[0]['content'] = json.loads(request.data.decode('utf-8'))['content']
-            except (KeyError, JSONDecodeError):
+            except (KeyError, JSONDecodeError, RuntimeError):
                 # request.data is not set during tests, so we ignore those errors
                 pass
 
@@ -239,7 +239,7 @@ class DictionaryService(BaseService):
             # cf. SDESK-3083
             try:
                 updates['content'] = json.loads(request.data.decode('utf-8'))['content']
-            except (KeyError, JSONDecodeError):
+            except (KeyError, JSONDecodeError, RuntimeError):
                 # request.data is not set during tests, so we ignore those errors
                 pass
         # parse json list
