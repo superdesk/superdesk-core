@@ -18,6 +18,9 @@ from superdesk.tests import TestCase
 from superdesk.publish.formatters.ninjs_newsroom_formatter import NewsroomNinjsFormatter
 from superdesk.publish import init_app
 
+import planning.assignments as planning_assignments
+import planning.planning as planning_planning
+
 
 @mock.patch('superdesk.publish.subscribers.SubscribersService.generate_sequence_number', lambda self, subscriber: 1)
 class NinjsFormatterTest(TestCase):
@@ -159,3 +162,24 @@ class NinjsFormatterTest(TestCase):
             'products': []
         }
         self.assertEqual(json.loads(doc), expected)
+
+    def test_planning_data(self):
+        planning_assignments.init_app(self.app)
+        planning_planning.init_app(self.app)
+
+        assignments = [{'coverage_item': 'urn:coverage-id', 'planning_item': 'urn:planning-id'}]
+        self.app.data.insert('assignments', assignments)
+
+        article = {
+            '_id': 'tag:aap.com.au:20150613:12345',
+            'guid': 'tag:aap.com.au:20150613:12345',
+            'type': 'text',
+            'version': 1,
+            'assignment_id': assignments[0]['_id'],
+        }
+
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        data = json.loads(doc)
+
+        self.assertEqual('urn:planning-id', data['planning_id'])
+        self.assertEqual('urn:coverage-id', data['coverage_id'])
