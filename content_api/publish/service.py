@@ -15,7 +15,7 @@ from eve.utils import config, ParsedRequest
 
 from superdesk.utc import utcnow
 from superdesk.services import BaseService
-from superdesk.publish.formatters.ninjs_formatter import NINJSFormatter
+from superdesk.publish.formatters.ninjs_newsroom_formatter import NewsroomNinjsFormatter
 from superdesk import get_resource_service
 from superdesk.metadata.item import ASSOCIATIONS
 
@@ -28,7 +28,7 @@ class PublishService(BaseService):
     Serves mainly as a proxy to the data layer.
     """
 
-    formatter = NINJSFormatter()
+    formatter = NewsroomNinjsFormatter()
     subscriber = {'config': {}}
 
     def publish(self, item, subscribers=[]):
