@@ -98,10 +98,13 @@ schema = {
     'wordcount': metadata_schema['word_count'],
     'charcount': {'type': 'integer'},
     'readtime': {'type': 'integer'},
+
+    # newsroom agenda links
     'event_id': metadata_schema['guid'],
     'planning_id': metadata_schema['guid'],
     'coverage_id': metadata_schema['guid'],
     'agenda_id': metadata_schema['guid'],
+    'agenda_href': metadata_schema['guid'],
 }
 
 

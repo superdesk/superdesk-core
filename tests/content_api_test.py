@@ -56,7 +56,7 @@ class ContentAPITestCase(TestCase):
 
         self.assertEqual(3, self.db.items_versions.count())
 
-    def test_publish_keep_planning_metadata(self):
+    def test_create_keeps_planning_metadata(self):
         item = {
             'guid': 'foo',
             'type': 'text',
@@ -64,7 +64,7 @@ class ContentAPITestCase(TestCase):
             'coverage_id': 'coverage-id',
             'agenda_id': 'agenda-id',
         }
-        self.content_api.publish(item)
+        self.content_api.create([item])
         self.assertEqual(item['planning_id'], self.db.items.find_one()['planning_id'])
         self.assertEqual(item['coverage_id'], self.db.items.find_one()['coverage_id'])
         self.assertEqual(item['agenda_id'], self.db.items.find_one()['agenda_id'])
