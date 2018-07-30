@@ -203,6 +203,7 @@ def _resize_image(content, size, format='png', keepProportions=True):
     """
     assert isinstance(size, tuple)
     img = Image.open(content)
+    img = img.convert('RGB')
     width, height = img.size
     new_width, new_height = [to_int(x) for x in size]
     if keepProportions:
