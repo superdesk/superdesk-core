@@ -867,7 +867,10 @@ Feature: Content Expiry Published Items
         "associations": {
           "featuremedia": {
             "_id": "bike",
-            "poi": {"x": 0.2, "y": 0.3}
+            "poi": {"x": 0.2, "y": 0.3},
+            "headline": "headline",
+            "alt_text": "alt_text",
+            "description_text": "description_text"
           }
         }
       }
@@ -927,7 +930,10 @@ Feature: Content Expiry Published Items
         "associations": {
           "featuremedia": {
             "_id": "bike",
-            "poi": {"x": 0.2, "y": 0.3}
+            "poi": {"x": 0.2, "y": 0.3},
+            "headline": "headline",
+            "alt_text": "alt_text",
+            "description_text": "description_text"
           }
         }
       }
@@ -989,7 +995,10 @@ Feature: Content Expiry Published Items
         "associations": {
           "featuremedia": {
             "_id": "bike",
-            "poi": {"x": 0.2, "y": 0.3}
+            "poi": {"x": 0.2, "y": 0.3},
+            "headline": "headline",
+            "alt_text": "alt_text",
+            "description_text": "description_text"
           }
         }
       }
@@ -1053,7 +1062,10 @@ Feature: Content Expiry Published Items
         "associations": {
           "featuremedia": {
             "_id": "bike",
-            "poi": {"x": 0.2, "y": 0.3}
+            "poi": {"x": 0.2, "y": 0.3},
+            "headline": "headline",
+            "alt_text": "alt_text",
+            "description_text": "description_text"
           }
         }
       }

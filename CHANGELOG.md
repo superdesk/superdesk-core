@@ -1,5 +1,12 @@
 # Superdesk Server Changelog
 
+## [1.24] NOT RELEASED YET
+
+### Changed
+
+- associations are now validated in backend
+- new setting `VALIDATOR_MEDIA_METADATA` to indicate which fields are mandatory in media
+
 ## [1.23] 2018-08-07
 
 ### Fixed
