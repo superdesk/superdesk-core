@@ -812,3 +812,17 @@ def is_media_item(doc):
     :return: If media item then true else false
     """
     return doc.get(ITEM_TYPE) in [CONTENT_TYPE.PICTURE, CONTENT_TYPE.VIDEO, CONTENT_TYPE.AUDIO]
+
+
+def get_subject(doc1, doc2=None):
+    """Get subject for the activity message
+
+    :param dict doc1:
+    :param dict doc2:
+    """
+    for key in ('headline', 'subject', 'slugline'):
+        value = doc1.get(key)
+        if not value and doc2:
+            value = doc2.get(key)
+        if value:
+            return value
