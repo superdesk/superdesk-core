@@ -203,7 +203,6 @@ def _resize_image(content, size, format='png', keepProportions=True):
     """
     assert isinstance(size, tuple)
     img = Image.open(content)
-    img = img.convert('RGB')
     width, height = img.size
     new_width, new_height = [to_int(x) for x in size]
     if keepProportions:
@@ -227,7 +226,12 @@ def _resize_image(content, size, format='png', keepProportions=True):
                 new_width = int(new_height * original_ratio)
     resized = img.resize((new_width, new_height), Image.ANTIALIAS)
     out = BytesIO()
-    resized.save(out, format, quality=85)
+    try:
+        resized.save(out, format, quality=85)
+    except IOError:
+        out = BytesIO()
+        resized = resized.convert('RGB')
+        resized.save(out, format, quality=85)
     out.seek(0)
     return out, new_width, new_height
 
