@@ -10,6 +10,11 @@
 
 import json
 import flask
+import logging
+import datetime
+import superdesk
+from copy import copy, deepcopy
+
 from superdesk.resource import Resource
 from superdesk.metadata.utils import extra_response_fields, item_url, aggregations, \
     is_normal_package, get_elastic_highlight_query
@@ -18,7 +23,7 @@ from .common import remove_unwanted, update_state, set_item_expiry, remove_media
     handle_existing_data, item_schema, validate_schedule, is_item_in_package, update_schedule_settings, \
     ITEM_OPERATION, ITEM_RESTORE, ITEM_CREATE, ITEM_UPDATE, ITEM_DUPLICATE, ITEM_DUPLICATED_FROM, \
     ITEM_DESCHEDULE, ARCHIVE as SOURCE, LAST_PRODUCTION_DESK, LAST_AUTHORING_DESK, ITEM_FETCH, \
-    convert_task_attributes_to_objectId, BROADCAST_GENRE, set_dateline
+    convert_task_attributes_to_objectId, BROADCAST_GENRE, set_dateline, get_subject
 from superdesk.media.crop import CropService
 from flask import current_app as app
 from superdesk import get_resource_service
@@ -36,27 +41,14 @@ from apps.item_autosave.components.item_autosave import ItemAutosave
 from apps.common.models.base_model import InvalidEtag
 from superdesk.etree import get_word_count
 from apps.content import push_content_notification, push_expired_notification
-from copy import copy, deepcopy
-import superdesk
-import logging
 from apps.common.models.utils import get_model
 from apps.item_lock.models.item import ItemModel
 from apps.packages import PackageService, TakesPackageService
 from .archive_media import ArchiveMediaService
 from superdesk.utc import utcnow
-import datetime
 
 
 logger = logging.getLogger(__name__)
-
-
-def get_subject(doc1, doc2=None):
-    for key in ('headline', 'subject', 'slugline'):
-        value = doc1.get(key)
-        if not value and doc2:
-            value = doc2.get(key)
-        if value:
-            return value
 
 
 def private_content_filter():

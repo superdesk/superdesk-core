@@ -10,25 +10,27 @@
 
 import re
 import superdesk
+import logging
+from flask import render_template_string
+from datetime import timedelta
+from copy import deepcopy
 from superdesk.services import BaseService
 from superdesk import Resource, Service, config, get_resource_service
-from superdesk.utils import SuperdeskBaseEnum
+from superdesk.utils import SuperdeskBaseEnum, plaintext_filter
 from superdesk.resource import build_custom_hateoas
 from superdesk.utc import utcnow, set_time, local_to_utc
 from superdesk.errors import SuperdeskApiError
 from superdesk.metadata.item import metadata_schema, ITEM_STATE, CONTENT_STATE
 from superdesk.celery_app import celery
-from superdesk.utils import plaintext_filter
 from apps.rules.routing_rules import Weekdays
-from apps.archive.common import ARCHIVE, CUSTOM_HATEOAS, item_schema, format_dateline_to_locmmmddsrc
-from apps.archive.common import insert_into_versions, ARCHIVE_SCHEMA_FIELDS
+from apps.tasks import apply_onstage_rule
+from apps.archive.common import ARCHIVE, CUSTOM_HATEOAS, item_schema, format_dateline_to_locmmmddsrc, \
+    insert_into_versions, ARCHIVE_SCHEMA_FIELDS
 from apps.auth import get_user
-from flask import render_template_string
-from datetime import timedelta
-from copy import deepcopy
-import logging
+
 from superdesk.lock import lock, unlock
 from superdesk.celery_task_utils import get_lock_id
+
 
 CONTENT_TEMPLATE_RESOURCE = 'content_templates'
 CONTENT_TEMPLATE_PRIVILEGE = CONTENT_TEMPLATE_RESOURCE
@@ -501,6 +503,10 @@ def create_scheduled_content(now=None):
             item[config.VERSION] = 1
             production.post([item])
             insert_into_versions(doc=item)
+            try:
+                apply_onstage_rule(item, item.get(config.ID_FIELD))
+            except Exception as ex:  # noqa
+                logger.exception('Failed to apply on stage rule while scheduling template.')
             items.append(item)
         return items
     except Exception as e:
