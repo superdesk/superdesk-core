@@ -1,5 +1,25 @@
 # Superdesk Server Changelog
 
+## [1.23] 2018-08-07
+
+### Fixed
+
+- Fix the upload of rgba jpg images.
+- Filter non text fields from content filter options.
+- Fix dictionary entries saving when ending with dot.
+- Prevent item type change after it's created.
+
+### Added
+
+- Add `agenda_href` to content api items schema.
+- Add event and coverage ids to content api items schema.
+- Add Preview API support.
+
+### Changed
+
+- Move tweet url from ednote to extra field in twitter ingest.
+- Move aggregations to be a member of search endpoint class.
+
 ## [1.22] 2018-06-17
 
 ### Fixed
