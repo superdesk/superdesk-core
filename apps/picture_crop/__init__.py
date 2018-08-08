@@ -17,12 +17,25 @@ def get_file(rendition, item):
         return app.media.fetch_rendition(rendition)
 
 
-def get_crop_size(crop):
+def get_crop_size(crop, width=800, height=600):
     """In case width or height is missing it will do the math.
 
     :param size: size dict with `width` or `height`
     :param crop: crop specs
+    :param width: original width
+    :param height: original height
     """
+    if not ('CropRight' in crop and 'CropLeft' in crop and 'CropBottom' in crop and 'CropTop' in crop):
+        crop['CropRight'] = width
+        crop['CropLeft'] = 0
+        crop['CropBottom'] = height
+        crop['CropTop'] = 0
+
+        return {
+            'width': width,
+            'height': height
+        }
+
     crop_width = crop['CropRight'] - crop['CropLeft']
     crop_height = crop['CropBottom'] - crop['CropTop']
 
@@ -58,8 +71,8 @@ class PictureCropService(superdesk.Service):
         for doc in docs:
             item = doc.pop('item')
             crop = doc.pop('crop')
-            size = get_crop_size(crop)
             orig = item['renditions']['original']
+            size = get_crop_size(crop, orig.get('width', 800), orig.get('height', 600))
             orig_file = get_file(orig, item)
             filename = get_random_string()
             ok, output = crop_image(orig_file, filename, crop, size)
