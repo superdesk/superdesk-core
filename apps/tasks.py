@@ -14,23 +14,21 @@ from copy import copy
 from eve.utils import ParsedRequest
 from eve.versioning import resolve_document_version
 
-from apps.archive.common import get_item_expiry, item_operations, ITEM_OPERATION, update_version
-from apps.archive.common import insert_into_versions, is_assigned_to_a_desk, convert_task_attributes_to_objectId
-
+import superdesk
 from superdesk.resource import Resource
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from superdesk.notification import push_notification
 from superdesk.utc import utcnow
 from superdesk.metadata.utils import item_url
-from apps.archive.common import on_create_item
 from superdesk.services import BaseService
 from superdesk.metadata.item import metadata_schema, ITEM_STATE, CONTENT_STATE, ITEM_TYPE
-import superdesk
-from superdesk.activity import add_activity, ACTIVITY_CREATE, ACTIVITY_UPDATE
-from apps.archive.archive import get_subject
-from superdesk.workflow import is_workflow_state_transition_valid
-from apps.archive.archive import SOURCE as ARCHIVE
 from superdesk import get_resource_service, config
+from superdesk.activity import add_activity, ACTIVITY_CREATE, ACTIVITY_UPDATE
+from superdesk.workflow import is_workflow_state_transition_valid
+from apps.archive.common import get_item_expiry, item_operations, ITEM_OPERATION, update_version, \
+    insert_into_versions, is_assigned_to_a_desk, convert_task_attributes_to_objectId, on_create_item, \
+    ARCHIVE, get_subject
+
 
 task_statuses = ['todo', 'in_progress', 'done']
 default_status = 'todo'
@@ -134,13 +132,14 @@ def apply_stage_rule(doc, update, stage, rule_type, desk=None):
             raise SuperdeskApiError.badRequestError(message)
 
 
-def apply_onstage_rule(doc, id):
+def apply_onstage_rule(doc, _id):
     """Apply any on stage macro/rule that may be defined for the stage.
 
     :param doc:
+    :param _id:
     :return:
     """
-    doc[config.ID_FIELD] = id
+    doc[config.ID_FIELD] = _id
     stage = get_resource_service('stages').find_one(req=None, _id=doc.get('task', {}).get('stage'))
     if stage:
         apply_stage_rule(doc, None, stage, 'onstage')

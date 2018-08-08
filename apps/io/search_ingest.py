@@ -14,18 +14,17 @@ import logging
 from eve.utils import config
 from flask import json
 
-from apps.archive.archive import SOURCE as ARCHIVE
-from apps.archive.common import generate_unique_id_and_name, ITEM_OPERATION
-from apps.archive.common import insert_into_versions, remove_unwanted, set_original_creator
-from apps.duplication.archive_fetch import ITEM_FETCH
-from apps.tasks import send_to
-from superdesk import get_resource_service
 import superdesk
+from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError, ProviderError
 from superdesk.metadata.item import GUID_TAG, FAMILY_ID, INGEST_ID, ITEM_STATE, CONTENT_STATE
 from superdesk.metadata.utils import generate_guid
 from superdesk.resource import Resource
 from superdesk.utc import utcnow
+from apps.archive.common import generate_unique_id_and_name, ITEM_OPERATION, ARCHIVE, \
+    insert_into_versions, remove_unwanted, set_original_creator
+from apps.duplication.archive_fetch import ITEM_FETCH
+from apps.tasks import send_to
 
 logger = logging.getLogger(__name__)
 
