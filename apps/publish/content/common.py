@@ -63,6 +63,9 @@ publish_services = {
     ITEM_TAKEDOWN: 'archive_takedown'
 }
 
+PRESERVED_FIELDS = ['headline', 'byline', 'usageterms', 'alt_text',
+                    'description_text', 'copyrightholder', 'copyrightnotice']
+
 
 class BasePublishResource(ArchiveResource):
     """
@@ -523,7 +526,8 @@ class BasePublishService(BaseService):
         associations = original.get(ASSOCIATIONS) or {}
         for associations_key, item in associations.items():
             if type(item) == dict and item.get(config.ID_FIELD):
-                keys = DEFAULT_SCHEMA.keys()
+                keys = [key for key in DEFAULT_SCHEMA.keys() if key not in PRESERVED_FIELDS]
+
                 if app.settings.get('COPY_METADATA_FROM_PARENT') and item.get(ITEM_TYPE) in MEDIA_TYPES:
                     original_item = original
                     keys = FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM
