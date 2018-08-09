@@ -241,9 +241,9 @@ class RSSFeedingService(FeedingService):
         try:
             response = requests.get(url, auth=auth, timeout=30)
         except requests.exceptions.ConnectionError as err:
-            raise IngestApiError.apiConnectionError(exception=err)
+            raise IngestApiError.apiConnectionError(exception=err, provider=provider)
         except requests.exceptions.RequestException as err:
-            raise IngestApiError.apiURLError(exception=err)
+            raise IngestApiError.apiURLError(exception=err, provider=provider)
 
         if response.ok:
             return response.content
