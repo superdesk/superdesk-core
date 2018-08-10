@@ -116,8 +116,12 @@ class MediaEditorService(BaseService):
             for operation, param in edit.items():
                 try:
                     out = self.transform(out, operation, param)
-                except ValueError as e:
-                    raise errors.SuperdeskApiError.badRequestError('invalid edit instructions: {msg}'.format(msg=e))
+                except ValueError:
+                    # if the operation can't be applied just ignore it
+                    logger.warning('failed to apply operation: {operation} {param} for media {id}'.format(
+                        operation=operation,
+                        param=param,
+                        id=media_id))
             buf = BytesIO()
             out.save(buf, format=im.format)
 
