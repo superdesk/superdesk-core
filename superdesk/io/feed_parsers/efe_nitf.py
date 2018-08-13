@@ -89,18 +89,20 @@ class EFEFeedParser(NITFFeedParser):
             if len(item.get('place', [])) == 1:
                 cities = app.locators.find_cities()
                 city = item.get('place', '')[0].get('name', '')
-                located = [c for c in cities if c['city'].lower() == city.lower()]
-                if len(located) == 1:
-                    item.setdefault('dateline', {})
-                    item['dateline']['located'] = located[0]
-                    item['dateline']['source'] = item.get('original_source', 'EFE')
-                    item['dateline']['text'] = format_dateline_to_locmmmddsrc(item['dateline']['located'],
-                                                                              get_date(item['firstcreated']),
-                                                                              source=item.get('original_source',
-                                                                                              'EFE'))
-                item.pop('place')
-        except Exception:
-            logging.exception('EFE dateline extraction exception')
+                if city:
+                    located = [c for c in cities if c['city'].lower() == city.lower()]
+                    if len(located) == 1:
+                        item.setdefault('dateline', {})
+                        item['dateline']['located'] = located[0]
+                        item['dateline']['source'] = item.get('original_source', 'EFE')
+                        item['dateline']['text'] = format_dateline_to_locmmmddsrc(item['dateline']['located'],
+                                                                                  get_date(item['firstcreated']),
+                                                                                  source=item.get('original_source',
+                                                                                                  'EFE'))
+        except Exception as ex:
+            logging.exception('EFE dateline extraction exception {}'.format(ex))
+        finally:
+            item.pop('place', None)
 
     def get_slugline(self, docdata):
         """
