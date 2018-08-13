@@ -79,7 +79,7 @@ class EmailFeedingService(FeedingService):
                 socket.setdefaulttimeout(app.config.get('EMAIL_TIMEOUT', 10))
                 imap = imaplib.IMAP4_SSL(host=server, port=port)
             except (socket.gaierror, OSError) as e:
-                raise IngestEmailError.emailHostError(exception=e)
+                raise IngestEmailError.emailHostError(exception=e, provider=provider)
 
             try:
                 imap.login(config.get('user', None), config.get('password', None))

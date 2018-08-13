@@ -64,7 +64,7 @@ class BBCLDRSFeedingService(FeedingService):
         try:
             response = requests.get(url, params=params, headers=headers, timeout=30)
         except requests.exceptions.ConnectionError as err:
-            raise IngestApiError.apiConnectionError(exception=err)
+            raise IngestApiError.apiConnectionError(exception=err, provider=provider)
 
         if not response.ok:
             if response.status_code == 404:
@@ -109,7 +109,7 @@ class BBCLDRSFeedingService(FeedingService):
             try:
                 response = requests.get(url, params=params, headers=headers, timeout=30)
             except requests.exceptions.ConnectionError as err:
-                raise IngestApiError.apiConnectionError(exception=err)
+                raise IngestApiError.apiConnectionError(exception=err, provider=provider)
 
             if response.ok:
                 # The total number of results are given to us in json, get them
