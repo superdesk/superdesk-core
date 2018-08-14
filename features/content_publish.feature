@@ -2303,7 +2303,15 @@ Feature: Content Publishing
       [{"guid": "123", "type": "text", "headline": "test", "_current_version": 1, "state": "in_progress",
         "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
         "subject":[{"qcode": "17004000", "name": "Statistics"}], "body_html": "Test Document body",
-        "associations": {"featureimage": {"_id": "234", "guid": "234", "type": "picture", "slugline": "s234", "state": "in_progress"}}}]
+        "associations": {
+            "featureimage": {
+                "_id": "234",
+                "guid": "234",
+                "alt_text": "alt_text",
+                "description_text": "description_text",
+                "type": "picture",
+                "slugline": "s234",
+                "state": "in_progress"}}}]
       """
       When we post to "/products" with success
       """
@@ -2322,7 +2330,7 @@ Feature: Content Publishing
       And we publish "#archive._id#" with "publish" type and "published" state
       Then we get error 400
       """
-      {"_issues": {"validator exception": "['Associated item s234 234: HEADLINE is a required field']"}, "_status": "ERR"}
+      {"_issues": {"validator exception": "[[\"MEDIA'S HEADLINE is a required field\"]]"}, "_status": "ERR"}
       """
 
     @auth
@@ -2410,30 +2418,30 @@ Feature: Content Publishing
       And "vocabularies"
       """
       [{
-      	"_id": "vocabulary1",
-      	"display_name": "Vocabulary 1",
-      	"schema": {"name" : {}, "qcode": {}, "parent": {}},
-      	"service": {"all": 1},
-      	"type": "manageable",
-      	"items": [{"name": "Option 1", "qcode": "o1", "is_active": true}, {"name": "Option 2", "qcode": "o2", "is_active": true}]
+          "_id": "vocabulary1",
+          "display_name": "Vocabulary 1",
+          "schema": {"name" : {}, "qcode": {}, "parent": {}},
+          "service": {"all": 1},
+          "type": "manageable",
+          "items": [{"name": "Option 1", "qcode": "o1", "is_active": true}, {"name": "Option 2", "qcode": "o2", "is_active": true}]
       },{
-      	"_id": "custom_field_1",
-      	"display_name": "Custom Field 1",
-      	"field_type": "text",
-      	"schema": {"name" : {}, "qcode": {}, "parent": {}},
-      	"service": {"all": 1},
-      	"type": "manageable",
-      	"items": [],
-      	"field_options": {"single": true}
+          "_id": "custom_field_1",
+          "display_name": "Custom Field 1",
+          "field_type": "text",
+          "schema": {"name" : {}, "qcode": {}, "parent": {}},
+          "service": {"all": 1},
+          "type": "manageable",
+          "items": [],
+          "field_options": {"single": true}
       }]
       """
       And "content_types"
       """
       [{
-      	"enabled": true, "priority": 0, "label": "Profile 1",
-      	"schema": {
-      		"custom_field_1": {"type": "string", "required": true, "enabled": true},
-      		"subject": {
+          "enabled": true, "priority": 0, "label": "Profile 1",
+          "schema": {
+              "custom_field_1": {"type": "string", "required": true, "enabled": true},
+              "subject": {
                 "schema": {
                     "schema": {
                         "qcode": {},
@@ -2456,15 +2464,15 @@ Feature: Content Publishing
                 "type": "list",
                 "minlength": 1
             }
-      	}
+          }
       }]
       """
       And "archive"
       """
       [{
-      	"type": "text", "profile": "#content_types._id#", "state": "in_progress",
-      	"subject": [{"scheme": "vocabulary1", "name": "Option 1", "qcode": "o1"}],
-      	"extra": {"custom_field_1": "some text"}
+          "type": "text", "profile": "#content_types._id#", "state": "in_progress",
+          "subject": [{"scheme": "vocabulary1", "name": "Option 1", "qcode": "o1"}],
+          "extra": {"custom_field_1": "some text"}
       }]
       """
       When we post to "/products" with success
@@ -2498,28 +2506,28 @@ Feature: Content Publishing
       Given "vocabularies"
       """
       [{
-      	"_id": "media1", "field_type": "media",
-      	"display_name": "Media 1", "type": "manageable",
-      	"service": {"all": 1}, "items": [],
-      	"field_options": {"allowed_types": {"picture": true}},
-      	"schema": {"parent": {}, "name": {}, "qcode": {}}
+          "_id": "media1", "field_type": "media",
+          "display_name": "Media 1", "type": "manageable",
+          "service": {"all": 1}, "items": [],
+          "field_options": {"allowed_types": {"picture": true}},
+          "schema": {"parent": {}, "name": {}, "qcode": {}}
       }]
       """
       And "content_types"
       """
       [{
-      	"_id": "profile1", "label": "Profile 1",
-      	"is_used": true, "enabled": true, "priority": 0, "editor": {},
-      	"schema": {"media1": {"required": true, "nullable": false, "enabled": true, "type": "media"}}
+          "_id": "profile1", "label": "Profile 1",
+          "is_used": true, "enabled": true, "priority": 0, "editor": {},
+          "schema": {"media1": {"required": true, "nullable": false, "enabled": true, "type": "media"}}
       }]
       """
-	  And "validators"
-	  """
-	  [
-	  	{"_id": "publish_picture", "act": "publish", "type": "picture", "schema":{}},
-	  	{"_id": "publish_text", "act": "publish", "type": "text", "schema":{}}
-	  ]
-	  """
+      And "validators"
+      """
+      [
+          {"_id": "publish_picture", "act": "publish", "type": "picture", "schema":{}},
+          {"_id": "publish_text", "act": "publish", "type": "text", "schema":{}}
+      ]
+      """
       And "desks"
       """
       [{"name": "Sports"}]
@@ -2527,7 +2535,7 @@ Feature: Content Publishing
       When we post to "/products" with success
       """
       {
-      	"name":"prod-1","codes":"abc,xyz", "product_type": "both"
+          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
       }
       """
       And we post to "/subscribers" with success
@@ -2541,22 +2549,30 @@ Feature: Content Publishing
       And we post to "archive" with success
       """
       [
-      	{
-       	    "guid": "234", "type": "picture", "slugline": "234", "headline": "234", "state": "in_progress",
-        	"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
-       	    "renditions": {}
+          {
+               "guid": "234", "type": "picture", "slugline": "234", "headline": "234", "state": "in_progress",
+            "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+               "renditions": {}
         },
-      	{
-      		"guid": "123", "type": "text", "headline": "test", "state": "in_progress",
-        	"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
-        	"subject":[{"qcode": "17004000", "name": "Statistics"}], "body_html": "Test Document body",
-        	"associations": {
-        		"media--1": {"_id": "234", "guid": "234", "type": "picture", "slugline": "234",
-        		"headline": "234", "state": "in_progress", "renditions": {},
-	        	"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}
-        		}
-        	}
-       	}
+          {
+              "guid": "123", "type": "text", "headline": "test", "state": "in_progress",
+            "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+            "subject":[{"qcode": "17004000", "name": "Statistics"}], "body_html": "Test Document body",
+            "associations": {
+                "media--1": {
+                    "_id": "234",
+                    "guid": "234",
+                    "type": "picture",
+                    "slugline": "234",
+                    "headline": "234",
+                    "alt_text": "alt_text",
+                    "description_text": "description_text",
+                    "state": "in_progress",
+                    "renditions": {},
+                    "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}
+                }
+            }
+           }
       ]
       """
       And we publish "123" with "publish" type and "published" state
@@ -2568,7 +2584,7 @@ Feature: Content Publishing
         "type": "text",
         "state": "published",
         "associations": {
-        	"media--1": {"state": "published"}
+            "media--1": {"state": "published"}
         },
         "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}
       }
@@ -2577,9 +2593,9 @@ Feature: Content Publishing
       Then we get existing resource
       """
       {
-      	"guid": "234",
-      	"state": "published",
-      	"task":{"desk": "#desks._id#"}
+          "guid": "234",
+          "state": "published",
+          "task":{"desk": "#desks._id#"}
       }
       """
       And we get null stage
@@ -2604,8 +2620,16 @@ Feature: Content Publishing
         "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
         "subject":[{"qcode": "17004000", "name": "Statistics"}], "body_html": "Test Document body",
         "associations": {"editor_0": {
-        	"_id": "234", "guid": "234", "type": "picture", "slugline": "s234", "state": "in_progress",
-        	"headline": "some headline", "_type": "archive", "_current_version": 1
+            "_id": "234",
+            "guid": "234",
+            "type": "picture",
+            "slugline": "s234",
+            "state": "in_progress",
+            "headline": "some headline",
+            "alt_text": "alt_text",
+            "description_text": "description_text",
+            "_type": "archive",
+            "_current_version": 1
         }}}]
       """
       When we post to "/products" with success
@@ -2630,7 +2654,7 @@ Feature: Content Publishing
         "guid": "123",
         "state": "published",
         "associations": {
-        	"editor_0": {"state": "published"}
+            "editor_0": {"state": "published"}
         }
       }
       """
@@ -2651,16 +2675,16 @@ Feature: Content Publishing
       [{"_id": "234", "guid": "234", "type": "picture", "slugline": "s234", "state": "in_progress",
         "headline": "some headline", "_current_version": 1,
         "renditions": {"original": {"mimetype": "audio/mp3", "media": "5ae35d0095cc644f859a94c2",
-        	"href": "http://localhost:5000/api/upload-raw/5ae35d0095cc644f859a94c2"
+            "href": "http://localhost:5000/api/upload-raw/5ae35d0095cc644f859a94c2"
         }}},
        {"guid": "123", "type": "text", "headline": "fc_api", "_current_version": 1, "state": "in_progress",
         "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
         "subject":[{"qcode": "17004000", "name": "Statistics"}], "body_html": "Test Document body",
         "associations": {"media--1": {
-        	"_id": "234", "guid": "234", "type": "picture", "slugline": "s234", "state": "in_progress",
-        	"headline": "some headline", "_type": "archive", "_current_version": 1,
-        	"renditions": {"original": {"mimetype": "audio/mp3", "media": "5ae35d0095cc644f859a94c2",
-        		"href": "http://localhost:5000/api/upload-raw/5ae35d0095cc644f859a94c2"
+            "_id": "234", "guid": "234", "type": "picture", "slugline": "s234", "state": "in_progress",
+            "headline": "some headline", "_type": "archive", "_current_version": 1,
+            "renditions": {"original": {"mimetype": "audio/mp3", "media": "5ae35d0095cc644f859a94c2",
+                "href": "http://localhost:5000/api/upload-raw/5ae35d0095cc644f859a94c2"
         }}}}}]
       """
       When we post to "/filter_conditions" with "fc_api" and success
@@ -2672,13 +2696,13 @@ Feature: Content Publishing
       [{"content_filter": [{"expression": {"fc": ["#fc_api#"]}}], "name": "cf_api"}]
       """
       And we post to "/products" with "p_api" and success
-	  """
-	  [{
-	    "name":"prod-2","codes":"api",
-	    "content_filter":{"filter_id":"#cf_api#", "filter_type": "permitting"},
-	    "product_type": "api"
-	  }]
-	  """
+      """
+      [{
+        "name":"prod-2","codes":"api",
+        "content_filter":{"filter_id":"#cf_api#", "filter_type": "permitting"},
+        "product_type": "api"
+      }]
+      """
       And we post to "/subscribers" with "sub_api" and success
       """
       {
@@ -2765,7 +2789,7 @@ Feature: Content Publishing
                     }
                 }
             }
-      	]
+          ]
       }
       """
 

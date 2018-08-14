@@ -21,6 +21,7 @@ from superdesk import get_resource_service
 from _collections_abc import MutableMapping
 
 REQUIRED_FIELD = 'is a required field'
+MAX_LENGTH = "max length is {length}"
 STRING_FIELD = 'require a string value'
 DATE_FIELD = 'require a date value'
 REQUIRED_ERROR = '{} is a required field'
@@ -127,6 +128,28 @@ class SchemaValidator(Validator):
     def _validate_company_codes(self, *args):
         """Ignore company codes."""
         pass
+
+    def _validate_media_metadata(self, validate, associations_field, associations):
+        if not validate:
+            return
+        media_metadata_schema = app.config.get('VALIDATOR_MEDIA_METADATA')
+        if not media_metadata_schema:
+            return
+        for assoc_name, assoc_data in associations.items():
+            if assoc_data is None:
+                continue
+            for field, schema in media_metadata_schema.items():
+                if schema.get('required', False) and not assoc_data.get(field):
+                    self._error("media's " + field, REQUIRED_FIELD)
+                try:
+                    max_length = int(schema['maxlength'])
+                except KeyError:
+                    pass
+                except ValueError:
+                    logger.error('Invalid max length value for media field {field}'.format(field=field))
+                else:
+                    if assoc_data.get(field) is not None and len(assoc_data[field]) > max_length:
+                        self._error("media's " + field, MAX_LENGTH.format(length=max_length))
 
 
 class ValidateResource(superdesk.Resource):
@@ -263,6 +286,16 @@ class ValidateService(superdesk.Service):
             # remove it from the valiadation it is not required
             schema.pop('sms', None)
 
+    def _process_media_metadata(self, doc, schema):
+        """Request media validation if associations is present
+
+        :param doc:
+        :param schema:
+        :return:
+        """
+        if doc.get('associations'):
+            schema.setdefault('associations', {})['media_metadata'] = True
+
     def _get_validator_schema(self, validator):
         """Get schema for given validator.
 
@@ -290,6 +323,7 @@ class ValidateService(superdesk.Service):
             self._set_default_subject_scheme(doc['validate'])
             self._process_media(doc['validate'], validation_schema)
             self._process_sms(doc['validate'], validation_schema)
+            self._process_media_metadata(doc['validate'], validation_schema)
             v = SchemaValidator()
             v.allow_unknown = True
             try:

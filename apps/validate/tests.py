@@ -11,6 +11,12 @@
 from apps.validate.validate import SchemaValidator, ValidateService
 from superdesk.tests import TestCase
 from superdesk.metadata.item import ITEM_TYPE
+from superdesk.default_settings import VALIDATOR_MEDIA_METADATA
+
+
+# dict of fields mandatory in media during validation
+# this is build dynamically to stay in sync with VALIDATOR_MEDIA_METADATA
+MEDIA_MANDATORY = {k: k for k, v in VALIDATOR_MEDIA_METADATA.items() if v.get("required")}
 
 
 class ValidateMandatoryInListTest(TestCase):
@@ -164,7 +170,7 @@ class ValidateMandatoryInListTest(TestCase):
                 'validate': {'profile': 'foo', 'slugline': 'foo', 'associations': {'featuremedia': {}}},
             }
         ])
-        self.assertEqual(['MEDIA_DESCRIPTION is a required field'], errors[0])
+        self.assertIn('MEDIA_DESCRIPTION is a required field', errors[0])
 
     def test_validate_field_required_media_description_null(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
@@ -224,6 +230,8 @@ class ValidateMandatoryInListTest(TestCase):
             'media_description': {'required': True},
         }}])
         service = ValidateService()
+        feature_media = MEDIA_MANDATORY
+        feature_media.update({'description_text': 'test'})
         errors = service.create([
             {
                 'act': 'test',
@@ -231,7 +239,7 @@ class ValidateMandatoryInListTest(TestCase):
                 'validate': {
                     'profile': 'foo',
                     'slugline': 'foo',
-                    'associations': {'featuremedia': {'description_text': 'test'}}
+                    'associations': {'featuremedia': feature_media}
                 },
             },
         ])

@@ -250,10 +250,10 @@ Feature: Validate
     Given "vocabularies"
     """
     [
-    	{"_id": "text1", "field_type": "text", "display_name": "Text 1"},
-    	{"_id": "media1", "field_type": "media", "display_name": "Media 1"},
-    	{"_id": "embed1", "field_type": "embed", "display_name": "Embed 1"},
-    	{"_id": "date1", "field_type": "date", "display_name": "Date 1"}
+        {"_id": "text1", "field_type": "text", "display_name": "Text 1"},
+        {"_id": "media1", "field_type": "media", "display_name": "Media 1"},
+        {"_id": "embed1", "field_type": "embed", "display_name": "Embed 1"},
+        {"_id": "date1", "field_type": "date", "display_name": "Date 1"}
     ]
     """
     And "content_types"
@@ -273,25 +273,30 @@ Feature: Validate
     Then we get existing resource
     """
     {"errors": ["Text 1 is a required field", "MEDIA1 is a required field",
-    	"Embed 1 is a required field", "Date 1 is a required field"
+        "Embed 1 is a required field", "Date 1 is a required field"
     ]}
     """
 
     When we post to "/validate"
     """
     {
-    	"act": "publish", "type": "text",
-    	"validate": {
-    		"profile": "foo",
-    		"extra": {
-    			"text1": "foo",
-    			"embed1": {"foo": "bar"},
-    			"date1": "2018-01-22T00:00:00+0000"
-    		},
-    		"associations": {
-    			"media1": {"foo": "bar"}
-    		}
-    	}
+        "act": "publish", "type": "text",
+        "validate": {
+            "profile": "foo",
+            "extra": {
+                "text1": "foo",
+                "embed1": {"foo": "bar"},
+                "date1": "2018-01-22T00:00:00+0000"
+            },
+            "associations": {
+                "media1": {
+                    "foo": "bar",
+                    "headline": "headline",
+                    "alt_text": "alt_text",
+                    "description_text": "description_text"
+                    }
+            }
+        }
     }
     """
     Then we get existing resource

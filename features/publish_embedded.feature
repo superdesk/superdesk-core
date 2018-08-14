@@ -179,6 +179,8 @@ Feature: Publish embedded items feature
         {"_id": "#archive._id#",
          "type": "picture",
          "headline": "test",
+         "alt_text": "alt_text",
+         "description_text": "description_text",
          "state": "in_progress"}}}
         """
         Then we get OK response
@@ -197,7 +199,14 @@ Feature: Publish embedded items feature
 
         When we publish "foo" with "publish" type and "published" state
         """
-        {"headline": "foo", "associations": {"embedded1": {"_id": "#archive._id#", "type": "picture", "headline": "test", "state": "in_progress"}}}
+        {"headline": "foo", "associations": {
+            "embedded1": {
+                "_id": "#archive._id#",
+                "type": "picture",
+                "headline": "test",
+                "alt_text": "alt_text",
+                "description_text": "description_text",
+                "state": "in_progress"}}}
         """
         Then we get OK response
         When we get "published"
@@ -248,6 +257,8 @@ Feature: Publish embedded items feature
         {"_id": "#archive._id#",
          "type": "picture",
          "headline": "test",
+         "alt_text": "alt_text",
+         "description_text": "description_text",
          "state": "in_progress"}}}
         """
         Then we get OK response
@@ -266,7 +277,14 @@ Feature: Publish embedded items feature
 
         When we publish "foo" with "publish" type and "published" state
         """
-        {"headline": "foo", "associations": {"embedded1": {"_id": "#archive._id#", "type": "picture", "headline": "test", "state": "in_progress"}}}
+        {"headline": "foo", "associations": {
+            "embedded1": {
+                "_id": "#archive._id#",
+                "type": "picture",
+                "headline": "test",
+                "alt_text": "alt_text",
+                "description_text": "description_text",
+                "state": "in_progress"}}}
         """
         Then we get OK response
         When we get "published"
@@ -338,6 +356,8 @@ Feature: Publish embedded items feature
         {"_id": "#archive._id#",
          "type": "picture",
          "headline": "test",
+         "alt_text": "alt_text",
+         "description_text": "description_text",
          "state": "in_progress"}}}
         """
         Then we get OK response
@@ -356,7 +376,14 @@ Feature: Publish embedded items feature
 
         When we publish "foo" with "publish" type and "published" state
         """
-        {"headline": "foo", "associations": {"embedded1": {"_id": "#archive._id#", "type": "picture", "headline": "test", "state": "in_progress"}}}
+        {"headline": "foo", "associations": {
+            "embedded1": {
+                "_id": "#archive._id#",
+                "type": "picture",
+                "headline": "test",
+                "alt_text": "alt_text",
+                "description_text": "description_text",
+                "state": "in_progress"}}}
         """
         Then we get OK response
         When we get "published"
@@ -429,7 +456,14 @@ Feature: Publish embedded items feature
 
         When we patch "archive/foo"
         """
-        {"headline": "foo", "slugline": "bar", "state": "in_progress", "associations": {"embedded1": {"_id": "#archive._id#", "type": "picture", "headline": "test", "state": "in_progress"}}}
+        {"headline": "foo", "slugline": "bar", "state": "in_progress", "associations": {
+            "embedded1": {
+                "_id": "#archive._id#",
+                "type": "picture",
+                "headline": "test",
+                "alt_text": "alt_text",
+                "description_text": "description_text",
+                "state": "in_progress"}}}
         """
         Then we get OK response
 
@@ -441,7 +475,15 @@ Feature: Publish embedded items feature
         Then we set copy metadata from parent flag
         When we publish "foo" with "publish" type and "published" state
         """
-        {"headline": "foo", "associations": {"embedded1": {"_id": "#archive._id#", "slugline": "test", "type": "picture", "headline": "test", "state": "in_progress"}}}
+        {"headline": "foo", "associations": {
+            "embedded1": {
+                "_id": "#archive._id#",
+                "slugline": "test",
+                "type": "picture",
+                "headline": "test",
+                "alt_text": "alt_text",
+                "description_text": "description_text",
+                "state": "in_progress"}}}
         """
         Then we get OK response
 

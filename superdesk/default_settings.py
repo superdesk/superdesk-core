@@ -679,3 +679,31 @@ ERROR_NOTIFICATIONS = strtobool(env('SUPERDESK_ERROR_NOTIFICATIONS', 'true'))
 
 #: geonames credentials
 GEONAMES_USERNAME = env('GEONAMES_USERNAME')
+
+# media required fields
+VALIDATOR_MEDIA_METADATA = {
+    "headline": {
+        "required": True,
+    },
+    "alt_text": {
+        "required": True,
+    },
+    "archive_description": {
+        "required": False,
+    },
+    "description_text": {
+        "required": True,
+    },
+    "copyrightholder": {
+        "required": False,
+    },
+    "byline": {
+        "required": False,
+    },
+    "usageterms": {
+        "required": False,
+    },
+    "copyrightnotice": {
+        "required": False,
+    },
+}

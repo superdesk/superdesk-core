@@ -498,7 +498,10 @@ Feature: Publish content to the public API
                         "state": "submitted",
                         "pubstatus": "usable",
                         "mimetype": "image/jpeg",
-                        "slugline": "foo"
+                        "slugline": "foo",
+                        "headline": "headline",
+                        "alt_text": "alt_text",
+                        "description_text": "description_text"
                     }
                 }
             }
