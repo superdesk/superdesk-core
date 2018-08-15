@@ -33,7 +33,7 @@ from eve.utils import parse_request, config, date_to_str, ParsedRequest
 from superdesk.services import BaseService
 from superdesk.users.services import current_user_has_privilege, is_admin
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, CONTENT_TYPE, ITEM_TYPE, EMBARGO, \
-    PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, SIGN_OFF, ASSOCIATIONS, MEDIA_TYPES, INGEST_ID
+    PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, SIGN_OFF, ASSOCIATIONS, MEDIA_TYPES, INGEST_ID, PROCESSED_FROM
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, RESIDREF
 from apps.common.components.utils import get_component
 from apps.item_autosave.components.item_autosave import ItemAutosave
@@ -445,7 +445,7 @@ class ArchiveService(BaseService):
         """
 
         new_doc = original_doc.copy()
-        self._remove_after_copy(new_doc, extra_fields)
+        self.remove_after_copy(new_doc, extra_fields)
         on_duplicate_item(new_doc, original_doc, operation)
         resolve_document_version(new_doc, SOURCE, 'PATCH', new_doc)
 
@@ -464,7 +464,7 @@ class ArchiveService(BaseService):
 
         return new_doc['guid']
 
-    def _remove_after_copy(self, copied_item, extra_fields=None):
+    def remove_after_copy(self, copied_item, extra_fields=None, delete_keys=None):
         """Removes the properties which doesn't make sense to have for an item after copy.
 
         :param copied_item: item to copy
@@ -480,7 +480,9 @@ class ArchiveService(BaseService):
         keys_to_delete.extend([config.ID_FIELD, 'guid', LINKED_IN_PACKAGES, EMBARGO, PUBLISH_SCHEDULE,
                                SCHEDULE_SETTINGS, 'lock_time', 'lock_action', 'lock_session', 'lock_user', SIGN_OFF,
                                'rewritten_by', 'rewrite_of', 'rewrite_sequence', 'highlights', 'marked_desks',
-                               '_type', 'event_id', 'assignment_id'])
+                               '_type', 'event_id', 'assignment_id', PROCESSED_FROM])
+        if delete_keys:
+            keys_to_delete.extend(delete_keys)
 
         if extra_fields:
             keys_to_delete = [key for key in keys_to_delete if key not in extra_fields]

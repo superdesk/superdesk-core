@@ -2345,6 +2345,20 @@ def then_we_get_package_item(context):
     test_items_contain_items(items, context_items)
 
 
+@then('we store "{tag}" with first item')
+def step_impl_store_first_item_to_ctx(context, tag):
+    data = get_json_data(context.response)
+    first_item = data['_items'][0]
+    setattr(context, tag, first_item)
+
+
+@then('we store "{tag}" with {index} item')
+def step_impl_store_indexed_item_to_ctx(context, tag, index):
+    data = get_json_data(context.response)
+    item = data['_items'][int(index) - 1]
+    setattr(context, tag, item)
+
+
 def test_items_contain_items(items, context_items):
     for context_item in context_items:
         for item in items:
