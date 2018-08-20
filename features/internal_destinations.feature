@@ -118,7 +118,7 @@ Feature: Internal Destinations
         """
 
     @auth
-    Scenario: Create item for destinations on publish and overwrite the item on correction and kill
+    Scenario: Create & Publish item for destinations on publish and overwrite the item on correction and kill
         When we post to "archive" with success
         """
         [{
@@ -384,5 +384,288 @@ Feature: Internal Destinations
         {
             "original_id": "#published_item._id#",
             "processed_from": "__no_value__"
+        }
+        """
+
+    @auth
+    Scenario: Create & Publish item for destinations on publish in global read off stage
+        When we post to "archive" with success
+        """
+        [{
+            "guid": "123",
+            "type": "text",
+            "headline": "Take-1 headline",
+            "abstract": "Take-1 abstract",
+            "task": {
+                "user": "#CONTEXT_USER_ID#",
+                "desk": "#origin_desk#",
+                "stage": "#origin_stage#"
+            },
+            "body_html": "Body",
+            "state": "submitted",
+            "slugline": "Take-1 slugline",
+            "urgency": "4",
+            "pubstatus": "usable",
+            "subject":[{"qcode": "17004000", "name": "Statistics"}],
+            "anpa_category": [{"qcode": "A", "name": "Sport"}],
+            "anpa_take_key": "Take"
+        }]
+        """
+        When we post to "/stages" with success
+        """
+        {
+            "name": "Invisible Stage",
+            "desk": "#destination_desk#",
+            "working_stage" : false,
+            "default_incoming" : false,
+            "is_visible" : false,
+            "local_readonly" : true
+        }
+        """
+        Given "internal_destinations"
+        """
+        [
+            {
+                "name": "publish",
+                "is_active": true,
+                "desk": "#destination_desk#",
+                "macro": "Internal_Destination_Auto_Publish",
+                "stage": "#stages._id#"
+            }
+        ]
+        """
+
+        When we publish "#archive._id#" with "publish" type and "published" state
+        Then we get OK response
+        When we get "/archive"
+        Then we get list with 0 items
+        When we get "/published"
+        Then we get list with 1 items
+        """
+        {
+            "_items": [
+                {
+                    "_id": "#archive._id#",
+                    "state": "published",
+                    "task": {"desk": "#origin_desk#", "stage": "#origin_stage#"},
+                    "body_html": "Body",
+                    "_current_version": 2
+                }
+            ]
+        }
+        """
+        When we patch "/desks/#destination_desk#"
+        """
+        {
+            "members": [{"user": "#CONTEXT_USER_ID#"}]
+        }
+        """
+        Then we get OK response
+        When we get "/published"
+        Then we get list with 2 items
+        """
+        {
+            "_items": [
+                {
+                    "_id": "#archive._id#",
+                    "state": "published",
+                    "task": {"desk": "#origin_desk#", "stage": "#origin_stage#"},
+                    "body_html": "Body",
+                    "_current_version": 2
+                },
+                {
+                    "state": "published",
+                    "task": {"desk": "#destination_desk#", "stage": "#stages._id#"},
+                    "body_html": "Body",
+                    "original_id": "#archive._id#",
+                    "processed_from": "#archive._id#",
+                    "_current_version": 4
+                }
+            ]
+        }
+        """
+        When we patch "/desks/#destination_desk#"
+        """
+        {
+            "members": []
+        }
+        """
+        Then we get OK response
+        When we publish "#archive._id#" with "correct" type and "corrected" state
+        """
+        {
+            "body_html": "Body Corrected"
+        }
+        """
+        Then we get OK response
+        When we get "/published"
+        Then we get list with 2 items
+        """
+        {
+            "_items": [
+                {
+                    "_id": "#archive._id#",
+                    "state": "corrected",
+                    "task": {"desk": "#origin_desk#", "stage": "#origin_stage#"},
+                    "body_html": "Body Corrected",
+                    "_current_version": 3
+                },
+                {
+                    "_id": "#archive._id#",
+                    "state": "published",
+                    "task": {"desk": "#origin_desk#", "stage": "#origin_stage#"},
+                    "body_html": "Body",
+                    "_current_version": 2
+                }
+            ]
+        }
+        """
+        When we patch "/desks/#destination_desk#"
+        """
+        {
+            "members": [{"user": "#CONTEXT_USER_ID#"}]
+        }
+        """
+        Then we get OK response
+        When we get "/published"
+        Then we get list with 4 items
+        """
+        {
+            "_items": [
+                {
+                    "_id": "#archive._id#",
+                    "state": "corrected",
+                    "task": {"desk": "#origin_desk#", "stage": "#origin_stage#"},
+                    "body_html": "Body Corrected",
+                    "_current_version": 3
+                },
+                {
+                    "_id": "#archive._id#",
+                    "state": "published",
+                    "task": {"desk": "#origin_desk#", "stage": "#origin_stage#"},
+                    "body_html": "Body",
+                    "_current_version": 2
+                },
+                {
+                    "state": "published",
+                    "task": {"desk": "#destination_desk#", "stage": "#stages._id#"},
+                    "body_html": "Body",
+                    "original_id": "#archive._id#",
+                    "processed_from": "#archive._id#",
+                    "_current_version": 4
+                },
+                {
+                    "state": "corrected",
+                    "task": {"desk": "#destination_desk#", "stage": "#stages._id#"},
+                    "body_html": "Body Corrected",
+                    "original_id": "#archive._id#",
+                    "processed_from": "#archive._id#",
+                    "_current_version": 5
+                }
+            ]
+        }
+        """
+        When we patch "/desks/#destination_desk#"
+        """
+        {
+            "members": []
+        }
+        """
+        Then we get OK response
+        When we publish "#archive._id#" with "kill" type and "killed" state
+        Then we get OK response
+        When we get "/published"
+        Then we get list with 3 items
+        """
+        {
+            "_items": [
+                {
+                    "_id": "#archive._id#",
+                    "state": "killed",
+                    "pubstatus": "canceled",
+                    "task": {"desk": "#origin_desk#", "stage": "#origin_stage#"},
+                    "_current_version": 4
+                },
+                {
+                    "_id": "#archive._id#",
+                    "state": "corrected",
+                    "task": {"desk": "#origin_desk#", "stage": "#origin_stage#"},
+                    "body_html": "Body Corrected",
+                    "_current_version": 3,
+                    "pubstatus": "usable"
+                },
+                {
+                    "_id": "#archive._id#",
+                    "state": "published",
+                    "task": {"desk": "#origin_desk#", "stage": "#origin_stage#"},
+                    "body_html": "Body",
+                    "_current_version": 2,
+                    "pubstatus": "usable"
+                }
+            ]
+        }
+        """
+        When we patch "/desks/#destination_desk#"
+        """
+        {
+            "members": [{"user": "#CONTEXT_USER_ID#"}]
+        }
+        """
+        Then we get OK response
+        When we get "/published"
+        Then we get list with 6 items
+        """
+        {
+            "_items": [
+                {
+                    "_id": "#archive._id#",
+                    "state": "killed",
+                    "pubstatus": "canceled",
+                    "task": {"desk": "#origin_desk#", "stage": "#origin_stage#"},
+                    "_current_version": 4
+                },
+                {
+                    "_id": "#archive._id#",
+                    "state": "corrected",
+                    "task": {"desk": "#origin_desk#", "stage": "#origin_stage#"},
+                    "body_html": "Body Corrected",
+                    "_current_version": 3,
+                    "pubstatus": "usable"
+                },
+                {
+                    "_id": "#archive._id#",
+                    "state": "published",
+                    "task": {"desk": "#origin_desk#", "stage": "#origin_stage#"},
+                    "body_html": "Body",
+                    "_current_version": 2,
+                    "pubstatus": "usable"
+                },
+                {
+                    "state": "published",
+                    "task": {"desk": "#destination_desk#", "stage": "#stages._id#"},
+                    "body_html": "Body",
+                    "original_id": "#archive._id#",
+                    "processed_from": "#archive._id#",
+                    "_current_version": 4,
+                    "pubstatus": "usable"
+                },
+                {
+                    "state": "corrected",
+                    "task": {"desk": "#destination_desk#", "stage": "#stages._id#"},
+                    "body_html": "Body Corrected",
+                    "original_id": "#archive._id#",
+                    "processed_from": "#archive._id#",
+                    "_current_version": 5,
+                    "pubstatus": "usable"
+                },
+                {
+                    "state": "killed",
+                    "task": {"desk": "#destination_desk#", "stage": "#stages._id#"},
+                    "original_id": "#archive._id#",
+                    "processed_from": "#archive._id#",
+                    "_current_version": 6,
+                    "pubstatus": "canceled"
+                }
+            ]
         }
         """

@@ -12,14 +12,26 @@ import json
 from copy import deepcopy
 from eve.utils import config, ParsedRequest
 from superdesk import get_resource_service
-from superdesk.errors import StopDuplication
-from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, PROCESSED_FROM
+from superdesk.errors import StopDuplication, InvalidStateTransitionError
+from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, \
+    PROCESSED_FROM, PUBLISH_STATES
 from apps.archive.common import ITEM_OPERATION
 from apps.publish.content.common import publish_services
 from apps.content_types import apply_schema
 
 
 def internal_destination_auto_publish(item, **kwargs):
+    """Auto publish the item using internal destination
+
+    :param dict item: item to be published
+    :param kwargs:
+    :raises StopDuplication: to indicate the superdesk.internal_destination.handle_item_published
+    to stop duplication as duplication is handle by this method.
+    """
+    if item.get(ITEM_STATE) not in PUBLISH_STATES:
+        raise InvalidStateTransitionError(message='Internal Destination auto publish macro can '
+                                                  'only be called after publishing the item.')
+
     operation = item.get(ITEM_OPERATION)
     archive_action_service = get_resource_service(publish_services.get(operation))
     archive_service = get_resource_service('archive')
@@ -55,7 +67,10 @@ def internal_destination_auto_publish(item, **kwargs):
             archive_action_service.patch(id=overwrite_item[config.ID_FIELD],
                                          updates=updates)
 
-    raise StopDuplication
+    # raise stop duplication on successful completion so that
+    # internal destination superdesk.internal_destination.handle_item_published
+    # will not duplicate the item.
+    raise StopDuplication()
 
 
 name = 'Internal_Destination_Auto_Publish'
