@@ -1,11 +1,20 @@
 # Superdesk Server Changelog
 
-## [1.24] NOT RELEASED YET
+## [1.24] 2018-08-20
+
+### Fixed
+
+- Add missing provider information in error messages.
+- Don't overwrite editable fields for embedded media items.
+- Set default crops when crops values are missing in payload.
+- Convert RGBA jpg images to RGB only if saving fails.
 
 ### Changed
 
-- associations are now validated in backend
-- new setting `VALIDATOR_MEDIA_METADATA` to indicate which fields are mandatory in media
+- Extending internal destination to publish the duplicate item.
+- Associations are now validated in backend
+- New setting `VALIDATOR_MEDIA_METADATA` to indicate which fields are mandatory in media
+- Executing on stage macro when content is created via scheduled template.
 
 ## [1.23] 2018-08-07
 
