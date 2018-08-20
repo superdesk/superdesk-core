@@ -110,7 +110,7 @@ class BasePublishService(BaseService):
         self._mark_media_item_as_used(updates, original)
 
     def on_updated(self, updates, original):
-        original = get_resource_service(ARCHIVE).find_one(req=None, _id=original[config.ID_FIELD])
+        original = super().find_one(req=None, _id=original[config.ID_FIELD])
         updates.update(original)
 
         if updates[ITEM_OPERATION] not in {ITEM_KILL, ITEM_TAKEDOWN} and \

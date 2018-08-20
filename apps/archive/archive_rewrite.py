@@ -15,7 +15,7 @@ from flask import request, current_app as app
 from apps.archive import ArchiveSpikeService
 from superdesk import get_resource_service, Service, config
 from superdesk.metadata.item import ITEM_STATE, EMBARGO, CONTENT_STATE, CONTENT_TYPE, \
-    ITEM_TYPE, PUBLISH_STATES, ASSOCIATIONS, GUID_TAG
+    ITEM_TYPE, PUBLISH_STATES, ASSOCIATIONS, GUID_TAG, PROCESSED_FROM
 from superdesk.resource import Resource, build_custom_hateoas
 from apps.archive.common import CUSTOM_HATEOAS, ITEM_CREATE, ARCHIVE, BROADCAST_GENRE, ITEM_REWRITE, \
     ITEM_UNLINK, ITEM_LINK, insert_into_versions
@@ -188,6 +188,7 @@ class ArchiveRewriteService(Service):
 
         rewrite['rewrite_of'] = original[config.ID_FIELD]
         rewrite['rewrite_sequence'] = (original.get('rewrite_sequence') or 0) + 1
+        rewrite.pop(PROCESSED_FROM, None)
 
         if not existing_item:
             # send the document to the desk only if a new rewrite is created

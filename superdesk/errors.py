@@ -699,3 +699,7 @@ class AlreadyExistsError(Exception):
 
 class SkipValue(Exception):
     """Exception used in XML feed_parser callbacks when a value is not needed"""
+
+
+class StopDuplication(Exception):
+    """Exception used in internal destination to not duplicate the item after marco execution"""

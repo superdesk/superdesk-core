@@ -61,6 +61,7 @@ SIGN_OFF = 'sign_off'
 EMBARGO = 'embargo'
 PUBLISH_SCHEDULE = 'publish_schedule'
 SCHEDULE_SETTINGS = 'schedule_settings'
+PROCESSED_FROM = 'processed_from'
 
 metadata_schema = {
     config.ID_FIELD: {
@@ -589,6 +590,9 @@ metadata_schema = {
         'type': 'string',
         'mapping': not_analyzed,
     },
+
+    # references item id for items auto published using internal destinations
+    PROCESSED_FROM: {'type': 'string', 'mapping': not_analyzed},
 }
 
 metadata_schema['lock_user']['versioned'] = False
