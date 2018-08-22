@@ -216,7 +216,9 @@ class SuperdeskIngestError(SuperdeskError):
 
         if exception:
             if provider.get('notifications', {}).get('on_error', True) and notifications_enabled():
-                exception_msg = str(exception)[-200:]
+                exception_msg = str(exception)
+                if len(exception_msg) > 200:
+                    exception_msg = exception_msg[200:] + '…'
                 update_notifiers('error',
                                  'Error [%s] on ingest provider {{name}}: %s' % (code, exception_msg),
                                  resource='ingest_providers' if provider else None,
