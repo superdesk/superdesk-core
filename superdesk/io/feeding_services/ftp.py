@@ -81,12 +81,12 @@ class FTPFeedingService(FeedingService):
         {
             'id': 'ftp_move_path', 'type': 'text', 'label': 'Move ingested items to',
             'placeholder': 'FTP Server Path, keep empty to use default path',
-            'required_expression': '{move}', 'show_expression': '{move}'
+            'required': False, 'show_expression': '{move}'
         },
         {
             'id': 'move_path_error', 'type': 'text', 'label': 'Move *NOT* ingested items (i.e. on error) to',
             'placeholder': 'FTP Server Path, keep empty to use default path',
-            'required_expression': '{move}', 'show_expression': '{move}'
+            'required': False, 'show_expression': '{move}'
         }
     ]
 
