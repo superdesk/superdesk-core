@@ -14,7 +14,8 @@ from superdesk import get_resource_service
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
-from apps.publish.enqueue.enqueue_service import EnqueueService
+from apps.publish.enqueue import get_enqueue_service
+from apps.archive.common import ITEM_OPERATION
 from apps.publish.content.common import BasePublishService
 
 logger = logging.getLogger(__name__)
@@ -59,10 +60,11 @@ class ProductTestService(BaseService):
         req = ParsedRequest()
         results = []
         products = list(get_resource_service('products').get(req=req, lookup=lookup))
+        service = get_enqueue_service(article.get(ITEM_OPERATION, 'publish'))
         for product in products:
             result = {'product_id': product['_id'], 'matched': True, 'name': product.get('name', '')}
             reason = ''
-            if not EnqueueService().conforms_product_targets(product, article):
+            if not service.conforms_product_targets(product, article):
                 # Here it fails to match due to geo restriction
                 # story has target_region and product has geo restriction
                 result['matched'] = False
@@ -73,10 +75,10 @@ class ProductTestService(BaseService):
                 if product.get('geo_restrictions'):
                     reason = '{} {}'.format(reason, 'Product has target_region')
 
-            if not EnqueueService().conforms_content_filter(product, article):
+            if not service.conforms_content_filter(product, article):
                 # Here it fails to match due to content filter
                 content_filter = product.get('content_filter')
-                filter = get_resource_service('content_filters').find_one(req=None, _id=content_filter['filter_id'])
+                filter = service.filters.get('content_filters', {}).get(content_filter['filter_id'], {}).get('cf')
                 result['matched'] = False
                 reason = 'Story does not match the filter: {}'.format(filter.get('name'))
 

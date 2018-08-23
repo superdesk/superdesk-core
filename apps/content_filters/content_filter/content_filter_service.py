@@ -187,7 +187,7 @@ class ContentFilterService(BaseService):
             expressions_list.append({'bool': filter_conditions})
         return {'bool': expressions}
 
-    def does_match(self, content_filter, article):
+    def does_match(self, content_filter, article, filters=None):
         if not content_filter:
             return True  # a non-existing filter matches every thing
 
@@ -197,11 +197,14 @@ class ContentFilterService(BaseService):
             filter_conditions = []
             if 'fc' in expression.get('expression', {}):
                 for f in expression['expression']['fc']:
-                    filter_condition = FilterCondition.parse(filter_condition_service.find_one(req=None, _id=f))
+                    fc = filters.get('filter_conditions', {}).get(f, {}).get('fc') if filters \
+                        else filter_condition_service.find_one(req=None, _id=f)
+                    filter_condition = FilterCondition.parse(fc)
                     filter_conditions.append(filter_condition.does_match(article))
             if 'pf' in expression.get('expression', {}):
                 for f in expression['expression']['pf']:
-                    current_filter = super().find_one(req=None, _id=f)
+                    current_filter = filters.get('content_filters', {}).get(f, {}).get('cf') if filters \
+                        else super().find_one(req=None, _id=f)
                     filter_conditions.append(self.does_match(current_filter, article))
 
             expressions.append(all(filter_conditions))
