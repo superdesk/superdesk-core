@@ -41,7 +41,7 @@ install_requires = [
     'boto3>=1.1.4,<1.6',
     'websockets>=3.0,<4.1',
     'mongolock>=1.3.4,<1.4',
-    'PyYAML>=3.11,<3.13',
+    'PyYAML>=3.11,<4.0',
     'lxml>=3.8,<4.2',
     'python-twitter==3.3',
     'chardet<4.0',
