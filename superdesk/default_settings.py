@@ -266,6 +266,10 @@ CELERY_TASK_ROUTES = {
     'apps.legal_archive.import_legal_archive': {
         'queue': celery_queue('legal'),
         'routing_key': 'legal.archive'
+    },
+    'analytics.send_scheduled_reports': {
+        'queue': celery_queue('default'),
+        'routing_key': 'analytics.schedules'
     }
 }
 
@@ -322,6 +326,10 @@ CELERY_BEAT_SCHEDULE = {
     'legal:import_legal_archive': {
         'task': 'apps.legal_archive.import_legal_archive',
         'schedule': crontab(minute=30, hour=local_to_utc_hour(0))
+    },
+    'analytics:send_scheduled_reports': {
+        'task': 'analytics.send_scheduled_reports',
+        'schedule': crontab(minute='0')  # Runs once every hour
     }
 }
 
@@ -707,3 +715,7 @@ VALIDATOR_MEDIA_METADATA = {
         "required": False,
     },
 }
+
+# Highcharts Export Server - default settings
+HIGHCHARTS_SERVER_HOST = 'localhost'
+HIGHCHARTS_SERVER_PORT = '6060'
