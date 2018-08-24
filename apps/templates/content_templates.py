@@ -18,7 +18,7 @@ from superdesk.services import BaseService
 from superdesk import Resource, Service, config, get_resource_service
 from superdesk.utils import SuperdeskBaseEnum, plaintext_filter
 from superdesk.resource import build_custom_hateoas
-from superdesk.utc import utcnow, set_time, local_to_utc
+from superdesk.utc import utcnow, set_time, local_to_utc, utc_to_local
 from superdesk.errors import SuperdeskApiError
 from superdesk.metadata.item import metadata_schema, ITEM_STATE, CONTENT_STATE
 from superdesk.celery_app import celery
@@ -61,13 +61,13 @@ def get_schema():
     return schema
 
 
-def get_next_run(schedule, now=None):
+def get_next_run(schedule, now_utc=None):
     """Get next run time based on schedule.
 
     Schedule is day of week and time.
 
     :param dict schedule: dict with `day_of_week` and `create_at` params
-    :param datetime now
+    :param now_utc
     :return datetime
     """
     if not schedule.get('is_active', False):
@@ -77,20 +77,22 @@ def get_next_run(schedule, now=None):
     if not allowed_days:
         return None
 
-    if now is None:
-        now = utcnow()
+    if now_utc is None:
+        now_utc = utcnow()
 
-    now = now.replace(second=0)
+        now_utc = now_utc.replace(second=0)
 
     # adjust current time to the schedule's timezone
     tz_name = schedule.get('time_zone', 'UTC')
     if tz_name != 'UTC':
-        next_run = local_to_utc(tz_name, set_time(now, schedule.get('create_at')))
+        current_local_datetime = utc_to_local(tz_name, now_utc)  # convert utc to local time
+        next_run_local = set_time(current_local_datetime, schedule.get('create_at'))
+        next_run = local_to_utc(tz_name, next_run_local)
     else:
-        next_run = set_time(now, schedule.get('create_at'))
+        next_run = set_time(now_utc, schedule.get('create_at'))
 
     # if the time passed already today do it tomorrow earliest
-    if next_run <= now:
+    if next_run <= now_utc:
         next_run += timedelta(days=1)
 
     while next_run.weekday() not in allowed_days:

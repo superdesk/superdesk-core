@@ -1,7 +1,8 @@
 
 import flask
 import unittest
-from datetime import datetime
+import pytz
+from datetime import datetime, timedelta
 
 from .content_templates import get_next_run, Weekdays, get_item_from_template, render_content_template
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
@@ -13,13 +14,21 @@ class TemplatesTestCase(unittest.TestCase):
 
     def setUp(self):
         # now is today at 09:05:03
-        self.now = datetime.now().replace(hour=9, minute=5, second=3)
+        self.now = datetime.utcnow().replace(hour=9, minute=5, second=3)
         self.weekdays = [day.name for day in Weekdays]
         self.app = flask.Flask(__name__)
 
-    def get_delta(self, create_at, weekdays):
-        next_run = get_next_run({'day_of_week': weekdays, 'create_at': create_at, 'is_active': True}, self.now)
-        return next_run - self.now.replace(second=0)
+    def get_delta(self, create_at, weekdays, time_zone=None, now=None):
+        next_run = get_next_run(
+            {
+                'day_of_week': weekdays,
+                'create_at': create_at,
+                'is_active': True,
+                'time_zone': time_zone or 'UTC'
+            },
+            now or self.now
+        )
+        return next_run - (now or self.now).replace(second=0)
 
     def test_inactive_schedule(self):
         self.assertEqual(None,
@@ -69,6 +78,38 @@ class TemplatesTestCase(unittest.TestCase):
         self.assertEqual('Sydney', dateline['located']['city'])
         self.assertEqual(now, dateline.get('date'))
         self.assertIn('SYDNEY', dateline.get('text'))
+
+    def test_next_run_for_timezone(self):
+        # UTC time Zero hours
+        now = datetime(2018, 6, 30, 19, 0, 0, 0, tzinfo=pytz.utc)
+        current_now = now + timedelta(seconds=5)
+        # schedule at 06:00 AM
+        delta = self.get_delta('06:00:00',
+                               self.weekdays,
+                               time_zone='Australia/Sydney',
+                               now=current_now
+                               )
+        self.assertEqual(delta.days, 0)
+        self.assertEqual(delta.seconds, 3600)
+
+        # 30 minutes before schedule
+        current_now = now + timedelta(minutes=30)
+        delta = self.get_delta('06:00:00',
+                               self.weekdays,
+                               time_zone='Australia/Sydney',
+                               now=current_now
+                               )
+        self.assertEqual(delta.days, 0)
+        self.assertEqual(delta.seconds, 1800)
+
+        # hour after schedule
+        current_now = now + timedelta(hours=1, seconds=5)
+        delta = self.get_delta('06:00:00',
+                               self.weekdays,
+                               time_zone='Australia/Sydney',
+                               now=current_now
+                               )
+        self.assertEqual(delta.days, 1)
 
 
 class RenderTemplateTestCase(TestCase):
