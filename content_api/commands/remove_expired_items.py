@@ -25,7 +25,7 @@ class RemoveExpiredItems(superdesk.Command):
     """Remove expired items from the content_api items collection"""
 
     log_msg = ''
-    expiry_days = 150
+    expiry_days = 0  # by default this should not run
 
     option_list = [
         superdesk.Option('--expiry', '-m', dest='expiry_days', required=False)
