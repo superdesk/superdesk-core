@@ -12,7 +12,7 @@ from unittest import mock
 from datetime import timedelta
 
 from apps.publish import init_app
-from apps.publish.enqueue import enqueue_items, get_published_items
+from apps.publish.enqueue import EnqueueContent
 from superdesk import config
 from superdesk.publish.publish_content import get_queue_items
 from superdesk.tests import TestCase
@@ -128,19 +128,19 @@ class PublishContentTests(TestCase):
             ids = [item[config.ID_FIELD] for item in items]
             self.assertNotIn(4, ids)
 
-    @mock.patch('apps.publish.enqueue.enqueue_item')
+    @mock.patch('apps.publish.enqueue.EnqueueContent.enqueue_item')
     def test_enqueue_item_not_scheduled(self, *mocks):
         fake_enqueue_item = mocks[0]
         queue_items = [
             {'_id': '1', 'item_id': 'item_1', 'queue_state': 'pending',
              'state': 'published'}
         ]
-        enqueue_items(queue_items)
+        EnqueueContent().enqueue_items(queue_items)
         fake_enqueue_item.assert_called_with(queue_items[0])
 
     def test_get_enqueue_items(self):
         self.app.data.insert('published', self.published_items)
-        items = get_published_items()
+        items = EnqueueContent().get_published_items()
         self.assertEqual(2, len(items))
         ids = [item[config.ID_FIELD] for item in items]
         self.assertNotIn(3, ids)

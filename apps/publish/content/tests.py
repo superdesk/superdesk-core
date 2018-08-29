@@ -23,9 +23,7 @@ from apps.archive.archive import SOURCE as ARCHIVE
 from apps.packages.package_service import PackageService
 from apps.publish.content.common import BasePublishService
 from apps.publish.content.publish import ArchivePublishService
-from apps.publish.enqueue import enqueue_published
-from apps.publish.enqueue.enqueue_published import EnqueuePublishedService
-from apps.publish.enqueue.enqueue_service import EnqueueService
+from apps.publish.enqueue import enqueue_published, get_enqueue_service
 from apps.publish.published_item import LAST_PUBLISHED_VERSION
 from apps.validators import ValidatorsPopulateCommand
 from superdesk import get_resource_service, get_backend
@@ -35,6 +33,8 @@ from superdesk.publish import init_app, publish_queue
 from superdesk.publish.subscribers import SUBSCRIBER_TYPES
 from superdesk.tests import TestCase
 from superdesk.utc import utcnow
+from apps.archive.common import ITEM_OPERATION
+from celery.exceptions import SoftTimeLimitExceeded
 
 ARCHIVE_PUBLISH = 'archive_publish'
 ARCHIVE_CORRECT = 'archive_correct'
@@ -127,7 +127,8 @@ class ArchivePublishTestCase(TestCase):
                           ITEM_STATE: CONTENT_STATE.PUBLISHED,
                           'expiry': utcnow() + timedelta(minutes=20),
                           'slugline': 'story slugline',
-                          'unique_name': '#1'},
+                          'unique_name': '#1',
+                          'operation': 'publish'},
                          {'guid': 'tag:localhost:2015:69b961ab-2816-4b8a-a974-xy4532fe33f9',
                           '_id': '2',
                           'last_version': 3,
@@ -150,7 +151,8 @@ class ArchivePublishTestCase(TestCase):
                           ITEM_STATE: CONTENT_STATE.PROGRESS,
                           'publish_schedule': "2016-05-30T10:00:00+0000",
                           ITEM_TYPE: CONTENT_TYPE.TEXT,
-                          'unique_name': '#2'},
+                          'unique_name': '#2',
+                          'operation': 'publish'},
                          {'guid': 'tag:localhost:2015:69b961ab-2816-4b8a-a584-a7b402fed4fa',
                           '_id': '3',
                           'last_version': 3,
@@ -462,9 +464,10 @@ class ArchivePublishTestCase(TestCase):
         doc = copy(self.articles[1])
         doc['item_id'] = doc['_id']
 
+        service = get_enqueue_service(doc[ITEM_OPERATION])
         subscribers, subscriber_codes, associations = \
-            EnqueuePublishedService().get_subscribers(doc, SUBSCRIBER_TYPES.DIGITAL)
-        EnqueueService().queue_transmission(doc, subscribers, subscriber_codes)
+            service.get_subscribers(doc, SUBSCRIBER_TYPES.DIGITAL)
+        service.queue_transmission(doc, subscribers, subscriber_codes)
 
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(1, queue_items.count())
@@ -478,9 +481,10 @@ class ArchivePublishTestCase(TestCase):
         doc = copy(self.articles[1])
         doc['item_id'] = doc['_id']
 
+        service = get_enqueue_service(doc[ITEM_OPERATION])
         subscribers, subscriber_codes, associations = \
-            EnqueuePublishedService().get_subscribers(doc, SUBSCRIBER_TYPES.WIRE)
-        EnqueueService().queue_transmission(doc, subscribers, subscriber_codes)
+            service.get_subscribers(doc, SUBSCRIBER_TYPES.WIRE)
+        service.queue_transmission(doc, subscribers, subscriber_codes)
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
 
         self.assertEqual(1, queue_items.count())
@@ -506,8 +510,9 @@ class ArchivePublishTestCase(TestCase):
 
         subscriber_service.post(self.subscribers)
 
+        service = get_enqueue_service(doc[ITEM_OPERATION])
         subscribers, subscriber_codes, associations = \
-            EnqueuePublishedService().get_subscribers(doc, SUBSCRIBER_TYPES.WIRE)
+            service.get_subscribers(doc, SUBSCRIBER_TYPES.WIRE)
 
         self.assertEqual(0, len(subscribers))
         self.assertDictEqual({}, subscriber_codes)
@@ -518,18 +523,19 @@ class ArchivePublishTestCase(TestCase):
         doc = copy(self.articles[0])
         doc['item_id'] = doc['_id']
         doc[ITEM_TYPE] = CONTENT_TYPE.PICTURE
+        service = get_enqueue_service(doc[ITEM_OPERATION])
 
         subscribers, subscriber_codes, associations = \
-            EnqueuePublishedService().get_subscribers(doc, SUBSCRIBER_TYPES.DIGITAL)
-        no_formatters, queued = EnqueueService().queue_transmission(doc, subscribers, subscriber_codes)
+            service.get_subscribers(doc, SUBSCRIBER_TYPES.DIGITAL)
+        no_formatters, queued = get_enqueue_service('publish').queue_transmission(doc, subscribers, subscriber_codes)
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(1, queue_items.count())
         self.assertEqual(0, len(no_formatters))
         self.assertTrue(queued)
 
         subscribers, subscriber_codes, associations = \
-            EnqueuePublishedService().get_subscribers(doc, SUBSCRIBER_TYPES.WIRE)
-        no_formatters, queued = EnqueueService().queue_transmission(doc, subscribers)
+            service.get_subscribers(doc, SUBSCRIBER_TYPES.WIRE)
+        no_formatters, queued = get_enqueue_service('publish').queue_transmission(doc, subscribers)
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(2, queue_items.count())
         self.assertEqual(0, len(no_formatters))
@@ -556,40 +562,46 @@ class ArchivePublishTestCase(TestCase):
     def test_conform_target_regions(self):
         doc = {'headline': 'test'}
         product = {'geo_restrictions': 'QLD'}
-        self.assertFalse(EnqueueService().conforms_product_targets(product, doc))
+        self.assertFalse(get_enqueue_service('publish').conforms_product_targets(product, doc))
         doc = {'headline': 'test', 'target_regions': []}
-        self.assertFalse(EnqueueService().conforms_product_targets(product, doc))
+        self.assertFalse(get_enqueue_service('publish').conforms_product_targets(product, doc))
         doc = {'headline': 'test', 'target_regions': [{'qcode': 'VIC', 'name': 'Victoria', 'allow': True}]}
-        self.assertFalse(EnqueueService().conforms_product_targets(product, doc))
+        self.assertFalse(get_enqueue_service('publish').conforms_product_targets(product, doc))
         doc = {'headline': 'test', 'target_regions': [{'qcode': 'VIC', 'name': 'Victoria', 'allow': False}]}
-        self.assertTrue(EnqueueService().conforms_product_targets(product, doc))
+        self.assertTrue(get_enqueue_service('publish').conforms_product_targets(product, doc))
         doc = {'headline': 'test', 'target_regions': [{'qcode': 'QLD', 'name': 'Queensland', 'allow': True}]}
-        self.assertTrue(EnqueueService().conforms_product_targets(product, doc))
+        self.assertTrue(get_enqueue_service('publish').conforms_product_targets(product, doc))
         doc = {'headline': 'test', 'target_regions': [{'qcode': 'QLD', 'name': 'Queensland', 'allow': False}]}
-        self.assertFalse(EnqueueService().conforms_product_targets(product, doc))
+        self.assertFalse(get_enqueue_service('publish').conforms_product_targets(product, doc))
 
     def test_conform_target_subscribers(self):
         doc = {'headline': 'test'}
         subscriber = {'_id': 1}
-        self.assertTupleEqual((True, False), EnqueueService().conforms_subscriber_targets(subscriber, doc))
+        self.assertTupleEqual((True, False),
+                              get_enqueue_service('publish').conforms_subscriber_targets(subscriber, doc))
         doc = {'headline': 'test', 'target_subscribers': []}
-        self.assertTupleEqual((True, False), EnqueueService().conforms_subscriber_targets(subscriber, doc))
+        self.assertTupleEqual((True, False),
+                              get_enqueue_service('publish').conforms_subscriber_targets(subscriber, doc))
         doc = {'headline': 'test', 'target_subscribers': [{'_id': 2}]}
-        self.assertTupleEqual((False, False), EnqueueService().conforms_subscriber_targets(subscriber, doc))
+        self.assertTupleEqual((False, False),
+                              get_enqueue_service('publish').conforms_subscriber_targets(subscriber, doc))
         doc = {'headline': 'test', 'target_subscribers': [{'_id': 1}]}
-        self.assertTupleEqual((True, True), EnqueueService().conforms_subscriber_targets(subscriber, doc))
+        self.assertTupleEqual((True, True),
+                              get_enqueue_service('publish').conforms_subscriber_targets(subscriber, doc))
         doc = {'headline': 'test', 'target_subscribers': [{'_id': 2}], 'target_regions': [{'name': 'Victoria'}]}
-        self.assertTupleEqual((True, False), EnqueueService().conforms_subscriber_targets(subscriber, doc))
+        self.assertTupleEqual((True, False),
+                              get_enqueue_service('publish').conforms_subscriber_targets(subscriber, doc))
 
     def test_can_publish_article(self):
         product = self.products[0]
         self._add_content_filters(product, is_global=False)
 
-        can_it = EnqueueService().conforms_content_filter(product, self.articles[4])
+        service = get_enqueue_service('publish')
+        can_it = service.conforms_content_filter(product, self.articles[4])
         self.assertFalse(can_it)
         product['content_filter']['filter_type'] = 'permitting'
 
-        can_it = EnqueueService().conforms_content_filter(product, self.articles[4])
+        can_it = service.conforms_content_filter(product, self.articles[4])
         self.assertTrue(can_it)
         product.pop('content_filter')
 
@@ -602,7 +614,7 @@ class ArchivePublishTestCase(TestCase):
         req = ParsedRequest()
         req.args = {'is_global': True}
         global_filters = list(service.get(req=req, lookup=None))
-        enqueue_service = EnqueueService()
+        enqueue_service = get_enqueue_service('publish')
         enqueue_service.conforms_global_filter(global_filters, self.articles[4])
         can_it = enqueue_service.conforms_subscriber_global_filter(subscriber, global_filters)
         self.assertFalse(can_it)
@@ -774,6 +786,54 @@ class ArchivePublishTestCase(TestCase):
         # dummy publishing so that elastic mappings are created.
         doc = self.articles[3].copy()
         get_resource_service(ARCHIVE_PUBLISH).patch(id=doc['_id'], updates={ITEM_STATE: CONTENT_STATE.PUBLISHED})
-        removed_items, added_items = EnqueueService()._get_changed_items({}, {'item_id': 'test'})
+        removed_items, added_items = get_enqueue_service('publish')._get_changed_items({}, {'item_id': 'test'})
         self.assertEqual(len(removed_items), 0)
         self.assertEqual(len(added_items), 0)
+
+    def test_reload_filters_if_updated(self):
+        self.app.data.insert('vocabularies',
+                             [{'_id': 'categories', 'items': []},
+                              {'_id': 'urgency', 'items': []},
+                              {'_id': 'priority', 'items': []},
+                              {'_id': 'type', 'items': []},
+                              {'_id': 'genre', 'items': []},
+                              {'_id': 'place', 'items': []},
+                              ])
+        product = self.products[0]
+        product['content_filter'] = {'filter_id': 1, 'filter_type': 'blocking'}
+        self.app.data.insert('filter_conditions',
+                             [{'_id': '1',
+                               'field': 'headline',
+                               'operator': 'like',
+                               'value': 'tor',
+                               'name': 'test-1',
+                               '_updated': utcnow() - timedelta(days=10)}])
+        get_enqueue_service('publish')
+        get_resource_service('filter_conditions').patch('1', updates={'name': 'test-1 updated'})
+        service2 = get_enqueue_service('publish')
+        self.assertGreater(service2.filters['latest_filter_conditions'], utcnow() - timedelta(seconds=10))
+
+
+class TimeoutTest(TestCase):
+
+    published_items = [
+        {
+            "_id": ObjectId("58006b8d1d41c88eace5179d"),
+            "item_id": "1",
+            "_created": utcnow(),
+            "_updated": utcnow(),
+            "queue_state": "pending",
+            "state": "published",
+            "operation": "publish"
+        }]
+
+    def setUp(self):
+        with self.app.app_context():
+            init_app(self.app)
+
+    @mock.patch('apps.publish.enqueue.get_enqueue_service', side_effect=SoftTimeLimitExceeded())
+    def test_soft_timeout_gets_re_queued(self, mock):
+        self.app.data.insert('published', self.published_items)
+        enqueue_published()
+        published = self.app.data.find(PUBLISHED, None, None)
+        self.assertTrue(published[0].get('queue_state'), 'pending')

@@ -94,6 +94,7 @@ class NinjsFormatterTest(TestCase):
             'genre': [{'name': 'Article', 'qcode': 'article'}],
             'flags': {'marked_for_legal': True},
             'extra': {'foo': 'test'},
+            'operation': 'publish'
         }
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
         expected = {

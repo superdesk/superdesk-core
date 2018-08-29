@@ -31,7 +31,8 @@ from apps.archive.common import get_user, get_utc_schedule
 from apps.packages.package_service import PackageService
 from apps.publish.published_item import PUBLISH_STATE, QUEUE_STATE
 from apps.content_types import apply_schema
-
+from datetime import datetime
+import pytz
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +49,44 @@ class EnqueueService:
     digital = partial(filter, lambda s: (s.get('subscriber_type', '') in {SUBSCRIBER_TYPES.DIGITAL,
                                                                           SUBSCRIBER_TYPES.ALL}))
     package_service = PackageService()
+
+    filters = None
+
+    def get_filters(self):
+        """Retrieve all of the available filter conditions and content filters if they have not yet been retrieved or
+        they have been updated. This avoids the filtering functions having to repeatedly retireve the individual filter
+        records.
+
+        :return:
+        """
+
+        # Get the most recent update time to the filter conditions and content_filters
+        req = ParsedRequest()
+        req.sort = '-_updated'
+        req.max_results = 1
+        mindate = datetime.min.replace(tzinfo=pytz.UTC)
+        latest_fc = next(get_resource_service('filter_conditions').get_from_mongo(req=req, lookup=None),
+                         {}).get('_updated', mindate)
+        latest_cf = next(get_resource_service('content_filters').get_from_mongo(req=req, lookup=None),
+                         {}).get('_updated', mindate)
+
+        if not self.filters or \
+                latest_fc > self.filters.get('latest_filter_conditions', mindate) or latest_fc == mindate or \
+                latest_cf > self.filters.get('latest_content_filters', mindate) or latest_cf == mindate:
+            logger.debug('Getting content filters and filter conditions')
+            self.filters = dict()
+            self.filters['filter_conditions'] = dict()
+            self.filters['content_filters'] = dict()
+            for fc in get_resource_service('filter_conditions').get(req=None, lookup={}):
+                self.filters['filter_conditions'][fc.get('_id')] = {'fc': fc}
+                self.filters['latest_filter_conditions'] = fc.get('_updated') if fc.get('_updated') > self.filters.get(
+                    'latest_filter_conditions', mindate) else self.filters.get('latest_filter_conditions', mindate)
+            for cf in get_resource_service('content_filters').get(req=None, lookup={}):
+                self.filters['content_filters'][cf.get('_id')] = {'cf': cf}
+                self.filters['latest_content_filters'] = cf.get('_updated') if cf.get('_updated') > self.filters.get(
+                    'latest_content_filters', mindate) else self.filters.get('latest_content_filters', mindate)
+        else:
+            logger.debug('Using chached content filters and filters conditions')
 
     def _enqueue_item(self, item, content_type=None):
         item_to_queue = deepcopy(item)
@@ -412,7 +451,7 @@ class EnqueueService:
                                 formatted_docs[idx] = {'published_seq_num': pub_seq_num,
                                                        'formatted_item': formatted_doc}
                             else:
-                                assert 'published_seq_num' in publish_data and 'formatted_item' in publish_data,\
+                                assert 'published_seq_num' in publish_data and 'formatted_item' in publish_data, \
                                     "missing keys in publish_data"
 
                         for publish_queue_item in formatted_docs:
@@ -525,12 +564,10 @@ class EnqueueService:
         """
         filtered_subscribers = []
         subscriber_codes = {}
-        req = ParsedRequest()
-        req.args = {'is_global': True}
-        filter_service = get_resource_service('content_filters')
         existing_products = {p[config.ID_FIELD]: p for p in
-                             list(get_resource_service('products').get(req=req, lookup=None))}
-        global_filters = list(filter_service.get(req=req, lookup=None))
+                             list(get_resource_service('products').get(req=None, lookup=None))}
+        global_filters = deepcopy([gf['cf'] for gf in self.filters.get('content_filters', {}).values() if
+                                   gf['cf'].get('is_global', True)])
 
         # apply global filters
         self.conforms_global_filter(global_filters, doc)
@@ -755,8 +792,8 @@ class EnqueueService:
             return True
 
         service = get_resource_service('content_filters')
-        filter = service.find_one(req=None, _id=content_filter['filter_id'])
-        does_match = service.does_match(filter, doc)
+        filter = self.filters.get('content_filters', {}).get(content_filter['filter_id'], {}).get('cf')
+        does_match = service.does_match(filter, doc, self.filters)
 
         if does_match:
             return content_filter['filter_type'] == 'permitting'
@@ -773,7 +810,7 @@ class EnqueueService:
         """
         service = get_resource_service('content_filters')
         for global_filter in global_filters:
-            global_filter['does_match'] = service.does_match(global_filter, doc)
+            global_filter['does_match'] = service.does_match(global_filter, doc, self.filters)
 
     def conforms_subscriber_global_filter(self, subscriber, global_filters):
         """Check global filter for subscriber
