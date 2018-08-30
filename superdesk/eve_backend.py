@@ -87,12 +87,11 @@ class EveBackend():
         """
         backend = self._lookup_backend(endpoint_name, fallback=True)
         cursor = backend.find(endpoint_name, req, lookup)
-        if not cursor.count():
-            return cursor  # return 304 if not modified
-        else:
-            # but fetch without filter if there is a change
+        if req.if_modified_since and cursor.count():
+            # fetch all items, not just updated
             req.if_modified_since = None
             return backend.find(endpoint_name, req, lookup)
+        return cursor
 
     def get_from_mongo(self, endpoint_name, req, lookup):
         """Get list of items from mongo.
