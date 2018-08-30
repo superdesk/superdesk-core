@@ -322,7 +322,11 @@ CELERY_BEAT_SCHEDULE = {
     'legal:import_legal_archive': {
         'task': 'apps.legal_archive.import_legal_archive',
         'schedule': crontab(minute=30, hour=local_to_utc_hour(0))
-    }
+    },
+    'saved_searches:report': {
+        'task': 'apps.saved_searches.report',
+        'schedule': timedelta(minutes=1)
+    },
 }
 
 #: Sentry DSN - will report exceptions there

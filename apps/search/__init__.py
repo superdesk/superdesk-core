@@ -19,6 +19,7 @@ from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE
 from superdesk.metadata.utils import aggregations as common_aggregations, item_url, get_elastic_highlight_query
 from apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.resource import build_custom_hateoas
+from superdesk import es_utils
 
 
 class SearchService(superdesk.Service):
@@ -27,7 +28,7 @@ class SearchService(superdesk.Service):
     It can search against different collections like Ingest, Production, Archived etc.. at the same time.
     """
 
-    repos = ['ingest', 'archive', 'published', 'archived']
+    repos = es_utils.REPOS
     aggregations = deepcopy(common_aggregations)
 
     @property
@@ -202,7 +203,7 @@ class SearchService(superdesk.Service):
         if fields:
             params['_source'] = fields
 
-        hits = self.elastic.es.search(body=query, index=self._get_index(), doc_type=types, params=params)
+        hits = self.elastic.es.search(body=query, index=es_utils.get_index(), doc_type=types, params=params)
         docs = self._get_docs(hits)
 
         for resource in types:
@@ -223,7 +224,7 @@ class SearchService(superdesk.Service):
 
     def find_one(self, req, **lookup):
         """Find item by id in all collections."""
-        hits = self.elastic.es.mget({'ids': [lookup[app.config['ID_FIELD']]]}, self._get_index())
+        hits = self.elastic.es.mget({'ids': [lookup[app.config['ID_FIELD']]]}, es_utils.get_index())
         hits['hits'] = {'hits': hits.pop('docs', [])}
         docs = self._get_docs(hits)
         return docs.first()
@@ -240,19 +241,12 @@ class SearchService(superdesk.Service):
         for item in docs:
             build_custom_hateoas({'self': {'title': item['_type'], 'href': '/{}/{{_id}}'.format(item['_type'])}}, item)
 
-    def _get_index(self):
-        """Get index id for all repos."""
-        indexes = {app.data.elastic.index}
-        for repo in self.repos:
-            indexes.add(app.config['ELASTICSEARCH_INDEXES'].get(repo, app.data.elastic.index))
-        return ','.join(indexes)
-
     def get_available_indexes(self):
         """Returns a set of the configured indexes
 
         :return:
         """
-        return set(self._get_index().split(','))
+        return set(es_utils.get_index().split(','))
 
 
 class SearchResource(superdesk.Resource):

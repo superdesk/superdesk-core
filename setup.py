@@ -46,6 +46,7 @@ install_requires = [
     'python-twitter==3.3',
     'chardet<4.0',
     'pymongo>=0.4,<4.0',
+    'croniter<0.4',
 ]
 
 package_data = {
