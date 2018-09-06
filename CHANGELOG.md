@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.24.1] 2018-09-06
+
+### Fixed
+
+- By default items should not expire in the Superdesk Content API.
+
 ## [1.24] 2018-08-20
 
 ### Fixed
