@@ -10,6 +10,7 @@
 
 
 import json
+import logging
 
 from eve.utils import ParsedRequest
 from eve_elastic.elastic import build_elastic_query
@@ -18,9 +19,10 @@ from superdesk import Resource, get_resource_service
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification
-from superdesk.logging import logger
 from superdesk.users.services import current_user_has_privilege
 from apps.auth import get_user_id
+
+logger = logging.getLogger(__name__)
 
 UPDATE_NOTIFICATION = 'savedsearch:update'
 
@@ -72,7 +74,56 @@ class SavedSearchesResource(Resource):
         'is_global': {
             'type': 'boolean',
             'default': False
-        }
+        },
+        'subscribers': {
+            'type': 'dict',
+            'schema': {
+                'user_subscriptions': {
+                    'type': 'list',
+                    'schema': {
+                        'type': 'dict',
+                        'schema': {
+                            'user': Resource.rel('users', True),
+                            'scheduling': {
+                                'type': 'string',
+                                'required': True
+                            },
+                            'last_report': {
+                                'type': 'datetime',
+                                'nullable': True,
+                                'readonly': True
+                            },
+                            'next_report': {
+                                'type': 'datetime',
+                                'readonly': True
+                            }
+                        }
+                    }
+                },
+                'desk_subscriptions': {
+                    'type': 'list',
+                    'schema': {
+                        'type': 'dict',
+                        'schema': {
+                            'desk': Resource.rel('desks', True),
+                            'scheduling': {
+                                'type': 'string'
+                            },
+                            'last_report': {
+                                'type': 'datetime',
+                                'nullable': True,
+                                'readonly': True
+                            },
+                            'next_report': {
+                                'type': 'datetime',
+                                'readonly': True
+                            }
+                        }
+                    }
+                },
+
+            }
+        },
     }
 
     url = 'saved_searches'
@@ -103,6 +154,9 @@ class SavedSearchesService(BaseService):
     def on_create(self, docs):
         for doc in docs:
             doc['user'] = get_user_id(required=True)
+            if 'subscribers' in doc:
+                raise SuperdeskApiError.forbiddenError("User's subscriptions are not allowed on create")
+
             self.process(doc)
         push_notification(UPDATE_NOTIFICATION)
 
@@ -116,6 +170,34 @@ class SavedSearchesService(BaseService):
         self.validate_and_run_elastic_query(query, repo)
         doc['filter'] = encode_filter(doc.get('filter'))
 
+    def process_subscription(self, updates, original):
+        """Do subscribe user if requested"""
+        subscribers = updates.get('subscribers')
+        if not subscribers:
+            return
+        if not current_user_has_privilege('saved_searches_subscriptions'):
+            raise SuperdeskApiError.forbiddenError('Unauthorized to modify subscriptions.')
+
+        session_user = get_user_id(required=True)
+        ori_subscribers = original.get('subscribers', {})
+        subscribers_users = subscribers.get('user_subscriptions', [])
+        subscribers_desks = subscribers.get('desk_subscriptions', [])
+        if subscribers_desks:
+            raise NotImplementedError("desk subscriptions are not implemented yet")
+        try:
+            ori_sub_users = {(d['user'], d['scheduling']) for d in ori_subscribers.get('user_subscriptions', [])}
+        except AttributeError:
+            ori_sub_users = set()
+        updates_sub_users = {(d['user'], d['scheduling']) for d in subscribers_users}
+        # users which have either new or modified subscriptions
+        updated_subscribers = {s[0] for s in set(updates_sub_users).difference(ori_sub_users)}
+        # users which have subscriptions removed
+        removed_subscribers = {s[0] for s in ori_sub_users.difference(updates_sub_users)}
+        if not updated_subscribers.issubset({session_user}) or not removed_subscribers.issubset({session_user}):
+            # user tries to modify other user(s) subscriptions, is she allowed to?
+            if not current_user_has_privilege('saved_searches_subscriptions_admin'):
+                raise SuperdeskApiError.forbiddenError("Unauthorized to modify other users' subscriptions.")
+
     def on_update(self, updates, original):
         """Runs on update.
 
@@ -125,6 +207,7 @@ class SavedSearchesService(BaseService):
         self._validate_user(original.get('user', ''), original.get('is_global', False))
         if 'filter' in updates:
             self.process(updates)
+        self.process_subscription(updates, original)
         super().on_update(updates, original)
         push_notification(UPDATE_NOTIFICATION)
 
@@ -142,6 +225,14 @@ class SavedSearchesService(BaseService):
             req.where = json.dumps({'$or': [{'is_global': True}, {'user': session_user}]})
 
         return super().get(req, lookup=None)
+
+    def update(self, id, updates, original):
+        res = super().update(id, updates, original)
+        try:
+            res['filter'] = decode_filter(res['filter'])
+        except KeyError:
+            logger.warning('"filter" key must be specified')
+        return res
 
     def init_request(self, elastic_query):
         """

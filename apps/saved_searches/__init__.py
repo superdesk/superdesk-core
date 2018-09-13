@@ -9,10 +9,22 @@
 # at https://www.sourcefabric.org/superdesk/license
 import logging
 import superdesk
+from superdesk.celery_app import celery
+from superdesk.lock import lock, unlock
 from .saved_searches import SavedSearchesService, SavedSearchesResource, AllSavedSearchesResource, \
     SavedSearchItemsResource, SavedSearchItemsService, AllSavedSearchesService
+from superdesk import get_resource_service
+from superdesk import es_utils
+import pytz
+from croniter import croniter
+from datetime import datetime
+from flask import render_template
+from superdesk import emails
+import json
 
 logger = logging.getLogger(__name__)
+REPORT_SOFT_LIMIT = 60 * 5
+LOCK_NAME = "saved_searches_report"
 
 
 def init_app(app):
@@ -34,3 +46,83 @@ def init_app(app):
     superdesk.privilege(name='saved_searches',
                         label='Manage Saved Searches',
                         description='User can manage saved searches')
+    superdesk.privilege(name='saved_searches_subscriptions',
+                        label='Manage Saved Searches Subscriptions',
+                        description='User can (un)subscribe to saved searches')
+    superdesk.privilege(name='saved_searches_subscriptions_admin',
+                        label='Manage Saved Searches Subscriptions For Other Users',
+                        description='User manage other users saved searches subscriptions ')
+
+
+def get_next_date(scheduling, base=None):
+    """Get next schedule date
+
+    :param str scheduling: task schedule, using cron syntax
+    :return datetime: date of next schedule
+    """
+    if base is None:
+        tz = pytz.timezone(superdesk.app.config['DEFAULT_TIMEZONE'])
+        base = datetime.now(tz=tz)
+    cron_iter = croniter(scheduling, base)
+    return cron_iter.get_next(datetime)
+
+
+def send_report_email(user_id, search, docs):
+    """Send saved search report by email.
+
+    :param dict search: saved search data
+    :param list found_items: items matching the search request
+    """
+    users_service = get_resource_service('users')
+    user_data = next(users_service.find({'_id': user_id}))
+    recipients = [user_data['email']]
+    app = superdesk.app
+    admins = app.config['ADMINS']
+    app_name = app.config['APPLICATION_NAME']
+    subject = "Saved searches report"
+    text_body = render_template("saved_searches_report.txt", app_name=app_name, search=search, docs=docs)
+    html_body = render_template("saved_searches_report.html", app_name=app_name, search=search, docs=docs)
+    emails.send_email.delay(
+        subject=subject, sender=admins[0], recipients=recipients, text_body=text_body, html_body=html_body)
+
+
+def publish_report(user_id, search_data):
+    """Create report for a search and send it by email"""
+    query = es_utils.filter2query(json.loads(search_data['filter']), user_id=user_id)
+    found = superdesk.app.data.elastic.es.search(
+        body=query, index=es_utils.get_index())
+    docs = es_utils.get_docs(found)
+    send_report_email(user_id, search_data, docs)
+
+
+@celery.task(soft_time_limit=REPORT_SOFT_LIMIT)
+def report():
+    """Check all saved_searches with subscribers, and publish reports"""
+    if not lock(LOCK_NAME, expire=REPORT_SOFT_LIMIT + 10):
+        return
+    try:
+        saved_searches = get_resource_service('saved_searches')
+        subscribed_searches = saved_searches.find({"subscribers": {"$exists": 1}})
+        tz = pytz.timezone(superdesk.app.config['DEFAULT_TIMEZONE'])
+        now = datetime.now(tz=tz)
+        for search in subscribed_searches:
+            subscribed_users = search['subscribers'].get('user_subscriptions', [])
+            do_update = False
+            for user_data in subscribed_users:
+                scheduling = user_data['scheduling']
+                next_report = user_data.get('next_report')
+                if next_report is None:
+                    user_data['next_report'] = get_next_date(scheduling)
+                    do_update = True
+                elif next_report <= now:
+                    publish_report(user_data['user'], search)
+                    user_data['last_report'] = now
+                    user_data['next_report'] = get_next_date(scheduling)
+                    do_update = True
+            if do_update:
+                updates = {'subscribers': search['subscribers']}
+                saved_searches.update(search['_id'], updates, search)
+    except Exception as e:
+        logger.error("Can't report saved searched: {reason}".format(reason=e))
+    finally:
+        unlock(LOCK_NAME)
