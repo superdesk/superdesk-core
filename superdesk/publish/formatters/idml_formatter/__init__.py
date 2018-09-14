@@ -81,7 +81,7 @@ class IDMLFormatter(Formatter):
         :param dict article:
         :return bool: True if article can formatted else False
         """
-        return format_type == self.format_type and article[ITEM_TYPE] == CONTENT_TYPE.TEXT
+        return format_type == self.format_type and article[ITEM_TYPE] in (CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED)
 
     def _create_idml(self, article):
         """
