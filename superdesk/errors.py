@@ -524,6 +524,7 @@ class FormatterError(SuperdeskPublishError):
         7009: 'Article couldn"t be converted to AAP Newscentre',
         7010: 'Article couldn"t be converted to Email',
         7011: 'Article couldn"t be converted to AAP Text format',
+        7012: 'Article couldn"t be converted to Adobe IDML format',
     }
 
     @classmethod
@@ -569,6 +570,10 @@ class FormatterError(SuperdeskPublishError):
     @classmethod
     def AAPTextFormatterError(cls, exception=None, destination=None):
         return FormatterError(7011, exception, destination)
+
+    @classmethod
+    def IDMLFormatterError(cls, exception=None, destination=None):
+        return FormatterError(7012, exception, destination)
 
 
 class SubscriberError(SuperdeskPublishError):

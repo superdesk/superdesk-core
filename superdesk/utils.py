@@ -138,6 +138,35 @@ def merge_dicts(dict_args):
     return result
 
 
+def merge_dicts_deep(dict1, dict2):
+    """
+    Deep merge of two dictionaries.
+    Example: merged_dict = dict(merge_dicts_deep(dict1, dict2))
+
+    :param dict1: first dictionary
+    :param dict2: second dictionary
+    :return: generator which will build a merged dict
+    """
+    unique_keys = set(
+        dict1.keys()
+    ).union(
+        dict2.keys()
+    )
+
+    for k in unique_keys:
+        # need to merge
+        if k in dict1 and k in dict2:
+            if isinstance(dict1[k], dict) and isinstance(dict2[k], dict):
+                yield (k, dict(merge_dicts_deep(dict1[k], dict2[k])))
+            else:
+                # if one of the values is not a dict - value from second dict overrides value from first one.
+                yield (k, dict2[k])
+        elif k in dict1:
+            yield (k, dict1[k])
+        else:
+            yield (k, dict2[k])
+
+
 class ListCursor(object):
     """Wrapper for a python list as a cursor."""
 
