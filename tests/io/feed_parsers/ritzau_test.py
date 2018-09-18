@@ -49,4 +49,8 @@ class RitzauTestCase(BaseRitzauTestCase):
                                             'tidspunkt, hvor tyske bilfabrikanter er udsat for massiv '
                                             'kritik, fordi de har finansieret lignende forsøg.</p>')
         self.assertEqual(item['guid'], '9a6955fc-11da-46b6-9903-439ebb288f2d')
-        self.assertEqual(item['firstcreated'].isoformat(), '2018-01-30T17:32:18.397000+01:00')
+        self.assertEqual(item['firstcreated'].isoformat(), '2018-01-30T16:32:18.397000+00:00')
+
+    def test_cest_timezone(self):
+        self.assertEqual(RitzauFeedParser()._publish_date_filter('2018-09-18T13:09:18.397').isoformat(),
+                         '2018-09-18T11:09:18.397000+00:00')
