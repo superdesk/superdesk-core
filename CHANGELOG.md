@@ -1,5 +1,24 @@
 # Superdesk Server Changelog
 
+## [1.25] 2018-09-18
+
+### Fixed
+
+- Optimize the enqueue processing of content filters.
+- Fix calculation of next run for template schedule.
+- Fix FTP ingest config form.
+- If error message is too long, use first 200 characters instead of last.
+
+### Added
+
+- Add IDML output support.
+- Allow moving package with all items.
+- Add saved searches subscriptions and scheduled reports.
+
+### Changed
+
+- Update PyYAML version.
+
 ## [1.24] 2018-08-20
 
 ### Fixed
