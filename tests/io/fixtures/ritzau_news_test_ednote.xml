@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<RBNews xmlns="" xmlns:i="http://www.w3.org/2001/XMLSchema-insance">
+  <NewsID>9a6955fc-11da-46b6-9903-439ebb288f2d</NewsID>
+  <PublishDate>2018-01-30T17:32:18.397</PublishDate>
+  <Topstory>0</Topstory>
+  <strapline>NU/FLASH-U</strapline>
+  <headline i:nil="true"/>
+  <subtitle i:nil="true"/>
+  <town>Haag</town>
+  <origin>/ritzau/</origin>
+  <sectionID>2</sectionID>
+  <section>Udland</section>
+  <sectionShort>U</sectionShort>
+  <version>1</version>
+  <Replaces i:nil="true"/>
+  <format>Flash</format>
+  <content>&lt;p&gt;Hollandske forskere har "i &#xE5;revis" lavet fors&#xF8;g p&#xE5; b&#xE5;de mennesker og dyr, hvor de har testet effekten af at ind&#xE5;nde udst&#xF8;dningsgas fra dieselbiler.&lt;/p&gt;&lt;p&gt;Det fort&#xE6;ller forskerne selv til nyhedsbureauet AFP.&lt;/p&gt;&lt;p&gt;Historien kommer frem p&#xE5; et tidspunkt, hvor tyske bilfabrikanter er udsat for massiv kritik, fordi de har finansieret lignende fors&#xF8;g.&lt;/p&gt;</content>
+  <formatID>3</formatID>
+  <HistID>PTP-1834828</HistID>
+  <Priority>3</Priority>
+  <IPTCList xmlns:a="http://schemas.microsoft.com/2003/10/Serialization/Arrays"/>
+  <MultimedieList/>
+  <ISIN xmlns:a="http://schemas.microsoft.com/2003/10/Serialization/Arrays"/>
+  <Related i:nil="true"/>
+  <replacedID i:nil="true"/>
+  <Annuleret>false</Annuleret>
+  <NyVersion>false</NyVersion>
+  <Korrektion>false</Korrektion>
+  <InfoFlash>false</InfoFlash>
+  <byLine>Peder Top Poulsen</byLine>
+  <byLineEmail>udland@ritzau.dk</byLineEmail>
+  <byLinePhone>33300412</byLinePhone>
+  <SubjectKeyword xmlns:a="http://schemas.microsoft.com/2003/10/Serialization/Arrays"/>
+  <TopWeb>false</TopWeb>
+  <TilRedaktionen>&lt;p&gt;Lasse Norman Hansen skifter til Corendon-Circus.&lt;br /&gt;Der i næste sæson kører på næsthøjeste niveau.&lt;/p&gt;&lt;p&gt;Som led i en større omstrukturering skal den danske medicinalgigant Novo Nordisk sige farvel til omkring 400 ansatte inden for forskning og udvikling i Danmark og Kina.&lt;/p&gt;</TilRedaktionen>
+  <Companies/>
+  <Status>New news</Status>
+  <ContentShort>Hollandske forskere har "i &#xE5;revis" lavet fors&#xF8;g p&#xE5; b&#xE5;de mennesker og...</ContentShort>
+</RBNews>

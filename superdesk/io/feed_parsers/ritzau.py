@@ -58,7 +58,10 @@ class RitzauFeedParser(XMLFeedParser):
             ('byline', 'origin'),
             ('version', {'xpath': 'version/text()',
                          'filter': int}),
-            ('ednote', 'Tilredaktionen/text()'),
+            ('ednote', {
+                'xpath': 'TilRedaktionen/text()',
+                'filter': self._ednote_filter
+            }),
             ('subject', {'xpath': 'IPTCList/a:int/text()',
                          'list': True,
                          'filter': self._subject_filter})])
@@ -110,6 +113,9 @@ class RitzauFeedParser(XMLFeedParser):
             # cf. SDNTB-481
             value = text_utils.get_text(item.get('body_html', ''), 'html')[:100]
         item['headline'] = value
+
+    def _ednote_filter(self, ednote):
+        return text_utils.get_text(ednote, lf_on_block=True).strip()
 
 
 register_feed_parser(RitzauFeedParser.NAME, RitzauFeedParser())
