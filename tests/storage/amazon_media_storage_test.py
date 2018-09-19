@@ -1,10 +1,12 @@
 import time
+
+from datetime import timedelta
 from unittest.mock import patch, Mock
 
+from superdesk.utc import utcnow
 from superdesk.tests import TestCase
 from superdesk.storage import AmazonMediaStorage
-from superdesk.utc import utcnow
-from datetime import timedelta
+from superdesk.storage.amazon_media_storage import _guess_extension
 
 
 class AmazonMediaStorageTestCase(TestCase):
@@ -125,3 +127,16 @@ class AmazonMediaStorageTestCase(TestCase):
         # We test the call_args_list as self.amazon.client.list_objects would have been called twice
         self.assertEqual(self.amazon.client.list_objects.call_count, 2)
         self.assertEqual(self.amazon.client.list_objects.call_args_list, call_arg_list)
+
+    def test_guess_extension(self):
+        self.assertEqual('.jpg', _guess_extension('image/jpeg'))
+        self.assertEqual('.png', _guess_extension('image/png'))
+
+        self.assertEqual('.mp3', _guess_extension('audio/mp3'))
+        self.assertEqual('.mp3', _guess_extension('audio/mpeg'))
+        self.assertEqual('.flac', _guess_extension('audio/flac'))
+
+        self.assertEqual('.mp4', _guess_extension('video/mp4'))
+
+        # leave empty when there is no extension
+        self.assertEqual('', _guess_extension('audio/foo'))
