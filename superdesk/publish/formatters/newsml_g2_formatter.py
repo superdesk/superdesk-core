@@ -37,6 +37,18 @@ def get_newsml_provider_id():
     return app.config.get('NEWSML_PROVIDER_ID')
 
 
+def _get_lang(article):
+    return article.get('language', 'en')
+
+
+def _get_cv_qcode(item):
+    if item.get('qcode'):
+        return item['qcode']
+    if item.get('code'):
+        return ':'.join([piece for piece in [item.get('scheme'), item['code']] if piece])
+    return item['name']
+
+
 class NewsMLG2Formatter(Formatter):
     """NewsML G2 Formatter"""
 
@@ -80,7 +92,7 @@ class NewsMLG2Formatter(Formatter):
                 self._format_content(article, newsItem, nitf)
 
             sd_etree.fix_html_void_elements(news_message)
-            return [(pub_seq_num, self.XML_ROOT + etree.tostring(news_message).decode('utf-8'))]
+            return [(pub_seq_num, self.XML_ROOT + etree.tostring(news_message, pretty_print=True).decode('utf-8'))]
         except Exception as ex:
             raise FormatterError.newmsmlG2FormatterError(ex, subscriber)
 
@@ -302,10 +314,11 @@ class NewsMLG2Formatter(Formatter):
         :param dict article:
         :param Element content_meta:
         """
-        if 'genre' in article and len(article['genre']) > 0:
+        if article.get('genre'):
             for g in article['genre']:
-                genre = SubElement(content_meta, 'genre')
-                SubElement(genre, 'name', attrib={XML_LANG: 'en'}).text = g.get('name', '')
+                if g.get('name'):
+                    genre = SubElement(content_meta, 'genre', attrib={'qcode': _get_cv_qcode(g)})
+                    SubElement(genre, 'name', attrib={XML_LANG: _get_lang(article)}).text = g['name']
 
     def _format_category(self, article, content_meta):
         """Appends the subject element to the contentMeta element

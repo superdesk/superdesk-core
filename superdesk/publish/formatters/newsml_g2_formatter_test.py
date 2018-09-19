@@ -75,6 +75,10 @@ class NewsMLG2FormatterTest(TestCase):
                    'world_region': 'Oceania'}],
         'embargo': embargo_ts,
         'company_codes': [{'name': 'YANCOAL AUSTRALIA LIMITED', 'qcode': 'YAL', 'security_exchange': 'ASX'}],
+        'genre': [
+            {'name': 'Article (News)', 'qcode': 'article'},
+            {'name': 'foo', 'code': 'foo', 'scheme': 'custom'},
+        ],
     }
 
     package = {
@@ -658,6 +662,7 @@ class NewsMLG2FormatterTest(TestCase):
     def test_formatter(self):
         seq, doc = self.formatter.format(self.article, {'name': 'Test Subscriber'})[0]
         xml = etree.fromstring(doc.encode('utf-8'))
+        content_meta = xml.find(ns('itemSet')).find(ns('newsItem')).find(ns('contentMeta'))
         self.assertEqual(xml.find(
             '{http://iptc.org/std/nar/2006-10-01/}header/{http://iptc.org/std/nar/2006-10-01/}sender').text,
             'sourcefabric.org')
@@ -728,6 +733,12 @@ class NewsMLG2FormatterTest(TestCase):
             '{http://iptc.org/std/nar/2006-10-01/}subject[@type="cpnat:organisation"]/' +
             '{http://iptc.org/std/nar/2006-10-01/}name')
         self.assertEqual(company_details.text, 'YANCOAL AUSTRALIA LIMITED')
+
+        genre = content_meta.findall(ns('genre'))
+        self.assertEqual(2, len(genre))
+        self.assertEqual('article', genre[0].get('qcode'))
+        self.assertEqual('Article (News)', genre[0].find(ns('name')).text)
+        self.assertEqual('custom:foo', genre[1].get('qcode'))
 
     def testPreservedFomat(self):
         article = dict(self.article)
