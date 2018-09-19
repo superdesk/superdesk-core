@@ -1,5 +1,14 @@
 # Superdesk Server Changelog
 
+## [1.25.1] 2018-09-19
+
+### Fixed
+
+- Fix media id missing extension for mp3 files when using Amazon backend.
+- Add qcode to genre element in NewsmlG2 output.
+- Fix send to with items package operation.
+- Handle daylight saving time in Ritzau ingest.
+
 ## [1.25] 2018-09-18
 
 ### Fixed
