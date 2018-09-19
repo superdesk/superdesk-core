@@ -3,7 +3,7 @@ Feature: Places
     @auth
     Scenario: Places autocomplete 
         When we get "/places_autocomplete?name=koberice&lang=cs"
-        Then we get list with 3 items
+        Then we get list with 3+ items
         """
         {
             "_items": [

@@ -20,7 +20,6 @@ BLOCK_ELEMENTS = (
     "article",
     "aside",
     "blockquote",
-    "br",
     "canvas",
     "dd",
     "div",
@@ -121,8 +120,12 @@ def parse_html(html, content='xml', lf_on_block=False, space_on_elements=False):
         raise ValueError('invalid content: {}'.format(content))
     if lf_on_block:
         for elem in root.iterfind('.//'):
+            # append \n to the tail
             if elem.tag in BLOCK_ELEMENTS:
                 elem.tail = (elem.tail or '') + '\n'
+            # prepend \n to the tail
+            elif elem.tag in ('br',):
+                elem.tail = '\n' + (elem.tail or '')
     if space_on_elements:
         for elem in root.iterfind('.//'):
             elem.tail = (elem.tail or '') + ' '
