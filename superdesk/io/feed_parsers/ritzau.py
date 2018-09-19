@@ -52,7 +52,14 @@ class RitzauFeedParser(XMLFeedParser):
             ('headline', {'xpath': 'headline/text()',
                           'default': '',
                           'key_hook': self._set_headline}),
-            ('priority', 'Priority/text()'),
+            ('priority', {
+                'xpath': 'Priority/text()',
+                'filter': int
+            }),
+            ('urgency', {
+                'xpath': 'Priority/text()',
+                'filter': int
+            }),
             ('keywords', {'xpath': 'strapline/text()',
                           'filter': lambda v: list(filter(None, v.split('/')))}),
             ('abstract', 'subtitle'),

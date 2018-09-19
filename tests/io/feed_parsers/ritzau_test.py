@@ -53,6 +53,8 @@ class RitzauTestCase(BaseRitzauTestCase):
         self.assertEqual(item['guid'], '9a6955fc-11da-46b6-9903-439ebb288f2d')
         self.assertEqual(item['firstcreated'].isoformat(), '2018-01-30T16:32:18.397000+00:00')
         self.assertNotIn('ednote', item)
+        self.assertEqual(item['priority'], 3)
+        self.assertEqual(item['priority'], item['urgency'])
 
     def test_ednote(self):
         self._parse_file('ritzau_news_test_ednote.xml')
