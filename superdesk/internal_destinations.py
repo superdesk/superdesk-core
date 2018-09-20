@@ -65,7 +65,7 @@ def handle_item_published(sender, item, **extra):
             try:
                 macro['callback'](new_item)
             except StopDuplication:
-                return
+                continue
 
         extra_fields = [PUBLISH_SCHEDULE, SCHEDULE_SETTINGS]
         archive_service.duplicate_content(new_item, state='routed', extra_fields=extra_fields)
