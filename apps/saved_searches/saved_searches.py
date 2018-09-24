@@ -181,9 +181,6 @@ class SavedSearchesService(BaseService):
         session_user = get_user_id(required=True)
         ori_subscribers = original.get('subscribers', {})
         subscribers_users = subscribers.get('user_subscriptions', [])
-        subscribers_desks = subscribers.get('desk_subscriptions', [])
-        if subscribers_desks:
-            raise NotImplementedError("desk subscriptions are not implemented yet")
         try:
             ori_sub_users = {(d['user'], d['scheduling']) for d in ori_subscribers.get('user_subscriptions', [])}
         except AttributeError:
