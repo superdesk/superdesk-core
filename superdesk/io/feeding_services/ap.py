@@ -46,6 +46,18 @@ class APFeedingService(FeedingService):
         {
             'id': 'idList', 'type': 'text', 'label': 'Id List',
             'placeholder': 'use coma separated ids for multiple values', 'required': False
+        },
+        {
+            'id': 'idListType', 'type': 'choices', 'label': 'Id List Type',
+            'choices': (
+                ('products', 'Products'),
+                ('savedsearches', 'Saved searches'),
+                ('topics', 'Topics'),
+                ('offerings', 'Offerings'),
+                ('packages', 'Packages')
+            ),
+            'default': 'products',
+            'required': True,
         }
     ]
 
@@ -58,6 +70,8 @@ class APFeedingService(FeedingService):
             user = config['username']
             password = config['password']
             id_list = config['idList']
+            # before "products" was hardcoded as value for "idListType"
+            id_list_type = config.get('idListType', 'products')
             if not user.strip() or not password.strip() or not id_list.strip():
                 raise KeyError
         except KeyError:
@@ -67,7 +81,7 @@ class APFeedingService(FeedingService):
         id_list = ','.join([id_.strip() for id_ in id_list.split(',') if id_.strip()])
 
         params = {'idList': id_list,
-                  'idListType': 'products',
+                  'idListType': id_list_type,
                   'format': '5',
                   'maxItems': '25',
                   'sortOrder': 'chronological'}

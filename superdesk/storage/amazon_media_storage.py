@@ -58,6 +58,8 @@ def _guess_extension(content_type):
         return '.jpg'
     if 'mp3' in content_type or 'audio/mpeg' in content_type:
         return '.mp3'
+    if 'flac' in content_type:
+        return '.flac'
     return ext if ext != 'None' else ''
 
 
