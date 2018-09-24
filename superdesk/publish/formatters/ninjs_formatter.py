@@ -32,6 +32,7 @@
 import json
 import superdesk
 import logging
+import re
 
 from eve.utils import config
 from superdesk.publish.formatters import Formatter
@@ -44,6 +45,11 @@ from apps.archive.common import get_utc_schedule
 from superdesk import text_utils
 
 logger = logging.getLogger(__name__)
+# this regex match the way custom media fields are put in associations (i.e. how the key
+# is generated). This is legacy, and can hardly be changed without risking to break
+# instances in production.
+MEDIA_FIELD_RE = re.compile(r"(?P<field_id>\S+)--(?P<version>\d+)$")
+EXTRA_ITEMS = "extra_items"
 
 
 def filter_empty_vals(data):
@@ -152,15 +158,19 @@ class NINJSFormatter(Formatter):
         if article.get('profile'):
             ninjs['profile'] = self._format_profile(article['profile'])
 
+        extra_items = None
         if recursive:
             if article[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
                 ninjs[ASSOCIATIONS] = self._get_associations(article, subscriber)
                 if article.get(ASSOCIATIONS):
-                    ninjs[ASSOCIATIONS].update(self._format_related(article, subscriber))
+                    associations, extra_items = self._format_related(article, subscriber)
+                    ninjs[ASSOCIATIONS].update(associations)
             elif article.get(ASSOCIATIONS):
-                ninjs[ASSOCIATIONS] = self._format_related(article, subscriber)
+                ninjs[ASSOCIATIONS], extra_items = self._format_related(article, subscriber)
         elif article.get(ASSOCIATIONS):
-            ninjs[ASSOCIATIONS] = self._format_related(article, subscriber)
+            ninjs[ASSOCIATIONS], extra_items = self._format_related(article, subscriber)
+        if extra_items:
+            ninjs.setdefault(EXTRA_ITEMS, {}).update(extra_items)
 
         if article.get(EMBARGO):
             ninjs['embargoed'] = get_utc_schedule(article, EMBARGO).isoformat()
@@ -279,10 +289,44 @@ class NINJSFormatter(Formatter):
     def _format_related(self, article, subscriber):
         """Format all associated items for simple items (not packages)."""
         associations = {}
+        extra_items = {}
+        media = {}
+        content_profile = None
         for key, item in (article.get(ASSOCIATIONS) or {}).items():
             if item:
-                associations[key] = self._transform_to_ninjs(item, subscriber)
-        return associations
+                item = self._transform_to_ninjs(item, subscriber)
+                match = MEDIA_FIELD_RE.match(key)
+                if match:
+                    # item id seems to be build from a custom id
+                    # we now check content profile to see if it correspond to a custom field
+                    if content_profile is None:
+                        try:
+                            profile = article['profile']
+                        except KeyError:
+                            logger.warning("missing profile in article (guid: {guid})".format(guid=article.get("guid")))
+                            content_profile = {"schema": {}}
+                        else:
+                            content_profile = superdesk.get_resource_service("content_types").find_one(
+                                _id=profile, req=None)
+                    field_id = match.group("field_id")
+                    schema = content_profile['schema'].get(field_id, {})
+                    if schema.get("type") == "media":
+                        # we want custom media fields in "extra_items", cf. SDESK-2955
+                        version = match.group("version")
+                        media.setdefault(field_id, []).append((version, item))
+                    else:
+                        match = None
+
+                if match is None:
+                    associations[key] = item
+
+        if media:
+            # we have custom media fields, we now order them
+            # and add them to "extra_items"
+            for field_id, data in media.items():
+                extra_items[field_id] = {"items": [d[1] for d in sorted(data)]}
+
+        return associations, extra_items
 
     def _get_genre(self, article):
         lang = article.get('language', '')
@@ -392,13 +436,13 @@ class NINJSFormatter(Formatter):
                 try:
                     user = next(users_service.find({'display_name': author['name']}))
                 except (StopIteration, KeyError):
-                    logger.warn("unknown user")
+                    logger.warning("unknown user")
                     user = {}
             else:
                 try:
                     user = next(users_service.find({'_id': user_id}))
                 except StopIteration:
-                    logger.warn("unknown user: {user_id}".format(user_id=user_id))
+                    logger.warning("unknown user: {user_id}".format(user_id=user_id))
                     user = {}
 
             avatar_url = user.get('picture_url', author.get('avatar_url'))

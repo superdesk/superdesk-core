@@ -311,6 +311,22 @@
 				}
 			}
 		},
+		"extra_items" : {
+			"description": "Custom items grouped by ids",
+			"type": "object",
+			"properties" : {
+				"type" : "object",
+				"properties" : {
+					"items" : {
+						"description": "Items linked together",
+						"type" : "array",
+						"items": {
+							"type": "object"
+						}
+					}
+				}
+			}
+		},
 		"extra" : {
 			"description" : "Extra metadata",
 			"type": "object",
@@ -415,11 +431,11 @@
 						"description" : "Author's biography",
 						"type" : "string"
 					},
-                    "avatar_url": {
-                        "description": "Author's avatar url",
-                        "type": "string",
-                        "format": "uri"
-                    }
+					"avatar_url": {
+						"description": "Author's avatar url",
+						"type": "string",
+						"format": "uri"
+					}
 				}
 			}
 		},
