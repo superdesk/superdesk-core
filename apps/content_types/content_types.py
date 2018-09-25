@@ -408,11 +408,18 @@ def compose_subject_schema(schema, fields_map):
 
 def init_subject_schema(schema, default, mandatory, allowed, fields_map):
     subject = get_subject_name(fields_map)
+    try:
+        is_required = schema['subject']['required']
+    except (KeyError, TypeError):
+        is_required = DEFAULT_SCHEMA['subject'].get('required', False)
     schema[subject] = deepcopy(DEFAULT_SCHEMA['subject'])
     schema[subject]['default'] = default
     schema[subject]['mandatory_in_list']['scheme'] = mandatory
     schema[subject]['schema']['schema']['scheme']['allowed'] = allowed
-    schema[subject]['required'] = mandatory.get('subject') is not None
+    if 'subject' in mandatory:  # custom subject field
+        schema[subject]['required'] = mandatory.get('subject') is not None
+    else:
+        schema[subject]['required'] = is_required
 
 
 def init_editor_required(editor, schema):
