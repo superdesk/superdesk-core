@@ -95,6 +95,29 @@ def publish_report(user_id, search_data):
     send_report_email(user_id, search_data, docs)
 
 
+def process_subscribers(subscribers, search, now, isDesk=False):
+    do_update = False
+
+    for suscriber_data in subscribers:
+        scheduling = suscriber_data['scheduling']
+        next_report = suscriber_data.get('next_report')
+        if next_report is None:
+            suscriber_data['next_report'] = get_next_date(scheduling)
+            do_update = True
+        elif next_report <= now:
+            if isDesk:
+                desk = get_resource_service('desks').find_one(req=None, _id=suscriber_data['desk'])
+                for user_id in (desk or {}).get('members', []):
+                    publish_report(user_id, search)
+            else:
+                publish_report(suscriber_data['user'], search)
+            suscriber_data['last_report'] = now
+            suscriber_data['next_report'] = get_next_date(scheduling)
+            do_update = True
+
+    return do_update
+
+
 @celery.task(soft_time_limit=REPORT_SOFT_LIMIT)
 def report():
     """Check all saved_searches with subscribers, and publish reports"""
@@ -106,19 +129,14 @@ def report():
         tz = pytz.timezone(superdesk.app.config['DEFAULT_TIMEZONE'])
         now = datetime.now(tz=tz)
         for search in subscribed_searches:
-            subscribed_users = search['subscribers'].get('user_subscriptions', [])
             do_update = False
-            for user_data in subscribed_users:
-                scheduling = user_data['scheduling']
-                next_report = user_data.get('next_report')
-                if next_report is None:
-                    user_data['next_report'] = get_next_date(scheduling)
-                    do_update = True
-                elif next_report <= now:
-                    publish_report(user_data['user'], search)
-                    user_data['last_report'] = now
-                    user_data['next_report'] = get_next_date(scheduling)
-                    do_update = True
+
+            subscribed_users = search['subscribers'].get('user_subscriptions', [])
+            do_update = process_subscribers(subscribed_users, search, now, False) or do_update
+
+            subscribed_desks = search['subscribers'].get('desk_subscriptions', [])
+            do_update = process_subscribers(subscribed_desks, search, now, True) or do_update
+
             if do_update:
                 updates = {'subscribers': search['subscribers']}
                 saved_searches.update(search['_id'], updates, search)
