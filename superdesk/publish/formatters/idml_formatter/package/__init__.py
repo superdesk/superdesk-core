@@ -6,3 +6,4 @@ from .tags import Tags # noqa
 from .spread import Spread # noqa
 from .designmap import Designmap # noqa
 from .stories import Story, StoryTable, StoryList # noqa
+from .converter import Converter # noqa
