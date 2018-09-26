@@ -535,6 +535,30 @@ Feature: Routing Scheme and Routing Rules
       ]
       """
       Then we get response code 201
+      When we post to "/routing_schemes"
+      """
+      [
+        {
+          "name": "routing rule scheme 2",
+          "rules": [
+            {
+              "name": "Sports Rule",
+              "filter": "#FILTER_ID#",
+              "actions": {
+                "fetch": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}]
+              },
+              "schedule": {
+                "day_of_week": ["FRI", "TUE"],
+                "hour_of_day_from": null,
+                "hour_of_day_to": null,
+                "time_zone": "Europe/Rome"
+              }
+            }
+          ]
+        }
+      ]
+      """
+      Then we get response code 201
 
     @auth
     Scenario: A user with no privilege to "routing schemes" can't create a Routing Scheme

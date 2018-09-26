@@ -135,10 +135,12 @@ class RoutingRuleSchemeResource(Resource):
                                 'type': 'list'
                             },
                             'hour_of_day_from': {
-                                'type': 'string'
+                                'type': 'string',
+                                'nullable': True,
                             },
                             'hour_of_day_to': {
-                                'type': 'string'
+                                'type': 'string',
+                                'nullable': True,
                             },
                             'time_zone': {
                                 'type': 'string',
@@ -402,6 +404,8 @@ class RoutingRuleSchemeService(BaseService):
                 hour_of_day_to = schedule.get('hour_of_day_to')
                 if hour_of_day_to:
                     to_time = set_time(now_tz_schedule, hour_of_day_to)
+                    if hour_of_day_to[-2:] == '00':
+                        to_time = to_time + delta_minute
                 else:
                     to_time = set_time(now_tz_schedule, '23:59:59') + delta_minute
 

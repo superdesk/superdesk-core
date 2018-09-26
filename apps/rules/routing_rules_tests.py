@@ -304,3 +304,43 @@ class GetScheduledRoutingRulesMethodTestCase(RoutingRuleSchemeServiceTest):
         result = self.instance._get_scheduled_routing_rules(rules, now)
 
         self.assertEqual(result, rules)
+
+    def test_schedule_routing_rules_at_end_time(self):
+        rules = [{
+            'name': 'rule_berlin',
+            'schedule': {
+                'day_of_week': ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'],
+                'hour_of_day_from': '00:00:00',
+                'hour_of_day_to': '23:55:00',
+                'time_zone': 'UTC',
+            }
+        }]
+        # before end time
+        now = datetime(2015, 9, 15, 23, 54, 59, 999999)  # Tuesday
+        result = self.instance._get_scheduled_routing_rules(rules, now)
+        self.assertEqual(result, rules)
+
+        # one second after end time
+        now = datetime(2015, 9, 15, 23, 55, 1, 999999)  # Tuesday
+        result = self.instance._get_scheduled_routing_rules(rules, now)
+        self.assertEqual(result, rules)
+
+        # after end time
+        now = datetime(2015, 9, 15, 23, 55, 59, 999999)  # Tuesday
+        result = self.instance._get_scheduled_routing_rules(rules, now)
+        self.assertEqual(result, rules)
+
+        # one second after end time
+        now = datetime(2015, 9, 15, 23, 56, 0, 999999)  # Tuesday
+        result = self.instance._get_scheduled_routing_rules(rules, now)
+        self.assertEqual(result, [])
+
+        # one second after end time
+        now = datetime(2015, 9, 15, 23, 56, 1)  # Tuesday
+        result = self.instance._get_scheduled_routing_rules(rules, now)
+        self.assertEqual(result, [])
+
+        # after end time
+        now = datetime(2015, 9, 15, 23, 59, 59, 999999)  # Tuesday
+        result = self.instance._get_scheduled_routing_rules(rules, now)
+        self.assertEqual(result, [])
