@@ -1192,7 +1192,7 @@ Feature: Content Profile
         }
         """
 
-   @auth
+    @auth
     Scenario: User can add profile with custom subject disabled and category(saved on subject) enabled
         Given "vocabularies"
         """
@@ -1723,3 +1723,98 @@ Feature: Content Profile
 	     }
 	    }
 	    """
+
+    @auth
+    Scenario: Keep user preffered required status for core subjects
+        Given "vocabularies"
+        """
+        [
+            {"_id": "foo", "service": {"all": 1}, "field_type": null}
+        ]
+        """
+        When we post to "content_types"
+        """
+        {"_id": "test"}
+        """
+        And we patch "content_types/test"
+        """
+        {"schema": {
+            "foo": {
+                "default": [],
+                "required": false,
+                "type": "list"
+            },
+            "subject": {
+                "required": false,
+                "default": [],
+                "nullable": true,
+                "schema": {},
+                "type": "list",
+                "mandatory_in_list": {
+                    "scheme": {}
+                }
+            }
+        }, "editor": {
+            "foo": {
+                "enabled": true,
+                "required": false
+            },
+            "subject": {
+                "enabled": true,
+                "required": false
+            }
+        }}
+        """
+        And we patch "content_types/test"
+        """
+        {"schema": {
+            "foo": {
+                "default": [],
+                "required": false,
+                "type": "list"
+            },
+            "subject": {
+                "required": true,
+                "default": [],
+                "nullable": true,
+                "schema": {},
+                "type": "list",
+                "mandatory_in_list": {
+                    "scheme": {}
+                }
+            }
+        }}
+        """
+
+        When we get "content_types/test"
+        Then we get existing resource
+        """
+        {"schema": {"subject": {"required": true}}}
+        """
+
+        When we patch "content_types/test"
+        """
+        {"schema": {
+            "foo": {
+                "default": [],
+                "required": true,
+                "type": "list"
+            },
+            "subject": {
+                "required": false,
+                "default": [],
+                "nullable": true,
+                "schema": {},
+                "type": "list",
+                "mandatory_in_list": {
+                    "scheme": {}
+                }
+            }
+        }}
+        """
+
+        When we get "content_types/test"
+        Then we get existing resource
+        """
+        {"schema": {"subject": {"required": false}}}
+        """
