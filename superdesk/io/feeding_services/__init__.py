@@ -37,7 +37,7 @@ class FeedingService(metaclass=ABCMeta):
         2. fields: list of dictionaries; contains the descriptions of configuration fields. All fields must
             have the following properties:
                 - id: field identifier
-                - type: valid values: text, password, boolean, mapping
+                - type: valid values: text, password, boolean, mapping, choices
             Optional properties:
                 - label: field label for UI view
                 - required: if true the field is required
@@ -63,6 +63,13 @@ class FeedingService(metaclass=ABCMeta):
                     - second_field_options: dictionary with the following keys:
                         - label
                         - placeholder
+                5. choices: render field as a dropdown. Has the following properties besides the generic ones:
+                    - choices: a tuple of tuples which defines keys and values for dropdown. Example:
+                        'choices': (
+                            ('key_one', 'Key one'),
+                            ('key_two', 'Key two'),
+                        )
+                    - default: preselect value in dropdown. Must be value from 'choices' preperties.
     """
 
     @abstractmethod
