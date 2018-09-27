@@ -106,7 +106,7 @@ class MediaEditorService(BaseService):
             item = next(archive.find({'_id': item_id}))
             edit = doc.pop('edit')
 
-            # new we retrieve and loag current original media
+            # now we retrieve and load current original media
             rendition = item['renditions']['original']
             media_id = rendition['media']
             media = current_app.media.get(media_id)
@@ -132,25 +132,23 @@ class MediaEditorService(BaseService):
             filename = str(uuid.uuid4()) + ext
 
             # and save transformed media in database
-            media_id = current_app.media.put(buf, filename=filename, content_type=content_type, folder='temp')
+            media_id = current_app.media.put(buf, filename=filename, content_type=content_type)
 
             # now we recreate other renditions based on transformed original media
             buf.seek(0)
-            # we keep old renditions to later delete old files
             renditions = generate_renditions(buf,
                                              media_id,
                                              [],
                                              'image',
                                              content_type,
                                              get_renditions_spec(),
-                                             current_app.media.url_for_media,
-                                             temporary=True)
+                                             current_app.media.url_for_media)
 
             # we update item in db, and the item we'll return to client
+            # we keep old renditions in GridFS for history references
             updates = {'renditions': renditions}
             ids.append(item_id)
             archive.update(item_id, updates, item)
-            # we keep old renditions to later delete old files
             item.update(updates)
 
             docs[idx] = item
