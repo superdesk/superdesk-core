@@ -35,6 +35,8 @@ EXPIRY = 'expiry'
 REVERT_STATE = 'revert_state'
 ITEM_SPIKE = 'spike'
 ITEM_UNSPIKE = 'unspike'
+GROUPS = 'groups'
+DELETED_GROUPS = 'deleted_groups'
 item_operations.extend([ITEM_SPIKE, ITEM_UNSPIKE])
 
 
@@ -176,6 +178,8 @@ class ArchiveSpikeService(BaseService):
                                           {LINKED_IN_PACKAGES: linked_in_packages},
                                           package_item)
 
+            # keep the structure of old group in order to be able to unspike the package
+            updates[DELETED_GROUPS] = original[GROUPS]
             # and remove all the items from the package
             updates['groups'] = []
 
@@ -231,6 +235,25 @@ class ArchiveUnspikeService(BaseService):
         }
 
         updates[EXPIRY] = get_expiry(desk_id=desk_id, stage_id=stage_id)
+
+        if doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and doc.get(DELETED_GROUPS, None):
+            updates[GROUPS] = doc[DELETED_GROUPS]
+            updates[DELETED_GROUPS] = []
+
+    def on_updated(self, updates, original):
+        if original[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and updates.get(GROUPS, None):
+            # restore the deleted items from package
+            package_service = PackageService()
+            items = package_service.get_item_refs(updates)
+            for item in items:
+                package_item = get_resource_service(ARCHIVE).find_one(req=None, _id=item[GUID_FIELD])
+                if package_item:
+                    linked_in_packages = [linked for linked in package_item.get(LINKED_IN_PACKAGES, [])
+                                          if linked.get(PACKAGE) != original.get(config.ID_FIELD)]
+                    linked_in_packages.append({PACKAGE: original.get(config.ID_FIELD)})
+                    super().system_update(package_item[config.ID_FIELD],
+                                          {LINKED_IN_PACKAGES: linked_in_packages},
+                                          package_item)
 
     def on_update(self, updates, original):
         updates[ITEM_OPERATION] = ITEM_UNSPIKE
