@@ -208,6 +208,30 @@ Feature: Content Spiking
         """
         When we spike "package-1"
         Then we get OK response
+        When we get "/archive/package-1"
+        Then we get existing resource
+        """
+        {
+            "deleted_groups": [
+                {"id": "root", "refs": [{"idRef": "main"}], "role": "grpRole:NEP"},
+                {
+                    "id": "main",
+                    "refs": [
+                        {
+                            "headline": "test package with text",
+                            "residRef": "item-1",
+                            "slugline": "awesome article"
+                        }
+                    ],
+                    "role": "grpRole:Main"
+                }
+            ],
+            "groups": [],
+            "_id": "package-1",
+            "guid": "package-1",
+            "type": "composite"
+        }
+        """
         When we get "/archive/item-1"
         Then we get existing resource
         """
@@ -215,6 +239,74 @@ Feature: Content Spiking
         """
         When we spike "item-1"
         Then we get OK response
+
+    @auth
+    Scenario: Unspike a non-empty package
+        Given empty "archive"
+        And "desks"
+        """
+        [{"name": "test desk"}]
+        """
+        Given "archive"
+        """
+        [{"headline": "test", "_id": "item-1", "guid": "item-1", "slugline": "WORMS", "linked_in_packages": []}]
+        """
+        When we post to "archive" with success
+        """
+        {
+            "groups": [
+                {"id": "root", "refs": [{"idRef": "main"}], "role": "grpRole:NEP"},
+                {
+                    "id": "main",
+                    "refs": [
+                        {
+                            "headline": "test package with text",
+                            "residRef": "item-1",
+                            "slugline": "awesome article"
+                        }
+                    ],
+                    "role": "grpRole:Main"
+                }
+            ],
+            "_id": "package-1",
+            "guid": "package-1",
+            "type": "composite",
+            "task": {"user": "#user._id#", "desk": "#desks._id#"}
+        }
+        """
+        When we spike "package-1"
+        Then we get OK response
+        When we unspike "package-1"
+        Then we get OK response
+        When we get "/archive/package-1"
+        Then we get existing resource
+        """
+        {
+            "groups": [
+                {"id": "root", "refs": [{"idRef": "main"}], "role": "grpRole:NEP"},
+                {
+                    "id": "main",
+                    "refs": [
+                        {
+                            "headline": "test package with text",
+                            "residRef": "item-1",
+                            "slugline": "awesome article"
+                        }
+                    ],
+                    "role": "grpRole:Main"
+                }
+            ],
+            "deleted_groups": [],
+            "_id": "package-1",
+            "guid": "package-1",
+            "type": "composite"
+        }
+        """
+        When we get "/archive/item-1"
+        Then we get existing resource
+        """
+        {"linked_in_packages": [{"package": "package-1"}]}
+        """
 
     @auth
     Scenario: Spike a desk content with configured spike expiry
