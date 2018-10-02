@@ -137,12 +137,15 @@ def apply_onstage_rule(doc, _id):
 
     :param doc:
     :param _id:
-    :return:
+    :return: update
     """
     doc[config.ID_FIELD] = _id
+    update = {config.ID_FIELD: _id}
     stage = get_resource_service('stages').find_one(req=None, _id=doc.get('task', {}).get('stage'))
     if stage:
-        apply_stage_rule(doc, None, stage, 'onstage')
+        apply_stage_rule(doc, update, stage, 'onstage')
+    update.pop(config.ID_FIELD, None)
+    return update
 
 
 class TaskResource(Resource):

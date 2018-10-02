@@ -506,7 +506,9 @@ def create_scheduled_content(now=None):
             production.post([item])
             insert_into_versions(doc=item)
             try:
-                apply_onstage_rule(item, item.get(config.ID_FIELD))
+                update = apply_onstage_rule(item, item.get(config.ID_FIELD))
+                if update:
+                    production.patch(item.get(config.ID_FIELD), update)
             except Exception as ex:  # noqa
                 logger.exception('Failed to apply on stage rule while scheduling template.')
             items.append(item)
