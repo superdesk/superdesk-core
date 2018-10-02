@@ -109,7 +109,9 @@ class MoveService(BaseService):
         # get the recent updates again
         archived_doc = archive_service.find_one(req=None, _id=id)
         # finally apply any on stage rules/macros
-        apply_onstage_rule(archived_doc, id)
+        updates = apply_onstage_rule(archived_doc, id)
+        if updates:
+            archived_doc = get_resource_service(ARCHIVE).patch(id, updates)
 
         return archived_doc
 
