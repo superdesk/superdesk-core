@@ -591,6 +591,11 @@ metadata_schema = {
         'mapping': not_analyzed,
     },
 
+    'translation_id': {
+        'type': 'string',
+        'mapping': not_analyzed,
+    },
+
     # references item id for items auto published using internal destinations
     PROCESSED_FROM: {'type': 'string', 'mapping': not_analyzed},
 }
