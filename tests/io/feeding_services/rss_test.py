@@ -15,6 +15,7 @@ from unittest import mock
 from unittest.mock import call, MagicMock
 
 from superdesk.tests import TestCase
+from superdesk.io.commands.update_ingest import LAST_ITEM_UPDATE
 
 feed_parse = MagicMock()
 requests_get = MagicMock()
@@ -212,7 +213,7 @@ class UpdateMethodTestCase(RssIngestServiceTest):
         self.instance._create_item.return_value = item
 
         returned = self.instance._update(
-            {'last_updated': datetime(2015, 2, 25, 15, 0, 0)}, {}
+            {LAST_ITEM_UPDATE: datetime(2015, 2, 25, 15, 0, 0)}, {}
         )
 
         self.assertEqual(len(returned), 1)

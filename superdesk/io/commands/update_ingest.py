@@ -238,7 +238,12 @@ def update_provider(provider, rule_set=None, routing_scheme=None):
         for items in feeding_service.update(provider, update):
             ingest_items(items, provider, feeding_service, rule_set, routing_scheme)
             if items:
-                update[LAST_ITEM_UPDATE] = utcnow()
+                last_item_update = max(
+                    [item['versioncreated'] for item in items if item.get('versioncreated')],
+                    default=utcnow()
+                )
+                if not update.get(LAST_ITEM_UPDATE) or update[LAST_ITEM_UPDATE] < last_item_update:
+                    update[LAST_ITEM_UPDATE] = last_item_update
 
         # Some Feeding Services update the collection and by this time the _etag might have been changed.
         # So it's necessary to fetch it once again. Otherwise, OriginalChangedError is raised.
