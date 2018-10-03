@@ -13,6 +13,7 @@ import json
 import logging
 
 from eve.utils import ParsedRequest
+from eve.methods.common import resolve_document_etag
 from eve_elastic.elastic import build_elastic_query
 from apps.archive.common import get_user
 from superdesk import Resource, get_resource_service
@@ -224,6 +225,7 @@ class SavedSearchesService(BaseService):
         return super().get(req, lookup=None)
 
     def update(self, id, updates, original):
+        resolve_document_etag(updates, self.datasource)  # sync etag with any changes done while processing
         res = super().update(id, updates, original)
         try:
             res['filter'] = decode_filter(res['filter'])
