@@ -224,11 +224,11 @@ class SavedSearchesService(BaseService):
         return super().get(req, lookup=None)
 
     def update(self, id, updates, original):
-        res = super().update(id, updates, original)
         try:
-            res['filter'] = decode_filter(res['filter'])
+            updates['filter'] = decode_filter(updates.get('filter', original["filter"]))
         except KeyError:
             logger.warning('"filter" key must be specified')
+        res = super().update(id, updates, original)
         return res
 
     def init_request(self, elastic_query):
