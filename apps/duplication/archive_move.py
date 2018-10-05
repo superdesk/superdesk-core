@@ -78,8 +78,9 @@ class MoveService(BaseService):
 
             if moved_item.get('type', None) == 'composite' and doc.get('allPackageItems', False):
                 try:
+                    item_lock_id = None
                     for item_id in (ref[RESIDREF] for group in moved_item.get(GROUPS, [])
-                                    for ref in group.get(REFS, []) if 'guid' in ref):
+                                    for ref in group.get(REFS, []) if RESIDREF in ref):
                         item_lock_id = "item_move {}".format(item_id)
                         if lock(item_lock_id, expire=5):
                             item = self.move_content(item_id, doc)
