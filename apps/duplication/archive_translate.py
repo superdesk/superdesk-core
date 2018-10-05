@@ -76,13 +76,15 @@ class TranslateService(BaseService):
                 ref[RESIDREF] = self._translate_item(ref[RESIDREF], language,
                                                      service=ref.get('location'),
                                                      task=task)
+        if not item.get('translation_id'):
+            archive_service.system_update(item['_id'], {'translation_id': item['_id']}, item)
+            item['translation_id'] = item['_id']
 
         macros_service.execute_translation_macro(
             item, item.get('language', None), language)
 
         item['language'] = language
         item['translated_from'] = guid
-        item['translation_id'] = item.get('translation_id', guid)
         item['versioncreated'] = utcnow()
         if task:
             item['task'] = task
