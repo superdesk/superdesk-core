@@ -470,3 +470,61 @@ Feature: Move or Send Content to another desk
         [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}]
         """
         Then we get response code 403
+
+
+	@auth
+    Scenario: Move package with all package
+        Given empty "archive"
+        And "desks"
+        """
+        [{"name": "source desk"}]
+        """
+        Given "archive"
+        """
+        [{"headline": "test", "_id": "item-1", "guid": "item-1", "slugline": "WORMS", "linked_in_packages": []}]
+        """
+        When we post to "archive" with success
+        """
+        {
+            "groups": [
+                {"id": "root", "refs": [{"idRef": "main"}], "role": "grpRole:NEP"},
+                {
+                    "id": "main",
+                    "refs": [
+                        {
+                            "headline": "test package with text",
+                            "residRef": "item-1",
+                            "slugline": "awesome article"
+                        }
+                    ],
+                    "role": "grpRole:Main"
+                }
+            ],
+            "_id": "package-1",
+            "guid": "package-1",
+            "type": "composite",
+            "task": {"user": "#user._id#", "desk": "#desks._id#"}
+        }
+        """
+        When we post to "/desks"
+        """
+        [{"_id": ObjectId("123456789"), "name": "destination desk"}]
+        """
+        And we post to "/archive/package-1/move"
+        """
+        [{"allPackageItems": true, "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
+        """
+        Then we get response code 201
+
+        When we get "/archive/package-1"
+        Then we get existing resource
+        """
+        {"_id": "package-1", "task": {"desk": "#desks._id#", "user": "#user._id#"}}
+        """
+
+        When we get "/archive/item-1"
+        Then we get existing resource
+        """
+        { "headline": "test", "_id": "item-1", "guid": "item-1", "slugline": "WORMS",
+          "task": {"desk": "#desks._id#", "user": "#user._id#"}}
+        """
