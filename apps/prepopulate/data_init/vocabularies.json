@@ -299,5 +299,21 @@
             "name": {},
             "is_active": {}
         }
+    },
+    {
+        "_id": "usageterms",
+        "display_name": "Terms of use",
+        "type": "manageable",
+        "unique_field": "qcode",
+        "single_value": true,
+        "items": [
+            {"is_active": true, "qcode": "single-usage", "name": "Single Usage"},
+            {"is_active": true, "qcode": "time-restricted", "name": "Time Restricted"},
+            {"is_active": true, "qcode": "indefinite-usage", "name": "Indefinite Usage"}
+        ],
+        "schema": {
+            "qcode": {},
+            "name": {}
+        }
     }
 ]
