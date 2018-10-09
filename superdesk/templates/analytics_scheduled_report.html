@@ -1,0 +1,17 @@
+{% extends "email_layout.html" %}
+
+{% block content %}
+{{html_body | safe}}
+<br>
+<div style="display: flex; flex-direction: row; flex-wrap: wrap;">
+    {% for report in reports %}
+        {% if report.type == 'html' %}
+            {{report.html | safe}}
+        {% elif report.type == 'image' %}
+            <div>
+                <img src="cid:{{report.id}}" width="{{report.width}}px">
+            </div>
+        {% endif %}
+    {% endfor %}
+</div>
+{% endblock %}
