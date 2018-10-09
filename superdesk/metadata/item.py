@@ -326,6 +326,11 @@ metadata_schema = {
         'minlength': 1,
         'nullable': True,
     },
+    'deleted_groups': {
+        'type': 'list',
+        'minlength': 1,
+        'nullable': True,
+    },
     'body_html': {
         'type': 'string',
         'nullable': True,
