@@ -164,6 +164,32 @@ class FTPFeedingService(FeedingService):
         _, ext = os.path.splitext(filename)
         return ext.lower() in allowed_ext
 
+    def _retrieve_and_parse(self, ftp, config, filename, provider, registered_parser):
+        items = []
+
+        local_file_path = os.path.join(config['dest_path'], filename)
+        with open(local_file_path, 'wb') as f:
+            try:
+                ftp.retrbinary('RETR %s' % filename, f.write)
+            except ftplib.all_errors:
+                os.remove(local_file_path)
+                raise Exception('Exception retrieving file from FTP server ({filename})'.format(
+                                filename=filename))
+
+        if isinstance(registered_parser, XMLFeedParser):
+            xml = etree.parse(local_file_path).getroot()
+            parser = self.get_feed_parser(provider, xml)
+            parsed = parser.parse(xml, provider)
+        else:
+            parser = self.get_feed_parser(provider, local_file_path)
+            parsed = parser.parse(local_file_path, provider)
+
+        if isinstance(parsed, dict):
+            parsed = [parsed]
+
+        items.append(parsed)
+        return items
+
     def _update(self, provider, update):
         config = provider.get('config', {})
         last_updated = provider.get('last_updated')
@@ -199,6 +225,7 @@ class FTPFeedingService(FeedingService):
                             reason=e))
                         do_move = False
                 items = []
+
                 for filename, facts in ftp.mlsd():
                     if facts.get('type', '') != 'file':
                         continue
@@ -214,27 +241,7 @@ class FTPFeedingService(FeedingService):
                             elif not crt_last_updated or item_last_updated > crt_last_updated:
                                 crt_last_updated = item_last_updated
 
-                        local_file_path = os.path.join(config['dest_path'], filename)
-                        with open(local_file_path, 'wb') as f:
-                            try:
-                                ftp.retrbinary('RETR %s' % filename, f.write)
-                            except ftplib.all_errors:
-                                os.remove(local_file_path)
-                                raise Exception('Exception retrieving file from FTP server ({filename})'.format(
-                                                filename=filename))
-
-                        if isinstance(registered_parser, XMLFeedParser):
-                            xml = etree.parse(local_file_path).getroot()
-                            parser = self.get_feed_parser(provider, xml)
-                            parsed = parser.parse(xml, provider)
-                        else:
-                            parser = self.get_feed_parser(provider, local_file_path)
-                            parsed = parser.parse(local_file_path, provider)
-
-                        if isinstance(parsed, dict):
-                            parsed = [parsed]
-
-                        items.append(parsed)
+                        items = self._retrieve_and_parse(ftp, config, filename, provider, registered_parser)
                         if do_move:
                             move_dest_file_path = os.path.join(move_dest_path, filename)
                             self._move(ftp, filename, move_dest_file_path)
@@ -273,27 +280,7 @@ class FTPFeedingService(FeedingService):
                             elif not crt_last_updated or item_last_updated > crt_last_updated:
                                 crt_last_updated = item_last_updated
 
-                        local_file_path = os.path.join(config['dest_path'], filename)
-                        with open(local_file_path, 'wb') as f:
-                            try:
-                                ftp.retrbinary('RETR %s' % filename, f.write)
-                            except ftplib.all_errors:
-                                os.remove(local_file_path)
-                                raise Exception('Exception retrieving file from FTP server ({filename})'.format(
-                                                filename=filename))
-
-                        if isinstance(registered_parser, XMLFeedParser):
-                            xml = etree.parse(local_file_path).getroot()
-                            parser = self.get_feed_parser(provider, xml)
-                            parsed = parser.parse(xml, provider)
-                        else:
-                            parser = self.get_feed_parser(provider, local_file_path)
-                            parsed = parser.parse(local_file_path, provider)
-
-                        if isinstance(parsed, dict):
-                            parsed = [parsed]
-
-                        items.append(parsed)
+                        items = self._retrieve_and_parse(ftp, config, filename, provider, registered_parser)
                         if do_move:
                             move_dest_file_path = os.path.join(move_dest_path, filename)
                             self._move(ftp, filename, move_dest_file_path)
