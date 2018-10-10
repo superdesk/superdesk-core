@@ -82,9 +82,54 @@ Feature: Templates
 
         When we patch latest
         """
-        {"schedule": {"day_of_week": ["MON"], "create_at": "09:15:00", "is_active": true}}
+        {"schedule": {"day_of_week": ["MON"], "cron_list": ["15 09 * * MON"], "is_active": true}}
         """
         Then next run is on monday "09:15:00"
+
+        When we run create content task
+        And we run create content task
+        And we get "/archive"
+        Then we get list with 1 items
+        """
+        {"_items": [{
+            "headline": "test",
+            "firstcreated": "__now__",
+            "versioncreated": "__now__",
+            "_updated": "__now__",
+            "_created": "__now__",
+            "_current_version": 1,
+            "_etag": "__any_value__"
+        }]}
+        """
+        When we get "/archive/#ITEM_ID#?version=all"
+        Then we get list with 1 items
+
+    @auth
+    Scenario: User can schedule a content creation for multiple times
+        Given "desks"
+        """
+        [{"name": "sports"}]
+        """
+        And "stages"
+        """
+        [{"name": "schedule", "desk": "#desks._id#"}]
+        """
+
+        When we post to "content_templates"
+        """
+        {"template_name": "test", "template_type": "create",
+         "data": {"headline": "test", "type": "text", "slugline": "test", "firstcreated": "2015-10-10T10:10:10+0000", "versioncreated": "2015-10-10T10:10:10+0000"},
+         "schedule": {"is_active": true, "cron_list": ["15 8 * * MON"]},
+         "template_desks": ["#desks._id#"], "schedule_desk": "#desks._id#", "schedule_stage": "#stages._id#"}
+        """
+        Then we get new resource
+        And next run is on monday "08:15:00"
+
+        When we patch latest
+        """
+        {"schedule": {"cron_list": ["15 8 * * MON","14 8 * * MON"], "is_active": true}}
+        """
+        Then next run is on monday "08:14:00"
 
         When we run create content task
         And we run create content task
@@ -128,7 +173,7 @@ Feature: Templates
 
         When we patch latest
         """
-        {"schedule": {"day_of_week": ["MON"], "create_at": "09:15:00", "is_active": true}}
+        {"schedule": {"day_of_week": ["MON"], "cron_list": ["15 09 * * MON"], "is_active": true}}
         """
         Then next run is on monday "09:15:00"
 
@@ -148,6 +193,70 @@ Feature: Templates
         """
         When we get "/archive/#ITEM_ID#?version=all"
         Then we get list with 1 items
+
+    @auth
+    Scenario: User can schedule a content creation with different timezone 2
+        Given "desks"
+        """
+        [{"name": "sports"}]
+        """
+        And "stages"
+        """
+        [{"name": "schedule", "desk": "#desks._id#"}]
+        """
+
+        When we post to "content_templates"
+        """
+        {"template_name": "test", "template_type": "create",
+         "data": {"headline": "test", "type": "text", "slugline": "test", "firstcreated": "2015-10-10T10:10:10+0000", "versioncreated": "2015-10-10T10:10:10+0000"},
+         "schedule": {"cron_list": ["15 8 * * MON"], "is_active": true,
+         "time_zone": "Australia/Sydney"},
+         "template_desks": ["#desks._id#"], "schedule_desk": "#desks._id#", "schedule_stage": "#stages._id#"}
+        """
+        Then we get new resource
+        And next run is on monday "08:15:00"
+
+        When we patch latest
+        """
+        {"schedule": {"cron_list": ["15 9 * * MON"], "is_active": true}}
+        """
+        Then next run is on monday "09:15:00"
+
+        When we run create content task
+        And we get "/archive"
+        Then we get list with 1 items
+        """
+        {"_items": [{
+            "headline": "test",
+            "firstcreated": "__now__",
+            "versioncreated": "__now__",
+            "_updated": "__now__",
+            "_created": "__now__",
+            "_current_version": 1,
+            "_etag": "__any_value__"
+        }]}
+        """
+        When we get "/archive/#ITEM_ID#?version=all"
+        Then we get list with 1 items
+
+    @auth
+    Scenario: Updated create_at returns cron_list
+        Given "content_templates"
+        """
+        [{"template_name": "test", "template_type": "create",
+         "data": {"headline": "test", "type": "text", "slugline": "test", "firstcreated": "2015-10-10T10:10:10+0000", "versioncreated": "2015-10-10T10:10:10+0000"},
+         "schedule": {"day_of_week": ["MON","WED"], "create_at": "08:15:00", "is_active": true,
+         "time_zone": "Australia/Sydney"},
+         "template_desks": ["#desks._id#"], "schedule_desk": "#desks._id#", "schedule_stage": "#stages._id#"}]
+        """
+        When we get "/content_templates"
+        Then we get list with 1 items
+        """
+        {"_items": [{
+        "schedule": {
+            "cron_list": ["15 08 * * MON,WED"]}
+        }]}
+        """
 
     @auth
     Scenario: Apply template to an item

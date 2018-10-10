@@ -1,33 +1,41 @@
+# -*- coding: utf-8; -*-
+#
+# This file is part of Superdesk.
+#
+# Copyright 2013, 2014, 2015 Sourcefabric z.u. and contributors.
+#
+# For the full copyright and license information, please see the
+# AUTHORS and LICENSE files distributed with this source code, or
+# at https://www.sourcefabric.org/superdesk/license
 
-import flask
-import unittest
 import pytz
 from datetime import datetime, timedelta
-
-from .content_templates import get_next_run, Weekdays, get_item_from_template, render_content_template
+from apps.rules.routing_rules import Weekdays
+from apps.templates.content_templates import get_next_run, get_item_from_template, render_content_template
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
 from superdesk.tests import TestCase
 from superdesk.utc import utcnow
 
 
-class TemplatesTestCase(unittest.TestCase):
+class TemplatesTestCase(TestCase):
 
     def setUp(self):
         # now is today at 09:05:03
         self.now = datetime.utcnow().replace(hour=9, minute=5, second=3)
         self.weekdays = [day.name for day in Weekdays]
-        self.app = flask.Flask(__name__)
 
-    def get_delta(self, create_at, weekdays, time_zone=None, now=None):
-        next_run = get_next_run(
-            {
-                'day_of_week': weekdays,
-                'create_at': create_at,
-                'is_active': True,
-                'time_zone': time_zone or 'UTC'
-            },
-            now or self.now
-        )
+    def get_delta(self, create_at, weekdays, time_zone=None, now=None, cron_list=None):
+        schedule = {
+            'day_of_week': weekdays,
+            'create_at': create_at,
+            'is_active': True,
+            'time_zone': time_zone or 'UTC'
+        }
+        if cron_list:
+            schedule['cron_list'] = cron_list
+            schedule.pop('create_at', None)
+
+        next_run = get_next_run(schedule, now or self.now)
         return next_run - (now or self.now).replace(second=0)
 
     def test_inactive_schedule(self):
@@ -37,12 +45,18 @@ class TemplatesTestCase(unittest.TestCase):
     def test_next_run_same_day_later(self):
         delta = self.get_delta('09:08:00', self.weekdays)
         self.assertEqual(delta.days, 0)
-        self.assertEqual(delta.seconds, 180)
+        self.assertEqual(delta.seconds, 179)
+
+    def test_next_run_same_day_later_cron_list(self):
+        cron_list = ['30 07 * * *', '08 09 * * *']
+        delta = self.get_delta('09:08:00', self.weekdays, cron_list=cron_list)
+        self.assertEqual(delta.days, 0)
+        self.assertEqual(delta.seconds, 179)
 
     def test_next_run_next_day(self):
         delta = self.get_delta('09:03:00', self.weekdays)
         self.assertEqual(delta.days, 0)
-        self.assertEqual(delta.seconds, 3600 * 24 - 120)
+        self.assertEqual(delta.seconds, 3600 * 24 - 121)
 
     def test_next_run_next_week(self):
         delta = self.get_delta('09:03:00', [self.now.strftime('%a').upper()])
@@ -50,7 +64,7 @@ class TemplatesTestCase(unittest.TestCase):
 
     def test_next_run_now(self):
         delta = self.get_delta('09:05:00', self.weekdays)
-        self.assertEqual(delta.days, 1)
+        self.assertEqual(delta.seconds, 24 * 60 * 60 - 1)
 
     def test_get_item_from_template(self):
         template = {'_id': 'foo', 'name': 'test',

@@ -31,10 +31,15 @@ def then_next_run_is_on_monday(context, time):
 
     parsed = datetime.strptime(time, fmt)
     expected = datetime.now(tz)
+    expected += timedelta(((-expected.weekday()) + 7) % 7)
+    expected = expected.astimezone(tz)
     expected = expected.replace(hour=parsed.hour, minute=parsed.minute, second=parsed.second, microsecond=0)
     expected_utc = expected.astimezone(pytz.utc)
 
     assert isinstance(next_run, datetime)
-    assert next_run.weekday() == 0
+    if tz.zone == 'Australia/Sydney':
+        assert next_run.weekday() == 6
+    else:
+        assert next_run.weekday() == 0
     assert next_run.strftime(fmt) == expected_utc.strftime(fmt), \
         'next run %s is not expected %s' % (next_run.strftime(fmt), expected_utc.strftime(fmt))
