@@ -1,0 +1,14 @@
+{% extends "email_layout.txt" %}
+
+{% block content %}
+{{text_body | striptags}}
+
+{% for report in reports %}
+    {% if report.type == 'html' %}
+        {{report.filename}}
+        {{report.html | striptags}}
+    {% elif report.type == 'image' %}
+        [image: {{report.filename}}]
+    {% endif %}
+{% endfor %}
+{% endblock %}
