@@ -16,13 +16,12 @@ from datetime import datetime
 from eve.render import send_response
 
 
+NEWSCODE_PATTERN = re.compile('[0-9]{8,9}')
 bp = Blueprint('subjectcodes', __name__)
 
 
 class SubjectIndex():
     """Subjects index."""
-
-    newscode_pattern = re.compile('[0-9]{8,9}')
 
     def __init__(self):
         self.subjects = {}
@@ -45,22 +44,23 @@ class SubjectIndex():
         """
         items = []
         for code in sorted(self.subjects):
-            items.append({'qcode': code, 'name': self.subjects[code], 'parent': self._get_parent_code(code)})
+            items.append({'qcode': code, 'name': self.subjects[code], 'parent': get_parent_subjectcode(code)})
         return items
 
-    def _get_parent_code(self, code):
-        """Compute parent code for iptc newscode.
 
-        :param code: iptc newscode without `subj:` prefix
-        """
-        parent_code = None
-        if not self.newscode_pattern.match(code):
-            return parent_code
-        if code[-3:] != '000':
-            parent_code = code[:5] + '000'
-        elif code[2:5] != '000':
-            parent_code = code[:2] + '000000'
+def get_parent_subjectcode(code):
+    """Compute parent code for iptc newscode.
+
+    :param code: iptc newscode without `subj:` prefix
+    """
+    parent_code = None
+    if not NEWSCODE_PATTERN.match(code):
         return parent_code
+    if code[-3:] != '000':
+        parent_code = code[:5] + '000'
+    elif code[2:5] != '000':
+        parent_code = code[:2] + '000000'
+    return parent_code
 
 
 @bp.route('/subjectcodes/', methods=['GET', 'OPTIONS'])
