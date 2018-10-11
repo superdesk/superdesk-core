@@ -120,9 +120,7 @@
             {"is_active": true, "name": "video", "qcode": "video"},
             {"is_active": true, "name": "picture", "qcode": "picture"},
             {"is_active": true, "name": "graphic", "qcode": "graphic"},
-            {"is_active": true, "name": "composite", "qcode": "composite"},
-            {"is_active": true, "name": "planning item", "qcode": "planning"},
-            {"is_active": true, "name": "event", "qcode": "event"}
+            {"is_active": true, "name": "composite", "qcode": "composite"}
         ],
         "init_version": 1
     },
