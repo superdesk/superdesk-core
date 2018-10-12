@@ -21,13 +21,14 @@ Feature: Desks
         """
         When we post to "/desks"
         """
-        {"name": "Sports Desk", "members": [{"user": "#users._id#"}], "desk_language": "en"}
+        {"name": "Sports Desk", "members": [{"user": "#users._id#"}, {"user": "#users._id#"}], "desk_language": "en"}
         """
         And we get "/desks/#desks._id#"
         Then we get existing resource
         """
         {"name": "Sports Desk", "desk_type": "authoring", "members": [{"user": "#users._id#"}], "desk_language": "en"}
         """
+        And we get desk members count as 1
         And we get "incoming_stage"
         And we get "working_stage"
         Then we get notifications
@@ -76,6 +77,20 @@ Feature: Desks
             """
             [{"event": "desk", "extra": {"updated": 1, "desk_id": "#desks._id#"}}]
             """
+        When we patch latest
+        """
+         {"members": [{"user": "#CONTEXT_USER_ID#"}, {"user": "#CONTEXT_USER_ID#"}]}
+        """
+		Then we get updated response
+        """
+        {
+            "name": "Sports Desk modified",
+            "desk_type": "production",
+            "desk_language": "en",
+            "members": [{"user": "#CONTEXT_USER_ID#"}]
+        }
+        """
+        And we get desk members count as 1
 
 	@auth
     @notification

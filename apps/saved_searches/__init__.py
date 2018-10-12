@@ -107,8 +107,8 @@ def process_subscribers(subscribers, search, now, isDesk=False):
         elif next_report <= now:
             if isDesk:
                 desk = get_resource_service('desks').find_one(req=None, _id=suscriber_data['desk'])
-                for user_id in (desk or {}).get('members', []):
-                    publish_report(user_id, search)
+                for member in (desk or {}).get('members', []):
+                    publish_report(member.get('user'), search)
             else:
                 publish_report(suscriber_data['user'], search)
             suscriber_data['last_report'] = now

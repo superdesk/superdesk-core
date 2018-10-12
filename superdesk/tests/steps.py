@@ -2367,3 +2367,9 @@ def test_items_contain_items(items, context_items):
         else:
             assert False, 'missing item = %s' % json.dumps(context_item, indent=2)
     return True
+
+
+@then('we get desk members count as {count}')
+def step_impl_we_get_desk_members_count(context, count):
+    desk = get_json_data(context.response) or {}
+    assert len(desk.get('members') or []) == int(count), 'Invalid desk members'
