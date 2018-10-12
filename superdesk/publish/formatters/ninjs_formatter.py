@@ -295,6 +295,7 @@ class NINJSFormatter(Formatter):
         for key, item in (article.get(ASSOCIATIONS) or {}).items():
             if item:
                 item = self._transform_to_ninjs(item, subscriber)
+                associations[key] = item  # all items should stay in associations
                 match = MEDIA_FIELD_RE.match(key)
                 if match:
                     # item id seems to be build from a custom id
@@ -314,11 +315,6 @@ class NINJSFormatter(Formatter):
                         # we want custom media fields in "extra_items", cf. SDESK-2955
                         version = match.group("version")
                         media.setdefault(field_id, []).append((version, item))
-                    else:
-                        match = None
-
-                if match is None:
-                    associations[key] = item
 
         if media:
             # we have custom media fields, we now order them

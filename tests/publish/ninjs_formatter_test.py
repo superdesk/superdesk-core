@@ -866,7 +866,38 @@ class NinjsFormatterTest(TestCase):
         }
 
         expected = {
-            "associations": {},
+            "associations": {
+                "custom_media_field_multi_1--1": {
+                    "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                    "priority": 5,
+                    "renditions": {
+                        "original": {
+                            "height": 331,
+                            "href": "http://localhost:5000/api/upload-raw/123.jpg",
+                            "media": "abc",
+                            "mimetype": "image/jpeg",
+                            "width": 550,
+                        }
+                    },
+                    "type": "picture",
+                    "version": "1",
+                },
+                "custom_media_field_multi_1--2": {
+                    "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                    "priority": 5,
+                    "renditions": {
+                        "original": {
+                            "height": 331,
+                            "href": "http://localhost:5000/api/upload-raw/456.jpg",
+                            "media": "cde",
+                            "mimetype": "image/jpeg",
+                            "width": 550,
+                        }
+                    },
+                    "type": "picture",
+                    "version": "1",
+                },
+            },
             "extra_items": {
                 "custom_media_field_multi_1": {
                     "items": [
