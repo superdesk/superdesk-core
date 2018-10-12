@@ -614,7 +614,20 @@ class UpdateIngestTest(TestCase):
                             'height': 426,
                         }
                     }
-                }
+                },
+                'foo': {
+                    'guid': 'foo',
+                    'type': 'picture',
+                    'versioncreated': utcnow(),
+                    'renditions': {
+                        'original': {
+                            'href': 'https://farm8.staticflickr.com/7300/9203849352_297ea4207d_z_d.jpg',
+                            'mimetype': 'image/jpeg',
+                            'width': 640,
+                            'height': 426,
+                        },
+                    },
+                },
             }
         }
 
@@ -624,5 +637,6 @@ class UpdateIngestTest(TestCase):
             status, ids = ingest.ingest_item(item, provider, provider_service)
 
         self.assertTrue(status)
-        self.assertEqual(2, len(ids))
+        self.assertEqual(3, len(ids))
         self.assertIn('thumbnail', item['associations']['featuremedia']['renditions'])
+        self.assertIn('thumbnail', item['associations']['foo']['renditions'])
