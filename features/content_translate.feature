@@ -10,6 +10,12 @@ Feature: Translate Content
       """
       {"guid": "123", "language": "en-AU"}
       """
+      And we get "/archive/#archive._id#"
+      Then we get existing resource
+      """
+      {"translation_id": "123"}
+      """
+
       When we get "/archive/#translate._id#"
       Then we get existing resource
       """
