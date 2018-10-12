@@ -164,6 +164,25 @@ class FTPFeedingService(FeedingService):
         _, ext = os.path.splitext(filename)
         return ext.lower() in allowed_ext
 
+    def _list_items(self, ftp, provider):
+        try:
+            return [(filename, facts['modify']) for filename, facts in ftp.mlsd() if facts.get('type') == 'file']
+        except Exception as ex:
+            if '500' in str(ex):
+                file_list = []
+                file_name_list = []
+                date_list = []
+                ftp.dir(file_list.append)
+                self.DATE_FORMAT = '%Y %b %d %H:%M:%S'
+                for line in file_list:
+                    col = line.split()
+                    date_string = '{} '.format(datetime.now().year) + ' '.join(col[5:8]) + ':00'
+                    date_list.append(date_string)
+                    file_name_list.append(col[8])
+                return zip(file_name_list, date_list)
+            else:
+                raise IngestFtpError.ftpError(ex, provider)
+
     def _retrieve_and_parse(self, ftp, config, filename, provider, registered_parser):
         items = []
 
@@ -226,16 +245,14 @@ class FTPFeedingService(FeedingService):
                         do_move = False
                 items = []
 
-                for filename, facts in ftp.mlsd():
-                    if facts.get('type', '') != 'file':
-                        continue
+                for filename, facts in self._list_items(ftp, provider):
                     try:
                         if not self._is_allowed(filename, allowed_ext):
                             logger.info('ignoring file {filename} because of file extension'.format(filename=filename))
                             continue
 
                         if last_updated:
-                            item_last_updated = datetime.strptime(facts['modify'], self.DATE_FORMAT).replace(tzinfo=utc)
+                            item_last_updated = datetime.strptime(facts, self.DATE_FORMAT).replace(tzinfo=utc)
                             if item_last_updated <= last_updated:
                                 continue
                             elif not crt_last_updated or item_last_updated > crt_last_updated:
@@ -256,44 +273,7 @@ class FTPFeedingService(FeedingService):
         except IngestFtpError:
             raise
         except Exception as ex:
-            if '500' in str(ex):
-                file_list = []
-                file_name_list = []
-                date_list = []
-                ftp.dir(file_list.append)
-                for line in file_list:
-                    col = line.split()
-                    date_string = '{} '.format(datetime.now().year) + ' '.join(col[5:8]) + ':00'
-                    date_list.append(date_string)
-                    file_name_list.append(col[8])
-
-                for filename, modify_date in zip(file_name_list, date_list):
-                    try:
-                        if not self._is_allowed(filename, allowed_ext):
-                            logger.info('ignoring file {filename} because of file extension'.format(filename=filename))
-                            continue
-
-                        if last_updated:
-                            item_last_updated = datetime.strptime(modify_date, '%Y %b %d %H:%M:%S').replace(tzinfo=utc)
-                            if item_last_updated <= last_updated:
-                                continue
-                            elif not crt_last_updated or item_last_updated > crt_last_updated:
-                                crt_last_updated = item_last_updated
-
-                        items = self._retrieve_and_parse(ftp, config, filename, provider, registered_parser)
-                        if do_move:
-                            move_dest_file_path = os.path.join(move_dest_path, filename)
-                            self._move(ftp, filename, move_dest_file_path)
-                    except Exception as e:
-                        logger.error("Error while parsing {filename}: {msg}".format(filename=filename, msg=e))
-                        if do_move:
-                            move_dest_file_path_error = os.path.join(move_dest_path_error, filename)
-                            self._move(ftp, filename, move_dest_file_path_error)
-                if crt_last_updated:
-                    update[LAST_UPDATED] = crt_last_updated
-                return items
-            else:
-                raise IngestFtpError.ftpError(ex, provider)
+            raise IngestFtpError.ftpError(ex, provider)
 
 
 register_feeding_service(FTPFeedingService)
