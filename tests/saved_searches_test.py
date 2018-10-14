@@ -41,7 +41,7 @@ class SavedSearchesTestCase(TestCase):
                 {
                     "_id": ObjectId("6b56e807cc3a2d1626a0507d"),
                     "guid": "#1",
-                    "members": ["7b56e807cc3a2d1626a0507d"],
+                    "members": [{"user": "7b56e807cc3a2d1626a0507d"}],
                 },
             ],
         )

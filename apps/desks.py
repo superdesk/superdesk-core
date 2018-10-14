@@ -153,6 +153,7 @@ class DesksService(BaseService):
         for desk in docs:
             stages_to_be_linked_with_desk = []
             stage_service = superdesk.get_resource_service('stages')
+            self._ensure_unique_members(desk)
 
             if desk.get('content_expiry') == 0:
                 desk['content_expiry'] = app.settings['CONTENT_EXPIRY_MINUTES']
@@ -183,6 +184,8 @@ class DesksService(BaseService):
         if updates.get('content_expiry') == 0:
             updates['content_expiry'] = None
 
+        self._ensure_unique_members(updates)
+
         if updates.get('desk_type') and updates.get('desk_type') != original.get('desk_type', ''):
             archive_versions_query = {
                 '$or': [
@@ -195,6 +198,12 @@ class DesksService(BaseService):
             if items and items.count():
                 raise SuperdeskApiError.badRequestError(
                     message='Cannot update Desk Type as there are article(s) referenced by the Desk.')
+
+    def _ensure_unique_members(self, doc):
+        """Ensure the members are unique"""
+        if doc.get('members'):
+            # ensuring that members list is unique
+            doc['members'] = [{'user': user} for user in {member.get('user') for member in doc.get('members')}]
 
     def on_updated(self, updates, original):
         self.__send_notification(updates, original)
