@@ -3,15 +3,21 @@
 {% block content %}
 {{html_body | safe}}
 <br>
-<div style="display: flex; flex-direction: row; flex-wrap: wrap;">
+<table border="0" cellpadding="0" cellspacing="0" style="width: 100%;">
     {% for report in reports %}
         {% if report.type == 'html' %}
-            {{report.html | safe}}
+            <tr>
+                <td>
+                    {{report.html | safe}}
+                </td>
+            </tr>
         {% elif report.type == 'image' %}
-            <div>
-                <img src="cid:{{report.id}}" width="{{report.width}}px">
-            </div>
+            <tr>
+                <td>
+                    <img src="cid:{{report.id}}" style="height: auto !important; max-width: {{report.width}}px !important; width: 100% !important;">
+                </td>
+            </tr>
         {% endif %}
     {% endfor %}
-</div>
+</table>
 {% endblock %}
