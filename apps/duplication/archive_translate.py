@@ -86,6 +86,7 @@ class TranslateService(BaseService):
         item['language'] = language
         item['translated_from'] = guid
         item['versioncreated'] = utcnow()
+        item['firstcreated'] = utcnow()
         if task:
             item['task'] = task
 

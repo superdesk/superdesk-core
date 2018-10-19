@@ -4,7 +4,7 @@ Feature: Translate Content
     Scenario: Translate content item
       Given "archive"
       """
-      [{"type":"text", "headline": "test1", "guid": "123", "original_creator": "abc", "state": "draft",  "language": "en-CA", "body_html": "$10"}]
+      [{"type":"text", "headline": "test1", "guid": "123", "original_creator": "abc", "state": "draft",  "language": "en-CA", "body_html": "$10", "firstcreated": "2018-01-01T01:01:01+0000"}]
       """
       When we post to "/archive/translate"
       """
@@ -19,7 +19,7 @@ Feature: Translate Content
       When we get "/archive/#translate._id#"
       Then we get existing resource
       """
-      {"type":"text", "headline": "test1", "state": "draft", "sign_off": "abc", "language": "en-AU", "body_html": "$10 (CAD 20)", "translated_from": "123", "translation_id": "123"}
+      {"type":"text", "headline": "test1", "state": "draft", "sign_off": "abc", "language": "en-AU", "body_html": "$10 (CAD 20)", "translated_from": "123", "translation_id": "123", "firstcreated": "__now__"}
       """
 
       When we post to "/archive/translate"
