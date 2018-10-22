@@ -13,11 +13,13 @@
 
 import logging
 import json
+import pytz
+from datetime import datetime
 from superdesk import app
 
 logger = logging.getLogger(__name__)
 
-REPOS = ['ingest', 'archive', 'published', 'archived']
+REPOS = ["ingest", "archive", "published", "archived"]
 POST_FILTER_MAP = {
     "type": "type",
     "desk": "task.desk",
@@ -31,14 +33,19 @@ POST_FILTER_MAP = {
     "language": "language",
 }
 SEARCH_CVS = [
-    {'id': 'subject',
-     'name': 'Subject',
-     'field': 'subject',
-     'list': 'subjectcodes'},
-    {'id': 'companycodes',
-     'name': 'Company Codes',
-     'field': 'company_codes',
-     'list': 'company_codes'}]
+    {"id": "subject", "name": "Subject", "field": "subject", "list": "subjectcodes"},
+    {"id": "companycodes", "name": "Company Codes", "field": "company_codes", "list": "company_codes"},
+]
+DATE_FORMAT = "%d/%m/%Y"
+DATE_FILTERS = {
+    "last_month": {"lte": "now-1M/M", "gte": "now-1M/M"},
+    "last_week": {"lte": "now-1w/w", "gte": "now-1w/w"},
+    "last_day": {"lte": "now-1d/d", "gte": "now-1d/d"},
+    "last_24_hours": {"gte": "now-24H"},
+    "last_7_hours": {"gte": "now-8H"},
+}
+
+DATE_FIELDS = ("firstcreated", "versioncreated", "firstpublished", "schedule_settings.utc_publish_schedule")
 
 
 def get_index(repos=None):
@@ -171,6 +178,50 @@ def filter2query(filter_, user_id=None):
     if credit_qcode is not None:
         values = json.loads(credit_qcode)
         post_filter.append({'terms': {'credit': [v['value'] for v in values]}})
+
+    # date filters
+    tz = pytz.timezone(app.config["DEFAULT_TIMEZONE"])
+    range_ = {}
+    to_delete = []
+    for field in DATE_FIELDS:
+        value = search_query.get(field)
+        if value in DATE_FILTERS:
+            range_[field] = DATE_FILTERS[value]
+            to_delete.append(field)
+        else:
+            field_suff = field + "to"
+            value = search_query.get(field_suff)
+            if value:
+                to_delete.append(field_suff)
+                field_range = range_.setdefault(field, {})
+                try:
+                    date = datetime.strptime(value, DATE_FORMAT)
+                except ValueError:
+                    # the value doesn't correspond to DATE_FORMAT,
+                    # it may be using ES date math syntax
+                    field_range["lte"] = value
+                else:
+                    date = tz.localize(datetime.combine(date, datetime.min.time()))
+                    field_range["lte"] = date.isoformat()
+
+            field_suff = field + "from"
+            value = search_query.get(field_suff)
+            if value:
+                to_delete.append(field_suff)
+                field_range = range_.setdefault(field, {})
+                try:
+                    date = datetime.strptime(value, DATE_FORMAT)
+                except ValueError:
+                    # same as above
+                    field_range["gte"] = value
+                else:
+                    date = tz.localize(datetime.combine(date, datetime.max.time()))
+                    field_range["gte"] = date.isoformat()
+
+    if range_:
+        post_filter.append({"range": range_})
+    for key in to_delete:
+        del search_query[key]
 
     # remove other users drafts
     if user_id is not None:
