@@ -133,7 +133,8 @@ class UsersResource(Resource):
                 'type': 'boolean',
                 'default': True
             },
-            'desk': Resource.rel('desks'),  # Default desk of the user, which would be selected when logged-in.
+            # Default desk of the user, which would be selected when logged-in.
+            'desk': Resource.rel('desks', nullable=True),
             SIGN_OFF: {  # Used for putting a sign-off on the content when it's created/updated except kill
                 'type': 'string',
                 'required': False,
