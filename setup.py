@@ -47,7 +47,7 @@ install_requires = [
     'chardet<4.0',
     'pymongo>=0.4,<4.0',
     'croniter<0.4',
-    'python-dateutil',
+    'python-dateutil<2.8',
 ]
 
 package_data = {
