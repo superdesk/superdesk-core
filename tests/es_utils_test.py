@@ -9,22 +9,49 @@ class ESUtilsTestCase(TestCase):
         filter_ = {"query": {"spike": "exclude", "notgenre": '["Article (news)"]'}}
         expected = {
             "query": {
-                "bool": {
-                    "must": [],
-                    "must_not": [
-                        {"term": {"state": "spiked"}},
-                        {"term": {"package_type": "takes"}},
-                    ],
-                }
+                "bool": {"must": [], "must_not": [{"term": {"state": "spiked"}}, {"term": {"package_type": "takes"}}]}
+            },
+            "post_filter": {"bool": {"must": [], "must_not": [{"terms": {"genre.name": ["Article (news)"]}}]}},
+        }
+
+        with self.app.app_context():
+            query = es_utils.filter2query(filter_)
+        self.assertEqual(query, expected)
+
+    def test_filter2query_date(self):
+        """Check that date a converted correctly to Elastic Search DSL"""
+        filter_ = {
+            "query": {
+                "spike": "exclude",
+                "firstcreatedfrom": "now-1M/M",
+                "firstcreatedto": "now-1M/M",
+                "firstpublished": "last_day",
+                "versioncreatedfrom": "01/02/2018",
+                "versioncreatedto": "11/12/2018",
+            }
+        }
+        expected = {
+            "query": {
+                "bool": {"must": [], "must_not": [{"term": {"state": "spiked"}}, {"term": {"package_type": "takes"}}]}
             },
             "post_filter": {
                 "bool": {
-                    "must": [],
-                    "must_not": [{"terms": {"genre.name": ["Article (news)"]}}],
+                    "must": [
+                        {
+                            "range": {
+                                "firstcreated": {"lte": "now-1M/M", "gte": "now-1M/M"},
+                                "versioncreated": {
+                                    "lte": "2018-12-11T00:00:00+01:00",
+                                    "gte": "2018-02-01T23:59:59.999999+01:00",
+                                },
+                                "firstpublished": {"lte": "now-1d/d", "gte": "now-1d/d"},
+                            }
+                        }
+                    ],
+                    "must_not": [],
                 }
             },
         }
-
         with self.app.app_context():
             query = es_utils.filter2query(filter_)
         self.assertEqual(query, expected)
