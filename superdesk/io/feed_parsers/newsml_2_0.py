@@ -13,7 +13,7 @@ import arrow
 import datetime
 import logging
 
-from superdesk import etree as sd_etree
+from superdesk import etree as sd_etree, app, get_resource_service
 from superdesk.errors import ParserError
 from superdesk.io.registry import register_feed_parser
 from superdesk.io.feed_parsers import XMLFeedParser
@@ -38,7 +38,13 @@ class NewsMLTwoFeedParser(XMLFeedParser):
     NAME = 'newsml2'
 
     label = 'News ML 2.0 Parser'
-    SUBJ_QCODE_PREFIXES = ('subj',)
+    # map subject qcode prefix to scheme
+    # if value is None, no "scheme" is used, and name comes from qcode
+    # if value is not None, <name> element is used instead of qcode
+    SUBJ_QCODE_PREFIXES = {
+        'subj': None
+    }
+    missing_voc = None
 
     def can_parse(self, xml):
         return any([xml.tag.endswith(tag) for tag in ['newsMessage', 'newsItem', 'packageItem']])
@@ -63,6 +69,14 @@ class NewsMLTwoFeedParser(XMLFeedParser):
             raise ParserError.newsmlTwoParserError(ex, provider)
 
     def parse_item(self, tree):
+        # config is not accessible during __init__, so we check it here
+        if self.__class__.missing_voc is None:
+            self.__class__.missing_voc = app.config.get('QCODE_MISSING_VOC', 'continue')
+            if self.__class__.missing_voc not in ('reject', 'create', 'continue'):
+                logger.warning('Bad QCODE_MISSING_VOC value ({value}) using default ("continue")'
+                               .format(value=self.missing_voc))
+                self.__class__.missing_voc = 'continue'
+
         item = dict()
         item['guid'] = tree.attrib['guid'] + ':' + tree.attrib['version']
         item['uri'] = tree.attrib['guid']
@@ -163,16 +177,34 @@ class NewsMLTwoFeedParser(XMLFeedParser):
     def parse_content_subject(self, tree, item):
         """Parse subj type subjects into subject list."""
         item['subject'] = []
-        for subject in tree.findall(self.qname('subject')):
-            qcode_parts = subject.get('qcode', '').split(':')
+        for subject_elt in tree.findall(self.qname('subject')):
+            qcode_parts = subject_elt.get('qcode', '').split(':')
             if len(qcode_parts) == 2 and qcode_parts[0] in self.SUBJ_QCODE_PREFIXES:
-                try:
-                    item['subject'].append({
-                        'qcode': qcode_parts[1],
-                        'name': subject_codes[qcode_parts[1]]
-                    })
-                except KeyError:
-                    logger.debug("Subject code '%s' not found" % qcode_parts[1])
+                scheme = self.SUBJ_QCODE_PREFIXES[qcode_parts[0]]
+                if scheme is None:
+                    # this is a main subject, we use IPTC qcode
+                    try:
+                        name = subject_codes[qcode_parts[1]]
+                    except KeyError:
+                        logger.debug("Subject code {code}' not found".format(code=qcode_parts[1]))
+                        continue
+                else:
+                    # we use the given name if it exists
+                    name_elt = subject_elt.find(self.qname('name'))
+                    name = name_elt.text if name_elt is not None and name_elt.text else ""
+                    try:
+                        name = self.getVocabulary(scheme, qcode_parts[1], name)
+                    except ValueError:
+                        logger.info('Subject element rejected for "{code}"'.format(code=qcode_parts[1]))
+                        continue
+
+                subject_data = {
+                    'qcode': qcode_parts[1],
+                    'name': name
+                }
+                if scheme:
+                    subject_data["scheme"] = scheme
+                item['subject'].append(subject_data)
 
     def parse_content_place(self, tree, item):
         """Parse subject with type="cptType:5" into place list."""
@@ -285,7 +317,7 @@ class NewsMLTwoFeedParser(XMLFeedParser):
     def datetime(self, string):
         try:
             return datetime.datetime.strptime(string, '%Y-%m-%dT%H:%M:%S.000Z')
-        except ValueError:
+        except (ValueError, TypeError):
             return arrow.get(string).datetime
 
     def get_literal_name(self, item):
@@ -302,6 +334,66 @@ class NewsMLTwoFeedParser(XMLFeedParser):
                     'uri': creator.get('uri'),
                     'name': name.text,
                 })
+
+    def getVocabulary(self, voc_id, qcode, name):
+        """Retrieve vocabulary and accept or reject it
+
+        The vocabulary will be kept if it exists in local vocabularies.
+        If it doesn't exist, it will be either created or rejected depending
+        on the value of QCODE_MISSING_VOC:
+            - if "reject", missing vocabulary are rejected (i.e. ValueError is raised)
+            - if "create", a new vocabulary is created
+            - if "continue" (default), value is returned but not created (it will be present in the resulting item,
+              but the missing vocabulary is not added to SD)
+        :param str qcode: qcode to check
+        :param str name: name
+        :return: value to use for name
+        :raise ValueError: value is rejected
+        """
+        vocabularies_service = get_resource_service('vocabularies')
+        voc = vocabularies_service.find_one(req=None, _id=voc_id)
+        create = False
+        if voc is None:
+            create = True
+            if self.missing_voc == "reject":
+                raise ValueError
+            elif self.missing_voc == "create":
+                voc = {
+                    "_id": voc_id,
+                    "field_type": None,
+                    "items": [],
+                    "type": "manageable",
+                    "schema": {"name": {}, "qcode": {}, "parent": {}},
+                    "service": {
+                            "all": 1
+                    },
+                    "display_name": voc_id.capitalize(),
+                    "unique_field": "qcode",
+                }
+            elif self.missing_voc == "continue":
+                return name
+            else:
+                raise RuntimeError("Unexpected missing_voc value: {}".format(self.missing_voc))
+        try:
+            items = voc['items']
+        except KeyError:
+            logger.warning("Creating missing items for {qcode}".format(qcode=qcode))
+            voc['items'] = items = []
+
+        for item in items:
+            if item['qcode'] == qcode:
+                if item.get("is_active", True):
+                    return item.get('name', name)
+                else:
+                    # the vocabulary exists but is disabled
+                    raise ValueError
+
+        items.append({"is_active": True, "name": name, "qcode": qcode})
+        if create:
+            vocabularies_service.post([voc])
+        else:
+            vocabularies_service.put(voc_id, voc)
+        return name
 
 
 register_feed_parser(NewsMLTwoFeedParser.NAME, NewsMLTwoFeedParser())

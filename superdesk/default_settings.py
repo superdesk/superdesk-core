@@ -711,3 +711,11 @@ VALIDATOR_MEDIA_METADATA = {
         "required": False,
     },
 }
+
+#: Behaviour on missing vocabulary, only used in (STT)NewsML G2 for now
+#: if "reject", missing vocabulary are rejected
+#: if "create", a new vocabulary is created
+#: if "continue" (default), value is returned but not created (it will be present in the resulting item, but the
+#: missing vocabulary is not added to SD)
+
+QCODE_MISSING_VOC = "continue"

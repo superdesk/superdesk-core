@@ -418,11 +418,14 @@ metadata_schema = {
                 'qcode': not_analyzed,
                 'code': not_analyzed,  # content api
                 'name': not_analyzed,
+                'locality': not_analyzed, # can be used for city/town/village etc.
                 'state': not_analyzed,
                 'country': not_analyzed,
                 'world_region': not_analyzed,
+                'locality_code': not_analyzed,
                 'state_code': not_analyzed,
                 'country_code': not_analyzed,
+                'world_region_code': not_analyzed,
                 'feature_class': not_analyzed,
                 'location': {'type': 'geo_point'},
                 'rel': not_analyzed,
