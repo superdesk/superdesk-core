@@ -54,7 +54,14 @@ enqueue_services = {
 
 
 def get_enqueue_service(operation):
-    enqueue_services[operation].get_filters()
+    try:
+        enqueue_services[operation].get_filters()
+    except KeyError:
+        # Hot fix for https://dev.sourcefabric.org/browse/SDESK-3555
+        # FIXME: this issue needs investigation and a proper fix.
+        logger.error("unexpected operation: {operation}".format(operation=operation))
+        operation = "correct"
+        enqueue_services[operation].get_filters()
     return enqueue_services[operation]
 
 
