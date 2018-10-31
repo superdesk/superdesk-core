@@ -154,7 +154,8 @@
             "copyrightHolder": {"label": "Copyright Holder", "translate": true},
             "copyrightNotice": {"label": "Copyright Notice", "translate": true},
             "usageTerms": {"label": "Usage Terms", "translate": true}
-        }
+        },
+        "unique_field": "name"
     },
     {
         "_id": "subscriber_types",
@@ -217,7 +218,8 @@
         "schema": {
             "existing": {},
             "replacement": {}
-        }
+        },
+        "unique_field": "existing"
     },
     {
         "_id": "locators",
