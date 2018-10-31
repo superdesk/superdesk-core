@@ -31,7 +31,7 @@ class Newsml12FormatterTest(TestCase):
         'subject': [{'qcode': '02011001'}, {'qcode': '02011002'}],
         'anpa_take_key': 'take_key',
         'unique_id': '1',
-        'body_html': '<p>The story body</p>',
+        'body_html': '<p>The story body&nbsp;more to the story</p>',
         'type': 'text',
         'word_count': '1',
         'priority': 1,
@@ -743,7 +743,7 @@ class Newsml12FormatterTest(TestCase):
                 'NewsComponent/NewsComponent/NewsComponent/ContentItem/DataContent')[0].text, 'sample abstract')
         self.assertEqual(self.newsml.findall(
             'NewsComponent/NewsComponent/NewsComponent/ContentItem/DataContent/nitf/body/body.content/p')[0].text,
-            'The story body')
+            'The story body\xa0more to the story')
         self.assertEqual(
             self.newsml.findall(
                 'NewsComponent/NewsComponent/NewsComponent/ContentItem/DataContent/nitf/body/body.content/p')[1].text,

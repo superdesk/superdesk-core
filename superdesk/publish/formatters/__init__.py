@@ -110,7 +110,7 @@ class Formatter(metaclass=FormatterRegistry):
         :param str html: the html to parse the text from
         :return:
         """
-        root = parse_html(html)
+        root = parse_html(html, content='html')
         # if there are no ptags just br
         if not len(root.xpath('//p')) and len(root.xpath('//br')):
             para = etree.SubElement(element, 'p')
