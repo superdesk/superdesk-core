@@ -505,3 +505,13 @@ Feature: Cropping the Image Articles
         {"_id": "bike_2", "used": true}
       """
       Then we get OK response
+
+    @auth
+    Scenario: Crop picture item fails crops not provided
+      When upload a file "bike.jpg" to "archive" with "123"
+      When we post to "/picture_crop"
+      """
+      {"item": {"renditions": {"original": {"mimetype": "image/jpeg", "href": "#original.href#", "media": "#original.media#"}}},
+       "crop": {}}
+      """
+      Then we get error 400

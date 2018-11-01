@@ -95,8 +95,8 @@ class PictureCropResource(superdesk.Resource):
     privileges = {'POST': 'archive'}
 
     schema = {
-        'item': {'type': 'dict', 'required': True},
-        'crop': {'type': 'dict', 'required': True}
+        'item': {'type': 'dict', 'required': True, 'empty': False},
+        'crop': {'type': 'dict', 'required': True, 'empty': False}
     }
 
 
