@@ -550,6 +550,10 @@ class BasePublishService(BaseService):
                     if ASSOCIATIONS not in updates:
                         updates[ASSOCIATIONS] = original[ASSOCIATIONS]
                     updates[ASSOCIATIONS][associations_key] = original[ASSOCIATIONS][associations_key]
+                elif publish:
+                    # Publishing an item with an association set the state and operation of the embedded association
+                    original[ASSOCIATIONS][associations_key]['state'] = self.published_state
+                    original[ASSOCIATIONS][associations_key]['operation'] = self.publish_type
 
     def _mark_media_item_as_used(self, updates, original):
         if ASSOCIATIONS not in updates or not updates.get(ASSOCIATIONS):
