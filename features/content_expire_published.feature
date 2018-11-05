@@ -282,7 +282,7 @@ Feature: Content Expiry Published Items
     When we get "publish_queue"
     Then we get list with 0 items
 
-  @auth 
+  @auth
   Scenario: Item in multiple packages is published and expired
     When we publish "#archive._id#" with "publish" type and "published" state
     Then we get OK response
@@ -470,7 +470,7 @@ Feature: Content Expiry Published Items
     """
 
 
-  @auth @vocabulary 
+  @auth @vocabulary
   Scenario: Expire the master story then it expires all related broadcast content.
     When we publish "123" with "publish" type and "published" state
     Then we get OK response
@@ -676,7 +676,7 @@ Feature: Content Expiry Published Items
     When we get "archived"
     Then we get list with 0 items
 
-  @auth @vocabulary 
+  @auth @vocabulary
   Scenario: Expire items that not moved to legal.
     When we publish "123" with "publish" type and "published" state
     Then we get OK response
@@ -881,7 +881,7 @@ Feature: Content Expiry Published Items
       When we get "/archive/123"
       Then we get OK response
       And we fetch a file "#rendition.4-3.href#"
-      And we get OK response      
+      And we get OK response
       When we enqueue published
       And we transmit items
       And run import legal publish queue
@@ -902,7 +902,7 @@ Feature: Content Expiry Published Items
       When we get "/archive"
       Then we get list with 0 items
       And we fetch a file "#rendition.4-3.href#"
-      And we get OK response      
+      And we get OK response
 
   @auth @vocabulary
   Scenario: Published a story with associated picture and spike the picture
@@ -1073,7 +1073,23 @@ Feature: Content Expiry Published Items
       Then we get OK response
       When we publish "123" with "publish" type and "published" state
       Then we get OK response
+
+      When we get "/published"
+      Then we get list with 1 items
+      """
+      {"_items" : [
+        {"guid": "123", "_current_version": 3, "state": "published", "type": "text", "operation": "publish",
+        "associations": {"featuremedia": {"operation": "publish", "state": "published"}}}
+        ]
+      }
+      """
       When we get "/archive/123"
+      Then we get existing resource
+      """
+        {"guid": "123", "_current_version": 3, "state": "published", "type": "text", "operation": "publish",
+        "associations": {"featuremedia": {"operation": "update", "state": "in_progress"}}
+      }
+      """
       Then we get OK response
       And we fetch a file "#rendition.4-3.href#"
       And we get OK response
