@@ -16,6 +16,7 @@ from eve.io.mongo import Validator
 from eve.utils import config
 from werkzeug.datastructures import FileStorage
 from eve.auth import auth_field_and_value
+from cerberus import errors
 
 
 ERROR_PATTERN = {'pattern': 1}
@@ -199,3 +200,13 @@ class SuperdeskValidator(Validator):
         """
         if twitter and not re.match('^@[A-Za-z0-9_]{1,15}$', value, re.IGNORECASE):
             self._error(field, ERROR_PATTERN)
+
+    def _validate_empty(self, empty, field, value):
+        """Validator for empty list, dict or str"""
+        # let the standard validation happen
+        super()._validate_empty(empty, field, value)
+
+        # custom validation
+        if isinstance(value, list) or isinstance(value, dict):
+            if len(value) == 0 and not empty:
+                self._error(field, errors.ERROR_EMPTY_NOT_ALLOWED)
