@@ -101,10 +101,8 @@ class TextParserTest(ItemTest):
         self.assertEqual("SOCCER-ENGLAND/CHELSEA-BENITEZ", self.item["slugline"])
         self.assertEqual("Soccer-Smiling Benitez pleads for support "
                          "after midweek outburst against opponent", self.item["headline"])
-        self.assertEqual("SOCCER-ENGLAND/CHELSEA-BENITEZ:Soccer-Smiling Benitez pleads for support after "
-                         "midweek outburst", self.item.get('description_text'))
-        self.assertEqual("SOCCER-ENGLAND/CHELSEA-BENITEZ:Soccer-Smiling Benitez pleads for support after "
-                         "midweek outburst", self.item.get('archive_description'))
+        self.assertNotIn('description_text', self.item)
+        self.assertNotIn('archive_description', self.item)
 
     def test_content_set(self):
         self.assertEqual("<p>By Toby Davis</p>", self.item.get('body_html'))
@@ -138,6 +136,18 @@ class PictureParserTest(ItemTest):
         self.assertEqual(772617, remote.get('sizeinbytes'))
         self.assertEqual("image/jpeg", remote.get('mimetype'))
         self.assertEqual("http://content.reuters.com/auth-server/content/tag:reuters.com,0000:newsml_GM1E9341HD701:360624134/tag:reuters.com,0000:binary_GM1E9341HD701-BASEIMAGE", remote.get('href'))  # noqa
+        self.assertIn("A woman casts her ballot inside a polling station in Kenya's town of Gatundu "
+                      "March 4, 2013. Polling stations opened up to Kenyans on Monday for a tense "
+                      "presidential election that will test whether the east African nation can repair "
+                      "its damaged reputation after the tribal blood-letting that followed a "
+                      "2007 poll.    REUTERS/Marko Djurica (KENYA - Tags: POLITICS ELECTIONS)",
+                      self.item['description_text'])
+        self.assertIn("A woman casts her ballot inside a polling station in Kenya's town of Gatundu "
+                      "March 4, 2013. Polling stations opened up to Kenyans on Monday for a tense "
+                      "presidential election that will test whether the east African nation can repair "
+                      "its damaged reputation after the tribal blood-letting that followed a "
+                      "2007 poll.    REUTERS/Marko Djurica (KENYA - Tags: POLITICS ELECTIONS)",
+                      self.item['archive_description'])
 
     def test_byline(self):
         self.assertEqual('MARKO DJURICA', self.item.get('byline'))

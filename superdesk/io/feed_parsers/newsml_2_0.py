@@ -126,15 +126,16 @@ class NewsMLTwoFeedParser(XMLFeedParser):
         parse_meta_item_text('urgency')
         parse_meta_item_text('slugline')
         parse_meta_item_text('headline')
-        # parse_meta_item_text('creditline')
         parse_meta_item_text('by', 'byline')
 
         item['slugline'] = item.get('slugline', '')
         item['headline'] = item.get('headline', '')
 
         try:
-            item['description_text'] = meta.find(self.qname('description')).text
-            item['archive_description'] = item['description_text']
+            if item[ITEM_TYPE] != CONTENT_TYPE.TEXT and item[ITEM_TYPE] != CONTENT_TYPE.COMPOSITE:
+                # only for media item
+                item['description_text'] = meta.find(self.qname('description')).text
+                item['archive_description'] = item['description_text']
         except AttributeError:
             pass
 

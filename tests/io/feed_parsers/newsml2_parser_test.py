@@ -36,6 +36,8 @@ class ReutersTestCase(BaseNewMLTwoTestCase):
         self.assertEqual(self.item[0].get('uri'), 'tag:reuters.com,0000:newsml_L4N1FL0N0')
         self.assertEqual(self.item[0].get('firstcreated').isoformat(), '2017-01-31T03:47:29')
         self.assertTrue(self.item[0].get('body_html').startswith('<p>(Adds comments, detail)</p>'))
+        self.assertNotIn('description_text', self.item[0])
+        self.assertNotIn('archive_description', self.item[0])
 
     def test_can_parse(self):
         self.assertTrue(NewsMLTwoFeedParser().can_parse(self.xml.getroot()))
