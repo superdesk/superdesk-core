@@ -182,7 +182,8 @@
             "copyrightHolder": {"label": "Copyright Holder"},
             "copyrightNotice": {"label": "Copyright Notice"},
             "usageTerms": {"label": "Usage Terms"}
-        }
+        },
+        "unique_field": "name"
     },
     {
         "_id": "geographical_restrictions",
@@ -2698,7 +2699,8 @@
         "schema": {
             "existing": {},
             "replacement": {}
-        }
+        },
+        "unique_field": "existing"
     },
     {
         "_id": "product_types",
