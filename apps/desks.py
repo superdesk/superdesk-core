@@ -135,6 +135,7 @@ superdesk.privilege(name='desks', label='Desk Management', description='User can
 class DesksResource(Resource):
     schema = desks_schema
     privileges = {'POST': 'desks', 'PATCH': 'desks', 'DELETE': 'desks'}
+    datasource = {'default_sort': [('name', 1)]}
 
 
 class DesksService(BaseService):
