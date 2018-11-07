@@ -292,7 +292,7 @@ class AppInitializeWithDataCommand(superdesk.Command):
             logger.info(' - file not exists: %s', file_path)
         else:
             logger.info(' - got file path: %s', file_path)
-            with file_path.open('rt') as app_prepopulation:
+            with file_path.open('rt', encoding='utf-8') as app_prepopulation:
                 service = superdesk.get_resource_service(entity_name)
                 json_data = json.loads(app_prepopulation.read())
                 data = [fillEnvironmentVariables(item) for item in json_data]
