@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<newsItem guid="urn:newsml:stt.fi:20170131:101160101" version="1" standardversion="2.12" conformance="power" xml:lang="fi-FI" xmlns:stt="http://www.stt-lehtikuva.fi/NewsML" standard="NewsML-G2" xsi:schemaLocation="http://iptc.org/std/nar/2006-10-01/ http://www.iptc.org/std/NewsML-G2/2.12/specification/NewsML-G2_2.12-spec-All-Power.xsd http://www.stt-lehtikuva.fi/NewsML http://www.stt-lehtikuva.fi/newsml/schema/STT-Lehtikuva_NewsML_G2.xsd" xmlns="http://iptc.org/std/nar/2006-10-01/" stt:formatversion="1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ><catalogRef href="http://www.iptc.org/std/catalog/catalog.IPTC-G2-Standards_19.xml"/>
+<catalogRef href="http://www.iptc.org/std/catalog/catalog.IPTC-G2-Standards_18.xml"/>
+<catalogRef href="http://www.stt-lehtikuva.fi/newsml/doc/stt-NewsCodesCatalog_1.xml"/>
+
+<itemMeta>
+
+<itemClass qcode="ninat:text"/>
+<provider literal="STT"/>
+<versionCreated>2017-01-31T21:52:11</versionCreated>
+<firstCreated>2017-01-31T21:52:11</firstCreated>
+<pubStatus qcode="stat:usable"/>
+<edNote role="sttnote:private">2. väliotsikon jälkeen 2. kpl. puolustusministeriössä po. Puolustusvoimissa</edNote>
+<edNote role="sttnote:public">Korjattu aiempaa uutista: Ylen juttu perustuu Puolustusvoimissa merkittävässä asemassa olevaan lähteeseen, ei puolustusministeriössä kuten aiemmin kerroimme.</edNote>
+<link rel="irel:seeAlso" href="http://yle.fi/uutiset/3-9433295"/>
+<link rel="irel:seeAlso" href="http://yle.fi/uutiset/3-9434562"/>
+</itemMeta>
+<contentMeta>
+<urgency>3</urgency>
+<contentCreated>2017-01-31T21:52:52</contentCreated>
+<contentModified>2017-01-31T21:52:52</contentModified>
+<altId type="sttidtype:textid"/>
+<located type="loctyp:City">
+<name/>
+</located>
+<subject type="cpnat:abstract" qcode="sttdepartment:9">
+<name>Politiikka</name>
+</subject>
+<subject type="cpnat:abstract" qcode="sttsubj:09000000">
+<name>Työelämä</name>
+</subject>
+<subject type="cpnat:abstract" qcode="sttsubj:09016000">
+<name>Työntekijät</name>
+</subject>
+<subject type="cpnat:abstract" qcode="sttsubj:11000000">
+<name>Politiikka</name>
+</subject>
+<subject type="cpnat:abstract" qcode="sttsubj:11001000">
+<name>Puolustus</name>
+</subject>
+<subject type="cpnat:abstract" qcode="sttsubj:11001004">
+<name>Puolustusvoimat</name>
+</subject>
+<subject type="cpnat:abstract" qcode="sttsubj:11000000">
+<name>Politiikka</name>
+</subject>
+<subject type="cpnat:abstract" qcode="sttsubj:11006000">
+<name>Julkinen hallinto</name>
+</subject>
+<subject type="cpnat:abstract" qcode="sttsubj:11006002">
+<name>Kansalaisten turvallisuus</name>
+</subject>
+<slugline/>
+<dateline/>
+<by>ANTTI AUTIO, HETA HASSINEN </by>
+<description role="drol:summary"/>
+<headline>Jussi Niinistö: Ylen tiedoissa voi olla kyse informaatio-operaatiosta </headline><creditline>STT&#8211;</creditline>
+
+<genre qcode="sttgenre:1">
+<name>Pääjuttu</name>
+</genre>
+<genre qcode="sttversion:4">
+<name>Pika+</name>
+<related qcode="sttrel:actuallength" value="3291"/>
+</genre>
+</contentMeta>
+<contentSet>
+<inlineXML contenttype="xhtml/xml">
+<html>
+<body>
+<h2>Ministerin mukaan Puolustusvoimat ei rajoita kaksoiskansalaisten ottamista töihin</h2>
+<p>Puolustusministeri Jussi Niinistö (ps.) kertoo STT:lle, ettei Puolustusvoimat rajoita millään tavalla Suomen ja Venäjän kaksoiskansalaisten ottamista töihin.</p>
+<p>&#8211;&#8201;  Tässä voi olla kyse informaatio-operaatiosta, jolla syötetään tarkoituksella virheellistä tietoa varteenotettavan median kautta. </p>
+<p> <a href="http://yle.fi/uutiset/3-9433295">Yle kertoi aiemmin tänään</a>, ettei Puolustusvoimat ole ottanut töihin Suomen ja Venäjän kaksoiskansalaisia. Näin on toimittu Ylen mukaan jo jonkin aikaa. </p>
+<p>Ylen mukaan lisäksi varusmiespalvelukseen tulevien Suomen ja Venäjän kaksoiskansalaisten koulutusta rajoitetaan. Heitä ei enää kouluteta sellaisiin tehtäviin, joissa on mahdollisuus päästä käsiksi turvallisuuden kannalta merkittävään tietoon, Yle kertoo. </p>
+<p>Niinistö arveli, että kyse voi olla myös jonkun yksittäisen henkilön tulkinnasta. Hän korostaa, ettei tämmöistä tapausta ole Puolustusvoimissa tunnistettu.</p>
+<p>&#8211;&#8201;  Tätä on nyt Pääesikunta selvittänyt. Tällaista salaista kaksoiskansalaisuuteen liittyvää ohjeistusta tai ylipäätään minkäänlaista ohjeistusta mitä Yle väittää Puolustusvoimilla olevan, niin sellaista ei ole. Niinistö sanoo.</p>
+<p>Hänen mukaansa Suomen ja Venäjän kaksoiskansalaisuus ei ole ollut esteenä virkaan pääsemiseksi. </p>
+<p>&#8211;&#8201;  Varusmiespalveluksessa kaksoiskansalaisuus ei edes tule esille, ellei henkilö halua itse halua tuoda sitä esille, Niinistö kuittaa.</p>
+<p><a href="http://yle.fi/uutiset/3-9434562">Ylelle</a> Niinistö kertoi myöhemmin, että hän aikoo laittaa vireille lakihankkeen, jolla kaksoiskansalaisten pääsy sotilasvirkoihin voitaisiin estää.   </p>
+<p></p><p>
+<h3>Puolustusvoimat hämmästyi</h3>
+</p>
+<p>  </p>
+<p>Puolustusvoimien koulutuspäällikkö, prikaatikenraali Jukka Sonninen sanoi STT:lle, että Puolustusvoimissa ollaan hämmästyneitä Ylen uutisesta Suomen ja Venäjän kaksoiskansalaisista.</p>
+<p>Hän korostaa, ettei pääesikunnassa ole minkäänlaista ohjeistusta tai normia kaksoiskansalaisten palkkaamisesta töihin. Hänen mukaansa kaksoiskansalaisten erottelu olisi viime kädessä syrjintää.</p>
+<p>&#8211;&#8201;  Me toimimme lain mukaan, ja laki sanoo, ettei se ole edes mahdollista, Sonninen vakuuttaa.</p>
+<p>&#8211;&#8201;  Emme me missään muissakaan asioissa erotella, ei kielen perusteella, ei uskon, ei rodun, eikä sukupuolenkaan perusteella.</p>
+<p>Puolustusvoimat tekee turvallisuusselvityksiä, mutta niissäkään Sonnisen mukaan ei ole kaksoiskansalaisia koskevaa ohjetta tai normia, vaan kyse on kokonaisharkinnasta.</p>
+<p></p><p>
+<h3>Yle: Niinistön väite täysin perätön</h3>
+</p>
+<p></p>
+<p>Ylen uutis- ja ajankohtaistoiminnan päätoimittaja Riikka Venäläinen pitää uskomattomana puolustusministeri Jussi Niinistön (ps.) väitettä, jonka mukaan Puolustusvoimia koskevassa Ylen uutisessa voi olla kyse informaatio-operaatiosta.</p>
+<p>Venäläinen kertoo, että Ylen juttu perustuu Puolustusvoimissa merkittävässä asemassa olevaan luotettavaan lähteeseen ja esimerkkitapauksiin. Lisäksi Ylen toimittaja on Venäläisen mukaan nähnyt asian vahvistavan sähköpostiasiakirjan.</p>
+<p>&#8211;&#8201;  Väite, että meitä olisi käytetty jonkinlaisen informaatio-operaation käsikassarana on täysin perätön, Venäläinen sanoo.</p></body>
+</html>
+</inlineXML>
+</contentSet></newsItem>
