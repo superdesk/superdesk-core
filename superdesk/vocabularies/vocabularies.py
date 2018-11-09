@@ -116,6 +116,18 @@ class VocabulariesResource(Resource):
         'preffered_items': {
             'type': 'boolean',
         },
+        'date_shortcuts': {
+            'type': 'list',
+            'nullable': True,
+            'schema': {
+                'type': 'dict',
+                'schema': {
+                    'value': {'type': 'integer', 'required': True},
+                    'term': {'type': 'string', 'required': True},
+                    'label': {'type': 'string', 'required': True},
+                }
+            }
+        },
     }
 
     soft_delete = True
