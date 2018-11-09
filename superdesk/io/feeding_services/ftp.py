@@ -258,7 +258,7 @@ class FTPFeedingService(FeedingService):
                             elif not crt_last_updated or item_last_updated > crt_last_updated:
                                 crt_last_updated = item_last_updated
 
-                        items = self._retrieve_and_parse(ftp, config, filename, provider, registered_parser)
+                        items += self._retrieve_and_parse(ftp, config, filename, provider, registered_parser)
                         if do_move:
                             move_dest_file_path = os.path.join(move_dest_path, filename)
                             self._move(ftp, filename, move_dest_file_path)

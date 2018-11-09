@@ -12,6 +12,8 @@
 import os
 import time
 import shutil
+from unittest import mock
+from copy import deepcopy
 from base64 import b64encode
 from datetime import datetime, timedelta
 from os.path import basename
@@ -42,9 +44,11 @@ from wooper.expect import (
 
 import superdesk
 from superdesk import tests
-from superdesk.io import registered_feeding_services
-from superdesk.io.commands.update_ingest import LAST_ITEM_UPDATE
 from superdesk import default_user_preferences, get_resource_service, utc, etree
+from superdesk.io import registered_feeding_services
+from superdesk.io.commands import update_ingest
+from superdesk.io.commands.update_ingest import LAST_ITEM_UPDATE
+from superdesk.io.feeding_services import ftp
 from superdesk.io.feed_parsers import XMLFeedParser, EMailRFC822FeedParser
 from superdesk.utc import utcnow, get_expiry_date
 from superdesk.tests import get_prefixed_url, set_placeholder
@@ -446,6 +450,85 @@ def step_impl_fetch_from_provider_ingest(context, provider_name, guid):
         fetch_from_provider(context, provider_name, guid)
 
 
+@when('we run update_ingest command for "{provider_name}"')
+def step_impl_run_update_ingest_command(context, provider_name):
+    with context.app.test_request_context(context.app.config['URL_PREFIX']):
+        ingest_provider_service = get_resource_service('ingest_providers')
+
+        # close other providers except `provider_name`
+        for provider in [p for p in context.providers if p != provider_name]:
+            ingest_provider_service.patch(
+                context.providers[provider],
+                {'is_closed': True}
+            )
+        provider = ingest_provider_service.find_one(name=provider_name, req=None)
+
+        if provider['feeding_service'] == 'ftp':
+            run_update_ingest_ftp()
+        else:
+            # TODO for FTP feeding service all needed objects were patched/mocked
+            # for other feeding services it must be implemented
+            update_ingest.UpdateIngest().run()
+
+
+@mock.patch.object(ftp, 'ftp_connect', return_value=mock.MagicMock())
+@mock.patch.object(update_ingest, 'is_scheduled', return_value=True)
+def run_update_ingest_ftp(*args):
+    def retrieve_and_parse_side_effect(ftp, config, filename, provider, registered_parser):
+        created = datetime.now() + timedelta(days=365)
+        item1 = {
+            'guid': '20170825001315282181',
+            'type': 'text',
+            'uri': None,
+            'usageterms': 'Usage',
+            'headline': 'headline 1',
+            'copyrightnotice': 'Copyright',
+            'urgency': 1,
+            'pubstatus': 'usable',
+            'copyrightholder': 'Australian Associated Press',
+            'ednote': 'ed note 1',
+            'body_html': '<p>The story so far.</p>',
+            'slugline': 'slugline',
+            'source': 'AAP',
+            'byline': 'Peter and Jane',
+            'description_text': 'abstract',
+            'profile': 'ContentProfile',
+            'priority': 6,
+            'genre': [{'name': 'Article (news)', 'qcode': 'Article'}],
+            'anpa_category': [{'name': 'International News', 'qcode': 'i'}],
+            'subject': [{'name': 'arts, culture and entertainment', 'qcode': '01000000'}],
+            'versioncreated': created,
+            'firstcreated': created,
+            'dateline': {'located': {'city': 'Milton Keynes'}}, 'abstract': 'abstract',
+            'place': [{'name': 'NSW', 'qcode': 'NSW'}],
+            'authors': [{'name': 'John', 'role': 'writer', 'avatar_url': 'http://example.com',
+                         'biography': 'bio'}]
+        }
+        if filename == 'ninjs1.json':
+            return [[item1]]
+        elif filename == 'ninjs2.json':
+            item2 = deepcopy(item1)
+            item2['guid'] = '20170825001315282182'
+            item2['headline'] = 'headline 2'
+            item2['ednote'] = 'ed note 2'
+            return [[item2]]
+        elif filename == 'ninjs3.json':
+            item3 = deepcopy(item1)
+            item3['guid'] = '20170825001315282183'
+            item3['headline'] = 'headline 3'
+            item3['ednote'] = 'ed note 3'
+            return [[item3]]
+
+    with mock.patch.object(ftp.FTPFeedingService, '_list_items') as ftp_list_items_mock:
+        ftp_list_items_mock.return_value = (('ninjs1.json', '20181111123456'),
+                                            ('ninjs2.json', '20181111123456'),
+                                            ('ninjs3.json', '20181111123456'))
+        with mock.patch.object(ftp.FTPFeedingService, '_retrieve_and_parse') as retrieve_and_parse_mock:
+            retrieve_and_parse_mock.side_effect = retrieve_and_parse_side_effect
+            # run command
+            update_ingest.UpdateIngest().run()
+
+
 def embed_routing_scheme_rules(scheme):
     """Fetch all content filters referenced by the given routing scheme and embed those into scheme.
 
@@ -503,8 +586,11 @@ def fetch_from_provider(context, provider_name, guid, routing_scheme=None, desk_
     provider_service = registered_feeding_services[provider['feeding_service']]
     provider_service = provider_service.__class__()
 
-    if provider.get('name', '').lower() in ('aap', 'dpa', 'ninjs', 'email'):
-        file_path = os.path.join(provider.get('config', {}).get('path', ''), guid)
+    if provider.get('name', '').lower() in ('aap', 'dpa', 'ninjs', 'email', 'ftp_ninjs'):
+        if provider.get('name', '').lower() == 'ftp_ninjs':
+            file_path = os.path.join(provider.get('config', {}).get('path_fixtures', ''), guid)
+        else:
+            file_path = os.path.join(provider.get('config', {}).get('path', ''), guid)
         feeding_parser = provider_service.get_feed_parser(provider)
         if isinstance(feeding_parser, XMLFeedParser):
             with open(file_path, 'rb') as f:
