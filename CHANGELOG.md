@@ -1,5 +1,9 @@
 # Superdesk Server Changelog
 
+## [1.26] 2018-11-12
+
+### TBD
+
 ## [1.25.1] 2018-09-19
 
 ### Fixed
