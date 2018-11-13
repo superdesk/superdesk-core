@@ -32,7 +32,7 @@ PROVIDER = {
         "dest_path": "/tmp",
         "path": "",
         "move": True,
-        "move_path": "dest_move",
+        "ftp_move_path": "dest_move",
         "move_path_error": "error",
         "field_aliases": []
     },
@@ -123,7 +123,7 @@ class FTPTestCase(unittest.TestCase):
         feature requested in SDESK-1452
         """
         provider = PROVIDER.copy()
-        provider['config']['move_path'] = ""
+        provider['config']['ftp_move_path'] = ""
         service = ftp.FTPFeedingService()
         service._update(provider, {})
         mock_ftp = ftp_connect.return_value.__enter__.return_value
