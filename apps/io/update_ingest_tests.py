@@ -72,8 +72,7 @@ class UpdateIngestTest(TestCase):
         return get_resource_service('ingest_providers').find_one(name=provider_name, req=None)
 
     def _get_provider_service(self, provider):
-        provider_service = registered_feeding_services[provider['feeding_service']]
-        return provider_service.__class__()
+        return registered_feeding_services[provider['feeding_service']]()
 
     def test_ingest_items(self):
         provider, provider_service = self.setup_reuters_provider()

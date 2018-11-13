@@ -583,8 +583,7 @@ def fetch_from_provider(context, provider_name, guid, routing_scheme=None, desk_
     else:
         rule_set = None
 
-    provider_service = registered_feeding_services[provider['feeding_service']]
-    provider_service = provider_service.__class__()
+    provider_service = registered_feeding_services[provider['feeding_service']]()
 
     if provider.get('name', '').lower() in ('aap', 'dpa', 'ninjs', 'email', 'ftp_ninjs'):
         if provider.get('name', '').lower() == 'ftp_ninjs':

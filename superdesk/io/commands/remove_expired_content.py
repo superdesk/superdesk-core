@@ -57,8 +57,8 @@ def remove_expired_data(provider):
     logger.info('Removing expired content for provider: %s' % provider.get('_id', 'Detached items'))
 
     try:
-        feeding_service = registered_feeding_services[provider['feeding_service']]
-        feeding_service = feeding_service.__class__()
+        feeding_service_class = registered_feeding_services[provider['feeding_service']]
+        feeding_service = feeding_service_class()
         ingest_collection = feeding_service.service if hasattr(feeding_service, 'service') else 'ingest'
     except KeyError:
         ingest_collection = 'ingest'

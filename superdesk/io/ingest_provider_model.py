@@ -281,7 +281,7 @@ class IngestProviderService(BaseService):
         provider.update(updates)
 
         try:
-            service = registered_feeding_services[provider['feeding_service']].__class__()
+            service = registered_feeding_services[provider['feeding_service']]()
         except KeyError:
             return
         service.config_test(provider)

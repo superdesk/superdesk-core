@@ -50,8 +50,8 @@ def is_service_and_parser_registered(provider):
     :return: True if both Feed Service and Feed Parser are registered. False otherwise.
     :rtype: bool
     """
-    return provider.get('feeding_service') in registered_feeding_services and provider.get(
-        'feed_parser') is None or provider.get('feed_parser') in registered_feed_parsers
+    return provider.get('feeding_service') in registered_feeding_services and \
+        provider.get('feed_parser') is None or provider.get('feed_parser') in registered_feed_parsers
 
 
 def is_scheduled(provider):
@@ -230,8 +230,8 @@ def update_provider(provider, rule_set=None, routing_scheme=None):
         return
 
     try:
-        feeding_service = registered_feeding_services[provider['feeding_service']]
-        feeding_service = feeding_service.__class__()
+        feeding_service_class = registered_feeding_services[provider['feeding_service']]
+        feeding_service = feeding_service_class()
 
         update = {LAST_UPDATED: utcnow()}
 
