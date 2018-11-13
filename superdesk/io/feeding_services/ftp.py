@@ -220,9 +220,9 @@ class FTPFeedingService(FeedingService):
         crt_last_updated = None
         if config.get('move', False):
             do_move = True
-            if not config.get('move_path'):
+            if not config.get('ftp_move_path'):
                 logger.debug('missing move_path, default will be used')
-            move_dest_path = os.path.join(config.get('path', ''), config.get('move_path') or DEFAULT_SUCCESS_PATH)
+            move_dest_path = os.path.join(config.get('path', ''), config.get('ftp_move_path') or DEFAULT_SUCCESS_PATH)
             if not config.get('move_path_error'):
                 logger.debug('missing move_path_error, default will be used')
             move_dest_path_error = os.path.join(config.get('path', ''),
