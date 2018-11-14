@@ -15,7 +15,7 @@ from superdesk.notification import push_notification
 from apps.content import push_expired_notification
 from superdesk.errors import ProviderError
 from superdesk.lock import lock, unlock
-from superdesk.io.registry import registered_feeding_services
+from superdesk.io import get_feeding_service
 
 
 class RemoveExpiredContent(superdesk.Command):
@@ -57,8 +57,7 @@ def remove_expired_data(provider):
     logger.info('Removing expired content for provider: %s' % provider.get('_id', 'Detached items'))
 
     try:
-        feeding_service = registered_feeding_services[provider['feeding_service']]
-        feeding_service = feeding_service.__class__()
+        feeding_service = get_feeding_service(provider['feeding_service'])
         ingest_collection = feeding_service.service if hasattr(feeding_service, 'service') else 'ingest'
     except KeyError:
         ingest_collection = 'ingest'

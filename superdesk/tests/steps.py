@@ -45,7 +45,7 @@ from wooper.expect import (
 import superdesk
 from superdesk import tests
 from superdesk import default_user_preferences, get_resource_service, utc, etree
-from superdesk.io import registered_feeding_services
+from superdesk.io import get_feeding_service
 from superdesk.io.commands import update_ingest
 from superdesk.io.commands.update_ingest import LAST_ITEM_UPDATE
 from superdesk.io.feeding_services import ftp
@@ -583,8 +583,7 @@ def fetch_from_provider(context, provider_name, guid, routing_scheme=None, desk_
     else:
         rule_set = None
 
-    provider_service = registered_feeding_services[provider['feeding_service']]
-    provider_service = provider_service.__class__()
+    provider_service = get_feeding_service(provider['feeding_service'])
 
     if provider.get('name', '').lower() in ('aap', 'dpa', 'ninjs', 'email', 'ftp_ninjs'):
         if provider.get('name', '').lower() == 'ftp_ninjs':

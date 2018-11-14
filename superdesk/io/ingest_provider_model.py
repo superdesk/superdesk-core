@@ -18,7 +18,7 @@ from superdesk import get_resource_service
 from superdesk.activity import ACTIVITY_CREATE, ACTIVITY_EVENT, ACTIVITY_UPDATE, notify_and_add_activity, \
     ACTIVITY_DELETE
 from superdesk.errors import SuperdeskApiError
-from superdesk.io import allowed_feeding_services, allowed_feed_parsers, registered_feeding_services
+from superdesk.io import allowed_feeding_services, allowed_feed_parsers, get_feeding_service
 from superdesk.metadata.item import CONTENT_STATE, content_type
 from superdesk.notification import push_notification
 from superdesk.resource import Resource
@@ -281,7 +281,7 @@ class IngestProviderService(BaseService):
         provider.update(updates)
 
         try:
-            service = registered_feeding_services[provider['feeding_service']].__class__()
+            service = get_feeding_service(provider['feeding_service'])
         except KeyError:
             return
         service.config_test(provider)

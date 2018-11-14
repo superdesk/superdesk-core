@@ -35,11 +35,13 @@ def register_feeding_service(service_class):
     """
 
     if service_class.NAME in registered_feeding_services:
-        raise AlreadyExistsError('Feeding Service: {} already registered by {}'
-                                 .format(service_class.NAME,
-                                         type(registered_feeding_services[service_class.NAME])))
+        raise AlreadyExistsError(
+            'Feeding Service: {} already registered by {}'.format(
+                service_class.NAME,
+                registered_feeding_services[service_class.NAME])
+        )
 
-    registered_feeding_services[service_class.NAME] = service_class()
+    registered_feeding_services[service_class.NAME] = service_class
     allowed_feeding_services.append(service_class.NAME)
 
     service_class.ERRORS.append(SuperdeskIngestError.parserNotFoundError().get_error_description())
@@ -55,6 +57,17 @@ def register_feeding_service_error(service_name, error):
     :return:
     """
     feeding_service_errors.get(service_name, {}).update(dict([error]))
+
+
+def get_feeding_service(service_name):
+    """
+    Create and return Feeding Service instance.
+    :param service_name: unique name to identify the Feeding Service class.
+    :return: Feeding Service instance.
+    :raise KeyError: there is no feeding service registered with this `service_name`.
+    """
+
+    return registered_feeding_services[service_name]()
 
 
 def register_feed_parser(parser_name, parser_class):
@@ -130,14 +143,14 @@ class FeedingServiceAllowedService(Service):
 
     def get(self, req, lookup):
         def service(service_id):
-            registered = registered_feeding_services[service_id]
+            feeding_service_class = registered_feeding_services[service_id]
             restricted_parsers = list(restricted_feeding_service_parsers.get(service_id, {}).keys())
 
             return {
                 'feeding_service': service_id,
-                'label': getattr(registered, 'label', service_id),
-                'fields': getattr(registered, 'fields', []),
-                'field_groups': getattr(registered, 'field_groups', {}),
+                'label': getattr(feeding_service_class, 'label', service_id),
+                'fields': getattr(feeding_service_class, 'fields', []),
+                'field_groups': getattr(feeding_service_class, 'field_groups', {}),
                 'parser_restricted_values': restricted_parsers
             }
 

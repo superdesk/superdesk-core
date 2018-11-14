@@ -20,6 +20,7 @@ from superdesk.io.registry import registered_feeding_services, allowed_feeding_s
 from superdesk.io.registry import feeding_service_errors, publish_errors  # noqa
 from superdesk.io.registry import FeedParserAllowedResource, FeedParserAllowedService
 from superdesk.io.registry import FeedingServiceAllowedResource, FeedingServiceAllowedService
+from superdesk.io.registry import get_feeding_service  # noqa
 
 from superdesk.io.commands.add_provider import AddProvider  # noqa
 from superdesk.io import importers  # noqa

@@ -25,7 +25,6 @@ from superdesk.celery_app import init_celery
 from superdesk.datalayer import SuperdeskDataLayer  # noqa
 from superdesk.errors import SuperdeskError, SuperdeskApiError
 from superdesk.factory.sentry import SuperdeskSentry
-from superdesk.io import registered_feeding_services
 from superdesk.logging import configure_logging
 from superdesk.storage import AmazonMediaStorage, SuperdeskGridFSMediaStorage
 from superdesk.validator import SuperdeskValidator
@@ -168,10 +167,6 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
 
     for name, jinja_filter in superdesk.JINJA_FILTERS.items():
         app.jinja_env.filters[name] = jinja_filter
-
-    # instantiate registered provider classes (leave non-classes intact)
-    for key, provider in registered_feeding_services.items():
-        registered_feeding_services[key] = provider() if isinstance(provider, type) else provider
 
     configure_logging(app.config['LOG_CONFIG_FILE'])
 
