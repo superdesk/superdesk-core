@@ -20,7 +20,8 @@ from apps.io.tests import setup_providers, teardown_providers
 from superdesk import etree, get_resource_service
 from superdesk.celery_task_utils import mark_task_as_not_running, is_task_running
 from superdesk.errors import SuperdeskApiError, ProviderError
-from superdesk.io.registry import register_feeding_service, registered_feeding_services
+from superdesk.io import get_feeding_service
+from superdesk.io.registry import register_feeding_service
 from superdesk.io.commands.remove_expired_content import get_expired_items, RemoveExpiredContent
 from superdesk.io.feeding_services import FeedingService
 from superdesk.io.feeding_services.file_service import FileFeedingService
@@ -72,7 +73,7 @@ class UpdateIngestTest(TestCase):
         return get_resource_service('ingest_providers').find_one(name=provider_name, req=None)
 
     def _get_provider_service(self, provider):
-        return registered_feeding_services[provider['feeding_service']]()
+        return get_feeding_service(provider['feeding_service'])
 
     def test_ingest_items(self):
         provider, provider_service = self.setup_reuters_provider()

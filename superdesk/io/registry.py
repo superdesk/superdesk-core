@@ -59,6 +59,17 @@ def register_feeding_service_error(service_name, error):
     feeding_service_errors.get(service_name, {}).update(dict([error]))
 
 
+def get_feeding_service(service_name):
+    """
+    Create and return Feeding Service instance.
+    :param service_name: unique name to identify the Feeding Service class.
+    :return: Feeding Service instance.
+    :raise KeyError: there is no feeding service registered with this `service_name`.
+    """
+
+    return registered_feeding_services[service_name]()
+
+
 def register_feed_parser(parser_name, parser_class):
     """
     Registers the Feed Parser with the application.

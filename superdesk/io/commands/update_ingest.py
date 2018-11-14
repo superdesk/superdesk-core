@@ -20,6 +20,7 @@ from superdesk.activity import ACTIVITY_EVENT, notify_and_add_activity
 from superdesk.celery_app import celery
 from superdesk.celery_task_utils import get_lock_id
 from superdesk.errors import ProviderError
+from superdesk.io import get_feeding_service
 from superdesk.io.registry import registered_feeding_services, registered_feed_parsers
 from superdesk.io.iptc import subject_codes
 from superdesk.lock import lock, unlock
@@ -230,9 +231,7 @@ def update_provider(provider, rule_set=None, routing_scheme=None):
         return
 
     try:
-        feeding_service_class = registered_feeding_services[provider['feeding_service']]
-        feeding_service = feeding_service_class()
-
+        feeding_service = get_feeding_service(provider['feeding_service'])
         update = {LAST_UPDATED: utcnow()}
 
         for items in feeding_service.update(provider, update):
