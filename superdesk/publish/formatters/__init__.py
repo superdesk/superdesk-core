@@ -26,7 +26,7 @@ class FormatterRegistry(type):
         """Register sub-classes of Formatter class when defined."""
         super(FormatterRegistry, cls).__init__(name, bases, attrs)
         if name != 'Formatter':
-            formatters.append(cls())
+            formatters.append(cls)
 
 
 class Formatter(metaclass=FormatterRegistry):
@@ -147,14 +147,15 @@ def get_formatter(format_type, article):
 
     :param etree: parsed xml
     """
-    for formatter in formatters:
-        if formatter.can_format(format_type, article):
-            return formatter
+    for formatter_cls in formatters:
+        formatter_instance = formatter_cls()
+        if formatter_instance.can_format(format_type, article):
+            return formatter_instance
 
 
 def get_all_formatters():
     """Return all formatters registered."""
-    return formatters
+    return [formatter_cls() for formatter_cls in formatters]
 
 
 from .nitf_formatter import NITFFormatter  # NOQA
