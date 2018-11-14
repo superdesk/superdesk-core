@@ -3,6 +3,7 @@
         "_id": "categories",
         "display_name": "Categories",
         "type": "manageable",
+        "selection_type": "multi selection",
         "unique_field": "qcode",
         "items": [
             {"is_active": true, "name": "FIXME1", "qcode": "f1", "subject": "", "translations": {"name": {"fr": "FIXME1-fr", "es": "FIXME1-es"}}},
@@ -18,6 +19,7 @@
         "_id": "default_categories",
         "display_name": "Default Categories",
         "type": "manageable",
+        "selection_type": "multi selection",
         "unique_field": "qcode",
         "items": [
             {"is_active": true, "qcode": "a"},
@@ -36,6 +38,7 @@
         "_id": "genre",
         "display_name": "Genre",
         "type": "manageable",
+        "selection_type": "multi selection",
         "unique_field": "qcode",
         "items": [
             {"is_active": true, "name": "Article (news)", "qcode": "Article"},
@@ -71,6 +74,7 @@
         "_id": "urgency",
         "display_name": "Urgency",
         "type": "manageable",
+        "selection_type": "multi selection",
         "unique_field": "qcode",
         "items": [
             {"is_active": true, "name": "1", "qcode": 1},
@@ -90,6 +94,7 @@
         "_id": "priority",
         "display_name": "Priority",
         "type": "manageable",
+        "selection_type": "multi selection",
         "unique_field": "qcode",
         "items": [
             {"is_active": true, "name": "1", "qcode": 1},
@@ -113,6 +118,7 @@
         "_id": "type",
         "display_name": "Article Type",
         "type": "unmanageable",
+        "selection_type": "multi selection",
         "items": [
             {"is_active": true, "name": "text", "qcode": "text"},
             {"is_active": true, "name": "preformatted", "qcode": "preformatted"},
@@ -128,6 +134,7 @@
         "_id": "signal",
         "display_name": "Signal",
         "type": "unmanageable",
+        "selection_type": "multi selection",
         "items": [
             {"is_active": true, "name": "Correction", "qcode": "Correction"},
             {"is_active": true, "name": "Update", "qcode": "Update"},
@@ -140,6 +147,7 @@
         "_id": "rightsinfo",
         "display_name": "Copyrights",
         "type": "manageable",
+        "selection_type": "multi selection",
         "items": [
             {
                 "is_active": true,
@@ -161,6 +169,7 @@
         "_id": "subscriber_types",
         "display_name": "Subscriber Types",
         "type": "unmanageable",
+        "selection_type": "do not show",
         "items": [
             {"is_active": true, "name": "All", "qcode": "all",
                 "formats": [
@@ -189,6 +198,7 @@
         "_id": "crop_sizes",
         "display_name": "Image Crop Sizes",
         "type": "manageable",
+        "selection_type": "do not show",
         "unique_field": "name",
         "items": [
             {"is_active": true, "name": "FIXME", "width": 800, "height": 600}
@@ -203,6 +213,7 @@
         "_id": "desk_types",
         "display_name": "Desk Types",
         "type": "unmanageable",
+        "selection_type": "do not show",
         "items": [
             {"is_active": true, "name": "authoring", "qcode": "authoring"},
             {"is_active": true, "name": "production", "qcode": "production"}
@@ -212,6 +223,7 @@
         "_id": "replace_words",
         "display_name": "Replacement Words",
         "type": "manageable",
+        "selection_type": "do not show",
         "items": [
             {"is_active": true, "existing": "FIXME", "replacement": ""}
         ],
@@ -225,6 +237,7 @@
         "_id": "locators",
         "display_name": "Locators",
         "type": "manageable",
+        "selection_type": "multi selection",
         "unique_field": "qcode",
         "items": [
             {"is_active": true, "name": "NSW", "qcode": "NSW"}
@@ -242,6 +255,7 @@
         "_id": "product_types",
         "display_name": "Product Types",
         "type": "unmanageable",
+        "selection_type": "do not show",
         "items": [
             {"is_active": true, "name": "API", "qcode": "api"},
             {"is_active": true, "name": "Direct", "qcode": "direct"},
@@ -252,6 +266,7 @@
         "_id": "annotation_types",
         "display_name": "Annotation Types",
         "type": "manageable",
+        "selection_type": "do not show",
         "unique_field": "qcode",
         "items": [
             {"is_active": true, "name": "Regular", "qcode": "regular"},
@@ -266,6 +281,7 @@
         "_id": "author_roles",
         "display_name": "Author Roles",
         "type": "manageable",
+        "selection_type": "do not show",
         "unique_field": "qcode",
         "items": [
             {"is_active": true, "name": "Writer", "qcode": "writer"}
@@ -279,6 +295,7 @@
         "_id": "job_titles",
         "display_name": "Job Titles",
         "type": "manageable",
+        "selection_type": "do not show",
         "unique_field": "qcode",
         "items": [],
         "schema": {
@@ -290,6 +307,7 @@
         "_id": "package-story-labels",
         "display_name": "Package Story Labels",
         "type": "manageable",
+        "selection_type": "do not show",
         "unique_field": "qcode",
         "items": [
             {"is_active": true, "qcode": "story-label:featured", "name": "Featured"}
@@ -305,7 +323,7 @@
         "display_name": "Terms of use",
         "type": "manageable",
         "unique_field": "qcode",
-        "single_value": true,
+        "selection_type": "single selection",
         "items": [
             {"is_active": true, "qcode": "single-usage", "name": "Single Usage"},
             {"is_active": true, "qcode": "time-restricted", "name": "Time Restricted"},
