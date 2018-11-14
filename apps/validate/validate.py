@@ -65,6 +65,10 @@ class SchemaValidator(Validator):
         """Allow type media in schema."""
         pass
 
+    def _validate_type_related_content(self, field, value):
+        """Allow type related_content in schema."""
+        pass
+
     def _validate_type_embed(self, field, value):
         """Allow type media in schema."""
         pass

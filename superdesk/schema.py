@@ -7,6 +7,7 @@ __all__ = (
     'IntegerField',
     'ListField',
     'DictField',
+    'RelatedContentField'
 )
 
 
@@ -103,6 +104,18 @@ class MediaField(SchemaField):
     def __init__(self, required=False, schema=None):
         super().__init__()
         self.schema['type'] = 'media'
+        self.schema['required'] = required
+
+
+class RelatedContentField(SchemaField):
+    """Related Content schema field."""
+
+    def __repr__(self):
+        return 'related-content'
+
+    def __init__(self, required=False, schema=None):
+        super().__init__()
+        self.schema['type'] = 'related-content'
         self.schema['required'] = required
 
 
