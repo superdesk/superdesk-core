@@ -9,15 +9,17 @@
 
 from superdesk.commands.data_updates import DataUpdate
 
+
 def get_root_nodes(tree_items):
     root_nodes = []
 
     for key in tree_items:
         node = tree_items[key]
-        if node.parent == None:
+        if node.parent is None:
             root_nodes.append(node)
 
     return root_nodes
+
 
 def get_ids_recursive(list_of_nodes):
     ids = []
@@ -25,16 +27,18 @@ def get_ids_recursive(list_of_nodes):
     for node in list_of_nodes:
         if len(node.children) > 0:
             ids.extend(get_ids_recursive(node.children))
-        
+
         ids.append(node.id)
-    
+
     return ids
+
 
 class TreeNode:
     def __init__(self, id):
         self.id = id
         self.parent = None
         self.children = []
+
 
 class DataUpdate(DataUpdate):
 
@@ -53,7 +57,7 @@ class DataUpdate(DataUpdate):
             node = tree_items[node_id]
 
             parent_id = item['translated_from']
-            
+
             if parent_id not in tree_items:
                 tree_items[parent_id] = TreeNode(parent_id)
 
