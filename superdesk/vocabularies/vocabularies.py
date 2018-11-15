@@ -78,8 +78,10 @@ class VocabulariesResource(Resource):
                 }
             }
         },
-        'single_value': {
-            'type': 'boolean',
+        'selection_type': {
+            'type': 'string',
+            'allowed': ['single selection', 'multi selection', 'do not show'],
+            'nullable': True
         },
         'schema_field': {
             'type': 'string',
