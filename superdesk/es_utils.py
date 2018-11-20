@@ -167,7 +167,13 @@ def filter2query(filter_, user_id=None):
     for key, field in POST_FILTER_MAP.items():
         value = search_query.pop(key, None)
         if value is not None:
-            post_filter.append({"terms": {field: json.loads(value)}})
+            try:
+                post_filter.append({"terms": {field: json.loads(value)}})
+            except TypeError as e:
+                logger.error('Invalid data received for post filter "{key}": {e}\ndata: {value}'.format(
+                    key=key, e=e, value=value))
+                # the value is probably not JSON encoded as expected, we try directly the value
+                post_filter.append({"terms": {field: value}})
         else:
             value = search_query.pop("not" + key, None)
             if value is not None:

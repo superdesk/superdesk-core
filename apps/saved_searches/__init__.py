@@ -98,21 +98,21 @@ def publish_report(user_id, search_data):
 def process_subscribers(subscribers, search, now, isDesk=False):
     do_update = False
 
-    for suscriber_data in subscribers:
-        scheduling = suscriber_data['scheduling']
-        next_report = suscriber_data.get('next_report')
+    for subscriber_data in subscribers:
+        scheduling = subscriber_data['scheduling']
+        next_report = subscriber_data.get('next_report')
         if next_report is None:
-            suscriber_data['next_report'] = get_next_date(scheduling)
+            subscriber_data['next_report'] = get_next_date(scheduling)
             do_update = True
         elif next_report <= now:
             if isDesk:
-                desk = get_resource_service('desks').find_one(req=None, _id=suscriber_data['desk'])
+                desk = get_resource_service('desks').find_one(req=None, _id=subscriber_data['desk'])
                 for member in (desk or {}).get('members', []):
                     publish_report(member.get('user'), search)
             else:
-                publish_report(suscriber_data['user'], search)
-            suscriber_data['last_report'] = now
-            suscriber_data['next_report'] = get_next_date(scheduling)
+                publish_report(subscriber_data['user'], search)
+            subscriber_data['last_report'] = now
+            subscriber_data['next_report'] = get_next_date(scheduling)
             do_update = True
 
     return do_update
@@ -132,15 +132,23 @@ def report():
             do_update = False
 
             subscribed_users = search['subscribers'].get('user_subscriptions', [])
-            do_update = process_subscribers(subscribed_users, search, now, False) or do_update
+            try:
+                do_update = process_subscribers(subscribed_users, search, now, False) or do_update
+            except Exception as e:
+                logger.error("Can't do saved search report for users:\nexception: {e}\ndata: {search}".format(
+                    e=e, search=search))
 
             subscribed_desks = search['subscribers'].get('desk_subscriptions', [])
-            do_update = process_subscribers(subscribed_desks, search, now, True) or do_update
+            try:
+                do_update = process_subscribers(subscribed_desks, search, now, True) or do_update
+            except Exception as e:
+                logger.error("Can't do saved search report for desks:\nexception: {e}\ndata: {search}".format(
+                    e=e, search=search))
 
             if do_update:
                 updates = {'subscribers': search['subscribers']}
                 saved_searches.update(search['_id'], updates, search)
     except Exception as e:
-        logger.error("Can't report saved searched: {reason}".format(reason=e))
+        logger.error("Can't report saved searches: {reason}".format(reason=e))
     finally:
         unlock(LOCK_NAME)
