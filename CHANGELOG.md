@@ -1,5 +1,16 @@
 # Superdesk Server Changelog
 
+## [1.26.1] 2018-11-20
+
+### Fixed
+
+- Improve robustness of saved searches handling.
+- Add upgrade script to fix translations display.
+- Remove failing data upgrade script.
+- Use fixed python redis lib version.
+- Define related content data type.
+- Fix move ingested items in FTP feeding service.
+
 ## [1.26] 2018-11-12
 
 ### TBD
