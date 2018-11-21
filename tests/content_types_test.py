@@ -19,7 +19,7 @@ class MockService():
 
 class MockVocabulariesService():
 
-    def get_custom_vocabularies(self):
+    def get_forbiden_custom_vocabularies(self):
         return [
             {
                 "_id": "test",

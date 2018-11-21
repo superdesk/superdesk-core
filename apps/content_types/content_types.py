@@ -197,7 +197,7 @@ class ContentTypesService(superdesk.Service):
 def clean_doc(doc):
     schema = doc.get('schema', {})
     editor = doc.get('editor', {})
-    vocabularies = get_forbiden_vocabularies()
+    vocabularies = get_resource_service('vocabularies').get_forbiden_custom_vocabularies()
 
     for vocabulary in vocabularies:
         field = vocabulary.get('schema_field', vocabulary['_id'])
@@ -271,13 +271,6 @@ def get_fields_map_and_names():
         field_names[vocabulary['_id']] = vocabulary.get('display_name', vocabulary['_id'])
 
     return fields_map, field_names
-
-
-def get_forbiden_vocabularies():
-    vocabularies = get_resource_service('vocabularies').get_custom_vocabularies()
-
-    return (vocabulary for vocabulary in vocabularies
-            if vocabulary.get('selection_type') == DO_NOT_SHOW_SELECTION)
 
 
 def init_default(doc):
