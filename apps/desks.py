@@ -323,33 +323,34 @@ class DesksService(BaseService):
         return desk_name
 
     def get(self, req, lookup):
-        desks_data = super().get(req, lookup)
+        desks = list(super().get(req, lookup))
 
-        desk_list = []
         members_list = []
         db_users = app.data.mongo.pymongo('users').db['users']
 
         # find display_name from the users document for each member in desks document
-        for item in desks_data:
-            desk_list.append(item)
-            for member in item['members']:
-                user_data = db_users.find_one({'_id': member['user']}, {'display_name': 1})
-                if not any(d == user_data for d in members_list):
-                    members_list.append(user_data)
+        for desk in desks:
+            if 'members' in desk:
+                users = list(db_users.find({
+                    '_id': {'$in': [member['user'] for member in desk['members']]}},
+                    {'display_name': 1}
+                ))
 
-        sorted_members = []
-        # sort the members_list, alphabetically by display_name
-        sorted_members = sorted(members_list, key=lambda k: k['display_name'].lower())
+                for user in users:
+                    if not any(item == user for item in members_list):
+                        members_list.append(user)
 
-        ordered_dict = []
-        for item in sorted_members:
-            ordered_dict.append(item['_id'])
+        if members_list:
+            members_list.sort(key=lambda k: k['display_name'].lower())
+            ordered_dict = []
+            for member in members_list:
+                ordered_dict.append(member['_id'])
 
-        # sort the members of each desk according to ordered_dict
-        for item in desk_list:
-            item['members'].sort(key=lambda x: ordered_dict.index(x['user']))
+            # sort the members of each desk according to ordered_dict
+            for desk in desks:
+                desk['members'].sort(key=lambda x: ordered_dict.index(x['user']))
 
-        return ListCursor(desk_list)
+        return ListCursor(desks)
 
 
 class UserDesksResource(Resource):
