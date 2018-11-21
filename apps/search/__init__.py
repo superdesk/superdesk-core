@@ -203,7 +203,12 @@ class SearchService(superdesk.Service):
         if fields:
             params['_source'] = fields
 
-        hits = self.elastic.es.search(body=query, index=es_utils.get_index(), doc_type=types, params=params)
+        hits = self.elastic.es.search(
+            body=query,
+            index=es_utils.get_index(types),
+            doc_type=types,
+            params=params
+        )
         docs = self._get_docs(hits)
 
         for resource in types:
@@ -258,3 +263,6 @@ class SearchResource(superdesk.Resource):
 def init_app(app):
     search_service = SearchService(ARCHIVE, backend=superdesk.get_backend())
     SearchResource('search', app=app, service=search_service)
+
+    # Set the start of week config for use in both server and client
+    app.client_config['start_of_week'] = app.config.get('START_OF_WEEK') or 0
