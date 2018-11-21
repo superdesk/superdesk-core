@@ -315,6 +315,13 @@ class VocabulariesService(BaseService):
             'service': {'$exists': True},
         }))
 
+    def get_forbiden_custom_vocabularies(self):
+        return list(self.get(req=None, lookup={
+            'field_type': None,
+            'selection_type': 'do not show',
+            'service': {'$exists': True},
+        }))
+
     def get_locale_vocabulary(self, vocabulary, language):
         if not vocabulary or not language:
             return vocabulary

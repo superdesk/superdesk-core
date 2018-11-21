@@ -17,6 +17,21 @@ class MockService():
         }
 
 
+class MockVocabulariesService():
+
+    def get_forbiden_custom_vocabularies(self):
+        return [
+            {
+                "_id": "test",
+                "field_type": None,
+                "selection_type": "do not show",
+                "display_name": "test",
+                "helper_text": "test",
+                "unique_field": "qcode",
+            }
+        ]
+
+
 class ContentTypesTestCase(TestCase):
 
     def test_apply_schema_default(self):
@@ -51,3 +66,24 @@ class ContentTypesTestCase(TestCase):
         service = content_types.ContentTypesService()
         with mock.patch.object(service, 'find_one', return_value={'label': 'Test Label 123 *#$'}):
             self.assertEqual('TestLabel123', service.get_output_name(_id))
+
+    @mock.patch('apps.content_types.content_types.get_resource_service', return_value=MockVocabulariesService())
+    def test_clean_doc(self, mock):
+        profile = {
+            "schema": {
+                "test": {
+                    "type": "list",
+                    "required": False,
+                    "default": []
+                }
+            },
+            "editor": {
+                "test": {
+                    "enabled": False,
+                    "field_name": "test"
+                }
+            }
+        }
+
+        content_types.clean_doc(profile)
+        self.assertEqual({'schema': {}, 'editor': {}}, profile)
