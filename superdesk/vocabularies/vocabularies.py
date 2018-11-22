@@ -54,9 +54,20 @@ class VocabulariesResource(Resource):
             'type': 'string',
             'required': True
         },
+        'description': {
+            'type': 'string',
+            'required': False
+        },
         'helper_text': {
             'type': 'string',
             'maxlength': 120
+        },
+        'tags': {
+            'type': 'list',
+            'required': False,
+            'schema': {
+                'type': 'dict',
+            }
         },
         'popup_width': {
             'type': 'integer',
