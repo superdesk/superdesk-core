@@ -387,4 +387,4 @@ class ArchivedService(BaseService):
         return refs
 
 
-superdesk.privilege(name='archived', label='Archived Management', description='User can remove items from the archived')
+superdesk.privilege(name='archived', label='Archive Management', description='User can remove items from the archived')
