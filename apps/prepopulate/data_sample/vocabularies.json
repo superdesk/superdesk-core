@@ -105,7 +105,7 @@
         "schema": {
             "name": {},
             "qcode": {},
-            "color": {"type": "color"},
+            "color": {"type": "color", "label": "Сolour"},
             "short": {"type": "short", "label": "List Name", "maxlength": 2}
         }
     },
@@ -127,7 +127,7 @@
         "schema": {
             "name": {},
             "qcode": {},
-            "color": {"type": "color"},
+            "color": {"type": "color", "label": "Сolour"},
             "short": {"type": "short", "label": "List Name", "maxlength": 2}
         }
     },
