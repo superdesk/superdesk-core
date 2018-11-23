@@ -348,7 +348,8 @@ class DesksService(BaseService):
 
             # sort the members of each desk according to ordered_dict
             for desk in desks:
-                desk['members'].sort(key=lambda x: ordered_dict.index(x['user']))
+                if 'members' in desk:
+                    desk['members'].sort(key=lambda x: ordered_dict.index(x['user']))
 
         return ListCursor(desks)
 
