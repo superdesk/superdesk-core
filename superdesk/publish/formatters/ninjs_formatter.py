@@ -311,7 +311,7 @@ class NINJSFormatter(Formatter):
                                 _id=profile, req=None)
                     field_id = match.group("field_id")
                     schema = content_profile['schema'].get(field_id, {})
-                    if schema.get("type") == "media":
+                    if schema.get("type") == "media" or schema.get("type") == "related_content":
                         # we want custom media fields in "extra_items", cf. SDESK-2955
                         version = match.group("version")
                         media.setdefault(field_id, []).append((version, item))

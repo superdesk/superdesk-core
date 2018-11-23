@@ -946,3 +946,152 @@ class NinjsFormatterTest(TestCase):
         seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
         ninjs = json.loads(doc)
         self.assertEqual(ninjs, expected)
+
+    def test_custor_related_items(self):
+        self.app.data.insert(
+            "content_types",
+            [
+                {
+                    "_id": ObjectId("5ba11fec0d6f1301ac3cbd13"),
+                    "label": "custom related content",
+                    "editor": {
+                        "slugline": {"order": 2, "sdWidth": "full"},
+                        "headline": {"order": 3, "formatOptions": ["underline", "link", "bold"]},
+                        "custom_related_content": {"order": 1},
+                    },
+                    "schema": {
+                        "headline": {"type": "string", "required": False, "maxlength": 64, "nullable": True},
+                        "slugline": {"type": "string", "required": False, "maxlength": 24, "nullable": True},
+                        "custom_related_content": {
+                            "type": "related_content",
+                            "required": False,
+                            "enabled": True,
+                            "nullable": True,
+                        },
+                    },
+                }
+            ],
+        )
+        article = {
+            "_id": "5ba1224e0d6f13056bd82d50",
+            "type": "text",
+            "version": 1,
+            "profile": "5ba11fec0d6f1301ac3cbd13",
+            "format": "HTML",
+            "template": "5ba11fec0d6f1301ac3cbd15",
+            "headline": "custom related content",
+            "slugline": "test custom related content",
+            "guid": "123",
+            "associations": {
+                "custom_related_content--1": {
+                    "renditions": {
+                        "original": {
+                            "href": "http://localhost:5000/api/upload-raw/123.jpg",
+                            "media": "abc",
+                            "mimetype": "image/jpeg",
+                            "width": 550,
+                            "height": 331,
+                        }
+                    },
+                    "media": "abc",
+                    "type": "picture",
+                    "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                },
+                "custom_related_content--2": {
+                    "renditions": {
+                        "original": {
+                            "href": "http://localhost:5000/api/upload-raw/456.jpg",
+                            "media": "cde",
+                            "mimetype": "image/jpeg",
+                            "width": 550,
+                            "height": 331,
+                        }
+                    },
+                    "media": "cde",
+                    "type": "picture",
+                    "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                },
+            },
+        }
+
+        expected = {
+            "associations": {
+                "custom_related_content--1": {
+                    "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                    "priority": 5,
+                    "renditions": {
+                        "original": {
+                            "height": 331,
+                            "href": "http://localhost:5000/api/upload-raw/123.jpg",
+                            "media": "abc",
+                            "mimetype": "image/jpeg",
+                            "width": 550,
+                        }
+                    },
+                    "type": "picture",
+                    "version": "1",
+                },
+                "custom_related_content--2": {
+                    "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                    "priority": 5,
+                    "renditions": {
+                        "original": {
+                            "height": 331,
+                            "href": "http://localhost:5000/api/upload-raw/456.jpg",
+                            "media": "cde",
+                            "mimetype": "image/jpeg",
+                            "width": 550,
+                        }
+                    },
+                    "type": "picture",
+                    "version": "1",
+                },
+            },
+            "extra_items": {
+                "custom_related_content": {
+                    "items": [
+                        {
+                            "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                            "priority": 5,
+                            "renditions": {
+                                "original": {
+                                    "height": 331,
+                                    "href": "http://localhost:5000/api/upload-raw/123.jpg",
+                                    "media": "abc",
+                                    "mimetype": "image/jpeg",
+                                    "width": 550,
+                                }
+                            },
+                            "type": "picture",
+                            "version": "1",
+                        },
+                        {
+                            "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                            "priority": 5,
+                            "renditions": {
+                                "original": {
+                                    "height": 331,
+                                    "href": "http://localhost:5000/api/upload-raw/456.jpg",
+                                    "media": "cde",
+                                    "mimetype": "image/jpeg",
+                                    "width": 550,
+                                }
+                            },
+                            "type": "picture",
+                            "version": "1",
+                        },
+                    ]
+                }
+            },
+            "guid": "123",
+            "headline": "custom related content",
+            "priority": 5,
+            "profile": "customrelatedcontent",
+            "slugline": "test custom related content",
+            "type": "text",
+            "version": "1",
+        }
+
+        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        ninjs = json.loads(doc)
+        self.assertEqual(ninjs, expected)
