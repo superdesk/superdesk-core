@@ -900,6 +900,7 @@ class NinjsFormatterTest(TestCase):
             },
             "extra_items": {
                 "custom_media_field_multi_1": {
+                    "type": "media",
                     "items": [
                         {
                             "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
@@ -947,7 +948,7 @@ class NinjsFormatterTest(TestCase):
         ninjs = json.loads(doc)
         self.assertEqual(ninjs, expected)
 
-    def test_custor_related_items(self):
+    def test_custom_related_items(self):
         self.app.data.insert(
             "content_types",
             [
@@ -1049,6 +1050,7 @@ class NinjsFormatterTest(TestCase):
             },
             "extra_items": {
                 "custom_related_content": {
+                    "type": "related_content",
                     "items": [
                         {
                             "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
