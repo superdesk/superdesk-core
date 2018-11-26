@@ -82,6 +82,13 @@ Feature: Translate Content
       {"type":"text", "headline": "test1", "state": "submitted", "sign_off": "abc", "language": "de", "source": "AAP", 
        "subject":[{"qcode": "17004000", "name": "Statistics"}], "body_html": "Test Document body"}
       """
+      When we get "/published"
+      Then we get list with 1 items
+      """
+      {"_items": [
+        {"translation_id": "123"}
+      ]}
+      """
 
     @auth
     Scenario: Translate package
