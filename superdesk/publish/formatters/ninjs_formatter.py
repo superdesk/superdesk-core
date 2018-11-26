@@ -315,12 +315,13 @@ class NINJSFormatter(Formatter):
                         # we want custom media fields in "extra_items", cf. SDESK-2955
                         version = match.group("version")
                         media.setdefault(field_id, []).append((version, item))
+                        extra_items[field_id] = {"type": schema.get("type")}
 
         if media:
             # we have custom media fields, we now order them
             # and add them to "extra_items"
             for field_id, data in media.items():
-                extra_items[field_id] = {"items": [d[1] for d in sorted(data)]}
+                extra_items[field_id]["items"] = [d[1] for d in sorted(data)]
 
         return associations, extra_items
 
