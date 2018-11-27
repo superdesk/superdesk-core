@@ -24,6 +24,7 @@ from superdesk.notification import push_notification
 from superdesk.activity import add_activity, ACTIVITY_UPDATE
 from superdesk.metadata.item import FAMILY_ID
 from eve.utils import ParsedRequest
+from superdesk.utils import ListCursor
 
 
 class DeskTypes(SuperdeskBaseEnum):
@@ -320,6 +321,37 @@ class DesksService(BaseService):
             desk_name = desk.get('name') or ''
 
         return desk_name
+
+    def get(self, req, lookup):
+        desks = list(super().get(req, lookup))
+
+        members_list = []
+        db_users = app.data.mongo.pymongo('users').db['users']
+
+        # find display_name from the users document for each member in desks document
+        for desk in desks:
+            if 'members' in desk:
+                users = list(db_users.find({
+                    '_id': {'$in': [member['user'] for member in desk['members']]}},
+                    {'display_name': 1}
+                ))
+
+                for user in users:
+                    if not any(item == user for item in members_list):
+                        members_list.append(user)
+
+        if members_list:
+            members_list.sort(key=lambda k: k['display_name'].lower())
+            ordered_dict = []
+            for member in members_list:
+                ordered_dict.append(member['_id'])
+
+            # sort the members of each desk according to ordered_dict
+            for desk in desks:
+                if 'members' in desk:
+                    desk['members'].sort(key=lambda x: ordered_dict.index(x['user']))
+
+        return ListCursor(desks)
 
 
 class UserDesksResource(Resource):
