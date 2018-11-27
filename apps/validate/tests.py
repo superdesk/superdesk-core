@@ -310,6 +310,46 @@ class ValidateMandatoryInListTest(TestCase):
         }}
         self.assertEqual(service._get_validators(doc)[0]['schema'], schema)
 
+    def test_validate_field_required_related_content_error(self):
+        self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
+            'slugline': None,
+            'related_content_field': {'required': True, 'type': 'related_content'},
+        }}])
+        service = ValidateService()
+        errors = service.create([
+            {
+                'act': 'test',
+                'type': 'test',
+                'validate': {
+                    'profile': 'foo',
+                    'slugline': 'foo',
+                    'associations': {}
+                },
+            },
+        ])
+        self.assertEqual(errors[0], ['RELATED_CONTENT_FIELD is a required field'])
+
+    def test_validate_field_required_related_content(self):
+        self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
+            'slugline': None,
+            'related_content_field': {'required': True, 'type': 'related_content'},
+        }}])
+        service = ValidateService()
+        errors = service.create([
+            {
+                'act': 'test',
+                'type': 'test',
+                'validate': {
+                    'profile': 'foo',
+                    'slugline': 'foo',
+                    'associations': {
+                        'related_content_field--1': MEDIA_MANDATORY
+                    }
+                },
+            },
+        ])
+        self.assertEqual(errors[0], [])
+
     def test_sanitize_text_fields(self):
         item = {
             'headline': '<p>headline</p>',
@@ -383,11 +423,10 @@ class ValidateMandatoryInListTest(TestCase):
         self.assertEqual(errors, [[]])
 
     def test_validate_process_media(self):
+        media = {'headline': 'media 1'}
         item = {
             'associations': {
-                'media1--1': {
-                    'headline': 'media 1'
-                }
+                'media1--1': media
             }
         }
         validation_schema = {
@@ -395,4 +434,4 @@ class ValidateMandatoryInListTest(TestCase):
         }
         ValidateService()._process_media(item, validation_schema)
         self.assertIn('media1', item)
-        self.assertEqual(item['associations']['media1--1'], item['media1'])
+        self.assertEqual(media, item['media1'])
