@@ -246,21 +246,23 @@ class ValidateService(superdesk.Service):
                         # fails for json fields like subject, genre
                         pass
 
-    def _get_media_field(self, field_schema, field_associations, doc,):
-        """Returns the field name in associations. For multiple valued media fields
+    def _get_media_fields(self, field_schema, field_associations, doc,):
+        """Returns the field names in associations. For multiple valued media fields
         the field asssociations name is different from the field schema name.
         :param field_schema: Field schema name
         :param field_associations: Field associations name
         :param doc: Article to be validated
         """
+
+        fields = []
         if field_associations in doc.get('associations', {}):
-            return field_associations
+            return [field_associations]
         media_multivalue_field = field_schema + '--'
         for media_field in doc.get('associations', {}):
             if media_field.startswith(media_multivalue_field) and \
                     doc.get('associations', {}).get(media_field):
-                return media_field
-        return None
+                fields.append(media_field)
+        return fields
 
     def _process_media(self, doc, validation_schema):
         """If media field(feature media or custom media field) is required it should be present for
@@ -270,13 +272,16 @@ class ValidateService(superdesk.Service):
         :param doc: Article to be validated
         :param schema: Schema to validate the article
         """
+
         for field_schema in validation_schema:
             field_associations = field_schema if field_schema != 'feature_media' else 'featuremedia'
-            media_field = self._get_media_field(field_schema, field_associations, doc)
-            if media_field and isinstance(doc['associations'][media_field], MutableMapping):
-                doc[field_schema] = doc['associations'][media_field]
-                if not doc.get('feature_media', None) is None and 'description_text' in doc['feature_media']:
-                    doc['media_description'] = doc['associations']['featuremedia']['description_text']
+            media_fields = self._get_media_fields(field_schema, field_associations, doc)
+            for media_field in media_fields:
+                if media_field and isinstance(doc['associations'][media_field], MutableMapping):
+                    doc[field_schema] = doc['associations'][media_field]
+                    if not doc.get('feature_media', None) is None and 'description_text' in doc['feature_media']:
+                        doc['media_description'] = doc['associations']['featuremedia']['description_text']
+                    del doc['associations'][media_field]
 
     def _process_sms(self, doc, schema):
         """Apply the SMS validation to the sms_message value if the document is flagged for SMS
