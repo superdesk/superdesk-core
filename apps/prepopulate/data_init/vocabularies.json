@@ -86,7 +86,7 @@
         "schema": {
             "name": {"translate": true},
             "qcode": {"type": "integer"},
-            "color": {"type": "color"},
+            "color": {"type": "color", "label": "Сolour"},
             "short": {"type": "short", "label": "List Name", "maxlength": 2, "translate": true}
         }
     },
@@ -110,7 +110,7 @@
         "schema": {
             "name": {"translate": true},
             "qcode": {"type": "integer"},
-            "color": {"type": "color"},
+            "color": {"type": "color", "label": "Сolour"},
             "short": {"type": "short", "label": "List Name", "maxlength": 2, "translate": true}
         }
     },
