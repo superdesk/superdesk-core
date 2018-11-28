@@ -112,9 +112,12 @@ class NewsMLTwoFeedParser(XMLFeedParser):
         """Parse itemMeta tag"""
         meta = tree.find(self.qname('itemMeta'))
         item[ITEM_TYPE] = meta.find(self.qname('itemClass')).attrib['qcode'].split(':')[1]
-        item['versioncreated'] = self.datetime(meta.find(self.qname('versionCreated')).text)
+
+        versioncreated_elt = meta.find(self.qname('versionCreated'))
+        if versioncreated_elt is not None and versioncreated_elt.text:
+            item['versioncreated'] = self.datetime(meta.find(self.qname('versionCreated')).text)
         firstcreated_elt = meta.find(self.qname('firstCreated'))
-        if firstcreated_elt is not None:
+        if firstcreated_elt is not None and firstcreated_elt.text:
             item['firstcreated'] = self.datetime(firstcreated_elt.text)
         item['pubstatus'] = (meta.find(self.qname('pubStatus')).attrib['qcode'].split(':')[1]).lower()
         item['ednote'] = meta.find(self.qname('edNote')).text if meta.find(self.qname('edNote')) is not None else ''
@@ -174,6 +177,14 @@ class NewsMLTwoFeedParser(XMLFeedParser):
                     item['genre'].append({'name': name_el.text})
 
         self.parse_authors(meta, item)
+
+        content_created = meta.find(self.qname('contentCreated'))
+        if content_created is not None and content_created.text and not item.get('firstcreated'):
+            item['firstcreated'] = self.datetime(content_created.text)
+
+        content_updated = meta.find(self.qname('contentModified'))
+        if content_updated is not None and content_updated.text and not item.get('versioncreated'):
+            item['versioncreated'] = self.datetime(content_updated.text)
 
     def parse_content_subject(self, tree, item):
         """Parse subj type subjects into subject list."""
@@ -286,6 +297,9 @@ class NewsMLTwoFeedParser(XMLFeedParser):
             return {'contenttype': NITF, 'content': '\n'.join(elements)}
         else:
             html = tree.find(self.qname('html', ns))
+            if html is None:
+                ns = tree.nsmap.get(None)  # fallback for missing xmlns
+                html = tree.find(self.qname('html', ns))
             body = html.find(self.qname('body', ns))
             elements = []
             for elem in body:
