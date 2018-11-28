@@ -40,6 +40,8 @@ LAST_INGESTED_ID = 'last_ingested_id'
 LAST_ITEM_UPDATE = 'last_item_update'
 IDLE_TIME_DEFAULT = {'hours': 0, 'minutes': 0}
 
+UPDATE_TTL = 1800
+
 logger = logging.getLogger(__name__)
 
 
@@ -115,8 +117,8 @@ def filter_expired_items(provider, items):
                           item.get(ITEM_TYPE, 'text') in provider.get('content_types', [])]
 
         if len(items) != len(filtered_items):
-            logger.debug('Received {0} articles from provider {1}, but only {2} are eligible to be saved in ingest'
-                         .format(len(items), provider['name'], len(filtered_items)))
+            logger.warning('Received {0} articles from provider {1}, but only {2} are eligible to be saved in ingest'
+                           .format(len(items), provider['name'], len(filtered_items)))
 
         return filtered_items
     except Exception as ex:
@@ -202,37 +204,51 @@ def get_task_id(provider):
 class UpdateIngest(superdesk.Command):
     """Update ingest providers."""
 
-    option_list = {superdesk.Option('--provider', '-p', dest='provider_name')}
+    option_list = (
+        superdesk.Option('--provider', '-p', dest='provider_name'),
+        superdesk.Option('--sync', '-s', dest='sync', action='store_true'),
+    )
 
-    def run(self, provider_name=None):
+    def run(self, provider_name=None, sync=False):
         lookup = {} if not provider_name else {'name': provider_name}
         for provider in superdesk.get_resource_service('ingest_providers').get(req=None, lookup=lookup):
-            if not is_closed(provider) and is_service_and_parser_registered(provider) and is_scheduled(provider):
+            if not is_closed(provider) and is_service_and_parser_registered(provider) and \
+                    (is_scheduled(provider) or sync):
                 kwargs = {
                     'provider': provider,
                     'rule_set': get_provider_rule_set(provider),
-                    'routing_scheme': get_provider_routing_scheme(provider)
+                    'routing_scheme': get_provider_routing_scheme(provider),
+                    'sync': sync,
                 }
 
-                update_provider.apply_async(expires=get_task_ttl(provider), kwargs=kwargs)
+                if sync:
+                    update_provider.apply(kwargs=kwargs)
+                else:
+                    update_provider.apply_async(expires=get_task_ttl(provider), kwargs=kwargs)
 
 
-@celery.task(soft_time_limit=1800)
-def update_provider(provider, rule_set=None, routing_scheme=None):
+@celery.task(soft_time_limit=UPDATE_TTL)
+def update_provider(provider, rule_set=None, routing_scheme=None, sync=False):
     """Fetch items from ingest provider, ingest them into Superdesk and update the provider.
 
     :param provider: Ingest Provider data
     :param rule_set: Translation Rule Set if one is associated with Ingest Provider.
     :param routing_scheme: Routing Scheme if one is associated with Ingest Provider.
+    :param sync: Running in sync mode from cli.
     """
     lock_name = get_lock_id('ingest', provider['name'], provider[superdesk.config.ID_FIELD])
 
-    if not lock(lock_name, expire=1810):
+    if not lock(lock_name, expire=UPDATE_TTL + 10):
+        if sync:
+            logger.error('update is already running for %s', provider['name'])
         return
 
     try:
         feeding_service = get_feeding_service(provider['feeding_service'])
         update = {LAST_UPDATED: utcnow()}
+
+        if sync:
+            provider[LAST_UPDATED] = utcnow() - timedelta(days=9999) # import everything again
 
         for items in feeding_service.update(provider, update):
             ingest_items(items, provider, feeding_service, rule_set, routing_scheme)
