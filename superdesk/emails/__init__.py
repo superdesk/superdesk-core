@@ -35,7 +35,7 @@ EMAIL_TIMESTAMP_RESOURCE = 'email_timestamps'
 
 
 @celery.task(bind=True, max_retries=3, soft_time_limit=120)
-def send_email(self, subject, sender, recipients, text_body, html_body, cc=None, bcc=None):
+def send_email(self, subject, sender, recipients, text_body, html_body, cc=None, bcc=None, attachments=None):
     _id = get_activity_digest({
         'subject': subject,
         'recipients': recipients,
@@ -51,7 +51,7 @@ def send_email(self, subject, sender, recipients, text_body, html_body, cc=None,
 
     try:
         msg = SuperdeskMessage(subject, sender=sender, recipients=recipients, cc=cc, bcc=bcc,
-                               body=text_body, html=html_body)
+                               body=text_body, html=html_body, attachments=attachments)
         return app.mail.send(msg)
     finally:
         unlock(lock_id, remove=True)
