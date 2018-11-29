@@ -87,8 +87,8 @@ class ItemLock(BaseComponent):
                     item[TASK] = {'user': user_id}
 
                 superdesk.get_resource_service('tasks').assign_user(item[config.ID_FIELD], item[TASK])
-                self.app.on_item_locked(item, user_id)
                 item = item_model.find_one(item_filter)
+                self.app.on_item_locked(item, user_id)
                 push_notification('item:lock',
                                   item=str(item.get(config.ID_FIELD)),
                                   item_version=str(item.get(config.VERSION)),
