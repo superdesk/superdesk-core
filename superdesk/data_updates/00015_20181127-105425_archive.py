@@ -8,6 +8,7 @@
 # Creation: 2018-11-27 10:54
 
 from superdesk.commands.data_updates import DataUpdate
+from superdesk import get_resource_service
 
 # This upgrade script does the same as the previous one 00014_20181114-153727_archive.py
 # except this works across multiple collections
@@ -78,17 +79,17 @@ class DataUpdate(DataUpdate):
 
         # processing trees
         for root_node in get_root_nodes(tree_items):
+            updates = {'translation_id': root_node.id}
 
             for resource in ['archive', 'published']:
-                collection = mongodb_database[resource]
+                service = get_resource_service(resource)
                 ids = get_ids_recursive([root_node], resource)
 
-                print(
-                    collection.update_many(
-                        {'_id': {'$in': ids}},
-                        {'$set': {'translation_id': root_node.id}}
-                    )
-                )
+                for item_id in ids:
+                    item = service.find_one(req=None, _id=item_id)
+
+                    if item is not None:
+                        print(service.system_update(item_id, updates, item))
 
     def backwards(self, mongodb_collection, mongodb_database):
         raise NotImplementedError()
