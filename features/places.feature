@@ -13,7 +13,7 @@ Feature: Places
                     "scheme": "geonames",
                     "state": "Moravskoslezský kraj",
                     "country": "Česko",
-                    "state_code": "80",
+                    "state_code": "85",
                     "country_code": "CZ",
                     "feature_class": "P",
                     "location": {
