@@ -37,11 +37,11 @@ class SuperdeskGridFSMediaStorage(GridFSMediaStorage):
             media_file = None
         if media_file and media_file.metadata:
             for k, v in media_file.metadata.items():
-                try:
-                    if isinstance(v, str):
+                if isinstance(v, str):
+                    try:
                         media_file.metadata[k] = json.loads(v)
-                except ValueError:
-                    logger.exception('Failed to load metadata for file: %s with key: %s and value: %s', _id, k, v)
+                    except ValueError:
+                        logger.info('Non JSON metadata for file: %s with key: %s and value: %s', _id, k, v)
         return media_file
 
     def url_for_media(self, media_id, content_type=None):
