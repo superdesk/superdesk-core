@@ -59,6 +59,7 @@ class TranslateService(BaseService):
             service = ARCHIVE
         archive_service = get_resource_service(service)
         macros_service = get_resource_service('macros')
+        published_service = get_resource_service('published')
 
         item = archive_service.find_one(req=None, _id=guid)
         if not item:
@@ -79,6 +80,7 @@ class TranslateService(BaseService):
         if not item.get('translation_id'):
             archive_service.system_update(item['_id'], {'translation_id': item['_id']}, item)
             item['translation_id'] = item['_id']
+            published_service.update_published_items(item['_id'], 'translation_id', item['_id'])
 
         macros_service.execute_translation_macro(
             item, item.get('language', None), language)
