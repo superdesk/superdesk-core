@@ -238,3 +238,12 @@ class STTNoteTestCase(BaseSTTNewsMLTestCase):
     def test_byline(self):
         item = self.item[0]
         self.assertEqual(item['byline'], 'ANTTI AUTIO, HETA HASSINEN ')
+
+
+class STTArchiveTestCase(BaseSTTNewsMLTestCase):
+    filename = 'stt_archive_newsml_test.xml'
+
+    def test_timestamps(self):
+        item = self.item[0]
+        self.assertEqual('2013-02-16T17:36:20+00:00', item['firstcreated'].isoformat())
+        self.assertEqual('2013-02-16T18:36:20+00:00', item['versioncreated'].isoformat())
