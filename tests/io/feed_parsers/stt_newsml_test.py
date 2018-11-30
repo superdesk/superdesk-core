@@ -247,3 +247,4 @@ class STTArchiveTestCase(BaseSTTNewsMLTestCase):
         item = self.item[0]
         self.assertEqual('2013-02-16T17:36:20+00:00', item['firstcreated'].isoformat())
         self.assertEqual('2013-02-16T18:36:20+00:00', item['versioncreated'].isoformat())
+        self.assertEqual('2013-02-16T18:36:20+00:00', item['firstpublished'].isoformat())
