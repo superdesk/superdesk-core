@@ -55,7 +55,7 @@ class DataUpdate(DataUpdate):
     def forwards(self, mongodb_collection, mongodb_database):
         tree_items = {}
 
-        # `translated_from` can refer to archive['_id'] or published['_id']
+        # `translated_from` can refer to archive['_id'] or published['item_id']
 
         for resource in ['archive', 'published']:
             collection = mongodb_database[resource]
