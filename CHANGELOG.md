@@ -1,5 +1,18 @@
 # Superdesk Server Changelog
 
+## [1.26.2] 2018-11-30
+
+### Fixed
+
+- Add upgrade script for translations on published items.
+- Add region data from geonames to place.
+- Set translation id on published items.
+- Fix validation for custom related content fields>
+
+### Changed
+
+- Minor corrections to labels.
+
 ## [1.26.1] 2018-11-20
 
 ### Fixed
