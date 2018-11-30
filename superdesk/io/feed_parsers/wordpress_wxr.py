@@ -11,6 +11,7 @@
 import logging
 from superdesk.io.registry import register_feed_parser
 from superdesk.io.feed_parsers import XMLFeedParser
+from superdesk.utc import utcnow
 from email.utils import parsedate_to_datetime
 from superdesk import etree as sd_etree
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
@@ -46,7 +47,8 @@ class WPWXRFeedParser(XMLFeedParser):
             ('guid', 'guid'),
             ('item_id', 'guid'),
             ('_current_version', lambda _: 1),
-            ('versioncreated', {'xpath': 'pubDate/text()',
+            ('versioncreated', lambda _: utcnow()),
+            ('firstpublished', {'xpath': 'pubDate/text()',
                                 'filter': parsedate_to_datetime}),
             ('author', 'dc:creator'),
             ('headline', 'title'),
@@ -129,6 +131,9 @@ class WPWXRFeedParser(XMLFeedParser):
             content = sd_etree.parse_html(html, 'html')
             for img in content.xpath('//img'):
                 src = img.get('src')
+                if src.startswith('//'):
+                    # if we have a protocol relative URL, we use https
+                    src = "https:" + src
                 try:
                     key, media_data = self._add_image(item, src)
                 except Exception as e:

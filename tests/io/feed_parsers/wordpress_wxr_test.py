@@ -84,8 +84,8 @@ class WPWXRTestCase(TestCase):
     def test_guid(self):
         self.assertEqual(self.articles[0]['guid'], 'http://sdnewtester.org/?p=216')
 
-    def test_versioncreated(self):
-        self.assertEqual(self.articles[0]['versioncreated'],
+    def test_firstpublished(self):
+        self.assertEqual(self.articles[0]['firstpublished'],
                          datetime.datetime(2013, 7, 29, 16, 3, 54, tzinfo=datetime.timezone.utc))
 
     def test_author(self):
