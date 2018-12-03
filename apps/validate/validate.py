@@ -281,7 +281,8 @@ class ValidateService(superdesk.Service):
                     doc[field_schema] = doc['associations'][media_field]
                     if not doc.get('feature_media', None) is None and 'description_text' in doc['feature_media']:
                         doc['media_description'] = doc['associations']['featuremedia']['description_text']
-                    del doc['associations'][media_field]
+                    if media_field != 'featuremedia':
+                        del doc['associations'][media_field]
 
     def _process_sms(self, doc, schema):
         """Apply the SMS validation to the sms_message value if the document is flagged for SMS
