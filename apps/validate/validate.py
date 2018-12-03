@@ -279,10 +279,10 @@ class ValidateService(superdesk.Service):
             for media_field in media_fields:
                 if media_field and isinstance(doc['associations'][media_field], MutableMapping):
                     doc[field_schema] = doc['associations'][media_field]
-                    if not doc.get('feature_media', None) is None and 'description_text' in doc['feature_media']:
-                        doc['media_description'] = doc['associations']['featuremedia']['description_text']
                     if media_field != 'featuremedia':
                         del doc['associations'][media_field]
+                    elif not doc.get('feature_media', None) is None and 'description_text' in doc['feature_media']:
+                        doc['media_description'] = doc['feature_media']['description_text']
 
     def _process_sms(self, doc, schema):
         """Apply the SMS validation to the sms_message value if the document is flagged for SMS
