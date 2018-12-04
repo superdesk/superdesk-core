@@ -78,10 +78,15 @@ def send_report_email(user_id, search, docs):
     recipients = [user_data['email']]
     app = superdesk.app
     admins = app.config['ADMINS']
-    app_name = app.config['APPLICATION_NAME']
     subject = "Saved searches report"
-    text_body = render_template("saved_searches_report.txt", app_name=app_name, search=search, docs=docs)
-    html_body = render_template("saved_searches_report.html", app_name=app_name, search=search, docs=docs)
+    context = {
+        'app_name': app.config['APPLICATION_NAME'],
+        'search': search,
+        'docs': docs,
+        'client_url': app.config['CLIENT_URL']
+    }
+    text_body = render_template("saved_searches_report.txt", **context)
+    html_body = render_template("saved_searches_report.html", **context)
     emails.send_email.delay(
         subject=subject, sender=admins[0], recipients=recipients, text_body=text_body, html_body=html_body)
 
