@@ -15,6 +15,7 @@ from superdesk.errors import SkipValue
 from flask import current_app as app
 from superdesk.metadata.item import Priority
 from collections import OrderedDict
+import inspect
 from lxml import etree
 import superdesk
 import logging
@@ -125,7 +126,15 @@ class XMLFeedParser(FeedParser, metaclass=ABCMeta):
                 return {}
             return {'xpath': value}
         elif callable(value):
-            return {'callback': value}
+            # if callable has 2 arguments, it's a callback_with_item
+            params = inspect.signature(value).parameters
+            if len(params) == 2:
+                return {'callback_with_item': value}
+            elif len(params) == 1:
+                return {'callback': value}
+            else:
+                logger.error("Invalid signature for parser callback, ignoring")
+                return {}
         else:
             logger.warn("Can't parse mapping value {}, ignoring it".format(value))
             return {}
@@ -139,10 +148,15 @@ class XMLFeedParser(FeedParser, metaclass=ABCMeta):
             - [setting_param_name] dictionary which can be put in settings
         If a value is a non-empty string, it is a xpath, @attribute can be used as last path component.
         If value is empty string/dict, the key will be ignored
-        If value is a callable, it will be executed with nitf Element as argument, return value will be used.
+        If value is a callable, if is used either as "callback" or "callback_with_item" (see below) depending on
+            its number of arguments ("callback" is used if it has only one argument, "callback_with_item" is
+            used if it has 2 arguments, else an error is logged)
         If a dictionary is used as value, following keys can be used:
             xpath: path to the element
             callback: callback executed with nitf Element as argument, return value will be used
+                SkipValue can be raised to ignore the value
+            callback_with_item: callback wich use nift element and item as arguments
+                the callback must store itself the argument in the item dict, return value is not used
             default: value to use if element/attribute doesn't exists (default: doesn't set the key)
             list: a bool which indicate if a list is expected
                   if False (default), only first value is used
@@ -210,11 +224,15 @@ class XMLFeedParser(FeedParser, metaclass=ABCMeta):
                 xpath = mapping['xpath']
             except KeyError:
                 # no xpath, we must have a callable
-                try:
-                    values = [mapping['callback'](item_xml)]
-                except KeyError:
+                if 'callback_with_item' in mapping:
+                    # callback_with_item store values themselves, so we continue after calling it
+                    mapping['callback_with_item'](item_xml, item)
+                    continue
+                if 'callback' not in mapping:
                     logging.warn("invalid mapping for key {}, ignoring it".format(key))
                     continue
+                try:
+                    values = [mapping['callback'](item_xml)]
                 except SkipValue:
                     continue
                 list_ = False
