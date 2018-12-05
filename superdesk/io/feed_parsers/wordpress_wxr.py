@@ -52,6 +52,10 @@ class WPWXRFeedParser(XMLFeedParser):
                                 'filter': parsedate_to_datetime}),
             ('author', 'dc:creator'),
             ('headline', 'title'),
+            # featuremedia must called before body_html, so thumbnail is used
+            # in priority as feature media (else body_html would use first image
+            # as feature media).
+            ('featuremedia', self.parse_thumbnail),
             # images are handled in body_hook
             ('body_html', {'xpath': 'content:encoded',
                            'key_hook': self.body_hook}),
@@ -71,7 +75,15 @@ class WPWXRFeedParser(XMLFeedParser):
         return list(self.parse_items(xml))
 
     def parse_items(self, xml):
-        for item_xml in xml.findall('channel/item', namespaces=nsmap):
+        for item_xml in xml.findall('channel/item'):
+            try:
+                post_type = item_xml.xpath('wp:post_type', namespaces=nsmap)[0].text
+            except IndexError:
+                pass
+            else:
+                if post_type and post_type != "post":
+                    # we don't want to parse attachments
+                    continue
             yield self.parse_item(item_xml)
 
     def parse_item(self, item_xml):
@@ -98,6 +110,25 @@ class WPWXRFeedParser(XMLFeedParser):
                 del item['associations']
         return item
 
+    def check_url(self, url):
+        """Check URL and add protocol in case of relative URL
+
+        :param url: found URL
+        :return unicode: HTTP(s) URL
+        :raises ValueError: the URL is invlalid
+        """
+        if url is None:
+            raise ValueError("No URL found")
+        url = url.strip()
+        if not url:
+            raise ValueError("URL is empty")
+        if url.startswith('//'):
+            # if we have a protocol relative URL, we use https
+            url = "https:" + url
+        if not url.startswith("http"):
+            raise ValueError("Url is not HTTP(s)")
+        return url
+
     def _add_image(self, item, url):
         associations = item.setdefault('associations', {})
         association = {
@@ -113,6 +144,52 @@ class WPWXRFeedParser(XMLFeedParser):
 
         associations[key] = association
         return key, association
+
+    def parse_thumbnail(self, item_elt, item):
+        """Check for _thumbnail_id meta_key, and use its attachment as feature media
+
+        If the key is found, the linked item is looked for, and its attachment_url is used as feature media
+        """
+        thumbnail_elt = item_elt.xpath('wp:postmeta/wp:meta_key[text()="_thumbnail_id"]', namespaces=nsmap)
+        if not thumbnail_elt:
+            return
+        thumbnail_elt = thumbnail_elt[0]
+
+        try:
+            post_id = thumbnail_elt.xpath("../wp:meta_value/text()", namespaces=nsmap)[0].strip()
+            if not post_id:
+                raise IndexError
+        except IndexError:
+            logger.warning("invalid post_id, ignoring: {elt}".format(
+                elt=sd_etree.tostring(thumbnail_elt.xpath("..")[0])))
+            return
+        try:
+            if '"' in post_id:
+                raise ValueError('post id should not contain " (double quote)')
+            post_id_elt = item_elt.xpath('/rss/channel/item/wp:post_id[text()="{}"]'
+                                         .format(post_id), namespaces=nsmap)[0]
+            att_item_elt = post_id_elt.getparent()
+            url = att_item_elt.xpath('wp:attachment_url', namespaces=nsmap)[0].text.strip()
+            url = self.check_url(url)
+        except (IndexError, ValueError) as e:
+            logger.warning("Can't find attachement URL, ignoring: {e}\n{elt}".format(
+                e=e, elt=sd_etree.tostring(thumbnail_elt.getparent())))
+            return
+        try:
+            key, media_data = self._add_image(item, url)
+        except Exception as e:
+            logger.error(e)
+            return
+
+        for key, elt_names in (("description_text", ("description", "title")),
+                               ("alt_text", ("title",))):
+            for elt_name in elt_names:
+                elt = att_item_elt.find(elt_name)
+                if elt is not None and elt.text:
+                    media_data[key] = elt.text
+                    break
+            else:
+                media_data[key] = ""
 
     def body_hook(self, item, html):
         """Copy content to body_html
@@ -130,10 +207,11 @@ class WPWXRFeedParser(XMLFeedParser):
         if "img" in html:
             content = sd_etree.parse_html(html, 'html')
             for img in content.xpath('//img'):
-                src = img.get('src')
-                if src.startswith('//'):
-                    # if we have a protocol relative URL, we use https
-                    src = "https:" + src
+                try:
+                    src = self.check_url(img.get('src'))
+                except ValueError:
+                    logger.warning("Can't fetch image: {elt}".format(elt=sd_etree.to_string(img)))
+                    continue
                 try:
                     key, media_data = self._add_image(item, src)
                 except Exception as e:

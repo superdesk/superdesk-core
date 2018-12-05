@@ -63,9 +63,7 @@ def fake_update_renditions(item, url, _):
     item.update(update)
 
 
-class WPWXRTestCase(TestCase):
-
-    filename = 'wordpress_wxr.xml'
+class WPWXRTestBase(TestCase):
 
     @mock.patch.object(wordpress_wxr, 'update_renditions', fake_update_renditions)
     def __init__(self, methodname):
@@ -80,6 +78,11 @@ class WPWXRTestCase(TestCase):
         parser = etree.XMLParser(recover=True)
         parsed = etree.fromstring(buf, parser)
         self.articles = wordpress_wxr.WPWXRFeedParser().parse(parsed, provider)
+
+
+class WPWXRTestCase(WPWXRTestBase):
+
+    filename = 'wordpress_wxr.xml'
 
     def test_guid(self):
         self.assertEqual(self.articles[0]['guid'], 'http://sdnewtester.org/?p=216')
@@ -165,3 +168,51 @@ class WPWXRTestCase(TestCase):
                     'its stake in Tongaat Hulett Botswana for $6 million to offset part o'
                     'f the companyâs $19.7 million debt.</p><hr><p>Bla bla test</p>')
         self.assertEqual(self.articles[2]['body_html'], expected)
+
+
+class WPWXRThumbnailTestCase(WPWXRTestBase):
+
+    filename = 'wordpress_wxr_thumb.xml'
+
+    def test_skipped(self):
+        """Check that "attachment" items are skipped"""
+        # in the test file are 2 items: one "attachment" and one "post",
+        # only the "post" item must be returned
+        self.assertEqual(len(self.articles), 1)
+
+    def test_thumbnail(self):
+        """Check that thumbnail is retrieved from other item and used as feature media (SDESK-3699)"""
+        expected = {
+            "type": "picture",
+            "ingest_provider": "wpwxr",
+            "_id": "https://toto.invalid/attachment.jpg",
+            "renditions": {
+                "original": {
+                    "height": 256,
+                    "href": "http://test",
+                    "media": "590099f1cc3a2d2349a785ee",
+                    "mimetype": "image/jpeg",
+                    "width": 642,
+                },
+                "thumbnail": {
+                    "height": 23,
+                    "href": "http://test",
+                    "media": "590099f1cc3a2d2349a785f0",
+                    "mimetype": "image/jpeg",
+                    "width": 60,
+                },
+                "viewImage": {
+                    "height": 79,
+                    "href": "http://test",
+                    "media": "590099f1cc3a2d2349a785f2",
+                    "mimetype": "image/jpeg",
+                    "width": 200,
+                },
+            },
+            "mimetype": "image/jpeg",
+            "description_text": "this is a description",
+            "alt_text": "test",
+            "headline": "test post",
+        }
+
+        self.assertEqual(self.articles[0]['associations']['featuremedia'], expected)
