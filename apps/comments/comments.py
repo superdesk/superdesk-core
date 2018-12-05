@@ -100,7 +100,7 @@ class CommentsService(BaseService):
             decode_keys(doc, 'mentioned_users')
             decode_keys(doc, 'mentioned_desks')
 
-        notify_mentioned_users(docs, app.config.get('CLIENT_URL', ''))
+        notify_mentioned_users(docs, app.config.get('CLIENT_URL', '').rstrip('/'))
         notify_mentioned_desks(docs)
 
     def on_updated(self, updates, original):

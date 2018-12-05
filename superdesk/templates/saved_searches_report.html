@@ -10,7 +10,10 @@
     <ul>
         {% for doc in docs %}
         <li>
-        <strong>{{doc.headline|e}}</strong> (<em>{{doc.guid|e}}</em>)
+            <strong>{{doc.headline|e}}</strong>
+            (<a target="_blank" href="{{client_url}}/#/workspace/personal?item={{doc.guid|e}}&action=edit">
+                <em>{{doc.guid|e}}</em>
+            </a>)
         </li>
         {% endfor %}
     </ul>
