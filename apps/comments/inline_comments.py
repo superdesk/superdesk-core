@@ -25,7 +25,7 @@ def handle_inline_mentions(sender, updates, original):
                     'item': original.get('_id'),
                     'text': _format_comment_text(comment),
                     'mentioned_users': {user: bson.ObjectId(user) for user in users},
-                }], app.config.get('CLIENT_URL', ''), item=updated)
+                }], app.config.get('CLIENT_URL', '').rstrip('/'), item=updated)
             comment['notified'] = True
 
 

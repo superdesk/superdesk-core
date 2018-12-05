@@ -83,7 +83,7 @@ def send_report_email(user_id, search, docs):
         'app_name': app.config['APPLICATION_NAME'],
         'search': search,
         'docs': docs,
-        'client_url': app.config['CLIENT_URL']
+        'client_url': app.config['CLIENT_URL'].rstrip('/')
     }
     text_body = render_template("saved_searches_report.txt", **context)
     html_body = render_template("saved_searches_report.html", **context)

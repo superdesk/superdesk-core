@@ -62,7 +62,7 @@ def send_activate_account_email(doc, activate_ttl):
     first_name = user.get('first_name')
     app_name = app.config['APPLICATION_NAME']
     admins = app.config['ADMINS']
-    client_url = app.config['CLIENT_URL']
+    client_url = app.config['CLIENT_URL'].rstrip('/')
     url = '{}/#/reset-password?token={}'.format(client_url, doc['token'])
     hours = activate_ttl * 24
     subject = render_template("account_created_subject.txt", app_name=app_name)
@@ -86,7 +86,7 @@ def send_user_status_changed_email(recipients, status):
 
 def send_reset_password_email(doc, token_ttl):
     admins = app.config['ADMINS']
-    client_url = app.config['CLIENT_URL']
+    client_url = app.config['CLIENT_URL'].rstrip('/')
     app_name = app.config['APPLICATION_NAME']
     url = '{}/#/reset-password?token={}'.format(client_url, doc['token'])
     hours = token_ttl * 24
