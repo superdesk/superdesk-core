@@ -97,6 +97,10 @@ class NINJSFeedParser(FeedParser):
                 if child_ninjs.get('type') == 'picture' and child_ninjs.get('body_text'):
                     child_ninjs['alt_text'] = child_ninjs.get('body_text')
             item['associations'] = deepcopy(ninjs.get('associations'))
+            # we don't want strings for versioncreated
+            for metadata in item['associations'].values():
+                if metadata.get('versioncreated'):
+                    metadata['versioncreated'] = self.datetime(metadata['versioncreated'])
 
         if ninjs.get('renditions', {}).get('baseImage'):
             item['renditions'] = {'baseImage': {'href': ninjs.get('renditions', {}).get('original', {}).get('href')}}

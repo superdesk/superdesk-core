@@ -58,9 +58,16 @@ def generate_renditions(original, media_id, inserted, file_type, content_type,
 
     # remove crop if original is small
     custom_renditions = get_renditions_spec(without_internal_renditions=True)
+    # we only want to remove rendition from rendition_config if they are custom ones
     for rendition, crop in custom_renditions.items():
+        if rendition not in rendition_config:
+            continue
         if not can_generate_custom_crop_from_original(width, height, crop):
-            rendition_config.pop(rendition, None)
+            if rendition in config.RENDITIONS['picture']:
+                logger.info('image is too small for rendition "{rendition}", but it is an internal one, '
+                            'so we keep it'.format(rendition=rendition))
+            else:
+                del rendition_config[rendition]
 
     ext = content_type.split('/')[1].lower()
     if ext in ('JPG', 'jpg'):
