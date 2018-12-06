@@ -161,7 +161,7 @@ class WPWXRFeedParser(XMLFeedParser):
                 raise IndexError
         except IndexError:
             logger.warning("invalid post_id, ignoring: {elt}".format(
-                elt=sd_etree.tostring(thumbnail_elt.xpath("..")[0])))
+                elt=sd_etree.to_string(thumbnail_elt.xpath("..")[0])))
             return
         try:
             if '"' in post_id:
@@ -173,7 +173,7 @@ class WPWXRFeedParser(XMLFeedParser):
             url = self.check_url(url)
         except (IndexError, ValueError) as e:
             logger.warning("Can't find attachement URL, ignoring: {e}\n{elt}".format(
-                e=e, elt=sd_etree.tostring(thumbnail_elt.getparent())))
+                e=e, elt=sd_etree.to_string(thumbnail_elt.getparent())))
             return
         try:
             key, media_data = self._add_image(item, url)
