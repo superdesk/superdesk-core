@@ -15,9 +15,10 @@ from copy import deepcopy
 from superdesk import get_resource_service
 from superdesk.resource import Resource
 from superdesk.services import BaseService
-from apps.archive.common import ITEM_UPDATE, get_user, ITEM_CREATE
+from apps.archive.common import ITEM_UPDATE, get_user, ITEM_CREATE, ITEM_FETCH
 from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE
 from superdesk.utc import utcnow
+from apps.item_lock.components.item_lock import LOCK_USER, LOCK_SESSION, LOCK_ACTION, LOCK_TIME
 
 log = logging.getLogger(__name__)
 
@@ -52,11 +53,41 @@ class ArchiveHistoryService(BaseService):
         if updates:
             item.update(updates)
 
-        self._save_history(item, updates, operation or ITEM_UPDATE)
+        if operation in [ITEM_CREATE, ITEM_FETCH]:
+            # If this is the initial create on the item,
+            # then store the metadata from original as well
+            self._save_history(item, item, operation)
+        else:
+            self._save_history(item, updates, operation or ITEM_UPDATE)
 
     def on_item_deleted(self, doc):
         lookup = {'item_id': doc[config.ID_FIELD]}
         self.delete(lookup=lookup)
+
+    def on_item_locked(self, item, user_id):
+        self._save_lock_history(item, 'item_lock')
+
+    def on_item_unlocked(self, item, user_id):
+        if item.get(config.VERSION, 1) == 0:
+            # version 0 items get deleted on unlock, along with all history documents
+            # so there is no need to record a history item here
+            return
+
+        self._save_lock_history(item, 'item_unlock')
+
+    def _save_lock_history(self, item, operation):
+        self.post([{
+            'item_id': item[config.ID_FIELD],
+            'user_id': self.get_user_id(item),
+            'operation': operation,
+            'update': {
+                LOCK_USER: item.get(LOCK_USER),
+                LOCK_SESSION: item.get(LOCK_SESSION),
+                LOCK_ACTION: item.get(LOCK_ACTION),
+                LOCK_TIME: item.get(LOCK_TIME),
+            },
+            'version': item.get(config.VERSION, 1)
+        }])
 
     def get_user_id(self, item):
         user = get_user()

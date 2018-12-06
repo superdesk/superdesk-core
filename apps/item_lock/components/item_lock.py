@@ -30,6 +30,8 @@ from ..models.item import ItemModel
 
 LOCK_USER = 'lock_user'
 LOCK_SESSION = 'lock_session'
+LOCK_TIME = 'lock_time'
+LOCK_ACTION = 'lock_action'
 STATUS = '_status'
 TASK = 'task'
 logger = logging.getLogger(__name__)
@@ -75,9 +77,9 @@ class ItemLock(BaseComponent):
 
             if can_user_lock:
                 self.app.on_item_lock(item, user_id)
-                updates = {LOCK_USER: user_id, LOCK_SESSION: session_id, 'lock_time': utcnow()}
+                updates = {LOCK_USER: user_id, LOCK_SESSION: session_id, LOCK_TIME: utcnow()}
                 if action:
-                    updates['lock_action'] = action
+                    updates[LOCK_ACTION] = action
 
                 item_model.update(item_filter, updates)
 
@@ -92,7 +94,8 @@ class ItemLock(BaseComponent):
                 push_notification('item:lock',
                                   item=str(item.get(config.ID_FIELD)),
                                   item_version=str(item.get(config.VERSION)),
-                                  user=str(user_id), lock_time=updates['lock_time'],
+                                  user=str(user_id),
+                                  lock_time=updates[LOCK_TIME],
                                   lock_session=str(session_id),
                                   _etag=item.get(config.ETAG))
             else:
@@ -130,8 +133,8 @@ class ItemLock(BaseComponent):
                 superdesk.get_resource_service('archive').delete_action(lookup={'_id': item['_id']})
                 push_content_notification([item])
             else:
-                updates = {LOCK_USER: None, LOCK_SESSION: None, 'lock_time': None,
-                           'lock_action': None, 'force_unlock': True}
+                updates = {LOCK_USER: None, LOCK_SESSION: None, LOCK_TIME: None,
+                           LOCK_ACTION: None, 'force_unlock': True}
                 autosave = superdesk.get_resource_service('archive_autosave').find_one(req=None, _id=item['_id'])
                 if autosave and item[ITEM_STATE] not in PUBLISH_STATES:
                     if not hasattr(flask.g, 'user'):  # user is not set when session expires
@@ -154,7 +157,7 @@ class ItemLock(BaseComponent):
 
     def unlock_session(self, user_id, session_id):
         item_model = get_model(ItemModel)
-        items = item_model.find({'lock_session': session_id})
+        items = item_model.find({LOCK_SESSION: session_id})
 
         for item in items:
             self.unlock({'_id': item['_id']}, user_id, session_id, None)
