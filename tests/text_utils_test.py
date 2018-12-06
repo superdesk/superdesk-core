@@ -69,3 +69,33 @@ class WordCountTestCase(unittest.TestCase):
         bytes_str = "téstôù".encode('latin-1')
         decoded = text_utils.decode(bytes_str)
         self.assertEqual(decoded, "téstôù")
+
+    def test_get_par_count(self):
+        self.assertEqual(3, text_utils.get_par_count("""
+        <p>First paragraph</p>
+        <p>Second paragraph</p>
+        <p>Last paragraph</p>
+        """))
+
+        self.assertEqual(3, text_utils.get_par_count("""
+        <p><br></p>
+        <p>First paragraph</p>
+        <p>Second paragraph</p>
+        <p></p>
+        <p>Last paragraph</p>
+        <p>
+
+        </p>
+        """))
+
+        self.assertEqual(0, text_utils.get_par_count("""
+        <p>
+
+        </p>
+        """))
+
+        self.assertEqual(0, text_utils.get_par_count("""
+        <div></div>
+        """))
+
+        self.assertEqual(0, text_utils.get_par_count(None))

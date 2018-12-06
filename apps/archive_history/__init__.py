@@ -28,3 +28,10 @@ def init_app(app):
 
     app.on_archive_item_deleted -= service.on_item_deleted
     app.on_archive_item_deleted += service.on_item_deleted
+
+    # Store lock information to generate statistics on time spent editing items
+    app.on_item_locked -= service.on_item_locked
+    app.on_item_locked += service.on_item_locked
+
+    app.on_item_unlocked -= service.on_item_unlocked
+    app.on_item_unlocked += service.on_item_unlocked

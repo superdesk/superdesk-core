@@ -10,12 +10,15 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import re
+import logging
 from lxml import etree  # noqa
 from superdesk import etree as sd_etree
 from lxml import html as lxml_html
 from lxml.html import clean
 from flask import current_app as app
 import chardet
+
+logger = logging.getLogger(__name__)
 
 
 # This pattern matches http(s) links, numbers (1.000.000 or 1,000,000 or 1 000 000), regulars words,
@@ -93,6 +96,20 @@ def get_char_count(html):
     :return int: count of chars inside the text
     """
     return len(get_text(html))
+
+
+def get_par_count(html):
+    try:
+        elem = sd_etree.parse_html(html, content='html')
+        return len([
+            p for p in elem.iterfind('.//p')
+            if p.text and len(p.text.strip()) > 0
+        ])
+    except ValueError as e:
+        logger.warning(e)
+
+    logger.warning('Failed to determine paragraph count from html: {}.'.format(html))
+    return 0
 
 
 def get_reading_time(html, word_count=None, language=None):

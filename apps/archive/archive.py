@@ -461,7 +461,20 @@ class ArchiveService(BaseService):
         self._duplicate_versions(original_doc['_id'], new_doc)
         self._duplicate_history(original_doc['_id'], new_doc)
         app.on_archive_item_updated({'duplicate_id': new_doc['guid']}, original_doc, operation or ITEM_DUPLICATE)
-        app.on_archive_item_updated({'duplicate_id': original_doc['_id']}, new_doc, operation or ITEM_DUPLICATED_FROM)
+
+        if original_doc.get('task'):
+            # Store the new task details along with this history entry
+            app.on_archive_item_updated(
+                {'duplicate_id': original_doc['_id'], 'task': original_doc.get('task')},
+                new_doc,
+                operation or ITEM_DUPLICATED_FROM
+            )
+        else:
+            app.on_archive_item_updated(
+                {'duplicate_id': original_doc['_id']},
+                new_doc,
+                operation or ITEM_DUPLICATED_FROM
+            )
 
         return new_doc['guid']
 

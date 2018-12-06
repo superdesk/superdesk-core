@@ -794,3 +794,40 @@ Feature: Archive history
         {"version": 1, "operation": "fetch"}
       ]}
       """
+
+  @auth
+  Scenario: History of item locks and unlocks
+    Given "desks"
+    """
+    [{"name": "Sports", "members": [{"user": "#CONTEXT_USER_ID#"}]}]
+    """
+    And "archive"
+    """
+    [{  "type":"text", "event_id": "abc123", "headline": "test1", "guid": "123",
+      "original_creator": "#CONTEXT_USER_ID#",
+      "state": "submitted", "source": "REUTERS", "subject":[{"qcode": "17004000", "name": "Statistics"}],
+      "body_html": "Test Document body",
+      "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}]
+    """
+    When we post to "/archive/#archive._id#/lock"
+    """
+    {"lock_action": "edit"}
+    """
+    Then we get OK response
+    When we post to "/archive/#archive._id#/unlock"
+    """
+    {}
+    """
+    Then we get OK response
+    When we get "/archive_history?where=item_id==%22#archive._id#%22"
+    Then we get list with 3 items
+    """
+    {"_items": [
+        {"version": 1, "operation": "create"},
+        {"version": 1, "operation": "item_lock", "update": {
+            "lock_action": "edit",
+            "lock_user": "#CONTEXT_USER_ID#"
+        }},
+        {"version": 1, "operation": "item_unlock"}
+    ]}
+    """
