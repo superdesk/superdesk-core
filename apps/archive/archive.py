@@ -311,7 +311,10 @@ class ArchiveService(BaseService):
             self._set_association_timestamps(item_obj, updates, new=False)
 
             stored_item.update(item_obj)
-            updates[ASSOCIATIONS][item_name] = stored_item
+            if 'test' in item_name:
+                updates[ASSOCIATIONS][item_name] = {'_id': item_id}
+            else:
+                updates[ASSOCIATIONS][item_name] = stored_item
         if body:
             updates["body_html"] = body
 
@@ -384,6 +387,14 @@ class ArchiveService(BaseService):
         if item and str(item.get('task', {}).get('stage', '')) in \
                 get_resource_service('users').get_invisible_stages_ids(get_user().get('_id')):
             raise SuperdeskApiError.forbiddenError("User does not have permissions to read the item.")
+
+        # To fetch the related items json on the basis of ID stored in association for related items
+        if item and 'associations' in item:
+            for item_name, item_obj in item.get(ASSOCIATIONS).items():
+                if item_obj and 'test' in item_name:
+                    item_id = item_obj[config.ID_FIELD]
+                    stored_item = self.find_one(req=None, _id=item_id)
+                    item[ASSOCIATIONS][item_name] = stored_item
 
         handle_existing_data(item)
         return item
@@ -925,6 +936,7 @@ class ArchiveSaveService(BaseService):
     def create(self, docs, **kwargs):
         if not docs:
             raise SuperdeskApiError.notFoundError('Content is missing')
+
         req = parse_request(self.datasource)
         try:
             get_component(ItemAutosave).autosave(docs[0]['_id'], docs[0], get_user(required=True), req.if_match)
