@@ -681,8 +681,10 @@ AUTO_PUBLISH_CONTENT_PROFILE = True
 #: controll error notifications globally
 ERROR_NOTIFICATIONS = strtobool(env('SUPERDESK_ERROR_NOTIFICATIONS', 'true'))
 
-#: geonames credentials
+#: geonames config
 GEONAMES_USERNAME = env('GEONAMES_USERNAME')
+GEONAMES_TOKEN = env('GEONAMES_TOKEN')
+GEONAMES_URL = env('GEONAMES_URL', 'http://api.geonames.org/')
 
 # media required fields
 VALIDATOR_MEDIA_METADATA = {
