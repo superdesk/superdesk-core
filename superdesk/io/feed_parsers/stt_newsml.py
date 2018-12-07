@@ -49,6 +49,9 @@ class STTNewsMLFeedParser(NewsMLTwoFeedParser):
             if not item.get('headline'):
                 item['headline'] = text_utils.get_text(item.get('body_html', ''), 'html')[:100]
 
+            # populate published for newsroom archive
+            item.setdefault('firstpublished', item.get('versioncreated'))
+
             # abstract
             try:
                 abstract = xml.xpath("//iptc:description[@role='drol:summary']", namespaces={'iptc': IPTC_NS})[0].text
