@@ -161,6 +161,10 @@ class SavedSearchesService(BaseService):
             self.process(doc)
         push_notification(UPDATE_NOTIFICATION)
 
+    def on_created(self, docs):
+        for doc in docs:
+            doc['filter'] = decode_filter(doc['filter'])
+
     def process(self, doc):
         """
         Validates, constructs and runs the query in the document

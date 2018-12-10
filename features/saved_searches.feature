@@ -10,7 +10,22 @@ Feature: Saved Searches
         "filter": {"query": {"q": "cricket", "repo": "archive"}}
         }
         """
-        Then we get response code 201
+        Then we get new resource
+        """
+        {"filter": {"query": {"q": "cricket", "repo": "archive"}}}
+        """
+        When we get "/saved_searches"
+        Then we get list with 1 items
+        """
+        {"_items": [
+            {"filter": {"query": {"q": "cricket", "repo": "archive"}}}
+        ]}
+        """
+        When we get "/saved_searches/#saved_searches._id#"
+        Then we get existing resource
+        """
+        {"filter": {"query": {"q": "cricket", "repo": "archive"}}}
+        """
 
     @auth
     Scenario: Create a Global Saved Search
