@@ -309,9 +309,9 @@ class ArchiveService(BaseService):
                 stored_item['used'] = True
 
             self._set_association_timestamps(item_obj, updates, new=False)
-
             stored_item.update(item_obj)
-            if 'test' in item_name:
+
+            if self._is_related_content(item_name):
                 updates[ASSOCIATIONS][item_name] = {'_id': item_id}
             else:
                 updates[ASSOCIATIONS][item_name] = stored_item
@@ -384,17 +384,17 @@ class ArchiveService(BaseService):
     def find_one(self, req, **lookup):
         item = super().find_one(req, **lookup)
 
-        if item and str(item.get('task', {}).get('stage', '')) in \
-                get_resource_service('users').get_invisible_stages_ids(get_user().get('_id')):
-            raise SuperdeskApiError.forbiddenError("User does not have permissions to read the item.")
-
         # To fetch the related items json on the basis of ID stored in association for related items
         if item and 'associations' in item:
             for item_name, item_obj in item.get(ASSOCIATIONS).items():
-                if item_obj and 'test' in item_name:
+                if item_obj and self._is_related_content(item_name):
                     item_id = item_obj[config.ID_FIELD]
-                    stored_item = self.find_one(req=None, _id=item_id)
+                    stored_item = super().find_one(req=None, _id=item_id)
                     item[ASSOCIATIONS][item_name] = stored_item
+
+        if item and str(item.get('task', {}).get('stage', '')) in \
+                get_resource_service('users').get_invisible_stages_ids(get_user().get('_id')):
+            raise SuperdeskApiError.forbiddenError("User does not have permissions to read the item.")
 
         handle_existing_data(item)
         return item
@@ -588,6 +588,13 @@ class ArchiveService(BaseService):
             get_resource_service('archive_history').post(new_history_items)
 
     def update(self, id, updates, original):
+        # remove the related_items json from the updates
+        if updates and 'associations' in updates:
+            for item_name, item_obj in updates.get(ASSOCIATIONS).items():
+                if item_obj and self._is_related_content(item_name):
+                    item_id = item_obj[config.ID_FIELD]
+                    updates[ASSOCIATIONS][item_name] = {'_id': item_id}
+
         if updates.get(ASSOCIATIONS):
             for association in updates[ASSOCIATIONS].values():
                 self._set_association_timestamps(association, updates, new=False)
@@ -920,6 +927,15 @@ class ArchiveService(BaseService):
                     for old_rendition in old_renditions:
                         if old_rendition not in new_renditions:
                             updates[ASSOCIATIONS][key]['renditions'][old_rendition] = None
+
+    def _is_related_content(self, item_name):
+        related_content = list(
+            get_resource_service('vocabularies').get(req=None, lookup={'field_type': 'related_content'}))
+        if related_content:
+                for content in related_content:
+                    if content['_id'] in item_name:
+                        return True
+        return False
 
 
 class AutoSaveResource(Resource):
