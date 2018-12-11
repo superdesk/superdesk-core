@@ -19,9 +19,10 @@ logger = logging.getLogger(__name__)
 
 
 class PurgeAudit(superdesk.Command):
-    """
-    Purges the Monogo audit collection, entries are purged if the related item is no longer in
-     'Production'. Other entries are deleted after the configured time period.
+    """Purge audit collection.
+
+    Entries are purged if the related item is no longer in 'Production'.
+    Other entries are deleted after the configured time period.
     """
 
     # The list of resource entries that we will preseved in audit if an associated item still exists in production

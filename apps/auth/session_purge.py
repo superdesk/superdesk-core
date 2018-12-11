@@ -20,6 +20,10 @@ logger = logging.getLogger(__name__)
 
 
 class RemoveExpiredSessions(superdesk.Command):
+    """Remove expired sessions from db.
+
+    Using ``SESSION_EXPIRY_MINUTES`` config.
+    """
 
     def run(self):
         self.remove_expired_sessions()

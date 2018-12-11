@@ -480,6 +480,13 @@ Default: ``True``
 
 Set to false to disable publishing to Content API.
 
+``CONTENT_API_EXPIRY_DAYS``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``0``
+
+Define after how many days items expire in content api. When set to ``0`` no items will be removed.
+
 ``CONTENTAPI_MONGO_DBNAME``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -607,3 +614,4 @@ Default: ``None``
 When configured it will enable ``/places_autocomplete`` service and client will use it
 for place field searching.
 
+/conten

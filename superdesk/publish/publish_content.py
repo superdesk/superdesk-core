@@ -33,7 +33,7 @@ STATE_PENDING = 'pending'
 
 
 class PublishContent(superdesk.Command):
-    """Runs deliveries"""
+    """Deliver items from ``publish_queue to destinations.``"""
 
     def run(self, provider_type=None):
         publish.apply_async(expires=10)

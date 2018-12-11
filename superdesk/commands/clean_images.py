@@ -20,7 +20,7 @@ class CleanImages(superdesk.Command):
 
     It checks the media type and calls the correspoinding function as s3 and mongo
     requires different approaches for handling multiple files.
-    Probably running db.repairDatabase() is needed in Mongo to shring the DB size.
+    Probably running ``db.repairDatabase()`` is needed in Mongo to shring the DB size.
     """
 
     def run(self):

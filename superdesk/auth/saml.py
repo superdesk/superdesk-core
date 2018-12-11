@@ -37,8 +37,13 @@ import logging
 from urllib.parse import urlparse
 
 from flask import current_app as app, request, redirect, make_response, session, jsonify
-from onelogin.saml2.auth import OneLogin_Saml2_Auth
 from superdesk.auth import auth_user
+
+try:
+    from onelogin.saml2.auth import OneLogin_Saml2_Auth
+    imported = True
+except ImportError:
+    imported = False
 
 
 bp = superdesk.Blueprint('saml', __name__)
@@ -48,6 +53,7 @@ logger = logging.getLogger(__name__)
 def init_app(app):
     app.client_config['saml_auth'] = False
     if app.config.get('SAML_PATH'):
+        assert imported, 'onelogin module is not available'
         app.client_config['saml_auth'] = True
         app.client_config['saml_label'] = app.config['SAML_LABEL']
         superdesk.blueprint(bp, app)

@@ -14,9 +14,7 @@ Welcome to Superdesk documentation
    :class: floatinglogo
 
 Welcome. This is the home of Superdesk technical documentation. You will learn
-here mainly about the Superdesk server application. A good starting point is the
-:ref:`installation`. It might also be a good idea to check out the :ref:`overview` before digging
-deeper into the system :ref:`reference`.
+here mainly about the Superdesk server application.
 
 For technical documentation on the Superdesk client web application, have a look
 `here <https://github.com/superdesk/superdesk-client-core>`_.
@@ -55,6 +53,7 @@ works and can be developed further.
     contentapi
     extending
     authentication
+    cli
 
 Additional topics
 -----------------
