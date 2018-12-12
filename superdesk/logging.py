@@ -22,6 +22,7 @@ logging.getLogger('elasticsearch').setLevel(logging.ERROR)
 
 logging.getLogger('apps').setLevel(logging.INFO)
 logging.getLogger('superdesk').setLevel(logging.INFO)
+logging.getLogger('content_api').setLevel(logging.INFO)
 logging.getLogger('superdesk.websockets_comms').setLevel(logging.WARNING)
 
 
