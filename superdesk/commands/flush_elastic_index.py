@@ -8,10 +8,9 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-
-import requests
-from urllib.parse import urljoin
+from elasticsearch import exceptions as es_exceptions
 from flask import current_app as app
+from eve_elastic import get_es
 import superdesk
 from content_api import ELASTIC_PREFIX as CAPI_ELASTIC_PREFIX
 
@@ -38,6 +37,9 @@ class FlushElasticIndex(superdesk.Command):
         if not (sd_index or capi_index):
             raise SystemExit('You must specify at least one elastic index to flush. '
                              'Options: `--sd`, `--capi`')
+
+        self._es = get_es(superdesk.app.config['ELASTICSEARCH_URL'])
+
         if sd_index:
             self._delete_elastic(superdesk.app.config['ELASTICSEARCH_INDEX'])
         if capi_index:
@@ -51,18 +53,16 @@ class FlushElasticIndex(superdesk.Command):
         :param str index: elastix index
         :raise: SystemExit exception if delete elastic index response status is not 200 or 404.
         """
-        es_index_url = urljoin(
-            superdesk.app.config['ELASTICSEARCH_URL'],
-            index
-        )
-        print('- Removing elastic index "{}"'.format(index))
-        resp = requests.delete(es_index_url)
-        if resp.status_code == requests.status_codes.codes.OK:
-            print('\t- "{}" elastic index was deleted'.format(index))
-        if resp.status_code == requests.status_codes.codes.not_found:
+
+        try:
+            print('- Removing elastic index "{}"'.format(index))
+            self._es.indices.delete(index=index, ignore=[])
+        except es_exceptions.NotFoundError:
             print('\t- "{}" elastic index was not found. Continue wihout deleting.'.format(index))
+        except es_exceptions.TransportError as e:
+            raise SystemExit('\t- "{}" elastic index was not deleted. Exception: "{}"'.format(index, e.error))
         else:
-            SystemExit('\t- "{}" elastic index was not deleted. Server response: {}'.format(index, resp.text))
+            print('\t- "{}" elastic index was deleted.'.format(index))
 
     def _index_from_mongo(self, sd_index, capi_index):
         """Index elastic search from mongo.
