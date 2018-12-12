@@ -110,9 +110,9 @@ class WPWXRTestCase(WPWXRTestBase):
 
     def test_category(self):
         self.assertEqual(self.articles[0]['anpa_category'],
-                         [{'qcode': 'Business', 'qname': 'Business'},
-                          {'qcode': 'Companies', 'qname': 'Companies'},
-                          {'qcode': 'Economy', 'qname': 'Economy'}])
+                         [{'qcode': 'Business', 'name': 'Business'},
+                          {'qcode': 'Companies', 'name': 'Companies'},
+                          {'qcode': 'Economy', 'name': 'Economy'}])
 
     def test_attachments(self):
         # in self.articles[1] there is a body, so image should be in associations
