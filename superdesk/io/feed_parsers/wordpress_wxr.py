@@ -63,7 +63,7 @@ class WPWXRFeedParser(XMLFeedParser):
                           'list': True}),
             ('anpa_category', {'xpath': 'category[@domain="category"]/text()',
                                'list': True,
-                               'filter': lambda cat: {'qcode': cat, 'qname': cat}}),
+                               'filter': lambda cat: {'qcode': cat, 'name': cat}}),
             ('attachments', {'xpath': 'wp:attachment_url',
                              'list': True,
                              'key_hook': self.attachments_hook})])
