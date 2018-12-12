@@ -389,7 +389,17 @@ class ArchiveService(BaseService):
             for item_name, item_obj in item.get(ASSOCIATIONS).items():
                 if item_obj and self._is_related_content(item_name):
                     item_id = item_obj[config.ID_FIELD]
+
                     stored_item = super().find_one(req=None, _id=item_id)
+
+                    # If the item is published
+                    if 'state' in stored_item and stored_item['state'] == 'published':
+                        stored_item = get_resource_service('published').find_one(
+                            req=None,
+                            item_id=item_id,
+                            last_published_version=True
+                        )
+
                     item[ASSOCIATIONS][item_name] = stored_item
 
         if item and str(item.get('task', {}).get('stage', '')) in \
@@ -931,10 +941,10 @@ class ArchiveService(BaseService):
     def _is_related_content(self, item_name):
         related_content = list(
             get_resource_service('vocabularies').get(req=None, lookup={'field_type': 'related_content'}))
-        if related_content:
-                for content in related_content:
-                    if content['_id'] in item_name:
-                        return True
+
+        if related_content and item_name.split('--')[0] in [content['_id'] for content in related_content]:
+            return True
+
         return False
 
 
