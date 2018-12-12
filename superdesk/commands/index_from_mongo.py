@@ -39,14 +39,16 @@ class IndexFromMongo(superdesk.Command):
             app.data.init_elastic(app)
             resources = app.data.get_elastic_resources()
             for resource in resources:
-                self._copy_resource(resource, page_size)
+                self.copy_resource(resource, page_size)
         else:
-            self._copy_resource(collection_name, page_size)
+            self.copy_resource(collection_name, page_size)
 
-    def _copy_resource(self, resource, page_size):
-        for items in self.get_mongo_items(resource, page_size):
+    @classmethod
+    def copy_resource(cls, resource, page_size):
+        for items in cls.get_mongo_items(resource, page_size):
             print('{} Inserting {} items'.format(time.strftime('%X %x %Z'), len(items)))
             s = time.time()
+            success, failed = 0, 0
 
             for i in range(1, 4):
                 try:
@@ -66,14 +68,15 @@ class IndexFromMongo(superdesk.Command):
 
         return 'Finished indexing collection {}'.format(resource)
 
-    def get_mongo_items(self, mongo_collection_name, page_size):
+    @classmethod
+    def get_mongo_items(cls, mongo_collection_name, page_size):
         """Generate list of items from given mongo collection per page size.
 
         :param mongo_collection_name: Name of the collection to get the items
         :param page_size: Size of every list in each iteration
         :return: list of items
         """
-        bucket_size = int(page_size) if page_size else self.default_page_size
+        bucket_size = int(page_size) if page_size else cls.default_page_size
         print('Indexing data from mongo/{} to elastic/{}'.format(mongo_collection_name, mongo_collection_name))
 
         db = app.data.get_mongo_collection(mongo_collection_name)
