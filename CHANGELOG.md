@@ -1,5 +1,39 @@
 # Superdesk Server Changelog
 
+## [1.27] 2018-12-13
+
+### Fixed
+
+- Set default log level to `INFO` for `content_api` module.
+- Decode filter in response when new saved search is created.
+- Fix readthedocs build.
+- Handle timeouts from geonames api.
+- Fix issue with related items validation.
+- Fix `NewsML G2` parser to handle STT content.
+- Various fixes in Wordpress import.
+- Fix `on_item_locked` signal not passing updated item.
+- Improvements for DPA feed parser.
+
+### Added
+
+- Add `app:flush_elastic_index` manage command.
+- Add `local_domains` cv for detecting local links.
+- Add links to items in saved search report.
+- Add ability to send email attachments.
+- Add sync mode to `ingest:update` command.
+- Add support for related items in `NINJS` output format.
+- Add description and tags to vocabularies in metadata settings.
+
+### Changed
+
+- Include lock/unlock info in archive history.
+- Desk members from `/desks` are sorted by name.
+- Use aggregations from query param sor class instance variable in search.
+- Filter out `do not show` vocabularies from content profile editor.
+- Replace `single_value` with `selection_type` in vocabularies.
+- Don't store publish formatter instance in registry.
+- Don't store feeding service instance in ingest.
+
 ## [1.26] 2018-11-12
 
 ### TBD
