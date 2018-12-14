@@ -117,6 +117,7 @@ class WPWXRTestCase(WPWXRTestBase):
     def test_attachments(self):
         # in self.articles[1] there is a body, so image should be in associations
         expected = {'_id': 'http://example.net/image.png',
+                    'guid': 'http://example.net/image.png',
                     'ingest_provider': 'wpwxr',
                     'headline': 'test2',
                     'alt_text': ' ',
@@ -186,6 +187,7 @@ class WPWXRThumbnailTestCase(WPWXRTestBase):
             "type": "picture",
             "ingest_provider": "wpwxr",
             "_id": "https://toto.invalid/attachment.jpg",
+            "guid": "https://toto.invalid/attachment.jpg",
             "renditions": {
                 "original": {
                     "height": 256,

@@ -14,7 +14,7 @@ from superdesk.io.feed_parsers import XMLFeedParser
 from superdesk.utc import utcnow
 from email.utils import parsedate_to_datetime
 from superdesk import etree as sd_etree
-from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
+from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, GUID_FIELD
 from superdesk.media.renditions import update_renditions
 from xml.sax.saxutils import quoteattr
 from lxml import etree
@@ -133,7 +133,9 @@ class WPWXRFeedParser(XMLFeedParser):
         associations = item.setdefault('associations', {})
         association = {
             ITEM_TYPE: CONTENT_TYPE.PICTURE,
-            'ingest_provider': self.NAME}
+            'ingest_provider': self.NAME,
+            GUID_FIELD: url,
+        }
         update_renditions(association, url, None)
 
         # we use featuremedia for the first image, then embeddedX
