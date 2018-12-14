@@ -1,0 +1,5 @@
+{% extends "email_layout.txt" %}
+
+{% block content %}
+{{username}} changed the following translated article: {{link}}.
+{% endblock %}
