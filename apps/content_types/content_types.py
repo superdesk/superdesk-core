@@ -375,6 +375,13 @@ def prepare_for_save_content_type(original, updates):
     clean_editor(editor)
     init_schema_for_custom_fields(schema, fields_map)
     compose_subject_schema(schema, fields_map)
+    if not editor.get("subject"):
+        # subject must not be mandatory if not present in editor
+        # Note that it can still be used for custom vocabularies
+        try:
+            schema["subject"]["required"] = False
+        except (TypeError, KeyError):
+            pass
     init_editor_required(editor, schema)
     rename_schema_for_custom_fields(schema, fields_map)
 
