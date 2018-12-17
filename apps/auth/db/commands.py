@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 class CreateUserCommand(superdesk.Command):
     """Create a user with given username, password and email.
 
-    If user with given username exists, reset password.
+    If user with given username exists it's noop.
     """
 
     option_list = (

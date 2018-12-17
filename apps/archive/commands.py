@@ -39,6 +39,11 @@ def log_exeption(fn):
 
 
 class RemoveExpiredContent(superdesk.Command):
+    """Remove expired content from Superdesk.
+
+    It removes expired items from production, published and archived colections.
+    """
+
     log_msg = ''
 
     def run(self):

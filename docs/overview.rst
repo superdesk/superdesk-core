@@ -1,5 +1,0 @@
-.. _overview:
-
-Overview
-========
-

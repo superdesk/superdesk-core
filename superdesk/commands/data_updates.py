@@ -143,7 +143,7 @@ class DataUpdateCommand(superdesk.Command):
 class Upgrade(DataUpdateCommand):
     """Runs all the new data updates available.
 
-    If `data_update_id` is given, runs new data updates until the given one.
+    If ``data_update_id`` is given, runs new data updates until the given one.
     """
 
     def run(self, data_update_id=None, fake=False, dry=False):
@@ -174,7 +174,7 @@ class Upgrade(DataUpdateCommand):
 class Downgrade(DataUpdateCommand):
     """Runs the latest data update backward.
 
-    If `data_update_id` is given, runs all the data updates backward until the given one.
+    If ``data_update_id`` is given, runs all the data updates backward until the given one.
     """
 
     def run(self, data_update_id=None, fake=False, dry=False):

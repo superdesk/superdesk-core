@@ -176,6 +176,11 @@ class PrepopulateService(BaseService):
 
 
 class AppPrepopulateCommand(superdesk.Command):
+    """Prepopulate Superdesk using sample data.
+
+    Useful for demo/development environment, but don't run in production,
+    it's hard to get rid of such data later.
+    """
 
     option_list = [
         superdesk.Option('--file', '-f', dest='prepopulate_file', default='app_prepopulate_data.json'),
