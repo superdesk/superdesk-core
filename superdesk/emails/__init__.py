@@ -163,9 +163,9 @@ def send_translation_changed(username, article, recipients):
     client_url = app.config.get('CLIENT_URL', '').rstrip('/')
 
     link = '{}/#/workspace?item={}&action=edit'.format(client_url, article['_id'])
-    title = article.get('headline', link)
+    headline = article.get('headline', link)
 
-    subject = render_template("translation_changed_subject.txt", title=title)
+    subject = render_template("translation_changed_subject.txt", headline=headline)
     text_body = render_template("translation_changed.txt", app_name=app_name, username=username, link=link)
     html_body = render_template("translation_changed.html", app_name=app_name, username=username, link=link)
 

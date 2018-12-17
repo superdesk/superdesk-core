@@ -1,1 +1,1 @@
-The translated item {{title}} has been changed
+The translated item {{headline}} has been changed
