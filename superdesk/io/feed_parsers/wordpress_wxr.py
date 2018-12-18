@@ -230,6 +230,7 @@ class WPWXRFeedParser(XMLFeedParser):
                 img.addprevious(embed_start)
                 img.addnext(embed_end)
 
+            content = sd_etree.fix_html_void_elements(content)
             html = etree.tostring(content, encoding="unicode")
 
         item['body_html'] = html
