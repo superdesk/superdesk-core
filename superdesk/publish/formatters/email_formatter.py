@@ -22,7 +22,8 @@ from superdesk import etree as sd_etree
 class EmailFormatter(Formatter):
     """Superdesk Email formatter.
 
-    - Does not support any media output, it's for text items only.
+    - Feature media renditions are passed on to the transmit service, which if configured will attach the media to
+    the email.
 
     It uses templates to render items, those can be overriden to customize the output:
 
@@ -63,6 +64,8 @@ class EmailFormatter(Formatter):
                 doc['message_html'] = None
             doc['message_text'] = render_template('email_article_body.txt', article=formatted_article)
             doc['message_subject'] = render_template('email_article_subject.txt', article=formatted_article)
+            doc['renditions'] = ((formatted_article.get('associations', {}) or {}).get('featuremedia', {}) or {}).get(
+                'renditions')
         except Exception as ex:
             raise FormatterError.EmailFormatterError(ex, FormatterError)
         return [(pub_seq_num, json.dumps(doc))]

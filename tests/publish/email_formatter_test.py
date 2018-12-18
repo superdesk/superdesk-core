@@ -247,3 +247,41 @@ class EmailFormatterTest(TestCase):
         _, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
         item = json.loads(doc)
         self.assertIsNotNone(item['message_html'])
+
+    def test_featuremedia(self):
+        article = {
+            'source': 'AAP',
+            'anpa_take_key': 'take',
+            'subject': [{'qcode': '02011001'}],
+            'format': 'HTML',
+            'type': 'text',
+            'body_html': '<p>Test</p>',
+            'word_count': '1',
+            'priority': 1,
+            'place': [{'qcode': 'VIC', 'name': 'VIC'}],
+            'genre': [],
+            'sign_off': 'aa/bb',
+            'associations': {
+                'featuremedia': {
+                    'archive_description': 'A woman crosses Bourke Street Mall',
+                    'renditions': {
+                        'viewImage': {
+                            'poi': {
+                                'y': 257,
+                                'x': 454
+                            },
+                            'href': 'http://localhost:5000/api/upload-raw/5c11ece81d41c89113ed202b?_schema=http',
+                            'media': '5c11ece81d41c89113ed202b',
+                            'height': 390,
+                            'mimetype': 'image/jpeg',
+                            'width': 640
+                        }
+                    }
+                }
+            }
+        }
+        article['versioncreated'] = datetime.datetime(year=2017, month=2, day=24, hour=16, minute=40, second=56,
+                                                      tzinfo=utc)
+        seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
+        item = json.loads(doc)
+        self.assertEqual(item['renditions']['viewImage']['media'], '5c11ece81d41c89113ed202b')
