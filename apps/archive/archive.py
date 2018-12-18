@@ -473,8 +473,9 @@ class ArchiveService(BaseService):
 
         :return: guid of the duplicated article
         """
+        # do not store whole json in associations
+        new_doc = self._store_id_only_in_associations(original_doc.copy())
 
-        new_doc = original_doc.copy()
         self.remove_after_copy(new_doc, extra_fields)
         on_duplicate_item(new_doc, original_doc, operation)
         resolve_document_version(new_doc, SOURCE, 'PATCH', new_doc)
@@ -599,11 +600,7 @@ class ArchiveService(BaseService):
 
     def update(self, id, updates, original):
         # remove the related_items json from the updates
-        if updates and 'associations' in updates:
-            for item_name, item_obj in updates.get(ASSOCIATIONS).items():
-                if item_obj and self._is_related_content(item_name):
-                    item_id = item_obj[config.ID_FIELD]
-                    updates[ASSOCIATIONS][item_name] = {'_id': item_id}
+        updates = self._store_id_only_in_associations(updates)
 
         if updates.get(ASSOCIATIONS):
             for association in updates[ASSOCIATIONS].values():
@@ -937,6 +934,15 @@ class ArchiveService(BaseService):
                     for old_rendition in old_renditions:
                         if old_rendition not in new_renditions:
                             updates[ASSOCIATIONS][key]['renditions'][old_rendition] = None
+
+    def _store_id_only_in_associations(self, item):
+        # remove the related_items json from the updates
+        if item and 'associations' in item:
+            for item_name, item_obj in item.get(ASSOCIATIONS).items():
+                if item_obj and self._is_related_content(item_name):
+                    item_id = item_obj[config.ID_FIELD]
+                    item[ASSOCIATIONS][item_name] = {'_id': item_id}
+        return item
 
     def _is_related_content(self, item_name):
         related_content = list(
