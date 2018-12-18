@@ -105,6 +105,16 @@ class WPWXRTestCase(WPWXRTestBase):
                     ' the companyâs $19.7 million debt.\nBla bla test</p>')
         self.assertEqual(self.articles[0]['body_html'], expected)
 
+    def test_body_html_non_void(self):
+        """Check that non void elements are not self closing (which is illegal in HTML 5)
+
+        SDESK-3758
+        """
+        expected = ('<div><hr/><img src="http://test"/><iframe src="https://test.invalid"'
+                    ' width="750" height="400" frameborder="0" allowfullscreen="allowfull'
+                    'screen"></iframe></div>')
+        self.assertEqual(self.articles[4]['body_html'], expected)
+
     def test_keywords(self):
         self.assertEqual(self.articles[0]['keywords'], ['companies'])
 
