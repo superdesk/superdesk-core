@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from superdesk import get_resource_service
 from superdesk.media.crop import CropService
 from superdesk.metadata.item import ITEM_STATE, EMBARGO, SCHEDULE_SETTINGS
 from superdesk.utc import utcnow
@@ -15,6 +16,40 @@ from superdesk.text_utils import update_word_count
 from apps.archive.common import set_sign_off, ITEM_OPERATION
 from apps.archive.archive import update_associations
 from .common import BasePublishService, BasePublishResource, ITEM_CORRECT
+from superdesk.emails import send_translation_changed
+from superdesk.activity import add_activity
+from flask import g
+
+
+def send_translation_notifications(original):
+    translated_items = get_resource_service('published').find({
+        'translation_id': original.get('guid'),
+        'last_published_version': True
+    })
+
+    user_ids = set()
+    for translated_item in translated_items:
+        if translated_item.get('item_id') == original.get('_id'):
+            changed_article = translated_item
+            continue
+        user_ids.add(translated_item.get('original_creator'))
+
+    if len(user_ids) == 0 or changed_article is None:
+        return
+
+    add_activity('translated:changed', '', resource=None, item=changed_article, notify=user_ids)
+
+    recipients = []
+    for user_id in user_ids:
+        user = get_resource_service('users').find_one(req=None, _id=user_id)
+        if user is not None and user.get('email', None) is not None:
+            recipients.append(user.get('email'))
+
+    if len(recipients) == 0:
+        return
+
+    username = g.user.get('display_name') or g.user.get('username')
+    send_translation_changed(username, changed_article, recipients)
 
 
 class CorrectPublishResource(BasePublishResource):
@@ -55,3 +90,7 @@ class CorrectPublishService(BasePublishService):
     def update(self, id, updates, original):
         CropService().create_multiple_crops(updates, original)
         super().update(id, updates, original)
+
+    def on_updated(self, updates, original):
+        super().on_updated(updates, original)
+        send_translation_notifications(original)
