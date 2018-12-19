@@ -166,8 +166,10 @@ def send_translation_changed(username, article, recipients):
     headline = article.get('headline', link)
 
     subject = render_template("translation_changed_subject.txt", headline=headline)
-    text_body = render_template("translation_changed.txt", app_name=app_name, username=username, link=link)
-    html_body = render_template("translation_changed.html", app_name=app_name, username=username, link=link)
+    text_body = render_template("translation_changed.txt", app_name=app_name, username=username,
+                                link=link, headline=headline)
+    html_body = render_template("translation_changed.html", app_name=app_name, username=username,
+                                link=link, headline=headline)
 
     send_email.delay(subject=subject, sender=admins[0], recipients=recipients,
                      text_body=text_body, html_body=html_body)
