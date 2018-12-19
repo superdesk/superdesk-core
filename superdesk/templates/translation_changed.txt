@@ -1,5 +1,6 @@
 {% extends "email_layout.txt" %}
 
 {% block content %}
-{{username}} changed the following translated article: {{link}}.
+The following original item has been modified by {{username}}.
+Please make sure to update the corresponding translated item accordingly. {{link}}.
 {% endblock %}

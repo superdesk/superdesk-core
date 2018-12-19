@@ -33,6 +33,7 @@ def send_translation_notifications(original):
             changed_article = translated_item
             continue
         user_ids.add(translated_item.get('original_creator'))
+        user_ids.add(translated_item.get('version_creator'))
 
     if len(user_ids) == 0 or changed_article is None:
         return

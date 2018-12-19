@@ -37,7 +37,7 @@ class SendEmailTestCase(TestCase):
                 assert len(outbox) == 0
                 send_translation_changed('admin', {'_id': 'test_id', 'headline': 'headline test'}, ['test@sd.io'])
                 assert len(outbox) == 1
-                assert outbox[0].subject == 'The translated item headline test has been changed'
+                assert outbox[0].subject == 'The original item headline test has been changed'
                 link = 'http://localhost:9000/#/workspace?item=test_id&action=edit'
                 assert outbox[0].body.find(link) != -1
                 assert outbox[0].html.find(link) != -1
