@@ -779,7 +779,8 @@ class ArchiveService(BaseService):
         # update the embargo date
         update_schedule_settings(updated, EMBARGO, updated.get(EMBARGO))
         # Do the validation after Circular Reference check passes in Package Service
-        self.validate_embargo(updated)
+        if not force_unlock:
+            self.validate_embargo(updated)
         if EMBARGO in updates or "schedule_settings" in updates:
             updates[SCHEDULE_SETTINGS] = updated.get(SCHEDULE_SETTINGS, {})
 
