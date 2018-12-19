@@ -441,7 +441,7 @@ class EnqueueService:
                             continue
 
                         formatter.set_destination(destination, subscriber)
-                        formatted_docs = formatter.format(apply_schema(doc),
+                        formatted_docs = formatter.format(self.filter_document(doc),
                                                           subscriber,
                                                           subscriber_codes.get(subscriber[config.ID_FIELD]))
 
@@ -855,3 +855,29 @@ class EnqueueService:
             return [c.strip() for c in item.get('codes').split(',') if c]
         else:
             return []
+
+    @staticmethod
+    def filter_document(doc):
+        """
+        Filter document:
+        1. Remove fields that should not be there given it's profile.
+        2. Remove `None` valued renditions.
+
+        :param dict doc: document to filter
+        :return: dict filtered document
+        """
+
+        # remove fields that should not be there given it's profile.
+        doc = apply_schema(doc)
+
+        # remove `None` valued renditions.
+        for association_key in doc.get(ASSOCIATIONS, {}):
+            association = doc[ASSOCIATIONS][association_key]
+            if not association:
+                continue
+
+            renditions = association.get('renditions', {})
+            for null_rendition_key in [k for k in renditions if not renditions[k]]:
+                del doc[ASSOCIATIONS][association_key]['renditions'][null_rendition_key]
+
+        return doc

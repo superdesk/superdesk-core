@@ -782,3 +782,249 @@ Feature: News Items Archive
         }]
         """
         Then we get OK response
+
+    @auth
+    Scenario: Update feature media with custom renditions
+        Given "archive"
+        """
+        [
+            {
+                "guid": "tag:example.com,0000:newsml_BRE9A605",
+                "associations": {
+                    "featuremedia": {
+                        "_id": "urn:newsml:localhost:5000:2018-12-14T11:31:26.088056:5c45850b-2985-42b3-9ae3-a42ad3c3bc28",
+                        "media": "5c13867efe985edfc9223480",
+                        "type": "picture",
+                        "format": "HTML",
+                        "renditions": {
+                            "original": {
+                                "href": "http://localhost:5000/api/upload-raw/orig.jpg",
+                                "media": "orig",
+                                "mimetype": "image/jpeg",
+                                "width": 4032,
+                                "height": 3024,
+                                "poi": {
+                                    "x": 3024,
+                                    "y": 756
+                                }
+                            },
+                            "baseImage": {
+                                "href": "http://localhost:5000/api/upload-raw/baseImage.jpg",
+                                "media": "baseImage",
+                                "mimetype": "image/jpeg",
+                                "width": 1400,
+                                "height": 1050,
+                                "poi": {
+                                    "x": 1050,
+                                    "y": 262
+                                }
+                            },
+                            "thumbnail": {
+                                "href": "http://localhost:5000/api/upload-raw/thumbnail.jpg",
+                                "media": "thumbnail",
+                                "mimetype": "image/jpeg",
+                                "width": 160,
+                                "height": 120,
+                                "poi": {
+                                    "x": 120,
+                                    "y": 30
+                                }
+                            },
+                            "viewImage": {
+                                "href": "http://localhost:5000/api/upload-raw/viewImage.jpg",
+                                "media": "viewImage",
+                                "mimetype": "image/jpeg",
+                                "width": 640,
+                                "height": 480,
+                                "poi": {
+                                    "x": 480,
+                                    "y": 120
+                                }
+                            },
+                            "600x800": {
+                                "poi": {
+                                    "x": 3012,
+                                    "y": 759
+                                },
+                                "CropLeft": 12,
+                                "CropRight": 4032,
+                                "CropTop": -3,
+                                "CropBottom": 3024,
+                                "width": 800,
+                                "height": 600,
+                                "href": "http://localhost:5000/api/upload-raw/600x800.jpg",
+                                "media": "600x800",
+                                "mimetype": "image/jpeg"
+                            },
+                            "1280x720": {
+                                "poi": {
+                                    "x": 3024,
+                                    "y": 756
+                                },
+                                "CropLeft": 0,
+                                "CropRight": 4032,
+                                "CropTop": 0,
+                                "CropBottom": 2277,
+                                "width": 1280,
+                                "height": 720,
+                                "href": "http://localhost:5000/api/upload-raw/1280x720.jpg",
+                                "media": "1280x720",
+                                "mimetype": "image/jpeg"
+                            }
+                        }
+                    }
+                }
+            }
+        ]
+        """
+
+        When we patch given
+        """
+        {
+            "associations": {
+                "featuremedia": {
+                    "_id": "urn:newsml:localhost:5000:2018-12-14T11:31:26.088056:5c45850b-2985-42b3-9ae3-a42ad3c3bc28",
+                    "media": "5c13867efe985edfc9223480",
+                    "type": "picture",
+                    "format": "HTML",
+                    "renditions": {
+                        "original": {
+                            "href": "http://localhost:5000/api/upload-raw/orig_new.jpg",
+                            "media": "orig_new",
+                            "mimetype": "image/jpeg",
+                            "width": 4032,
+                            "height": 3024,
+                            "poi": {
+                                "x": 3024,
+                                "y": 756
+                            }
+                        },
+                        "baseImage": {
+                            "href": "http://localhost:5000/api/upload-raw/baseImage_new.jpg",
+                            "media": "baseImage_new",
+                            "mimetype": "image/jpeg",
+                            "width": 1400,
+                            "height": 1050,
+                            "poi": {
+                                "x": 1050,
+                                "y": 262
+                            }
+                        },
+                        "thumbnail": {
+                            "href": "http://localhost:5000/api/upload-raw/thumbnail_new.jpg",
+                            "media": "thumbnail_new",
+                            "mimetype": "image/jpeg",
+                            "width": 160,
+                            "height": 120,
+                            "poi": {
+                                "x": 120,
+                                "y": 30
+                            }
+                        },
+                        "viewImage": {
+                            "href": "http://localhost:5000/api/upload-raw/viewImage_new.jpg",
+                            "media": "viewImage_new",
+                            "mimetype": "image/jpeg",
+                            "width": 640,
+                            "height": 480,
+                            "poi": {
+                                "x": 480,
+                                "y": 120
+                            }
+                        },
+                        "600x800": {
+                            "poi": {
+                                "x": 3012,
+                                "y": 759
+                            },
+                            "CropLeft": 12,
+                            "CropRight": 4032,
+                            "CropTop": -3,
+                            "CropBottom": 3024,
+                            "width": 800,
+                            "height": 600,
+                            "href": "http://localhost:5000/api/upload-raw/600x800_new.jpg",
+                            "media": "600x800_new",
+                            "mimetype": "image/jpeg"
+                        }
+                    }
+                }
+            }
+        }
+        """
+        When we get "/archive/tag:example.com,0000:newsml_BRE9A605"
+        Then we get existing resource
+        """
+        {
+            "associations": {
+                "featuremedia": {
+                    "_id": "urn:newsml:localhost:5000:2018-12-14T11:31:26.088056:5c45850b-2985-42b3-9ae3-a42ad3c3bc28",
+                    "media": "5c13867efe985edfc9223480",
+                    "type": "picture",
+                    "format": "HTML",
+                    "renditions": {
+                        "original": {
+                            "href": "http://localhost:5000/api/upload-raw/orig_new.jpg",
+                            "media": "orig_new",
+                            "mimetype": "image/jpeg",
+                            "width": 4032,
+                            "height": 3024,
+                            "poi": {
+                                "x": 3024,
+                                "y": 756
+                            }
+                        },
+                        "baseImage": {
+                            "href": "http://localhost:5000/api/upload-raw/baseImage_new.jpg",
+                            "media": "baseImage_new",
+                            "mimetype": "image/jpeg",
+                            "width": 1400,
+                            "height": 1050,
+                            "poi": {
+                                "x": 1050,
+                                "y": 262
+                            }
+                        },
+                        "thumbnail": {
+                            "href": "http://localhost:5000/api/upload-raw/thumbnail_new.jpg",
+                            "media": "thumbnail_new",
+                            "mimetype": "image/jpeg",
+                            "width": 160,
+                            "height": 120,
+                            "poi": {
+                                "x": 120,
+                                "y": 30
+                            }
+                        },
+                        "viewImage": {
+                            "href": "http://localhost:5000/api/upload-raw/viewImage_new.jpg",
+                            "media": "viewImage_new",
+                            "mimetype": "image/jpeg",
+                            "width": 640,
+                            "height": 480,
+                            "poi": {
+                                "x": 480,
+                                "y": 120
+                            }
+                        },
+                        "600x800": {
+                            "poi": {
+                                "x": 3012,
+                                "y": 759
+                            },
+                            "CropLeft": 12,
+                            "CropRight": 4032,
+                            "CropTop": -3,
+                            "CropBottom": 3024,
+                            "width": 800,
+                            "height": 600,
+                            "href": "http://localhost:5000/api/upload-raw/600x800_new.jpg",
+                            "media": "600x800_new",
+                            "mimetype": "image/jpeg"
+                        },
+                        "1280x720": null
+                    }
+                }
+            }
+        }
+        """

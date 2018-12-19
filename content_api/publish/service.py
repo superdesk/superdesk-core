@@ -18,6 +18,7 @@ from superdesk.services import BaseService
 from superdesk.publish.formatters.ninjs_newsroom_formatter import NewsroomNinjsFormatter
 from superdesk import get_resource_service
 from superdesk.metadata.item import ASSOCIATIONS
+from apps.publish.enqueue.enqueue_service import EnqueueService
 
 logger = logging.getLogger('superdesk')
 
@@ -40,6 +41,7 @@ class PublishService(BaseService):
         """
 
         if not self._filter_item(item):
+            item = EnqueueService.filter_document(item)
             doc = self.formatter._transform_to_ninjs(item, self.subscriber)
             now = utcnow()
             doc.setdefault('firstcreated', now)
