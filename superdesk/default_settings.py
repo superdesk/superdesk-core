@@ -721,3 +721,6 @@ VALIDATOR_MEDIA_METADATA = {
 #: missing vocabulary is not added to SD)
 
 QCODE_MISSING_VOC = "continue"
+
+# Relative path and filename for an image to apply as a watermark on publish of feature media via email.
+WATERMARK_IMAGE = env('WATERMARK_IMAGE', '')

@@ -16,15 +16,17 @@ import hashlib
 import logging
 import requests
 import requests.exceptions
+import os
 
 from urllib.parse import urljoin
 from bson import ObjectId
 from io import BytesIO
-from PIL import Image
+from PIL import Image, ImageEnhance
 from flask import json, url_for
 from .image import get_meta
 from .video import get_meta as video_meta
 from superdesk.errors import SuperdeskApiError
+from flask import current_app as app
 
 logger = logging.getLogger(__name__)
 
@@ -182,3 +184,37 @@ def crop_image(content, file_name, cropping_data, exact_size=None, image_format=
             logger.exception('Failed to generate crop for filename: {}. Crop: {}'.format(file_name, cropping_data))
             return False, io
     return False, content
+
+
+def get_watermark(image):
+    """Apply the specified watermark to the image if available
+
+    :param image:
+    :return: watermarked image
+    """
+    image = image.copy()
+    if not app.config.get('WATERMARK_IMAGE'):
+        return image
+    if image.mode != 'RGBA':
+        image = image.convert('RGBA')
+    path = os.path.join(app.config['ABS_PATH'], app.config['WATERMARK_IMAGE'])
+    if not os.path.isfile(path):
+        logger.warning('No water mark file found at : {}'.format(path))
+        return image
+    with open(path, mode='rb') as watermark_binary:
+        watermark_image = Image.open(watermark_binary)
+        set_opacity(watermark_image, 0.3)
+        watermark_layer = Image.new('RGBA', image.size)
+        watermark_layer.paste(watermark_image, (
+            image.size[0] - watermark_image.size[0],
+            int((image.size[1] - watermark_image.size[1]) * 0.66),
+        ))
+
+    watermark = Image.alpha_composite(image, watermark_layer)
+    return watermark.convert('RGB')
+
+
+def set_opacity(image, opacity=1):
+    alpha = image.split()[3]
+    alpha = ImageEnhance.Brightness(alpha).enhance(opacity)
+    image.putalpha(alpha)
