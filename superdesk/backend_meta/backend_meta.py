@@ -23,6 +23,56 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+GITHUB_TAG_HREF = 'https://github.com/superdesk/%s/releases/tag/v%s'
+GITHUB_COMMIT_HREF = 'https://github.com/superdesk/%s/commit/%s'
+GITHUB_BRANCH_HREF = 'https://github.com/superdesk/%s/tree/%s'
+
+
+def get_client_ref(version, package, repo=None):
+    if not repo:
+        repo = package
+    try:
+        commit = version.split('#')[1]
+        try:
+            int(commit, 16)
+            template = GITHUB_COMMIT_HREF
+        except ValueError:
+            template = GITHUB_BRANCH_HREF
+        return {
+            'name': commit,
+            'href': template % (repo, commit),
+        }
+    except IndexError:
+        pass
+    return {
+        'name': version,
+        'href': GITHUB_TAG_HREF % (repo, version),
+    }
+
+
+def get_server_ref(req, package):
+    try:
+        version = re.search(r'%s==([0-9.]+)' % package, req, re.IGNORECASE).group(1)
+        return {
+            'name': version,
+            'href': GITHUB_TAG_HREF % (package, version),
+        }
+    except AttributeError:
+        pass
+    try:
+        commit = re.search(r'%s.git@([-.a-z0-9]+)#' % package, req, re.IGNORECASE).group(1)  # branch or commit
+        try:
+            int(commit, 16)
+            template = GITHUB_COMMIT_HREF
+        except ValueError:
+            template = GITHUB_BRANCH_HREF
+        return {
+            'name': commit,
+            'href': template % (package, commit),
+        }
+    except AttributeError:
+        pass
+
 
 class BackendMetaResource(Resource):
     pass
@@ -56,21 +106,21 @@ class BackendMetaService(BaseService):
                     return rev_f.read()
             except (IOError, IndexError):
                 pass
-        return ''
+        return {}
 
-    def get_core_rev(self):
+    def get_server_rev(self, package):
         if settings is not None:
             # we get superdesk-core revision from requirements.txt
             requirements_path = os.path.join(os.path.dirname(settings.__file__), 'requirements.txt')
             try:
                 with open(requirements_path) as f:
                     req = f.read()
-                return re.search(r'superdesk-core.git@([0-9a-f]+)#', req).group(1)
-            except (IOError, AttributeError):
+                    return get_server_ref(req, package)
+            except IOError:
                 pass
-        return ''
+        return None
 
-    def get_client_rev(self):
+    def get_client_rev(self, package, repo=None):
         # we get superdesk-client-core revision from package.json
         client_dir = self.find_dir('client')
         if client_dir is not None:
@@ -78,12 +128,16 @@ class BackendMetaService(BaseService):
             try:
                 with open(pkg_path) as f:
                     pkg = json.load(f)
-                return pkg['dependencies']['superdesk-core'].split('#')[-1]
-            except (IOError, ValueError, KeyError, IndexError):
+                version = pkg['dependencies'][package]
+                return get_client_ref(version, package, repo)
+            except (IOError, KeyError):
                 pass
-        return ''
+        return None
 
     def on_fetched(self, doc):
         doc['meta_rev'] = self.get_superdesk_rev()
-        doc['meta_rev_core'] = self.get_core_rev()
-        doc['meta_rev_client'] = self.get_client_rev()
+        doc['meta_rev_core'] = self.get_server_rev('superdesk-core')
+        doc['meta_rev_client'] = self.get_client_rev('superdesk-core', repo='superdesk-client-core')
+        doc['meta_rev_planning'] = self.get_server_rev('superdesk-planning')
+        doc['meta_rev_analytics'] = self.get_server_rev('superdesk-analytics')
+        doc['meta_rev_publisher'] = self.get_client_rev('superdesk-publisher')
