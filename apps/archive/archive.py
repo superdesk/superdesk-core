@@ -941,7 +941,10 @@ class ArchiveService(BaseService):
             for item_name, item_obj in item.get(ASSOCIATIONS).items():
                 if item_obj and self._is_related_content(item_name):
                     item_id = item_obj[config.ID_FIELD]
-                    item[ASSOCIATIONS][item_name] = {'_id': item_id}
+                    if 'state' in item_obj and item_obj['state'] == 'published':
+                        item[ASSOCIATIONS][item_name] = {'_id': item_obj['item_id']}
+                    else:
+                        item[ASSOCIATIONS][item_name] = {'_id': item_id}
         return item
 
     def _is_related_content(self, item_name):
