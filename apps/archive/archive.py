@@ -771,10 +771,11 @@ class ArchiveService(BaseService):
 
             updates[SCHEDULE_SETTINGS] = updated.get(SCHEDULE_SETTINGS, {})
 
-        if original[ITEM_TYPE] == CONTENT_TYPE.PICTURE:
-            CropService().validate_multiple_crops(updates, original)
-        elif original[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
+        if original[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
             self.packageService.on_update(updates, original)
+
+        if original[ITEM_TYPE] == CONTENT_TYPE.PICTURE and not force_unlock:
+            CropService().validate_multiple_crops(updates, original)
 
         # update the embargo date
         update_schedule_settings(updated, EMBARGO, updated.get(EMBARGO))
