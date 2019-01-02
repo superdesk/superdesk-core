@@ -241,12 +241,14 @@ class CropService():
         renditions = deepcopy(original.get('renditions', {}))
         # keep renditions updates (urls may have changed)
         renditions.update(update_renditions)
+        renditions = {k: renditions[k] for k in renditions if renditions[k]}
+
         if 'original' in updates.get('renditions', {}):
             original_image = updates['renditions']['original']
         else:
             original_image = original['renditions']['original']
 
-        for key in update_renditions:
+        for key in [k for k in update_renditions if update_renditions[k]]:
             if not self.get_crop_by_name(key):
                 continue
 
@@ -296,7 +298,7 @@ class CropService():
         if not (renditions and original.get(ITEM_TYPE) == CONTENT_TYPE.PICTURE):
             return
 
-        for key in renditions:
+        for key in [k for k in renditions if renditions[k]]:
             self.validate_crop(original, updates, key)
 
     def delete_replaced_crop_files(self, updates, original):
@@ -344,7 +346,7 @@ class CropService():
 
         for assoc_id, renditions in references.items():
             associated_id = assoc_id if assoc_id != item_id else None
-            for rendition in renditions.values():
+            for rendition in [r for r in renditions.values() if r]:
                 if not rendition.get('media'):
                     continue
 

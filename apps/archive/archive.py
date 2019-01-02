@@ -92,6 +92,13 @@ def update_image_caption(body, name, caption):
 
 
 def update_associations(doc):
+    """
+    Update `associations` from `body_html` draft js state.
+    When new media item is added/removed in body html,
+    `associations` in update dict will be updated from body html.
+
+    :param dict doc: update data
+    """
     if not doc.get('fields_meta', {}).get('body_html'):
         return
     entityMap = doc['fields_meta']['body_html']['draftjsState'][0].get('entityMap', {})
@@ -254,6 +261,7 @@ class ArchiveService(BaseService):
         self._add_system_updates(original, updates, user)
         self._add_desk_metadata(updates, original)
         self._handle_media_updates(updates, original, user)
+        self._flush_renditions(updates, original)
 
         # send signal
         superdesk.item_update.send(self, updates=updates, original=original)
@@ -877,6 +885,30 @@ class ArchiveService(BaseService):
         :param original: original item version before update
         """
         return get_resource_service('desks').apply_desk_metadata(updates, original)
+
+    def _flush_renditions(self, updates, original):
+        if ASSOCIATIONS not in original or ASSOCIATIONS not in updates or not updates[ASSOCIATIONS]:
+            return
+
+        default_renditions = ('original', 'baseImage', 'thumbnail', 'viewImage')
+
+        for key in [k for k in updates[ASSOCIATIONS] if k in original[ASSOCIATIONS]]:
+            try:
+                new_href = updates[ASSOCIATIONS][key]['renditions']['original']['href']
+                old_href = original[ASSOCIATIONS][key]['renditions']['original']['href']
+            except (KeyError, TypeError):
+                continue
+            else:
+                if new_href != old_href:
+                    new_renditions = [
+                        r for r in updates[ASSOCIATIONS][key]['renditions'] if r not in default_renditions
+                    ]
+                    old_renditions = [
+                        r for r in original[ASSOCIATIONS][key]['renditions'] if r not in default_renditions
+                    ]
+                    for old_rendition in old_renditions:
+                        if old_rendition not in new_renditions:
+                            updates[ASSOCIATIONS][key]['renditions'][old_rendition] = None
 
 
 class AutoSaveResource(Resource):
