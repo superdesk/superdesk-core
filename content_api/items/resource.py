@@ -54,6 +54,7 @@ schema = {
     'versioncreated': {'type': 'datetime', 'required': True},
     'firstcreated': {'type': 'datetime'},
     'firstpublished': {'type': 'datetime', 'required': False},
+    'embargoed': {'type': 'datetime'},
     'evolvedfrom': Resource.not_analyzed_field(),
     'nextversion': Resource.not_analyzed_field(),
     'subscribers': Resource.not_analyzed_field('list'),
