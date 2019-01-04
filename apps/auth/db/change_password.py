@@ -54,4 +54,9 @@ class ChangePasswordService(BaseService):
             superdesk.get_resource_service('users').update_password(user['_id'], doc['new_password'])
             del doc['old_password']
             del doc['new_password']
+
+            # return etag for further user updates
+            user = superdesk.get_resource_service('users').find_one(req=None, _id=user['_id'])
+            doc['_etag'] = user['_etag']
+
             return [user['_id']]
