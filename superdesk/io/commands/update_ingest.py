@@ -76,6 +76,19 @@ def is_closed(provider):
     return provider.get('is_closed', False)
 
 
+def is_not_expired(item, delta):
+    if item.get('expiry') or item.get('versioncreated'):
+        try:
+            expiry = item.get('expiry', item['versioncreated'] + delta)
+        except OverflowError:  # this will never expire
+            return True
+        if expiry.tzinfo:
+            return expiry > utcnow()
+        else:
+            return expiry > datetime.now()
+    return False
+
+
 def filter_expired_items(provider, items):
     """Filter out expired items from the list of articles to be ingested.
 
@@ -88,15 +101,6 @@ def filter_expired_items(provider, items):
     :return: list of items which can be saved into ingest collection
     :rtype: list
     """
-    def is_not_expired(item):
-        if item.get('expiry') or item.get('versioncreated'):
-            expiry = item.get('expiry', item['versioncreated'] + delta)
-            if expiry.tzinfo:
-                return expiry > utcnow()
-            else:
-                return expiry > datetime.now()
-        return False
-
     try:
         try:
             content_expiry = int(provider['content_expiry'])
@@ -113,7 +117,7 @@ def filter_expired_items(provider, items):
                 content_expiry = None
 
         delta = timedelta(minutes=content_expiry or app.config['INGEST_EXPIRY_MINUTES'])
-        filtered_items = [item for item in items if is_not_expired(item) and
+        filtered_items = [item for item in items if is_not_expired(item, delta) and
                           item.get(ITEM_TYPE, 'text') in provider.get('content_types', [])]
 
         if len(items) != len(filtered_items):
