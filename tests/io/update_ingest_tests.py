@@ -11,6 +11,9 @@
 
 from unittest import mock, TestCase
 from unittest.mock import MagicMock
+from datetime import datetime, timedelta
+
+from superdesk.io.commands.update_ingest import is_not_expired
 
 
 class FakeSuperdesk():
@@ -89,3 +92,14 @@ class GetProviderRoutingSchemeTestCase(TestCase):
         self.assertEqual(len(scheme_rules), 2)
         self.assertEqual(scheme_rules[0].get('filter'), {'_id': 'filter_id_4'})
         self.assertEqual(scheme_rules[1].get('filter'), {'_id': 'filter_id_8'})
+
+
+class ItemExpiryTestCase(TestCase):
+
+    def test_expiry_no_dateinfo(self):
+        self.assertFalse(is_not_expired({}, None))
+
+    def test_expiry_overflow(self):
+        item = {'versioncreated': datetime.now()}
+        delta = timedelta(minutes=999999999999)
+        self.assertTrue(is_not_expired(item, delta))
