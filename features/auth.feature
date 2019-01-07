@@ -28,13 +28,18 @@ Feature: Authentication
         [{"username": "foo", "old_password": "bar", "new_password": "new"}]
         """
         And we post to auth_db
-            """
-            {"username": "foo", "password": "new"}
-            """
-
+        """
+        {"username": "foo", "password": "new"}
+        """
         Then we get "token"
         And we get "user"
         And we get no "password"
+
+        When we get "users/foo"
+        Then we get existing resource
+        """
+        {"_etag": "#change_user_password._etag#"}
+        """
 
 
 	Scenario: Change user password with wrong old password
