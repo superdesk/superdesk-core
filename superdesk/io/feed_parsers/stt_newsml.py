@@ -37,6 +37,7 @@ class STTNewsMLFeedParser(NewsMLTwoFeedParser):
         'stt-subj': None,
         'sttdepartment': 'sttdepartment',
         'sttsubj': None,
+        'sttdone1': 'sttdone1',
     }
 
     def can_parse(self, xml):
