@@ -39,14 +39,16 @@ def get_client_ref(version, package, repo=None):
         except ValueError:
             template = GITHUB_BRANCH_HREF
         return {
-            'name': commit,
+            'name': repo,
             'href': template % (repo, commit),
+            'version': commit,
         }
     except IndexError:
         pass
     return {
-        'name': version,
+        'name': repo,
         'href': GITHUB_TAG_HREF % (repo, version),
+        'version': version,
     }
 
 
@@ -54,8 +56,9 @@ def get_server_ref(req, package):
     try:
         version = re.search(r'%s==([0-9.]+)' % package, req, re.IGNORECASE).group(1)
         return {
-            'name': version,
+            'name': package,
             'href': GITHUB_TAG_HREF % (package, version),
+            'version': version,
         }
     except AttributeError:
         pass
@@ -67,8 +70,9 @@ def get_server_ref(req, package):
         except ValueError:
             template = GITHUB_BRANCH_HREF
         return {
-            'name': commit,
+            'name': package,
             'href': template % (package, commit),
+            'version': commit,
         }
     except AttributeError:
         pass
@@ -136,8 +140,10 @@ class BackendMetaService(BaseService):
 
     def on_fetched(self, doc):
         doc['meta_rev'] = self.get_superdesk_rev()
-        doc['meta_rev_core'] = self.get_server_rev('superdesk-core')
-        doc['meta_rev_client'] = self.get_client_rev('superdesk-core', repo='superdesk-client-core')
-        doc['meta_rev_planning'] = self.get_server_rev('superdesk-planning')
-        doc['meta_rev_analytics'] = self.get_server_rev('superdesk-analytics')
-        doc['meta_rev_publisher'] = self.get_client_rev('superdesk-publisher')
+        doc['modules'] = [mod for mod in [
+            self.get_server_rev('superdesk-core'),
+            self.get_client_rev('superdesk-core', repo='superdesk-client-core'),
+            self.get_server_rev('superdesk-planning'),
+            self.get_server_rev('superdesk-analytics'),
+            self.get_client_rev('superdesk-publisher'),
+        ] if mod is not None]
