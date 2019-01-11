@@ -224,7 +224,6 @@ Feature: Rewrite content
         "rewrite_sequence": 1}
       """
 
-
     @auth
       Scenario: Rewrite of a rewritten published content
         Given the "validators"
@@ -456,7 +455,6 @@ Feature: Rewrite content
       {"_items": [{"_id": "123", "rewritten_by": "#REWRITE_OF#"}]}
       """
 
-
     @auth
     Scenario: Associate a story as update
       Given the "validators"
@@ -626,7 +624,6 @@ Feature: Rewrite content
         {"_status": "ERR",
          "_issues": {"validator exception": "400: Cannot publish the story after Update is published.!"}}
         """
-
 
     @auth
     Scenario: Cannot create rewrite of a rewrite if the original rewrite is not published
@@ -1792,5 +1789,180 @@ Feature: Rewrite content
         "place": [{"qcode" : "ACT"}],
         "target_subscribers": [{"_id": "abc"}],
         "ingest_provider": "1", "source": "YYY"
+      }
+      """
+
+    @auth
+    Scenario: Do not overwrite existing item associations
+      Given the "validators"
+      """
+        [
+        {
+            "schema": {},
+            "type": "text",
+            "act": "publish",
+            "_id": "publish_text"
+        },
+        {
+            "_id": "publish_composite",
+            "act": "publish",
+            "type": "composite",
+            "schema": {}
+        }
+        ]
+      """
+      Given "desks"
+      """
+      [{"name": "Sports"}]
+      """
+      And "archive"
+      """
+      [
+          {
+              "guid": "123",
+              "_id": "123",
+              "type": "text",
+              "headline": "test original",
+              "_current_version": 1,
+              "state": "draft",
+              "task": {
+                  "desk": "#desks._id#",
+                  "stage": "#desks.incoming_stage#",
+                  "user": "#CONTEXT_USER_ID#"
+              },
+              "subject": [
+                  {
+                      "qcode": "17004000",
+                      "name": "Statistics"
+                  }
+              ],
+              "body_html": "Test Document body original",
+              "genre": [
+                  {
+                      "name": "Article",
+                      "qcode": "Article"
+                  }
+              ],
+              "body_footer": "Original Suicide Call Back Service 1300 659 467",
+              "associations": {
+                  "editor_0": {
+                      "guid": "123",
+                      "type": "picture",
+                      "slugline": "123",
+                      "state": "in_progress",
+                      "headline": "some headline",
+                      "renditions": {
+                          "original": {}
+                      }
+                  }
+              }
+          },
+          {
+              "guid": "456",
+              "_id": "456",
+              "type": "text",
+              "headline": "test",
+              "_current_version": 1,
+              "state": "draft",
+              "task": {
+                  "desk": "#desks._id#",
+                  "stage": "#desks.incoming_stage#",
+                  "user": "#CONTEXT_USER_ID#"
+              },
+              "subject": [
+                  {
+                      "qcode": "17004000",
+                      "name": "Statistics"
+                  }
+              ],
+              "body_html": "Test Document body",
+              "genre": [
+                  {
+                      "name": "Music",
+                      "qcode": "Music"
+                  }
+              ],
+              "body_footer": "Suicide Call Back Service 1300 659 467",
+              "associations": {
+                  "editor_0": {
+                      "guid": "456",
+                      "type": "picture",
+                      "slugline": "456",
+                      "state": "in_progress",
+                      "headline": "some headline",
+                      "renditions": {
+                          "original": {}
+                      }
+                  }
+              }
+          }
+      ]
+      """
+      When we rewrite "123"
+      """
+      {
+          "update": {
+              "guid": "456",
+              "_id": "456",
+              "type": "text",
+              "headline": "test",
+              "_current_version": 1,
+              "state": "draft",
+              "task": {
+                  "desk": "#desks._id#",
+                  "stage": "#desks.incoming_stage#",
+                  "user": "#CONTEXT_USER_ID#"
+              },
+              "subject": [
+                  {
+                      "qcode": "17004000",
+                      "name": "Statistics"
+                  }
+              ],
+              "body_html": "Test Document body",
+              "genre": [
+                  {
+                      "name": "Music",
+                      "qcode": "Music"
+                  }
+              ],
+              "body_footer": "Suicide Call Back Service 1300 659 467",
+              "associations": {
+                  "editor_0": {
+                      "guid": "456",
+                      "type": "picture",
+                      "slugline": "456",
+                      "state": "in_progress",
+                      "headline": "some headline",
+                      "renditions": {
+                          "original": {}
+                      }
+                  }
+              }
+          }
+      }
+      """
+      When we get "/archive/#REWRITE_ID#"
+      Then we get existing resource
+      """
+      {
+          "_id": "456",
+          "rewrite_of": "123",
+          "headline": "test",
+          "rewrite_sequence": 1,
+          "_current_version": 1,
+          "body_html": "Test Document body",
+          "associations": {
+              "editor_0": {
+                  "guid": "456",
+                  "type": "picture",
+                  "slugline": "456",
+                  "state": "in_progress",
+                  "headline": "some headline",
+                  "renditions": {
+                      "original": {}
+                  }
+              }
+          }
       }
       """
