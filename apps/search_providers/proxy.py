@@ -2,7 +2,7 @@
 import bson
 import superdesk
 
-from flask import abort, request
+from flask import abort, request, json
 from superdesk.utc import utcnow
 from superdesk.utils import ListCursor
 from apps.search_providers.registry import registered_search_providers
@@ -64,7 +64,11 @@ class SearchProviderProxyService(SearchIngestService):
         if isinstance(service, str):
             return superdesk.get_resource_service(service).get(req, lookup)
         query = self._get_query(req)
-        items = service.find(query)
+        params = json.loads(req.args['params']) if req.args.get('params') else {}
+        try:
+            items = service.find(query, params)
+        except TypeError:  # BC
+            items = service.find(query)
         if isinstance(items, list):
             items = ListCursor(items)
         for item in items:
