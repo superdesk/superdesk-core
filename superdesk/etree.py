@@ -132,7 +132,7 @@ def parse_html(html, content='xml', lf_on_block=False, space_on_elements=False):
     return root
 
 
-def to_string(elem, encoding="unicode", method="xml", remove_root_div=True):
+def to_string(elem, encoding="unicode", method="xml", remove_root_div=True, pretty_print=False):
     """Convert Element to string
 
     :param etree.Element elem: element to convert
@@ -141,7 +141,7 @@ def to_string(elem, encoding="unicode", method="xml", remove_root_div=True):
     :param bool remove_root_dir: if True remove surrounding <div> which is added by parse_html
     :return str: converted element
     """
-    string = etree.tostring(elem, encoding=encoding, method=method)
+    string = etree.tostring(elem, encoding=encoding, method=method, pretty_print=pretty_print)
     if remove_root_div:
         if encoding == "unicode":
             div_start = "<div>"

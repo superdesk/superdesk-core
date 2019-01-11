@@ -74,7 +74,6 @@ class WPWXRTestBase(TestCase):
         with open(fixture, 'rb') as f:
             buf = f.read()
         self.ori_file = buf
-        buf = buf.replace(b'\r', b'&#13;')
         parser = etree.XMLParser(recover=True)
         parsed = etree.fromstring(buf, parser)
         self.articles = wordpress_wxr.WPWXRFeedParser().parse(parsed, provider)
@@ -110,9 +109,9 @@ class WPWXRTestCase(WPWXRTestBase):
 
         SDESK-3758
         """
-        expected = ('<div><hr/><img src="http://test"/><iframe src="https://test.invalid"'
+        expected = ('<hr/><p>\t\t<img src="http://test"/></p>\t\t<iframe src="https://test.invalid"'
                     ' width="750" height="400" frameborder="0" allowfullscreen="allowfull'
-                    'screen"></iframe></div>')
+                    'screen"></iframe>')
         self.assertEqual(self.articles[4]['body_html'], expected)
 
     def test_keywords(self):
@@ -228,3 +227,13 @@ class WPWXRThumbnailTestCase(WPWXRTestBase):
         }
 
         self.assertEqual(self.articles[0]['associations']['featuremedia'], expected)
+
+
+class FunkeWXRTestCase(WPWXRTestBase):
+
+    filename = 'wordpress_wxr_funke.xml'
+
+    def test_body_html(self):
+        self.assertTrue(
+            self.articles[0]['body_html'].lstrip().startswith('<p><strong'),
+            self.articles[0]['body_html'][:20])

@@ -30,6 +30,27 @@ nsmap = {
 }
 embed_TPL = "EMBED {} Image {{id: \"{}\"}}"
 
+BLOCK_WHITELIST = {
+    '<h',  # hr + h[1..9]
+    '<br',
+    '<p',
+    '<div',
+    '<iframe',
+    '<ul',
+    '<ol',
+    '<li',
+    '<table',
+    '</',
+}
+
+
+def is_block_elem(line):
+    text = line.lstrip()
+    for block in BLOCK_WHITELIST:
+        if text.startswith(block):
+            return True
+    return False
+
 
 class WPWXRFeedParser(XMLFeedParser):
     """
@@ -203,8 +224,10 @@ class WPWXRFeedParser(XMLFeedParser):
         # cf. SDTS-22
         html = html.replace('&#13;', '\r')
         splitted = html.split('\r\n')
+        if len(splitted) == 1 and '<p>' not in html:
+            splitted = html.split('\n')
         if len(splitted) > 1:
-            html = ''.join(['<p>{}</p>'.format(s) if not s.startswith('<hr') else s for s in splitted if s])
+            html = ''.join(['<p>{}</p>'.format(s) if not is_block_elem(s) else s for s in splitted if s.strip()])
 
         if "img" in html:
             content = sd_etree.parse_html(html, 'html')
@@ -231,7 +254,7 @@ class WPWXRFeedParser(XMLFeedParser):
                 img.addnext(embed_end)
 
             content = sd_etree.fix_html_void_elements(content)
-            html = etree.tostring(content, encoding="unicode")
+            html = sd_etree.to_string(content, encoding="unicode", method='xml')
 
         item['body_html'] = html
 
