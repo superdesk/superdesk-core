@@ -146,6 +146,9 @@ class ArchiveRewriteService(Service):
 
         fields = ['family_id', 'event_id', 'flags', 'language', ASSOCIATIONS, 'extra']
 
+        if app.config.get('COPY_ON_REWRITE_FIELDS'):
+            fields.extend(app.config['COPY_ON_REWRITE_FIELDS'])
+
         if existing_item:
             # for associate an existing file as update merge subjects
             subjects = original.get('subject', [])

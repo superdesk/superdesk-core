@@ -155,5 +155,27 @@ def register_jinja_filter(name, jinja_filter):
     JINJA_FILTERS[name] = jinja_filter
 
 
+def register_item_schema_field(name, schema, app, copy_on_rewrite=True):
+    """Register new item schema field.
+
+    .. versionadded:: 1.28
+
+    :param str name: field name
+    :param dict schema: field schema
+    :param Flask app: flask app
+    :param bool copy_on_rewrite: copy field value when rewriting item
+    """
+    for resource in ['ingest', 'archive', 'published', 'archive_autosave']:
+        app.config['DOMAIN'][resource]['schema'].update({name: schema})
+
+    app.config['DOMAIN']['content_templates_apply']['schema']['item']['schema'].update(
+        {name: schema}
+    )
+
+    if copy_on_rewrite:
+        app.config.setdefault('COPY_ON_REWRITE_FIELDS', [])
+        app.config['COPY_ON_REWRITE_FIELDS'].append(name)
+
+
 from superdesk.search_provider import SearchProvider  # noqa
 from apps.search_providers import register_search_provider  # noqa

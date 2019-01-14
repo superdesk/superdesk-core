@@ -2458,3 +2458,8 @@ def test_items_contain_items(items, context_items):
 def step_impl_we_get_desk_members_count(context, count):
     desk = get_json_data(context.response) or {}
     assert len(desk.get('members') or []) == int(count), 'Invalid desk members'
+
+
+@when('we register custom schema field "{name}"')
+def when_register_custom_schema_field(context, name):
+    superdesk.register_item_schema_field(name, schema=json.loads(context.text), app=context.app)
