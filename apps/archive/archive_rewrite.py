@@ -145,6 +145,7 @@ class ArchiveRewriteService(Service):
         rewrite = dict()
 
         fields = ['family_id', 'event_id', 'flags', 'language', ASSOCIATIONS, 'extra']
+        existing_item_preserve_fields = (ASSOCIATIONS,)
 
         if app.config.get('COPY_ON_REWRITE_FIELDS'):
             fields.extend(app.config['COPY_ON_REWRITE_FIELDS'])
@@ -178,6 +179,10 @@ class ArchiveRewriteService(Service):
 
         for field in fields:
             if original.get(field):
+                # don't overwrite some fields in existing items
+                if existing_item and field in existing_item_preserve_fields:
+                    continue
+
                 rewrite[field] = original[field]
 
         # if the original was flagged for SMS the rewrite should not be.
