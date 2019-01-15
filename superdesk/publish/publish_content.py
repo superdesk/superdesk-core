@@ -89,56 +89,74 @@ def get_queue_items(retries=False):
 @celery.task(soft_time_limit=600)
 def transmit_subscriber_items(queue_items, subscriber):
     lock_name = get_lock_id('Subscriber', 'Transmit', subscriber)
-    publish_queue_service = get_resource_service(PUBLISH_QUEUE)
+    is_async = get_resource_service('subscribers').is_async(subscriber)
 
     if not lock(lock_name, expire=610):
         return
 
     try:
         for queue_item in queue_items:
-            log_msg = '_id: {_id}  item_id: {item_id}  state: {state} ' \
-                      'item_version: {item_version} headline: {headline}'.format(**queue_item)
-            try:
-                # check the status of the queue item
-                queue_item = publish_queue_service.find_one(req=None, _id=queue_item[config.ID_FIELD])
-                if queue_item.get('state') not in [QueueState.PENDING.value, QueueState.RETRYING.value]:
-                    logger.info('Transmit State is not pending/retrying for queue item: {}. It is in {}'.
-                                format(queue_item.get(config.ID_FIELD), queue_item.get('state')))
-                    continue
-
-                # update the status of the item to in-progress
-                queue_update = {'state': 'in-progress', 'transmit_started_at': utcnow()}
-                publish_queue_service.patch(queue_item.get(config.ID_FIELD), queue_update)
-                logger.info('Transmitting queue item {}'.format(log_msg))
-
-                destination = queue_item['destination']
-                transmitter = superdesk.publish.registered_transmitters[destination.get('delivery_type')]
-                transmitter.transmit(queue_item)
-                logger.info('Transmitted queue item {}'.format(log_msg))
-            except Exception as e:
-                logger.exception('Failed to transmit queue item {}'.format(log_msg))
-
-                max_retry_attempt = app.config.get('MAX_TRANSMIT_RETRY_ATTEMPT')
-                retry_attempt_delay = app.config.get('TRANSMIT_RETRY_ATTEMPT_DELAY_MINUTES')
-                try:
-                    orig_item = publish_queue_service.find_one(req=None, _id=queue_item['_id'])
-                    updates = {config.LAST_UPDATED: utcnow()}
-
-                    if orig_item.get('retry_attempt', 0) < max_retry_attempt and \
-                            not isinstance(e, PublishHTTPPushClientError):
-
-                        updates['retry_attempt'] = orig_item.get('retry_attempt', 0) + 1
-                        updates['state'] = QueueState.RETRYING.value
-                        updates['next_retry_attempt_at'] = utcnow() + timedelta(minutes=retry_attempt_delay)
-                    else:
-                        # all retry attempts exhausted marking the item as failed.
-                        updates['state'] = QueueState.FAILED.value
-
-                    publish_queue_service.system_update(orig_item.get(config.ID_FIELD), updates, orig_item)
-                except Exception:
-                    logger.error('Failed to set the state for failed publish queue item {}.'.format(queue_item['_id']))
+            args = [queue_item[config.ID_FIELD]]
+            kwargs = {'is_async': is_async}
+            if is_async:
+                transmit_item.apply_async(args=args, kwargs=kwargs)
+            else:
+                transmit_item.apply(args=args, kwargs=kwargs)
     finally:
         unlock(lock_name)
+
+
+@celery.task(soft_time_limit=300)
+def transmit_item(queue_item_id, is_async=False):
+    publish_queue_service = get_resource_service(PUBLISH_QUEUE)
+    lock_name = get_lock_id('Transmit', str(queue_item_id))
+    if is_async and not lock(lock_name, expire=310):
+        return
+    try:
+        # check the status of the queue item
+        queue_item = publish_queue_service.find_one(req=None, _id=queue_item_id)
+        if queue_item.get('state') not in [QueueState.PENDING.value, QueueState.RETRYING.value]:
+            logger.info('Transmit State is not pending/retrying for queue item: {}. It is in {}'.
+                        format(queue_item.get(config.ID_FIELD), queue_item.get('state')))
+            return
+
+        log_msg = '_id: {_id}  item_id: {item_id}  state: {state} ' \
+                  'item_version: {item_version} headline: {headline}'.format(**queue_item)
+
+        # update the status of the item to in-progress
+        queue_update = {'state': 'in-progress', 'transmit_started_at': utcnow()}
+        publish_queue_service.patch(queue_item.get(config.ID_FIELD), queue_update)
+        logger.info('Transmitting queue item {}'.format(log_msg))
+
+        destination = queue_item['destination']
+        transmitter = superdesk.publish.registered_transmitters[destination.get('delivery_type')]
+        transmitter.transmit(queue_item)
+        logger.info('Transmitted queue item {}'.format(log_msg))
+    except Exception as e:
+        logger.exception('Failed to transmit queue item {}'.format(log_msg))
+
+        max_retry_attempt = app.config.get('MAX_TRANSMIT_RETRY_ATTEMPT')
+        retry_attempt_delay = app.config.get('TRANSMIT_RETRY_ATTEMPT_DELAY_MINUTES')
+        try:
+            orig_item = publish_queue_service.find_one(req=None, _id=queue_item['_id'])
+            updates = {config.LAST_UPDATED: utcnow()}
+
+            if orig_item.get('retry_attempt', 0) < max_retry_attempt and \
+                    not isinstance(e, PublishHTTPPushClientError):
+
+                updates['retry_attempt'] = orig_item.get('retry_attempt', 0) + 1
+                updates['state'] = QueueState.RETRYING.value
+                updates['next_retry_attempt_at'] = utcnow() + timedelta(minutes=retry_attempt_delay)
+            else:
+                # all retry attempts exhausted marking the item as failed.
+                updates['state'] = QueueState.FAILED.value
+
+            publish_queue_service.system_update(orig_item.get(config.ID_FIELD), updates, orig_item)
+        except Exception:
+            logger.error('Failed to set the state for failed publish queue item {}.'.format(queue_item['_id']))
+    finally:
+        if is_async:
+            unlock(lock_name, remove=True)
 
 
 def transmit_items(queue_items):
