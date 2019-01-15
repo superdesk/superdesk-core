@@ -389,16 +389,7 @@ class ArchiveService(BaseService):
             for item_name, item_obj in item.get(ASSOCIATIONS).items():
                 if item_obj and self._is_related_content(item_name):
                     item_id = item_obj[config.ID_FIELD]
-
                     stored_item = super().find_one(req=None, _id=item_id)
-
-                    # If the item is published
-                    if 'state' in stored_item and stored_item['state'] == 'published':
-                        stored_item = get_resource_service('published').find_one(
-                            req=None,
-                            item_id=item_id,
-                            last_published_version=True
-                        )
 
                     item[ASSOCIATIONS][item_name] = stored_item
 
@@ -941,10 +932,7 @@ class ArchiveService(BaseService):
             for item_name, item_obj in item.get(ASSOCIATIONS).items():
                 if item_obj and self._is_related_content(item_name):
                     item_id = item_obj[config.ID_FIELD]
-                    if 'state' in item_obj and item_obj['state'] == 'published':
-                        item[ASSOCIATIONS][item_name] = {'_id': item_obj['item_id']}
-                    else:
-                        item[ASSOCIATIONS][item_name] = {'_id': item_id}
+                    item[ASSOCIATIONS][item_name] = {'_id': item_id}
         return item
 
     def _is_related_content(self, item_name):
