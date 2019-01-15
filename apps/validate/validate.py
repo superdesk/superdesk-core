@@ -55,6 +55,8 @@ def get_validator_schema(schema):
     validator_schema = {key: val for key, val in schema.items() if val is not None}
 
     if validator_schema.get('required') and not validator_schema.get('minlength'):
+        if 'mandatory_in_list' in validator_schema and 'subject' in validator_schema['mandatory_in_list']['scheme']:
+            validator_schema['schema']['schema']['scheme']['allowed'] = ['subject_custom', 'category']
         validator_schema.setdefault('empty', False)
 
     return validator_schema
@@ -97,9 +99,10 @@ class SchemaValidator(Validator):
 
     def _validate_mandatory_in_dictionary(self, mandatory, field, value):
         """Validates if all elements from mandatory are presented in the dictionary"""
-        for key in mandatory:
-            if not value.get(key):
-                self._error(key, REQUIRED_FIELD)
+        if field != 'subject':
+            for key in mandatory:
+                if not value.get(key):
+                    self._error(key, REQUIRED_FIELD)
 
     def _validate_empty(self, empty, field, value):
         """Original validates only strings, adding a list check."""
