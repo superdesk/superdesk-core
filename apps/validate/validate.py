@@ -92,17 +92,17 @@ class SchemaValidator(Validator):
 
     def _validate_mandatory_in_list(self, mandatory, field, value):
         """Validates if all elements from mandatory are presented in the list"""
-        for key in mandatory:
-            for key_field in mandatory[key]:
-                if not check_json(value, key, mandatory[key][key_field]):
-                    self._error(key_field, REQUIRED_FIELD)
+        if field != 'subject': # ignore in case of subject and category
+            for key in mandatory:
+                for key_field in mandatory[key]:
+                    if not check_json(value, key, mandatory[key][key_field]):
+                        self._error(key_field, REQUIRED_FIELD)
 
     def _validate_mandatory_in_dictionary(self, mandatory, field, value):
         """Validates if all elements from mandatory are presented in the dictionary"""
-        if field != 'subject':
-            for key in mandatory:
-                if not value.get(key):
-                    self._error(key, REQUIRED_FIELD)
+        for key in mandatory:
+            if not value.get(key):
+                self._error(key, REQUIRED_FIELD)
 
     def _validate_empty(self, empty, field, value):
         """Original validates only strings, adding a list check."""
