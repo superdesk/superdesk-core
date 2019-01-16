@@ -3,7 +3,7 @@ Feature: Places
     @auth
     Scenario: Places autocomplete 
         When we get "/places_autocomplete?name=koberice&lang=cs"
-        Then we get list with 3+ items
+        Then we get list with 5 items
         """
         {
             "_items": [
@@ -24,3 +24,14 @@ Feature: Places
             ]
         }
         """
+
+    @auth
+    Scenario: Places autocomplete feature filter setting
+        Given config update
+        """
+        {
+            "GEONAMES_FEATURE_CLASSES": ["P"]
+        }
+        """
+        When we get "/places_autocomplete?name=koberice&lang=cs"
+        Then we get list with 3 items

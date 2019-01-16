@@ -62,7 +62,6 @@ def geonames_request(service, service_params):
 
     params.extend(service_params)
     url = urljoin(app.config['GEONAMES_URL'], service)
-    print('url', url, params)
     res = session.get(url, params=params, timeout=10)
     if res.status_code != 200:
         res.raise_for_status()
