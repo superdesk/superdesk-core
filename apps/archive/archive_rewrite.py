@@ -145,7 +145,7 @@ class ArchiveRewriteService(Service):
         rewrite = dict()
 
         fields = ['family_id', 'event_id', 'flags', 'language', ASSOCIATIONS, 'extra']
-        existing_item_preserve_fields = (ASSOCIATIONS,)
+        existing_item_preserve_fields = (ASSOCIATIONS, 'flags')
 
         if app.config.get('COPY_ON_REWRITE_FIELDS'):
             fields.extend(app.config['COPY_ON_REWRITE_FIELDS'])
@@ -157,6 +157,11 @@ class ArchiveRewriteService(Service):
             rewrite['subject'] = [subject for subject in existing_item.get('subject', [])
                                   if subject.get('qcode') not in unique_subjects]
             rewrite['subject'].extend(subjects)
+            rewrite['flags'] = original['flags'] or {}
+
+            # preserve flags
+            for key in rewrite.get('flags').keys():
+                rewrite['flags'][key] = original['flags'][key] or existing_item.get('flags', {}).get(key, False)
         else:
             # ingest provider and source to be retained for new item
             fields.extend(['ingest_provider', 'source'])
@@ -186,7 +191,7 @@ class ArchiveRewriteService(Service):
                 rewrite[field] = original[field]
 
         # if the original was flagged for SMS the rewrite should not be.
-        if rewrite.get('flags', {}).get('marked_for_sms', False):
+        if not existing_item and rewrite.get('flags', {}).get('marked_for_sms', False):
             rewrite['flags']['marked_for_sms'] = False
 
         # SD-4595 - Default value for the update article to be set based on the system config.
