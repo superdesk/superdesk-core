@@ -551,6 +551,7 @@ Feature: Rewrite content
       """
       {"_id": "456", "anpa_take_key": "update", "priority": 2,
        "rewrite_of": "123", "rewrite_sequence": 1,
+       "flags": {"marked_for_legal": true},
        "subject":[{"qcode": "17004000", "name": "Statistics"},
        {"qcode": "01000000", "name": "arts, culture and entertainment"}]}
       """
@@ -1963,6 +1964,156 @@ Feature: Rewrite content
                       "original": {}
                   }
               }
+          }
+      }
+      """
+
+    @auth
+    Scenario: Do not overwrite existing item flags
+      Given the "validators"
+      """
+        [
+        {
+            "schema": {},
+            "type": "text",
+            "act": "publish",
+            "_id": "publish_text"
+        },
+        {
+            "_id": "publish_composite",
+            "act": "publish",
+            "type": "composite",
+            "schema": {}
+        }
+        ]
+      """
+      Given "desks"
+      """
+      [{"name": "Sports"}]
+      """
+      And "archive"
+      """
+      [
+          {
+              "guid": "123",
+              "_id": "123",
+              "type": "text",
+              "headline": "test original",
+              "_current_version": 1,
+              "state": "draft",
+              "task": {
+                  "desk": "#desks._id#",
+                  "stage": "#desks.incoming_stage#",
+                  "user": "#CONTEXT_USER_ID#"
+              },
+              "flags": {
+                "marked_for_legal": true,
+                "marked_for_sms": false,
+                "marked_not_for_publication": false
+              },
+              "subject": [
+                  {
+                      "qcode": "17004000",
+                      "name": "Statistics"
+                  }
+              ],
+              "body_html": "Test Document body original",
+              "genre": [
+                  {
+                      "name": "Article",
+                      "qcode": "Article"
+                  }
+              ],
+              "body_footer": "Original Suicide Call Back Service 1300 659 467"
+          },
+          {
+              "guid": "456",
+              "_id": "456",
+              "type": "text",
+              "headline": "test",
+              "_current_version": 1,
+              "state": "draft",
+              "task": {
+                  "desk": "#desks._id#",
+                  "stage": "#desks.incoming_stage#",
+                  "user": "#CONTEXT_USER_ID#"
+              },
+              "subject": [
+                  {
+                      "qcode": "17004000",
+                      "name": "Statistics"
+                  }
+              ],
+              "body_html": "Test Document body",
+              "sms_message": "update story sms",
+              "flags": {
+                "marked_for_legal": false,
+                "marked_for_sms": true,
+                "marked_not_for_publication": false
+              },
+              "genre": [
+                  {
+                      "name": "Music",
+                      "qcode": "Music"
+                  }
+              ],
+              "body_footer": "Suicide Call Back Service 1300 659 467"
+          }
+      ]
+      """
+      When we rewrite "123"
+      """
+      {
+          "update": {
+              "guid": "456",
+              "_id": "456",
+              "type": "text",
+              "headline": "test",
+              "_current_version": 1,
+              "state": "draft",
+              "task": {
+                  "desk": "#desks._id#",
+                  "stage": "#desks.incoming_stage#",
+                  "user": "#CONTEXT_USER_ID#"
+              },
+              "subject": [
+                  {
+                      "qcode": "17004000",
+                      "name": "Statistics"
+                  }
+              ],
+              "body_html": "Test Document body",
+              "sms_message": "update story sms",
+              "flags": {
+                "marked_for_legal": false,
+                "marked_for_sms": true,
+                "marked_not_for_publication": false
+              },
+              "genre": [
+                  {
+                      "name": "Music",
+                      "qcode": "Music"
+                  }
+              ],
+              "body_footer": "Suicide Call Back Service 1300 659 467"
+          }
+      }
+      """
+      When we get "/archive/#REWRITE_ID#"
+      Then we get existing resource
+      """
+      {
+          "_id": "456",
+          "rewrite_of": "123",
+          "headline": "test",
+          "rewrite_sequence": 1,
+          "_current_version": 1,
+          "body_html": "Test Document body",
+          "sms_message": "update story sms",
+          "flags": {
+            "marked_for_legal": true,
+            "marked_for_sms": true,
+            "marked_not_for_publication": false
           }
       }
       """
