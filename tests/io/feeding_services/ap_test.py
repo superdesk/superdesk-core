@@ -13,6 +13,7 @@ from unittest import mock
 import os
 
 from superdesk.tests import TestCase
+from superdesk.io.feeding_services import http_base_service
 from superdesk.io.feeding_services import ap
 from superdesk.io.feed_parsers import newsml_2_0
 
@@ -41,7 +42,7 @@ class APTestCase(TestCase):
         with open(fixture, 'rb') as f:
             self.feed_raw = f.read()
 
-    @mock.patch.object(ap, 'requests')
+    @mock.patch.object(http_base_service, 'requests')
     @mock.patch.object(ap.APFeedingService, 'get_feed_parser')
     def test_feeding(self, get_feed_parser, requests):
         get_feed_parser.return_value = newsml_2_0.NewsMLTwoFeedParser()
@@ -49,5 +50,6 @@ class APTestCase(TestCase):
         mock_get.content = self.feed_raw
         provider = PROVIDER.copy()
         service = ap.APFeedingService()
+        service.provider = provider
         items = service._update(provider, {})[0]
         self.assertEqual(len(items), 3)

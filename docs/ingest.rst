@@ -34,7 +34,10 @@ Feeding Services
 
 Handle transport protocols when ingesting.
 
+
 .. module:: superdesk.io.feeding_services
+
+.. autoclass:: superdesk.io.feeding_services.http_base_service.HTTPFeedingServiceBase
 
 .. autoclass:: EmailFeedingService
 
