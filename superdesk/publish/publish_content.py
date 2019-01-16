@@ -49,45 +49,48 @@ def publish():
             return
 
         try:
-            # Query any oustanding transmit requests
-            items = list(get_queue_items())
-            if len(items) > 0:
-                transmit_items(items)
-
-            # Query any outstanding retry attempts
-            retry_items = list(get_queue_items(True))
-            if len(retry_items) > 0:
-                transmit_items(retry_items)
-
+            for retries in [False, True]:  # first publish pending, retries after
+                subs = get_queue_subscribers(retries=retries)
+                for sub in subs:
+                    transmit_subscriber_items.delay(str(sub), retries=retries)
         except Exception:
             logger.exception('Task: {} failed.'.format(lock_name))
         finally:
             unlock(lock_name)
 
 
-def get_queue_items(retries=False):
+def _get_queue_lookup(retries=False):
     if retries:
-        lookup = {
+        return {
             '$and': [
                 {'state': QueueState.RETRYING.value},
                 {'next_retry_attempt_at': {'$lte': utcnow()}}
             ]
         }
-    else:
-        lookup = {
-            '$and': [
-                {'state': QueueState.PENDING.value}
-            ]
-        }
+    return {
+        '$and': [
+            {'state': QueueState.PENDING.value}
+        ]
+    }
+
+
+def get_queue_subscribers(retries=False):
+    lookup = _get_queue_lookup(retries)
+    return app.data.mongo.pymongo(resource=PUBLISH_QUEUE).db[PUBLISH_QUEUE].distinct('subscriber_id', lookup)
+
+
+def get_queue_items(retries=False, subscriber_id=None):
+    lookup = _get_queue_lookup(retries)
+    if subscriber_id:
+        lookup['$and'].append({'subscriber_id': subscriber_id})
     request = ParsedRequest()
-    request.max_results = app.config.get('MAX_TRANSMIT_QUERY_LIMIT', 500)
-    # ensure we publish in the correct sequence
-    request.sort = '[("_created", 1), ("subscriber_id", 1), ("published_seq_num", 1)]'
+    request.max_results = app.config.get('MAX_TRANSMIT_QUERY_LIMIT', 100)  # limit per subscriber now
+    request.sort = '[("_created", 1), ("published_seq_num", 1)]'
     return get_resource_service(PUBLISH_QUEUE).get(req=request, lookup=lookup)
 
 
 @celery.task(soft_time_limit=600)
-def transmit_subscriber_items(queue_items, subscriber):
+def transmit_subscriber_items(subscriber, retries=False):
     lock_name = get_lock_id('Subscriber', 'Transmit', subscriber)
     is_async = get_resource_service('subscribers').is_async(subscriber)
 
@@ -95,6 +98,7 @@ def transmit_subscriber_items(queue_items, subscriber):
         return
 
     try:
+        queue_items = get_queue_items(retries, subscriber)
         for queue_item in queue_items:
             args = [queue_item[config.ID_FIELD]]
             kwargs = {'is_async': is_async}
