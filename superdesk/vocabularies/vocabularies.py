@@ -176,10 +176,16 @@ class VocabulariesService(BaseService):
     def on_create(self, docs):
         for doc in docs:
             self._validate_items(doc)
+
             if doc.get('field_type') and doc['_id'] in self.system_keys:
                 raise SuperdeskApiError(
                     message='{} is in use'.format(doc['_id']),
                     payload={'_id': {'conflict': 1}})
+
+            if self.find_one(req=None, **{'_id': doc['_id'], '_deleted': True}):
+                raise SuperdeskApiError(
+                    message='{} is used by deleted vocabulary'.format(doc['_id']),
+                    payload={'_id': {'deleted': 1}})
 
     def on_created(self, docs):
         for doc in docs:
