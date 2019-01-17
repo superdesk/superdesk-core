@@ -9,11 +9,15 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import os
+from os.path import basename
+from io import BytesIO
+import mimetypes
 
 from unittest.mock import patch
 from datetime import timedelta, datetime
 from nose.tools import assert_raises
 from eve.utils import ParsedRequest
+from bson import ObjectId
 
 import superdesk.io.commands.update_ingest as ingest
 from apps.io.tests import setup_providers, teardown_providers
@@ -27,6 +31,19 @@ from superdesk.io.feeding_services import FeedingService
 from superdesk.io.feeding_services.file_service import FileFeedingService
 from superdesk.tests import TestCase
 from superdesk.utc import utcnow
+
+
+def get_file(url):
+    """Return file data tuple as returned by media_operations.download_file_from_url"""
+    filename = basename(url)
+    dirname = os.path.dirname(os.path.realpath(__file__))
+    filepath = os.path.normpath(os.path.join(dirname, 'fixtures', filename))
+    mime = mimetypes.guess_type(filepath)[0]
+    ext = str(mime).split('/')[1]
+    name = str(ObjectId()) + ext
+    with open(filepath, 'rb') as f:
+        data = f.read()
+    return BytesIO(data), name, mime
 
 
 class TestProviderService(FeedingService):
@@ -594,6 +611,7 @@ class UpdateIngestTest(TestCase):
             elastic_item = ingest_service.get(None, lookup)[0]
             self.assertEqual(mongo_item['_etag'], elastic_item['_etag'], mongo_item['guid'])
 
+    @patch('superdesk.media.renditions.download_file_from_url', get_file)
     def test_ingest_associated_item_renditions(self):
         provider = {'feeding_service': 'ninjs', '_id': self.providers['ninjs']}
         provider_service = FileFeedingService()
