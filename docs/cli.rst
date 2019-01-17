@@ -58,6 +58,11 @@ Superdesk commands
 
 .. autoclass:: apps.prepopulate.app_initialize.AppInitializeWithDataCommand()
 
+``app:flush_elastic_index``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: superdesk.commands.flush_elastic_index.FlushElasticIndex()
+
 ``app:prepopulate``
 ^^^^^^^^^^^^^^^^^^^
 
@@ -182,6 +187,11 @@ Superdesk commands
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: apps.auth.db.commands.HashUserPasswordsCommand()
+
+``vocabularies:generate``
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: superdesk.commands.generate_vocabularies.GenerateVocabularies()
 
 ``validators:populate``
 ^^^^^^^^^^^^^^^^^^^^^^^
