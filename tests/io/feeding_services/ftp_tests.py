@@ -18,7 +18,8 @@ from unittest import mock
 import datetime
 import pytz
 
-from superdesk.tests import TestCase
+from superdesk.tests import setup
+from superdesk.tests import TestCase as CoreTestCase
 from superdesk.io.feeding_services import ftp
 from superdesk.utc import utcnow, utc
 
@@ -88,6 +89,26 @@ class FailingFakeFeedParser(FakeFeedParser):
 
     def parse(self, *args, **kwargs):
         raise Exception('Test exception')
+
+
+class TestCase(CoreTestCase):
+
+    def setUpForChildren(self):
+        """Run this `setUp` stuff for each children.
+
+        Configure new `app` for each test.
+        """
+        setup.reset = True
+        setup(self)
+
+        self.ctx = self.app.app_context()
+        self.ctx.push()
+
+        def clean_ctx():
+            if self.ctx:
+                self.ctx.pop()
+
+        self.addCleanup(clean_ctx)
 
 
 class FTPTestCase(TestCase):
@@ -332,7 +353,6 @@ class FTPTestCase(TestCase):
             provider['private']['last_processed_file_modify'],
             datetime.datetime.strptime('20170517164745', '%Y%m%d%H%M%S').replace(tzinfo=utc)
         )
-
 
         service._update(provider, update)
         provider.update(update)

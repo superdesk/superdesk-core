@@ -455,7 +455,7 @@ class TestCase(unittest.TestCase):
 
     def setUpForChildren(self):
         """Run this `setUp` stuff for each children."""
-        setup(self, reset=True)
+        setup(self)
 
         self.ctx = self.app.app_context()
         self.ctx.push()

@@ -258,15 +258,15 @@ class FTPFeedingService(FeedingService):
                         continue
 
                     # filter by modify datetime
-                    file_mofidy = datetime.strptime(modify, self.DATE_FORMAT).replace(tzinfo=utc)
+                    file_modify = datetime.strptime(modify, self.DATE_FORMAT).replace(tzinfo=utc)
                     if last_processed_file_modify:
                         # ignore limit and add files for processing
-                        if last_processed_file_modify == file_mofidy:
-                            files_to_process.append((filename, file_mofidy))
-                        elif last_processed_file_modify < file_mofidy:
+                        if last_processed_file_modify == file_modify:
+                            files_to_process.append((filename, file_modify))
+                        elif last_processed_file_modify < file_modify:
                             # evenv if we have reached a limit, we must add at least one file to increment
                             # a `last_processed_file_modify` in provider
-                            files_to_process.append((filename, file_mofidy))
+                            files_to_process.append((filename, file_modify))
                             # limit amount of files to process per ingest update
                             if len(files_to_process) >= limit:
                                 break
@@ -275,13 +275,13 @@ class FTPFeedingService(FeedingService):
                         if len(files_to_process) >= limit:
                             break
                         # add files for processing
-                        files_to_process.append((filename, file_mofidy))
+                        files_to_process.append((filename, file_modify))
 
                 # process files
-                for filename, file_mofidy in files_to_process:
+                for filename, file_modify in files_to_process:
                     try:
                         items += self._retrieve_and_parse(ftp, config, filename, provider, registered_parser)
-                        update['private'] = {'last_processed_file_modify': file_mofidy}
+                        update['private'] = {'last_processed_file_modify': file_modify}
 
                         if do_move:
                             move_dest_file_path = os.path.join(move_path, filename)
