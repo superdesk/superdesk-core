@@ -333,7 +333,6 @@ class FTPTestCase(TestCase):
             datetime.datetime.strptime('20170517164745', '%Y%m%d%H%M%S').replace(tzinfo=utc)
         )
 
-
         service._update(provider, update)
         provider.update(update)
         # emulate moving files by reducing list
