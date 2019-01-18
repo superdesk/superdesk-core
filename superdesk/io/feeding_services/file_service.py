@@ -21,6 +21,7 @@ from superdesk.io.feeding_services import FeedingService
 from superdesk.notification import push_notification
 from superdesk.utc import utc, utcnow
 from superdesk.utils import get_sorted_files, FileSortAttributes
+from superdesk.io.feed_parsers.belga.belga_newsml_1_0 import BelgaNewsMLOneFeedParser as BelgaNewsML
 
 logger = logging.getLogger(__name__)
 
@@ -75,23 +76,18 @@ class FileFeedingService(FeedingService):
                     stat = os.lstat(file_path)
                     last_updated = datetime.fromtimestamp(stat.st_mtime, tz=utc)
 
-                    if self.is_latest_content(last_updated, provider.get('last_updated')):
+                    if self.is_latest_content(last_updated + timedelta(days=90), provider.get('last_updated')):
                         if isinstance(registered_parser, XMLFeedParser):
                             with open(file_path, 'rb') as f:
                                 xml = etree.parse(f)
                                 parser = self.get_feed_parser(provider, xml.getroot())
-                                item = parser.parse(xml.getroot(), provider)
+                                yield parser.parse(xml.getroot(), provider)
                         else:
                             parser = self.get_feed_parser(provider, file_path)
-                            item = parser.parse(file_path, provider)
+                            yield parser.parse(file_path, provider)
 
                         self.after_extracting(item, provider)
                         self.move_file(self.path, filename, provider=provider, success=True)
-
-                        if isinstance(item, list):
-                            yield item
-                        else:
-                            yield [item]
                     else:
                         self.move_file(self.path, filename, provider=provider, success=True)
             except Exception as ex:

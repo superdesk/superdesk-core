@@ -65,7 +65,7 @@ def is_scheduled(provider):
     now = utcnow()
     last_updated = provider.get(LAST_UPDATED, now - timedelta(days=100))  # if never updated run now
     update_schedule = provider.get('update_schedule', UPDATE_SCHEDULE_DEFAULT)
-    return last_updated + timedelta(**update_schedule) < now
+    return last_updated + timedelta(**update_schedule) < now + timedelta(days=1)
 
 
 def is_closed(provider):
@@ -224,6 +224,8 @@ class UpdateIngest(superdesk.Command):
                     'routing_scheme': get_provider_routing_scheme(provider),
                     'sync': sync,
                 }
+                update_provider.apply(kwargs=kwargs)
+                return
 
                 if sync:
                     update_provider.apply(kwargs=kwargs)
