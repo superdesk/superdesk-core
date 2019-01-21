@@ -299,7 +299,7 @@ class ParserError(SuperdeskIngestError):
         1005: 'NewsML2 input could not be processed',
         1006: 'NITF input could not be processed',
         1007: 'WENN input could not be processed',
-        1008: 'IPTC7901 input could not be processed'
+        1008: 'IPTC7901 input could not be processed',
         1009: 'BelgaNewsML input could not be processed'
     }
 
