@@ -197,7 +197,7 @@ class EveBackend():
         except eve.io.base.DataLayer.OriginalChangedError:
             if not backend.find_one(endpoint_name, req=None, _id=id) and search_backend:
                 # item is in elastic, not in mongo - not good
-                logger.warn("Item is missing in mongo resource=%s id=%s".format(endpoint_name, id))
+                logger.warn("Item is missing in mongo resource={} id={}".format(endpoint_name, id))
                 item = search_backend.find_one(endpoint_name, req=None, _id=id)
                 if item:
                     self.remove_from_search(endpoint_name, item)
@@ -212,7 +212,7 @@ class EveBackend():
 
             doc = backend.find_one(endpoint_name, req=None, _id=id)
             if not doc:  # there is no doc in mongo, remove it from elastic
-                logger.warn("Item is missing in mongo resource=%s id=%s".format(endpoint_name, id))
+                logger.warn("Item is missing in mongo resource={} id={}".format(endpoint_name, id))
                 item = search_backend.find_one(endpoint_name, req=None, _id=id)
                 if item:
                     self.remove_from_search(endpoint_name, item)
