@@ -81,13 +81,18 @@ class FileFeedingService(FeedingService):
                             with open(file_path, 'rb') as f:
                                 xml = etree.parse(f)
                                 parser = self.get_feed_parser(provider, xml.getroot())
-                                yield parser.parse(xml.getroot(), provider)
+                                item = parser.parse(xml.getroot(), provider)
                         else:
                             parser = self.get_feed_parser(provider, file_path)
-                            yield parser.parse(file_path, provider)
+                            item = parser.parse(file_path, provider)
 
                         self.after_extracting(item, provider)
                         self.move_file(self.path, filename, provider=provider, success=True)
+
+                        if isinstance(item, list):
+                            yield item
+                        else:
+                            yield [item]
                     else:
                         self.move_file(self.path, filename, provider=provider, success=True)
             except Exception as ex:
