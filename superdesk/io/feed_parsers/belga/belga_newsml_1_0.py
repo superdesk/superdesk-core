@@ -262,13 +262,10 @@ class BelgaNewsMLOneFeedParser(NewsMLOneFeedParser):
             return
         newsline_el = component_el.find('NewsLines')
         if newsline_el is not None:
-            self.set_dateline(item, text=component_el.get('DateLine', ''))
-            """
             element = newsline_el.find('DateLine')
-                if element is not None:
-                    item['dateline'] = {}
-                    item['dateline']['text'] = element.text
-            """
+            if element is not None:
+                self.set_dateline(item, text=element.text)
+
             element = newsline_el.find('HeadLine')
             if element is not None:
                 item['headline'] = element.text
