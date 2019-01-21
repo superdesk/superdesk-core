@@ -625,6 +625,9 @@ ENABLE_PROFILING = False
 #: default timeout for ftp connections
 FTP_TIMEOUT = 300
 
+#: default amount of files which can processed during one iteration of ftp ingest
+FTP_INGEST_FILES_LIST_LIMIT = 100
+
 #: default timeout for email connections
 EMAIL_TIMEOUT = 10
 

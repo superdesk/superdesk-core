@@ -519,8 +519,8 @@ def run_update_ingest_ftp(*args):
             item3['ednote'] = 'ed note 3'
             return [[item3]]
 
-    with mock.patch.object(ftp.FTPFeedingService, '_list_items') as ftp_list_items_mock:
-        ftp_list_items_mock.return_value = (('ninjs1.json', '20181111123456'),
+    with mock.patch.object(ftp.FTPFeedingService, '_list_files') as ftp_list_files_mock:
+        ftp_list_files_mock.return_value = (('ninjs1.json', '20181111123456'),
                                             ('ninjs2.json', '20181111123456'),
                                             ('ninjs3.json', '20181111123456'))
         with mock.patch.object(ftp.FTPFeedingService, '_retrieve_and_parse') as retrieve_and_parse_mock:

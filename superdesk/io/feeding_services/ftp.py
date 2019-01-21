@@ -16,6 +16,7 @@ import tempfile
 
 from datetime import datetime
 
+from flask import current_app as app
 from superdesk.io.registry import register_feeding_service
 from superdesk.io.feed_parsers import XMLFeedParser
 from superdesk.utc import utc
@@ -23,7 +24,6 @@ from superdesk.etree import etree
 from superdesk.io.feeding_services import FeedingService
 from superdesk.errors import IngestFtpError
 from superdesk.ftp import ftp_connect
-from superdesk.io.commands.update_ingest import LAST_UPDATED
 
 try:
     from urllib.parse import urlparse
@@ -159,12 +159,31 @@ class FTPFeedingService(FeedingService):
         finally:
             ftp.cwd(base_path)
 
+    def _create_move_folders(self, config, ftp):
+        if not config.get('ftp_move_path'):
+            logger.debug('missing move_path, default will be used')
+        move_path = os.path.join(config.get('path', ''), config.get('ftp_move_path') or DEFAULT_SUCCESS_PATH)
+
+        if not config.get('move_path_error'):
+            logger.debug('missing move_path_error, default will be used')
+        move_path_error = os.path.join(config.get('path', ''),
+                                       config.get('move_path_error') or DEFAULT_FAILURE_PATH)
+
+        try:
+            self._create_if_missing(ftp, move_path)
+            self._create_if_missing(ftp, move_path_error)
+        except ftplib.all_errors as e:
+            logger.error("Can't create move directory: {reason}".format(reason=e))
+            raise e
+
+        return move_path, move_path_error
+
     def _is_allowed(self, filename, allowed_ext):
         """Test if given file is allowed to be ingested."""
         _, ext = os.path.splitext(filename)
         return ext.lower() in allowed_ext
 
-    def _list_items(self, ftp, provider):
+    def _list_files(self, ftp, provider):
         try:
             return [(filename, facts['modify']) for filename, facts in ftp.mlsd() if facts.get('type') == 'file']
         except Exception as ex:
@@ -183,10 +202,16 @@ class FTPFeedingService(FeedingService):
             else:
                 raise IngestFtpError.ftpError(ex, provider)
 
+    def _sort_files(self, files):
+        return sorted(files, key=lambda x: x[1])
+
     def _retrieve_and_parse(self, ftp, config, filename, provider, registered_parser):
         items = []
 
+        if 'dest_path' not in config:
+            config['dest_path'] = tempfile.mkdtemp(prefix='superdesk_ingest_')
         local_file_path = os.path.join(config['dest_path'], filename)
+
         with open(local_file_path, 'wb') as f:
             try:
                 ftp.retrbinary('RETR %s' % filename, f.write)
@@ -211,64 +236,63 @@ class FTPFeedingService(FeedingService):
 
     def _update(self, provider, update):
         config = provider.get('config', {})
-        last_updated = provider.get('last_updated')
+        do_move = config.get('move', False)
+        last_processed_file_modify = provider.get('private', {}).get('last_processed_file_modify')
+        limit = app.config.get('FTP_INGEST_FILES_LIST_LIMIT', 100)
         registered_parser = self.get_feed_parser(provider)
-        try:
-            allowed_ext = registered_parser.ALLOWED_EXT
-        except AttributeError:
-            allowed_ext = self.ALLOWED_EXT_DEFAULT
-        crt_last_updated = None
-        if config.get('move', False):
-            do_move = True
-            if not config.get('ftp_move_path'):
-                logger.debug('missing move_path, default will be used')
-            move_dest_path = os.path.join(config.get('path', ''), config.get('ftp_move_path') or DEFAULT_SUCCESS_PATH)
-            if not config.get('move_path_error'):
-                logger.debug('missing move_path_error, default will be used')
-            move_dest_path_error = os.path.join(config.get('path', ''),
-                                                config.get('move_path_error') or DEFAULT_FAILURE_PATH)
-        else:
-            do_move = False
-
-        if 'dest_path' not in config:
-            config['dest_path'] = tempfile.mkdtemp(prefix='superdesk_ingest_')
+        allowed_ext = getattr(registered_parser, 'ALLOWED_EXT', self.ALLOWED_EXT_DEFAULT)
 
         try:
             with ftp_connect(config) as ftp:
-                if do_move:
-                    try:
-                        self._create_if_missing(ftp, move_dest_path)
-                        self._create_if_missing(ftp, move_dest_path_error)
-                    except ftplib.all_errors as e:
-                        logger.warning("Can't create move directory, files will not be moved: {reason}".format(
-                            reason=e))
-                        do_move = False
                 items = []
+                files_to_process = []
+                files = self._sort_files(self._list_files(ftp, provider))
 
-                for filename, facts in self._list_items(ftp, provider):
+                if do_move:
+                    move_path, move_path_error = self._create_move_folders(config, ftp)
+
+                for filename, modify in files:
+                    # filter by extension
+                    if not self._is_allowed(filename, allowed_ext):
+                        logger.info('ignoring file {filename} because of file extension'.format(filename=filename))
+                        continue
+
+                    # filter by modify datetime
+                    file_modify = datetime.strptime(modify, self.DATE_FORMAT).replace(tzinfo=utc)
+                    if last_processed_file_modify:
+                        # ignore limit and add files for processing
+                        if last_processed_file_modify == file_modify:
+                            files_to_process.append((filename, file_modify))
+                        elif last_processed_file_modify < file_modify:
+                            # evenv if we have reached a limit, we must add at least one file to increment
+                            # a `last_processed_file_modify` in provider
+                            files_to_process.append((filename, file_modify))
+                            # limit amount of files to process per ingest update
+                            if len(files_to_process) >= limit:
+                                break
+                    else:
+                        # limit amount of files to process per ingest update
+                        if len(files_to_process) >= limit:
+                            break
+                        # add files for processing
+                        files_to_process.append((filename, file_modify))
+
+                # process files
+                for filename, file_modify in files_to_process:
                     try:
-                        if not self._is_allowed(filename, allowed_ext):
-                            logger.info('ignoring file {filename} because of file extension'.format(filename=filename))
-                            continue
-
-                        if last_updated:
-                            item_last_updated = datetime.strptime(facts, self.DATE_FORMAT).replace(tzinfo=utc)
-                            if item_last_updated <= last_updated:
-                                continue
-                            elif not crt_last_updated or item_last_updated > crt_last_updated:
-                                crt_last_updated = item_last_updated
-
                         items += self._retrieve_and_parse(ftp, config, filename, provider, registered_parser)
+                        update['private'] = {'last_processed_file_modify': file_modify}
+
                         if do_move:
-                            move_dest_file_path = os.path.join(move_dest_path, filename)
+                            move_dest_file_path = os.path.join(move_path, filename)
                             self._move(ftp, filename, move_dest_file_path)
                     except Exception as e:
                         logger.error("Error while parsing {filename}: {msg}".format(filename=filename, msg=e))
+
                         if do_move:
-                            move_dest_file_path_error = os.path.join(move_dest_path_error, filename)
+                            move_dest_file_path_error = os.path.join(move_path_error, filename)
                             self._move(ftp, filename, move_dest_file_path_error)
-            if crt_last_updated:
-                update[LAST_UPDATED] = crt_last_updated
+
             return items
         except IngestFtpError:
             raise
