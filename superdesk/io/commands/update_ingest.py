@@ -224,8 +224,6 @@ class UpdateIngest(superdesk.Command):
                     'routing_scheme': get_provider_routing_scheme(provider),
                     'sync': sync,
                 }
-                update_provider.apply(kwargs=kwargs)
-                return
 
                 if sync:
                     update_provider.apply(kwargs=kwargs)

@@ -36,7 +36,6 @@ EMAIL_TIMESTAMP_RESOURCE = 'email_timestamps'
 
 @celery.task(bind=True, max_retries=3, soft_time_limit=120)
 def send_email(self, subject, sender, recipients, text_body, html_body, cc=None, bcc=None, attachments=None):
-    return
     _id = get_activity_digest({
         'subject': subject,
         'recipients': recipients,
