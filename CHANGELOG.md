@@ -1,5 +1,36 @@
 # Superdesk Server Changelog
 
+## [1.28] 2018-01-18
+
+### Added
+
+- Add `manage.py` command for generating vocabularies from text files.
+- Make geonames feature class configurable for place autocomplete.
+- Add api for custom item schema field registration.
+- Add `embargoed` field to content api item schema.
+- Attach featured image to email output.
+- Add `manage.py` commands to docs.
+- Add guid to associations in WXR parser. 
+
+### Changed
+
+- Return user `_etag` on password change.
+- Improve component version info for about screen.
+
+### Fixed
+
+- Fix failing update ingest tests.
+- Preserve legal and sms flags on associate as update action.
+- Do not overwrite existing item associations during archive rewrite.
+- Fix `CRLF` handling in WXR parser.
+- Handle ingest expiry set to very big number.
+- Updated item preserves parent's featured image even if it was changed.
+- Fix unlocking with invalid renditions data.
+- Fix unlocking of item with expired embargo.
+- Stop using self closing tags for non-void elements in WXR parser.
+- When translated item is corrected, send notification to translators.
+- Fix mandatory subject in schema when not present in the editor.
+
 ## [1.27] 2018-12-13
 
 ### Fixed

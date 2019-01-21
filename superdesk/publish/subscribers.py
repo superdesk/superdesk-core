@@ -113,7 +113,11 @@ class SubscribersResource(Resource):
         'api_products': {
             'type': 'list',
             'schema': Resource.rel('products', True)
-        }
+        },
+        'async': {
+            'type': 'boolean',
+            'nullable': True,
+        },
     }
 
     item_methods = ['GET', 'PATCH', 'PUT']
@@ -151,6 +155,10 @@ class SubscribersService(BaseService):
         get_resource_service('sequences').delete(lookup={
             'key': 'ingest_providers_{_id}'.format(_id=doc[config.ID_FIELD])
         })
+
+    def is_async(self, subscriber_id):
+        subscriber = self.find_one(req=None, _id=subscriber_id)
+        return subscriber and bool(subscriber.get('async', False))
 
     def _get_subscribers_by_filter_condition(self, filter_condition):
         """
