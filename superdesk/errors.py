@@ -299,7 +299,8 @@ class ParserError(SuperdeskIngestError):
         1005: 'NewsML2 input could not be processed',
         1006: 'NITF input could not be processed',
         1007: 'WENN input could not be processed',
-        1008: 'IPTC7901 input could not be processed'
+        1008: 'IPTC7901 input could not be processed',
+        1009: 'BelgaNewsML input could not be processed'
     }
 
     @classmethod
@@ -334,6 +335,9 @@ class ParserError(SuperdeskIngestError):
     def IPTC7901ParserError(cls, exception=None, provider=None):
         return ParserError(1008, exception, provider)
 
+    @classmethod
+    def BelganewsmlOneParserError(cls, exception=None, provider=None):
+        return ParserError(1009, exception, provider)
 
 class IngestFileError(SuperdeskIngestError):
     _codes = {
