@@ -339,6 +339,7 @@ class ParserError(SuperdeskIngestError):
     def BelganewsmlOneParserError(cls, exception=None, provider=None):
         return ParserError(1009, exception, provider)
 
+
 class IngestFileError(SuperdeskIngestError):
     _codes = {
         3001: 'Destination folder could not be created',
