@@ -28,6 +28,37 @@ class BelgaNewsMLOneFeedParser(NewsMLOneFeedParser):
         return xml.tag == 'NewsML'
 
     def parse(self, xml, provider=None):
+        """
+        Parser content the xml newsml file to json object.
+
+        Example content the xml newsml file:
+
+        <?xml version="1.0" encoding="utf-8"?>
+        <NewsML Version="1.2">
+          <!--AFP NewsML text-photo profile evolution2-->
+          <!--Processed by Xafp1-4ToNewsML1-2 rev21-->
+          <Catalog Href="http://www.afp.com/dtd/AFPCatalog.xml"/>
+          <NewsEnvelope>
+            ......
+          </NewsEnvelope>
+          <NewsItem xml:lang="fr">
+            <Identification>
+                .......
+            </Identification>
+            <NewsManagement>
+                ......
+            </NewsManagement>
+            <NewsComponent>
+                ......
+            </NewsComponent>
+          </NewsItem>
+        </NewsML>
+
+        :param xml:
+        :param provider:
+        :return:
+        """
+
         try:
             l_item=[]
             self.root = xml
@@ -39,10 +70,10 @@ class BelgaNewsMLOneFeedParser(NewsMLOneFeedParser):
             l_newsitem_el = xml.findall('NewsItem')
             for newsitem_el in l_newsitem_el:
                 item = item_envelop
-
                 self.parser_newsitem(item, newsitem_el)
                 l_item.append(self.populate_fields(item))
             return l_item
+
         except Exception as ex:
             raise ParserError.BelganewsmlOneParserError(ex, provider)
 
@@ -185,6 +216,7 @@ class BelgaNewsMLOneFeedParser(NewsMLOneFeedParser):
           <AssociatedWith FormalName="LIVEVIDEO"/>
           <AssociatedWith FormalName="Video"/>
         </NewsManagement>
+
         :param item:
         :param manage_el:
         :return:

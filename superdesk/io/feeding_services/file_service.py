@@ -76,7 +76,7 @@ class FileFeedingService(FeedingService):
                     stat = os.lstat(file_path)
                     last_updated = datetime.fromtimestamp(stat.st_mtime, tz=utc)
 
-                    if self.is_latest_content(last_updated, provider.get('last_updated')):
+                    if self.is_latest_content(last_updated + timedelta(days=90), provider.get('last_updated')):
                         if isinstance(registered_parser, XMLFeedParser):
                             with open(file_path, 'rb') as f:
                                 xml = etree.parse(f)

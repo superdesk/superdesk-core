@@ -27,8 +27,8 @@ class AFPNewsMLOneFeedParser(NewsMLOneFeedParser):
 
     def parse(self, xml, provider=None):
         item = super().parse(xml, provider)
-        item['firstcreated'] = utc.localize(item['firstcreated']) if item.get('firstcreated') else utcnow()
-        item['versioncreated'] = utc.localize(item['versioncreated']) if item.get('versioncreated') else utcnow()
+        item['firstcreated'] = item['firstcreated'].astimezone(utc) if item.get('firstcreated') else utcnow()
+        item['versioncreated'] = item['versioncreated'].astimezone(utc) if item.get('versioncreated') else utcnow()
         return item
 
 
