@@ -439,7 +439,16 @@ Feature: Publish embedded items feature
     Scenario: Publish embedded picture together with text item with copy metadata from text item
         When we post to "archive"
         """
-        {"type": "text", "task": {"desk": "#desks._id#"}, "guid": "foo", "slugline": "text item slugline"}
+        {
+            "type": "text",
+            "task": {"desk": "#desks._id#"},
+            "guid": "foo",
+            "slugline": "text item slugline",
+            "anpa_category": [{"qcode": "a", "name": "foo"}],
+            "subject": [{"qcode": "01000000", "name": "bar"}],
+            "urgency": 1,
+            "priority": 2
+        }
         """
         Then we get OK response
 
@@ -450,20 +459,27 @@ Feature: Publish embedded items feature
         """
         And we patch "/archive/#archive._id#"
         """
-        {"state": "in_progress"}
+        {"state": "in_progress", "subject": [{"qcode": "02000000", "name": "xxx"}]}
         """
         Then we get OK response
 
         When we patch "archive/foo"
         """
-        {"headline": "foo", "slugline": "bar", "state": "in_progress", "associations": {
-            "embedded1": {
-                "_id": "#archive._id#",
-                "type": "picture",
-                "headline": "test",
-                "alt_text": "alt_text",
-                "description_text": "description_text",
-                "state": "in_progress"}}}
+        {
+            "headline": "foo",
+            "state": "in_progress",
+            "associations": {
+                "embedded1": {
+                    "_id": "#archive._id#",
+                    "type": "picture",
+                    "headline": "test",
+                    "alt_text": "alt_text",
+                    "description_text": "description_text",
+                    "state": "in_progress",
+                    "subject": [{"qcode": "02000000", "name": "xxx"}]
+                }
+            }
+        }
         """
         Then we get OK response
 
@@ -474,17 +490,24 @@ Feature: Publish embedded items feature
         """
         Then we set copy metadata from parent flag
         When we publish "foo" with "publish" type and "published" state
+        Then we get updated response
         """
-        {"headline": "foo", "associations": {
-            "embedded1": {
-                "_id": "#archive._id#",
-                "slugline": "test",
-                "type": "picture",
-                "headline": "test",
-                "alt_text": "alt_text",
-                "description_text": "description_text",
-                "state": "in_progress"}}}
+        {
+            "headline": "foo",
+            "associations": {
+                "embedded1": {
+                    "_id": "#archive._id#",
+                    "slugline": "text item slugline",
+                    "type": "picture",
+                    "headline": "test",
+                    "alt_text": "alt_text",
+                    "description_text": "description_text",
+                    "state": "published",
+                    "subject": [{"qcode": "01000000", "name": "bar"}],
+                    "anpa_category": [{"qcode": "a", "name": "foo"}],
+                    "urgency": 1,
+                    "priority": 2
+                }
+            }
+        }
         """
-        Then we get OK response
-
-
