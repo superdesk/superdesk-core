@@ -60,7 +60,7 @@ class BelgaNewsMLOneFeedParser(NewsMLOneFeedParser):
         """
 
         try:
-            l_item=[]
+            l_item = []
             self.root = xml
 
             # parser the NewsEnvelope element
@@ -78,6 +78,7 @@ class BelgaNewsMLOneFeedParser(NewsMLOneFeedParser):
             raise ParserError.BelganewsmlOneParserError(ex, provider)
 
     def parser_newsenvelop(self, envelop_el):
+
         """
         Function parser Identification element
 
@@ -118,6 +119,7 @@ class BelgaNewsMLOneFeedParser(NewsMLOneFeedParser):
         return item
 
     def parser_newsitem(self, item, newsitem_el):
+
         """
         Function parser Newsitem element
 
@@ -150,6 +152,7 @@ class BelgaNewsMLOneFeedParser(NewsMLOneFeedParser):
         self.parser_newscomponent(item, newsitem_el.find('NewsComponent'))
 
     def parser_identification(self, item, indent_el):
+
         """
         function parse Identification in NewsItem element
 
@@ -196,6 +199,7 @@ class BelgaNewsMLOneFeedParser(NewsMLOneFeedParser):
         return
 
     def parser_newsmanagement(self, item, manage_el):
+
         """
         Function parser NewsManagement in NewsItem element
 
@@ -416,8 +420,8 @@ class BelgaNewsMLOneFeedParser(NewsMLOneFeedParser):
               <nitf>
                 <body>
                   <body.content>
-                    <p>Un an après la mort de Johnny Hallyday, plus d'un millier de fans sont venus assister dimanche matin à une cérémonie dédiée à leur idole, en l'église de la Madeleine à Paris, là même où s'était déroulé "l'hommage populaire" au rockeur français.</p>
-                    <p>A l'intérieur de l'église, plus d'un millier de personnes étaient réunies pour assister à une messe en hommage au chanteur, et des centaines de fans qui n'avaient pu entrer dans le bâtiment, le nombre de places étant limité, étaient massés autour du célèbre monument parisien.</p>
+                    <p>Un an après la mort de Johnny Hallyday, plus d'un millier de fans sont venus assister dimanche
+                    <p>A l'intérieur de l'église, plus d'un millier de personnes étaient réunies pour assister à une
                     <p>
                       <org idsrc="isin" value="US38259P5089">GOOGLE</org>
                     </p>
@@ -443,5 +447,6 @@ class BelgaNewsMLOneFeedParser(NewsMLOneFeedParser):
         item['body_html'] = etree.tostring(
             content_el.find('DataContent/nitf/body/body.content'),
             encoding='unicode').replace('<body.content>', '').replace('</body.content>', '')
+
 
 register_feed_parser(BelgaNewsMLOneFeedParser.NAME, BelgaNewsMLOneFeedParser())
