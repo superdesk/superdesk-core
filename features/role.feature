@@ -255,3 +255,12 @@ Feature: Role Resource
                }
             ]}
             """
+
+    @auth
+    Scenario: Set author/editor role
+        Given empty "roles"
+        When we post to "/roles"
+        """
+        {"name": "test", "author_role": "author", "editor_role": "editor"}
+        """
+        Then we get new resource
