@@ -165,7 +165,7 @@ ARCHIVE_SCHEMA_FIELDS = {
 }
 
 
-FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM = ['anpa_category', 'subjects', 'slugline', 'urgency',
+FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM = ['anpa_category', 'subject', 'slugline', 'urgency',
                                       'priority', 'footer', 'abstract', 'genre']
 
 
