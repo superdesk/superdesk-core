@@ -323,33 +323,32 @@ class DesksService(BaseService):
         return desk_name
 
     def get(self, req, lookup):
-        desks = list(super().get(req, lookup))
+        desks = tuple(super().get(req, lookup))
 
-        members_list = []
+        members_set = set()
         db_users = app.data.mongo.pymongo('users').db['users']
 
         # find display_name from the users document for each member in desks document
         for desk in desks:
             if 'members' in desk:
-                users = list(db_users.find({
+                users = tuple(db_users.find({
                     '_id': {'$in': [member['user'] for member in desk['members']]}},
                     {'display_name': 1}
                 ))
+                members_set |= {(m['_id'], m['display_name']) for m in users}
 
-                for user in users:
-                    if not any(item == user for item in members_list):
-                        members_list.append(user)
-
-        if members_list:
-            members_list.sort(key=lambda k: k['display_name'].lower())
-            ordered_dict = []
-            for member in members_list:
-                ordered_dict.append(member['_id'])
+        if members_set:
+            members_list = list(members_set)
+            members_list.sort(key=lambda k: k[1].lower())
+            sorted_members_ids = tuple(m[0] for m in members_list)
 
             # sort the members of each desk according to ordered_dict
             for desk in desks:
                 if 'members' in desk:
-                    desk['members'].sort(key=lambda x: ordered_dict.index(x['user']))
+                    # remove members which don't exist in db
+                    desk['members'] = [member for member in desk['members'] if member['user'] in sorted_members_ids]
+                    # sort member in desk
+                    desk['members'].sort(key=lambda x: sorted_members_ids.index(x['user']))
 
         return ListCursor(desks)
 
