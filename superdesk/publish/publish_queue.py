@@ -35,7 +35,7 @@ class QueueState(SuperdeskBaseEnum):
 
 class PublishQueueResource(Resource):
     schema = {
-        'item_id': Resource.rel('archive', type='string'),
+        'item_id': {'type': 'string', 'required': True},
         'item_version': {'type': 'integer', 'nullable': False},
 
         'formatted_item': {'type': 'string', 'nullable': False},
@@ -67,13 +67,15 @@ class PublishQueueResource(Resource):
             'type': 'string'
         },
         'unique_name': {
-            'type': 'string'
+            'type': 'string',
+            'nullable': True
         },
         'content_type': {
             'type': 'string'
         },
         'headline': {
-            'type': 'string'
+            'type': 'string',
+            'nullable': True
         },
 
         'transmit_started_at': {
