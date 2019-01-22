@@ -110,7 +110,7 @@ class BackendMetaService(BaseService):
                     return rev_f.read()
             except (IOError, IndexError):
                 pass
-        return {}
+        return None
 
     def get_server_rev(self, package):
         if settings is not None:
