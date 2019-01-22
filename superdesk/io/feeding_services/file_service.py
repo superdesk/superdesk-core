@@ -21,7 +21,6 @@ from superdesk.io.feeding_services import FeedingService
 from superdesk.notification import push_notification
 from superdesk.utc import utc, utcnow
 from superdesk.utils import get_sorted_files, FileSortAttributes
-from superdesk.io.feed_parsers.belga.belga_newsml_1_0 import BelgaNewsMLOneFeedParser as BelgaNewsML
 
 logger = logging.getLogger(__name__)
 
