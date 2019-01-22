@@ -186,17 +186,13 @@ class BelgaNewsMLOneFeedParser(NewsMLOneFeedParser):
             if element is not None:
                 item['version'] = element.text
 
-            element = newsident_el.find('RevisionId')
-            if element is not None:
-                item['version'] = element.text
-
             element = newsident_el.find('PublicIdentifier')
             if element is not None:
                 item['guid'] = element.text
 
-            element = newsident_el.find('NameLabel')
-            if element is not None:
-                item['label'] = element.text
+        element = newsident_el.find('NameLabel')
+        if element is not None:
+            item['label'] = element.text
         return
 
     def parser_newsmanagement(self, item, manage_el):
