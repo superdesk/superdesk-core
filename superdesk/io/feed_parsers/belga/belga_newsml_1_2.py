@@ -20,6 +20,7 @@ class BelgaNewsMLOneFeedParser(NewsMLOneFeedParser):
     """
     Feed Parser which can parse if the feed is in NewsML format, specific AFP, ANP, .. Belga xml.
     """
+
     NAME = 'belganewsml12'
 
     label = 'Belga News ML 1.2 Parser'
@@ -69,7 +70,7 @@ class BelgaNewsMLOneFeedParser(NewsMLOneFeedParser):
             # parser the NewsItem element
             l_newsitem_el = xml.findall('NewsItem')
             for newsitem_el in l_newsitem_el:
-                item = item_envelop.copy()
+                item = item_envelop
                 self.parser_newsitem(item, newsitem_el)
                 l_item.append(self.populate_fields(item))
             return l_item
@@ -78,7 +79,6 @@ class BelgaNewsMLOneFeedParser(NewsMLOneFeedParser):
             raise ParserError.BelganewsmlOneParserError(ex, provider)
 
     def parser_newsenvelop(self, envelop_el):
-
         """
         Function parser Identification element
 
@@ -96,6 +96,7 @@ class BelgaNewsMLOneFeedParser(NewsMLOneFeedParser):
         :param envelop_el:
         :return:
         """
+
         if envelop_el is None:
             return {}
         item = {}
@@ -119,7 +120,6 @@ class BelgaNewsMLOneFeedParser(NewsMLOneFeedParser):
         return item
 
     def parser_newsitem(self, item, newsitem_el):
-
         """
         Function parser Newsitem element
 
@@ -152,9 +152,8 @@ class BelgaNewsMLOneFeedParser(NewsMLOneFeedParser):
         self.parser_newscomponent(item, newsitem_el.find('NewsComponent'))
 
     def parser_identification(self, item, indent_el):
-
         """
-        function parse Identification in NewsItem element
+        Function parse Identification in NewsItem element
 
         Example:
 
@@ -169,6 +168,7 @@ class BelgaNewsMLOneFeedParser(NewsMLOneFeedParser):
           <NameLabel>musique-rock-célébrités-religion-France</NameLabel>
         </Identification>
         """
+
         if indent_el is None:
             return
         newsident_el = indent_el.find('NewsIdentifier')
@@ -199,7 +199,6 @@ class BelgaNewsMLOneFeedParser(NewsMLOneFeedParser):
         return
 
     def parser_newsmanagement(self, item, manage_el):
-
         """
         Function parser NewsManagement in NewsItem element
 
@@ -290,6 +289,7 @@ class BelgaNewsMLOneFeedParser(NewsMLOneFeedParser):
         :param component_el:
         :return:
         """
+
         if component_el is None:
             return
         newsline_el = component_el.find('NewsLines')
@@ -355,6 +355,7 @@ class BelgaNewsMLOneFeedParser(NewsMLOneFeedParser):
         :param descript_el:
         :return:
         """
+
         if descript_el is None:
             return
         element = descript_el.find('Language')
@@ -435,6 +436,7 @@ class BelgaNewsMLOneFeedParser(NewsMLOneFeedParser):
         :param content_el:
         :return:
         """
+
         if content_el is None:
             return
         element = content_el.find('MediaType')
