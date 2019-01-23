@@ -39,11 +39,11 @@ class DataUpdatesTestCase(TestCase):
             patcher.start()
 
     def test_data_update_generation(self):
-        assert len(get_data_updates_files()) is 0, get_data_updates_files()
+        assert len(get_data_updates_files()) == 0, get_data_updates_files()
         GenerateUpdate().run(resource_name='RESOURCE_NAME')
-        assert len(get_data_updates_files()) is 1, get_data_updates_files()
+        assert len(get_data_updates_files()) == 1, get_data_updates_files()
         GenerateUpdate().run(resource_name='RESOURNCE_NAME')
-        assert len(get_data_updates_files()) is 2, get_data_updates_files()
+        assert len(get_data_updates_files()) == 2, get_data_updates_files()
 
     def test_data_update_generation_create_updates_dir(self):
         updates_dir = DEFAULT_DATA_UPDATE_DIR_NAME
@@ -59,7 +59,7 @@ class DataUpdatesTestCase(TestCase):
     def test_dry_data_update(self):
         superdesk.commands.data_updates.DEFAULT_DATA_UPDATE_FW_IMPLEMENTATION = '''
             count = mongodb_collection.find({}).count()
-            assert count is 0, count
+            assert count == 0, count
         '''
         self.assertEqual(self.number_of_data_updates_applied(), 0)
         GenerateUpdate().run(resource_name='data_updates')
@@ -81,26 +81,26 @@ class DataUpdatesTestCase(TestCase):
         # create migrations
         for index in range(40):
             superdesk.commands.data_updates.DEFAULT_DATA_UPDATE_FW_IMPLEMENTATION = '''
-            assert(mongodb_collection)
+            assert mongodb_collection
             count = mongodb_collection.find({}).count()
-            assert count is %d, count
-            assert(mongodb_database)
+            assert count == %d, count
+            assert mongodb_database
             ''' % (index)
             superdesk.commands.data_updates.DEFAULT_DATA_UPDATE_BW_IMPLEMENTATION = '''
-            assert(mongodb_collection)
+            assert mongodb_collection
             count = mongodb_collection.find({}).count()
-            assert count is %d, count
-            assert(mongodb_database)
+            assert count == %d, count
+            assert mongodb_database
             ''' % (index + 1)
             GenerateUpdate().run(resource_name='data_updates')
-        assert(self.number_of_data_updates_applied() is 0)
+        assert self.number_of_data_updates_applied() == 0
         thirdieth_update = get_data_updates_files(True)[29]
         Upgrade().run(data_update_id=thirdieth_update)
-        assert(self.number_of_data_updates_applied() is 30)
+        assert self.number_of_data_updates_applied() == 30
         Upgrade().run()
-        assert(self.number_of_data_updates_applied() is 40)
+        assert self.number_of_data_updates_applied() == 40
         Downgrade().run()
-        assert(self.number_of_data_updates_applied() is 39)
+        assert self.number_of_data_updates_applied() == 39
         Downgrade().run(data_update_id=thirdieth_update)
-        assert(self.number_of_data_updates_applied() is 29)
+        assert self.number_of_data_updates_applied() == 29
         Upgrade().run()
