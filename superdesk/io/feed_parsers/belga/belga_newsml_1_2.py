@@ -70,7 +70,7 @@ class BelgaNewsMLOneFeedParser(NewsMLOneFeedParser):
             # parser the NewsItem element
             l_newsitem_el = xml.findall('NewsItem')
             for newsitem_el in l_newsitem_el:
-                item = item_envelop
+                item = item_envelop.copy()
                 self.parser_newsitem(item, newsitem_el)
                 l_item.append(self.populate_fields(item))
             return l_item
