@@ -295,7 +295,7 @@ class RoutingRuleSchemeService(BaseService):
 
             if invalid_fields:
                 raise SuperdeskApiError.badRequestError(
-                    message="A routing rule has invalid fields %s".format(invalid_fields))
+                    message="A routing rule has invalid fields {}".format(invalid_fields))
 
             schedule = routing_rule.get('schedule')
             actions = routing_rule.get('actions')
