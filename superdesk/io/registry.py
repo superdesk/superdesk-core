@@ -95,11 +95,16 @@ def register_feeding_service_parser(service_name, parser_name):
 
     :param service_name: unique name to identify the Feeding Service class
     :param parser_name: unique name to identify the Feed Parser class
+        None if the feeding service doesn't expect any parser
     """
     if not restricted_feeding_service_parsers.get(service_name):
         restricted_feeding_service_parsers[service_name] = {}
-
-    restricted_feeding_service_parsers[service_name][parser_name] = True
+    if parser_name is None:
+        if restricted_feeding_service_parsers[service_name]:
+            raise ValueError("You can't set None to a feeding service if some parsers are already registered")
+        restricted_feeding_service_parsers[service_name] = None
+    else:
+        restricted_feeding_service_parsers[service_name][parser_name] = True
 
 
 def get_feed_parser(parser_name):
@@ -144,7 +149,9 @@ class FeedingServiceAllowedService(Service):
     def get(self, req, lookup):
         def service(service_id):
             feeding_service_class = registered_feeding_services[service_id]
-            restricted_parsers = list(restricted_feeding_service_parsers.get(service_id, {}).keys())
+            restricted_parsers = restricted_feeding_service_parsers.get(service_id, {})
+            if restricted_parsers is not None:
+                restricted_parsers = list(restricted_parsers.keys())
 
             return {
                 'feeding_service': service_id,

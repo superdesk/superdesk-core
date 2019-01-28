@@ -16,7 +16,7 @@ from collections import namedtuple
 from datetime import datetime
 
 from superdesk.errors import IngestApiError, ParserError
-from superdesk.io.registry import register_feeding_service
+from superdesk.io.registry import register_feeding_service, register_feeding_service_parser
 from superdesk.io.feeding_services.http_base_service import HTTPFeedingServiceBase
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, GUID_TAG
 from superdesk.utils import merge_dicts
@@ -44,7 +44,7 @@ class RSSFeedingService(HTTPFeedingServiceBase):
               IngestApiError.apiGeneralError().get_error_description(),
               ParserError.parseMessageError().get_error_description()]
 
-    label = 'RSS'
+    label = 'RSS/Atom'
 
     fields = [
         {
@@ -398,3 +398,4 @@ class RSSFeedingService(HTTPFeedingServiceBase):
 
 
 register_feeding_service(RSSFeedingService)
+register_feeding_service_parser(RSSFeedingService.NAME, None)
