@@ -345,7 +345,7 @@ class NINJSFormatter(Formatter):
         # get the actual article's renditions
         actual_renditions = article.get('renditions', {})
         # renditions list that we want to publish
-        if article['type'] is 'picture':
+        if article['type'] == 'picture':
             renditions_to_publish = ['original'] + list(get_renditions_spec(without_internal_renditions=True).keys())
             # filter renditions and keep only the ones we want to publish
             actual_renditions = {name: actual_renditions[name] for name in renditions_to_publish

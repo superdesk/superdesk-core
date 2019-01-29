@@ -34,7 +34,7 @@ TaskBase = celery.Task
 
 def try_cast(v):
     # False and 0 are getting converted to datetime by arrow
-    if v is None or isinstance(v, bool) or v is 0:
+    if v is None or isinstance(v, bool) or v == 0:
         return v
 
     try:
