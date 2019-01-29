@@ -68,6 +68,11 @@ Superdesk commands
 
 .. autoclass:: apps.prepopulate.app_prepopulate.AppPrepopulateCommand()
 
+``app:populate``
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: apps.prepopulate.app_populate.AppPopulateCommand()
+
 ``app:rebuild_elastic_index``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -193,15 +198,6 @@ Superdesk commands
 
 .. autoclass:: superdesk.commands.generate_vocabularies.GenerateVocabularies()
 
-``validators:populate``
-^^^^^^^^^^^^^^^^^^^^^^^
-
-.. autoclass:: apps.validators.command.ValidatorsPopulateCommand()
-
-``vocabularies:populate``
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. autoclass:: superdesk.vocabularies.commands.VocabulariesPopulateCommand()
 
 ``vocabularies:update_archive``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

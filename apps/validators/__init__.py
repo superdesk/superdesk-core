@@ -10,10 +10,9 @@
 
 
 import logging
+import superdesk
 
 from .validators import ValidatorsService, ValidatorsResource
-from .command import ValidatorsPopulateCommand  # noqa
-import superdesk
 
 logger = logging.getLogger(__name__)
 

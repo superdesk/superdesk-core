@@ -22,6 +22,13 @@ class RebuildElasticIndex(superdesk.Command):
 
     It creates new index with same alias as the configured index,
     puts the new mapping and removes the old index.
+
+    Example:
+    ::
+
+        $ python manage.py app:rebuild_elastic_index
+        $ python manage.py app:rebuild_elastic_index --index=contentapi
+        $ python manage.py app:rebuild_elastic_index --index=superdesk
     """
 
     option_list = [

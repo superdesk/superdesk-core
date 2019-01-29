@@ -25,6 +25,11 @@ class RemoveExpiredItems(superdesk.Command):
     """Remove expired items from the content_api items collection.
 
     By default no items expire there, you can change it using ``CONTENT_API_EXPIRY_DAYS`` config.
+
+    Example:
+    ::
+
+        $ python manage.py content_api:remove_expired
     """
 
     log_msg = ''

@@ -14,7 +14,10 @@ import json
 class RunMacro(superdesk.Command):
     r"""Executes a macro by given name and optional keyword arguments.
 
-    Example: app:run_macro --name clean_keywords --kwargs {\"repo\":\"archived\"}
+    Example:
+    ::
+
+        $ app:run_macro --name clean_keywords --kwargs {"repo":"archived"}
     """
 
     option_list = [

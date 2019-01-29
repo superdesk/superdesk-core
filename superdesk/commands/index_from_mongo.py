@@ -23,6 +23,12 @@ class IndexFromMongo(superdesk.Command):
     This will use the default APP mongo DB to read the data and the default Elastic APP index.
 
     Use ``-f all`` to index all collections.
+
+    Example:
+    ::
+
+        $ python manage.py app:index_from_mongo --from=archive
+        $ python manage.py app:index_from_mongo --all
     """
 
     option_list = [

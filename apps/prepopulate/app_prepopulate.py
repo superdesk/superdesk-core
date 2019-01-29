@@ -180,6 +180,11 @@ class AppPrepopulateCommand(superdesk.Command):
 
     Useful for demo/development environment, but don't run in production,
     it's hard to get rid of such data later.
+
+    Example:
+    ::
+
+        $ python manage.py app:prepopulate
     """
 
     option_list = [

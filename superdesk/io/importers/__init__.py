@@ -17,7 +17,13 @@ from superdesk.metadata.item import ITEM_STATE
 
 
 class ImportCommand(superdesk.Command):
-    """Import articles into archives."""
+    """Import articles into archives.
+
+    Example:
+    ::
+
+        $ python manage.py xml:import ninjs data/sample.json
+    """
 
     option_list = [
         superdesk.Option('parser', help="name of the feed parser"),

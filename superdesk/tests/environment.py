@@ -12,10 +12,10 @@ import os
 from flask import json
 
 from apps.io.tests import setup_providers, teardown_providers
+from apps.prepopulate.app_populate import AppPopulateCommand
 from superdesk import tests
 from superdesk.factory.app import get_app
 from superdesk.tests import setup_auth_user
-from superdesk.vocabularies.commands import VocabulariesPopulateCommand
 from superdesk.tests.mocks import TestSearchProvider
 from superdesk.tests.steps import get_macro_path
 
@@ -67,13 +67,13 @@ def setup_before_scenario(context, scenario, config, app_factory):
 
     if scenario.status != 'skipped' and 'vocabulary' in scenario.tags:
         with context.app.app_context():
-            cmd = VocabulariesPopulateCommand()
+            cmd = AppPopulateCommand()
             filename = os.path.join(os.path.abspath(os.path.dirname("features/steps/fixtures/")), "vocabularies.json")
             cmd.run(filename)
 
     if scenario.status != 'skipped' and 'content_type' in scenario.tags:
         with context.app.app_context():
-            cmd = VocabulariesPopulateCommand()
+            cmd = AppPopulateCommand()
             filename = os.path.join(os.path.abspath(os.path.dirname("features/steps/fixtures/")), "content_types.json")
             cmd.run(filename)
 
