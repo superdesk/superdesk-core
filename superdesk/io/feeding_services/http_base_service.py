@@ -118,6 +118,40 @@ class HTTPFeedingServiceBase(FeedingService):
     def config(self):
         return self.provider.setdefault('config', {})
 
+    def validate_config(self):
+        """
+        Validate provider config according to `cls.fields`
+
+        :param config: Ingest provider configuration
+        :type config: dict
+        :return:
+        """
+        # validate required config fields
+        required_keys = [field['id'] for field in self.fields if field.get('required', False)]
+        if not set(self.config.keys()).issuperset(required_keys):
+            raise SuperdeskIngestError.notConfiguredError(
+                Exception('{} are required.'.format(', '.join(required_keys)))
+            )
+
+        url = self.config.get('url').strip()
+        if not url:
+            try:
+                url_field = next({f for f in self.fields if f['id'] == u'url'})
+            except StopIteration:
+                url_required = False
+            else:
+                url_required = url_field.get('required', False)
+            if url_required:
+                raise SuperdeskIngestError.notConfiguredError(
+                    Exception('URL is a required field.')
+                )
+        else:
+            # validate url
+            if not url.startswith('http'):
+                raise SuperdeskIngestError.notConfiguredError(
+                    Exception('URL must be a valid HTTP link.')
+                )
+
     def get_url(self, url=None, **kwargs):
         """Do an HTTP Get on URL
 
@@ -127,7 +161,7 @@ class HTTPFeedingServiceBase(FeedingService):
         """
         if not url:
             url = self.HTTP_URL
-        config = self.provider['config']
+        config = self.config
         user = config.get('username')
         password = config.get('password')
         if user:
@@ -182,4 +216,5 @@ class HTTPFeedingServiceBase(FeedingService):
 
     def update(self, provider, update):
         self.provider = provider
+        self.validate_config()
         return super().update(provider, update)
