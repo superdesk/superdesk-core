@@ -54,6 +54,11 @@ class SchemaMigrateCommand(superdesk.Command):
 
     Current version is read from settings and fallbacks to superdesk.SCHEMA_VERSION,
     so that you can avoid migration via settings file if needed.
+
+    Example:
+    ::
+
+        $ python manage.py schema:migrate
     """
 
     def run(self):

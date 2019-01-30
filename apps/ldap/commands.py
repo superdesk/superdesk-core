@@ -24,6 +24,11 @@ class ImportUserProfileFromADCommand(superdesk.Command):
     This command runs on assumption that the user executing this command and
     the user whose profile need to be imported need not to be the same. Uses ad_username and ad_password to bind to AD
     and then searches for a user identified by username_to_import and if found imports into Mongo.
+
+    Example:
+    ::
+
+        $ python manage.py users:copyfromad --ad_username=ad_uname --ad_password=123 --username_to_import=admin
     """
 
     option_list = (

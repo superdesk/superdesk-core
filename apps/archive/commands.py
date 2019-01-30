@@ -42,6 +42,11 @@ class RemoveExpiredContent(superdesk.Command):
     """Remove expired content from Superdesk.
 
     It removes expired items from production, published and archived colections.
+
+    Example:
+    ::
+
+        $ python manage.py archive:remove_expired
     """
 
     log_msg = ''

@@ -66,7 +66,13 @@ def get_enqueue_service(operation):
 
 
 class EnqueueContent(superdesk.Command):
-    """Add published items to ``publish_queue``."""
+    """Add published items to ``publish_queue``.
+
+    Example:
+    ::
+
+        $ python manage.py publish:enqueue
+    """
 
     def run(self):
         """Fetches items from publish queue as per the configuration, calls the transmit function.

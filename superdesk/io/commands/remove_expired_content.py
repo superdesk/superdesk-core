@@ -19,7 +19,14 @@ from superdesk.io import get_feeding_service
 
 
 class RemoveExpiredContent(superdesk.Command):
-    """Remove stale data from ingest based on the provider settings."""
+    """Remove stale data from ingest based on the provider settings.
+
+    Example:
+    ::
+
+        $ python manage.py ingest:clean_expired
+        $ python manage.py ingest:clean_expired --provider=aap
+    """
 
     option_list = (
         superdesk.Option('--provider', '-p', dest='provider_name'),

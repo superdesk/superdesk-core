@@ -206,7 +206,14 @@ def get_task_id(provider):
 
 
 class UpdateIngest(superdesk.Command):
-    """Update ingest providers."""
+    """Runs update for ingest providers.
+
+    Example:
+    ::
+
+        $ python manage.py ingest:update
+        $ python manage.py ingest:update --provider=aap-demo
+    """
 
     option_list = (
         superdesk.Option('--provider', '-p', dest='provider_name'),

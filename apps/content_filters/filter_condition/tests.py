@@ -18,9 +18,9 @@ from datetime import timedelta
 from apps.content_filters.filter_condition.filter_condition_service import FilterConditionService
 from apps.content_filters.filter_condition.filter_condition import FilterCondition
 from apps.content_filters.filter_condition.filter_condition_operator import FilterConditionOperator
+from apps.prepopulate.app_populate import AppPopulateCommand
 from superdesk import get_resource_service
 from superdesk.tests import TestCase
-from superdesk.vocabularies.commands import VocabulariesPopulateCommand
 
 
 class FilterConditionTests(TestCase):
@@ -723,7 +723,7 @@ class FilterConditionTests(TestCase):
         filter_condition5 = {'field': 'urgency', 'operator': 'nin', 'value': '5'}
         filter_condition6 = {'field': 'headline', 'operator': 'like', 'value': 'tor'}
         with self.app.app_context():
-            cmd = VocabulariesPopulateCommand()
+            cmd = AppPopulateCommand()
             filename = os.path.join(os.path.abspath(
                 os.path.dirname("apps/prepopulate/data_init/vocabularies.json")), "vocabularies.json")
             cmd.run(filename)

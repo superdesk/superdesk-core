@@ -23,6 +23,12 @@ class PurgeAudit(superdesk.Command):
 
     Entries are purged if the related item is no longer in 'Production'.
     Other entries are deleted after the configured time period.
+
+    Example:
+    ::
+
+        $ python manage.py audit:purge
+        $ python manage.py audit:purge --expiry_minutes=20
     """
 
     # The list of resource entries that we will preseved in audit if an associated item still exists in production
