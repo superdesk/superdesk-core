@@ -36,6 +36,7 @@ EDITOR_ATTRIBUTES = (
     'cleanPastedHTML',
     'imageTitle',
     'sourceField',
+    'section',
 )
 
 

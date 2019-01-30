@@ -544,7 +544,7 @@ def get_expiry(desk_id, stage_id, offset=None):
         stage = get_resource_service('stages').find_one(req=None, _id=stage_id)
 
         if not stage:
-                raise SuperdeskApiError.notFoundError('Invalid stage identifier %s' % stage_id)
+            raise SuperdeskApiError.notFoundError('Invalid stage identifier %s' % stage_id)
 
     return get_item_expiry(desk, stage, offset)
 
