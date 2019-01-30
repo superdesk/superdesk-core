@@ -23,7 +23,7 @@ from superdesk.celery_app import celery
 from superdesk.utc import utcnow
 from superdesk.profiling import ProfileManager
 from .publish_queue import QueueState
-
+from celery.exceptions import SoftTimeLimitExceeded
 
 logger = logging.getLogger(__name__)
 
@@ -105,7 +105,7 @@ def transmit_subscriber_items(subscriber, retries=False):
             if is_async:
                 transmit_item.apply_async(args=args, kwargs=kwargs)
             else:
-                transmit_item.apply(args=args, kwargs=kwargs)
+                transmit_item.apply(args=args, kwargs=kwargs, throw=True)
     finally:
         unlock(lock_name)
 
@@ -158,6 +158,8 @@ def transmit_item(queue_item_id, is_async=False):
             publish_queue_service.system_update(orig_item.get(config.ID_FIELD), updates, orig_item)
         except Exception:
             logger.error('Failed to set the state for failed publish queue item {}.'.format(queue_item['_id']))
+        if isinstance(e, SoftTimeLimitExceeded):
+            raise
     finally:
         if is_async:
             unlock(lock_name, remove=True)
