@@ -292,8 +292,12 @@ class NINJSFormatter(Formatter):
         extra_items = {}
         media = {}
         content_profile = None
+        archive_service = superdesk.get_resource_service('archive')
         for key, item in (article.get(ASSOCIATIONS) or {}).items():
             if item:
+                if archive_service._is_related_content(key):
+                    item = archive_service.find_one(req=None, _id=item['_id'])
+
                 item = self._transform_to_ninjs(item, subscriber)
                 associations[key] = item  # all items should stay in associations
                 match = MEDIA_FIELD_RE.match(key)

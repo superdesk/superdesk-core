@@ -384,15 +384,6 @@ class ArchiveService(BaseService):
     def find_one(self, req, **lookup):
         item = super().find_one(req, **lookup)
 
-        # To fetch the related items json on the basis of ID stored in association for related items
-        if item and 'associations' in item:
-            for item_name, item_obj in item.get(ASSOCIATIONS).items():
-                if item_obj and self._is_related_content(item_name):
-                    item_id = item_obj[config.ID_FIELD]
-                    stored_item = super().find_one(req=None, _id=item_id)
-
-                    item[ASSOCIATIONS][item_name] = stored_item
-
         if item and str(item.get('task', {}).get('stage', '')) in \
                 get_resource_service('users').get_invisible_stages_ids(get_user().get('_id')):
             raise SuperdeskApiError.forbiddenError("User does not have permissions to read the item.")
@@ -594,9 +585,10 @@ class ArchiveService(BaseService):
         updates = self._store_id_only_in_associations(updates)
 
         if updates.get(ASSOCIATIONS):
-            for association in updates[ASSOCIATIONS].values():
-                self._set_association_timestamps(association, updates, new=False)
-                remove_unwanted(association)
+            for item_name, association in updates[ASSOCIATIONS].items():
+                if not self._is_related_content(item_name):
+                    self._set_association_timestamps(association, updates, new=False)
+                    remove_unwanted(association)
 
         # this needs to here as resolve_nested_documents (in eve) will add the schedule_settings
         if PUBLISH_SCHEDULE in updates and original[ITEM_STATE] == CONTENT_STATE.SCHEDULED:
