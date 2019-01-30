@@ -11,7 +11,7 @@
 import re
 import superdesk
 import logging
-from flask import render_template_string
+from flask import render_template_string, current_app as app
 from copy import deepcopy
 from superdesk.services import BaseService
 from superdesk import Resource, Service, config, get_resource_service
@@ -40,7 +40,6 @@ TEMPLATE_FIELDS = {'template_name', 'template_type', 'schedule', 'type', 'state'
                    config.ETAG, 'task'}
 KILL_TEMPLATE_NOT_REQUIRED_FIELDS = ['schedule', 'dateline', 'template_desks', 'schedule_desk',
                                      'schedule_stage']
-KILL_TEMPLATE_NULL_FIELDS = ['byline', 'place']
 PLAINTEXT_FIELDS = {'headline'}
 
 
@@ -509,7 +508,7 @@ def filter_plaintext_fields(item):
 
 
 def apply_null_override_for_kill(item):
-    for key in KILL_TEMPLATE_NULL_FIELDS:
+    for key in app.config['KILL_TEMPLATE_NULL_FIELDS']:
         if key in item:
             item[key] = None
 
