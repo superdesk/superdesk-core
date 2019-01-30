@@ -211,7 +211,7 @@ class LegalArchiveImport:
                                                                          msg))
 
             if history_update.get('task') and history_update['task'].get('user'):
-                    history_update['task']['user'] = self.__get_user_name(history_update['task'].get('user'))
+                history_update['task']['user'] = self.__get_user_name(history_update['task'].get('user'))
 
             history_item['update'] = history_update
 
