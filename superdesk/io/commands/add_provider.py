@@ -31,24 +31,24 @@ class AddProvider(superdesk.Command):
     }
 
     def run(self, provider):
-            try:
-                data = {}
-                data = superdesk.json.loads(provider)
-                data.setdefault('content_expiry', superdesk.app.config['INGEST_EXPIRY_MINUTES'])
+        try:
+            data = {}
+            data = superdesk.json.loads(provider)
+            data.setdefault('content_expiry', superdesk.app.config['INGEST_EXPIRY_MINUTES'])
 
-                validator = superdesk.app.validator(superdesk.app.config['DOMAIN']['ingest_providers']['schema'],
-                                                    'ingest_providers')
-                validation = validator.validate(data)
+            validator = superdesk.app.validator(superdesk.app.config['DOMAIN']['ingest_providers']['schema'],
+                                                'ingest_providers')
+            validation = validator.validate(data)
 
-                if validation:
-                    get_resource_service('ingest_providers').post([data])
-                    return data
-                else:
-                    ex = Exception('Failed to add Provider as the data provided is invalid. Errors: {}'
-                                   .format(str(validator.errors)))
-                    raise ProviderError.providerAddError(exception=ex, provider=data)
-            except Exception as ex:
-                raise ProviderError.providerAddError(ex, data)
+            if validation:
+                get_resource_service('ingest_providers').post([data])
+                return data
+            else:
+                ex = Exception('Failed to add Provider as the data provided is invalid. Errors: {}'
+                               .format(str(validator.errors)))
+                raise ProviderError.providerAddError(exception=ex, provider=data)
+        except Exception as ex:
+            raise ProviderError.providerAddError(ex, data)
 
 
 superdesk.command('ingest:provider', AddProvider())

@@ -92,12 +92,12 @@ if os.environ.get('LDAP_SERVER', ''):
                     side_effect=CredentialsAuthError(credentials={'username': 'test'}, error='test'))
         @mock.patch('apps.ldap.ldap.get_user', return_value={'username': 'user'})
         def test_user_import_profile_with_invalid_credentials(self, mock_ldap_connection, mock_auth, mock_get_user):
-                with self.assertRaises(SuperdeskApiError) as context:
-                    service = get_resource_service('import_profile')
-                    doc = {'username': 'user', 'password': 'pwd', 'profile_to_import': 'barf'}
-                    service.post([doc])
+            with self.assertRaises(SuperdeskApiError) as context:
+                service = get_resource_service('import_profile')
+                doc = {'username': 'user', 'password': 'pwd', 'profile_to_import': 'barf'}
+                service.post([doc])
 
-                ex = context.exception
-                self.assertEqual(ex.message, 'Invalid Credentials.')
-                self.assertEqual(ex.status_code, 403)
-                self.assertDictEqual(ex.payload, {'credentials': 1})
+            ex = context.exception
+            self.assertEqual(ex.message, 'Invalid Credentials.')
+            self.assertEqual(ex.status_code, 403)
+            self.assertDictEqual(ex.payload, {'credentials': 1})
