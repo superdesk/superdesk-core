@@ -725,3 +725,7 @@ QCODE_MISSING_VOC = "continue"
 
 # Relative path and filename for an image to apply as a watermark on publish of feature media via email.
 WATERMARK_IMAGE = env('WATERMARK_IMAGE', '')
+
+
+#: Kill template config
+KILL_TEMPLATE_NULL_FIELDS = ['byline', 'place']
