@@ -96,7 +96,6 @@ def update_config(conf):
     conf['ARCHIVED_MAX_POOL_SIZE'] = 1
     conf['LEGAL_ARCHIVE_MAX_POOL_SIZE'] = 1
     conf['PUBLISH_ASSOCIATED_ITEMS'] = True
-    conf['PUBLISH_DRAFT_ITEMS'] = False
 
     # misc
     conf['GEONAMES_USERNAME'] = 'superdesk_dev'
