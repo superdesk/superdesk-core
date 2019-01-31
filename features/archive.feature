@@ -121,7 +121,7 @@ Feature: News Items Archive
         When we upload a file "bike.jpg" to "archive"
         Then we get new resource
         """
-        {"guid": "__any_value__", "firstcreated": "__any_value__", "versioncreated": "__any_value__", "state": "draft"}
+        {"guid": "__any_value__", "firstcreated": "__any_value__", "versioncreated": "__any_value__", "state": "in_progress"}
         """
         And we get "bike.jpg" metadata
         And we get "picture" renditions
@@ -155,7 +155,7 @@ Feature: News Items Archive
         When we upload a file "bike.jpg" to "archive"
         Then we get new resource
         """
-        {"guid": "__any_value__", "firstcreated": "__any_value__", "versioncreated": "__any_value__", "state": "draft"}
+        {"guid": "__any_value__", "firstcreated": "__any_value__", "versioncreated": "__any_value__", "state": "in_progress"}
         """
         And we get "bike.jpg" metadata
         And we get "picture" renditions
@@ -167,7 +167,7 @@ Feature: News Items Archive
         Then we get list with 1 items
         """
         {"_items": [{"headline": "flower", "byline": "foo", "description_text": "flower desc",
-                     "pubstatus": "usable", "language": "en", "state": "draft", "sign_off": "abc", "expiry": "__no_value__"}]}
+                     "pubstatus": "usable", "language": "en", "state": "in_progress", "sign_off": "abc", "expiry": "__no_value__"}]}
         """
 
     @auth
@@ -176,7 +176,7 @@ Feature: News Items Archive
         When we upload a file "green.ogg" to "archive"
         Then we get new resource
         """
-        {"guid": "__any_value__", "state": "draft"}
+        {"guid": "__any_value__", "state": "in_progress"}
         """
         And we get "green.ogg" metadata
         Then original rendition is updated with link to file having mimetype "audio/ogg"
@@ -187,7 +187,7 @@ Feature: News Items Archive
         When we get "/archive"
         Then we get list with 1 items
         """
-        {"_items": [{"headline": "green", "byline": "foo", "description_text": "green music", "state": "draft", "sign_off": "abc"}]}
+        {"_items": [{"headline": "green", "byline": "foo", "description_text": "green music", "state": "in_progress", "sign_off": "abc"}]}
         """
 
     @auth
@@ -196,7 +196,7 @@ Feature: News Items Archive
         When we upload a file "this_week_nasa.mp4" to "archive"
         Then we get new resource
         """
-        {"guid": "__any_value__", "state": "draft"}
+        {"guid": "__any_value__", "state": "in_progress"}
         """
         And we get "this_week_nasa.mp4" metadata
         Then original rendition is updated with link to file having mimetype "video/mp4"
@@ -207,7 +207,7 @@ Feature: News Items Archive
         When we get "/archive"
         Then we get list with 1 items
         """
-        {"_items": [{"headline": "week @ nasa", "byline": "foo", "description_text": "nasa video", "state": "draft", "sign_off": "abc"}]}
+        {"_items": [{"headline": "week @ nasa", "byline": "foo", "description_text": "nasa video", "state": "in_progress", "sign_off": "abc"}]}
         """
 
     @auth
@@ -353,7 +353,7 @@ Feature: News Items Archive
         When we upload a file "bike.jpg" to "archive"
         Then we get new resource
         """
-        {"guid": "__any_value__", "firstcreated": "__any_value__", "versioncreated": "__any_value__", "state": "draft"}
+        {"guid": "__any_value__", "firstcreated": "__any_value__", "versioncreated": "__any_value__", "state": "in_progress"}
         """
         When we patch latest
         """
@@ -363,7 +363,7 @@ Feature: News Items Archive
         Then we get list with 1 items
         """
         {"_items": [{"headline": "flower", "byline": "foo", "description_text": "flower desc",
-                     "pubstatus": "usable", "language": "en", "state": "draft"}]}
+                     "pubstatus": "usable", "language": "en", "state": "in_progress"}]}
         """
         When we patch "/archive/#archive._id#"
         """
