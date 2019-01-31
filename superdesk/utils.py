@@ -282,3 +282,6 @@ class Timer():
         del self._stopwatches[key]
 
         return delta
+
+    def stop_all(self):
+        self._stopwatches = {}

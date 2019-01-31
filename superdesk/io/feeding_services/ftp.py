@@ -184,6 +184,7 @@ class FTPFeedingService(FeedingService):
         return ext.lower() in allowed_ext
 
     def _list_files(self, ftp, provider):
+        self._timer.start('ftp_list')
         try:
             return [(filename, facts['modify']) for filename, facts in ftp.mlsd() if facts.get('type') == 'file']
         except Exception as ex:
@@ -201,9 +202,14 @@ class FTPFeedingService(FeedingService):
                 return zip(file_name_list, date_list)
             else:
                 raise IngestFtpError.ftpError(ex, provider)
+        finally:
+            self._log_msg("FTP list files. Exec time: {:.4f} secs.".format(self._timer.stop('ftp_list')))
 
     def _sort_files(self, files):
-        return sorted(files, key=lambda x: x[1])
+        self._timer.start('sort_files')
+        files = sorted(files, key=lambda x: x[1])
+        self._log_msg("Sort {} files. Exec time: {:.4f} secs.".format(len(files), self._timer.stop('sort_files')))
+        return files
 
     def _retrieve_and_parse(self, ftp, config, filename, provider, registered_parser):
         items = []
@@ -215,7 +221,20 @@ class FTPFeedingService(FeedingService):
         with open(local_file_path, 'wb') as f:
             try:
                 ftp.retrbinary('RETR %s' % filename, f.write)
+                self._log_msg(
+                    "Download finished. Exec time: {:.4f} secs. Size: {} bytes. File: {}.".format(
+                        self._timer.split('retrieve_parse'),
+                        os.path.getsize(local_file_path),
+                        filename
+                    )
+                )
             except ftplib.all_errors:
+                self._log_msg(
+                    "Download failed. Exec time: {:.4f} secs. File: {}.".format(
+                        self._timer.split('retrieve_parse'),
+                        filename
+                    )
+                )
                 os.remove(local_file_path)
                 raise Exception('Exception retrieving file from FTP server ({filename})'.format(
                                 filename=filename))
@@ -227,6 +246,13 @@ class FTPFeedingService(FeedingService):
         else:
             parser = self.get_feed_parser(provider, local_file_path)
             parsed = parser.parse(local_file_path, provider)
+
+        self._log_msg(
+            "Parsing finished. Exec time: {:.4f} secs. File: {}.".format(
+                self._timer.split('retrieve_parse'),
+                filename
+            )
+        )
 
         if isinstance(parsed, dict):
             parsed = [parsed]
@@ -243,13 +269,19 @@ class FTPFeedingService(FeedingService):
         allowed_ext = getattr(registered_parser, 'ALLOWED_EXT', self.ALLOWED_EXT_DEFAULT)
 
         try:
+            self._timer.start('ftp_connect')
             with ftp_connect(config) as ftp:
+                self._log_msg("Connected to FTP server. Exec time: {:.4f} secs.".format(
+                    self._timer.stop('ftp_connect')
+                ))
                 items = []
                 files_to_process = []
                 files = self._sort_files(self._list_files(ftp, provider))
 
                 if do_move:
                     move_path, move_path_error = self._create_move_folders(config, ftp)
+
+                self._timer.start('files_to_process')
 
                 for filename, modify in files:
                     # filter by extension
@@ -264,7 +296,7 @@ class FTPFeedingService(FeedingService):
                         if last_processed_file_modify == file_modify:
                             files_to_process.append((filename, file_modify))
                         elif last_processed_file_modify < file_modify:
-                            # evenv if we have reached a limit, we must add at least one file to increment
+                            # even if we have reached a limit, we must add at least one file to increment
                             # a `last_processed_file_modify` in provider
                             files_to_process.append((filename, file_modify))
                             # limit amount of files to process per ingest update
@@ -277,7 +309,15 @@ class FTPFeedingService(FeedingService):
                         # add files for processing
                         files_to_process.append((filename, file_modify))
 
+                self._log_msg(
+                    "Got {} file for processing. Exec time: {:.4f} secs.".format(
+                        len(files_to_process), self._timer.stop('files_to_process')
+                    )
+                )
+
                 # process files
+                self._timer.start('start_processing')
+                self._timer.start('retrieve_parse')
                 for filename, file_modify in files_to_process:
                     try:
                         items += self._retrieve_and_parse(ftp, config, filename, provider, registered_parser)
@@ -292,6 +332,10 @@ class FTPFeedingService(FeedingService):
                         if do_move:
                             move_dest_file_path_error = os.path.join(move_path_error, filename)
                             self._move(ftp, filename, move_dest_file_path_error)
+
+                self._log_msg(
+                    "Processing finished. Exec time: {:.4f} secs.".format(self._timer.stop('start_processing'))
+                )
 
             return items
         except IngestFtpError:

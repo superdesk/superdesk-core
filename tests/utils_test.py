@@ -19,3 +19,13 @@ class UtilsTestCase(unittest.TestCase):
         self.assertIn('superdesk', filename)
         with open(filename) as f:
             self.assertEqual('foo', f.read())
+
+    def test_timer(self):
+        timer = utils.Timer()
+
+        timer.start('test')
+        self.assertIsNotNone(timer.split('test'))
+        self.assertIsNotNone(timer.split('test'))
+        self.assertIsNotNone(timer.stop('test'))
+        self.assertRaises(Exception, timer.split, 'test')
+        self.assertRaises(Exception, timer.split, 'bla')
