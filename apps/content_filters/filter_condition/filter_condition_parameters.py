@@ -115,7 +115,7 @@ class FilterConditionParametersService(BaseService):
         for vocabulary in get_resource_service('vocabularies').get(req=None, lookup=lookup):
             field = {'field': vocabulary[config.ID_FIELD], 'label': vocabulary['display_name']}
 
-            if vocabulary.get('field_type', '') != '' and vocabulary.get('field_type', '') != 'text':
+            if vocabulary.get('field_type') and vocabulary.get('field_type', '') != 'text':
                 continue
 
             if vocabulary.get('field_type', '') == 'text':
