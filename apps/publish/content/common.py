@@ -607,14 +607,9 @@ def update_item_data(item, data, keys=DEFAULT_SCHEMA.keys(), keep_existing=False
 
 
 superdesk.workflow_state('published')
-
-include_states = ['fetched', 'routed', 'submitted', 'in_progress', 'scheduled']
-if superdesk.app and superdesk.app.config.get('PUBLISH_DRAFT_ITEMS', False):
-    include_states.append('draft')
-
 superdesk.workflow_action(
     name='publish',
-    include_states=include_states,
+    include_states=['fetched', 'routed', 'submitted', 'in_progress', 'scheduled'],
     privileges=['publish']
 )
 

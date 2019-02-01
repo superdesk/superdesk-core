@@ -681,7 +681,6 @@ HTML_TAGS_WHITELIST = ('h1', 'h2', 'h3', 'h4', 'h6', 'blockquote', 'pre', 'figur
 JAPANESE_CHARACTERS_PER_MINUTE = 600
 
 PUBLISH_ASSOCIATED_ITEMS = False
-PUBLISH_DRAFT_ITEMS = False
 
 # Use content profile for validation when auto-publishing
 AUTO_PUBLISH_CONTENT_PROFILE = True

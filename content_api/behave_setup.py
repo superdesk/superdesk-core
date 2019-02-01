@@ -33,7 +33,6 @@ def get_test_settings():
     test_settings['SUPERDESK_CONTENTAPI_TESTING'] = True
     test_settings['REDIS_URL'] = 'redis://localhost:6379'
     test_settings['BCRYPT_GENSALT_WORK_FACTOR'] = 12
-    test_settings['PUBLISH_DRAFT_ITEMS'] = False
 
     return test_settings
 
