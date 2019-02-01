@@ -39,6 +39,7 @@ class HTTPFeedingService(FeedingService, metaclass=ABCMeta):
     label = 'HTTP'
 
     def __init__(self):
+        super().__init__()
         self.token = None
 
     def _generate_token_and_update_provider(self, provider):
