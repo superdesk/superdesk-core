@@ -162,6 +162,15 @@ class ArchiveRewriteService(Service):
             # preserve flags
             for key in rewrite.get('flags').keys():
                 rewrite['flags'][key] = original['flags'][key] or existing_item.get('flags', {}).get(key, False)
+
+            original_associations = original.get(ASSOCIATIONS) or {}
+            existing_associations = existing_item.get(ASSOCIATIONS) or {}
+            rewrite[ASSOCIATIONS] = existing_associations
+
+            # if the existing item has association then preserve the association
+            for key, assoc in original_associations.items():
+                if not existing_associations.get(key):
+                    rewrite[ASSOCIATIONS][key] = assoc
         else:
             # ingest provider and source to be retained for new item
             fields.extend(['ingest_provider', 'source'])

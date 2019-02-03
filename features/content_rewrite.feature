@@ -1855,6 +1855,16 @@ Feature: Rewrite content
                       "renditions": {
                           "original": {}
                       }
+                  },
+                  "editor_2": {
+                      "guid": "1234",
+                      "type": "picture",
+                      "slugline": "1234",
+                      "state": "in_progress",
+                      "headline": "some headline",
+                      "renditions": {
+                          "original": {}
+                      }
                   }
               }
           },
@@ -1889,6 +1899,16 @@ Feature: Rewrite content
                       "guid": "456",
                       "type": "picture",
                       "slugline": "456",
+                      "state": "in_progress",
+                      "headline": "some headline",
+                      "renditions": {
+                          "original": {}
+                      }
+                  },
+                  "editor_1": {
+                      "guid": "786",
+                      "type": "picture",
+                      "slugline": "786",
                       "state": "in_progress",
                       "headline": "some headline",
                       "renditions": {
@@ -1938,6 +1958,16 @@ Feature: Rewrite content
                       "renditions": {
                           "original": {}
                       }
+                  },
+                  "editor_1": {
+                      "guid": "786",
+                      "type": "picture",
+                      "slugline": "786",
+                      "state": "in_progress",
+                      "headline": "some headline",
+                      "renditions": {
+                          "original": {}
+                      }
                   }
               }
           }
@@ -1958,6 +1988,197 @@ Feature: Rewrite content
                   "guid": "456",
                   "type": "picture",
                   "slugline": "456",
+                  "state": "in_progress",
+                  "headline": "some headline",
+                  "renditions": {
+                      "original": {}
+                  }
+              },
+              "editor_1": {
+                  "guid": "786",
+                  "type": "picture",
+                  "slugline": "786",
+                  "state": "in_progress",
+                  "headline": "some headline",
+                  "renditions": {
+                      "original": {}
+                  }
+              },
+              "editor_2": {
+                  "guid": "1234",
+                  "type": "picture",
+                  "slugline": "1234",
+                  "state": "in_progress",
+                  "headline": "some headline",
+                  "renditions": {
+                      "original": {}
+                  }
+              }
+          }
+      }
+      """
+
+    @auth
+    Scenario: Add association if existing item does not have associations
+      Given the "validators"
+      """
+        [
+        {
+            "schema": {},
+            "type": "text",
+            "act": "publish",
+            "_id": "publish_text"
+        },
+        {
+            "_id": "publish_composite",
+            "act": "publish",
+            "type": "composite",
+            "schema": {}
+        }
+        ]
+      """
+      Given "desks"
+      """
+      [{"name": "Sports"}]
+      """
+      And "archive"
+      """
+      [
+          {
+              "guid": "123",
+              "_id": "123",
+              "type": "text",
+              "headline": "test original",
+              "_current_version": 1,
+              "state": "draft",
+              "task": {
+                  "desk": "#desks._id#",
+                  "stage": "#desks.incoming_stage#",
+                  "user": "#CONTEXT_USER_ID#"
+              },
+              "subject": [
+                  {
+                      "qcode": "17004000",
+                      "name": "Statistics"
+                  }
+              ],
+              "body_html": "Test Document body original",
+              "genre": [
+                  {
+                      "name": "Article",
+                      "qcode": "Article"
+                  }
+              ],
+              "body_footer": "Original Suicide Call Back Service 1300 659 467",
+              "associations": {
+                  "editor_0": {
+                      "guid": "123",
+                      "type": "picture",
+                      "slugline": "123",
+                      "state": "in_progress",
+                      "headline": "some headline",
+                      "renditions": {
+                          "original": {}
+                      }
+                  },
+                  "editor_1": {
+                      "guid": "786",
+                      "type": "picture",
+                      "slugline": "786",
+                      "state": "in_progress",
+                      "headline": "some headline",
+                      "renditions": {
+                          "original": {}
+                      }
+                  }
+              }
+          },
+          {
+              "guid": "456",
+              "_id": "456",
+              "type": "text",
+              "headline": "test",
+              "_current_version": 1,
+              "state": "draft",
+              "task": {
+                  "desk": "#desks._id#",
+                  "stage": "#desks.incoming_stage#",
+                  "user": "#CONTEXT_USER_ID#"
+              },
+              "subject": [
+                  {
+                      "qcode": "17004000",
+                      "name": "Statistics"
+                  }
+              ],
+              "body_html": "Test Document body",
+              "genre": [
+                  {
+                      "name": "Music",
+                      "qcode": "Music"
+                  }
+              ],
+              "body_footer": "Suicide Call Back Service 1300 659 467"
+          }
+      ]
+      """
+      When we rewrite "123"
+      """
+      {
+          "update": {
+              "guid": "456",
+              "_id": "456",
+              "type": "text",
+              "headline": "test",
+              "_current_version": 1,
+              "state": "draft",
+              "task": {
+                  "desk": "#desks._id#",
+                  "stage": "#desks.incoming_stage#",
+                  "user": "#CONTEXT_USER_ID#"
+              },
+              "subject": [
+                  {
+                      "qcode": "17004000",
+                      "name": "Statistics"
+                  }
+              ],
+              "body_html": "Test Document body",
+              "genre": [
+                  {
+                      "name": "Music",
+                      "qcode": "Music"
+                  }
+              ],
+              "body_footer": "Suicide Call Back Service 1300 659 467"
+          }
+      }
+      """
+      When we get "/archive/#REWRITE_ID#"
+      Then we get existing resource
+      """
+      {
+          "_id": "456",
+          "rewrite_of": "123",
+          "headline": "test",
+          "rewrite_sequence": 1,
+          "_current_version": 1,
+          "body_html": "Test Document body",
+          "associations": {
+              "editor_0": {
+                  "guid": "123",
+                  "type": "picture",
+                  "slugline": "123",
+                  "state": "in_progress",
+                  "headline": "some headline",
+                  "renditions": {
+                      "original": {}
+                  }
+              },
+              "editor_1": {
+                  "guid": "786",
+                  "type": "picture",
+                  "slugline": "786",
                   "state": "in_progress",
                   "headline": "some headline",
                   "renditions": {
