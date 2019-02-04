@@ -212,6 +212,7 @@ class FTPFeedingService(FeedingService):
         return files
 
     def _retrieve_and_parse(self, ftp, config, filename, provider, registered_parser):
+        self._timer.start('retrieve_parse')
         items = []
 
         if 'dest_path' not in config:
@@ -231,7 +232,7 @@ class FTPFeedingService(FeedingService):
             except ftplib.all_errors:
                 self._log_msg(
                     "Download failed. Exec time: {:.4f} secs. File: {}.".format(
-                        self._timer.split('retrieve_parse'),
+                        self._timer.stop('retrieve_parse'),
                         filename
                     )
                 )
@@ -249,7 +250,7 @@ class FTPFeedingService(FeedingService):
 
         self._log_msg(
             "Parsing finished. Exec time: {:.4f} secs. File: {}.".format(
-                self._timer.split('retrieve_parse'),
+                self._timer.stop('retrieve_parse'),
                 filename
             )
         )
@@ -317,7 +318,6 @@ class FTPFeedingService(FeedingService):
 
                 # process files
                 self._timer.start('start_processing')
-                self._timer.start('retrieve_parse')
                 for filename, file_modify in files_to_process:
                     try:
                         items += self._retrieve_and_parse(ftp, config, filename, provider, registered_parser)

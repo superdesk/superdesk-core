@@ -263,7 +263,7 @@ class Timer():
 
     def _validate(self, key):
         if key not in self._stopwatches:
-            raise Exception('Timer was not started or was stopped for {} key.'.format(key))
+            raise KeyError('Timer was not started or was stopped for {} key.'.format(key))
 
     def start(self, key):
         self._stopwatches[key] = time.time()

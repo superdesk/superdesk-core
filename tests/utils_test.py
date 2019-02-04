@@ -27,5 +27,5 @@ class UtilsTestCase(unittest.TestCase):
         self.assertIsNotNone(timer.split('test'))
         self.assertIsNotNone(timer.split('test'))
         self.assertIsNotNone(timer.stop('test'))
-        self.assertRaises(Exception, timer.split, 'test')
-        self.assertRaises(Exception, timer.split, 'bla')
+        self.assertRaises(KeyError, timer.split, 'test')
+        self.assertRaises(KeyError, timer.split, 'bla')
