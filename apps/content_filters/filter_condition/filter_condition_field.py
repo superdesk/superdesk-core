@@ -89,7 +89,7 @@ class FilterConditionField:
 
     def get_value(self, article):
         try:
-            return get_text(article[self.field.name]).replace('\n', ' ')
+            return get_text(article[self.field.name]).strip()
         except (etree.XMLSyntaxError, ValueError):
             return article[self.field.name]
 
