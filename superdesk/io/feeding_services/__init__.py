@@ -19,6 +19,7 @@ from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError, SuperdeskIngestError
 from superdesk.io.registry import registered_feed_parsers, restricted_feeding_service_parsers
 from superdesk.utc import utcnow
+from superdesk.utils import Timer
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +72,10 @@ class FeedingService(metaclass=ABCMeta):
                         )
                     - default: preselect value in dropdown. Must be value from 'choices' preperties.
     """
+
+    def __init__(self):
+        self._timer = Timer()
+        self._provider = None
 
     @abstractmethod
     def _update(self, provider, update):
@@ -132,6 +137,11 @@ class FeedingService(metaclass=ABCMeta):
 
         return is_closed
 
+    def _log_msg(self, msg, level='info'):
+        getattr(logger, level)(
+            "Ingest:{} '{}': {}".format(self._provider['_id'], self._provider['name'], msg)
+        )
+
     def update(self, provider, update):
         """
         Clients consuming Ingest Services should invoke this to get items from the provider.
@@ -148,10 +158,18 @@ class FeedingService(metaclass=ABCMeta):
             raise SuperdeskApiError.internalError('Ingest Provider is closed')
         else:
             try:
+                self._provider = provider
+                self._log_msg("Start update execution.")
+                self._timer.start('update')
+
                 return self._update(provider, update) or []
             except SuperdeskIngestError as error:
                 self.close_provider(provider, error)
                 raise error
+            finally:
+                self._log_msg("Stop update execution. Exec time: {:.4f} secs.".format(self._timer.stop('update')))
+                # just in case stop all timers
+                self._timer.stop_all()
 
     def close_provider(self, provider, error, force=False):
         """Closes the provider and uses error as reason for closing.

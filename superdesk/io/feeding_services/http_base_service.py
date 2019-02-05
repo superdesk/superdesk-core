@@ -103,6 +103,7 @@ class HTTPFeedingServiceBase(FeedingService):
     ]
 
     def __init__(self):
+        super().__init__()
         self.token = None
 
     @property

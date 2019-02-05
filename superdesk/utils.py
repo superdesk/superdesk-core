@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import os
+import time
 import bcrypt
 import hashlib
 import base64
@@ -240,3 +241,47 @@ def save_error_data(data, prefix='superdesk-', suffix='.txt'):
     with tempfile.NamedTemporaryFile(prefix=prefix, suffix=suffix, delete=False) as file:
         file.write(data.encode('utf-8'))
         return file.name
+
+
+class Timer():
+    """
+    Stopwatch to measure program execution time in seconds.
+
+    Example:
+        >>> t = Timer()
+        >>> t.start('retrbinary')
+        >>> t.split('retrbinary')
+        1.390733003616333
+        >>> t.split('retrbinary')
+        1.207962989807129
+        >>> t.stop('retrbinary')
+        4.4189231395721436
+    """
+
+    def __init__(self):
+        self._stopwatches = {}
+
+    def _validate(self, key):
+        if key not in self._stopwatches:
+            raise KeyError('Timer was not started or was stopped for {} key.'.format(key))
+
+    def start(self, key):
+        self._stopwatches[key] = time.time()
+
+    def split(self, key):
+        self._validate(key)
+        now = time.time()
+        delta = now - self._stopwatches[key]
+        self._stopwatches[key] = now
+
+        return delta
+
+    def stop(self, key):
+        self._validate(key)
+        delta = time.time() - self._stopwatches[key]
+        del self._stopwatches[key]
+
+        return delta
+
+    def stop_all(self):
+        self._stopwatches = {}
