@@ -136,6 +136,11 @@ class MoveService(BaseService):
         push_item_move_notification(original, archived_doc)
         app.on_archive_item_updated(archived_doc, original, ITEM_MOVE)
 
+        # make sure `item._id` is there in signal
+        moved_item = archived_doc.copy()
+        moved_item[config.ID_FIELD] = original[config.ID_FIELD]
+        superdesk.item_moved.send(self, item=moved_item, original=original)
+
     def _validate(self, archived_doc, doc):
         """Validate that the item can be move.
 

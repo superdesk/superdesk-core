@@ -8,8 +8,42 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+__all__ = ['signals', 'item_published', 'item_update', 'item_fetched', 'item_moved']
 
 import blinker
+
+signals = blinker.Namespace()
+
+#: Sent when item is published.
+#:
+#: :param sender: PublishService
+#: :param item: published item
+item_published = signals.signal('item:published')
+
+#: Sent before item is updated.
+#:
+#: :param sender: ArchiveService
+#: :param updates: changes to be saved
+#: :param original: original item version
+item_update = signals.signal('item:update')
+
+#: Sent after item is fetched.
+#:
+#: .. versionadded:: 1.29
+#:
+#: :param sender: FetchService
+#: :param item: fetched item in production
+#: :param ingest_item: item in ingest
+item_fetched = signals.signal('item:fetched')
+
+#: Sent after item is moved to different desk/stage.
+#:
+#: .. versionadded:: 1.29
+#:
+#: :param sender: MoveService
+#: :param item: item after moving
+#: :param original: item before moving
+item_moved = signals.signal('item:moved')
 
 
 def connect(signal, subscriber):
