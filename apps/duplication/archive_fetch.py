@@ -114,6 +114,7 @@ class FetchService(BaseService):
             get_resource_service(ARCHIVE).post([dest_doc])
             insert_into_versions(doc=dest_doc)
             build_custom_hateoas(custom_hateoas, dest_doc)
+            superdesk.item_fetched.send(self, item=dest_doc, ingest_item=ingest_doc)
             doc.update(dest_doc)
 
         if kwargs.get('notify', True):
