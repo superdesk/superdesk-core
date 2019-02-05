@@ -138,6 +138,32 @@ Feature: Contacts
         """
         [{"event": "contacts:update", "extra": {"_id": ["#contacts._id#"]}}]
         """
+        When we patch "/contacts/1"
+        """
+        {"twitter": "@foo"}
+        """
+        Then we get updated response
+        """
+        {
+            "last_name" : "Foo", "first_name" : "Mary", "twitter": "@foo"
+        }
+        """
+        When we patch "/contacts/1"
+        """
+        {"twitter": ""}
+        """
+        Then we get updated response
+        """
+        {
+            "last_name" : "Foo", "first_name" : "Mary", "twitter": ""
+        }
+        """
+        When we patch "/contacts/1"
+        """
+        {"twitter": "foo"}
+        """
+        Then we get error 400
+
 
     @auth
     Scenario: Update a contact without permission

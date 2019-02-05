@@ -198,7 +198,7 @@ class SuperdeskValidator(Validator):
         :param field: field name.
         :param value: field value.
         """
-        if twitter and not re.match('^@[A-Za-z0-9_]{1,15}$', value, re.IGNORECASE):
+        if twitter and value and not re.match('^@[A-Za-z0-9_]{1,15}$', value, re.IGNORECASE):
             self._error(field, ERROR_PATTERN)
 
     def _validate_empty(self, empty, field, value):
