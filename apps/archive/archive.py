@@ -196,9 +196,11 @@ class ArchiveService(BaseService):
             self.validate_embargo(doc)
 
             update_associations(doc)
-            for assoc in doc.get(ASSOCIATIONS, {}).values():
-                self._set_association_timestamps(assoc, doc)
-                remove_unwanted(assoc)
+            for key, assoc in doc.get(ASSOCIATIONS, {}).items():
+                # don't set time stamp for related items
+                if not self._is_related_content(key):
+                    self._set_association_timestamps(assoc, doc)
+                    remove_unwanted(assoc)
 
             if doc.get('media'):
                 self.mediaService.on_create([doc])
@@ -455,8 +457,7 @@ class ArchiveService(BaseService):
 
         :return: guid of the duplicated article
         """
-        # do not store whole json in associations
-        new_doc = self._store_id_only_in_associations(original_doc.copy())
+        new_doc = original_doc.copy()
 
         self.remove_after_copy(new_doc, extra_fields)
         on_duplicate_item(new_doc, original_doc, operation)
@@ -581,12 +582,14 @@ class ArchiveService(BaseService):
             get_resource_service('archive_history').post(new_history_items)
 
     def update(self, id, updates, original):
-        # remove the related_items json from the updates
-        updates = self._store_id_only_in_associations(updates)
 
         if updates.get(ASSOCIATIONS):
-            for item_name, association in updates[ASSOCIATIONS].items():
-                if not self._is_related_content(item_name):
+            # remove null values from associations in updates
+            updates['associations'] = {k: v for k, v in updates[ASSOCIATIONS].items() if v is not None}
+
+            for key, association in updates[ASSOCIATIONS].items():
+                # don't set time stamp for related items
+                if not self._is_related_content(key):
                     self._set_association_timestamps(association, updates, new=False)
                     remove_unwanted(association)
 
@@ -917,15 +920,6 @@ class ArchiveService(BaseService):
                     for old_rendition in old_renditions:
                         if old_rendition not in new_renditions:
                             updates[ASSOCIATIONS][key]['renditions'][old_rendition] = None
-
-    def _store_id_only_in_associations(self, item):
-        # remove the related_items json from the updates
-        if item and 'associations' in item:
-            for item_name, item_obj in item.get(ASSOCIATIONS).items():
-                if item_obj and self._is_related_content(item_name):
-                    item_id = item_obj[config.ID_FIELD]
-                    item[ASSOCIATIONS][item_name] = {'_id': item_id}
-        return item
 
     def _is_related_content(self, item_name):
         related_content = list(

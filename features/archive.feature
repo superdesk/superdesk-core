@@ -1045,13 +1045,13 @@ Feature: News Items Archive
         Then we get OK response
         And we get existing resource
         """
-        {"guid": "item-2", "associations": {"test--1": {"_id": "item-1", "_updated": "__now__"}}}
+        {"guid": "item-2", "associations": {"test--1": {"_id": "item-1"}}}
         """
 
         When we get "archive/item-2"
         Then we get existing resource
         """
         {"guid": "item-2", "type": "text", "headline": "test", "state": "in_progress",
-          "associations": {"test--1":{"_id": "item-1", "guid": "item-1", "headline": "test-one"}}}
+          "associations": {"test--1":{"_id": "item-1"}}}
         """
 

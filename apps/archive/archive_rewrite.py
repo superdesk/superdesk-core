@@ -51,8 +51,6 @@ class ArchiveRewriteService(Service):
 
         archive_service = get_resource_service(ARCHIVE)
         original = archive_service.find_one(req=None, _id=original_id)
-        # store only id of related item when creating an update for publsihed item
-        original = archive_service._store_id_only_in_associations(original)
         self._validate_rewrite(original, update_document)
 
         rewrite = self._create_rewrite_article(original,
