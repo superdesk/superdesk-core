@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<newsItem guid="urn:newsml:stt.fi:20180401:101976596" version="1" standardversion="2.12" conformance="power" xml:lang="fi-FI"
+    xmlns:stt="http://www.stt-lehtikuva.fi/NewsML" standard="NewsML-G2" xsi:schemaLocation="http://iptc.org/std/nar/2006-10-01/ http://www.iptc.org/std/NewsML-G2/2.12/specification/NewsML-G2_2.12-spec-All-Power.xsd http://www.stt-lehtikuva.fi/NewsML http://www.stt-lehtikuva.fi/newsml/schema/STT-Lehtikuva_NewsML_G2.xsd"
+    xmlns="http://iptc.org/std/nar/2006-10-01/" stt:formatversion="1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <catalogRef href="http://www.iptc.org/std/catalog/catalog.IPTC-G2-Standards_19.xml" />
+    <catalogRef href="http://www.iptc.org/std/catalog/catalog.IPTC-G2-Standards_18.xml" />
+    <catalogRef href="http://www.stt-lehtikuva.fi/newsml/doc/stt-NewsCodesCatalog_1.xml" />
+
+    <itemMeta>
+
+        <itemClass qcode="ninat:text" />
+        <provider literal="STT" />
+        <versionCreated>2018-04-04T04:05:16</versionCreated>
+        <firstCreated>2018-04-04T04:05:16</firstCreated>
+        <pubStatus qcode="stat:usable" />
+    </itemMeta>
+    <contentMeta>
+        <urgency>3</urgency>
+        <contentCreated>2018-04-01T04:00:44</contentCreated>
+        <contentModified>2018-04-01T04:00:44</contentModified>
+        <altId type="sttidtype:textid" />
+        <located type="loctyp:City">
+            <name />
+        </located>
+        <subject type="cpnat:abstract" qcode="sttdepartment:3">
+            <name>Kotimaa</name>
+        </subject>
+        <subject type="cpnat:geoArea" qcode="sttlocationalias:17591" />
+        <subject type="cpnat:geoArea" qcode="sttlocationalias:7670" />
+        <subject type="cpnat:abstract" qcode="sttsubj:06000000">
+            <name>Ympäristö</name>
+        </subject>
+        <subject type="cpnat:abstract" qcode="sttsubj:06006000">
+            <name>Luonnonvarat</name>
+        </subject>
+        <subject type="cpnat:abstract" qcode="sttsubj:06006008">
+            <name>Luonnonvaraiset eläimet</name>
+        </subject>
+        <subject type="cpnat:abstract" qcode="sttsubj:08000000">
+            <name>Human interest</name>
+        </subject>
+        <subject type="cpnat:abstract" qcode="sttsubj:08001000">
+            <name>Eläimet</name>
+        </subject>
+        <subject type="cpnat:abstract" qcode="sttsubj:07000000">
+            <name>Terveys</name>
+        </subject>
+        <subject type="cpnat:abstract" qcode="sttsubj:07009000">
+            <name>Vammat Loukkaantumiset</name>
+        </subject>
+        <subject type="cpnat:abstract" qcode="sttsubj:13000000">
+            <name>Tiede Teknologia</name>
+        </subject>
+        <subject type="cpnat:abstract" qcode="sttsubj:13004000">
+            <name>Luonnontieteet </name>
+        </subject>
+        <subject type="cpnat:abstract" qcode="sttsubj:13004005">
+            <name>Eläintiede</name>
+        </subject>
+        <subject type="cpnat:abstract" qcode="sttsubj:07000000">
+            <name>Terveys</name>
+        </subject>
+        <subject type="cpnat:abstract" qcode="sttsubj:07010000">
+            <name>Sairaalat Terveyskeskukset</name>
+        </subject>
+        <slugline />
+        <dateline />
+        <by />
+        <description role="drol:summary" />
+        <headline>Reilu kolmannes Korkeasaaren eläinpotilaista saadaan palautettua luontoon</headline>
+        <creditline>STT&#8211;Sourcefabric</creditline>
+
+        <genre qcode="sttgenre:1">
+            <name>Pääjuttu</name>
+        </genre>
+        <genre qcode="sttversion:3">
+            <name>Pika</name>
+            <related qcode="sttrel:actuallength" value="663" />
+        </genre>
+        <keyword />
+    </contentMeta>
+    <assert qcode="sttlocmeta:rich:17591">
+        <name>Globaali</name>
+        <definition />
+        <geoAreaDetails />
+        <POIDetails>
+            <address>
+                <line> </line>
+                <postalCode />
+            </address>
+        </POIDetails>
+    </assert>
+    <assert qcode="sttlocmeta:rich:7670">
+        <name>Helsinki</name>
+        <definition />
+        <geoAreaDetails>
+            <position latitude="0" longitude="0" />
+        </geoAreaDetails>
+        <POIDetails>
+            <address>
+                <line> </line>
+                <postalCode />
+            </address>
+        </POIDetails>
+        <broader type="cpnat:geoArea" qcode="sttcity:35">
+            <name>Helsinki</name>
+        </broader>
+        <broader type="cpnat:geoArea" qcode="sttstate:31">
+            <name>Uusimaa</name>
+        </broader>
+        <broader type="cpnat:geoArea" qcode="sttcountry:1">
+            <name>Suomi</name>
+        </broader>
+        <broader type="cpnat:geoArea" qcode="wldreg:150">
+            <name>Eurooppa</name>
+        </broader>
+    </assert>
+    <contentSet>
+        <inlineXML contenttype="xhtml/xml">
+            <html>
+
+            <body>
+                <p>Sadat eläimet saadaan joka vuosi hoidettua Korkeasaaren villieläinsairaalassa sellaiseen kuntoon,
+                    että ne voidaan palauttaa luontoon.</p>
+                <p>Villieläinsairaalaan tuodaan vuosittain 800&lt;endash&gt;-&lt;/endash&gt;1&#8201; 000
+                    luonnonvaraista, jollakin tavalla vahingoittunutta eläintä. Niistä
+                    35&lt;endash&gt;-&lt;/endash&gt;40 prosenttia saadaan palautettua luontoon.</p>
+                <p>Eläinpotilaista noin puolet on lintuja ja puolet nisäkkäitä. Valtaosa sairaalaan tuoduista
+                    nisäkkäistä on siilejä ja oravia.</p>
+                <p>Eläin voidaan palauttaa luontoon vain, jos voidaan olla riittävän varmoja, että se pärjää
+                    itsenäisesti. Jos eläintä ei saada palautuskuntoon, se joudutaan lopettamaan.</p>
+            </body>
+
+            </html>
+        </inlineXML>
+    </contentSet>
+</newsItem>

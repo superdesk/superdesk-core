@@ -186,6 +186,8 @@ class NewsMLTwoFeedParser(XMLFeedParser):
         if content_updated is not None and content_updated.text and not item.get('versioncreated'):
             item['versioncreated'] = self.datetime(content_updated.text)
 
+        return meta
+
     def parse_content_subject(self, tree, item):
         """Parse subj type subjects into subject list."""
         item['subject'] = []
