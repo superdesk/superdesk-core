@@ -210,3 +210,10 @@ class SuperdeskValidator(Validator):
         if isinstance(value, list) or isinstance(value, dict):
             if len(value) == 0 and not empty:
                 self._error(field, errors.ERROR_EMPTY_NOT_ALLOWED)
+
+    def _validate_unique_list(self, unique_list, field, value):
+        """Validate if list contains only unique items."""
+
+        if unique_list and isinstance(value, list):
+            if len(set(value)) != len(value):
+                self._error(field, "Must contain unique items only.")
