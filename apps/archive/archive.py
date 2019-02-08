@@ -196,9 +196,11 @@ class ArchiveService(BaseService):
             self.validate_embargo(doc)
 
             update_associations(doc)
-            for assoc in doc.get(ASSOCIATIONS, {}).values():
-                self._set_association_timestamps(assoc, doc)
-                remove_unwanted(assoc)
+            for key, assoc in doc.get(ASSOCIATIONS, {}).items():
+                # don't set time stamp for related items
+                if not self._is_related_content(key):
+                    self._set_association_timestamps(assoc, doc)
+                    remove_unwanted(assoc)
 
             if doc.get('media'):
                 self.mediaService.on_create([doc])
@@ -309,9 +311,12 @@ class ArchiveService(BaseService):
                 stored_item['used'] = True
 
             self._set_association_timestamps(item_obj, updates, new=False)
-
             stored_item.update(item_obj)
-            updates[ASSOCIATIONS][item_name] = stored_item
+
+            if self._is_related_content(item_name):
+                updates[ASSOCIATIONS][item_name] = {'_id': item_id}
+            else:
+                updates[ASSOCIATIONS][item_name] = stored_item
         if body:
             updates["body_html"] = body
 
@@ -452,8 +457,8 @@ class ArchiveService(BaseService):
 
         :return: guid of the duplicated article
         """
-
         new_doc = original_doc.copy()
+
         self.remove_after_copy(new_doc, extra_fields)
         on_duplicate_item(new_doc, original_doc, operation)
         resolve_document_version(new_doc, SOURCE, 'PATCH', new_doc)
@@ -577,10 +582,16 @@ class ArchiveService(BaseService):
             get_resource_service('archive_history').post(new_history_items)
 
     def update(self, id, updates, original):
+
         if updates.get(ASSOCIATIONS):
-            for association in updates[ASSOCIATIONS].values():
-                self._set_association_timestamps(association, updates, new=False)
-                remove_unwanted(association)
+            # remove null values from associations in updates
+            updates['associations'] = {k: v for k, v in updates[ASSOCIATIONS].items() if v is not None}
+
+            for key, association in updates[ASSOCIATIONS].items():
+                # don't set time stamp for related items
+                if not self._is_related_content(key):
+                    self._set_association_timestamps(association, updates, new=False)
+                    remove_unwanted(association)
 
         # this needs to here as resolve_nested_documents (in eve) will add the schedule_settings
         if PUBLISH_SCHEDULE in updates and original[ITEM_STATE] == CONTENT_STATE.SCHEDULED:
@@ -910,6 +921,15 @@ class ArchiveService(BaseService):
                         if old_rendition not in new_renditions:
                             updates[ASSOCIATIONS][key]['renditions'][old_rendition] = None
 
+    def _is_related_content(self, item_name):
+        related_content = list(
+            get_resource_service('vocabularies').get(req=None, lookup={'field_type': 'related_content'}))
+
+        if related_content and item_name.split('--')[0] in [content['_id'] for content in related_content]:
+            return True
+
+        return False
+
 
 class AutoSaveResource(Resource):
     endpoint_name = 'archive_autosave'
@@ -925,6 +945,7 @@ class ArchiveSaveService(BaseService):
     def create(self, docs, **kwargs):
         if not docs:
             raise SuperdeskApiError.notFoundError('Content is missing')
+
         req = parse_request(self.datasource)
         try:
             get_component(ItemAutosave).autosave(docs[0]['_id'], docs[0], get_user(required=True), req.if_match)

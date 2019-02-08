@@ -419,7 +419,6 @@ class BasePublishService(BaseService):
         :param: versioned_doc: doc which can be inserted into archive_versions
         :param: should_insert_into_versions if True inserts the latest document into versions collection
         """
-
         self.backend.update(self.datasource, original[config.ID_FIELD], updates, original)
         app.on_archive_item_updated(updates, original, updates[ITEM_OPERATION])
 
