@@ -145,6 +145,14 @@ class Resource():
         on_updated_event -= service.on_updated
         on_updated_event += service.on_updated
 
+        on_replace_event = getattr(app, 'on_replace_%s' % self.endpoint_name)
+        on_replace_event -= service.on_replace
+        on_replace_event += service.on_replace
+
+        on_replaced_event = getattr(app, 'on_replaced_%s' % self.endpoint_name)
+        on_replaced_event -= service.on_replaced
+        on_replaced_event += service.on_replaced
+
         on_delete_event = getattr(app, 'on_delete_item_%s' % self.endpoint_name)
         on_delete_event -= service.on_delete
         on_delete_event += service.on_delete
