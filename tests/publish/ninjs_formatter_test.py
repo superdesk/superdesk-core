@@ -179,6 +179,7 @@ class NinjsFormatterTest(TestCase):
             "source": "AAP",
         }
         self.assertEqual(expected, json.loads(doc))
+        self.assertNotIn('viewImage', json.loads(doc).get('renditions'))
 
     def test_composite_formatter(self):
         article = {

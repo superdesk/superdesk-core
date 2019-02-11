@@ -112,6 +112,7 @@ class NINJSFormatter(Formatter):
         self.format_type = 'ninjs'
         self.can_preview = True
         self.can_export = True
+        self.internal_renditions = ['original']
 
     def format(self, article, subscriber, codes=None):
         try:
@@ -346,7 +347,9 @@ class NINJSFormatter(Formatter):
         actual_renditions = article.get('renditions', {})
         # renditions list that we want to publish
         if article['type'] == 'picture':
-            renditions_to_publish = ['original'] + list(get_renditions_spec(without_internal_renditions=True).keys())
+            renditions_to_publish = self.internal_renditions + list(get_renditions_spec(
+                without_internal_renditions=True
+            ).keys())
             # filter renditions and keep only the ones we want to publish
             actual_renditions = {name: actual_renditions[name] for name in renditions_to_publish
                                  if name in actual_renditions}
