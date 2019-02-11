@@ -170,7 +170,8 @@ class EveBackend():
             updated = original.copy()
             updated.update(updates)
             resolve_document_etag(updated, endpoint_name)
-            updates[config.ETAG] = updated[config.ETAG]
+            if config.IF_MATCH:
+                updates[config.ETAG] = updated[config.ETAG]
         return self._change_request(endpoint_name, id, updates, original)
 
     def system_update(self, endpoint_name, id, updates, original):
