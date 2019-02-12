@@ -101,6 +101,10 @@ class DefaultSchema(schema.Schema):
     #: embedded media description
     media_description = schema.StringField()
 
+    #: item attachments
+    #: .. versionadded:: 1.29
+    attachments = schema.ListField()
+
 
 DEFAULT_SCHEMA = dict(DefaultSchema)
 
@@ -140,4 +144,5 @@ DEFAULT_EDITOR = {
     'sign_off': {'order': 23, 'enabled': True},
     'feature_media': {'enabled': True},
     'media_description': {'enabled': True},
+    'attachments': {'enabled': False},
 }
