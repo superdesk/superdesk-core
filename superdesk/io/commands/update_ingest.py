@@ -356,11 +356,19 @@ def process_iptc_codes(item, provider):
             if 'qcode' in subject and len(subject['qcode']) == 8 and subject['qcode'].isdigit():
                 top_qcode = subject['qcode'][:2] + '000000'
                 if not iptc_already_exists(top_qcode):
-                    item['subject'].append({'qcode': top_qcode, 'name': subject_codes[top_qcode]})
+                    try:
+                        item['subject'].append({'qcode': top_qcode, 'name': subject_codes[top_qcode]})
+                    except KeyError:
+                        logger.warning("missing qcode in subject_codes: {qcode}".format(qcode=top_qcode))
+                        continue
 
                 mid_qcode = subject['qcode'][:5] + '000'
                 if not iptc_already_exists(mid_qcode):
-                    item['subject'].append({'qcode': mid_qcode, 'name': subject_codes[mid_qcode]})
+                    try:
+                        item['subject'].append({'qcode': mid_qcode, 'name': subject_codes[mid_qcode]})
+                    except KeyError:
+                        logger.warning("missing qcode in subject_codes: {qcode}".format(qcode=mid_qcode))
+                        continue
     except Exception as ex:
         raise ProviderError.iptcError(ex, provider)
 
