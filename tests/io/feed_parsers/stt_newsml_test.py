@@ -245,8 +245,32 @@ class STTArchiveTestCase(BaseSTTNewsMLTestCase):
 
     def test_timestamps(self):
         item = self.item[0]
-        self.assertEqual('2013-02-16T17:36:20+00:00', item['firstcreated'].isoformat())
-        self.assertEqual('2013-02-16T18:36:20+00:00', item['versioncreated'].isoformat())
-        self.assertEqual('2013-02-16T18:36:20+00:00', item['firstpublished'].isoformat())
+        self.assertEqual('2013-02-16T15:36:20+00:00', item['firstcreated'].isoformat())
+        self.assertEqual('2013-02-16T16:36:20+00:00', item['versioncreated'].isoformat())
+        self.assertEqual('2013-02-16T16:36:20+00:00', item['firstpublished'].isoformat())
 
         self.assertIn({'qcode': '5', 'scheme': 'sttdone1', 'name': ''}, item['subject'])
+
+        # test daylight savings
+        self.assertEqual('2018-01-01T10:00:00+00:00', STTNewsMLFeedParser().datetime('2018-01-01T12:00:00').isoformat())
+        self.assertEqual('2018-08-01T09:00:00+00:00', STTNewsMLFeedParser().datetime('2018-08-01T12:00:00').isoformat())
+
+    def test_source(self):
+        item = self.item[0]
+        self.assertEqual('STT', item['source'])
+
+
+class STTEndashTestCase(BaseSTTNewsMLTestCase):
+    filename = 'stt_newsml_endash.xml'
+
+    def test_can_parse(self):
+        self.assertTrue(STTNewsMLFeedParser().can_parse(self.xml_root))
+
+    def test_content(self):
+        item = self.item[0]
+        self.assertNotIn('endash', item['body_html'])
+        self.assertIn('35-40', item['body_html'])
+
+    def test_source(self):
+        item = self.item[0]
+        self.assertEqual('STT-Sourcefabric', item['source'])

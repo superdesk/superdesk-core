@@ -14,6 +14,7 @@ from superdesk.errors import ParserError
 from superdesk.metadata.item import CONTENT_TYPE
 from superdesk import etree as sd_etree
 from superdesk import text_utils
+from superdesk.utc import local_to_utc
 import logging
 
 logger = logging.getLogger(__name__)
@@ -24,6 +25,8 @@ STT_LOCATION_MAP = {
     "sttcountry": {"qcode": "country_code", "name": "country"},
     "wldreg": {"qcode": "world_region_code", "name": "world_region"},
 }
+
+TIMEZONE = 'Europe/Helsinki'
 
 
 class STTNewsMLFeedParser(NewsMLTwoFeedParser):
@@ -162,7 +165,21 @@ class STTNewsMLFeedParser(NewsMLTwoFeedParser):
         elif body_elt.text:
             content['content'] = '<pre>' + body_elt.text + '</pre>'
             content['format'] = CONTENT_TYPE.PREFORMATTED
+        content['content'] = content['content'].replace('&lt;endash&gt;-&lt;/endash&gt;', '-')
         return content
+
+    def datetime(self, value):
+        """When there is no timezone info, assume it's Helsinki timezone."""
+        parsed = super().datetime(value)
+        if '+' not in value:
+            return local_to_utc(TIMEZONE, parsed)
+        return parsed
+
+    def parse_content_meta(self, tree, item):
+        meta = super().parse_content_meta(tree, item)
+        creditline = meta.find(self.qname('creditline'))
+        if creditline is not None:
+            item['source'] = creditline.text.replace('–', '-').rstrip('-')  # replace endash with dash
 
 
 register_feed_parser(STTNewsMLFeedParser.NAME, STTNewsMLFeedParser())
