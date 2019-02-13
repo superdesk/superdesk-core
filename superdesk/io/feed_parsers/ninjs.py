@@ -126,7 +126,12 @@ class NINJSFeedParser(FeedParser):
         return item
 
     def _format_qcodes(self, items):
-        return [{'name': item.get('name'), 'qcode': item.get('code')} for item in items]
+        subject = {'name': item.get('name'), 'qcode': item.get('code')}
+        
+        if item.get('scheme'):
+            subject['scheme'] = item.get('scheme')
+        
+        return [subject for item in items]
 
     def datetime(self, string):
         try:
