@@ -13,6 +13,7 @@ from flask import json
 
 from apps.io.tests import setup_providers, teardown_providers
 from apps.prepopulate.app_populate import AppPopulateCommand
+from apps.prepopulate.app_initialize import AppInitializeWithDataCommand
 from superdesk import tests
 from superdesk.factory.app import get_app
 from superdesk.tests import setup_auth_user
@@ -79,6 +80,11 @@ def setup_before_scenario(context, scenario, config, app_factory):
 
     if scenario.status != 'skipped' and 'notification' in scenario.tags:
         tests.setup_notification(context)
+
+    if scenario.status != 'skipped' and 'app_init' in scenario.tags:
+        with context.app.app_context():
+            command = AppInitializeWithDataCommand()
+            command.run()
 
 
 def before_all(context):
