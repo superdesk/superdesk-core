@@ -3,10 +3,6 @@ import superdesk
 from flask import current_app as app
 from superdesk.media.renditions import generate_renditions, get_renditions_spec
 from apps.picture_crop import get_file
-from superdesk import get_resource_service
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 class PictureRenditionsService(superdesk.Service):
@@ -33,14 +29,6 @@ class PictureRenditionsService(superdesk.Service):
             doc['renditions'] = renditions
             ids.append(item['_id'])
 
-            is_article_edit_media = doc.get('is_article_edit_media', False)
-
-            updates = {'renditions': item['renditions']}
-            try:
-                if not is_article_edit_media:
-                    get_resource_service('archive').update(item['_id'], updates, item)
-            except Exception as ex:
-                logger.warning('failed to update the renditions for original item in archive')
         return ids
 
 
@@ -50,8 +38,7 @@ class PictureRenditionsResource(superdesk.Resource):
     privileges = {'POST': 'archive'}
     schema = {
         'item': {'type': 'dict', 'required': True},
-        'no_custom_crops': {'type': 'boolean'},
-        'is_article_edit_media': {'type': 'boolean'}
+        'no_custom_crops': {'type': 'boolean'}
     }
 
 
