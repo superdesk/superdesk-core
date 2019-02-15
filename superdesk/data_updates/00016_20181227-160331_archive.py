@@ -24,7 +24,7 @@ class DataUpdate(DataUpdate):
 
         collection = mongodb_database['archive']
 
-        for item in collection.find({'associations': {'$exists': True}}):
+        for item in collection.find({'associations': {'$ne': None}}):
             for item_name, item_obj in item['associations'].items():
                 if item_obj and related_content:
                     if item_name.split('--')[0] in [content['_id'] for content in related_content]:
