@@ -428,7 +428,7 @@ class ArchivePublishTestCase(TestCase):
             }
         }
         get_resource_service(ARCHIVE).patch(id=doc['_id'], updates=updates)
-        get_resource_service(ARCHIVE_PUBLISH).patch(id=doc['_id'], updates={ITEM_STATE: CONTENT_STATE.SCHEDULED})
+        get_resource_service(ARCHIVE_PUBLISH).patch(id=doc['_id'], updates=updates)
         enqueue_published()
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(0, queue_items.count())
@@ -446,7 +446,7 @@ class ArchivePublishTestCase(TestCase):
             }
         }
         get_resource_service(ARCHIVE).patch(id=doc['_id'], updates=updates)
-        get_resource_service(ARCHIVE_PUBLISH).patch(id=doc['_id'], updates={ITEM_STATE: CONTENT_STATE.SCHEDULED})
+        get_resource_service(ARCHIVE_PUBLISH).patch(id=doc['_id'], updates=updates)
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(0, queue_items.count())
         schedule_in_past = utcnow() + timedelta(minutes=-10)
