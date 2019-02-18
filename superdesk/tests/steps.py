@@ -180,7 +180,7 @@ def get_macro_path(macro):
 
 
 def get_self_href(resource, context):
-    assert '_links' in resource, 'expted "_links", but got only %s' % (resource)
+    assert '_links' in resource, 'expected "_links", but got only %s' % (resource)
     return resource['_links']['self']['href']
 
 
@@ -706,9 +706,12 @@ def step_impl_when_post_url_with_success(context, url):
 @when('we put to "{url}"')
 def step_impl_when_put_url(context, url):
     with context.app.mail.record_messages() as outbox:
+        url = apply_placeholders(context, url)
+        res = get_res(url, context)
+        headers = if_match(context, res.get('_etag'))
         data = apply_placeholders(context, context.text)
-        href = get_self_href(url)
-        context.response = context.client.put(get_prefixed_url(context.app, href), data=data, headers=context.headers)
+        href = get_prefixed_url(context.app, url)
+        context.response = context.client.put(href, data=data, headers=headers)
         assert_ok(context.response)
         context.outbox = outbox
 
