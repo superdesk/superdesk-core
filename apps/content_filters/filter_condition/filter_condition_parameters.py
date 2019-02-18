@@ -135,9 +135,11 @@ class FilterConditionParametersService(BaseService):
         genre = vocabularies_resource.get(req=req, lookup=None)
         if genre.count():
             values['genre'] = genre[0]['items']
-        values['urgency'] = vocabularies_resource.find_one(req=None, _id='urgency')['items']
-        values['priority'] = vocabularies_resource.find_one(req=None, _id='priority')['items']
-        values['type'] = vocabularies_resource.find_one(req=None, _id='type')['items']
+        for voc_id in ('urgency', 'priority', 'type'):
+            try:
+                values[voc_id] = vocabularies_resource.find_one(req=None, _id=voc_id)['items']
+            except TypeError:
+                values[voc_id] = []
         subject = vocabularies_resource.find_one(req=None, schema_field='subject')
         if subject:
             values['subject'] = subject['items']
@@ -152,6 +154,8 @@ class FilterConditionParametersService(BaseService):
         place = vocabularies_resource.get(req=req, lookup=None)
         if place.count():
             values['place'] = place[0]['items']
+        else:
+            values['place'] = []
         values['ingest_provider'] = list(get_resource_service('ingest_providers').get(None, {}))
         return values
 
