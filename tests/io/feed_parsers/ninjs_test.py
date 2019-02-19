@@ -40,6 +40,8 @@ class SimpleTestCase(NINJSTestCase):
             'avatar_url': 'http://example.com',
             'biography': 'bio',
         })
+        self.assertNotIn("source", self.items[0])
+        self.assertEqual(self.items[0]['original_source'], "AAP")
 
 
 class AssociatedTestCase(NINJSTestCase):
