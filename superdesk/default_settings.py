@@ -456,6 +456,7 @@ CORE_APPS.extend([
     'apps.monitoring',
     'apps.concept_items',
     'superdesk.places',
+    'apps.desk_routing',
 ])
 
 RESOURCE_METHODS = ['GET', 'POST']
