@@ -33,7 +33,7 @@ class NINJSFeedParser(FeedParser):
     direct_copy_properties = ('usageterms', 'language', 'headline', 'copyrightnotice',
                               'urgency', 'pubstatus', 'mimetype', 'copyrightholder', 'ednote',
                               'body_text', 'body_html', 'slugline', 'keywords',
-                              'source', 'extra', 'byline', 'description_text', 'profile')
+                              'extra', 'byline', 'description_text', 'profile')
 
     items = []
 
@@ -69,6 +69,9 @@ class NINJSFeedParser(FeedParser):
         for copy_property in self.direct_copy_properties:
             if ninjs.get(copy_property) is not None:
                 item[copy_property] = ninjs[copy_property]
+
+        if ninjs.get('source'):
+            item['original_source'] = ninjs['source']
 
         if ninjs.get('priority'):
             item['priority'] = int(ninjs['priority'])
