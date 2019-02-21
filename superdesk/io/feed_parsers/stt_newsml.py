@@ -98,10 +98,13 @@ class STTNewsMLFeedParser(NewsMLTwoFeedParser):
             # location
             for location_elt in xml.xpath("//iptc:assert", namespaces={'iptc': IPTC_NS}):
                 qcode = location_elt.get("qcode")
-                if not qcode or not qcode.startswith("sttlocmeta:default:"):
+                if not qcode or not qcode.startswith("sttlocmeta:"):
                     continue
-                qcode = qcode[19:]
-                location_data = {"scheme": "sttlocmeta:default", "qcode": qcode}
+                qcode = qcode.split(':')[-1]
+                location_data = {"scheme": "sttlocmeta", "qcode": qcode}
+                location_name = location_elt.find(self.qname('name'))
+                if location_name is not None:
+                    location_data['name'] = location_name.text
                 for broader_elt in location_elt.xpath(".//iptc:broader[@type='cpnat:geoArea']",
                                                       namespaces={'iptc': IPTC_NS}):
                     qcode = broader_elt.get('qcode')
