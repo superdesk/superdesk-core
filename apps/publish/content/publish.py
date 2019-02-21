@@ -55,7 +55,7 @@ class ArchivePublishService(BasePublishService):
         :param dict updates: updates related to original document
         """
         updates.setdefault(ITEM_OPERATION, ITEM_PUBLISH)
-        if original.get(PUBLISH_SCHEDULE) or updates.get(PUBLISH_SCHEDULE):
+        if updates.get(PUBLISH_SCHEDULE):
             updates[ITEM_STATE] = CONTENT_STATE.SCHEDULED
         elif original.get(EMBARGO) or updates.get(EMBARGO):
             updates[ITEM_STATE] = CONTENT_STATE.PUBLISHED

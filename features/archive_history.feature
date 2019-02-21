@@ -581,6 +581,9 @@ Feature: Archive history
       }
       """
       And we publish "#archive._id#" with "publish" type and "published" state
+      """
+        {"publish_schedule": "#DATE+2#"}
+      """
       Then we get OK response
       When we get "/legal_archive/123"
       Then we get error 404
@@ -659,6 +662,9 @@ Feature: Archive history
       }
       """
       And we publish "#archive._id#" with "publish" type and "published" state
+      """
+        {"publish_schedule": "#DATE+1#"}
+      """
       Then we get OK response
       When we get "/legal_archive/123"
       Then we get error 404
