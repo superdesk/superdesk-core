@@ -158,7 +158,7 @@ class STTLocationTestCase(BaseSTTNewsMLTestCase):
         item = self.item[0]
         expected = [
             {'qcode': '7576',
-             'scheme': 'sttlocmeta:default',
+             'scheme': 'sttlocmeta',
              'locality_code': '392',
              'locality': 'Tallinna',
              'state_code': '67',
@@ -168,13 +168,28 @@ class STTLocationTestCase(BaseSTTNewsMLTestCase):
              'world_region_code': '150',
              'world_region': 'Eurooppa'},
             {'qcode': '8975',
-             'scheme': 'sttlocmeta:default',
+             'scheme': 'sttlocmeta',
              'country': 'Suomi',
              'country_code': '1',
              'world_region_code': '150',
              'world_region': 'Eurooppa'}]
 
         self.assertEqual(item['place'], expected)
+
+
+class STTRichLocationTestCase(BaseSTTNewsMLTestCase):
+
+    filename = 'stt_newsml_location_rich.xml'
+
+    def test_location(self):
+        item = self.item[0]
+        self.assertIn({
+            'qcode': '20016',
+            'scheme': 'sttlocmeta',
+            'name': 'Myanmar',
+            'world_region': 'Aasia',
+            'world_region_code': '142',
+        }, item['place'])
 
 
 class STTNoHLTestCase(BaseSTTNewsMLTestCase):
