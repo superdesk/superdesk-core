@@ -166,7 +166,6 @@ def transmit_item(queue_item_id, is_async=False):
             logger.error('Failed to set the state for failed publish queue item {}.'.format(queue_item['_id']))
         if isinstance(e, SoftTimeLimitExceeded):
             logger.error('Subscriber transmit timeout for {}'.format(subscriber))
-            break
     finally:
         if is_async:
             unlock(lock_name, remove=True)
