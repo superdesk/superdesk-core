@@ -259,6 +259,10 @@ CELERY_TASK_ROUTES = {
         'queue': celery_queue('publish'),
         'routing_key': 'publish.transmit'
     },
+    'superdesk.publish.publish_content.transmit_item': {
+        'queue': celery_queue('publish'),
+        'routing_key': 'publish.transmit'
+    },
     'apps.publish.enqueue.enqueue_published': {
         'queue': celery_queue('publish'),
         'routing_key': 'publish.enqueue'
