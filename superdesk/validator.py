@@ -40,7 +40,7 @@ class SuperdeskValidator(Validator):
         :param field: field name.
         :param value: field value.
         """
-        if not re.match("^(?:(?:0?[1-9][0-9]{8})|(?:(?:\+|00)[1-9][0-9]{9,11}))$", value):
+        if not re.match(r"^(?:(?:0?[1-9][0-9]{8})|(?:(?:\+|00)[1-9][0-9]{9,11}))$", value):
             self._error(field, ERROR_PATTERN)
 
     def _validate_type_email(self, field, value):
@@ -88,11 +88,11 @@ class SuperdeskValidator(Validator):
                 self._error(field, ERROR_UNIQUE)
 
     def _set_id_query(self, query):
-            if self._id:
-                try:
-                    query[config.ID_FIELD] = {'$ne': ObjectId(self._id)}
-                except Exception:
-                    query[config.ID_FIELD] = {'$ne': self._id}
+        if self._id:
+            try:
+                query[config.ID_FIELD] = {'$ne': ObjectId(self._id)}
+            except Exception:
+                query[config.ID_FIELD] = {'$ne': self._id}
 
     def _validate_iunique(self, unique, field, value):
         """Validate uniqueness ignoring case.MONGODB USE ONLY"""
