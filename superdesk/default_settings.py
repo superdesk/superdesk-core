@@ -340,6 +340,7 @@ CORE_APPS = [
     'superdesk.allowed_values',
     'apps.picture_crop',
     'apps.picture_renditions',
+    'apps.video-edit',
     'content_api.publish',
     'content_api.items',
     'content_api.tokens',

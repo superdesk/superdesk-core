@@ -89,6 +89,21 @@ def process_file_from_stream(content, content_type=None):
     return file_name, content_type, metadata
 
 
+def get_info_file_from_stream(content, content_type=None):
+    content_type = content_type or content.content_type
+    content.seek(0)
+    file_type, ext = content_type.split('/')
+    try:
+        metadata = process_file(content, file_type)
+    except OSError:  # error from PIL when image is supposed to be an image but is not.
+        raise SuperdeskApiError.internalError('Failed to process file')
+    file_name = get_file_name(content)
+    content.seek(0)
+    metadata = encode_metadata(metadata)
+    metadata.update({'length': json.dumps(len(content.getvalue()))})
+    return file_name, content_type, metadata, content
+
+
 def encode_metadata(metadata):
     return dict((k.lower(), json.dumps(v)) for k, v in metadata.items())
 
