@@ -41,3 +41,4 @@ access_type = 'frontend'
 action_type = 'interactive'
 from_languages = ['en-CA']
 to_languages = ['en-AU']
+replace_type = 'keep-style-replace'
