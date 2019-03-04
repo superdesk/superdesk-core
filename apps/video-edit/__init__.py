@@ -19,27 +19,43 @@ class VideoEditService(superdesk.Service):
     """
 
     def create(self, docs, **kwargs):
-        res = []
+        res = {}
         for doc in docs:
             item = doc.pop('item')
             thumbnail_add = doc.pop('thumbnail_add')
             video_cut = doc.pop('video_cut')
             path_temp_file = None
+            renditions = []
             try:
                 if thumbnail_add or video_cut:
                     path_temp_file = self.create_temp_media(item['media'])
                 if thumbnail_add:
                     media_id = self.thumbnail_add(path_temp_file, thumbnail_add)
-                    res.append(media_id)
+                    rendition = {
+                        'thumbnail': {
+                            'href': app.media.url_for_media(media_id, mimetype),
+                            'media': media_id,
+                            'mimetype': mimetype
+                        }
+                    }
+                    renditions.append(media_id)
+
                 if video_cut:
                     mimetype = item['renditions']['original']['mimetype']
                     media_id = self.video_cut(path_temp_file, mimetype, video_cut['starttime'],
                                               video_cut['endtime'])
-                    res.append(media_id)
+                    renditions = {
+                        'original': {
+                            'href': app.media.url_for_media(media_id, mimetype),
+                            'media': media_id,
+                            'mimetype': mimetype
+                        }
+                    }
+
             finally:
                 os.remove(path_temp_file)
                 pass
-        return res
+        return renditions
 
     def video_cut(self, path_file, mimetype, start_time, end_time):
         try:
