@@ -30,13 +30,11 @@ class VideoEditService(superdesk.Service):
                 if thumbnail_add:
                     rendition = self.thumbnail_add(path_temp_file, thumbnail_add)
                     res.update(rendition)
-
                 if video_cut:
                     mimetype = item['renditions']['original']['mimetype']
                     rendition = self.video_cut(path_temp_file, mimetype, video_cut['starttime'],
                                                video_cut['endtime'])
                     res.update(rendition)
-
             finally:
                 os.remove(path_temp_file)
             doc['result'] = res
