@@ -30,41 +30,37 @@ class VideoEditService(superdesk.Service):
                 if thumbnail_add or video_cut:
                     path_temp_file = self.create_temp_media(item['media'])
                 if thumbnail_add:
-                    media_id = self.thumbnail_add(path_temp_file, thumbnail_add)
-                    rendition = {
-                        'thumbnail': {
-                            'href': app.media.url_for_media(media_id, mimetype),
-                            'media': media_id,
-                            'mimetype': mimetype
-                        }
-                    }
-                    renditions.append(media_id)
+                    rendition = self.thumbnail_add(path_temp_file, thumbnail_add)
+                    renditions.append(rendition)
 
                 if video_cut:
                     mimetype = item['renditions']['original']['mimetype']
-                    media_id = self.video_cut(path_temp_file, mimetype, video_cut['starttime'],
+                    rendition = self.video_cut(path_temp_file, mimetype, video_cut['starttime'],
                                               video_cut['endtime'])
-                    renditions = {
-                        'original': {
-                            'href': app.media.url_for_media(media_id, mimetype),
-                            'media': media_id,
-                            'mimetype': mimetype
-                        }
-                    }
+                    renditions.append(rendition)
 
             finally:
                 os.remove(path_temp_file)
                 pass
-        return renditions
+            doc['result'] = renditions
+        return {renditions}
 
     def video_cut(self, path_file, mimetype, start_time, end_time):
         try:
             path_output = path_file + "_cut." + str.split(mimetype, "/")[1]
             content = self._cutting_video(path_file, path_output, start_time, end_time)
             res = get_info_file_from_stream(content, content_type=mimetype)
-            file_name, content_type, metadata = res
-            return app.media.put(content, filename=file_name, content_type=content_type,
+            file_name, content_type, metadata, content = res
+            media_id = app.media.put(content, filename=file_name, content_type=content_type,
                                  metadata=metadata)
+            rendition = {
+                'original': {
+                    'href': app.media.url_for_media(media_id, mimetype),
+                    'media': media_id,
+                    'mimetype': mimetype
+                }
+            }
+            return rendition
         finally:
             os.remove(path_output)
 
@@ -83,9 +79,16 @@ class VideoEditService(superdesk.Service):
             mimetype = header.split(";")[0].split(":")[1]
             content = BytesIO(base64.b64decode(data))
         res = get_info_file_from_stream(content, content_type=mimetype)
-        file_name, content_type, metadata = res
-
-        return app.media.put(content, file_name, content_type, metadata=metadata)
+        file_name, content_type, metadata, content = res
+        media_id = app.media.put(content, file_name, content_type, metadata=metadata)
+        rendition = {
+            'thumbnail': {
+                'href': app.media.url_for_media(media_id, mimetype),
+                'media': media_id,
+                'mimetype': mimetype
+            }
+        }
+        return rendition
 
     def create_temp_media(self, media_id):
         media_id = app.media.getFilename(media_id)
