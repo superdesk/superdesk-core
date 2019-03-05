@@ -35,33 +35,29 @@ class VideoEditService(superdesk.Service):
                 if video_cut:
                     mimetype = item['renditions']['original']['mimetype']
                     rendition = self.video_cut(path_temp_file, mimetype, video_cut['starttime'],
-                                              video_cut['endtime'])
+                                               video_cut['endtime'])
                     res.update(rendition)
 
             finally:
                 os.remove(path_temp_file)
-                pass
             doc['result'] = res
         return [res]
 
     def video_cut(self, path_file, mimetype, start_time, end_time):
-        try:
-            path_output = path_file + "_cut." + str.split(mimetype, "/")[1]
-            content = self._cutting_video(path_file, path_output, start_time, end_time)
-            res = get_info_file_from_stream(content, content_type=mimetype)
-            file_name, content_type, metadata, content = res
-            media_id = app.media.put(content, filename=file_name, content_type=content_type,
+        path_output = path_file + "_cut." + str.split(mimetype, "/")[1]
+        content = self._cutting_video(path_file, path_output, start_time, end_time)
+        res = get_info_file_from_stream(content, content_type=mimetype)
+        file_name, content_type, metadata, content = res
+        media_id = app.media.put(content, filename=file_name, content_type=content_type,
                                  metadata=metadata)
-            rendition = {
-                'original': {
-                    'href': app.media.url_for_media(media_id, mimetype),
-                    'media': media_id,
-                    'mimetype': mimetype
-                }
+        rendition = {
+            'original': {
+                'href': app.media.url_for_media(media_id, mimetype),
+                'media': media_id,
+                'mimetype': mimetype
             }
-            return rendition
-        finally:
-            os.remove(path_output)
+        }
+        return rendition
 
     def thumbnail_add(self, path_input, thumbnail_add):
         mimetype = None
@@ -98,18 +94,26 @@ class VideoEditService(superdesk.Service):
         return tmp_path
 
     def _capture_thumnail(self, path_video, path_output, time_capture=0):
-        cmd.run(["ffmpeg", "-i", path_video, "-ss", str(time_capture), "-vframes", "1", path_output])
-        return BytesIO(open(path_output, "rb+").read())
+        try:
+            cmd.run(["ffmpeg", "-i", path_video, "-ss", str(time_capture), "-vframes", "1", path_output])
+            return BytesIO(open(path_output, "rb+").read())
+        finally:
+            os.remove(path_output)
 
     def _cutting_video(self, path_video, path_output, start_time, end_time):
-        cmd.run(["ffmpeg", "-i", path_video, "-ss", str(start_time), "-t", str(end_time), "-strict", "-2",
-                 path_output])
-        return BytesIO(open(path_output, "rb+").read())
+        try:
+            cmd.run(["ffmpeg", "-i", path_video, "-ss", str(start_time), "-t", str(end_time), "-strict", "-2",
+                     path_output])
+            return BytesIO(open(path_output, "rb+").read())
+        finally:
+            os.remove(path_output)
 
     def get(self, req, lookup):
         test = 'hello'
 
-    pass
+    def create_list_thumnails_timeline(self):
+
+
 
 
 class VideoEditResource(superdesk.Resource):
