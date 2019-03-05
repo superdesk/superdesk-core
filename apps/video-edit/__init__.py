@@ -25,25 +25,24 @@ class VideoEditService(superdesk.Service):
             thumbnail_add = doc.pop('thumbnail_add')
             video_cut = doc.pop('video_cut')
             path_temp_file = None
-            renditions = []
             try:
                 if thumbnail_add or video_cut:
                     path_temp_file = self.create_temp_media(item['media'])
                 if thumbnail_add:
                     rendition = self.thumbnail_add(path_temp_file, thumbnail_add)
-                    renditions.append(rendition)
+                    res.update(rendition)
 
                 if video_cut:
                     mimetype = item['renditions']['original']['mimetype']
                     rendition = self.video_cut(path_temp_file, mimetype, video_cut['starttime'],
                                               video_cut['endtime'])
-                    renditions.append(rendition)
+                    res.update(rendition)
 
             finally:
                 os.remove(path_temp_file)
                 pass
-            doc['result'] = renditions
-        return {renditions}
+            doc['result'] = res
+        return [res]
 
     def video_cut(self, path_file, mimetype, start_time, end_time):
         try:
