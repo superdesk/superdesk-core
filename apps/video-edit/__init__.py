@@ -13,9 +13,8 @@ from superdesk.utils import get_random_string
 
 
 class VideoEditService(superdesk.Service):
-    """Crop original image of picture item and return its url.
-
-    It is used for embedded images within text item body.
+    """Edit video
+        use ffmpeg to create thumbnail and cutting video
     """
 
     def create(self, docs, **kwargs):
@@ -107,13 +106,6 @@ class VideoEditService(superdesk.Service):
             return BytesIO(open(path_output, "rb+").read())
         finally:
             os.remove(path_output)
-
-    def get(self, req, lookup):
-        test = 'hello'
-
-    def create_list_thumnails_timeline(self):
-
-
 
 
 class VideoEditResource(superdesk.Resource):
