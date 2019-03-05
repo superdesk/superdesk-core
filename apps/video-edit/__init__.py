@@ -14,7 +14,8 @@ from superdesk.utils import get_random_string
 
 class VideoEditService(superdesk.Service):
     """Edit video
-        use ffmpeg to create thumbnail and cutting video
+
+    Use ffmpeg to create thumbnail and cutting video
     """
 
     def create(self, docs, **kwargs):
