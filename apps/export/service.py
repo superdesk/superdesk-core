@@ -11,6 +11,10 @@ from io import BytesIO
 from zipfile import ZipFile
 from flask import current_app as app
 
+import gettext
+
+_ = gettext.gettext
+
 logger = logging.getLogger(__name__)
 
 
@@ -59,7 +63,7 @@ class ExportService(BaseService):
             doc['failures'] = unsuccessful_exports
             return [len(docs)]
         except Exception as ex:
-            raise SuperdeskApiError.badRequestError('Error creating export zip file. Try again please.',
+            raise SuperdeskApiError.badRequestError(_('Error creating export zip file. Try again please.'),
                                                     exception=ex)
 
     def _validate_for_publish(self, doc):
@@ -72,11 +76,11 @@ class ExportService(BaseService):
     def _validate_and_get_formatter(self, doc):
         """Validates incoming request and gets the formatter to be used"""
         if doc.get('item_ids') == 0:
-            raise SuperdeskApiError.badRequestError('No items to export.')
+            raise SuperdeskApiError.badRequestError(_('No items to export.'))
 
         formatter_name = doc.get('format_type')
         formatter = next((f for f in get_all_formatters() if type(f).__name__ == formatter_name), None)
         if not formatter:
-            raise SuperdeskApiError.badRequestError('Formatter not found for requested format type.')
+            raise SuperdeskApiError.badRequestError(_('Formatter not found for requested format type.'))
 
         return formatter

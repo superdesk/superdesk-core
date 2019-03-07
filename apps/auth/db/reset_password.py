@@ -19,6 +19,9 @@ from superdesk.utils import get_random_string
 from superdesk.emails import send_reset_password_email
 from superdesk.errors import SuperdeskApiError
 
+import gettext
+_ = gettext.gettext
+
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +80,7 @@ class ResetPasswordService(BaseService):
                 token_req = self.check_if_valid_token(key)
                 return [token_req.get('_id')]
 
-            raise SuperdeskApiError.badRequestError('Either key:password or email must be provided')
+            raise SuperdeskApiError.badRequestError(_('Either key:password or email must be provided'))
 
     def store_reset_password_token(self, doc, email, days_alive, user_id):
         now = utcnow()
@@ -95,15 +98,15 @@ class ResetPasswordService(BaseService):
         user = superdesk.get_resource_service('users').find_one(req=None, email=email)
         if not user:
             logger.warning('User password reset triggered with invalid email: %s' % email)
-            raise SuperdeskApiError.badRequestError('Invalid email')
+            raise SuperdeskApiError.badRequestError(_('Invalid email'))
 
         if not user.get('is_enabled', False):
             logger.warning('User password reset triggered for an disabled user')
-            raise SuperdeskApiError.forbiddenError('User not enabled')
+            raise SuperdeskApiError.forbiddenError(_('User not enabled'))
 
         if not user.get('is_active', False):
             logger.warning('User password reset triggered for an inactive user')
-            raise SuperdeskApiError.forbiddenError('User not active')
+            raise SuperdeskApiError.forbiddenError(_('User not active'))
 
         ids = self.store_reset_password_token(doc, email, token_ttl, user['_id'])
         send_reset_password_email(doc, token_ttl)
@@ -120,7 +123,7 @@ class ResetPasswordService(BaseService):
         user = superdesk.get_resource_service('users').find_one(req=None, _id=user_id)
         if not user.get('is_active'):
             logger.warning('Try to set password for an inactive user')
-            raise SuperdeskApiError.forbiddenError('User not active')
+            raise SuperdeskApiError.forbiddenError(_('User not active'))
 
         superdesk.get_resource_service('users').update_password(user_id, password)
         self.remove_all_tokens_for_email(reset_request['email'])

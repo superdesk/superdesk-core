@@ -16,6 +16,9 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.services import BaseService
 from superdesk.utils import ListCursor
 
+import gettext
+
+_ = gettext.gettext
 
 logger = logging.getLogger(__name__)
 
@@ -66,4 +69,4 @@ class SearchProviderService(BaseService):
         """
 
         if doc.get('last_item_update'):
-            raise SuperdeskApiError.forbiddenError("Deleting a Search Provider after receiving items is prohibited.")
+            raise SuperdeskApiError.forbiddenError(_("Deleting a Search Provider after receiving items is prohibited."))

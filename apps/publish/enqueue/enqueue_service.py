@@ -33,6 +33,9 @@ from apps.publish.published_item import PUBLISH_STATE, QUEUE_STATE
 from apps.content_types import apply_schema
 from datetime import datetime
 import pytz
+import gettext
+
+_ = gettext.gettext
 
 logger = logging.getLogger(__name__)
 
@@ -117,7 +120,7 @@ class EnqueueService:
             removed_items, added_items = self._get_changed_items(items, package)
             # we raise error if correction is done on a empty package. Kill is fine.
             if len(removed_items) == len(items) and len(added_items) == 0 and self.publish_type == 'correct':
-                raise SuperdeskApiError.badRequestError("Corrected package cannot be empty!")
+                raise SuperdeskApiError.badRequestError(_("Corrected package cannot be empty!"))
             items.extend(added_items)
 
         if items:
@@ -127,7 +130,7 @@ class EnqueueService:
 
                 if not package_item:
                     raise SuperdeskApiError.badRequestError(
-                        "Package item with id: {} has not been published.".format(guid))
+                        _("Package item with id: {guid} has not been published.").format(guid=guid))
 
                 subscribers, subscriber_codes, associations = self._get_subscribers_for_package_item(package_item)
                 package_item_id = package_item[config.ID_FIELD]
@@ -193,11 +196,11 @@ class EnqueueService:
             raise e
         except KeyError as e:
             raise SuperdeskApiError.badRequestError(
-                message="Key is missing on article to be published: {}".format(str(e)))
+                message=_("Key is missing on article to be published: {exception}").format(exception=str(e)))
         except Exception as e:
             logger.exception("Something bad happened while publishing {}".format(id))
             raise SuperdeskApiError.internalError(
-                message="Failed to publish the item: {}".format(str(e)),
+                message=_("Failed to publish the item: {exception}").format(exception=str(e)),
                 exception=e
             )
 
@@ -507,7 +510,8 @@ class EnqueueService:
                 package_item = get_resource_service('published').find_one(req=None, item_id=ref[RESIDREF],
                                                                           _current_version=ref[config.VERSION])
                 if not package_item:
-                    msg = 'Can not find package %s published item %s' % (package['item_id'], ref['residRef'])
+                    msg = _('Can not find package {package} published item {item}').format(
+                        package=package['item_id'], item=ref['residRef'])
                     raise SuperdeskPublishError(500, msg)
                 package_item[config.ID_FIELD] = package_item['item_id']
                 ref['package_item'] = package_item

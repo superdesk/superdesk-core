@@ -14,6 +14,9 @@ from superdesk.errors import SuperdeskApiError
 import superdesk
 from .ldap import ADAuth, add_default_values, get_user_query
 
+import gettext
+
+_ = gettext.gettext
 
 logger = logging.getLogger(__name__)
 

@@ -48,6 +48,10 @@ from apps.publish.published_item import LAST_PUBLISHED_VERSION, PUBLISHED,\
     PUBLISHED_IN_PACKAGE
 from superdesk.media.crop import CropService
 
+import gettext
+
+_ = gettext.gettext
+
 
 logger = logging.getLogger(__name__)
 
@@ -179,10 +183,11 @@ class BasePublishService(BaseService):
         except KeyError as e:
             logger.exception(e)
             raise SuperdeskApiError.badRequestError(
-                message="Key is missing on article to be published: {}".format(str(e))
+                message=_("Key is missing on article to be published: {exception}").format(exception=str(e))
             )
         except Exception as e:
-            raise SuperdeskApiError.internalError(message="Failed to publish the item: {}".format(str(id)), exception=e)
+            raise SuperdeskApiError.internalError(
+                message=_("Failed to publish the item: {id}").format(id=str(id)), exception=e)
 
     def is_targeted(self, article, target=None):
         """Checks if article is targeted.
@@ -222,16 +227,16 @@ class BasePublishService(BaseService):
 
         if self.publish_type in [ITEM_CORRECT, ITEM_KILL]:
             if updates.get(EMBARGO) and not original.get(EMBARGO):
-                raise SuperdeskApiError.badRequestError("Embargo can't be set after publishing")
+                raise SuperdeskApiError.badRequestError(_("Embargo can't be set after publishing"))
 
         if self.publish_type == ITEM_KILL:
             if updates.get('dateline'):
-                raise SuperdeskApiError.badRequestError("Dateline can't be modified on kill or take down")
+                raise SuperdeskApiError.badRequestError(_("Dateline can't be modified on kill or take down"))
 
         if self.publish_type == ITEM_PUBLISH and updated.get('rewritten_by'):
             rewritten_by = get_resource_service(ARCHIVE).find_one(req=None, _id=updated.get('rewritten_by'))
             if rewritten_by and rewritten_by.get(ITEM_STATE) in PUBLISH_STATES:
-                raise SuperdeskApiError.badRequestError("Cannot publish the story after Update is published.!")
+                raise SuperdeskApiError.badRequestError(_("Cannot publish the story after Update is published.!"))
 
         publish_type = 'auto_publish' if updates.get('auto_publish') else self.publish_type
         validate_item = {'act': publish_type, 'type': original['type'], 'validate': updated}
@@ -261,17 +266,19 @@ class BasePublishService(BaseService):
             removed_items, added_items = self._get_changed_items(items, updates)
             # we raise error if correction is done on a empty package. Kill is fine.
             if len(removed_items) == len(items) and len(added_items) == 0 and self.publish_type == ITEM_CORRECT:
-                validation_errors.append("Corrected package cannot be empty!")
+                validation_errors.append(_("Corrected package cannot be empty!"))
 
     def raise_if_not_marked_for_publication(self, original):
         if original.get('flags', {}).get('marked_for_not_publication', False):
-            raise SuperdeskApiError.badRequestError('Cannot publish an item which is marked as Not for Publication')
+            raise SuperdeskApiError.badRequestError(_('Cannot publish an item which is marked as Not for Publication'))
 
     def raise_if_invalid_state_transition(self, original):
         if not is_workflow_state_transition_valid(self.publish_type, original[ITEM_STATE]):
-            error_message = "Can't {} as item state is {}" if original[ITEM_TYPE] == CONTENT_TYPE.TEXT else \
-                "Can't {} as either package state or one of the items state is {}"
-            raise InvalidStateTransitionError(error_message.format(self.publish_type, original[ITEM_STATE]))
+            error_message = _("Can't {operation} as item state is {state}") \
+                if original[ITEM_TYPE] == CONTENT_TYPE.TEXT else \
+                _("Can't {operation} as either package state or one of the items state is {state}")
+            raise InvalidStateTransitionError(
+                error_message.format(operation=self.publish_type, state=original[ITEM_STATE]))
 
     def _process_publish_updates(self, original, updates):
         """Common updates for published items."""
@@ -311,14 +318,14 @@ class BasePublishService(BaseService):
         items = self.package_service.get_residrefs(package)
 
         if len(items) == 0 and self.publish_type == ITEM_PUBLISH:
-            raise SuperdeskApiError.badRequestError("Empty package cannot be published!")
+            raise SuperdeskApiError.badRequestError(_("Empty package cannot be published!"))
 
         removed_items = []
         if self.publish_type in [ITEM_CORRECT, ITEM_KILL]:
             removed_items, added_items = self._get_changed_items(items, updates)
             # we raise error if correction is done on a empty package. Kill is fine.
             if len(removed_items) == len(items) and len(added_items) == 0 and self.publish_type == ITEM_CORRECT:
-                raise SuperdeskApiError.badRequestError("Corrected package cannot be empty!")
+                raise SuperdeskApiError.badRequestError(_("Corrected package cannot be empty!"))
             items.extend(added_items)
 
         if not updates.get('groups') and package.get('groups'):  # this saves some typing in tests
@@ -331,7 +338,7 @@ class BasePublishService(BaseService):
 
                 if not package_item:
                     raise SuperdeskApiError.badRequestError(
-                        "Package item with id: {} does not exist.".format(guid))
+                        _("Package item with id: {guid} does not exist.").format(guid=guid))
 
                 if package_item[ITEM_STATE] not in PUBLISH_STATES:  # if the item is not published then publish it
                     if package_item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:

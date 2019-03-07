@@ -21,6 +21,10 @@ from apps.archive.common import is_genre, BROADCAST_GENRE, ITEM_RESEND
 from apps.publish.enqueue import get_enqueue_service
 from apps.archive.common import ITEM_OPERATION
 
+import gettext
+
+_ = gettext.gettext
+
 logger = logging.getLogger(__name__)
 
 
@@ -55,18 +59,18 @@ class ResendService(Service):
 
     def _validate_subscribers(self, subscriber_ids, article):
         if not subscriber_ids:
-            raise SuperdeskApiError.badRequestError(message='No subscribers selected!')
+            raise SuperdeskApiError.badRequestError(message=_('No subscribers selected!'))
 
         query = {'$and': [{config.ID_FIELD: {'$in': list(subscriber_ids)}}, {'is_active': True}]}
         subscribers = list(get_resource_service('subscribers').get(req=None, lookup=query))
 
         if len(subscribers) == 0:
-            raise SuperdeskApiError.badRequestError(message='No active subscribers found!')
+            raise SuperdeskApiError.badRequestError(message=_('No active subscribers found!'))
 
         if is_genre(article, BROADCAST_GENRE):
             digital_subscribers = list(self.digital(subscribers))
             if len(digital_subscribers) > 0:
-                raise SuperdeskApiError.badRequestError('Only wire subscribers can receive broadcast stories!')
+                raise SuperdeskApiError.badRequestError(_('Only wire subscribers can receive broadcast stories!'))
 
         return subscribers
 
@@ -74,23 +78,24 @@ class ResendService(Service):
         archive_article = get_resource_service(ARCHIVE).find_one(req=None, _id=article_id)
 
         if not archive_article:
-            raise SuperdeskApiError.badRequestError(message="Story couldn't be found!")
+            raise SuperdeskApiError.badRequestError(message=_("Story couldn't be found!"))
 
         if archive_article[ITEM_TYPE] not in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
             raise SuperdeskApiError.badRequestError(
-                message='Only text stories can be resent!')
+                message=_('Only text stories can be resent!'))
 
         if archive_article.get(ITEM_STATE) not in \
                 [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED, CONTENT_STATE.KILLED]:
             raise SuperdeskApiError.badRequestError(
-                message='Only published, corrected or killed stories can be resent!')
+                message=_('Only published, corrected or killed stories can be resent!'))
 
         if archive_article[config.VERSION] != article_version:
             raise SuperdeskApiError.badRequestError(
-                message='Please use the newest version {} to resend!'.format(archive_article[config.VERSION]))
+                message=_('Please use the newest version {version} to resend!').format(
+                    version=archive_article[config.VERSION]))
 
         if archive_article.get('rewritten_by'):
             raise SuperdeskApiError.badRequestError(
-                message='Updated story cannot be resent!')
+                message=_('Updated story cannot be resent!'))
 
         return archive_article

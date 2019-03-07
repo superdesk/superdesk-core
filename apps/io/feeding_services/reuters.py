@@ -22,6 +22,10 @@ from superdesk.logging import logger
 from superdesk.utc import utcnow
 from urllib.parse import urlparse, urlunparse
 
+import gettext
+
+_ = gettext.gettext
+
 
 requests.packages.urllib3.disable_warnings()
 
@@ -145,7 +149,7 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
                 raise IngestApiError.apiGeneralError(error, self.provider)
 
             if response.status_code == 404:
-                raise LookupError('Not found %s' % payload)
+                raise LookupError(_('Not found {payload}').format(payload=payload))
 
             break
 

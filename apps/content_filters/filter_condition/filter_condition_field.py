@@ -14,6 +14,9 @@ from superdesk.utc import utcnow
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
 
+import gettext
+_ = gettext.gettext
+
 
 class FilterConditionFieldsEnum(Enum):
     anpa_category = 1,
@@ -47,7 +50,7 @@ class FilterConditionField:
                     return FilterConditionCustomTextField(field)
                 else:
                     return FilterConditionControlledVocabularyField(field)
-            raise SuperdeskApiError.internalError('Invalid filter conditions field %s' % field)
+            raise SuperdeskApiError.internalError(_('Invalid filter conditions field {field}').format(field=field))
         if FilterConditionFieldsEnum[field] == FilterConditionFieldsEnum.desk:
             return FilterConditionDeskField(field)
         elif FilterConditionFieldsEnum[field] == FilterConditionFieldsEnum.stage:

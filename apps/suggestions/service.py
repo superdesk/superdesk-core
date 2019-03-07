@@ -15,6 +15,10 @@ from eve_elastic.elastic import ElasticCursor
 from eve.utils import ParsedRequest
 import json
 
+import gettext
+
+_ = gettext.gettext
+
 
 class SuggestionsService(BaseService):
     """Service used for live suggestions functionality.
@@ -30,12 +34,12 @@ class SuggestionsService(BaseService):
         from the lookup dictionary as 'item_id'
         """
         if 'item_id' not in lookup:
-            raise SuperdeskApiError.badRequestError('The item identifier is required')
+            raise SuperdeskApiError.badRequestError(_('The item identifier is required'))
         item = get_resource_service('archive_autosave').find_one(req=None, _id=lookup['item_id'])
         if not item:
             item = get_resource_service('archive').find_one(req=None, _id=lookup['item_id'])
             if not item:
-                raise SuperdeskApiError.notFoundError('Invalid item identifer')
+                raise SuperdeskApiError.notFoundError(_('Invalid item identifer'))
 
         keywords = self.provider.get_keywords(self._transform(item))
         if not keywords:

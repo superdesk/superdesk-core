@@ -14,6 +14,9 @@ from apps.desks import remove_profile_from_desks
 from eve.utils import ParsedRequest
 from superdesk.resource import build_custom_hateoas
 
+import gettext
+_ = gettext.gettext
+
 
 CONTENT_TYPE_PRIVILEGE = 'content_type'
 DO_NOT_SHOW_SELECTION = 'do not show'
@@ -126,8 +129,8 @@ class ContentTypesService(superdesk.Service):
         res = self.get(req=req, lookup={'schema.' + doc[config.ID_FIELD]: {'$type': 3}})
         if res.count():
             payload = {'content_types': [doc_hateoas for doc_hateoas in map(self._build_hateoas, res)]}
-            message = 'Vocabulary "%s" is used in %d content type(s)' % \
-                (doc.get('display_name'), res.count())
+            message = _('Vocabulary {vocabulary} is used in {count} content type(s)').format(
+                vocabulary=doc.get('display_name'), count=res.count())
             raise SuperdeskApiError.badRequestError(message, payload)
 
     def _build_hateoas(self, doc):
@@ -146,8 +149,8 @@ class ContentTypesService(superdesk.Service):
             if len(templates) > 0:
                 template_names = ', '.join([t.get('template_name') for t in templates])
                 raise SuperdeskApiError.badRequestError(
-                    message='Cannot disable content profile as following templates are referencing: {}'.
-                    format(template_names))
+                    message=_('Cannot disable content profile as following templates are referencing: {templates}').
+                    format(templates=template_names))
 
             req = ParsedRequest()
             all_desks = list(superdesk.get_resource_service('desks').get(req=req, lookup={}))
@@ -157,8 +160,8 @@ class ContentTypesService(superdesk.Service):
             if len(profile_desks) > 0:
                 profile_desk_names = ', '.join([d.get('name') for d in profile_desks])
                 raise SuperdeskApiError.badRequestError(
-                    message='Cannot disable content profile as following desks are referencing: {}'.
-                    format(profile_desk_names))
+                    message=_('Cannot disable content profile as following desks are referencing: {desks}').
+                    format(desks=profile_desk_names))
 
     def _update_template_fields(self, updates, original):
         """

@@ -14,6 +14,10 @@ from apps.common.models.utils import get_model
 from apps.item_lock.models.item import ItemModel
 from superdesk.errors import SuperdeskApiError
 
+import gettext
+
+_ = gettext.gettext
+
 
 class ItemAutosave(BaseComponent):
     def __init__(self, app):
@@ -27,11 +31,11 @@ class ItemAutosave(BaseComponent):
         item_model = get_model(ItemModel)
         item = item_model.find_one({'_id': item_id})
         if item is None:
-            raise SuperdeskApiError.notFoundError('Invalid item identifier')
+            raise SuperdeskApiError.notFoundError(_('Invalid item identifier'))
 
         lock_user = item.get('lock_user', None)
         if lock_user and str(lock_user) != str(user['_id']):
-            raise SuperdeskApiError.forbiddenError('The item was locked by another user')
+            raise SuperdeskApiError.forbiddenError(_('The item was locked by another user'))
 
         autosave_model = get_model(ItemAutosaveModel)
         item.update(updates)

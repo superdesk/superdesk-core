@@ -22,6 +22,9 @@ import superdesk
 from apps.auth.errors import CredentialsAuthError
 from apps.auth import get_user
 
+import gettext
+
+_ = gettext.gettext
 
 logger = logging.getLogger(__name__)
 
@@ -122,9 +125,8 @@ class ADAuth:
 
                 if not result:
                     # the search returns false in case of user not a security group member.
-                    raise CredentialsAuthError(credentials={'username': username},
-                                               message='User does not belong to security Group or '
-                                                       'could not find the user profile.')
+                    raise CredentialsAuthError(credentials={'username': username}, message=_(
+                        'User does not belong to security Group or could not find the user profile.'))
 
                 response = dict()
                 user_profile = ldap_conn.response[0]['attributes']
@@ -172,7 +174,7 @@ class ADAuthService(AuthService):
 
         if len(user_data) == 0:
             raise SuperdeskApiError.notFoundError(
-                message='No user has been found in AD',
+                message=_('No user has been found in AD'),
                 payload={'profile_to_import': 1})
 
         query = get_user_query(profile_to_import)
@@ -199,17 +201,17 @@ class ImportUserProfileService(UsersService):
         for index, doc in enumerate(docs):
             # ensuring the that logged in user is importing the profile.
             if logged_in_user != doc.get('username'):
-                raise SuperdeskApiError.forbiddenError(message="Invalid Credentials.", payload={'credentials': 1})
+                raise SuperdeskApiError.forbiddenError(message=_("Invalid Credentials."), payload={'credentials': 1})
 
             try:
                 # authenticate on error sends 401 and the client is redirected to login.
                 # but in case import user profile from Active Directory 403 should be fine.
                 user = get_resource_service('auth_db').authenticate(doc)
             except CredentialsAuthError:
-                raise SuperdeskApiError.forbiddenError(message="Invalid Credentials.", payload={'credentials': 1})
+                raise SuperdeskApiError.forbiddenError(message=_("Invalid Credentials."), payload={'credentials': 1})
 
             if user.get('_id'):
-                raise SuperdeskApiError.badRequestError(message="User already exists in the system.",
+                raise SuperdeskApiError.badRequestError(message=_("User already exists in the system."),
                                                         payload={'profile_to_import': 1})
 
             docs[index] = user

@@ -20,6 +20,10 @@ from eve.validation import ValidationError
 from apps.publish.content.common import ITEM_PUBLISH
 from apps.content_types import apply_schema
 
+import gettext
+
+_ = gettext.gettext
+
 logger = logging.getLogger(__name__)
 
 
@@ -50,19 +54,19 @@ class FormattersService(BaseService):
         formatter_name = doc.get('formatter_name')
 
         if not formatter_name:
-            raise SuperdeskApiError.badRequestError('Formatter name not found')
+            raise SuperdeskApiError.badRequestError(_('Formatter name not found'))
 
         formatter = self._get_formatter(formatter_name)
 
         if not formatter:
-            raise SuperdeskApiError.badRequestError('Formatter not found')
+            raise SuperdeskApiError.badRequestError(_('Formatter not found'))
 
         if 'article_id' in doc:
             article_id = doc.get('article_id')
             article = service.find_one(req=None, _id=article_id)
 
             if not article:
-                raise SuperdeskApiError.badRequestError('Article not found!')
+                raise SuperdeskApiError.badRequestError(_('Article not found!'))
 
             try:
                 self._validate(article)
@@ -76,6 +80,6 @@ class FormattersService(BaseService):
             except Exception as ex:
                 logger.exception(ex)
                 raise SuperdeskApiError.\
-                    badRequestError('Error in formatting article: {}'.format(str(ex)))
+                    badRequestError(_('Error in formatting article: {exception}').format(exception=str(ex)))
 
             return [{'formatted_doc': formatted_doc}]

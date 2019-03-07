@@ -29,6 +29,10 @@ from apps.archive.archive import SOURCE as ARCHIVE
 from apps.archive.common import handle_existing_data, item_schema
 from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
 
+import gettext
+
+_ = gettext.gettext
+
 
 logger = logging.getLogger(__name__)
 
@@ -173,8 +177,8 @@ class PublishedItemService(BaseService):
         Item should be one of the PUBLISH_STATES. If not raise error.
         """
         if doc.get(ITEM_STATE) not in PUBLISH_STATES:
-            raise SuperdeskApiError.badRequestError('Invalid state ({}) for the Published item.'
-                                                    .format(doc.get(ITEM_STATE)))
+            raise SuperdeskApiError.badRequestError(
+                _('Invalid state ({state}) for the Published item.').format(state=doc.get(ITEM_STATE)))
 
     def set_defaults(self, doc):
         doc['item_id'] = doc[config.ID_FIELD]
@@ -228,8 +232,8 @@ class PublishedItemService(BaseService):
         if app.testing:
             super().on_delete(doc)
         else:
-            raise NotImplementedError("Deleting a published item has a workflow which is "
-                                      "implemented in remove_expired().")
+            raise NotImplementedError(
+                _("Deleting a published item has a workflow which is implemented in remove_expired()."))
 
     def delete_action(self, lookup=None):
         """Deleting a published item has a workflow which is implemented in remove_expired().
@@ -240,8 +244,8 @@ class PublishedItemService(BaseService):
         if app.testing:
             super().delete_action(lookup)
         else:
-            raise NotImplementedError("Deleting a published item has a workflow which is "
-                                      "implemented in remove_expired().")
+            raise NotImplementedError(
+                _("Deleting a published item has a workflow which is implemented in remove_expired()."))
 
     def on_deleted(self, doc):
         """Deleting a published item has a workflow which is implemented in remove_expired().
@@ -252,8 +256,8 @@ class PublishedItemService(BaseService):
         if app.testing:
             super().on_deleted(doc)
         else:
-            raise NotImplementedError("Deleting a published item has a workflow which is "
-                                      "implemented in remove_expired().")
+            raise NotImplementedError(
+                _("Deleting a published item has a workflow which is implemented in remove_expired()."))
 
     def get_other_published_items(self, _id):
         try:

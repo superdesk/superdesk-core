@@ -14,6 +14,9 @@ from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
 
+import gettext
+_ = gettext.gettext
+
 
 class ContentFilterTestResource(Resource):
     endpoint_name = 'content_filter_tests'
@@ -42,7 +45,7 @@ class ContentFilterTestService(BaseService):
                 content_filter = doc.get('filter')
 
             if not content_filter:
-                raise SuperdeskApiError.badRequestError('Content filter not found')
+                raise SuperdeskApiError.badRequestError(_('Content filter not found'))
 
             if 'article_id' in doc:
                 article_id = doc.get('article_id')
@@ -50,12 +53,12 @@ class ContentFilterTestService(BaseService):
                 if not article:
                     article = get_resource_service('ingest').find_one(req=None, _id=article_id)
                     if not article:
-                        raise SuperdeskApiError.badRequestError('Article not found!')
+                        raise SuperdeskApiError.badRequestError(_('Article not found!'))
                 try:
                     doc['match_results'] = service.does_match(content_filter, article)
                 except Exception as ex:
                     raise SuperdeskApiError.\
-                        badRequestError('Error in testing article: {}'.format(str(ex)))
+                        badRequestError(_('Error in testing article: {error}').format(error=str(ex)))
             else:
                 try:
                     if doc.get('return_matching', True):
@@ -69,6 +72,6 @@ class ContentFilterTestService(BaseService):
                     doc['match_results'] = list(get_resource_service('archive').get(req=req, lookup=None))
                 except Exception as ex:
                     raise SuperdeskApiError.\
-                        badRequestError('Error in testing archive: {}'.format(str(ex)))
+                        badRequestError(_('Error in testing archive: {error}').format(error=str(ex)))
 
         return [len(docs)]

@@ -26,6 +26,10 @@ from superdesk.services import BaseService
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.utc import utcnow
 
+import gettext
+
+_ = gettext.gettext
+
 
 class DuplicateResource(Resource):
     endpoint_name = 'duplicate'
@@ -116,7 +120,8 @@ class DuplicateService(BaseService):
         """
 
         if not doc_in_archive:
-            raise SuperdeskApiError.notFoundError('Fail to found item with guid: %s' % guid_to_duplicate)
+            raise SuperdeskApiError.notFoundError(_(
+                'Fail to found item with guid: {guid}').format(guid=guid_to_duplicate))
 
         if not is_workflow_state_transition_valid('duplicate', doc_in_archive[ITEM_STATE]):
             raise InvalidStateTransitionError()
@@ -126,7 +131,7 @@ class DuplicateService(BaseService):
         user = get_user()
         str_user_id = str(user.get(config.ID_FIELD)) if user else None
         if lock_user and str(lock_user) != str_user_id and not force_unlock:
-            raise SuperdeskApiError.forbiddenError('The item was locked by another user')
+            raise SuperdeskApiError.forbiddenError(_('The item was locked by another user'))
 
 
 superdesk.workflow_action(

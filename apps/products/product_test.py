@@ -18,6 +18,10 @@ from apps.publish.enqueue import get_enqueue_service
 from apps.archive.common import ITEM_OPERATION
 from apps.publish.content.common import BasePublishService
 
+import gettext
+
+_ = gettext.gettext
+
 logger = logging.getLogger(__name__)
 
 
@@ -39,19 +43,20 @@ class ProductTestService(BaseService):
         archive_service = get_resource_service('archive')
         doc = docs[0]
         if not doc.get('article_id'):
-            raise SuperdeskApiError.badRequestError('Article id cannot be empty!')
+            raise SuperdeskApiError.badRequestError(_('Article id cannot be empty!'))
 
         article_id = doc.get('article_id')
         article = archive_service.find_one(req=None, _id=article_id)
 
         if not article:
-            raise SuperdeskApiError.badRequestError('Article not found!')
+            raise SuperdeskApiError.badRequestError(_('Article not found!'))
 
         try:
             results = self.test_products(article)
         except Exception as ex:
             logger.exception(ex)
-            raise SuperdeskApiError.badRequestError('Error in testing article: {}'.format(str(ex)))
+            raise SuperdeskApiError.badRequestError(
+                _('Error in testing article: {exception}').format(exception=str(ex)))
 
         doc['_items'] = results
         return [article_id]

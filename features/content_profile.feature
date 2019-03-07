@@ -1710,7 +1710,7 @@ Feature: Content Profile
 		When we delete "/vocabularies/foo"
 	    Then we get error 400
 	    """
-	    {"_message": "Vocabulary \"Foo\" is used in 1 content type(s)",
+	    {"_message": "Vocabulary Foo is used in 1 content type(s)",
 	     "_status": "ERR",
 	     "_issues": {
 	     	"content_types": [{

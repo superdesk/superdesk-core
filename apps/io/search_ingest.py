@@ -26,6 +26,10 @@ from apps.archive.common import generate_unique_id_and_name, ITEM_OPERATION, ARC
 from apps.duplication.archive_fetch import ITEM_FETCH
 from apps.tasks import send_to
 
+import gettext
+
+_ = gettext.gettext
+
 logger = logging.getLogger(__name__)
 
 
@@ -62,7 +66,7 @@ class SearchIngestService(superdesk.Service):
         for doc in docs:
             if not doc.get('desk'):
                 # if no desk is selected then it is bad request
-                raise SuperdeskApiError.badRequestError("Destination desk cannot be empty.")
+                raise SuperdeskApiError.badRequestError(_("Destination desk cannot be empty."))
             try:
                 archived_doc = self.fetch(doc['guid'])
             except FileNotFoundError as ex:
@@ -104,7 +108,7 @@ class SearchIngestService(superdesk.Service):
                 doc['ingest_provider'] = str(provider[superdesk.config.ID_FIELD])
             return results
         else:
-            raise ProviderNotFoundError('provider not found source=%s' % (self.source, ))
+            raise ProviderNotFoundError(_('provider not found source={source}').format(source=self.source))
 
     def fetch_rendition(self, rendition):
         """Get file stream for given rendition specs.

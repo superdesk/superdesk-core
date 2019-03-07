@@ -24,6 +24,9 @@ from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.utc import utcnow
 from apps.packages import PackageService
 
+import gettext
+
+_ = gettext.gettext
 
 package_service = PackageService()
 
@@ -63,7 +66,7 @@ class TranslateService(BaseService):
 
         item = archive_service.find_one(req=None, _id=guid)
         if not item:
-            raise SuperdeskApiError.notFoundError('Fail to found item with guid: %s' % guid)
+            raise SuperdeskApiError.notFoundError(_('Fail to found item with guid: {guid}').format(guid=guid))
 
         if not is_workflow_state_transition_valid('translate', item[ITEM_STATE]):
             raise InvalidStateTransitionError()

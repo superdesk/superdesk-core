@@ -11,6 +11,10 @@
 from superdesk.errors import SuperdeskApiError
 from superdesk.services import BaseService
 
+import gettext
+
+_ = gettext.gettext
+
 
 class KeywordsService(BaseService):
     """Analyze the text and extract the keywords"""
@@ -21,7 +25,7 @@ class KeywordsService(BaseService):
 
     def create(self, docs, **kwargs):
         if not self.provider:
-            raise SuperdeskApiError.internalError('Not set a keywords provider')
+            raise SuperdeskApiError.internalError(_('Not set a keywords provider'))
 
         try:
             ids = []

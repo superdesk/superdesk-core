@@ -13,6 +13,9 @@ from superdesk.errors import SuperdeskApiError
 from superdesk import get_resource_service
 from apps.content_filters.filter_condition.filter_condition import FilterCondition
 
+import gettext
+_ = gettext.gettext
+
 
 class ContentFilterService(BaseService):
     def get(self, req, lookup):
@@ -35,26 +38,25 @@ class ContentFilterService(BaseService):
         subscribers = self._get_referencing_subscribers(filter_id)
         if len(subscribers) > 0:
             references = ','.join(s['name'] for s in subscribers)
-            raise SuperdeskApiError.badRequestError(
-                'Content filter has been referenced by '
-                'subscriber(s) {}'.format(references)
+            raise SuperdeskApiError.badRequestError(_(
+                'Content filter has been referenced by subscriber(s) {references}').format(references=references)
             )
 
         # check if the filter is referenced by any routing schemes...
         schemes = self._get_referencing_routing_schemes(filter_id)
         if schemes.count() > 0:
             references = ','.join(s['name'] for s in schemes)
-            raise SuperdeskApiError.badRequestError(
-                'Content filter has been referenced by '
-                'routing scheme(s) {}'.format(references)
+            raise SuperdeskApiError.badRequestError(_(
+                'Content filter has been referenced by routing scheme(s) {references}').format(references=references)
             )
 
         # check if the filter is referenced by any other content filters...
         referenced_filters = self._get_content_filters_by_content_filter(filter_id)
         if referenced_filters.count() > 0:
             references = ','.join([pf['name'] for pf in referenced_filters])
-            raise SuperdeskApiError.badRequestError(
-                'Content filter has been referenced in {}'.format(references))
+            raise SuperdeskApiError.badRequestError(_(
+                'Content filter has been referenced in {references})').format(references=references)
+            )
 
         return super().delete(lookup)
 
@@ -122,9 +124,9 @@ class ContentFilterService(BaseService):
                 for f in expression['expression']['pf']:
                     current_filter = super().find_one(req=None, _id=f)
                     if f == filter_id:
-                        raise SuperdeskApiError.badRequestError(
-                            'Circular dependency error in content filters:{}'
-                            .format(current_filter['name'])
+                        raise SuperdeskApiError.badRequestError(_(
+                            'Circular dependency error in content filters:{filter}')
+                            .format(filter=current_filter['name'])
                         )
                     self._validate_no_circular_reference(current_filter, filter_id)
 

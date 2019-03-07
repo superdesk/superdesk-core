@@ -22,6 +22,9 @@ from superdesk.services import BaseService
 from superdesk.notification import push_notification
 from apps.dictionaries.resource import DICTIONARY_FILE, DictionaryType
 
+import gettext
+_ = gettext.gettext
+
 
 FILE_ID = '_file_id'
 
@@ -138,7 +141,7 @@ def read_from_file(doc):
     """
     content = doc.pop(DICTIONARY_FILE)
     if 'text/' not in content.mimetype:
-        raise SuperdeskApiError.badRequestError('A text dictionary file is required')
+        raise SuperdeskApiError.badRequestError(_('A text dictionary file is required'))
     return train(words(read(content)))
 
 
@@ -158,7 +161,7 @@ class DictionaryService(BaseService):
             if self.find_one(req=None, name=doc['name'],
                              language_id=doc['language_id'],
                              type=doc.get('type', DictionaryType.DICTIONARY.value)):
-                raise SuperdeskApiError.badRequestError(message='The dictionary already exists',
+                raise SuperdeskApiError.badRequestError(message=_('The dictionary already exists'),
                                                         payload={'name': 'duplicate'})
             self.__set_default(doc)
             self._validate_dictionary(doc)
@@ -182,11 +185,11 @@ class DictionaryService(BaseService):
     def _validate_dictionary(self, updates, original={}):
         dict_type = updates.get('type', original.get('type', DictionaryType.DICTIONARY.value))
         if dict_type == DictionaryType.ABBREVIATIONS.value and not updates.get('user', original.get('user')):
-            raise SuperdeskApiError.badRequestError(message='User is required for the abbreviations dictionary.',
+            raise SuperdeskApiError.badRequestError(message=_('User is required for the abbreviations dictionary.'),
                                                     payload={'user': 'missing'})
 
         if original and dict_type != original.get('type', DictionaryType.DICTIONARY.value):
-            raise SuperdeskApiError.badRequestError(message='The dictionary type cannot be changed.')
+            raise SuperdeskApiError.badRequestError(message=_('The dictionary type cannot be changed.'))
 
     def get_base_language(self, lang):
         if lang and lang.find('-') > 0:

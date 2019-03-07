@@ -28,6 +28,9 @@ from apps.archive.archive import SOURCE
 from apps.publish.content.common import ITEM_CORRECT, ITEM_PUBLISH
 from superdesk.utc import utcnow
 
+import gettext
+_ = gettext.gettext
+
 
 logger = logging.getLogger(__name__)
 # field to be copied from item to broadcast item
@@ -80,7 +83,8 @@ class ArchiveBroadcastService(BaseService):
                            if genre.get('qcode') == BROADCAST_GENRE and genre.get('is_active')]
 
         if not broadcast_genre:
-            raise SuperdeskApiError.badRequestError(message="Cannot find the {} genre.".format(BROADCAST_GENRE))
+            raise SuperdeskApiError.badRequestError(
+                message=_("Cannot find the {genre} genre.").format(genre=BROADCAST_GENRE))
 
         doc['broadcast'] = {
             'status': '',
@@ -110,13 +114,13 @@ class ArchiveBroadcastService(BaseService):
         """
         if not item:
             raise SuperdeskApiError.notFoundError(
-                message="Cannot find the requested item id.")
+                message=_("Cannot find the requested item id."))
 
         if not item.get(ITEM_TYPE) in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
-            raise SuperdeskApiError.badRequestError(message="Invalid content type.")
+            raise SuperdeskApiError.badRequestError(message=_("Invalid content type."))
 
         if item.get(ITEM_STATE) not in [CONTENT_STATE.CORRECTED, CONTENT_STATE.PUBLISHED]:
-            raise SuperdeskApiError.badRequestError(message="Invalid content state.")
+            raise SuperdeskApiError.badRequestError(message=_("Invalid content state."))
 
     def _get_broadcast_items(self, ids, include_archived_repo=False):
         """Returns list of broadcast items.
