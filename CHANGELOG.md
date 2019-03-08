@@ -1,5 +1,35 @@
 # Superdesk Server Changelog
 
+## [1.28.1] 2018-02-25
+
+### Added
+
+- Add support to disable style and entity preservation on macros.
+- Include `baseImage` and `viewImage` renditions on newsroom ninjs.
+- Add `item_fetched` and `item_moved` signals.
+- Twitter info for contacts can be removed.
+- Make null fields configurable on kill.
+
+### Changed
+
+- Allow clearing the publish schedule on save and publish.
+- Only fix associations that are not null.
+
+### Fixed
+
+- Fix stt newsml parser and location parsing.
+- Fix exceptions on some missing vocabularies.
+- Fix errors when saving an image after cropping.
+- Fix ingestion crash on unkown subject qcode.
+- Strip whitespace characters from values when filtering.
+- Fix custom vocabularies not shown in Filter Conditions.
+- Do not overwrite existing item associations if existing item has associations on archive rewrite.
+- After cropping image, other operations were bringing the old image back.
+- Make sure transmit thread terminates on a softtimeout.
+- Fix typo in the field name for subject.
+- Fix wrong string format in some error messages.
+- Fix broken desks after fresh install.
+
 ## [1.28] 2018-01-18
 
 ### Added
@@ -10,7 +40,7 @@
 - Add `embargoed` field to content api item schema.
 - Attach featured image to email output.
 - Add `manage.py` commands to docs.
-- Add guid to associations in WXR parser. 
+- Add guid to associations in WXR parser.
 
 ### Changed
 
@@ -142,7 +172,7 @@
 ### Added
 
 - Add support to expire user password after given period.
-- Allow media transmitting while formatting item. 
+- Allow media transmitting while formatting item.
 - Create context manager for es aggregations.
 - Add registry for restricted parser on feeding services.
 - Add `preview_endpoint_url` to subscribers schema.

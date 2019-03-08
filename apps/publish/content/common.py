@@ -209,8 +209,11 @@ class BasePublishService(BaseService):
         self.raise_if_not_marked_for_publication(updated)
 
         if self.publish_type == 'publish':
-            update_schedule_settings(updated, PUBLISH_SCHEDULE, updated.get(PUBLISH_SCHEDULE))
-            validate_schedule(updated.get(SCHEDULE_SETTINGS, {}).get('utc_{}'.format(PUBLISH_SCHEDULE)))
+            # The publish schedule has not been cleared
+            if updates.get(PUBLISH_SCHEDULE) or updated.get(SCHEDULE_SETTINGS, {}).get(
+                    'utc_{}'.format(PUBLISH_SCHEDULE)) or not original.get(PUBLISH_SCHEDULE):
+                update_schedule_settings(updated, PUBLISH_SCHEDULE, updated.get(PUBLISH_SCHEDULE))
+                validate_schedule(updated.get(SCHEDULE_SETTINGS, {}).get('utc_{}'.format(PUBLISH_SCHEDULE)))
 
         if original[ITEM_TYPE] != CONTENT_TYPE.COMPOSITE and updates.get(EMBARGO):
             update_schedule_settings(updated, EMBARGO, updated.get(EMBARGO))

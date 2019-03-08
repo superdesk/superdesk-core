@@ -730,6 +730,9 @@ Feature: Content Publishing
       }
       """
       And we publish "#archive._id#" with "publish" type and "published" state
+      """
+        {"publish_schedule": "#DATE+2#"}
+      """
       Then we get OK response
       And we get existing resource
       """
@@ -941,6 +944,9 @@ Feature: Content Publishing
       ]
       """
       And we publish "#archive._id#" with "publish" type and "published" state
+      """
+        {"publish_schedule": "#DATE+1#"}
+      """
       Then we get OK response
       And we get existing resource
       """

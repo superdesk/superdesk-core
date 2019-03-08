@@ -601,6 +601,9 @@ Feature: Embargo Date and Time on an Article (User Story: https://dev.sourcefabr
     """
     Then we get response code 200
     When we publish "123" with "publish" type and "published" state
+    """
+    {"publish_schedule": "#DATE+1#"}
+    """
     Then we get OK response
     And we get existing resource
     """

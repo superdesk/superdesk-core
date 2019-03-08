@@ -55,7 +55,7 @@ class FormattersService(BaseService):
         formatter = self._get_formatter(formatter_name)
 
         if not formatter:
-                raise SuperdeskApiError.badRequestError('Formatter not found')
+            raise SuperdeskApiError.badRequestError('Formatter not found')
 
         if 'article_id' in doc:
             article_id = doc.get('article_id')

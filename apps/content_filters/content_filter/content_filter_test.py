@@ -42,7 +42,7 @@ class ContentFilterTestService(BaseService):
                 content_filter = doc.get('filter')
 
             if not content_filter:
-                    raise SuperdeskApiError.badRequestError('Content filter not found')
+                raise SuperdeskApiError.badRequestError('Content filter not found')
 
             if 'article_id' in doc:
                 article_id = doc.get('article_id')

@@ -66,7 +66,7 @@ class FilterConditionOperator:
         raise NotImplementedError()
 
     def get_lower_case(self, value):
-            return str(value).lower()
+        return str(value).lower()
 
 
 class InOperator(FilterConditionOperator):
