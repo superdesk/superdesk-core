@@ -10,10 +10,7 @@ from eve.validation import ValidationError
 from io import BytesIO
 from zipfile import ZipFile
 from flask import current_app as app
-
-import gettext
-
-_ = gettext.gettext
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 

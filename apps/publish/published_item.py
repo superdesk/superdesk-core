@@ -28,11 +28,7 @@ from flask import current_app as app
 from apps.archive.archive import SOURCE as ARCHIVE
 from apps.archive.common import handle_existing_data, item_schema
 from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
-
-import gettext
-
-_ = gettext.gettext
-
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 

@@ -27,10 +27,7 @@ from superdesk.errors import SuperdeskApiError
 from apps.archive.common import ITEM_OPERATION, ARCHIVE, insert_into_versions, get_dateline_city
 from itertools import chain
 from apps.publish.published_item import PUBLISHED, LAST_PUBLISHED_VERSION
-
-import gettext
-
-_ = gettext.gettext
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 

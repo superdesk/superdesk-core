@@ -13,9 +13,7 @@ from superdesk.text_utils import get_text
 from superdesk.utc import utcnow
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
-
-import gettext
-_ = gettext.gettext
+from flask_babel import _
 
 
 class FilterConditionFieldsEnum(Enum):

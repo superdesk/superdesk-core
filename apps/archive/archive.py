@@ -45,9 +45,7 @@ from apps.item_lock.models.item import ItemModel
 from apps.packages import PackageService
 from .archive_media import ArchiveMediaService
 from superdesk.utc import utcnow
-
-import gettext
-_ = gettext.gettext
+from flask_babel import _
 
 EDITOR_KEY_PREFIX = 'editor_'
 logger = logging.getLogger(__name__)

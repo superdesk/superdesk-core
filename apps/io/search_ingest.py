@@ -25,10 +25,7 @@ from apps.archive.common import generate_unique_id_and_name, ITEM_OPERATION, ARC
     insert_into_versions, remove_unwanted, set_original_creator
 from apps.duplication.archive_fetch import ITEM_FETCH
 from apps.tasks import send_to
-
-import gettext
-
-_ = gettext.gettext
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 

@@ -25,10 +25,7 @@ from superdesk.activity import add_activity, ACTIVITY_UPDATE
 from superdesk.metadata.item import FAMILY_ID
 from eve.utils import ParsedRequest
 from superdesk.utils import ListCursor
-
-import gettext
-
-_ = gettext.gettext
+from flask_babel import _
 
 
 class DeskTypes(SuperdeskBaseEnum):

@@ -47,11 +47,7 @@ from apps.packages.package_service import PackageService
 from apps.publish.published_item import LAST_PUBLISHED_VERSION, PUBLISHED,\
     PUBLISHED_IN_PACKAGE
 from superdesk.media.crop import CropService
-
-import gettext
-
-_ = gettext.gettext
-
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 
@@ -527,7 +523,7 @@ class BasePublishService(BaseService):
         item was associated will be carried on and used when validating those items.
         """
         associations = original.get(ASSOCIATIONS) or {}
-        for _, item in associations.items():
+        for __, item in associations.items():
             if type(item) == dict and item.get(config.ID_FIELD):
                 keys = [key for key in DEFAULT_SCHEMA.keys() if key not in PRESERVED_FIELDS]
 

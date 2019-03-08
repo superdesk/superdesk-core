@@ -28,9 +28,7 @@ from apps.packages import PackageService
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE
 from superdesk.utc import get_expiry_date
 from apps.item_lock.components.item_lock import push_unlock_notification
-
-import gettext
-_ = gettext.gettext
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 

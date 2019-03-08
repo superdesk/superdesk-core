@@ -12,9 +12,7 @@ import re
 from superdesk.errors import SuperdeskApiError
 from superdesk import get_resource_service
 from superdesk.services import BaseService
-
-import gettext
-_ = gettext.gettext
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +48,7 @@ class FilterConditionService(BaseService):
             if not parameter or len(parameter) == 0:
                 raise SuperdeskApiError.badRequestError(_(
                     'Filter condition:{condition} has unidentified field: {field}')
-                    .format(consition=doc['name'], field=doc['field']))
+                    .format(condition=doc['name'], field=doc['field']))
             if doc['operator'] not in parameter[0]['operators']:
                 raise SuperdeskApiError.badRequestError(_(
                     'Filter condition:{condition} has unidentified operator: {operator}')

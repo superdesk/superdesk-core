@@ -18,10 +18,7 @@ from superdesk.utc import utcnow
 from superdesk.utils import get_random_string
 from superdesk.emails import send_reset_password_email
 from superdesk.errors import SuperdeskApiError
-
-import gettext
-_ = gettext.gettext
-
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 

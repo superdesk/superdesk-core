@@ -13,10 +13,7 @@ from flask import current_app as app
 from superdesk.errors import SuperdeskApiError
 import superdesk
 from .ldap import ADAuth, add_default_values, get_user_query
-
-import gettext
-
-_ = gettext.gettext
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 

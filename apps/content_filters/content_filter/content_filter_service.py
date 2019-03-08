@@ -12,9 +12,7 @@ from eve.utils import ParsedRequest
 from superdesk.errors import SuperdeskApiError
 from superdesk import get_resource_service
 from apps.content_filters.filter_condition.filter_condition import FilterCondition
-
-import gettext
-_ = gettext.gettext
+from flask_babel import _
 
 
 class ContentFilterService(BaseService):

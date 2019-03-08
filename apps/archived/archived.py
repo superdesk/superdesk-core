@@ -37,9 +37,7 @@ from superdesk.services import BaseService
 from superdesk.resource import Resource
 from superdesk.utc import utcnow
 from apps.publish.content import KillPublishService, TakeDownPublishService
-
-import gettext
-_ = gettext.gettext
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 PACKAGE_TYPE = 'package_type'

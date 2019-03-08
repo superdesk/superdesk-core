@@ -20,10 +20,7 @@ from superdesk.publish import SUBSCRIBER_TYPES
 from apps.archive.common import is_genre, BROADCAST_GENRE, ITEM_RESEND
 from apps.publish.enqueue import get_enqueue_service
 from apps.archive.common import ITEM_OPERATION
-
-import gettext
-
-_ = gettext.gettext
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 

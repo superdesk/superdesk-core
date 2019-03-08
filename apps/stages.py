@@ -22,10 +22,7 @@ from eve.utils import ParsedRequest
 from apps.tasks import task_statuses
 from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE
 from apps.archive.archive import SOURCE as ARCHIVE
-
-import gettext
-
-_ = gettext.gettext
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 

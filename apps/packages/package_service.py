@@ -25,10 +25,7 @@ from apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.utc import utcnow
 from superdesk.default_settings import VERSION
 from apps.templates.content_templates import render_content_template_by_id
-
-import gettext
-
-_ = gettext.gettext
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 package_create_signal = superdesk.signals.signal('package.create')  # @UndefinedVariable

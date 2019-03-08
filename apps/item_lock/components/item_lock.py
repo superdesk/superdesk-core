@@ -26,10 +26,7 @@ from apps.common.models.utils import get_model
 from apps.content import push_content_notification
 from apps.packages.package_service import PackageService
 from ..models.item import ItemModel
-
-import gettext
-
-_ = gettext.gettext
+from flask_babel import _
 
 LOCK_USER = 'lock_user'
 LOCK_SESSION = 'lock_session'

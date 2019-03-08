@@ -21,10 +21,9 @@ from apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification
 import logging
-import gettext
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
-_ = gettext.gettext
 
 
 class ArchiveLinkResource(Resource):

@@ -33,9 +33,7 @@ from apps.publish.published_item import PUBLISH_STATE, QUEUE_STATE
 from apps.content_types import apply_schema
 from datetime import datetime
 import pytz
-import gettext
-
-_ = gettext.gettext
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 

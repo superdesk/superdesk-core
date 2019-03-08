@@ -14,9 +14,7 @@ from superdesk.notification import push_notification
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
 from .user_mentions import get_users, get_desks, get_mentions, notify_mentioned_users, notify_mentioned_desks
-
-import gettext
-_ = gettext.gettext
+from flask_babel import _
 
 comments_schema = {
     'text': {

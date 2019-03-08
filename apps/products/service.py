@@ -13,10 +13,7 @@ from superdesk.services import BaseService
 from eve.utils import ParsedRequest, config
 from superdesk.errors import SuperdeskApiError
 from superdesk.metadata.utils import ProductTypes
-
-import gettext
-
-_ = gettext.gettext
+from flask_babel import _
 
 
 class ProductsService(BaseService):

@@ -21,11 +21,7 @@ from superdesk.io.feeding_services.http_service import HTTPFeedingService
 from superdesk.logging import logger
 from superdesk.utc import utcnow
 from urllib.parse import urlparse, urlunparse
-
-import gettext
-
-_ = gettext.gettext
-
+from flask_babel import _
 
 requests.packages.urllib3.disable_warnings()
 

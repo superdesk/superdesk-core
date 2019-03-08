@@ -22,10 +22,7 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.services import BaseService
 from superdesk.metadata.packages import GROUPS, GROUP_ID, REFS, RESIDREF,\
     ROOT_GROUP, ID_REF, PACKAGE_TYPE
-
-import gettext
-
-_ = gettext.gettext
+from flask_babel import _
 
 
 class PublishedPackageItemsResource(Resource):

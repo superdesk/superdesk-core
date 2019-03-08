@@ -19,10 +19,7 @@ from superdesk.utils import ListCursor
 from eve.validation import ValidationError
 from apps.publish.content.common import ITEM_PUBLISH
 from apps.content_types import apply_schema
-
-import gettext
-
-_ = gettext.gettext
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 

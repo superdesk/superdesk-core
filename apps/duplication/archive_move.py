@@ -30,10 +30,7 @@ from apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.workflow import is_workflow_state_transition_valid
 from apps.content import push_item_move_notification
 from superdesk.lock import lock, unlock
-
-import gettext
-
-_ = gettext.gettext
+from flask_babel import _
 
 ITEM_MOVE = 'move'
 item_operations.append(ITEM_MOVE)

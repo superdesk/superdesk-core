@@ -14,10 +14,7 @@ from superdesk.services import BaseService
 from eve_elastic.elastic import ElasticCursor
 from eve.utils import ParsedRequest
 import json
-
-import gettext
-
-_ = gettext.gettext
+from flask_babel import _
 
 
 class SuggestionsService(BaseService):

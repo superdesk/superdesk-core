@@ -13,10 +13,7 @@ from apps.common.components.base_component import BaseComponent
 from apps.common.models.utils import get_model
 from apps.item_lock.models.item import ItemModel
 from superdesk.errors import SuperdeskApiError
-
-import gettext
-
-_ = gettext.gettext
+from flask_babel import _
 
 
 class ItemAutosave(BaseComponent):

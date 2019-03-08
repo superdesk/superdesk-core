@@ -29,10 +29,7 @@ from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk import get_resource_service
 from superdesk.metadata.packages import RESIDREF, REFS, GROUPS
 from superdesk.metadata.item import MEDIA_TYPES
-
-import gettext
-
-_ = gettext.gettext
+from flask_babel import _
 
 custom_hateoas = {'self': {'title': 'Archive', 'href': '/archive/{_id}'}}
 

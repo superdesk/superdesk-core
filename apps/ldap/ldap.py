@@ -21,10 +21,7 @@ from flask import current_app as app
 import superdesk
 from apps.auth.errors import CredentialsAuthError
 from apps.auth import get_user
-
-import gettext
-
-_ = gettext.gettext
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 

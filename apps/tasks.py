@@ -28,10 +28,7 @@ from superdesk.workflow import is_workflow_state_transition_valid
 from apps.archive.common import get_item_expiry, item_operations, ITEM_OPERATION, update_version, \
     insert_into_versions, is_assigned_to_a_desk, convert_task_attributes_to_objectId, on_create_item, \
     ARCHIVE, get_subject
-
-import gettext
-
-_ = gettext.gettext
+from flask_babel import _
 
 task_statuses = ['todo', 'in_progress', 'done']
 default_status = 'todo'

@@ -13,9 +13,7 @@ from superdesk import get_resource_service
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
-
-import gettext
-_ = gettext.gettext
+from flask_babel import _
 
 
 class ContentFilterTestResource(Resource):

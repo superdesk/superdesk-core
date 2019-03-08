@@ -19,11 +19,7 @@ from superdesk.utc import utcnow
 from superdesk import get_backend
 from superdesk import get_resource_service
 from superdesk.workflow import get_privileged_actions
-
-import gettext
-
-_ = gettext.gettext
-
+from flask_babel import _
 
 _preferences_key = 'preferences'
 _user_preferences_key = 'user_preferences'

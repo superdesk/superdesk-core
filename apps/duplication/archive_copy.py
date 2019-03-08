@@ -22,10 +22,7 @@ from superdesk.workflow import is_workflow_state_transition_valid
 from eve.utils import config
 from apps.auth import get_user
 import superdesk
-
-import gettext
-
-_ = gettext.gettext
+from flask_babel import _
 
 
 class CopyResource(Resource):

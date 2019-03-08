@@ -13,9 +13,7 @@ from apps.templates.content_templates import remove_profile_from_templates
 from apps.desks import remove_profile_from_desks
 from eve.utils import ParsedRequest
 from superdesk.resource import build_custom_hateoas
-
-import gettext
-_ = gettext.gettext
+from flask_babel import _
 
 
 CONTENT_TYPE_PRIVILEGE = 'content_type'

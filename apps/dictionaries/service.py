@@ -21,9 +21,7 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.services import BaseService
 from superdesk.notification import push_notification
 from apps.dictionaries.resource import DICTIONARY_FILE, DictionaryType
-
-import gettext
-_ = gettext.gettext
+from flask_babel import _
 
 
 FILE_ID = '_file_id'

@@ -23,10 +23,7 @@ from superdesk.services import BaseService
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.utc import utcnow
 from apps.packages import PackageService
-
-import gettext
-
-_ = gettext.gettext
+from flask_babel import _
 
 package_service = PackageService()
 

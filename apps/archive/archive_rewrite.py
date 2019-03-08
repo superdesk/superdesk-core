@@ -25,10 +25,8 @@ from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from superdesk.notification import push_notification
 from apps.tasks import send_to
 from apps.archive.archive import update_associations
+from flask_babel import _
 
-import gettext
-
-_ = gettext.gettext
 logger = logging.getLogger(__name__)
 
 

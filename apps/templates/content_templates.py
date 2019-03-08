@@ -30,10 +30,7 @@ from superdesk.lock import lock, unlock
 from superdesk.celery_task_utils import get_lock_id
 from croniter import croniter
 from datetime import datetime
-
-import gettext
-
-_ = gettext.gettext
+from flask_babel import _
 
 CONTENT_TEMPLATE_RESOURCE = 'content_templates'
 CONTENT_TEMPLATE_PRIVILEGE = CONTENT_TEMPLATE_RESOURCE

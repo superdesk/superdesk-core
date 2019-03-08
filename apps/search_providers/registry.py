@@ -2,10 +2,7 @@
 from superdesk import Resource, Service
 from superdesk.utils import ListCursor
 from superdesk.errors import AlreadyExistsError
-
-import gettext
-
-_ = gettext.gettext
+from flask_babel import _
 
 registered_search_providers = {}
 allowed_search_providers = []

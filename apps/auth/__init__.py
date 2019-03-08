@@ -21,9 +21,7 @@ from superdesk.celery_app import celery
 from .session_purge import RemoveExpiredSessions
 from superdesk.errors import SuperdeskApiError
 from .service import UserSessionClearService, AuthService
-
-import gettext
-_ = gettext.gettext
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 

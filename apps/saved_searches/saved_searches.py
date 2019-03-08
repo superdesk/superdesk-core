@@ -22,10 +22,7 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification
 from superdesk.users.services import current_user_has_privilege
 from apps.auth import get_user_id
-
-import gettext
-
-_ = gettext.gettext
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 

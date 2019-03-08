@@ -25,10 +25,7 @@ from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.utc import utcnow
-
-import gettext
-
-_ = gettext.gettext
+from flask_babel import _
 
 
 class DuplicateResource(Resource):

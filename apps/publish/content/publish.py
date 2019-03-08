@@ -17,11 +17,7 @@ from apps.archive.archive import update_word_count
 from superdesk.utc import utcnow
 
 from .common import BasePublishService, BasePublishResource, ITEM_PUBLISH
-
-import gettext
-
-_ = gettext.gettext
-
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 

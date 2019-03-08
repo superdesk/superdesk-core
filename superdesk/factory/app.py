@@ -20,6 +20,8 @@ from flask_mail import Mail
 from eve.auth import TokenAuth
 from eve.io.mongo import MongoJSONEncoder, create_index
 from eve.render import send_response
+from flask_babel import Babel
+from flask import g
 
 from superdesk.celery_app import init_celery
 from superdesk.datalayer import SuperdeskDataLayer  # noqa
@@ -115,6 +117,13 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
     app.jinja_loader = custom_loader
     app.mail = Mail(app)
     app.sentry = SuperdeskSentry(app)
+    babel = Babel(app, configure_jinja=False)
+    app.config['BABEL_TRANSLATION_DIRECTORIES'] = '../translations'
+
+    @babel.localeselector
+    def get_locale():
+        user = getattr(g, 'user', {})
+        return user.get('language', 'en')
 
     @app.errorhandler(SuperdeskError)
     def client_error_handler(error):
