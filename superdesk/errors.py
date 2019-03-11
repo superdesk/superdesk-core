@@ -208,7 +208,7 @@ class SuperdeskIngestError(SuperdeskError):
         2002: 'Invalid feed parser value'
     }
 
-    def __init__(self, code, exception, provider=None, data=None, extra=None):
+    def __init__(self, code, exception, provider=None, data=None, extra=None, item=None):
         super().__init__(code)
         self.system_exception = exception
         provider = provider or {}
@@ -219,8 +219,12 @@ class SuperdeskIngestError(SuperdeskError):
                 exception_msg = str(exception)
                 if len(exception_msg) > 200:
                     exception_msg = exception_msg[200:] + '…'
+                message = 'Error [%s] on ingest provider {{name}}: %s' % (code, exception_msg)
+                if item is not None:
+                    message += '\nitem="{}" name="{}"'.format(item.get('guid', ''),
+                                                              item.get('headline', item.get('slugline', '')))
                 update_notifiers('error',
-                                 'Error [%s] on ingest provider {{name}}: %s' % (code, exception_msg),
+                                 message,
                                  resource='ingest_providers' if provider else None,
                                  name=self.provider_name,
                                  provider_id=provider.get('_id', ''))
@@ -254,7 +258,8 @@ class ProviderError(SuperdeskIngestError):
         2005: 'Anpa category error',
         2006: 'Expired content could not be filtered',
         2007: 'IPTC processing error',
-        2008: 'External source no suitable resolution found'
+        2008: 'External source no suitable resolution found',
+        2009: 'Ingest item error',
     }
 
     @classmethod
@@ -288,6 +293,10 @@ class ProviderError(SuperdeskIngestError):
     @classmethod
     def externalProviderError(cls, exception=None, provider=None):
         return ProviderError(2008, exception, provider)
+
+    @classmethod
+    def ingestItemError(cls, exception=None, provider=None, item=None):
+        return ProviderError(2009, exception, provider, item=item)
 
 
 class ParserError(SuperdeskIngestError):

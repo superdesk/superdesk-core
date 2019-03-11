@@ -567,6 +567,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
                 items_ids.extend(ingest_service.post_in_mongo([item]))
             except HTTPException as e:
                 logger.error('Exception while persisting item in %s collection: %s', ingest_collection, e)
+                raise e
 
         if routing_scheme and new_version:
             routed = ingest_service.find_one(_id=item[superdesk.config.ID_FIELD], req=None)
@@ -574,6 +575,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
 
     except Exception as ex:
         logger.exception(ex)
+        ProviderError.ingestItemError(ex, provider, item=item)
         return False, []
     return True, items_ids
 
