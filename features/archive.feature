@@ -1055,3 +1055,32 @@ Feature: News Items Archive
           "associations": {"test--1":{"_id": "item-1"}}}
         """
 
+    @auth
+    Scenario: It should remove association from elastic via setting it to null
+        Given "archive"
+        """
+        [{"_id": "item-1", "guid": "item-1", "headline": "test-one"}]
+        """
+        When we post to "/archive"
+        """
+        [{"guid": "item-2", "type": "text", "headline": "test", "state": "in_progress",
+          "associations": {"foo": {"_id": "item-1", "guid": "item-1", "headline": "test-one"}}
+        }]
+        """
+        And we patch "/archive/item-2"
+        """
+        {"associations": {"foo": null}}
+        """
+        When we get "/archive/item-2"
+        Then we get existing resource
+        """
+        {"associations": {"foo": null}}
+        """
+        When we get "/archive"
+        Then we get list with 1 items
+        """
+        {"_items": [{
+            "_id": "item-2",
+            "associations": {"foo": null}
+        }]}
+        """
