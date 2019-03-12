@@ -102,7 +102,7 @@ class BasePublishService(BaseService):
     package_service = PackageService()
 
     def on_update(self, updates, original):
-        self._publish_associated_items(original)
+        self._refresh_associated_items(original)
         self._validate(original, updates)
         self._set_updates(original, updates, updates.get(config.LAST_UPDATED, utcnow()))
         convert_task_attributes_to_objectId(updates)  # ???
@@ -157,11 +157,12 @@ class BasePublishService(BaseService):
                 self._publish_package_items(original, updates)
                 self._update_archive(original, updates, should_insert_into_versions=auto_publish)
             else:
-                self._publish_associated_items(original, updates, publish=True)
+                self._publish_associated_items(original, updates)
                 updated = deepcopy(original)
                 updated.update(deepcopy(updates))
 
-                self._publish_associated_items(updated, updates)  # updates got lost with update
+                if updates.get(ASSOCIATIONS):
+                    self._refresh_associated_items(updated)  # updates got lost with update
 
                 self._update_archive(original, updates, should_insert_into_versions=auto_publish)
                 self.update_published_collection(published_item_id=original[config.ID_FIELD], updated=updated)
@@ -515,48 +516,82 @@ class BasePublishService(BaseService):
             # countdown=3 is for elasticsearch to be refreshed with archive and published changes
             import_into_legal_archive.apply_async(countdown=3, kwargs=kwargs)  # @UndefinedVariable
 
-    def _publish_associated_items(self, original, updates={}, publish=False):
-        """Refresh and publish associated items before publishing. The publishing is done if the setting
-        PUBLISH_ASSOCIATED_ITEMS was true.
-
-        Any further updates made to basic metadata done after item was associated will be carried on and
-        used when validating those items.
+    def _refresh_associated_items(self, original):
+        """Refreshes associated items with the latest version. Any further updates made to basic metadata done after
+        item was associated will be carried on and used when validating those items.
         """
-        publish_service = None
-        if config.PUBLISH_ASSOCIATED_ITEMS and publish_services.get(self.publish_type):
-            publish_service = get_resource_service(publish_services[self.publish_type])
-
         associations = original.get(ASSOCIATIONS) or {}
-        for associations_key, item in associations.items():
+        for _, item in associations.items():
             if type(item) == dict and item.get(config.ID_FIELD):
                 keys = [key for key in DEFAULT_SCHEMA.keys() if key not in PRESERVED_FIELDS]
 
                 if app.settings.get('COPY_METADATA_FROM_PARENT') and item.get(ITEM_TYPE) in MEDIA_TYPES:
-                    original_item = original
+                    updates = original
                     keys = FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM
                 else:
-                    original_item = super().find_one(req=None, _id=item[config.ID_FIELD]) or {}
+                    updates = super().find_one(req=None, _id=item[config.ID_FIELD]) or {}
 
-                update_item_data(item, original_item, keys)
-                remove_unwanted(item)
+                try:
+                    is_db_item_bigger_ver = updates['_current_version'] > item['_current_version']
+                except KeyError:
+                    update_item_data(item, updates, keys)
+                else:
+                    # if copying from parent the don't keep the existing
+                    # otherwise check the value is_db_item_bigger_ver
+                    keep_existing = not app.settings.get('COPY_METADATA_FROM_PARENT') and not is_db_item_bigger_ver
+                    update_item_data(item, updates, keys, keep_existing=keep_existing)
 
-                if publish_service and publish and item['type'] in MEDIA_TYPES:
-                    if item.get('task', {}).get('stage', None):
-                        del item['task']['stage']
-                    if item['state'] not in PUBLISH_STATES:
-                        get_resource_service('archive_publish').patch(id=item.pop(config.ID_FIELD), updates=item)
-                    else:
-                        publish_service.patch(id=item.pop(config.ID_FIELD), updates=item)
-                    item['state'] = self.published_state
+    def _publish_associated_items(self, original, updates={}):
+        """If there any updates to associated item and if setting:PUBLISH_ASSOCIATED_ITEMS is true
+        then publish the associated item
+        """
+        if not publish_services.get(self.publish_type):
+            # publish type not supported
+            return
+
+        publish_service = get_resource_service(publish_services.get(self.publish_type))
+
+        if not updates.get(ASSOCIATIONS) and not original.get(ASSOCIATIONS):
+            # there's nothing to update
+            return
+
+        associations = original.get(ASSOCIATIONS) or {}
+        for associations_key, associated_item in associations.items():
+            if type(associated_item) == dict and associated_item.get(config.ID_FIELD):
+
+                if not config.PUBLISH_ASSOCIATED_ITEMS or not publish_service:
+                    # Not allowed to publish
                     original[ASSOCIATIONS][associations_key]['state'] = self.published_state
                     original[ASSOCIATIONS][associations_key]['operation'] = self.publish_type
-                    if ASSOCIATIONS not in updates:
-                        updates[ASSOCIATIONS] = original[ASSOCIATIONS]
-                    updates[ASSOCIATIONS][associations_key] = original[ASSOCIATIONS][associations_key]
-                elif publish:
-                    # Publishing an item with an association set the state and operation of the embedded association
-                    original[ASSOCIATIONS][associations_key]['state'] = self.published_state
-                    original[ASSOCIATIONS][associations_key]['operation'] = self.publish_type
+                    continue
+
+                if associated_item['state'] not in PUBLISH_STATES:
+                    # This associated item has not been published before
+                    associated_item.get('task', {}).pop('stage', None)
+                    remove_unwanted(associated_item)
+                    get_resource_service('archive_publish').patch(id=associated_item.pop(config.ID_FIELD),
+                                                                  updates=associated_item)
+                    associated_item['state'] = self.published_state
+                    associated_item['operation'] = self.publish_type
+                    updates[ASSOCIATIONS] = updates.get(ASSOCIATIONS, {})
+                    updates[ASSOCIATIONS][associations_key] = associated_item
+                else:
+                    # Check if there are updates to associated item
+                    association_updates = updates.get(ASSOCIATIONS, {}).get(associations_key)
+
+                    if not association_updates:
+                        # there is no update for this item but still patching the associated item
+                        associated_item.get('task', {}).pop('stage', None)
+                        remove_unwanted(associated_item)
+                        publish_service.patch(id=associated_item.pop(config.ID_FIELD), updates=associated_item)
+                        continue
+
+                    if association_updates['state'] not in PUBLISH_STATES:
+                        # There's an update to the published associated item
+                        remove_unwanted(association_updates)
+                        publish_service.patch(id=association_updates.pop(config.ID_FIELD), updates=association_updates)
+
+        self._refresh_associated_items(original)
 
     def _mark_media_item_as_used(self, updates, original):
         if ASSOCIATIONS not in updates or not updates.get(ASSOCIATIONS):
