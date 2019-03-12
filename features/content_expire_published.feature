@@ -59,7 +59,7 @@ Feature: Content Expiry Published Items
                 }
             }
         }
-    
+
     ]
     """
     When we post to "/products" with success
