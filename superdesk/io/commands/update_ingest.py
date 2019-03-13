@@ -238,6 +238,16 @@ class UpdateIngest(superdesk.Command):
                     update_provider.apply_async(expires=get_task_ttl(provider), kwargs=kwargs)
 
 
+def update_last_item_updated(update, items):
+    if items:
+        last_item_update = max(
+            [item['versioncreated'] for item in items if item.get('versioncreated')],
+            default=utcnow()
+        )
+        if not update.get(LAST_ITEM_UPDATE) or update[LAST_ITEM_UPDATE] < last_item_update:
+            update[LAST_ITEM_UPDATE] = last_item_update
+
+
 @celery.task(soft_time_limit=UPDATE_TTL)
 def update_provider(provider, rule_set=None, routing_scheme=None, sync=False):
     """Fetch items from ingest provider, ingest them into Superdesk and update the provider.
@@ -261,15 +271,18 @@ def update_provider(provider, rule_set=None, routing_scheme=None, sync=False):
         if sync:
             provider[LAST_UPDATED] = utcnow() - timedelta(days=9999) # import everything again
 
-        for items in feeding_service.update(provider, update):
-            ingest_items(items, provider, feeding_service, rule_set, routing_scheme)
-            if items:
-                last_item_update = max(
-                    [item['versioncreated'] for item in items if item.get('versioncreated')],
-                    default=utcnow()
-                )
-                if not update.get(LAST_ITEM_UPDATE) or update[LAST_ITEM_UPDATE] < last_item_update:
-                    update[LAST_ITEM_UPDATE] = last_item_update
+        generator = feeding_service.update(provider, update)
+        if isinstance(generator, list):
+            generator = (items for items in generator)
+        status = None
+        while True:
+            try:
+                items = generator.send(status)
+                failed = ingest_items(items, provider, feeding_service, rule_set, routing_scheme)
+                status = not failed
+                update_last_item_updated(update, items)
+            except StopIteration:
+                break
 
         # Some Feeding Services update the collection and by this time the _etag might have been changed.
         # So it's necessary to fetch it once again. Otherwise, OriginalChangedError is raised.

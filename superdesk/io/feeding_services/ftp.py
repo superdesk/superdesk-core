@@ -213,7 +213,6 @@ class FTPFeedingService(FeedingService):
 
     def _retrieve_and_parse(self, ftp, config, filename, provider, registered_parser):
         self._timer.start('retrieve_parse')
-        items = []
 
         if 'dest_path' not in config:
             config['dest_path'] = tempfile.mkdtemp(prefix='superdesk_ingest_')
@@ -255,11 +254,7 @@ class FTPFeedingService(FeedingService):
             )
         )
 
-        if isinstance(parsed, dict):
-            parsed = [parsed]
-
-        items.append(parsed)
-        return items
+        return [parsed] if isinstance(parsed, dict) else parsed
 
     def _update(self, provider, update):
         config = provider.get('config', {})
@@ -320,11 +315,11 @@ class FTPFeedingService(FeedingService):
                 self._timer.start('start_processing')
                 for filename, file_modify in files_to_process:
                     try:
-                        items += self._retrieve_and_parse(ftp, config, filename, provider, registered_parser)
                         update['private'] = {'last_processed_file_modify': file_modify}
+                        ingested = yield self._retrieve_and_parse(ftp, config, filename, provider, registered_parser)
 
                         if do_move:
-                            move_dest_file_path = os.path.join(move_path, filename)
+                            move_dest_file_path = os.path.join(move_path if ingested else move_path_error, filename)
                             self._move(ftp, filename, move_dest_file_path)
                     except Exception as e:
                         logger.error("Error while parsing {filename}: {msg}".format(filename=filename, msg=e))
@@ -337,7 +332,6 @@ class FTPFeedingService(FeedingService):
                     "Processing finished. Exec time: {:.4f} secs.".format(self._timer.stop('start_processing'))
                 )
 
-            return items
         except IngestFtpError:
             raise
         except Exception as ex:

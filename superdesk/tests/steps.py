@@ -505,19 +505,19 @@ def run_update_ingest_ftp(*args):
                          'biography': 'bio'}]
         }
         if filename == 'ninjs1.json':
-            return [[item1]]
+            return [item1]
         elif filename == 'ninjs2.json':
             item2 = deepcopy(item1)
             item2['guid'] = '20170825001315282182'
             item2['headline'] = 'headline 2'
             item2['ednote'] = 'ed note 2'
-            return [[item2]]
+            return [item2]
         elif filename == 'ninjs3.json':
             item3 = deepcopy(item1)
             item3['guid'] = '20170825001315282183'
             item3['headline'] = 'headline 3'
             item3['ednote'] = 'ed note 3'
-            return [[item3]]
+            return [item3]
 
     with mock.patch.object(ftp.FTPFeedingService, '_list_files') as ftp_list_files_mock:
         ftp_list_files_mock.return_value = (('ninjs1.json', '20181111123456'),

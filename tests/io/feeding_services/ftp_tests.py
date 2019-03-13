@@ -51,6 +51,16 @@ def ftp_file(filename, modify):
     return [filename, facts]
 
 
+def ingest_items(generator, ingest_status=True):
+    status = None
+    while True:
+        try:
+            generator.send(status)
+            status = ingest_status
+        except StopIteration:
+            break
+
+
 class FakeFTP(mock.MagicMock):
 
     files = [
@@ -151,7 +161,8 @@ class FTPTestCase(TestCase):
         """
         provider = copy.deepcopy(PROVIDER)
         service = ftp.FTPFeedingService()
-        service.update(provider, {})
+        ingest_items(service.update(provider, {}))
+
         mock_ftp = ftp_connect.return_value.__enter__.return_value
 
         self.assertEqual(mock_ftp.rename.call_count, len(FakeFTP.files))
@@ -173,7 +184,7 @@ class FTPTestCase(TestCase):
         provider = copy.deepcopy(PROVIDER)
         provider['config']['ftp_move_path'] = ""
         service = ftp.FTPFeedingService()
-        service.update(provider, {})
+        ingest_items(service.update(provider, {}))
         mock_ftp = ftp_connect.return_value.__enter__.return_value
 
         self.assertEqual(mock_ftp.rename.call_count, len(FakeFTP.files))
@@ -181,6 +192,25 @@ class FTPTestCase(TestCase):
             self.assertEqual(
                 call[0],
                 (FakeFTP.files[i][0], '{}/{}'.format(ftp.DEFAULT_SUCCESS_PATH, FakeFTP.files[i][0]))
+            )
+
+    @mock.patch.object(os.path, 'getsize', return_value=3)
+    @mock.patch.object(ftp, 'ftp_connect', new_callable=FakeFTP)
+    @mock.patch.object(ftp.FTPFeedingService, 'get_feed_parser', FakeFeedParser())
+    @mock.patch('builtins.open', mock.mock_open())
+    def test_move_ingested_error(self, ftp_connect, *args):
+        """Check that ingested file is moved to error path if ingest fails"""
+        provider = copy.deepcopy(PROVIDER)
+        provider['config']['ftp_move_path'] = ""
+        service = ftp.FTPFeedingService()
+        ingest_items(service.update(provider, {}), False)
+        mock_ftp = ftp_connect.return_value.__enter__.return_value
+
+        self.assertEqual(mock_ftp.rename.call_count, len(FakeFTP.files))
+        for i, call in enumerate(mock_ftp.rename.call_args_list):
+            self.assertEqual(
+                call[0],
+                (FakeFTP.files[i][0], '{}/{}'.format('error', FakeFTP.files[i][0]))
             )
 
     @mock.patch.object(ftp, 'ftp_connect', new_callable=FakeFTP)
@@ -194,7 +224,7 @@ class FTPTestCase(TestCase):
         provider = copy.deepcopy(PROVIDER)
         provider['config']['move'] = False
         service = ftp.FTPFeedingService()
-        service.update(provider, {})
+        ingest_items(service.update(provider, {}))
         mock_ftp = ftp_connect.return_value.__enter__.return_value
         mock_ftp.rename.assert_not_called()
 
@@ -208,7 +238,7 @@ class FTPTestCase(TestCase):
         """
         provider = copy.deepcopy(PROVIDER)
         service = ftp.FTPFeedingService()
-        service.update(provider, {})
+        ingest_items(service.update(provider, {}))
         mock_ftp = ftp_connect.return_value.__enter__.return_value
 
         self.assertEqual(mock_ftp.rename.call_count, len(FakeFTP.files))
@@ -229,7 +259,7 @@ class FTPTestCase(TestCase):
         provider = copy.deepcopy(PROVIDER)
         provider['config']['move_path_error'] = ""
         service = ftp.FTPFeedingService()
-        service.update(provider, {})
+        ingest_items(service.update(provider, {}))
         mock_ftp = ftp_connect.return_value.__enter__.return_value
 
         self.assertEqual(mock_ftp.rename.call_count, len(FakeFTP.files))
@@ -267,7 +297,7 @@ class FTPTestCase(TestCase):
         service = ftp.FTPFeedingService()
         mock_ftp = ftp_connect.return_value.__enter__.return_value
 
-        service.update(provider, update)
+        ingest_items(service.update(provider, update))
         provider.update(update)
         self.assertEqual(retrieve_and_parse.call_count, 3)
         self.assertEqual(
@@ -275,7 +305,7 @@ class FTPTestCase(TestCase):
             datetime.datetime.strptime('20170517164739', '%Y%m%d%H%M%S').replace(tzinfo=utc)
         )
 
-        service.update(provider, update)
+        ingest_items(service.update(provider, update))
         provider.update(update)
         self.assertEqual(retrieve_and_parse.call_count, 8)
         self.assertEqual(
@@ -283,7 +313,7 @@ class FTPTestCase(TestCase):
             datetime.datetime.strptime('20170517164745', '%Y%m%d%H%M%S').replace(tzinfo=utc)
         )
 
-        service.update(provider, update)
+        ingest_items(service.update(provider, update))
         provider.update(update)
         self.assertEqual(retrieve_and_parse.call_count, 13)
         self.assertEqual(
@@ -291,7 +321,7 @@ class FTPTestCase(TestCase):
             datetime.datetime.strptime('20170517164746', '%Y%m%d%H%M%S').replace(tzinfo=utc)
         )
 
-        service.update(provider, update)
+        ingest_items(service.update(provider, update))
         provider.update(update)
         self.assertEqual(retrieve_and_parse.call_count, 16)
         self.assertEqual(
@@ -299,7 +329,7 @@ class FTPTestCase(TestCase):
             datetime.datetime.strptime('20170517164748', '%Y%m%d%H%M%S').replace(tzinfo=utc)
         )
 
-        service.update(provider, update)
+        ingest_items(service.update(provider, update))
         provider.update(update)
         self.assertEqual(retrieve_and_parse.call_count, 22)
         self.assertEqual(
@@ -307,7 +337,7 @@ class FTPTestCase(TestCase):
             datetime.datetime.strptime('20170517164755', '%Y%m%d%H%M%S').replace(tzinfo=utc)
         )
 
-        service.update(provider, update)
+        ingest_items(service.update(provider, update))
         provider.update(update)
         self.assertEqual(retrieve_and_parse.call_count, 24)
         self.assertEqual(
@@ -333,7 +363,7 @@ class FTPTestCase(TestCase):
         service = ftp.FTPFeedingService()
         mock_ftp = ftp_connect.return_value.__enter__.return_value
 
-        service.update(provider, update)
+        ingest_items(service.update(provider, update))
         provider.update(update)
         # emulate moving files by reducing list
         ftp_connect().__enter__().mlsd = mock.Mock()
@@ -345,7 +375,7 @@ class FTPTestCase(TestCase):
             datetime.datetime.strptime('20170517164739', '%Y%m%d%H%M%S').replace(tzinfo=utc)
         )
 
-        service.update(provider, update)
+        ingest_items(service.update(provider, update))
         provider.update(update)
         # emulate moving files by reducing list
         ftp_connect().__enter__().mlsd = mock.Mock()
@@ -357,7 +387,7 @@ class FTPTestCase(TestCase):
             datetime.datetime.strptime('20170517164745', '%Y%m%d%H%M%S').replace(tzinfo=utc)
         )
 
-        service.update(provider, update)
+        ingest_items(service.update(provider, update))
         provider.update(update)
         # emulate moving files by reducing list
         ftp_connect().__enter__().mlsd = mock.Mock()
@@ -369,7 +399,7 @@ class FTPTestCase(TestCase):
             datetime.datetime.strptime('20170517164746', '%Y%m%d%H%M%S').replace(tzinfo=utc)
         )
 
-        service.update(provider, update)
+        ingest_items(service.update(provider, update))
         provider.update(update)
         # emulate moving files by reducing list
         ftp_connect().__enter__().mlsd = mock.Mock()
@@ -381,7 +411,7 @@ class FTPTestCase(TestCase):
             datetime.datetime.strptime('20170517164748', '%Y%m%d%H%M%S').replace(tzinfo=utc)
         )
 
-        service.update(provider, update)
+        ingest_items(service.update(provider, update))
         provider.update(update)
         # emulate moving files by reducing list
         ftp_connect().__enter__().mlsd = mock.Mock()
@@ -393,7 +423,7 @@ class FTPTestCase(TestCase):
             datetime.datetime.strptime('20170517164755', '%Y%m%d%H%M%S').replace(tzinfo=utc)
         )
 
-        service.update(provider, update)
+        ingest_items(service.update(provider, update))
         provider.update(update)
         # emulate moving files by reducing list
         ftp_connect().__enter__().mlsd = mock.Mock()
