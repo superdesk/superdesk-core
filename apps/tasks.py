@@ -28,7 +28,7 @@ from superdesk.workflow import is_workflow_state_transition_valid
 from apps.archive.common import get_item_expiry, item_operations, ITEM_OPERATION, update_version, \
     insert_into_versions, is_assigned_to_a_desk, convert_task_attributes_to_objectId, on_create_item, \
     ARCHIVE, get_subject
-
+from flask_babel import _
 
 task_statuses = ['todo', 'in_progress', 'done']
 default_status = 'todo'
@@ -81,7 +81,7 @@ def send_to(doc, update=None, desk_id=None, stage_id=None, user_id=None, default
     if desk_id:
         desk = superdesk.get_resource_service('desks').find_one(req=None, _id=desk_id)
         if not desk:
-            raise SuperdeskApiError.notFoundError('Invalid desk identifier %s' % desk_id)
+            raise SuperdeskApiError.notFoundError(_('Invalid desk identifier {desk_id}').format(desk_id=desk_id))
 
         task['desk'] = desk_id
         if not stage_id:
@@ -91,7 +91,7 @@ def send_to(doc, update=None, desk_id=None, stage_id=None, user_id=None, default
     if stage_id:
         destination_stage = get_resource_service('stages').find_one(req=None, _id=stage_id)
         if not destination_stage:
-            raise SuperdeskApiError.notFoundError('Invalid stage identifier %s' % stage_id)
+            raise SuperdeskApiError.notFoundError(_('Invalid stage identifier {stage_id}').format(stage_id=stage_id))
 
         task['desk'] = destination_stage['desk']
         task['stage'] = stage_id
@@ -124,11 +124,8 @@ def apply_stage_rule(doc, update, stage, rule_type, desk=None):
                 for i in modified:
                     update[i] = doc[i]
         except Exception as ex:
-            message = 'Error:{} in {} rule:{} for stage:{}'\
-                .format(str(ex),
-                        rule_type,
-                        macro.get('label'),
-                        stage.get('name'))
+            message = _('Error:{exception} in {rule_type} rule:{rule} for stage:{stage}').format(
+                exception=str(ex), rule_type=rule_type, rule=macro.get('label'), stage=stage.get('name'))
             raise SuperdeskApiError.badRequestError(message)
 
 

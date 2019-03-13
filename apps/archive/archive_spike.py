@@ -28,6 +28,7 @@ from apps.packages import PackageService
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE
 from superdesk.utc import get_expiry_date
 from apps.item_lock.components.item_lock import push_unlock_notification
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 
@@ -91,8 +92,8 @@ class ArchiveSpikeService(BaseService):
             cursor = get_resource_service(ARCHIVE).get_from_mongo(req=None, lookup=query)
             if cursor.count() > 0:
                 raise SuperdeskApiError.badRequestError(
-                    message="The item \"{}\" is in a package".format(original.get('slugline', '')) +
-                            " it needs to be removed before the item can be spiked")
+                    message=_("The item \"{slugline}\" is in a package").format(slugline=original.get('slugline', ''))
+                    + _(" it needs to be removed before the item can be spiked"))
 
     def update_rewrite(self, original):
         """Removes the reference from the rewritten story in published collection."""

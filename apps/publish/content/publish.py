@@ -17,7 +17,7 @@ from apps.archive.archive import update_word_count
 from superdesk.utc import utcnow
 
 from .common import BasePublishService, BasePublishResource, ITEM_PUBLISH
-
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ class ArchivePublishService(BasePublishService):
             items = self.package_service.get_residrefs(original)
 
             if len(items) == 0 and self.publish_type == ITEM_PUBLISH:
-                raise SuperdeskApiError.badRequestError("Empty package cannot be published!")
+                raise SuperdeskApiError.badRequestError(_("Empty package cannot be published!"))
 
     def on_update(self, updates, original):
         if not original.get('firstpublished'):

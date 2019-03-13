@@ -27,6 +27,7 @@ from superdesk.errors import SuperdeskApiError
 from apps.archive.common import ITEM_OPERATION, ARCHIVE, insert_into_versions, get_dateline_city
 from itertools import chain
 from apps.publish.published_item import PUBLISHED, LAST_PUBLISHED_VERSION
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 
@@ -52,9 +53,8 @@ class KillPublishService(BasePublishService):
         if packages and packages.count() > 0:
             for package in packages:
                 if package[ITEM_STATE] not in {CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED}:
-                    raise SuperdeskApiError.badRequestError(message='This item is in a package. '
-                                                                    'It needs to be removed '
-                                                                    'before the item can be killed')
+                    raise SuperdeskApiError.badRequestError(message=_(
+                        'This item is in a package. It needs to be removed before the item can be killed'))
 
         updates['pubstatus'] = PUB_STATUS.CANCELED
         updates['versioncreated'] = utcnow()

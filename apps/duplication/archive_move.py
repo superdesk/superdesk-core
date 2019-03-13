@@ -30,6 +30,7 @@ from apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.workflow import is_workflow_state_transition_valid
 from apps.content import push_item_move_notification
 from superdesk.lock import lock, unlock
+from flask_babel import _
 
 ITEM_MOVE = 'move'
 item_operations.append(ITEM_MOVE)
@@ -68,7 +69,7 @@ class MoveService(BaseService):
         lock_id = "item_move {}".format(guid_of_item_to_be_moved)
 
         if not lock(lock_id, expire=5):
-            raise SuperdeskApiError.forbiddenError(message="Item is locked for move by another user.")
+            raise SuperdeskApiError.forbiddenError(message=_("Item is locked for move by another user."))
 
         try:
             # doc represents the target desk and stage
@@ -102,7 +103,7 @@ class MoveService(BaseService):
         archived_doc = archive_service.find_one(req=None, _id=id)
 
         if not archived_doc:
-            raise SuperdeskApiError.notFoundError('Fail to found item with guid: %s' % id)
+            raise SuperdeskApiError.notFoundError(_('Fail to found item with guid: {guid}').format(guid=id))
 
         self._validate(archived_doc, doc)
         self._move(archived_doc, doc)
@@ -149,7 +150,7 @@ class MoveService(BaseService):
         """
         current_stage_of_item = archived_doc.get('task', {}).get('stage')
         if current_stage_of_item and str(current_stage_of_item) == str(doc.get('task', {}).get('stage')):
-            raise SuperdeskApiError.preconditionFailedError(message='Move is not allowed within the same stage.')
+            raise SuperdeskApiError.preconditionFailedError(message=_('Move is not allowed within the same stage.'))
         if not is_workflow_state_transition_valid('submit_to_desk', archived_doc[ITEM_STATE]):
             raise InvalidStateTransitionError()
 

@@ -25,6 +25,7 @@ from superdesk.activity import add_activity, ACTIVITY_UPDATE
 from superdesk.metadata.item import FAMILY_ID
 from eve.utils import ParsedRequest
 from superdesk.utils import ListCursor
+from flask_babel import _
 
 
 class DeskTypes(SuperdeskBaseEnum):
@@ -199,7 +200,7 @@ class DesksService(BaseService):
             items = superdesk.get_resource_service('archive_versions').get(req=None, lookup=archive_versions_query)
             if items and items.count():
                 raise SuperdeskApiError.badRequestError(
-                    message='Cannot update Desk Type as there are article(s) referenced by the Desk.')
+                    message=_('Cannot update Desk Type as there are article(s) referenced by the Desk.'))
 
     def _ensure_unique_members(self, doc):
         """Ensure the members are unique"""
@@ -222,7 +223,7 @@ class DesksService(BaseService):
         as_default_desk = superdesk.get_resource_service('users').get(req=None, lookup={'desk': desk[config.ID_FIELD]})
         if as_default_desk and as_default_desk.count():
             raise SuperdeskApiError.preconditionFailedError(
-                message='Cannot delete desk as it is assigned as default desk to user(s).')
+                message=_('Cannot delete desk as it is assigned as default desk to user(s).'))
 
         routing_rules_query = {
             '$or': [
@@ -233,7 +234,7 @@ class DesksService(BaseService):
         routing_rules = superdesk.get_resource_service('routing_schemes').get(req=None, lookup=routing_rules_query)
         if routing_rules and routing_rules.count():
             raise SuperdeskApiError.preconditionFailedError(
-                message='Cannot delete desk as routing scheme(s) are associated with the desk')
+                message=_('Cannot delete desk as routing scheme(s) are associated with the desk'))
 
         archive_versions_query = {
             '$or': [
@@ -246,7 +247,7 @@ class DesksService(BaseService):
         items = superdesk.get_resource_service('archive_versions').get(req=None, lookup=archive_versions_query)
         if items and items.count():
             raise SuperdeskApiError.preconditionFailedError(
-                message='Cannot delete desk as it has article(s) or referenced by versions of the article(s).')
+                message=_('Cannot delete desk as it has article(s) or referenced by versions of the article(s).'))
 
     def delete(self, lookup):
         """

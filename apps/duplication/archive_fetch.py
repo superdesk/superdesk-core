@@ -29,6 +29,7 @@ from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk import get_resource_service
 from superdesk.metadata.packages import RESIDREF, REFS, GROUPS
 from superdesk.metadata.item import MEDIA_TYPES
+from flask_babel import _
 
 custom_hateoas = {'self': {'title': 'Archive', 'href': '/archive/{_id}'}}
 
@@ -69,8 +70,8 @@ class FetchService(BaseService):
             ingest_doc = ingest_service.find_one(req=None, _id=id_of_item_to_be_fetched)
 
             if not ingest_doc:
-                raise SuperdeskApiError.notFoundError('Fail to found ingest item with _id: %s' %
-                                                      id_of_item_to_be_fetched)
+                raise SuperdeskApiError.notFoundError(
+                    _('Fail to found ingest item with _id: {id}').format(id=id_of_item_to_be_fetched))
 
             if not is_workflow_state_transition_valid('fetch_from_ingest', ingest_doc[ITEM_STATE]):
                 raise InvalidStateTransitionError()

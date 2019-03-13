@@ -22,6 +22,7 @@ from superdesk.workflow import is_workflow_state_transition_valid
 from eve.utils import config
 from apps.auth import get_user
 import superdesk
+from flask_babel import _
 
 
 class CopyResource(Resource):
@@ -50,12 +51,12 @@ class CopyService(BaseService):
 
             archived_doc = archive_service.find_one(req=None, _id=guid_of_item_to_be_copied)
             if not archived_doc:
-                raise SuperdeskApiError.notFoundError('Fail to found item with guid: %s' %
-                                                      guid_of_item_to_be_copied)
+                raise SuperdeskApiError.notFoundError(_(
+                    'Fail to found item with guid: {guid}').format(guid=guid_of_item_to_be_copied))
 
             current_desk_of_item = archived_doc.get('task', {}).get('desk')
             if current_desk_of_item:
-                raise SuperdeskApiError.preconditionFailedError(message='Copy is not allowed on items in a desk.')
+                raise SuperdeskApiError.preconditionFailedError(message=_('Copy is not allowed on items in a desk.'))
 
             if not is_workflow_state_transition_valid('copy', archived_doc[ITEM_STATE]):
                 raise InvalidStateTransitionError()

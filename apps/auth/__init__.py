@@ -21,6 +21,7 @@ from superdesk.celery_app import celery
 from .session_purge import RemoveExpiredSessions
 from superdesk.errors import SuperdeskApiError
 from .service import UserSessionClearService, AuthService
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +61,7 @@ def get_user(required=False):
     """
     user = flask.g.get('user', {})
     if config.ID_FIELD not in user and required:
-        raise SuperdeskApiError.notFoundError('Invalid user.')
+        raise SuperdeskApiError.notFoundError(_('Invalid user.'))
     return user
 
 
