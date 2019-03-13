@@ -582,12 +582,10 @@ class ArchiveService(BaseService):
             get_resource_service('archive_history').post(new_history_items)
 
     def update(self, id, updates, original):
-
         if updates.get(ASSOCIATIONS):
-            # remove null values from associations in updates
-            updates['associations'] = {k: v for k, v in updates[ASSOCIATIONS].items() if v is not None}
-
             for key, association in updates[ASSOCIATIONS].items():
+                if association is None:
+                    continue
                 # don't set time stamp for related items
                 if not self._is_related_content(key):
                     self._set_association_timestamps(association, updates, new=False)

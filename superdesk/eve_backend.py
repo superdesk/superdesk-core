@@ -210,7 +210,6 @@ class EveBackend():
                 return updates
 
         if search_backend:
-
             doc = backend.find_one(endpoint_name, req=None, _id=id)
             if not doc:  # there is no doc in mongo, remove it from elastic
                 logger.warn("Item is missing in mongo resource={} id={}".format(endpoint_name, id))
