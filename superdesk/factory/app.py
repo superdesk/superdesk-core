@@ -119,11 +119,12 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
     app.sentry = SuperdeskSentry(app)
     babel = Babel(app, configure_jinja=False)
     app.config['BABEL_TRANSLATION_DIRECTORIES'] = '../translations'
+    default_language = app.config.get('DEFAULT_LANGUAGE', 'en')
 
     @babel.localeselector
     def get_locale():
         user = getattr(g, 'user', {})
-        return user.get('language', 'en')
+        return user.get('language', default_language)
 
     @app.errorhandler(SuperdeskError)
     def client_error_handler(error):
