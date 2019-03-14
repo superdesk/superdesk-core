@@ -52,11 +52,11 @@ def ftp_file(filename, modify):
 
 
 def ingest_items(generator, ingest_status=True):
-    status = None
+    failed = None
     while True:
         try:
-            generator.send(status)
-            status = ingest_status
+            item = generator.send(failed)
+            failed = set([item['guid']]) if not ingest_status else set()
         except StopIteration:
             break
 

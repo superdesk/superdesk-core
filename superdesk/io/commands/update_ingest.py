@@ -274,12 +274,11 @@ def update_provider(provider, rule_set=None, routing_scheme=None, sync=False):
         generator = feeding_service.update(provider, update)
         if isinstance(generator, list):
             generator = (items for items in generator)
-        status = None
+        failed = None
         while True:
             try:
-                items = generator.send(status)
+                items = generator.send(failed)
                 failed = ingest_items(items, provider, feeding_service, rule_set, routing_scheme)
-                status = not failed
                 update_last_item_updated(update, items)
             except StopIteration:
                 break

@@ -316,10 +316,10 @@ class FTPFeedingService(FeedingService):
                 for filename, file_modify in files_to_process:
                     try:
                         update['private'] = {'last_processed_file_modify': file_modify}
-                        ingested = yield self._retrieve_and_parse(ftp, config, filename, provider, registered_parser)
+                        failed = yield self._retrieve_and_parse(ftp, config, filename, provider, registered_parser)
 
                         if do_move:
-                            move_dest_file_path = os.path.join(move_path if ingested else move_path_error, filename)
+                            move_dest_file_path = os.path.join(move_path if not failed else move_path_error, filename)
                             self._move(ftp, filename, move_dest_file_path)
                     except Exception as e:
                         logger.error("Error while parsing {filename}: {msg}".format(filename=filename, msg=e))
