@@ -495,6 +495,7 @@ Feature: Fetch From Ingest
                  "state":"ingested",
                  "associations":{
                     "featuremedia":{
+                       "state": "ingested",
                        "renditions":{
                           "baseImage":{
                              "width":1400
