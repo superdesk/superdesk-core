@@ -26,7 +26,9 @@ Feature: Desks
         And we get "/desks/#desks._id#"
         Then we get existing resource
         """
-        {"name": "Sports Desk", "desk_type": "authoring", "members": [{"user": "#users._id#"}], "desk_language": "en"}
+        {"name": "Sports Desk", "desk_type": "authoring", "members": [{"user": "#users._id#"}], "desk_language": "en",
+         "preserve_published_content": false
+        }
         """
         And we get desk members count as 1
         And we get "incoming_stage"
@@ -65,13 +67,19 @@ Feature: Desks
             """
             {"name": "Sports Desk", "desk_type": "production"}
             """
-		And we patch latest
+        Then we get OK response
+        Then we get existing resource
+            """
+            {"name": "Sports Desk", "desk_type": "production", "preserve_published_content": false}
+            """
+		When we patch latest
 			 """
-            {"name": "Sports Desk modified", "desk_language": "en"}
+            {"name": "Sports Desk modified", "desk_language": "en", "preserve_published_content": true}
              """
 		Then we get updated response
             """
-            {"name": "Sports Desk modified", "desk_type": "production", "desk_language": "en"}
+            {"name": "Sports Desk modified", "desk_type": "production", "desk_language": "en",
+            "preserve_published_content": true}
             """
         Then we get notifications
             """
