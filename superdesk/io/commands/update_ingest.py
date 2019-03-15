@@ -543,6 +543,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
 
         # if the item has associated media
         for key, assoc in item.get('associations', {}).items():
+            set_default_state(assoc, CONTENT_STATE.INGESTED)
             if assoc.get('renditions'):
                 transfer_renditions(assoc['renditions'])
             # wire up the id of the associated feature media to the ingested one
