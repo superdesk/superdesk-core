@@ -12,6 +12,7 @@ import requests
 import re
 from . import macro_replacement_fields
 from decimal import Decimal
+from collections import OrderedDict
 
 RATE_SERVICE = 'http://download.finance.yahoo.com/d/quotes.csv?s={}=X&f=nl1d1'
 
@@ -92,7 +93,7 @@ def do_conversion(item, rate, currency, search_param, match_index, value_index):
     :param value_index: int index of groups used in converting the value
     :return: modified story
     """
-    diff = {}
+    diff = OrderedDict()
 
     def convert(match):
         match_item = match.group(match_index)
