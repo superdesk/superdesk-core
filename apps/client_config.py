@@ -30,5 +30,6 @@ def init_app(app):
         'override_ednote_template': app.config.get('OVERRIDE_EDNOTE_TEMPLATE'),
         'default_genre': app.config.get('DEFAULT_GENRE_VALUE_FOR_MANUAL_ARTICLES'),
         'japanese_characters_per_minute': app.config.get('JAPANESE_CHARACTERS_PER_MINUTE'),
-        'validator_media_metadata': app.config.get('VALIDATOR_MEDIA_METADATA', {})
+        'validator_media_metadata': app.config.get('VALIDATOR_MEDIA_METADATA', {}),
+        'publish_content_expiry_minutes': app.config.get('PUBLISHED_CONTENT_EXPIRY_MINUTES', 0),
     })

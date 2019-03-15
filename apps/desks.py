@@ -116,6 +116,12 @@ desks_schema = {
     'preferred_cv_items': {
         'type': 'dict',
     },
+    # if the preserve_published_content is set to true then the content on this won't be expired
+    'preserve_published_content': {
+        'type': 'boolean',
+        'required': False,
+        'default': False
+    }
 }
 
 
