@@ -25,6 +25,7 @@ from apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.utc import utcnow
 from superdesk.default_settings import VERSION
 from apps.templates.content_templates import render_content_template_by_id
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 package_create_signal = superdesk.signals.signal('package.create')  # @UndefinedVariable
@@ -127,12 +128,12 @@ class PackageService():
             root_groups = [group for group in groups if group.get(GROUP_ID) == ROOT_GROUP]
 
             if len(root_groups) == 0:
-                message = 'Root group is missing.'
+                message = _('Root group is missing.')
                 logger.error(message)
                 raise SuperdeskApiError.forbiddenError(message=message)
 
             if len(root_groups) > 1:
-                message = 'Only one root group is allowed.'
+                message = _('Only one root group is allowed.')
                 logger.error(message)
                 raise SuperdeskApiError.forbiddenError(message=message)
 
@@ -140,7 +141,7 @@ class PackageService():
 
     def check_all_groups_have_id_set(self, groups):
         if any(group for group in groups if not group.get(GROUP_ID)):
-            message = 'Group is missing id.'
+            message = _('Group is missing id.')
             logger.error(message)
             raise SuperdeskApiError.forbiddenError(message=message)
 
@@ -151,17 +152,17 @@ class PackageService():
 
         rest_counter = Counter(rest)
         if any(id for id, value in rest_counter.items() if value > 1):
-            message = '{id} group is added multiple times.'.format(id=id)
+            message = _('{id} group is added multiple times.').format(id=id)
             logger.error(message)
             raise SuperdeskApiError.forbiddenError(message=message)
 
         if len(rest) != len(refs):
-            message = 'The number of groups and of referenced groups in the root group do not match.'
+            message = _('The number of groups and of referenced groups in the root group do not match.')
             logger.error(message)
             raise SuperdeskApiError.forbiddenError(message=message)
 
         if len(set(rest).intersection(refs)) != len(refs):
-            message = 'Not all groups are referenced in the root group.'
+            message = _('Not all groups are referenced in the root group.')
             logger.error(message)
             raise SuperdeskApiError.forbiddenError(message=message)
 
@@ -206,12 +207,12 @@ class PackageService():
         item_id = assoc[RESIDREF]
 
         if not item_id:
-            raise SuperdeskApiError.badRequestError("Package contains empty ResidRef!")
+            raise SuperdeskApiError.badRequestError(_("Package contains empty ResidRef!"))
 
         item = get_resource_service(endpoint).find_one(req=None, _id=item_id)
 
         if not item and throw_if_not_found:
-            message = 'Invalid item reference: ' + assoc[RESIDREF]
+            message = _('Invalid item reference: {reference}').format(reference=assoc[RESIDREF])
             logger.error(message)
             raise SuperdeskApiError.notFoundError(message=message)
         return item, item_id, endpoint
@@ -241,19 +242,19 @@ class PackageService():
         package_id = package[config.ID_FIELD]
         for itemRef in [assoc[RESIDREF] for assoc in associations if assoc.get(RESIDREF)]:
             if itemRef == package_id:
-                message = 'Trying to self reference as an association.'
+                message = _('Trying to self reference as an association.')
                 logger.error(message)
                 raise SuperdeskApiError.forbiddenError(message=message)
             counter[itemRef] += 1
 
         if any(itemRef for itemRef, value in counter.items() if value > 1):
-            message = 'Content associated multiple times'
+            message = _('Content associated multiple times')
             logger.error(message)
             raise SuperdeskApiError.forbiddenError(message=message)
 
     def check_for_circular_reference(self, package, item_id):
         if any(d for d in package.get(LINKED_IN_PACKAGES, []) if d['package'] == item_id):
-            message = 'Trying to create a circular reference to: ' + item_id
+            message = _('Trying to create a circular reference to: {item_id}').format(item_id=item_id)
             logger.error(message)
             raise ValidationError(message)
         else:
@@ -425,9 +426,10 @@ class PackageService():
             doc = get_resource_service(ARCHIVE).find_one(req=None, _id=item_ref)
 
             if doc.get(EMBARGO):
-                raise SuperdeskApiError.badRequestError("Package can't have item which has embargo. "
-                                                        "Slugline/Unique Name of the item having embargo: %s/%s" %
-                                                        (doc.get('slugline'), doc.get('unique_name')))
+                raise SuperdeskApiError.badRequestError(
+                    _("Package can't have item which has embargo. ") +
+                    _("Slugline/Unique Name of the item having embargo: {slugline}/{unique}").format(
+                        slugline=doc.get('slugline'), unique=doc.get('unique_name')))
 
             if doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
                 self.check_if_any_item_in_package_has_embargo(doc)

@@ -25,7 +25,7 @@ class ConceptItemsResource(Resource):
             'required': True,
             'empty': False
         },
-        'code': Resource.rel(
+        'group_id': Resource.rel(
             resource='concept_items',
             required=False,
             embeddable=False
@@ -88,7 +88,7 @@ class ConceptItemsResource(Resource):
     item_methods = ['GET', 'PATCH', 'PUT', 'DELETE']
     query_objectid_as_string = False
     mongo_indexes = {
-        'code': ([('code', 1), ('language', 1)], {'unique': True}),
         'name_collation': ([('name', 1)], {'collation': {'locale': 'en', 'strength': 1}}),
         'definition_collation': ([('definition', 1), ], {'collation': {'locale': 'en', 'strength': 1}})
+        'group_id': ([('group_id', 1), ('language', 1)], {'unique': True})
     }

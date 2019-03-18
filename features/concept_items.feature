@@ -45,7 +45,7 @@ Feature: Concept items
             "_items": [
                 {
                     "_id": "#concept_items._id#",
-                    "code": "#concept_items._id#",
+                    "group_id": "#concept_items._id#",
                     "name": "Hobbit",
                     "cpnat_type": "cpnat:abstract",
                     "labels": [
@@ -69,7 +69,7 @@ Feature: Concept items
         """
         {
             "_id": "#concept_items._id#",
-            "code": "#concept_items._id#",
+            "group_id": "#concept_items._id#",
             "name": "Hobbit",
             "cpnat_type": "cpnat:abstract",
             "labels": [
@@ -414,7 +414,7 @@ Feature: Concept items
         """
         {
             "name": "Hobbit",
-            "code": "5c62d77efe985ea36958fa3e",
+            "group_id": "5c62d77efe985ea36958fa3e",
             "cpnat_type": "cpnat:abstract",
             "labels": ["book", "tolkien"],
             "language": "en",
@@ -425,7 +425,7 @@ Feature: Concept items
         """
         {
             "_issues": {
-                "code": "value '5c62d77efe985ea36958fa3e' must exist in resource 'concept_items', field '_id'."
+                "group_id": "value '5c62d77efe985ea36958fa3e' must exist in resource 'concept_items', field '_id'."
             }
         }
         """
@@ -447,7 +447,7 @@ Feature: Concept items
             "_items": [
                 {
                     "_id": "#concept_items._id#",
-                    "code": "#concept_items._id#",
+                    "group_id": "#concept_items._id#",
                     "name": "Hobbit",
                     "cpnat_type": "cpnat:abstract",
                     "labels": [
@@ -468,7 +468,7 @@ Feature: Concept items
         """
         {
             "name": "Hobbit",
-            "code": "#concept_items._id#",
+            "group_id": "#concept_items._id#",
             "cpnat_type": "cpnat:abstract",
             "labels": ["book", "tolkien"],
             "language": "en",
@@ -480,7 +480,7 @@ Feature: Concept items
         """
         {
             "name": "Hobbit",
-            "code": "#concept_items._id#",
+            "group_id": "#concept_items._id#",
             "cpnat_type": "cpnat:abstract",
             "labels": ["book", "tolkien"],
             "language": "es",
@@ -540,7 +540,7 @@ Feature: Concept items
             "_status": "OK",
             "_type": "concept_items",
             "_updated": "__any_value__",
-            "code": "#concept_items._id#",
+            "group_id": "#concept_items._id#",
             "cpnat_type": "cpnat:abstract",
             "created_by": "#CONTEXT_USER_ID#",
             "definition": "The Hobbit is a children's fantasy novel by English author J. R. R. Tolkien.",
@@ -579,7 +579,7 @@ Feature: Concept items
             "name": "Hobbit",
             "cpnat_type": "cpnat:abstract",
             "labels": ["book", "tolkien"],
-            "code": "#concept_items._id#",
+            "group_id": "#concept_items._id#",
             "language": "es",
             "definition": "The Hobbit is a children's fantasy novel by English author J. R. R. Tolkien."
         }
@@ -633,7 +633,7 @@ Feature: Concept items
             {
                 "name": "Lord of the Rings",
                 "cpnat_type": "cpnat:abstract",
-                "code": "#concept_items._id#",
+                "group_id": "#concept_items._id#",
                 "labels": ["book", "tolkien", "fantasy"],
                 "language": "es",
                 "definition": "The Hobbit is a children's fantasy novel by English author J. R. R. Tolkien."
@@ -646,7 +646,7 @@ Feature: Concept items
                 "_id": "#concept_items._id#",
                 "_status": "OK",
                 "_updated": "__any_value__",
-                "code": "#concept_items._id#",
+                "group_id": "#concept_items._id#",
                 "cpnat_type": "cpnat:abstract",
                 "created_by": "#CONTEXT_USER_ID#",
                 "definition": "The Hobbit is a children's fantasy novel by English author J. R. R. Tolkien.",

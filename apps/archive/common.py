@@ -32,6 +32,7 @@ from superdesk.metadata.utils import generate_guid
 from superdesk.errors import SuperdeskApiError, IdentifierGenerationError
 from superdesk.logging import logger
 from apps.auth import get_user, get_auth  # noqa
+from flask_babel import _
 
 
 logger = logging.getLogger(__name__)
@@ -431,7 +432,7 @@ def insert_into_versions(id_=None, doc=None):
         doc_in_archive_collection = doc
 
     if not doc_in_archive_collection:
-        raise SuperdeskApiError.badRequestError(message='Document not found in archive collection')
+        raise SuperdeskApiError.badRequestError(message=_('Document not found in archive collection'))
 
     remove_unwanted(doc_in_archive_collection)
     if app.config['VERSION'] in doc_in_archive_collection:
@@ -538,13 +539,13 @@ def get_expiry(desk_id, stage_id, offset=None):
         desk = superdesk.get_resource_service('desks').find_one(req=None, _id=desk_id)
 
         if not desk:
-            raise SuperdeskApiError.notFoundError('Invalid desk identifier %s' % desk_id)
+            raise SuperdeskApiError.notFoundError(_('Invalid desk identifier {desk_id}').format(desk_id=desk_id))
 
     if stage_id:
         stage = get_resource_service('stages').find_one(req=None, _id=stage_id)
 
         if not stage:
-            raise SuperdeskApiError.notFoundError('Invalid stage identifier %s' % stage_id)
+            raise SuperdeskApiError.notFoundError(_('Invalid stage identifier {stage_id}').format(stage_id=stage_id))
 
     return get_item_expiry(desk, stage, offset)
 
@@ -620,11 +621,11 @@ def validate_schedule(schedule):
     """
     if schedule:
         if not isinstance(schedule, datetime):
-            raise SuperdeskApiError.badRequestError("Schedule date is not recognized")
+            raise SuperdeskApiError.badRequestError(_("Schedule date is not recognized"))
         if not schedule.date() or schedule.date().year <= 1970:
-            raise SuperdeskApiError.badRequestError("Schedule date is not recognized")
+            raise SuperdeskApiError.badRequestError(_("Schedule date is not recognized"))
         if schedule < utcnow():
-            raise SuperdeskApiError.badRequestError("Schedule cannot be earlier than now")
+            raise SuperdeskApiError.badRequestError(_("Schedule cannot be earlier than now"))
 
 
 def update_schedule_settings(updates, field_name, value):

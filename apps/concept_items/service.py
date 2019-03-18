@@ -24,8 +24,8 @@ class ConceptItemsService(BaseService):
 
     def on_created(self, docs):
         for doc in docs:
-            if 'code' not in doc:
-                self._setup_code(doc)
+            if 'group_id' not in doc:
+                self._setup_group_id(doc)
 
     def on_create(self, docs):
         for doc in docs:
@@ -133,10 +133,10 @@ class ConceptItemsService(BaseService):
             payload={"cpnat_type": "concept type 'cpnat:poi' is not supported"}
         )
 
-    def _setup_code(self, doc):
+    def _setup_group_id(self, doc):
         self.update(
             id=doc['_id'],
-            updates={'code': doc['_id']},
+            updates={'group_id': doc['_id']},
             original=doc
         )
 

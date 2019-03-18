@@ -730,6 +730,9 @@ Feature: Content Publishing
       }
       """
       And we publish "#archive._id#" with "publish" type and "published" state
+      """
+        {"publish_schedule": "#DATE+2#"}
+      """
       Then we get OK response
       And we get existing resource
       """
@@ -941,6 +944,9 @@ Feature: Content Publishing
       ]
       """
       And we publish "#archive._id#" with "publish" type and "published" state
+      """
+        {"publish_schedule": "#DATE+1#"}
+      """
       Then we get OK response
       And we get existing resource
       """
@@ -2599,6 +2605,152 @@ Feature: Content Publishing
       }
       """
       And we get null stage
+
+    @auth
+    Scenario: Correct associated items updates the fields
+      Given "vocabularies"
+      """
+      [{
+          "_id": "media1", "field_type": "media",
+          "display_name": "Media 1", "type": "manageable",
+          "service": {"all": 1}, "items": [],
+          "field_options": {"allowed_types": {"picture": true}},
+          "schema": {"parent": {}, "name": {}, "qcode": {}}
+      }, {
+      	"_id": "crop_sizes",
+      	"unique_field": "name",
+      	"items": [
+      		{"is_active": true, "name": "original", "width": 800, "height": 600}
+      	]
+      }
+      ]
+      """
+      And "content_types"
+      """
+      [{
+          "_id": "profile1", "label": "Profile 1",
+          "is_used": true, "enabled": true, "priority": 0, "editor": {},
+          "schema": {"media1": {"required": true, "nullable": false, "enabled": true, "type": "media"}}
+      }]
+      """
+      And "validators"
+      """
+      [
+          {"_id": "publish_text", "act": "publish", "type": "text", "schema":{}},
+          {"_id": "correct_text", "act": "correct", "type": "text", "schema":{}},
+          {
+            "_id": "publish_picture",
+            "act": "publish",
+            "type": "picture",
+            "schema": {
+                "renditions": {
+                    "type": "dict",
+                    "required": true,
+                    "schema": {"original": {"type": "dict", "required": true}}
+                }
+            }
+        },
+        {
+            "_id": "correct_picture",
+            "act": "correct",
+            "type": "picture",
+            "schema": {
+                "renditions": {
+                    "type": "dict",
+                    "required": false,
+                    "schema": {"original": {"type": "dict", "required": true}}
+                }
+            }
+        }
+      ]
+      """
+      And "desks"
+      """
+      [{"name": "Sports"}]
+      """
+      When we post to "/products" with success
+      """
+      {
+          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+      }
+      """
+      And we post to "/subscribers" with success
+      """
+      {
+        "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
+      And we post to "archive" with success
+      """
+      [
+          {
+               "guid": "234", "type": "picture", "slugline": "234", "headline": "234", "state": "in_progress",
+               "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+               "renditions": {
+                  "original": {"CropLeft": 0, "CropRight": 800, "CropTop": 0, "CropBottom": 600}
+               }
+          },
+          {
+              "guid": "123", "type": "text", "headline": "test", "state": "in_progress",
+            "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+            "subject":[{"qcode": "17004000", "name": "Statistics"}], "body_html": "Test Document body",
+            "associations": {
+                "featuremedia": {
+                    "_id": "234",
+                    "guid": "234",
+                    "type": "picture",
+                    "slugline": "234",
+                    "headline": "234",
+                    "byline": "xyz",
+                    "alt_text": "alt_text",
+                    "description_text": "description_text",
+                    "state": "in_progress",
+                    "renditions": {
+                        "original": {"CropLeft": 0, "CropRight": 800, "CropTop": 0, "CropBottom": 600}
+                     },
+                    "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}
+                }
+            }
+           }
+      ]
+      """
+      And we publish "123" with "publish" type and "published" state
+      Then we get OK response
+      And we get existing resource
+      """
+      {
+        "_current_version": 2,
+        "type": "text",
+        "state": "published",
+        "associations": {
+            "featuremedia": {"state": "published"}
+        },
+        "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}
+      }
+      """
+      When we publish "123" with "correct" type and "corrected" state
+      """
+      {
+        "associations": {
+            "featuremedia": {
+                "byline": "foo",
+                "alt_text": "alt_text",
+                "description_text": "description_text",
+                "headline": "234",
+                "renditions": {
+                      "original": {"CropLeft": 0, "CropRight": 800, "CropTop": 0, "CropBottom": 600}
+                   }
+                }
+            }
+      }
+      """
+      Then we get OK response
+      And we get existing resource
+      """
+      {"_current_version": 3, "state": "corrected", "associations": {"featuremedia": {"byline": "foo"}}}
+      """
 
     @auth
     Scenario: Publish with success when associated item contains _type field

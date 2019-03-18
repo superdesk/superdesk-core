@@ -30,7 +30,7 @@ from superdesk.lock import lock, unlock
 from superdesk.celery_task_utils import get_lock_id
 from croniter import croniter
 from datetime import datetime
-
+from flask_babel import _
 
 CONTENT_TEMPLATE_RESOURCE = 'content_templates'
 CONTENT_TEMPLATE_PRIVILEGE = CONTENT_TEMPLATE_RESOURCE
@@ -180,8 +180,8 @@ class ContentTemplatesService(BaseService):
             if doc.get('template_type') == TemplateType.KILL.value and \
                     any(key for key in doc.keys() if key in KILL_TEMPLATE_NOT_REQUIRED_FIELDS):
                 raise SuperdeskApiError.badRequestError(
-                    message="Invalid kill template. "
-                            "{} are not allowed".format(', '.join(KILL_TEMPLATE_NOT_REQUIRED_FIELDS)))
+                    message=_("Invalid kill template. {fields} are not allowed").format(
+                        fields=', '.join(KILL_TEMPLATE_NOT_REQUIRED_FIELDS)))
             if doc.get('template_type') == TemplateType.KILL.value:
                 self._validate_kill_template(doc)
             if get_user():
@@ -230,7 +230,7 @@ class ContentTemplatesService(BaseService):
 
     def on_delete(self, doc):
         if doc.get('template_type') == TemplateType.KILL.value:
-            raise SuperdeskApiError.badRequestError('Kill templates can not be deleted.')
+            raise SuperdeskApiError.badRequestError(_('Kill templates can not be deleted.'))
 
     def get_scheduled_templates(self, now):
         """Get the template by schedule
@@ -318,7 +318,7 @@ class ContentTemplatesService(BaseService):
         if doc.get('template_desks'):
             raise SuperdeskApiError.badRequestError('Kill templates can not be assigned to desks')
         if 'is_public' in doc and doc['is_public'] is False:
-            raise SuperdeskApiError.badRequestError('Kill templates must be public')
+            raise SuperdeskApiError.badRequestError(_('Kill templates must be public'))
         doc['is_public'] = True
 
     def _validate_template_desks(self, updates, original={}):
@@ -330,7 +330,7 @@ class ContentTemplatesService(BaseService):
                 type(updates.get('template_desks')) == list and \
                 len(updates['template_desks']) > 1:
             raise SuperdeskApiError.badRequestError(
-                message='Templates that are not create type can only be assigned to one desk!')
+                message=_('Templates that are not create type can only be assigned to one desk!'))
 
     def _process_kill_template(self, doc):
         """

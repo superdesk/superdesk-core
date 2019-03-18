@@ -75,7 +75,7 @@ class MacrosService(superdesk.Service):
         for m in macros:
             if (not m.get('from_languages', None) or from_language in m['from_languages']) \
                     and to_language in m.get('to_languages', []):
-                m['callback'](doc)
+                m['callback'](doc, from_language=from_language, to_language=to_language)
 
 
 class MacrosResource(superdesk.Resource):

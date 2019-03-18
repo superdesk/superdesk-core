@@ -13,6 +13,7 @@ import requests
 
 from flask import current_app as app
 from superdesk.errors import SuperdeskApiError
+from flask_babel import _
 
 
 class AlchemyKeywordsProvider():
@@ -23,7 +24,7 @@ class AlchemyKeywordsProvider():
 
     def get_keywords(self, text):
         if not app.config['KEYWORDS_KEY_API']:
-            raise SuperdeskApiError.notFoundError('AlchemyAPI key is not set')
+            raise SuperdeskApiError.notFoundError(_('AlchemyAPI key is not set'))
 
         params = {'apikey': app.config['KEYWORDS_KEY_API'],
                   'outputMode': 'json'}
@@ -37,10 +38,10 @@ class AlchemyKeywordsProvider():
         try:
             result = self._http.post(url, data=values)
         except Exception as ex:
-            raise SuperdeskApiError.internalError('Fail to connect to Alchemy service', exception=ex)
+            raise SuperdeskApiError.internalError(_('Fail to connect to Alchemy service'), exception=ex)
 
         try:
             keywords = result.json()
             return keywords.get('entities', [])
         except Exception as ex:
-            raise SuperdeskApiError.internalError('Fail to parse the response from Alchemy service', exception=ex)
+            raise SuperdeskApiError.internalError(_('Fail to parse the response from Alchemy service'), exception=ex)

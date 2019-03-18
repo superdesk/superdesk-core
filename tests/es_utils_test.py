@@ -15,7 +15,7 @@ class ESUtilsTestCase(TestCase):
         }
 
         with self.app.app_context():
-            query = es_utils.filter2query(filter_)
+            __, query = es_utils.filter2query(filter_)
         self.assertEqual(query, expected)
 
     def test_filter2query_date(self):
@@ -53,5 +53,23 @@ class ESUtilsTestCase(TestCase):
             },
         }
         with self.app.app_context():
-            query = es_utils.filter2query(filter_)
+            __, query = es_utils.filter2query(filter_)
         self.assertEqual(query, expected)
+
+    def test_filter2query_ingest_provider(self):
+        """Check that ingest provider is handler correctly"""
+        filter_ = {
+            "query": {
+                "repo": "ingest",
+                "ingest_provider": "5c505c8f0d6f137d69cebc99",
+                "spike": "exclude",
+                "params": "{}",
+            }
+        }
+
+        expected = {'bool': {'must': [{'term': {'ingest_provider': '5c505c8f0d6f137d69cebc99'}}], 'must_not': []}}
+
+        with self.app.app_context():
+            __, query = es_utils.filter2query(filter_)
+
+        self.assertEqual(query['post_filter'], expected)

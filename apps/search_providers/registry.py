@@ -2,7 +2,7 @@
 from superdesk import Resource, Service
 from superdesk.utils import ListCursor
 from superdesk.errors import AlreadyExistsError
-
+from flask_babel import _
 
 registered_search_providers = {}
 allowed_search_providers = []
@@ -25,20 +25,21 @@ def register_search_provider(name, fetch_endpoint=None, provider_class=None, lab
     :raises: AlreadyExistsError - if a search has been registered with either name or fetch_endpoint.
     """
     if fetch_endpoint is not None and not isinstance(fetch_endpoint, str):
-        raise ValueError("fetch_enpoint must be a string")
+        raise ValueError(_("fetch_enpoint must be a string"))
     if name in registered_search_providers:
         raise AlreadyExistsError("A Search Provider with name: {} already exists".format(name))
 
     if not ((fetch_endpoint and not provider_class) or (not fetch_endpoint and provider_class)):
-        raise ValueError('You have to specify either fetch_endpoint or provider_class.')
+        raise ValueError(_('You have to specify either fetch_endpoint or provider_class.'))
 
     provider_data = {}
 
     if fetch_endpoint:
         existing_endpoints = {d['endpoint'] for d in registered_search_providers.values() if 'endpoint' in d}
         if fetch_endpoint in existing_endpoints:
-            raise AlreadyExistsError("A Search Provider for the fetch endpoint: {} exists with name: {}"
-                                     .format(fetch_endpoint, registered_search_providers[name]))
+            raise AlreadyExistsError(
+                _("A Search Provider for the fetch endpoint: {endpoint} exists with name: {name}").format(
+                    endpoint=fetch_endpoint, name=registered_search_providers[name]))
         provider_data['endpoint'] = fetch_endpoint
     else:
         provider_data['class'] = provider_class

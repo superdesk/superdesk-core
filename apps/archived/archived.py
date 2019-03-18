@@ -37,6 +37,7 @@ from superdesk.services import BaseService
 from superdesk.resource import Resource
 from superdesk.utc import utcnow
 from apps.publish.content import KillPublishService, TakeDownPublishService
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 PACKAGE_TYPE = 'package_type'
@@ -122,46 +123,47 @@ class ArchivedService(BaseService):
         doc[config.ID_FIELD] = item_id
 
         if not allow_all_types and doc[ITEM_TYPE] != CONTENT_TYPE.TEXT:
-            raise bad_req_error(message='Only Text articles are allowed to be Killed in Archived repo')
+            raise bad_req_error(message=_('Only Text articles are allowed to be Killed in Archived repo'))
 
         if is_genre(doc, BROADCAST_GENRE):
-            raise bad_req_error(message="Killing of Broadcast Items isn't allowed in Archived repo")
+            raise bad_req_error(message=_("Killing of Broadcast Items isn't allowed in Archived repo"))
 
         if get_resource_service('archive_broadcast').get_broadcast_items_from_master_story(doc, True):
-            raise bad_req_error(message="Can't kill as this article acts as a Master Story for existing broadcast(s)")
+            raise bad_req_error(
+                message=_("Can't kill as this article acts as a Master Story for existing broadcast(s)"))
 
         if get_resource_service(ARCHIVE).find_one(req=None, _id=doc[GUID_FIELD]):
-            raise bad_req_error(message="Can't Kill as article is still available in production")
+            raise bad_req_error(message=_("Can't Kill as article is still available in production"))
 
         if not allow_all_types and is_item_in_package(doc):
-            raise bad_req_error(message="Can't kill as article is part of a Package")
+            raise bad_req_error(message=_("Can't kill as article is part of a Package"))
 
         takes_package_id = self._get_take_package_id(doc)
         if takes_package_id:
             if get_resource_service(ARCHIVE).find_one(req=None, _id=takes_package_id):
-                raise bad_req_error(message="Can't Kill as the Digital Story is still available in production")
+                raise bad_req_error(message=_("Can't Kill as the Digital Story is still available in production"))
 
             req = ParsedRequest()
             req.sort = '[("%s", -1)]' % config.VERSION
             takes_package = list(self.get(req=req, lookup={'item_id': takes_package_id}))
             if not takes_package:
-                raise bad_req_error(message='Digital Story of the article not found in Archived repo')
+                raise bad_req_error(message=_('Digital Story of the article not found in Archived repo'))
 
             takes_package = takes_package[0]
             if not allow_all_types and is_item_in_package(takes_package):
-                raise bad_req_error(message="Can't kill as Digital Story is part of a Package")
+                raise bad_req_error(message=_("Can't kill as Digital Story is part of a Package"))
 
             for takes_ref in self._get_package_refs(takes_package):
                 if takes_ref[RESIDREF] != doc[GUID_FIELD]:
                     if get_resource_service(ARCHIVE).find_one(req=None, _id=takes_ref[RESIDREF]):
-                        raise bad_req_error(message="Can't Kill as Take(s) are still available in production")
+                        raise bad_req_error(message=_("Can't Kill as Take(s) are still available in production"))
 
                     take = list(self.get(req=None, lookup={'item_id': takes_ref[RESIDREF]}))
                     if not take:
-                        raise bad_req_error(message='One of Take(s) not found in Archived repo')
+                        raise bad_req_error(message=_('One of Take(s) not found in Archived repo'))
 
                     if not allow_all_types and is_item_in_package(take[0]):
-                        raise bad_req_error(message="Can't kill as one of Take(s) is part of a Package")
+                        raise bad_req_error(message=_("Can't kill as one of Take(s) is part of a Package"))
 
         doc['item_id'] = item_id
         doc[config.ID_FIELD] = id_field
@@ -182,7 +184,7 @@ class ArchivedService(BaseService):
 
         if item and str(item.get('task', {}).get('stage', '')) in \
                 get_resource_service('users').get_invisible_stages_ids(get_user().get('_id')):
-            raise SuperdeskApiError.forbiddenError("User does not have permissions to read the item.")
+            raise SuperdeskApiError.forbiddenError(_("User does not have permissions to read the item."))
 
         return item
 

@@ -10,6 +10,7 @@
 
 from superdesk.errors import SuperdeskApiError
 from superdesk.services import BaseService
+from flask_babel import _
 
 
 class KeywordsService(BaseService):
@@ -21,7 +22,7 @@ class KeywordsService(BaseService):
 
     def create(self, docs, **kwargs):
         if not self.provider:
-            raise SuperdeskApiError.internalError('Not set a keywords provider')
+            raise SuperdeskApiError.internalError(_('Not set a keywords provider'))
 
         try:
             ids = []

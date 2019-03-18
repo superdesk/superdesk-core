@@ -86,12 +86,13 @@ class FileFeedingService(FeedingService):
                             item = parser.parse(file_path, provider)
 
                         self.after_extracting(item, provider)
-                        self.move_file(self.path, filename, provider=provider, success=True)
 
                         if isinstance(item, list):
-                            yield item
+                            failed = yield item
                         else:
-                            yield [item]
+                            failed = yield [item]
+
+                        self.move_file(self.path, filename, provider=provider, success=not failed)
                     else:
                         self.move_file(self.path, filename, provider=provider, success=True)
             except Exception as ex:

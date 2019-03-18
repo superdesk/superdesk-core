@@ -22,6 +22,7 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.services import BaseService
 from superdesk.metadata.packages import GROUPS, GROUP_ID, REFS, RESIDREF,\
     ROOT_GROUP, ID_REF, PACKAGE_TYPE
+from flask_babel import _
 
 
 class PublishedPackageItemsResource(Resource):
@@ -57,19 +58,21 @@ class PublishedPackageItemsService(BaseService):
         for doc in docs:
             original = get_resource_service(ARCHIVE).find_one(req=None, _id=doc['package_id'])
             if not original or original[ITEM_TYPE] != CONTENT_TYPE.COMPOSITE:
-                raise SuperdeskApiError.badRequestError('Invalid package identifier')
+                raise SuperdeskApiError.badRequestError(_('Invalid package identifier'))
             if original[ITEM_STATE] not in PUBLISH_STATES:
-                raise SuperdeskApiError.badRequestError('Package was not published')
+                raise SuperdeskApiError.badRequestError(_('Package was not published'))
 
             items = {}
             for new_item in doc['new_items']:
                 item = get_resource_service(ARCHIVE).find_one(req=None, _id=new_item['item_id'])
                 if not item:
-                    raise SuperdeskApiError.badRequestError('Invalid item identifier %s' % new_item['item_id'])
+                    raise SuperdeskApiError.badRequestError(
+                        _('Invalid item identifier  {item_id}').format(item_id=new_item['item_id']))
                 try:
                     self.package_service.check_for_circular_reference(original, new_item['item_id'])
                 except ValidationError:
-                    raise SuperdeskApiError.badRequestError('Circular reference in item %s', new_item['item_id'])
+                    raise SuperdeskApiError.badRequestError(
+                        _('Circular reference in item {item_id}').format(item_id=new_item['item_id']))
                 items[item[config.ID_FIELD]] = item
 
             updates = {key: original[key] for key in [config.ID_FIELD, PACKAGE_TYPE, GROUPS]

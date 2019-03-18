@@ -45,6 +45,7 @@ from apps.item_lock.models.item import ItemModel
 from apps.packages import PackageService
 from .archive_media import ArchiveMediaService
 from superdesk.utc import utcnow
+from flask_babel import _
 
 EDITOR_KEY_PREFIX = 'editor_'
 logger = logging.getLogger(__name__)
@@ -179,7 +180,7 @@ class ArchiveService(BaseService):
 
         for doc in docs:
             if doc.get('body_footer') and is_normal_package(doc):
-                raise SuperdeskApiError.badRequestError("Package doesn't support Public Service Announcements")
+                raise SuperdeskApiError.badRequestError(_("Package doesn't support Public Service Announcements"))
 
             self._test_readonly_stage(doc)
 
@@ -352,7 +353,7 @@ class ArchiveService(BaseService):
         force_unlock = document.get('force_unlock', False)
         user_id = str(user.get('_id'))
         if lock_user and str(lock_user) != user_id and not force_unlock:
-            raise SuperdeskApiError.forbiddenError('The item was locked by another user')
+            raise SuperdeskApiError.forbiddenError(_('The item was locked by another user'))
         document['versioncreated'] = utcnow()
         set_item_expiry(document, original)
         document['version_creator'] = user_id
@@ -388,7 +389,7 @@ class ArchiveService(BaseService):
 
         if item and str(item.get('task', {}).get('stage', '')) in \
                 get_resource_service('users').get_invisible_stages_ids(get_user().get('_id')):
-            raise SuperdeskApiError.forbiddenError("User does not have permissions to read the item.")
+            raise SuperdeskApiError.forbiddenError(_("User does not have permissions to read the item."))
 
         handle_existing_data(item)
         return item
@@ -403,14 +404,15 @@ class ArchiveService(BaseService):
         old = get_resource_service('archive_versions').find_one(req=None, _id_document=item_id,
                                                                 _current_version=old_version)
         if old is None:
-            raise SuperdeskApiError.notFoundError('Invalid version %s' % old_version)
+            raise SuperdeskApiError.notFoundError(_('Invalid version {old_version}').format(old_version=old_version))
 
         curr = get_resource_service(SOURCE).find_one(req=None, _id=item_id)
         if curr is None:
-            raise SuperdeskApiError.notFoundError('Invalid item id %s' % item_id)
+            raise SuperdeskApiError.notFoundError(_('Invalid item id {item_id}').format(item_id=item_id))
 
         if curr[config.VERSION] != last_version:
-            raise SuperdeskApiError.preconditionFailedError('Invalid last version %s' % last_version)
+            raise SuperdeskApiError.preconditionFailedError(
+                _('Invalid last version {last_version}').format(last_version=last_version))
 
         old['_id'] = old['_id_document']
         old['_updated'] = old['versioncreated'] = utcnow()
@@ -582,12 +584,10 @@ class ArchiveService(BaseService):
             get_resource_service('archive_history').post(new_history_items)
 
     def update(self, id, updates, original):
-
         if updates.get(ASSOCIATIONS):
-            # remove null values from associations in updates
-            updates['associations'] = {k: v for k, v in updates[ASSOCIATIONS].items() if v is not None}
-
             for key, association in updates[ASSOCIATIONS].items():
+                if association is None:
+                    continue
                 # don't set time stamp for related items
                 if not self._is_related_content(key):
                     self._set_association_timestamps(association, updates, new=False)
@@ -684,22 +684,23 @@ class ArchiveService(BaseService):
                 embargo = item.get(SCHEDULE_SETTINGS, {}).get('utc_{}'.format(EMBARGO))
                 if embargo:
                     if item.get(PUBLISH_SCHEDULE) or item[ITEM_STATE] == CONTENT_STATE.SCHEDULED:
-                        raise SuperdeskApiError.badRequestError("An item can't have both Publish Schedule and Embargo")
+                        raise SuperdeskApiError.badRequestError(
+                            _("An item can't have both Publish Schedule and Embargo"))
 
                     if (item[ITEM_STATE] not in {
                         CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED, CONTENT_STATE.SCHEDULED}) \
                             and embargo <= utcnow():
-                        raise SuperdeskApiError.badRequestError("Embargo cannot be earlier than now")
+                        raise SuperdeskApiError.badRequestError(_("Embargo cannot be earlier than now"))
 
                     if item.get('rewrite_of'):
-                        raise SuperdeskApiError.badRequestError("Rewrites doesn't support Embargo")
+                        raise SuperdeskApiError.badRequestError(_("Rewrites doesn't support Embargo"))
 
                     if not isinstance(embargo, datetime.date) or not embargo.time():
-                        raise SuperdeskApiError.badRequestError("Invalid Embargo")
+                        raise SuperdeskApiError.badRequestError(_("Invalid Embargo"))
 
         elif is_normal_package(item):
             if item.get(EMBARGO):
-                raise SuperdeskApiError.badRequestError("A Package doesn't support Embargo")
+                raise SuperdeskApiError.badRequestError(_("A Package doesn't support Embargo"))
 
             self.packageService.check_if_any_item_in_package_has_embargo(item)
 
@@ -760,28 +761,28 @@ class ArchiveService(BaseService):
         str_user_id = str(user.get(config.ID_FIELD)) if user else None
 
         if lock_user and str(lock_user) != str_user_id and not force_unlock:
-            raise SuperdeskApiError.forbiddenError('The item was locked by another user')
+            raise SuperdeskApiError.forbiddenError(_('The item was locked by another user'))
 
         if original.get(ITEM_STATE) in {CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED}:
-            raise SuperdeskApiError.forbiddenError("Item isn't in a valid state to be updated.")
+            raise SuperdeskApiError.forbiddenError(_("Item isn't in a valid state to be updated."))
 
         if updates.get('body_footer') and is_normal_package(original):
-            raise SuperdeskApiError.badRequestError("Package doesn't support Public Service Announcements")
+            raise SuperdeskApiError.badRequestError(_("Package doesn't support Public Service Announcements"))
 
         if 'unique_name' in updates and not is_admin(user) \
                 and (user['active_privileges'].get('metadata_uniquename', 0) == 0) \
                 and not force_unlock:
-            raise SuperdeskApiError.forbiddenError("Unauthorized to modify Unique Name")
+            raise SuperdeskApiError.forbiddenError(_("Unauthorized to modify Unique Name"))
 
         # if broadcast then update to genre is not allowed.
         if original.get('broadcast') and updates.get('genre') and \
                 any(genre.get('qcode', '').lower() != BROADCAST_GENRE.lower() for genre in updates.get('genre')):
-            raise SuperdeskApiError.badRequestError('Cannot change the genre for broadcast content.')
+            raise SuperdeskApiError.badRequestError(_('Cannot change the genre for broadcast content.'))
 
         if PUBLISH_SCHEDULE in updates or "schedule_settings" in updates:
             if is_item_in_package(original) and not force_unlock:
                 raise SuperdeskApiError.badRequestError(
-                    'This item is in a package and it needs to be removed before the item can be scheduled!')
+                    _('This item is in a package and it needs to be removed before the item can be scheduled!'))
 
             update_schedule_settings(updated, PUBLISH_SCHEDULE, updated.get(PUBLISH_SCHEDULE))
 
@@ -807,12 +808,12 @@ class ArchiveService(BaseService):
         # Ensure that there are no duplicate categories in the update
         category_qcodes = [q['qcode'] for q in updates.get('anpa_category', []) or []]
         if category_qcodes and len(category_qcodes) != len(set(category_qcodes)):
-            raise SuperdeskApiError.badRequestError("Duplicate category codes are not allowed")
+            raise SuperdeskApiError.badRequestError(_("Duplicate category codes are not allowed"))
 
         # Ensure that there are no duplicate subjects in the update
         subject_qcodes = [q['qcode'] for q in updates.get('subject', []) or []]
         if subject_qcodes and len(subject_qcodes) != len(set(subject_qcodes)):
-            raise SuperdeskApiError.badRequestError("Duplicate subjects are not allowed")
+            raise SuperdeskApiError.badRequestError(_("Duplicate subjects are not allowed"))
 
     def _add_system_updates(self, original, updates, user):
         """Adds system updates to item.
@@ -950,9 +951,9 @@ class ArchiveSaveService(BaseService):
         try:
             get_component(ItemAutosave).autosave(docs[0]['_id'], docs[0], get_user(required=True), req.if_match)
         except InvalidEtag:
-            raise SuperdeskApiError.preconditionFailedError('Client and server etags don\'t match')
+            raise SuperdeskApiError.preconditionFailedError(_('Client and server etags don\'t match'))
         except KeyError:
-            raise SuperdeskApiError.badRequestError("Request for Auto-save must have _id")
+            raise SuperdeskApiError.badRequestError(_("Request for Auto-save must have _id"))
         return [docs[0]['_id']]
 
 

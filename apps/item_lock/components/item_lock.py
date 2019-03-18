@@ -26,7 +26,7 @@ from apps.common.models.utils import get_model
 from apps.content import push_content_notification
 from apps.packages.package_service import PackageService
 from ..models.item import ItemModel
-
+from flask_babel import _
 
 LOCK_USER = 'lock_user'
 LOCK_SESSION = 'lock_session'
@@ -70,7 +70,7 @@ class ItemLock(BaseComponent):
 
         # get the lock it not raise forbidden exception
         if not lock(lock_id, expire=5):
-            raise SuperdeskApiError.forbiddenError(message="Item is locked by another user.")
+            raise SuperdeskApiError.forbiddenError(message=_("Item is locked by another user."))
 
         try:
             can_user_lock, error_message = self.can_lock(item, user_id, session_id)
@@ -115,7 +115,7 @@ class ItemLock(BaseComponent):
             raise SuperdeskApiError.notFoundError()
 
         if not item.get(LOCK_USER):
-            raise SuperdeskApiError.badRequestError(message="Item is not locked.")
+            raise SuperdeskApiError.badRequestError(message=_("Item is not locked."))
 
         can_user_unlock, error_message = self.can_unlock(item, user_id)
 

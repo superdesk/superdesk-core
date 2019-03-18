@@ -179,6 +179,11 @@ def filter2query(filter_, user_id=None):
             if value is not None:
                 post_filter_must_not.append({"terms": {field: json.loads(value)}})
 
+    # ingest provider
+    ingest_provider = search_query.pop("ingest_provider", None)
+    if ingest_provider is not None:
+        post_filter.append({"term": {"ingest_provider": ingest_provider}})
+
     # used by AAP multimedia datalayer
     credit_qcode = search_query.pop("creditqcode", None)
     if credit_qcode is not None:
@@ -249,9 +254,15 @@ def filter2query(filter_, user_id=None):
     if post_filter or post_filter_must_not:
         query["post_filter"] = {"bool": {"must": post_filter, "must_not": post_filter_must_not}}
 
+    repo = search_query.pop("repo", None)
+    repos = repo.split(',') if repo is not None else None
+
+    if "params" in search_query and (search_query['params'] is None or not json.loads(search_query['params'])):
+        del search_query['params']
+
     if search_query:
         logger.warning(
             "All query fields have not been used, remaining fields: {search_query}".format(search_query=search_query)
         )
 
-    return query
+    return repos, query
