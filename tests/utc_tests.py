@@ -68,7 +68,8 @@ class UTCTestCase(unittest.TestCase):
             get_expiry_date(minutes=5, offset=offset)
 
     def test_get_expiry_date_overflow(self):
-        self.assertIsNone(None, get_expiry_date(9999999999999))
+        self.assertIsNone(get_expiry_date(9999999999999))
+        self.assertIsNone(get_expiry_date(9999999999999, utcnow()))
 
     def test_utc_to_local(self):
         # with day light saving on

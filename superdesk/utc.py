@@ -40,14 +40,17 @@ def get_expiry_date(minutes, offset=None):
         return None
     if offset:
         if type(offset) is datetime.datetime:
-            return offset + datetime.timedelta(minutes=minutes)
+            try:
+                return offset + datetime.timedelta(minutes=minutes)
+            except OverflowError:
+                return
         else:
             raise TypeError('offset must be a datetime.date, not a %s' % type(offset))
     else:
         try:
             return utcnow() + datetime.timedelta(minutes=minutes)
         except OverflowError:  # very big number, never expire
-            return None
+            return
 
 
 def local_to_utc(local_tz_name, local_datetime):
