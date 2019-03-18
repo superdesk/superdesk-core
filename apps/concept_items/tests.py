@@ -85,7 +85,7 @@ class ConceptItemsServiceTestCase(TestCase):
     def test_query_all_items(self):
         service = get_resource_service('concept_items')
 
-        self.assertTrue(
+        self.assertEqual(
             len(list(service.get_from_mongo(req=None, lookup={}))),
             len(self.concept_items)
         )
@@ -135,4 +135,3 @@ class ConceptItemsServiceTestCase(TestCase):
             [i['name'] for i in cursor],
             names
         )
-
