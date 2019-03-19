@@ -565,7 +565,7 @@ class BasePublishService(BaseService):
                     original[ASSOCIATIONS][associations_key]['operation'] = self.publish_type
                     continue
 
-                if associated_item['state'] not in PUBLISH_STATES:
+                if associated_item.get('state') not in PUBLISH_STATES:
                     # This associated item has not been published before
                     associated_item.get('task', {}).pop('stage', None)
                     remove_unwanted(associated_item)
@@ -586,7 +586,7 @@ class BasePublishService(BaseService):
                         publish_service.patch(id=associated_item.pop(config.ID_FIELD), updates=associated_item)
                         continue
 
-                    if association_updates['state'] not in PUBLISH_STATES:
+                    if association_updates.get('state') not in PUBLISH_STATES:
                         # There's an update to the published associated item
                         remove_unwanted(association_updates)
                         publish_service.patch(id=association_updates.pop(config.ID_FIELD), updates=association_updates)
