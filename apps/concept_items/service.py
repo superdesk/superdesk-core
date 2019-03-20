@@ -96,6 +96,7 @@ class ConceptItemsService(BaseService):
         # 1) define schema_event in resource (https://iptc.org/std/NewsML-G2/guidelines/#more-real-world-entities)
         # 2) create cerberus Validator based on the schema_event
         # 3) validate doc['properties'] using cerberus Validator instance
+        # TODO if we want to have a case insensitive sort, please, add a proper index
 
         raise SuperdeskApiError.badRequestError(
             message="Request is not valid",

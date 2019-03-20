@@ -11,6 +11,9 @@
 
 import eve.io.base
 
+import json as std_json
+from pymongo.cursor import Cursor as MongoCursor
+from pymongo.collation import Collation
 from flask import current_app as app, json
 from eve.utils import document_etag, config, ParsedRequest
 from eve.io.mongo import MongoJSONEncoder
@@ -91,6 +94,7 @@ class EveBackend():
             # fetch all items, not just updated
             req.if_modified_since = None
             return backend.find(endpoint_name, req, lookup)
+        self._cursor_hook(cursor=cursor, req=req)
         return cursor
 
     def get_from_mongo(self, endpoint_name, req, lookup):
@@ -104,7 +108,9 @@ class EveBackend():
         """
         req.if_modified_since = None
         backend = self._backend(endpoint_name)
-        return backend.find(endpoint_name, req, lookup)
+        cursor = backend.find(endpoint_name, req, lookup)
+        self._cursor_hook(cursor=cursor, req=req)
+        return cursor
 
     def find_and_modify(self, endpoint_name, **kwargs):
         """Find and modify in mongo.
@@ -356,3 +362,18 @@ class EveBackend():
             parent = search_backend.get_parent_id(endpoint_name, doc)
             if parent:
                 lookup['parent'] = parent
+
+    def _cursor_hook(self, cursor, req):
+        """Apply additional methods for cursor"""
+
+        if not req or not req.args:
+            return
+
+        # Mongo methods
+        if isinstance(cursor, MongoCursor):
+            # http://api.mongodb.com/python/current/examples/collations.html
+            # https://docs.mongodb.com/manual/reference/collation/
+            if 'collation' in req.args:
+                cursor.collation(Collation(
+                    **std_json.loads(req.args['collation'])
+                ))

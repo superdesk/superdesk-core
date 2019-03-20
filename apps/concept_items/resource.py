@@ -88,5 +88,7 @@ class ConceptItemsResource(Resource):
     item_methods = ['GET', 'PATCH', 'PUT', 'DELETE']
     query_objectid_as_string = False
     mongo_indexes = {
+        'name_collation': ([('name', 1)], {'collation': {'locale': 'en', 'strength': 1}}),
+        'definition_collation': ([('definition', 1), ], {'collation': {'locale': 'en', 'strength': 1}}),
         'group_id': ([('group_id', 1), ('language', 1)], {'unique': True})
     }
