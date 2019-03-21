@@ -30,9 +30,14 @@ class ConceptItemsResource(Resource):
             required=False,
             embeddable=False
         ),
-        'definition': {
+        'definition_text': {
             'type': 'string',
-            'required': True,
+            'required': False,
+            'empty': False
+        },
+        'definition_html': {
+            'type': 'string',
+            'required': False,
             'empty': False
         },
         'language': {
@@ -89,6 +94,6 @@ class ConceptItemsResource(Resource):
     query_objectid_as_string = False
     mongo_indexes = {
         'name_collation': ([('name', 1)], {'collation': {'locale': 'en', 'strength': 1}}),
-        'definition_collation': ([('definition', 1), ], {'collation': {'locale': 'en', 'strength': 1}}),
+        'definition_text_collation': ([('definition_text', 1), ], {'collation': {'locale': 'en', 'strength': 1}}),
         'group_id': ([('group_id', 1), ('language', 1)], {'unique': True})
     }

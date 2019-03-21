@@ -21,60 +21,62 @@ class ConceptItemsServiceTestCase(TestCase):
             "cpnat_type": "cpnat:abstract",
             "labels": ["book", "tolkien"],
             "language": "en",
-            "definition": "The Hobbit is a children's fantasy novel by English author J. R. R. Tolkien."
+            "definition_text": "The Hobbit is a children's fantasy novel by English author J. R. R. Tolkien."
         },
         {
             "name": "Lord of the rings",
             "cpnat_type": "cpnat:abstract",
             "labels": ["book", "tolkien"],
             "language": "en",
-            "definition": "The Lord of the rings is a children's fantasy novel by English author J. R. R. Tolkien."
+            "definition_text": "The Lord of the rings is a children's fantasy novel by English author J. R. R. "
+                               "Tolkien."
         },
         {
             "name": "Bootstrap: Responsive Web Development",
             "cpnat_type": "cpnat:abstract",
             "labels": ["book", "Jake Spurlock", "Development"],
             "language": "en",
-            "definition": "Discover how easy it is to design killer interfaces and "
-                          "responsive websites with the Bootstrap framework. "
+            "definition_text": "Discover how easy it is to design killer interfaces and "
+                               "responsive websites with the Bootstrap framework. "
         },
         {
             "name": "The Little Prince",
             "cpnat_type": "cpnat:abstract",
             "labels": ["book", "Antoine de Saint-Exupéry"],
             "language": "en",
-            "definition": "is a novella, the most famous work of French aristocrat, writer, poet, and pioneering "
-                          "aviator Antoine de Saint-Exupéry."
+            "definition_text": "is a novella, the most famous work of French aristocrat, writer, poet, and pioneering "
+                               "aviator Antoine de Saint-Exupéry."
         },
         {
             "name": "the Elegance of the Hedgehog",
             "cpnat_type": "cpnat:abstract",
             "labels": ["book", "Muriel Barbery"],
             "language": "en",
-            "definition": "A novel about parallels and the concealment of one’s true passions in life."
+            "definition_text": "A novel about parallels and the concealment of one’s true passions in life."
         },
         {
             "name": "and then there were none",
             "cpnat_type": "cpnat:abstract",
             "labels": ["book", "Agatha Christie"],
             "language": "en",
-            "definition": "Dame Agatha Mary Clarissa Christie, Lady Mallowan, DBE "
-                          "(née Miller; 15 September 1890 – 12 January 1976) was an English writer."
+            "definition_text": "Dame Agatha Mary Clarissa Christie, Lady Mallowan, DBE "
+                               "(née Miller; 15 September 1890 – 12 January 1976) was an English writer."
         },
         {
             "name": "A Message to Garcia",
             "cpnat_type": "cpnat:abstract",
             "labels": ["book", "Elbert Hubbard"],
             "language": "en",
-            "definition": "A Message to Garcia is a widely distributed essay written by Elbert Hubbard in 1899, "
-                          "expressing the value of individual initiative and conscientiousness in work."
+            "definition_text": "A Message to Garcia is a widely distributed essay written by Elbert Hubbard in 1899, "
+                               "expressing the value of individual initiative and conscientiousness in work."
         },
         {
             "name": "Гайдамаки",
             "cpnat_type": "cpnat:abstract",
             "labels": ["book", "Шевченко Тарас Григорович"],
             "language": "en",
-            "definition": "Гайдамаки — історико-героїчна поема Шевченка, перший український історичний роман у віршах."
+            "definition_text": "Гайдамаки — історико-героїчна поема Шевченка, перший український історичний роман у "
+                               "віршах."
         }
     ]
 
