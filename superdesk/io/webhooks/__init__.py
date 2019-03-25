@@ -19,7 +19,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class FeedinServiceWebhookAuth(object):
+class FeedingServiceWebhookAuth(object):
 
     def authenticate(self):
         abort(403, description='You are not authorized to access this resource')
@@ -31,7 +31,7 @@ class FeedinServiceWebhookAuth(object):
         except KeyError:
             logger.warning('Got an invalid webhook request (missing provider name) ')
             return False
-        # FIXME: there can be a conflict if 2 provider name are similar but with different case
+        # FIXME: there can be a conflict if 2 provider names are similar but with different case
         #        this will be fixed when we'll use id instead of name
         env_name = 'WEBHOOK_{}_AUTH'.format(provider_name.upper())
         try:
@@ -44,17 +44,17 @@ class FeedinServiceWebhookAuth(object):
 
 class FeedingServiceWebhookResource(Resource):
     resource_methods = ['POST']
-    authentication = FeedinServiceWebhookAuth
+    authentication = FeedingServiceWebhookAuth
     # we don't want schema validation to accept any webhook data
     allow_unknown = True
 
 
 class FeedingServiceWebhookService(BaseService):
-    """Service givin metadata on backend itself"""
+    """Service giving metadata on backend itself"""
 
     def create(self, docs, **kwargs):
         # we don't want to create anything
-        # we just use this service to trigget the provider
+        # we just use this service to trigger the provider
         # and return a fake id
         self.trigger_provider()
         return [0]

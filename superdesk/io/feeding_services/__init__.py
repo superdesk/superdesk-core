@@ -46,8 +46,10 @@ class FeedingService(metaclass=ABCMeta):
                 - required_expression: if the evaluation of the expression is true the field is required
                     on validation. Field values can be referred by enclosing the field identifier in
                     accolades: {field_id}
+                - readonly: if true, the field is not editable
                 - show_expression: if the evaluation of the expression is true the field is displayed.
                     Field values can be referred by enclosing the field identifier in accolades: {field_id}
+                - default_value: value to use
             The fields can be of the following types:
                 1. text: has the following properties besides the generic ones:
                     - placeholder: placeholder text
