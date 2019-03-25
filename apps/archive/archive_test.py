@@ -34,6 +34,7 @@ from superdesk.tests import TestCase
 from superdesk.utc import get_expiry_date, utcnow
 from apps.publish.content import publish
 from unittest import mock
+from apps.search_providers import register_search_provider, registered_search_providers
 
 NOW = utcnow()
 
@@ -370,6 +371,13 @@ class RemoveSpikedContentTestCase(TestCase):
 
 
 class ArchiveTestCase(TestCase):
+    def setUp(self):
+        super().setUp()
+        search_provider = {'_id': 1, 'source': 'ABC', 'name': 'ABC', 'search_provider': 'ABC'}
+        self.app.data.insert('search_providers', [search_provider])
+        if not registered_search_providers.get('ABC'):
+            register_search_provider('ABC', fetch_endpoint='ABC', label='ABC')
+
     def test_validate_schedule(self):
         validate_schedule(utcnow() + timedelta(hours=2))
 
@@ -531,6 +539,39 @@ class ArchiveTestCase(TestCase):
         self.assertEqual(doc['source'], 'FOO')
         self.assertEqual(doc['dateline']['source'], 'FOO')
         self.assertEqual(doc['dateline']['text'], 'SYDNEY, %s %s -' % (formatted_date, 'FOO'))
+
+    def test_if_search_provider_source_is_preserved(self):
+        desk = {'name': 'sports', 'source': 'FOO'}
+        self.app.data.insert('desks', [desk])
+        doc = {
+            '_id': '123',
+            'task': {
+                'desk': desk['_id'],
+                'stage': desk['working_stage']
+            },
+            'type': 'picture',
+            'ingest_provider': 1
+        }
+
+        set_default_source(doc)
+        self.assertEqual(doc['source'], 'ABC')
+
+    def test_if_item_has_source_then_search_provider_source_is_not_used(self):
+        desk = {'name': 'sports', 'source': 'FOO'}
+        self.app.data.insert('desks', [desk])
+        doc = {
+            '_id': '123',
+            'task': {
+                'desk': desk['_id'],
+                'stage': desk['working_stage']
+            },
+            'type': 'picture',
+            'ingest_provider': 1,
+            'source': 'bar'
+        }
+
+        set_default_source(doc)
+        self.assertEqual(doc['source'], 'bar')
 
     def test_if_image_caption_is_updated(self):
         body = """
