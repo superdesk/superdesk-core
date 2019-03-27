@@ -20,7 +20,7 @@ signals = blinker.Namespace()
 #: :param item: published item
 item_published = signals.signal('item:published')
 
-#: Sent before item is updated.
+#: Sent before new version is saved.
 #:
 #: :param sender: ArchiveService
 #: :param updates: changes to be saved
@@ -44,6 +44,16 @@ item_fetched = signals.signal('item:fetched')
 #: :param item: item after moving
 #: :param original: item before moving
 item_moved = signals.signal('item:moved')
+
+
+#: Sent before item update is created
+#:
+#: .. versionadded:: 1.29
+#:
+#: :param sender: ArchiveRewriteService
+#: :param item: new item update
+#: :param original: original item
+item_rewrite = signals.signal('item:rewrite')
 
 
 def connect(signal, subscriber):

@@ -23,6 +23,7 @@ from superdesk.metadata.utils import item_url, generate_guid
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from superdesk.notification import push_notification
+from superdesk.signals import item_rewrite
 from apps.tasks import send_to
 from apps.archive.archive import update_associations
 
@@ -61,6 +62,9 @@ class ArchiveRewriteService(Service):
             if 'fields_meta' in original:
                 rewrite['fields_meta'] = original['fields_meta']
             update_associations(rewrite)
+
+        # signal
+        item_rewrite.send(self, item=rewrite, original=original)
 
         if update_document:
             # process the existing story

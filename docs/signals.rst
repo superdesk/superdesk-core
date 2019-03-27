@@ -34,3 +34,6 @@ Core Signals
 
 .. autodata:: item_moved
     :annotation:
+
+.. autodata:: item_rewrite
+    :annotation:
