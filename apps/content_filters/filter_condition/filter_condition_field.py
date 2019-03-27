@@ -43,7 +43,7 @@ class FilterConditionField:
         if field not in FilterConditionFieldsEnum.__members__:
             vocabulary = get_resource_service('vocabularies').find_one(req=None, _id=field)
             if vocabulary:
-                if vocabulary['field_type'] == 'text':
+                if vocabulary.get('field_type', '') == 'text':
                     return FilterConditionCustomTextField(field)
                 else:
                     return FilterConditionControlledVocabularyField(field)

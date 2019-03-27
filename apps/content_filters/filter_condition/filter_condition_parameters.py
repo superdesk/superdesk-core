@@ -29,27 +29,27 @@ class FilterConditionParametersService(BaseService):
         values = self._get_field_values()
         fields = [{'field': 'anpa_category',
                    'operators': ['in', 'nin'],
-                   'values': values['anpa_category'],
+                   'values': values.get('anpa_category', []),
                    'value_field': 'qcode'
                    },
                   {'field': 'urgency',
                    'operators': ['in', 'nin', 'eq', 'ne', 'lt', 'lte', 'gt', 'gte'],
-                   'values': values['urgency'],
+                   'values': values.get('urgency', []),
                    'value_field': 'qcode'
                    },
                   {'field': 'genre',
                    'operators': ['in', 'nin'],
-                   'values': values['genre'],
+                   'values': values.get('genre', []),
                    'value_field': 'qcode'
                    },
                   {'field': 'subject',
                    'operators': ['in', 'nin'],
-                   'values': values['subject'],
+                   'values': values.get('subject', []),
                    'value_field': 'qcode'
                    },
                   {'field': 'priority',
                    'operators': ['in', 'nin', 'eq', 'ne', 'lt', 'lte', 'gt', 'gte'],
-                   'values': values['priority'],
+                   'values': values.get('priority', []),
                    'value_field': 'qcode'
                    },
                   {'field': 'keywords',
@@ -60,7 +60,7 @@ class FilterConditionParametersService(BaseService):
                    },
                   {'field': 'type',
                    'operators': ['in', 'nin', 'eq', 'ne'],
-                   'values': values['type'],
+                   'values': values.get('type', []),
                    'value_field': 'qcode'
                    },
                   {'field': 'source',
