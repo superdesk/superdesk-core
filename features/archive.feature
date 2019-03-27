@@ -1084,3 +1084,20 @@ Feature: News Items Archive
             "associations": {"foo": null}
         }]}
         """
+
+    @auth
+    Scenario: Add external_source items as related items
+        Given "archive"
+        """
+        [{"_id": "item-1", "guid": "item-1", "type": "text", "headline": "test", "state": "in_progress", "_type": "archive"
+        }]
+        """
+        When we patch given
+        """
+        {"associations": {"foo--1": {"headline": "flower", "byline": "foo", "description_text": "flower desc", "_type": "externalsource"}}}
+        """
+        When we get "/archive/item-1"
+        Then we get existing resource
+        """
+        {"associations": {"foo--1": {"headline": "flower", "byline": "foo", "description_text": "flower desc"}}}
+        """
