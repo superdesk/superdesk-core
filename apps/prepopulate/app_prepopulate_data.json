@@ -723,6 +723,24 @@
     },
 
     {
+    	"data": {"_id" : "5c9bd4f5149f117d0e47afe4", "is_active" : false, "name" : "alpha", "desk" : "-id desk Sports Desks-"},
+    	"resource": "internal_destinations",
+    	"id_name": "-id internal_destinations alpha-"
+    },
+
+    {
+    	"data": {"_id" : "5c9bd4f5149f117d0e47afe5", "is_active" : false, "name" : "bravo", "desk" : "-id desk Politic Desks-"},
+    	"resource": "internal_destinations",
+    	"id_name": "-id internal_destinations bravo-"
+    },
+
+    {
+    	"data": {"_id" : "5c9bd4f5149f117d0e47afe6", "is_active" : false, "name" : "charlie", "desk" : "-id desk Sports Desks-"},
+    	"resource": "internal_destinations",
+    	"id_name": "-id internal_destinations charlie-"
+    },
+
+    {
     	"data": {
     		"name" : "Public API",
     		"subscriber_type": "digital",
