@@ -270,9 +270,10 @@ def set_default_source(doc):
 
     # If the item has been ingested and the source for the provider is not the same as the system default source
     # the source must be preserved as the item has been ingested from an external agency
-    if 'ingest_provider' in doc:
-        ingest_provider_service = superdesk.get_resource_service('ingest_providers')
-        provider = ingest_provider_service.find_one(req=None, _id=doc.get('ingest_provider'))
+    if doc.get('ingest_provider'):
+        provider = get_resource_service('ingest_providers').find_one(req=None, _id=doc.get('ingest_provider'))
+        if not provider:
+            provider = get_resource_service('search_providers').find_one(req=None, _id=doc.get('ingest_provider'))
         if provider and provider.get('source', '') != get_default_source():
             if not doc.get('source'):
                 doc['source'] = provider.get('source')
