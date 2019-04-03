@@ -6,7 +6,7 @@ pyflakes
 pydocstyle
 httmock
 wooper
-sphinx
+sphinx<2.0
 sphinx-autobuild
 sphinxcontrib-plantuml
 docutils==0.12

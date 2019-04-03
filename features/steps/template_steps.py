@@ -3,7 +3,7 @@ import pytz
 from datetime import datetime, timedelta
 from superdesk.tests import set_placeholder
 from steps import when, then, get_json_data, parse_date  # @UnresolvedImport
-from superdesk.utc import utcnow
+from superdesk.utc import utcnow, local_to_utc
 
 
 @when('we run create content task')
@@ -31,10 +31,12 @@ def then_next_run_is_on_monday(context, time):
 
     parsed = datetime.strptime(time, fmt)
     expected = datetime.now(tz)
-    expected += timedelta(((-expected.weekday()) + 7) % 7)
-    expected = expected.astimezone(tz)
     expected = expected.replace(hour=parsed.hour, minute=parsed.minute, second=parsed.second, microsecond=0)
-    expected_utc = expected.astimezone(pytz.utc)
+
+    if expected < utcnow():  # make sure it's monday in future
+        expected = expected + timedelta(days=(7 - expected.weekday()))
+
+    expected_utc = local_to_utc(tz.zone, expected)
 
     assert isinstance(next_run, datetime)
     if tz.zone == 'Australia/Sydney':
