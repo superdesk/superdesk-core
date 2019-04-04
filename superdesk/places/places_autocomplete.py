@@ -17,10 +17,14 @@ class PlacesAutocompleteService(superdesk.Service):
         params = [
             ('name_startsWith', req.args.get('name')),
             ('lang', req.args.get('lang')),
+            ('style', req.args.get('style', 'medium')),
         ]
 
-        for feature_class in app.config['GEONAMES_FEATURE_CLASSES']:
-            params.append(('featureClass', feature_class.upper()))
+        if req.args.get('featureClass'):
+            params.append(('featureClass', req.args.get('featureClass')))
+        else:
+            for feature_class in app.config['GEONAMES_FEATURE_CLASSES']:
+                params.append(('featureClass', feature_class.upper()))
 
         json_data = geonames_request('search', params)
         data = [format_geoname_item(item) for item in json_data.get('geonames', [])]
