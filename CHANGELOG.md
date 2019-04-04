@@ -1,6 +1,25 @@
 # Superdesk Server Changelog
 
-## [1.28.1] 2018-02-25
+## [1.28.2] 2019-04-04
+
+### Added
+
+- Add `item_rewrite` signal.
+- Published content is not expired if `preserve_published_content` flag is set.
+- Add `replace_type` for macros.
+
+### Fixed
+
+- Source from search provider should be preserved for fetched documents.
+- Fix content filter test failing when using custom vocabulary.
+- Prevent publishing failure on missing associated item state.
+- When replace macro is run it selects the target randomly.
+- State is missing on article to be published.
+- Fix updates to associated items were not reflected on correction.
+- Fix email notification link on item update.
+- Fix expiry date overflow in ingest.
+
+## [1.28.1] 2019-02-25
 
 ### Added
 
