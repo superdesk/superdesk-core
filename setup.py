@@ -59,12 +59,14 @@ package_data = {
         'io/data/*.json',
         'data_updates/*.py',
         'data_updates/*.js',
+        'translations/*.po',
+        'translations/*.mo',
     ],
     'apps': [
         'prepopulate/*.json',
         'prepopulate/data_init/*.json',
         'io/data/*.json',
-    ]
+    ],
 }
 
 setup(
