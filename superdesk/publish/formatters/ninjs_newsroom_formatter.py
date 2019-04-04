@@ -32,6 +32,10 @@ class NewsroomNinjsFormatter(NINJSFormatter):
 
     def _transform_to_ninjs(self, article, subscriber, recursive=True):
         ninjs = super()._transform_to_ninjs(article, subscriber, recursive)
+
+        if article.get('ingest_id') and article.get('auto_publish'):
+            ninjs['guid'] = article.get('ingest_id')
+
         ninjs['products'] = self._format_products(article)
 
         if article.get('assignment_id'):
