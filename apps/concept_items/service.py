@@ -30,14 +30,12 @@ class ConceptItemsService(BaseService):
 
     def on_create(self, docs):
         for doc in docs:
-            self._validate_definition(doc)
             self._validate_properties(doc)
             self._validate_language(doc)
             self._setup_created_by(doc)
             self._fill_definition_text(doc)
 
     def on_replace(self, doc, original):
-        self._validate_definition(doc, original)
         self._validate_properties(doc)
         self._validate_language(doc)
         self._setup_created_by(doc, original)
@@ -58,8 +56,7 @@ class ConceptItemsService(BaseService):
         if 'language' in updates:
             self._validate_language(updates)
 
-        if 'definition_text' in updates or 'definition_html' in updates:
-            self._validate_definition(updates, original)
+        if 'definition_html' in updates:
             self._fill_definition_text(updates)
 
         self._setup_updated_by(updates)
@@ -87,20 +84,8 @@ class ConceptItemsService(BaseService):
                 payload={"language": "unallowed value '{}'".format(doc['language'])}
             )
 
-    def _validate_definition(self, doc, original=None):
-        if not original:
-            # at least one definition_* field is required
-            if 'definition_text' not in doc and 'definition_html' not in doc:
-                raise SuperdeskApiError.badRequestError(
-                    message="Request is not valid",
-                    payload={"definition_text": "'definition_text' or 'definition_html' were not provided, "
-                                                "at least one parameter is required."}
-                )
-
     def _fill_definition_text(self, doc):
-        # fill definition_text if it was not provided
-        if 'definition_html' in doc and 'definition_text' not in doc:
-            doc['definition_text'] = get_text(doc['definition_html'], content='html', lf_on_block=True).strip()
+        doc['definition_text'] = get_text(doc['definition_html'], content='html', lf_on_block=True).strip()
 
     def _validate_properties(self, doc):
         getattr(

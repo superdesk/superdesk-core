@@ -33,11 +33,12 @@ class ConceptItemsResource(Resource):
         'definition_text': {
             'type': 'string',
             'required': False,
-            'empty': False
+            'empty': False,
+            'readonly': True
         },
         'definition_html': {
             'type': 'string',
-            'required': False,
+            'required': True,
             'empty': False
         },
         'language': {
