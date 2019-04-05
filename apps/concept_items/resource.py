@@ -25,11 +25,12 @@ class ConceptItemsResource(Resource):
             'required': True,
             'empty': False
         },
-        'group_id': Resource.rel(
-            resource='concept_items',
-            required=False,
-            embeddable=False
-        ),
+        'group_id': {
+            'type': 'string',
+            'required': False,
+            'empty': False,
+            'readonly': False
+        },
         'definition_text': {
             'type': 'string',
             'required': False,

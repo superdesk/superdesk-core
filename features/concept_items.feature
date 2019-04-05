@@ -45,7 +45,7 @@ Feature: Concept items
             "_items": [
                 {
                     "_id": "#concept_items._id#",
-                    "group_id": "#concept_items._id#",
+                    "group_id": "#concept_items.group_id#",
                     "name": "Hobbit",
                     "cpnat_type": "cpnat:abstract",
                     "labels": [
@@ -70,7 +70,7 @@ Feature: Concept items
         """
         {
             "_id": "#concept_items._id#",
-            "group_id": "#concept_items._id#",
+            "group_id": "__any_value__",
             "name": "Hobbit",
             "cpnat_type": "cpnat:abstract",
             "labels": [
@@ -390,7 +390,7 @@ Feature: Concept items
 
     @auth
     @app_init
-    Scenario: Create a concept item: code in payload
+    Scenario: Create a concept item: group_id in payload
         Given "vocabularies"
         """
         [{
@@ -427,24 +427,6 @@ Feature: Concept items
             "definition_html": "The Hobbit is a children's fantasy novel by English author J. R. R. Tolkien."
         }
         """
-        Then we get error 400
-        """
-        {
-            "_issues": {
-                "group_id": "value '5c62d77efe985ea36958fa3e' must exist in resource 'concept_items', field '_id'."
-            }
-        }
-        """
-        When we post to "/concept_items"
-        """
-        {
-            "name": "Hobbit",
-            "cpnat_type": "cpnat:abstract",
-            "labels": ["book", "tolkien"],
-            "language": "en",
-            "definition_html": "The Hobbit is a children's fantasy novel by English author J. R. R. Tolkien."
-        }
-        """
         Then we get response code 201
         When we get "/concept_items"
         Then we get existing resource
@@ -452,8 +434,7 @@ Feature: Concept items
         {
             "_items": [
                 {
-                    "_id": "#concept_items._id#",
-                    "group_id": "#concept_items._id#",
+                    "group_id": "5c62d77efe985ea36958fa3e",
                     "name": "Hobbit",
                     "cpnat_type": "cpnat:abstract",
                     "labels": [
@@ -471,11 +452,12 @@ Feature: Concept items
             ]
         }
         """
+        When we get "/concept_items"
         When we post to "/concept_items"
         """
         {
             "name": "Hobbit",
-            "group_id": "#concept_items._id#",
+            "group_id": "5c62d77efe985ea36958fa3e",
             "cpnat_type": "cpnat:abstract",
             "labels": ["book", "tolkien"],
             "language": "en",
@@ -487,7 +469,7 @@ Feature: Concept items
         """
         {
             "name": "Hobbit",
-            "group_id": "#concept_items._id#",
+            "group_id": "b615a998-544b-4c3f-b063-9ceccdd7c1dc",
             "cpnat_type": "cpnat:abstract",
             "labels": ["book", "tolkien"],
             "language": "es",
@@ -531,6 +513,7 @@ Feature: Concept items
             "cpnat_type": "cpnat:abstract",
             "labels": ["book", "tolkien"],
             "language": "en",
+            "group_id": "5c94ebcdfe985e1c9fc26d52",
             "definition_html": "The Hobbit is a children's fantasy novel by English author J. R. R. Tolkien."
         }
         """
@@ -547,7 +530,7 @@ Feature: Concept items
             "_status": "OK",
             "_type": "concept_items",
             "_updated": "__any_value__",
-            "group_id": "#concept_items._id#",
+            "group_id": "#concept_items.group_id#",
             "cpnat_type": "cpnat:abstract",
             "created_by": "#CONTEXT_USER_ID#",
             "definition_html": "The Hobbit is a children's fantasy novel by English author J. R. R. Tolkien.",
@@ -587,11 +570,12 @@ Feature: Concept items
             "name": "Hobbit",
             "cpnat_type": "cpnat:abstract",
             "labels": ["book", "tolkien"],
-            "group_id": "#concept_items._id#",
+            "group_id": "5c94ebcdfe985e1c9fc26d52",
             "language": "es",
             "definition_html": "The Hobbit is a children's fantasy novel by English author J. R. R. Tolkien."
         }
         """
+        When we get "/concept_items"
         When we patch "/concept_items/#concept_items._id#"
         """
         {"language": "en"}
@@ -756,7 +740,7 @@ Feature: Concept items
                 "_items": [
                     {
                         "_id": "#concept_items._id#",
-                        "group_id": "#concept_items._id#",
+                        "group_id": "__any_value__",
                         "name": "Hobbit",
                         "cpnat_type": "cpnat:abstract",
                         "labels": [

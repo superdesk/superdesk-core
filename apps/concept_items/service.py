@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import json
+from uuid import uuid4
 
 import superdesk
 from eve.utils import ParsedRequest
@@ -23,21 +24,18 @@ class ConceptItemsService(BaseService):
     CRUD service for concept items
     """
 
-    def on_created(self, docs):
-        for doc in docs:
-            if 'group_id' not in doc:
-                self._setup_group_id(doc)
-
     def on_create(self, docs):
         for doc in docs:
             self._validate_properties(doc)
             self._validate_language(doc)
             self._setup_created_by(doc)
+            self._setup_group_id(doc)
             self._fill_definition_text(doc)
 
     def on_replace(self, doc, original):
         self._validate_properties(doc)
         self._validate_language(doc)
+        self._validate_group_id(doc)
         self._setup_created_by(doc, original)
         self._setup_updated_by(doc)
         self._fill_definition_text(doc)
@@ -82,6 +80,13 @@ class ConceptItemsService(BaseService):
             raise SuperdeskApiError.badRequestError(
                 message="Request is not valid",
                 payload={"language": "unallowed value '{}'".format(doc['language'])}
+            )
+
+    def _validate_group_id(self, doc):
+        if 'group_id' not in doc:
+            raise SuperdeskApiError.badRequestError(
+                message="Request is not valid",
+                payload={"group_id": "This field is required"}
             )
 
     def _fill_definition_text(self, doc):
@@ -142,13 +147,6 @@ class ConceptItemsService(BaseService):
             payload={"cpnat_type": "concept type 'cpnat:poi' is not supported"}
         )
 
-    def _setup_group_id(self, doc):
-        self.update(
-            id=doc['_id'],
-            updates={'group_id': doc['_id']},
-            original=doc
-        )
-
     def _setup_created_by(self, doc, original=None):
         if not original:
             doc['created_by'] = get_user().get('_id')
@@ -158,3 +156,7 @@ class ConceptItemsService(BaseService):
 
     def _setup_updated_by(self, doc):
         doc['updated_by'] = get_user().get('_id')
+
+    def _setup_group_id(self, doc):
+        if 'group_id' not in doc:
+            doc['group_id'] = str(uuid4())
