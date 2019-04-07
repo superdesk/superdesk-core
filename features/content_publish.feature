@@ -2340,6 +2340,55 @@ Feature: Content Publishing
       """
 
     @auth
+    Scenario: Publish fails when embedded item does not exist
+      Given the "validators"
+      """
+        [{"_id": "publish_embedded", "type": "picture", "act": "publish", "embedded": true,
+          "schema": {"headline": {"type": "string","required": true}}},
+         {"_id": "publish_text", "type": "text", "act": "publish", "schema": {}}]
+      """
+      And "desks"
+      """
+      [{"name": "Sports"}]
+      """
+      And "archive"
+      """
+      [{"guid": "123", "type": "text", "headline": "test", "_current_version": 1, "state": "in_progress",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "subject":[{"qcode": "17004000", "name": "Statistics"}], "body_html": "Test Document body",
+        "associations": {
+            "featureimage": {
+                "_id": "234",
+                "guid": "234",
+                "headline": "Test",
+                "alt_text": "alt_text",
+                "description_text": "description_text",
+                "type": "picture",
+                "slugline": "s234",
+                "state": "in_progress"}}}]
+      """
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+      }
+      """
+      And we post to "/subscribers" with success
+      """
+      {
+        "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
+      And we publish "#archive._id#" with "publish" type and "published" state
+      Then we get error 400
+      """
+      {"_issues": {"validator exception": "400: Associated item \"featureimage\" does not exist in the system"}, "_status": "ERR"}
+      """
+
+
+    @auth
     Scenario: PUBLISHED_CONTENT_EXPIRY_MINUTES setting overrides content expiry setting.
       Given the "validators"
       """

@@ -571,6 +571,16 @@ class BasePublishService(BaseService):
                     # This associated item has not been published before
                     associated_item.get('task', {}).pop('stage', None)
                     remove_unwanted(associated_item)
+
+                    # get the original associated item from archive
+                    original_associated_item = get_resource_service('archive').\
+                        find_one(req=None, _id=associated_item[config.ID_FIELD])
+
+                    # check if the original associated item exists in archive
+                    if not original_associated_item:
+                        raise SuperdeskApiError.badRequestError(
+                            _('Associated item "{}" does not exist in the system'.format(associations_key)))
+
                     get_resource_service('archive_publish').patch(id=associated_item.pop(config.ID_FIELD),
                                                                   updates=associated_item)
                     associated_item['state'] = self.published_state

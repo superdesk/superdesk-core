@@ -93,17 +93,17 @@ class NINJSFeedParser(FeedParser):
         if ninjs.get('firstcreated'):
             item['firstcreated'] = self.datetime(ninjs.get('firstcreated'))
 
-        if ninjs.get('associations', {}).get('featuremedia'):
-            child_ninjs = ninjs.get('associations', {}).get('featuremedia')
-            if child_ninjs:
-                self.items.append(self._transform_from_ninjs(child_ninjs))
-                if child_ninjs.get('type') == 'picture' and child_ninjs.get('body_text'):
-                    child_ninjs['alt_text'] = child_ninjs.get('body_text')
-            item['associations'] = deepcopy(ninjs.get('associations'))
-            # we don't want strings for versioncreated
-            for metadata in item['associations'].values():
-                if metadata.get('versioncreated'):
-                    metadata['versioncreated'] = self.datetime(metadata['versioncreated'])
+        if ninjs.get('associations'):
+            item['associations'] = {}
+
+        for key, associated_item in ninjs.get('associations', {}).items():
+            if associated_item:
+                self.items.append(self._transform_from_ninjs(associated_item))
+                if associated_item.get('type') == 'picture' and associated_item.get('body_text'):
+                    associated_item['alt_text'] = associated_item.get('body_text')
+                if associated_item.get('versioncreated'):
+                    associated_item['versioncreated'] = self.datetime(associated_item['versioncreated'])
+                item['associations'][key] = deepcopy(associated_item)
 
         if ninjs.get('renditions', {}).get('baseImage'):
             item['renditions'] = {'baseImage': {'href': ninjs.get('renditions', {}).get('original', {}).get('href')}}

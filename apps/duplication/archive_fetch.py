@@ -28,8 +28,9 @@ from superdesk.utc import utcnow
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk import get_resource_service
 from superdesk.metadata.packages import RESIDREF, REFS, GROUPS
-from superdesk.metadata.item import MEDIA_TYPES
+from superdesk.metadata.item import MEDIA_TYPES, ASSOCIATIONS
 from flask_babel import _
+from copy import deepcopy
 
 custom_hateoas = {'self': {'title': 'Archive', 'href': '/archive/{_id}'}}
 
@@ -105,6 +106,8 @@ class FetchService(BaseService):
             self.__fetch_items_in_package(dest_doc, desk_id, stage_id,
                                           doc.get(ITEM_STATE, CONTENT_STATE.FETCHED))
 
+            self.__fetch_associated_items(dest_doc, desk_id, stage_id, doc.get(ITEM_STATE, CONTENT_STATE.FETCHED))
+
             desk = get_resource_service('desks').find_one(req=None, _id=desk_id)
             if desk and desk.get('default_content_profile'):
                 dest_doc['profile'] = desk['default_content_profile']
@@ -123,6 +126,18 @@ class FetchService(BaseService):
             push_item_move_notification(ingest_doc, doc, 'item:fetch')
 
         return id_of_fetched_items
+
+    def __fetch_associated_items(self, doc, desk, stage, state):
+        """
+        Fetches the associated items of a given document
+        """
+        for key, item in (doc.get(ASSOCIATIONS) or {}).items():
+            new_item = deepcopy(item)
+            new_item['desk'] = desk
+            new_item['stage'] = stage
+            new_item['state'] = state
+            new_ids = self.fetch([new_item], id=None, notify=False)
+            item[config.ID_FIELD] = new_ids[0]
 
     def __fetch_items_in_package(self, dest_doc, desk, stage, state):
         # Note: macro and target information is not user for package publishing.
