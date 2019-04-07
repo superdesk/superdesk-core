@@ -245,3 +245,31 @@ class NinjsFormatterTest(TestCase):
         }
         self.assertEqual(expected, json.loads(doc))
         self.assertIn('viewImage', json.loads(doc).get('renditions'))
+
+    def test_auto_published_item(self):
+        article = {
+            "guid": "foo",
+            "_current_version": 1,
+            "slugline": "AMAZING PICTURE",
+            "original_source": "AAP",
+            "byline": "MICKEY MOUSE",
+            "headline": "AMAZING PICTURE",
+            "versioncreated": "2015-07-23T00:15:00.000Z",
+            "ednote": "TEST ONLY",
+            "type": "picture",
+            "pubstatus": "usable",
+            "source": "AAP",
+            "description": "The most amazing picture you will ever see",
+            "body_footer": "<p>call helpline 999 if you are planning to quit smoking</p>",
+        }
+        _, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        processed = json.loads(doc)
+        self.assertEqual(processed['guid'], 'foo')
+        article['ingest_id'] = 'bar'
+        _, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        processed = json.loads(doc)
+        self.assertEqual(processed['guid'], 'foo')
+        article['auto_publish'] = True
+        _, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        processed = json.loads(doc)
+        self.assertEqual(processed['guid'], 'bar')
