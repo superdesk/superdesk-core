@@ -79,6 +79,7 @@ class NinjsFormatterTest(TestCase):
             "abstract": "<p>sample <b>abstract</b></p>",
             "place": [{"name": "NSW", "qcode": "NSW"}],
             "embargo": embargo_ts,
+            "embargoed": embargo_ts - timedelta(days=1),
             "body_footer": "<p>call helpline 999 if you are planning to quit smoking</p>",
             "company_codes": [{"name": "YANCOAL AUSTRALIA LIMITED", "qcode": "YAL", "security_exchange": "ASX"}],
             "genre": [{"name": "Article", "qcode": "article"}],
@@ -128,6 +129,7 @@ class NinjsFormatterTest(TestCase):
         self.assertEqual(json.loads(doc), expected)
 
     def test_picture_formatter(self):
+        embargoed = utcnow() + timedelta(days=2)
         article = {
             "guid": "20150723001158606583",
             "_current_version": 1,
@@ -155,6 +157,7 @@ class NinjsFormatterTest(TestCase):
             "description": "The most amazing picture you will ever see",
             "guid": "20150723001158606583",
             "body_footer": "<p>call helpline 999 if you are planning to quit smoking</p>",
+            "embargoed": embargoed,
         }
         seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
         expected = {
@@ -177,6 +180,7 @@ class NinjsFormatterTest(TestCase):
             "slugline": "AMAZING PICTURE",
             "ednote": "TEST ONLY",
             "source": "AAP",
+            "embargoed": embargoed.isoformat(),
         }
         self.assertEqual(expected, json.loads(doc))
         self.assertNotIn('viewImage', json.loads(doc).get('renditions'))

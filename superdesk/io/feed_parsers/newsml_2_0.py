@@ -122,6 +122,10 @@ class NewsMLTwoFeedParser(XMLFeedParser):
         item['pubstatus'] = (meta.find(self.qname('pubStatus')).attrib['qcode'].split(':')[1]).lower()
         item['ednote'] = meta.find(self.qname('edNote')).text if meta.find(self.qname('edNote')) is not None else ''
 
+        embargoed = meta.find(self.qname('embargoed'))
+        if embargoed is not None and embargoed.text:
+            item['embargoed'] = self.datetime(embargoed.text)
+
     def parse_content_meta(self, tree, item):
         """Parse contentMeta tag"""
         meta = tree.find(self.qname('contentMeta'))

@@ -606,6 +606,9 @@ metadata_schema = {
 
     # references item id for items auto published using internal destinations
     PROCESSED_FROM: {'type': 'string', 'mapping': not_analyzed},
+
+    # ingested embargoed info, not using embargo to avoid validation
+    'embargoed': {'type': 'datetime'},
 }
 
 metadata_schema['lock_user']['versioned'] = False

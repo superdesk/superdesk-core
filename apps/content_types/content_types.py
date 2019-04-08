@@ -22,6 +22,7 @@ DO_NOT_SHOW_SELECTION = 'do not show'
 # Fields that might not be in the schema but should be still available in formatter/output
 REQUIRED_FIELDS = (
     'language',
+    'embargoed',
 )
 
 # Valid editor keys
