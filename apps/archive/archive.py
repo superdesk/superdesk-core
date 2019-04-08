@@ -285,6 +285,9 @@ class ArchiveService(BaseService):
             if not (item_obj and config.ID_FIELD in item_obj):
                 continue
 
+            if self._is_related_content(item_name):
+                continue
+
             item_id = item_obj[config.ID_FIELD]
             media_item = {}
             if app.settings.get('COPY_METADATA_FROM_PARENT') and item_obj.get(ITEM_TYPE) in MEDIA_TYPES:
@@ -314,10 +317,7 @@ class ArchiveService(BaseService):
             self._set_association_timestamps(item_obj, updates, new=False)
             stored_item.update(item_obj)
 
-            if self._is_related_content(item_name):
-                updates[ASSOCIATIONS][item_name] = {'_id': item_id}
-            else:
-                updates[ASSOCIATIONS][item_name] = stored_item
+            updates[ASSOCIATIONS][item_name] = stored_item
         if body:
             updates["body_html"] = body
 

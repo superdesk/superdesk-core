@@ -296,7 +296,8 @@ class NINJSFormatter(Formatter):
         archive_service = superdesk.get_resource_service('archive')
         for key, item in (article.get(ASSOCIATIONS) or {}).items():
             if item:
-                if archive_service._is_related_content(key):
+                if archive_service._is_related_content(key) and '_type' not in item:
+                    # if item is related item then fetch it from db
                     item = archive_service.find_one(req=None, _id=item['_id'])
 
                 item = self._transform_to_ninjs(item, subscriber)
