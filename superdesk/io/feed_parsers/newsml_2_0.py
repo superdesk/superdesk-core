@@ -124,7 +124,11 @@ class NewsMLTwoFeedParser(XMLFeedParser):
 
         embargoed = meta.find(self.qname('embargoed'))
         if embargoed is not None and embargoed.text:
-            item['embargoed'] = self.datetime(embargoed.text)
+            try:
+                item['embargoed'] = self.datetime(embargoed.text)
+            except ValueError:
+                item['embargoed_text'] = embargoed.text  # store it for inspection
+                logger.warning("Can't parse embargoed info '%s' on item '%s'", embargoed.text, item['guid'])
 
     def parse_content_meta(self, tree, item):
         """Parse contentMeta tag"""
@@ -339,7 +343,10 @@ class NewsMLTwoFeedParser(XMLFeedParser):
         try:
             return datetime.datetime.strptime(string, '%Y-%m-%dT%H:%M:%S.000Z')
         except (ValueError, TypeError):
-            return arrow.get(string).datetime
+            try:
+                return arrow.get(string).datetime
+            except arrow.parser.ParserError:
+                raise ValueError(string)
 
     def get_literal_name(self, item):
         """Get name for item with fallback to literal attribute if name is not provided."""
