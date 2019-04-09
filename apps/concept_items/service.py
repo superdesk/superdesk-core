@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import json
+from uuid import uuid4
 
 import superdesk
 from eve.utils import ParsedRequest
@@ -23,23 +24,18 @@ class ConceptItemsService(BaseService):
     CRUD service for concept items
     """
 
-    def on_created(self, docs):
-        for doc in docs:
-            if 'group_id' not in doc:
-                self._setup_group_id(doc)
-
     def on_create(self, docs):
         for doc in docs:
-            self._validate_definition(doc)
             self._validate_properties(doc)
             self._validate_language(doc)
             self._setup_created_by(doc)
+            self._setup_group_id(doc)
             self._fill_definition_text(doc)
 
     def on_replace(self, doc, original):
-        self._validate_definition(doc, original)
         self._validate_properties(doc)
         self._validate_language(doc)
+        self._validate_group_id(doc)
         self._setup_created_by(doc, original)
         self._setup_updated_by(doc)
         self._fill_definition_text(doc)
@@ -58,8 +54,7 @@ class ConceptItemsService(BaseService):
         if 'language' in updates:
             self._validate_language(updates)
 
-        if 'definition_text' in updates or 'definition_html' in updates:
-            self._validate_definition(updates, original)
+        if 'definition_html' in updates:
             self._fill_definition_text(updates)
 
         self._setup_updated_by(updates)
@@ -87,20 +82,15 @@ class ConceptItemsService(BaseService):
                 payload={"language": "unallowed value '{}'".format(doc['language'])}
             )
 
-    def _validate_definition(self, doc, original=None):
-        if not original:
-            # at least one definition_* field is required
-            if 'definition_text' not in doc and 'definition_html' not in doc:
-                raise SuperdeskApiError.badRequestError(
-                    message="Request is not valid",
-                    payload={"definition_text": "'definition_text' or 'definition_html' were not provided, "
-                                                "at least one parameter is required."}
-                )
+    def _validate_group_id(self, doc):
+        if 'group_id' not in doc:
+            raise SuperdeskApiError.badRequestError(
+                message="Request is not valid",
+                payload={"group_id": "This field is required"}
+            )
 
     def _fill_definition_text(self, doc):
-        # fill definition_text if it was not provided
-        if 'definition_html' in doc and 'definition_text' not in doc:
-            doc['definition_text'] = get_text(doc['definition_html'], content='html', lf_on_block=True).strip()
+        doc['definition_text'] = get_text(doc['definition_html'], content='html', lf_on_block=True).strip()
 
     def _validate_properties(self, doc):
         getattr(
@@ -157,13 +147,6 @@ class ConceptItemsService(BaseService):
             payload={"cpnat_type": "concept type 'cpnat:poi' is not supported"}
         )
 
-    def _setup_group_id(self, doc):
-        self.update(
-            id=doc['_id'],
-            updates={'group_id': doc['_id']},
-            original=doc
-        )
-
     def _setup_created_by(self, doc, original=None):
         if not original:
             doc['created_by'] = get_user().get('_id')
@@ -173,3 +156,7 @@ class ConceptItemsService(BaseService):
 
     def _setup_updated_by(self, doc):
         doc['updated_by'] = get_user().get('_id')
+
+    def _setup_group_id(self, doc):
+        if 'group_id' not in doc:
+            doc['group_id'] = str(uuid4())
