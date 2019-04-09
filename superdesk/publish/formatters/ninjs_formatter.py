@@ -173,7 +173,10 @@ class NINJSFormatter(Formatter):
         if extra_items:
             ninjs.setdefault(EXTRA_ITEMS, {}).update(extra_items)
 
-        if article.get(EMBARGO):
+        if article.get('embargoed'):
+            ninjs['embargoed'] = article['embargoed'].isoformat()
+
+        if article.get(EMBARGO):  # embargo set in superdesk overrides ingested one
             ninjs['embargoed'] = get_utc_schedule(article, EMBARGO).isoformat()
 
         if article.get('priority'):
