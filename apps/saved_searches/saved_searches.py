@@ -77,6 +77,10 @@ class SavedSearchesResource(Resource):
             'type': 'boolean',
             'default': False
         },
+        'shortcut': {
+            'type': 'boolean',
+            'default': False,
+        },
         'subscribers': {
             'type': 'dict',
             'schema': {
