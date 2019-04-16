@@ -31,7 +31,6 @@ def internal_destination_auto_publish(item, **kwargs):
     if item.get(ITEM_STATE) not in PUBLISH_STATES:
         raise InvalidStateTransitionError(message='Internal Destination auto publish macro can '
                                                   'only be called after publishing the item.')
-
     operation = item.get(ITEM_OPERATION)
     archive_action_service = get_resource_service(publish_services.get(operation))
     archive_service = get_resource_service('archive')
@@ -47,12 +46,17 @@ def internal_destination_auto_publish(item, **kwargs):
     req.max_results = 1
     overwrite_item = next((archive_service.get_from_mongo(req=req, lookup=None)), None)
 
+    # keep pubslish_schedule and schedule_settings in updates so that state can be set to scheduled
+    updates = {
+        PUBLISH_SCHEDULE: item[PUBLISH_SCHEDULE],
+        SCHEDULE_SETTINGS: item[SCHEDULE_SETTINGS]
+    }
     if item.get(ITEM_STATE) == CONTENT_STATE.PUBLISHED or not overwrite_item:
         new_id = archive_service.duplicate_content(item, state='routed', extra_fields=extra_fields)
-        get_resource_service('archive_publish').patch(
-            id=new_id,
-            updates={ITEM_STATE: item.get(ITEM_STATE), PROCESSED_FROM: item[config.ID_FIELD]}
-        )
+        updates[ITEM_STATE] = item.get(ITEM_STATE)
+        updates[PROCESSED_FROM] = item[config.ID_FIELD]
+
+        get_resource_service('archive_publish').patch(id=new_id, updates=updates)
     else:
         if overwrite_item:
             # get the schema fields
@@ -62,8 +66,9 @@ def internal_destination_auto_publish(item, **kwargs):
             # remove the keys
             archive_service.remove_after_copy(schema_item, delete_keys=keys_to_delete)
             # get the diff
-            updates = {key: val for key, val in schema_item.items()
-                       if overwrite_item.get(key) != val and not key.startswith("_")}
+            updates.update({key: val for key, val in schema_item.items()
+                            if overwrite_item.get(key) != val and not key.startswith("_")})
+
             archive_action_service.patch(id=overwrite_item[config.ID_FIELD],
                                          updates=updates)
 
