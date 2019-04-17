@@ -322,7 +322,7 @@ Feature: Fetch Items from Ingest
       {"_items": [
       	{
       		"family_id": "urn:newsml:localhost:5000:2019-03-31T20:37:43.126066:07067129-d906-412d-92c5-4a72d9796a64",
-      		"ingest_id": "urn:newsml:localhost:5000:2019-03-31T20:37:43.126066:07067129-d906-412d-92c5-4a72d9796a64",
+      		"ingest_id": "tag:localhost:2017:7ca07622-3b19-4d61-8daf-18500412d46b",
       		"operation": "fetch",
       		"sign_off": "abc",
       		"slugline": "TEST GLOBAL-OIL",

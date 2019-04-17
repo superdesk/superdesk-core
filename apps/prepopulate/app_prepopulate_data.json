@@ -575,6 +575,20 @@
           "is_closed": true
         }
     },
+    {
+        "resource":"ingest_providers",
+        "username": "admin",
+        "data": {
+          "name": "stt",
+          "feeding_service": "file",
+          "feed_parser": "stt_newsml",
+          "config": {"path": "/"},
+          "source": "stt",
+          "allow_remove_ingested" : true,
+          "is_closed": true
+        }
+    },
+
 
     {
         "data": {

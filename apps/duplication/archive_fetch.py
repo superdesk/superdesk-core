@@ -98,7 +98,8 @@ class FetchService(BaseService):
             dest_doc['versioncreated'] = archived
             send_to(doc=dest_doc, desk_id=desk_id, stage_id=stage_id)
             dest_doc[ITEM_STATE] = doc.get(ITEM_STATE, CONTENT_STATE.FETCHED)
-            dest_doc[INGEST_ID] = dest_doc[FAMILY_ID] = ingest_doc[config.ID_FIELD]
+            dest_doc[FAMILY_ID] = ingest_doc[config.ID_FIELD]
+            dest_doc[INGEST_ID] = self.__strip_version_from_guid(ingest_doc[GUID_FIELD], ingest_doc.get('version'))
             dest_doc[ITEM_OPERATION] = ITEM_FETCH
 
             remove_unwanted(dest_doc)
@@ -126,6 +127,19 @@ class FetchService(BaseService):
             push_item_move_notification(ingest_doc, doc, 'item:fetch')
 
         return id_of_fetched_items
+
+    def __strip_version_from_guid(self, guid, version):
+        """
+        Checks if guid contains the version for the ingested item and returns the guid without version
+        """
+        try:
+            if not version:
+                return guid
+
+            if guid.endswith(':{}'.format(str(version))):
+                return guid[:-1 * (len(str(version)) + 1)]
+        except Exception:
+            return guid
 
     def __fetch_associated_items(self, doc, desk, stage, state):
         """
