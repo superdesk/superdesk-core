@@ -49,7 +49,7 @@ from superdesk.io import get_feeding_service
 from superdesk.io.commands import update_ingest
 from superdesk.io.commands.update_ingest import LAST_ITEM_UPDATE
 from superdesk.io.feeding_services import ftp
-from superdesk.io.feed_parsers import XMLFeedParser, EMailRFC822FeedParser
+from superdesk.io.feed_parsers import XMLFeedParser, EMailRFC822FeedParser, STTNewsMLFeedParser
 from superdesk.utc import utcnow, get_expiry_date
 from superdesk.tests import get_prefixed_url, set_placeholder
 from apps.dictionaries.resource import DICTIONARY_FILE
@@ -585,13 +585,17 @@ def fetch_from_provider(context, provider_name, guid, routing_scheme=None, desk_
 
     provider_service = get_feeding_service(provider['feeding_service'])
 
-    if provider.get('name', '').lower() in ('aap', 'dpa', 'ninjs', 'email', 'ftp_ninjs'):
+    if provider.get('name', '').lower() in ('aap', 'dpa', 'ninjs', 'email', 'ftp_ninjs', 'stt'):
         if provider.get('name', '').lower() == 'ftp_ninjs':
             file_path = os.path.join(provider.get('config', {}).get('path_fixtures', ''), guid)
         else:
             file_path = os.path.join(provider.get('config', {}).get('path', ''), guid)
         feeding_parser = provider_service.get_feed_parser(provider)
-        if isinstance(feeding_parser, XMLFeedParser):
+        if isinstance(feeding_parser, STTNewsMLFeedParser):
+            with open(file_path, 'rb') as f:
+                xml_string = etree.etree.fromstring(f.read())
+                items = feeding_parser.parse(xml_string, provider)
+        elif isinstance(feeding_parser, XMLFeedParser):
             with open(file_path, 'rb') as f:
                 xml_string = etree.etree.fromstring(f.read())
                 items = [feeding_parser.parse(xml_string, provider)]
@@ -1997,7 +2001,7 @@ def validate_routed_item(context, rule_name, is_routed, is_transformed=False):
         for destination in rule.get('actions', {}).get(action, []):
             query = {
                 'and': [
-                    {'term': {'ingest_id': str(data['ingest'])}},
+                    {'term': {'family_id': str(data['ingest'])}},
                     {'term': {'task.desk': str(destination['desk'])}},
                     {'term': {'task.stage': str(destination['stage'])}},
                     {'term': {'state': state}}
@@ -2007,7 +2011,7 @@ def validate_routed_item(context, rule_name, is_routed, is_transformed=False):
 
             if is_routed:
                 assert len(item) > 0, 'No routed items found for criteria: ' + str(query)
-                assert item[0]['ingest_id'] == data['ingest']
+                assert item[0]['family_id'] == data['ingest']
                 assert item[0]['task']['desk'] == str(destination['desk'])
                 assert item[0]['task']['stage'] == str(destination['stage'])
                 assert item[0]['state'] == state

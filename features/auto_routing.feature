@@ -1184,3 +1184,103 @@ Feature: Auto Routing
           }]
         }
         """
+
+
+
+    @auth @provider @vocabulary
+    Scenario: Content is ingested and auto published
+        Given empty "desks"
+        Given the "validators"
+        """
+          [{"_id": "publish_text", "act": "auto_publish", "type": "text", "schema":{}}]
+        """
+        Given "filter_conditions"
+        """
+        [{
+            "_id": "123",
+            "name": "Headline Test",
+            "field": "headline",
+            "operator": "like",
+            "value": "Mikko"
+        }]
+        """
+        Given "content_filters"
+        """
+        [{
+            "_id": "1234567890abcd1234567890",
+            "name": "Headline Content",
+            "content_filter": [
+                {
+                    "expression": {
+                        "fc": ["123"]
+                    }
+                }
+            ]
+        }]
+        """
+        Given "subscribers"
+        """
+        [{
+          "_id": "sub-1",
+          "name":"Channel 1",
+          "media_type": "media",
+          "subscriber_type": "digital",
+          "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+          "codes": "Aaa",
+          "destinations":[{"name":"Test","format": "newsroom ninjs", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+        }]
+        """
+        When we post to "/desks"
+        """
+          {
+            "name": "Finance Desk", "members": [{"user": "#CONTEXT_USER_ID#"}]
+          }
+        """
+        Then we get response code 201
+        When we post to "/routing_schemes"
+        """
+        [
+          {
+            "name": "routing rule scheme 1",
+            "rules": [
+              {
+                "name": "Finance Rule 1",
+                "filter": "1234567890abcd1234567890",
+                "actions": {
+                  "fetch": [],
+                  "publish": [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "target_subscribers": [{"_id":"sub-1"}]}],
+                  "exit": true
+                }
+              }
+            ]
+          }
+        ]
+        """
+        Then we get response code 201
+        When we ingest with routing scheme "STT" "stt1.xml"
+        """
+        #routing_schemes._id#
+        """
+        When we get "/published"
+        Then we get list with 1 items
+        """
+        {"_items": [
+          {
+              "headline": "Mikko Moilanen siirtyy Revenion toimitusjohtajaksi",
+              "type": "text",
+              "auto_publish": true,
+              "ingest_id": "urn:newsml:stt.fi::102736761"
+          }
+        ]}
+        """
+        When we enqueue published
+        And we get "/publish_queue"
+        Then we get list with 1 items
+        """
+        {
+          "_items":
+            [
+              {"subscriber_id": "sub-1"}
+            ]
+        }
+        """
