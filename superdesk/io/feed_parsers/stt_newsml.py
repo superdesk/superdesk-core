@@ -39,7 +39,7 @@ class STTNewsMLFeedParser(NewsMLTwoFeedParser):
     SUBJ_QCODE_PREFIXES = {
         'stt-subj': None,
         'sttdepartment': 'sttdepartment',
-        'sttsubj': None,
+        'sttsubj': 'sttsubj',
         'sttdone1': 'sttdone1',
     }
 
