@@ -310,4 +310,3 @@ class STTSubjectTestCase(BaseSTTNewsMLTestCase):
             'qcode': '11006006',
             'name': 'heads of state',
         }, item['subject'])
-
