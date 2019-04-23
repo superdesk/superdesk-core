@@ -223,12 +223,14 @@ class STTAbstractTestCase(BaseSTTNewsMLTestCase):
             item['subject'],
             [
                 {'qcode': '9', 'name': 'Politiikka', 'scheme': 'sttdepartment'},
-                {'qcode': '11000000', 'name': 'politics'},
-                {'qcode': '11009000', 'name': 'parliament'},
-                {'qcode': '11000000', 'name': 'politics'},
-                {'qcode': '11010000', 'name': 'parties and movements'},
-                {'qcode': '11000000', 'name': 'politics'},
-                {'qcode': '11010000', 'name': 'parties and movements'},
+                {'qcode': '11000000', 'scheme': 'sttsubj', 'name': 'Politiikka'},
+                {'qcode': '11009000', 'scheme': 'sttsubj', 'name': 'Eduskunta Parlamentti'},
+                {'qcode': '11000000', 'scheme': 'sttsubj', 'name': 'Politiikka'},
+                {'qcode': '11010000', 'scheme': 'sttsubj', 'name': 'Puolueet Yhteiskunnalliset liikkeet '},
+                {'qcode': '11010999', 'scheme': 'sttsubj', 'name': 'Muut puolueet ja poliittiset ryhmät'},
+                {'qcode': '11000000', 'scheme': 'sttsubj', 'name': 'Politiikka'},
+                {'qcode': '11010000', 'scheme': 'sttsubj', 'name': 'Puolueet Yhteiskunnalliset liikkeet '},
+                {'qcode': '11010992', 'scheme': 'sttsubj', 'name': 'Kokoomus'},
                 {'name': 'Viiva', 'qcode': '1', 'scheme': 'sttversion'}
             ],
         )
@@ -289,3 +291,22 @@ class STTEndashTestCase(BaseSTTNewsMLTestCase):
     def test_source(self):
         item = self.item[0]
         self.assertEqual('STT-Sourcefabric', item['source'])
+
+
+class STTSubjectTestCase(BaseSTTNewsMLTestCase):
+    filename = 'stt_newsml_subject_test.xml'
+
+    def test_can_parse(self):
+        self.assertTrue(STTNewsMLFeedParser().can_parse(self.xml_root))
+
+    def test_subject(self):
+        item = self.item[0]
+        self.assertIn({
+            'qcode': '11006000',
+            'scheme': 'sttsubj',
+            'name': 'Julkinen hallinto',
+        }, item['subject'])
+        self.assertIn({
+            'qcode': '11006006',
+            'name': 'heads of state',
+        }, item['subject'])
