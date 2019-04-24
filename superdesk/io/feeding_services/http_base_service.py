@@ -134,24 +134,12 @@ class HTTPFeedingServiceBase(FeedingService):
                 Exception('{} are required.'.format(', '.join(required_keys)))
             )
 
-        url = self.config.get('url').strip()
-        if not url:
-            try:
-                url_field = next({f for f in self.fields if f['id'] == u'url'})
-            except StopIteration:
-                url_required = False
-            else:
-                url_required = url_field.get('required', False)
-            if url_required:
-                raise SuperdeskIngestError.notConfiguredError(
-                    Exception('URL is a required field.')
-                )
-        else:
-            # validate url
-            if not url.startswith('http'):
-                raise SuperdeskIngestError.notConfiguredError(
-                    Exception('URL must be a valid HTTP link.')
-                )
+        # validate url
+        url = self.config.get('url', '').strip()
+        if url and not url.startswith('http'):
+            raise SuperdeskIngestError.notConfiguredError(
+                Exception('URL must be a valid HTTP link.')
+            )
 
     def get_url(self, url=None, **kwargs):
         """Do an HTTP Get on URL
