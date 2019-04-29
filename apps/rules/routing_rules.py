@@ -483,10 +483,16 @@ class RoutingRuleSchemeService(BaseService):
         """Assigns the default values to the item that about to be auto published"""
 
         archive_item = get_resource_service('archive').find_one(req=None, _id=item)
+        default_values = self._assign_default_values(archive_item)
+        get_resource_service('archive').patch(item, default_values)
+
+    def _assign_default_values(self, archive_item):
+        """Assigns the default values to the item that about to be auto published"""
+
         default_values = {}
         default_values['headline'] = archive_item.get('headline') or ' '
         default_values['anpa_category'] = \
-            archive_item.get('anpa_category') or [{'qcode': 'a', 'name': 'Australian General News'}]
+            archive_item.get('anpa_category') or config.DEFAULT_CATEGORY_VALUE_FOR_AUTO_PUBLISHED_ARTICLES
         default_values['slugline'] = archive_item.get('slugline') or ' '
         default_values['body_html'] = archive_item.get('body_html') or '<p></p>'
-        get_resource_service('archive').patch(item, default_values)
+        return default_values

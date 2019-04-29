@@ -4,6 +4,9 @@ from unittest import mock
 
 from copy import deepcopy
 from datetime import datetime, timedelta
+
+import superdesk
+from superdesk.tests import TestCase
 from .routing_rules import Weekdays
 
 
@@ -344,3 +347,23 @@ class GetScheduledRoutingRulesMethodTestCase(RoutingRuleSchemeServiceTest):
         now = datetime(2015, 9, 15, 23, 59, 59, 999999)  # Tuesday
         result = self.instance._get_scheduled_routing_rules(rules, now)
         self.assertEqual(result, [])
+
+
+class SetDefaultValuesTestCase(TestCase):
+    def test_setting_default_values(self):
+
+        from .routing_rules import RoutingRuleSchemeService
+        instance = RoutingRuleSchemeService()
+        category = [{'qcode': 'a', 'name': 'Australian General News'}]
+        result = instance._assign_default_values({'anpa_category': category})
+        self.assertEqual(result['anpa_category'], [{'qcode': 'a', 'name': 'Australian General News'}])
+
+        with self.app.app_context():
+            result = instance._assign_default_values({})
+            self.assertIsNone(result['anpa_category'])
+
+            self.app.config['DEFAULT_CATEGORY_VALUE_FOR_AUTO_PUBLISHED_ARTICLES'] = \
+                [{'qcode': 'a', 'name': 'Australian General News'}]
+
+            result = instance._assign_default_values({})
+            self.assertEqual(result['anpa_category'], [{'qcode': 'a', 'name': 'Australian General News'}])
