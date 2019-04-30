@@ -589,8 +589,8 @@ DEFAULT_URGENCY_VALUE_FOR_MANUAL_ARTICLES = int(env('DEFAULT_URGENCY_VALUE_FOR_M
 DEFAULT_GENRE_VALUE_FOR_MANUAL_ARTICLES = env('DEFAULT_GENRE_VALUE_FOR_MANUAL_ARTICLES',
                                               [{'qcode': 'Article', 'name': 'Article (news)'}])
 
-#: Defines default value for category for ingested and auto published articles
-DEFAULT_CATEGORY_VALUE_FOR_AUTO_PUBLISHED_ARTICLES = env('DEFAULT_CATEGORY_VALUE_FOR_AUTO_PUBLISHED_ARTICLES', None)
+#: Defines default qcodes (comma separated) for category for ingested and auto published articles
+DEFAULT_CATEGORY_QCODES_FOR_AUTO_PUBLISHED_ARTICLES = env('DEFAULT_CATEGORY_QCODES_FOR_AUTO_PUBLISHED_ARTICLES', 'a')
 
 #: Defines default value for Priority to be set for ingested articles
 DEFAULT_PRIORITY_VALUE_FOR_INGESTED_ARTICLES = int(env('DEFAULT_PRIORITY_VALUE_FOR_INGESTED_ARTICLES', 6))
