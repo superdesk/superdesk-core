@@ -709,6 +709,7 @@ VALIDATOR_MEDIA_METADATA = {
     },
     "description_text": {
         "required": True,
+        "textarea": True,
     },
     "copyrightholder": {
         "required": False,
