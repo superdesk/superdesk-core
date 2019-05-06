@@ -26,6 +26,9 @@ Core Signals
 .. autodata:: item_update
     :annotation:
 
+.. autodata:: item_publish
+    :annotation:
+
 .. autodata:: item_published
     :annotation:
 
