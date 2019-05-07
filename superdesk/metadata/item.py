@@ -18,6 +18,7 @@ GUID_TAG = 'tag'
 GUID_FIELD = 'guid'
 GUID_NEWSML = 'newsml'
 INGEST_ID = 'ingest_id'
+INGEST_VERSION = 'ingest_version'
 FAMILY_ID = 'family_id'
 ASSOCIATIONS = 'associations'
 
@@ -87,6 +88,10 @@ metadata_schema = {
         'type': 'integer'
     },
     'ingest_id': {
+        'type': 'string',
+        'mapping': not_analyzed
+    },
+    'ingest_version': {
         'type': 'string',
         'mapping': not_analyzed
     },
