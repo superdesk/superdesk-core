@@ -1269,7 +1269,8 @@ Feature: Auto Routing
               "headline": "Mikko Moilanen siirtyy Revenion toimitusjohtajaksi",
               "type": "text",
               "auto_publish": true,
-              "ingest_id": "urn:newsml:stt.fi::102736761"
+              "ingest_id": "urn:newsml:stt.fi::102736761",
+              "ingest_version": "2"
           }
         ]}
         """
