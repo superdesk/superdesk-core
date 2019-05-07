@@ -235,7 +235,7 @@ class UpdateIngest(superdesk.Command):
                 if sync:
                     update_provider.apply(kwargs=kwargs)
                 else:
-                    update_provider.apply_async(expires=get_task_ttl(provider), kwargs=kwargs)
+                    update_provider.apply_async(expires=get_task_ttl(provider), kwargs=kwargs, serializer="eve/json")
 
 
 def update_last_item_updated(update, items):
