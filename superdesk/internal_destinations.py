@@ -10,10 +10,11 @@
 
 from copy import deepcopy
 from apps.tasks import send_to
-from superdesk import register_resource, item_published, get_resource_service, privilege
+from superdesk import register_resource, get_resource_service, privilege
 from superdesk.services import Service
 from superdesk.resource import Resource
 from superdesk.errors import StopDuplication
+from superdesk.signals import item_published
 from superdesk.metadata.item import PUBLISH_SCHEDULE, SCHEDULE_SETTINGS
 
 

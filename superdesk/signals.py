@@ -8,11 +8,25 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-__all__ = ['signals', 'item_published', 'item_update', 'item_fetched', 'item_moved']
+__all__ = [
+    'item_publish',
+    'item_published',
+    'item_update',
+    'item_fetched',
+    'item_moved',
+]
 
 import blinker
 
 signals = blinker.Namespace()
+
+#: Sent before item is published.
+#:
+#: .. versionadded:: 1.30
+#:
+#: :param sender: PublishService
+#: :param item: item to publish
+item_publish = signals.signal('item:publish')
 
 #: Sent when item is published.
 #:

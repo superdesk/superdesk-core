@@ -10,6 +10,7 @@
 
 import logging
 import superdesk
+import superdesk.signals as signals
 
 from copy import copy
 from copy import deepcopy
@@ -48,6 +49,7 @@ from apps.publish.published_item import LAST_PUBLISHED_VERSION, PUBLISHED,\
     PUBLISHED_IN_PACKAGE
 from superdesk.media.crop import CropService
 from flask_babel import _
+
 
 logger = logging.getLogger(__name__)
 
@@ -121,7 +123,7 @@ class BasePublishService(BaseService):
         push_content_notification([updates])
         self._import_into_legal_archive(updates)
         CropService().update_media_references(updates, original, True)
-        superdesk.item_published.send(self, item=original)
+        signals.item_published.send(self, item=original)
         packages = self.package_service.get_packages(original[config.ID_FIELD])
         if packages and packages.count() > 0:
             archive_correct = get_resource_service('archive_correct')
@@ -164,6 +166,7 @@ class BasePublishService(BaseService):
                 if updates.get(ASSOCIATIONS):
                     self._refresh_associated_items(updated)  # updates got lost with update
 
+                signals.item_publish.send(self, item=updated)
                 self._update_archive(original, updates, should_insert_into_versions=auto_publish)
                 self.update_published_collection(published_item_id=original[config.ID_FIELD], updated=updated)
 
