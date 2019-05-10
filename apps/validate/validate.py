@@ -202,6 +202,11 @@ class ValidateService(superdesk.Service):
                         schema['extra']['schema'].update({extra_field['_id']: get_validator_schema(rules)})
                         self._populate_extra(doc['validate'], extra_field['_id'])
                 content_type['schema'] = schema
+                try:
+                    # avoid errors when cv is removed and value is still there
+                    schema['subject']['schema']['schema']['scheme'].pop('allowed', None)
+                except KeyError:
+                    pass
                 return [content_type]
         lookup = {'act': doc['act'], 'type': doc[ITEM_TYPE]}
         if doc.get('embedded'):
