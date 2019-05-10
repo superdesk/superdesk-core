@@ -151,6 +151,18 @@ class STTNewsMLFeedParser(NewsMLTwoFeedParser):
                 if private_note:
                     item.setdefault('extra', {})['sttnote_private'] = private_note
 
+            # newsItem guid
+            if 'uri' in item:
+                item.setdefault('extra', {})['newsItem_guid'] = item['uri']
+
+            # newsItem altId
+            try:
+                alt_id = xml.find(self.qname('contentMeta')).find(self.qname('altId')).text
+                if alt_id:
+                    item.setdefault('extra', {})['sttidtype_textid'] = alt_id
+            except Exception:
+                pass
+
             return [item]
         except Exception as ex:
             raise ParserError.newsmlTwoParserError(ex, provider)

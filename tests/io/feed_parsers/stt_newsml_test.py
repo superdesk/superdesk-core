@@ -310,3 +310,15 @@ class STTSubjectTestCase(BaseSTTNewsMLTestCase):
             'qcode': '11006006',
             'name': 'heads of state',
         }, item['subject'])
+
+
+class STTExtraFieldsTestCase(BaseSTTNewsMLTestCase):
+    filename = 'stt_newsml_extra.xml'
+
+    def test_can_parse(self):
+        self.assertTrue(STTNewsMLFeedParser().can_parse(self.xml_root))
+
+    def test_subject(self):
+        item = self.item[0]
+        self.assertEqual(item['extra']['sttidtype_textid'], '117616076')
+        self.assertEqual(item['extra']['newsItem_guid'], 'urn:newsml:stt.fi::102725812')

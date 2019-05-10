@@ -1270,7 +1270,11 @@ Feature: Auto Routing
               "type": "text",
               "auto_publish": true,
               "ingest_id": "urn:newsml:stt.fi::102736761",
-              "ingest_version": "2"
+              "ingest_version": "2",
+              "extra": {
+                  "newsItem_guid": "urn:newsml:stt.fi::102736761",
+                  "sttidtype_textid" : "117641913"
+               }
           }
         ]}
         """
