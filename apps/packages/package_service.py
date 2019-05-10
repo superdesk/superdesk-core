@@ -26,9 +26,10 @@ from superdesk.utc import utcnow
 from superdesk.default_settings import VERSION
 from apps.templates.content_templates import render_content_template_by_id
 from flask_babel import _
+from superdesk.signals import signals
 
 logger = logging.getLogger(__name__)
-package_create_signal = superdesk.signals.signal('package.create')  # @UndefinedVariable
+package_create_signal = signals.signal('package.create')  # @UndefinedVariable
 
 
 def create_root_group(docs):

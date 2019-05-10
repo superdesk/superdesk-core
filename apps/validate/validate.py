@@ -177,7 +177,6 @@ class ValidateService(superdesk.Service):
         for doc in docs:
             test_doc = deepcopy(doc)
             doc['errors'] = self._validate(test_doc, **kwargs)
-
         return [doc['errors'] for doc in docs]
 
     def _get_validators(self, doc):
