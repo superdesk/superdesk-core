@@ -19,7 +19,7 @@ from superdesk.metadata.utils import item_url
 from apps.archive.common import generate_unique_id_and_name, remove_unwanted, \
     set_original_creator, insert_into_versions, ITEM_OPERATION, ITEM_FETCH
 from superdesk.metadata.utils import generate_guid
-from superdesk.metadata.item import GUID_TAG, INGEST_ID, FAMILY_ID, ITEM_STATE, \
+from superdesk.metadata.item import GUID_TAG, INGEST_ID, INGEST_VERSION, FAMILY_ID, ITEM_STATE, \
     CONTENT_STATE, GUID_FIELD
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from superdesk.resource import Resource, build_custom_hateoas
@@ -98,7 +98,9 @@ class FetchService(BaseService):
             dest_doc['versioncreated'] = archived
             send_to(doc=dest_doc, desk_id=desk_id, stage_id=stage_id)
             dest_doc[ITEM_STATE] = doc.get(ITEM_STATE, CONTENT_STATE.FETCHED)
-            dest_doc[INGEST_ID] = dest_doc[FAMILY_ID] = ingest_doc[config.ID_FIELD]
+            dest_doc[FAMILY_ID] = ingest_doc[config.ID_FIELD]
+            dest_doc[INGEST_ID] = self.__strip_version_from_guid(ingest_doc[GUID_FIELD], ingest_doc.get('version'))
+            dest_doc[INGEST_VERSION] = ingest_doc.get('version')
             dest_doc[ITEM_OPERATION] = ITEM_FETCH
 
             remove_unwanted(dest_doc)
@@ -126,6 +128,19 @@ class FetchService(BaseService):
             push_item_move_notification(ingest_doc, doc, 'item:fetch')
 
         return id_of_fetched_items
+
+    def __strip_version_from_guid(self, guid, version):
+        """
+        Checks if guid contains the version for the ingested item and returns the guid without version
+        """
+        try:
+            if not version:
+                return guid
+
+            if guid.endswith(':{}'.format(str(version))):
+                return guid[:-1 * (len(str(version)) + 1)]
+        except Exception:
+            return guid
 
     def __fetch_associated_items(self, doc, desk, stage, state):
         """
