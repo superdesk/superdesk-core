@@ -779,7 +779,8 @@ class ArchiveService(BaseService):
                 any(genre.get('qcode', '').lower() != BROADCAST_GENRE.lower() for genre in updates.get('genre')):
             raise SuperdeskApiError.badRequestError(_('Cannot change the genre for broadcast content.'))
 
-        if PUBLISH_SCHEDULE in updates or "schedule_settings" in updates:
+        if PUBLISH_SCHEDULE in updates and updates.get(PUBLISH_SCHEDULE) or \
+                "schedule_settings" in updates and any(v is not None for v in updates['schedule_settings'].values()):
             if is_item_in_package(original) and not force_unlock:
                 raise SuperdeskApiError.badRequestError(
                     _('This item is in a package and it needs to be removed before the item can be scheduled!'))
