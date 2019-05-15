@@ -33,7 +33,7 @@ from superdesk.tests import TestCase
 from superdesk.utc import utcnow
 
 
-def get_file(url):
+def get_file(url, request_kwargs=None):
     """Return file data tuple as returned by media_operations.download_file_from_url"""
     filename = basename(url)
     dirname = os.path.dirname(os.path.realpath(__file__))
