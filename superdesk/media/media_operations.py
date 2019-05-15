@@ -43,17 +43,21 @@ def get_file_name(file):
     return hash_file(file, hashlib.sha256())
 
 
-def download_file_from_url(url):
+def download_file_from_url(url, request_kwargs=None):
     """Download file from given url.
 
     In case url is relative it will prefix it with current host.
 
     :param url: file url
     """
+
+    if not request_kwargs:
+        request_kwargs = {}
+
     try:
-        rv = requests.get(url, timeout=(5, 25))
+        rv = requests.get(url, timeout=(5, 25), **request_kwargs)
     except requests.exceptions.MissingSchema:  # any route will do here, we only need host
-        rv = requests.get(urljoin(url_for('static', filename='x', _external=True), url), timeout=15)
+        rv = requests.get(urljoin(url_for('static', filename='x', _external=True), url), timeout=15, **request_kwargs)
     if rv.status_code not in (200, 201):
         raise SuperdeskApiError.internalError('Failed to retrieve file from URL: %s' % url)
     mime = rv.headers.get('content-type', 'image/jpeg').split(';')[0]
