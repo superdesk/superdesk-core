@@ -104,9 +104,16 @@ class SchemaValidator(Validator):
     def _validate_empty(self, empty, field, value):
         """Original validates only strings, adding a list check."""
         super()._validate_empty(empty, field, value)
-        if isinstance(value, list) and not value:
+        if field == "subject":
+            # for subject, we have to ignore all data with scheme
+            # as they are used for custom values
+            filtered = [v for v in value if not v.get('scheme')]
+            if not filtered:
+                self._error(field, REQUIRED_FIELD)
+
+        elif isinstance(value, list) and not value:
             self._error(field, REQUIRED_FIELD)
-        if isinstance(value, str) and value == '<p></p>':  # default value for editor3
+        elif isinstance(value, str) and value == '<p></p>':  # default value for editor3
             self._error(field, REQUIRED_FIELD)
 
     def _validate_enabled(self, *args):

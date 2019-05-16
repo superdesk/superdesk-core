@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.30] NOT RELEASED YET
+
+### Fixed
+
+- Fix subject required validation failing in some cases
+
 ## [1.29.1] 2019-05-28
 
 ### Fixed
