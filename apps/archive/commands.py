@@ -267,6 +267,9 @@ class RemoveExpiredContent(superdesk.Command):
                     if not is_expired:
                         break
 
+        # If this item is not expired then it is potentially keeping it's parent alive.
+        if not is_expired:
+            logger.info('{} Item ID: [{}] has not expired'.format(self.log_msg, item.get(config.ID_FIELD)))
         return is_expired
 
     def _get_associated_media_id(self, item):
