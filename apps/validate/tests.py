@@ -108,6 +108,20 @@ class ValidateMandatoryInListTest(TestCase):
 
         self.assertEqual(errors, [['SUBJECT is a required field']])
 
+    def test_validate_required_subject_with_cv(self):
+        """Test that subject required error is raised as expected when a custom vocabulary is used"""
+        self.app.data.insert('content_types', [
+            {'_id': 'foo', 'schema': {'subject': {'type': 'list', 'required': True}}}
+        ])
+
+        service = ValidateService()
+        errors = service.create([
+            {'act': 'test', 'type': 'test', 'validate': {'profile': 'foo', 'subject': [
+                {'qcode': 'test', 'name': 'test', 'scheme': 'custom_cv'}]}}
+        ])
+
+        self.assertEqual(errors, [['SUBJECT is a required field']])
+
     def test_validate_required_none_list(self):
         self.app.data.insert('content_types', [{
             '_id': 'foo',
