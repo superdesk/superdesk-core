@@ -180,10 +180,10 @@ class ValidateResource(superdesk.Resource):
 
 class ValidateService(superdesk.Service):
 
-    def create(self, docs, **kwargs):
+    def create(self, docs, fields=False, **kwargs):
         for doc in docs:
             test_doc = deepcopy(doc)
-            doc['errors'] = self._validate(test_doc, **kwargs)
+            doc['errors'] = self._validate(test_doc, fields=fields, **kwargs)
         return [doc['errors'] for doc in docs]
 
     def _get_validators(self, doc):
@@ -335,7 +335,7 @@ class ValidateService(superdesk.Service):
             for subject in item['subject']:
                 subject.setdefault('scheme', None)
 
-    def _validate(self, doc, **kwargs):
+    def _validate(self, doc, fields=False, **kwargs):
         use_headline = kwargs and 'headline' in kwargs
         validators = self._get_validators(doc)
         for validator in validators:
@@ -387,7 +387,11 @@ class ValidateService(superdesk.Service):
                         response.append(headline)
                     else:
                         response.append(message)
+            if fields:
+                return response, v.errors
             return response
         else:
             logger.warn('validator was not found for {}'.format(doc['act']))
+            if fields:
+                return [], {}
             return []

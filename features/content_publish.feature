@@ -1833,7 +1833,20 @@ Feature: Content Publishing
       And we publish "#archive._id#" with "publish" type and "published" state
       Then we get error 400
       """
-      {"_issues": {"validator exception": "[['DATELINE is a required field']]"}, "_status": "ERR"}
+      {
+        "_issues": {
+          "validator exception": "[['DATELINE is a required field']]",
+          "fields": {
+            "dateline": {
+              "located": "required field",
+              "date": "required field",
+              "source": "required field",
+              "text": "required field"
+            }
+          }
+        },
+        "_status": "ERR"
+      }
       """
 
     @auth
@@ -2994,7 +3007,7 @@ Feature: Content Publishing
       }
       """
 
-    @auth @wip
+    @auth
     Scenario: We can lock a published content and then correct it and then takedown the article
       Given the "validators"
       """
