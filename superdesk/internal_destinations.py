@@ -29,6 +29,7 @@ class InternalDestinationsResource(Resource):
         'desk': Resource.rel('desks', nullable=False, required=True),
         'stage': Resource.rel('stages', nullable=True),
         'macro': {'type': 'string', 'nullable': True},
+        'send_after_schedule': {'type': 'boolean'},
     }
 
     privileges = {'POST': 'internal_destinations',
@@ -57,6 +58,14 @@ def handle_item_published(sender, item, **extra):
                 continue
             if not filters_service.does_match(content_filter, item):
                 continue
+
+        if dest.get('send_after_schedule', False) and item.get('state') != 'published':
+            # if send_after_schedule is set to True and item state is other than published
+            # then don't execute
+            continue
+        elif item.get('state') == 'published':
+            item[PUBLISH_SCHEDULE] = None
+            item[SCHEDULE_SETTINGS] = {}
 
         new_item = deepcopy(item)
         send_to(new_item, desk_id=dest['desk'], stage_id=dest.get('stage'))

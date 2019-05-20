@@ -707,7 +707,7 @@ Feature: Internal Destinations
         """
         [{"name": "copy", "is_active": true,  "desk": "#destination_desk#", "macro": "Internal_Destination_Auto_Publish"}]
         """
-        When we publish "#archive._id#" with "publish" type and "published" state
+        When we publish "#archive._id#" with "publish" type and "scheduled" state
         """
         {
             "publish_schedule": "2099-05-19T10:15:00",
@@ -740,4 +740,54 @@ Feature: Internal Destinations
         """
         When we get "/published"
         Then we get list with 2 items
+
+    @auth
+    Scenario: Delay item creation for destinations on publish if the send_after_schedule is enabled for internal destinations
+        When we post to "archive" with success
+        """
+        [{
+            "guid": "123",
+            "type": "text",
+            "headline": "Take-1 headline",
+            "abstract": "Take-1 abstract",
+            "task": {
+                "user": "#CONTEXT_USER_ID#",
+                "desk": "#origin_desk#",
+                "stage": "#origin_stage#"
+            },
+            "body_html": "Body $10",
+            "state": "submitted",
+            "slugline": "Take-1 slugline",
+            "urgency": "4",
+            "pubstatus": "usable",
+            "subject":[{"qcode": "17004000", "name": "Statistics"}],
+            "anpa_category": [{"qcode": "A", "name": "Sport"}],
+            "anpa_take_key": "Take",
+            "publish_schedule": "2099-05-19T10:15:00",
+            "schedule_settings": {
+                "time_zone": "Europe/London",
+                "utc_publish_schedule": "2099-05-19T10:15:00+0000"
+            }
+        }]
+        """
+        Given "internal_destinations"
+        """
+        [{"name": "copy", "is_active": true,  "desk": "#destination_desk#", "macro": "Internal_Destination_Auto_Publish",
+        "send_after_schedule": true}]
+        """
+        When we publish "#archive._id#" with "publish" type and "scheduled" state
+        """
+        {
+            "publish_schedule": "2099-05-19T10:15:00",
+            "schedule_settings": {
+                "time_zone": "Europe/London",
+                "utc_publish_schedule": "2099-05-19T10:15:00+0000"
+            }
+        }
+        """
+        Then we get OK response
+        When we get "/published?where=%7B%22processed_from%22%3A%22123%22%7D"
+        Then we get list with 0 items
+        When we get "/published"
+        Then we get list with 1 items
 
