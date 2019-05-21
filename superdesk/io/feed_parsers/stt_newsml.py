@@ -51,7 +51,7 @@ class STTNewsMLFeedParser(NewsMLTwoFeedParser):
         try:
             item = self.parse_item(xml)
             if not item.get('headline'):
-                item['headline'] = text_utils.get_text(item.get('body_html', ''), 'html')[:100]
+                item['headline'] = text_utils.get_text(item.get('body_html', '') or '', 'html')[:100]
 
             # populate published for newsroom archive
             item.setdefault('firstpublished', item.get('versioncreated'))
@@ -168,7 +168,10 @@ class STTNewsMLFeedParser(NewsMLTwoFeedParser):
         elif body_elt.text:
             content['content'] = '<pre>' + body_elt.text + '</pre>'
             content['format'] = CONTENT_TYPE.PREFORMATTED
-        content['content'] = content['content'].replace('&lt;endash&gt;-&lt;/endash&gt;', '-')
+
+        if content.get('content'):
+            content['content'] = content['content'].replace('&lt;endash&gt;-&lt;/endash&gt;', '-')
+
         return content
 
     def datetime(self, value):
