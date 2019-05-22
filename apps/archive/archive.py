@@ -115,6 +115,41 @@ def update_associations(doc):
     doc[ASSOCIATIONS].update(mediaList)
 
 
+def flush_renditions(updates, original):
+    """Removes incorrect custom renditions from `updates`.
+
+    Sometimes, when image (association) in `updates` is small, it can't fill all custom renditions,
+    in this case, after merge of `updates` and `original`, custom renditions will point to old values from `original`,
+    which is wrong.
+    This function finds such cases and removes them.
+
+    :param dict updates: updates for the document
+    :param original: original is document
+    """
+    if ASSOCIATIONS not in original or ASSOCIATIONS not in updates or not updates[ASSOCIATIONS]:
+        return
+
+    default_renditions = ('original', 'baseImage', 'thumbnail', 'viewImage')
+
+    for key in [k for k in updates[ASSOCIATIONS] if k in original[ASSOCIATIONS]]:
+        try:
+            new_href = updates[ASSOCIATIONS][key]['renditions']['original']['href']
+            old_href = original[ASSOCIATIONS][key]['renditions']['original']['href']
+        except (KeyError, TypeError):
+            continue
+        else:
+            if new_href != old_href:
+                new_renditions = [
+                    r for r in updates[ASSOCIATIONS][key]['renditions'] if r not in default_renditions
+                ]
+                old_renditions = [
+                    r for r in original[ASSOCIATIONS][key]['renditions'] if r not in default_renditions
+                ]
+                for old_rendition in old_renditions:
+                    if old_rendition not in new_renditions:
+                        updates[ASSOCIATIONS][key]['renditions'][old_rendition] = None
+
+
 class ArchiveVersionsResource(Resource):
     schema = item_schema()
     extra_response_fields = extra_response_fields
@@ -264,7 +299,7 @@ class ArchiveService(BaseService):
         self._add_system_updates(original, updates, user)
         self._add_desk_metadata(updates, original)
         self._handle_media_updates(updates, original, user)
-        self._flush_renditions(updates, original)
+        flush_renditions(updates, original)
 
         # send signal
         superdesk.item_update.send(self, updates=updates, original=original)
@@ -897,30 +932,6 @@ class ArchiveService(BaseService):
         :param original: original item version before update
         """
         return get_resource_service('desks').apply_desk_metadata(updates, original)
-
-    def _flush_renditions(self, updates, original):
-        if ASSOCIATIONS not in original or ASSOCIATIONS not in updates or not updates[ASSOCIATIONS]:
-            return
-
-        default_renditions = ('original', 'baseImage', 'thumbnail', 'viewImage')
-
-        for key in [k for k in updates[ASSOCIATIONS] if k in original[ASSOCIATIONS]]:
-            try:
-                new_href = updates[ASSOCIATIONS][key]['renditions']['original']['href']
-                old_href = original[ASSOCIATIONS][key]['renditions']['original']['href']
-            except (KeyError, TypeError):
-                continue
-            else:
-                if new_href != old_href:
-                    new_renditions = [
-                        r for r in updates[ASSOCIATIONS][key]['renditions'] if r not in default_renditions
-                    ]
-                    old_renditions = [
-                        r for r in original[ASSOCIATIONS][key]['renditions'] if r not in default_renditions
-                    ]
-                    for old_rendition in old_renditions:
-                        if old_rendition not in new_renditions:
-                            updates[ASSOCIATIONS][key]['renditions'][old_rendition] = None
 
     def _is_related_content(self, item_name):
         related_content = list(
