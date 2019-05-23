@@ -52,10 +52,20 @@ def register_macros():
     print(macro_modules, file=open(os.devnull, 'w'))
 
     for macro_module in macro_modules:
+        replace_type = macro_module.replace_type if hasattr(macro_module, 'replace_type') else 'no-replace'
+        '''
+         replace_type:
+             'no-replace': no replace action will be performed
+             'simple-replace': will detect changes from backend and will perform a replace that will
+                 not preserve any style
+             'keep-style-replace': will detect changes from backend and will perform a replace that
+                 will not preserve any set style
+        '''
         kwargs = {'name': macro_module.name,
                   'callback': macro_module.callback,
                   'access_type': macro_module.access_type,
-                  'action_type': macro_module.action_type}
+                  'action_type': macro_module.action_type,
+                  'replace_type': replace_type}
 
         options = ['label', 'order', 'shortcut', 'from_languages', 'to_languages', 'group']
         for field in options:

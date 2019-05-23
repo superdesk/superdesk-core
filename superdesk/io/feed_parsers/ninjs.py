@@ -33,7 +33,7 @@ class NINJSFeedParser(FeedParser):
     direct_copy_properties = ('usageterms', 'language', 'headline', 'copyrightnotice',
                               'urgency', 'pubstatus', 'mimetype', 'copyrightholder', 'ednote',
                               'body_text', 'body_html', 'slugline', 'keywords',
-                              'source', 'extra', 'byline', 'description_text', 'profile')
+                              'extra', 'byline', 'description_text', 'profile')
 
     items = []
 
@@ -70,6 +70,9 @@ class NINJSFeedParser(FeedParser):
             if ninjs.get(copy_property) is not None:
                 item[copy_property] = ninjs[copy_property]
 
+        if ninjs.get('source'):
+            item['original_source'] = ninjs['source']
+
         if ninjs.get('priority'):
             item['priority'] = int(ninjs['priority'])
         else:
@@ -90,17 +93,17 @@ class NINJSFeedParser(FeedParser):
         if ninjs.get('firstcreated'):
             item['firstcreated'] = self.datetime(ninjs.get('firstcreated'))
 
-        if ninjs.get('associations', {}).get('featuremedia'):
-            child_ninjs = ninjs.get('associations', {}).get('featuremedia')
-            if child_ninjs:
-                self.items.append(self._transform_from_ninjs(child_ninjs))
-                if child_ninjs.get('type') == 'picture' and child_ninjs.get('body_text'):
-                    child_ninjs['alt_text'] = child_ninjs.get('body_text')
-            item['associations'] = deepcopy(ninjs.get('associations'))
-            # we don't want strings for versioncreated
-            for metadata in item['associations'].values():
-                if metadata.get('versioncreated'):
-                    metadata['versioncreated'] = self.datetime(metadata['versioncreated'])
+        if ninjs.get('associations'):
+            item['associations'] = {}
+
+        for key, associated_item in ninjs.get('associations', {}).items():
+            if associated_item:
+                self.items.append(self._transform_from_ninjs(associated_item))
+                if associated_item.get('type') == 'picture' and associated_item.get('body_text'):
+                    associated_item['alt_text'] = associated_item.get('body_text')
+                if associated_item.get('versioncreated'):
+                    associated_item['versioncreated'] = self.datetime(associated_item['versioncreated'])
+                item['associations'][key] = deepcopy(associated_item)
 
         if ninjs.get('renditions', {}).get('baseImage'):
             item['renditions'] = {'baseImage': {'href': ninjs.get('renditions', {}).get('original', {}).get('href')}}
@@ -126,7 +129,14 @@ class NINJSFeedParser(FeedParser):
         return item
 
     def _format_qcodes(self, items):
-        return [{'name': item.get('name'), 'qcode': item.get('code')} for item in items]
+        subjects = []
+        for item in items:
+            subject = {'name': item.get('name'), 'qcode': item.get('code')}
+            if item.get('scheme'):
+                subject['scheme'] = item.get('scheme')
+            subjects.append(subject)
+
+        return subjects
 
     def datetime(self, string):
         try:

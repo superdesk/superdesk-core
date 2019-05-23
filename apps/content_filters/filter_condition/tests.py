@@ -18,9 +18,9 @@ from datetime import timedelta
 from apps.content_filters.filter_condition.filter_condition_service import FilterConditionService
 from apps.content_filters.filter_condition.filter_condition import FilterCondition
 from apps.content_filters.filter_condition.filter_condition_operator import FilterConditionOperator
+from apps.prepopulate.app_populate import AppPopulateCommand
 from superdesk import get_resource_service
 from superdesk.tests import TestCase
-from superdesk.vocabularies.commands import VocabulariesPopulateCommand
 
 
 class FilterConditionTests(TestCase):
@@ -46,7 +46,10 @@ class FilterConditionTests(TestCase):
                                  [{'qcode': 'a', 'name': 'Aus News'}]},
                              {'_id': '10', 'body_html': '<p>Mention<p>', 'embargo': utcnow(),
                              'schedule_settings': {'utc_embargo': utcnow() - timedelta(minutes=20)}},
-                             {'_id': '11', 'place': [{'qcode': 'NSW', 'name': 'NSW'}], 'state': 'fetched'}]
+                             {'_id': '11', 'place': [{'qcode': 'NSW', 'name': 'NSW'}], 'state': 'fetched'},
+                             {'_id': '12', 'body_html': '<div>&#13;\n&#13;\n<body dir=\"ltr\">&#13;\n<div>&#13;\n'
+                                                        '<span>SDA</span><br/>&#13;\n</div>&#13;\n&#13;\n</body>'
+                                                        '&#13;\n</div>', 'embargo': utcnow()}]
 
             self.app.data.insert('archive', self.articles)
 
@@ -129,7 +132,7 @@ class FilterConditionTests(TestCase):
         with self.app.app_context():
             docs = get_resource_service('archive'). \
                 get_from_mongo(req=self.req, lookup=query)
-            self.assertEqual(10, docs.count())
+            self.assertEqual(11, docs.count())
             self.assertTrue('5' not in [d['_id'] for d in docs])
 
     def test_mongo_using_priority_compare_lte_filter(self):
@@ -156,7 +159,7 @@ class FilterConditionTests(TestCase):
         with self.app.app_context():
             docs = get_resource_service('archive'). \
                 get_from_mongo(req=self.req, lookup=query)
-            self.assertEqual(10, docs.count())
+            self.assertEqual(11, docs.count())
 
     def test_mongo_using_desk_filter_eq(self):
         f = FilterCondition('desk', 'eq', '1')
@@ -279,7 +282,7 @@ class FilterConditionTests(TestCase):
         with self.app.app_context():
             docs = get_resource_service('archive'). \
                 get_from_mongo(req=self.req, lookup=query)
-            self.assertEqual(10, docs.count())
+            self.assertEqual(11, docs.count())
             doc_ids = [d['_id'] for d in docs]
             self.assertTrue('2' not in doc_ids)
 
@@ -299,7 +302,7 @@ class FilterConditionTests(TestCase):
         with self.app.app_context():
             docs = get_resource_service('archive'). \
                 get_from_mongo(req=self.req, lookup=query)
-            self.assertEqual(8, docs.count())
+            self.assertEqual(9, docs.count())
             doc_ids = [d['_id'] for d in docs]
             self.assertTrue('1' in doc_ids)
             self.assertTrue('2' in doc_ids)
@@ -567,6 +570,10 @@ class FilterConditionTests(TestCase):
         f = FilterCondition('body_html', 'startswith', 'men')
         self.assertTrue(f.does_match(self.articles[9]))
 
+    def test_does_match_with_startswith_filter_html_field_with_fluff(self):
+        f = FilterCondition('body_html', 'startswith', 'SDA')
+        self.assertTrue(f.does_match(self.articles[11]))
+
     def test_does_match_with_endswith_filter(self):
         f = FilterCondition('headline', 'endswith', 'Que')
         self.assertFalse(f.does_match(self.articles[0]))
@@ -723,7 +730,7 @@ class FilterConditionTests(TestCase):
         filter_condition5 = {'field': 'urgency', 'operator': 'nin', 'value': '5'}
         filter_condition6 = {'field': 'headline', 'operator': 'like', 'value': 'tor'}
         with self.app.app_context():
-            cmd = VocabulariesPopulateCommand()
+            cmd = AppPopulateCommand()
             filename = os.path.join(os.path.abspath(
                 os.path.dirname("apps/prepopulate/data_init/vocabularies.json")), "vocabularies.json")
             cmd.run(filename)

@@ -25,7 +25,7 @@ from apps.publish.content.common import BasePublishService
 from apps.publish.content.publish import ArchivePublishService
 from apps.publish.enqueue import enqueue_published, get_enqueue_service
 from apps.publish.published_item import LAST_PUBLISHED_VERSION
-from apps.validators import ValidatorsPopulateCommand
+from apps.prepopulate.app_populate import AppPopulateCommand
 from superdesk import get_resource_service, get_backend
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTENT_TYPE
 from superdesk.metadata.packages import RESIDREF
@@ -259,7 +259,7 @@ class ArchivePublishTestCase(TestCase):
         with open(self.filename, "w+") as file:
             json.dump(self.json_data, file)
         init_app(self.app)
-        ValidatorsPopulateCommand().run(self.filename)
+        AppPopulateCommand().run(self.filename)
 
         self.app.media.url_for_media = MagicMock(return_value='url_for_media')
         self._put = self.app.media.put
@@ -428,7 +428,7 @@ class ArchivePublishTestCase(TestCase):
             }
         }
         get_resource_service(ARCHIVE).patch(id=doc['_id'], updates=updates)
-        get_resource_service(ARCHIVE_PUBLISH).patch(id=doc['_id'], updates={ITEM_STATE: CONTENT_STATE.SCHEDULED})
+        get_resource_service(ARCHIVE_PUBLISH).patch(id=doc['_id'], updates=updates)
         enqueue_published()
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(0, queue_items.count())
@@ -446,7 +446,7 @@ class ArchivePublishTestCase(TestCase):
             }
         }
         get_resource_service(ARCHIVE).patch(id=doc['_id'], updates=updates)
-        get_resource_service(ARCHIVE_PUBLISH).patch(id=doc['_id'], updates={ITEM_STATE: CONTENT_STATE.SCHEDULED})
+        get_resource_service(ARCHIVE_PUBLISH).patch(id=doc['_id'], updates=updates)
         queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(0, queue_items.count())
         schedule_in_past = utcnow() + timedelta(minutes=-10)
@@ -638,7 +638,7 @@ class ArchivePublishTestCase(TestCase):
         self.assertTrue(BasePublishService().is_targeted(doc))
 
     def test_targeted_for_includes_digital_subscribers(self):
-        ValidatorsPopulateCommand().run(self.filename)
+        AppPopulateCommand().run(self.filename)
         updates = {'target_regions': [{'qcode': 'NSW', 'name': 'New South Wales', 'allow': True}]}
         doc_id = self.articles[5][config.ID_FIELD]
         get_resource_service(ARCHIVE).patch(id=doc_id, updates=updates)
@@ -660,7 +660,7 @@ class ArchivePublishTestCase(TestCase):
             request.args = {'source': json.dumps(query), 'aggregations': 0}
             return self.app.data.find(PUBLISHED, req=request, lookup=None)
 
-        ValidatorsPopulateCommand().run(self.filename)
+        AppPopulateCommand().run(self.filename)
         get_resource_service(ARCHIVE).patch(id=self.articles[1][config.ID_FIELD],
                                             updates={'publish_schedule': None})
 

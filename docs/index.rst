@@ -54,6 +54,7 @@ works and can be developed further.
     extending
     authentication
     cli
+    signals
 
 Additional topics
 -----------------

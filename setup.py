@@ -21,6 +21,7 @@ install_requires = [
     'flask-mail>=0.9,<0.10',
     'flask-script>=2.0.5,<3.0',
     'flask_pymongo>=0.5.2,<1.0',
+    'flask-babel==0.12.2',
     'pillow>=3.0,<=5.0',
     'arrow>=0.4,<=0.13',
     'asyncio>=3.4,<3.5',
@@ -38,11 +39,10 @@ install_requires = [
     'tzlocal>=1.2.2,<2.0',
     'raven[flask]>=5.10,<7.0',
     'requests>=2.7.0,<3.0',
-    'httmock>=1.2.3,<1.3',
     'boto3>=1.1.4,<1.6',
     'websockets>=3.0,<7.0',
     'mongolock>=1.3.4,<1.4',
-    'PyYAML>=3.11,<4.0',
+    'PyYAML>=4.2b1,<5.0',
     'lxml>=3.8,<4.2',
     'python-twitter==3.3',
     'chardet<4.0',
@@ -59,17 +59,19 @@ package_data = {
         'io/data/*.json',
         'data_updates/*.py',
         'data_updates/*.js',
+        'translations/*.po',
+        'translations/*.mo',
     ],
     'apps': [
         'prepopulate/*.json',
         'prepopulate/data_init/*.json',
         'io/data/*.json',
-    ]
+    ],
 }
 
 setup(
     name='Superdesk-Core',
-    version='1.27',
+    version='1.29rc1',
     description='Superdesk Core library',
     long_description=LONG_DESCRIPTION,
     author='petr jasek',

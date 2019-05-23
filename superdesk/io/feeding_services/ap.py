@@ -12,37 +12,24 @@
 import logging
 
 from superdesk.io.registry import register_feeding_service
-from superdesk.io.feeding_services import FeedingService
+from superdesk.io.feeding_services.http_base_service import HTTPFeedingServiceBase
 from superdesk.errors import IngestApiError, SuperdeskIngestError
 from lxml import etree
-import requests
 
 logger = logging.getLogger(__name__)
-URL = 'https://syndication.ap.org/AP.Distro.Feed/GetFeed.aspx'
 NS = {'iptc': 'http://iptc.org/std/nar/2006-10-01/'}
 
 
-class APFeedingService(FeedingService):
+class APFeedingService(HTTPFeedingServiceBase):
     """
     Feeding Service class which can retrieve articles from Associated Press web service
     """
 
     NAME = 'ap'
 
-    ERRORS = [IngestApiError.apiRequestError().get_error_description(),
-              SuperdeskIngestError.notConfiguredError().get_error_description()]
-
     label = 'AP feed API'
 
-    fields = [
-        {
-            'id': 'username', 'type': 'text', 'label': 'Username',
-            'placeholder': 'Username', 'required': True
-        },
-        {
-            'id': 'password', 'type': 'password', 'label': 'Password',
-            'placeholder': 'Password', 'required': True
-        },
+    fields = HTTPFeedingServiceBase.AUTH_FIELDS + [
         {
             'id': 'idList', 'type': 'text', 'label': 'Id List',
             'placeholder': 'use coma separated ids for multiple values', 'required': False
@@ -60,6 +47,7 @@ class APFeedingService(FeedingService):
             'required': True,
         }
     ]
+    HTTP_URL = 'https://syndication.ap.org/AP.Distro.Feed/GetFeed.aspx'
 
     def config_test(self, provider=None):
         super().config_test(provider)
@@ -67,15 +55,13 @@ class APFeedingService(FeedingService):
     def _update(self, provider, update):
         try:
             config = provider['config']
-            user = config['username']
-            password = config['password']
             id_list = config['idList']
             # before "products" was hardcoded as value for "idListType"
             id_list_type = config.get('idListType', 'products')
-            if not user.strip() or not password.strip() or not id_list.strip():
+            if not id_list.strip():
                 raise KeyError
         except KeyError:
-            raise SuperdeskIngestError.notConfiguredError(Exception('username, password and idList are needed'))
+            raise SuperdeskIngestError.notConfiguredError(Exception('idList is needed'))
 
         # we remove spaces and empty values from id_list to do a clean list
         id_list = ','.join([id_.strip() for id_ in id_list.split(',') if id_.strip()])
@@ -94,10 +80,7 @@ class APFeedingService(FeedingService):
             params['minDateTime'] = min_date_time
             params['sequenceNumber'] = sequence_number
 
-        try:
-            r = requests.get(URL, auth=(user, password), params=params)
-        except Exception:
-            raise IngestApiError.apiRequestError(Exception('error while doing the request'))
+        r = self.get_url(params=params)
 
         try:
             root_elt = etree.fromstring(r.content)

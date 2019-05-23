@@ -3,7 +3,7 @@ Feature: Places
     @auth
     Scenario: Places autocomplete 
         When we get "/places_autocomplete?name=koberice&lang=cs"
-        Then we get list with 5 items
+        Then we get list with 3 items
         """
         {
             "_items": [
@@ -30,8 +30,10 @@ Feature: Places
         Given config update
         """
         {
-            "GEONAMES_FEATURE_CLASSES": ["P"]
+            "GEONAMES_FEATURE_CLASSES": ["P", "A"]
         }
         """
         When we get "/places_autocomplete?name=koberice&lang=cs"
+        Then we get list with 5 items
+        When we get "/places_autocomplete?name=koberice&lang=cs&featureClass=P"
         Then we get list with 3 items

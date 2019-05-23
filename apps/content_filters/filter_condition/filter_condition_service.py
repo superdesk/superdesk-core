@@ -12,6 +12,7 @@ import re
 from superdesk.errors import SuperdeskApiError
 from superdesk import get_resource_service
 from superdesk.services import BaseService
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +32,8 @@ class FilterConditionService(BaseService):
         referenced_filters = self._get_referenced_filter_conditions(lookup.get('_id'))
         if referenced_filters.count() > 0:
             references = ','.join([pf['name'] for pf in referenced_filters])
-            raise SuperdeskApiError.badRequestError('Filter condition has been referenced in content filter: {}'
-                                                    .format(references))
+            raise SuperdeskApiError.badRequestError(_(
+                'Filter condition has been referenced in content filter: {references}').format(references=references))
         return super().delete(lookup)
 
     def _get_referenced_filter_conditions(self, id):
@@ -45,13 +46,13 @@ class FilterConditionService(BaseService):
         for doc in docs:
             parameter = [p for p in parameters if p['field'] == doc['field']]
             if not parameter or len(parameter) == 0:
-                raise SuperdeskApiError.badRequestError(
-                    'Filter condition:{} has unidentified field: {}'
-                    .format(doc['name'], doc['field']))
+                raise SuperdeskApiError.badRequestError(_(
+                    'Filter condition:{condition} has unidentified field: {field}')
+                    .format(condition=doc['name'], field=doc['field']))
             if doc['operator'] not in parameter[0]['operators']:
-                raise SuperdeskApiError.badRequestError(
-                    'Filter condition:{} has unidentified operator: {}'
-                    .format(doc['name'], doc['operator']))
+                raise SuperdeskApiError.badRequestError(_(
+                    'Filter condition:{condition} has unidentified operator: {operator}')
+                    .format(condition=doc['name'], operator=doc['operator']))
 
     def _check_equals(self, docs):
         """Checks if any of the filter conditions in the docs already exists
@@ -66,8 +67,9 @@ class FilterConditionService(BaseService):
                 if '_id' in doc and doc['_id'] == existing_doc['_id']:
                     continue
                 if self._are_equal(doc, existing_doc):
-                    raise SuperdeskApiError.badRequestError(
-                        'Filter condition:{} has identical settings'.format(existing_doc['name']))
+                    raise SuperdeskApiError.badRequestError(_(
+                        'Filter condition:{condition} has identical settings')
+                        .format(condition=existing_doc['name']))
 
     def check_similar(self, filter_condition):
         """Checks for similar items

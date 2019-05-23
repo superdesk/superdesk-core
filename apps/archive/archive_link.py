@@ -21,6 +21,7 @@ from apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification
 import logging
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +55,7 @@ class ArchiveLinkService(Service):
 
         if not target.get('rewrite_of'):
             # there is nothing to do
-            raise SuperdeskApiError.badRequestError("Only updates can be unlinked!")
+            raise SuperdeskApiError.badRequestError(_("Only updates can be unlinked!"))
 
         if target.get('rewrite_of'):
             updates['rewrite_of'] = None

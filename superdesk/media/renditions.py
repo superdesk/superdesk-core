@@ -267,7 +267,7 @@ def get_renditions_spec(without_internal_renditions=False, no_custom_crops=False
     return rendition_spec
 
 
-def update_renditions(item, href, old_item):
+def update_renditions(item, href, old_item, request_kwargs=None):
     """Update renditions for an item.
 
     If the old_item has renditions uploaded in to media then the old rendition details are
@@ -291,7 +291,7 @@ def update_renditions(item, href, old_item):
                 item['filemeta_json'] = old_item.get('filemeta_json')
                 return
 
-        content, filename, content_type = download_file_from_url(href)
+        content, filename, content_type = download_file_from_url(href, request_kwargs)
         file_type, ext = content_type.split('/')
         metadata = process_file(content, file_type)
         file_guid = app.media.put(content, filename, content_type, metadata)

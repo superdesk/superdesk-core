@@ -22,6 +22,7 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification
 from superdesk.users.services import current_user_has_privilege
 from apps.auth import get_user_id
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +76,10 @@ class SavedSearchesResource(Resource):
         'is_global': {
             'type': 'boolean',
             'default': False
+        },
+        'shortcut': {
+            'type': 'boolean',
+            'default': False,
         },
         'subscribers': {
             'type': 'dict',
@@ -156,7 +161,7 @@ class SavedSearchesService(BaseService):
         for doc in docs:
             doc['user'] = get_user_id(required=True)
             if 'subscribers' in doc:
-                raise SuperdeskApiError.forbiddenError("User's subscriptions are not allowed on create")
+                raise SuperdeskApiError.forbiddenError(_("User's subscriptions are not allowed on create"))
 
             self.process(doc)
         push_notification(UPDATE_NOTIFICATION)
@@ -181,7 +186,7 @@ class SavedSearchesService(BaseService):
         if not subscribers:
             return
         if not current_user_has_privilege('saved_searches_subscriptions'):
-            raise SuperdeskApiError.forbiddenError('Unauthorized to modify subscriptions.')
+            raise SuperdeskApiError.forbiddenError(_('Unauthorized to modify subscriptions.'))
 
         session_user = get_user_id(required=True)
         ori_subscribers = original.get('subscribers', {})
@@ -198,7 +203,7 @@ class SavedSearchesService(BaseService):
         if not updated_subscribers.issubset({session_user}) or not removed_subscribers.issubset({session_user}):
             # user tries to modify other user(s) subscriptions, is she allowed to?
             if not current_user_has_privilege('saved_searches_subscriptions_admin'):
-                raise SuperdeskApiError.forbiddenError("Unauthorized to modify other users' subscriptions.")
+                raise SuperdeskApiError.forbiddenError(_("Unauthorized to modify other users' subscriptions."))
 
     def on_update(self, updates, original):
         """Runs on update.
@@ -262,7 +267,7 @@ class SavedSearchesService(BaseService):
         """
 
         if not doc['filter'].get('query'):
-            raise SuperdeskApiError.badRequestError('Search cannot be saved without a filter!')
+            raise SuperdeskApiError.badRequestError(_('Search cannot be saved without a filter!'))
 
         return self.get_location(doc), build_elastic_query(
             {k: v for k, v in doc['filter']['query'].items() if k != 'repo'})
@@ -282,7 +287,8 @@ class SavedSearchesService(BaseService):
             return get_resource_service('search_providers_proxy').get(req=parsed_request, lookup={})
         except Exception as e:
             logger.exception(e)
-            raise SuperdeskApiError.badRequestError('Fail to validate the filter against %s.' % index)
+            raise SuperdeskApiError.badRequestError(
+                _('Fail to validate the filter against {index}.').format(index=index))
 
     def on_fetched_item(self, doc):
         enhance_savedsearch(doc)
@@ -301,9 +307,9 @@ class SavedSearchesService(BaseService):
         session_user = get_user(required=True)
         if str(session_user['_id']) != str(doc_user_id):
             if not doc_is_global:
-                raise SuperdeskApiError.forbiddenError('Unauthorized to modify other user\'s local search.')
+                raise SuperdeskApiError.forbiddenError(_('Unauthorized to modify other user\'s local search.'))
             elif not current_user_has_privilege('global_saved_searches'):
-                raise SuperdeskApiError.forbiddenError('Unauthorized to modify global search.')
+                raise SuperdeskApiError.forbiddenError(_('Unauthorized to modify global search.'))
 
 
 class SavedSearchItemsResource(Resource):
@@ -328,7 +334,7 @@ class SavedSearchItemsService(SavedSearchesService):
         saved_search = get_resource_service('saved_searches').find_one(req=None, _id=saved_search_id)
 
         if not saved_search:
-            raise SuperdeskApiError.notFoundError("Invalid Saved Search")
+            raise SuperdeskApiError.notFoundError(_("Invalid Saved Search"))
 
         saved_search['filter'] = decode_filter(saved_search.get('filter'))
 

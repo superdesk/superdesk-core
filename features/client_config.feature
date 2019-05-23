@@ -11,7 +11,8 @@ Feature: Client Config
                 "attachments_max_size": 8388608,
                 "japanese_characters_per_minute": 600,
                 "schema": {},
-                "editor": {}
+                "editor": {},
+                "publish_content_expiry_minutes": 0
             }
         }
         """

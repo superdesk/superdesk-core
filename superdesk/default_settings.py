@@ -259,6 +259,10 @@ CELERY_TASK_ROUTES = {
         'queue': celery_queue('publish'),
         'routing_key': 'publish.transmit'
     },
+    'superdesk.publish.publish_content.transmit_item': {
+        'queue': celery_queue('publish'),
+        'routing_key': 'publish.transmit'
+    },
     'apps.publish.enqueue.enqueue_published': {
         'queue': celery_queue('publish'),
         'routing_key': 'publish.enqueue'
@@ -450,7 +454,9 @@ CORE_APPS.extend([
     'apps.workqueue',
     'apps.contacts',
     'apps.monitoring',
+    'apps.concept_items',
     'superdesk.places',
+    'apps.desk_routing',
 ])
 
 RESOURCE_METHODS = ['GET', 'POST']
@@ -621,6 +627,9 @@ ENABLE_PROFILING = False
 #: default timeout for ftp connections
 FTP_TIMEOUT = 300
 
+#: default amount of files which can processed during one iteration of ftp ingest
+FTP_INGEST_FILES_LIST_LIMIT = 100
+
 #: default timeout for email connections
 EMAIL_TIMEOUT = 10
 
@@ -685,7 +694,7 @@ ERROR_NOTIFICATIONS = strtobool(env('SUPERDESK_ERROR_NOTIFICATIONS', 'true'))
 GEONAMES_USERNAME = env('GEONAMES_USERNAME')
 GEONAMES_TOKEN = env('GEONAMES_TOKEN')
 GEONAMES_URL = env('GEONAMES_URL', 'http://api.geonames.org/')
-GEONAMES_FEATURE_CLASSES = ['A', 'P']
+GEONAMES_FEATURE_CLASSES = ['P']
 
 # media required fields
 VALIDATOR_MEDIA_METADATA = {
@@ -700,6 +709,7 @@ VALIDATOR_MEDIA_METADATA = {
     },
     "description_text": {
         "required": True,
+        "textarea": True,
     },
     "copyrightholder": {
         "required": False,
@@ -725,3 +735,7 @@ QCODE_MISSING_VOC = "continue"
 
 # Relative path and filename for an image to apply as a watermark on publish of feature media via email.
 WATERMARK_IMAGE = env('WATERMARK_IMAGE', '')
+
+
+#: Kill template config
+KILL_TEMPLATE_NULL_FIELDS = ['byline', 'place']

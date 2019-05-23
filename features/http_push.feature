@@ -80,8 +80,7 @@ Feature: HTTP Push publishing
             "version": "3",
             "copyrightholder": "copyright holder",
             "copyrightnotice": "copyright notice",
-            "language": "en",
-            "associations": "__empty__"
+            "language": "en"
         }]
         """
 

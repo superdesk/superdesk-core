@@ -8,9 +8,10 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from .vocabularies import VocabulariesResource, VocabulariesService
-from .commands import VocabulariesPopulateCommand, UpdateVocabulariesInItemsCommand # noqa
 import superdesk
+
+from .vocabularies import VocabulariesResource, VocabulariesService
+from .commands import UpdateVocabulariesInItemsCommand # noqa
 
 
 def init_app(app):

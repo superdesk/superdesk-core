@@ -10,15 +10,14 @@
 
 
 import feedparser
-import requests
 
 from calendar import timegm
 from collections import namedtuple
 from datetime import datetime
 
 from superdesk.errors import IngestApiError, ParserError
-from superdesk.io.registry import register_feeding_service
-from superdesk.io.feeding_services import FeedingService
+from superdesk.io.registry import register_feeding_service, register_feeding_service_parser
+from superdesk.io.feeding_services.http_base_service import HTTPFeedingServiceBase
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, GUID_TAG
 from superdesk.utils import merge_dicts
 from superdesk.metadata.utils import generate_guid, generate_tag, generate_tag_from_url
@@ -30,7 +29,7 @@ from urllib.parse import quote as urlquote, urlsplit, urlunsplit
 utcfromtimestamp = datetime.utcfromtimestamp
 
 
-class RSSFeedingService(FeedingService):
+class RSSFeedingService(HTTPFeedingServiceBase):
     """
     Feeding service for providing feeds received in RSS 2.0 format.
 
@@ -45,7 +44,7 @@ class RSSFeedingService(FeedingService):
               IngestApiError.apiGeneralError().get_error_description(),
               ParserError.parseMessageError().get_error_description()]
 
-    label = 'RSS'
+    label = 'RSS/Atom'
 
     fields = [
         {
@@ -53,21 +52,7 @@ class RSSFeedingService(FeedingService):
             'placeholder': 'RSS Feed URL', 'required': True,
             'errors': {4001: 'Connection timed out.', 4006: 'URL not found.',
                        4009: 'Can\'t connect to host.', 1001: 'Can\'t parse the RSS.'}
-        },
-        {
-            'id': 'auth_required', 'type': 'boolean', 'label': 'Requires Authentication',
-            'placeholder': 'Requires Authentication', 'required': False
-        },
-        {
-            'id': 'username', 'type': 'text', 'label': 'Username',
-            'placeholder': 'Username', 'required_expression': '{auth_required}',
-            'show_expression': '{auth_required}'
-        },
-        {
-            'id': 'password', 'type': 'password', 'label': 'Password',
-            'placeholder': 'Password', 'required_expression': '{auth_required}',
-            'show_expression': '{auth_required}'
-        },
+        }] + HTTPFeedingServiceBase.AUTH_REQ_FIELDS + [
         {
             'id': 'field_aliases', 'type': 'mapping', 'label': 'Content Field Aliases',
             'add_mapping_label': 'Add alias', 'remove_mapping_label': 'Remove',
@@ -82,6 +67,8 @@ class RSSFeedingService(FeedingService):
             }
         }
     ]
+
+    HTTP_AUTH = None
 
     field_groups = {'auth_data': {'label': 'Authentication Info', 'fields': ['username', 'password']}}
 
@@ -124,10 +111,6 @@ class RSSFeedingService(FeedingService):
     <media:thumbnail> tags - they lack the "type" attribute).
     """
 
-    def __init__(self):
-        super().__init__()
-        self.auth_info = None
-
     def prepare_href(self, url, mimetype=None):
         """Prepare a link to an external resource (e.g. an image file).
 
@@ -154,8 +137,8 @@ class RSSFeedingService(FeedingService):
 
     def _test(self, provider):
         """Test connection."""
-        config = provider.get('config', {})
-        xml = self._fetch_data(config, provider)
+        self.provider = provider
+        xml = self._fetch_data()
         data = feedparser.parse(xml)
         if data.bozo:
             raise ParserError.parseMessageError(data.bozo_exception, provider)
@@ -171,8 +154,7 @@ class RSSFeedingService(FeedingService):
         :raises IngestApiError: if data retrieval error occurs
         :raises ParserError: if retrieved RSS data cannot be parsed
         """
-        config = provider.get('config', {})
-        xml_data = self._fetch_data(config, provider)
+        xml_data = self._fetch_data()
 
         try:
             data = feedparser.parse(xml_data)
@@ -187,7 +169,7 @@ class RSSFeedingService(FeedingService):
         t_provider_updated = t_provider_updated.replace(tzinfo=None)
 
         new_items = []
-        field_aliases = config.get('field_aliases')
+        field_aliases = self.config.get('field_aliases')
 
         for entry in data.entries:
             try:
@@ -216,48 +198,20 @@ class RSSFeedingService(FeedingService):
 
         return [new_items]
 
-    def _fetch_data(self, config, provider):
+    def _fetch_data(self):
         """Fetch the latest feed data.
 
-        :param dict config: RSS resource configuration
-        :param provider: data provider instance, needed as an argument when
-            raising ingest errors
         :return: fetched RSS data
         :rtype: str
 
         :raises IngestApiError: if fetching data fails for any reason
             (e.g. authentication error, resource not found, etc.)
         """
-        url = config['url']
+        url = self.config['url']
 
-        if config.get('auth_required', False):
-            auth = (config.get('username'), config.get('password'))
-            self.auth_info = {
-                'username': config.get('username', ''),
-                'password': config.get('password', '')
-            }
-        else:
-            auth = None
+        response = self.get_url(url)
 
-        try:
-            response = requests.get(url, auth=auth, timeout=30)
-        except requests.exceptions.ConnectionError as err:
-            raise IngestApiError.apiConnectionError(exception=err, provider=provider)
-        except requests.exceptions.RequestException as err:
-            raise IngestApiError.apiURLError(exception=err, provider=provider)
-
-        if response.ok:
-            return response.content
-        else:
-            if response.status_code in (401, 403):
-                raise IngestApiError.apiAuthError(
-                    Exception(response.reason), provider)
-            elif response.status_code == 404:
-                raise IngestApiError.apiNotFoundError(
-                    Exception(response.reason), provider)
-            else:
-                raise IngestApiError.apiGeneralError(
-                    Exception(response.reason), provider)
+        return response.content
 
     def _extract_image_links(self, rss_entry):
         """Extract URLs of all images referenced by the given RSS entry.
@@ -444,3 +398,4 @@ class RSSFeedingService(FeedingService):
 
 
 register_feeding_service(RSSFeedingService)
+register_feeding_service_parser(RSSFeedingService.NAME, None)

@@ -158,7 +158,7 @@ class STTLocationTestCase(BaseSTTNewsMLTestCase):
         item = self.item[0]
         expected = [
             {'qcode': '7576',
-             'scheme': 'sttlocmeta:default',
+             'scheme': 'sttlocmeta',
              'locality_code': '392',
              'locality': 'Tallinna',
              'state_code': '67',
@@ -168,13 +168,28 @@ class STTLocationTestCase(BaseSTTNewsMLTestCase):
              'world_region_code': '150',
              'world_region': 'Eurooppa'},
             {'qcode': '8975',
-             'scheme': 'sttlocmeta:default',
+             'scheme': 'sttlocmeta',
              'country': 'Suomi',
              'country_code': '1',
              'world_region_code': '150',
              'world_region': 'Eurooppa'}]
 
         self.assertEqual(item['place'], expected)
+
+
+class STTRichLocationTestCase(BaseSTTNewsMLTestCase):
+
+    filename = 'stt_newsml_location_rich.xml'
+
+    def test_location(self):
+        item = self.item[0]
+        self.assertIn({
+            'qcode': '20016',
+            'scheme': 'sttlocmeta',
+            'name': 'Myanmar',
+            'world_region': 'Aasia',
+            'world_region_code': '142',
+        }, item['place'])
 
 
 class STTNoHLTestCase(BaseSTTNewsMLTestCase):
@@ -208,12 +223,14 @@ class STTAbstractTestCase(BaseSTTNewsMLTestCase):
             item['subject'],
             [
                 {'qcode': '9', 'name': 'Politiikka', 'scheme': 'sttdepartment'},
-                {'qcode': '11000000', 'name': 'politics'},
-                {'qcode': '11009000', 'name': 'parliament'},
-                {'qcode': '11000000', 'name': 'politics'},
-                {'qcode': '11010000', 'name': 'parties and movements'},
-                {'qcode': '11000000', 'name': 'politics'},
-                {'qcode': '11010000', 'name': 'parties and movements'},
+                {'qcode': '11000000', 'scheme': 'sttsubj', 'name': 'Politiikka'},
+                {'qcode': '11009000', 'scheme': 'sttsubj', 'name': 'Eduskunta Parlamentti'},
+                {'qcode': '11000000', 'scheme': 'sttsubj', 'name': 'Politiikka'},
+                {'qcode': '11010000', 'scheme': 'sttsubj', 'name': 'Puolueet Yhteiskunnalliset liikkeet '},
+                {'qcode': '11010999', 'scheme': 'sttsubj', 'name': 'Muut puolueet ja poliittiset ryhmät'},
+                {'qcode': '11000000', 'scheme': 'sttsubj', 'name': 'Politiikka'},
+                {'qcode': '11010000', 'scheme': 'sttsubj', 'name': 'Puolueet Yhteiskunnalliset liikkeet '},
+                {'qcode': '11010992', 'scheme': 'sttsubj', 'name': 'Kokoomus'},
                 {'name': 'Viiva', 'qcode': '1', 'scheme': 'sttversion'}
             ],
         )
@@ -245,8 +262,51 @@ class STTArchiveTestCase(BaseSTTNewsMLTestCase):
 
     def test_timestamps(self):
         item = self.item[0]
-        self.assertEqual('2013-02-16T17:36:20+00:00', item['firstcreated'].isoformat())
-        self.assertEqual('2013-02-16T18:36:20+00:00', item['versioncreated'].isoformat())
-        self.assertEqual('2013-02-16T18:36:20+00:00', item['firstpublished'].isoformat())
+        self.assertEqual('2013-02-16T15:36:20+00:00', item['firstcreated'].isoformat())
+        self.assertEqual('2013-02-16T16:36:20+00:00', item['versioncreated'].isoformat())
+        self.assertEqual('2013-02-16T16:36:20+00:00', item['firstpublished'].isoformat())
 
         self.assertIn({'qcode': '5', 'scheme': 'sttdone1', 'name': ''}, item['subject'])
+
+        # test daylight savings
+        self.assertEqual('2018-01-01T10:00:00+00:00', STTNewsMLFeedParser().datetime('2018-01-01T12:00:00').isoformat())
+        self.assertEqual('2018-08-01T09:00:00+00:00', STTNewsMLFeedParser().datetime('2018-08-01T12:00:00').isoformat())
+
+    def test_source(self):
+        item = self.item[0]
+        self.assertEqual('STT', item['source'])
+
+
+class STTEndashTestCase(BaseSTTNewsMLTestCase):
+    filename = 'stt_newsml_endash.xml'
+
+    def test_can_parse(self):
+        self.assertTrue(STTNewsMLFeedParser().can_parse(self.xml_root))
+
+    def test_content(self):
+        item = self.item[0]
+        self.assertNotIn('endash', item['body_html'])
+        self.assertIn('35-40', item['body_html'])
+
+    def test_source(self):
+        item = self.item[0]
+        self.assertEqual('STT-Sourcefabric', item['source'])
+
+
+class STTSubjectTestCase(BaseSTTNewsMLTestCase):
+    filename = 'stt_newsml_subject_test.xml'
+
+    def test_can_parse(self):
+        self.assertTrue(STTNewsMLFeedParser().can_parse(self.xml_root))
+
+    def test_subject(self):
+        item = self.item[0]
+        self.assertIn({
+            'qcode': '11006000',
+            'scheme': 'sttsubj',
+            'name': 'Julkinen hallinto',
+        }, item['subject'])
+        self.assertIn({
+            'qcode': '11006006',
+            'name': 'heads of state',
+        }, item['subject'])

@@ -29,27 +29,27 @@ class FilterConditionParametersService(BaseService):
         values = self._get_field_values()
         fields = [{'field': 'anpa_category',
                    'operators': ['in', 'nin'],
-                   'values': values['anpa_category'],
+                   'values': values.get('anpa_category', []),
                    'value_field': 'qcode'
                    },
                   {'field': 'urgency',
                    'operators': ['in', 'nin', 'eq', 'ne', 'lt', 'lte', 'gt', 'gte'],
-                   'values': values['urgency'],
+                   'values': values.get('urgency', []),
                    'value_field': 'qcode'
                    },
                   {'field': 'genre',
                    'operators': ['in', 'nin'],
-                   'values': values['genre'],
+                   'values': values.get('genre', []),
                    'value_field': 'qcode'
                    },
                   {'field': 'subject',
                    'operators': ['in', 'nin'],
-                   'values': values['subject'],
+                   'values': values.get('subject', []),
                    'value_field': 'qcode'
                    },
                   {'field': 'priority',
                    'operators': ['in', 'nin', 'eq', 'ne', 'lt', 'lte', 'gt', 'gte'],
-                   'values': values['priority'],
+                   'values': values.get('priority', []),
                    'value_field': 'qcode'
                    },
                   {'field': 'keywords',
@@ -60,7 +60,7 @@ class FilterConditionParametersService(BaseService):
                    },
                   {'field': 'type',
                    'operators': ['in', 'nin', 'eq', 'ne'],
-                   'values': values['type'],
+                   'values': values.get('type', []),
                    'value_field': 'qcode'
                    },
                   {'field': 'source',
@@ -115,7 +115,7 @@ class FilterConditionParametersService(BaseService):
         for vocabulary in get_resource_service('vocabularies').get(req=None, lookup=lookup):
             field = {'field': vocabulary[config.ID_FIELD], 'label': vocabulary['display_name']}
 
-            if vocabulary.get('field_type', '') != '' and vocabulary.get('field_type', '') != 'text':
+            if vocabulary.get('field_type') and vocabulary.get('field_type', '') != 'text':
                 continue
 
             if vocabulary.get('field_type', '') == 'text':
@@ -135,9 +135,11 @@ class FilterConditionParametersService(BaseService):
         genre = vocabularies_resource.get(req=req, lookup=None)
         if genre.count():
             values['genre'] = genre[0]['items']
-        values['urgency'] = vocabularies_resource.find_one(req=None, _id='urgency')['items']
-        values['priority'] = vocabularies_resource.find_one(req=None, _id='priority')['items']
-        values['type'] = vocabularies_resource.find_one(req=None, _id='type')['items']
+        for voc_id in ('urgency', 'priority', 'type'):
+            try:
+                values[voc_id] = vocabularies_resource.find_one(req=None, _id=voc_id)['items']
+            except TypeError:
+                values[voc_id] = []
         subject = vocabularies_resource.find_one(req=None, schema_field='subject')
         if subject:
             values['subject'] = subject['items']
@@ -152,6 +154,8 @@ class FilterConditionParametersService(BaseService):
         place = vocabularies_resource.get(req=req, lookup=None)
         if place.count():
             values['place'] = place[0]['items']
+        else:
+            values['place'] = []
         values['ingest_provider'] = list(get_resource_service('ingest_providers').get(None, {}))
         return values
 

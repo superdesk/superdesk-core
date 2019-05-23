@@ -49,7 +49,7 @@ from superdesk.io import get_feeding_service
 from superdesk.io.commands import update_ingest
 from superdesk.io.commands.update_ingest import LAST_ITEM_UPDATE
 from superdesk.io.feeding_services import ftp
-from superdesk.io.feed_parsers import XMLFeedParser, EMailRFC822FeedParser
+from superdesk.io.feed_parsers import XMLFeedParser, EMailRFC822FeedParser, STTNewsMLFeedParser
 from superdesk.utc import utcnow, get_expiry_date
 from superdesk.tests import get_prefixed_url, set_placeholder
 from apps.dictionaries.resource import DICTIONARY_FILE
@@ -180,7 +180,7 @@ def get_macro_path(macro):
 
 
 def get_self_href(resource, context):
-    assert '_links' in resource, 'expted "_links", but got only %s' % (resource)
+    assert '_links' in resource, 'expected "_links", but got only %s' % (resource)
     return resource['_links']['self']['href']
 
 
@@ -505,22 +505,22 @@ def run_update_ingest_ftp(*args):
                          'biography': 'bio'}]
         }
         if filename == 'ninjs1.json':
-            return [[item1]]
+            return [item1]
         elif filename == 'ninjs2.json':
             item2 = deepcopy(item1)
             item2['guid'] = '20170825001315282182'
             item2['headline'] = 'headline 2'
             item2['ednote'] = 'ed note 2'
-            return [[item2]]
+            return [item2]
         elif filename == 'ninjs3.json':
             item3 = deepcopy(item1)
             item3['guid'] = '20170825001315282183'
             item3['headline'] = 'headline 3'
             item3['ednote'] = 'ed note 3'
-            return [[item3]]
+            return [item3]
 
-    with mock.patch.object(ftp.FTPFeedingService, '_list_items') as ftp_list_items_mock:
-        ftp_list_items_mock.return_value = (('ninjs1.json', '20181111123456'),
+    with mock.patch.object(ftp.FTPFeedingService, '_list_files') as ftp_list_files_mock:
+        ftp_list_files_mock.return_value = (('ninjs1.json', '20181111123456'),
                                             ('ninjs2.json', '20181111123456'),
                                             ('ninjs3.json', '20181111123456'))
         with mock.patch.object(ftp.FTPFeedingService, '_retrieve_and_parse') as retrieve_and_parse_mock:
@@ -585,13 +585,17 @@ def fetch_from_provider(context, provider_name, guid, routing_scheme=None, desk_
 
     provider_service = get_feeding_service(provider['feeding_service'])
 
-    if provider.get('name', '').lower() in ('aap', 'dpa', 'ninjs', 'email', 'ftp_ninjs'):
+    if provider.get('name', '').lower() in ('aap', 'dpa', 'ninjs', 'email', 'ftp_ninjs', 'stt'):
         if provider.get('name', '').lower() == 'ftp_ninjs':
             file_path = os.path.join(provider.get('config', {}).get('path_fixtures', ''), guid)
         else:
             file_path = os.path.join(provider.get('config', {}).get('path', ''), guid)
         feeding_parser = provider_service.get_feed_parser(provider)
-        if isinstance(feeding_parser, XMLFeedParser):
+        if isinstance(feeding_parser, STTNewsMLFeedParser):
+            with open(file_path, 'rb') as f:
+                xml_string = etree.etree.fromstring(f.read())
+                items = feeding_parser.parse(xml_string, provider)
+        elif isinstance(feeding_parser, XMLFeedParser):
             with open(file_path, 'rb') as f:
                 xml_string = etree.etree.fromstring(f.read())
                 items = [feeding_parser.parse(xml_string, provider)]
@@ -706,9 +710,12 @@ def step_impl_when_post_url_with_success(context, url):
 @when('we put to "{url}"')
 def step_impl_when_put_url(context, url):
     with context.app.mail.record_messages() as outbox:
+        url = apply_placeholders(context, url)
+        res = get_res(url, context)
+        headers = if_match(context, res.get('_etag'))
         data = apply_placeholders(context, context.text)
-        href = get_self_href(url)
-        context.response = context.client.put(get_prefixed_url(context.app, href), data=data, headers=context.headers)
+        href = get_prefixed_url(context.app, url)
+        context.response = context.client.put(href, data=data, headers=headers)
         assert_ok(context.response)
         context.outbox = outbox
 
@@ -1994,7 +2001,7 @@ def validate_routed_item(context, rule_name, is_routed, is_transformed=False):
         for destination in rule.get('actions', {}).get(action, []):
             query = {
                 'and': [
-                    {'term': {'ingest_id': str(data['ingest'])}},
+                    {'term': {'family_id': str(data['ingest'])}},
                     {'term': {'task.desk': str(destination['desk'])}},
                     {'term': {'task.stage': str(destination['stage'])}},
                     {'term': {'state': state}}
@@ -2004,7 +2011,7 @@ def validate_routed_item(context, rule_name, is_routed, is_transformed=False):
 
             if is_routed:
                 assert len(item) > 0, 'No routed items found for criteria: ' + str(query)
-                assert item[0]['ingest_id'] == data['ingest']
+                assert item[0]['family_id'] == data['ingest']
                 assert item[0]['task']['desk'] == str(destination['desk'])
                 assert item[0]['task']['stage'] == str(destination['stage'])
                 assert item[0]['state'] == state

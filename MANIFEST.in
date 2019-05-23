@@ -1,6 +1,8 @@
 recursive-include superdesk *.json
 recursive-include superdesk *.html
 recursive-include superdesk *.txt
+recursive-include superdesk *.mo
+recursive-include superdesk *.po
 
 recursive-include apps *.json
 recursive-include apps *.html

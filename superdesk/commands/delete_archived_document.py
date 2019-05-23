@@ -18,10 +18,12 @@ class DeleteArchivedDocumentCommand(superdesk.Command):
     Deletes a Text Archive document(s) from both Mongodb and ElasticSearch.
 
     It deletes digital package and the story given by id.
-    It accepts one or more ids separated by space::
+    It accepts one or more ids separated by space.
+
+    Example:
+    ::
 
         $ manage.py app:deleteArchivedDocument 588c1df11d41c80928015601 588c1b901d41c805dce70df0
-
     """
 
     capture_all_args = True

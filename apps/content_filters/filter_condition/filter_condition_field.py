@@ -13,6 +13,7 @@ from superdesk.text_utils import get_text
 from superdesk.utc import utcnow
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
+from flask_babel import _
 
 
 class FilterConditionFieldsEnum(Enum):
@@ -43,11 +44,11 @@ class FilterConditionField:
         if field not in FilterConditionFieldsEnum.__members__:
             vocabulary = get_resource_service('vocabularies').find_one(req=None, _id=field)
             if vocabulary:
-                if vocabulary['field_type'] == 'text':
+                if vocabulary.get('field_type', '') == 'text':
                     return FilterConditionCustomTextField(field)
                 else:
                     return FilterConditionControlledVocabularyField(field)
-            raise SuperdeskApiError.internalError('Invalid filter conditions field %s' % field)
+            raise SuperdeskApiError.internalError(_('Invalid filter conditions field {field}').format(field=field))
         if FilterConditionFieldsEnum[field] == FilterConditionFieldsEnum.desk:
             return FilterConditionDeskField(field)
         elif FilterConditionFieldsEnum[field] == FilterConditionFieldsEnum.stage:
@@ -89,7 +90,7 @@ class FilterConditionField:
 
     def get_value(self, article):
         try:
-            return get_text(article[self.field.name]).replace('\n', ' ')
+            return get_text(article[self.field.name]).strip()
         except (etree.XMLSyntaxError, ValueError):
             return article[self.field.name]
 

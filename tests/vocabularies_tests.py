@@ -10,12 +10,12 @@
 
 import os
 import json
-
 from unittest.mock import patch
+
+from apps.prepopulate.app_populate import AppPopulateCommand
 from superdesk.tests import TestCase
 from superdesk import get_resource_service
 from superdesk.vocabularies import VocabulariesService
-from superdesk.vocabularies.commands import VocabulariesPopulateCommand
 from superdesk.errors import SuperdeskApiError
 
 
@@ -42,7 +42,7 @@ class VocabulariesPopulateTest(TestCase):
             json.dump(self.json_data, file)
 
     def test_populate_vocabularies(self):
-        cmd = VocabulariesPopulateCommand()
+        cmd = AppPopulateCommand()
         cmd.run(self.filename)
         service = get_resource_service('vocabularies')
 

@@ -18,6 +18,7 @@ class NewsroomNinjsFormatter(NINJSFormatter):
         self.format_type = 'newsroom ninjs'
         self.can_preview = False
         self.can_export = False
+        self.internal_renditions = ['original', 'viewImage', 'baseImage']
 
     def _format_products(self, article):
         """
@@ -31,6 +32,10 @@ class NewsroomNinjsFormatter(NINJSFormatter):
 
     def _transform_to_ninjs(self, article, subscriber, recursive=True):
         ninjs = super()._transform_to_ninjs(article, subscriber, recursive)
+
+        if article.get('ingest_id') and article.get('auto_publish'):
+            ninjs['guid'] = article.get('ingest_id')
+
         ninjs['products'] = self._format_products(article)
 
         if article.get('assignment_id'):

@@ -20,6 +20,8 @@ from flask_mail import Mail
 from eve.auth import TokenAuth
 from eve.io.mongo import MongoJSONEncoder, create_index
 from eve.render import send_response
+from flask_babel import Babel
+from flask import g
 
 from superdesk.celery_app import init_celery
 from superdesk.datalayer import SuperdeskDataLayer  # noqa
@@ -28,6 +30,8 @@ from superdesk.factory.sentry import SuperdeskSentry
 from superdesk.logging import configure_logging
 from superdesk.storage import AmazonMediaStorage, SuperdeskGridFSMediaStorage
 from superdesk.validator import SuperdeskValidator
+
+SUPERDESK_PATH = os.path.abspath(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 
 class SuperdeskEve(eve.Eve):
@@ -68,7 +72,7 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
     :return: a new SuperdeskEve app instance
     """
 
-    abs_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+    abs_path = SUPERDESK_PATH
     app_config = flask.Config(abs_path)
     app_config.from_object('superdesk.default_settings')
     app_config.setdefault('APP_ABSPATH', abs_path)
@@ -109,12 +113,20 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
 
     custom_loader = jinja2.ChoiceLoader([
         jinja2.FileSystemLoader('templates'),
-        jinja2.FileSystemLoader(os.path.join(
-            os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'templates'))])
+        jinja2.FileSystemLoader(os.path.join(SUPERDESK_PATH, 'templates')),
+    ])
 
     app.jinja_loader = custom_loader
     app.mail = Mail(app)
     app.sentry = SuperdeskSentry(app)
+
+    app.config.setdefault('BABEL_TRANSLATION_DIRECTORIES', os.path.join(SUPERDESK_PATH, 'translations'))
+    babel = Babel(app, configure_jinja=False)
+
+    @babel.localeselector
+    def get_locale():
+        user = getattr(g, 'user', {})
+        return user.get('language', app.config.get('DEFAULT_LANGUAGE', 'en'))
 
     @app.errorhandler(SuperdeskError)
     def client_error_handler(error):

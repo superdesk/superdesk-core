@@ -11,6 +11,7 @@
 
 import os
 import unittest
+import flask
 
 from xml.etree import ElementTree
 from superdesk.io.feed_parsers.newsml_2_0 import NewsMLTwoFeedParser
@@ -18,13 +19,15 @@ from superdesk.io.feed_parsers.newsml_2_0 import NewsMLTwoFeedParser
 
 class BaseNewMLTwoTestCase(unittest.TestCase):
     def setUp(self):
+        app = flask.Flask(__name__)
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.normpath(os.path.join(dirname, '../fixtures', self.filename))
         provider = {'name': 'Test'}
         with open(fixture, 'rb') as f:
             self.parser = NewsMLTwoFeedParser()
             self.xml = ElementTree.parse(f)
-            self.item = self.parser.parse(self.xml.getroot(), provider)
+            with app.app_context():
+                self.item = self.parser.parse(self.xml.getroot(), provider)
 
 
 class ReutersTestCase(BaseNewMLTwoTestCase):
@@ -76,6 +79,7 @@ class IPTCExampleTextTestCase(BaseNewMLTwoTestCase):
         self.assertEqual('2016-10-21T16:25:32-05:00', item['versioncreated'].isoformat())
         self.assertIn('STRICTLY EMBARGOED', item['ednote'])
         self.assertEqual(1, len(item['authors']))
+        self.assertEqual('2016-10-23T12:00:00+00:00', item['embargoed'].isoformat())
 
     def test_can_parse(self):
         self.assertTrue(self.parser.can_parse(self.xml.getroot()))

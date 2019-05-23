@@ -42,6 +42,20 @@ class RolesResource(Resource):
         'is_default': {
             'type': 'boolean'
         },
+
+        #: author role to be automatically set when user creates an item
+        #: .. versionadded:: 1.29
+        'author_role': {
+            'type': 'string',
+            'nullable': True,
+        },
+
+        #: author role to be automatically set when user edits an item
+        #: .. versionadded:: 1.29
+        'editor_role': {
+            'type': 'string',
+            'nullable': True,
+        },
     }
 
     privileges = {'POST': 'roles', 'DELETE': 'roles', 'PATCH': 'roles'}

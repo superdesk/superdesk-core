@@ -82,6 +82,14 @@ def setup_providers(context):
                 'config': {'path': path_to_fixtures}
             },
             {
+                'name': 'STT',
+                'source': 'STT',
+                'feeding_service': 'file',
+                'feed_parser': 'sttnewsml',
+                'is_closed': False,
+                'config': {'path': path_to_fixtures}
+            },
+            {
                 'name': 'ninjs',
                 'source': 'NINJS',
                 'feeding_service': 'file', 'feed_parser': 'ninjs',

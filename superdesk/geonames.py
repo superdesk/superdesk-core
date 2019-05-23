@@ -32,7 +32,7 @@ def get_geonames_qcode(place):
 
 
 def format_geoname_item(item):
-    return {
+    geo = {
         'scheme': 'geonames',
         'code': str(item['geonameId']),
         'name': item['name'],
@@ -49,6 +49,11 @@ def format_geoname_item(item):
             'lon': float(item['lng']),
         }
     }
+
+    if item.get('timezone'):
+        geo['tz'] = item['timezone'].get('timeZoneId')
+
+    return geo
 
 
 def geonames_request(service, service_params):

@@ -23,8 +23,10 @@ from superdesk.metadata.utils import item_url, generate_guid
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from superdesk.notification import push_notification
+from superdesk.signals import item_rewrite
 from apps.tasks import send_to
 from apps.archive.archive import update_associations
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +64,9 @@ class ArchiveRewriteService(Service):
                 rewrite['fields_meta'] = original['fields_meta']
             update_associations(rewrite)
 
+        # signal
+        item_rewrite.send(self, item=rewrite, original=original)
+
         if update_document:
             # process the existing story
             archive_service.patch(update_document[config.ID_FIELD], rewrite)
@@ -94,27 +99,28 @@ class ArchiveRewriteService(Service):
         :raises: SuperdeskApiError
         """
         if not original:
-            raise SuperdeskApiError.notFoundError(message='Cannot find the article')
+            raise SuperdeskApiError.notFoundError(message=_('Cannot find the article'))
 
         if original.get(EMBARGO):
-            raise SuperdeskApiError.badRequestError("Rewrite of an Item having embargo isn't possible")
+            raise SuperdeskApiError.badRequestError(_("Rewrite of an Item having embargo isn't possible"))
 
         if not original.get('event_id'):
-            raise SuperdeskApiError.notFoundError(message='Event id does not exist')
+            raise SuperdeskApiError.notFoundError(message=_('Event id does not exist'))
 
         if original.get('rewritten_by'):
-            raise SuperdeskApiError.badRequestError(message='Article has been rewritten before !')
+            raise SuperdeskApiError.badRequestError(message=_('Article has been rewritten before !'))
 
         if not is_workflow_state_transition_valid('rewrite', original[ITEM_STATE]):
             raise InvalidStateTransitionError()
 
         if original.get('rewrite_of') and not (original.get(ITEM_STATE) in PUBLISH_STATES):
-            raise SuperdeskApiError.badRequestError(message="Rewrite is not published. Cannot rewrite the story again.")
+            raise SuperdeskApiError.badRequestError(
+                message=_("Rewrite is not published. Cannot rewrite the story again."))
 
         if update:
             # in case of associate as update
             if update.get('rewrite_of'):
-                raise SuperdeskApiError.badRequestError("Rewrite story has been used as update before !")
+                raise SuperdeskApiError.badRequestError(_("Rewrite story has been used as update before !"))
 
             if update.get(ITEM_STATE) in [CONTENT_STATE.PUBLISHED,
                                           CONTENT_STATE.CORRECTED,
@@ -125,15 +131,15 @@ class ArchiveRewriteService(Service):
                 raise InvalidStateTransitionError()
 
             if update.get(ITEM_TYPE) not in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
-                raise SuperdeskApiError.badRequestError("Rewrite story can only be text or pre-formatted !")
+                raise SuperdeskApiError.badRequestError(_("Rewrite story can only be text or pre-formatted !"))
 
             if update.get('genre') and \
                     any(genre.get('value', '').lower() == BROADCAST_GENRE.lower() for genre in update.get('genre')):
-                raise SuperdeskApiError.badRequestError("Broadcast cannot be a update story !")
+                raise SuperdeskApiError.badRequestError(_("Broadcast cannot be a update story !"))
 
             if original.get('profile') and original.get('profile') != update.get('profile'):
-                raise SuperdeskApiError.badRequestError("Rewrite item content profile does "
-                                                        "not match with Original item.")
+                raise SuperdeskApiError.badRequestError(_("Rewrite item content profile does "
+                                                        "not match with Original item."))
 
     def _create_rewrite_article(self, original, existing_item=None, desk_id=None):
         """Creates a new story and sets the metadata from original.
@@ -162,6 +168,15 @@ class ArchiveRewriteService(Service):
             # preserve flags
             for key in rewrite.get('flags').keys():
                 rewrite['flags'][key] = original['flags'][key] or existing_item.get('flags', {}).get(key, False)
+
+            original_associations = original.get(ASSOCIATIONS) or {}
+            existing_associations = existing_item.get(ASSOCIATIONS) or {}
+            rewrite[ASSOCIATIONS] = existing_associations
+
+            # if the existing item has association then preserve the association
+            for key, assoc in original_associations.items():
+                if not existing_associations.get(key):
+                    rewrite[ASSOCIATIONS][key] = assoc
         else:
             # ingest provider and source to be retained for new item
             fields.extend(['ingest_provider', 'source'])
@@ -260,7 +275,7 @@ class ArchiveRewriteService(Service):
 
         if not target.get('rewrite_of'):
             # there is nothing to do
-            raise SuperdeskApiError.badRequestError("Only updates can be unlinked!")
+            raise SuperdeskApiError.badRequestError(_("Only updates can be unlinked!"))
 
         if target.get('rewrite_of'):
             updates['rewrite_of'] = None

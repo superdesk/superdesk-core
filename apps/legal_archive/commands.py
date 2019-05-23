@@ -211,7 +211,7 @@ class LegalArchiveImport:
                                                                          msg))
 
             if history_update.get('task') and history_update['task'].get('user'):
-                    history_update['task']['user'] = self.__get_user_name(history_update['task'].get('user'))
+                history_update['task']['user'] = self.__get_user_name(history_update['task'].get('user'))
 
             history_item['update'] = history_update
 
@@ -424,6 +424,12 @@ def import_into_legal_archive(self, item_id):
 class ImportLegalPublishQueueCommand(superdesk.Command):
     """
     This command import publish queue records into legal publish queue.
+
+    Example:
+    ::
+
+        $ python manage.py legal_publish_queue:import
+        $ python manage.py legal_publish_queue:import --page-size=100
     """
 
     default_page_size = 500
@@ -452,6 +458,12 @@ class ImportLegalArchiveCommand(superdesk.Command):
     As per the publishing logic the import to legal archive is done asynchronously. If this fails
     then you are missing records in legal archive. Use this command to manually import archive
     items into legal archive.
+
+    Example:
+    ::
+
+        $ python manage.py legal_archive:import
+        $ python manage.py legal_archive:import --page-size=100
     """
 
     default_page_size = 500

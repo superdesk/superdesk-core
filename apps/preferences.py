@@ -19,7 +19,7 @@ from superdesk.utc import utcnow
 from superdesk import get_backend
 from superdesk import get_resource_service
 from superdesk.workflow import get_privileged_actions
-
+from flask_babel import _
 
 _preferences_key = 'preferences'
 _user_preferences_key = 'user_preferences'
@@ -239,7 +239,7 @@ class PreferencesService(BaseService):
         session_prefs = updates.get(_session_preferences_key)
         if session_prefs is not None:
             for k in (k for k, v in session_prefs.items() if k not in superdesk.default_session_preferences):
-                raise ValidationError('Invalid preference: %s' % k)
+                raise ValidationError(_('Invalid preference: {preference}').format(preference=k))
 
             existing = existing_session_preferences.get(session_id, {})
             existing.update(session_prefs)
@@ -251,7 +251,7 @@ class PreferencesService(BaseService):
         if user_prefs is not None:
             # check if the input is validated against the default values
             for k in ((k for k, v in user_prefs.items() if k not in superdesk.default_user_preferences)):
-                raise ValidationError('Invalid preference: %s' % k)
+                raise ValidationError(_('Invalid preference: {preference}').format(preference=k))
 
             existing_user_preferences.update(user_prefs)
             updates[_user_preferences_key] = existing_user_preferences

@@ -13,11 +13,11 @@ import json
 import os
 
 from apps.content_filters.content_filter.content_filter_service import ContentFilterService
+from apps.prepopulate.app_populate import AppPopulateCommand
 from superdesk import get_backend, get_resource_service
 from superdesk.errors import SuperdeskApiError
 from superdesk.publish import SubscribersService
 from superdesk.tests import TestCase
-from superdesk.vocabularies.commands import VocabulariesPopulateCommand
 
 
 class ContentFilterTests(TestCase):
@@ -468,7 +468,7 @@ class FilteringDataTests(ContentFilterTests):
         filter_condition4 = {'field': 'urgency', 'operator': 'nin', 'value': '3'}
 
         with self.app.app_context():
-            cmd = VocabulariesPopulateCommand()
+            cmd = AppPopulateCommand()
             filename = os.path.join(os.path.abspath(
                 os.path.dirname("apps/prepopulate/data_init/vocabularies.json")), "vocabularies.json")
             cmd.run(filename)

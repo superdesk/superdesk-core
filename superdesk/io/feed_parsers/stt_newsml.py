@@ -14,6 +14,7 @@ from superdesk.errors import ParserError
 from superdesk.metadata.item import CONTENT_TYPE
 from superdesk import etree as sd_etree
 from superdesk import text_utils
+from superdesk.utc import local_to_utc
 import logging
 
 logger = logging.getLogger(__name__)
@@ -24,6 +25,8 @@ STT_LOCATION_MAP = {
     "sttcountry": {"qcode": "country_code", "name": "country"},
     "wldreg": {"qcode": "world_region_code", "name": "world_region"},
 }
+
+TIMEZONE = 'Europe/Helsinki'
 
 
 class STTNewsMLFeedParser(NewsMLTwoFeedParser):
@@ -36,7 +39,7 @@ class STTNewsMLFeedParser(NewsMLTwoFeedParser):
     SUBJ_QCODE_PREFIXES = {
         'stt-subj': None,
         'sttdepartment': 'sttdepartment',
-        'sttsubj': None,
+        'sttsubj': 'sttsubj',
         'sttdone1': 'sttdone1',
     }
 
@@ -95,10 +98,13 @@ class STTNewsMLFeedParser(NewsMLTwoFeedParser):
             # location
             for location_elt in xml.xpath("//iptc:assert", namespaces={'iptc': IPTC_NS}):
                 qcode = location_elt.get("qcode")
-                if not qcode or not qcode.startswith("sttlocmeta:default:"):
+                if not qcode or not qcode.startswith("sttlocmeta:"):
                     continue
-                qcode = qcode[19:]
-                location_data = {"scheme": "sttlocmeta:default", "qcode": qcode}
+                qcode = qcode.split(':')[-1]
+                location_data = {"scheme": "sttlocmeta", "qcode": qcode}
+                location_name = location_elt.find(self.qname('name'))
+                if location_name is not None:
+                    location_data['name'] = location_name.text
                 for broader_elt in location_elt.xpath(".//iptc:broader[@type='cpnat:geoArea']",
                                                       namespaces={'iptc': IPTC_NS}):
                     qcode = broader_elt.get('qcode')
@@ -162,7 +168,21 @@ class STTNewsMLFeedParser(NewsMLTwoFeedParser):
         elif body_elt.text:
             content['content'] = '<pre>' + body_elt.text + '</pre>'
             content['format'] = CONTENT_TYPE.PREFORMATTED
+        content['content'] = content['content'].replace('&lt;endash&gt;-&lt;/endash&gt;', '-')
         return content
+
+    def datetime(self, value):
+        """When there is no timezone info, assume it's Helsinki timezone."""
+        parsed = super().datetime(value)
+        if '+' not in value:
+            return local_to_utc(TIMEZONE, parsed)
+        return parsed
+
+    def parse_content_meta(self, tree, item):
+        meta = super().parse_content_meta(tree, item)
+        creditline = meta.find(self.qname('creditline'))
+        if creditline is not None:
+            item['source'] = creditline.text.replace('–', '-').rstrip('-')  # replace endash with dash
 
 
 register_feed_parser(STTNewsMLFeedParser.NAME, STTNewsMLFeedParser())

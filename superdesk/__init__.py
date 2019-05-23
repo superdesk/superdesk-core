@@ -24,8 +24,9 @@ from .services import BaseService as Service  # noqa
 from .resource import Resource  # noqa
 from .privilege import privilege, intrinsic_privilege, get_intrinsic_privileges  # noqa
 from .workflow import *  # noqa
+from .signals import *  # noqa
 
-__version__ = '1.27'
+__version__ = '1.28'
 
 API_NAME = 'Superdesk API'
 SCHEMA_VERSION = 0
@@ -38,12 +39,7 @@ resources = dict()
 eve_backend = EveBackend()
 default_user_preferences = dict()
 default_session_preferences = dict()
-signals = blinker.Namespace()
 logger = logging_lib.getLogger(__name__)
-
-# core signals
-item_published = signals.signal('item:published')
-item_update = signals.signal('item:update')
 
 
 class Command(BaseCommand):

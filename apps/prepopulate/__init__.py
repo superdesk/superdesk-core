@@ -11,6 +11,7 @@
 import superdesk
 
 from .app_prepopulate import PrepopulateService, PrepopulateResource
+from .app_populate import AppPopulateCommand  # NOQA
 from .app_initialize import AppInitializeWithDataCommand  # NOQA
 from .app_scaffold_data import AppScaffoldDataCommand  # NOQA
 

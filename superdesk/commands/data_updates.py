@@ -144,6 +144,11 @@ class Upgrade(DataUpdateCommand):
     """Runs all the new data updates available.
 
     If ``data_update_id`` is given, runs new data updates until the given one.
+
+    Example:
+    ::
+
+        $ python manage.py data:upgrade
     """
 
     def run(self, data_update_id=None, fake=False, dry=False):
@@ -175,6 +180,11 @@ class Downgrade(DataUpdateCommand):
     """Runs the latest data update backward.
 
     If ``data_update_id`` is given, runs all the data updates backward until the given one.
+
+    Example:
+    ::
+
+        $ python manage.py data:downgrade
     """
 
     def run(self, data_update_id=None, fake=False, dry=False):
@@ -213,7 +223,13 @@ class Downgrade(DataUpdateCommand):
 
 
 class GenerateUpdate(superdesk.Command):
-    """Generate a file where to define a new data update."""
+    """Generate a file where to define a new data update.
+
+    Example:
+    ::
+
+        $ python manage.py data:generate_update --resource=archive
+    """
 
     option_list = [
         superdesk.Option('--resource', '-r', dest='resource_name', required=True,

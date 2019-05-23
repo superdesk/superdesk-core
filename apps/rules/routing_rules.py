@@ -23,6 +23,7 @@ from superdesk.errors import SuperdeskApiError
 from eve.utils import config
 from superdesk.metadata.item import CONTENT_STATE
 from superdesk.utc import set_time
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 
@@ -196,7 +197,8 @@ class RoutingRuleSchemeService(BaseService):
         """
 
         if self.backend.find_one('ingest_providers', req=None, routing_scheme=doc[config.ID_FIELD]):
-            raise SuperdeskApiError.forbiddenError('Routing scheme is applied to channel(s). It cannot be deleted.')
+            raise SuperdeskApiError.forbiddenError(
+                _('Routing scheme is applied to channel(s). It cannot be deleted.'))
 
     def apply_routing_scheme(self, ingest_item, provider, routing_scheme):
         """Applies routing scheme and applies appropriate action (fetch, publish) to the item
@@ -288,23 +290,23 @@ class RoutingRuleSchemeService(BaseService):
 
         routing_rules = routing_scheme.get('rules', [])
         if len(routing_rules) == 0:
-            raise SuperdeskApiError.badRequestError(message="A Routing Scheme must have at least one Rule")
+            raise SuperdeskApiError.badRequestError(message=_("A Routing Scheme must have at least one Rule"))
         for routing_rule in routing_rules:
             invalid_fields = [field for field in routing_rule.keys()
                               if field not in ('name', 'filter', 'actions', 'schedule')]
 
             if invalid_fields:
                 raise SuperdeskApiError.badRequestError(
-                    message="A routing rule has invalid fields %s".format(invalid_fields))
+                    message=_("A routing rule has invalid fields {fields}").format(fields=invalid_fields))
 
             schedule = routing_rule.get('schedule')
             actions = routing_rule.get('actions')
 
             if routing_rule.get('name') is None:
-                raise SuperdeskApiError.badRequestError(message="A routing rule must have a name")
+                raise SuperdeskApiError.badRequestError(message=_("A routing rule must have a name"))
             elif actions is None or len(actions) == 0 or (actions.get('fetch') is None and actions.get(
                     'publish') is None and actions.get('exit') is None):
-                raise SuperdeskApiError.badRequestError(message="A routing rule must have actions")
+                raise SuperdeskApiError.badRequestError(message=_("A routing rule must have actions"))
             else:
                 self._validate_schedule(schedule)
 
@@ -323,17 +325,17 @@ class RoutingRuleSchemeService(BaseService):
             schedule.get('day_of_week') is None or
             len(schedule.get('day_of_week', [])) == 0
         ):
-            raise SuperdeskApiError.badRequestError(message="Schedule when defined can't be empty.")
+            raise SuperdeskApiError.badRequestError(message=_("Schedule when defined can't be empty."))
 
         if schedule:
             if not Weekdays.is_valid_schedule(schedule.get('day_of_week', [])):
-                raise SuperdeskApiError.badRequestError(message="Invalid values for day of week.")
+                raise SuperdeskApiError.badRequestError(message=_("Invalid values for day of week."))
 
             if schedule.get('hour_of_day_from') or schedule.get('hour_of_day_to'):
                 try:
                     from_time = datetime.strptime(schedule.get('hour_of_day_from'), '%H:%M:%S')
                 except Exception:
-                    raise SuperdeskApiError.badRequestError(message="Invalid value for from time.")
+                    raise SuperdeskApiError.badRequestError(message=_("Invalid value for from time."))
 
                 to_time = schedule.get('hour_of_day_to', '')
                 if to_time:
@@ -341,18 +343,17 @@ class RoutingRuleSchemeService(BaseService):
                         to_time = datetime.strptime(to_time, '%H:%M:%S')
                     except Exception:
                         raise SuperdeskApiError.badRequestError(
-                            message="Invalid value for hour_of_day_to "
-                                    "(expected %H:%M:%S).")
+                            message=_("Invalid value for hour_of_day_to (expected %H:%M:%S)."))
 
                     if from_time > to_time:
                         raise SuperdeskApiError.badRequestError(
-                            message="From time should be less than To Time."
+                            message=_("From time should be less than To Time.")
                         )
 
             time_zone = schedule.get('time_zone')
 
             if time_zone and (time_zone not in all_timezones_set):
-                msg = 'Unknown time zone {}'.format(time_zone)
+                msg = _('Unknown time zone {time_zone}').format(time_zone=time_zone)
                 raise SuperdeskApiError.badRequestError(message=msg)
 
     def _check_if_rule_name_is_unique(self, routing_scheme):
@@ -365,7 +366,7 @@ class RoutingRuleSchemeService(BaseService):
             rules_with_same_name = [rule for rule in routing_rules if rule.get('name') == routing_rule.get('name')]
 
             if len(rules_with_same_name) > 1:
-                raise SuperdeskApiError.badRequestError("Rule Names must be unique within a scheme")
+                raise SuperdeskApiError.badRequestError(_("Rule Names must be unique within a scheme"))
 
     def _get_scheduled_routing_rules(self, rules, current_dt_utc):
         """

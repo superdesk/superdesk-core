@@ -206,7 +206,14 @@ def get_task_id(provider):
 
 
 class UpdateIngest(superdesk.Command):
-    """Update ingest providers."""
+    """Runs update for ingest providers.
+
+    Example:
+    ::
+
+        $ python manage.py ingest:update
+        $ python manage.py ingest:update --provider=aap-demo
+    """
 
     option_list = (
         superdesk.Option('--provider', '-p', dest='provider_name'),
@@ -229,6 +236,16 @@ class UpdateIngest(superdesk.Command):
                     update_provider.apply(kwargs=kwargs)
                 else:
                     update_provider.apply_async(expires=get_task_ttl(provider), kwargs=kwargs)
+
+
+def update_last_item_updated(update, items):
+    if items:
+        last_item_update = max(
+            [item['versioncreated'] for item in items if item.get('versioncreated')],
+            default=utcnow()
+        )
+        if not update.get(LAST_ITEM_UPDATE) or update[LAST_ITEM_UPDATE] < last_item_update:
+            update[LAST_ITEM_UPDATE] = last_item_update
 
 
 @celery.task(soft_time_limit=UPDATE_TTL)
@@ -254,15 +271,17 @@ def update_provider(provider, rule_set=None, routing_scheme=None, sync=False):
         if sync:
             provider[LAST_UPDATED] = utcnow() - timedelta(days=9999) # import everything again
 
-        for items in feeding_service.update(provider, update):
-            ingest_items(items, provider, feeding_service, rule_set, routing_scheme)
-            if items:
-                last_item_update = max(
-                    [item['versioncreated'] for item in items if item.get('versioncreated')],
-                    default=utcnow()
-                )
-                if not update.get(LAST_ITEM_UPDATE) or update[LAST_ITEM_UPDATE] < last_item_update:
-                    update[LAST_ITEM_UPDATE] = last_item_update
+        generator = feeding_service.update(provider, update)
+        if isinstance(generator, list):
+            generator = (items for items in generator)
+        failed = None
+        while True:
+            try:
+                items = generator.send(failed)
+                failed = ingest_items(items, provider, feeding_service, rule_set, routing_scheme)
+                update_last_item_updated(update, items)
+            except StopIteration:
+                break
 
         # Some Feeding Services update the collection and by this time the _etag might have been changed.
         # So it's necessary to fetch it once again. Otherwise, OriginalChangedError is raised.
@@ -349,11 +368,19 @@ def process_iptc_codes(item, provider):
             if 'qcode' in subject and len(subject['qcode']) == 8 and subject['qcode'].isdigit():
                 top_qcode = subject['qcode'][:2] + '000000'
                 if not iptc_already_exists(top_qcode):
-                    item['subject'].append({'qcode': top_qcode, 'name': subject_codes[top_qcode]})
+                    try:
+                        item['subject'].append({'qcode': top_qcode, 'name': subject_codes[top_qcode]})
+                    except KeyError:
+                        logger.warning("missing qcode in subject_codes: {qcode}".format(qcode=top_qcode))
+                        continue
 
                 mid_qcode = subject['qcode'][:5] + '000'
                 if not iptc_already_exists(mid_qcode):
-                    item['subject'].append({'qcode': mid_qcode, 'name': subject_codes[mid_qcode]})
+                    try:
+                        item['subject'].append({'qcode': mid_qcode, 'name': subject_codes[mid_qcode]})
+                    except KeyError:
+                        logger.warning("missing qcode in subject_codes: {qcode}".format(qcode=mid_qcode))
+                        continue
     except Exception as ex:
         raise ProviderError.iptcError(ex, provider)
 
@@ -516,6 +543,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
 
         # if the item has associated media
         for key, assoc in item.get('associations', {}).items():
+            set_default_state(assoc, CONTENT_STATE.INGESTED)
             if assoc.get('renditions'):
                 transfer_renditions(assoc['renditions'])
             # wire up the id of the associated feature media to the ingested one
@@ -552,6 +580,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
                 items_ids.extend(ingest_service.post_in_mongo([item]))
             except HTTPException as e:
                 logger.error('Exception while persisting item in %s collection: %s', ingest_collection, e)
+                raise e
 
         if routing_scheme and new_version:
             routed = ingest_service.find_one(_id=item[superdesk.config.ID_FIELD], req=None)
@@ -559,6 +588,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
 
     except Exception as ex:
         logger.exception(ex)
+        ProviderError.ingestItemError(ex, provider, item=item)
         return False, []
     return True, items_ids
 

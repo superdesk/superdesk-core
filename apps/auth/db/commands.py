@@ -22,6 +22,11 @@ class CreateUserCommand(superdesk.Command):
     """Create a user with given username, password and email.
 
     If user with given username exists it's noop.
+
+    Example:
+    ::
+
+        $ python manage.py users:create -u admin -p admin -e 'admin@example.com' --admin
     """
 
     option_list = (
@@ -67,6 +72,10 @@ class CreateUserCommand(superdesk.Command):
 class HashUserPasswordsCommand(superdesk.Command):
     """Hash all the user passwords which are not hashed yet.
 
+    Example:
+    ::
+
+        $ python manage.py users:hash_passwords
     """
 
     def run(self):
@@ -86,6 +95,11 @@ class GetAuthTokenCommand(superdesk.Command):
 
     Generate an authorization token to be able to authenticate against the REST api without
     starting the client the copy the authorization header.
+
+    Example:
+    ::
+
+        $ python manage.py users:get_auth_token --username=admin --password=123123
     """
 
     option_list = (

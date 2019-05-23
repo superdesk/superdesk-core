@@ -22,6 +22,7 @@ from eve.utils import ParsedRequest
 from apps.tasks import task_statuses
 from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE
 from apps.archive.archive import SOURCE as ARCHIVE
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 
@@ -160,25 +161,25 @@ class StagesService(BaseService):
         if doc['working_stage'] is True:
             desk_id = doc.get('desk', None)
             if desk_id and superdesk.get_resource_service('desks').find_one(req=None, _id=desk_id):
-                raise SuperdeskApiError.preconditionFailedError(message='Cannot delete a Working Stage.')
+                raise SuperdeskApiError.preconditionFailedError(message=_('Cannot delete a Working Stage.'))
 
         if doc['default_incoming'] is True:
             desk_id = doc.get('desk', None)
             if desk_id and superdesk.get_resource_service('desks').find_one(req=None, _id=desk_id):
-                raise SuperdeskApiError.preconditionFailedError(message='Cannot delete a Incoming Stage.')
+                raise SuperdeskApiError.preconditionFailedError(message=_('Cannot delete a Incoming Stage.'))
 
         archive_versions_query = {'task.stage': str(doc[config.ID_FIELD])}
         items = superdesk.get_resource_service('archive_versions').get(req=None, lookup=archive_versions_query)
         if items and items.count():
             raise SuperdeskApiError.preconditionFailedError(
-                message='Cannot delete stage as it has article(s) or referenced by versions of the article(s).')
+                message=_('Cannot delete stage as it has article(s) or referenced by versions of the article(s).'))
 
         # check if the stage is referred to in a ingest routing rule
         rules = self._stage_in_rule(doc[config.ID_FIELD])
         if rules.count() > 0:
             rule_names = ', '.join(rule.get('name') for rule in rules)
             raise SuperdeskApiError.preconditionFailedError(
-                message='Stage is referred by Ingest Routing Schemes : {}'.format(rule_names))
+                message=_('Stage is referred by Ingest Routing Schemes : {rule_names}').format(rule_names=rule_names))
 
     def on_deleted(self, doc):
         push_notification(self.notification_key,
@@ -198,7 +199,7 @@ class StagesService(BaseService):
                 self.set_desk_ref(original, 'working_stage')
         else:
             if original.get('working_stage') and 'working_stage' in updates:
-                raise SuperdeskApiError.forbiddenError(message='Must have one working stage in a desk')
+                raise SuperdeskApiError.forbiddenError(message=_('Must have one working stage in a desk'))
 
         if updates.get('default_incoming', False):
             if not original.get('default_incoming'):
@@ -206,7 +207,7 @@ class StagesService(BaseService):
                 self.set_desk_ref(original, 'incoming_stage')
         else:
             if original.get('default_incoming') and 'default_incoming' in updates:
-                raise SuperdeskApiError.forbiddenError(message='Must have one incoming stage in a desk')
+                raise SuperdeskApiError.forbiddenError(message=_('Must have one incoming stage in a desk'))
 
     def on_updated(self, updates, original):
         if 'is_visible' in updates and updates['is_visible'] != original.get('is_visible', True):

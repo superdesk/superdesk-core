@@ -112,6 +112,7 @@ class NINJSFormatter(Formatter):
         self.format_type = 'ninjs'
         self.can_preview = True
         self.can_export = True
+        self.internal_renditions = ['original']
 
     def format(self, article, subscriber, codes=None):
         try:
@@ -172,7 +173,10 @@ class NINJSFormatter(Formatter):
         if extra_items:
             ninjs.setdefault(EXTRA_ITEMS, {}).update(extra_items)
 
-        if article.get(EMBARGO):
+        if article.get('embargoed'):
+            ninjs['embargoed'] = article['embargoed'].isoformat()
+
+        if article.get(EMBARGO):  # embargo set in superdesk overrides ingested one
             ninjs['embargoed'] = get_utc_schedule(article, EMBARGO).isoformat()
 
         if article.get('priority'):
@@ -292,8 +296,13 @@ class NINJSFormatter(Formatter):
         extra_items = {}
         media = {}
         content_profile = None
+        archive_service = superdesk.get_resource_service('archive')
         for key, item in (article.get(ASSOCIATIONS) or {}).items():
             if item:
+                if archive_service._is_related_content(key) and '_type' not in item:
+                    # if item is related item then fetch it from db
+                    item = archive_service.find_one(req=None, _id=item['_id'])
+
                 item = self._transform_to_ninjs(item, subscriber)
                 associations[key] = item  # all items should stay in associations
                 match = MEDIA_FIELD_RE.match(key)
@@ -345,8 +354,10 @@ class NINJSFormatter(Formatter):
         # get the actual article's renditions
         actual_renditions = article.get('renditions', {})
         # renditions list that we want to publish
-        if article['type'] is 'picture':
-            renditions_to_publish = ['original'] + list(get_renditions_spec(without_internal_renditions=True).keys())
+        if article['type'] == 'picture':
+            renditions_to_publish = self.internal_renditions + list(get_renditions_spec(
+                without_internal_renditions=True
+            ).keys())
             # filter renditions and keep only the ones we want to publish
             actual_renditions = {name: actual_renditions[name] for name in renditions_to_publish
                                  if name in actual_renditions}

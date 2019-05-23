@@ -8,8 +8,6 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import json
-import os
 import superdesk
 import logging
 
@@ -17,47 +15,6 @@ from superdesk import get_resource_service
 
 
 logger = logging.getLogger(__name__)
-
-
-def populate_table_json(service_name, json_data):
-    service = get_resource_service(service_name)
-    for item in json_data:
-        id_name = item.get("_id")
-
-        if service.find_one(_id=id_name, req=None):
-            service.put(id_name, item)
-        else:
-            service.post([item])
-
-
-def process_vocabularies(filepath):
-    """Upsert the vocabularies into the vocabularies collections.
-
-    The format of the file used is JSON.
-    :param filepath: absolute filepath
-    :return: nothing
-    """
-    if not os.path.exists(filepath):
-        raise FileNotFoundError
-
-    [table_name, ext] = os.path.basename(filepath).split('.')
-
-    with open(filepath, 'rt') as vocabularies:
-        json_data = json.loads(vocabularies.read())
-        populate_table_json(table_name, json_data)
-
-
-class VocabulariesPopulateCommand(superdesk.Command):
-    """
-    Class defining the populate vocabularies command.
-    """
-
-    option_list = (
-        superdesk.Option('--filepath', '-f', dest='filepath', required=True),
-    )
-
-    def run(self, filepath):
-        process_vocabularies(filepath)
 
 
 def update_items(vocabularies, fields, service):
@@ -136,7 +93,13 @@ def update_item(item, vocabularies, fields):
 
 class UpdateVocabulariesInItemsCommand(superdesk.Command):
     """
-    Class defining the update of vocabularies values in archive command.
+    Update documents in `archive` and `published` collections which contain CV related fields:
+    `subject`, `genre`, `place`, `anpa_category` with corresponding data from vocabularies.
+
+    Example:
+    ::
+
+        $ python manage.py vocabularies:update_archive
     """
 
     option_list = ()
@@ -151,5 +114,4 @@ class UpdateVocabulariesInItemsCommand(superdesk.Command):
         update_items(vocabularies, fields, get_resource_service('published'))
 
 
-superdesk.command('vocabularies:populate', VocabulariesPopulateCommand())
 superdesk.command('vocabularies:update_archive', UpdateVocabulariesInItemsCommand())

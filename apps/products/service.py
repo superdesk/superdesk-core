@@ -13,6 +13,7 @@ from superdesk.services import BaseService
 from eve.utils import ParsedRequest, config
 from superdesk.errors import SuperdeskApiError
 from superdesk.metadata.utils import ProductTypes
+from flask_babel import _
 
 
 class ProductsService(BaseService):
@@ -27,7 +28,7 @@ class ProductsService(BaseService):
         ]})
         if names:
             raise SuperdeskApiError.badRequestError(
-                message="Product is used by the subscriber(s): {}".format(", ".join(names)))
+                message=_("Product is used by the subscriber(s): {names}").format(names=", ".join(names)))
 
     def _validate_product_type(self, updates, original):
         """Validates product type field. Raises Bad Request error for following conditions:
@@ -43,15 +44,15 @@ class ProductsService(BaseService):
                     'api_products': original.get(config.ID_FIELD)})
                 if names:
                     raise SuperdeskApiError.badRequestError(
-                        message="Product is used for API publishing "
-                                "for the subscriber(s) : {}".format(", ".join(names)))
+                        message=_("Product is used for API publishing for the subscriber(s): {subscribers}").
+                        format(subscribers=", ".join(names)))
             elif updates.get('product_type') == ProductTypes.API.value:
                 names = get_resource_service('subscribers').get_subscriber_names(
                     {'products': original.get(config.ID_FIELD)})
                 if names:
                     raise SuperdeskApiError.badRequestError(
-                        message="Product is used for direct publishing "
-                                "for the subscriber(s) : {}".format(", ".join(names)))
+                        message=_("Product is used for direct publishing for the subscriber(s): {subscribers}").
+                        format(subscribers=", ".join(names)))
 
     def get_product_names(self, lookup):
         """Get the product names based on the lookup.

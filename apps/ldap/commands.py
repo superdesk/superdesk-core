@@ -13,7 +13,7 @@ from flask import current_app as app
 from superdesk.errors import SuperdeskApiError
 import superdesk
 from .ldap import ADAuth, add_default_values, get_user_query
-
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +24,11 @@ class ImportUserProfileFromADCommand(superdesk.Command):
     This command runs on assumption that the user executing this command and
     the user whose profile need to be imported need not to be the same. Uses ad_username and ad_password to bind to AD
     and then searches for a user identified by username_to_import and if found imports into Mongo.
+
+    Example:
+    ::
+
+        $ python manage.py users:copyfromad --ad_username=ad_uname --ad_password=123 --username_to_import=admin
     """
 
     option_list = (

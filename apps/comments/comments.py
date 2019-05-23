@@ -14,6 +14,7 @@ from superdesk.notification import push_notification
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
 from .user_mentions import get_users, get_desks, get_mentions, notify_mentioned_users, notify_mentioned_desks
+from flask_babel import _
 
 comments_schema = {
     'text': {
@@ -80,7 +81,7 @@ class CommentsService(BaseService):
             sent_user = doc.get('user', None)
             user = g.user
             if sent_user and sent_user != str(user.get('_id')):
-                message = 'Commenting on behalf of someone else is prohibited.'
+                message = _('Commenting on behalf of someone else is prohibited.')
                 raise SuperdeskApiError.forbiddenError(message)
             doc['user'] = str(user.get('_id'))
             user_names, desk_names = get_mentions(doc.get('text'))

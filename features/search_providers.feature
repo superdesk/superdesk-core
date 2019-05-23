@@ -92,7 +92,19 @@ Feature: Search Provider Feature
         """
         {"guid": "foo", "desk": "#desks._id#"}
         """
-        Then we get new resource
+        Then we get OK response
+        When we get "/archive/#search_providers_proxy._id#"
+        Then we get existing resource
+        """
+        {
+            "ingest_id": "foo",
+            "_id": "#search_providers_proxy._id#",
+            "source": "bar",
+            "ingest_provider": "#search_providers._id#",
+            "type": "picture",
+            "headline": "foo"
+        }
+        """
 
 
     @auth

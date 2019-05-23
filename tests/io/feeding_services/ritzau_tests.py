@@ -13,7 +13,7 @@ from unittest import mock
 import os
 
 from superdesk.tests import TestCase
-from superdesk.io.feeding_services import ritzau
+from superdesk.io.feeding_services import ritzau, http_base_service
 from superdesk.io.feed_parsers import ritzau as ritzau_feed
 
 PREFIX = 'test_superdesk_'
@@ -40,7 +40,7 @@ class RitzauTestCase(TestCase):
         with open(fixture) as f:
             self.feed_raw = f.read()
 
-    @mock.patch.object(ritzau, 'requests')
+    @mock.patch.object(http_base_service, 'requests')
     @mock.patch.object(ritzau.RitzauFeedingService, 'get_feed_parser')
     def test_feeding(self, get_feed_parser, requests):
         get_feed_parser.return_value = ritzau_feed.RitzauFeedParser()
@@ -48,5 +48,6 @@ class RitzauTestCase(TestCase):
         mock_get.text = self.feed_raw
         provider = PROVIDER.copy()
         service = ritzau.RitzauFeedingService()
+        service.provider = provider
         items = service._update(provider, {})[0]
         self.assertEqual(len(items), 2)

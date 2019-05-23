@@ -201,14 +201,40 @@ def get_filepath(filename, path=None):
 class AppInitializeWithDataCommand(superdesk.Command):
     """Initialize application with predefined data for various entities.
 
-    Entities supported: [roles, users, desks, stages, vocabularies, validators, content_templates, content_types,
-    published, activity, archive, archive_versions, ingest, publish_queue, archived, legal_archive,
-    legal_archive_versions, legal_publish_queue, dictionaries, ingest_providers, search_providers, products,
-    subscribers, workspaces, item_comments, audit, contacts, planning_types].
+    Loads predefined data (vocabularies, desks, etc..) for instance.
+    Mostly used for to load initial data for production instances,
+    using **app:prepopulate** command in this case is bad practice,
+    because it will load a lot of redundant data which is difficult to get rid of.
+
+    Supported entities:
+    ::
+
+        roles, users, desks, stages, vocabularies, validators,
+        content_templates, content_types, published, activity,
+        archive, archive_versions, ingest, publish_queue, archived,
+        legal_archive, legal_archive_versions, legal_publish_queue,
+        dictionaries, ingest_providers, search_providers, products,
+        subscribers, workspaces, item_comments, audit, contacts,
+        planning_types
+
     If no --entity-name parameter is supplied, all the entities are inserted.
-    The entities [vocabularies, validators, content_types, dictionaries, ingest_providers, search_providers,
-    products, subscribers, workspaces, item_comments, planning_types] will be updated with the predefined data
-    if it already exists, no action will be taken for the other entities.
+    The entities:
+
+    ::
+
+        vocabularies, validators, content_types, dictionaries, ingest_providers,
+        search_providers, products, subscribers, workspaces, item_comments,
+        planning_types
+
+    will be updated with the predefined data if it already exists,
+    no action will be taken for the other entities.
+
+    Example:
+    ::
+
+        $ python manage.py app:initialize_data
+        $ python manage.py app:initialize_data --entity-name=vocabularies
+        $ python manage.py app:initialize_data --entity-name=content_types
     """
 
     option_list = [

@@ -42,6 +42,11 @@ class RemoveExpiredContent(superdesk.Command):
     """Remove expired content from Superdesk.
 
     It removes expired items from production, published and archived colections.
+
+    Example:
+    ::
+
+        $ python manage.py archive:remove_expired
     """
 
     log_msg = ''
@@ -90,6 +95,8 @@ class RemoveExpiredContent(superdesk.Command):
         items_to_remove = set()
         items_to_be_archived = dict()
         items_having_issues = dict()
+        preserve_published_desks = {desk.get(config.ID_FIELD): 1 for desk in
+                                    get_resource_service('desks').find(where={'preserve_published_content': True})}
 
         for expired_items in archive_service.get_expired_items(expiry_datetime):
             if len(expired_items) == 0:
@@ -129,7 +136,7 @@ class RemoveExpiredContent(superdesk.Command):
 
                 processed_items = dict()
                 if item_id not in items_to_be_archived and item_id not in items_having_issues and \
-                        self._can_remove_item(item, processed_items):
+                        self._can_remove_item(item, processed_items, preserve_published_desks):
                     # item can be archived and removed from the database
                     logger.info('{} Removing item. {}'.format(self.log_msg, expiry_msg))
                     logger.info('{} Items to be removed. {}'.format(self.log_msg, processed_items))
@@ -200,7 +207,7 @@ class RemoveExpiredContent(superdesk.Command):
 
             logger.info('{} Deleting killed from archive.'.format(self.log_msg))
 
-    def _can_remove_item(self, item, processed_item=None):
+    def _can_remove_item(self, item, processed_item=None, preserve_published_desks=None):
         """Recursively checks if the item can be removed.
 
         :param dict item: item to be remove
@@ -241,6 +248,12 @@ class RemoveExpiredContent(superdesk.Command):
         # check item refs in the ids to remove set
         is_expired = item.get('expiry') and item.get('expiry') < utcnow()
 
+        # if the item is published or corrected and desk has preserve_published_content as true
+        if preserve_published_desks and \
+                item.get(ITEM_STATE) in {CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED} and \
+                item.get('task').get('desk') in preserve_published_desks:
+            is_expired = False
+
         if is_expired:
             # now check recursively for all references
             if item.get(config.ID_FIELD) in processed_item:
@@ -250,10 +263,13 @@ class RemoveExpiredContent(superdesk.Command):
             if item_refs:
                 archive_items = archive_service.get_from_mongo(req=None, lookup={'_id': {'$in': item_refs}})
                 for archive_item in archive_items:
-                    is_expired = self._can_remove_item(archive_item, processed_item)
+                    is_expired = self._can_remove_item(archive_item, processed_item, preserve_published_desks)
                     if not is_expired:
                         break
 
+        # If this item is not expired then it is potentially keeping it's parent alive.
+        if not is_expired:
+            logger.info('{} Item ID: [{}] has not expired'.format(self.log_msg, item.get(config.ID_FIELD)))
         return is_expired
 
     def _get_associated_media_id(self, item):

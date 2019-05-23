@@ -184,3 +184,92 @@ class NinjsFormatterTest(TestCase):
 
         self.assertEqual('urn:planning-id', data['planning_id'])
         self.assertEqual('urn:coverage-id', data['coverage_id'])
+
+    def test_picture_formatter(self):
+        article = {
+            "guid": "20150723001158606583",
+            "_current_version": 1,
+            "slugline": "AMAZING PICTURE",
+            "original_source": "AAP",
+            "renditions": {
+                "viewImage": {
+                    "width": 640,
+                    "href": "http://localhost:5000/api/upload/55b032041d41c8d278d21b6f/raw?_schema=http",
+                    "mimetype": "image/jpeg",
+                    "height": 401,
+                },
+                "original": {
+                    "href": "https://one-api.aap.com.au/api/v3/Assets/20150723001158606583/Original/download",
+                    "mimetype": "image/jpeg",
+                },
+            },
+            "byline": "MICKEY MOUSE",
+            "headline": "AMAZING PICTURE",
+            "versioncreated": "2015-07-23T00:15:00.000Z",
+            "ednote": "TEST ONLY",
+            "type": "picture",
+            "pubstatus": "usable",
+            "source": "AAP",
+            "description": "The most amazing picture you will ever see",
+            "guid": "20150723001158606583",
+            "body_footer": "<p>call helpline 999 if you are planning to quit smoking</p>",
+        }
+        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        expected = {
+            "byline": "MICKEY MOUSE",
+            "renditions": {
+                "original": {
+                    "href": "https://one-api.aap.com.au/api/v3/Assets/20150723001158606583/Original/download",
+                    "mimetype": "image/jpeg",
+                },
+                "viewImage": {
+                    "href": "http://localhost:5000/api/upload/55b032041d41c8d278d21b6f/raw?_schema=http",
+                    "mimetype": "image/jpeg",
+                    "width": 640,
+                    "height": 401,
+                }
+            },
+            "headline": "AMAZING PICTURE",
+            "pubstatus": "usable",
+            "version": "1",
+            "versioncreated": "2015-07-23T00:15:00.000Z",
+            "guid": "20150723001158606583",
+            "description_html": "The most amazing picture you will ever see<p>call helpline 999 if you are planning to "
+            "quit smoking</p>",
+            "type": "picture",
+            "priority": 5,
+            "slugline": "AMAZING PICTURE",
+            "ednote": "TEST ONLY",
+            "source": "AAP",
+            "products": [],
+        }
+        self.assertEqual(expected, json.loads(doc))
+        self.assertIn('viewImage', json.loads(doc).get('renditions'))
+
+    def test_auto_published_item(self):
+        article = {
+            "guid": "foo",
+            "_current_version": 1,
+            "slugline": "AMAZING PICTURE",
+            "original_source": "AAP",
+            "byline": "MICKEY MOUSE",
+            "headline": "AMAZING PICTURE",
+            "versioncreated": "2015-07-23T00:15:00.000Z",
+            "ednote": "TEST ONLY",
+            "type": "picture",
+            "pubstatus": "usable",
+            "source": "AAP",
+            "description": "The most amazing picture you will ever see",
+            "body_footer": "<p>call helpline 999 if you are planning to quit smoking</p>",
+        }
+        _, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        processed = json.loads(doc)
+        self.assertEqual(processed['guid'], 'foo')
+        article['ingest_id'] = 'bar'
+        _, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        processed = json.loads(doc)
+        self.assertEqual(processed['guid'], 'foo')
+        article['auto_publish'] = True
+        _, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        processed = json.loads(doc)
+        self.assertEqual(processed['guid'], 'bar')

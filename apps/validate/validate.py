@@ -104,9 +104,16 @@ class SchemaValidator(Validator):
     def _validate_empty(self, empty, field, value):
         """Original validates only strings, adding a list check."""
         super()._validate_empty(empty, field, value)
-        if isinstance(value, list) and not value:
+        if field == "subject":
+            # for subject, we have to ignore all data with scheme
+            # as they are used for custom values
+            filtered = [v for v in value if not v.get('scheme')]
+            if not filtered:
+                self._error(field, REQUIRED_FIELD)
+
+        elif isinstance(value, list) and not value:
             self._error(field, REQUIRED_FIELD)
-        if isinstance(value, str) and value == '<p></p>':  # default value for editor3
+        elif isinstance(value, str) and value == '<p></p>':  # default value for editor3
             self._error(field, REQUIRED_FIELD)
 
     def _validate_enabled(self, *args):
@@ -177,7 +184,6 @@ class ValidateService(superdesk.Service):
         for doc in docs:
             test_doc = deepcopy(doc)
             doc['errors'] = self._validate(test_doc, **kwargs)
-
         return [doc['errors'] for doc in docs]
 
     def _get_validators(self, doc):
@@ -186,7 +192,7 @@ class ValidateService(superdesk.Service):
         In case there is profile defined for item with respective content type it will
         use its schema for validations, otherwise it will fall back to action/item_type filter.
         """
-        extra_field_types = {'text': 'string', 'embed': 'dict', 'date': 'date'}
+        extra_field_types = {'text': 'string', 'embed': 'dict', 'date': 'date', 'urls': 'list'}
         profile = doc['validate'].get('profile')
         if profile and (app.config['AUTO_PUBLISH_CONTENT_PROFILE'] or doc['act'] != 'auto_publish'):
             content_type = superdesk.get_resource_service('content_types').find_one(req=None, _id=profile)
@@ -203,6 +209,11 @@ class ValidateService(superdesk.Service):
                         schema['extra']['schema'].update({extra_field['_id']: get_validator_schema(rules)})
                         self._populate_extra(doc['validate'], extra_field['_id'])
                 content_type['schema'] = schema
+                try:
+                    # avoid errors when cv is removed and value is still there
+                    schema['subject']['schema']['schema']['scheme'].pop('allowed', None)
+                except KeyError:
+                    pass
                 return [content_type]
         lookup = {'act': doc['act'], 'type': doc[ITEM_TYPE]}
         if doc.get('embedded'):

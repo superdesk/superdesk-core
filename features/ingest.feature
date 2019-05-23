@@ -495,9 +495,63 @@ Feature: Fetch From Ingest
                  "state":"ingested",
                  "associations":{
                     "featuremedia":{
+                       "state": "ingested",
                        "renditions":{
                           "baseImage":{
                              "width":1400
+                          },
+                          "original":{
+                          }
+                       }
+                    }
+                 }
+              }
+           ]
+        }
+        """
+
+    @auth
+    @provider
+    Scenario: Ingest ninjs with embedded items
+        Given empty "ingest"
+        When we fetch from "ninjs" ingest "ninjs4.json"
+        And we get "/ingest"
+        Then we get existing resource
+        """
+        {
+           "_items":[
+              {
+                 "type":"picture",
+                 "state":"ingested",
+                 "headline": "Polizeihunde sollen effizienter trainiert werden – Klone sollen die Lösung sein.",
+                 "renditions":{
+                    "baseImage":{
+                       "width":1400
+                    },
+                    "thumbnail":{
+
+                    },
+                    "original":{
+
+                    },
+                    "viewImage":{
+                    }
+                 }
+              },
+              {
+                 "type":"picture",
+                 "state":"ingested",
+                 "headline": "Ob China bald ganze Polizeihund-Staffeln voller Klone haben wird?"
+              },
+              {
+                 "type":"text",
+                 "state":"ingested",
+                 "associations":{
+                    "featuremedia":{
+                       "state": "ingested",
+                       "renditions":{
+                          "baseImage":{
+                             "width":1280
                           },
                           "original":{
                           }

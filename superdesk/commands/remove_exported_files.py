@@ -21,7 +21,14 @@ logger = logging.getLogger(__name__)
 
 
 class RemoveExportedFiles(superdesk.Command):
-    """Remove files from storage that were used for exporting items"""
+    """Remove files from storage that were used for exporting items
+
+    Example:
+    ::
+
+        $ python manage.py storage:remove_exported
+        $ python manage.py storage:remove_exported --expire-hours=12
+    """
 
     log_msg = ''
     expire_hours = 24

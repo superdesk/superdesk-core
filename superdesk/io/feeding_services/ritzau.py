@@ -12,17 +12,15 @@
 import logging
 
 from superdesk.io.registry import register_feeding_service, register_feeding_service_parser
-from superdesk.io.feeding_services import FeedingService
+from superdesk.io.feeding_services.http_base_service import HTTPFeedingServiceBase
 from superdesk.errors import IngestApiError, SuperdeskIngestError
 from lxml import etree
-import requests
 
 logger = logging.getLogger(__name__)
-URL = 'https://services.ritzau.dk/ritzaurest/Services.svc/xml/news/NewsQueue'
 URL_ACK = 'https://services.ritzau.dk/ritzaurest/Services.svc/xml/news/QueueAcknowledge'
 
 
-class RitzauFeedingService(FeedingService):
+class RitzauFeedingService(HTTPFeedingServiceBase):
     """
     Feeding Service class which can retrieve articles from Ritzau web service
     """
@@ -34,26 +32,21 @@ class RitzauFeedingService(FeedingService):
 
     label = 'Ritzau feed API'
 
-    fields = [
-        {
-            'id': 'username', 'type': 'text', 'label': 'Username',
-            'placeholder': 'Username', 'required': True
-        },
-        {
-            'id': 'password', 'type': 'password', 'label': 'Password',
-            'placeholder': 'Password', 'required': True
-        },
+    fields = HTTPFeedingServiceBase.AUTH_FIELDS + [
         {
             'id': 'url', 'type': 'text', 'label': 'URL',
             'placeholder': 'fill this field only for advanced uses', 'required': False
         }
     ]
 
+    HTTP_URL = 'https://services.ritzau.dk/ritzaurest/Services.svc/xml/news/NewsQueue'
+    # auth is done with params
+    HTTP_AUTH = False
+
     def _update(self, provider, update):
+        config = self.config
         try:
-            config = provider['config']
-            user = config['username']
-            password = config['password']
+            user, password = self.config['username'], self.config['password']
         except KeyError:
             SuperdeskIngestError.notConfiguredError(Exception('username and password are needed'))
 
@@ -66,10 +59,7 @@ class RitzauFeedingService(FeedingService):
         else:
             params = {'user': user, 'password': password, 'maksAntal': 50, 'waitAcknowledge': 'true'}
 
-        try:
-            r = requests.get(url_override or URL, params=params)
-        except Exception:
-            raise IngestApiError.apiRequestError(Exception('error while doing the request'))
+        r = self.get_url(url_override, params=params)
 
         try:
             root_elt = etree.fromstring(r.text)
@@ -94,10 +84,7 @@ class RitzauFeedingService(FeedingService):
                 except IndexError:
                     raise IngestApiError.apiRequestError(Exception('missing ServiceQueueId element'))
                 ack_params = {'user': user, 'password': password, 'servicequeueid': queue_id}
-                try:
-                    requests.get(URL_ACK, params=ack_params)
-                except Exception:
-                    raise IngestApiError.apiRequestError(Exception('error while doing the request'))
+                self.get_url(URL_ACK, params=ack_params)
 
         return [items]
 

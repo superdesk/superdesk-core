@@ -32,12 +32,13 @@ class SendEmailTestCase(TestCase):
                 self.assertEqual(2, sent.call_count)
 
     def test_send_translation_changed(self):
+        item = {'_id': 'test_id', 'guid': 'guid', 'headline': 'headline test'}
         with self.app.app_context():
             with self.app.mail.record_messages() as outbox:
                 assert len(outbox) == 0
-                send_translation_changed('admin', {'_id': 'test_id', 'headline': 'headline test'}, ['test@sd.io'])
+                send_translation_changed('admin', item, ['test@sd.io'])
                 assert len(outbox) == 1
                 assert outbox[0].subject == 'The original item headline test has been changed'
-                link = 'http://localhost:9000/#/workspace?item=test_id&action=edit'
+                link = 'http://localhost:9000/#/workspace?item=guid&action=edit'
                 assert outbox[0].body.find(link) != -1
                 assert outbox[0].html.find(link) != -1

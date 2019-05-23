@@ -11,22 +11,32 @@
 import os
 import json
 
-from apps.validators.command import ValidatorsPopulateCommand
 from superdesk.tests import TestCase
 from superdesk import get_resource_service
 
+from .app_populate import AppPopulateCommand
 
-class ValidatorsPopulateTest(TestCase):
+
+class AppPopulateValidatorsTest(TestCase):
 
     def setUp(self):
         self.filename = os.path.join(os.path.abspath(os.path.dirname(__file__)), "validators.json")
-        self.json_data = [{"_id": "publish", "schema": {"headline": {"type": "string"}}}]
+        self.json_data = [
+            {
+                "_id": "publish",
+                "schema": {
+                    "headline": {
+                        "type": "string"
+                    }
+                }
+            }
+        ]
 
         with open(self.filename, "w+") as file:
             json.dump(self.json_data, file)
 
     def test_populate_validators(self):
-        cmd = ValidatorsPopulateCommand()
+        cmd = AppPopulateCommand()
         with self.app.test_request_context(self.app.config.get('URL_PREFIX')):
             cmd.run(self.filename)
             service = get_resource_service("validators")

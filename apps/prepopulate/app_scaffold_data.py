@@ -25,6 +25,12 @@ class AppScaffoldDataCommand(superdesk.Command):
 
     Text archive dump must be restored before running this command as well as ``app:initialize_data``
     command to bootstrap the system with desks/users.
+
+    Example:
+    ::
+
+        $ python manage.py app:scaffold_data
+        $ python manage.py app:scaffold_data --no-of-stories=50
     """
 
     option_list = [

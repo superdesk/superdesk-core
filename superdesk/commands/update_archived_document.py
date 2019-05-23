@@ -20,14 +20,17 @@ class UpdateArchivedDocumentCommand(superdesk.Command):
     Update metadata for a document in both Mongodb and ElasticSearch by supplying ids
     field to update and the value for the update
 
-    manage.py app:updateArchivedDocument --ids='["588c1df11d41c80928015601","588c1b901d41c805dce70df0"]'
-        --field=anpa_category --value=[{"scheme" : null,"qcode" : "f","subject" : "04000000","name" : "Finance"}]
-        --parseNeeded=True
-
     --field   Field name
     --value   Value to be set in the field
     --parseNeeded   Optional. True if value is a complex type, not an int or string
 
+    Example:
+    ::
+
+        $ manage.py app:updateArchivedDocument --ids='["588c1df11d41c80928015601","588c1b901d41c805dce70df0"]'
+            --field=anpa_category
+            --value=[{"scheme" : null,"qcode" : "f","subject" : "04000000","name" : "Finance"}]
+            --parseNeeded=True
     """
 
     option_list = [

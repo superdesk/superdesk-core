@@ -197,3 +197,56 @@ Feature: Content Filter Tests
       "match_results": true
     }
     """
+
+  @auth
+  Scenario: Test filtering with custom cv
+    When we post to "archive" with success
+    """
+    {"guid": "foo", "headline": "foo", "subject": [], "type": "text", "version": 1}
+    """
+    When we post to "vocabularies" with success
+    """
+    {"_id": "categories", "items": [{"name": "National", "qcode": "a", "is_active": true}], "type": "manageable", "display_name": "Cat"}
+    """
+    When we post to "/filter_conditions" with success
+    """
+    {"name": "cat", "field": "categories", "operator": "in", "value": "a"}
+    """
+
+    When we post to "/content_filters/test"
+    """
+    {
+      "article_id": "#archive._id#",
+      "filter": {
+        "name": "test",
+        "content_filter": [
+          {"expression": {"fc": ["#filter_conditions._id#"]}}
+        ]
+      }
+    }
+    """
+    Then we get existing resource
+    """
+    {"match_results": false}
+    """
+
+    When we patch "/archive/#archive._id#"
+    """
+    {"subject": [{"name": "national", "qcode": "a", "scheme": "categories"}]}
+    """
+    When we post to "/content_filters/test"
+    """
+    {
+      "article_id": "#archive._id#",
+      "filter": {
+        "name": "test",
+        "content_filter": [
+          {"expression": {"fc": ["#filter_conditions._id#"]}}
+        ]
+      }
+    }
+    """
+    Then we get existing resource
+    """
+    {"match_results": true}
+    """

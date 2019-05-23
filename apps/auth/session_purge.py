@@ -23,6 +23,11 @@ class RemoveExpiredSessions(superdesk.Command):
     """Remove expired sessions from db.
 
     Using ``SESSION_EXPIRY_MINUTES`` config.
+
+    Example:
+    ::
+
+        $ python manage.py session:gc
     """
 
     def run(self):

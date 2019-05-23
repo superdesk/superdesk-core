@@ -59,7 +59,7 @@ Feature: Content Expiry Published Items
                 }
             }
         }
-    
+
     ]
     """
     When we post to "/products" with success
@@ -1158,3 +1158,207 @@ Feature: Content Expiry Published Items
     Then we get list with 0 items
     When we get "archived"
     Then we get list with 0 items
+
+  @auth
+  Scenario: Published content is not expired if the desk has preserve_published_content as True
+    When we patch "/desks/#desks._id#"
+    """
+    {"preserve_published_content": true}
+    """
+    Then we get existing resource
+    """
+    {"_id": "#desks._id#", "preserve_published_content": true, "name": "Sports"}
+    """
+    When we publish "#archive._id#" with "publish" type and "published" state
+    Then we get OK response
+    And we get existing resource
+    """
+    {"_current_version": 2, "state": "published", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
+    """
+    When we get "/published"
+    Then we get list with 1 items
+    """
+    {
+      "_items" : [
+        {"_id": "123", "state": "published", "type": "text", "_current_version": 2}
+      ]
+    }
+    """
+    When we enqueue published
+    When we get "/publish_queue"
+    Then we get list with 2 items
+    When we transmit items
+    And run import legal publish queue
+    When we get "/archive_history?where=item_id==%22123%22"
+    Then we get list with 2 items
+    """
+    {"_items": [
+      {"version": 1, "operation": "create"},
+      {"version": 2, "operation": "publish"}
+    ]}
+    """
+    When we expire items
+    """
+    ["123"]
+    """
+    And we get "/published"
+    Then we get list with 1 items
+    When we enqueue published
+    When we get "/publish_queue"
+    Then we get list with 2 items
+    When we get "/archive_history?where=item_id==%22123%22"
+    Then we get list with 2 items
+    When we get "/archived"
+    Then we get list with 0 items
+
+
+  @auth @vocabulary
+  Scenario: Correct/takedown an item and then expire on desk with preserve_published_content as True
+    When we patch "/desks/#desks._id#"
+    """
+    {"preserve_published_content": true}
+    """
+    Then we get existing resource
+    """
+    {"_id": "#desks._id#", "preserve_published_content": true, "name": "Sports"}
+    """
+    When we publish "123" with "publish" type and "published" state
+    Then we get OK response
+    When we enqueue published
+    And we transmit items
+    And run import legal publish queue
+    When we expire items
+    """
+    ["123"]
+    """
+    And we get "/published"
+    Then we get list with 1 items
+    When we enqueue published
+    When we get "/publish_queue"
+    Then we get list with 2 items
+    When we get "/archive_history?where=item_id==%22123%22"
+    Then we get list with 2 items
+    When we get "/archived"
+    Then we get list with 0 items
+    When we publish "123" with "correct" type and "corrected" state
+    """
+    {"body_html": "Corrected", "slugline": "corrected", "headline": "corrected"}
+    """
+    Then we get OK response
+    When we enqueue published
+    And we transmit items
+    And run import legal publish queue
+    When we expire items
+    """
+    ["123"]
+    """
+    And we get "/published"
+    Then we get list with 2 items
+    When we enqueue published
+    When we get "/publish_queue"
+    Then we get list with 4 items
+    When we get "/archive_history?where=item_id==%22123%22"
+    Then we get list with 3 items
+    When we get "/archived"
+    Then we get list with 0 items
+    When we publish "123" with "takedown" type and "recalled" state
+    """
+    {"body_html": "recalled", "slugline": "recalled", "headline": "recalled"}
+    """
+    Then we get OK response
+    When we enqueue published
+    And we transmit items
+    And run import legal publish queue
+    When we get "archive"
+    Then we get list with 0 items
+    When we get "published"
+    Then we get list with 3 items
+    When we get "publish_queue"
+    Then we get list with 6 items
+    When we get "archived"
+    Then we get list with 0 items
+    When we expire items
+    """
+    ["123"]
+    """
+    And we get "archive"
+    Then we get list with 0 items
+    When we get "published"
+    Then we get list with 0 items
+    When we get "publish_queue"
+    Then we get list with 0 items
+    When we get "archived"
+    Then we get list with 0 items
+
+  @auth
+  Scenario: Published content is expired if the preserve_published_content flag is changed to false
+    When we patch "/desks/#desks._id#"
+    """
+    {"preserve_published_content": true}
+    """
+    Then we get existing resource
+    """
+    {"_id": "#desks._id#", "preserve_published_content": true, "name": "Sports"}
+    """
+    When we publish "#archive._id#" with "publish" type and "published" state
+    Then we get OK response
+    And we get existing resource
+    """
+    {"_current_version": 2, "state": "published", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
+    """
+    When we get "/published"
+    Then we get list with 1 items
+    """
+    {
+      "_items" : [
+        {"_id": "123", "state": "published", "type": "text", "_current_version": 2}
+      ]
+    }
+    """
+    When we enqueue published
+    When we get "/publish_queue"
+    Then we get list with 2 items
+    When we transmit items
+    And run import legal publish queue
+    When we get "/archive_history?where=item_id==%22123%22"
+    Then we get list with 2 items
+    """
+    {"_items": [
+      {"version": 1, "operation": "create"},
+      {"version": 2, "operation": "publish"}
+    ]}
+    """
+    When we expire items
+    """
+    ["123"]
+    """
+    And we get "/published"
+    Then we get list with 1 items
+    When we enqueue published
+    When we get "/publish_queue"
+    Then we get list with 2 items
+    When we get "/archive_history?where=item_id==%22123%22"
+    Then we get list with 2 items
+    When we get "/archived"
+    Then we get list with 0 items
+    When we patch "/desks/#desks._id#"
+    """
+    {"preserve_published_content": false}
+    """
+    Then we get existing resource
+    """
+    {"_id": "#desks._id#", "preserve_published_content": false, "name": "Sports"}
+    """
+    When we expire items
+    """
+    ["123"]
+    """
+    When we get "/published"
+    Then we get list with 0 items
+    When we enqueue published
+    When we get "/publish_queue"
+    Then we get list with 0 items
+    When we get "/archive_history?where=item_id==%22123%22"
+    Then we get list with 0 items
+    When we get "/archived"
+    Then we get list with 1 items
