@@ -664,7 +664,10 @@ def step_then_we_get_same_etag(context):
 
 def store_placeholder(context, url):
     if context.response.status_code in (200, 201):
-        item = json.loads(context.response.get_data())
+        try:
+            item = json.loads(context.response.get_data())
+        except ValueError:
+            assert False, context.response.get_data()
         if item['_status'] == 'OK' and item.get('_id'):
             try:
                 setattr(context, get_resource_name(url), item)
