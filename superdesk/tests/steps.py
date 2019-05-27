@@ -116,7 +116,7 @@ def assert_is_now(val, key):
     """
     now = arrow.get()
     val = arrow.get(val)
-    assert val + timedelta(seconds=2) > now, '%s should be now, it is %s' % (key, val)
+    assert val + timedelta(seconds=2) > now, '%s should be %s, it is %s' % (key, now, val)
 
 
 def json_match(context_data, response_data, json_fields=[]):
