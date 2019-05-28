@@ -1,5 +1,12 @@
 # Superdesk Server Changelog
 
+## [1.29.1] 2019-05-28
+
+### Fixed
+
+- Handling empty content in STT ingest.
+- SD sends wrong feature media pic renditions after correction.
+
 ## [1.29] 2019-04-30
 
 ### Added
