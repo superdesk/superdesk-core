@@ -65,24 +65,8 @@ class ConceptItemsResource(Resource):
             'type': 'dict',
             'required': False
         },
-        'created_by': {
-            'type': 'objectid',
-            'readonly': True,
-            'data_relation': {
-                'resource': 'users',
-                'field': '_id',
-                'embeddable': False
-            }
-        },
-        'updated_by': {
-            'type': 'objectid',
-            'readonly': True,
-            'data_relation': {
-                'resource': 'users',
-                'field': '_id',
-                'embeddable': False
-            }
-        }
+        'created_by': Resource.rel('users', embeddable=False, readonly=True),
+        'updated_by': Resource.rel('users', embeddable=False, readonly=True),
     }
     privileges = {
         'POST': CONCEPT_ITEMS_PRIVELEGE,
