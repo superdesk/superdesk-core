@@ -2,9 +2,13 @@
 import copy
 import bson
 
-from superdesk.tests import TestCase
 from unittest import mock
-from apps.content_types import content_types, apply_schema
+from datetime import timedelta
+from superdesk.tests import TestCase
+from superdesk.utc import utcnow
+from apps.content_types import apply_schema
+
+import apps.content_types.content_types as content_types
 
 
 class MockService():
@@ -121,3 +125,13 @@ class ContentTypesTestCase(TestCase):
         updates['schema']['subject'] = updates['editor']['subject'] = None
         content_types.ContentTypesService().on_update(updates, original)
         self.assertFalse(updates['schema']['subject']['required'])
+
+    def test_prepare_for_edit_updated_now(self):
+        doc = {
+            'editor': {},
+            'schema': {},
+            '_updated': utcnow() - timedelta(days=5),
+        }
+
+        content_types.prepare_for_edit_content_type(doc)
+        self.assertGreaterEqual(doc['_updated'], utcnow() - timedelta(seconds=2))

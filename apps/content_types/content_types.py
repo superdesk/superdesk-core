@@ -9,11 +9,11 @@ from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
 from superdesk.default_schema import DEFAULT_SCHEMA, DEFAULT_EDITOR
 from apps.auth import get_user_id
-from apps.templates.content_templates import remove_profile_from_templates
 from apps.desks import remove_profile_from_desks
 from eve.utils import ParsedRequest
 from superdesk.resource import build_custom_hateoas
 from flask_babel import _
+from superdesk.utc import utcnow
 
 
 CONTENT_TYPE_PRIVILEGE = 'content_type'
@@ -244,6 +244,7 @@ def prepare_for_edit_content_type(doc):
     expand_subject(editor, schema, fields_map)
     set_field_name(editor, field_names)
     init_extra_fields(editor, schema)
+    doc['_updated'] = utcnow()
 
 
 def init_extra_fields(editor, schema):
@@ -500,3 +501,15 @@ def apply_schema(item):
     except Exception:
         schema = DEFAULT_SCHEMA
     return {key: val for key, val in item.items() if is_enabled(key, schema)}
+
+
+def remove_profile_from_templates(item):
+    """Removes the profile data from templates that are using the profile
+
+    :param item: deleted content profile
+    """
+    templates = list(superdesk.get_resource_service('content_templates').
+                     get_templates_by_profile_id(item.get(config.ID_FIELD)))
+    for template in templates:
+        template.get('data', {}).pop('profile', None)
+        superdesk.get_resource_service('content_templates').patch(template[config.ID_FIELD], template)
