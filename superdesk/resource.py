@@ -197,11 +197,12 @@ class Resource():
                     eve_hook += service_method
 
     @staticmethod
-    def rel(resource, embeddable=True, required=False, type='objectid', nullable=False):
+    def rel(resource, embeddable=True, required=False, type='objectid', nullable=False, readonly=False):
         return {
             'type': type,
             'required': required,
             'nullable': nullable,
+            'readonly': readonly,
             'data_relation': {'resource': resource, 'field': '_id', 'embeddable': embeddable}
         }
 
