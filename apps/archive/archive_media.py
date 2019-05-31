@@ -21,6 +21,7 @@ from .common import update_dates_for, generate_guid, GUID_TAG, set_original_crea
     generate_unique_id_and_name, set_item_expiry
 from superdesk.activity import add_activity
 from superdesk.filemeta import set_filemeta
+from superdesk.timer import timer
 
 
 logger = logging.getLogger(__name__)
@@ -47,8 +48,9 @@ class ArchiveMediaService():
                 doc[ITEM_TYPE] = self.type_av.get(file_type)
                 doc[ITEM_STATE] = CONTENT_STATE.PROGRESS
                 rendition_spec = get_renditions_spec(no_custom_crops=True)
-                renditions = generate_renditions(file, doc['media'], inserted, file_type,
-                                                 content_type, rendition_spec, url_for_media)
+                with timer('archive:renditions'):
+                    renditions = generate_renditions(file, doc['media'], inserted, file_type,
+                                                     content_type, rendition_spec, url_for_media)
                 doc['renditions'] = renditions
                 doc['mimetype'] = content_type
                 set_filemeta(doc, metadata)
@@ -95,7 +97,8 @@ class ArchiveMediaService():
             file_name, content_type, metadata = res
             logger.debug('Going to save media file with %s ' % file_name)
             content.seek(0)
-            doc['media'] = app.media.put(content, filename=file_name, content_type=content_type, metadata=metadata)
+            with timer('media:put.original'):
+                doc['media'] = app.media.put(content, filename=file_name, content_type=content_type, metadata=metadata)
             return content, content_type, decode_metadata(metadata)
 
         return file, file.content_type, file.metadata
