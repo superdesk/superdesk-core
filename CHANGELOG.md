@@ -6,6 +6,13 @@
 
 - Fix subject required validation failing in some cases
 
+## [1.29.2] 2019-06-07
+
+### Fixed
+
+- Fix AP ingest.
+- Fix wufoo ingest.
+
 ## [1.29.1] 2019-05-28
 
 ### Fixed

@@ -135,8 +135,8 @@ class HTTPFeedingServiceBase(FeedingService):
             )
 
         # validate url
-        url = self.config.get('url', '').strip()
-        if url and not url.startswith('http'):
+        url = self.config.get('url')
+        if url and not url.strip().startswith('http'):
             raise SuperdeskIngestError.notConfiguredError(
                 Exception('URL must be a valid HTTP link.')
             )
