@@ -48,6 +48,7 @@ class WufooFeedingService(FeedingService):
     ]
 
     def __init__(self):
+        super().__init__()
         self.fields_cache = {}
 
     def _update(self, provider, update):
