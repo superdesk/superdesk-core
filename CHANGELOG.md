@@ -1,6 +1,6 @@
 # Superdesk Server Changelog
 
-## [1.30] NOT RELEASED YET
+## [1.30.0] 2019-06-12
 
 ### Fixed
 
