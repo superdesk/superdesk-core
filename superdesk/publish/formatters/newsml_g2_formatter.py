@@ -53,14 +53,15 @@ class NewsMLG2Formatter(Formatter):
     """NewsML G2 Formatter"""
 
     XML_ROOT = '<?xml version="1.0" encoding="UTF-8"?>'
-    now = utcnow()
-    string_now = now.strftime('%Y-%m-%dT%H:%M:%S.0000Z')
 
     _message_nsmap = {None: 'http://iptc.org/std/nar/2006-10-01/', 'x': 'http://www.w3.org/1999/xhtml',
                       'xsi': 'http://www.w3.org/2001/XMLSchema-instance'}
 
     _debug_message_extra = {'{{{}}}schemaLocation'.format(_message_nsmap['xsi']): 'http://iptc.org/std/nar/2006-10-01/ \
     http://www.iptc.org/std/NewsML-G2/2.18/specification/NewsML-G2_2.18-spec-All-Power.xsd'}
+
+    def _format_date(self, date):
+        return date.strftime('%Y-%m-%dT%H:%M:%S+00:00')
 
     def format(self, article, subscriber, codes=None):
         """Create article in NewsML G2 format
@@ -112,7 +113,7 @@ class NewsMLG2Formatter(Formatter):
         :param int pub_seq_num:
         """
         header = SubElement(news_message, 'header')
-        SubElement(header, 'sent').text = self.string_now
+        SubElement(header, 'sent').text = self._format_date(utcnow())
         SubElement(header, 'sender').text = get_newsml_provider_id()
         SubElement(header, 'transmitId').text = str(pub_seq_num)
         SubElement(header, 'priority').text = str(article.get('priority', 5))
@@ -237,7 +238,7 @@ class NewsMLG2Formatter(Formatter):
         :param dict article:
         :param Element item_meta:
         """
-        SubElement(item_meta, 'versionCreated').text = article['versioncreated'].strftime('%Y-%m-%dT%H:%M:%S+00:00')
+        SubElement(item_meta, 'versionCreated').text = self._format_date(article['versioncreated'])
 
     def _format_firstcreated(self, article, item_meta):
         """Appends the firstCreated element to the item_meta element.
@@ -245,7 +246,7 @@ class NewsMLG2Formatter(Formatter):
         :param dict article:
         :param Element item_meta:
         """
-        SubElement(item_meta, 'firstCreated').text = article['firstcreated'].strftime('%Y-%m-%dT%H:%M:%S+00:00')
+        SubElement(item_meta, 'firstCreated').text = self._format_date(article['firstcreated'])
 
     def _format_pubstatus(self, article, item_meta):
         """Appends the pubStatus element to the item_meta element.
@@ -282,8 +283,8 @@ class NewsMLG2Formatter(Formatter):
         :param dict article:
         :param Element content_meta:
         """
-        SubElement(content_meta, 'contentCreated').text = article['firstcreated'].strftime('%Y-%m-%dT%H:%M:%S+00:00')
-        SubElement(content_meta, 'contentModified').text = article['versioncreated'].strftime('%Y-%m-%dT%H:%M:%S+00:00')
+        SubElement(content_meta, 'contentCreated').text = self._format_date(article['firstcreated'])
+        SubElement(content_meta, 'contentModified').text = self._format_date(article['versioncreated'])
 
     def _format_creator(self, article, content_meta):
         """Appends the creator element to the contentMeta element

@@ -43,6 +43,17 @@ def get_file_name(file):
     return hash_file(file, hashlib.sha256())
 
 
+def fix_content_type(content_type, content):
+    """Get known content_type
+
+    It will try to get it from content if it starts with application or is unknown.
+    """
+    if not content_type or 'application/' in content_type:
+        content_type = magic.from_buffer(content.getvalue(), mime=True)
+        content.seek(0)
+    return str(content_type)
+
+
 def download_file_from_url(url, request_kwargs=None):
     """Download file from given url.
 
@@ -60,10 +71,12 @@ def download_file_from_url(url, request_kwargs=None):
         rv = requests.get(urljoin(url_for('static', filename='x', _external=True), url), timeout=15, **request_kwargs)
     if rv.status_code not in (200, 201):
         raise SuperdeskApiError.internalError('Failed to retrieve file from URL: %s' % url)
-    mime = rv.headers.get('content-type', 'image/jpeg').split(';')[0]
-    ext = str(mime).split('/')[1]
+    content = BytesIO(rv.content)
+    content_type = rv.headers.get('content-type', 'image/jpeg').split(';')[0]
+    content_type = fix_content_type(content_type, content)
+    ext = str(content_type).split('/')[1]
     name = str(ObjectId()) + ext
-    return BytesIO(rv.content), name, str(mime)
+    return content, name, content_type
 
 
 def download_file_from_encoded_str(encoded_str):
@@ -78,9 +91,7 @@ def download_file_from_encoded_str(encoded_str):
 def process_file_from_stream(content, content_type=None):
     content_type = content_type or content.content_type
     content = BytesIO(content.read())
-    if 'application/' in content_type:
-        content_type = magic.from_buffer(content.getvalue(), mime=True)
-        content.seek(0)
+    content_type = fix_content_type(content_type, content)
     file_type, ext = content_type.split('/')
     try:
         metadata = process_file(content, file_type)

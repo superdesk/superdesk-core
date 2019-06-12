@@ -12,6 +12,7 @@ import json
 from uuid import uuid4
 
 import superdesk
+from werkzeug.datastructures import ImmutableMultiDict
 from eve.utils import ParsedRequest
 from superdesk.text_utils import get_text
 from superdesk.services import BaseService
@@ -23,6 +24,41 @@ class ConceptItemsService(BaseService):
     """
     CRUD service for concept items
     """
+
+    def get(self, req, lookup):
+        if all([req, req.sort]):
+            CASE_INSENSITIVE_COLLATION = '{"locale": "en", "strength":"1"}'
+            COLLATION_SORT_ARGS = (
+                'name', '-name',
+                'definition_html', '-definition_html',
+                'definition_text', '-definition_text'
+            )
+
+            # apply case insensitive collation only if collation was not provided explicitly
+            # and sorting by `name`, `definition_html` or `definition_text` was used
+            req_sort_args = [arg.strip() for arg in req.sort.split(',')]
+            if [arg for arg in req_sort_args if arg in COLLATION_SORT_ARGS] and \
+                    (not req.args or not req.args.get('collation')):
+                if req.args:
+                    req.args = req.args.to_dict()
+                    req.args['collation'] = CASE_INSENSITIVE_COLLATION
+                    req.args = ImmutableMultiDict(req.args)
+                else:
+                    req.args = ImmutableMultiDict({'collation': CASE_INSENSITIVE_COLLATION})
+
+            # if sort by (-)definition_html was used, we'll apply sort by definition_text under the hood
+            if any([arg for arg in req_sort_args if arg in ('definition_html', '-definition_html')]):
+                req_sort_args = ['definition_text' if arg == 'definition_html' else arg for arg in req_sort_args]
+                req_sort_args = ['-definition_text' if arg == '-definition_html' else arg for arg in req_sort_args]
+                if req.args:
+                    req.args = req.args.to_dict()
+                    req.args['sort'] = ','.join(set(req_sort_args))
+                    req.args = ImmutableMultiDict(req.args)
+                else:
+                    req.args = ImmutableMultiDict({'sort': ','.join(set(req_sort_args))})
+                req.sort = req.args['sort']
+
+        return super().get(req, lookup)
 
     def on_create(self, docs):
         for doc in docs:

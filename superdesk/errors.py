@@ -10,9 +10,11 @@
 
 import logging
 
-from flask import current_app as app
+from flask import current_app as app, json
 from eve.validation import ValidationError
+from eve.endpoints import send_response
 from superdesk.utils import save_error_data
+from werkzeug.exceptions import HTTPException
 from elasticsearch.exceptions import ConnectionTimeout  # noqa
 
 
@@ -719,3 +721,28 @@ class SkipValue(Exception):
 
 class StopDuplication(Exception):
     """Exception used in internal destination to not duplicate the item after marco execution"""
+
+
+class SuperdeskValidationError(HTTPException):
+
+    def __init__(self, errors, fields, message=None):
+        Exception.__init__(self)
+        self.errors = errors
+        self.fields = fields
+        self.response = send_response(
+            None, (
+                {
+                    app.config['STATUS']: app.config['STATUS_ERR'],
+                    app.config['ISSUES']: {
+                        'validator exception': str([self.errors]),  # BC
+                        'fields': self.fields,
+                    },
+                },
+                None,
+                None,
+                400,
+            )
+        )
+
+    def __str__(self):
+        return 'Validation Error: {}'.format(str(self.errors))

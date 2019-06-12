@@ -116,7 +116,7 @@ def assert_is_now(val, key):
     """
     now = arrow.get()
     val = arrow.get(val)
-    assert val + timedelta(seconds=2) > now, '%s should be now, it is %s' % (key, val)
+    assert val + timedelta(seconds=2) > now, '%s should be %s, it is %s' % (key, now, val)
 
 
 def json_match(context_data, response_data, json_fields=[]):
@@ -664,7 +664,10 @@ def step_then_we_get_same_etag(context):
 
 def store_placeholder(context, url):
     if context.response.status_code in (200, 201):
-        item = json.loads(context.response.get_data())
+        try:
+            item = json.loads(context.response.get_data())
+        except ValueError:
+            assert False, context.response.get_data()
         if item['_status'] == 'OK' and item.get('_id'):
             try:
                 setattr(context, get_resource_name(url), item)

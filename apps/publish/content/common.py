@@ -20,7 +20,7 @@ from flask import current_app as app
 from superdesk import get_resource_service
 from apps.content import push_content_notification
 from apps.content_types.content_types import DEFAULT_SCHEMA
-from superdesk.errors import InvalidStateTransitionError, SuperdeskApiError
+from superdesk.errors import InvalidStateTransitionError, SuperdeskApiError, SuperdeskValidationError
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, CONTENT_STATE, \
     PUBLISH_STATES, EMBARGO, PUB_STATUS, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, ASSOCIATIONS, MEDIA_TYPES
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE, PACKAGE_TYPE
@@ -239,9 +239,10 @@ class BasePublishService(BaseService):
 
         publish_type = 'auto_publish' if updates.get('auto_publish') else self.publish_type
         validate_item = {'act': publish_type, 'type': original['type'], 'validate': updated}
-        validation_errors = get_resource_service('validate').post([validate_item])
-        if validation_errors[0]:
-            raise ValidationError(validation_errors)
+        validation_errors = get_resource_service('validate').post([validate_item], fields=True)
+        for errors, fields in validation_errors:
+            if errors:
+                raise SuperdeskValidationError(errors, fields)
 
         validation_errors = []
         self._validate_associated_items(original, validation_errors)
