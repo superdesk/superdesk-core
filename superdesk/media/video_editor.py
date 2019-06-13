@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class VideoEditorFactory():
-    """Base class for Video Editor
+    """Base class for Video Editor.
     """
 
     label = 'unknown'
@@ -21,28 +21,28 @@ class VideoEditorFactory():
         self.provider = provider
 
     def get(self, project_id):
-        """Get single project
+        """Get single project.
 
         :param project_id:
         """
         raise NotImplementedError
 
     def get_paginate(self, offset):
-        """Get list of projects
+        """Get list of projects.
 
         :param offset:
         """
         raise NotImplementedError
 
     def post_project(self, filestream):
-        """Create new project
+        """Create new project.
 
         :param filestream:
         """
         raise NotImplementedError
 
     def post(self, project_id, updates):
-        """Edit video. This method creates a new project
+        """Edit video. This method creates a new project.
 
         :param project_id:
         :param updates: changes apply to the video
@@ -50,7 +50,7 @@ class VideoEditorFactory():
         raise NotImplementedError
 
     def put(self, project_id, updates):
-        """Edit video. This method does not create a new project
+        """Edit video. This method does not create a new project.
 
         :param project_id:
         :param updates: changes apply to the video
@@ -58,14 +58,14 @@ class VideoEditorFactory():
         raise NotImplementedError
 
     def delete(self, project_id):
-        """Delete video
+        """Delete video in video server.
 
         :param project_id:
         """
         raise NotImplementedError
 
     def get_timeline_thumbnails(self, project_id, amount):
-        """Get video thumbnails
+        """Get video thumbnails.
 
         :param project_id:
         :param amount: number of thumbnails to generate/get
@@ -73,12 +73,21 @@ class VideoEditorFactory():
         raise NotImplementedError
 
     def post_preview_thumbnail(self, project_id, post_type, time=None, base64_data=None):
-        """Post video preview thumbnail, capture image from video or from user upload
+        """Upload video preview thumbnail to video server.
 
         :param project_id:
         :param post_type: Post preview thumbnail type, either capture or upload
         :param time: time to capture
         :param base64_data: base64 image data if type is upload
+        """
+        raise NotImplementedError
+
+    def get_preview_thumbnail(self, project_id, time=None):
+        """Capture image from video-server.
+
+        :param project_id:
+        :param time: period time to capture the image in video
+        :return:
         """
         raise NotImplementedError
 
