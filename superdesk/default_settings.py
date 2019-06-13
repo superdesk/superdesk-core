@@ -739,3 +739,7 @@ WATERMARK_IMAGE = env('WATERMARK_IMAGE', '')
 
 #: Kill template config
 KILL_TEMPLATE_NULL_FIELDS = ['byline', 'place']
+
+#: Video editor server
+VIDEO_SERVER_HOST = env('VIDEO_SERVER_HOST', 'http://localhost:5050')
+VIDEO_SERVER_ENABLE = env('VIDEO_SERVER_ENABLE', True)
