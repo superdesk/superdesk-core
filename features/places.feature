@@ -3,8 +3,8 @@ Feature: Places
     @auth
     Scenario: Places autocomplete 
         When we get "/places_autocomplete?name=koberice&lang=cs"
-        # we use __any_value__ for Koberice because we
-        # can get either "Olomoucký kraj" or "Olomoucký"
+        # we use __any_value__ for states because we
+        # can get either "XXX" or "XXX kraj" (e.g. "Olomoucký kraj" or "Olomoucký")
         Then we get list with 3 items
         """
         {
@@ -40,7 +40,7 @@ Feature: Places
                     "region": null,
                     "region_code": null,
                     "scheme": "geonames",
-                    "state": "Moravskoslezsk\u00fd",
+                    "state": "__any_value__",
                     "state_code": "85"
                 },
                 {
@@ -57,7 +57,7 @@ Feature: Places
                     "region": null,
                     "region_code": null,
                     "scheme": "geonames",
-                    "state": "Jihomoravsk\u00fd",
+                    "state": "__any_value__",
                     "state_code": "78"
                 }
             ]
