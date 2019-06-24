@@ -52,7 +52,7 @@ class HTTPPushService(PublishService):
 
     **Publishing assets**
 
-    The ``POST`` request to the assets ``URL`` has the ``multipart/data-form`` content type and should
+    The ``POST`` request to the assets ``URL`` has the ``multipart/form-data`` content type and should
     contain the following fields:
 
     ``media_id``
