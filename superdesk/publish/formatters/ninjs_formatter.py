@@ -243,6 +243,9 @@ class NINJSFormatter(Formatter):
         if article.get('authors'):
             ninjs['authors'] = self._format_authors(article)
 
+        if (article.get('schedule_settings') or {}).get('utc_publish_schedule'):
+            ninjs['publish_schedule'] = article['schedule_settings']['utc_publish_schedule']
+
         return ninjs
 
     def _generate_renditions(self, article):
