@@ -408,6 +408,7 @@ CORE_APPS.extend([
     'superdesk.io.subjectcodes',
     'superdesk.io.format_document_for_preview',
     'superdesk.io.iptc',
+    'superdesk.text_checkers.spellcheckers',
     'apps.io',
     'apps.io.feeding_services',
     'superdesk.publish',

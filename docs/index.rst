@@ -25,7 +25,7 @@ For technical documentation on the Superdesk client web application, have a look
 
     We've got you covered. Check out the `User Manual <https://www.superdesk.org/uploads/superdeskmastermanual.pdf>`_.
 
-First steps 
+First steps
 -----------
 
 New to Superdesk? This is the best place to start. Here you will get the big picture of
@@ -47,6 +47,7 @@ works and can be developed further.
     architecture
     publish
     ingest
+    spellchecking
     settings
     schema
     content-types
