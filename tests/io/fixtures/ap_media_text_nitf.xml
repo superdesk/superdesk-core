@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<nitf version="-//IPTC//DTD NITF 3.4//EN" change.date="October 18, 2006" change.time="19:30">
+    <head>
+        <docdata>
+            <doc-id regsrc="AP"/>
+            <date.issue norm="20190703T040512Z"/>
+            <doc.copyright holder="AP" year="2019"/>
+        </docdata>
+    </head>
+    <body>
+        <body.head>
+            <hedline>
+                <hl1 id="headline">BC-BBN--Top Ten</hl1>
+            </hedline>
+            <distributor>The Associated Press</distributor>
+        </body.head>
+        <body.content>
+            <block id="Main">
+                <hl2>BC-BBN--Top Ten</hl2>
+            </block>
+            <table>
+                <tbody>
+                    <tr>
+                        <th>BASEBALL'S TOP TEN</th>
+                    </tr>
+                    <tr>
+                        <th>By The Associated Press</th>
+                    </tr>
+                    <tr>
+                        <th>NATIONAL LEAGUE</th>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <th>G</th>
+                        <th>AB</th>
+                        <th>R</th>
+                        <th>H</th>
+                        <th>Pct.</th>
+                    </tr>
+                    <tr>
+                        <td>McNeil NYM</td>
+                        <td>72</td>
+                        <td>271</td>
+                        <td>37</td>
+                        <td>95</td>
+                        <td>.351</td>
+                    </tr>
+                    <tr>
+                        <td>Bellinger LAD</td>
+                        <td>82</td>
+                        <td>295</td>
+                        <td>67</td>
+                        <td>102</td>
+                        <td>.346</td>
+                    </tr>
+                    <tr>
+                        <td>Blackmon Col</td>
+                        <td>69</td>
+                        <td>301</td>
+                        <td>66</td>
+                        <td>101</td>
+                        <td>.336</td>
+                    </tr>
+                    <tr>
+                        <td>Yelich Mil</td>
+                        <td>79</td>
+                        <td>296</td>
+                        <td>66</td>
+                        <td>97</td>
+                        <td>.328</td>
+                    </tr>
+                    <tr>
+                        <td>Arenado Col</td>
+                        <td>84</td>
+                        <td>326</td>
+                        <td>61</td>
+                        <td>105</td>
+                        <td>.322</td>
+                    </tr>
+                    <tr>
+                        <td>Dahl Col</td>
+                        <td>76</td>
+                        <td>286</td>
+                        <td>55</td>
+                        <td>92</td>
+                        <td>.322</td>
+                    </tr>
+                    <tr>
+                        <td>Verdugo LAD</td>
+                        <td>80</td>
+                        <td>251</td>
+                        <td>32</td>
+                        <td>78</td>
+                        <td>.311</td>
+                    </tr>
+                    <tr>
+                        <td>KMarte Ari</td>
+                        <td>82</td>
+                        <td>333</td>
+                        <td>55</td>
+                        <td>103</td>
+                        <td>.309</td>
+                    </tr>
+                    <tr>
+                        <td>Freeman Atl</td>
+                        <td>85</td>
+                        <td>337</td>
+                        <td>63</td>
+                        <td>104</td>
+                        <td>.309</td>
+                    </tr>
+                    <tr>
+                        <td>Bell Pit</td>
+                        <td>82</td>
+                        <td>318</td>
+                        <td>65</td>
+                        <td>98</td>
+                        <td>.308</td>
+                    </tr>
+                    <tr>
+                        <th>Home Runs</th>
+                    </tr>
+                </tbody>
+            </table>
+            <p>Yelich, Milwaukee, 31; Alonso, New York, 28; Bellinger, Los Angeles, 27; Bell, Pittsburgh, 25; FReyes,
+                San Diego, 24; Renfroe, San Diego, 24; Moustakas, Milwaukee, 24; Freeman, Atlanta, 22; JBaez, Chicago,
+                21; 9 tied at 20.
+            </p>
+            <table>
+                <tbody>
+                    <tr>
+                        <th>Runs Batted In</th>
+                    </tr>
+                </tbody>
+            </table>
+            <p>Bell, Pittsburgh, 77; Arenado, Colorado, 67; Bellinger, Los Angeles, 67; Yelich, Milwaukee, 67; Freeman,
+                Atlanta, 65; Alonso, New York, 64; Escobar, Arizona, 64; Ozuna, St. Louis, 62; Hosmer, San Diego, 60;
+                Harper, Philadelphia, 59.
+            </p>
+            <table>
+                <tbody>
+                    <tr>
+                        <th>Pitching</th>
+                    </tr>
+                </tbody>
+            </table>
+            <p>Woodruff, Milwaukee, 10-2; Soroka, Atlanta, 9-1; Ryu, Los Angeles, 9-2; Greinke, Arizona, 9-3; Fried,
+                Atlanta, 9-3; Strasburg, Washington, 9-4; JGray, Colorado, 9-5; Buehler, Los Angeles, 8-1; Marquez,
+                Colorado, 8-3; Scherzer, Washington, 8-5.
+            </p>
+        </body.content>
+    </body>
+</nitf>
