@@ -19,6 +19,8 @@ from superdesk.logging import logger
 from superdesk.text_utils import get_text
 from superdesk import get_resource_service
 from _collections_abc import MutableMapping
+from superdesk.signals import item_validate
+
 
 REQUIRED_FIELD = 'is a required field'
 MAX_LENGTH = "max length is {length}"
@@ -387,6 +389,10 @@ class ValidateService(superdesk.Service):
                         response.append(headline)
                     else:
                         response.append(message)
+
+            # let custom code do additional validation
+            item_validate.send(self, item=doc['validate'], response=response, error_fields=v.errors)
+
             if fields:
                 return response, v.errors
             return response

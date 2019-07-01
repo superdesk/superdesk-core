@@ -40,3 +40,6 @@ Core Signals
 
 .. autodata:: item_rewrite
     :annotation:
+
+.. autodata:: item_validate
+    :annotation:
