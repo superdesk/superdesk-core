@@ -13,3 +13,5 @@ So far, Superdesk support the following spellcheckers:
 
 
 .. autoclass:: superdesk.text_checkers.spellcheckers.grammalecte.Grammalecte
+
+.. autoclass:: superdesk.text_checkers.spellcheckers.leuven_dutch.LeuvenDutch
