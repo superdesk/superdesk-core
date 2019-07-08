@@ -18,6 +18,7 @@ from urllib.parse import urljoin
 import requests
 from os.path import abspath, expanduser
 from superdesk.errors import SuperdeskApiError
+from superdesk.text_checkers.spellcheckers import CAP_SPELLING, CAP_GRAMMAR
 from superdesk.text_checkers.spellcheckers.base import SpellcheckerBase
 
 logger = logging.getLogger(__name__)
@@ -69,7 +70,7 @@ class Grammalecte(SpellcheckerBase):
     """
 
     name = "grammalecte"
-    capacities = ("spelling", "grammar")
+    capacities = (CAP_SPELLING, CAP_GRAMMAR)
     languages = ['fr']
 
     def __init__(self, app):
@@ -204,7 +205,7 @@ class Grammalecte(SpellcheckerBase):
             raise SuperdeskApiError.internalError("Unexpected return code from Grammalecte")
         return self.grammalecte2superdesk(text, r.json())
 
-    def check(self, text):
+    def check(self, text, language=None):
         return self._check_cli(text) if self.use_cli else self._check_server(text)
 
     def _suggest_cli(self, text):
@@ -230,7 +231,7 @@ class Grammalecte(SpellcheckerBase):
         suggestions = r.json().get('suggestions', [])
         return {'suggestions': self.list2suggestions(suggestions)}
 
-    def suggest(self, text):
+    def suggest(self, text, language=None):
         return self._suggest_cli(text) if self.use_cli else self._suggest_server(text)
 
     def _available_cli(self):

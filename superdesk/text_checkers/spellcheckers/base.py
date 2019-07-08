@@ -40,7 +40,10 @@ class SpellcheckerRegisterer(abc.ABCMeta):
         instance = super().__call__(*args, **kwargs)
         name = instance.name
         if name in registered_spellcheckers:
-            raise ValueError('"{name}" spellchecker is already registered'.format(name=name))
+            # we log an error but don't raise an exception because the issue
+            # may happen with tests
+            logger.error('"{name}" spellchecker is already registered'.format(name=name))
+            return registered_spellcheckers[name]
 
         instance.capacities = SpellcheckerCapacities(instance.capacities)
         if not instance.available():
@@ -80,15 +83,23 @@ class SpellcheckerBase(metaclass=SpellcheckerRegisterer):
     @property
     @abc.abstractmethod
     def languages(self):
-        """List of RFC-5646 tags for languages supported by this spellchecker"""
+        """List of RFC-5646 tags for languages supported by this spellchecker
+
+        Special value ['*'] means that any language can be supported.
+        """
         pass
 
     @abc.abstractmethod
-    def check(self, text):
+    def check(self, text, language=None):
         """Check spelling in given text"""
         pass
 
-    def suggest(self, text):
+    def get_language(self, language):
+        if language is None:
+            language = self.languages[0]
+        return language.split('-', 1)[0].lower()
+
+    def suggest(self, text, language=None):
         """Get suggestions to correct given text"""
         logger.debug(u'"suggest" is not implemented')
         return {'suggestions': []}

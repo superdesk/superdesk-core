@@ -8,6 +8,9 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from functools import partial
+from unittest.mock import MagicMock, patch
+from .utils import mock_dictionaries
 import responses
 from flask import Flask
 from superdesk.tests import TestCase
@@ -17,6 +20,9 @@ from superdesk.text_checkers.spellcheckers.leuven_dutch import LeuvenDutch, API_
 from superdesk import get_resource_service
 
 spellcheckers.AUTO_IMPORT = False
+MODEL = {
+    'outo': 1,
+}
 
 
 @responses.activate
@@ -48,12 +54,19 @@ class LeuvenDutchTestCase(TestCase):
         self.fail("Leuven University Dutch spellchecker not found")
 
     @responses.activate
-    def test_checker(self):
-        """Check that spellchecking is working"""
+    def test_checker(self, expected=None, use_internal_dict=False):
+        """Check that spellchecking is working
+
+        :param expected: "errors" expected
+            to be specified if this test is re-used
+        :param use_internal_dict: value to use in request
+            can be changed if this test is re-used
+        """
         doc = {
             "spellchecker": LeuvenDutch.name,
             "text": "Outo rijden is gevaarlijk",
             "suggestions": False,
+            "use_internal_dict": use_internal_dict,
         }
         spellchecker = get_resource_service('spellchecker')
         check_url = API_URL.format(method="spellingchecker")
@@ -88,29 +101,23 @@ class LeuvenDutchTestCase(TestCase):
         )
         spellchecker.create([doc])
 
-        self.assertEqual(doc, {
-            'errors': [{
-                'json': {
-                    'debug': {'timeneeded': 0.1197},
-                    'settings': {
-                        'endmarker': '##__ERR_END__##',
-                        'html': False,
-                        'startmarker': '##__ERR_START__##'},
-                    'spellingchecker': {
-                        'input': 'Outo rijden is gevaarlijk',
-                        'output': {
-                            'context': [''],
-                            'marked': '##__ERR_START__##Outo##__ERR_END__## '
-                            'rijden is '
-                            'gevaarlijk',
-                            'mistakes': ['Outo']}},
-                    'status': {'code': 200, 'message': 'ok'}},
+        if expected is None:
+            expected = [{
                 'startOffset': 0,
                 'text': 'Outo',
-                'type': 'spelling'}],
-            'spellchecker': 'leuven_dutch',
-            'suggestions': False,
-            'text': 'Outo rijden is gevaarlijk'})
+                'type': 'spelling'}]
+
+        self.assertEqual(doc['errors'], expected)
+
+    @patch('superdesk.get_resource_service', MagicMock(side_effect=partial(mock_dictionaries, model=MODEL)))
+    def test_checker_with_internal_dict(self):
+        """Check that words in personal dictionary are discarded correctly
+
+        This test re-uses test_checker but activate "use_internal_dict" option and mock dictionary to have "outo" inside
+        """
+        # outo is in personal dictionary, so no spelling error should be returned
+        expected = []
+        self.test_checker(expected=expected, use_internal_dict=True)
 
     @responses.activate
     def test_suggest(self):
