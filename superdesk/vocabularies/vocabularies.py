@@ -141,6 +141,10 @@ class VocabulariesResource(Resource):
                 }
             }
         },
+        'custom_field_type': {
+            'type': 'string',
+            'nullable': True,
+        },
     }
 
     soft_delete = True
