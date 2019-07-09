@@ -362,9 +362,6 @@ class SetDefaultValuesTestCase(TestCase):
             result = instance._assign_default_values({}, None)
             self.assertIsNone(result['anpa_category'])
 
-            # self.app.config['DEFAULT_CATEGORY_VALUE_FOR_AUTO_PUBLISHED_ARTICLES'] = \
-            #     [{'qcode': 'a', 'name': 'Australian General News'}]
-
             result = instance._assign_default_values({}, [{'qcode': 'a', 'name': 'Australian General News'}])
             self.assertEqual(result['anpa_category'], [{'qcode': 'a', 'name': 'Australian General News'}])
 
