@@ -91,7 +91,8 @@ class SearchService(superdesk.Service):
                     CONTENT_STATE.PUBLISHED,
                     CONTENT_STATE.KILLED,
                     CONTENT_STATE.RECALLED,
-                    CONTENT_STATE.CORRECTED
+                    CONTENT_STATE.CORRECTED,
+                    CONTENT_STATE.UNPUBLISHED,
                 ]
             }
             }
