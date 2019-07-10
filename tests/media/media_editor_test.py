@@ -117,6 +117,4 @@ class MediaEditorTestCase(BaseMediaEditorTestCase):
         self.assertNotEqual(original_media_id, expected_media_id)
         md5_hash = self.md5_sum(item, 'original')
         self.assertEqual(md5_hash, '4e88727bb595d21ecdc7670a6afb099c')
-        archive_service = get_resource_service('archive')
-        updated_item = next(archive_service.find({'_id': item['_id']}))
-        self.assertEqual(updated_item['renditions']['original']['media'], expected_media_id)
+        self.assertEqual(item['renditions']['original']['media'], expected_media_id)

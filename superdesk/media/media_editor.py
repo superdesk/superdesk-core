@@ -89,12 +89,11 @@ class MediaEditorService(BaseService):
     def create(self, docs):
         """Apply transformation requested in 'edit'"""
         ids = []
-
+        archive = get_resource_service('archive')
         for doc in docs:
             # first we get item and requested edit operations
-            try:
-                item = doc.pop('item')
-            except KeyError:
+            item = doc.pop('item', None)
+            if item is None:
                 try:
                     item_id = doc.pop('item_id')
                 except KeyError:
@@ -102,6 +101,8 @@ class MediaEditorService(BaseService):
             else:
                 item_id = item[config.ID_FIELD]
 
+            if item is None and item_id:
+                item = next(archive.find({'_id': item_id}))
             edit = doc.pop('edit')
 
             # now we retrieve and load current original media
