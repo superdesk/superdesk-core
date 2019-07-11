@@ -93,3 +93,10 @@ class IPTCExamplePackage(BaseNewMLTwoTestCase):
 
     def test_can_parse(self):
         self.assertTrue(self.parser.can_parse(self.xml.getroot()))
+
+
+class ANSACultureParser(BaseNewMLTwoTestCase):
+    filename = 'ansa_culture.xml'
+
+    def test_content_parsing(self):
+        self.assertIn('(ANSA) - ROMA, 1 LUG - TEST FROM XAWES', self.item[0]['body_html'])

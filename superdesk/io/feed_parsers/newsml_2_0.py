@@ -30,6 +30,13 @@ NS = {'iptc': 'http://iptc.org/std/NITF/2006-10-18',
 logger = logging.getLogger(__name__)
 
 
+def get_content_tag(elem):
+    try:
+        return elem.tag.rsplit('}')[1]
+    except IndexError:
+        return elem.tag
+
+
 class NewsMLTwoFeedParser(XMLFeedParser):
     """
     Feed Parser which can parse if the feed is in NewsML 2 format.
@@ -308,17 +315,20 @@ class NewsMLTwoFeedParser(XMLFeedParser):
         else:
             html = tree.find(self.qname('html', ns))
             if html is None:
-                ns = tree.nsmap.get(None)  # fallback for missing xmlns
+                try:
+                    ns = tree.nsmap.get(None)  # fallback for missing xmlns
+                except AttributeError:
+                    ns = None
                 html = tree.find(self.qname('html', ns))
             body = html.find(self.qname('body', ns))
             elements = []
             for elem in body:
                 if elem.text:
-                    tag = elem.tag.rsplit('}')[1]
+                    tag = get_content_tag(elem)
                     elements.append('<%s>%s</%s>' % (tag, elem.text, tag))
 
             # If there is a single p tag then replace the line feeds with breaks
-            if len(elements) == 1 and body[0].tag.rsplit('}')[1] == 'p':
+            if len(elements) == 1 and get_content_tag(body[0]) == 'p':
                 elements[0] = elements[0].replace('\n    ', '</p><p>').replace('\n', '<br/>')
 
             content = dict()
