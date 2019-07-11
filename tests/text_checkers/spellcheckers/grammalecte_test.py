@@ -13,6 +13,7 @@ import responses
 from flask import Flask
 from superdesk.tests import TestCase
 from superdesk.text_checkers import spellcheckers
+from superdesk.text_checkers.spellcheckers.base import registered_spellcheckers
 from superdesk.text_checkers.spellcheckers.grammalecte import PATH_CHECK, PATH_SUGGEST, Grammalecte
 from superdesk import get_resource_service
 import os
@@ -23,7 +24,28 @@ TEST_URL = "http://localhost:8080"
 os.environ['GRAMMALECTE_URL'] = TEST_URL
 
 
+@responses.activate
+def load_spellcheckers():
+    """Load spellcheckers by mocking Grammalecte server, so it can be detected"""
+    registered_spellcheckers.clear()
+    app = Flask(__name__)
+    check_url = urljoin(TEST_URL, PATH_CHECK)
+    responses.add(
+        responses.POST, check_url,
+        json={
+            "program": "grammalecte-fr",
+            "version": "1.2",
+        },
+    )
+    spellcheckers.importSpellcheckers(app, spellcheckers.__name__)
+
+
 class GrammalecteTestCase(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        load_spellcheckers()
 
     def test_list(self):
         """Check that Grammalecte is listed by spellcheckers_list service"""
@@ -240,21 +262,3 @@ class GrammalecteTestCase(TestCase):
                 {'text': 'lote'},
                 {'text': 'lotte'}],
             'text': 'fote'})
-
-
-@responses.activate
-def load_spellcheckers():
-    """Load spellcheckers by mocking Grammalecte server, so it can be detected"""
-    app = Flask(__name__)
-    check_url = urljoin(TEST_URL, PATH_CHECK)
-    responses.add(
-        responses.POST, check_url,
-        json={
-            "program": "grammalecte-fr",
-            "version": "1.2",
-        },
-    )
-    spellcheckers.importSpellcheckers(app, spellcheckers.__name__)
-
-
-load_spellcheckers()

@@ -216,7 +216,7 @@ class Grammalecte(SpellcheckerBase):
 
         out = cmp_proc.stdout.decode('utf-8')
         suggestions = json.loads(out).get('aSuggestions', [])
-        return {'suggestions': [{'text': s} for s in suggestions]}
+        return {'suggestions': self.list2suggestions(suggestions)}
 
     def _suggest_server(self, text):
         if self.version_tuple < (1, 2):
@@ -228,7 +228,7 @@ class Grammalecte(SpellcheckerBase):
             raise SuperdeskApiError.internalError("Unexpected return code from Grammalecte")
 
         suggestions = r.json().get('suggestions', [])
-        return {'suggestions': [{'text': s} for s in suggestions]}
+        return {'suggestions': self.list2suggestions(suggestions)}
 
     def suggest(self, text):
         return self._suggest_cli(text) if self.use_cli else self._suggest_server(text)

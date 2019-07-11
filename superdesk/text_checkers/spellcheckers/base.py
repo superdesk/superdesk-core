@@ -85,7 +85,7 @@ class SpellcheckerBase(metaclass=SpellcheckerRegisterer):
 
     @abc.abstractmethod
     def check(self, text):
-        """Check spelling is given text"""
+        """Check spelling in given text"""
         pass
 
     def suggest(self, text):
@@ -100,6 +100,14 @@ class SpellcheckerBase(metaclass=SpellcheckerRegisterer):
         server launched)
         """
         return True
+
+    def list2suggestions(self, suggest_list):
+        """Convert a list of str to expected list of objects for suggestions
+
+        :param list suggest_list: if of suggests strings
+        :return list: list of suggestions in the dict format expected by client
+        """
+        return [{'text': s} for s in suggest_list]
 
     def serialize(self):
         data = {
