@@ -15,11 +15,14 @@ import flask
 
 from xml.etree import ElementTree
 from superdesk.io.feed_parsers.newsml_2_0 import NewsMLTwoFeedParser
+from superdesk.io.subjectcodes import init_app as init_subjects
 
 
 class BaseNewMLTwoTestCase(unittest.TestCase):
     def setUp(self):
         app = flask.Flask(__name__)
+        app.api_prefix = '/api'
+        init_subjects(app)
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.normpath(os.path.join(dirname, '../fixtures', self.filename))
         provider = {'name': 'Test'}

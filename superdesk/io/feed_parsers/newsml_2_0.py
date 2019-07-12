@@ -13,11 +13,11 @@ import arrow
 import datetime
 import logging
 
+from flask import current_app as app
 from superdesk import etree as sd_etree, app, get_resource_service
 from superdesk.errors import ParserError
 from superdesk.io.registry import register_feed_parser
 from superdesk.io.feed_parsers import XMLFeedParser
-from superdesk.io.iptc import subject_codes
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
 from superdesk.metadata.utils import is_normal_package
 from lxml import etree
@@ -213,7 +213,7 @@ class NewsMLTwoFeedParser(XMLFeedParser):
                 if scheme is None:
                     # this is a main subject, we use IPTC qcode
                     try:
-                        name = subject_codes[qcode_parts[1]]
+                        name = app.subjects[qcode_parts[1]]
                     except KeyError:
                         logger.debug("Subject code {code}' not found".format(code=qcode_parts[1]))
                         continue
