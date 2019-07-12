@@ -75,6 +75,10 @@ class SchemaValidator(Validator):
         """Allow type media in schema."""
         pass
 
+    def _validate_type_custom(self, field, value):
+        """Allow custom field type."""
+        pass
+
     def _validate_type_date(self, field, value):
         try:
             datetime.strptime(value or '', '%Y-%m-%dT%H:%M:%S+%f')
