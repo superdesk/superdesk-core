@@ -72,7 +72,7 @@ class SchemaValidator(Validator):
     def _validate_type_embed(self, field, value):
         """Allow type media in schema."""
         pass
-    
+
     def _validate_type_custom(self, field, value):
         """Allow custom field type."""
         pass
