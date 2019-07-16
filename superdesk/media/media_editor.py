@@ -90,12 +90,10 @@ class MediaEditorService(BaseService):
         """Apply transformation requested in 'edit'"""
         ids = []
         archive = get_resource_service('archive')
-
-        for idx, doc in enumerate(docs):
+        for doc in docs:
             # first we get item and requested edit operations
-            try:
-                item = doc.pop('item')
-            except KeyError:
+            item = doc.pop('item', None)
+            if item is None:
                 try:
                     item_id = doc.pop('item_id')
                 except KeyError:
@@ -103,7 +101,8 @@ class MediaEditorService(BaseService):
             else:
                 item_id = item[config.ID_FIELD]
 
-            item = next(archive.find({'_id': item_id}))
+            if item is None and item_id:
+                item = next(archive.find({'_id': item_id}))
             edit = doc.pop('edit')
 
             # now we retrieve and load current original media
@@ -144,13 +143,7 @@ class MediaEditorService(BaseService):
                                              get_renditions_spec(),
                                              current_app.media.url_for_media)
 
-            # we update item in db, and the item we'll return to client
-            # we keep old renditions in GridFS for history references
-            updates = {'renditions': renditions}
             ids.append(item_id)
-            archive.update(item_id, updates, item)
-            item.update(updates)
-
-            docs[idx] = item
+            doc['renditions'] = renditions
 
         return [ids]
