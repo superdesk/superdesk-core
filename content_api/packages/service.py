@@ -10,6 +10,7 @@
 
 import logging
 from content_api.items.service import ItemsService
+from content_api.packages.resource import PackagesResource
 
 
 logger = logging.getLogger(__name__)
@@ -22,6 +23,8 @@ class PackagesService(ItemsService):
 
     Serves mainly as a proxy to the data layer.
     """
+
+    default_sort = PackagesResource.datasource.get('default_sort', [('versioncreated', -1)])
 
     def on_fetched_item(self, document):
         """Event handler when a single package is retrieved from database.
