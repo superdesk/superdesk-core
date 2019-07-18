@@ -191,7 +191,7 @@ class GetMethodTestCase(ItemsServiceTestCase):
             'max_results', 'page', 'version', 'where',
             'q', 'default_operator', 'filter',
             'service', 'subject', 'genre', 'urgency',
-            'priority', 'type', 'item_source'
+            'priority', 'type', 'item_source', 'sort'
         ])
 
         whitelist_arg = kwargs.get('whitelist')
