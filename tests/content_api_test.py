@@ -1,4 +1,5 @@
 import io
+import time
 import superdesk
 
 from bson import ObjectId
@@ -574,3 +575,100 @@ class ContentAPITestCase(TestCase):
         with self.capi.test_client() as c:
             response = c.get(attachments[0]['href'], headers=self._auth_headers(subscriber))
             self.assertEqual(200, response.status_code, attachments[0]['href'])
+
+    def test_items_default_sorting(self):
+        subscriber = {'_id': 'sub1'}
+        headers = self._auth_headers(subscriber)
+
+        self.content_api.publish(
+            {'_id': 'aaaa', 'guid': 'aaa', 'urgency': '1', 'type': 'text', 'source': 'foo'},
+            [subscriber]
+        )
+        # We want to test a default sorting and default sort field is versioncreated,
+        # so if we `self.content_api.publish` without delay, `versioncreated` will be almost the same, because it
+        # filled automatically in publish service.
+        # The lowest dimension is a `second` in datetime format for `versioncreated`.
+        # That's why 1 sec delay is used.
+        time.sleep(1)
+        self.content_api.publish(
+            {'_id': 'bbbb', 'guid': 'bbb', 'urgency': '2', 'type': 'text', 'source': 'foo'},
+            [subscriber]
+        )
+        time.sleep(1)
+        self.content_api.publish(
+            {'_id': 'cccc', 'guid': 'ccc', 'urgency': '3', 'type': 'text', 'source': 'foo'},
+            [subscriber]
+        )
+        time.sleep(1)
+        self.content_api.publish(
+            {'_id': 'dddd', 'guid': 'ddd', 'urgency': '4', 'type': 'text', 'source': 'bar'},
+            [subscriber]
+        )
+        time.sleep(1)
+        self.content_api.publish(
+            {'_id': 'eeee', 'guid': 'eee', 'urgency': '5', 'type': 'text', 'source': 'foo'},
+            [subscriber]
+        )
+
+        with self.capi.test_client() as c:
+            # no filters
+            response = c.get('items', headers=headers)
+            self.assertEqual(200, response.status_code)
+            data = json.loads(response.data)
+            self.assertListEqual([i['urgency'] for i in data['_items']], ['5', '4', '3', '2', '1'])
+
+            # with filtering
+            response = c.get('items?item_source=["foo"]', headers=headers)
+            self.assertEqual(200, response.status_code)
+            data = json.loads(response.data)
+            self.assertListEqual([i['urgency'] for i in data['_items']], ['5', '3', '2', '1'])
+
+            # with filtering and custom sorting
+            response = c.get('items?item_source=["foo"]&sort=[("versioncreated",1)]', headers=headers)
+            self.assertEqual(200, response.status_code)
+            data = json.loads(response.data)
+            self.assertListEqual([i['urgency'] for i in data['_items']], ['1', '2', '3', '5'])
+
+    def test_items_custom_sorting(self):
+        subscriber = {'_id': 'sub1'}
+        headers = self._auth_headers(subscriber)
+
+        self.content_api.publish(
+            {'_id': 'aaaa', 'guid': 'aaa', 'urgency': '1', 'type': 'text', 'source': 'foo'},
+            [subscriber]
+        )
+        self.content_api.publish(
+            {'_id': 'bbbb', 'guid': 'bbb', 'urgency': '2', 'type': 'text', 'source': 'foo'},
+            [subscriber]
+        )
+        self.content_api.publish(
+            {'_id': 'cccc', 'guid': 'ccc', 'urgency': '3', 'type': 'text', 'source': 'foo'},
+            [subscriber]
+        )
+        self.content_api.publish(
+            {'_id': 'dddd', 'guid': 'ddd', 'urgency': '4', 'type': 'text', 'source': 'bar'},
+            [subscriber]
+        )
+        self.content_api.publish(
+            {'_id': 'eeee', 'guid': 'eee', 'urgency': '5', 'type': 'text', 'source': 'foo'},
+            [subscriber]
+        )
+
+        with self.capi.test_client() as c:
+            # urgency desc
+            response = c.get('items?sort=[("urgency",-1)]', headers=headers)
+            self.assertEqual(200, response.status_code)
+            data = json.loads(response.data)
+            self.assertListEqual([i['urgency'] for i in data['_items']], ['5', '4', '3', '2', '1'])
+
+            # urgency asc
+            response = c.get('items?sort=[("urgency",1)]', headers=headers)
+            self.assertEqual(200, response.status_code)
+            data = json.loads(response.data)
+            self.assertListEqual([i['urgency'] for i in data['_items']], ['1', '2', '3', '4', '5'])
+
+            # urgency asc + filter
+            response = c.get('items?sort=[("urgency",1)]&item_source=["foo"]', headers=headers)
+            self.assertEqual(200, response.status_code)
+            data = json.loads(response.data)
+            self.assertListEqual([i['urgency'] for i in data['_items']], ['1', '2', '3', '5'])
