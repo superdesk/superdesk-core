@@ -63,6 +63,18 @@ class APFeedingService(HTTPFeedingServiceBase):
         except KeyError:
             raise SuperdeskIngestError.notConfiguredError(Exception('idList is needed'))
 
+        # we check if the provider has been closed since the last update
+        try:
+            last_closed = provider['last_closed']['closed_at']
+            last_updated = provider['last_updated']
+        except KeyError:
+            pass
+        else:
+            if last_closed > last_updated and 'private' in provider:
+                # we reset the private data so only last page of items will be retrieved (cf. SDESK-4372)
+                logger.info("reseting private data for provider {source}".format(source=provider.get('source')))
+                del provider['private']
+
         # we remove spaces and empty values from id_list to do a clean list
         id_list = ','.join([id_.strip() for id_ in id_list.split(',') if id_.strip()])
 
@@ -70,15 +82,19 @@ class APFeedingService(HTTPFeedingServiceBase):
                   'idListType': id_list_type,
                   'format': '5',
                   'maxItems': '25',
-                  'sortOrder': 'chronological'}
+                  }
         try:
             min_date_time = provider['private']['min_date_time']
             sequence_number = provider['private']['sequence_number']
         except KeyError:
-            pass
+            # the provider is new or re-opened, we want last items
+            # so we need reverse-chronological order
+            chronological = False
         else:
             params['minDateTime'] = min_date_time
             params['sequenceNumber'] = sequence_number
+            params['sortOrder'] = 'chronological'
+            chronological = True
 
         r = self.get_url(params=params)
 
@@ -89,6 +105,8 @@ class APFeedingService(HTTPFeedingServiceBase):
 
         parser = self.get_feed_parser(provider)
         items = parser.parse(root_elt, provider)
+        if not chronological:
+            items.reverse()
 
         try:
             min_date_time = root_elt.xpath('//iptc:timestamp[@role="minDateTime"]/text()', namespaces=NS)[0].strip()
