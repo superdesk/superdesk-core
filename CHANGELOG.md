@@ -1,5 +1,13 @@
 # Superdesk Server Changelog
 
+## [1.29.3] 2019-07-22
+
+### Fixed
+
+- Content API sends items in random order.
+- Use default locale for translations if user language is not supported.
+- Fix flake8 error.
+
 ## [1.29.2] 2019-06-07
 
 ### Fixed
