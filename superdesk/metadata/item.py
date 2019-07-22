@@ -41,16 +41,17 @@ ITEM_URGENCY = 'urgency'
 
 #: item internal states
 content_state = ['draft', 'ingested', 'routed', 'fetched', 'submitted', 'in_progress', 'spiked',
-                 'published', 'killed', 'corrected', 'scheduled', 'recalled']
+                 'published', 'killed', 'corrected', 'scheduled', 'recalled', 'unpublished']
 CONTENT_STATE = namedtuple('CONTENT_STATE', ['DRAFT', 'INGESTED', 'ROUTED', 'FETCHED', 'SUBMITTED', 'PROGRESS',
                                              'SPIKED', 'PUBLISHED', 'KILLED', 'CORRECTED',
-                                             'SCHEDULED', 'RECALLED'])(*content_state)
+                                             'SCHEDULED', 'RECALLED', 'UNPUBLISHED'])(*content_state)
 PUBLISH_STATES = {
     CONTENT_STATE.PUBLISHED,
     CONTENT_STATE.SCHEDULED,
     CONTENT_STATE.CORRECTED,
     CONTENT_STATE.KILLED,
-    CONTENT_STATE.RECALLED
+    CONTENT_STATE.RECALLED,
+    CONTENT_STATE.UNPUBLISHED,
 }
 
 FORMAT = 'format'

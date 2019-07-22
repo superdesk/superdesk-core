@@ -307,7 +307,10 @@ def format_items(items):
     output = ['']  # insert empty line
     for item in items:
         if item.get('formatted_item'):
-            item['formatted_item'] = json.loads(item['formatted_item'])
+            try:
+                item['formatted_item'] = json.loads(item['formatted_item'])
+            except ValueError:
+                pass
         output.append(json.dumps(item, indent=4, sort_keys=True))
     return ',\n'.join(output)
 

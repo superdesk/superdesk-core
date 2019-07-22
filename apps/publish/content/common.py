@@ -57,12 +57,14 @@ ITEM_PUBLISH = 'publish'
 ITEM_CORRECT = 'correct'
 ITEM_KILL = 'kill'
 ITEM_TAKEDOWN = 'takedown'
-item_operations.extend([ITEM_PUBLISH, ITEM_CORRECT, ITEM_KILL, ITEM_TAKEDOWN])
+ITEM_UNPUBLISH = 'unpublish'
+item_operations.extend([ITEM_PUBLISH, ITEM_CORRECT, ITEM_KILL, ITEM_TAKEDOWN, ITEM_UNPUBLISH])
 publish_services = {
     ITEM_PUBLISH: 'archive_publish',
     ITEM_CORRECT: 'archive_correct',
     ITEM_KILL: 'archive_kill',
-    ITEM_TAKEDOWN: 'archive_takedown'
+    ITEM_TAKEDOWN: 'archive_takedown',
+    ITEM_UNPUBLISH: 'archive_unpublish',
 }
 
 PRESERVED_FIELDS = ['headline', 'byline', 'usageterms', 'alt_text',
@@ -663,7 +665,7 @@ def update_item_data(item, data, keys=DEFAULT_SCHEMA.keys(), keep_existing=False
 superdesk.workflow_state('published')
 superdesk.workflow_action(
     name='publish',
-    include_states=['fetched', 'routed', 'submitted', 'in_progress', 'scheduled'],
+    include_states=['fetched', 'routed', 'submitted', 'in_progress', 'scheduled', 'unpublished'],
     privileges=['publish']
 )
 
@@ -705,4 +707,11 @@ superdesk.workflow_action(
     name='recalled',
     include_states=['published', 'scheduled', 'corrected'],
     privileges=['takedown']
+)
+
+superdesk.workflow_state('unpublished')
+superdesk.workflow_action(
+    name='unpublish',
+    include_states=['published', 'scheduled', 'corrected'],
+    privileges=['unpublish']
 )

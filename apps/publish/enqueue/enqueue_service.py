@@ -53,6 +53,10 @@ class EnqueueService:
 
     filters = None
 
+    def __init__(self, published_state=None):
+        if published_state is not None:
+            self.published_state = published_state
+
     def get_filters(self):
         """Retrieve all of the available filter conditions and content filters if they have not yet been retrieved or
         they have been updated. This avoids the filtering functions having to repeatedly retireve the individual filter

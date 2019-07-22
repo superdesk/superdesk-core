@@ -14,7 +14,8 @@ import superdesk
 
 from apps.publish.content import ArchivePublishResource, ArchivePublishService, \
     KillPublishResource, KillPublishService, CorrectPublishResource, CorrectPublishService, \
-    ResendResource, ResendService, TakeDownPublishService, TakeDownPublishResource
+    ResendResource, ResendService, TakeDownPublishService, TakeDownPublishResource, \
+    UnpublishResource, UnpublishService
 from apps.publish.enqueue import EnqueueContent
 from apps.publish.published_item import PublishedItemResource, PublishedItemService
 from apps.publish.content.published_package_items import PublishedPackageItemsService,\
@@ -54,6 +55,10 @@ def init_app(app):
     service = PublishedPackageItemsService(endpoint_name, backend=get_backend())
     PublishedPackageItemsResource(endpoint_name, app=app, service=service)
 
+    endpoint_name = 'archive_unpublish'
+    service = UnpublishService(endpoint_name, backend=get_backend())
+    UnpublishResource(endpoint_name, app=app, service=service)
+
     superdesk.privilege(name='subscribers', label='Subscribers', description='User can manage subscribers')
     superdesk.privilege(name='publish', label='Publish', description='Publish a content')
     superdesk.privilege(name='kill', label='Kill', description='Kill a published content')
@@ -62,6 +67,7 @@ def init_app(app):
     superdesk.privilege(name='resend', label='Resending Stories', description='User can resend published stories')
     superdesk.privilege(name='embargo', label='Embargo', description='User can set embargo date')
     superdesk.privilege(name='takedown', label='Take down', description='Take down a published content')
+    superdesk.privilege(name='unpublish', label='Unpublish', description='Unpublish a published content')
 
 
 def enqueue_content():
