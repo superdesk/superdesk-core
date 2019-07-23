@@ -1,0 +1,349 @@
+{
+    "api_version": "1.1",
+    "api_mode": "live",
+    "id": "HyIVRoKlHF",
+    "method": "/content.GET",
+    "org_name": "Australian Associated Press - AAP",
+    "params": {
+        "et": "0a1aza0c0",
+        "qt": "HyIVRoKlHF"
+    },
+    "data": {
+        "meta": {
+            "products": [
+                {
+                    "id": 31244,
+                    "name": "Asian Wire"
+                }
+            ]
+        },
+        "item": {
+            "uri": "https://d.e.f/media/v/content/5ee9b4b40ea5fe9c9ca60f890fb2e1d9?qt=HyIVRoKlHF&et=0a4aza0c0",
+            "altids": {
+                "itemid": "5ee9b4b40ea5fe9c9ca60f890fb2e1d9",
+                "etag": "5ee9b4b40ea5fe9c9ca60f890fb2e1d9_0a4aza0c0",
+                "friendlykey": "53976786742",
+                "referenceid": "BBN--Top Ten",
+                "transref": "s0005"
+            },
+            "version": 0,
+            "type": "text",
+            "urgency": 4,
+            "editorialpriority": "r",
+            "language": "en",
+            "versioncreated": "2019-07-03T04:05:12Z",
+            "firstcreated": "2019-07-03T04:05:12Z",
+            "pubstatus": "usable",
+            "signals": [
+                "newscontent"
+            ],
+            "title": "BBN--Top Ten",
+            "headline": "BC-BBN--Top Ten",
+            "slugline": "BC-BBN--Top Ten",
+            "copyrightnotice": "Copyright 2019 The Associated Press. All rights reserved. This material may not be published, broadcast, rewritten or redistributed.",
+            "usageterms": [
+                "This content is intended for editorial use only. For other uses, additional clearances may be required."
+            ],
+            "keywords": [
+                "BBN--Top Ten"
+            ],
+            "provider": "AP",
+            "person": [
+                {
+                    "code": "9f20931c4c3f49e8a45cff69f00fe0b0",
+                    "name": "Ariane Bellamar",
+                    "rels": [
+                        "direct"
+                    ],
+                    "types": [
+                        "TV_PERSONALITY",
+                        "ENTERTAINMENT_FIGURE",
+                        "PERSON"
+                    ],
+                    "scheme": "http://cv.ap.org/id/",
+                    "creator": "Machine"
+                }
+            ],
+            "subject": [
+                {
+                    "rels": [
+                        "category"
+                    ],
+                    "creator": "Editorial",
+                    "code": "s",
+                    "name": "s"
+                },
+                {
+                    "code": "94aaa8f88c0c100489d7b9433d2f4c0e",
+                    "name": "MLB baseball",
+                    "rels": [
+                        "direct"
+                    ],
+                    "scheme": "http://cv.ap.org/id/",
+                    "creator": "Machine",
+                    "parentids": [
+                        "20dd2c287e4e100488e5d0913b2d075c"
+                    ]
+                },
+                {
+                    "code": "20dd2c287e4e100488e5d0913b2d075c",
+                    "name": "Professional baseball",
+                    "rels": [
+                        "ancestor"
+                    ],
+                    "scheme": "http://cv.ap.org/id/",
+                    "creator": "Machine",
+                    "parentids": [
+                        "20d82ae87e4e100488a0d0913b2d075c"
+                    ]
+                },
+                {
+                    "code": "20d82ae87e4e100488a0d0913b2d075c",
+                    "name": "Baseball",
+                    "rels": [
+                        "ancestor"
+                    ],
+                    "scheme": "http://cv.ap.org/id/",
+                    "creator": "Machine",
+                    "parentids": [
+                        "54df6c687df7100483dedf092526b43e",
+                        "039d42210158410db74f393deea38897"
+                    ]
+                },
+                {
+                    "code": "54df6c687df7100483dedf092526b43e",
+                    "name": "Sports",
+                    "rels": [
+                        "direct"
+                    ],
+                    "scheme": "http://cv.ap.org/id/",
+                    "creator": "Machine",
+                    "topparent": true
+                },
+                {
+                    "code": "039d42210158410db74f393deea38897",
+                    "name": "Men's sports",
+                    "rels": [
+                        "ancestor"
+                    ],
+                    "scheme": "http://cv.ap.org/id/",
+                    "creator": "Machine",
+                    "parentids": [
+                        "54df6c687df7100483dedf092526b43e"
+                    ]
+                }
+            ],
+            "place": [
+                {
+                    "code": "06ddc2e0834110048585df092526b43e",
+                    "name": "San Diego",
+                    "rels": [
+                        "direct"
+                    ],
+                    "scheme": "http://cv.ap.org/id/",
+                    "creator": "Machine",
+                    "parentids": [
+                        "789fdd8882af10048263df092526b43e"
+                    ],
+                    "locationtype": {
+                        "code": "9d26a20b35f0484a891740f8189d4c7b",
+                        "name": "City"
+                    },
+                    "geometry_geojson": {
+                        "type": "Point",
+                        "coordinates": [
+                            -117.15726,
+                            32.71533
+                        ]
+                    }
+                },
+                {
+                    "code": "789fdd8882af10048263df092526b43e",
+                    "name": "California",
+                    "rels": [
+                        "ancestor"
+                    ],
+                    "scheme": "http://cv.ap.org/id/",
+                    "creator": "Machine",
+                    "parentids": [
+                        "661e48387d5b10048291c076b8e3055c"
+                    ],
+                    "locationtype": {
+                        "code": "0ae5eb8e00e04295a4fc209c94bfe6ef",
+                        "name": "State"
+                    },
+                    "geometry_geojson": {
+                        "type": "Point",
+                        "coordinates": [
+                            -119.75126,
+                            37.25022
+                        ]
+                    }
+                },
+                {
+                    "code": "661e48387d5b10048291c076b8e3055c",
+                    "name": "United States",
+                    "rels": [
+                        "ancestor"
+                    ],
+                    "scheme": "http://cv.ap.org/id/",
+                    "creator": "Machine",
+                    "parentids": [
+                        "661850e07d5b100481f7c076b8e3055c"
+                    ],
+                    "locationtype": {
+                        "code": "01f56e0e654841eca2e69bf2cbcc0526",
+                        "name": "Nation"
+                    },
+                    "geometry_geojson": {
+                        "type": "Point",
+                        "coordinates": [
+                            -98.5,
+                            39.76
+                        ]
+                    }
+                },
+                {
+                    "code": "661850e07d5b100481f7c076b8e3055c",
+                    "name": "North America",
+                    "rels": [
+                        "ancestor"
+                    ],
+                    "scheme": "http://cv.ap.org/id/",
+                    "creator": "Machine",
+                    "topparent": true,
+                    "locationtype": {
+                        "code": "976d112cd5c3497ea180aeecab922c6b",
+                        "name": "Continent"
+                    },
+                    "geometry_geojson": {
+                        "type": "Point",
+                        "coordinates": [
+                            -100.54688,
+                            46.07323
+                        ]
+                    }
+                },
+                {
+                    "code": "1bc1bc3082c81004896cdf092526b43e",
+                    "name": "Wisconsin",
+                    "rels": [
+                        "direct"
+                    ],
+                    "scheme": "http://cv.ap.org/id/",
+                    "creator": "Machine",
+                    "parentids": [
+                        "661e48387d5b10048291c076b8e3055c"
+                    ],
+                    "locationtype": {
+                        "code": "0ae5eb8e00e04295a4fc209c94bfe6ef",
+                        "name": "State"
+                    },
+                    "geometry_geojson": {
+                        "type": "Point",
+                        "coordinates": [
+                            -90.00041,
+                            44.50024
+                        ]
+                    }
+                },
+                {
+                    "code": "1609d3a082c710048896df092526b43e",
+                    "name": "Pittsburgh",
+                    "rels": [
+                        "direct"
+                    ],
+                    "scheme": "http://cv.ap.org/id/",
+                    "creator": "Machine",
+                    "parentids": [
+                        "0b394d7082c71004887fdf092526b43e"
+                    ],
+                    "locationtype": {
+                        "code": "9d26a20b35f0484a891740f8189d4c7b",
+                        "name": "City"
+                    },
+                    "geometry_geojson": {
+                        "type": "Point",
+                        "coordinates": [
+                            -79.99589,
+                            40.44062
+                        ]
+                    }
+                },
+                {
+                    "code": "0b394d7082c71004887fdf092526b43e",
+                    "name": "Pennsylvania",
+                    "rels": [
+                        "ancestor"
+                    ],
+                    "scheme": "http://cv.ap.org/id/",
+                    "creator": "Machine",
+                    "parentids": [
+                        "661e48387d5b10048291c076b8e3055c"
+                    ],
+                    "locationtype": {
+                        "code": "0ae5eb8e00e04295a4fc209c94bfe6ef",
+                        "name": "State"
+                    },
+                    "geometry_geojson": {
+                        "type": "Point",
+                        "coordinates": [
+                            -76.90567,
+                            40.27245
+                        ]
+                    }
+                },
+                {
+                    "code": "8345b5f082af10048280df092526b43e",
+                    "name": "Los Angeles",
+                    "rels": [
+                        "direct"
+                    ],
+                    "scheme": "http://cv.ap.org/id/",
+                    "creator": "Machine",
+                    "parentids": [
+                        "789fdd8882af10048263df092526b43e"
+                    ],
+                    "locationtype": {
+                        "code": "9d26a20b35f0484a891740f8189d4c7b",
+                        "name": "City"
+                    },
+                    "geometry_geojson": {
+                        "type": "Point",
+                        "coordinates": [
+                            -118.24368,
+                            34.05223
+                        ]
+                    }
+                }
+            ],
+            "renditions": {
+                "nitf": {
+                    "title": "NITF Story Download",
+                    "rel": "Story",
+                    "format": "IIM",
+                    "type": "text",
+                    "mimetype": "text/xml",
+                    "fileextension": "xml",
+                    "words": 206,
+                    "contentid": "52f6a7cb772048f1b2c2304a86fb0c13",
+                    "href": "https://d.e.f/media/v/content/5ee9b4b40ea5fe9c9ca60f890fb2e1d9.0/download?type=text&format=NITF&rid=5ee9b4b40ea5fe9c9ca60f890fb2e1d9&cid=0&fid=52f6a7cb772048f1b2c2304a86fb0c13&trf=s0005&qt=HyIVRoKlHF&dt=HkW2f82KxB&et=0a4aza0c0",
+                    "mediafilterid": "2"
+                },
+                "anpa": {
+                    "title": "ANPA Story Download",
+                    "rel": "Main",
+                    "format": "ANPA1312",
+                    "type": "text",
+                    "mimetype": "application/octet-stream",
+                    "fileextension": "anpa",
+                    "mediafilterid": "1",
+                    "words": 206,
+                    "contentid": "52f6a7cb772048f1b2c2304a86fb0c13",
+                    "href": "https://d.e.f/media/v/content/5ee9b4b40ea5fe9c9ca60f890fb2e1d9.0/download?type=text&format=ANPA&rid=5ee9b4b40ea5fe9c9ca60f890fb2e1d9&cid=0&fid=52f6a7cb772048f1b2c2304a86fb0c13&trf=s0005&qt=HyIVRoKlHF&dt=HkW2f82KxB&et=0a4aza0c0"
+                }
+            },
+            "textformat": "at"
+        }
+    }
+}
