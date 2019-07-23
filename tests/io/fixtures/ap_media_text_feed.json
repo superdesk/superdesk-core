@@ -1,0 +1,69 @@
+{
+    "api_version": "1.1",
+    "api_mode": "live",
+    "id": "HyIVRoKlHF",
+    "method": "/content/feed.GET",
+    "org_name": "Some Organisation",
+    "params": {
+        "q": "productid:(1234) AND versioncreated:>now-1H"
+    },
+    "data": {
+        "query": "productid:(31244) AND versioncreated:>now-1H",
+        "updated": "2019-07-03T04:25:17.798Z",
+        "current_item_count": 1,
+        "next_page": "https://a.b.c",
+        "items": [
+            {
+                "meta": {},
+                "item": {
+                    "uri": "https://a.b.c/media/v/content/5ee9b4b40ea5fe9c9ca60f890fb2e1d9?qt=HyIVRoKlHF&et=0a1aza0c0",
+                    "altids": {
+                        "itemid": "5ee9b4b40ea5fe9c9ca60f890fb2e1d9",
+                        "etag": "5ee9b4b40ea5fe9c9ca60f890fb2e1d9_0a1aza0c0",
+                        "friendlykey": "53976786742"
+                    },
+                    "version": 0,
+                    "type": "text",
+                    "versioncreated": "2019-07-03T04:05:12Z",
+                    "firstcreated": "2019-07-03T04:05:12Z",
+                    "pubstatus": "usable",
+                    "signals": [
+                        "newscontent"
+                    ],
+                    "headline": "BC-BBN--Top Ten",
+                    "copyrightnotice": "Copyright 2019 The Associated Press.",
+                    "usageterms": [
+                        "This content is intended for editorial use only. For other uses, additional clearances may be required."
+                    ],
+                    "provider": "AP",
+                    "renditions": {
+                        "nitf": {
+                            "title": "NITF Story Download",
+                            "rel": "Story",
+                            "format": "IIM",
+                            "type": "text",
+                            "mimetype": "text/xml",
+                            "fileextension": "xml",
+                            "words": 206,
+                            "contentid": "423ed13cf9974bafb2ff2c9309bd5f9b",
+                            "href": "https://a.b.c/media/v/content/5ee9b4b40ea5fe9c9ca60f890fb2e1d9.0/download?type=text&format=NITF&rid=5ee9b4b40ea5fe9c9ca60f890fb2e1d9&cid=0&fid=423ed13cf9974bafb2ff2c9309bd5f9b&trf=W1392&qt=HyIVRoKlHF&dt=Bkl8NRitgH&et=0a1aza0c0",
+                            "mediafilterid": "2"
+                        },
+                        "anpa": {
+                            "title": "ANPA Story Download",
+                            "rel": "Main",
+                            "format": "ANPA1312",
+                            "type": "text",
+                            "mimetype": "application/octet-stream",
+                            "fileextension": "anpa",
+                            "mediafilterid": "1",
+                            "words": 206,
+                            "contentid": "423ed13cf9974bafb2ff2c9309bd5f9b",
+                            "href": "https://a.b.c/media/v/content/5ee9b4b40ea5fe9c9ca60f890fb2e1d9.0/download?type=text&format=ANPA&rid=5ee9b4b40ea5fe9c9ca60f890fb2e1d9&cid=0&fid=423ed13cf9974bafb2ff2c9309bd5f9b&trf=W1392&qt=HyIVRoKlHF&dt=Bkl8NRitgH&et=0a1aza0c0"
+                        }
+                    }
+                }
+            }
+        ]
+    }
+}

@@ -1,0 +1,129 @@
+{
+    "api_version": "1.1",
+    "api_mode": "live",
+    "id": "Hk-CpDWcJrF",
+    "method": "/content/feed.GET",
+    "org_name": "Some Organisation",
+    "params": {
+        "qt": "Hk-CpDWcJrF",
+        "seq": "64008365"
+    },
+    "data": {
+        "query": "productid:(12345)",
+        "updated": "2019-06-25T04:16:57.946Z",
+        "current_item_count": 10,
+        "next_page": "https://a.b.c",
+        "items": [
+            {
+                "meta": {},
+                "item": {
+                    "uri": "https://a.b.c/media/v/content/95e8bd71fed448cda1a0be35d8ddbd2f?qt=Hk-CpDWcJrF&et=0a1aza3c0",
+                    "altids": {
+                        "itemid": "95e8bd71fed448cda1a0be35d8ddbd2f",
+                        "etag": "95e8bd71fed448cda1a0be35d8ddbd2f_0a1aza3c0",
+                        "friendlykey": "19174219843308"
+                    },
+                    "version": 0,
+                    "type": "picture",
+                    "versioncreated": "2019-06-23T06:06:29Z",
+                    "firstcreated": "2019-06-22T21:40:42Z",
+                    "pubstatus": "usable",
+                    "ednote": "062219125467, 21334631, 32",
+                    "signals": [
+                        "newscontent"
+                    ],
+                    "headline": "AC2: An Intimate Evening with Anderson Cooper and Andy Cohen",
+                    "datelinelocation": {
+                        "city": "New York",
+                        "countryareacode": "NY",
+                        "countryareaname": "NEW YORK",
+                        "countrycode": "USA",
+                        "countryname": "UNITED STATES",
+                        "geometry_geojson": {
+                            "type": "Point",
+                            "coordinates": [
+                                -74.00597,
+                                40.71427
+                            ]
+                        }
+                    },
+                    "description_creditline": "Charles Sykes/Invision/AP",
+                    "copyrightnotice": "2019 Invision",
+                    "usageterms": [
+                        "This content is intended for editorial use only. For other uses, additional clearances may be required."
+                    ],
+                    "provider": "AP",
+                    "infosource": [
+                        {
+                            "name": "Invision",
+                            "type": "AP"
+                        }
+                    ],
+                    "description_caption": "Caption description",
+                    "renditions": {
+                        "main": {
+                            "title": "Full Resolution (JPG)",
+                            "rel": "Main",
+                            "format": "JPEG Baseline",
+                            "type": "picture",
+                            "contentid": "dd90da645d5f425a9e839b470c63aee1",
+                            "digest": "303756e9e3cb2e286aba0f1fdc9ebb70",
+                            "href": "https://a.b.c/media/v/content/95e8bd71fed448cda1a0be35d8ddbd2f.0/download",
+                            "orientation": "Horizontal",
+                            "sizeinbytes": 3224988,
+                            "width": 4666,
+                            "height": 3111,
+                            "originalfilename": "AC2__An_Intimate_Evening_with_Anderson_Cooper_and_Andy_Cohen_43308.jpg",
+                            "fileextension": "jpg",
+                            "mimetype": "image/jpeg",
+                            "pricetag": "LimitedDuration"
+                        },
+                        "preview": {
+                            "title": "Preview (JPG)",
+                            "rel": "Preview",
+                            "format": "JPEG Baseline",
+                            "type": "picture",
+                            "contentid": "04e73b0d276d41e6ab5c52875e752b10",
+                            "digest": "1c3b8ea82e6e3ec57d3623f006065b5d",
+                            "href": "https://a.b.c/v1/items/95e8bd71fed448cda1a0be35d8ddbd2f.0/preview/preview.jpg?",
+                            "orientation": "Horizontal",
+                            "sizeinbytes": 47395,
+                            "width": 512,
+                            "height": 341,
+                            "originalfilename": "AC2__An_Intimate_Evening_with_Anderson_Cooper_and_Andy_Cohen_43308.jpg",
+                            "fileextension": "jpg",
+                            "mimetype": "image/jpeg"
+                        },
+                        "thumbnail": {
+                            "title": "Thumbnail (JPG)",
+                            "rel": "Thumbnail",
+                            "format": "JPEG Baseline",
+                            "type": "picture",
+                            "contentid": "e230a8c960a247b68ecf8636ffb61a4f",
+                            "digest": "dd8d0b6c51399bc700cf20930f8d4220",
+                            "href": "https://a.b.c/v1/items/95e8bd71fed448cda1a0be35d8ddbd2f.0/thumbnail/thumbnail.jpg",
+                            "orientation": "Horizontal",
+                            "sizeinbytes": 15761,
+                            "width": 125,
+                            "height": 83,
+                            "originalfilename": "AC2__An_Intimate_Evening_with_Anderson_Cooper_and_Andy_Cohen_43308.jpg",
+                            "fileextension": "jpg",
+                            "mimetype": "image/jpeg"
+                        },
+                        "caption_nitf": {
+                            "title": "NITF Caption Download",
+                            "rel": "Caption",
+                            "format": "IIM",
+                            "type": "text",
+                            "mimetype": "text/xml",
+                            "fileextension": "xml",
+                            "words": 31,
+                            "contentid": "95e8bd71fed448cda1a0be35d8ddbd2f",
+                            "href": "https://a.b.c/media/v/content/95e8bd71fed448cda1a0be35d8ddbd2f.0/download"
+                        }
+                    }
+                }
+            }
+        ]
+    }
+}
