@@ -12,6 +12,7 @@ import os
 import logging
 import requests
 from superdesk.errors import SuperdeskApiError
+from superdesk.text_checkers.spellcheckers import CAP_SPELLING
 from superdesk.text_checkers.spellcheckers.base import SpellcheckerBase
 
 logger = logging.getLogger(__name__)
@@ -29,14 +30,14 @@ class LeuvenDutch(SpellcheckerBase):
 
     name = "leuven_dutch"
     label = "University of Leuven Dutch spellchecker"
-    capacities = ["spelling"]
+    capacities = [CAP_SPELLING]
     languages = ['nl']
 
     def __init__(self, app):
         super().__init__(app)
         self.api_key = self.config.get(OPT_API_KEY, os.environ.get(OPT_API_KEY))
 
-    def check(self, text):
+    def check(self, text, language=None):
         check_url = API_URL.format(method="spellingchecker")
         data = {
             "key": self.api_key,
@@ -64,14 +65,13 @@ class LeuvenDutch(SpellcheckerBase):
                 'startOffset': text_idx,
                 'text': mistake,
                 'type': "spelling",
-                'json': r.json(),
             }
             err_list.append(ercorr_data)
             text_idx += len(marked_part) - len_end_marker
 
         return check_data
 
-    def suggest(self, text):
+    def suggest(self, text, language=None):
         check_url = API_URL.format(method="suggesties")
         data = {
             "key": self.api_key,

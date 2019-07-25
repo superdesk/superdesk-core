@@ -67,6 +67,7 @@ class GrammalecteTestCase(TestCase):
             "spellchecker": "grammalecte",
             "text": "Il nous reste à vérifié votre maquette.",
             "suggestions": False,
+            "use_internal_dict": False,
         }
         spellchecker = get_resource_service('spellchecker')
         check_url = urljoin(TEST_URL, PATH_CHECK)
@@ -103,21 +104,20 @@ class GrammalecteTestCase(TestCase):
         )
         spellchecker.create([doc])
 
-        self.assertEqual(doc, {
-            'errors': [{'startOffset': 14,
-                         'suggestions': [{'text': 'a'}],
-                         'text': 'à',
-                         'message': 'Confusion probable : “à” est une préposition. '
-                                    'Pour le verbe “avoir”, écrivez “a”.',
-                         'type': 'grammar'},
-                        {'startOffset': 16,
-                         'suggestions': [{'text': 'vérifier'}],
-                         'text': 'vérifié',
-                         'message': 'Le verbe devrait être à l’infinitif.',
-                         'type': 'grammar'}],
-            'spellchecker': 'grammalecte',
-            'suggestions': False,
-            'text': 'Il nous reste à vérifié votre maquette.'})
+        expected = [{
+            'startOffset': 14,
+            'suggestions': [{'text': 'a'}],
+            'text': 'à',
+            'message': 'Confusion probable : “à” est une préposition. '
+                       'Pour le verbe “avoir”, écrivez “a”.',
+            'type': 'grammar'},
+            {'startOffset': 16,
+             'suggestions': [{'text': 'vérifier'}],
+             'text': 'vérifié',
+             'message': 'Le verbe devrait être à l’infinitif.',
+             'type': 'grammar'}]
+
+        self.assertEqual(doc['errors'], expected)
 
     @responses.activate
     def test_checker_paragraphs(self):
@@ -126,6 +126,7 @@ class GrammalecteTestCase(TestCase):
             "spellchecker": "grammalecte",
             "text": "Il nous reste à vérifié votre maquette.\n\nIl nous reste à vérifié votre maquette.",
             "suggestions": False,
+            "use_internal_dict": False,
         }
         spellchecker = get_resource_service('spellchecker')
         check_url = urljoin(TEST_URL, PATH_CHECK)
@@ -189,35 +190,31 @@ class GrammalecteTestCase(TestCase):
             })
         spellchecker.create([doc])
 
-        self.assertEqual(doc, {
-            'errors': [{'message': 'Confusion probable : “à” est une préposition. Pour le '
-                                   'verbe “avoir”, écrivez “a”.',
-                        'startOffset': 14,
-                        'suggestions': [{'text': 'a'}],
-                        'text': 'à',
-                        'type': 'grammar'},
-                       {'message': 'Le verbe devrait être à l’infinitif.',
-                        'startOffset': 16,
-                        'suggestions': [{'text': 'vérifier'}],
-                        'text': 'vérifié',
-                        'type': 'grammar'},
-                       {'message': 'Confusion probable : “à” est une préposition. Pour le '
-                                   'verbe “avoir”, écrivez “a”.',
-                        'startOffset': 55,
-                        'suggestions': [{'text': 'a'}],
-                        'text': 'à',
-                        'type': 'grammar'},
-                       {'message': 'Le verbe devrait être à l’infinitif.',
-                        'startOffset': 57,
-                        'suggestions': [{'text': 'vérifier'}],
-                        'text': 'vérifié',
-                        'type': 'grammar'}],
-            'spellchecker': 'grammalecte',
-            'suggestions': False,
-            'text': 'Il nous reste à vérifié votre maquette.\n'
-                    '\n'
-                    'Il nous reste à vérifié votre maquette.'}
-        )
+        expected = [{
+            'message': 'Confusion probable : “à” est une préposition. Pour le '
+                       'verbe “avoir”, écrivez “a”.',
+            'startOffset': 14,
+            'suggestions': [{'text': 'a'}],
+            'text': 'à',
+            'type': 'grammar'},
+            {'message': 'Le verbe devrait être à l’infinitif.',
+             'startOffset': 16,
+             'suggestions': [{'text': 'vérifier'}],
+             'text': 'vérifié',
+             'type': 'grammar'},
+            {'message': 'Confusion probable : “à” est une préposition. Pour le '
+                        'verbe “avoir”, écrivez “a”.',
+             'startOffset': 55,
+             'suggestions': [{'text': 'a'}],
+             'text': 'à',
+             'type': 'grammar'},
+            {'message': 'Le verbe devrait être à l’infinitif.',
+             'startOffset': 57,
+             'suggestions': [{'text': 'vérifier'}],
+             'text': 'vérifié',
+             'type': 'grammar'}]
+
+        self.assertEqual(doc['errors'], expected)
 
     @responses.activate
     def test_suggest(self):
@@ -226,7 +223,7 @@ class GrammalecteTestCase(TestCase):
         doc = {
             "spellchecker": "grammalecte",
             "text": "fote",
-            "suggestions": True
+            "suggestions": True,
         }
         spellchecker = get_resource_service('spellchecker')
         check_url = urljoin(TEST_URL, PATH_SUGGEST)

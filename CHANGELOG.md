@@ -2,6 +2,13 @@
 
 ## [1.30] NOT RELEASED YET
 
+### Added
+
+- Add generic spellcheckers management
+- Add Grammalecte French spellchecker support
+- Add Leuven University Dutch spellchecker support
+- Add basic generic spellchecker
+
 ### Fixed
 
 - Fix subject required validation failing in some cases
