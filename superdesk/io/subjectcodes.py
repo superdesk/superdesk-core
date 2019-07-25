@@ -27,6 +27,12 @@ class SubjectIndex():
         self.subjects = {}
         self.last_modified = datetime.fromtimestamp(0)
 
+    def __getitem__(self, item):
+        return self.subjects[item]
+
+    def clear(self):
+        self.subjects.clear()
+
     def register(self, subjects, last_modified=None):
         """Register subjects.
 
