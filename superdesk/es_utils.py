@@ -157,6 +157,14 @@ def filter2query(filter_, user_id=None):
             query_must_not.append({"term": {"last_published_version": "false"}})
         elif key == "ignoreScheduled":
             query_must_not.append({"term": {"state": "scheduled"}})
+        elif key == "raw":
+            query_must.append({
+                "query_string": {
+                    "query": value,
+                    "lenient": False,
+                    "default_operator": "AND",
+                },
+            })
         else:
             continue
         to_delete.append(key)
@@ -169,8 +177,8 @@ def filter2query(filter_, user_id=None):
         if value is not None:
             try:
                 post_filter.append({"terms": {field: json.loads(value)}})
-            except TypeError as e:
-                logger.error('Invalid data received for post filter "{key}": {e}\ndata: {value}'.format(
+            except (ValueError, TypeError) as e:
+                logger.warning('Invalid data received for post filter key="{key}" data="{value}" error="{e}"'.format(
                     key=key, e=e, value=value))
                 # the value is probably not JSON encoded as expected, we try directly the value
                 post_filter.append({"terms": {field: value}})
@@ -253,6 +261,8 @@ def filter2query(filter_, user_id=None):
     query = {"query": {"bool": {"must": query_must, "must_not": query_must_not}}}
     if post_filter or post_filter_must_not:
         query["post_filter"] = {"bool": {"must": post_filter, "must_not": post_filter_must_not}}
+
+    query["sort"] = {"versioncreated": "desc"}
 
     repo = search_query.pop("repo", None)
     repos = repo.split(',') if repo is not None else None
