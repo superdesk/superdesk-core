@@ -1310,29 +1310,29 @@ class NinjsFormatterTest(TestCase):
     def test_custom_related_items_ordering_in_associations(self):
         """Test that custom related items are in right order inside associations SDESK-4463"""
         self.app.data.insert(
-        "content_types",
-        [
-            {
-                "_id": ObjectId("5ba11fec0d6f1301ac3cbd13"),
-                "label": "custom related content",
-                "editor": {
-                    "slugline": {"order": 2, "sdWidth": "full"},
-                    "headline": {"order": 3, "formatOptions": ["underline", "link", "bold"]},
-                    "custom_related_content": {"order": 1},
-                },
-                "schema": {
-                    "headline": {"type": "string", "required": False, "maxlength": 64, "nullable": True},
-                    "slugline": {"type": "string", "required": False, "maxlength": 24, "nullable": True},
-                    "custom_related_content": {
-                        "type": "related_content",
-                        "required": False,
-                        "enabled": True,
-                        "nullable": True,
+            "content_types",
+            [
+                {
+                    "_id": ObjectId("5ba11fec0d6f1301ac3cbd13"),
+                    "label": "custom related content",
+                    "editor": {
+                        "slugline": {"order": 2, "sdWidth": "full"},
+                        "headline": {"order": 3, "formatOptions": ["underline", "link", "bold"]},
+                        "custom_related_content": {"order": 1},
                     },
-                },
-            }
-        ],
-    )
+                    "schema": {
+                        "headline": {"type": "string", "required": False, "maxlength": 64, "nullable": True},
+                        "slugline": {"type": "string", "required": False, "maxlength": 24, "nullable": True},
+                        "custom_related_content": {
+                            "type": "related_content",
+                            "required": False,
+                            "enabled": True,
+                            "nullable": True,
+                        },
+                    },
+                }
+            ],
+        )
         article = {
             "_id": "5ba1224e0d6f13056bd82d50",
             "type": "text",
