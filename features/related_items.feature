@@ -11,16 +11,7 @@ Feature: Related items
             {"_id": "other", "state": "published", "family_id": "other"}
         ]
         """
-        When we get "/archive/original/related?exclude=0"
-        Then we get list with 2 items
-        """
-        {"_items": [
-            {"_id": "original"},
-            {"_id": "published"}
-        ]}
-        """
-
-        When we get "/archive/original/related?exclude=1"
+        When we get "/archive/original/related"
         Then we get list with 1 items
         """
         {"_items": [

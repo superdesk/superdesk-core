@@ -11,7 +11,7 @@ ARCHIVE_DATASOURCE = ArchiveResource.datasource
 
 
 def exclude_filter():
-    if request and request.args.get('exclude') and bool(int(request.args['exclude'])):
+    if request:
         return {
             'bool': {
                 'must_not': {
