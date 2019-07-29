@@ -812,7 +812,7 @@ class NinjsFormatterTest(TestCase):
                     "label": "custom media field multi",
                     "editor": {
                         "slugline": {"order": 2, "sdWidth": "full"},
-                        "headline": {"order": 3, "formatOptions": ["underline", "link", "bold"]},
+                        "headline": {"order": 3, "formatOptions": []},
                         "custom_media_field_multi_1": {"order": 1},
                     },
                     "schema": {
@@ -962,7 +962,7 @@ class NinjsFormatterTest(TestCase):
                     "label": "custom related content",
                     "editor": {
                         "slugline": {"order": 2, "sdWidth": "full"},
-                        "headline": {"order": 3, "formatOptions": ["underline", "link", "bold"]},
+                        "headline": {"order": 3, "formatOptions": []},
                         "custom_related_content": {"order": 1},
                     },
                     "schema": {
