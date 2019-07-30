@@ -25,6 +25,7 @@ from .ingest import IngestResource, AppIngestService
 from .user_content import UserContentResource, UserContentService
 from .archive_lock import ArchiveLockResource, ArchiveUnlockResource, ArchiveLockService, ArchiveUnlockService
 from .archive_spike import ArchiveUnspikeResource, ArchiveSpikeService, ArchiveSpikeResource, ArchiveUnspikeService
+from .related import ArchiveRelatedResource, ArchiveRelatedService
 from apps.common.components.utils import register_component
 from apps.item_lock.components.item_lock import ItemLock
 from apps.common.models.utils import register_model
@@ -76,6 +77,10 @@ def init_app(app):
     endpoint_name = 'archive_autosave'
     service = ArchiveSaveService(endpoint_name, backend=superdesk.get_backend())
     AutoSaveResource(endpoint_name, app=app, service=service)
+
+    endpoint_name = 'archive_related'
+    service = ArchiveRelatedService(endpoint_name, backend=superdesk.get_backend())
+    ArchiveRelatedResource(endpoint_name, app=app, service=service)
 
     from apps.item_autosave.components.item_autosave import ItemAutosave
     from apps.item_autosave.models.item_autosave import ItemAutosaveModel
