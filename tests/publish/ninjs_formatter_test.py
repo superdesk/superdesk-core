@@ -1102,3 +1102,402 @@ class NinjsFormatterTest(TestCase):
         seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
         ninjs = json.loads(doc)
         self.assertEqual(ninjs, expected)
+
+    def test_custom_media_ordering_in_extra_fields(self):
+        """Test that custom media items are in right order inside extra field SDESK-4423"""
+        self.app.data.insert(
+            "content_types",
+            [
+                {
+                    "_id": ObjectId("5ba11fec0d6f1301ac3cbd13"),
+                    "label": "custom media field multi",
+                    "editor": {
+                        "slugline": {"order": 2, "sdWidth": "full"},
+                        "headline": {"order": 3, "formatOptions": ["underline", "link", "bold"]},
+                        "custom_media_field_multi_1": {"order": 1},
+                    },
+                    "schema": {
+                        "headline": {"type": "string", "required": False, "maxlength": 64, "nullable": True},
+                        "slugline": {"type": "string", "required": False, "maxlength": 24, "nullable": True},
+                        "custom_media_field_multi_1": {
+                            "type": "media",
+                            "required": False,
+                            "enabled": True,
+                            "nullable": True,
+                        },
+                    },
+                }
+            ],
+        )
+        article = {
+            "_id": "5ba1224e0d6f13056bd82d50",
+            "type": "text",
+            "version": 1,
+            "profile": "5ba11fec0d6f1301ac3cbd13",
+            "format": "HTML",
+            "template": "5ba11fec0d6f1301ac3cbd15",
+            "headline": "custom media field multi",
+            "slugline": "test custom media2",
+            "guid": "123",
+            "associations": {
+                "custom_media_field_multi_1--1": {
+                    "renditions": {
+                        "original": {
+                            "href": "http://localhost:5000/api/upload-raw/123.jpg",
+                            "media": "abc",
+                            "mimetype": "image/jpeg",
+                            "width": 550,
+                            "height": 331,
+                        }
+                    },
+                    "media": "abc",
+                    "type": "picture",
+                    "order": 1,
+                    "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                },
+                "custom_media_field_multi_1--2": {
+                    "renditions": {
+                        "original": {
+                            "href": "http://localhost:5000/api/upload-raw/456.jpg",
+                            "media": "cde",
+                            "mimetype": "image/jpeg",
+                            "width": 550,
+                            "height": 331,
+                        }
+                    },
+                    "media": "cde",
+                    "type": "picture",
+                    "order": 2,
+                    "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                },
+                "custom_media_field_multi_1--3": {
+                    "renditions": {
+                        "original": {
+                            "href": "http://localhost:5000/api/upload-raw/345.jpg",
+                            "media": "efg",
+                            "mimetype": "image/jpeg",
+                            "width": 550,
+                            "height": 331,
+                        }
+                    },
+                    "media": "efg",
+                    "type": "picture",
+                    "order": 0,
+                    "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                },
+            },
+        }
+
+        expected = {
+            "associations": {
+                "custom_media_field_multi_1--1": {
+                    "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                    "priority": 5,
+                    "renditions": {
+                        "original": {
+                            "height": 331,
+                            "href": "http://localhost:5000/api/upload-raw/123.jpg",
+                            "media": "abc",
+                            "mimetype": "image/jpeg",
+                            "width": 550,
+                        }
+                    },
+                    "type": "picture",
+                    "order": 1,
+                    "version": "1",
+                },
+                "custom_media_field_multi_1--2": {
+                    "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                    "priority": 5,
+                    "renditions": {
+                        "original": {
+                            "height": 331,
+                            "href": "http://localhost:5000/api/upload-raw/456.jpg",
+                            "media": "cde",
+                            "mimetype": "image/jpeg",
+                            "width": 550,
+                        }
+                    },
+                    "type": "picture",
+                    "order": 2,
+                    "version": "1",
+                },
+                "custom_media_field_multi_1--3": {
+                    "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                    "priority": 5,
+                    "renditions": {
+                        "original": {
+                            "height": 331,
+                            "href": "http://localhost:5000/api/upload-raw/345.jpg",
+                            "media": "efg",
+                            "mimetype": "image/jpeg",
+                            "width": 550,
+                        }
+                    },
+                    "type": "picture",
+                    "order": 0,
+                    "version": "1",
+                },
+            },
+            "extra_items": {
+                "custom_media_field_multi_1": {
+                    "type": "media",
+                    "items": [
+                        {
+                            "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                            "priority": 5,
+                            "renditions": {
+                                "original": {
+                                    "height": 331,
+                                    "href": "http://localhost:5000/api/upload-raw/345.jpg",
+                                    "media": "efg",
+                                    "mimetype": "image/jpeg",
+                                    "width": 550,
+                                }
+                            },
+                            "type": "picture",
+                            "order": 0,
+                            "version": "1",
+                        },
+                        {
+                            "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                            "priority": 5,
+                            "renditions": {
+                                "original": {
+                                    "height": 331,
+                                    "href": "http://localhost:5000/api/upload-raw/123.jpg",
+                                    "media": "abc",
+                                    "mimetype": "image/jpeg",
+                                    "width": 550,
+                                }
+                            },
+                            "type": "picture",
+                            "order": 1,
+                            "version": "1",
+                        },
+                        {
+                            "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                            "priority": 5,
+                            "renditions": {
+                                "original": {
+                                    "height": 331,
+                                    "href": "http://localhost:5000/api/upload-raw/456.jpg",
+                                    "media": "cde",
+                                    "mimetype": "image/jpeg",
+                                    "width": 550,
+                                }
+                            },
+                            "type": "picture",
+                            "order": 2,
+                            "version": "1",
+                        },
+                    ]
+                }
+            },
+            "guid": "123",
+            "headline": "custom media field multi",
+            "priority": 5,
+            "profile": "custommediafieldmulti",
+            "slugline": "test custom media2",
+            "type": "text",
+            "version": "1",
+        }
+
+        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        ninjs = json.loads(doc)
+        self.assertEqual(ninjs, expected)
+
+    def test_custom_related_items_ordering_in_associations(self):
+        """Test that custom related items are in right order inside associations SDESK-4463"""
+        self.app.data.insert(
+            "content_types",
+            [
+                {
+                    "_id": ObjectId("5ba11fec0d6f1301ac3cbd13"),
+                    "label": "custom related content",
+                    "editor": {
+                        "slugline": {"order": 2, "sdWidth": "full"},
+                        "headline": {"order": 3, "formatOptions": ["underline", "link", "bold"]},
+                        "custom_related_content": {"order": 1},
+                    },
+                    "schema": {
+                        "headline": {"type": "string", "required": False, "maxlength": 64, "nullable": True},
+                        "slugline": {"type": "string", "required": False, "maxlength": 24, "nullable": True},
+                        "custom_related_content": {
+                            "type": "related_content",
+                            "required": False,
+                            "enabled": True,
+                            "nullable": True,
+                        },
+                    },
+                }
+            ],
+        )
+        article = {
+            "_id": "5ba1224e0d6f13056bd82d50",
+            "type": "text",
+            "version": 1,
+            "profile": "5ba11fec0d6f1301ac3cbd13",
+            "format": "HTML",
+            "template": "5ba11fec0d6f1301ac3cbd15",
+            "headline": "custom related content",
+            "slugline": "test custom related content",
+            "guid": "123",
+            "associations": {
+                "custom_related_content--1": {
+                    "renditions": {
+                        "original": {
+                            "href": "http://localhost:5000/api/upload-raw/123.jpg",
+                            "media": "abc",
+                            "mimetype": "image/jpeg",
+                            "width": 550,
+                            "height": 331,
+                        }
+                    },
+                    "media": "abc",
+                    "type": "picture",
+                    "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                },
+                "custom_related_content--3": {
+                    "renditions": {
+                        "original": {
+                            "href": "http://localhost:5000/api/upload-raw/345.jpg",
+                            "media": "efg",
+                            "mimetype": "image/jpeg",
+                            "width": 550,
+                            "height": 331,
+                        }
+                    },
+                    "media": "efg",
+                    "type": "picture",
+                    "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                },
+                "custom_related_content--2": {
+                    "renditions": {
+                        "original": {
+                            "href": "http://localhost:5000/api/upload-raw/456.jpg",
+                            "media": "cde",
+                            "mimetype": "image/jpeg",
+                            "width": 550,
+                            "height": 331,
+                        }
+                    },
+                    "media": "cde",
+                    "type": "picture",
+                    "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                },
+            },
+        }
+
+        expected = {
+            "associations": {
+                "custom_related_content--1": {
+                    "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                    "priority": 5,
+                    "renditions": {
+                        "original": {
+                            "height": 331,
+                            "href": "http://localhost:5000/api/upload-raw/123.jpg",
+                            "media": "abc",
+                            "mimetype": "image/jpeg",
+                            "width": 550,
+                        }
+                    },
+                    "type": "picture",
+                    "version": "1",
+                },
+                "custom_related_content--2": {
+                    "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                    "priority": 5,
+                    "renditions": {
+                        "original": {
+                            "height": 331,
+                            "href": "http://localhost:5000/api/upload-raw/456.jpg",
+                            "media": "cde",
+                            "mimetype": "image/jpeg",
+                            "width": 550,
+                        }
+                    },
+                    "type": "picture",
+                    "version": "1",
+                },
+                "custom_related_content--3": {
+                    "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                    "priority": 5,
+                    "renditions": {
+                        "original": {
+                            "height": 331,
+                            "href": "http://localhost:5000/api/upload-raw/345.jpg",
+                            "media": "efg",
+                            "mimetype": "image/jpeg",
+                            "width": 550,
+                        }
+                    },
+                    "type": "picture",
+                    "version": "1",
+                },
+            },
+            "extra_items": {
+                "custom_related_content": {
+                    "type": "related_content",
+                    "items": [
+                        {
+                            "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                            "priority": 5,
+                            "renditions": {
+                                "original": {
+                                    "height": 331,
+                                    "href": "http://localhost:5000/api/upload-raw/123.jpg",
+                                    "media": "abc",
+                                    "mimetype": "image/jpeg",
+                                    "width": 550,
+                                }
+                            },
+                            "type": "picture",
+                            "version": "1",
+                        },
+                        {
+                            "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                            "priority": 5,
+                            "renditions": {
+                                "original": {
+                                    "height": 331,
+                                    "href": "http://localhost:5000/api/upload-raw/456.jpg",
+                                    "media": "cde",
+                                    "mimetype": "image/jpeg",
+                                    "width": 550,
+                                }
+                            },
+                            "type": "picture",
+                            "version": "1",
+                        },
+                        {
+                            "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                            "priority": 5,
+                            "renditions": {
+                                "original": {
+                                    "height": 331,
+                                    "href": "http://localhost:5000/api/upload-raw/345.jpg",
+                                    "media": "efg",
+                                    "mimetype": "image/jpeg",
+                                    "width": 550,
+                                }
+                            },
+                            "type": "picture",
+                            "version": "1",
+                        },
+                    ]
+                }
+            },
+            "guid": "123",
+            "headline": "custom related content",
+            "priority": 5,
+            "profile": "customrelatedcontent",
+            "slugline": "test custom related content",
+            "type": "text",
+            "version": "1",
+        }
+
+        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        ninjs = json.loads(doc)
+        self.assertEqual(ninjs, expected)
