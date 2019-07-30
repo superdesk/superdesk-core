@@ -284,12 +284,16 @@ def filter2repos(filter_):
         return None
 
 
-def get_doc_types(repos):
+def get_doc_types(selected_repos, all_repos=None):
     """Get document types for the given query."""
-    # If not repos were supplied, return the default repos
-    if repos is None:
-        return REPOS.copy()
-    repos = repos.split(',')
+    if all_repos is None:
+        all_repos = REPOS
+
+    # If not repos were supplied, return all
+    if selected_repos is None:
+        return all_repos.copy()
+
+    repos = selected_repos.split(',')
 
     # If the repos array is still empty after filtering, then return the default repos
-    return [repo for repo in repos if repo in REPOS] or REPOS.copy()
+    return [repo for repo in repos if repo in all_repos] or all_repos.copy()
