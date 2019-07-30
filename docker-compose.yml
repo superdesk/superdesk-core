@@ -1,0 +1,21 @@
+elastic:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.1.1
+    ports:
+        - "9200:9200"
+    environment:
+        - discovery.type=single-node
+
+redis: 
+    image: redis:3
+    ports:
+        - "6379:6379"
+
+mongo:
+    image: mongo:3.4
+    ports:
+        - "27017:27017"
+
+rabbitmq:
+    image: rabbitmq
+    ports:
+        - "5672:5672"

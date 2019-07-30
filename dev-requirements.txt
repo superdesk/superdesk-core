@@ -12,5 +12,6 @@ sphinxcontrib-plantuml
 docutils==0.12
 requests-mock
 responses
+-e git+git://github.com/petrjasek/eve-elastic.git@elastic6#egg=eve-elastic
 -e git+git://github.com/superdesk/superdesk-planning.git@master#egg=superdesk-planning
 -e .

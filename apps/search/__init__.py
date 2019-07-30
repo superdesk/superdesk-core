@@ -204,13 +204,7 @@ class SearchService(superdesk.Service):
         if fields:
             params['_source'] = fields
 
-        hits = self.elastic.es.search(
-            body=query,
-            index=es_utils.get_index(types),
-            doc_type=types,
-            params=params
-        )
-        docs = self._get_docs(hits)
+        docs = self.elastic.search(query, types, params)
 
         for resource in types:
             response = {app.config['ITEMS']: [doc for doc in docs if doc['_type'] == resource]}

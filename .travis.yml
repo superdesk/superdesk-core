@@ -1,33 +1,14 @@
 language: python
 
-python:
-    - "3.5"
-
 services:
-    - mongodb
-    - redis-server
-
-addons:
-    apt:
-        sources:
-            - elasticsearch-2.x
-        packages:
-            - elasticsearch
+    - docker
 
 cache:
   - pip
 
-before_install:
-    - sudo apt-get purge elasticsearch
-    - sudo apt-get install -t stable elasticsearch
-
 install:
+    - docker-compose up -d
     - pip install -r dev-requirements.txt
-
-before_script: >
-    sudo sed -i 's\enabled: true\enabled: false\' /etc/mongod.conf
-    && sudo service mongod restart
-    && sudo service elasticsearch restart
 
 script:
     - flake8
