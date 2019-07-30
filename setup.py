@@ -31,7 +31,7 @@ install_requires = [
     'redis==2.10.6',
     'kombu>=4.2,<4.3',
     'feedparser>=5.2,<5.3',
-    'hachoir3>=3.0a1,<=3.0a2',
+    'hachoir<=3.0a3',
     'HermesCache>=0.6.0,<0.8.0',
     'python-magic>=0.4,<0.5',
     'ldap3>=2.2.4,<2.6',
