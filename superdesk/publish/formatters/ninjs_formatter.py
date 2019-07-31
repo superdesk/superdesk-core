@@ -296,7 +296,7 @@ class NINJSFormatter(Formatter):
 
     def _format_related(self, article, subscriber):
         """Format all associated items for simple items (not packages)."""
-        associations = {}
+        associations = OrderedDict()
         extra_items = {}
         media = {}
         content_profile = None
