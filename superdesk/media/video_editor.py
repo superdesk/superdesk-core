@@ -27,33 +27,33 @@ class VideoEditorFactory():
         """
         raise NotImplementedError
 
-    def get_paginate(self, offset):
+    def get_paginate(self, page):
         """Get list of projects.
 
         :param offset:
         """
         raise NotImplementedError
 
-    def post_project(self, filestream):
+    def post(self, filestream):
         """Create new project.
 
         :param filestream:
         """
         raise NotImplementedError
 
-    def post(self, project_id, updates):
-        """Edit video. This method creates a new project.
+    def duplicate(self, project_id, updates):
+        """Duplicate video. This method clone original project and increase version.
 
-        :param project_id:
-        :param updates: changes apply to the video
+        :param project_id: id project.
+        :param updates: changes apply to the video.
         """
         raise NotImplementedError
 
     def put(self, project_id, updates):
         """Edit video. This method does not create a new project.
 
-        :param project_id:
-        :param updates: changes apply to the video
+        :param project_id: id project.
+        :param updates: changes apply to the video.
         """
         raise NotImplementedError
 
@@ -72,7 +72,7 @@ class VideoEditorFactory():
         """
         raise NotImplementedError
 
-    def post_preview_thumbnail(self, project_id, post_type, time=None, base64_data=None):
+    def post_preview_thumbnail(self, project_id, file):
         """Upload video preview thumbnail to video server.
 
         :param project_id:
@@ -82,8 +82,8 @@ class VideoEditorFactory():
         """
         raise NotImplementedError
 
-    def get_preview_thumbnail(self, project_id, time=None):
-        """Capture image from video-server.
+    def get_preview_thumbnail(self, project_id, position=0, crop=None, rotate=None):
+        """Capture thumbnail of video on video-server.
 
         :param project_id:
         :param time: period time to capture the image in video
@@ -129,52 +129,93 @@ class VideoEditorService(VideoEditorFactory):
         json = json_util.loads(resp.text)
         if resp.status_code not in status:
             if resp.status_code == 400:
-                raise SuperdeskApiError.badRequestError(message=json.get('message'))
-            resp.raise_for_status()
+                raise SuperdeskApiError.badRequestError(message=json)
+            if resp.status_code == 409:
+                raise SuperdeskApiError.conflictError(message=json)
+            if resp.status_code == 404:
+                raise SuperdeskApiError.notFoundError(message=json)
+            if resp.status_code == 500:
+                raise SuperdeskApiError.internalError(message=json)
         return json
 
     def get(self, project_id):
-        resp = self.session.get(self._url(str(project_id)))
-        return self._get_response(resp, 200)
+        try:
+            resp = self.session.get(self._url(str(project_id)))
+            return self._get_response(resp, 200)
+        except ConnectionError as ex:
+            raise SuperdeskApiError(message=ex.args[0], status_code=500)
 
-    def get_paginate(self, offset):
-        resp = self.session.get(self.get_base_url(), params={'offset': offset})
-        return self._get_response(resp, 200)
+    def get_paginate(self, page):
+        try:
+            resp = self.session.get(self.get_base_url(), params={'page': page})
+            return self._get_response(resp, 200)
+        except ConnectionError as ex:
+            raise SuperdeskApiError(message=ex.args[0], status_code=500)
 
-    def post_project(self, file_storage):
-        video_file = {'file': (file_storage.filename, file_storage.read(), file_storage.mimetype)}
-        resp = self.session.post(self.get_base_url(), files=video_file)
-        return self._get_response(resp, 200)
+    def post(self, file_storage):
+        try:
+            video_file = {'file': (file_storage.filename, file_storage.read(), file_storage.mimetype)}
+            resp = self.session.post(self.get_base_url(), files=video_file)
+            return self._get_response(resp, 201)
+        except ConnectionError as ex:
+            raise SuperdeskApiError(message=ex.args[0], status_code=500)
 
-    def post(self, project_id, updates):
-        resp = self.session.post(self._url(str(project_id)), json=updates)
-        return self._get_response(resp, 201)
+    def duplicate(self, project_id, updates):
+        try:
+            resp = self.session.post(self._url(str(project_id), "duplicate"), json=updates)
+            return self._get_response(resp, 201)
+        except ConnectionError as ex:
+            raise SuperdeskApiError(message=ex.args[0], status_code=500)
 
     def put(self, project_id, updates):
-        resp = self.session.put(self._url(str(project_id)), json=updates)
-        return self._get_response(resp, 200)
+        try:
+            resp = self.session.put(self._url(str(project_id)), json=updates)
+            return self._get_response(resp, 202)
+        except ConnectionError as ex:
+            raise SuperdeskApiError(message=ex.args[0], status_code=500)
 
     def delete(self, project_id):
-        resp = self.session.delete(self._url(str(project_id)))
-        if resp.status_code != 204:
-            logger.exception(resp.text)
-            resp.raise_for_status()
-
-        return True
+        try:
+            resp = self.session.delete(self._url(str(project_id)))
+            if resp.status_code != 204:
+                logger.exception(resp.text)
+                resp.raise_for_status()
+            return True
+        except ConnectionError as ex:
+            raise SuperdeskApiError(message=ex.args[0], status_code=500)
 
     def get_timeline_thumbnails(self, project_id, amount):
-        resp = self.session.get(self._url(str(project_id), 'thumbnails'), params={'type': 'timeline', 'amount': amount})
-        return self._get_response(resp, 200)
+        try:
+            params = {
+                'type': 'timeline',
+                'amount': amount
+            }
+            resp = self.session.get(self._url(str(project_id), 'thumbnails'), params=params)
+            return self._get_response(resp, 202)
+        except ConnectionError as ex:
+            raise SuperdeskApiError(message=ex.args[0], status_code=500)
 
-    def post_preview_thumbnail(self, project_id, base64_data=None):
-        payloads = {
-            'data': base64_data,
-        }
-        resp = self.session.post(self._url(str(project_id), 'thumbnails'), json=payloads)
+    def post_preview_thumbnail(self, project_id, file):
+        try:
+            payloads = {
+                'file': file,
+            }
+            resp = self.session.post(self._url(str(project_id), 'thumbnails'), json=payloads)
+            return self._get_response(resp, 200)
+        except ConnectionError as ex:
+            raise SuperdeskApiError(message=ex.args[0], status_code=500)
 
-        return self._get_response(resp, 200)
-
-    def get_preview_thumbnail(self, project_id, time=None):
-
-        resp = self.session.get(self._url(str(project_id), 'thumbnails'), params={'type': 'preview', "time": time})
-        return self._get_response(resp, 200)
+    def get_preview_thumbnail(self, project_id, position=0, crop=None, rotate=None):
+        try:
+            params = {
+                "type": "preview",
+                "position": position
+            }
+            if crop:
+                params["crop"] = crop
+            if rotate:
+                params["rotate"] = rotate
+            resp = self.session.get(self._url(str(project_id), 'thumbnails'), params=params)
+            return self._get_response(resp, 202)
+        except ConnectionError as ex:
+            raise SuperdeskApiError(message=ex.args[0], status_code=500)

@@ -117,7 +117,7 @@ class ArchiveMediaService():
 
     def upload_file_to_video_server(self, doc):
         """
-        Upload file to video server and create redition for it
+        Upload file to video server and create rendition for it
         :param doc: info of file
         :return:
         """
