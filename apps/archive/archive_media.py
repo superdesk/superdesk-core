@@ -117,7 +117,7 @@ class ArchiveMediaService():
 
     def upload_file_to_video_server(self, doc):
         """
-        Upload file to video server and create redition for it
+        Upload file to video server and create rendition for it
         :param doc: info of file
         :return:
         """
@@ -131,6 +131,7 @@ class ArchiveMediaService():
             'href': res.get('url'),
             'media': res.get('_id'),
             'mimetype': res.get('content-type'),
+            'version': res.get('version'),
         }
         renditions = {'original': rend}
         return res, renditions, metadata
