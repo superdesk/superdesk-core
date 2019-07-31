@@ -264,8 +264,7 @@ def filter2query(filter_, user_id=None):
 
     query["sort"] = {"versioncreated": "desc"}
 
-    repo = search_query.pop("repo", None)
-    repos = repo.split(',') if repo is not None else None
+    search_query.pop("repo", None)
 
     if "params" in search_query and (search_query['params'] is None or not json.loads(search_query['params'])):
         del search_query['params']
@@ -275,4 +274,26 @@ def filter2query(filter_, user_id=None):
             "All query fields have not been used, remaining fields: {search_query}".format(search_query=search_query)
         )
 
-    return repos, query
+    return query
+
+
+def filter2repos(filter_):
+    try:
+        return filter_['query']['repo']
+    except KeyError:
+        return None
+
+
+def get_doc_types(selected_repos, all_repos=None):
+    """Get document types for the given query."""
+    if all_repos is None:
+        all_repos = REPOS
+
+    # If not repos were supplied, return all
+    if selected_repos is None:
+        return all_repos.copy()
+
+    repos = selected_repos.split(',')
+
+    # If the repos array is still empty after filtering, then return the default repos
+    return [repo for repo in repos if repo in all_repos] or all_repos.copy()

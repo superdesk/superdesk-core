@@ -28,7 +28,7 @@ class SearchService(superdesk.Service):
     It can search against different collections like Ingest, Production, Archived etc.. at the same time.
     """
 
-    repos = es_utils.REPOS
+    repos = None
     aggregations = deepcopy(common_aggregations)
 
     @property
@@ -149,15 +149,7 @@ class SearchService(superdesk.Service):
         """Get document types for the given query."""
         args = getattr(req, 'args', {})
         repos = args.get('repo')
-
-        # If not repos were supplied, return the default repos
-        if repos is None:
-            return self.repos.copy()
-        else:
-            repos = repos.split(',')
-
-            # If the repos array is still empty after filtering, then return the default repos
-            return [repo for repo in repos if repo in self.repos] or self.repos.copy()
+        return es_utils.get_doc_types(repos, self.repos)
 
     def _get_filters(self, repos, invisible_stages):
         """
