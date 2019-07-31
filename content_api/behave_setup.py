@@ -65,6 +65,7 @@ def setup(context=None, config=None):
 
     # create index again after dropping it
     app.data.elastic.init_app(app)
+    app.data.elastic.init_index()
 
     if context:
         context.app = app

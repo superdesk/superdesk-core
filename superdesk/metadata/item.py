@@ -199,7 +199,7 @@ metadata_schema = {
         'type': 'string',
         'allowed': content_type,
         'default': 'text',
-        'mapping': not_analyzed
+        'mapping': not_analyzed,
     },
     'package_type': {  # deprecated
         'type': 'string',
@@ -485,7 +485,14 @@ metadata_schema = {
     },
 
     # Desk and Stage Details
-    'task': {'type': 'dict'},
+    'task': {
+        'type': 'dict',
+        'schema': {
+            'user': {'type': 'string', 'mapping': not_analyzed},
+            'desk': {'type': 'string', 'mapping': not_analyzed},
+            'stage': {'type': 'string', 'mapping': not_analyzed},
+        },
+    },
 
     # Task and Lock Details
     'task_id': {
@@ -617,7 +624,14 @@ metadata_schema = {
     'embargoed': {'type': 'datetime'},
     'embargoed_text': {'type': 'string', 'mapping': not_indexed},
 
-    'marked_for_user': Resource.rel('users', required=False, nullable=True)
+    'marked_for_user': Resource.rel('users', required=False, nullable=True),
+
+    'broadcast': {
+        'type': 'dict',
+        'schema': {
+            'master_id': {'type': 'string', 'mapping': not_analyzed}
+        }
+    }
 }
 
 metadata_schema['lock_user']['versioned'] = False

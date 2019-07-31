@@ -55,6 +55,7 @@ def get_mongo_uri(key, dbname):
 
 def update_config(conf):
     conf['ELASTICSEARCH_INDEX'] = 'sptest'
+    conf['MONGO_DBNAME'] = 'sptests'
     conf['MONGO_URI'] = get_mongo_uri('MONGO_URI', 'sptests')
     conf['LEGAL_ARCHIVE_DBNAME'] = 'sptests_legal_archive'
     conf['LEGAL_ARCHIVE_URI'] = get_mongo_uri('LEGAL_ARCHIVE_URI', 'sptests_legal_archive')
@@ -104,10 +105,7 @@ def update_config(conf):
 
 def drop_elastic(app):
     with app.app_context():
-        es = app.data.elastic.es
-        indexes = [app.config['ELASTICSEARCH_INDEX']] + list(app.config['ELASTICSEARCH_INDEXES'].values())
-        for index in indexes:
-            es.indices.delete(index, ignore=[404])
+        app.data.elastic.drop_index()
 
 
 def foreach_mongo(fn):
@@ -135,10 +133,21 @@ def foreach_mongo(fn):
     return inner
 
 
-@foreach_mongo
-def drop_mongo(app, dbconn, dbname):
-    dbconn.drop_database(dbname)
-    dbconn.close()
+def drop_mongo(app):
+    pairs = (
+        ('MONGO', 'MONGO_DBNAME'),
+        ('ARCHIVED', 'ARCHIVED_DBNAME'),
+        ('LEGAL_ARCHIVE', 'LEGAL_ARCHIVE_DBNAME'),
+        ('CONTENTAPI_MONGO', 'CONTENTAPI_MONGO_DBNAME')
+    )
+    with app.app_context():
+        for prefix, name in pairs:
+            if not app.config.get(name):
+                continue
+            dbname = app.config[name]
+            dbconn = app.data.mongo.pymongo(prefix=prefix).cx
+            dbconn.drop_database(dbname)
+            dbconn.close()
 
 
 def setup_config(config):
@@ -164,7 +173,7 @@ def setup_config(config):
 
 
 def clean_dbs(app, force=False):
-    clean_es(app, force)
+    _clean_es(app)
     drop_mongo(app)
 
 
@@ -188,11 +197,8 @@ def retry(exc, count=1):
 
 
 def _clean_es(app):
-    indices = '%s*' % app.config['ELASTICSEARCH_INDEX']
-    es = app.data.elastic.es
-    es.indices.delete(indices, ignore=[404])
     with app.app_context():
-        app.data.init_elastic(app)
+        app.data.elastic.drop_index()
 
 
 @retry(socket.timeout, 2)
@@ -298,6 +304,9 @@ def setup(context=None, config=None, app_factory=get_app, reset=False):
             app.test_request_context().push()
 
     clean_dbs(app, force=bool(config))
+
+    print('init')
+    app.data.elastic.init_index()
 
 
 def setup_auth_user(context, user=None):

@@ -28,14 +28,14 @@ extra_response_fields = [GUID_FIELD, 'headline', 'firstcreated', 'versioncreated
 
 aggregations = {
     'type': {'terms': {'field': 'type'}},
-    'desk': {'terms': {'field': 'task.desk', 'size': 0}},
-    'category': {'terms': {'field': 'anpa_category.name', 'size': 0}},
-    'source': {'terms': {'field': 'source', 'size': 0}},
+    'desk': {'terms': {'field': 'task.desk', 'size': 50}},
+    'category': {'terms': {'field': 'anpa_category.name', 'size': 50}},
+    'source': {'terms': {'field': 'source', 'size': 50}},
     'urgency': {'terms': {'field': 'urgency'}},
     'priority': {'terms': {'field': 'priority'}},
     'legal': {'terms': {'field': 'flags.marked_for_legal'}},
     'sms': {'terms': {'field': 'flags.marked_for_sms'}},
-    'genre': {'terms': {'field': 'genre.name', 'size': 0}}
+    'genre': {'terms': {'field': 'genre.name', 'size': 50}}
 }
 
 
