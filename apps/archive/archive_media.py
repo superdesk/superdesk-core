@@ -48,36 +48,34 @@ class ArchiveMediaService():
                 if not self.videoEditor.check_video_server():
                     raise SuperdeskApiError(message="Cannot connect to videoserver", status_code=500)
                 # upload media to video server
-                self.upload_file_to_video_server(doc, content_type)
+                res, renditions, metadata = self.upload_file_to_video_server(doc)
                 # get thumbnails for timeline bar
                 self.videoEditor.get_timeline_thumbnails(doc.get('media'), 40)
             else:
                 file, content_type, metadata = self.get_file_from_document(doc)
                 inserted = [doc['media']]
-                file_type = content_type.split('/')[0]
-
+                rendition_spec = get_renditions_spec(no_custom_crops=True)
+                with timer('archive:renditions'):
+                    renditions = generate_renditions(file, doc['media'], inserted, file_type,
+                                                     content_type, rendition_spec, url_for_media)
+            try:
                 self._set_metadata(doc)
-
-                try:
-                    doc[ITEM_TYPE] = self.type_av.get(file_type)
-                    doc[ITEM_STATE] = CONTENT_STATE.PROGRESS
-                    rendition_spec = get_renditions_spec(no_custom_crops=True)
-                    with timer('archive:renditions'):
-                        renditions = generate_renditions(file, doc['media'], inserted, file_type,
-                                                         content_type, rendition_spec, url_for_media)
-                    doc['renditions'] = renditions
-                    doc['mimetype'] = content_type
-                    set_filemeta(doc, metadata)
-
-                    add_activity('upload', 'uploaded media {{ name }}',
-                                 'archive', item=doc,
-                                 name=doc.get('headline', doc.get('mimetype')),
-                                 renditions=doc.get('renditions'))
-                except Exception as io:
-                    logger.exception(io)
-                    for file_id in inserted:
-                        delete_file_on_error(doc, file_id)
-                    abort(500)
+                doc[ITEM_TYPE] = self.type_av.get(file_type)
+                doc[ITEM_STATE] = CONTENT_STATE.PROGRESS
+                doc['renditions'] = renditions
+                doc['mimetype'] = content_type
+                set_filemeta(doc, metadata)
+                add_activity('upload', 'uploaded media {{ name }}',
+                             'archive', item=doc,
+                             name=doc.get('headline', doc.get('mimetype')),
+                             renditions=doc.get('renditions'))
+            except Exception as io:
+                logger.exception(io)
+                for file_id in inserted:
+                    delete_file_on_error(doc, file_id)
+                if res:
+                    self.videoEditor.delete(res.get('_id'))
+                abort(500)
 
     def _set_metadata(self, doc):
         """
@@ -117,33 +115,22 @@ class ArchiveMediaService():
 
         return file, file.content_type, file.metadata
 
-    def upload_file_to_video_server(self, doc, content_type):
-
+    def upload_file_to_video_server(self, doc):
+        """
+        Upload file to video server and create redition for it
+        :param doc: info of file
+        :return:
+        """
         file = doc.get('media')
         # upload video to video server
-        res = self.videoEditor.post_project(doc.get('media'))
-        try:
-            doc['media'] = res['_id']
-            metadata = res.get('metadata')
-            file_type = content_type.split('/')[0]
-            doc[ITEM_TYPE] = self.type_av.get(file_type)
-            rend = {
-                'href': res['url'],
-                'media': res['_id'],
-                'mimetype': content_type,
-                'version': 1,
-            }
-            renditions = {'original': rend}
-            self._set_metadata(doc)
-            doc['renditions'] = renditions
-            doc['mimetype'] = content_type
-            set_filemeta(doc, metadata)
-            add_activity('upload', 'uploaded media {{ name }}',
-                         'archive', item=doc,
-                         name=doc.get('headline', doc.get('mimetype')),
-                         renditions=doc.get('renditions'))
-        except Exception as ex:
-            logger.exception(ex)
-            if res:
-                self.videoEditor.delete(res.get('_id'))
-            abort(500)
+        res = self.videoEditor.post(doc.get('media'))
+        doc['media'] = res['_id']
+        metadata = res.get('metadata')
+        # create renditions
+        rend = {
+            'href': res.get('url'),
+            'media': res.get('_id'),
+            'mimetype': res.get('content-type'),
+        }
+        renditions = {'original': rend}
+        return res, renditions, metadata
