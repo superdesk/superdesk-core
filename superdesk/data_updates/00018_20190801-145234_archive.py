@@ -30,6 +30,12 @@ class DataUpdate(DataUpdate):
                             '_id': val.get('item_id') or val.get('_id'),
                             'type': val['type'],
                         }
+                    elif val and val.get('_id') and len(val.keys()) == 1:
+                        type_ = mongodb_database[resource].find_one({'_id': val['_id']}, {'type': 1})
+                        if type_:
+                            update = True
+                            associations[key] = val
+                            associations[key]['type'] = type_['type']
                     else:
                         associations[key] = val
                 if update:
