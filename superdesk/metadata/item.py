@@ -65,6 +65,11 @@ PUBLISH_SCHEDULE = 'publish_schedule'
 SCHEDULE_SETTINGS = 'schedule_settings'
 PROCESSED_FROM = 'processed_from'
 
+# part the task dict
+LAST_DESK = 'last_desk'
+LAST_AUTHORING_DESK = 'last_authoring_desk'
+LAST_PRODUCTION_DESK = 'last_production_desk'
+
 metadata_schema = {
     config.ID_FIELD: {
         'type': 'string',
