@@ -164,7 +164,7 @@ class BasePublishService(BaseService):
                 updated.update(deepcopy(updates))
 
                 if updates.get(ASSOCIATIONS):
-                    self._refresh_associated_items(updated)  # updates got lost with update
+                    self._refresh_associated_items(updated, skip_related=True)  # updates got lost with update
 
                 signals.item_publish.send(self, item=updated)
                 self._update_archive(original, updates, should_insert_into_versions=auto_publish)
@@ -522,13 +522,13 @@ class BasePublishService(BaseService):
             # countdown=3 is for elasticsearch to be refreshed with archive and published changes
             import_into_legal_archive.apply_async(countdown=3, kwargs=kwargs)  # @UndefinedVariable
 
-    def _refresh_associated_items(self, original):
+    def _refresh_associated_items(self, original, skip_related=False):
         """Refreshes associated items with the latest version. Any further updates made to basic metadata done after
         item was associated will be carried on and used when validating those items.
         """
         associations = original.get(ASSOCIATIONS) or {}
         for __, item in associations.items():
-            if type(item) == dict and item.get(config.ID_FIELD):
+            if type(item) == dict and item.get(config.ID_FIELD) and (not skip_related or len(item.keys()) > 2):
                 keys = [key for key in DEFAULT_SCHEMA.keys() if key not in PRESERVED_FIELDS]
 
                 if app.settings.get('COPY_METADATA_FROM_PARENT') and item.get(ITEM_TYPE) in MEDIA_TYPES:
