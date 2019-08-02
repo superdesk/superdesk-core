@@ -39,7 +39,7 @@ from apps.common.components.utils import get_component
 from apps.item_autosave.components.item_autosave import ItemAutosave
 from apps.common.models.base_model import InvalidEtag
 from superdesk.text_utils import update_word_count
-from apps.content import push_content_notification, push_expired_notification
+from apps.content import push_content_notification, push_expired_notification, push_notification
 from apps.common.models.utils import get_model
 from apps.item_lock.models.item import ItemModel
 from apps.packages import PackageService
@@ -960,10 +960,18 @@ class ArchiveService(BaseService):
             marked_for_user = user.get('display_name', user.get('username'))
 
         if orig_marked_user and new_marked_user is None:
+            # sent when unmarking user from item
+            user_list = [{'_id': orig_marked_user}]
             notify_and_add_activity('item:unmarked', 'Item unmarked.',
                                     resource=self.datasource, item=original,
-                                    user_list=[{'_id': orig_marked_user}])
+                                    user_list=user_list)
+            # send separate notification for markForUser extension
+            push_notification('item:unmarked',
+                              item_id=original.get(config.ID_FIELD),
+                              user_list=user_list,
+                              extension='markForUser')
         else:
+            # sent when mark item for user or mark to another user
             if new_marked_user and orig_marked_user and new_marked_user != orig_marked_user:
                 user_list = [{'_id': new_marked_user}, {'_id': orig_marked_user}]
             else:
@@ -972,6 +980,11 @@ class ArchiveService(BaseService):
                                     resource=self.datasource, item=original,
                                     user_list=user_list,
                                     marked_for_user=marked_for_user)
+            # send separate notification for markForUser extension
+            push_notification('item:marked',
+                              item_id=original.get(config.ID_FIELD),
+                              user_list=user_list,
+                              extension='markForUser')
 
 
 class AutoSaveResource(Resource):
