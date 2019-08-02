@@ -935,9 +935,10 @@ class ArchiveService(BaseService):
         """
         return get_resource_service('desks').apply_desk_metadata(updates, original)
 
-    def _is_related_content(self, item_name):
-        related_content = list(
-            get_resource_service('vocabularies').get(req=None, lookup={'field_type': 'related_content'}))
+    def _is_related_content(self, item_name, related_content=None):
+        if related_content is None:
+            related_content = list(
+                get_resource_service('vocabularies').get(req=None, lookup={'field_type': 'related_content'}))
 
         if related_content and item_name.split('--')[0] in [content['_id'] for content in related_content]:
             return True
