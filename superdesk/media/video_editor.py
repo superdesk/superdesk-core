@@ -41,11 +41,10 @@ class VideoEditorFactory():
         """
         raise NotImplementedError
 
-    def duplicate(self, project_id, updates):
+    def duplicate(self, project_id):
         """Duplicate video. This method clone original project and increase version.
 
         :param project_id: id project.
-        :param updates: changes apply to the video.
         """
         raise NotImplementedError
 
@@ -160,9 +159,9 @@ class VideoEditorService(VideoEditorFactory):
         except ConnectionError as ex:
             raise SuperdeskApiError(message=ex.args[0], status_code=500)
 
-    def duplicate(self, project_id, updates):
+    def duplicate(self, project_id):
         try:
-            resp = self.session.post(self._url(str(project_id), "duplicate"), json=updates)
+            resp = self.session.post(self._url(str(project_id), "duplicate"))
             return self._get_response(resp, 201)
         except ConnectionError as ex:
             raise SuperdeskApiError(message=ex.args[0], status_code=500)
