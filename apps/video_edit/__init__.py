@@ -1,7 +1,9 @@
 import superdesk
+from apps.archive.common import ARCHIVE
 from superdesk import config
-from superdesk.media.video_editor import VideoEditorService
 from superdesk.errors import SuperdeskApiError
+from superdesk.media.video_editor import VideoEditorService
+from superdesk.metadata.utils import item_url
 
 
 class VideoEditService(superdesk.Service):
@@ -55,18 +57,19 @@ class VideoEditService(superdesk.Service):
         return ids
 
     def find_one(self, req, **lookup):
+        res = super().find_one(req, **lookup)
         if req is None:
-            return super().find_one(req, **lookup)
+            return res
 
         action = req.args.get('action')
-        _id = lookup['_id']
+        video_id = res['media']
 
         response = None
         if action == 'timeline':
-            response = self.video_editor.get_timeline_thumbnails(_id, req.args.get('amount', 40))
+            response = self.video_editor.get_timeline_thumbnails(video_id, req.args.get('amount', 40))
         elif action == 'preview':
             response = self.video_editor.get_preview_thumbnail(
-                project_id=_id,
+                project_id=video_id,
                 position=req.args.get('position'),
                 crop=req.args.get('crop'),
                 rotate=req.args.get('rotate')
@@ -74,23 +77,22 @@ class VideoEditService(superdesk.Service):
 
         if type(response) is dict and response.get('processing'):
             return {
-                config.ID_FIELD: _id,
+                config.ID_FIELD: video_id,
                 **response
             }
 
-        doc = self.video_editor.get(lookup['_id'])
-        return doc
+        return self.video_editor.get(video_id)
 
 
 class VideoEditResource(superdesk.Resource):
     item_methods = ['GET']
     resource_methods = ['POST']
     privileges = {
-        'POST': 'archive',
-        'PUT': 'archive',
+        'POST': ARCHIVE,
     }
+    item_url = item_url
     schema = {
-        'file': {'type': 'file', 'required': False, 'empty': True},
+        'file': {'type': 'file'},
         'item': {'type': 'dict', 'required': False, 'empty': True},
         'thumbnail': {'type': 'dict', 'required': False, 'empty': True},
         'edit': {'type': 'dict', 'required': False, 'empty': True},
@@ -98,5 +100,5 @@ class VideoEditResource(superdesk.Resource):
 
 
 def init_app(app):
-    video_edit_service = VideoEditService('archive', backend=superdesk.get_backend())
+    video_edit_service = VideoEditService(ARCHIVE, backend=superdesk.get_backend())
     VideoEditResource('video_edit', app=app, service=video_edit_service)
