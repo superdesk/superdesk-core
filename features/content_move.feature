@@ -89,7 +89,8 @@ Feature: Move or Send Content to another desk
             "desk": "#desks._id#",
             "stage": "#desks.incoming_stage#",
             "last_authoring_desk": "#SPORTS_DESK_ID#",
-            "last_desk": ["#SPORTS_DESK_ID#"]
+            "last_desk": "#SPORTS_DESK_ID#",
+            "desk_history": ["#SPORTS_DESK_ID#"]
             }
         }
         """
@@ -129,7 +130,8 @@ Feature: Move or Send Content to another desk
             "desk": "#desks._id#",
             "stage": "#desks.incoming_stage#",
             "last_authoring_desk": "#SPORTS_DESK_ID#",
-            "last_desk": ["#SPORTS_DESK_ID#"]
+            "last_desk": "#SPORTS_DESK_ID#",
+            "desk_history": ["#SPORTS_DESK_ID#"]
             }
         }
         """
@@ -151,7 +153,8 @@ Feature: Move or Send Content to another desk
             "desk": "#desks._id#",
             "stage": "#desks.incoming_stage#",
             "last_authoring_desk": "#SPORTS_DESK_ID#",
-            "last_desk": ["#SPORTS_DESK_ID#", "#FINANCE_DESK_ID#"]
+            "last_desk": "#FINANCE_DESK_ID#",
+            "desk_history": ["#SPORTS_DESK_ID#", "#FINANCE_DESK_ID#"]
             }
         }
         """
@@ -174,7 +177,8 @@ Feature: Move or Send Content to another desk
             "stage": "#desks.incoming_stage#",
             "last_production_desk": "#NATIONAL_DESK_ID#",
             "last_authoring_desk": "#SPORTS_DESK_ID#",
-            "last_desk": ["#SPORTS_DESK_ID#", "#FINANCE_DESK_ID#", "#NATIONAL_DESK_ID#"]
+            "last_desk": "#NATIONAL_DESK_ID#",
+            "desk_history": ["#SPORTS_DESK_ID#", "#FINANCE_DESK_ID#", "#NATIONAL_DESK_ID#"]
             }
         }
         """

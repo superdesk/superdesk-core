@@ -19,7 +19,7 @@ from apps.desks import DeskTypes
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, SIGN_OFF, \
-    LAST_AUTHORING_DESK, LAST_PRODUCTION_DESK, LAST_DESK
+    LAST_AUTHORING_DESK, LAST_PRODUCTION_DESK, LAST_DESK, DESK_HISTORY
 from superdesk.metadata.packages import REFS, GROUPS, RESIDREF
 from superdesk.resource import Resource
 from superdesk.services import BaseService
@@ -172,9 +172,10 @@ class MoveService(BaseService):
                     updated['task'][LAST_AUTHORING_DESK] = old_desk_id
                 else:
                     updated['task'][LAST_PRODUCTION_DESK] = old_desk_id
-            updated['task'].setdefault(LAST_DESK, [])
-            if old_desk_id not in updated['task'][LAST_DESK]:
-                updated['task'][LAST_DESK].append(old_desk_id)
+            updated['task'][LAST_DESK] = old_desk_id
+            updated['task'].setdefault(DESK_HISTORY, [])
+            if old_desk_id not in updated['task'][DESK_HISTORY]:
+                updated['task'][DESK_HISTORY].append(old_desk_id)
 
 
 superdesk.workflow_action(

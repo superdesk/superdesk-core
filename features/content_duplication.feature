@@ -58,6 +58,7 @@ Feature: Duplication of Content
       Then there is no "last_production_desk" in task
       And there is no "last_authoring_desk" in task
       And there is no "last_desk" in task
+      And there is no "desk_history" in task
       And we get notifications
       """
         [{"event": "content:update", "extra": {"items": {"123": 1}, "desks": {"#desks._id#": 1}, "stages": {"#desks.working_stage#": 1}}, "_created": "__any_value__"}]
