@@ -83,18 +83,29 @@ class VideoEditService(superdesk.Service):
 
         return self.video_editor.get(video_id)
 
+    def on_replace(self, document, original):
+        """
+        Override to upload thumbnails
+        """
+        if not document.get('file'):
+            return
+
+        file = document.pop('file')  # avoid dump file storage
+        self.video_editor.post_preview_thumbnail(document['_id'], file)
+        document.update(self.video_editor.get(document['_id']))
+
 
 class VideoEditResource(superdesk.Resource):
-    item_methods = ['GET']
+    item_methods = ['GET', 'PUT']
     resource_methods = ['POST']
     privileges = {
         'POST': ARCHIVE,
+        'PUT': ARCHIVE,
     }
     item_url = item_url
     schema = {
         'file': {'type': 'file'},
         'item': {'type': 'dict', 'required': False, 'empty': True},
-        'thumbnail': {'type': 'dict', 'required': False, 'empty': True},
         'edit': {'type': 'dict', 'required': False, 'empty': True},
     }
 

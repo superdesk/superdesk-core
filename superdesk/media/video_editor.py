@@ -1,12 +1,12 @@
-import socket
 import logging
-from urllib.parse import urljoin
-from flask import current_app as app
-from superdesk.errors import SuperdeskApiError
+import socket
+from urllib.parse import urljoin, urlparse
 
 import requests
 from bson import json_util
-from urllib.parse import urlparse
+from flask import current_app as app
+
+from superdesk.errors import SuperdeskApiError
 
 logger = logging.getLogger(__name__)
 
@@ -16,9 +16,6 @@ class VideoEditorFactory():
     """
 
     label = 'unknown'
-
-    def __init__(self, provider):
-        self.provider = provider
 
     def get(self, project_id):
         """Get single project.
@@ -34,10 +31,10 @@ class VideoEditorFactory():
         """
         raise NotImplementedError
 
-    def post(self, filestream):
+    def post(self, file_storage):
         """Create new project.
 
-        :param filestream:
+        :param file_storage:
         """
         raise NotImplementedError
 
@@ -71,7 +68,7 @@ class VideoEditorFactory():
         """
         raise NotImplementedError
 
-    def post_preview_thumbnail(self, project_id, file):
+    def post_preview_thumbnail(self, project_id, file_storage):
         """Upload video preview thumbnail to video server.
 
         :param project_id:
@@ -100,7 +97,7 @@ class VideoEditorService(VideoEditorFactory):
 
     label = 'Video Editor'
 
-    def __init__(self, ):
+    def __init__(self):
         self.session = requests.Session()
         self.session.headers.update({'User-Agent': 'superdesk'})
 
@@ -194,12 +191,10 @@ class VideoEditorService(VideoEditorFactory):
         except ConnectionError as ex:
             raise SuperdeskApiError(message=ex.args[0], status_code=500)
 
-    def post_preview_thumbnail(self, project_id, file):
+    def post_preview_thumbnail(self, project_id, file_storage):
         try:
-            payloads = {
-                'file': file,
-            }
-            resp = self.session.post(self._url(str(project_id), 'thumbnails'), json=payloads)
+            video_file = {'file': (file_storage.filename, file_storage.read(), file_storage.mimetype)}
+            resp = self.session.post(self._url(str(project_id), 'thumbnails'), files=video_file)
             return self._get_response(resp, 200)
         except ConnectionError as ex:
             raise SuperdeskApiError(message=ex.args[0], status_code=500)
