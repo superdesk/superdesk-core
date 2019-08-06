@@ -135,7 +135,7 @@ class DeleteDocTestCase(TestCase):
         with redirect_stdout(f):
             DeleteArchivedDocumentCommand().run(['5880000000000'])
         s = f.getvalue()
-        self.assertEqual(s, 'No archived story found with given ids(s)!\n')
+        self.assertIn('No archived story found with given ids(s)!\n', s)
 
     def test_delete_non_text_document_succeeds(self):
         self.archivedService.post(self.archived_only_data)

@@ -131,13 +131,11 @@ class ArchiveBroadcastService(BaseService):
         """
         query = {
             'query': {
-                'filtered': {
-                    'filter': {
-                        'bool': {
-                            'must': {'term': {'genre.name': BROADCAST_GENRE}},
-                            'should': {'terms': {'broadcast.master_id': ids}}
-                        }
-                    }
+                'bool': {
+                    'filter': [
+                        {'term': {'genre.name': BROADCAST_GENRE}},
+                        {'terms': {'broadcast.master_id': ids}},
+                    ],
                 }
             }
         }
