@@ -1,5 +1,12 @@
 # Superdesk Server Changelog
 
+## [1.30.1] 2019-08-06
+
+### Fixed
+
+- Fir related item references in associations.
+- Fix ordering of media gallery items in ninjs output.
+
 ## [1.30.0] 2019-06-12
 
 ### Fixed
