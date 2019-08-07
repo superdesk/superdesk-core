@@ -225,7 +225,8 @@ metadata_schema = {
                 'phrase': {
                     'type': 'string',
                     'analyzer': 'phrase_prefix_analyzer',
-                    'search_analyzer': 'phrase_prefix_analyzer'
+                    'search_analyzer': 'phrase_prefix_analyzer',
+                    'fielddata': True,
                 }
             }
         }
@@ -491,6 +492,7 @@ metadata_schema = {
             'user': {'type': 'string', 'mapping': not_analyzed},
             'desk': {'type': 'string', 'mapping': not_analyzed},
             'stage': {'type': 'string', 'mapping': not_analyzed},
+            'status': {'type': 'string', 'mapping': not_analyzed},
         },
     },
 
@@ -629,7 +631,8 @@ metadata_schema = {
     'broadcast': {
         'type': 'dict',
         'schema': {
-            'master_id': {'type': 'string', 'mapping': not_analyzed}
+            'master_id': {'type': 'string', 'mapping': not_analyzed},
+            'rewrite_id': {'type': 'string', 'mapping': not_analyzed},
         }
     }
 }

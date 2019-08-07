@@ -224,10 +224,13 @@ class SearchService(superdesk.Service):
 
     def find_one(self, req, **lookup):
         """Find item by id in all collections."""
-        hits = self.elastic.es.mget({'ids': [lookup[app.config['ID_FIELD']]]}, es_utils.get_index())
-        hits['hits'] = {'hits': hits.pop('docs', [])}
-        docs = self._get_docs(hits)
-        return docs.first()
+        _id = lookup['_id']
+        for resource in self.repos:
+            id_field = 'item_id' if resource == 'published' else '_id'
+            resource_lookup = {id_field: _id}
+            item = get_resource_service(resource).find_one(req=req, **resource_lookup)
+            if item:
+                return item
 
     def on_fetched(self, doc):
         """

@@ -185,10 +185,10 @@ Feature: Search Feature
         When we post to "/archive"
             """
             [{"guid": "item1", "state": "in_progress", "task": {"desk": "#desks._id#",
-            "stage": "#desks.incoming_stage#", "user": "#users._id#",
+            "stage": "#desks.incoming_stage#", "user": "#users._id#"},
             "subject":[{"qcode": "17004000", "name": "Statistics"}],
             "slugline": "test",
-            "body_html": "Test Document body"}}]
+            "body_html": "Test Document body"}]
             """
         Then we get response code 201
         When we get "/search"
@@ -316,7 +316,7 @@ Feature: Search Feature
         {"guid": "2", "state": "in_progress", "task": {"desk": "#desks._id#"},
          "headline": "bar", "body_html": "bar"}]
         """
-        When we get "/search?source={"query": {"filtered": {"query": {"query_string": {"query": "(foo)", "lenient": false, "default_operator": "AND"}}}}}"
+        When we get "/search?source={"query": {"filtered": {"query": {"query_string": {"query": "(foo)", "lenient": true, "default_operator": "AND"}}}}}"
         Then we get list with 1 items
         """
         {
@@ -324,7 +324,7 @@ Feature: Search Feature
                         "headline": "Foo", "body_html": "foo", "es_highlight": "__no_value__"}]
         }
         """
-        When we get "/search?es_highlight=1&source={"query": {"filtered": {"query": {"query_string": {"query": "(foo)", "lenient": false, "default_operator": "AND"}}}}}"
+        When we get "/search?es_highlight=1&source={"query": {"filtered": {"query": {"query_string": {"query": "(foo)", "lenient": true, "default_operator": "AND"}}}}}"
         Then we get list with 1 items
         """
         {
@@ -350,7 +350,7 @@ Feature: Search Feature
         {"guid": "2", "state": "in_progress", "task": {"desk": "#desks._id#"},
          "headline": "bar", "body_html": "bar"}]
         """
-        When we get "/search?source={"query": {"filtered": {"query": {"query_string": {"query": "(foo)", "lenient": false, "default_operator": "AND"}}}}}"
+        When we get "/search?source={"query": {"filtered": {"query": {"query_string": {"query": "(foo)", "lenient": true, "default_operator": "AND"}}}}}"
         Then we get list with 1 items
         """
         {
@@ -358,7 +358,7 @@ Feature: Search Feature
                         "headline": "Foo", "body_html": "foo", "es_highlight": "__no_value__"}]
         }
         """
-        When we get "/search?projections=["headline"]&source={"query": {"filtered": {"query": {"query_string": {"query": "(foo)", "lenient": false, "default_operator": "AND"}}}}}"
+        When we get "/search?projections=["headline"]&source={"query": {"filtered": {"query": {"query_string": {"query": "(foo)", "lenient": true, "default_operator": "AND"}}}}}"
         Then we get list with 1 items
         And we get "body_html" does not exist
         And we get "state" does not exist

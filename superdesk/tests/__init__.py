@@ -8,11 +8,13 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import os
 import functools
 import logging
-import os
 import socket
 import unittest
+
+from copy import deepcopy
 from base64 import b64encode
 from unittest.mock import patch
 
@@ -156,6 +158,7 @@ def setup_config(config):
     app_config.from_object('superdesk.default_settings')
 
     update_config(app_config)
+
     app_config.update(config or {}, **{
         'APP_ABSPATH': app_abspath,
         'DEBUG': True,
@@ -169,7 +172,10 @@ def setup_config(config):
     logging.getLogger('superdesk').setLevel(logging.ERROR)
     logging.getLogger('elasticsearch').setLevel(logging.ERROR)
     logging.getLogger('superdesk.errors').setLevel(logging.CRITICAL)
-    return app_config
+
+    return {
+        key: deepcopy(val) for key, val in app_config.items()
+    }
 
 
 def clean_dbs(app, force=False):
@@ -291,10 +297,9 @@ use_snapshot.cache = {}
 
 
 def setup(context=None, config=None, app_factory=get_app, reset=False):
-    if not hasattr(setup, 'app') or setup.reset or config:
-        cfg = setup_config(config)
-        setup.app = app_factory(cfg)
-        setup.reset = reset
+    cfg = setup_config(config)
+    setup.app = app_factory(cfg)
+    setup.reset = reset
     app = setup.app
 
     if context:
@@ -303,10 +308,9 @@ def setup(context=None, config=None, app_factory=get_app, reset=False):
         if not hasattr(context, 'BEHAVE'):
             app.test_request_context().push()
 
-    clean_dbs(app, force=bool(config))
-
-    print('init')
-    app.data.elastic.init_index()
+    with app.app_context():
+        clean_dbs(app, force=bool(config))
+        app.data.elastic.init_index()
 
 
 def setup_auth_user(context, user=None):

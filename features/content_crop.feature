@@ -27,6 +27,11 @@ Feature: Cropping the Image Articles
       """
       [{"name": "Sports"}]
       """
+      And config update
+      """
+      {"PUBLISH_QUEUE_EXPIRY_MINUTES": -1}
+      """
+
       When upload a file "bike.jpg" to "archive" with "123"
       And we post to "/archive/123/move"
       """
