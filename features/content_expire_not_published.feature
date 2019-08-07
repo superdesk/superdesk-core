@@ -202,3 +202,29 @@ Feature: Content Expiry Not Published Items
     Then we get OK response
     When we get "archive/456?versions=all"
     Then we get OK response
+
+  @auth
+  Scenario: Content linked in planning does not expire.
+    When we post to "archive" with success
+    """
+    [{"guid": "456", "type": "text", "headline": "test", "state": "fetched",
+      "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+      "subject":[{"qcode": "17004000", "name": "Statistics"}],
+      "body_html": "Test Document body",
+      "assignment_id": "123456"}]
+    """
+    And we get "archive"
+    Then we get list with 2 items
+    """
+    {"_items": [
+      {"_id": "123"}, {"_id": "456"}
+    ]}
+    """
+    When we expire items
+    """
+    ["456"]
+    """
+    And we get "archive/456"
+    Then we get OK response
+    When we get "archive/456?versions=all"
+    Then we get OK response
