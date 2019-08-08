@@ -230,7 +230,7 @@ def get_it(context):
 
 def get_response_readable(data):
     try:
-        return json.dumps(json.loads(data), indent=2) 
+        return json.dumps(json.loads(data), indent=2)
     except (ValueError, TypeError):
         pass
     try:
@@ -1141,10 +1141,7 @@ def step_impl_then_get_ok(context):
 @then('we get response code {code}')
 def step_impl_then_get_code(context, code):
     assert context.response.status_code == int(code), \
-        'we got code={} data={}'.format(
-            context.response.status_code,
-            get_response_readable(context.response.data),
-        )
+        'we got code={} data={}'.format(context.response.status_code, get_response_readable(context.response.data))
 
 
 @then('we get updated response')
