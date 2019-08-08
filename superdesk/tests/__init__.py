@@ -297,9 +297,10 @@ use_snapshot.cache = {}
 
 
 def setup(context=None, config=None, app_factory=get_app, reset=False):
-    cfg = setup_config(config)
-    setup.app = app_factory(cfg)
-    setup.reset = reset
+    if not hasattr(setup, 'app') or setup.reset or config:
+        cfg = setup_config(config)
+        setup.app = app_factory(cfg)
+        setup.reset = reset
     app = setup.app
 
     if context:
