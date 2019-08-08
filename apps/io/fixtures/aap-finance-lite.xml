@@ -1,0 +1,37 @@
+<?xml version='1.0' encoding="UTF-8"?>
+<nitf>
+    <head>
+        <title></title>
+        <meta name="anpa-sequence" content="1832"/>
+        <meta name="anpa-service" content="a"/>
+        <meta name="anpa-format" content="x"/>
+        <meta name="anpa-wordcount" content="0399"/>
+        <meta name="anpa-keyword" content="Samsung"/>
+        <meta name="anpa-takekey" content=""/>
+        <meta name="aap-selectors"
+              content="0nl 0fh axx axi afi pxx pxi pfi 2in 0ah cxx cxi cfi 0fr sxx sfx sfi cni 3nz 3rk 3ff 3pn"/>
+        <tobject tobject.type="News">
+            <tobject.property tobject.property.type="Current"/>
+            <tobject.subject tobject.subject.refnum="04000000" tobject.subject.type="Finance"
+                             tobject.subject.matter="Finance (General)"/>
+        </tobject>
+        <docdata>
+            <doc-id id-string="AFP.121974877.6504909"/>
+            <urgency ed-urg="5"/>
+            <date.issue norm="20141126T152703"/>
+            <date.release norm="20141126T152703"/>
+            <date.expire norm="20141226T152703"/>
+            <doc.copyright year="2014" holder="Agence France Presse"/>
+            <doc.rights owner="AAP" startdate="20141126T152703" enddate="20141226T152703" agent="AAP"
+                        geography="Australia"
+                        type="A non-exclusive, non-transferable right to display and/or store the document in accordance with the AAP Information Supply Agreement between Australian Associated Press Pty Limited and the direct recipient of this document from Australian Associated Press Pty Limited."
+                        limitations="The direct recipient of this document from Australian Associated Press Pty Limited must comply with the limitations specified in the AAP Information Supply Agreement between Australian Associated Press Pty Limited and that recipient including, without limitation, not permitting deep hyperlinking to the document, framing of the document on a web site, posting the document to Usenet newsgroups or facilitating such actions."/>
+        </docdata>
+    </head>
+    <body>
+        <body.head>
+            <hedline></hedline>
+        </body.head>
+        <body.content></body.content>
+    </body>
+</nitf>
