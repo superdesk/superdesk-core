@@ -74,7 +74,8 @@ class SearchService(superdesk.Service):
                             }
                         }
                     ],
-                    'must_not': {'term': {'version': 0}}
+                    'must_not': {'term': {'version': 0}},
+                    'minimum_should_match': 1,
                 }
             }
         ]

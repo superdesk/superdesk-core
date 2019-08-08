@@ -1821,6 +1821,11 @@ def step_set_limit(context):
     context.app.settings['MAX_SEARCH_DEPTH'] = 1
 
 
+@when('we reset elastic limit')
+def step_set_limit(context):
+    context.app.settings['MAX_SEARCH_DEPTH'] = -1
+
+
 @then('we get emails')
 def step_we_get_email(context):
     data = json.loads(context.text)
