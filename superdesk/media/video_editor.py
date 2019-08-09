@@ -125,13 +125,13 @@ class VideoEditorService(VideoEditorFactory):
         json = json_util.loads(resp.text)
         if resp.status_code not in status:
             if resp.status_code == 400:
-                raise SuperdeskApiError.badRequestError(message=json)
+                raise SuperdeskApiError.badRequestError(message=json_util.dumps(json))
             if resp.status_code == 409:
-                raise SuperdeskApiError.conflictError(message=json)
+                raise SuperdeskApiError.conflictError(message=json_util.dumps(json))
             if resp.status_code == 404:
-                raise SuperdeskApiError.notFoundError(message=json)
+                raise SuperdeskApiError.notFoundError(message=json_util.dumps(json))
             if resp.status_code == 500:
-                raise SuperdeskApiError.internalError(message=json)
+                raise SuperdeskApiError.internalError(message=json_util.dumps(json))
         return json
 
     def get(self, project_id):
@@ -206,7 +206,7 @@ class VideoEditorService(VideoEditorFactory):
                 "position": position
             }
             if crop:
-                params["crop"] = crop
+                params["crop"] =  json_util.dumps(crop)
             if rotate:
                 params["rotate"] = rotate
             resp = self.session.get(self._url(str(project_id), 'thumbnails'), params=params)

@@ -130,7 +130,8 @@ class ArchiveMediaService():
         rend = {
             'href': res.get('url'),
             'media': res.get('_id'),
-            'mimetype': res.get('content-type'),
+            'mimetype': res.get('mime_type'),
+            'version': res.get('version'),
         }
         renditions = {'original': rend}
         return res, renditions, metadata

@@ -20,28 +20,49 @@ class VideoEditService(superdesk.Service):
             item_id = item.get(config.ID_FIELD)
             media_id = item['media']
             renditions = item.get('renditions', {})
+            # push task capture preview thumbnail to video server
+            capture = {}
+            edit = {}
+            if 'capture' in doc:
+                capture = doc.pop('capture')
+                # Remove empty value in updates to avoid cerberus return invalid input error
+                for action in capture.copy().keys():
+                    if not capture[action]:
+                        capture.pop(action)
+                        continue
+                self.video_editor.get_preview_thumbnail(media_id, position=capture.get('position'),
+                                                        crop=capture.get('crop'),
+                                                        rotate=capture.get('rotate')
+                                                        )
+            # push task edit video to video server
 
-            edit = doc.pop('edit')
-            if edit:
+            if 'edit' in doc:
+                edit = doc.pop('edit')
                 # Remove empty value in updates to avoid cerberus return invalid input error
                 for action in edit.copy().keys():
                     if not edit[action]:
                         edit.pop(action)
-
+                        continue
                 # duplicate original video before edit to avoid override
-                if renditions.get('original', {}).get('version', 1) == 1:
-                    response = self.video_editor.duplicate(media_id)
-                    media_id = response.get('_id', media_id)
-
-                try:
-                    self.video_editor.put(media_id, edit)
-                except SuperdeskApiError as ex:
-                    if response.get('parent'):
-                        self.video_editor.delete(media_id)
-                    raise ex
-
-                data = self.video_editor.get(media_id)
-                renditions.setdefault('original').update({
+                if edit:
+                    if renditions.get('original', {}).get('version', 1) == 1:
+                        response = self.video_editor.duplicate(media_id)
+                        media_id = response.get('_id', media_id)
+                    try:
+                        self.video_editor.put(media_id, edit)
+                    except SuperdeskApiError as ex:
+                        if response:
+                            self.video_editor.delete(media_id)
+                        raise ex
+            # get data video
+            data = self.video_editor.get(media_id)
+            if capture:
+                renditions.setdefault('thumbnail',{}).update({
+                    'href': data['thumbnails']['preview'].get('url'),
+                    'mimetype': data['thumbnails']['preview'].get('mime_type'),
+                })
+            if edit:
+                renditions.setdefault('original',{}).update({
                     'href': data['url'],
                     'media': data['_id'],
                     'mimetype': data['mime_type'],
@@ -52,8 +73,8 @@ class VideoEditService(superdesk.Service):
                     'renditions': renditions,
                     'media': renditions['original']['media'],
                 })
-                ids.append(updates)
-
+                item.update(updates)
+            ids.append(item_id)
         return ids
 
     def find_one(self, req, **lookup):
@@ -63,14 +84,17 @@ class VideoEditService(superdesk.Service):
 
         action = req.args.get('action')
         video_id = res['media']
-
         response = None
         if action == 'timeline':
             response = self.video_editor.get_timeline_thumbnails(video_id, req.args.get('amount', 40))
         elif action == 'preview':
+            metadata = self.video_editor.get(media_id).get('metadata')
+            position = req.args.get('position')
+            if position > metadata.get('duration'):
+                position = metadata.get('duration')
             response = self.video_editor.get_preview_thumbnail(
                 project_id=video_id,
-                position=req.args.get('position'),
+                position=position,
                 crop=req.args.get('crop'),
                 rotate=req.args.get('rotate')
             )
@@ -107,6 +131,7 @@ class VideoEditResource(superdesk.Resource):
         'file': {'type': 'file'},
         'item': {'type': 'dict', 'required': False, 'empty': True},
         'edit': {'type': 'dict', 'required': False, 'empty': True},
+        'capture': {'type': 'dict', 'required': False, 'empty': True},
     }
 
 
