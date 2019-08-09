@@ -90,7 +90,7 @@ class SubscribersResource(Resource):
                     'format': {'type': 'string', 'required': True},
                     'preview_endpoint_url': {'type': 'string'},
                     'delivery_type': {'type': 'string', 'required': True},
-                    'config': {'type': 'dict'}
+                    'config': {'type': 'dict'},
                 }
             }
         },
@@ -115,6 +115,10 @@ class SubscribersResource(Resource):
             'schema': Resource.rel('products', True)
         },
         'async': {
+            'type': 'boolean',
+            'nullable': True,
+        },
+        'priority': {
             'type': 'boolean',
             'nullable': True,
         },

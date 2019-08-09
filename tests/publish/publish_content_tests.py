@@ -7,6 +7,7 @@
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
+import superdesk
 
 from unittest import mock
 from unittest.mock import MagicMock, ANY
@@ -22,7 +23,6 @@ from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
 from superdesk.publish import publish_queue
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE
 from celery.exceptions import SoftTimeLimitExceeded
-import superdesk
 
 
 class TransmitItemTestCase(TestCase):

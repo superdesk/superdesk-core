@@ -265,6 +265,19 @@ Default: ``None``
 
 If not set it will be the number of CPUs available.
 
+``HIGH_PRIORITY_QUEUE_ENABLED``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. versionadded:: 1.31
+
+Default: ``False``
+
+When enabled you can toggle subscriber priority and those with high priority will use
+dedicated celery queue for transmissions.
+This should be only enabled when you have dedicated worker running::
+
+    $ celery -A worker worker -Q publish_priority
+
 .. _settings.monitoring:
 
 Monitoring settings
@@ -613,5 +626,3 @@ Default: ``None``
 
 When configured it will enable ``/places_autocomplete`` service and client will use it
 for place field searching.
-
-/conten
