@@ -18,14 +18,14 @@ from apps.tasks import send_to, apply_onstage_rule
 from apps.desks import DeskTypes
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
-from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, SIGN_OFF
+from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, SIGN_OFF, \
+    LAST_AUTHORING_DESK, LAST_PRODUCTION_DESK, LAST_DESK, DESK_HISTORY
 from superdesk.metadata.packages import REFS, GROUPS, RESIDREF
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.metadata.utils import item_url
 from apps.archive.common import insert_into_versions, item_operations,\
-    ITEM_OPERATION, set_sign_off, get_user, LAST_AUTHORING_DESK, LAST_PRODUCTION_DESK,\
-    convert_task_attributes_to_objectId
+    ITEM_OPERATION, set_sign_off, get_user, convert_task_attributes_to_objectId
 from apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.workflow import is_workflow_state_transition_valid
 from apps.content import push_item_move_notification
@@ -172,6 +172,10 @@ class MoveService(BaseService):
                     updated['task'][LAST_AUTHORING_DESK] = old_desk_id
                 else:
                     updated['task'][LAST_PRODUCTION_DESK] = old_desk_id
+            updated['task'][LAST_DESK] = old_desk_id
+            updated['task'].setdefault(DESK_HISTORY, [])
+            if old_desk_id not in updated['task'][DESK_HISTORY]:
+                updated['task'][DESK_HISTORY].append(old_desk_id)
 
 
 superdesk.workflow_action(

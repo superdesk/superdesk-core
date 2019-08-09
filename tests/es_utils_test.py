@@ -16,7 +16,7 @@ class ESUtilsTestCase(TestCase):
         }
 
         with self.app.app_context():
-            __, query = es_utils.filter2query(filter_)
+            query = es_utils.filter2query(filter_)
         self.assertEqual(query, expected)
 
     def test_filter2query_date(self):
@@ -55,7 +55,7 @@ class ESUtilsTestCase(TestCase):
             "sort": {"versioncreated": "desc"},
         }
         with self.app.app_context():
-            __, query = es_utils.filter2query(filter_)
+            query = es_utils.filter2query(filter_)
         self.assertEqual(query, expected)
 
     def test_filter2query_ingest_provider(self):
@@ -72,7 +72,7 @@ class ESUtilsTestCase(TestCase):
         expected = {'bool': {'must': [{'term': {'ingest_provider': '5c505c8f0d6f137d69cebc99'}}], 'must_not': []}}
 
         with self.app.app_context():
-            __, query = es_utils.filter2query(filter_)
+            query = es_utils.filter2query(filter_)
 
         self.assertEqual(query['post_filter'], expected)
 
@@ -85,7 +85,7 @@ class ESUtilsTestCase(TestCase):
         }
 
         with self.app.app_context():
-            _, query = es_utils.filter2query(filter_)
+            query = es_utils.filter2query(filter_)
 
         self.assertIn({
             "query_string": {
@@ -103,10 +103,21 @@ class ESUtilsTestCase(TestCase):
         }
 
         with self.app.app_context():
-            _, query = es_utils.filter2query(filter_)
+            query = es_utils.filter2query(filter_)
 
         self.assertIn({
             "terms": {
                 "priority": ["2"],
             },
         }, query['post_filter']['bool']['must'])
+
+    def test_filter2repos_get_types(self):
+        repos = es_utils.filter2repos({})
+        self.assertIsNone(repos)
+        types = es_utils.get_doc_types(repos)
+        self.assertEqual(es_utils.REPOS, types)
+
+        repos = es_utils.filter2repos({'query': {'repo': 'ingest,published'}})
+        self.assertEqual('ingest,published', repos)
+        types = es_utils.get_doc_types(repos)
+        self.assertEqual(['ingest', 'published'], types)

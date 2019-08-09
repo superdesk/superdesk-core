@@ -207,7 +207,13 @@ def add_activity(activity_name, msg, resource=None, item=None, notify=None, noti
         activity['recipients'].extend([{'desk_id': ObjectId(_id), 'read': False} for _id in notify_desks])
 
     if item:
-        activity['item'] = str(item.get('guid', item.get('_id')))
+        if item.get('type') == 'text':
+            activity['item'] = str(item.get('guid', item.get('_id')))
+        else:
+            # since guid and _id do not match for the item of type picture, audio and video
+            # so sending _id as activity['item'] instead of guid for media items
+            activity['item'] = str(item.get('_id'))
+
         activity['item_slugline'] = item.get('slugline', item.get('headline')) or item.get('unique_name')
         if item.get('task') and item['task'].get('desk'):
             activity['desk'] = ObjectId(item['task']['desk'])

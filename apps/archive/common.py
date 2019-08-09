@@ -25,7 +25,7 @@ from superdesk.utc import utcnow, get_expiry_date, local_to_utc, get_date
 from superdesk import get_resource_service
 from superdesk.metadata.item import metadata_schema, ITEM_STATE, CONTENT_STATE, \
     LINKED_IN_PACKAGES, BYLINE, SIGN_OFF, EMBARGO, ITEM_TYPE, CONTENT_TYPE, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, \
-    ASSOCIATIONS
+    ASSOCIATIONS, LAST_AUTHORING_DESK, LAST_PRODUCTION_DESK
 from superdesk.workflow import set_default_state, is_workflow_state_transition_valid
 from superdesk.metadata.item import GUID_NEWSML, GUID_FIELD, GUID_TAG, not_analyzed
 from superdesk.metadata.utils import generate_guid
@@ -60,9 +60,6 @@ item_operations = [ITEM_CREATE, ITEM_FETCH, ITEM_UPDATE, ITEM_RESTORE,
                    ITEM_DUPLICATE, ITEM_DUPLICATED_FROM, ITEM_DESCHEDULE,
                    ITEM_REWRITE, ITEM_LINK, ITEM_UNLINK, ITEM_MARK, ITEM_UNMARK, ITEM_RESEND,
                    ITEM_EXPORT_HIGHLIGHT, ITEM_CREATE_HIGHLIGHT]
-# part the task dict
-LAST_AUTHORING_DESK = 'last_authoring_desk'
-LAST_PRODUCTION_DESK = 'last_production_desk'
 BROADCAST_GENRE = 'Broadcast Script'
 
 # these fields are not available in ingest but available in archive, published, archived
