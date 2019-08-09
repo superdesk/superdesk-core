@@ -96,6 +96,7 @@ Feature: Content Expiry Published Items
       "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
       "subject":[{"qcode": "17004000", "name": "Statistics"}],
       "body_html": "Test Document body",
+      "assignment_id": "123456",
       "dateline": {
         "date": "#DATE#",
         "located" : {
