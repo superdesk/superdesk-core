@@ -218,7 +218,7 @@ class SearchService(superdesk.Service):
     def find_one(self, req, **lookup):
         """Find item by id in all collections."""
         _id = lookup['_id']
-        for resource in self.repos:
+        for resource in self._get_types(req):
             id_field = 'item_id' if resource == 'published' else '_id'
             resource_lookup = {id_field: _id}
             item = get_resource_service(resource).find_one(req=req, **resource_lookup)
