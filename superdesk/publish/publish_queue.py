@@ -106,7 +106,11 @@ class PublishQueueResource(Resource):
             'type': 'datetime'
         },
         'ingest_provider': Resource.rel('ingest_providers', nullable=True),
-        'associated_items': {'type': 'list', 'nullable': True}
+        'associated_items': {'type': 'list', 'nullable': True},
+        'priority': {
+            'type': 'boolean',
+            'nullable': True,
+        },
     }
 
     additional_lookup = {
