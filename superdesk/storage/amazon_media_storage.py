@@ -16,6 +16,7 @@ from urllib.parse import urlparse
 import json
 import logging
 import time
+import unidecode
 
 import boto3
 from botocore.client import Config
@@ -82,6 +83,35 @@ class AmazonMediaStorage(MediaStorage):
     def url_for_download(self, media_id, content_type=None):
         return self.app.download_url(str(media_id))
 
+    def _make_s3_safe(self, _id):
+        """
+        Removes characters from the input _id that may cause issues when using the string as a key in S3 storage.
+
+        See https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingMetadata.html
+
+        :param _id:
+        :return:
+        """
+
+        def get_translation_table():
+            return ''.maketrans({'\\': '',
+                                 '{': '',
+                                 '^': '',
+                                 '}': '',
+                                 '%': '',
+                                 '`': '',
+                                 ']': '',
+                                 '>': '',
+                                 '[': '',
+                                 '~': '',
+                                 '<': '',
+                                 '#': '',
+                                 '|': '',
+                                 "'": '',
+                                 '"': ''})
+
+        return unidecode.unidecode(str(_id)).translate(get_translation_table())
+
     def media_id(self, filename, content_type=None, version=True):
         """Get the ``media_id`` path for the given ``filename``.
 
@@ -105,7 +135,7 @@ class AmazonMediaStorage(MediaStorage):
         else:
             version = '%s/' % version.strip('/')
 
-        return '%s%s%s' % (version, filename, extension)
+        return '%s%s%s' % (version, self._make_s3_safe(filename), extension)
 
     def fetch_rendition(self, rendition):
         stream, name, mime = download_file_from_url(rendition.get('href'))
@@ -129,7 +159,7 @@ class AmazonMediaStorage(MediaStorage):
         Note that although the returned file is guaranteed to be a File object,
         it might actually be some subclass. Returns None if no file was found.
         """
-        id_or_filename = str(id_or_filename)
+        id_or_filename = self._make_s3_safe(id_or_filename)
         try:
             obj = self.call('get_object', Key=id_or_filename)
             if obj:

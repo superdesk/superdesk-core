@@ -49,6 +49,7 @@ install_requires = [
     'pymongo>=0.4,<4.0',
     'croniter<0.4',
     'python-dateutil<2.8',
+    'unidecode==0.04.21',
 ]
 
 package_data = {
