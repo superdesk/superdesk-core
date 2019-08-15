@@ -469,6 +469,7 @@ class NINJSFormatter(Formatter):
             avatar_url = user.get('picture_url', author.get('avatar_url'))
 
             author = {
+                "code": str(user.get('_id', author.get('name', ''))),
                 "name": user.get('display_name', author.get('name', '')),
                 "role": author.get('role', ''),
                 "biography": user.get('biography', author.get('biography', ''))
