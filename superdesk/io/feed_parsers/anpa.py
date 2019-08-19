@@ -51,14 +51,15 @@ class ANPAFeedParser(FileFeedParser):
             # parse second header line
             m = re.match(
                 b'([a-z]) ([a-z])(\x13|\x14)(\x11|\x12) (am-|pm-|bc-|ap-)([a-z-.]+)(.*) '
-                b'([0-9]{1,2})-([0-9]{1,2}) ([0-9]{4})',
+                b'([0-9]{1,2})-([0-9]{1,2}) ([0-9]{0,4})',
                 lines[1], flags=re.I)
             if m:
                 item['priority'] = self.map_priority(m.group(1).decode())
                 item['anpa_category'] = [{'qcode': m.group(2).decode()}]
                 item['slugline'] = m.group(6).decode('latin-1', 'replace')
                 item['anpa_take_key'] = m.group(7).decode('latin-1', 'replace').strip()
-                item['word_count'] = int(m.group(10).decode())
+                if len(m.group(10).decode()):
+                    item['word_count'] = int(m.group(10).decode())
                 if m.group(4) == b'\x12':
                     item[FORMAT] = FORMATS.PRESERVED
 
