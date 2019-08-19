@@ -46,8 +46,10 @@ class ItemsService(BaseService):
         'max_results', 'page', 'version', 'where',
         'q', 'default_operator', 'filter',
         'service', 'subject', 'genre', 'urgency',
-        'priority', 'type', 'item_source'
+        'priority', 'type', 'item_source', 'sort'
     }
+
+    default_sort = ItemsResource.datasource.get('default_sort', [('versioncreated', -1)])
 
     excluded_fields_from_response = {
         '_etag', '_created',
@@ -112,6 +114,11 @@ class ItemsService(BaseService):
         if self._is_internal_api():
             # in case there is no subscriber set by auth return nothing
             lookup['subscribers'] = g.get('user')
+
+        # apply default sorting if it was not provided explicitly in query.
+        # eve-elastic applies default sorting only if filtering was not provided in query
+        # https://github.com/petrjasek/eve-elastic/blob/master/eve_elastic/elastic.py#L455
+        self._set_default_sort(internal_req)
 
         if 'aggregations' in self.allowed_params:
             internal_req.args['aggregations'] = orig_request_params.get('aggregations', 0)
@@ -620,6 +627,10 @@ class ItemsService(BaseService):
                 projection[field] = 0
 
         return projection
+
+    def _set_default_sort(self, internal_req):
+        if not internal_req.sort:
+            internal_req.sort = json.dumps(self.default_sort)
 
     @staticmethod
     def _parse_iso_date(date_str):

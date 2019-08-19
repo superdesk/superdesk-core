@@ -242,7 +242,8 @@ class ArchivedService(BaseService):
                                                                    lookup={'item_id': article['item_id']}))
 
             if transmission_details:
-                get_enqueue_service(ITEM_KILL).enqueue_archived_kill_item(article, transmission_details)
+                get_enqueue_service(updates.get(ITEM_OPERATION, ITEM_KILL)) \
+                    .enqueue_archived_kill_item(article, transmission_details)
 
             article[config.ID_FIELD] = article.pop('item_id', article['item_id'])
 

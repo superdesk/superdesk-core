@@ -9,13 +9,13 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-from unittest import mock
 import os
-
+from unittest import mock
 from superdesk.tests import TestCase
 from superdesk.io.feeding_services import http_base_service
 from superdesk.io.feeding_services import ap
 from superdesk.io.feed_parsers import newsml_2_0
+from copy import deepcopy
 
 PREFIX = 'test_superdesk_'
 PROVIDER = {
@@ -48,8 +48,40 @@ class APTestCase(TestCase):
         get_feed_parser.return_value = newsml_2_0.NewsMLTwoFeedParser()
         mock_get = requests.get.return_value
         mock_get.content = self.feed_raw
-        provider = PROVIDER.copy()
+        provider = deepcopy(PROVIDER)
         service = ap.APFeedingService()
         service.provider = provider
         items = service._update(provider, {})[0]
         self.assertEqual(len(items), 3)
+
+    @mock.patch.object(http_base_service, 'requests')
+    @mock.patch.object(ap.APFeedingService, 'get_feed_parser')
+    def test_items_order(self, get_feed_parser, requests):
+        """Test that items are reversed on first call (SDESK-4372)
+
+        Items of a new provider must be in reverse chronological order
+        while further updates should give chronological order
+        so we check that "reverse" has been called on items to fix order
+        on first call.
+        """
+        feed_parser = newsml_2_0.NewsMLTwoFeedParser()
+        get_feed_parser.return_value = feed_parser
+        mock_get = requests.get.return_value
+        mock_get.content = self.feed_raw
+        provider = deepcopy(PROVIDER)
+        service = ap.APFeedingService()
+        service.provider = provider
+
+        self.assertNotIn('private', provider)
+        with mock.patch.object(feed_parser, 'parse'):
+            update = {}
+            items = service._update(provider, update)[0]
+            items.reverse.assert_called_once_with()
+            provider.update(update)
+
+        # because the provider has been run at least one time,
+        # private data must now be present
+        self.assertIn('private', provider)
+        with mock.patch.object(feed_parser, 'parse'):
+            items = service._update(provider, {})[0]
+            items.reverse.assert_not_called()

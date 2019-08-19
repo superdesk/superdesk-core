@@ -41,16 +41,17 @@ ITEM_URGENCY = 'urgency'
 
 #: item internal states
 content_state = ['draft', 'ingested', 'routed', 'fetched', 'submitted', 'in_progress', 'spiked',
-                 'published', 'killed', 'corrected', 'scheduled', 'recalled']
+                 'published', 'killed', 'corrected', 'scheduled', 'recalled', 'unpublished']
 CONTENT_STATE = namedtuple('CONTENT_STATE', ['DRAFT', 'INGESTED', 'ROUTED', 'FETCHED', 'SUBMITTED', 'PROGRESS',
                                              'SPIKED', 'PUBLISHED', 'KILLED', 'CORRECTED',
-                                             'SCHEDULED', 'RECALLED'])(*content_state)
+                                             'SCHEDULED', 'RECALLED', 'UNPUBLISHED'])(*content_state)
 PUBLISH_STATES = {
     CONTENT_STATE.PUBLISHED,
     CONTENT_STATE.SCHEDULED,
     CONTENT_STATE.CORRECTED,
     CONTENT_STATE.KILLED,
-    CONTENT_STATE.RECALLED
+    CONTENT_STATE.RECALLED,
+    CONTENT_STATE.UNPUBLISHED,
 }
 
 FORMAT = 'format'
@@ -63,6 +64,12 @@ EMBARGO = 'embargo'
 PUBLISH_SCHEDULE = 'publish_schedule'
 SCHEDULE_SETTINGS = 'schedule_settings'
 PROCESSED_FROM = 'processed_from'
+
+# part the task dict
+LAST_DESK = 'last_desk'
+LAST_AUTHORING_DESK = 'last_authoring_desk'
+LAST_PRODUCTION_DESK = 'last_production_desk'
+DESK_HISTORY = 'desk_history'
 
 metadata_schema = {
     config.ID_FIELD: {
@@ -615,6 +622,8 @@ metadata_schema = {
     # ingested embargoed info, not using embargo to avoid validation
     'embargoed': {'type': 'datetime'},
     'embargoed_text': {'type': 'string', 'mapping': not_indexed},
+
+    'marked_for_user': Resource.rel('users', required=False, nullable=True)
 }
 
 metadata_schema['lock_user']['versioned'] = False

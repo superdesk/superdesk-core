@@ -22,6 +22,7 @@ from eve.io.mongo import MongoJSONEncoder, create_index
 from eve.render import send_response
 from flask_babel import Babel
 from flask import g
+from babel import parse_locale
 
 from superdesk.celery_app import init_celery
 from superdesk.datalayer import SuperdeskDataLayer  # noqa
@@ -126,7 +127,15 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
     @babel.localeselector
     def get_locale():
         user = getattr(g, 'user', {})
-        return user.get('language', app.config.get('DEFAULT_LANGUAGE', 'en'))
+        user_language = user.get('language', app.config.get('DEFAULT_LANGUAGE', 'en'))
+        try:
+            # Attempt to load the local using Babel.parse_local
+            parse_locale(user_language)
+        except ValueError:
+            # If Babel fails to recognise the locale, then use the default language
+            user_language = app.config.get('DEFAULT_LANGUAGE', 'en')
+
+        return user_language
 
     @app.errorhandler(SuperdeskError)
     def client_error_handler(error):

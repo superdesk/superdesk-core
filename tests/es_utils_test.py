@@ -12,10 +12,11 @@ class ESUtilsTestCase(TestCase):
                 "bool": {"must": [], "must_not": [{"term": {"state": "spiked"}}, {"term": {"package_type": "takes"}}]}
             },
             "post_filter": {"bool": {"must": [], "must_not": [{"terms": {"genre.name": ["Article (news)"]}}]}},
+            "sort": {"versioncreated": "desc"},
         }
 
         with self.app.app_context():
-            __, query = es_utils.filter2query(filter_)
+            query = es_utils.filter2query(filter_)
         self.assertEqual(query, expected)
 
     def test_filter2query_date(self):
@@ -51,9 +52,10 @@ class ESUtilsTestCase(TestCase):
                     "must_not": [],
                 }
             },
+            "sort": {"versioncreated": "desc"},
         }
         with self.app.app_context():
-            __, query = es_utils.filter2query(filter_)
+            query = es_utils.filter2query(filter_)
         self.assertEqual(query, expected)
 
     def test_filter2query_ingest_provider(self):
@@ -70,6 +72,52 @@ class ESUtilsTestCase(TestCase):
         expected = {'bool': {'must': [{'term': {'ingest_provider': '5c505c8f0d6f137d69cebc99'}}], 'must_not': []}}
 
         with self.app.app_context():
-            __, query = es_utils.filter2query(filter_)
+            query = es_utils.filter2query(filter_)
 
         self.assertEqual(query['post_filter'], expected)
+
+    def test_filter2query_raw(self):
+        filter_ = {
+            "query": {
+                "spike": "exclude",
+                "raw": "headline:test",
+            },
+        }
+
+        with self.app.app_context():
+            query = es_utils.filter2query(filter_)
+
+        self.assertIn({
+            "query_string": {
+                "query": "headline:test",
+                "lenient": False,
+                "default_operator": "AND",
+            },
+        }, query['query']['bool']['must'])
+
+    def test_filter2query_priority(self):
+        filter_ = {
+            "query": {
+                "priority": ["2"],
+            },
+        }
+
+        with self.app.app_context():
+            query = es_utils.filter2query(filter_)
+
+        self.assertIn({
+            "terms": {
+                "priority": ["2"],
+            },
+        }, query['post_filter']['bool']['must'])
+
+    def test_filter2repos_get_types(self):
+        repos = es_utils.filter2repos({})
+        self.assertIsNone(repos)
+        types = es_utils.get_doc_types(repos)
+        self.assertEqual(es_utils.REPOS, types)
+
+        repos = es_utils.filter2repos({'query': {'repo': 'ingest,published'}})
+        self.assertEqual('ingest,published', repos)
+        types = es_utils.get_doc_types(repos)
+        self.assertEqual(['ingest', 'published'], types)

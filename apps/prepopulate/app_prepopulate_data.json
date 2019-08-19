@@ -1318,11 +1318,11 @@
             "_current_version" : 2,
             "original_creator": "admin",
             "task" : {
-		        "desk" : "Sports Desk",
-		        "user" : "administrator",
-		        "status": "done",
-		        "stage": "one"
-		    }
+                "desk" : "-id desk Sports Desks-",
+                "user" : "-id user admin-",
+                "status": "done",
+                "stage": "-id stage one Sports Desks-"
+            }
         }
     },
     {
@@ -1340,11 +1340,11 @@
             "_current_version" : 2,
             "original_creator": "admin",
             "task" : {
-		        "desk" : "Sports Desk",
-		        "user" : "administrator",
-		        "status": "todo",
-		        "stage": "one"
-		    }
+                "desk" : "-id desk Sports Desks-",
+                "user" : "-id user admin-",
+                "status": "done",
+                "stage": "-id stage one Sports Desks-"
+            }
         }
     },
     {
@@ -1370,11 +1370,11 @@
                                    "itemClass" : "icls:text",  "_current_version" : 2, "location" : "archived"}],
                                    "id" : "main", "role" : "grpRole:main"}],
             "task" : {
-		        "desk" : "Sports Desk",
-		        "user" : "administrator",
-		        "status": "todo",
-		        "stage": "one"
-		    }
+                "desk" : "-id desk Sports Desks-",
+                "user" : "-id user admin-",
+                "status": "done",
+                "stage": "-id stage one Sports Desks-"
+            }
         }
     },
     {

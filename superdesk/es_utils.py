@@ -157,6 +157,14 @@ def filter2query(filter_, user_id=None):
             query_must_not.append({"term": {"last_published_version": "false"}})
         elif key == "ignoreScheduled":
             query_must_not.append({"term": {"state": "scheduled"}})
+        elif key == "raw":
+            query_must.append({
+                "query_string": {
+                    "query": value,
+                    "lenient": False,
+                    "default_operator": "AND",
+                },
+            })
         else:
             continue
         to_delete.append(key)
@@ -169,8 +177,8 @@ def filter2query(filter_, user_id=None):
         if value is not None:
             try:
                 post_filter.append({"terms": {field: json.loads(value)}})
-            except TypeError as e:
-                logger.error('Invalid data received for post filter "{key}": {e}\ndata: {value}'.format(
+            except (ValueError, TypeError) as e:
+                logger.warning('Invalid data received for post filter key="{key}" data="{value}" error="{e}"'.format(
                     key=key, e=e, value=value))
                 # the value is probably not JSON encoded as expected, we try directly the value
                 post_filter.append({"terms": {field: value}})
@@ -254,8 +262,9 @@ def filter2query(filter_, user_id=None):
     if post_filter or post_filter_must_not:
         query["post_filter"] = {"bool": {"must": post_filter, "must_not": post_filter_must_not}}
 
-    repo = search_query.pop("repo", None)
-    repos = repo.split(',') if repo is not None else None
+    query["sort"] = {"versioncreated": "desc"}
+
+    search_query.pop("repo", None)
 
     if "params" in search_query and (search_query['params'] is None or not json.loads(search_query['params'])):
         del search_query['params']
@@ -265,4 +274,26 @@ def filter2query(filter_, user_id=None):
             "All query fields have not been used, remaining fields: {search_query}".format(search_query=search_query)
         )
 
-    return repos, query
+    return query
+
+
+def filter2repos(filter_):
+    try:
+        return filter_['query']['repo']
+    except KeyError:
+        return None
+
+
+def get_doc_types(selected_repos, all_repos=None):
+    """Get document types for the given query."""
+    if all_repos is None:
+        all_repos = REPOS
+
+    # If not repos were supplied, return all
+    if selected_repos is None:
+        return all_repos.copy()
+
+    repos = selected_repos.split(',')
+
+    # If the repos array is still empty after filtering, then return the default repos
+    return [repo for repo in repos if repo in all_repos] or all_repos.copy()

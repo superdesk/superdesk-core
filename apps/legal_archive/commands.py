@@ -25,7 +25,7 @@ from .resource import LEGAL_ARCHIVE_NAME, LEGAL_ARCHIVE_VERSIONS_NAME, LEGAL_PUB
     LEGAL_ARCHIVE_HISTORY_NAME
 from superdesk.users.services import get_display_name
 from apps.archive.common import ARCHIVE
-from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
+from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, PUBLISH_STATES
 from superdesk.lock import lock, unlock
 from superdesk.publish.publish_queue import QueueState
 from superdesk.errors import update_notifiers
@@ -70,8 +70,7 @@ class LegalArchiveImport:
             doc.setdefault(config.VERSION, 1)
             doc.setdefault('expiry', utcnow())
 
-            if not doc.get(ITEM_STATE) in \
-                    {CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED, CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED}:
+            if not doc.get(ITEM_STATE) in PUBLISH_STATES:
                 # at times we have seen that item is published but the item is different in the archive collection
                 # this will notify admins about the issue but proceed to move the item into legal archive.
                 msg = 'Invalid state: {}. Moving the item to legal archive. item: {}'.\

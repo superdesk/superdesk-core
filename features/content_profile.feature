@@ -100,7 +100,7 @@ Feature: Content Profile
                     "order": 3
                 },
                 "headline": {
-                    "formatOptions": ["underline", "link", "bold"],
+                    "formatOptions": [],
                     "enabled": true,
                     "order": 15
                 },
@@ -511,7 +511,7 @@ Feature: Content Profile
                 "headline": {
                     "enabled": false,
                     "order": 15,
-                    "formatOptions": ["underline", "link", "bold"]
+                    "formatOptions": []
                 },
                 "place": {
                     "enabled": false,
@@ -862,7 +862,7 @@ Feature: Content Profile
                 "headline": {
                     "order": 15,
                     "enabled": true,
-                    "formatOptions": ["underline", "link", "bold"]
+                    "formatOptions": []
                 },
                 "usageterms": {
                 	"order": 4,
@@ -1026,7 +1026,7 @@ Feature: Content Profile
                     "enabled": false
                 },
                 "headline": {
-                    "formatOptions": ["underline", "link", "bold"],
+                    "formatOptions": [],
                     "enabled": false,
                     "order": 15
                 },

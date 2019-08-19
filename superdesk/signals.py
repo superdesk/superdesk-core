@@ -70,6 +70,20 @@ item_moved = signals.signal('item:moved')
 item_rewrite = signals.signal('item:rewrite')
 
 
+#: Validate item
+#:
+#: You can add errors to response and that will
+#: prevent publishing and display those errors to users.
+#:
+#: .. versionadded:: 1.30.1
+#:
+#: :param sender: ValidateService
+#: :param item: item to validate
+#: :param response: human readable list or errors
+#: :param error_fields: system readable errors info
+item_validate = signals.signal('item:validate')
+
+
 def connect(signal, subscriber):
     """Connect to signal"""
     blinker.signal(signal).connect(subscriber)

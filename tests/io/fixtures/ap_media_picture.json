@@ -1,0 +1,367 @@
+{
+    "api_version": "1.1",
+    "api_mode": "live",
+    "id": "rkKaPDOkSF",
+    "method": "/content.GET",
+    "org_name": "Some Organisation",
+    "params": {
+        "et": "0a1aza3c0",
+        "qt": "rkKaPDOkSF"
+    },
+    "data": {
+        "meta": {
+            "products": [
+                {
+                    "id": 12345,
+                    "name": "Some Product"
+                }
+            ]
+        },
+        "item": {
+            "uri": "https://a.b.c",
+            "altids": {
+                "itemid": "171b16d930db49a396159714c732af9c",
+                "etag": "171b16d930db49a396159714c732af9c_0a1aza3c0",
+                "friendlykey": "19170371225240",
+                "referenceid": "19170371225240",
+                "transref": "TKSK105"
+            },
+            "version": 0,
+            "type": "picture",
+            "urgency": 5,
+            "editorialpriority": "d",
+            "language": "en",
+            "versioncreated": "2019-06-19T10:22:14Z",
+            "firstcreated": "2018-09-23T06:23:19Z",
+            "pubstatus": "usable",
+            "ednote": "092218124137, 21334631,",
+            "signals": [
+                "newscontent"
+            ],
+            "title": "US Paul Simon Poets Society",
+            "headline": "US Paul Simon Poets Society",
+            "slugline": "US Paul Simon Poets Society",
+            "photographer": {
+                "code": "xxx",
+                "title": "Something",
+                "name": "John Doe"
+            },
+            "datelinelocation": {
+                "city": "New York",
+                "countryareacode": "NY",
+                "countryareaname": "NEW YORK",
+                "countrycode": "USA",
+                "countryname": "UNITED STATES",
+                "geometry_geojson": {
+                    "type": "Point",
+                    "coordinates": [
+                        -74.00597,
+                        40.71427
+                    ]
+                }
+            },
+            "description_creditline": "john Doe/Something/AP",
+            "usageterms": [
+                "This content is intended for editorial use only. For other uses, additional clearances may be required."
+            ],
+            "provider": "AP",
+            "infosource": [
+                {
+                    "name": "Something",
+                    "type": "AP"
+                }
+            ],
+            "person": [
+                {
+                    "code": "354c0b3c72d64956bd9545331d5d202e",
+                    "name": "Paul Simon",
+                    "rels": [
+                        "direct"
+                    ],
+                    "types": [
+                        "MUSICIAN",
+                        "ENTERTAINMENT_FIGURE",
+                        "PERSON"
+                    ],
+                    "scheme": "http://cv.ap.org/id/",
+                    "creator": "Machine"
+                },
+                {
+                    "name": "Paul Simon",
+                    "creator": "Editorial",
+                    "rels": [
+                        "personfeatured"
+                    ]
+                }
+            ],
+            "subject": [
+                {
+                    "rels": [
+                        "category"
+                    ],
+                    "creator": "Editorial",
+                    "code": "a",
+                    "name": "Domestic News"
+                },
+                {
+                    "rels": [
+                        "suppcategory"
+                    ],
+                    "creator": "Editorial",
+                    "code": "ent",
+                    "name": "Entertainment"
+                },
+                {
+                    "rels": [
+                        "suppcategory"
+                    ],
+                    "creator": "Editorial",
+                    "code": "file",
+                    "name": "File photo"
+                },
+                {
+                    "code": "5b4319707dd310048b23df092526b43e",
+                    "name": "Entertainment",
+                    "scheme": "http://cv.ap.org/id/",
+                    "creator": "Editorial"
+                },
+                {
+                    "code": "c189875088be10048dceb097165a0203",
+                    "name": "Music",
+                    "rels": [
+                        "direct"
+                    ],
+                    "scheme": "http://cv.ap.org/id/",
+                    "creator": "Machine",
+                    "parentids": [
+                        "5b4319707dd310048b23df092526b43e"
+                    ]
+                },
+                {
+                    "code": "5b4319707dd310048b23df092526b43e",
+                    "name": "Entertainment",
+                    "rels": [
+                        "ancestor"
+                    ],
+                    "scheme": "http://cv.ap.org/id/",
+                    "creator": "Machine",
+                    "parentids": [
+                        "16cb0ba3e6d24d97ace39f5a1924669a"
+                    ]
+                },
+                {
+                    "code": "16cb0ba3e6d24d97ace39f5a1924669a",
+                    "name": "Arts and entertainment",
+                    "rels": [
+                        "ancestor"
+                    ],
+                    "scheme": "http://cv.ap.org/id/",
+                    "creator": "Machine",
+                    "topparent": true
+                },
+                {
+                    "code": "b4ed19d87e5c10048565df092526b43e",
+                    "name": "Celebrity",
+                    "rels": [
+                        "direct"
+                    ],
+                    "scheme": "http://cv.ap.org/id/",
+                    "creator": "Machine",
+                    "parentids": [
+                        "5b4319707dd310048b23df092526b43e"
+                    ]
+                },
+                {
+                    "code": "274af29089f010048ea3d37e1a6ef903",
+                    "name": "Rock music",
+                    "rels": [
+                        "direct"
+                    ],
+                    "scheme": "http://cv.ap.org/id/",
+                    "creator": "Machine",
+                    "parentids": [
+                        "c189875088be10048dceb097165a0203"
+                    ]
+                }
+            ],
+            "place": [
+                {
+                    "code": "b836d07082c610048807df092526b43e",
+                    "name": "New York City",
+                    "rels": [
+                        "direct"
+                    ],
+                    "scheme": "http://cv.ap.org/id/",
+                    "creator": "Machine",
+                    "parentids": [
+                        "b58f18a082c6100487fbdf092526b43e"
+                    ],
+                    "locationtype": {
+                        "code": "9d26a20b35f0484a891740f8189d4c7b",
+                        "name": "City"
+                    },
+                    "geometry_geojson": {
+                        "type": "Point",
+                        "coordinates": [
+                            -74.00597,
+                            40.71427
+                        ]
+                    }
+                },
+                {
+                    "code": "b58f18a082c6100487fbdf092526b43e",
+                    "name": "New York",
+                    "rels": [
+                        "ancestor"
+                    ],
+                    "scheme": "http://cv.ap.org/id/",
+                    "creator": "Machine",
+                    "parentids": [
+                        "661e48387d5b10048291c076b8e3055c"
+                    ],
+                    "locationtype": {
+                        "code": "0ae5eb8e00e04295a4fc209c94bfe6ef",
+                        "name": "State"
+                    },
+                    "geometry_geojson": {
+                        "type": "Point",
+                        "coordinates": [
+                            -75.4999,
+                            43.00035
+                        ]
+                    }
+                },
+                {
+                    "code": "661e48387d5b10048291c076b8e3055c",
+                    "name": "United States",
+                    "rels": [
+                        "direct"
+                    ],
+                    "scheme": "http://cv.ap.org/id/",
+                    "creator": "Machine",
+                    "parentids": [
+                        "661850e07d5b100481f7c076b8e3055c"
+                    ],
+                    "locationtype": {
+                        "code": "01f56e0e654841eca2e69bf2cbcc0526",
+                        "name": "Nation"
+                    },
+                    "geometry_geojson": {
+                        "type": "Point",
+                        "coordinates": [
+                            -98.5,
+                            39.76
+                        ]
+                    }
+                },
+                {
+                    "code": "661850e07d5b100481f7c076b8e3055c",
+                    "name": "North America",
+                    "rels": [
+                        "ancestor"
+                    ],
+                    "scheme": "http://cv.ap.org/id/",
+                    "creator": "Machine",
+                    "topparent": true,
+                    "locationtype": {
+                        "code": "976d112cd5c3497ea180aeecab922c6b",
+                        "name": "Continent"
+                    },
+                    "geometry_geojson": {
+                        "type": "Point",
+                        "coordinates": [
+                            -100.54688,
+                            46.07323
+                        ]
+                    }
+                },
+                {
+                    "code": "723270769d004b679855076e5f774ad0",
+                    "name": "Queens",
+                    "rels": [
+                        "direct"
+                    ],
+                    "scheme": "http://cv.ap.org/id/",
+                    "creator": "Machine",
+                    "parentids": [
+                        "b836d07082c610048807df092526b43e"
+                    ],
+                    "locationtype": {
+                        "code": "30f6407ef71943d08409c3addcff1179",
+                        "name": "Borough"
+                    },
+                    "geometry_geojson": {
+                        "type": "Point",
+                        "coordinates": [
+                            -73.79763,
+                            40.74982
+                        ]
+                    }
+                }
+            ],
+            "description_caption": "FILE - This Sept. 22, 2018 file photo something.(Photo by John Doe/Something/AP, File)",
+            "renditions": {
+                "main": {
+                    "title": "Full Resolution (JPG)",
+                    "rel": "Main",
+                    "format": "JPEG Baseline",
+                    "type": "picture",
+                    "contentid": "902528bcd997452cafb195db98ffa896",
+                    "digest": "4a33391ca49df0ea6d26831be6ae197f",
+                    "href": "https://a.b.c",
+                    "orientation": "Horizontal",
+                    "sizeinbytes": 4359966,
+                    "width": 3500,
+                    "height": 2592,
+                    "originalfilename": "US_Paul_Simon_Poets_Society_25240.jpg",
+                    "fileextension": "jpg",
+                    "mimetype": "image/jpeg",
+                    "pricetag": "LimitedDuration"
+                },
+                "preview": {
+                    "title": "Preview (JPG)",
+                    "rel": "Preview",
+                    "format": "JPEG Baseline",
+                    "type": "picture",
+                    "contentid": "78f3b3b581a14d4aadf76d60b4c1beb6",
+                    "digest": "5132450cb50c2620cc19537f77749a5e",
+                    "href": "https://a.b.c",
+                    "orientation": "Horizontal",
+                    "sizeinbytes": 43731,
+                    "width": 512,
+                    "height": 379,
+                    "originalfilename": "US_Paul_Simon_Poets_Society_25240.jpg",
+                    "fileextension": "jpg",
+                    "mimetype": "image/jpeg"
+                },
+                "thumbnail": {
+                    "title": "Thumbnail (JPG)",
+                    "rel": "Thumbnail",
+                    "format": "JPEG Baseline",
+                    "type": "picture",
+                    "contentid": "bb350b3fcadb40ed8a6e4eb7b1d0abc5",
+                    "digest": "a7a13cdc290de17a4e1b26d5d946eb32",
+                    "href": "https://a.b.c",
+                    "orientation": "Horizontal",
+                    "sizeinbytes": 18198,
+                    "width": 125,
+                    "height": 93,
+                    "originalfilename": "US_Paul_Simon_Poets_Society_25240.jpg",
+                    "fileextension": "jpg",
+                    "mimetype": "image/jpeg"
+                },
+                "caption_nitf": {
+                    "title": "NITF Caption Download",
+                    "rel": "Caption",
+                    "format": "IIM",
+                    "type": "text",
+                    "mimetype": "text/xml",
+                    "fileextension": "xml",
+                    "words": 124,
+                    "contentid": "171b16d930db49a396159714c732af9c",
+                    "href": "https://a.b.c"
+                }
+            }
+        }
+    }
+}

@@ -483,10 +483,40 @@ class RoutingRuleSchemeService(BaseService):
         """Assigns the default values to the item that about to be auto published"""
 
         archive_item = get_resource_service('archive').find_one(req=None, _id=item)
+        default_categories = self._get_categories(config.DEFAULT_CATEGORY_QCODES_FOR_AUTO_PUBLISHED_ARTICLES)
+        default_values = self._assign_default_values(archive_item, default_categories)
+        get_resource_service('archive').patch(item, default_values)
+
+    def _assign_default_values(self, archive_item, default_categories):
+        """Assigns the default values to the item that about to be auto published"""
+
         default_values = {}
         default_values['headline'] = archive_item.get('headline') or ' '
-        default_values['anpa_category'] = \
-            archive_item.get('anpa_category') or [{'qcode': 'a', 'name': 'Australian General News'}]
+
+        if archive_item.get('anpa_category'):
+            default_values['anpa_category'] = archive_item.get('anpa_category')
+        else:
+            default_values['anpa_category'] = default_categories
+
         default_values['slugline'] = archive_item.get('slugline') or ' '
         default_values['body_html'] = archive_item.get('body_html') or '<p></p>'
-        get_resource_service('archive').patch(item, default_values)
+        return default_values
+
+    def _get_categories(self, qcodes):
+        """Returns list of categories for a given comma separated qcodes"""
+
+        if not qcodes:
+            return
+
+        qcode_list = qcodes.split(',')
+        selected_categories = None
+        categories = superdesk.get_resource_service('vocabularies').find_one(req=None, _id='categories')
+
+        if categories and len(qcode_list) > 0:
+            selected_categories = []
+            for qcode in qcode_list:
+                selected_categories.extend([{'qcode': qcode, 'name': c.get('name', '')} for c in categories['items']
+                                            if c['is_active'] is True and
+                                            qcode.lower() == c['qcode'].lower()])
+
+        return selected_categories

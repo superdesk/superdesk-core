@@ -13,11 +13,11 @@ import arrow
 import datetime
 import logging
 
+from flask import current_app as app
 from superdesk import etree as sd_etree, app, get_resource_service
 from superdesk.errors import ParserError
 from superdesk.io.registry import register_feed_parser
 from superdesk.io.feed_parsers import XMLFeedParser
-from superdesk.io.iptc import subject_codes
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
 from superdesk.metadata.utils import is_normal_package
 from lxml import etree
@@ -28,6 +28,13 @@ NS = {'iptc': 'http://iptc.org/std/NITF/2006-10-18',
       'xhtml': 'http://www.w3.org/1999/xhtml'}
 
 logger = logging.getLogger(__name__)
+
+
+def get_content_tag(elem):
+    try:
+        return elem.tag.rsplit('}')[1]
+    except IndexError:
+        return elem.tag
 
 
 class NewsMLTwoFeedParser(XMLFeedParser):
@@ -206,7 +213,7 @@ class NewsMLTwoFeedParser(XMLFeedParser):
                 if scheme is None:
                     # this is a main subject, we use IPTC qcode
                     try:
-                        name = subject_codes[qcode_parts[1]]
+                        name = app.subjects[qcode_parts[1]]
                     except KeyError:
                         logger.debug("Subject code {code}' not found".format(code=qcode_parts[1]))
                         continue
@@ -308,17 +315,20 @@ class NewsMLTwoFeedParser(XMLFeedParser):
         else:
             html = tree.find(self.qname('html', ns))
             if html is None:
-                ns = tree.nsmap.get(None)  # fallback for missing xmlns
+                try:
+                    ns = tree.nsmap.get(None)  # fallback for missing xmlns
+                except AttributeError:
+                    ns = None
                 html = tree.find(self.qname('html', ns))
             body = html.find(self.qname('body', ns))
             elements = []
             for elem in body:
                 if elem.text:
-                    tag = elem.tag.rsplit('}')[1]
+                    tag = get_content_tag(elem)
                     elements.append('<%s>%s</%s>' % (tag, elem.text, tag))
 
             # If there is a single p tag then replace the line feeds with breaks
-            if len(elements) == 1 and body[0].tag.rsplit('}')[1] == 'p':
+            if len(elements) == 1 and get_content_tag(body[0]) == 'p':
                 elements[0] = elements[0].replace('\n    ', '</p><p>').replace('\n', '<br/>')
 
             content = dict()

@@ -53,6 +53,10 @@ class EnqueueService:
 
     filters = None
 
+    def __init__(self, published_state=None):
+        if published_state is not None:
+            self.published_state = published_state
+
     def get_filters(self):
         """Retrieve all of the available filter conditions and content filters if they have not yet been retrieved or
         they have been updated. This avoids the filtering functions having to repeatedly retireve the individual filter
@@ -473,6 +477,7 @@ class EnqueueService:
                             publish_queue_item['ingest_provider'] = \
                                 ObjectId(doc.get('ingest_provider')) if doc.get('ingest_provider') else None
                             publish_queue_item['associated_items'] = associations.get(subscriber[config.ID_FIELD], [])
+                            publish_queue_item['priority'] = subscriber.get('priority')
 
                             if doc.get(PUBLISHED_IN_PACKAGE):
                                 publish_queue_item[PUBLISHED_IN_PACKAGE] = doc[PUBLISHED_IN_PACKAGE]

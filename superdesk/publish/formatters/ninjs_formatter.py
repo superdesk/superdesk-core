@@ -43,6 +43,7 @@ from superdesk.utils import json_serialize_datetime_objectId
 from superdesk.media.renditions import get_renditions_spec
 from apps.archive.common import get_utc_schedule
 from superdesk import text_utils
+from collections import OrderedDict
 
 logger = logging.getLogger(__name__)
 # this regex match the way custom media fields are put in associations (i.e. how the key
@@ -194,6 +195,9 @@ class NINJSFormatter(Formatter):
         elif 'url' in article:
             ninjs['renditions'] = self._generate_renditions(article)
 
+        if 'order' in article:
+            ninjs['order'] = article['order']
+
         # SDPA-317
         if 'abstract' in article:
             abstract = article.get('abstract', '')
@@ -242,6 +246,9 @@ class NINJSFormatter(Formatter):
 
         if article.get('authors'):
             ninjs['authors'] = self._format_authors(article)
+
+        if (article.get('schedule_settings') or {}).get('utc_publish_schedule'):
+            ninjs['publish_schedule'] = article['schedule_settings']['utc_publish_schedule']
 
         return ninjs
 
@@ -292,12 +299,14 @@ class NINJSFormatter(Formatter):
 
     def _format_related(self, article, subscriber):
         """Format all associated items for simple items (not packages)."""
-        associations = {}
+        associations = OrderedDict()
         extra_items = {}
         media = {}
         content_profile = None
         archive_service = superdesk.get_resource_service('archive')
-        for key, item in (article.get(ASSOCIATIONS) or {}).items():
+        sorted_associations = OrderedDict(sorted(article.get(ASSOCIATIONS).items() or {}))
+
+        for key, item in sorted_associations.items():
             if item:
                 if archive_service._is_related_content(key) and '_type' not in item:
                     # if item is related item then fetch it from db
@@ -330,7 +339,11 @@ class NINJSFormatter(Formatter):
             # we have custom media fields, we now order them
             # and add them to "extra_items"
             for field_id, data in media.items():
-                extra_items[field_id]["items"] = [d[1] for d in sorted(data)]
+                if extra_items[field_id]["type"] == "media":
+                    items_to_sort = [d[1] for d in sorted(data)]
+                    extra_items[field_id]["items"] = sorted(items_to_sort, key=lambda item: item.get('order', 0))
+                else:
+                    extra_items[field_id]["items"] = [d[1] for d in sorted(data)]
 
         return associations, extra_items
 

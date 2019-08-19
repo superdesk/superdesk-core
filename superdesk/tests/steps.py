@@ -307,7 +307,10 @@ def format_items(items):
     output = ['']  # insert empty line
     for item in items:
         if item.get('formatted_item'):
-            item['formatted_item'] = json.loads(item['formatted_item'])
+            try:
+                item['formatted_item'] = json.loads(item['formatted_item'])
+            except ValueError:
+                pass
         output.append(json.dumps(item, indent=4, sort_keys=True))
     return ',\n'.join(output)
 
@@ -719,7 +722,6 @@ def step_impl_when_put_url(context, url):
         data = apply_placeholders(context, context.text)
         href = get_prefixed_url(context.app, url)
         context.response = context.client.put(href, data=data, headers=headers)
-        assert_ok(context.response)
         context.outbox = outbox
 
 

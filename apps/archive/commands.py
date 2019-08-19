@@ -18,7 +18,8 @@ from apps.packages import PackageService
 from superdesk.celery_task_utils import get_lock_id
 from superdesk.utc import utcnow
 from .archive import SOURCE as ARCHIVE
-from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTENT_TYPE, ASSOCIATIONS, MEDIA_TYPES
+from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, ITEM_TYPE,\
+    CONTENT_TYPE, ASSOCIATIONS, MEDIA_TYPES, PUBLISH_STATES
 from superdesk.lock import lock, unlock, remove_locks
 from superdesk.notification import push_notification
 from superdesk import get_resource_service
@@ -252,6 +253,10 @@ class RemoveExpiredContent(superdesk.Command):
         if preserve_published_desks and \
                 item.get(ITEM_STATE) in {CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED} and \
                 item.get('task').get('desk') in preserve_published_desks:
+            is_expired = False
+
+        # If the item is associated with a planning assignment and not published then preserve it
+        if item.get('assignment_id') and item.get(ITEM_STATE) not in PUBLISH_STATES:
             is_expired = False
 
         if is_expired:

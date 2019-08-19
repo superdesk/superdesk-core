@@ -201,17 +201,26 @@ CELERY_WORKER_TASK_SOFT_TIME_LIMIT = 300
 CELERY_WORKER_LOG_FORMAT = '%(message)s level=%(levelname)s process=%(processName)s'
 CELERY_WORKER_TASK_LOG_FORMAT = ' '.join([CELERY_WORKER_LOG_FORMAT, 'task=%(task_name)s task_id=%(task_id)s'])
 CELERY_WORKER_CONCURRENCY = env('CELERY_WORKER_CONCURRENCY') or None
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 
 #: celery routing config
 CELERY_TASK_DEFAULT_QUEUE = celery_queue('default')
 CELERY_TASK_DEFAULT_EXCHANGE = celery_queue('default')
 CELERY_TASK_DEFAULT_ROUTING_KEY = 'default'
 
+HIGH_PRIORITY_QUEUE = celery_queue('publish_priority')
+HIGH_PRIORITY_QUEUE_ENABLED = False
+
 CELERY_TASK_QUEUES = (
     Queue(celery_queue('default'), Exchange(celery_queue('default')), routing_key='default'),
     Queue(celery_queue('expiry'), Exchange(celery_queue('expiry'), type='topic'), routing_key='expiry.#'),
     Queue(celery_queue('legal'), Exchange(celery_queue('legal'), type='topic'), routing_key='legal.#'),
     Queue(celery_queue('publish'), Exchange(celery_queue('publish'), type='topic'), routing_key='publish.#'),
+    Queue(
+        HIGH_PRIORITY_QUEUE,
+        Exchange(HIGH_PRIORITY_QUEUE, type='direct'),
+        routing_key=HIGH_PRIORITY_QUEUE,
+    ),
 )
 
 CELERY_TASK_ROUTES = {
@@ -239,27 +248,11 @@ CELERY_TASK_ROUTES = {
         'queue': celery_queue('expiry'),
         'routing_key': 'expiry.content_api'
     },
-    'apps.legal_archive.import_legal_publish_queue': {
+    'apps.legal_archive.*': {
         'queue': celery_queue('legal'),
         'routing_key': 'legal.publish_queue'
     },
-    'apps.legal_archive.commands.import_into_legal_archive': {
-        'queue': celery_queue('legal'),
-        'routing_key': 'legal.archive'
-    },
-    'superdesk.publish.transmit': {
-        'queue': celery_queue('publish'),
-        'routing_key': 'publish.transmit'
-    },
-    'superdesk.publish.publish_content.publish': {
-        'queue': celery_queue('publish'),
-        'routing_key': 'publish.transmit'
-    },
-    'superdesk.publish.publish_content.transmit_subscriber_items': {
-        'queue': celery_queue('publish'),
-        'routing_key': 'publish.transmit'
-    },
-    'superdesk.publish.publish_content.transmit_item': {
+    'superdesk.publish.*': {
         'queue': celery_queue('publish'),
         'routing_key': 'publish.transmit'
     },
@@ -267,10 +260,6 @@ CELERY_TASK_ROUTES = {
         'queue': celery_queue('publish'),
         'routing_key': 'publish.enqueue'
     },
-    'apps.legal_archive.import_legal_archive': {
-        'queue': celery_queue('legal'),
-        'routing_key': 'legal.archive'
-    }
 }
 
 #: celery beat config
@@ -409,6 +398,7 @@ CORE_APPS.extend([
     'superdesk.io.subjectcodes',
     'superdesk.io.format_document_for_preview',
     'superdesk.io.iptc',
+    'superdesk.text_checkers.spellcheckers',
     'apps.io',
     'apps.io.feeding_services',
     'superdesk.publish',
@@ -588,6 +578,9 @@ DEFAULT_URGENCY_VALUE_FOR_MANUAL_ARTICLES = int(env('DEFAULT_URGENCY_VALUE_FOR_M
 #: Defines default value for genre to be set for manually created articles
 DEFAULT_GENRE_VALUE_FOR_MANUAL_ARTICLES = env('DEFAULT_GENRE_VALUE_FOR_MANUAL_ARTICLES',
                                               [{'qcode': 'Article', 'name': 'Article (news)'}])
+
+#: Defines default qcodes (comma separated) for category for ingested and auto published articles
+DEFAULT_CATEGORY_QCODES_FOR_AUTO_PUBLISHED_ARTICLES = env('DEFAULT_CATEGORY_QCODES_FOR_AUTO_PUBLISHED_ARTICLES', 'a')
 
 #: Defines default value for Priority to be set for ingested articles
 DEFAULT_PRIORITY_VALUE_FOR_INGESTED_ARTICLES = int(env('DEFAULT_PRIORITY_VALUE_FOR_INGESTED_ARTICLES', 6))
