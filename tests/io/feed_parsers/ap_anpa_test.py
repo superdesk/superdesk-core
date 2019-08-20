@@ -64,3 +64,8 @@ class ANPATestCase(TestCase):
         item = self.open('ap_anpa-5.tst')
         self.assertTrue(item['headline'], 'Hawaii files court challenge to Trump administration''s definition of '
                                           'close U.S. relationship needed to avoid travel ban.')
+
+    def test_no_word_count(self):
+        item = self.open('ap_anpa-6.tst')
+        self.assertEqual(item['slugline'], 'BBO--WildCardGlance')
+        self.assertEqual(item['anpa_category'], [{'qcode': 's'}])
