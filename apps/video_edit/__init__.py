@@ -25,7 +25,7 @@ class VideoEditService(superdesk.Service):
             edit = {}
             if 'capture' in doc:
                 # Remove empty value in updates to avoid cerberus return invalid input error
-                capture = remove_empty_or_invalid_value(doc.pop('capture'))
+                capture = validate_edit_data(doc.pop('capture'))
                 if capture:
                     self.video_editor.get_preview_thumbnail(media_id, position=capture.get('position'),
                                                             crop=capture.get('crop'),
@@ -34,7 +34,7 @@ class VideoEditService(superdesk.Service):
             # push task edit video to video server
             if 'edit' in doc:
                 # Remove empty value in updates to avoid cerberus return invalid input error
-                edit = remove_empty_or_invalid_value(doc.pop('edit'))
+                edit = validate_edit_data(doc.pop('edit'))
                 # duplicate original video before edit to avoid override
                 if edit:
                     if renditions.get('original', {}).get('version', 1) == 1:
@@ -109,16 +109,17 @@ class VideoEditService(superdesk.Service):
         project = original.pop('project')
         data = self.video_editor.post_preview_thumbnail(project.get('_id'), file)
         document.update(original)
-        renditions= document.get('renditions',{})
+        renditions = document.get('renditions', {})
         renditions.setdefault('thumbnail', {}).update({
             'href': data.get('url'),
             'mimetype': data.get('mimetype'),
         })
-        document.update({'renditions':renditions})
+        document.update({'renditions': renditions})
         return document
 
+
 class VideoEditResource(superdesk.Resource):
-    item_methods = ['GET', 'PUT','PATCH']
+    item_methods = ['GET', 'PUT', 'PATCH']
     resource_methods = ['POST']
     privileges = {
         'POST': ARCHIVE,
@@ -134,10 +135,15 @@ class VideoEditResource(superdesk.Resource):
     }
 
 
-def remove_empty_or_invalid_value(data):
+def validate_edit_data(data):
     for action in data.copy().keys():
         if not data[action]:
             data.pop(action)
+            continue
+        if action == 'crop':
+            for k, v in data[action].items():
+                if v < 0:
+                    data[action][k] = 0
     return data
 
 
