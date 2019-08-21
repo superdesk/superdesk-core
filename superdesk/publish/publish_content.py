@@ -55,38 +55,46 @@ def publish():
             return
 
         try:
-            for retries in [False, True]:  # first publish pending, retries after
-                subs = get_queue_subscribers(retries=retries)
-                for sub in subs:
-                    transmit_subscriber_items.delay(str(sub), retries=retries)
+            for priority in [True, False]:  # top priority first
+                for retries in [False, True]:  # first publish pending, retries after
+                    subs = get_queue_subscribers(priority=priority, retries=retries)
+                    for sub in subs:
+                        transmit_subscriber_items.apply_async(
+                            (str(sub), ),
+                            {'retries': retries, 'priority': priority},
+                            queue=_get_queue(priority),
+                        )
         except Exception:
             logger.exception('Task: {} failed.'.format(lock_name))
         finally:
             unlock(lock_name)
 
 
-def _get_queue_lookup(retries=False):
+def _get_queue_lookup(retries=False, priority=None):
+    priority_lookup = {'priority': priority if priority else {'$ne': True}}
     if retries:
         return {
             '$and': [
                 {'state': QueueState.RETRYING.value},
-                {'next_retry_attempt_at': {'$lte': utcnow()}}
+                {'next_retry_attempt_at': {'$lte': utcnow()}},
+                priority_lookup,
             ]
         }
     return {
         '$and': [
-            {'state': QueueState.PENDING.value}
+            {'state': QueueState.PENDING.value},
+            priority_lookup,
         ]
     }
 
 
-def get_queue_subscribers(retries=False):
-    lookup = _get_queue_lookup(retries)
+def get_queue_subscribers(retries=False, priority=None):
+    lookup = _get_queue_lookup(retries, priority)
     return app.data.mongo.pymongo(resource=PUBLISH_QUEUE).db[PUBLISH_QUEUE].distinct('subscriber_id', lookup)
 
 
-def get_queue_items(retries=False, subscriber_id=None):
-    lookup = _get_queue_lookup(retries)
+def get_queue_items(retries=False, subscriber_id=None, priority=None):
+    lookup = _get_queue_lookup(retries, priority)
     if subscriber_id:
         lookup['$and'].append({'subscriber_id': subscriber_id})
     request = ParsedRequest()
@@ -95,8 +103,13 @@ def get_queue_items(retries=False, subscriber_id=None):
     return get_resource_service(PUBLISH_QUEUE).get(req=request, lookup=lookup)
 
 
+def _get_queue(priority=None):
+    if priority and app.config.get('HIGH_PRIORITY_QUEUE_ENABLED'):
+        return app.config['HIGH_PRIORITY_QUEUE']
+
+
 @celery.task(soft_time_limit=600)
-def transmit_subscriber_items(subscriber, retries=False):
+def transmit_subscriber_items(subscriber, retries=False, priority=None):
     lock_name = get_lock_id('Subscriber', 'Transmit', subscriber)
     is_async = get_resource_service('subscribers').is_async(subscriber)
 
@@ -104,12 +117,16 @@ def transmit_subscriber_items(subscriber, retries=False):
         return
 
     try:
-        queue_items = get_queue_items(retries, subscriber)
+        queue_items = get_queue_items(retries, subscriber, priority)
         for queue_item in queue_items:
             args = [queue_item[config.ID_FIELD]]
             kwargs = {'is_async': is_async}
             if is_async:
-                transmit_item.apply_async(args=args, kwargs=kwargs)
+                transmit_item.apply_async(
+                    args=args,
+                    kwargs=kwargs,
+                    queue=_get_queue(priority),
+                )
             else:
                 transmit_item.apply(args=args, kwargs=kwargs, throw=True)
     finally:
@@ -173,15 +190,6 @@ def transmit_item(queue_item_id, is_async=False):
     finally:
         if is_async:
             unlock(lock_name, remove=True)
-
-
-def transmit_items(queue_items):
-    # get a distinct list of the subscribers that have queued items
-    subscribers = list(set([q['subscriber_id'] for q in queue_items]))
-    # extract the queued items for each subscriber and transmit them
-    for subscriber in subscribers:
-        sub_queue_items = [item for item in queue_items if item['subscriber_id'] == subscriber]
-        transmit_subscriber_items.apply_async(kwargs={'queue_items': sub_queue_items, 'subscriber': str(subscriber)})
 
 
 superdesk.command('publish:transmit', PublishContent())

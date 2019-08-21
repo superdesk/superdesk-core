@@ -597,6 +597,7 @@ class NinjsFormatterTest(TestCase):
 
         expected = [
             {
+                "code": "test_id",
                 "name": "author 1",
                 "role": "writer",
                 "jobtitle": {"qcode": "writer_code", "name": "Writer"},
@@ -607,6 +608,7 @@ class NinjsFormatterTest(TestCase):
                 "avatar_url": "http://example.com",
             },
             {
+                "code": "test_id_2",
                 "name": "author 2",
                 "role": "photographer",
                 "jobtitle": {"qcode": "reporter_code", "name": "Reporter"},
@@ -642,8 +644,8 @@ class NinjsFormatterTest(TestCase):
             "type": "text",
             "priority": 5,
             "authors": [
-                {"name": "Writer", "role": "writer", "biography": ""},
-                {"name": "photographer", "role": "photographer", "biography": ""},
+                {"code": "Writer", "name": "Writer", "role": "writer", "biography": ""},
+                {"code": "photographer", "name": "photographer", "role": "photographer", "biography": ""},
             ],
         }
 

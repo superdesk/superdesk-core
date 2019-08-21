@@ -22,6 +22,8 @@ class ItemsVersionsResource(Resource):
 
     datasource = {'source': 'items_versions'}
 
+    mongo_indexes = {'_id_document_': [('_id_document', 1)]}
+
     item_methods = ['GET']
     resource_methods = ['GET']
     internal_resource = True

@@ -27,9 +27,9 @@ install_requires = [
     'asyncio>=3.4,<3.5',
     'bcrypt>=3.1.1,<3.2',
     'blinker>=1.3,<1.5',
-    'celery[redis]>=4.1.1,<4.2',
-    'redis==2.10.6',
-    'kombu>=4.2,<4.3',
+    'celery[redis]>=4.3.0,<4.4',
+    'redis>=3.2.0,<3.3',
+    'kombu>=4.5,<4.6',
     'feedparser>=5.2,<5.3',
     'hachoir<=3.0a3',
     'HermesCache>=0.6.0,<0.8.0',
@@ -49,6 +49,7 @@ install_requires = [
     'pymongo>=0.4,<4.0',
     'croniter<0.4',
     'python-dateutil<2.8',
+    'unidecode==0.04.21',
 ]
 
 package_data = {

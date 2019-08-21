@@ -33,6 +33,7 @@ from superdesk.profiling import ProfileManager
 from apps.content import push_content_notification
 from superdesk.errors import ConnectionTimeout
 from celery.exceptions import SoftTimeLimitExceeded
+from superdesk.publish.publish_content import publish
 
 
 logger = logging.getLogger(__name__)
@@ -147,17 +148,19 @@ class EnqueueContent(superdesk.Command):
 
             published_service.patch(published_item_id, published_update)
             # queue the item for publishing
-            queued = get_enqueue_service(published_item[ITEM_OPERATION]).enqueue_item(published_item, None)
+            try:
+                queued = get_enqueue_service(published_item[ITEM_OPERATION]).enqueue_item(published_item, None)
+            except KeyError as key_error:
+                error_updates = {QUEUE_STATE: PUBLISH_STATE.ERROR, ERROR_MESSAGE: str(key_error)}
+                published_service.patch(published_item_id, error_updates)
+                logger.exception('No enqueue service found for operation %s', published_item[ITEM_OPERATION])
+                raise
 
             # if the item is queued in the publish_queue then the state is "queued"
             # else the queue state is "queued_not_transmitted"
             queue_state = PUBLISH_STATE.QUEUED if queued else PUBLISH_STATE.QUEUED_NOT_TRANSMITTED
             published_service.patch(published_item_id, {QUEUE_STATE: queue_state})
             logger.info('Queued item with id: {} and item_id: {}'.format(published_item_id, published_item['item_id']))
-        except KeyError as key_error:
-            error_updates = {QUEUE_STATE: PUBLISH_STATE.ERROR, ERROR_MESSAGE: str(key_error)}
-            published_service.patch(published_item_id, error_updates)
-            logger.exception('No enqueue service found for operation %s', published_item[ITEM_OPERATION])
         except ConnectionTimeout as error:  # recoverable, set state to pending and retry next time
             error_updates = {QUEUE_STATE: PUBLISH_STATE.PENDING, ERROR_MESSAGE: str(error)}
             published_service.patch(published_item_id, error_updates)

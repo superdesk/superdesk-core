@@ -32,4 +32,5 @@ def init_app(app):
         'japanese_characters_per_minute': app.config.get('JAPANESE_CHARACTERS_PER_MINUTE'),
         'validator_media_metadata': app.config.get('VALIDATOR_MEDIA_METADATA', {}),
         'publish_content_expiry_minutes': app.config.get('PUBLISHED_CONTENT_EXPIRY_MINUTES', 0),
+        'high_priority_queue_enabled': app.config.get('HIGH_PRIORITY_QUEUE_ENABLED'),
     })

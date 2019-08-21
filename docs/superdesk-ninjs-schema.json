@@ -407,6 +407,10 @@
 			"items": {
 				"type" : "object",
 				"properties" : {
+					"code" : {
+						"description" : "The qualified code of the author",
+						"type" : "string"
+					},
 					"name" : {
 						"description" : "The full name of the author",
 						"type" : "string"

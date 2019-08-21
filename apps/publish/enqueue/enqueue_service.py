@@ -477,6 +477,7 @@ class EnqueueService:
                             publish_queue_item['ingest_provider'] = \
                                 ObjectId(doc.get('ingest_provider')) if doc.get('ingest_provider') else None
                             publish_queue_item['associated_items'] = associations.get(subscriber[config.ID_FIELD], [])
+                            publish_queue_item['priority'] = subscriber.get('priority')
 
                             if doc.get(PUBLISHED_IN_PACKAGE):
                                 publish_queue_item[PUBLISHED_IN_PACKAGE] = doc[PUBLISHED_IN_PACKAGE]
