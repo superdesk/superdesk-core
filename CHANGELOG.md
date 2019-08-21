@@ -1,6 +1,27 @@
 # Superdesk Server Changelog
 
-## [1.30] NOT RELEASED YET
+## [1.31] NOT RELEASED YET
+
+### Added
+
+- Add `id` to authors in NINJS output.
+- Add high priority publish celery queue.
+- Default spellchecker implementation using new api.
+- AP Media API ingest.
+- Implement `Unpublish` action.
+
+### Fixed
+
+- Fix custom renditions generated during ingest not cropping.
+- Do not expire items from production if the reference an assignment.
+- Fix saved search reports showing more items than visible in UI.
+- Edit image action done from article should not modify the original image.
+
+### Changed
+
+- Update celery version to 4.3.
+
+## [1.30] 2019-06-12
 
 ### Added
 
@@ -11,9 +32,59 @@
 
 ### Fixed
 
-- Fix subject required validation failing in some cases
+- Make media description field multi-line.
+- Fix subject required validation failing in some cases.
 
-## [1.28] 2018-01-18
+## [1.29] 2019-04-30
+
+### Added
+
+- Ingest embargoed info in NewsML G2 and publish it in NINJS format.
+- Add data required for dateline to geonames search.
+- Add collation support for case insensitive mongo indexes.
+- Add support for localization.
+- Add source and dest language info to translate macro.
+- Add desk routing support.
+- Backend implementation for knowledge base.
+- Create custom decorator for test scenarios for executing `app:initialize_data`.
+- Allow item attachments in content editor.
+- Implement `on_replace` and `on_replaced` hooks for PUT requests.
+- Log execution time during FTP ingest.
+- Add docs for `manage.py` commands.
+- Add section attribute to content profile fields.
+- Allow to restrict a feeding service to no parser.
+- Add default author/editor role config.
+- Add widgets config to content profiles.
+- Add new `HTTPFeedinfServiceBase` helper class.
+- Add FTP reading limit for files.
+- Pass `req.arg.params` to search proxy.
+
+### Changed
+
+- Publish queue should allow `item_id` for any resource type.
+- Update PyYAML version.
+
+### Fixed
+
+- Fix subject name parsing in STT NewsML parser.
+- Enabled related items widget to work with media from external source.
+- Publishing fails for missing embedded item.
+- Auto-published updates appear as brand new stories in Newsroom.
+- Handle `ingest_provider` in saved search.
+- Send ingested status to feeding service.
+- Keep removed associations as `null`.
+- Add missing ingest error logs to ingest dashboard.
+- Fix `original_source` parsing in NINJS parser.
+- Fix unknown error is thrown on publishing a story that contains URL.
+- Ingest subject scheme in NINJS parser.
+- Ignore etag during update when `IF_MATCH` is switched off.
+- Display latest properties for related items.
+- Remove `httmock` from setup dependencies.
+- Add missing cvs for media contacts.
+- Fix creating a vocabulary with same ID like previously deleted one.
+- Fix backend-meta return value for unknow superdesk revision.
+
+## [1.28] 2019-01-18
 
 ### Added
 
