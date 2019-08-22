@@ -36,15 +36,18 @@ class ContactsResource(Resource):
         },
         'organisation': {
             'type': 'string',
-            'required': False
+            'required': False,
+            'mapping': {'type': 'keyword'},
         },
         'first_name': {
             'type': 'string',
-            'required': False
+            'required': False,
+            'mapping': {'type': 'keyword'},
         },
         'last_name': {
             'type': 'string',
-            'required': False
+            'required': False,
+            'mapping': {'type': 'keyword'},
         },
         'honorific': {
             'type': 'string',

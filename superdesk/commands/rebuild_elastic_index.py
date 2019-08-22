@@ -32,7 +32,7 @@ class RebuildElasticIndex(superdesk.Command):
     """
 
     option_list = [
-        superdesk.Option('--resource', '-r', dest='resource_filter')
+        superdesk.Option('--resource', '-r', dest='resource_name')
     ]
 
     def run(self, resource_name=None):

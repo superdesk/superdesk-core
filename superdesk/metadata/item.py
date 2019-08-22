@@ -227,6 +227,7 @@ metadata_schema = {
         'type': 'string',
         'mapping': {
             'type': 'string',
+            'fielddata': True,
             'fields': {
                 'phrase': {
                     'type': 'string',
