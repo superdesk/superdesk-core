@@ -123,8 +123,17 @@ def __get_redis(app_ctx):
 
     :return: Redis Client object
     """
+    redis_url = app_ctx.config['REDIS_URL']
+    try:
+        return redis.from_url(redis_url)
+    except ValueError as e:
+        logger.warn('Failed to connect to redis using a connection string: {}'.format(e))
 
-    return redis.from_url(app_ctx.config['REDIS_URL'])
+        # Newer Redis clients will not accept 'amqp' as the scheme
+        # Attempt to mock a redis scheme instead
+        protocol = redis_url.split('//')[0]
+        new_url = redis_url.replace(protocol, 'redis:')
+        return redis.from_url(new_url)
 
 
 def update_key(key, flag=False, db=None):
