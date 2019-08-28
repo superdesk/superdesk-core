@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.31.1] 2019-08-28
+
+### Fixed
+
+- Fix upgrade script for related items references.
+
 ## [1.31] 2019-08-26
 
 ### Added
