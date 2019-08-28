@@ -16,17 +16,18 @@ def norvig_suggest(word, model):
         transposes = [a + b[1] + b[0] + b[2:] for a, b in splits if len(b) > 1]
         replaces = [a + c + b[1:] for a, b in splits for c in alphabet if b]
         inserts = [a + c + b for a, b in splits for c in alphabet]
+
         return set(deletes + transposes + replaces + inserts)
 
     def known_edits2(word):
-        return set(e2 for e1 in edits1(word) for e2 in edits1(e1) if e2 in NWORDS)
+        return set(e2 for e1 in edits1(word) for e2 in edits1(e1) if e2 in (word.lower() for word in NWORDS))
 
     def known(words):
-        return set(w for w in words if w in NWORDS)
+        return set(w for w in words if w in (word.lower() for word in NWORDS))
 
     def suggest(word):
-        candidates = known([word]) or known(edits1(word))  # or known_edits2(word)
-        return sorted(candidates, key=NWORDS.get, reverse=True)
+        candidates = known([word]) or known(edits1(word)) or known_edits2(word)
+        return sorted(candidates, key=lambda item: NWORDS.get(item, 1), reverse=True)
 
     return suggest(word.lower())
 
