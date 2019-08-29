@@ -980,6 +980,10 @@ class NinjsFormatterTest(TestCase):
                 }
             ],
         )
+        self.app.data.insert("vocabularies", [
+            {"_id": "custom_related_content", "field_type": "related_content"},
+        ])
+
         article = {
             "_id": "5ba1224e0d6f13056bd82d50",
             "type": "text",
@@ -992,67 +996,49 @@ class NinjsFormatterTest(TestCase):
             "guid": "123",
             "associations": {
                 "custom_related_content--1": {
-                    "renditions": {
-                        "original": {
-                            "href": "http://localhost:5000/api/upload-raw/123.jpg",
-                            "media": "abc",
-                            "mimetype": "image/jpeg",
-                            "width": 550,
-                            "height": 331,
-                        }
-                    },
-                    "media": "abc",
-                    "type": "picture",
-                    "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                    "type": "text",
+                    "_id": "guid1",
                 },
                 "custom_related_content--2": {
-                    "renditions": {
-                        "original": {
-                            "href": "http://localhost:5000/api/upload-raw/456.jpg",
-                            "media": "cde",
-                            "mimetype": "image/jpeg",
-                            "width": 550,
-                            "height": 331,
-                        }
-                    },
-                    "media": "cde",
                     "type": "picture",
-                    "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                    "_id": "guid2",
                 },
             },
         }
 
+        self.app.data.insert("archive", [
+            {
+                "_id": "guid1",
+                "guid": "guid1",
+                "type": "text",
+                "language": "en",
+                "associations": {
+                    "featuredmedia": {
+                        "type": "picture",
+                    },
+                },
+            },
+            {
+                "_id": "guid2",
+                "guid": "guid2",
+                "type": "picture",
+            },
+        ])
+
         expected = {
             "associations": {
                 "custom_related_content--1": {
-                    "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
-                    "priority": 5,
-                    "renditions": {
-                        "original": {
-                            "height": 331,
-                            "href": "http://localhost:5000/api/upload-raw/123.jpg",
-                            "media": "abc",
-                            "mimetype": "image/jpeg",
-                            "width": 550,
-                        }
-                    },
-                    "type": "picture",
+                    "guid": "guid1",
                     "version": "1",
+                    "type": "text",
+                    "language": "en",
+                    "priority": 5,
                 },
                 "custom_related_content--2": {
-                    "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
-                    "priority": 5,
-                    "renditions": {
-                        "original": {
-                            "height": 331,
-                            "href": "http://localhost:5000/api/upload-raw/456.jpg",
-                            "media": "cde",
-                            "mimetype": "image/jpeg",
-                            "width": 550,
-                        }
-                    },
-                    "type": "picture",
+                    "guid": "guid2",
                     "version": "1",
+                    "type": "picture",
+                    "priority": 5,
                 },
             },
             "extra_items": {
@@ -1060,35 +1046,18 @@ class NinjsFormatterTest(TestCase):
                     "type": "related_content",
                     "items": [
                         {
-                            "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
-                            "priority": 5,
-                            "renditions": {
-                                "original": {
-                                    "height": 331,
-                                    "href": "http://localhost:5000/api/upload-raw/123.jpg",
-                                    "media": "abc",
-                                    "mimetype": "image/jpeg",
-                                    "width": 550,
-                                }
-                            },
-                            "type": "picture",
+                            "guid": "guid1",
                             "version": "1",
+                            "type": "text",
+                            "language": "en",
+                            "priority": 5,
                         },
                         {
-                            "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
-                            "priority": 5,
-                            "renditions": {
-                                "original": {
-                                    "height": 331,
-                                    "href": "http://localhost:5000/api/upload-raw/456.jpg",
-                                    "media": "cde",
-                                    "mimetype": "image/jpeg",
-                                    "width": 550,
-                                }
-                            },
-                            "type": "picture",
+                            "guid": "guid2",
                             "version": "1",
-                        },
+                            "type": "picture",
+                            "priority": 5,
+                        }
                     ]
                 }
             },
