@@ -53,6 +53,11 @@ class SpellcheckerResource(Resource):
             'type': 'boolean',
             'default': True,
         },
+        'ignore': {
+            'type': 'list',
+            'nullable': True,
+            'default': None
+        },
     }
     internal_resource = False
     resource_methods = ['POST']
@@ -73,6 +78,7 @@ class SpellcheckerService(BaseService):
     language            language to use (for spellcheckers handling several ones)
     suggestions         false (default) to check a text, else will get suggestions
     use_internal_dict   true (default) to remove spellings mistakes from words in personal dictionary
+    ignore              list of words to ignore (i.e. to remove from reported errors)
     =================   ===========
 
     e.g. to check a French text while removing words from personal dictionary (grammar mistakes are here on purpose):
@@ -121,6 +127,18 @@ class SpellcheckerService(BaseService):
         for error in to_remove:
             errors.remove(error)
 
+    def remove_ignored(self, check_data, ignore):
+        ignore = {i.lower() for i in ignore}
+        errors = check_data['errors']
+        if not errors:
+            return
+        to_remove = []
+        for error in errors:
+            if error['text'].lower() in ignore:
+                to_remove.append(error)
+        for error in to_remove:
+            errors.remove(error)
+
     def create(self, docs, **kwargs):
         # we override create because we don't want anything stored in database
         doc = docs[0]
@@ -139,6 +157,9 @@ class SpellcheckerService(BaseService):
             assert "errors" in check_data
             if doc["use_internal_dict"]:
                 self.remove_errors_in_dict(spellchecker, language, check_data)
+            ignore = doc.get("ignore")
+            if ignore:
+                self.remove_ignored(check_data, ignore)
         docs[0].update(check_data)
         return [0]
 

@@ -30,6 +30,10 @@ MODEL = {
     "mistake": 1,
     "number": 1,
     "rendez-vous": 1,
+    "this": 1,
+    "are": 1,
+    "proper": 1,
+    "nouns": 1,
 }
 
 
@@ -97,3 +101,29 @@ class DefaultSpellcheckerTestCase(TestCase):
             'spellchecker': 'default',
             'suggestions': [{'text': 'mistake'}],
             'text': 'mitake'})
+
+    @patch('superdesk.get_resource_service', MagicMock(side_effect=partial(mock_dictionaries, model=MODEL)))
+    def test_ignore(self):
+        """Check that "ignore" is working (SDBELGA-165)"""
+        doc = {
+            "spellchecker": "default",
+            "text": "This is are proper nouns: David, Jean, Arthur",
+            "suggestions": False,
+            "language": "en",
+            "use_internal_dict": False,
+        }
+        spellchecker = get_resource_service('spellchecker')
+        spellchecker.create([doc])
+
+        self.assertEqual(doc['errors'], [
+            {'startOffset': 26, 'text': 'David', 'type': 'spelling'},
+            {'startOffset': 33, 'text': 'Jean', 'type': 'spelling'},
+            {'startOffset': 39, 'text': 'Arthur', 'type': 'spelling'}
+        ])
+
+        # now the same check with ignore
+        doc = doc.copy()
+        doc['ignore'] = ["David", "Jean", "Arthur"]
+        spellchecker.create([doc])
+
+        self.assertEqual(doc['errors'], [])
