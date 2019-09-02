@@ -121,6 +121,11 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
     app.mail = Mail(app)
     app.sentry = SuperdeskSentry(app)
 
+    # fix eve event slot
+    app.babel_tzinfo = None
+    app.babel_locale = None
+    app.babel_translations = None
+
     app.config.setdefault('BABEL_TRANSLATION_DIRECTORIES', os.path.join(SUPERDESK_PATH, 'translations'))
     babel = Babel(app, configure_jinja=False)
 
