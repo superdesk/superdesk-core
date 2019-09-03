@@ -7,6 +7,10 @@ from superdesk.tests import TestCase
 from superdesk.media.renditions import generate_renditions, get_renditions_spec
 
 IMG_PATH = os.path.join(os.path.dirname(__file__), 'fixtures', 'iphone_gpsinfo_exif.JPG')
+BIG_IMG_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+    'features', 'steps', 'fixtures', 'bike.jpg',
+)
 
 
 class GenerateRenditionsTestCase(TestCase):
@@ -62,3 +66,19 @@ class GenerateRenditionsTestCase(TestCase):
         self.assertEqual(300, portrait['CropBottom'])
         self.assertEqual(87, portrait['CropLeft'])
         self.assertEqual(312, portrait['CropRight'])
+
+    def test_generate_renditions_base_image(self):
+        inserted = []
+        renditions = get_renditions_spec()
+        with open(BIG_IMG_PATH, 'rb') as original:
+            generated = generate_renditions(original, 'id', inserted, 'image', 'image/jpeg', renditions,
+                                            self.app.media.url_for_media)
+
+        self.assertIn('landscape', generated)
+        landscape = generated['landscape']
+        self.assertEqual(200, landscape['width'])
+        self.assertEqual(100, landscape['height'])
+        self.assertEqual(0, landscape['CropLeft'])
+        self.assertEqual(1200, landscape['CropRight'])
+        self.assertEqual(500, landscape['CropTop'])
+        self.assertEqual(1100, landscape['CropBottom'])

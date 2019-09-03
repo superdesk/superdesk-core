@@ -79,17 +79,20 @@ def generate_renditions(original, media_id, inserted, file_type, content_type,
     specs = list(rendition_config.items())
     if base_image:
         specs.insert(0, ('baseImage', base_image))
+    base = original
     for rendition, rsize in specs:
         cropping_data = {}
         # reset
-        original.seek(0)
+        base.seek(0)
         # create the rendition (can be based on ratio or pixels)
         if rsize.get('width') and rsize.get('height') and rendition not in config.RENDITIONS['picture']:  # custom crop
-            resized, width, height, cropping_data = _crop_image_center(original, ext, rsize['width'], rsize['height'])
+            resized, width, height, cropping_data = _crop_image_center(base, ext, rsize['width'], rsize['height'])
+            # we need crop data for original size image
+            cropping_data = _get_center_crop(original, rsize['width'], rsize['height'])
         elif rsize.get('width') or rsize.get('height'):
-            resized, width, height = _resize_image(original, (rsize.get('width'), rsize.get('height')), ext)
+            resized, width, height = _resize_image(base, (rsize.get('width'), rsize.get('height')), ext)
         elif rsize.get('ratio'):
-            resized, width, height, cropping_data = _crop_image(original, ext, rsize.get('ratio'))
+            resized, width, height, cropping_data = _crop_image(base, ext, rsize.get('ratio'))
         rend_content_type = 'image/%s' % ext
         file_name, rend_content_type, metadata = process_file_from_stream(resized, content_type=rend_content_type)
         resized.seek(0)
@@ -106,7 +109,7 @@ def generate_renditions(original, media_id, inserted, file_type, content_type,
 
         # use baseImage for other renditions once we have it
         if rendition == 'baseImage' and width < img.size[0] and height < img.size[1]:
-            original = resized
+            base = resized
     return renditions
 
 
@@ -189,8 +192,8 @@ def _crop_image(content, format, ratio):
     return out, new_width, new_height, cropping_data
 
 
-def _crop_image_center(content, format, width, height):
-    image = Image.open(content)
+def _get_center_crop(original, width, height):
+    image = Image.open(original)
     width = int(width)
     height = int(height)
 
@@ -218,11 +221,15 @@ def _crop_image_center(content, format, width, height):
             'CropBottom': offset + dest_height,
         }
 
+    return cropping_data
+
+
+def _crop_image_center(content, format, width, height):
+    cropping_data = _get_center_crop(content, width, height)
     crop, out = crop_image(content, file_name='crop.for.rendition', cropping_data=cropping_data, exact_size={
         'width': width,
         'height': height,
     }, image_format=format)
-
     return out, width, height, cropping_data
 
 
