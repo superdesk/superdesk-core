@@ -36,7 +36,7 @@ class VideoEditorFactory():
         """
         raise NotImplementedError
 
-    def duplicate(self, project_id, updates):
+    def duplicate(self, project_id):
         """Duplicate video. This method clone original project and increase version.
 
         :param project_id: id project.
@@ -101,10 +101,10 @@ class VideoEditorService(VideoEditorFactory):
         self.session.headers.update({'User-Agent': 'superdesk'})
 
     def get_base_url(self):
-        return app.config.get('VIDEO_SERVER_HOST') + '/projects/'
+        return app.config.get('VIDEO_SERVER_URL') + '/projects/'
 
     def check_video_server(self):
-        parse = urlparse(app.config.get('VIDEO_SERVER_HOST'))
+        parse = urlparse(app.config.get('VIDEO_SERVER_URL'))
         host = parse.hostname
         port = parse.port if parse.port else 80
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -115,7 +115,7 @@ class VideoEditorService(VideoEditorFactory):
             return False
 
     def _url(self, _id, resource=''):
-        url = urljoin(self.get_base_url(), _id)
+        url = urljoin(self.get_base_url(), str(_id))
         if resource:
             return urljoin(url + '/', resource)
         return url
@@ -135,7 +135,7 @@ class VideoEditorService(VideoEditorFactory):
 
     def get(self, project_id):
         try:
-            resp = self.session.get(self._url(str(project_id)))
+            resp = self.session.get(self._url(project_id))
             return self._get_response(resp, 200)
         except ConnectionError as ex:
             raise SuperdeskApiError(message=ex.args[0], status_code=500)
@@ -157,21 +157,21 @@ class VideoEditorService(VideoEditorFactory):
 
     def duplicate(self, project_id):
         try:
-            resp = self.session.post(self._url(str(project_id), "duplicate"))
+            resp = self.session.post(self._url(project_id, "duplicate"))
             return self._get_response(resp, 201)
         except ConnectionError as ex:
             raise SuperdeskApiError(message=ex.args[0], status_code=500)
 
     def put(self, project_id, updates):
         try:
-            resp = self.session.put(self._url(str(project_id)), json=updates)
+            resp = self.session.put(self._url(project_id), json=updates)
             return self._get_response(resp, 202)
         except ConnectionError as ex:
             raise SuperdeskApiError(message=ex.args[0], status_code=500)
 
     def delete(self, project_id):
         try:
-            resp = self.session.delete(self._url(str(project_id)))
+            resp = self.session.delete(self._url(project_id))
             if resp.status_code != 204:
                 logger.exception(resp.text)
                 resp.raise_for_status()
@@ -185,7 +185,7 @@ class VideoEditorService(VideoEditorFactory):
                 'type': 'timeline',
                 'amount': amount
             }
-            resp = self.session.get(self._url(str(project_id), 'thumbnails'), params=params)
+            resp = self.session.get(self._url(project_id, 'thumbnails'), params=params)
             return self._get_response(resp, 202)
         except ConnectionError as ex:
             raise SuperdeskApiError(message=ex.args[0], status_code=500)
@@ -195,7 +195,7 @@ class VideoEditorService(VideoEditorFactory):
             payloads = {
                 'file': file,
             }
-            resp = self.session.post(self._url(str(project_id), 'thumbnails'), json=payloads)
+            resp = self.session.post(self._url(project_id, 'thumbnails'), json=payloads)
             return self._get_response(resp, 200)
         except ConnectionError as ex:
             raise SuperdeskApiError(message=ex.args[0], status_code=500)
@@ -210,7 +210,7 @@ class VideoEditorService(VideoEditorFactory):
                 params["crop"] = crop
             if rotate:
                 params["rotate"] = rotate
-            resp = self.session.get(self._url(str(project_id), 'thumbnails'), params=params)
+            resp = self.session.get(self._url(project_id, 'thumbnails'), params=params)
             return self._get_response(resp, 202)
         except ConnectionError as ex:
             raise SuperdeskApiError(message=ex.args[0], status_code=500)

@@ -741,5 +741,5 @@ WATERMARK_IMAGE = env('WATERMARK_IMAGE', '')
 KILL_TEMPLATE_NULL_FIELDS = ['byline', 'place']
 
 #: Video editor server
-VIDEO_SERVER_HOST = env('VIDEO_SERVER_HOST', 'http://localhost:5050')
+VIDEO_SERVER_URL = env('VIDEO_SERVER_URL', 'http://localhost:5050')
 VIDEO_SERVER_ENABLE = strtobool(env('VIDEO_SERVER_ENABLE', 'false'))
