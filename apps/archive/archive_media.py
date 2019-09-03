@@ -121,7 +121,6 @@ class ArchiveMediaService():
         :param doc: info of file
         :return:
         """
-        file = doc.get('media')
         # upload video to video server
         res = self.videoEditor.post(doc.get('media'))
         doc['media'] = res['_id']
@@ -129,7 +128,7 @@ class ArchiveMediaService():
         # create renditions
         rend = {
             'href': res.get('url'),
-            'media': res.get('_id'),
+            'video_editor_id': res.get('_id'),
             'mimetype': res.get('content-type'),
             'version': res.get('version'),
         }
