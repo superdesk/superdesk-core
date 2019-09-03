@@ -169,6 +169,10 @@ class SuperdeskApiError(SuperdeskError):
         default_message = "configuration is not done for this action"
         return SuperdeskApiError(status_code=500, message=message or default_message, payload=payload)
 
+    @classmethod
+    def conflictError(cls, message=None, payload=None):
+        return SuperdeskApiError(status_code=409, message=message, payload=payload)
+
 
 class IdentifierGenerationError(SuperdeskApiError):
     """Exception raised if failed to generate unique_id."""
