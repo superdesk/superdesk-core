@@ -1,5 +1,12 @@
 # Superdesk Server Changelog
 
+## [1.31.2] 2019-09-03
+
+### Fixed
+
+- Avoid recursive formatting of related items in NINJS.
+- Fix crop data returned after media operation.
+
 ## [1.31.1] 2019-08-28
 
 ### Fixed
