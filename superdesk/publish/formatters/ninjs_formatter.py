@@ -375,7 +375,8 @@ class NINJSFormatter(Formatter):
         # format renditions to Ninjs
         renditions = {}
         for name, rendition in actual_renditions.items():
-            renditions[name] = self._format_rendition(rendition)
+            if rendition:
+                renditions[name] = self._format_rendition(rendition)
         return renditions
 
     def _format_rendition(self, rendition):

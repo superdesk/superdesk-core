@@ -129,6 +129,18 @@ class NinjsFormatterTest(TestCase):
         self.assertEqual(json.loads(doc), expected)
 
     def test_picture_formatter(self):
+        self.app.data.insert(
+            "vocabularies",
+            [
+                {
+                    "_id": "crop_sizes",
+                    "items": [
+                        {"is_active": True, "name": "custom", "width": 10000, "height": 10000},
+                    ],
+                }
+            ],
+        )
+
         embargoed = utcnow() + timedelta(days=2)
         article = {
             "guid": "20150723001158606583",
@@ -146,6 +158,7 @@ class NinjsFormatterTest(TestCase):
                     "href": "https://one-api.aap.com.au/api/v3/Assets/20150723001158606583/Original/download",
                     "mimetype": "image/jpeg",
                 },
+                "custom": None,  # simulate custom crop which is too big
             },
             "byline": "MICKEY MOUSE",
             "headline": "AMAZING PICTURE",
@@ -166,7 +179,7 @@ class NinjsFormatterTest(TestCase):
                 "original": {
                     "href": "https://one-api.aap.com.au/api/v3/Assets/20150723001158606583/Original/download",
                     "mimetype": "image/jpeg",
-                }
+                },
             },
             "headline": "AMAZING PICTURE",
             "pubstatus": "usable",
