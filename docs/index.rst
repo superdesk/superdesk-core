@@ -56,6 +56,7 @@ works and can be developed further.
     authentication
     cli
     signals
+    testing
 
 Additional topics
 -----------------
