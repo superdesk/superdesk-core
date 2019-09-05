@@ -63,7 +63,6 @@ def set_error_handlers(app):
         return client_error_handler(return_error)
 
 
-
 class SuperdeskEve(eve.Eve):
 
     def __getattr__(self, name):
