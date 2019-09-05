@@ -1,0 +1,6 @@
+{
+    "requests": {
+        "https://img.futurezone.de/img/science/origs216742513/4187068320-w1280-h960-q85/Polizeihund-China.jpg": {"get": {"binary": "Polizeihund-China.jpg"}},
+        "https://img.futurezone.de/img/science/origs216742511/239706555-w1280-h960-q85/Polizeihund-China-2.jpg": {"get": {"binary": "Polizeihund-China-2.jpg"}}
+    }
+}
