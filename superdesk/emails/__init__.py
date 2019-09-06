@@ -50,7 +50,12 @@ def send_email(self, subject, sender, recipients, text_body, html_body, cc=None,
         return
 
     try:
-        msg = SuperdeskMessage(subject, sender=sender, recipients=recipients, cc=cc, bcc=bcc,
+        subject_line = subject.split('\n')[0]
+    except AttributeError:
+        subject_line = None
+
+    try:
+        msg = SuperdeskMessage(subject_line, sender=sender, recipients=recipients, cc=cc, bcc=bcc,
                                body=text_body, html=html_body, attachments=attachments)
         return app.mail.send(msg)
     finally:

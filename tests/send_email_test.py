@@ -14,6 +14,13 @@ class SendEmailTestCase(TestCase):
                 assert len(outbox) == 1
                 assert outbox[0].subject == 'Your Superdesk account is created'
 
+    def test_send_email_multiline_subject(self):
+        with self.app.app_context():
+            with self.app.mail.record_messages() as outbox:
+                send_email('foo\nbar', 'admin@localhost', ['foo@example.com'], 'text', '<p>html</p>')
+                assert len(outbox) == 1
+                assert outbox[0].subject == 'foo'
+
     def test_send_activity_emails_error(self):
         recipients = ['foo', 'bar']
         activities = [
