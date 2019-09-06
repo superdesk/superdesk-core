@@ -1,5 +1,13 @@
 # Superdesk Server Changelog
 
+## [1.31.3] 2019-09-06
+
+### Fixed
+
+- Avoid sending multi line subject via email.
+- Use pymongo 3.8.
+- Fix NINJS formatter error when custom crop is not set for picture item.
+
 ## [1.31.2] 2019-09-03
 
 ### Fixed
