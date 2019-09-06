@@ -47,23 +47,22 @@ class VideoEditService(superdesk.Service):
                             self.video_editor.delete(media_id)
                         raise ex
             # get data video
-            data = self.video_editor.get(media_id)
+            project = self.video_editor.get(media_id)
             if capture:
                 renditions.setdefault('thumbnail', {}).update({
-                    'href': data['thumbnails']['preview'].get('url'),
-                    'mimetype': data['thumbnails']['preview'].get('mime_type'),
+                    'href': project['thumbnails']['preview'].get('url'),
+                    'mimetype': project['thumbnails']['preview'].get('mime_type'),
                 })
             if edit:
                 renditions.setdefault('original', {}).update({
-                    'href': data['url'],
-                    'media': data['_id'],
-                    'mimetype': data['mime_type'],
-                    'version': data['version'],
+                    'href': project['url'],
+                    'version': project['version']+1,
+                    'video_editor_id':media_id,
                 })
             if renditions:
                 updates = self.patch(item_id, {
                     'renditions': renditions,
-                    'media': renditions['original']['media'],
+                    'media': media_id,
                 })
                 item.update(updates)
             ids.append(item_id)
@@ -78,19 +77,6 @@ class VideoEditService(superdesk.Service):
         response = None
         if action == 'timeline':
             response = self.video_editor.get_timeline_thumbnails(video_id, req.args.get('amount', 40))
-        elif action == 'preview':
-            metadata = self.video_editor.get(video_id).get('metadata')
-            position = req.args.get('position')
-            if position > metadata.get('duration'):
-                position = metadata.get('duration')
-            response = self.video_editor.get_preview_thumbnail(
-                project_id=video_id,
-                position=position,
-                crop=req.args.get('crop'),
-                rotate=req.args.get('rotate')
-            )
-
-        if type(response) is dict and response.get('processing'):
             return {
                 config.ID_FIELD: video_id,
                 **response
@@ -116,7 +102,7 @@ class VideoEditService(superdesk.Service):
         })
         document.update({'renditions': renditions})
         return document
-
+    def patch()
 
 class VideoEditResource(superdesk.Resource):
     item_methods = ['GET', 'PUT', 'PATCH']
