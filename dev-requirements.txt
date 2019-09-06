@@ -11,6 +11,6 @@ sphinx-autobuild
 sphinxcontrib-plantuml
 docutils==0.12
 requests-mock
-responses
+responses>=0.10.6,<0.11
 -e git+git://github.com/superdesk/superdesk-planning.git@master#egg=superdesk-planning
 -e .
