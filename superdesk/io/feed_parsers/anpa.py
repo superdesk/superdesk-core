@@ -50,7 +50,7 @@ class ANPAFeedParser(FileFeedParser):
 
             # parse second header line
             m = re.match(
-                b'([a-z]) ([a-z])(\x13|\x14)(\x11|\x12) (am-|pm-|bc-|ap-)([a-z-.]+)(.*) '
+                b'([a-z]) ([a-z])(\x13|\x14)(\x11|\x12) (am-|pm-|bc-|ap-)([a-z-.0-9]+)(.*) '
                 b'([0-9]{1,2})-([0-9]{1,2}) ([0-9]{0,4})',
                 lines[1], flags=re.I)
             if m:

@@ -77,22 +77,11 @@ class AP_ANPAFeedParser(ANPAFeedParser):
         :param item:
         :return:
         """
-        for category in item.get('anpa_category', []):
-            if category.get('qcode').lower() in ('a', 'p', 'w', 'n'):
-                category['qcode'] = 'i'
-            elif category.get('qcode').lower() == 'r':
-                category['qcode'] = 'v'
-            elif category.get('qcode').lower() == 'z':
-                category['qcode'] = 's'
-            else:
-                # check if the category is defined in the system
-                category_map = get_resource_service('vocabularies').find_one(req=None, _id='categories')
-                if category_map:
-                    if not next((code for code in category_map['items'] if
-                                 code['qcode'].lower() == category['qcode'].lower() and code['is_active']), None):
-                        category['qcode'] = 'i'
-                else:
-                    category['qcode'] = 'i'
+        category_code_map = get_resource_service('vocabularies').find_one(req=None, _id='ap_category_map')
+        if category_code_map:
+            map = {c['ap_code']: c['category_code'] for c in category_code_map['items'] if c['is_active']}
+            for category in item.get('anpa_category', []):
+                category['qcode'] = map.get(category.get('qcode').lower(), map.get('default'))
 
     def map_sluglines_to_subjects(self, item):
         """The first few characters of the slugline may match AP supplimetal categories this is used to set the subject code.
