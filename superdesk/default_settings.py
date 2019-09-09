@@ -248,11 +248,27 @@ CELERY_TASK_ROUTES = {
         'queue': celery_queue('expiry'),
         'routing_key': 'expiry.content_api'
     },
-    'apps.legal_archive.*': {
+    'apps.legal_archive.import_legal_publish_queue': {
         'queue': celery_queue('legal'),
         'routing_key': 'legal.publish_queue'
     },
-    'superdesk.publish.*': {
+    'apps.legal_archive.commands.import_into_legal_archive': {
+        'queue': celery_queue('legal'),
+        'routing_key': 'legal.archive'
+    },
+    'superdesk.publish.transmit': {
+        'queue': celery_queue('publish'),
+        'routing_key': 'publish.transmit'
+    },
+    'superdesk.publish.publish_content.publish': {
+        'queue': celery_queue('publish'),
+        'routing_key': 'publish.transmit'
+    },
+    'superdesk.publish.publish_content.transmit_subscriber_items': {
+        'queue': celery_queue('publish'),
+        'routing_key': 'publish.transmit'
+    },
+    'superdesk.publish.publish_content.transmit_item': {
         'queue': celery_queue('publish'),
         'routing_key': 'publish.transmit'
     },
@@ -260,6 +276,10 @@ CELERY_TASK_ROUTES = {
         'queue': celery_queue('publish'),
         'routing_key': 'publish.enqueue'
     },
+    'apps.legal_archive.import_legal_archive': {
+        'queue': celery_queue('legal'),
+        'routing_key': 'legal.archive'
+    }
 }
 
 #: celery beat config
@@ -735,5 +755,5 @@ WATERMARK_IMAGE = env('WATERMARK_IMAGE', '')
 KILL_TEMPLATE_NULL_FIELDS = ['byline', 'place']
 
 #: Video editor server
-VIDEO_SERVER_HOST = env('VIDEO_SERVER_HOST', 'http://localhost:5050')
+VIDEO_SERVER_URL = env('VIDEO_SERVER_URL', 'http://localhost:5050')
 VIDEO_SERVER_ENABLE = strtobool(env('VIDEO_SERVER_ENABLE', 'false'))
