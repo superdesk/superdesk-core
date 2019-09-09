@@ -1,5 +1,5 @@
-import superdesk
+from ..service import ProdApiService
 
 
-class ItemsService(superdesk.Service):
+class ItemsService(ProdApiService):
     pass

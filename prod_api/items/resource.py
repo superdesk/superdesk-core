@@ -10,8 +10,5 @@ class ItemsResource(Resource):
     datasource = {
         'source': 'archive',
         'search_backend': 'elastic',
-        'default_sort': [('_updated', -1)],
-        # 'projection': {
-        #     '_etag': 0,
-        # }
+        'default_sort': [('_updated', -1)]
     }
