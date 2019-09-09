@@ -26,7 +26,54 @@ class ANPATestCase(TestCase):
 
     def setUp(self):
         with self.app.app_context():
-            vocab = [{'_id': 'categories', 'items': [{'is_active': True, 'name': 'Domestic Sport', 'qcode': 's'}]}]
+            vocab = [{'_id': 'categories', 'items': [{'is_active': True, 'name': 'Domestic Sport', 'qcode': 's'}]},
+                     {'_id': 'ap_category_map', 'items': [
+                         {
+                             'is_active': True,
+                             'ap_code': 'e',
+                             'category_code': 'e'
+                         },
+                         {
+                             'is_active': True,
+                             'ap_code': 'f',
+                             'category_code': 'f'
+                         },
+                         {
+                             'is_active': True,
+                             'ap_code': 'j',
+                             'category_code': 'l'
+                         },
+                         {
+                             'is_active': True,
+                             'ap_code': 'l',
+                             'category_code': 'e'
+                         },
+                         {
+                             'is_active': True,
+                             'ap_code': 'q',
+                             'category_code': 's'
+                         },
+                         {
+                             'is_active': True,
+                             'ap_code': 'r',
+                             'category_code': 'v'
+                         },
+                         {
+                             'is_active': True,
+                             'ap_code': 's',
+                             'category_code': 's'
+                         },
+                         {
+                             'is_active': True,
+                             'ap_code': 'z',
+                             'category_code': 's'
+                         },
+                         {
+                             'is_active': True,
+                             'ap_code': 'default',
+                             'category_code': 'i'
+                         }
+                     ]}]
             self.app.data.insert('vocabularies', vocab)
 
     def open(self, filename):
@@ -44,6 +91,7 @@ class ANPATestCase(TestCase):
         item = self.open('ap_anpa-1.tst')
         self.assertEqual(item['subject'][0]['qcode'], '15008000')
         self.assertEqual(item['dateline']['text'], 'ATLANTA, Feb 19 AP -')
+        self.assertEqual(item['anpa_category'][0]['qcode'], 's')
 
     def test_table_story(self):
         item = self.open('ap_anpa-2.tst')
@@ -69,3 +117,7 @@ class ANPATestCase(TestCase):
         item = self.open('ap_anpa-6.tst')
         self.assertEqual(item['slugline'], 'BBO--WildCardGlance')
         self.assertEqual(item['anpa_category'], [{'qcode': 's'}])
+
+    def test_number_in_slugline(self):
+        item = self.open('ap_anpa-7.tst')
+        self.assertEqual(item['slugline'], '10ThingstoKnow-Today')

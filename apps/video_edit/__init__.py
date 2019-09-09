@@ -7,10 +7,11 @@ from superdesk.metadata.utils import item_url
 
 
 class VideoEditService(superdesk.Service):
-    """Edit video
-    Use ffmpeg to create thumbnail and cutting video
-    data req:
     """
+    Edit video
+    Use ffmpeg to create thumbnail and cutting video
+    """
+
     video_editor = VideoEditorService()
 
     def create(self, docs, **kwargs):
@@ -51,13 +52,13 @@ class VideoEditService(superdesk.Service):
             if capture:
                 renditions.setdefault('thumbnail', {}).update({
                     'href': project['thumbnails']['preview'].get('url'),
-                    'mimetype': project['thumbnails']['preview'].get('mime_type','image/png'),
+                    'mimetype': project['thumbnails']['preview'].get('mime_type', 'image/png'),
                 })
             if edit:
                 renditions.setdefault('original', {}).update({
                     'href': project['url'],
-                    'version': project['version']+1,
-                    'video_editor_id':media_id,
+                    'version': project['version'] + 1,
+                    'video_editor_id': media_id,
                 })
             if renditions:
                 updates = self.patch(item_id, {
@@ -102,7 +103,7 @@ class VideoEditService(superdesk.Service):
         })
         document.update({'renditions': renditions})
         return document
-    def patch()
+
 
 class VideoEditResource(superdesk.Resource):
     item_methods = ['GET', 'PUT', 'PATCH']

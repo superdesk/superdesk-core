@@ -204,7 +204,7 @@ class VideoEditorService(VideoEditorFactory):
                 "position": position
             }
             if crop:
-                params["crop"] =  json_util.dumps(crop)
+                params["crop"] = json_util.dumps(crop)
             if rotate:
                 params["rotate"] = rotate
             resp = self.session.get(self._url(project_id, 'thumbnails'), params=params)

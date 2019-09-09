@@ -169,7 +169,7 @@ class NINJSFormatter(Formatter):
                     ninjs[ASSOCIATIONS].update(associations)
             elif article.get(ASSOCIATIONS):
                 ninjs[ASSOCIATIONS], extra_items = self._format_related(article, subscriber)
-        elif article.get(ASSOCIATIONS):
+        elif article.get(ASSOCIATIONS) and recursive:
             ninjs[ASSOCIATIONS], extra_items = self._format_related(article, subscriber)
         if extra_items:
             ninjs.setdefault(EXTRA_ITEMS, {}).update(extra_items)
@@ -309,10 +309,8 @@ class NINJSFormatter(Formatter):
         for key, item in sorted_associations.items():
             if item:
                 if archive_service._is_related_content(key) and '_type' not in item:
-                    # if item is related item then fetch it from db
                     item = archive_service.find_one(req=None, _id=item['_id'])
-
-                item = self._transform_to_ninjs(item, subscriber)
+                item = self._transform_to_ninjs(item, subscriber, recursive=False)
                 associations[key] = item  # all items should stay in associations
                 match = MEDIA_FIELD_RE.match(key)
                 if match:
@@ -377,7 +375,8 @@ class NINJSFormatter(Formatter):
         # format renditions to Ninjs
         renditions = {}
         for name, rendition in actual_renditions.items():
-            renditions[name] = self._format_rendition(rendition)
+            if rendition:
+                renditions[name] = self._format_rendition(rendition)
         return renditions
 
     def _format_rendition(self, rendition):
