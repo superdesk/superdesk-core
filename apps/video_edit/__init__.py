@@ -51,7 +51,7 @@ class VideoEditService(superdesk.Service):
             if capture:
                 renditions.setdefault('thumbnail', {}).update({
                     'href': project['thumbnails']['preview'].get('url'),
-                    'mimetype': project['thumbnails']['preview'].get('mime_type'),
+                    'mimetype': project['thumbnails']['preview'].get('mime_type','image/png'),
                 })
             if edit:
                 renditions.setdefault('original', {}).update({
