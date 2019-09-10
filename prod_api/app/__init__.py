@@ -44,7 +44,7 @@ def get_app(config=None):
     app_config.from_object('prod_api.app.settings')
 
     # https://docs.python-eve.org/en/stable/config.html#domain-configuration
-    app_config.update({'DOMAIN': {}})
+    app_config.update({'DOMAIN': {'upload': {}}})
 
     # override from instance settings module, but only things defined in default config
     try:

@@ -18,6 +18,7 @@ The meaning of configuration options is described in the Eve framework
 from superdesk.default_settings import env, urlparse
 
 from superdesk.default_settings import (  # noqa
+    MONGO_URI,
     ELASTICSEARCH_INDEX,
     ELASTICSEARCH_URL,
     AMAZON_ACCESS_KEY_ID,
@@ -32,15 +33,14 @@ SECRET_KEY = env('PRODAPI_SECRET_KEY', '')
 
 PRODAPI_INSTALLED_APPS = (
     'prod_api.items',
+    'prod_api.assets',
 )
-
-PRODAPI_DOMAIN = {}
 
 # NOTE: no trailing slash for the PRODAPI_URL setting!
 PRODAPI_URL = env('PRODAPI_URL', 'http://localhost:5500')
-MEDIA_PREFIX = env('MEDIA_PREFIX', '%s/assets' % PRODAPI_URL.rstrip('/'))
 URL_PREFIX = env('PRODAPI_URL_PREFIX', 'api')
 API_VERSION = 'v1'
+MEDIA_PREFIX = env('MEDIA_PREFIX', '{}/{}/{}/assets'.format(PRODAPI_URL.rstrip('/'), URL_PREFIX, API_VERSION))
 
 # date formats
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%S+0000'
