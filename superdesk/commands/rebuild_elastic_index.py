@@ -29,6 +29,7 @@ class RebuildElasticIndex(superdesk.Command):
         $ python manage.py app:rebuild_elastic_index
         $ python manage.py app:rebuild_elastic_index --index=contentapi
         $ python manage.py app:rebuild_elastic_index --index=superdesk
+
     """
 
     option_list = [

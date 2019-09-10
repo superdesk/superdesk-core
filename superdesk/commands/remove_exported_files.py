@@ -28,6 +28,7 @@ class RemoveExportedFiles(superdesk.Command):
 
         $ python manage.py storage:remove_exported
         $ python manage.py storage:remove_exported --expire-hours=12
+
     """
 
     log_msg = ''

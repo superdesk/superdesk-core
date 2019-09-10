@@ -30,6 +30,7 @@ class RemoveExpiredItems(superdesk.Command):
     ::
 
         $ python manage.py content_api:remove_expired
+
     """
 
     log_msg = ''

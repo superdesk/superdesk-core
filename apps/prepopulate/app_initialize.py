@@ -235,6 +235,7 @@ class AppInitializeWithDataCommand(superdesk.Command):
         $ python manage.py app:initialize_data
         $ python manage.py app:initialize_data --entity-name=vocabularies
         $ python manage.py app:initialize_data --entity-name=content_types
+
     """
 
     option_list = [

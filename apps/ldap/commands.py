@@ -29,6 +29,7 @@ class ImportUserProfileFromADCommand(superdesk.Command):
     ::
 
         $ python manage.py users:copyfromad --ad_username=ad_uname --ad_password=123 --username_to_import=admin
+
     """
 
     option_list = (

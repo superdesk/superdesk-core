@@ -48,6 +48,7 @@ class RemoveExpiredContent(superdesk.Command):
     ::
 
         $ python manage.py archive:remove_expired
+
     """
 
     log_msg = ''
