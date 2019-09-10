@@ -8,13 +8,13 @@ class ProdApiService(superdesk.Service):
     """
 
     excluded_fields = {
+        '_id',
         '_etag',
         '_type',
         '_updated',
         '_created',
         '_current_version',
         '_links',
-        'fields_meta',
     }
 
     def on_fetched(self, result):
