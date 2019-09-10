@@ -34,6 +34,7 @@ SECRET_KEY = env('PRODAPI_SECRET_KEY', '')
 PRODAPI_INSTALLED_APPS = (
     'prod_api.items',
     'prod_api.assets',
+    'prod_api.desks',
 )
 
 # NOTE: no trailing slash for the PRODAPI_URL setting!
