@@ -73,6 +73,7 @@ class EnqueueContent(superdesk.Command):
     ::
 
         $ python manage.py publish:enqueue
+
     """
 
     def run(self):

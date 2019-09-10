@@ -24,6 +24,7 @@ class AddProvider(superdesk.Command):
              "source" : "aap-demo", "feeding_service" : "rss",
              "config" : { "url" : "https://abcnews.go.com/abcnews/primetimeheadlines", "field_aliases" : [ ] },
              "feed_parser" : null, "content_types" : [ "text" ]}'
+
     """
 
     option_list = {

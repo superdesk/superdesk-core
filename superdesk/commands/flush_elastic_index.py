@@ -33,6 +33,7 @@ class FlushElasticIndex(superdesk.Command):
         $ python manage.py app:flush_elastic_index --sd
         $ python manage.py app:flush_elastic_index --capi
         $ python manage.py app:flush_elastic_index --sd --capi
+
     """
 
     option_list = [

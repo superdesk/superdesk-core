@@ -185,6 +185,7 @@ class AppPrepopulateCommand(superdesk.Command):
     ::
 
         $ python manage.py app:prepopulate
+
     """
 
     option_list = [

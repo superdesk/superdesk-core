@@ -18,6 +18,7 @@ class RunMacro(superdesk.Command):
     ::
 
         $ app:run_macro --name clean_keywords --kwargs {"repo":"archived"}
+
     """
 
     option_list = [

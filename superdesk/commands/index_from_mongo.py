@@ -29,6 +29,7 @@ class IndexFromMongo(superdesk.Command):
 
         $ python manage.py app:index_from_mongo --from=archive
         $ python manage.py app:index_from_mongo --all
+
     """
 
     option_list = [

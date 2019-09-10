@@ -39,6 +39,7 @@ class PublishContent(superdesk.Command):
     ::
 
         $ python manage.py publish:transmit
+
     """
 
     def run(self, provider_type=None):

@@ -430,6 +430,7 @@ class ImportLegalPublishQueueCommand(superdesk.Command):
 
         $ python manage.py legal_publish_queue:import
         $ python manage.py legal_publish_queue:import --page-size=100
+
     """
 
     default_page_size = 500
@@ -464,6 +465,7 @@ class ImportLegalArchiveCommand(superdesk.Command):
 
         $ python manage.py legal_archive:import
         $ python manage.py legal_archive:import --page-size=100
+
     """
 
     default_page_size = 500

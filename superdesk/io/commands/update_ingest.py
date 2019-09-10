@@ -213,6 +213,7 @@ class UpdateIngest(superdesk.Command):
 
         $ python manage.py ingest:update
         $ python manage.py ingest:update --provider=aap-demo
+
     """
 
     option_list = (
