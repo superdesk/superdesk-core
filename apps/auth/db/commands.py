@@ -27,6 +27,7 @@ class CreateUserCommand(superdesk.Command):
     ::
 
         $ python manage.py users:create -u admin -p admin -e 'admin@example.com' --admin
+
     """
 
     option_list = (
@@ -76,6 +77,7 @@ class HashUserPasswordsCommand(superdesk.Command):
     ::
 
         $ python manage.py users:hash_passwords
+
     """
 
     def run(self):
@@ -100,6 +102,7 @@ class GetAuthTokenCommand(superdesk.Command):
     ::
 
         $ python manage.py users:get_auth_token --username=admin --password=123123
+
     """
 
     option_list = (

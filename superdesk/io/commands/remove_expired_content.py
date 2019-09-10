@@ -26,6 +26,7 @@ class RemoveExpiredContent(superdesk.Command):
 
         $ python manage.py ingest:clean_expired
         $ python manage.py ingest:clean_expired --provider=aap
+
     """
 
     option_list = (

@@ -28,6 +28,7 @@ class RemoveExpiredSessions(superdesk.Command):
     ::
 
         $ python manage.py session:gc
+
     """
 
     def run(self):

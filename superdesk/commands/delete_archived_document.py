@@ -24,6 +24,7 @@ class DeleteArchivedDocumentCommand(superdesk.Command):
     ::
 
         $ manage.py app:deleteArchivedDocument 588c1df11d41c80928015601 588c1b901d41c805dce70df0
+
     """
 
     capture_all_args = True

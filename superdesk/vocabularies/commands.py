@@ -100,6 +100,7 @@ class UpdateVocabulariesInItemsCommand(superdesk.Command):
     ::
 
         $ python manage.py vocabularies:update_archive
+
     """
 
     option_list = ()
