@@ -34,7 +34,7 @@ class VideoEditService(superdesk.Service):
                                                             )
             # push task edit video to video server
             if 'edit' in doc:
-                # Remove empty value in updates to avoid cerberus return invalid input error
+                # Remove empty values in updates to avoid invalid input
                 edit = validate_edit_data(doc.pop('edit'))
                 # duplicate original video before edit to avoid override
                 if edit:
