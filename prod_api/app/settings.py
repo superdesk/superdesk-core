@@ -36,6 +36,7 @@ PRODAPI_INSTALLED_APPS = (
     'prod_api.assets',
     'prod_api.desks',
     'prod_api.planning',
+    'prod_api.contacts',
 )
 
 # NOTE: no trailing slash for the PRODAPI_URL setting!
