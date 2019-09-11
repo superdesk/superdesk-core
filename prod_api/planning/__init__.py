@@ -9,12 +9,12 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import superdesk
-from .services import PlanningService, EventsService
-from .resources import PlanningResource, EventsResource
+from .services import PlanningService, EventsService, AssignmentsService
+from .resources import PlanningResource, EventsResource, AssignmentsResource
 
 
 def init_app(app):
-    """Initialize the `planning` API endpoint.
+    """Initialize the `planning`, `events` and `assignments` API endpoint.
 
     :param app: the API application object
     :type app: `Eve`
@@ -24,3 +24,6 @@ def init_app(app):
 
     events_service = EventsService(datasource='events', backend=superdesk.get_backend())
     EventsResource(endpoint_name='events', app=app, service=events_service)
+
+    assignments_service = AssignmentsService(datasource='assignments', backend=superdesk.get_backend())
+    AssignmentsResource(endpoint_name='assignments', app=app, service=assignments_service)

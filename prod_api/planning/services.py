@@ -20,3 +20,16 @@ class EventsService(ProdApiService):
             'lock_time',
             'lock_session',
         } | ProdApiService.excluded_fields
+
+
+assignments_excluded_fields = \
+    {
+        'lock_action',
+        'lock_user',
+        'lock_time',
+    } | ProdApiService.excluded_fields
+assignments_excluded_fields.remove('_id')
+
+
+class AssignmentsService(ProdApiService):
+    excluded_fields = assignments_excluded_fields

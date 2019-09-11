@@ -30,3 +30,18 @@ class EventsResource(Resource):
             'fields_meta': 0
         },
     }
+
+
+class AssignmentsResource(Resource):
+    url = 'assignments'
+    item_url = item_url
+    item_methods = ['GET']
+    resource_methods = ['GET']
+    datasource = {
+        'source': 'assignments',
+        'search_backend': 'elastic',
+        'default_sort': [('_updated', -1)],
+        'projection': {
+            'fields_meta': 0
+        },
+    }
