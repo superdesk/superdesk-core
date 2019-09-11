@@ -22,6 +22,7 @@ from unittest.mock import patch
 from urllib.parse import urlparse
 
 import arrow
+import responses
 from behave import given, when, then  # @UnresolvedImport
 from bson import ObjectId
 from eve.io.mongo import MongoJSONEncoder
@@ -54,6 +55,8 @@ from superdesk.utc import utcnow, get_expiry_date
 from superdesk.tests import get_prefixed_url, set_placeholder
 from apps.dictionaries.resource import DICTIONARY_FILE
 from superdesk.filemeta import get_filemeta
+from apps import io
+from pathlib import Path
 
 external_url = 'http://thumbs.dreamstime.com/z/digital-nature-10485007.jpg'
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S%z"
@@ -465,6 +468,17 @@ def step_impl_fetch_from_provider_ingest(context, provider_name, guid):
         fetch_from_provider(context, provider_name, guid)
 
 
+@when('we fetch from "{provider_name}" ingest "{guid}" (mocking with "{mock_file}")')
+def step_impl_fetch_from_provider_ingest_with_mocking(context, provider_name, guid, mock_file):
+    with context.app.test_request_context(context.app.config['URL_PREFIX']):
+        ingest_provider_service = get_resource_service('ingest_providers')
+        provider = ingest_provider_service.find_one(name=provider_name, req=None)
+
+        with responses.RequestsMock() as rsps:
+            apply_mock_file(rsps, mock_file, fixture_path=get_provider_file_path(provider))
+            fetch_from_provider(context, provider_name, guid)
+
+
 @when('we run update_ingest command for "{provider_name}"')
 def step_impl_run_update_ingest_command(context, provider_name):
     with context.app.test_request_context(context.app.config['URL_PREFIX']):
@@ -589,6 +603,13 @@ def step_impl_ingest_with_routing_scheme(context, provider_name, guid):
         fetch_from_provider(context, provider_name, guid, routing_scheme)
 
 
+def get_provider_file_path(provider, filename=''):
+    if provider.get('name', '').lower() == 'ftp_ninjs':
+        return os.path.join(provider.get('config', {}).get('path_fixtures', ''), filename)
+    else:
+        return os.path.join(provider.get('config', {}).get('path', ''), filename)
+
+
 def fetch_from_provider(context, provider_name, guid, routing_scheme=None, desk_id=None, stage_id=None):
     ingest_provider_service = get_resource_service('ingest_providers')
     provider = ingest_provider_service.find_one(name=provider_name, req=None)
@@ -601,6 +622,7 @@ def fetch_from_provider(context, provider_name, guid, routing_scheme=None, desk_
     provider_service = get_feeding_service(provider['feeding_service'])
 
     if provider.get('name', '').lower() in ('aap', 'dpa', 'ninjs', 'email', 'ftp_ninjs', 'stt'):
+        file_path = get_provider_file_path(provider, guid)
         if provider.get('name', '').lower() == 'ftp_ninjs':
             file_path = os.path.join(provider.get('config', {}).get('path_fixtures', ''), guid)
         else:
@@ -643,6 +665,45 @@ def fetch_from_provider(context, provider_name, guid, routing_scheme=None, desk_
 
     for item in items:
         set_placeholder(context, '{}.{}'.format(provider_name, item['guid']), item['_id'])
+
+
+def apply_mock_file(rsps, mock_file, fixture_path=None):
+    """Parse the mock file and apply it
+
+    This must be executed inside a responses context.
+    :param rsps: responses context object
+    :param mock_file: name of the mock_file (inside fixture path)
+    :param fixture_path: path to the directory containing the file for "binary"
+    """
+    mock_file = os.path.join(str(fixture_path), mock_file)
+    with open(mock_file) as f:
+        mocks = json.load(f)
+    for mock_url, mock_data in mocks.get('requests', {}).items():
+        for verb, verb_data in mock_data.items():
+            verb = verb.upper()
+
+            if verb != 'GET':
+                raise NotImplementedError('we only support mocking "get" for now')
+            kwargs = {}
+
+            if 'text' in verb_data:
+                kwargs['body'] = verb_data['text']
+                content_type = verb_data.get(
+                    'content_type', 'text/plain')
+            elif 'json' in verb_data:
+                kwargs['json'] = verb_data['json']
+                content_type = verb_data.get(
+                    'content_type', 'application/json')
+            elif 'binary' in verb_data:
+                binary_file = verb_data['binary']
+                # we have a binary file to return
+                binary_path = os.path.join(str(fixture_path), binary_file)
+                with open(binary_path, 'rb') as f:
+                    kwargs['body'] = f.read()
+                content_type = verb_data.get(
+                    'content_type', 'application/octet-stream')
+
+            rsps.add(verb, mock_url, content_type=content_type, **kwargs)
 
 
 @when('we post to "{url}"')
@@ -954,7 +1015,11 @@ def step_impl_when_upload_from_url(context):
     data = {'URL': external_url}
     headers = [('Content-Type', 'multipart/form-data')]
     headers = unique_headers(headers, context.headers)
-    context.response = context.client.post(get_prefixed_url(context.app, '/upload'), data=data, headers=headers)
+    fixture_path = Path(io.__file__).parent / "fixtures"
+
+    with responses.RequestsMock() as rsps:
+        apply_mock_file(rsps, "upload_from_url_mock.json", fixture_path=fixture_path)
+        context.response = context.client.post(get_prefixed_url(context.app, '/upload'), data=data, headers=headers)
 
 
 @when('we upload a file from URL with cropping')
@@ -966,7 +1031,11 @@ def step_impl_when_upload_from_url_with_crop(context):
             'CropRight': '333'}
     headers = [('Content-Type', 'multipart/form-data')]
     headers = unique_headers(headers, context.headers)
-    context.response = context.client.post(get_prefixed_url(context.app, '/upload'), data=data, headers=headers)
+    fixture_path = Path(io.__file__).parent / "fixtures"
+
+    with responses.RequestsMock() as rsps:
+        apply_mock_file(rsps, "upload_from_url_mock.json", fixture_path=fixture_path)
+        context.response = context.client.post(get_prefixed_url(context.app, '/upload'), data=data, headers=headers)
 
 
 @when('we get user profile')
@@ -1263,7 +1332,7 @@ def step_impl_then_get_renditions(context, type):
 
 
 @then('we get "{crop_name}" in renditions')
-def step_impl_then_get_renditions(context, crop_name):
+def step_impl_then_get_crop_renditions(context, crop_name):
     expect_json_contains(context.response, 'renditions')
     renditions = apply_path(parse_json_response(context.response), 'renditions')
     assert isinstance(renditions, dict), 'expected dict for image renditions'
@@ -1275,7 +1344,7 @@ def step_impl_then_get_renditions(context, crop_name):
 
 
 @then('we get "{crop_name}" not in renditions')
-def step_impl_then_get_renditions(context, crop_name):
+def step_impl_then_crop_not_in_renditions(context, crop_name):
     expect_json_contains(context.response, 'renditions')
     renditions = apply_path(parse_json_response(context.response), 'renditions')
     assert isinstance(renditions, dict), 'expected dict for image renditions'
@@ -1968,7 +2037,7 @@ def step_impl_when_rewrite(context, item_id):
 
 
 @then('we get "{field_name}" does not exist')
-def then_field_is_not_populated_in_results(context, field_name):
+def step_field_name_does_exist(context, field_name):
     resps = parse_json_response(context.response)
 
     if '_items' in resps:
@@ -1979,7 +2048,7 @@ def then_field_is_not_populated_in_results(context, field_name):
 
 
 @then('we get "{field_name}" does exist')
-def then_field_is_not_populated_in_results(context, field_name):
+def step_field_name_does_not_exist(context, field_name):
     resps = parse_json_response(context.response)
     for resp in resps['_items']:
         assert field_name in resp, 'field does not exist'
@@ -2286,7 +2355,7 @@ def run_overdue_schedule_jobs(context):
 
 
 @when('we transmit items')
-def expire_content(context):
+def transmit_items(context):
     with context.app.test_request_context(context.app.config['URL_PREFIX']):
         from superdesk.publish.publish_content import PublishContent
         PublishContent().run()
@@ -2427,7 +2496,7 @@ def we_assert_that_associated_item_for_subscriber(context, item_id, embedded_id,
 
 
 @then('we assert content api item "{item_id}" with associated item "{embedded_id}" is not published to "{subscriber}"')
-def we_assert_that_associated_item_for_subscriber(context, item_id, embedded_id, subscriber):
+def we_assert_content_api_not_published(context, item_id, embedded_id, subscriber):
     with context.app.test_request_context(context.app.config['URL_PREFIX']):
         item_id = apply_placeholders(context, item_id)
         subscriber = apply_placeholders(context, subscriber)

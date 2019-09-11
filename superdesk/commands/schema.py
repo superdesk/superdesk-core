@@ -59,6 +59,7 @@ class SchemaMigrateCommand(superdesk.Command):
     ::
 
         $ python manage.py schema:migrate
+
     """
 
     def run(self):

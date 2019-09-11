@@ -26,6 +26,7 @@ class CleanImages(superdesk.Command):
     ::
 
         $ python manage.py app:clean_images
+
     """
 
     def run(self):

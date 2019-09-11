@@ -256,6 +256,7 @@ class Timer():
         1.207962989807129
         >>> t.stop('retrbinary')
         4.4189231395721436
+
     """
 
     def __init__(self):

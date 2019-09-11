@@ -31,6 +31,7 @@ class UpdateArchivedDocumentCommand(superdesk.Command):
             --field=anpa_category
             --value=[{"scheme" : null,"qcode" : "f","subject" : "04000000","name" : "Finance"}]
             --parseNeeded=True
+
     """
 
     option_list = [

@@ -704,15 +704,8 @@ Feature: Publish content to the public API
 		"associations": {
 			"main": {
                 "body_html": "item content",
-					"headline": "text item with embedded pic",
-					"type": "text",
-                "associations": {
-                    "embedded1": {
-                        "type": "picture",
-                        "slugline": "foo",
-                        "pubstatus": "usable"
-                    }
-                }
+                "headline": "text item with embedded pic",
+                "type": "text"
             },
 			"sidebars": {
 					"guid": "item2",

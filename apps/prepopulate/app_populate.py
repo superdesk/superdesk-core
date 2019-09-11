@@ -62,6 +62,7 @@ class AppPopulateCommand(superdesk.Command):
         $ python manage.py app:populate --filepath=data/content_types.json
         $ python manage.py app:populate --filepath=data/planning_types.json
         $ python manage.py app:populate --filepath=data/vocabularies.json
+
     """
 
     option_list = (

@@ -29,6 +29,7 @@ class PurgeAudit(superdesk.Command):
 
         $ python manage.py audit:purge
         $ python manage.py audit:purge --expiry_minutes=20
+
     """
 
     # The list of resource entries that we will preseved in audit if an associated item still exists in production

@@ -31,6 +31,7 @@ class AppScaffoldDataCommand(superdesk.Command):
 
         $ python manage.py app:scaffold_data
         $ python manage.py app:scaffold_data --no-of-stories=50
+
     """
 
     option_list = [

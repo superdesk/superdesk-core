@@ -91,7 +91,7 @@ class FilterConditionParametersService(BaseService):
                    'value_field': 'name'
                    },
                   {'field': 'place',
-                   'operators': ['match'],
+                   'operators': ['match', 'in', 'nin'],
                    'values': values['place'],
                    'value_field': 'qcode'
                    },
