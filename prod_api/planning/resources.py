@@ -15,3 +15,18 @@ class PlanningResource(Resource):
             'fields_meta': 0
         },
     }
+
+
+class EventsResource(Resource):
+    url = 'events'
+    item_url = item_url
+    item_methods = ['GET']
+    resource_methods = ['GET']
+    datasource = {
+        'source': 'events',
+        'search_backend': 'elastic',
+        'default_sort': [('dates.start', 1)],
+        'projection': {
+            'fields_meta': 0
+        },
+    }

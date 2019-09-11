@@ -9,8 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import superdesk
-from .services import PlanningService
-from .resources import PlanningResource
+from .services import PlanningService, EventsService
+from .resources import PlanningResource, EventsResource
 
 
 def init_app(app):
@@ -19,5 +19,8 @@ def init_app(app):
     :param app: the API application object
     :type app: `Eve`
     """
-    service = PlanningService(datasource='planning', backend=superdesk.get_backend())
-    PlanningResource(endpoint_name='planning', app=app, service=service)
+    planning_service = PlanningService(datasource='planning', backend=superdesk.get_backend())
+    PlanningResource(endpoint_name='planning', app=app, service=planning_service)
+
+    events_service = EventsService(datasource='events', backend=superdesk.get_backend())
+    EventsResource(endpoint_name='events', app=app, service=events_service)
