@@ -168,6 +168,11 @@ class PublishedItemService(BaseService):
         if ITEM_STATE in updates:
             self.raise_if_not_marked_for_publication(updates)
 
+    def on_updated(self, updates, original):
+        if 'marked_for_user' in updates:
+            # Send notification on mark-for-user operation
+            get_resource_service('archive').handle_mark_user_notifications(updates, original)
+
     def raise_if_not_marked_for_publication(self, doc):
         """
         Item should be one of the PUBLISH_STATES. If not raise error.
