@@ -1,4 +1,3 @@
-@wip
 Feature: Unpublish content
     
     @auth

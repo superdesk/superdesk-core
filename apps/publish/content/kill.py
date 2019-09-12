@@ -41,6 +41,9 @@ class KillPublishService(BasePublishService):
     publish_type = 'kill'
     published_state = 'killed'
     item_operation = ITEM_KILL
+    VALIDATE_ERROR_MESSAGE = _(
+        'This item is in a package. It needs to be removed before the item can be killed'
+    )
 
     def __init__(self, datasource=None, backend=None):
         super().__init__(datasource=datasource, backend=backend)
@@ -52,9 +55,8 @@ class KillPublishService(BasePublishService):
         packages = self.package_service.get_packages(original[config.ID_FIELD])
         if packages and packages.count() > 0:
             for package in packages:
-                if package[ITEM_STATE] not in {CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED}:
-                    raise SuperdeskApiError.badRequestError(message=_(
-                        'This item is in a package. It needs to be removed before the item can be killed'))
+                if package[ITEM_STATE] not in {CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED, CONTENT_STATE.UNPUBLISHED}:
+                    raise SuperdeskApiError.badRequestError(message=self.VALIDATE_ERROR_MESSAGE)
 
         updates['pubstatus'] = PUB_STATUS.CANCELED
         updates['versioncreated'] = utcnow()
