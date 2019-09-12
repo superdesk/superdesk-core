@@ -18,6 +18,8 @@ The meaning of configuration options is described in the Eve framework
 from superdesk.default_settings import env, urlparse
 
 from superdesk.default_settings import (  # noqa
+    DEBUG,
+    SUPERDESK_TESTING,
     MONGO_URI,
     ELASTICSEARCH_INDEX,
     ELASTICSEARCH_URL,
@@ -26,7 +28,7 @@ from superdesk.default_settings import (  # noqa
     AMAZON_REGION,
     AMAZON_CONTAINER_NAME,
     AMAZON_S3_SUBFOLDER,
-    AMAZON_OBJECT_ACL
+    AMAZON_OBJECT_ACL,
 )
 
 SECRET_KEY = env('PRODAPI_SECRET_KEY', '')
