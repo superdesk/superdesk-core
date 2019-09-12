@@ -8,7 +8,6 @@ class ProdApiService(superdesk.Service):
     """
 
     excluded_fields = {
-        '_id',
         '_etag',
         '_type',
         '_updated',

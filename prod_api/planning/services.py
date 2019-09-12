@@ -4,6 +4,7 @@ from ..service import ProdApiService
 class PlanningService(ProdApiService):
     excluded_fields = \
         {
+            '_id',
             'item_class',
             'flags',
             'lock_user',
@@ -15,6 +16,7 @@ class PlanningService(ProdApiService):
 class EventsService(ProdApiService):
     excluded_fields = \
         {
+            '_id',
             'lock_action',
             'lock_user',
             'lock_time',
@@ -22,14 +24,10 @@ class EventsService(ProdApiService):
         } | ProdApiService.excluded_fields
 
 
-assignments_excluded_fields = \
-    {
-        'lock_action',
-        'lock_user',
-        'lock_time',
-    } | ProdApiService.excluded_fields
-assignments_excluded_fields.remove('_id')
-
-
 class AssignmentsService(ProdApiService):
-    excluded_fields = assignments_excluded_fields
+    excluded_fields = \
+        {
+            'lock_action',
+            'lock_user',
+            'lock_time',
+        } | ProdApiService.excluded_fields

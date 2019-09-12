@@ -15,6 +15,6 @@ class DesksResource(Resource):
             # otherwise default `eve` fields (projection) will be applied e.q. `{'_id': 1}`
             # and it will cut off all required data.
             # https://github.com/pyeve/eve/blob/afd573d9254a9a23393f35760e9c515300909ccd/eve/io/base.py#L420
-            'fields_meta': 0
+            'desk_metadata': 0
         },
     }

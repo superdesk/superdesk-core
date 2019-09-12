@@ -4,6 +4,7 @@ from ..service import ProdApiService
 class ItemsService(ProdApiService):
     excluded_fields = \
         {
+            '_id',
             'fields_meta',
             'unique_id',
             'family_id',
