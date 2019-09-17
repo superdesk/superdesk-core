@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 """
-A module that provides the Superdesk produciton API application object and runs
+A module that provides the Superdesk production API application object and runs
 the Superdesk production API.
 
 The API is built using the `Eve framework <http://python-eve.org/>`_ and is
