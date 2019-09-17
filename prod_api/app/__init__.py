@@ -78,9 +78,11 @@ def get_app(config=None):
     for module_name in app.config.get('PRODAPI_INSTALLED_APPS', []):
         app_module = importlib.import_module(module_name)
         try:
-            app_module.init_app(app)
+            init_app = app_module.init_app
         except AttributeError:
             pass
+        else:
+            init_app(app)
 
     app.sentry = SuperdeskSentry(app)
 
