@@ -13,7 +13,7 @@ Feature: Translate Content
       And we get "/archive/#archive._id#"
       Then we get existing resource
       """
-      {"translation_id": "123"}
+      {"translation_id": "123", "translations": ["#translate._id#"]}
       """
 
       When we get "/archive/#translate._id#"
@@ -86,7 +86,7 @@ Feature: Translate Content
       Then we get list with 1 items
       """
       {"_items": [
-        {"translation_id": "123"}
+        {"translation_id": "123", "translations": ["#translate._id#"]}
       ]}
       """
 
