@@ -40,6 +40,9 @@ def init_app(app):
     service = SavedSearchItemsService(endpoint_name, backend=superdesk.get_backend())
     SavedSearchItemsResource(endpoint_name, app=app, service=service)
 
+    superdesk.privilege(name='use_global_saved_searches',
+                        label='Use global saved searches',
+                        description='')
     superdesk.privilege(name='global_saved_searches',
                         label='Manage Global Saved Searches',
                         description='User can manage other users\' global saved searches')
