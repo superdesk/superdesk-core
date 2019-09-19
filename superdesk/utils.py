@@ -9,11 +9,14 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import os
+import sys
 import time
 import bcrypt
 import hashlib
 import base64
 import tempfile
+import string
+import logging
 
 from uuid import uuid4
 from datetime import datetime
@@ -26,7 +29,27 @@ from superdesk.default_settings import ELASTIC_DATE_FORMAT, \
 from superdesk.text_utils import get_text
 
 
+logger = logging.getLogger(__name__)
+
 required_string = {'type': 'string', 'required': True, 'nullable': False, 'empty': False}
+
+PWD_ALPHABET = string.ascii_letters + string.digits
+PWD_DEFAULT_LENGHT = 40
+
+
+if sys.version_info < (3, 6):
+    logger.warning("Using unsecure password generation, please update to Python 3.6+")
+    from random import SystemRandom
+
+    def gen_password(lenght=PWD_DEFAULT_LENGHT):
+        sys_random = SystemRandom()
+        return ''.join(sys_random.choice(PWD_ALPHABET) for _ in range(lenght))
+else:
+    # "secrets" module is only available with Python 3.6+
+    import secrets
+
+    def gen_password(lenght=PWD_DEFAULT_LENGHT):
+        return ''.join(secrets.choice(PWD_ALPHABET) for _ in range(lenght))
 
 
 class FileSortAttributes(Enum):
