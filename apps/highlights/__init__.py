@@ -21,7 +21,7 @@ def init_app(app):
     GenerateHighlightsResource(endpoint_name, app=app, service=service)
 
     superdesk.privilege(name='highlights_read', label='Can see a list of highlights',
-                        description='User can manage highlights/summary lists.')
+                        description='')
     superdesk.privilege(name='highlights', label='Highlights/Summary List Management',
                         description='User can manage highlights/summary lists.')
     superdesk.privilege(name='mark_for_highlights', label='Mark items for Highlights/Summary Lists',
