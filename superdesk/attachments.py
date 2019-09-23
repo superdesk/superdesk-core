@@ -19,6 +19,7 @@ class AttachmentsResource(superdesk.Resource):
         'title': {'type': 'string'},
         'description': {'type': 'string'},
         'user': superdesk.Resource.rel('users'),
+        'internal': {'type': 'boolean', 'default': False},
     }
 
     item_methods = ['GET', 'PATCH']

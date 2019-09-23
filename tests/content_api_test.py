@@ -576,6 +576,35 @@ class ContentAPITestCase(TestCase):
             response = c.get(attachments[0]['href'], headers=self._auth_headers(subscriber))
             self.assertEqual(200, response.status_code, attachments[0]['href'])
 
+    def test_publish_item_with_internal_attachments(self):
+        media = io.BytesIO(b'content')
+        data = {'media': (media, 'media.txt')}
+        attachment = {'title': 'Test', 'description': 'test', 'internal': True}
+        with self.app.test_request_context('attachments', method='POST', data=data):
+            attachment['media'] = request.files['media']
+            store_media_files(attachment, 'attachment')
+            superdesk.get_resource_service('attachments').post([attachment])
+        self.assertIn('_id', attachment)
+        self.assertIsInstance(attachment['media'], ObjectId)
+
+        item = {
+            'guid': 'foo-internal',
+            'type': 'text',
+            'attachments': [{'attachment': attachment['_id']}],
+            'body_html': '<p>Foo Bar</p>'
+        }
+
+        subscriber = {'_id': 'sub'}
+        self.content_api.publish(item, [subscriber])
+        with self.capi.test_client() as c:
+            response = c.get('item/foo-internal', headers=self._auth_headers(subscriber))
+            data = json.loads(response.data)
+
+        self.assertIn('attachment', data)
+        attachments = data['attachments']
+        # there is only one attachment and it shouldn't be publish as it is internal
+        self.assertEqual(0, len(attachments))
+
     def test_items_default_sorting(self):
         subscriber = {'_id': 'sub1'}
         headers = self._auth_headers(subscriber)
