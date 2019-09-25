@@ -582,7 +582,7 @@ class ContentAPITestCase(TestCase):
         attachment = {'title': 'Test', 'description': 'test', 'internal': True}
         with self.app.test_request_context('attachments', method='POST', data=data):
             attachment['media'] = request.files['media']
-            store_media_files(attachment, 'attachment')
+            store_media_files(attachment, 'attachments')
             superdesk.get_resource_service('attachments').post([attachment])
         self.assertIn('_id', attachment)
         self.assertIsInstance(attachment['media'], ObjectId)
@@ -597,10 +597,10 @@ class ContentAPITestCase(TestCase):
         subscriber = {'_id': 'sub'}
         self.content_api.publish(item, [subscriber])
         with self.capi.test_client() as c:
-            response = c.get('item/foo-internal', headers=self._auth_headers(subscriber))
+            response = c.get('items/foo-internal', headers=self._auth_headers(subscriber))
             data = json.loads(response.data)
 
-        self.assertIn('attachment', data)
+        self.assertIn('attachments', data)
         attachments = data['attachments']
         # there is only one attachment and it shouldn't be publish as it is internal
         self.assertEqual(0, len(attachments))
