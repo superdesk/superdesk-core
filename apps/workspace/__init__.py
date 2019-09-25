@@ -22,5 +22,5 @@ def init_app(app):
     })
 
     superdesk.privilege(name='dashboard',
-                        label='Access dashboard',
-                        description='')
+                        label='Dashboard',
+                        description='Can access dashboard.')
