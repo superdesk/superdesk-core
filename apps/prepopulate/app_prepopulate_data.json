@@ -1,24 +1,72 @@
 [
     {
-    	"data": {"name": "Editor", "privileges": {"ingest": {"read": 1}}},
+    	"data": {
+            "name": "Editor",
+            "privileges": {
+                "ingest": {"read": 1},
+                "publisher_dashboard": 1,
+                "planning_assignments_view": 1,
+                "monitoring_view": 1,
+                "spike_read": 1,
+                "highlights_read": 1,
+                "use_global_saved_searches": 1,
+                "dashboard": 1
+            }
+        },
     	"resource": "roles",
     	"id_name": "-id Editor role-"
     },
 
     {
-    	"data": {"name": "Writer", "privileges": {"ingest": {"read": 1}}},
+    	"data": {
+            "name": "Writer",
+            "privileges": {
+                "ingest": {"read": 1},
+                "publisher_dashboard": 1,
+                "planning_assignments_view": 1,
+                "monitoring_view": 1,
+                "spike_read": 1,
+                "highlights_read": 1,
+                "use_global_saved_searches": 1,
+                "dashboard": 1
+            }
+        },
     	"resource": "roles",
     	"id_name": "-id Writer role-"
     },
 
     {
-    	"data": {"name": "Superadmin", "privileges": {"ingest": {"read": 1}}},
+    	"data": {
+            "name": "Superadmin",
+            "privileges": {
+                "ingest": {"read": 1},
+                "publisher_dashboard": 1,
+                "planning_assignments_view": 1,
+                "monitoring_view": 1,
+                "spike_read": 1,
+                "highlights_read": 1,
+                "use_global_saved_searches": 1,
+                "dashboard": 1
+            }
+        },
     	"resource": "roles",
     	"id_name": "-id Superadmin role-"
     },
 
     {
-    	"data": {"name": "admin", "privileges": {"ingest": {"read": 1}}},
+    	"data": {
+            "name": "admin",
+            "privileges": {
+                "ingest": {"read": 1},
+                "publisher_dashboard": 1,
+                "planning_assignments_view": 1,
+                "monitoring_view": 1,
+                "spike_read": 1,
+                "highlights_read": 1,
+                "use_global_saved_searches": 1,
+                "dashboard": 1
+            }
+        },
     	"resource": "roles",
     	"id_name": "-id admin role-"
     },
