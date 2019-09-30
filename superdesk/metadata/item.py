@@ -645,8 +645,9 @@ crop_schema = {
 
 def remove_metadata_for_publish(item):
     def filter_internal_attachment(attachment):
-        attachment = superdesk.get_resource_service('attachments').find_one(req=None, _id=attachment['attachment'])
-        return not attachment['internal']
+        if attachment.get('attachment'): # retrieve object reference
+            attachment = superdesk.get_resource_service('attachments').find_one(req=None, _id=attachment['attachment'])
+        return not attachment.get('internal')
 
     # Remove attachments that are internal
     if len(item.get('attachments', [])) > 0:
