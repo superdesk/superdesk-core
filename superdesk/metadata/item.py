@@ -644,6 +644,12 @@ crop_schema = {
 
 
 def remove_metadata_for_publish(item):
+    """Remove metadata from item that should not be public.
+
+    :param item: Item containing the metadata
+    :return: item
+    """
+
     def filter_internal_attachment(attachment):
         if attachment.get('attachment'): # retrieve object reference
             attachment = superdesk.get_resource_service('attachments').find_one(req=None, _id=attachment['attachment'])
