@@ -49,20 +49,36 @@ class ProdApiService(superdesk.Service):
         Does some processing on the document fetched from database.
         :param dict document: MongoDB document to process
         """
-        # remove keys from a response
-        for key in self.excluded_fields:
-            doc.pop(key, None)
-
-        # post process renditions
+        self._remove_excluded_fields(doc)
         self._process_item_renditions(doc)
 
-    def _process_item_renditions(self, item):
-        hrefs = {}
-        if item.get('renditions'):
-            for _k, v in item['renditions'].items():
+    def _remove_excluded_fields(self, item):
+        """
+        Remove keys from an item
+        """
+        for key in self.excluded_fields:
+            item.pop(key, None)
+
+    def _process_item_renditions(self, doc):
+        """
+        Replace `href` in `renditions` and in `body_html`
+        """
+
+        def _process(item):
+            for _k, v in item.get('renditions', {}).items():
                 if 'media' in v:
-                    href = v.get('href')
                     media = v.pop('media')
-                    v['href'] = app.media.url_for_media(media, v.get('mimetype'))
-                    hrefs[href] = v['href']
-        return hrefs
+                    old_href = v.get('href')
+                    new_href = app.media.url_for_media(media, v.get('mimetype'))
+                    v['href'] = new_href
+                    # replace href in body
+                    if old_href and doc.get('body_html'):
+                        # no need to use lxml here, it will be to much
+                        doc['body_html'] = doc['body_html'].replace(old_href, new_href)
+
+        if doc.get('renditions'):
+            _process(doc)
+
+        for v in [v for v in doc.get('associations', {}).values() if v]:
+            _process(v)
+            self._remove_excluded_fields(v)
