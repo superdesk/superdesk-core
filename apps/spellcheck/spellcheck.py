@@ -9,6 +9,7 @@ def norvig_suggest(word, model):
     """
     NWORDS = model
     alphabet = 'abcdefghijklmnopqrstuvwxyz'
+    suggestions = []
 
     def edits1(word):
         splits = [(word[:i], word[i:]) for i in range(len(word) + 1)]
@@ -20,16 +21,26 @@ def norvig_suggest(word, model):
         return set(deletes + transposes + replaces + inserts)
 
     def known_edits2(word):
-        return set(e2 for e1 in edits1(word) for e2 in edits1(e1) if e2 in (word.lower() for word in NWORDS))
+        return set(e2 for e1 in edits1(word) for e2 in edits1(e1) if e2 in NWORDS)
 
     def known(words):
-        return set(w for w in words if w in (word.lower() for word in NWORDS))
+        return set(w for w in words if w in NWORDS)
 
     def suggest(word):
-        candidates = known([word]) or known(edits1(word)) or known_edits2(word)
+        candidates = known([word]) or known(edits1(word)) # or known_edits2(word)
         return sorted(candidates, key=lambda item: NWORDS.get(item, 1), reverse=True)
 
-    return suggest(word.lower())
+    name_suggestions = suggest(word.capitalize())
+    # check if word suggestion is a name as we store name as capitalized case in dictionary
+    if len(name_suggestions) == 1:
+        return name_suggestions
+
+    # if not name suggestion find all the suggestions by converting the word to lowercase
+    # and make sure to send lowercase as well as capitalized case suggestions for normal words
+    for suggestion in suggest(word.lower()):
+        suggestions.extend([suggestion, suggestion.capitalize()])
+
+    return suggestions
 
 
 class SpellcheckResource(superdesk.Resource):

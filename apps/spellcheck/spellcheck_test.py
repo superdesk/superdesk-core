@@ -6,18 +6,21 @@ from .spellcheck import norvig_suggest
 
 class SpellcheckTestCase(unittest.TestCase):
 
-    def test_suggestsions(self):
-
+    def test_normal_suggestions(self):
+        """Test case for getting the suggestions for the word which aren't name"""
         model = {'foe': 3, 'fox': 5}
-        suggestions = norvig_suggest('foo', model)
-        self.assertEquals(['fox', 'foe'], suggestions)
+        suggestions_1 = norvig_suggest('foo', model)
+        self.assertEquals(['fox', 'Fox', 'foe', 'Foe'], suggestions_1)
 
-    def test_suggestsions_case_insensitive(self):
-        """Test case for getting the suggestions irrespective of the case(lower/upper) of the word"""
+        suggestions_2 = norvig_suggest('Foo', model)
+        self.assertEquals(['fox', 'Fox', 'foe', 'Foe'], suggestions_2)
+
+    def test_name_suggestions(self):
+        """Test case for getting the suggestions for name in capitalized case"""
 
         model = {'Foe': 1, 'fox': 5}
-        suggestions_lower = norvig_suggest('fooe', model)
-        self.assertEquals(['foe'], suggestions_lower)
+        name_suggestion_1 = norvig_suggest('fooe', model)
+        self.assertEquals(['Foe'], name_suggestion_1)
 
-        suggestions_upper = norvig_suggest('Fooe', model)
-        self.assertEquals(['foe'], suggestions_upper)
+        name_suggestion_2 = norvig_suggest('Fooe', model)
+        self.assertEquals(['Foe'], name_suggestion_2)
