@@ -956,14 +956,20 @@ class ArchiveService(BaseService):
         """
         orig_marked_user = original.get('marked_for_user', None)
         new_marked_user = updates.get('marked_for_user', None)
+        by_user = get_user().get('display_name', get_user().get('username'))
+
         if new_marked_user:
-            user = get_resource_service('users').find_one(req=None, _id=new_marked_user)
-            marked_for_user = user.get('display_name', user.get('username'))
+            marked_user = get_resource_service('users').find_one(req=None, _id=new_marked_user)
+            marked_for_user = marked_user.get('display_name', marked_user.get('username'))
 
         if orig_marked_user and new_marked_user is None:
             # sent when unmarking user from item
             user_list = [{'_id': orig_marked_user}]
-            notify_and_add_activity('item:unmarked', 'Item unmarked.',
+            message = 'Item "{headline}" has been unmarked by {by_user}.'.format(
+                headline=original.get('headline', original.get('slugline', 'item')),
+                by_user=by_user)
+
+            notify_and_add_activity('item:unmarked', message,
                                     resource=self.datasource, item=original,
                                     user_list=user_list)
             # send separate notification for markForUser extension
@@ -977,7 +983,13 @@ class ArchiveService(BaseService):
                 user_list = [{'_id': new_marked_user}, {'_id': orig_marked_user}]
             else:
                 user_list = [{'_id': new_marked_user}]
-            notify_and_add_activity('item:marked', 'Item marked.',
+
+            message = 'Item "{headline}" has been marked for {for_user} by {by_user}.'.format(
+                headline=original.get('headline', original.get('slugline', 'item')),
+                for_user=marked_for_user,
+                by_user=by_user)
+
+            notify_and_add_activity('item:marked', message,
                                     resource=self.datasource, item=original,
                                     user_list=user_list,
                                     marked_for_user=marked_for_user)
