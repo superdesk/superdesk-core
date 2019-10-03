@@ -26,7 +26,7 @@ from .privilege import privilege, intrinsic_privilege, get_intrinsic_privileges 
 from .workflow import *  # noqa
 from .signals import *  # noqa
 
-__version__ = '1.31.3'
+__version__ = '1.31.4'
 
 API_NAME = 'Superdesk API'
 SCHEMA_VERSION = 0

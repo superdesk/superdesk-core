@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.31.4] 2019-10-03
+
+### Fixed
+
+- Use custom error message for unpublish validation error.
+
 ## [1.31.3] 2019-09-06
 
 ### Fixed
