@@ -51,6 +51,10 @@ EDITOR_KEY_PREFIX = 'editor_'
 logger = logging.getLogger(__name__)
 
 
+def format_subj_qcode(subj):
+    return ':'.join([code for code in [subj.get('scheme'), subj.get('qcode')] if code])
+
+
 def private_content_filter():
     """Filter out out users private content if this is a user request.
 
@@ -851,7 +855,7 @@ class ArchiveService(BaseService):
             raise SuperdeskApiError.badRequestError(_("Duplicate category codes are not allowed"))
 
         # Ensure that there are no duplicate subjects in the update
-        subject_qcodes = [q['qcode'] for q in updates.get('subject', []) or []]
+        subject_qcodes = [format_subj_qcode(q) for q in updates.get('subject', []) or []]
         if subject_qcodes and len(subject_qcodes) != len(set(subject_qcodes)):
             raise SuperdeskApiError.badRequestError(_("Duplicate subjects are not allowed"))
 
