@@ -11,6 +11,7 @@
 from flask import request
 from eve.validation import ValidationError
 from eve.utils import config
+from eve.methods.common import resolve_document_etag
 import logging
 import superdesk
 from superdesk.resource import Resource
@@ -35,8 +36,8 @@ def init_app(app):
     PreferencesResource(endpoint_name, app=app, service=service)
     app.on_session_end -= service.on_session_end
     app.on_session_end += service.on_session_end
-    app.on_role_privileges_revoked -= service.on_role_privileges_revoked
-    app.on_role_privileges_revoked += service.on_role_privileges_revoked
+    app.on_role_privileges_updated -= service.on_role_privileges_updated
+    app.on_role_privileges_updated += service.on_role_privileges_updated
     superdesk.intrinsic_privilege(resource_name=endpoint_name, method=['PATCH'])
 
 
@@ -309,8 +310,8 @@ class PreferencesService(BaseService):
 
         return str(kwargs.get('user_id')) == str(session.get('user'))
 
-    def on_role_privileges_revoked(self, role, role_users):
-        """Runs when user privilage has been revoked.
+    def on_role_privileges_updated(self, role, role_users):
+        """Runs when user privilage has been updated.
 
         Update the session for active user so that preferences can be reloaded.
 
@@ -320,12 +321,12 @@ class PreferencesService(BaseService):
         if not role_users or not role:
             return
 
-        logger.info('On_Role_Privileges_Revoked: Updating Users for Role:{}.'.format(role.get(config.ID_FIELD)))
+        logger.info('On_Role_Privileges_Updated: Updating Users for Role:{}.'.format(role.get(config.ID_FIELD)))
         for user in role_users:
             try:
-                self.system_update(user[config.ID_FIELD], {config.LAST_UPDATED: utcnow()}, user)
+                super().update(user[config.ID_FIELD], {}, user)
             except Exception:
-                logger.warn('On_Role_Privileges_Revoked:Failed to update user:{} with role:{}.'.
+                logger.warn('On_Role_Privileges_Updated:Failed to update user:{} with role:{}.'.
                             format(user.get(config.ID_FIELD), role.get(config.ID_FIELD)), exc_info=True)
 
     def _filter_preferences_by_privileges(self, doc):

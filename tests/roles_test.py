@@ -31,6 +31,6 @@ class RolesTestCase(TestCase):
             self.assertEqual(role_users[0]['username'], 'foobar')
             pass
 
-        self.app.on_role_privileges_revoked -= on_revoke_roles
-        self.app.on_role_privileges_revoked += on_revoke_roles
+        self.app.on_role_privileges_updated -= on_revoke_roles
+        self.app.on_role_privileges_updated += on_revoke_roles
         get_resource_service('roles').patch(self.roles[0]['_id'], {'privileges': {'ingest': 0}})
