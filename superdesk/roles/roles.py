@@ -106,10 +106,11 @@ class RolesService(BaseService):
         notified_users = [user['_id'] for user in role_users]
 
         if 'privileges' in updates:
+            privileges_updated = False
             added, removed, modified = compare_preferences(role.get('privileges', {}), updates['privileges'])
             if len(removed) > 0 or (1, 0) in modified.values():
-                app.on_role_privileges_revoked(role, role_users)
                 push_notification('role_privileges_revoked', updated=1, role_id=str(role_id))
+                privileges_updated = True
             if len(added) > 0 or (0, 1) in modified.values():
                 activity = add_activity(ACTIVITY_UPDATE,
                                         'role {{role}} has been granted new privileges: Please re-login.',
@@ -118,5 +119,9 @@ class RolesService(BaseService):
                                         can_push_notification=False,
                                         role=role.get('name'))
                 push_notification('activity', _dest=activity['recipients'])
+                privileges_updated = True
+            if privileges_updated:
+                app.on_role_privileges_updated(role, role_users)
+
         else:
             push_notification('role', updated=1, user_id=str(role_id))
