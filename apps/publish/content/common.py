@@ -239,6 +239,11 @@ class BasePublishService(BaseService):
             if rewritten_by and rewritten_by.get(ITEM_STATE) in PUBLISH_STATES:
                 raise SuperdeskApiError.badRequestError(_("Cannot publish the story after Update is published.!"))
 
+        if self.publish_type == ITEM_PUBLISH and updated.get('rewrite_of'):
+            rewrite_of = get_resource_service(ARCHIVE).find_one(req=None, _id=updated.get('rewrite_of'))
+            if rewrite_of and rewrite_of.get(ITEM_STATE) not in PUBLISH_STATES:
+                raise SuperdeskApiError.badRequestError(_("Can't publish update until original story is published.!"))
+
         publish_type = 'auto_publish' if updates.get('auto_publish') else self.publish_type
         validate_item = {'act': publish_type, 'type': original['type'], 'validate': updated}
         validation_errors = get_resource_service('validate').post([validate_item], fields=True)
