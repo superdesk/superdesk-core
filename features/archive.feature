@@ -589,6 +589,20 @@ Feature: News Items Archive
         """
         {"_issues": {"validator exception": "400: Duplicate subjects are not allowed"}, "_status": "ERR"}
         """
+        When we patch "/archive/xyz"
+        """
+            { "subject" : [ { "name" : "bullfighting",
+                    "parent" : "01000000",
+                    "qcode" : "01003000"
+                  },
+                  { "name" : "bullfighting",
+                    "parent" : "01000000",
+                    "qcode" : "01003000",
+                    "scheme": "foo"
+                  }
+                ] }
+        """
+        Then we get ok response
 
     @auth
  	Scenario: Create content on a desk with no source setting on the desk
