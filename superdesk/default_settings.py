@@ -471,6 +471,8 @@ AMAZON_CONTAINER_NAME = env('AMAZON_CONTAINER_NAME', '')
 AMAZON_S3_SUBFOLDER = env('AMAZON_S3_SUBFOLDER', '')
 #: adds ACL when putting to S3, can be set to ``public-read``, etc.
 AMAZON_OBJECT_ACL = env('AMAZON_OBJECT_ACL', '')
+#: amazon endpoint. This can be used with third-party s3-compatible servers
+AMAZON_ENDPOINT_URL = env('AMAZON_ENDPOINT_URL', '')
 
 RENDITIONS = {
     'picture': {
