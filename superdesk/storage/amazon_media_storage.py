@@ -68,13 +68,23 @@ class AmazonMediaStorage(MediaStorage):
 
     def __init__(self, app=None):
         super().__init__(app)
-        self.client = boto3.client(
-            's3',
-            aws_access_key_id=self.app.config['AMAZON_ACCESS_KEY_ID'],
-            aws_secret_access_key=self.app.config['AMAZON_SECRET_ACCESS_KEY'],
-            region_name=self.app.config.get('AMAZON_REGION'),
-            config=Config(signature_version='s3v4'),
-        )
+        if self.app.config['AMAZON_ENDPOINT_URL']:
+            self.client = boto3.client(
+                's3',
+                endpoint_url=self.app.config['AMAZON_ENDPOINT_URL'],
+                aws_access_key_id=self.app.config['AMAZON_ACCESS_KEY_ID'],
+                aws_secret_access_key=self.app.config['AMAZON_SECRET_ACCESS_KEY'],
+                region_name=self.app.config.get('AMAZON_REGION'),
+                config=Config(signature_version='s3v4'),
+            )
+        else:
+            self.client = boto3.client(
+                's3',
+                aws_access_key_id=self.app.config['AMAZON_ACCESS_KEY_ID'],
+                aws_secret_access_key=self.app.config['AMAZON_SECRET_ACCESS_KEY'],
+                region_name=self.app.config.get('AMAZON_REGION'),
+                config=Config(signature_version='s3v4'),
+            )
         self.user_metadata_header = 'x-amz-meta-'
 
     def url_for_media(self, media_id, content_type=None):
