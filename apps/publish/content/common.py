@@ -592,6 +592,14 @@ class BasePublishService(BaseService):
                         raise SuperdeskApiError.badRequestError(
                             _('Associated item "{}" does not exist in the system'.format(associations_key)))
 
+                    if original_associated_item.get('state') in PUBLISH_STATES:
+                        # item was published already
+                        original[ASSOCIATIONS][associations_key].update({
+                            'state': original_associated_item['state'],
+                            'operation': original_associated_item.get('operation', self.publish_type),
+                        })
+                        continue
+
                     get_resource_service('archive_publish').patch(id=associated_item.pop(config.ID_FIELD),
                                                                   updates=associated_item)
                     associated_item['state'] = self.published_state
