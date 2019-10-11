@@ -54,7 +54,9 @@ class ArchiveMediaService():
             else:
                 file, content_type, metadata = self.get_file_from_document(doc)
                 inserted = [doc['media']]
-                rendition_spec = get_renditions_spec(no_custom_crops=True)
+                # set no_cutom_crops to False so that custom crops are generated automatically on media upload
+                # see (SDESK-4742)
+                rendition_spec = get_renditions_spec(no_custom_crops=False)
                 with timer('archive:renditions'):
                     renditions = generate_renditions(file, doc['media'], inserted, file_type,
                                                      content_type, rendition_spec, url_for_media)
