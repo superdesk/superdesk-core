@@ -157,6 +157,11 @@ class ArchiveSpikeService(BaseService):
         if original.get('rewrite_sequence'):
             updates['rewrite_sequence'] = None
 
+        if original.get('marked_for_user'):
+            # remove marked_for_user on spike and keep it as previous_marked_user for history
+            updates['previous_marked_user'] = original['marked_for_user']
+            updates['marked_for_user'] = None
+
         # remove any relation with linked items
         updates[ITEM_EVENT_ID] = generate_guid(type=GUID_TAG)
 
