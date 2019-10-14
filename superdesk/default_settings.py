@@ -732,3 +732,6 @@ WATERMARK_IMAGE = env('WATERMARK_IMAGE', '')
 
 #: Kill template config
 KILL_TEMPLATE_NULL_FIELDS = ['byline', 'place']
+
+#: Whether to generate custom crops on image upload by default or not, if false means generate else don't generate
+NO_CUSTOM_CROPS = strtobool(env('NO_CUSTOM_CROPS', 'false'))
