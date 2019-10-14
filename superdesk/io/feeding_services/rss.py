@@ -181,7 +181,7 @@ class RSSFeedingService(HTTPFeedingServiceBase):
                 pass
 
             item = self._create_item(entry, field_aliases, provider.get('source', None))
-            self.add_timestamps(item)
+            self.localize_timestamps(item)
 
             # If the RSS entry references any images, create picture items from
             # them and create a package referencing them and the entry itself.

@@ -9,6 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+import warnings
+
 from abc import ABCMeta, abstractmethod
 from datetime import datetime
 
@@ -194,15 +196,14 @@ class FeedingService(metaclass=ABCMeta):
                                                                    updates, provider)
 
     def add_timestamps(self, item):
-        """
-        Adds firstcreated and versioncreated timestamps to item
+        warnings.warn('deprecated, use localize_timestamps', DeprecationWarning)
+        self.localize_timestamps(item)
 
-        :param item: object which can be saved to ingest collection
-        :type item: dict
-        """
-
-        item['firstcreated'] = utc.localize(item['firstcreated']) if item.get('firstcreated') else utcnow()
-        item['versioncreated'] = utc.localize(item['versioncreated']) if item.get('versioncreated') else utcnow()
+    def localize_timestamps(self, item):
+        """Make sure timestamps are in UTC."""
+        for timestamp in ('firstcreated', 'versioncreated'):
+            if item.get(timestamp):
+                item[timestamp] = utc.localize(item[timestamp])
 
     def log_item_error(self, err, item, provider):
         """TODO: put item into provider error basket."""
