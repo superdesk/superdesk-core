@@ -89,7 +89,11 @@ def init_app(app):
     register_component(ItemAutosave(app))
     register_model(ItemAutosaveModel(EveProxy(superdesk.get_backend())))
 
-    superdesk.privilege(name='monitoring_view', label='Monitoring view', description='Access to Monitoring view in left toolbar')
+    superdesk.privilege(
+        name='monitoring_view',
+        label='Monitoring view',
+        description='Access to Monitoring view in left toolbar'
+    )
     superdesk.privilege(name='archive', label='Create content', description='Create and save content')
     superdesk.privilege(name='ingest', label='Ingest', description='Access to ingest sources management')
     superdesk.privilege(name='spike', label='Spike', description='Spike/delete items')
