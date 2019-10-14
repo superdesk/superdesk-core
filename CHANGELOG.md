@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.31.5] 2019-10-14
+
+### Changed
+
+- Add config to generate custom renditions by default.
+
 ## [1.31.4] 2019-10-03
 
 ### Fixed
