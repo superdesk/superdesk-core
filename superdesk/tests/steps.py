@@ -128,7 +128,7 @@ def json_match(context_data, response_data, json_fields=[]):
             return False
         for key in context_data:
             if context_data[key] == "__none__":
-                assert response_data[key] is None
+                assert response_data.get(key) is None, '{} is not None ({})'.format(key, response_data[key])
                 continue
             if context_data[key] == "__no_value__":
                 test_key_is_not_present(key, response_data)

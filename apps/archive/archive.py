@@ -551,7 +551,7 @@ class ArchiveService(BaseService):
         keys_to_delete.extend([config.ID_FIELD, 'guid', LINKED_IN_PACKAGES, EMBARGO, PUBLISH_SCHEDULE,
                                SCHEDULE_SETTINGS, 'lock_time', 'lock_action', 'lock_session', 'lock_user', SIGN_OFF,
                                'rewritten_by', 'rewrite_of', 'rewrite_sequence', 'highlights', 'marked_desks',
-                               '_type', 'event_id', 'assignment_id', PROCESSED_FROM])
+                               '_type', 'event_id', 'assignment_id', PROCESSED_FROM, 'translations'])
         if delete_keys:
             keys_to_delete.extend(delete_keys)
 

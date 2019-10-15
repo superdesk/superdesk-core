@@ -29,7 +29,17 @@ Feature: Translate Content
       And we get "/archive/#translate._id#"
       Then we get existing resource
       """
-      {"language": "de", "translation_id": "123"}
+      {"language": "de", "translation_id": "123", "translations": "__none__"}
+      """
+
+      When we post to "/archive/translate"
+      """
+      {"guid": "123", "language": "en-AU"}
+      """
+      And we get "/archive/#translate._id#"
+      Then we get existing resource
+      """
+      {"language": "en-AU", "translation_id": "123", "translations": "__none__"}
       """
 
     @auth
