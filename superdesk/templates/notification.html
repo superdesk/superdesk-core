@@ -2,4 +2,7 @@
 
 {% block content %}
 <p>{{notification}}</p>
+{% if link %}
+    <p>Please use this link <a href="{{link}}">{{link}}</a> to view the item.</p>
+{% endif %}
 {% endblock %}
