@@ -35,6 +35,7 @@ class FilterConditionFieldsEnum(Enum):
     place = 16,
     ingest_provider = 17
     embargo = 18
+    featuremedia = 19
 
 
 class FilterConditionField:
@@ -71,6 +72,8 @@ class FilterConditionField:
             return FilterConditionIngestProviderField(field)
         elif FilterConditionFieldsEnum[field] == FilterConditionFieldsEnum.embargo:
             return FilterConditionEmbargoField(field)
+        elif FilterConditionFieldsEnum[field] == FilterConditionFieldsEnum.featuremedia:
+            return FilterConditionFeatureMediaField(field)
         else:
             return FilterConditionField(field)
 
@@ -242,3 +245,22 @@ class FilterConditionCustomTextField(FilterConditionField):
 
     def get_value(self, article):
         return article['extra'].get(self.field.name, '')
+
+
+class FilterConditionFeatureMediaField(FilterConditionField):
+    def __init__(self, field):
+        self.field = FilterConditionFieldsEnum.featuremedia
+        self.entity_name = 'associations.featuremedia._id'
+        self.field_type = bool
+
+    def get_value(self, article):
+        return ((article.get('associations') or {}).get('featuremedia') or {}).get('_id')
+
+    def is_in_article(self, article):
+        return '_id' in ((article.get('associations') or {}).get('featuremedia') or {})
+
+    def get_elastic_query(self):
+        return {"exists": {"field": "associations.featuremedia._id"}}
+
+    def get_mongo_query(self):
+        return {'associations.featuremedia._id': {'$exists': True}}

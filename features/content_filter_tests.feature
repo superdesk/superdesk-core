@@ -250,3 +250,85 @@ Feature: Content Filter Tests
     """
     {"match_results": true}
     """
+
+  @auth
+  @vocabulary
+  Scenario: Test in-memory content filter using exists
+    Given empty "archive"
+    When we post to "/archive"
+    """
+    [{"associations": {"featuremedia": {"_id": "12345"}}}]
+    """
+    Given empty "filter_conditions"
+    When we post to "/filter_conditions" with success
+    """
+    [{"name": "test", "field": "featuremedia", "operator": "exists", "value": "True"}]
+    """
+    Then we get latest
+    Given empty "content_filters"
+    When we post to "/content_filters/test"
+    """
+    [{"filter": {"content_filter": [{"expression" : {"fc" : ["#filter_conditions._id#"]}}]},
+      "article_id": "#archive._id#"}]
+    """
+    Then we get existing resource
+    """
+    {
+      "match_results": true
+    }
+    """
+
+  @auth
+  @vocabulary
+  Scenario: Test in-memory content filter using exists false
+    Given empty "archive"
+    When we post to "/archive"
+    """
+    [{"associations": {"featuremedia": {"_id": "12345"}}}]
+    """
+    Given empty "filter_conditions"
+    When we post to "/filter_conditions" with success
+    """
+    [{"name": "test", "field": "featuremedia", "operator": "exists", "value": "False"}]
+    """
+    Then we get latest
+    Given empty "content_filters"
+    When we post to "/content_filters/test"
+    """
+    [{"filter": {"content_filter": [{"expression" : {"fc" : ["#filter_conditions._id#"]}}]},
+      "article_id": "#archive._id#"}]
+    """
+    Then we get existing resource
+    """
+    {
+      "match_results": false
+    }
+    """
+
+
+  @auth
+  @vocabulary
+  Scenario: Test in-memory content filter does not exists
+    Given empty "archive"
+    When we post to "/archive"
+    """
+    [{"associations": {}}]
+    """
+    Given empty "filter_conditions"
+    When we post to "/filter_conditions" with success
+    """
+    [{"name": "test", "field": "featuremedia", "operator": "exists", "value": "True"}]
+    """
+    Then we get latest
+    Given empty "content_filters"
+    When we post to "/content_filters/test"
+    """
+    [{"filter": {"content_filter": [{"expression" : {"fc" : ["#filter_conditions._id#"]}}]},
+      "article_id": "#archive._id#"}]
+    """
+    Then we get existing resource
+    """
+    {
+      "match_results": false
+    }
+    """

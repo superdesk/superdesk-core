@@ -104,6 +104,11 @@ class FilterConditionParametersService(BaseService):
                    'operators': ['eq', 'ne'],
                    'values': values['embargo'],
                    'value_field': 'name'
+                   },
+                  {'field': 'featuremedia',
+                   'operators': ['exists'],
+                   'values': values['featuremedia'],
+                   'value_field': 'name'
                    }]
         fields.extend(self._get_vocabulary_fields(values))
         return ListCursor(fields)
@@ -157,6 +162,7 @@ class FilterConditionParametersService(BaseService):
         else:
             values['place'] = []
         values['ingest_provider'] = list(get_resource_service('ingest_providers').get(None, {}))
+        values['featuremedia'] = [{'qcode': 1, 'name': 'True'}, {'qcode': 0, 'name': 'False'}]
         return values
 
     def _get_stage_field_values(self, desks):

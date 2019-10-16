@@ -11,7 +11,7 @@ from apps.content_filters.filter_condition.filter_condition_field import FilterC
 from apps.content_filters.filter_condition.filter_condition_value import FilterConditionValue
 from apps.content_filters.filter_condition.filter_condition_operator import \
     FilterConditionOperator, NotInOperator, NotLikeOperator, MatchOperator, \
-    FilterConditionOperatorsEnum, ComparisonOperator
+    FilterConditionOperatorsEnum, ComparisonOperator, ExistsOperator
 import json
 
 
@@ -53,7 +53,7 @@ class FilterCondition:
 
     def does_match(self, article):
 
-        if not self.field.is_in_article(article):
+        if not self.field.is_in_article(article) and type(self.operator) is not ExistsOperator:
             return type(self.operator) is NotInOperator or \
                 type(self.operator) is NotLikeOperator or \
                 self.operator.operator is FilterConditionOperatorsEnum.ne or \
