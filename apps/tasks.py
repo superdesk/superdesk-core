@@ -15,6 +15,7 @@ from eve.utils import ParsedRequest
 from eve.versioning import resolve_document_version
 
 import superdesk
+from superdesk.users.services import current_user_has_privilege
 from superdesk.resource import Resource
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from superdesk.notification import push_notification
@@ -82,6 +83,10 @@ def send_to(doc, update=None, desk_id=None, stage_id=None, user_id=None, default
         desk = superdesk.get_resource_service('desks').find_one(req=None, _id=desk_id)
         if not desk:
             raise SuperdeskApiError.notFoundError(_('Invalid desk identifier {desk_id}').format(desk_id=desk_id))
+
+        if not current_user_has_privilege('move') and \
+                str(user_id) not in [str(x.get('user', '')) for x in desk.get('members', [])]:
+            raise SuperdeskApiError.forbiddenError(_('User is not member of desk: {desk_id}').format(desk_id=desk_id))
 
         task['desk'] = desk_id
         if not stage_id:

@@ -57,7 +57,7 @@ class MoveResource(Resource):
     resource_methods = ['POST']
     item_methods = []
 
-    privileges = {'POST': 'move'}
+    privileges = {'POST': 'archive'}
 
 
 class MoveService(BaseService):
@@ -181,5 +181,5 @@ class MoveService(BaseService):
 superdesk.workflow_action(
     name='submit_to_desk',
     include_states=['draft', 'fetched', 'routed', 'submitted', 'in_progress', 'published', 'scheduled'],
-    privileges=['archive', 'move']
+    privileges=['archive']
 )

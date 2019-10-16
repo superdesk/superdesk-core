@@ -455,15 +455,57 @@ Feature: Move or Send Content to another desk
         Then we get response code 201
 
     @auth
-    Scenario: User can't move content without a privilege
-        Given "desks"
+    Scenario: User can move content without a move privilege if member of the destination desk
+        Given "users"
+        """
+        [{"username": "foo", "password": "bar", "email": "foo@bar.com"}]
+        """
+        And "desks"
         """
         [{"name": "Sports"}]
         """
         And "archive"
         """
-        [{  "type":"text", "headline": "test1", "guid": "123", "original_creator": "abc", "state": "published",
-            "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}]
+        [{  "type":"text", "headline": "test1", "guid": "123", "original_creator": "abc", "state": "submitted",
+            "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#users._id#"}}]
+        """
+        When we patch "/users/#users._id#"
+        """
+        {"user_type": "user", "privileges": {"archive": 1, "move": 0}}
+        """
+        When we post to "/desks"
+        """
+        [{"name": "Finance", "members": [{"user": "#users._id#"}]}]
+        """
+        And we login as user "foo" with password "bar" and user type "user"
+        """
+        {"user_type": "user", "email": "foo.bar@foobar.org"}
+        """
+        And we post to "/archive/123/move"
+        """
+        [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
+        """
+        Then we get response code 201
+
+
+    @auth
+    Scenario: User can't move content without a move privilege if not member of the destination desk
+        Given "users"
+        """
+        [{"username": "foo", "password": "bar", "email": "foo@bar.com"}]
+        """
+        And "desks"
+        """
+        [{"name": "Sports", "members": [{"user": "#users._id#"}]}]
+        """
+        And "archive"
+        """
+        [{  "type":"text", "headline": "test1", "guid": "123", "original_creator": "abc", "state": "submitted",
+            "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#users._id#"}}]
+        """
+        When we patch "/users/#users._id#"
+        """
+        {"user_type": "user", "privileges": {"archive": 1, "move": 0}}
         """
         When we post to "/desks"
         """
@@ -475,7 +517,7 @@ Feature: Move or Send Content to another desk
         """
         And we post to "/archive/123/move"
         """
-        [{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}]
+        [{"task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}]
         """
         Then we get response code 403
 
