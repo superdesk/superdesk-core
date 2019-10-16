@@ -86,6 +86,8 @@ def is_not_expired(item, delta):
             return expiry > utcnow()
         else:
             return expiry > datetime.now()
+    if not item.get('versioncreated'):  # can't say really
+        return True
     return False
 
 
@@ -566,12 +568,12 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
 
         new_version = True
         if old_item:
+            new_version = is_new_version(item, old_item)
             updates = deepcopy(item)
             ingest_service.patch_in_mongo(old_item[superdesk.config.ID_FIELD], updates, old_item)
             item.update(old_item)
             item.update(updates)
             items_ids.append(item['_id'])
-            new_version = is_new_version(item, old_item)
         else:
             if item.get('ingest_provider_sequence') is None:
                 ingest_service.set_ingest_provider_sequence(item, provider)
@@ -592,6 +594,11 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
     return True, items_ids
 
 
+NEW_VERSION_IGNORE_FIELS = (
+    'expiry',
+)
+
+
 def is_new_version(item, old_item):
     # explicit version info
     for field in ('version', 'versioncreated'):
@@ -602,6 +609,8 @@ def is_new_version(item, old_item):
                 return item[field] > old_item[field]
     # no version info, check content
     for field in item:
+        if field in NEW_VERSION_IGNORE_FIELS or item[field] is None:
+            continue
         if not old_item.get(field) or item[field] != old_item[field]:
             return True
     return False
