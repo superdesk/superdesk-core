@@ -25,7 +25,8 @@ class FilterConditionOperatorsEnum(Enum):
     gt = 10,
     gte = 11,
     lt = 12,
-    lte = 13
+    lte = 13,
+    exists = 14
 
 
 class FilterConditionOperator:
@@ -47,6 +48,8 @@ class FilterConditionOperator:
                           FilterConditionOperatorsEnum.lt.name,
                           FilterConditionOperatorsEnum.lte.name]:
             return ComparisonOperator(operator)
+        elif operator == FilterConditionOperatorsEnum.exists.name:
+            return ExistsOperator(operator)
         else:
             return RegexOperator(operator)
 
@@ -180,3 +183,18 @@ class MatchOperator(FilterConditionOperator):
             return any([self.get_lower_case(v) in map(self.get_lower_case, filter_value) for v in article_value])
         else:
             return self.get_lower_case(article_value) in map(self.get_lower_case, filter_value)
+
+
+class ExistsOperator(FilterConditionOperator):
+    def __init__(self, operator):
+        self.operator = FilterConditionOperatorsEnum[operator]
+        self.get_mongo_operator = '$exists'
+        self.get_elastic_operator = '{{"exists": {{"field": "{}"}} }}'
+
+    def does_match(self, article_value, filter_value):
+        # exists
+        if filter_value:
+            return article_value
+        # does no exist
+        else:
+            return not article_value
