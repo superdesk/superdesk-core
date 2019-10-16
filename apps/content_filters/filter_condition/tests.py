@@ -31,7 +31,7 @@ class FilterConditionTests(TestCase):
                              {'_id': '2', 'headline': 'prtorque', 'state': 'fetched'},
                              {'_id': '3', 'urgency': 3, 'state': 'fetched', 'flags': {'marked_for_sms': True}},
                              {'_id': '4', 'urgency': 4, 'state': 'fetched', 'task': {'desk': '1'},
-                              'ingest_provider': '1'},
+                              'ingest_provider': '1', 'associations': {'featuremedia': {'_id': '123456'}}},
                              {'_id': '5', 'urgency': 2, 'state': 'fetched', 'task': {'desk': '2'}, 'priority': 3},
                              {'_id': '6', 'state': 'fetched', 'embargo': utcnow(),
                              'schedule_settings': {'utc_embargo': utcnow() + timedelta(minutes=20)}},
@@ -107,6 +107,10 @@ class FilterConditionTests(TestCase):
                             'should': [{
                                 'bool': {
                                     'must': [elastic_translation]}}]}}}}})}
+        elif search_type == 'exists':
+            self.req.args = {'source': json.dumps({'query': {
+                'bool': {
+                    'must': [elastic_translation]}}})}
 
     def test_mongo_using_genre_filter_complete_string(self):
         f = FilterCondition('genre', 'in', 'Sidebar')
@@ -774,6 +778,25 @@ class FilterConditionTests(TestCase):
         query = f.get_elastic_query()
         with self.app.app_context():
             self._setup_elastic_args(query)
+            docs = get_resource_service('archive').get(req=self.req, lookup=None)
+            doc_ids = [d['_id'] for d in docs]
+            self.assertEqual(1, docs.count())
+            self.assertTrue('4' in doc_ids)
+
+    def test_mongo_featuremedia_exists(self):
+        f = FilterCondition('featuremedia', 'exists', 'true')
+        query = f.get_mongo_query()
+        with self.app.app_context():
+            docs = get_resource_service('archive'). \
+                get_from_mongo(req=self.req, lookup=query)
+            self.assertEqual(1, docs.count())
+            self.assertEqual('4', docs[0]['_id'])
+
+    def test_elastic_using_featuremedia_exists(self):
+        f = FilterCondition('featuremedia', 'exists', 'true')
+        query = f.get_elastic_query()
+        with self.app.app_context():
+            self._setup_elastic_args(query, search_type='exists')
             docs = get_resource_service('archive').get(req=self.req, lookup=None)
             doc_ids = [d['_id'] for d in docs]
             self.assertEqual(1, docs.count())
