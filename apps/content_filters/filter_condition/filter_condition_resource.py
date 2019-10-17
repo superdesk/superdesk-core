@@ -30,7 +30,8 @@ default_allowed_filters = ['anpa_category',
                            'sms',
                            'place',
                            'ingest_provider',
-                           'embargo']
+                           'embargo',
+                           'featuremedia']
 
 
 class FilterConditionResource(Resource):
@@ -62,7 +63,8 @@ class FilterConditionResource(Resource):
                         'lt',
                         'lte',
                         'gt',
-                        'gte'],
+                        'gte',
+                        'exists'],
             'empty': False,
             'nullable': False,
         },
