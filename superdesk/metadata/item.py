@@ -83,6 +83,10 @@ metadata_schema = {
         'unique': True,
         'mapping': not_analyzed
     },
+    'uri': {
+        'type': 'string',
+        'mapping': not_analyzed,
+    },
     'unique_id': {
         'type': 'integer',
         'unique': True,
