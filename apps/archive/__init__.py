@@ -32,6 +32,7 @@ from apps.common.models.utils import register_model
 from apps.item_lock.models.item import ItemModel
 from apps.common.models.io.eve_proxy import EveProxy
 from .archive_rewrite import ArchiveRewriteResource, ArchiveRewriteService
+from .production import ProductionResource, ProductionService
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +82,10 @@ def init_app(app):
     endpoint_name = 'archive_related'
     service = ArchiveRelatedService(endpoint_name, backend=superdesk.get_backend())
     ArchiveRelatedResource(endpoint_name, app=app, service=service)
+
+    endpoint_name = 'production'
+    service = ProductionService(endpoint_name, backend=superdesk.get_backend())
+    ProductionResource(endpoint_name, app=app, service=service)
 
     from apps.item_autosave.components.item_autosave import ItemAutosave
     from apps.item_autosave.models.item_autosave import ItemAutosaveModel
