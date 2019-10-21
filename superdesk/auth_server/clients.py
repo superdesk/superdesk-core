@@ -246,9 +246,9 @@ class ListClients(superdesk.Command):
         clients_service = superdesk.get_resource_service('auth_server_clients')
         clients_desc = []
         for client in clients_service.find({}):
-            clients_desc.append("- client {name!r}: id {client_id!r} with scope(s) {scopes}".format(
+            clients_desc.append("- client {name!r}: id '{client_id}' with scope(s) {scopes}".format(
                 name=client['name'],
-                client_id=client['client_id'],
+                client_id=client['_id'],
                 scopes=', '.join(client['scope']),
             ))
 
