@@ -345,6 +345,7 @@ CORE_APPS = [
     'apps.client_config',
     'superdesk.auth',
     'superdesk.attachments',
+    'superdesk.auth_server',
 ]
 
 #: Specify what modules should be enabled
@@ -739,3 +740,9 @@ VIDEO_SERVER_ENABLE = strtobool(env('VIDEO_SERVER_ENABLE', 'false'))
 
 #: Whether to generate custom crops on image upload by default or not, if false means generate else don't generate
 NO_CUSTOM_CROPS = strtobool(env('NO_CUSTOM_CROPS', 'false'))
+
+#: Authorisation server
+
+#: how long an authorisation token is valid (in seconds)
+AUTH_SERVER_EXPIRATION_DELAY = env('AUTH_SERVER_EXPIRATION_TIME', 60 * 60 * 24)  # 1 day by default
+AUTH_SERVER_SHARED_SECRET = env('AUTH_SERVER_SHARED_SECRET', '')
