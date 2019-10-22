@@ -33,7 +33,7 @@ from eve.utils import parse_request, config, date_to_str, ParsedRequest
 from superdesk.services import BaseService
 from superdesk.users.services import current_user_has_privilege, is_admin
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, CONTENT_TYPE, ITEM_TYPE, EMBARGO, \
-    PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, SIGN_OFF, ASSOCIATIONS, MEDIA_TYPES, INGEST_ID, PROCESSED_FROM
+    PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, SIGN_OFF, ASSOCIATIONS, MEDIA_TYPES, INGEST_ID, PROCESSED_FROM, PUBLISH_STATES
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, RESIDREF
 from apps.common.components.utils import get_component
 from apps.item_autosave.components.item_autosave import ItemAutosave
@@ -961,47 +961,61 @@ class ArchiveService(BaseService):
         orig_marked_user = original.get('marked_for_user', None)
         new_marked_user = updates.get('marked_for_user', None)
         by_user = get_user().get('display_name', get_user().get('username'))
+        user_service = get_resource_service('users')
 
         if new_marked_user:
-            marked_user = get_resource_service('users').find_one(req=None, _id=new_marked_user)
+            marked_user = user_service.find_one(req=None, _id=new_marked_user)
             marked_for_user = marked_user.get('display_name', marked_user.get('username'))
 
         if orig_marked_user and new_marked_user is None:
             # sent when unmarking user from item
-            user_list = [{'_id': orig_marked_user}]
+            user_list = [user_service.find_one(req=None, _id=orig_marked_user)]
             message = 'Item "{headline}" has been unmarked by {by_user}.'.format(
-                headline=original.get('headline', original.get('slugline', 'item')),
-                by_user=by_user)
+                headline=original.get('headline', original.get('slugline', 'item')), by_user=by_user)
 
-            notify_and_add_activity('item:unmarked', message,
-                                    resource=self.datasource, item=original,
-                                    user_list=user_list)
-            # send separate notification for markForUser extension
-            push_notification('item:unmarked',
-                              item_id=original.get(config.ID_FIELD),
-                              user_list=user_list,
-                              extension='markForUser')
+            self._send_mark_user_notifications('item:unmarked', message, resource=self.datasource, item=original,
+                                               user_list=user_list)
         else:
             # sent when mark item for user or mark to another user
+            user_list = [marked_user]
             if new_marked_user and orig_marked_user and new_marked_user != orig_marked_user:
-                user_list = [{'_id': new_marked_user}, {'_id': orig_marked_user}]
-            else:
-                user_list = [{'_id': new_marked_user}]
+                user_list.append(user_service.find_one(req=None, _id=orig_marked_user))
 
             message = 'Item "{headline}" has been marked for {for_user} by {by_user}.'.format(
-                headline=original.get('headline', original.get('slugline', 'item')),
-                for_user=marked_for_user,
+                headline=original.get('headline', original.get('slugline', 'item')), for_user=marked_for_user,
                 by_user=by_user)
 
-            notify_and_add_activity('item:marked', message,
-                                    resource=self.datasource, item=original,
-                                    user_list=user_list,
-                                    marked_for_user=marked_for_user)
-            # send separate notification for markForUser extension
-            push_notification('item:marked',
-                              item_id=original.get(config.ID_FIELD),
-                              user_list=user_list,
-                              extension='markForUser')
+            self._send_mark_user_notifications('item:marked', message, resource=self.datasource, item=original,
+                                               user_list=user_list, marked_for_user=marked_for_user)
+
+    def _send_mark_user_notifications(self, activity_name, msg, resource=None, item=None, user_list=None, **data):
+        """Send notifications on mark or unmark user operation
+
+        :param activity_name: Name of the activity
+        :param msg: Notification message to be sent
+        :param resource: resource name generating this notification
+        :param item: marked or unmarked article, default None
+        :param data: kwargs
+        """
+        if item.get('type') == 'text':
+            link_id = item.get('guid', item.get('_id'))
+        else:
+            # since guid and _id do not match for the item of type picture, audio and video
+            # create link using _id instead of guid for media items
+            # and item_id for published media items as _id or guid does not match _id in archive for media items
+            link_id = item.get('item_id') if item.get('state') in PUBLISH_STATES else item.get('_id')
+
+        client_url = app.config.get('CLIENT_URL', '').rstrip('/')
+        link = '{}/#/workspace?item={}&action=view'.format(client_url, link_id)
+
+        notify_and_add_activity(activity_name, msg,
+                                resource=resource, item=item,
+                                user_list=user_list, link=link, **data)
+        # send separate notification for markForUser extension
+        push_notification(activity_name,
+                          item_id=item.get(config.ID_FIELD),
+                          user_list=user_list,
+                          extension='markForUser')
 
 
 class AutoSaveResource(Resource):
