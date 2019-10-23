@@ -646,6 +646,15 @@ crop_schema = {
     'CropBottom': {'type': 'integer'}
 }
 
+def is_attachment_public(attachment):
+    """Retuns true if attachment is public. False if it's internal.
+
+    :param attachment: Attachment object or id inside attachment attribute
+    :return: boolean
+    """
+    if attachment.get('attachment'): # retrieve object reference
+        attachment = superdesk.get_resource_service('attachments').find_one(req=None, _id=attachment['attachment'])
+    return not attachment.get('internal')
 
 def remove_metadata_for_publish(item):
     """Remove metadata from item that should not be public.
@@ -654,14 +663,8 @@ def remove_metadata_for_publish(item):
     :return: item
     """
 
-    def filter_internal_attachment(attachment):
-        if attachment.get('attachment'): # retrieve object reference
-            attachment = superdesk.get_resource_service('attachments').find_one(req=None, _id=attachment['attachment'])
-        return not attachment.get('internal')
-
-    # Remove attachments that are internal
     if len(item.get('attachments', [])) > 0:
-        item['attachments'] = filter(filter_internal_attachment, item['attachments'])
+        item['attachments'] = list(filter(is_attachment_public, item['attachments']))
 
     return item
 

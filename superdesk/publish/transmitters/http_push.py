@@ -129,9 +129,6 @@ class HTTPPushService(PublishService):
                 }})
             return media
 
-        # Remove internal metadata
-        item = remove_metadata_for_publish(item)
-
         media = {}
         media.update(parse_media(item))
 
