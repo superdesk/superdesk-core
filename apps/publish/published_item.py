@@ -30,7 +30,6 @@ from apps.archive.common import handle_existing_data, item_schema
 from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
 from apps.content import push_content_notification
 from flask_babel import _
-from copy import copy
 
 logger = logging.getLogger(__name__)
 
@@ -172,7 +171,7 @@ class PublishedItemService(BaseService):
 
     def on_updated(self, updates, original):
         if 'marked_for_user' in updates:
-            updated = copy(original)
+            updated = original.copy()
             updated.update(updates)
             # Send notification on mark-for-user operation
             get_resource_service('archive').handle_mark_user_notifications(updates, original)
