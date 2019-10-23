@@ -23,14 +23,14 @@ from superdesk.activity import add_activity
 from superdesk.filemeta import set_filemeta
 from superdesk.timer import timer
 from superdesk.errors import SuperdeskApiError
-from superdesk.media.video_editor import VideoEditorService
+from superdesk.media.video_editor import VideoEditorWrapper
 import magic
 
 logger = logging.getLogger(__name__)
 
 
 class ArchiveMediaService():
-    videoEditor = VideoEditorService()
+    videoEditor = VideoEditorWrapper()
 
     type_av = {'image': CONTENT_TYPE.PICTURE, 'audio': CONTENT_TYPE.AUDIO, 'video': CONTENT_TYPE.VIDEO}
 
@@ -50,7 +50,7 @@ class ArchiveMediaService():
                 # upload media to video server
                 res, renditions, metadata = self.upload_file_to_video_server(doc)
                 # get thumbnails for timeline bar
-                self.videoEditor.get_timeline_thumbnails(doc.get('media'), 40)
+                self.videoEditor.create_timeline_thumbnails(doc.get('media'), 40)
             else:
                 file, content_type, metadata = self.get_file_from_document(doc)
                 inserted = [doc['media']]
@@ -122,7 +122,7 @@ class ArchiveMediaService():
         :return:
         """
         # upload video to video server
-        res = self.videoEditor.post(doc.get('media'))
+        res = self.videoEditor.create(doc.get('media'))
         doc['media'] = res['_id']
         metadata = res.get('metadata')
         # create renditions

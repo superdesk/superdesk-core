@@ -2,7 +2,7 @@ import superdesk
 from apps.archive.common import ARCHIVE
 from superdesk import config
 from superdesk.errors import SuperdeskApiError
-from superdesk.media.video_editor import VideoEditorService
+from superdesk.media.video_editor import VideoEditorWrapper
 from superdesk.metadata.utils import item_url
 
 
@@ -12,7 +12,7 @@ class VideoEditService(superdesk.Service):
     Use ffmpeg to create thumbnail and cutting video
     """
 
-    video_editor = VideoEditorService()
+    videoEditor = VideoEditorWrapper()
 
     def create(self, docs, **kwargs):
         ids = []
@@ -22,44 +22,29 @@ class VideoEditService(superdesk.Service):
             media_id = item['media']
             renditions = item.get('renditions', {})
             # push task capture preview thumbnail to video server
-            capture = {}
-            edit = {}
+            project = {}
             if 'capture' in doc:
                 # Remove empty value in updates to avoid cerberus return invalid input error
-                capture = validate_edit_data(doc.pop('capture'))
+                capture = doc.pop('capture')
                 if capture:
-                    self.video_editor.get_preview_thumbnail(media_id, position=capture.get('position'),
-                                                            crop=capture.get('crop'),
-                                                            rotate=capture.get('rotate')
-                                                            )
+                    project = self.videoEditor.capture_preview_thumbnail(media_id, position=capture.get('position'),
+                                                                         crop=capture.get('crop'),
+                                                                         rotate=capture.get('rotate')
+                                                                         )
+                    renditions.setdefault('thumbnail', {}).update({
+                        'href': project['thumbnails']['preview'].get('url'),
+                        'mimetype': project['thumbnails']['preview'].get('mime_type', 'image/png'),
+                    })
             # push task edit video to video server
             if 'edit' in doc:
-                # Remove empty values in updates to avoid invalid input
-                edit = validate_edit_data(doc.pop('edit'))
-                # duplicate original video before edit to avoid override
+                edit = doc.pop('edit')                
                 if edit:
-                    if renditions.get('original', {}).get('version', 1) == 1:
-                        response = self.video_editor.duplicate(media_id)
-                        media_id = response.get('_id', media_id)
-                    try:
-                        self.video_editor.put(media_id, edit)
-                    except SuperdeskApiError as ex:
-                        if response:
-                            self.video_editor.delete(media_id)
-                        raise ex
-            # get data video
-            project = self.video_editor.get(media_id)
-            if capture:
-                renditions.setdefault('thumbnail', {}).update({
-                    'href': project['thumbnails']['preview'].get('url'),
-                    'mimetype': project['thumbnails']['preview'].get('mime_type', 'image/png'),
-                })
-            if edit:
-                renditions.setdefault('original', {}).update({
-                    'href': project['url'],
-                    'version': project['version'] + 1,
-                    'video_editor_id': media_id,
-                })
+                    project = self.videoEditor.edit(media_id, edit)
+                    renditions.setdefault('original', {}).update({
+                        'href': project['url'],
+                        'version': project['version'] + 1,
+                        'video_editor_id': media_id,
+                    })
             if renditions:
                 updates = self.patch(item_id, {
                     'renditions': renditions,
@@ -77,12 +62,12 @@ class VideoEditService(superdesk.Service):
         video_id = res['media']
         response = None
         if action == 'timeline':
-            response = self.video_editor.get_timeline_thumbnails(video_id, req.args.get('amount', 40))
+            response = self.videoEditor.create_timeline_thumbnails(video_id, req.args.get('amount', 40))
             return {
                 config.ID_FIELD: video_id,
                 **response
             }
-        res['project'] = self.video_editor.get(video_id)
+        res['project'] = self.videoEditor.find_one(video_id)
         return res
 
     def on_replace(self, document, original):
@@ -94,7 +79,7 @@ class VideoEditService(superdesk.Service):
         # avoid dump file storage
         file = document.pop('file')
         project = original.pop('project')
-        data = self.video_editor.post_preview_thumbnail(project.get('_id'), file)
+        data = self.videoEditor.upload_preview_thumbnail(project.get('_id'), file)
         document.update(original)
         renditions = document.get('renditions', {})
         renditions.setdefault('thumbnail', {}).update({
@@ -117,22 +102,59 @@ class VideoEditResource(superdesk.Resource):
     schema = {
         'file': {'type': 'file'},
         'item': {'type': 'dict', 'required': False, 'empty': True},
-        'edit': {'type': 'dict', 'required': False, 'empty': False},
-        'capture': {'type': 'dict', 'required': False, 'empty': False},
+        'edit': {'type': 'dict',
+                 'required': False,
+                 'empty': False,
+                 'schema': {
+                     'trim': {
+                         'required': False,
+                         'regex': '^\\d+\\.?\\d*,\\d+\\.?\\d*$',
+                         'min_trim_start': 0,
+                         'min_trim_end': 1
+
+                     },
+                     'rotate': {
+                         'type': 'integer',
+                         'required': False,
+                         'allowed': [-270, -180, -90, 90, 180, 270]
+                     },
+                     'scale': {
+                         'type': 'integer',
+                         'required': False
+                     },
+                     'crop': {
+                         'required': False,
+                         'regex': '^\\d+,\\d+,\\d+,\\d+$'
+                     }
+                 }
+                 },
+        'capture': {'type': 'dict',
+                    'required': False,
+                    'empty': False,
+                    'schema': {
+                        'trim': {
+                            'required': False,
+                            'regex': '^\\d+\\.?\\d*,\\d+\\.?\\d*$',
+                            'min_trim_start': 0,
+                            'min_trim_end': 1
+
+                        },
+                        'rotate': {
+                            'type': 'integer',
+                            'required': False,
+                            'allowed': [-270, -180, -90, 90, 180, 270]
+                        },
+                        'scale': {
+                            'type': 'integer',
+                            'required': False
+                        },
+                        'crop': {
+                            'required': False,
+                            'regex': '^\\d+,\\d+,\\d+,\\d+$'
+                        }
+                    }
+                    },
     }
-
-
-def validate_edit_data(data):
-    for action in data.copy().keys():
-        if not data[action]:
-            data.pop(action)
-            continue
-        if action == 'crop':
-            for k, v in data[action].items():
-                if v < 0:
-                    data[action][k] = 0
-    return data
-
 
 def init_app(app):
     video_edit_service = VideoEditService(ARCHIVE, backend=superdesk.get_backend())
