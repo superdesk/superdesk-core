@@ -1,10 +1,17 @@
+"""
+News resource
+=============
+
+It is an alias for archive without filtering out published items.
+"""
+
 
 from superdesk.resource import build_custom_hateoas
-from .archive import ArchiveResource, ArchiveService
-from .common import CUSTOM_HATEOAS
+from apps.archive.archive import ArchiveResource, ArchiveService
+from apps.archive.common import CUSTOM_HATEOAS
 
 
-class ProductionResource(ArchiveResource):
+class NewsResource(ArchiveResource):
     datasource = ArchiveResource.datasource.copy()
     datasource.update({
         'source': 'archive',
@@ -17,7 +24,7 @@ class ProductionResource(ArchiveResource):
     item_methods = []
 
 
-class ProductionService(ArchiveService):
+class NewsService(ArchiveService):
 
     def get(self, req, lookup):
         docs = super().get(req, lookup)
