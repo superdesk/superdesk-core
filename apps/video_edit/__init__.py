@@ -8,11 +8,10 @@ from superdesk.metadata.utils import item_url
 
 class VideoEditService(superdesk.Service):
     """
-    Edit video
-    Use ffmpeg to create thumbnail and cutting video
+    Use video server for editing video.
     """
 
-    videoEditor = VideoEditorWrapper()
+    video_editor = VideoEditorWrapper()
 
     def create(self, docs, **kwargs):
         ids = []
@@ -27,7 +26,7 @@ class VideoEditService(superdesk.Service):
                 # Remove empty value in updates to avoid cerberus return invalid input error
                 capture = doc.pop('capture')
                 if capture:
-                    project = self.videoEditor.capture_preview_thumbnail(media_id, position=capture.get('position'),
+                    project = self.video_editor.capture_preview_thumbnail(media_id, position=capture.get('position'),
                                                                          crop=capture.get('crop'),
                                                                          rotate=capture.get('rotate')
                                                                          )
@@ -37,9 +36,9 @@ class VideoEditService(superdesk.Service):
                     })
             # push task edit video to video server
             if 'edit' in doc:
-                edit = doc.pop('edit')                
+                edit = doc.pop('edit')
                 if edit:
-                    project = self.videoEditor.edit(media_id, edit)
+                    project = self.video_editor.edit(media_id, edit)
                     renditions.setdefault('original', {}).update({
                         'href': project['url'],
                         'version': project['version'] + 1,
@@ -62,12 +61,12 @@ class VideoEditService(superdesk.Service):
         video_id = res['media']
         response = None
         if action == 'timeline':
-            response = self.videoEditor.create_timeline_thumbnails(video_id, req.args.get('amount', 40))
+            response = self.video_editor.create_timeline_thumbnails(video_id, req.args.get('amount', 40))
             return {
                 config.ID_FIELD: video_id,
                 **response
             }
-        res['project'] = self.videoEditor.find_one(video_id)
+        res['project'] = self.video_editor.find_one(video_id)
         return res
 
     def on_replace(self, document, original):
@@ -79,7 +78,7 @@ class VideoEditService(superdesk.Service):
         # avoid dump file storage
         file = document.pop('file')
         project = original.pop('project')
-        data = self.videoEditor.upload_preview_thumbnail(project.get('_id'), file)
+        data = self.video_editor.upload_preview_thumbnail(project.get('_id'), file)
         document.update(original)
         renditions = document.get('renditions', {})
         renditions.setdefault('thumbnail', {}).update({
@@ -109,9 +108,6 @@ class VideoEditResource(superdesk.Resource):
                      'trim': {
                          'required': False,
                          'regex': '^\\d+\\.?\\d*,\\d+\\.?\\d*$',
-                         'min_trim_start': 0,
-                         'min_trim_end': 1
-
                      },
                      'rotate': {
                          'type': 'integer',
@@ -135,9 +131,6 @@ class VideoEditResource(superdesk.Resource):
                         'trim': {
                             'required': False,
                             'regex': '^\\d+\\.?\\d*,\\d+\\.?\\d*$',
-                            'min_trim_start': 0,
-                            'min_trim_end': 1
-
                         },
                         'rotate': {
                             'type': 'integer',
@@ -155,6 +148,7 @@ class VideoEditResource(superdesk.Resource):
                     }
                     },
     }
+
 
 def init_app(app):
     video_edit_service = VideoEditService(ARCHIVE, backend=superdesk.get_backend())

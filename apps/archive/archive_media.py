@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 class ArchiveMediaService():
-    videoEditor = VideoEditorWrapper()
+    video_editor = VideoEditorWrapper()
 
     type_av = {'image': CONTENT_TYPE.PICTURE, 'audio': CONTENT_TYPE.AUDIO, 'video': CONTENT_TYPE.VIDEO}
 
@@ -45,12 +45,12 @@ class ArchiveMediaService():
             doc['media'].seek(0)
             file_type = content_type.split('/')[0]
             if file_type == 'video' and app.config.get("VIDEO_SERVER_ENABLE"):
-                if not self.videoEditor.check_video_server():
+                if not self.video_editor.check_video_server():
                     raise SuperdeskApiError(message="Cannot connect to videoserver", status_code=500)
                 # upload media to video server
                 res, renditions, metadata = self.upload_file_to_video_server(doc)
                 # get thumbnails for timeline bar
-                self.videoEditor.create_timeline_thumbnails(doc.get('media'), 40)
+                self.video_editor.create_timeline_thumbnails(doc.get('media'), 40)
             else:
                 file, content_type, metadata = self.get_file_from_document(doc)
                 inserted = [doc['media']]
@@ -74,7 +74,7 @@ class ArchiveMediaService():
                 for file_id in inserted:
                     delete_file_on_error(doc, file_id)
                 if res:
-                    self.videoEditor.delete(res.get('_id'))
+                    self.video_editor.delete(res.get('_id'))
                 abort(500)
 
     def _set_metadata(self, doc):
@@ -122,7 +122,7 @@ class ArchiveMediaService():
         :return:
         """
         # upload video to video server
-        res = self.videoEditor.create(doc.get('media'))
+        res = self.video_editor.create(doc.get('media'))
         doc['media'] = res['_id']
         metadata = res.get('metadata')
         # create renditions
