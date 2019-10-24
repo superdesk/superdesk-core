@@ -1,7 +1,7 @@
-Feature: News Items Production
+Feature: News Items resource
 
     @auth
-    Scenario: Can display all items no matter what's the status
+    Scenario: It can display all items no matter what's the status
         When we post to "archive"
         """
         [
@@ -9,7 +9,7 @@ Feature: News Items Production
             {"guid": "published", "version": 1, "state": "published"}
         ]
         """
-        And we get "/production"
+        And we get "/news"
         Then we get list with 2 items
         """
         {
@@ -25,12 +25,13 @@ Feature: News Items Production
         }
         """
 
+    @auth
     Scenario: Keep it readonly for now
-        When we post to "published"
+        When we post to "news"
         """
         [
             {"guid": "in_progress", "version": 1, "state": "in_progress"},
             {"guid": "published", "version": 1, "state": "published"}
         ]
         """
-        Then we get error 401
+        Then we get error 405
