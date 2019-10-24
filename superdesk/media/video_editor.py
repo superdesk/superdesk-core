@@ -40,13 +40,13 @@ class VideoEditorWrapper():
     def edit(self, _id, updates):
         project = self._get(_id)
         if project.get('version', 1) == 1:
-            response = self._duplicate(media_id)
-            media_id = response.get('_id', media_id)
+            response = self._duplicate(_id)
+            _id = response.get('_id', _id)
         try:
-            self._put(media_id, updates)
+            self._put(_id, updates)
         except SuperdeskApiError as ex:
             if response:
-                self._delete(media_id)
+                self._delete(_id)
             raise ex
         return self._get(_id)
 

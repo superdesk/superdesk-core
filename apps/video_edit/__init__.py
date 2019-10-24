@@ -21,7 +21,6 @@ class VideoEditService(superdesk.Service):
             media_id = item['media']
             renditions = item.get('renditions', {})
             # push task capture preview thumbnail to video server
-            project = {}
             if 'capture' in doc:
                 # Remove empty value in updates to avoid cerberus return invalid input error
                 capture = doc.pop('capture')
@@ -39,6 +38,7 @@ class VideoEditService(superdesk.Service):
                 edit = doc.pop('edit')
                 if edit:
                     project = self.video_editor.edit(media_id, edit)
+                    media_id = project.get('_id')
                     renditions.setdefault('original', {}).update({
                         'href': project['url'],
                         'version': project['version'] + 1,
