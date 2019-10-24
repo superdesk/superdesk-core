@@ -41,6 +41,18 @@ class AttachmentsService(superdesk.Service):
         current_app.media.delete(doc['media'], RESOURCE)
 
 
+def is_attachment_public(attachment):
+    """Retuns true if attachment is public. False if it's internal.
+
+    :param attachment: Attachment object or id inside attachment attribute
+    :return: boolean
+    """
+    if attachment.get('attachment'): # retrieve object reference
+        attachment = superdesk.get_resource_service('attachments').find_one(req=None, _id=attachment['attachment'])
+
+    return not attachment.get('internal')
+
+
 def init_app(app):
     superdesk.register_resource(RESOURCE, AttachmentsResource, AttachmentsService)
     app.client_config['attachments_max_files'] = app.config.get('ATTACHMENTS_MAX_FILES', 10)
