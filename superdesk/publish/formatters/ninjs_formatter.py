@@ -427,16 +427,16 @@ class NINJSFormatter(Formatter):
         for attachment_ref in article['attachments']:
             attachment = attachments_service.find_one(req=None, _id=attachment_ref['attachment'])
             if superdesk.attachments.is_attachment_public(attachment): # don't save internal attachments
-              output.append({
-                  'id': str(attachment['_id']),
-                  'title': attachment['title'],
-                  'description': attachment['description'],
-                  'filename': attachment['filename'],
-                  'mimetype': attachment['mimetype'],
-                  'length': attachment.get('length'),
-                  'media': str(attachment['media']),
-                  'href': '/assets/{}'.format(str(attachment['media'])),
-              })
+                output.append({
+                    'id': str(attachment['_id']),
+                    'title': attachment['title'],
+                    'description': attachment['description'],
+                    'filename': attachment['filename'],
+                    'mimetype': attachment['mimetype'],
+                    'length': attachment.get('length'),
+                    'media': str(attachment['media']),
+                    'href': '/assets/{}'.format(str(attachment['media'])),
+                })
         return output
 
     def _format_authors(self, article):
