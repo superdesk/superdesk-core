@@ -6,6 +6,11 @@ Feature: Translate Content
       """
       [{"type":"text", "headline": "test1", "guid": "123", "original_creator": "abc", "state": "draft",  "language": "en-CA", "body_html": "$10", "firstcreated": "2018-01-01T01:01:01+0000"}]
       """
+      And "desks"
+      """
+      [{"name": "Sports"}]
+      """
+
       When we post to "/archive/translate"
       """
       {"guid": "123", "language": "en-AU"}
@@ -29,7 +34,27 @@ Feature: Translate Content
       And we get "/archive/#translate._id#"
       Then we get existing resource
       """
-      {"language": "de", "translation_id": "123"}
+      {"language": "de", "translation_id": "123", "translations": "__none__"}
+      """
+
+      When we post to "/archive/translate"
+      """
+      {"guid": "123", "language": "en-AU"}
+      """
+      And we get "/archive/#translate._id#"
+      Then we get existing resource
+      """
+      {"language": "en-AU", "translation_id": "123", "translated_from": "123", "translations": "__none__"}
+      """
+
+      When we post to "/archive/#translate._id#/duplicate"
+      """
+      {"desk": "#desks._id#", "type": "archive"}
+      """
+      When we get "/archive/#duplicate._id#"
+      Then we get existing resource
+      """
+      {"translation_id": "__none__", "translations": "__none__", "translated_from": "__none__"}
       """
 
     @auth
