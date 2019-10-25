@@ -201,10 +201,15 @@ class ArchiveSpikeService(BaseService):
 
     def on_updated(self, updates, original):
         get_resource_service('archive_broadcast').spike_item(original)
+
         if original.get('lock_user'):
             user = get_user()
             auth = get_auth()
             push_unlock_notification(original, user['_id'], auth['_id'])
+
+        if updates.get('previous_marked_user') and not updates.get('marked_for_user'):
+            # send notification so that marked for me list can be updated
+            get_resource_service('archive').handle_mark_user_notifications(updates, original, False)
 
 
 class ArchiveUnspikeService(BaseService):

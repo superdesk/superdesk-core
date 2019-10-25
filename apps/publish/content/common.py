@@ -179,6 +179,11 @@ class BasePublishService(BaseService):
                               unique_name=original['unique_name'],
                               desk=str(original.get('task', {}).get('desk', '')),
                               user=str(user.get(config.ID_FIELD, '')))
+
+            if updates.get('previous_marked_user') and not updates.get('marked_for_user'):
+                # send notification so that marked for me list can be updated
+                get_resource_service('archive').handle_mark_user_notifications(updates, original, False)
+
         except SuperdeskApiError:
             raise
         except KeyError as e:

@@ -50,6 +50,8 @@ install_requires = [
     'croniter<0.4',
     'python-dateutil<2.8',
     'unidecode==0.04.21',
+    'authlib>0.12,<0.13',
+
 ]
 
 package_data = {
