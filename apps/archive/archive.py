@@ -952,11 +952,12 @@ class ArchiveService(BaseService):
 
         return False
 
-    def handle_mark_user_notifications(self, updates, original):
+    def handle_mark_user_notifications(self, updates, original, add_activity=True):
         """Notify user when item is marked or unmarked
 
         :param updates: updates to item that should be saved
         :param original: original item version before update
+        :param add_activity: flag to decide whether to add notification as activity or not
         """
         orig_marked_user = original.get('marked_for_user', None)
         new_marked_user = updates.get('marked_for_user', None)
@@ -974,7 +975,7 @@ class ArchiveService(BaseService):
                 headline=original.get('headline', original.get('slugline', 'item')), by_user=by_user)
 
             self._send_mark_user_notifications('item:unmarked', message, resource=self.datasource, item=original,
-                                               user_list=user_list)
+                                               user_list=user_list, add_activity=add_activity)
         else:
             # sent when mark item for user or mark to another user
             user_list = [marked_user]
@@ -986,17 +987,22 @@ class ArchiveService(BaseService):
                 by_user=by_user)
 
             self._send_mark_user_notifications('item:marked', message, resource=self.datasource, item=original,
-                                               user_list=user_list, marked_for_user=marked_for_user)
+                                               user_list=user_list,
+                                               add_activity=add_activity, marked_for_user=marked_for_user)
 
-    def _send_mark_user_notifications(self, activity_name, msg, resource=None, item=None, user_list=None, **data):
+    def _send_mark_user_notifications(self, activity_name, msg, resource=None, item=None, user_list=None,
+                                      add_activity=True, **data):
         """Send notifications on mark or unmark user operation
 
         :param activity_name: Name of the activity
         :param msg: Notification message to be sent
         :param resource: resource name generating this notification
         :param item: marked or unmarked article, default None
+        :param user_list: users to be notified
+        :param add_activity: flag to decide whether to add notification as activity or not
         :param data: kwargs
         """
+
         if item.get('type') == 'text':
             link_id = item.get('guid', item.get('_id'))
         else:
@@ -1008,9 +1014,10 @@ class ArchiveService(BaseService):
         client_url = app.config.get('CLIENT_URL', '').rstrip('/')
         link = '{}/#/workspace?item={}&action=view'.format(client_url, link_id)
 
-        notify_and_add_activity(activity_name, msg,
-                                resource=resource, item=item,
-                                user_list=user_list, link=link, **data)
+        if add_activity:
+            notify_and_add_activity(activity_name, msg,
+                                    resource=resource, item=item,
+                                    user_list=user_list, link=link, **data)
         # send separate notification for markForUser extension
         push_notification(activity_name,
                           item_id=item.get(config.ID_FIELD),
