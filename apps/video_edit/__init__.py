@@ -25,10 +25,11 @@ class VideoEditService(superdesk.Service):
                 # Remove empty value in updates to avoid cerberus return invalid input error
                 capture = doc.pop('capture')
                 if capture:
-                    project = self.video_editor.capture_preview_thumbnail(media_id, position=capture.get('position'),
-                                                                         crop=capture.get('crop'),
-                                                                         rotate=capture.get('rotate')
-                                                                         )
+                    project = self.video_editor.capture_preview_thumbnail(
+                        media_id, position=capture.get('position'),
+                        crop=capture.get('crop'),
+                        rotate=capture.get('rotate')
+                    )
                     renditions.setdefault('thumbnail', {}).update({
                         'href': project['thumbnails']['preview'].get('url'),
                         'mimetype': project['thumbnails']['preview'].get('mime_type', 'image/png'),
@@ -57,10 +58,9 @@ class VideoEditService(superdesk.Service):
         res = super().find_one(req, **lookup)
         if req is None:
             return res
-        action = req.args.get('action')
+
         video_id = res['media']
-        response = None
-        if action == 'timeline':
+        if req.args.get('action') == 'timeline':
             response = self.video_editor.create_timeline_thumbnails(video_id, req.args.get('amount', 40))
             return {
                 config.ID_FIELD: video_id,
@@ -128,9 +128,9 @@ class VideoEditResource(superdesk.Resource):
                     'required': False,
                     'empty': False,
                     'schema': {
-                        'trim': {
+                        'position': {
                             'required': False,
-                            'regex': '^\\d+\\.?\\d*,\\d+\\.?\\d*$',
+                            'type': 'float',
                         },
                         'rotate': {
                             'type': 'integer',

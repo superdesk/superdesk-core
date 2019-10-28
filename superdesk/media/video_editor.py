@@ -54,7 +54,7 @@ class VideoEditorWrapper():
         return self._get(_id)
 
     def capture_preview_thumbnail(self, _id, position=0, crop=None, rotate=None):
-        self._get_preview_thumbnail(_id, position=0, crop=None, rotate=None)
+        self._get_preview_thumbnail(_id, position, crop, rotate)
         return self._get(_id)
 
     def upload_preview_thumbnail(self, _id, file_storage):
