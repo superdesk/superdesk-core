@@ -28,84 +28,103 @@ class FilterConditionParametersService(BaseService):
     def get(self, req, lookup):
         values = self._get_field_values()
         fields = [{'field': 'anpa_category',
+                   'label': 'ANPA Category',
                    'operators': ['in', 'nin'],
                    'values': values.get('anpa_category', []),
                    'value_field': 'qcode'
                    },
                   {'field': 'urgency',
+                   'label': 'Urgency',
                    'operators': ['in', 'nin', 'eq', 'ne', 'lt', 'lte', 'gt', 'gte'],
                    'values': values.get('urgency', []),
                    'value_field': 'qcode'
                    },
                   {'field': 'genre',
+                   'label': 'Genre',
                    'operators': ['in', 'nin'],
                    'values': values.get('genre', []),
                    'value_field': 'qcode'
                    },
                   {'field': 'subject',
+                   'label': 'Subject',
                    'operators': ['in', 'nin'],
                    'values': values.get('subject', []),
                    'value_field': 'qcode'
                    },
                   {'field': 'priority',
+                   'label': 'Priority',
                    'operators': ['in', 'nin', 'eq', 'ne', 'lt', 'lte', 'gt', 'gte'],
                    'values': values.get('priority', []),
                    'value_field': 'qcode'
                    },
                   {'field': 'keywords',
+                   'label': 'Keywords',
                    'operators': ['in', 'nin']
                    },
                   {'field': 'slugline',
+                   'label': 'Slugline',
                    'operators': ['in', 'nin', 'eq', 'ne', 'like', 'notlike', 'startswith', 'endswith']
                    },
                   {'field': 'type',
+                   'label': 'Type',
                    'operators': ['in', 'nin', 'eq', 'ne'],
                    'values': values.get('type', []),
                    'value_field': 'qcode'
                    },
                   {'field': 'source',
+                   'label': 'Source',
                    'operators': ['in', 'nin', 'eq', 'ne', 'like', 'notlike', 'startswith', 'endswith']
                    },
                   {'field': 'headline',
+                   'label': 'Headline',
                    'operators': ['in', 'nin', 'eq', 'ne', 'like', 'notlike', 'startswith', 'endswith']
                    },
                   {'field': 'ednote',
+                   'label': 'Ednote',
                    'operators': ['in', 'nin', 'eq', 'ne', 'like', 'notlike', 'startswith', 'endswith']
                    },
                   {'field': 'body_html',
+                   'label': 'Body HTML',
                    'operators': ['in', 'nin', 'like', 'notlike', 'startswith', 'endswith']
                    },
                   {'field': 'desk',
+                   'label': 'Desk',
                    'operators': ['in', 'nin', 'eq', 'ne'],
                    'values': values['desk'],
                    'value_field': '_id'
                    },
                   {'field': 'stage',
+                   'label': 'Stage',
                    'operators': ['in', 'nin', 'eq', 'ne'],
                    'values': values['stage'],
                    'value_field': '_id'
                    },
                   {'field': 'sms',
+                   'label': 'SMS',
                    'operators': ['in', 'nin', 'eq', 'ne'],
                    'values': values['sms'],
                    'value_field': 'name'
                    },
                   {'field': 'place',
+                   'label': 'Place',
                    'operators': ['match', 'in', 'nin'],
                    'values': values['place'],
                    'value_field': 'qcode'
                    },
                   {'field': 'ingest_provider',
+                   'label': 'Ingest provider',
                    'operators': ['eq', 'ne'],
                    'values': values['ingest_provider'],
                    'value_field': '_id'
                    },
                   {'field': 'embargo',
+                   'label': 'Embargo',
                    'operators': ['eq', 'ne'],
                    'values': values['embargo'],
                    'value_field': 'name'
                    },
                   {'field': 'featuremedia',
+                   'label': 'Feature Media',
                    'operators': ['exists'],
                    'values': values['featuremedia'],
                    'value_field': 'name'
