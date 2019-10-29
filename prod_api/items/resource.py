@@ -29,3 +29,6 @@ class ItemsResource(Resource):
             'fields_meta': 0
         },
     }
+    privileges = {
+        'GET': 'ARCHIVE_READ'
+    }

@@ -29,6 +29,8 @@ from superdesk.validator import SuperdeskValidator
 from superdesk.factory.app import set_error_handlers
 from superdesk.factory.sentry import SuperdeskSentry
 
+from prod_api.auth import JWTAuth
+
 
 def get_app(config=None):
     """
@@ -66,6 +68,7 @@ def get_app(config=None):
         media_storage = AmazonMediaStorage
 
     app = Eve(
+        auth=JWTAuth,
         settings=app_config,
         data=SuperdeskDataLayer,
         media=media_storage,

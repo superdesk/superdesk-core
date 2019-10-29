@@ -54,3 +54,6 @@ ELASTIC_DATE_FORMAT = '%Y-%m-%d'
 
 # response in json
 XML = False
+
+# authorisation server
+AUTH_SERVER_SHARED_SECRET = env('AUTH_SERVER_SHARED_SECRET', '')
