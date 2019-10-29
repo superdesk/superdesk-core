@@ -94,15 +94,17 @@ To interact with the production API, clients need to be explicitly allowed to pe
 actions. This is done using the ``--scope`` argument when registering the client. The
 possible values are:
 
-=============  ======================================================
-permission     explanation
-=============  ======================================================
-ARCHIVE_READ   The client can read items from archive collection
-DESK_READ      The client can get desks metadata
-PLANNING_READ  The client can access planning, events and assignments
-CONTACT_READ   The client can get contacts metadata
-USERS_READ     The client can retrieve users
-=============  ======================================================
+================    ======================================================
+permission          explanation
+================    ======================================================
+ARCHIVE_READ        The client can read items from archive collection
+DESKS_READ          The client can get desks metadata
+PLANNING_READ       The client can retrieve planning items
+CONTACTS_READ       The client can get contacts metadata
+USERS_READ          The client can retrieve users
+ASSIGNMENTS_READ    The client can retrieve assignments
+EVENTS_READ         The client can retrieve events
+================    ======================================================
 
 Access token
 ------------
