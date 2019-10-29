@@ -34,6 +34,7 @@ import superdesk
 import logging
 import re
 
+from flask import current_app as app
 from eve.utils import config
 from superdesk.publish.formatters import Formatter
 from superdesk.errors import FormatterError
