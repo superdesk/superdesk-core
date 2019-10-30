@@ -10,6 +10,7 @@
 
 from superdesk.resource import Resource
 from superdesk.metadata.utils import item_url
+from superdesk.auth_server.scopes import Scope
 
 
 class ItemsResource(Resource):
@@ -30,5 +31,5 @@ class ItemsResource(Resource):
         },
     }
     privileges = {
-        'GET': 'ARCHIVE_READ'
+        'GET': Scope.ARCHIVE_READ.name
     }
