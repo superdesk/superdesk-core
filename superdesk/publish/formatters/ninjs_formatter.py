@@ -436,7 +436,7 @@ class NINJSFormatter(Formatter):
                     'mimetype': attachment['mimetype'],
                     'length': attachment.get('length'),
                     'media': str(attachment['media']),
-                    'href': app.media.url_for_media(attachment['media']),
+                    'href': '/assets/{}'.format(str(attachment['media'])),
                 })
         return output
 
