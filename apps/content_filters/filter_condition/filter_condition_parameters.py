@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import json
+from flask_babel import _
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.utils import ListCursor
@@ -28,103 +29,103 @@ class FilterConditionParametersService(BaseService):
     def get(self, req, lookup):
         values = self._get_field_values()
         fields = [{'field': 'anpa_category',
-                   'label': 'ANPA Category',
+                   'label': _('ANPA Category'),
                    'operators': ['in', 'nin'],
                    'values': values.get('anpa_category', []),
                    'value_field': 'qcode'
                    },
                   {'field': 'urgency',
-                   'label': 'Urgency',
+                   'label': _('Urgency'),
                    'operators': ['in', 'nin', 'eq', 'ne', 'lt', 'lte', 'gt', 'gte'],
                    'values': values.get('urgency', []),
                    'value_field': 'qcode'
                    },
                   {'field': 'genre',
-                   'label': 'Genre',
+                   'label': _('Genre'),
                    'operators': ['in', 'nin'],
                    'values': values.get('genre', []),
                    'value_field': 'qcode'
                    },
                   {'field': 'subject',
-                   'label': 'Subject',
+                   'label': _('Subject'),
                    'operators': ['in', 'nin'],
                    'values': values.get('subject', []),
                    'value_field': 'qcode'
                    },
                   {'field': 'priority',
-                   'label': 'Priority',
+                   'label': _('Priority'),
                    'operators': ['in', 'nin', 'eq', 'ne', 'lt', 'lte', 'gt', 'gte'],
                    'values': values.get('priority', []),
                    'value_field': 'qcode'
                    },
                   {'field': 'keywords',
-                   'label': 'Keywords',
+                   'label': _('Keywords'),
                    'operators': ['in', 'nin']
                    },
                   {'field': 'slugline',
-                   'label': 'Slugline',
+                   'label': _('Slugline'),
                    'operators': ['in', 'nin', 'eq', 'ne', 'like', 'notlike', 'startswith', 'endswith']
                    },
                   {'field': 'type',
-                   'label': 'Type',
+                   'label': _('Type'),
                    'operators': ['in', 'nin', 'eq', 'ne'],
                    'values': values.get('type', []),
                    'value_field': 'qcode'
                    },
                   {'field': 'source',
-                   'label': 'Source',
+                   'label': _('Source'),
                    'operators': ['in', 'nin', 'eq', 'ne', 'like', 'notlike', 'startswith', 'endswith']
                    },
                   {'field': 'headline',
-                   'label': 'Headline',
+                   'label': _('Headline'),
                    'operators': ['in', 'nin', 'eq', 'ne', 'like', 'notlike', 'startswith', 'endswith']
                    },
                   {'field': 'ednote',
-                   'label': 'Ednote',
+                   'label': _('Ednote'),
                    'operators': ['in', 'nin', 'eq', 'ne', 'like', 'notlike', 'startswith', 'endswith']
                    },
                   {'field': 'body_html',
-                   'label': 'Body HTML',
+                   'label': _('Body HTML'),
                    'operators': ['in', 'nin', 'like', 'notlike', 'startswith', 'endswith']
                    },
                   {'field': 'desk',
-                   'label': 'Desk',
+                   'label': _('Desk'),
                    'operators': ['in', 'nin', 'eq', 'ne'],
                    'values': values['desk'],
                    'value_field': '_id'
                    },
                   {'field': 'stage',
-                   'label': 'Stage',
+                   'label': _('Stage'),
                    'operators': ['in', 'nin', 'eq', 'ne'],
                    'values': values['stage'],
                    'value_field': '_id'
                    },
                   {'field': 'sms',
-                   'label': 'SMS',
+                   'label': _('SMS'),
                    'operators': ['in', 'nin', 'eq', 'ne'],
                    'values': values['sms'],
                    'value_field': 'name'
                    },
                   {'field': 'place',
-                   'label': 'Place',
+                   'label': _('Place'),
                    'operators': ['match', 'in', 'nin'],
                    'values': values['place'],
                    'value_field': 'qcode'
                    },
                   {'field': 'ingest_provider',
-                   'label': 'Ingest provider',
+                   'label': _('Ingest provider'),
                    'operators': ['eq', 'ne'],
                    'values': values['ingest_provider'],
                    'value_field': '_id'
                    },
                   {'field': 'embargo',
-                   'label': 'Embargo',
+                   'label': _('Embargo'),
                    'operators': ['eq', 'ne'],
                    'values': values['embargo'],
                    'value_field': 'name'
                    },
                   {'field': 'featuremedia',
-                   'label': 'Feature Media',
+                   'label': _('Feature Media'),
                    'operators': ['exists'],
                    'values': values['featuremedia'],
                    'value_field': 'name'
