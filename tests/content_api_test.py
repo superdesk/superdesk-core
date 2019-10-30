@@ -579,18 +579,23 @@ class ContentAPITestCase(TestCase):
     def test_publish_item_with_internal_attachments(self):
         media = io.BytesIO(b'content')
         data = {'media': (media, 'media.txt')}
-        attachment = {'title': 'Test', 'description': 'test', 'internal': True}
+        internal_attachment = {'title': 'Test Internal', 'description': 'test', 'internal': True}
+        public_attachment = {'title': 'Test', 'description': 'test', 'internal': False}
         with self.app.test_request_context('attachments', method='POST', data=data):
-            attachment['media'] = request.files['media']
-            store_media_files(attachment, 'attachments')
-            superdesk.get_resource_service('attachments').post([attachment])
-        self.assertIn('_id', attachment)
-        self.assertIsInstance(attachment['media'], ObjectId)
+            internal_attachment['media'] = request.files['media']
+            public_attachment['media'] = request.files['media']
+            store_media_files(internal_attachment, 'attachments')
+            store_media_files(public_attachment, 'attachments')
+            superdesk.get_resource_service('attachments').post([internal_attachment, public_attachment])
+        self.assertIn('_id', internal_attachment)
+        self.assertIn('_id', public_attachment)
+        self.assertIsInstance(internal_attachment['media'], ObjectId)
+        self.assertIsInstance(public_attachment['media'], ObjectId)
 
         item = {
             'guid': 'foo-internal',
             'type': 'text',
-            'attachments': [{'attachment': attachment['_id']}],
+            'attachments': [{'attachment': internal_attachment['_id']}, {'attachment': public_attachment['_id']}],
             'body_html': '<p>Foo Bar</p>'
         }
 
@@ -602,8 +607,9 @@ class ContentAPITestCase(TestCase):
 
         self.assertIn('attachments', data)
         attachments = data['attachments']
-        # there is only one attachment and it shouldn't be publish as it is internal
-        self.assertEqual(0, len(attachments))
+        # there should be only one attachment (public one)
+        self.assertEqual(1, len(attachments))
+        self.assertEqual(str(public_attachment['_id']), attachments[0]['id'])
 
     def test_items_default_sorting(self):
         subscriber = {'_id': 'sub1'}

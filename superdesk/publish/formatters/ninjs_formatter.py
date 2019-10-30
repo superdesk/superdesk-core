@@ -34,6 +34,7 @@ import superdesk
 import logging
 import re
 
+from flask import current_app as app
 from eve.utils import config
 from superdesk.publish.formatters import Formatter
 from superdesk.errors import FormatterError
@@ -426,16 +427,17 @@ class NINJSFormatter(Formatter):
         attachments_service = superdesk.get_resource_service('attachments')
         for attachment_ref in article['attachments']:
             attachment = attachments_service.find_one(req=None, _id=attachment_ref['attachment'])
-            output.append({
-                'id': str(attachment['_id']),
-                'title': attachment['title'],
-                'description': attachment['description'],
-                'filename': attachment['filename'],
-                'mimetype': attachment['mimetype'],
-                'length': attachment.get('length'),
-                'media': str(attachment['media']),
-                'href': '/assets/{}'.format(str(attachment['media'])),
-            })
+            if superdesk.attachments.is_attachment_public(attachment): # don't save internal attachments
+                output.append({
+                    'id': str(attachment['_id']),
+                    'title': attachment['title'],
+                    'description': attachment['description'],
+                    'filename': attachment['filename'],
+                    'mimetype': attachment['mimetype'],
+                    'length': attachment.get('length'),
+                    'media': str(attachment['media']),
+                    'href': '/assets/{}'.format(str(attachment['media'])),
+                })
         return output
 
     def _format_authors(self, article):

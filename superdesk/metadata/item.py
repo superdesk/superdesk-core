@@ -13,7 +13,6 @@ from superdesk.resource import Resource, not_analyzed, not_indexed, not_enabled
 from .packages import LINKED_IN_PACKAGES, PACKAGE
 from eve.utils import config
 from superdesk.utils import SuperdeskBaseEnum
-import superdesk
 
 GUID_TAG = 'tag'
 GUID_FIELD = 'guid'
@@ -653,15 +652,10 @@ def remove_metadata_for_publish(item):
     :param item: Item containing the metadata
     :return: item
     """
+    from superdesk.attachments import is_attachment_public
 
-    def filter_internal_attachment(attachment):
-        if attachment.get('attachment'): # retrieve object reference
-            attachment = superdesk.get_resource_service('attachments').find_one(req=None, _id=attachment['attachment'])
-        return not attachment.get('internal')
-
-    # Remove attachments that are internal
     if len(item.get('attachments', [])) > 0:
-        item['attachments'] = filter(filter_internal_attachment, item['attachments'])
+        item['attachments'] = [attachment for attachment in item['attachments'] if is_attachment_public(attachment)]
 
     return item
 
