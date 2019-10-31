@@ -33,4 +33,5 @@ def init_app(app):
         'validator_media_metadata': app.config.get('VALIDATOR_MEDIA_METADATA', {}),
         'publish_content_expiry_minutes': app.config.get('PUBLISHED_CONTENT_EXPIRY_MINUTES', 0),
         'high_priority_queue_enabled': app.config.get('HIGH_PRIORITY_QUEUE_ENABLED'),
+        'default_language': app.config.get('DEFAULT_LANGUAGE'),
     })
