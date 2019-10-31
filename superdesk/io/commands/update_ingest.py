@@ -515,6 +515,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
 
         item['ingest_provider'] = str(provider[superdesk.config.ID_FIELD])
         item.setdefault('source', provider.get('source', ''))
+        item.setdefault('uri', item[GUID_FIELD])  # keep it as original guid
         set_default_state(item, CONTENT_STATE.INGESTED)
         item['expiry'] = get_expiry_date(provider.get('content_expiry') or app.config['INGEST_EXPIRY_MINUTES'],
                                          item.get('versioncreated'))
@@ -565,6 +566,8 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
                     if status:
                         assoc['_id'] = ids[0]
                         items_ids.extend(ids)
+            elif assoc.get('residRef'):
+                item['associations'][key] = resolve_ref(assoc)
 
         new_version = True
         if old_item:
@@ -592,6 +595,13 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
         ProviderError.ingestItemError(ex, provider, item=item)
         return False, []
     return True, items_ids
+
+
+def resolve_ref(assoc):
+    """Resolve reference to existing item."""
+    uri = assoc.pop('residRef')
+    item = superdesk.get_resource_service('archive').find_one(req=None, uri=uri)
+    return item
 
 
 NEW_VERSION_IGNORE_FIELS = (
