@@ -498,3 +498,33 @@ class NINJSFormatter(Formatter):
             return formatted_doc.replace('\'\'', '\'')
         else:
             raise Exception()
+
+
+class NINJS2Formatter(NINJSFormatter):
+    """NINJS formatter v2
+
+    .. versionadded:: 2.0
+
+    Extending :py:class:`NINJSFormatter` to avoid breaking changes.
+
+    *Changes*:
+
+    - user ``correction_sequence`` for ``version`` field, so it's 1, 2, 3, ... in the output
+    - add ``rewrite_sequence`` field
+    - add ``rewrite_of`` field
+
+    """
+
+    direct_copy_properties = NINJSFormatter.direct_copy_properties + (
+        'rewrite_sequence',
+        'rewrite_of',
+    )
+
+    def __init__(self):
+        super().__init__()
+        self.format_type = 'ninjs2'
+
+    def _transform_to_ninjs(self, article, subscriber, recursive=True):
+        ninjs = super()._transform_to_ninjs(article, subscriber, recursive)
+        ninjs['version'] = str(article.get('correction_sequence', 1))
+        return ninjs
