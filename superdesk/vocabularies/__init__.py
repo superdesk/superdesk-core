@@ -10,8 +10,10 @@
 
 import superdesk
 
+from superdesk.signals import item_published
 from .vocabularies import VocabulariesResource, VocabulariesService
 from .commands import UpdateVocabulariesInItemsCommand # noqa
+from .keywords import add_missing_keywords
 
 
 def init_app(app):
@@ -24,3 +26,5 @@ def init_app(app):
         'category': 'cvs',
         'label': 'Prefered CV items',
     })
+
+    item_published.connect(add_missing_keywords)
