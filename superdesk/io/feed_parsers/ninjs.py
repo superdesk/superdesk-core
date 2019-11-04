@@ -140,7 +140,7 @@ class NINJSFeedParser(FeedParser):
 
     def datetime(self, string):
         try:
-            return datetime.datetime.strptime(string, '%Y-%m-%dT%H:%M:%S+0000')
+            return datetime.datetime.strptime(string, '%Y-%m-%dT%H:%M:%S+0000').replace(tzinfo=utc)
         except ValueError:
             return datetime.datetime.strptime(string, '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=utc)
 
