@@ -147,7 +147,7 @@ class FetchService(BaseService):
         Fetches the associated items of a given document
         """
         for key, item in (doc.get(ASSOCIATIONS) or {}).items():
-            if item.get('state') == 'ingested':
+            if item is not None and item.get('state') == 'ingested':
                 new_item = deepcopy(item)
                 new_item['desk'] = desk
                 new_item['stage'] = stage
