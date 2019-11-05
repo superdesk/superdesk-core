@@ -746,3 +746,9 @@ NO_CUSTOM_CROPS = strtobool(env('NO_CUSTOM_CROPS', 'false'))
 #: how long an authorisation token is valid (in seconds)
 AUTH_SERVER_EXPIRATION_DELAY = env('AUTH_SERVER_EXPIRATION_TIME', 60 * 60 * 24)  # 1 day by default
 AUTH_SERVER_SHARED_SECRET = env('AUTH_SERVER_SHARED_SECRET', '')
+
+#: Add missing keywords to *keywords* vocabulary when item is published
+#:
+#: .. versionadded:: 2.0
+#:
+KEYWORDS_ADD_MISSING_ON_PUBLISH = False

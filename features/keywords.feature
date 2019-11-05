@@ -27,6 +27,11 @@ Feature: Keywords
     @auth
     @notification
     Scenario: Save keywords on item publish
+    Given config update
+    """
+    {"KEYWORDS_ADD_MISSING_ON_PUBLISH": true}
+    """
+
     Given "archive"
     """
     [
