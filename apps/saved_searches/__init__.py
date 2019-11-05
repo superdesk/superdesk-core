@@ -158,7 +158,7 @@ def report():
 
             if do_update:
                 updates = {'subscribers': search['subscribers']}
-                saved_searches.update(search['_id'], updates, search)
+                saved_searches.system_update(search['_id'], updates, search)
     except Exception as e:
         logger.error("Can't report saved searches: {reason}".format(reason=e))
     finally:
