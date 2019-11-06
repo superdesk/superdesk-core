@@ -39,8 +39,7 @@ from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
 from apps.archive.common import get_user, insert_into_versions, item_operations, \
     FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM, remove_unwanted
 from apps.archive.common import validate_schedule, ITEM_OPERATION, update_schedule_settings, \
-    convert_task_attributes_to_objectId, \
-    get_expiry, get_utc_schedule, get_expiry_date
+    convert_task_attributes_to_objectId, get_expiry, get_utc_schedule, get_expiry_date, transtype_metadata
 from apps.common.components.utils import get_component
 from apps.item_autosave.components.item_autosave import ItemAutosave
 from apps.legal_archive.commands import import_into_legal_archive
@@ -110,6 +109,7 @@ class BasePublishService(BaseService):
         self._validate(original, updates)
         self._set_updates(original, updates, updates.get(config.LAST_UPDATED, utcnow()))
         convert_task_attributes_to_objectId(updates)  # ???
+        transtype_metadata(updates, original)
         self._process_publish_updates(original, updates)
         self._mark_media_item_as_used(updates, original)
 
