@@ -29,3 +29,4 @@ class TestCase(_TestCase):
         }
 
         self.prodapi = get_app(test_config)
+
