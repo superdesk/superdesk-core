@@ -541,6 +541,12 @@ metadata_schema = {
             'marked_for_sms': {
                 'type': 'boolean',
                 'default': False
+            },
+            'change_types': {
+                'type': 'string'
+            },
+            'change_types_tmp': {
+                'type': 'string'
             }
         }
     },
