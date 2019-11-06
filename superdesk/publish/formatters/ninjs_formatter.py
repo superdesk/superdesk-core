@@ -248,6 +248,9 @@ class NINJSFormatter(Formatter):
         if article.get('authors'):
             ninjs['authors'] = self._format_authors(article)
 
+        if article.get('unique_name'):
+            ninjs['extra'].update({'unique_name': article.get('unique_name')})
+
         if article.get('flags', {}).get('change_types_tmp') == "2":
             update_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             ninjs["extra"].update({"update_date": update_date})
