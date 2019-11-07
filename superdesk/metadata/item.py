@@ -541,6 +541,22 @@ metadata_schema = {
             'marked_for_sms': {
                 'type': 'boolean',
                 'default': False
+            },
+            'advertising': {
+                'type': 'boolean',
+                'default': True
+            },
+            'noFollow': {
+                'type': 'boolean',
+                'default': False
+            },
+            'noIndex': {
+                'type': 'boolean',
+                'default': False
+            },
+            'allowComments': {
+                'type': 'boolean',
+                'default': False
             }
         }
     },
