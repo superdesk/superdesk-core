@@ -39,6 +39,7 @@ class VideoEditorWrapper():
 
     def edit(self, _id, updates):
         project = self._get(_id)
+        response = {}
         if project.get('version', 1) == 1:
             response = self._duplicate(_id)
             _id = response.get('_id', _id)
