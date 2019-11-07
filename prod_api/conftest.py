@@ -1,4 +1,5 @@
 import pytest
+from bson import ObjectId
 
 from superdesk.tests import get_mongo_uri, setup
 from superdesk.factory import get_app as get_sd_app
@@ -8,6 +9,43 @@ from prod_api.app import get_app as get_prodapi_api
 
 MONGO_DB = 'prodapi_tests'
 ELASTICSEARCH_INDEX = 'prodapi_tests'
+AUTH_SERVER_SHARED_SECRET = '2kZOf0VI9T70vU9uMlKLyc5GlabxVgl6'
+
+
+def get_test_prodapi_app():
+    test_config = {
+        'DEBUG': True,
+        'TESTING': True,
+        'SUPERDESK_TESTING': True,
+        'MONGO_CONNECT': False,
+        'MONGO_MAX_POOL_SIZE': 1,
+        'MONGO_URI': get_mongo_uri('MONGO_URI', MONGO_DB),
+        'ELASTICSEARCH_INDEX': ELASTICSEARCH_INDEX,
+        'PRODAPI_URL_PREFIX': 'prodapi',
+        'URL_PREFIX': 'prodapi',
+        'AUTH_SERVER_SHARED_SECRET': AUTH_SERVER_SHARED_SECRET
+    }
+    prodapi_app = get_prodapi_api(test_config)
+
+    return prodapi_app
+
+
+def get_test_superdesk_app():
+    test_config = {
+        'MONGO_URI': get_mongo_uri('MONGO_URI', MONGO_DB),
+        'ELASTICSEARCH_INDEX': ELASTICSEARCH_INDEX,
+        'AUTH_SERVER_SHARED_SECRET': AUTH_SERVER_SHARED_SECRET,
+    }
+
+    def context():
+        pass
+
+    context.app = None
+    context.ctx = None
+    context.client = None
+    setup(context=context, config=test_config, app_factory=get_sd_app)
+
+    return context.app
 
 
 @pytest.fixture(scope='function')
@@ -19,17 +57,7 @@ def superdesk_app(request):
     :rtype: superdesk.factory.app.SuperdeskEve
     """
 
-    test_config = {
-        'MONGO_URI': get_mongo_uri('MONGO_URI', MONGO_DB),
-        'ELASTICSEARCH_INDEX': ELASTICSEARCH_INDEX,
-    }
-    context = lambda: None
-    context.app = None
-    context.ctx = None
-    context.client = None
-    setup(context=context, config=test_config, app_factory=get_sd_app)
-
-    return context.app
+    return get_test_superdesk_app()
 
 
 @pytest.fixture(scope='function')
@@ -41,20 +69,7 @@ def prodapi_app(request):
     :rtype: eve.flaskapp.Eve
     """
 
-    test_config = {
-        'DEBUG': True,
-        'TESTING': True,
-        'SUPERDESK_TESTING': True,
-        'MONGO_CONNECT': False,
-        'MONGO_MAX_POOL_SIZE': 1,
-        'MONGO_URI': get_mongo_uri('MONGO_URI', MONGO_DB),
-        'ELASTICSEARCH_INDEX': ELASTICSEARCH_INDEX,
-        'PRODAPI_URL_PREFIX': 'prodapi',
-        'URL_PREFIX': 'prodapi',
-    }
-    prodapi_app = get_prodapi_api(test_config)
-
-    return prodapi_app
+    return get_test_prodapi_app()
 
 
 @pytest.fixture(scope='function')
@@ -78,14 +93,17 @@ def superdesk_client(superdesk_app):
 
 
 @pytest.fixture(scope='function')
-def auth_server_registered_client(superdesk_app):
-    with superdesk_app.app_context():
-        client_data = {
-            "name": "soyuz-spacecraft",
-            "client_id": "0102030405060708090a0b0c",
-            "password": "secret_pwd_123",
-            "scope": ["ARCHIVE_READ"]
-        }
-        RegisterClient().run(**client_data)
+def auth_server_registered_clients(request, superdesk_app):
+    clients_data = []
 
-    return client_data
+    if request.param:
+        clients_data.append({
+            "name": str(ObjectId()),  # just a random string
+            "client_id": str(ObjectId()),
+            "password": str(ObjectId()),  # just a random string
+            "scope": request.param
+        })
+        with superdesk_app.app_context():
+            RegisterClient().run(**clients_data[-1])
+
+    return clients_data
