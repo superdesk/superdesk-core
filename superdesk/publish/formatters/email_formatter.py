@@ -22,7 +22,7 @@ from superdesk import etree as sd_etree
 class EmailFormatter(Formatter):
     """Superdesk Email formatter.
 
-    - Feature media renditions are passed on to the transmit service, which if configured will attach the media to
+    Feature media renditions are passed on to the transmit service, which if configured will attach the media to
     the email.
 
     It uses templates to render items, those can be overriden to customize the output:

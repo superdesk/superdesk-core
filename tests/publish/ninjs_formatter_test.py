@@ -15,7 +15,7 @@ from datetime import timedelta
 
 from superdesk.utc import utcnow
 from superdesk.tests import TestCase
-from superdesk.publish.formatters.ninjs_formatter import NINJSFormatter
+from superdesk.publish.formatters.ninjs_formatter import NINJSFormatter, NINJS2Formatter
 from superdesk.publish import init_app
 from bson import ObjectId
 
@@ -1485,3 +1485,30 @@ class NinjsFormatterTest(TestCase):
         seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
         ninjs = json.loads(doc)
         self.assertEqual(ninjs, expected)
+
+
+@mock.patch("superdesk.publish.subscribers.SubscribersService.generate_sequence_number", lambda self, subscriber: 1)
+class Ninjs2FormatterTest(TestCase):
+
+    def setUp(self):
+        self.formatter = NINJS2Formatter()
+
+    def test_format_type(self):
+        self.assertEqual('ninjs2', self.formatter.format_type)
+
+    def test_correction_sequence_number(self):
+        article = {
+            'guid': 'bar',
+            'type': 'text',
+            'correction_sequence': 2,
+            'rewrite_sequence': 1,
+            'rewrite_of': 'foo',
+            'version': 5,
+        }
+
+        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        ninjs = json.loads(doc)
+
+        self.assertEqual('2', ninjs.get('version'))
+        self.assertEqual(1, ninjs.get('rewrite_sequence'))
+        self.assertEqual('foo', ninjs.get('rewrite_of'))

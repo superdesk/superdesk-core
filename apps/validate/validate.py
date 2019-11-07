@@ -112,8 +112,10 @@ class SchemaValidator(Validator):
         super()._validate_empty(empty, field, value)
         if field == "subject":
             # for subject, we have to ignore all data with scheme
-            # as they are used for custom values
-            filtered = [v for v in value if not v.get('scheme')]
+            # as they are used for custom values except "subject_custom" scheme as it's the scheme for subject cv
+            # so it must be present
+            filtered = [v for v in value if not v.get('scheme') or v.get('scheme') == 'subject_custom']
+
             if not filtered:
                 self._error(field, REQUIRED_FIELD)
 

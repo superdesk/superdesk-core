@@ -503,7 +503,7 @@ class ArchiveService(BaseService):
         """
         new_doc = original_doc.copy()
 
-        self.remove_after_copy(new_doc, extra_fields)
+        self.remove_after_copy(new_doc, extra_fields, delete_keys=['marked_for_user'])
         on_duplicate_item(new_doc, original_doc, operation)
         resolve_document_version(new_doc, SOURCE, 'PATCH', new_doc)
 

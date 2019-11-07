@@ -143,10 +143,6 @@ class Formatter(metaclass=FormatterRegistry):
 
 
 def get_formatter(format_type, article):
-    """Get parser for given xml.
-
-    :param etree: parsed xml
-    """
     for formatter_cls in formatters:
         formatter_instance = formatter_cls()
         if formatter_instance.can_format(format_type, article):
@@ -159,7 +155,7 @@ def get_all_formatters():
 
 
 from .nitf_formatter import NITFFormatter  # NOQA
-from .ninjs_formatter import NINJSFormatter  # NOQA
+from .ninjs_formatter import NINJSFormatter, NINJS2Formatter  # NOQA
 from .newsml_1_2_formatter import NewsML12Formatter  # NOQA
 from .newsml_g2_formatter import NewsMLG2Formatter  # NOQA
 from .email_formatter import EmailFormatter  # NOQA
