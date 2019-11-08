@@ -45,7 +45,7 @@ class LeuvenDutch(SpellcheckerBase):
             "startmarker": START_MARKER,
             "endmarker": END_MARKER,
         }
-        r = requests.post(check_url, data=data)
+        r = requests.post(check_url, data=data, timeout=self.CHECK_TIMEOUT)
         if r.status_code != 200:
             raise SuperdeskApiError.internalError("Unexpected return code from {}".format(self.name))
 
@@ -77,7 +77,7 @@ class LeuvenDutch(SpellcheckerBase):
             "key": self.api_key,
             "input": text,
         }
-        r = requests.post(check_url, data=data)
+        r = requests.post(check_url, data=data, timeout=self.SUGGEST_TIMEOUT)
         if r.status_code != 200:
             raise SuperdeskApiError.internalError("Unexpected return code from {}".format(self.name))
         return {'suggestions': self.list2suggestions(r.json()['suggesties']['output'].get('suggesties', []))}
