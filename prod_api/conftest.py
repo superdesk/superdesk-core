@@ -1,7 +1,10 @@
+import json
 import pytest
 from bson import ObjectId
+from flask import url_for
+from requests.auth import _basic_auth_str
 
-from superdesk.tests import get_mongo_uri, setup
+from superdesk.tests import get_mongo_uri, setup, clean_dbs
 from superdesk.factory import get_app as get_sd_app
 from superdesk.auth_server.clients import RegisterClient
 from prod_api.app import get_app as get_prodapi_api
@@ -48,6 +51,14 @@ def get_test_superdesk_app():
     return context.app
 
 
+def teardown_app(app):
+    """
+    Drop test db and test app
+    """
+    clean_dbs(app)
+    del app
+
+
 @pytest.fixture(scope='function')
 def superdesk_app(request):
     """
@@ -57,7 +68,17 @@ def superdesk_app(request):
     :rtype: superdesk.factory.app.SuperdeskEve
     """
 
-    return get_test_superdesk_app()
+    app = get_test_superdesk_app()
+
+    def test_app_teardown():
+        """
+        Drop test db and test app
+        """
+        teardown_app(app)
+
+    request.addfinalizer(test_app_teardown)
+
+    return app
 
 
 @pytest.fixture(scope='function')
@@ -69,7 +90,17 @@ def prodapi_app(request):
     :rtype: eve.flaskapp.Eve
     """
 
-    return get_test_prodapi_app()
+    app = get_test_prodapi_app()
+
+    def test_app_teardown():
+        """
+        Drop test db and test app
+        """
+        teardown_app(app)
+
+    request.addfinalizer(test_app_teardown)
+
+    return app
 
 
 @pytest.fixture(scope='function')
@@ -96,14 +127,51 @@ def superdesk_client(superdesk_app):
 def auth_server_registered_clients(request, superdesk_app):
     clients_data = []
 
-    if request.param:
-        clients_data.append({
-            "name": str(ObjectId()),  # just a random string
-            "client_id": str(ObjectId()),
-            "password": str(ObjectId()),  # just a random string
-            "scope": request.param
-        })
-        with superdesk_app.app_context():
+    with superdesk_app.app_context():
+        for param in request.param:
+            # register clients
+            clients_data.append({
+                "name": str(ObjectId()),  # just a random string
+                "client_id": str(ObjectId()),
+                "password": str(ObjectId()),  # just a random string
+                "scope": param
+            })
             RegisterClient().run(**clients_data[-1])
 
     return clients_data
+
+
+@pytest.fixture(scope='function')
+def issued_tokens(request, superdesk_app, superdesk_client):
+    tokens = []
+    clients_data = []
+
+    # register clients
+    with superdesk_app.app_context():
+        for param in request.param:
+            clients_data.append({
+                "name": str(ObjectId()),  # just a random string
+                "client_id": str(ObjectId()),
+                "password": str(ObjectId()),  # just a random string
+                "scope": param
+            })
+            RegisterClient().run(**clients_data[-1])
+
+    # retrieve tokens
+    with superdesk_app.test_request_context():
+        for client_data in clients_data:
+            resp = superdesk_client.post(
+                url_for('auth_server.issue_token'),
+                data={
+                    'grant_type': 'client_credentials'
+                },
+                headers={
+                    'Authorization': _basic_auth_str(client_data['client_id'], client_data['password'])
+                }
+            )
+            tokens.append(json.loads(resp.data))
+
+    teardown_app(superdesk_app)
+    del superdesk_client
+
+    return tokens
