@@ -15,7 +15,7 @@ ELASTICSEARCH_INDEX = 'prodapi_tests'
 AUTH_SERVER_SHARED_SECRET = '2kZOf0VI9T70vU9uMlKLyc5GlabxVgl6'
 
 
-def get_test_prodapi_app():
+def get_test_prodapi_app(extra_config=None):
     test_config = {
         'DEBUG': True,
         'TESTING': True,
@@ -28,17 +28,21 @@ def get_test_prodapi_app():
         'URL_PREFIX': 'prodapi',
         'AUTH_SERVER_SHARED_SECRET': AUTH_SERVER_SHARED_SECRET
     }
+    if extra_config:
+        test_config.update(extra_config)
     prodapi_app = get_prodapi_api(test_config)
 
     return prodapi_app
 
 
-def get_test_superdesk_app():
+def get_test_superdesk_app(extra_config=None):
     test_config = {
         'MONGO_URI': get_mongo_uri('MONGO_URI', MONGO_DB),
         'ELASTICSEARCH_INDEX': ELASTICSEARCH_INDEX,
         'AUTH_SERVER_SHARED_SECRET': AUTH_SERVER_SHARED_SECRET,
     }
+    if extra_config:
+        test_config.update(extra_config)
 
     def context():
         pass
@@ -68,7 +72,8 @@ def superdesk_app(request):
     :rtype: superdesk.factory.app.SuperdeskEve
     """
 
-    app = get_test_superdesk_app()
+    extra_config = getattr(request, 'param', None)
+    app = get_test_superdesk_app(extra_config)
 
     def test_app_teardown():
         """
@@ -90,7 +95,8 @@ def prodapi_app(request):
     :rtype: eve.flaskapp.Eve
     """
 
-    app = get_test_prodapi_app()
+    extra_config = getattr(request, 'param', None)
+    app = get_test_prodapi_app(extra_config)
 
     def test_app_teardown():
         """
