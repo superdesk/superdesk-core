@@ -616,7 +616,10 @@ def is_new_version(item, old_item):
             try:
                 return int(item[field], 10) > int(old_item[field], 10)
             except (ValueError, TypeError):
-                return item[field] > old_item[field]
+                try:
+                    return item[field] > old_item[field]
+                except TypeError:
+                    return True  # no idea
     # no version info, check content
     for field in item:
         if field in NEW_VERSION_IGNORE_FIELS or item[field] is None:
