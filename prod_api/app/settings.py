@@ -57,3 +57,6 @@ XML = False
 
 # authorisation server
 AUTH_SERVER_SHARED_SECRET = env('AUTH_SERVER_SHARED_SECRET', '')
+
+# authentication
+PRODAPI_AUTH_ENABLED = env('PRODAPI_AUTH_ENABLED', True)

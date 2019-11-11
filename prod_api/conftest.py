@@ -1,5 +1,6 @@
 import json
 import pytest
+from pathlib import Path
 from bson import ObjectId
 from flask import url_for
 from requests.auth import _basic_auth_str
@@ -16,6 +17,11 @@ AUTH_SERVER_SHARED_SECRET = '2kZOf0VI9T70vU9uMlKLyc5GlabxVgl6'
 
 
 def get_test_prodapi_app(extra_config=None):
+    """
+    Create and return configured test prod api flask app.
+    :param extra_config: extra settings
+    :return: eve.flaskapp.Eve
+    """
     test_config = {
         'DEBUG': True,
         'TESTING': True,
@@ -36,6 +42,11 @@ def get_test_prodapi_app(extra_config=None):
 
 
 def get_test_superdesk_app(extra_config=None):
+    """
+    Create and return configured test superdesk flask app.
+    :param extra_config: extra settings
+    :return: eve.flaskapp.Eve
+    """
     test_config = {
         'MONGO_URI': get_mongo_uri('MONGO_URI', MONGO_DB),
         'ELASTICSEARCH_INDEX': ELASTICSEARCH_INDEX,
@@ -72,7 +83,7 @@ def superdesk_app(request):
     :rtype: superdesk.factory.app.SuperdeskEve
     """
 
-    extra_config = getattr(request, 'param', None)
+    extra_config = getattr(request, 'param', {})
     app = get_test_superdesk_app(extra_config)
 
     def test_app_teardown():
@@ -95,7 +106,7 @@ def prodapi_app(request):
     :rtype: eve.flaskapp.Eve
     """
 
-    extra_config = getattr(request, 'param', None)
+    extra_config = getattr(request, 'param', {})
     app = get_test_prodapi_app(extra_config)
 
     def test_app_teardown():
@@ -107,6 +118,52 @@ def prodapi_app(request):
     request.addfinalizer(test_app_teardown)
 
     return app
+
+
+@pytest.fixture(scope='session')
+def prodapi_app_with_data(request):
+    """
+    Prod api app with prefilled collections and with disabled auth.
+    ATTENTION: This is a resource-heavy fixture and it's designed to use with "session" scope.
+    It's better to use it in readonly tests and not modify data of fixtured app.
+
+    :return: prod api app
+    :rtype: eve.flaskapp.Eve
+    """
+
+    extra_config = getattr(request, 'param', {})
+    extra_config['PRODAPI_AUTH_ENABLED'] = False
+    app = get_test_prodapi_app(extra_config)
+
+    # fill with data
+    with app.app_context():
+        p = Path('./tests/fixtures')
+        for fixture_file in [x for x in p.iterdir() if x.is_file()]:
+            with fixture_file.open() as f:
+                app.data.insert(
+                    resource=fixture_file.stem,
+                    docs=json.loads(f.read())
+                )
+
+    def test_app_teardown():
+        """
+        Drop test db and test app
+        """
+        teardown_app(app)
+
+    request.addfinalizer(test_app_teardown)
+
+    return app
+
+
+@pytest.fixture(scope='session')
+def prodapi_app_with_data_client(prodapi_app_with_data):
+    """Test client for prod api with filled data"""
+
+    client = prodapi_app_with_data.test_client()
+
+    with prodapi_app_with_data.app_context():
+        yield client
 
 
 @pytest.fixture(scope='function')
@@ -131,6 +188,10 @@ def superdesk_client(superdesk_app):
 
 @pytest.fixture(scope='function')
 def auth_server_registered_clients(request, superdesk_app):
+    """
+    Registers clients for auth server.
+    :return: dict with clients
+    """
     clients_data = []
 
     with superdesk_app.app_context():

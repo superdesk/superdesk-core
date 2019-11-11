@@ -67,8 +67,13 @@ def get_app(config=None):
         from superdesk.storage import AmazonMediaStorage
         media_storage = AmazonMediaStorage
 
+    # auth
+    auth = None
+    if app_config['PRODAPI_AUTH_ENABLED']:
+        auth = JWTAuth
+
     app = Eve(
-        auth=JWTAuth,
+        auth=auth,
         settings=app_config,
         data=SuperdeskDataLayer,
         media=media_storage,
