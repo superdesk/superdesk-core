@@ -1,6 +1,7 @@
 flake8
 flake8-docstrings
 nose
+nose-exclude
 pep8
 pyflakes
 pydocstyle<4.0
@@ -12,5 +13,7 @@ sphinxcontrib-plantuml
 docutils==0.12
 requests-mock
 responses
+pytest==5.2.2
+pytest-env==0.6.2
 -e git+git://github.com/superdesk/superdesk-planning.git@master#egg=superdesk-planning
 -e .
