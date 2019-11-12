@@ -1,0 +1,141 @@
+[
+    {
+        "_id": "5d77afe64c3b49675964b0bd",
+        "assigned_to": {
+            "user": "5d385f31fe985ec67a0ca583",
+            "desk": "5d76113ab3af37dea3a2eb9e",
+            "state": "in_progress",
+            "assigned_date_desk": "2019-09-10T14:15:02.000Z",
+            "assignor_desk": "5d385f31fe985ec67a0ca583",
+            "assigned_date_user": "2019-09-10T14:15:02.000Z",
+            "assignor_user": "5d385f31fe985ec67a0ca583"
+        },
+        "planning_item": "urn:newsml:localhost:5000:2019-09-10T15:47:04.367097:714ceeb4-c366-48af-b360-e7aefdf9941a",
+        "coverage_item": "urn:newsml:localhost:5000:2019-09-10T16:15:02.472468:39bf806f-a802-4cb4-bc81-9f28477c7a64",
+        "planning": {
+            "g2_content_type": "text",
+            "slugline": "Citroen 100 let",
+            "ednote": "Citroen 100 let",
+            "scheduled": "2019-09-10T15:00:00.000Z",
+            "genre": [
+                {
+                    "qcode": "Article",
+                    "name": "Article (news)"
+                }
+            ],
+            "keyword": [
+                "сфк",
+                "car",
+                "100",
+                "let",
+                "citroen"
+            ]
+        },
+        "priority": 2,
+        "description_text": "Citroen 100 let",
+        "type": "assignment",
+        "original_creator": "5d385f31fe985ec67a0ca583",
+        "lock_action": null,
+        "lock_session": null,
+        "lock_time": null,
+        "lock_user": null,
+        "version_creator": "5d385f31fe985ec67a0ca583"
+    },
+    {
+        "_id": "5d77b0244c3b49675964b0cd",
+        "assigned_to": {
+            "user": "5d385f31fe985ec67a0ca583",
+            "desk": "5d76113ab3af37dea3a2eb9e",
+            "state": "completed",
+            "assigned_date_desk": "2019-09-10T14:16:04.000Z",
+            "assignor_desk": "5d385f31fe985ec67a0ca583",
+            "assigned_date_user": "2019-09-10T14:16:39.000Z",
+            "assignor_user": "5d385f31fe985ec67a0ca583"
+        },
+        "planning_item": "urn:newsml:localhost:5000:2019-09-10T15:47:04.367097:714ceeb4-c366-48af-b360-e7aefdf9941a",
+        "coverage_item": "urn:newsml:localhost:5000:2019-09-10T15:47:04.656641:5cfa0851-6985-47c3-8091-3c06dae91c66",
+        "planning": {
+            "slugline": "Citroen 100 let",
+            "internal_note": "Citroen 100 let",
+            "scheduled": "2019-09-10T15:00:00.000Z",
+            "g2_content_type": "text",
+            "genre": [
+                {
+                    "qcode": "Article",
+                    "name": "Article (news)"
+                }
+            ]
+        },
+        "priority": 2,
+        "description_text": "Citroen 100 let",
+        "type": "assignment",
+        "original_creator": "5d385f31fe985ec67a0ca583",
+        "lock_action": null,
+        "lock_session": null,
+        "lock_time": null,
+        "lock_user": null,
+        "version_creator": "5d385f31fe985ec67a0ca583"
+    },
+    {
+        "_id": "5d77b2444c3b49675964b118",
+        "assigned_to": {
+            "user": "5d385f31fe985ec67a0ca583",
+            "desk": "5d76113ab3af37dea3a2eb9e",
+            "state": "completed",
+            "assigned_date_desk": "2019-09-10T14:25:08.000Z",
+            "assignor_desk": "5d385f31fe985ec67a0ca583",
+            "assigned_date_user": "2019-09-10T14:25:08.000Z",
+            "assignor_user": "5d385f31fe985ec67a0ca583"
+        },
+        "planning_item": "urn:newsml:localhost:5000:2019-09-10T16:22:02.020996:dd01be40-e401-407f-a2f4-f6532c3f907c",
+        "coverage_item": "urn:newsml:localhost:5000:2019-09-10T16:25:08.583289:bc12f4de-1176-4af9-a971-6621fc091f2b",
+        "planning": {
+            "g2_content_type": "text",
+            "slugline": "article A",
+            "ednote": "",
+            "scheduled": "2019-09-10T15:00:00.000Z",
+            "genre": [
+                {
+                    "qcode": "Article",
+                    "name": "Article (news)"
+                }
+            ]
+        },
+        "priority": 2,
+        "description_text": "PLAN B",
+        "type": "assignment",
+        "original_creator": "5d385f31fe985ec67a0ca583",
+        "lock_action": null,
+        "lock_session": null,
+        "lock_time": null,
+        "lock_user": null,
+        "version_creator": "5d385f31fe985ec67a0ca583"
+    },
+    {
+        "_id": "5dad81fe942b4ff15ae2f263",
+        "assigned_to": {
+            "user": null,
+            "desk": "5d76113ab3af37dea3a2eb9e",
+            "state": "draft",
+            "assigned_date_desk": "2019-10-21T10:01:34.000Z",
+            "assignor_desk": "5d385f31fe985ec67a0ca583"
+        },
+        "planning_item": "urn:newsml:localhost:5000:2019-10-21T11:48:10.807263:c61d74ec-fb22-4665-98e1-f773f618826d",
+        "coverage_item": "urn:newsml:localhost:5000:2019-10-21T12:01:34.722174:4d9759fc-553c-4d6e-ad4b-c90b2a15a4d9",
+        "planning": {
+            "slugline": "test planning item",
+            "scheduled": "2019-10-21T11:00:00.000Z",
+            "g2_content_type": "text",
+            "genre": [
+                {
+                    "name": "BACKGROUND",
+                    "qcode": "BACKGROUND"
+                }
+            ]
+        },
+        "priority": 2,
+        "description_text": null,
+        "type": "assignment",
+        "original_creator": "5d385f31fe985ec67a0ca583"
+    }
+]

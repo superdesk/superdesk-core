@@ -1,0 +1,359 @@
+[
+    {
+        "_id": "urn:newsml:localhost:5000:2019-08-22T15:50:04.266685:64201fdf-7462-4079-b914-60700b2bbf0c",
+        "type": "event",
+        "name": "Zaun",
+        "slugline": "Diana hehehehe",
+        "dates": {
+            "start": "2019-07-04T22:00:00.000Z",
+            "end": "2019-07-19T22:00:00.000Z",
+            "tz": "Europe/Brussels"
+        },
+        "definition_short": "",
+        "definition_long": "",
+        "internal_note": "Konklab",
+        "ednote": "",
+        "links": [
+            "http://www.arlena-gusikowski.info"
+        ],
+        "guid": "urn:newsml:localhost:5000:2019-08-22T15:50:04.266685:64201fdf-7462-4079-b914-60700b2bbf0c",
+        "state": "draft",
+        "occur_status": {
+            "qcode": "eocstat:eos5",
+            "name": "Planned, occurs certainly",
+            "label": "planned, occurs certainly"
+        },
+        "calendars": [
+            {
+                "is_active": true,
+                "name": "General",
+                "qcode": "general"
+            }
+        ],
+        "firstcreated": "2019-08-22T15:50:04.542Z",
+        "versioncreated": "2019-08-22T15:50:04.542Z",
+        "ingest_provider": "5d5e99300396129addd2b20b",
+        "source": "Google spreadshhet",
+        "expiry": "2019-07-19T22:00:00.000Z",
+        "ingest_provider_sequence": "1",
+        "completed": false,
+        "_planning_schedule": [
+            {
+                "scheduled": "2019-07-04T22:00:00.000Z"
+            }
+        ]
+    },
+    {
+        "_id": "urn:newsml:localhost:5000:2019-08-22T15:50:04.269381:6a770882-d45d-4452-9e24-ba64f6065baa",
+        "type": "event",
+        "name": "Demacia",
+        "slugline": "Master Yi hahaha",
+        "dates": {
+            "start": "2019-07-01T22:00:00.000Z",
+            "end": "2019-07-19T22:00:00.000Z",
+            "tz": "Europe/Brussels"
+        },
+        "definition_short": "",
+        "definition_long": "",
+        "internal_note": "Cardify",
+        "ednote": "",
+        "links": [
+            "http://www.nicolas-smitham.io"
+        ],
+        "guid": "urn:newsml:localhost:5000:2019-08-22T15:50:04.269381:6a770882-d45d-4452-9e24-ba64f6065baa",
+        "state": "draft",
+        "occur_status": {
+            "qcode": "eocstat:eos2",
+            "name": "Planned, occurrence highly uncertain",
+            "label": "planned, occurrence highly uncertain"
+        },
+        "calendars": [
+            {
+                "is_active": true,
+                "name": "Sport",
+                "qcode": "sport"
+            }
+        ],
+        "firstcreated": "2019-08-22T15:50:04.582Z",
+        "versioncreated": "2019-09-18T09:19:55.000Z",
+        "ingest_provider": "5d5e99300396129addd2b20b",
+        "source": "Google spreadshhet",
+        "expiry": "2019-07-19T22:00:00.000Z",
+        "ingest_provider_sequence": "2",
+        "completed": false,
+        "_planning_schedule": [
+            {
+                "scheduled": "2019-07-01T22:00:00.000Z"
+            }
+        ],
+        "lock_action": null,
+        "lock_session": null,
+        "lock_time": null,
+        "lock_user": null
+    },
+    {
+        "_id": "urn:newsml:localhost:5000:2019-08-22T15:50:04.269842:06386861-30b6-4fcb-a249-0a0aa7273f84",
+        "type": "event",
+        "name": "Demacia",
+        "slugline": "Master Yi hahaha",
+        "dates": {
+            "start": "2019-10-01T22:00:00.000Z",
+            "end": "2019-10-20T21:59:59.000Z",
+            "tz": "Europe/Brussels"
+        },
+        "definition_short": "Test by Oleg",
+        "definition_long": "",
+        "internal_note": "Cardify",
+        "ednote": "",
+        "links": [
+            "http://www.nicolas-smitham.io"
+        ],
+        "guid": "urn:newsml:localhost:5000:2019-08-22T15:50:04.269842:06386861-30b6-4fcb-a249-0a0aa7273f84",
+        "state": "draft",
+        "occur_status": {
+            "qcode": "eocstat:eos2",
+            "name": "Planned, occurrence highly uncertain",
+            "label": "planned, occurrence highly uncertain"
+        },
+        "calendars": [
+            {
+                "is_active": true,
+                "name": "General",
+                "qcode": "general"
+            }
+        ],
+        "location": [
+            {
+                "name": "This is location name",
+                "address": {
+                    "line": [
+                        "Salvatorska"
+                    ],
+                    "locality": "Prague",
+                    "area": "",
+                    "country": "CZ"
+                },
+                "qcode": "urn:newsml:localhost:5000:2019-08-22T15:50:04.614928:c42c88e2-1e07-455c-93c3-20192448e43e"
+            }
+        ],
+        "firstcreated": "2019-08-22T15:50:04.674Z",
+        "versioncreated": "2019-09-18T09:19:56.000Z",
+        "ingest_provider": "5d5e99300396129addd2b20b",
+        "source": "Google spreadshhet",
+        "expiry": "2019-10-20T21:59:59.000Z",
+        "ingest_provider_sequence": "3",
+        "completed": false,
+        "_planning_schedule": [
+            {
+                "scheduled": "2019-10-01T22:00:00.000Z"
+            }
+        ],
+        "lock_action": null,
+        "lock_session": null,
+        "lock_time": null,
+        "lock_user": null
+    },
+    {
+        "_id": "urn:newsml:localhost:5000:2019-08-22T15:50:04.270524:86da81f0-c3fa-4b93-9e28-ed21ad2f1ed9",
+        "type": "event",
+        "name": "Demacia",
+        "slugline": "Master Yi hahaha",
+        "dates": {
+            "start": "2019-10-01T22:00:00.000Z",
+            "end": "2019-10-20T21:59:59.000Z",
+            "tz": "Europe/Brussels"
+        },
+        "definition_short": "Test by Oleg again",
+        "definition_long": "",
+        "internal_note": "Cardify",
+        "ednote": "",
+        "links": [
+            "http://www.nicolas-smitham.io"
+        ],
+        "guid": "urn:newsml:localhost:5000:2019-08-22T15:50:04.270524:86da81f0-c3fa-4b93-9e28-ed21ad2f1ed9",
+        "state": "draft",
+        "occur_status": {
+            "qcode": "eocstat:eos2",
+            "name": "Planned, occurrence highly uncertain",
+            "label": "planned, occurrence highly uncertain"
+        },
+        "calendars": [
+            {
+                "is_active": true,
+                "name": "General",
+                "qcode": "general"
+            }
+        ],
+        "location": [
+            {
+                "name": "This is location name",
+                "address": {
+                    "line": [
+                        "Salvatorska"
+                    ],
+                    "locality": "Prague",
+                    "area": "",
+                    "country": "CZ"
+                }
+            }
+        ],
+        "firstcreated": "2019-08-22T15:50:04.736Z",
+        "versioncreated": "2019-08-22T15:50:04.736Z",
+        "ingest_provider": "5d5e99300396129addd2b20b",
+        "source": "Google spreadshhet",
+        "expiry": "2019-10-20T21:59:59.000Z",
+        "ingest_provider_sequence": "4",
+        "completed": false,
+        "_planning_schedule": [
+            {
+                "scheduled": "2019-10-01T22:00:00.000Z"
+            }
+        ]
+    },
+    {
+        "_id": "urn:newsml:localhost:5000:2019-08-22T15:50:04.271104:03210496-79e3-427b-a2b8-3843e71b33ec",
+        "type": "event",
+        "name": "Demacia",
+        "slugline": "Master Yi hahaha",
+        "dates": {
+            "start": "2019-10-01T22:00:00.000Z",
+            "end": "2019-10-20T21:59:59.000Z",
+            "tz": "Europe/Brussels"
+        },
+        "definition_short": "Test by Oleg one more time",
+        "definition_long": "",
+        "internal_note": "Cardify",
+        "ednote": "",
+        "links": [
+            "http://www.nicolas-smitham.io"
+        ],
+        "guid": "urn:newsml:localhost:5000:2019-08-22T15:50:04.271104:03210496-79e3-427b-a2b8-3843e71b33ec",
+        "state": "draft",
+        "occur_status": {
+            "qcode": "eocstat:eos2",
+            "name": "Planned, occurrence highly uncertain",
+            "label": "planned, occurrence highly uncertain"
+        },
+        "calendars": [
+            {
+                "is_active": true,
+                "name": "General",
+                "qcode": "general"
+            }
+        ],
+        "location": [
+            {
+                "name": "This is location name",
+                "address": {
+                    "line": [
+                        "Salvatorska"
+                    ],
+                    "locality": "Prague",
+                    "area": "",
+                    "country": "CZ"
+                }
+            }
+        ],
+        "firstcreated": "2019-08-22T15:50:04.827Z",
+        "versioncreated": "2019-08-22T15:50:04.827Z",
+        "ingest_provider": "5d5e99300396129addd2b20b",
+        "source": "Google spreadshhet",
+        "expiry": "2019-10-20T21:59:59.000Z",
+        "ingest_provider_sequence": "5",
+        "completed": false,
+        "_planning_schedule": [
+            {
+                "scheduled": "2019-10-01T22:00:00.000Z"
+            }
+        ]
+    },
+    {
+        "_id": "urn:newsml:localhost:5000:2019-09-10T15:43:13.722490:5dcea683-fb9b-42ca-a77f-ce1216aef8b1",
+        "type": "event",
+        "occur_status": {
+            "qcode": "eocstat:eos5",
+            "name": "Planned, occurs certainly",
+            "label": "Planned, occurs certainly"
+        },
+        "dates": {
+            "start": "2019-09-18T22:00:00.000Z",
+            "end": "2019-09-19T21:59:59.999Z",
+            "tz": "Europe/Prague"
+        },
+        "calendars": [
+            {
+                "is_active": true,
+                "name": "Sport",
+                "qcode": "sport"
+            }
+        ],
+        "state": "draft",
+        "place": [],
+        "completed": false,
+        "slugline": "Citroen 100 let",
+        "name": "Citroen 100 let",
+        "definition_short": "Citroen 100 let",
+        "location": [
+            {
+                "name": "This is location name",
+                "qcode": "urn:newsml:localhost:5000:2019-08-22T15:50:04.614928:c42c88e2-1e07-455c-93c3-20192448e43e",
+                "address": {
+                    "line": [
+                        "Salvatorska"
+                    ],
+                    "locality": "Prague",
+                    "area": "",
+                    "country": "CZ"
+                }
+            }
+        ],
+        "guid": "urn:newsml:localhost:5000:2019-09-10T15:43:13.722490:5dcea683-fb9b-42ca-a77f-ce1216aef8b1",
+        "original_creator": "5d385f31fe985ec67a0ca583",
+        "firstcreated": "2019-09-10T13:43:13.000Z",
+        "versioncreated": "2019-09-23T10:44:04.000Z",
+        "_planning_schedule": [
+            {
+                "scheduled": "2019-09-18T22:00:00.000Z"
+            }
+        ],
+        "lock_action": null,
+        "lock_session": null,
+        "lock_time": null,
+        "lock_user": null
+    },
+    {
+        "_id": "urn:newsml:localhost:5000:2019-09-10T16:22:34.066960:6b2d9c79-08b9-456f-b890-9b2154ee997a",
+        "type": "event",
+        "occur_status": {
+            "qcode": "eocstat:eos5",
+            "name": "Planned, occurs certainly",
+            "label": "Planned, occurs certainly"
+        },
+        "dates": {
+            "start": "2019-09-09T22:00:00.000Z",
+            "end": "2019-09-10T21:59:59.999Z",
+            "tz": "Europe/Prague"
+        },
+        "calendars": [
+            {
+                "is_active": true,
+                "name": "Business",
+                "qcode": "business"
+            }
+        ],
+        "state": "draft",
+        "place": [],
+        "completed": false,
+        "slugline": "EVENT A",
+        "name": "EVENT A",
+        "definition_short": "EVENT A",
+        "guid": "urn:newsml:localhost:5000:2019-09-10T16:22:34.066960:6b2d9c79-08b9-456f-b890-9b2154ee997a",
+        "original_creator": "5d385f31fe985ec67a0ca583",
+        "firstcreated":  "2019-09-10T14:22:34.000Z",
+        "versioncreated": "2019-09-10T14:22:36.000Z",
+        "lock_action": null,
+        "lock_session": null,
+        "lock_time": null,
+        "lock_user": null
+    }
+]
