@@ -187,6 +187,7 @@ class BasePublishService(BaseService):
                 message=_("Key is missing on article to be published: {exception}").format(exception=str(e))
             )
         except Exception as e:
+            logger.exception(e)
             raise SuperdeskApiError.internalError(
                 message=_("Failed to publish the item: {id}").format(id=str(id)), exception=e)
 
@@ -606,12 +607,12 @@ class BasePublishService(BaseService):
                     associated_item['operation'] = self.publish_type
                     updates[ASSOCIATIONS] = updates.get(ASSOCIATIONS, {})
                     updates[ASSOCIATIONS][associations_key] = associated_item
-                else:
+                elif associated_item.get('state') != self.published_state:
                     # Check if there are updates to associated item
                     association_updates = updates.get(ASSOCIATIONS, {}).get(associations_key)
 
                     if not association_updates:
-                        # there is no update for this item but still patching the associated item
+                        # there is no update for this item
                         associated_item.get('task', {}).pop('stage', None)
                         remove_unwanted(associated_item)
                         publish_service.patch(id=associated_item.pop(config.ID_FIELD), updates=associated_item)
