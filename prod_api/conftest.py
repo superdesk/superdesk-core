@@ -120,7 +120,7 @@ def prodapi_app(request):
     return app
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='module')
 def prodapi_app_with_data(request):
     """
     Prod api app with prefilled collections and with disabled auth.
@@ -156,7 +156,7 @@ def prodapi_app_with_data(request):
     return app
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='module')
 def prodapi_app_with_data_client(prodapi_app_with_data):
     """Test client for prod api with filled data"""
 

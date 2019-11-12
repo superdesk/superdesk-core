@@ -1,0 +1,403 @@
+[
+    {
+        "_id": "5d385f31fe985ec67a0ca583",
+        "username": "admin",
+        "password": "$2b$12$hSdlW6V0VLTz8jMjIxqxUuErEM5.oJ8HEH77S1j4SmUK7MGEg5MS6",
+        "email": "admin@example.com",
+        "user_type": "administrator",
+        "is_active": true,
+        "is_support": false,
+        "needs_activation": false,
+        "is_author": true,
+        "is_enabled": true,
+        "password_changed_on": "2019-07-24T13:37:53.000Z",
+        "display_name": "John Smith",
+        "sign_off": "ADM",
+        "role": "5d542206c04280bc6d6157f9",
+        "user_preferences": {
+            "email:notification": {
+                "type": "bool",
+                "enabled": true,
+                "default": true,
+                "label": "Send notifications via email",
+                "category": "notifications"
+            },
+            "desktop:notification": {
+                "type": "bool",
+                "enabled": true,
+                "default": false,
+                "label": "Allow Desktop Notifications",
+                "category": "notifications"
+            },
+            "cvs:preferred_items": {
+                "value": {},
+                "category": "cvs",
+                "label": "Prefered CV items"
+            },
+            "feature:preview": {
+                "type": "bool",
+                "enabled": false,
+                "default": false,
+                "label": "Enable Feature Preview",
+                "category": "feature",
+                "privileges": [
+                    "feature_preview"
+                ]
+            },
+            "archive:view": {
+                "type": "string",
+                "allowed": [
+                    "mgrid",
+                    "compact"
+                ],
+                "view": "photogrid",
+                "default": "mgrid",
+                "label": "Users archive view format",
+                "category": "archive"
+            },
+            "singleline:view": {
+                "type": "bool",
+                "enabled": null,
+                "default": false,
+                "label": "Enable Single Line View",
+                "category": "rows"
+            },
+            "editor:theme": {
+                "type": "string",
+                "theme": ""
+            },
+            "workqueue:items": {
+                "items": []
+            },
+            "dashboard:ingest": [
+                {
+                    "_id": "5d4d7b8efe985e8fb78c5c01",
+                    "show_log_messages": true,
+                    "show_ingest_count": true,
+                    "show_time": true,
+                    "log_messages": "all",
+                    "show_status": true
+                },
+                {
+                    "_id": "5d4d7547fe985e8fb78c5bf1",
+                    "show_log_messages": true,
+                    "show_ingest_count": true,
+                    "show_time": true,
+                    "log_messages": "all",
+                    "show_status": true
+                },
+                {
+                    "_id": "5d5e99300396129addd2b20b",
+                    "show_log_messages": true,
+                    "show_ingest_count": true,
+                    "show_time": true,
+                    "log_messages": "all",
+                    "show_status": true
+                },
+                {
+                    "_id": "5d5e6333ca0c1318ddb7f580",
+                    "show_log_messages": true,
+                    "show_ingest_count": true,
+                    "show_time": true,
+                    "log_messages": "all",
+                    "show_status": true
+                }
+            ],
+            "agg:view": {
+                "active": {}
+            },
+            "templates:recent": {
+                "null": [
+                    "5d385f17fe985ec5e1a78b49"
+                ],
+                "5d3860bbfe985ec40943b60e": [
+                    "5d385f17fe985ec5e1a78b49"
+                ],
+                "5d76113ab3af37dea3a2eb9e": [
+                    "5d385f17fe985ec5e1a78b49",
+                    "5d9b567e49bc7ee4582dff7a"
+                ]
+            },
+            "dateline:located": {
+                "type": "dict",
+                "label": "Located",
+                "category": "article_defaults"
+            },
+            "categories:preferred": {
+                "type": "dict",
+                "category": "categories",
+                "label": "Preferred Categories",
+                "selected": {}
+            },
+            "desks:preferred": {
+                "type": "dict",
+                "category": "desks",
+                "label": "Preferred Desks",
+                "selected": {}
+            },
+            "article:default:place": {
+                "type": "list",
+                "label": "Place",
+                "category": "article_defaults",
+                "place": []
+            },
+            "spellchecker:status": {
+                "type": "bool",
+                "enabled": false,
+                "default": true
+            },
+            "contacts:view": {
+                "type": "string",
+                "allowed": [
+                    "photogrid",
+                    "compact"
+                ],
+                "view": "photogrid",
+                "default": "photogrid",
+                "label": "Users contacts view format",
+                "category": "contacts"
+            },
+            "destination:active": {
+                "desk": "5d3860bbfe985ec40943b60e",
+                "stage": "5d3860bbfe985ec40943b60d"
+            },
+            "workspace:active": {
+                "type": "string",
+                "workspace": "5d76113ab3af37dea3a2eb9e"
+            },
+            "monitoring:view": {
+                "type": "string",
+                "allowed": [
+                    "list",
+                    "swimlane"
+                ],
+                "view": "list",
+                "default": "list",
+                "label": "Monitoring view",
+                "category": "monitoring"
+            },
+            "slack:notification": {
+                "type": "bool",
+                "enabled": true,
+                "default": false,
+                "label": "Allow Notifications To Slack",
+                "category": "notifications"
+            },
+            "planning:calendar": {
+                "type": "dict",
+                "label": "Default Calendar",
+                "category": "planning",
+                "calendar": {}
+            },
+            "planning:agenda": {
+                "type": "dict",
+                "label": "Default Agenda",
+                "category": "planning",
+                "agenda": {},
+                "default": null
+            },
+            "planning:events_planning_filter": {
+                "type": "dict",
+                "label": "Default Events Planning Filter",
+                "category": "planning",
+                "filter": {},
+                "default": null
+            },
+            "planning:default_coverage_desks": {
+                "type": "dict",
+                "label": "Default desk for coverage types",
+                "category": "planning",
+                "desks": {
+                    "text": "5d76113ab3af37dea3a2eb9e"
+                },
+                "default": null
+            }
+        },
+        "invisible_stages": [],
+        "session_preferences": {
+            "5dc4252dffb904a2452c4f45": {
+                "scratchpad:items": [],
+                "desk:last_worked": "5d76113ab3af37dea3a2eb9e",
+                "desk:items": [],
+                "stage:items": [],
+                "pinned:items": [],
+                "monitoring:view:session": null
+            }
+        },
+        "first_name": "John",
+        "last_name": "Smith"
+    },
+    {
+        "_id": "5d6e86f0e3a44a95b9d48f23",
+        "is_author": true,
+        "first_name": "oleg",
+        "last_name": "oleg",
+        "username": "pshenichniy",
+        "phone": "775448655",
+        "email": "olegpshenichniy@gmail.com",
+        "role": "5d542206c04280bc6d6157f9",
+        "user_type": "administrator",
+        "is_support": false,
+        "is_active": true,
+        "is_enabled": true,
+        "needs_activation": false,
+        "password_changed_on": "2019-09-03T15:33:42.000Z",
+        "display_name": "oleg oleg",
+        "sign_off": "oo",
+        "user_preferences": {
+            "email:notification": {
+                "type": "bool",
+                "enabled": true,
+                "default": true,
+                "label": "Send notifications via email",
+                "category": "notifications"
+            },
+            "desktop:notification": {
+                "type": "bool",
+                "enabled": true,
+                "default": false,
+                "label": "Allow Desktop Notifications",
+                "category": "notifications"
+            },
+            "cvs:preferred_items": {
+                "value": {},
+                "category": "cvs",
+                "label": "Prefered CV items"
+            },
+            "feature:preview": {
+                "type": "bool",
+                "enabled": false,
+                "default": false,
+                "label": "Enable Feature Preview",
+                "category": "feature",
+                "privileges": [
+                    "feature_preview"
+                ]
+            },
+            "archive:view": {
+                "type": "string",
+                "allowed": [
+                    "mgrid",
+                    "compact"
+                ],
+                "view": "mgrid",
+                "default": "mgrid",
+                "label": "Users archive view format",
+                "category": "archive"
+            },
+            "singleline:view": {
+                "type": "bool",
+                "enabled": null,
+                "default": false,
+                "label": "Enable Single Line View",
+                "category": "rows"
+            },
+            "editor:theme": {
+                "type": "string",
+                "theme": ""
+            },
+            "workqueue:items": {
+                "items": []
+            },
+            "dashboard:ingest": {
+                "providers": []
+            },
+            "agg:view": {
+                "active": {}
+            },
+            "templates:recent": {},
+            "dateline:located": {
+                "type": "dict",
+                "label": "Located",
+                "category": "article_defaults"
+            },
+            "categories:preferred": {
+                "type": "dict",
+                "category": "categories",
+                "label": "Preferred Categories",
+                "selected": {}
+            },
+            "desks:preferred": {
+                "type": "dict",
+                "category": "desks",
+                "label": "Preferred Desks",
+                "selected": {}
+            },
+            "article:default:place": {
+                "type": "list",
+                "label": "Place",
+                "category": "article_defaults",
+                "place": []
+            },
+            "spellchecker:status": {
+                "type": "bool",
+                "enabled": true,
+                "default": true
+            },
+            "contacts:view": {
+                "type": "string",
+                "allowed": [
+                    "mgrid",
+                    "compact"
+                ],
+                "view": "mgrid",
+                "default": "mgrid",
+                "label": "Users contacts view format",
+                "category": "contacts"
+            },
+            "destination:active": {},
+            "workspace:active": {
+                "type": "string",
+                "workspace": ""
+            },
+            "monitoring:view": {
+                "type": "string",
+                "allowed": [
+                    "list",
+                    "swimlane"
+                ],
+                "view": "list",
+                "default": "list",
+                "label": "Monitoring view",
+                "category": "monitoring"
+            },
+            "slack:notification": {
+                "type": "bool",
+                "enabled": true,
+                "default": false,
+                "label": "Allow Notifications To Slack",
+                "category": "notifications"
+            },
+            "planning:calendar": {
+                "type": "dict",
+                "label": "Default Calendar",
+                "category": "planning",
+                "calendar": {}
+            },
+            "planning:agenda": {
+                "type": "dict",
+                "label": "Default Agenda",
+                "category": "planning",
+                "agenda": {},
+                "default": null
+            },
+            "planning:events_planning_filter": {
+                "type": "dict",
+                "label": "Default Events Planning Filter",
+                "category": "planning",
+                "filter": {},
+                "default": null
+            },
+            "planning:default_coverage_desks": {
+                "type": "dict",
+                "label": "Default desk for coverage types",
+                "category": "planning",
+                "desks": {},
+                "default": null
+            }
+        },
+        "invisible_stages": [],
+        "password": "$2b$12$nZBkAsK8kW3slvo71F2TVOdEfYIXKto0cJdLdTdL/rQ78kE8V5iB.",
+        "session_preferences": {}
+    }
+]
