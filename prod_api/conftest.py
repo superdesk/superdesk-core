@@ -124,7 +124,7 @@ def prodapi_app(request):
 def prodapi_app_with_data(request):
     """
     Prod api app with prefilled collections and with disabled auth.
-    ATTENTION: This is a resource-heavy fixture and it's designed to use with "session" scope.
+    ATTENTION: This is a resource-heavy fixture and it's designed to use with "module" scope.
     It's better to use it in readonly tests and not modify data of fixtured app.
 
     :return: prod api app
