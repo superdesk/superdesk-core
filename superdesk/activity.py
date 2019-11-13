@@ -23,6 +23,7 @@ from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.utc import utcnow
 from eve.utils import ParsedRequest
+from superdesk.metadata.item import PUBLISH_STATES
 import json
 
 log = logging.getLogger(__name__)
@@ -212,7 +213,8 @@ def add_activity(activity_name, msg, resource=None, item=None, notify=None, noti
         else:
             # since guid and _id do not match for the item of type picture, audio and video
             # so sending _id as activity['item'] instead of guid for media items
-            activity['item'] = str(item.get('_id'))
+            # and item_id for published media items as _id or guid does not match _id in archive for media items
+            activity['item'] = str(item.get('item_id')) if item.get('state') in PUBLISH_STATES else str(item.get('_id'))
 
         activity['item_slugline'] = item.get('slugline', item.get('headline')) or item.get('unique_name')
         if item.get('task') and item['task'].get('desk'):

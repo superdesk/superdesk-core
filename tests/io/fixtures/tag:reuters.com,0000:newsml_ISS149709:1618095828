@@ -90,7 +90,7 @@ AUTHOR: thomsonreuters.com
         <description role="descRole:caption">SOCCER-TURKEY/RESULTS:Soccer-Turkish championship results and standings</description>
       </contentMeta>
       <contentSet>
-        <inlineXML contenttype="application/xhtml+html" wordcount="265">
+        <inlineXML contenttype="application/xhtml+html" wordcount="">
           <html xmlns="http://www.w3.org/1999/xhtml">
             <head>
               <title />

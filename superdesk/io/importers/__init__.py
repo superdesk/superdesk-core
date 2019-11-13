@@ -23,6 +23,7 @@ class ImportCommand(superdesk.Command):
     ::
 
         $ python manage.py xml:import ninjs data/sample.json
+
     """
 
     option_list = [

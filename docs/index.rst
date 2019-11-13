@@ -52,6 +52,7 @@ works and can be developed further.
     schema
     content-types
     contentapi
+    auth_server
     extending
     authentication
     cli

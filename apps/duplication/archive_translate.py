@@ -77,10 +77,9 @@ class TranslateService(BaseService):
                 ref[RESIDREF] = self._translate_item(ref[RESIDREF], language,
                                                      service=ref.get('location'),
                                                      task=task)
+
         if not item.get('translation_id'):
-            archive_service.system_update(item['_id'], {'translation_id': item['_id']}, item)
             item['translation_id'] = item['_id']
-            published_service.update_published_items(item['_id'], 'translation_id', item['_id'])
 
         macros_service.execute_translation_macro(
             item, item.get('language', None), language)
@@ -92,7 +91,19 @@ class TranslateService(BaseService):
         if task:
             item['task'] = task
 
-        _id = archive_service.duplicate_item(item, operation='translate')
+        extra_fields = ['translation_id', 'translated_from']
+        _id = archive_service.duplicate_item(item, extra_fields=extra_fields, operation='translate')
+
+        item.setdefault('translations', []).append(_id)
+
+        updates = {
+            'translation_id': item['translation_id'],
+            'translations': item['translations'],
+        }
+
+        archive_service.system_update(item['_id'], updates, item)
+        published_service.update_published_items(item['_id'], 'translation_id', item['_id'])
+        published_service.update_published_items(item['_id'], 'translations', item['translations'])
 
         if kwargs.get('notify', True):
             push_content_notification([item])

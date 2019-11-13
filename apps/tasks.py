@@ -15,6 +15,7 @@ from eve.utils import ParsedRequest
 from eve.versioning import resolve_document_version
 
 import superdesk
+from superdesk.users.services import current_user_has_privilege
 from superdesk.resource import Resource
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from superdesk.notification import push_notification
@@ -83,6 +84,10 @@ def send_to(doc, update=None, desk_id=None, stage_id=None, user_id=None, default
         if not desk:
             raise SuperdeskApiError.notFoundError(_('Invalid desk identifier {desk_id}').format(desk_id=desk_id))
 
+        if not current_user_has_privilege('move') and \
+                str(user_id) not in [str(x.get('user', '')) for x in desk.get('members', [])]:
+            raise SuperdeskApiError.forbiddenError(_('User is not member of desk: {desk_id}').format(desk_id=desk_id))
+
         task['desk'] = desk_id
         if not stage_id:
             task['stage'] = desk.get(default_stage)
@@ -97,7 +102,7 @@ def send_to(doc, update=None, desk_id=None, stage_id=None, user_id=None, default
         task['stage'] = stage_id
 
     if destination_stage:
-        apply_stage_rule(doc, update, destination_stage, MACRO_INCOMING, desk=desk)
+        apply_stage_rule(doc, update, destination_stage, MACRO_INCOMING, desk=desk, task=task)
         if destination_stage.get('task_status'):
             task['status'] = destination_stage['task_status']
 
@@ -111,14 +116,14 @@ def send_to(doc, update=None, desk_id=None, stage_id=None, user_id=None, default
         superdesk.get_resource_service('desks').apply_desk_metadata(doc, doc)
 
 
-def apply_stage_rule(doc, update, stage, rule_type, desk=None):
+def apply_stage_rule(doc, update, stage, rule_type, desk=None, task=None):
     macro_type = '{}_macro'.format(rule_type)
 
     if stage.get(macro_type):
         try:
             original_doc = dict(doc)
             macro = get_resource_service('macros').get_macro_by_name(stage.get(macro_type))
-            macro['callback'](doc, desk=desk, stage=stage)
+            macro['callback'](doc, desk=desk, stage=stage, task=task)
             if update:
                 modified = compare_dictionaries(original_doc, doc)
                 for i in modified:

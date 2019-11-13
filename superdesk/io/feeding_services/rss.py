@@ -322,6 +322,9 @@ class RSSFeedingService(HTTPFeedingServiceBase):
             'date': item.get('firstcreated', item.get('versioncreated'))
         }
 
+        if not item.get('versioncreated') and item.get('firstcreated'):
+            item['versioncreated'] = item['firstcreated']
+
         return item
 
     def _create_image_items(self, image_links, text_item):

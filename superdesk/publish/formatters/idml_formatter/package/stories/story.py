@@ -304,6 +304,7 @@ class Story(BasePackageElement):
         :param lxml.etree element: html element
         :param list parents: list of parent tags
         :return dict: dictionary
+
         """
         if not parents:
             parents = []
@@ -349,6 +350,7 @@ class Story(BasePackageElement):
         :param dict element_dict: dict representation of html element
         :param bool tail: if element has tail
         :return:
+
         """
 
         characterstylerange_list = []

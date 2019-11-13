@@ -149,6 +149,7 @@ class Upgrade(DataUpdateCommand):
     ::
 
         $ python manage.py data:upgrade
+
     """
 
     def run(self, data_update_id=None, fake=False, dry=False):
@@ -185,6 +186,7 @@ class Downgrade(DataUpdateCommand):
     ::
 
         $ python manage.py data:downgrade
+
     """
 
     def run(self, data_update_id=None, fake=False, dry=False):
@@ -229,6 +231,7 @@ class GenerateUpdate(superdesk.Command):
     ::
 
         $ python manage.py data:generate_update --resource=archive
+
     """
 
     option_list = [

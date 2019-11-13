@@ -35,6 +35,34 @@ from superdesk.validator import SuperdeskValidator
 SUPERDESK_PATH = os.path.abspath(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 
+def set_error_handlers(app):
+    """Set error handlers for the given application object.
+
+    Each error handler receives a :py:class:`superdesk.errors.SuperdeskError`
+    instance as a parameter and returns a tuple containing an error message
+    that is sent to the client and the HTTP status code.
+
+    :param app: an instance of `Eve <http://python-eve.org/>`_ application
+    """
+
+    @app.errorhandler(SuperdeskError)
+    def client_error_handler(error):
+        error_dict = error.to_dict()
+        error_dict.update(internal_error=error.status_code)
+        status_code = error.status_code or 422
+        return send_response(None, (error_dict, None, None, status_code))
+
+    @app.errorhandler(403)
+    def server_forbidden_handler(error):
+        return send_response(None, ({'code': 403, 'error': error.response}, None, None, 403))
+
+    @app.errorhandler(500)
+    def server_error_handler(error):
+        """Log server errors."""
+        return_error = SuperdeskApiError.internalError(error)
+        return client_error_handler(return_error)
+
+
 class SuperdeskEve(eve.Eve):
 
     def __getattr__(self, name):
@@ -137,23 +165,7 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
 
         return user_language
 
-    @app.errorhandler(SuperdeskError)
-    def client_error_handler(error):
-        """Return json error response.
-
-        :param error: an instance of :attr:`superdesk.SuperdeskError` class
-        """
-        return send_response(None, (error.to_dict(), None, None, error.status_code))
-
-    @app.errorhandler(403)
-    def server_forbidden_handler(error):
-        return send_response(None, ({'code': 403, 'error': error.response}, None, None, 403))
-
-    @app.errorhandler(500)
-    def server_error_handler(error):
-        """Log server errors."""
-        return_error = SuperdeskApiError.internalError(error)
-        return client_error_handler(return_error)
+    set_error_handlers(app)
 
     @app.after_request
     def after_request(response):

@@ -213,6 +213,7 @@ class UpdateIngest(superdesk.Command):
 
         $ python manage.py ingest:update
         $ python manage.py ingest:update --provider=aap-demo
+
     """
 
     option_list = (
@@ -570,9 +571,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
             item.update(old_item)
             item.update(updates)
             items_ids.append(item['_id'])
-            # if the feed is versioned and this is not a new version
-            if 'version' in item and 'version' in old_item and item.get('version') == old_item.get('version'):
-                new_version = False
+            new_version = is_new_version(item, old_item)
         else:
             if item.get('ingest_provider_sequence') is None:
                 ingest_service.set_ingest_provider_sequence(item, provider)
@@ -591,6 +590,21 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
         ProviderError.ingestItemError(ex, provider, item=item)
         return False, []
     return True, items_ids
+
+
+def is_new_version(item, old_item):
+    # explicit version info
+    for field in ('version', 'versioncreated'):
+        if item.get(field) and old_item.get(field):
+            try:
+                return int(item[field], 10) > int(old_item[field], 10)
+            except (ValueError, TypeError):
+                return item[field] > old_item[field]
+    # no version info, check content
+    for field in item:
+        if not old_item.get(field) or item[field] != old_item[field]:
+            return True
+    return False
 
 
 superdesk.command('ingest:update', UpdateIngest())

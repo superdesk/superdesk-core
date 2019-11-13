@@ -28,8 +28,16 @@ from apps.archive.common import ITEM_OPERATION, ARCHIVE, insert_into_versions, g
 from itertools import chain
 from apps.publish.published_item import PUBLISHED, LAST_PUBLISHED_VERSION
 from flask_babel import _
+from enum import Enum
 
 logger = logging.getLogger(__name__)
+# what to do when the item is in a package
+PACKAGE_WORKFLOW = Enum('PACKAGE_WORKFLOW', (
+    # raise an exception, the VALIDATE_ERROR_MESSAGE will be used
+    'RAISE',
+    # ignore, the action can be done on items in a package
+    'IGNORE',
+))
 
 
 class KillPublishResource(BasePublishResource):
@@ -41,20 +49,27 @@ class KillPublishService(BasePublishService):
     publish_type = 'kill'
     published_state = 'killed'
     item_operation = ITEM_KILL
+    package_workflow = PACKAGE_WORKFLOW.RAISE
+    VALIDATE_ERROR_MESSAGE = _(
+        'This item is in a package. It needs to be removed before the item can be killed'
+    )
 
     def __init__(self, datasource=None, backend=None):
         super().__init__(datasource=datasource, backend=backend)
 
     def on_update(self, updates, original):
-        # check if we are trying to kill and item that is contained in package
+        # check if we are trying to kill an item that is contained in package
         # and the package itself is not killed.
 
         packages = self.package_service.get_packages(original[config.ID_FIELD])
-        if packages and packages.count() > 0:
-            for package in packages:
-                if package[ITEM_STATE] not in {CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED}:
-                    raise SuperdeskApiError.badRequestError(message=_(
-                        'This item is in a package. It needs to be removed before the item can be killed'))
+        if self.package_workflow == PACKAGE_WORKFLOW.RAISE:
+            if packages and packages.count() > 0:
+                for package in packages:
+                    if package[ITEM_STATE] not in {
+                            CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED, CONTENT_STATE.UNPUBLISHED}:
+                        raise SuperdeskApiError.badRequestError(message=self.VALIDATE_ERROR_MESSAGE)
+        elif self.package_workflow not in PACKAGE_WORKFLOW:
+            raise ValueError("Invalid package workflow")
 
         updates['pubstatus'] = PUB_STATUS.CANCELED
         updates['versioncreated'] = utcnow()

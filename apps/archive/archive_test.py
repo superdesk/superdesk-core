@@ -25,7 +25,7 @@ from apps.archive.common import (
     validate_schedule, remove_media_files,
     format_dateline_to_locmmmddsrc, convert_task_attributes_to_objectId,
     is_genre, BROADCAST_GENRE, get_default_source, set_default_source,
-    get_utc_schedule, get_dateline_city
+    get_utc_schedule, get_dateline_city, transtype_metadata
 )
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
@@ -448,6 +448,31 @@ class ArchiveTestCase(TestCase):
         self.assertEqual(doc['task']['stage'], 'test')
         self.assertEqual(doc['task']['last_authoring_desk'], 3245)
         self.assertIsNone(doc['task']['last_production_desk'])
+
+    def test_if_metadata_are_transtyped(self):
+        """Check that date metadata in extra are transtyped correctly"""
+        content_type = {
+            "_id": "type_1",
+            "label": "test_type",
+            "editor": {"test_date_field": {"order": 1, "section": "header"}},
+            "schema": {
+                "test_date_field": {
+                    "type": "date",
+                    "required": False,
+                    "enabled": True,
+                    "nullable": True,
+                }
+            },
+        }
+        self.app.data.insert('content_types', [content_type])
+        doc = {
+            "_id": "transtype_1",
+            "profile": "type_1",
+            "extra": {"test_date_field": "2019-11-06T00:00:00+0000"},
+        }
+
+        transtype_metadata(doc)
+        self.assertIsInstance(doc['extra']['test_date_field'], datetime)
 
     def test_if_no_source_defined_on_desk(self):
         desk = {'name': 'sports'}

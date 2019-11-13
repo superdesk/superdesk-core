@@ -99,6 +99,9 @@ def update_config(conf):
 
     # misc
     conf['GEONAMES_USERNAME'] = 'superdesk_dev'
+
+    # auth server
+    conf['AUTH_SERVER_SHARED_SECRET'] = 'some secret'
     return conf
 
 
