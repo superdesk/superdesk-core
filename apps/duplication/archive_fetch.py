@@ -78,7 +78,12 @@ class FetchService(BaseService):
                 raise InvalidStateTransitionError()
 
             if doc.get('macro'):  # there is a macro so transform it
-                ingest_doc = get_resource_service('macros').execute_macro(ingest_doc, doc.get('macro'))
+                ingest_doc = get_resource_service('macros').execute_macro(
+                    ingest_doc,
+                    doc.get('macro'),
+                    dest_desk_id=desk_id,
+                    dest_stage_id=stage_id,
+                )
 
             archived = utcnow()
             ingest_service.patch(id_of_item_to_be_fetched, {'archived': archived})
