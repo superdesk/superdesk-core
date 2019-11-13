@@ -101,7 +101,7 @@ class GetProviderRoutingSchemeTestCase(TestCase):
 class ItemExpiryTestCase(TestCase):
 
     def test_expiry_no_dateinfo(self):
-        self.assertFalse(is_not_expired({}, None))
+        self.assertTrue(is_not_expired({}, None))
 
     def test_expiry_overflow(self):
         item = {'versioncreated': datetime.now()}
@@ -158,4 +158,11 @@ class UtilsTestCase(unittest.TestCase):
         self.assertFalse(is_new_version(
             {'subject': [{'name': 'foo', 'qcode': 'foo'}]},
             {'subject': [{'name': 'foo', 'qcode': 'foo'}]},
+        ))
+
+    def test_is_new_version_ignores_expiry(self):
+        yesterday = datetime.now() - timedelta(days=1)
+        self.assertFalse(is_new_version(
+            {'headline': 'foo', 'firstcreated': None, 'expiry': datetime.now()},
+            {'headline': 'foo', 'firstcreated': yesterday, 'expiry': yesterday},
         ))

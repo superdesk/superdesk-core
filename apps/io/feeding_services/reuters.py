@@ -258,7 +258,7 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
         result_items = []
         while items:
             item = items.pop()
-            self.add_timestamps(item)
+            self.localize_timestamps(item)
             try:
                 items.extend(self._fetch_items_in_package(item))
                 result_items.append(item)

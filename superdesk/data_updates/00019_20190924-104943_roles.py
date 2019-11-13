@@ -21,6 +21,9 @@ class DataUpdate(DataUpdate):
         "highlights_read",
         "use_global_saved_searches",
         "dashboard",
+        "ansa_metasearch",
+        "ansa_live_assistant",
+        "ansa_ai_news",
     ]
 
     def forwards(self, mongodb_collection, mongodb_database):
