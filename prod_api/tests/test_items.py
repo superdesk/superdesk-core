@@ -62,7 +62,7 @@ def test_excluded_fields(prodapi_app_with_data, prodapi_app_with_data_client):
     with prodapi_app_with_data.test_request_context():
         # list
         resp = prodapi_app_with_data_client.get(url_for('archive|resource'))
-        resp_data = json.loads(resp.data)
+        resp_data = json.loads(resp.data.decode('utf-8'))
 
         for item in resp_data['_items']:
             assert len(set(item.keys()) & excluded_fields) == 0
@@ -72,7 +72,7 @@ def test_excluded_fields(prodapi_app_with_data, prodapi_app_with_data_client):
         resp = prodapi_app_with_data_client.get(
             url_for('archive|item_lookup', _id=item['guid']),
         )
-        resp_data = json.loads(resp.data)
+        resp_data = json.loads(resp.data.decode('utf-8'))
 
         assert len(set(resp_data.keys()) & excluded_fields) == 0
 
@@ -92,7 +92,7 @@ def test_renditions(prodapi_app_with_data, prodapi_app_with_data_client):
                 _id='urn:newsml:localhost:5000:2019-08-14T15:02:48.032188:d1be79f4-1d08-464a-90ac-90542dde4e90'
             ),
         )
-        resp_data = json.loads(resp.data)
+        resp_data = json.loads(resp.data.decode('utf-8'))
 
         assert resp_data['associations']['editor_0']['renditions'] == {
             'baseImage': {
@@ -161,7 +161,7 @@ def test_filters(prodapi_app_with_data, prodapi_app_with_data_client):
             })
         }
         resp = prodapi_app_with_data_client.get(url_for('archive|resource', **params))
-        resp_data = json.loads(resp.data)
+        resp_data = json.loads(resp.data.decode('utf-8'))
 
         assert len(resp_data['_items']) == 1
         assert resp_data['_items'][0]['guid'] == 'tag:localhost:5000:2019:1dbebe89-e808-43f5-a27c-91545dac896f'

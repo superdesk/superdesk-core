@@ -57,7 +57,7 @@ def test_excluded_fields(prodapi_app_with_data, prodapi_app_with_data_client):
     with prodapi_app_with_data.test_request_context():
         # list
         resp = prodapi_app_with_data_client.get(url_for('events|resource'))
-        resp_data = json.loads(resp.data)
+        resp_data = json.loads(resp.data.decode('utf-8'))
 
         for item in resp_data['_items']:
             assert len(set(item.keys()) & excluded_fields) == 0
@@ -67,6 +67,6 @@ def test_excluded_fields(prodapi_app_with_data, prodapi_app_with_data_client):
         resp = prodapi_app_with_data_client.get(
             url_for('events|item_lookup', _id=item['guid']),
         )
-        resp_data = json.loads(resp.data)
+        resp_data = json.loads(resp.data.decode('utf-8'))
 
         assert len(set(resp_data.keys()) & excluded_fields) == 0

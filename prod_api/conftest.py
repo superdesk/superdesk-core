@@ -236,7 +236,7 @@ def issued_tokens(request, superdesk_app, superdesk_client):
                     'Authorization': _basic_auth_str(client_data['client_id'], client_data['password'])
                 }
             )
-            tokens.append(json.loads(resp.data))
+            tokens.append(json.loads(resp.data.decode('utf-8')))
 
     teardown_app(superdesk_app)
     del superdesk_client

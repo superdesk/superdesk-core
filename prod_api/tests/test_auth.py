@@ -40,7 +40,7 @@ def test_not_authenticated(prodapi_app, prodapi_client):
             resp = prodapi_client.get(
                 url_for('{}|resource'.format(resource))
             )
-            resp_data = json.loads(resp.data)
+            resp_data = json.loads(resp.data.decode('utf-8'))
             # we get a 401 response
             assert resp.status_code == 401
             assert resp_data['_status'] == 'ERR'
@@ -77,7 +77,7 @@ def test_authenticated(superdesk_app, superdesk_client, auth_server_registered_c
         )
 
     # we get an access token
-    resp_data = json.loads(resp.data)
+    resp_data = json.loads(resp.data.decode('utf-8'))
     assert resp.status_code == 200
     assert resp_data['token_type'] == 'Bearer'
     assert 'access_token' in resp_data
@@ -137,7 +137,7 @@ def test_bad_shared_key(superdesk_app, superdesk_client, auth_server_registered_
         )
 
     # we get an access token
-    resp_data = json.loads(resp.data)
+    resp_data = json.loads(resp.data.decode('utf-8'))
     token = resp_data['access_token']
 
     # we drop a superdesk flask app and client to avoid conflict between flask apps
@@ -161,7 +161,7 @@ def test_bad_shared_key(superdesk_app, superdesk_client, auth_server_registered_
                     'Authorization': 'Bearer {}'.format(token)
                 }
             )
-            resp_data = json.loads(resp.data)
+            resp_data = json.loads(resp.data.decode('utf-8'))
 
     # we get a 401 response
     assert resp.status_code == 401
@@ -204,7 +204,7 @@ def test_scopes(issued_tokens, prodapi_app):
                     'Authorization': 'Bearer {}'.format(access_token_no_scopes)
                 }
             )
-            resp_data = json.loads(resp.data)
+            resp_data = json.loads(resp.data.decode('utf-8'))
             # we get a 401 response
             assert resp.status_code == 401
             assert resp_data == {
@@ -259,7 +259,7 @@ def test_scopes_partial(issued_tokens, prodapi_app):
                 'Authorization': 'Bearer {}'.format(access_token)
             }
         )
-        resp_data = json.loads(resp.data)
+        resp_data = json.loads(resp.data.decode('utf-8'))
         # we get a 401 response
         assert resp.status_code == 401
         assert resp_data == {
@@ -306,7 +306,7 @@ def test_token_expired(superdesk_app, superdesk_client, auth_server_registered_c
 
     # we get an access token
     assert resp.status_code == 200
-    resp_data = json.loads(resp.data)
+    resp_data = json.loads(resp.data.decode('utf-8'))
     token = resp_data['access_token']
 
     # we drop a superdesk flask app and client to avoid conflict between flask apps
