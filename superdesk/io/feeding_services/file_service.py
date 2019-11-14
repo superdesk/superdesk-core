@@ -72,8 +72,7 @@ class FileFeedingService(FeedingService):
                 last_updated = None
                 file_path = os.path.join(self.path, filename)
                 if os.path.isfile(file_path):
-                    stat = os.lstat(file_path)
-                    last_updated = datetime.fromtimestamp(stat.st_mtime, tz=utc)
+                    last_updated = self.get_last_updated(file_path)
 
                     if self.is_latest_content(last_updated, provider.get('last_updated')):
                         if isinstance(registered_parser, XMLFeedParser):
@@ -166,6 +165,17 @@ class FileFeedingService(FeedingService):
         :param last_updated: file last updated datetime
         """
         return last_updated < utcnow() - timedelta(minutes=10)
+
+    def get_last_updated(self, file_path):
+        """Get last updated time for file.
+
+        Using both mtime and ctime timestamps not to miss
+        old files being copied around and recent files after
+        changes done in place.
+        """
+        stat = os.lstat(file_path)
+        timestamp = max(stat.st_mtime, stat.st_ctime)
+        return datetime.fromtimestamp(timestamp, tz=utc)
 
 
 register_feeding_service(FileFeedingService)

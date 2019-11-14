@@ -22,7 +22,7 @@ from .common import remove_unwanted, update_state, set_item_expiry, remove_media
     handle_existing_data, item_schema, validate_schedule, is_item_in_package, update_schedule_settings, \
     ITEM_OPERATION, ITEM_RESTORE, ITEM_CREATE, ITEM_UPDATE, ITEM_DUPLICATE, ITEM_DUPLICATED_FROM, \
     ITEM_DESCHEDULE, ARCHIVE as SOURCE, LAST_PRODUCTION_DESK, LAST_AUTHORING_DESK, ITEM_FETCH, \
-    convert_task_attributes_to_objectId, BROADCAST_GENRE, set_dateline, get_subject
+    convert_task_attributes_to_objectId, BROADCAST_GENRE, set_dateline, get_subject, transtype_metadata
 from superdesk.media.crop import CropService
 from flask import current_app as app, json
 from superdesk import get_resource_service
@@ -252,6 +252,7 @@ class ArchiveService(BaseService):
             self._add_desk_metadata(doc, {})
 
             convert_task_attributes_to_objectId(doc)
+            transtype_metadata(doc)
 
     def on_created(self, docs):
         packages = [doc for doc in docs if doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE]
@@ -514,6 +515,7 @@ class ArchiveService(BaseService):
             new_doc[ITEM_STATE] = state
 
         convert_task_attributes_to_objectId(new_doc)
+        transtype_metadata(new_doc)
         get_model(ItemModel).create([new_doc])
         self._duplicate_versions(original_doc['_id'], new_doc)
         self._duplicate_history(original_doc['_id'], new_doc)
@@ -870,6 +872,7 @@ class ArchiveService(BaseService):
         """
 
         convert_task_attributes_to_objectId(updates)
+        transtype_metadata(updates, original)
 
         updates[ITEM_OPERATION] = ITEM_UPDATE
         updates.setdefault('original_creator', original.get('original_creator'))

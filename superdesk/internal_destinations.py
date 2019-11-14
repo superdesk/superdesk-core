@@ -73,7 +73,11 @@ def handle_item_published(sender, item, **extra):
         if dest.get('macro'):
             macro = macros_service.get_macro_by_name(dest['macro'])
             try:
-                macro['callback'](new_item)
+                macro['callback'](
+                    new_item,
+                    dest_desk_id=dest.get('desk'),
+                    dest_stage_id=dest.get('stage'),
+                )
             except StopDuplication:
                 continue
 

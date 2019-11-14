@@ -328,6 +328,14 @@ Feature: Publish embedded items feature
         Then we assert content api item "foo" with associated item "embedded1" is published to "58f6115b88ea94d000369a31"
         Then we assert content api item "foo" with associated item "embedded1" is not published to "58f6110d88ea94d000369a2f"
 
+        When we publish "foo" with "correct" type and "corrected" state
+        """
+        {"headline": "foo corrected v2"}
+        """
+        Then we get OK response
+        When we get "published"
+        Then we get list with 6 items
+
     @auth
     @vocabulary
     Scenario: Publish embedded picture together with text item and resend to another subscriber

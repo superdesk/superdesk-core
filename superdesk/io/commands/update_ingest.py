@@ -86,6 +86,8 @@ def is_not_expired(item, delta):
             return expiry > utcnow()
         else:
             return expiry > datetime.now()
+    if not item.get('versioncreated'):  # can't say really
+        return True
     return False
 
 
@@ -513,6 +515,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
 
         item['ingest_provider'] = str(provider[superdesk.config.ID_FIELD])
         item.setdefault('source', provider.get('source', ''))
+        item.setdefault('uri', item[GUID_FIELD])  # keep it as original guid
         set_default_state(item, CONTENT_STATE.INGESTED)
         item['expiry'] = get_expiry_date(provider.get('content_expiry') or app.config['INGEST_EXPIRY_MINUTES'],
                                          item.get('versioncreated'))
@@ -563,15 +566,17 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
                     if status:
                         assoc['_id'] = ids[0]
                         items_ids.extend(ids)
+            elif assoc.get('residRef'):
+                item['associations'][key] = resolve_ref(assoc)
 
         new_version = True
         if old_item:
+            new_version = is_new_version(item, old_item)
             updates = deepcopy(item)
             ingest_service.patch_in_mongo(old_item[superdesk.config.ID_FIELD], updates, old_item)
             item.update(old_item)
             item.update(updates)
             items_ids.append(item['_id'])
-            new_version = is_new_version(item, old_item)
         else:
             if item.get('ingest_provider_sequence') is None:
                 ingest_service.set_ingest_provider_sequence(item, provider)
@@ -592,6 +597,18 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
     return True, items_ids
 
 
+def resolve_ref(assoc):
+    """Resolve reference to existing item."""
+    uri = assoc.pop('residRef')
+    item = superdesk.get_resource_service('archive').find_one(req=None, uri=uri)
+    return item
+
+
+NEW_VERSION_IGNORE_FIELS = (
+    'expiry',
+)
+
+
 def is_new_version(item, old_item):
     # explicit version info
     for field in ('version', 'versioncreated'):
@@ -602,6 +619,8 @@ def is_new_version(item, old_item):
                 return item[field] > old_item[field]
     # no version info, check content
     for field in item:
+        if field in NEW_VERSION_IGNORE_FIELS or item[field] is None:
+            continue
         if not old_item.get(field) or item[field] != old_item[field]:
             return True
     return False

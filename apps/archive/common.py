@@ -13,6 +13,7 @@ from bson import ObjectId
 import logging
 from eve.utils import config
 from datetime import datetime
+from dateutil.parser import parse as date_parse
 from flask import current_app as app
 from eve.versioning import insert_versioning_documents
 from eve.defaults import resolve_default_values
@@ -708,6 +709,49 @@ def convert_task_attributes_to_objectId(doc):
     if ObjectId.is_valid(task.get(LAST_AUTHORING_DESK, None)) and \
             not isinstance(task.get(LAST_AUTHORING_DESK), ObjectId):
         task[LAST_AUTHORING_DESK] = ObjectId(task.get(LAST_AUTHORING_DESK))
+
+
+def transtype_metadata(doc, original=None):
+    """Change the type of metadata coming from client to match expected type in database
+
+    Some metadata (e.g. custom fields) are sent as plain text while an other type is expected in
+    database (e.g. datetime). This method check those metadata and update them.
+
+    :param doc: document to be transtyped (will be modified in place)
+    :param original: original document in case of update
+    """
+    # For now only fields of type "date" in the "extra" dict are handled.
+    extra = doc.get('extra')
+    if not extra:
+        return
+
+    if original is None:
+        original = {}
+
+    try:
+        profile_id = doc.get('profile') or original['profile']
+    except KeyError:
+        # profile may be missing with some items in tests
+        logger.warning("`profile` is not available in doc")
+        return
+    ctypes_service = get_resource_service('content_types')
+    profile = ctypes_service.find_one(None, _id=profile_id)
+    if profile is None:
+        return
+
+    for key, value in extra.items():
+        try:
+            value_type = profile['schema'][key]['type']
+        except KeyError:
+            continue
+
+        if value_type == 'date':
+            if value and type(value) != datetime:
+                try:
+                    extra[key] = date_parse(value)
+                except Exception as e:
+                    logger.warning("Can't parse {key}: {reason}".format(
+                        key=key, reason=e))
 
 
 def copy_metadata_from_profile(doc):

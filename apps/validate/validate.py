@@ -80,10 +80,11 @@ class SchemaValidator(Validator):
         pass
 
     def _validate_type_date(self, field, value):
-        try:
-            datetime.strptime(value or '', '%Y-%m-%dT%H:%M:%S+%f')
-        except ValueError:
-            self._error(field, DATE_FIELD)
+        if not isinstance(value, datetime):
+            try:
+                datetime.strptime(value or '', '%Y-%m-%dT%H:%M:%S+%f')
+            except ValueError:
+                self._error(field, DATE_FIELD)
 
     def _validate_type_picture(self, field, value):
         """Allow type picture in schema."""

@@ -676,7 +676,11 @@ HTML_TAGS_WHITELIST = ('h1', 'h2', 'h3', 'h4', 'h6', 'blockquote', 'pre', 'figur
 # Japanese reading speed
 JAPANESE_CHARACTERS_PER_MINUTE = 600
 
+#: publish associated items automatically
 PUBLISH_ASSOCIATED_ITEMS = False
+
+#: raise error when published item is not queued to any subscriber
+PUBLISH_NOT_QUEUED_ERROR = True
 
 # Use content profile for validation when auto-publishing
 AUTO_PUBLISH_CONTENT_PROFILE = True
