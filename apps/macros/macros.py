@@ -57,9 +57,9 @@ class MacrosService(superdesk.Service):
     def get_macro_by_name(self, macro_name):
         return macros.find(macro_name)
 
-    def execute_macro(self, doc, macro_name):
+    def execute_macro(self, doc, macro_name, **kwargs):
         macro = self.get_macro_by_name(macro_name)
-        return macro['callback'](doc)
+        return macro['callback'](doc, **kwargs)
 
     def get_macros(self, include_backend):
         if include_backend:
