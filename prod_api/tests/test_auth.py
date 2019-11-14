@@ -175,7 +175,7 @@ def test_bad_shared_key(superdesk_app, superdesk_client, auth_server_registered_
 
 
 @pytest.mark.parametrize('issued_tokens', [(SCOPES, tuple())], indirect=True)
-def test_scopes(issued_tokens, prodapi_app):
+def test_scopes(issued_tokens, prodapi_app, prodapi_client):
     """
     Send a request with 'all scopes' token:
         - make a requests to all endpoints with a token
@@ -185,15 +185,16 @@ def test_scopes(issued_tokens, prodapi_app):
         - make a requests to all endpoints with a token
         - ensure that all requests are NOT authorized by prod api due to empty scopes
 
-    :param prodapi_app: prod api app
-    :type prodapi_app: eve.flaskapp.Eve
     :param issued_tokens: list of tokens provided by `issued_tokens` fixture
     :type issued_tokens: list
+    :param prodapi_app: prod api app
+    :type prodapi_app: eve.flaskapp.Eve
+    :param prodapi_client: client for prod api
+    :type prodapi_client: flask.testing.FlaskClient
     """
 
     access_token_all_scopes = issued_tokens[0]['access_token']
     access_token_no_scopes = issued_tokens[1]['access_token']
-    prodapi_client = prodapi_app.test_client()
 
     with prodapi_app.test_request_context():
         for resource in RESOURCES:

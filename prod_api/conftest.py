@@ -30,6 +30,8 @@ def get_test_prodapi_app(extra_config=None):
         'MONGO_MAX_POOL_SIZE': 1,
         'MONGO_URI': get_mongo_uri('MONGO_URI', MONGO_DB),
         'ELASTICSEARCH_INDEX': ELASTICSEARCH_INDEX,
+        'PRODAPI_URL': 'http://localhost:5500',
+        'MEDIA_PREFIX': 'http://localhost:5500/prodapi/v1/assets',
         'PRODAPI_URL_PREFIX': 'prodapi',
         'URL_PREFIX': 'prodapi',
         'AUTH_SERVER_SHARED_SECRET': AUTH_SERVER_SHARED_SECRET
