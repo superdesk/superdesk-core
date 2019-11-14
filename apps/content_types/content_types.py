@@ -493,6 +493,9 @@ def apply_schema(item):
 
     :param item: item to apply schema to
     """
+    # fields that can be added to article without being added to CP eg: using widgets
+    allowed_keys = ['attachments']
+
     if item.get('type') == 'event':
         return item.copy()
     try:
@@ -500,7 +503,7 @@ def apply_schema(item):
         schema = profile['schema']
     except Exception:
         schema = DEFAULT_SCHEMA
-    return {key: val for key, val in item.items() if is_enabled(key, schema)}
+    return {key: val for key, val in item.items() if is_enabled(key, schema) or key in allowed_keys}
 
 
 def remove_profile_from_templates(item):
