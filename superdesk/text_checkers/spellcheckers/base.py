@@ -62,6 +62,9 @@ class SpellcheckerBase(metaclass=SpellcheckerRegisterer):
     "label" attribute can be used, if it is not present the name will be used as label
     """
 
+    CHECK_TIMEOUT = (3, 5)
+    SUGGEST_TIMEOUT = (3, 10)
+
     #: what this spellchecker can do (spelling, grammar)
     capacities = "spelling"
 
