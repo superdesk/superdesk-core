@@ -9,7 +9,6 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk.resource import Resource
-from superdesk.metadata.item import not_analyzed
 
 CONTACTS_PRIVILEDGE = 'contacts'
 VIEW_CONTACTS = 'view_contacts'
@@ -46,7 +45,7 @@ class ContactsResource(Resource):
         'last_name': {
             'type': 'string',
             'required': False,
-            'mapping': not_analyzed
+            'mapping': {'type': 'string'}
         },
         'honorific': {
             'type': 'string',
