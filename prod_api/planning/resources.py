@@ -39,7 +39,7 @@ class EventsResource(Resource):
     datasource = {
         'source': 'events',
         'search_backend': 'elastic',
-        'default_sort': [('dates.start', 1)],
+        'default_sort': [('_updated', -1)],
         'projection': {
             'fields_meta': 0
         },
