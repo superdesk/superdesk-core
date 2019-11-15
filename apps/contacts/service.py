@@ -9,10 +9,14 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
+from superdesk import get_resource_service
 from superdesk.services import Service
 from superdesk.notification import push_notification
+from superdesk.errors import SuperdeskApiError
 from eve.utils import config
 from eve.utils import ParsedRequest
+from flask_babel import _
+from copy import deepcopy
 
 
 class ContactsService(Service):
@@ -25,6 +29,10 @@ class ContactsService(Service):
             lookup['public'] = True
         return super().get(req, lookup)
 
+    def on_create(self, docs):
+        for doc in docs:
+            self._validate_assignable(doc)
+
     def on_created(self, docs):
         """
         Send notification to clients that new contact(s) have been created
@@ -32,6 +40,11 @@ class ContactsService(Service):
         :return:
         """
         push_notification('contacts:create', _id=[doc.get(config.ID_FIELD) for doc in docs])
+
+    def on_update(self, updates, original):
+        item = deepcopy(original)
+        item.update(updates)
+        self._validate_assignable(item)
 
     def on_updated(self, updates, original):
         """
@@ -49,6 +62,33 @@ class ContactsService(Service):
         :return:
         """
         push_notification('contacts:deleted', _id=[doc.get(config.ID_FIELD)])
+
+    def _validate_assignable(self, contact):
+        """Validates a required email address if the contact_type has assignable flag turned on"""
+
+        if not contact or not contact.get('contact_type'):
+            return
+
+        types = get_resource_service('vocabularies').find_one(req=None, _id='contact_type')
+
+        if not types:
+            return
+
+        contact_type = next((
+            item
+            for item in (types.get('items') or [])
+            if item.get('qcode') == contact.get('contact_type')
+        ), None)
+
+        if not contact_type or not contact_type.get('assignable'):
+            return
+
+        if not contact.get('contact_email'):
+            raise SuperdeskApiError.badRequestError(
+                message=_("Contacts of type \"{contact_type}\" must have an email address").format(
+                    contact_type=contact_type.get('name')
+                )
+            )
 
 
 class OrganisationService(Service):
