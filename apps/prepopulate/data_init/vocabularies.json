@@ -339,6 +339,7 @@
     {
         "_id": "usageterms",
         "display_name": "Terms of use",
+        "schema_field": "usageterms",
         "type": "manageable",
         "unique_field": "qcode",
         "selection_type": "single selection",
