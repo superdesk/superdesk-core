@@ -145,6 +145,10 @@ class VocabulariesResource(Resource):
             'type': 'string',
             'nullable': True,
         },
+        'custom_field_config': {
+            'type': 'dict',
+            'nullable': True,
+        },
     }
 
     soft_delete = True
