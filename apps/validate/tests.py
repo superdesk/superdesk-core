@@ -451,7 +451,7 @@ class ValidateMandatoryInListTest(TestCase):
         self.assertEqual(media, item['media1'])
 
     def test_validate_validate_characters(self):
-        self.app.config['DISSALLOWED_CHARACTERS'] = ['!', '@', '#']
+        self.app.config['DISALLOWED_CHARACTERS'] = ['!', '@', '#']
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
             'slugline': {'validate_characters': True, 'type': 'string'}
         }}])

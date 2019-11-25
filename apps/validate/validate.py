@@ -152,7 +152,7 @@ class SchemaValidator(Validator):
 
     def _validate_validate_characters(self, validate, field, value):
         """Validate if field contains only allowed characters."""
-        disallowed_characters = app.config.get('DISSALLOWED_CHARACTERS')
+        disallowed_characters = app.config.get('DISALLOWED_CHARACTERS')
 
         if validate and disallowed_characters and value:
             invalid_chars = [char for char in disallowed_characters if char in value]
