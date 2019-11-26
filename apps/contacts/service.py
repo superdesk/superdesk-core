@@ -83,7 +83,7 @@ class ContactsService(Service):
         if not contact_type or not contact_type.get('assignable'):
             return
 
-        if not len(contact.get('contact_email') or []):
+        if not contact.get('contact_email'):
             raise SuperdeskApiError.badRequestError(
                 message=_("Contacts of type \"{contact_type}\" must have an email address").format(
                     contact_type=contact_type.get('name')
