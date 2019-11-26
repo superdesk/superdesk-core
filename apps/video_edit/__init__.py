@@ -1,7 +1,6 @@
 import superdesk
 from apps.archive.common import ARCHIVE
 from superdesk import config
-from superdesk.errors import SuperdeskApiError
 from superdesk.media.video_editor import VideoEditorWrapper
 from superdesk.metadata.utils import item_url
 
