@@ -29,6 +29,8 @@ from itertools import chain
 from apps.publish.published_item import PUBLISHED, LAST_PUBLISHED_VERSION
 from flask_babel import _
 from enum import Enum
+from bson.objectid import ObjectId
+from apps.content import push_content_notification
 
 logger = logging.getLogger(__name__)
 # what to do when the item is in a package
@@ -76,6 +78,7 @@ class KillPublishService(BasePublishService):
 
         super().on_update(updates, original)
         updates[ITEM_OPERATION] = self.item_operation
+        self._remove_marked_user(original)
         get_resource_service('archive_broadcast').spike_item(original)
 
     def update(self, id, updates, original):
@@ -131,8 +134,10 @@ class KillPublishService(BasePublishService):
         """
         # apply the kill template
         original_copy = deepcopy(original)
+
         updates_data = self.apply_kill_template(original_copy)
         updates_data['body_html'] = updates.get('body_html', '')
+
         # resolve the document version
         resolve_document_version(document=updates_data, resource=ARCHIVE, method='PATCH', latest_doc=original)
         # kill the item
@@ -184,3 +189,24 @@ class KillPublishService(BasePublishService):
             updates.update(kill_header)
         except Exception:
             logger.exception('Failed to apply kill header template to item {}.'.format(item))
+
+    def _remove_marked_user(self, item):
+        """Remove the marked_for_user from the published item which is being killed"""
+        item_id = item.get('_id')
+        if not item_id:
+            return
+
+        published_item = get_resource_service(PUBLISHED).find_one(req=None, item_id=item_id)
+
+        if published_item and published_item.get('marked_for_user'):
+            updated = published_item.copy()
+            updates = {'marked_for_user': None}
+            updated.update(updates)
+
+            get_resource_service(PUBLISHED).system_update(
+                ObjectId(published_item.get('_id')), updates, published_item
+            )
+
+            # send notifications so that list can be updated in the client
+            get_resource_service('archive').handle_mark_user_notifications(updates, published_item, False)
+            push_content_notification([updated, published_item])
