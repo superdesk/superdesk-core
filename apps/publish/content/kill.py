@@ -191,22 +191,26 @@ class KillPublishService(BasePublishService):
             logger.exception('Failed to apply kill header template to item {}.'.format(item))
 
     def _remove_marked_user(self, item):
-        """Remove the marked_for_user from the published item which is being killed"""
+        """Remove the marked_for_user from all the published items having same 'item_id' as item being killed."""
         item_id = item.get('_id')
         if not item_id:
             return
 
-        published_item = get_resource_service(PUBLISHED).find_one(req=None, item_id=item_id)
+        updates = {'marked_for_user': None}
+        published_service = get_resource_service(PUBLISHED)
 
-        if published_item and published_item.get('marked_for_user'):
-            updated = published_item.copy()
-            updates = {'marked_for_user': None}
-            updated.update(updates)
+        published_items = list(published_service.get_from_mongo(req=None, lookup={'item_id': item_id}))
+        if not published_items:
+            return
 
-            get_resource_service(PUBLISHED).system_update(
-                ObjectId(published_item.get('_id')), updates, published_item
-            )
+        for item in published_items:
+            if item and item.get('marked_for_user'):
+                updated = item.copy()
+                updated.update(updates)
 
-            # send notifications so that list can be updated in the client
-            get_resource_service('archive').handle_mark_user_notifications(updates, published_item, False)
-            push_content_notification([updated, published_item])
+                published_service.system_update(
+                    ObjectId(item.get('_id')), updates, item
+                )
+                # send notifications so that list can be updated in the client
+                get_resource_service('archive').handle_mark_user_notifications(updates, item, False)
+                push_content_notification([updated, item])
