@@ -863,9 +863,11 @@ def get_subject(doc1, doc2=None):
     :param dict doc1:
     :param dict doc2:
     """
-    for key in ('headline', 'subject', 'slugline'):
+    for key in ('headline', 'slugline', 'subject'):
         value = doc1.get(key)
         if not value and doc2:
             value = doc2.get(key)
+        if value and key == 'subject':
+            value = [v.get('name') for v in value if 'name' in v][0]
         if value:
             return value
