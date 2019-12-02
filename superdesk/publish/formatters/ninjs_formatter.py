@@ -250,7 +250,7 @@ class NINJSFormatter(Formatter):
 
         if 'extra' in ninjs:
             if article.get('flags', {}).get('change_types_tmp') == "1":
-                ninjs["extra"].update({"dont_update_date": True})
+                ninjs["extra"].update({"update_date": True})
 
         if (article.get('schedule_settings') or {}).get('utc_publish_schedule'):
             ninjs['publish_schedule'] = article['schedule_settings']['utc_publish_schedule']
