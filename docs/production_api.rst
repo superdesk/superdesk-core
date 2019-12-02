@@ -173,11 +173,14 @@ All fixtures for production API tests are defined in the ``conftest.py`` file.
 Tests for authentication and authorization are in ``test_auth.py`` file and they are more like e2e.
 To test an entire auth process close to real interaction between client, auth server and production API,
 2 flask apps are required respectively.
-**To avoid spinning 2 flask servers (superdesk and prod api) in separate processes and send real requests via local network to test things,
-flask's built-in test client was used. It requires having 2 flask apps/clients in one test case (fixtures).
-The issue is that 2 flask apps in the same process will conflict with each other (flask registers resources simply in a variable,
-so one flask app will overwrite resources of another app),
-to avoid this issue, only one flask app must be active at a period of time.**
+
+.. note::
+    To avoid spinning 2 flask servers (superdesk and prod api) in separate processes and send real requests via local
+    network to test things, flask's built-in test client was used.
+    It requires having 2 flask apps/clients in one test case (fixtures).
+    The issue is that 2 flask apps in the same process will conflict with each other
+    (flask registers resources simply in a variable, so one flask app will overwrite resources of another app),
+    to avoid this issue, only one flask app must be active at a period of time.
 
 
 Settings
