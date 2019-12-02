@@ -17,6 +17,8 @@ from werkzeug.datastructures import FileStorage
 import superdesk
 from superdesk import config
 from superdesk.tests import TestCase
+import magic
+import copy
 
 
 class Req(dict):
@@ -29,24 +31,98 @@ video_info = {
 
 
 class VideoEditTestCase(TestCase):
+    project_data = {
+        '_id': 'video_id',
+        'metadata': {
+            "codec_name": "h264",
+            "width": 1280,
+            "height": 720,
+            "duration": 10,
+        },
+        'url': 'video_url',
+        'mime_type': 'video/mp4',
+        'version': 1,
+    }
+
     def setUp(self):
         self.video_edit = superdesk.get_resource_service('video_edit')
         self.app.config['VIDEO_SERVER_ENABLE'] = 'true'
         self.app.config['VIDEO_SERVER_URL'] = 'http://localhost'
-        superdesk.Service.find_one = MagicMock()
-        superdesk.Service.find_one.return_value = {'media': 'video_id'}
+        with requests_mock.mock() as mock:
+            doc = {'media': FileStorage(BytesIO(b'abcdef'), 'video.mp4')}
+            mock.post('http://localhost/projects/', json=self.project_data)
+            mock.get("http://localhost/projects/video_id/thumbnails?type=timeline&amount=40",
+                     json={"processing": True})
+            archive_service = superdesk.get_resource_service('archive')
+            magic.from_buffer = MagicMock()
+            magic.from_buffer.return_value = 'video/mp4'
+            self.item = archive_service.find_one(req=None, _id=archive_service.post([doc])[0])
 
     def test_get_video(self):
         with requests_mock.mock() as mock:
             mock.get('http://localhost/projects/video_id', json=video_info)
-            res = self.video_edit.find_one(Req())
+            res = self.video_edit.find_one(Req(), _id=self.item['_id'])
             self.assertEqual(res['project']['_id'], video_info['_id'])
 
+    def test_upload_video(self):
+        self.assertEqual(self.item["renditions"], {'original': {'href': 'video_url',
+                                                                'mimetype': 'video/mp4',
+                                                                'version': 1,
+                                                                'video_editor_id':
+                                                                'video_id'}})
+
     def test_edit_video(self):
-        pass
+        project_data = copy.deepcopy(self.project_data)
+        doc = {
+            "item": self.item,
+            "edit": {
+                "crop": "0,0,200,500",
+                "rotate": -90,
+                "trim": "5,15"
+            },
+        }
+        with requests_mock.mock() as mock:
+            project_data['version'] = 2
+            mock.get('http://localhost/projects/video_id', json=project_data)
+            mock.post('http://localhost/projects/video_id/duplicate', json=project_data)
+            mock.put('http://localhost/projects/video_id', json={"processing": True})
+            item = self.video_edit.find_one(req=None, _id=self.video_edit.create([doc])[0])
+            self.assertEqual(item["renditions"], {'original': {'href': 'video_url',
+                                                               'mimetype': 'video/mp4',
+                                                               'version': 3,
+                                                               'video_editor_id':
+                                                               'video_id'}})
 
     def test_capture_thumbnail(self):
-        pass
+        doc = {
+            "item": self.item,
+            "capture": {
+                "crop": "0,0,200,500",
+                "rotate": -90,
+                "trim": "5,10"
+            },
+        }
+        project_data = copy.deepcopy(self.project_data)
+        project_data.setdefault('thumbnails', {})['preview'] = {
+            "mimetype": "image/png",
+            "url": "http://localhost/projects/video_id/raw/thumbnails/preview"
+        }
+        with requests_mock.mock() as mock:
+            mock.get('http://localhost/projects/video_id', json=project_data)
+            mock.post('http://localhost/projects/video_id', json={"processing": True})
+            mock.get('http://localhost/projects/video_id/thumbnails?type=preview&crop=0,0,200,500&rotate=-90',
+                     json=project_data)
+            item = self.video_edit.find_one(req=None, _id=self.video_edit.create([doc])[0])
+            self.assertEqual(item["renditions"],
+                             {'original': {'href': 'video_url',
+                                           'mimetype': 'video/mp4',
+                                           'version': 1,
+                                           'video_editor_id':
+                                           'video_id'},
+                              'thumbnail': {
+                                 "mimetype": "image/png",
+                                 "href": "http://localhost/projects/video_id/raw/thumbnails/preview"
+                             }})
 
     def test_upload_thumbnail(self):
         thumbnail = {
@@ -72,6 +148,6 @@ class VideoEditTestCase(TestCase):
             )
             req = Req()
             setattr(req, 'args', {'action': 'timeline'})
-            res = self.video_edit.find_one(req)
+            res = self.video_edit.find_one(req, _id=self.item['_id'])
             self.assertEqual(res[config.ID_FIELD], video_info['_id'])
             self.assertTrue(res['processing'])

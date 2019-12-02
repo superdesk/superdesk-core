@@ -23,17 +23,6 @@ class VideoEditorWrapper():
     def get_base_url(self):
         return app.config.get('VIDEO_SERVER_URL') + '/projects/'
 
-    def check_video_server(self):
-        parse = urlparse(app.config.get('VIDEO_SERVER_URL'))
-        host = parse.hostname
-        port = parse.port if parse.port else 80
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        result = sock.connect_ex((host, port))
-        if result == 0:
-            return True
-        else:
-            return False
-
     def create(self, file):
         return self._post(file)
 

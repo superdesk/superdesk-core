@@ -45,8 +45,6 @@ class ArchiveMediaService():
             doc['media'].seek(0)
             file_type = content_type.split('/')[0]
             if file_type == 'video' and app.config.get("VIDEO_SERVER_ENABLE"):
-                if not self.video_editor.check_video_server():
-                    raise SuperdeskApiError(message="Cannot connect to videoserver", status_code=500)
                 # upload media to video server
                 res, renditions, metadata = self.upload_file_to_video_server(doc)
                 # get thumbnails for timeline bar
@@ -131,7 +129,7 @@ class ArchiveMediaService():
         rend = {
             'href': res.get('url'),
             'video_editor_id': res.get('_id'),
-            'mimetype': res.get('content-type'),
+            'mimetype': res.get('mime_type'),
             'version': res.get('version'),
         }
         renditions = {'original': rend}
