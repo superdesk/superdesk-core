@@ -1,12 +1,13 @@
 Authentication Server
 =====================
 
-Superdesk provides an OAuth2 authentication server for the production API. The server is
+Superdesk provides an OAuth2 authentication server for the `production API`_. The server is
 using the `Client Credentials Grant`_ with JWT access token.
 
 The endpoint used in Superdesk is ``/api/auth_server/token``.
 
 .. _Client Credentials Grant: https://tools.ietf.org/html/rfc6749#section-4.4
+.. _production API: production_api.html
 
 Overview
 --------
