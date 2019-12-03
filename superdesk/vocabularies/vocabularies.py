@@ -168,6 +168,7 @@ class VocabulariesService(BaseService):
         else:
             update.setdefault('unique_field', 'qcode')
         unique_field = update.get('unique_field')
+        vocabs = {}
         if 'schema' in update and 'items' in update:
             for index, item in enumerate(update['items']):
                 for field, desc in update.get('schema', {}).items():
@@ -176,6 +177,35 @@ class VocabulariesService(BaseService):
                         msg = 'Required ' + field + ' in item ' + str(index)
                         payload = {'error': {'required_field': 1}, 'params': {'field': field, 'item': index}}
                         raise SuperdeskApiError.badRequestError(message=msg, payload=payload)
+
+                    elif desc.get('link_vocab') and desc.get('link_field'):
+                        if not vocabs.get(desc['link_vocab']):
+                            linked_vocab = self.find_one(req=None, _id=desc['link_vocab']) or {}
+
+                            vocabs[desc['link_vocab']] = [
+                                vocab.get(desc['link_field'])
+                                for vocab in linked_vocab.get('items') or []
+                            ]
+
+                        if item.get(field) and item[field] not in vocabs[desc['link_vocab']]:
+                            msg = '{} "{}={}" not found'.format(
+                                desc['link_vocab'],
+                                desc['link_field'],
+                                item[field]
+                            )
+                            payload = {
+                                'error': {
+                                    'required_field': 1,
+                                    'params': {
+                                        'field': field,
+                                        'item': index
+                                    }
+                                }
+                            }
+                            raise SuperdeskApiError.badRequestError(
+                                message=msg,
+                                payload=payload
+                            )
 
     def on_create(self, docs):
         for doc in docs:
