@@ -346,6 +346,7 @@ class ValidateService(superdesk.Service):
                 subject.setdefault('scheme', None)
 
     def _validate(self, doc, fields=False, **kwargs):
+        item = deepcopy(doc['validate'])  # make a copy for signal before validation processing
         use_headline = kwargs and 'headline' in kwargs
         validators = self._get_validators(doc)
         for validator in validators:
@@ -399,7 +400,7 @@ class ValidateService(superdesk.Service):
                         response.append(message)
 
             # let custom code do additional validation
-            item_validate.send(self, item=doc['validate'], response=response, error_fields=v.errors)
+            item_validate.send(self, item=item, response=response, error_fields=v.errors)
 
             if fields:
                 return response, v.errors

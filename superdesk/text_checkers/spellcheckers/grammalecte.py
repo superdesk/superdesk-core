@@ -200,7 +200,7 @@ class Grammalecte(SpellcheckerBase):
     def _check_server(self, text):
         check_url = urljoin(self.base_url, PATH_CHECK)
         r = requests.post(check_url, data={"text": text,
-                                           "options": json.dumps(self.grammalecte_config)})
+                                           "options": json.dumps(self.grammalecte_config)}, timeout=self.CHECK_TIMEOUT)
         if r.status_code != 200:
             raise SuperdeskApiError.internalError("Unexpected return code from Grammalecte")
         return self.grammalecte2superdesk(text, r.json())
@@ -224,7 +224,7 @@ class Grammalecte(SpellcheckerBase):
             logger.warning("Suggestions not available with this server version")
             return {'suggestions': []}
         check_url = urljoin(self.base_url, PATH_SUGGEST)
-        r = requests.post(check_url, data={"token": text})
+        r = requests.post(check_url, data={"token": text}, timeout=self.SUGGEST_TIMEOUT)
         if r.status_code != 200:
             raise SuperdeskApiError.internalError("Unexpected return code from Grammalecte")
 
@@ -262,7 +262,7 @@ class Grammalecte(SpellcheckerBase):
         """Check if grammalecte-server is launched at expected URL, and retrieve Grammalecte version"""
         check_url = urljoin(self.base_url, PATH_CHECK)
         try:
-            r = requests.post(check_url, data={"text": ""})
+            r = requests.post(check_url, data={"text": ""}, timeout=self.CHECK_TIMEOUT)
         except Exception as e:
             logger.warning(
                 "can't request Grammalecte URL ({check_url}): {e}".

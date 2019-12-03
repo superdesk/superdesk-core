@@ -1,5 +1,61 @@
 # Superdesk Server Changelog
 
+## [1.32] 2019-12-03
+
+### Added
+
+- Add `content_type` to *Contacts* resource.
+- Add `schema_field` to *Terms of Use* cv.
+- Support internal attachments.
+- Allow ingested item to reference item ingested previously.
+- Add news resource for production content.
+- Support internal attachments.
+- Add filter condition for featuremedia presence.
+- Add production API.
+- Keep list of translations on original item.
+- Implement mark for user action backend.
+- Additional filter condition operators for place.
+- Support Leuven University Dutch spellchecker.
+- Support Grammalecte spellchecker.
+
+### Changed
+
+- Use `contentUpdated` field to populate `versionCreated` in STT parser.
+- Generate custom renditions on image upload.
+- Add `task` param to stage incoming macro call.
+
+### Fixed
+
+- Fix date parsing in IPTC picture parser.
+- Use original item for validate signal.
+- Ingested and auto published updates are not reflected in Newshub.
+- Fix data type for custom date fields.
+- Check also `ctime` when detecting if file is too old for ingest.
+- Avoid duplicate items ingested via rss.
+- Set tzinfo on dates when ingesting ninjs.
+- Subject is required error when subject is there.
+- Fix routing of ingested items on every ingest update.
+- Auto-publish associated items only if those are not published yet.
+- Prevent out-of-sequence publishing of Updates.
+- Update user etag on role privileges change to force reload on client.
+- Fix validation error when same qcode is used with different scheme.
+- AP ingest stops on parsing error.
+- Use custom error message for unpublish validation.
+- Fix AP category parser mapping.
+- Fix validation for custom types.
+
+## [1.31.5] 2019-10-14
+
+### Changed
+
+- Add config to generate custom renditions by default.
+
+## [1.31.4] 2019-10-03
+
+### Fixed
+
+- Use custom error message for unpublish validation error.
+
 ## [1.31.3] 2019-09-06
 
 ### Fixed
