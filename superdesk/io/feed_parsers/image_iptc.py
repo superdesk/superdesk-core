@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import arrow
 from superdesk.io.feed_parsers import FileFeedParser
 from superdesk.io.registry import register_feed_parser
 from superdesk.errors import ParserError
@@ -18,6 +19,7 @@ from superdesk.metadata.item import GUID_TAG, ITEM_TYPE, CONTENT_TYPE
 from superdesk.metadata import utils
 from superdesk.media.renditions import generate_renditions, get_renditions_spec
 from superdesk.upload import url_for_media
+from superdesk.utc import utcnow
 from superdesk import filemeta
 from flask import current_app as app
 from eve.utils import config
@@ -70,7 +72,7 @@ class ImageIPTCFeedParser(FileFeedParser):
                 config.ID_FIELD: guid,
                 ITEM_TYPE: CONTENT_TYPE.PICTURE,
                 'mimetype': content_type,
-                'versioncreated': datetime.now()
+                'versioncreated': utcnow(),
                 }
         with open(image_path, 'rb') as f:
             _, content_type, file_metadata = process_file_from_stream(f, content_type=content_type)
@@ -100,7 +102,10 @@ class ImageIPTCFeedParser(FileFeedParser):
                                                                  time_created[6],
                                                                  time_created[7:9],
                                                                  time_created[9:])
-            item['firstcreated'] = dateutil.parser.parse(datetime_created)
+            try:
+                item['firstcreated'] = dateutil.parser.parse(datetime_created)
+            except ValueError:
+                item['firstcreated'] = arrow.get('{} {}'.format(date_created, time_created)).datetime
 
         # now we map IPTC metadata to superdesk metadata
         for source_key, dest_key in IPTC_MAPPING.items():
