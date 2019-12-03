@@ -137,6 +137,11 @@ class ContactsResource(Resource):
         'notes': {
             'type': 'string',
             'required': False
+        },
+        'contact_type': {
+            'type': 'string',
+            'required': False,
+            'nullable': True,
         }
     }
 
