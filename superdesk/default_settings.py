@@ -318,7 +318,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'saved_searches:report': {
         'task': 'apps.saved_searches.report',
-        'schedule': timedelta(minutes=1)
+        'schedule': crontab(minute=0),
     },
 }
 
