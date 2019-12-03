@@ -275,3 +275,70 @@ Feature: Vocabularies
     """
     {"_issues": {"validator exception": "400: Required qcode in item 0"}, "_status": "ERR"}
     """
+
+  @auth
+  Scenario: Validate linked vocabularies
+    When we post to "vocabularies"
+    """
+    [{
+        "_id": "foo",
+        "type": "manageable",
+        "display_name": "Foo",
+        "items": [],
+        "schema": {
+            "name": {"required": true},
+            "qcode": {"required": true}
+        }
+    }, {
+        "_id": "bar",
+        "type": "manageable",
+        "display_name": "Bar",
+        "items": [],
+        "schema": {
+            "name": {"required": true},
+            "qcode": {"required": true},
+            "foo": {
+                "type": "string",
+                "required": false,
+                "link_vocab": "foo",
+                "link_field": "qcode"
+            }
+        }
+    }]
+    """
+    Then we get OK response
+    When we patch "/vocabularies/bar"
+    """
+    {
+        "items": [{
+            "qcode": "b1",
+            "name": "B1",
+            "foo": "f1"
+        }]
+    }
+    """
+    Then we get error 400
+    """
+    {"_issues": {"validator exception": "400: foo \"qcode=f1\" not found"}, "_status": "ERR"}
+    """
+    When we patch "/vocabularies/foo"
+    """
+    {
+        "items": [{
+            "qcode": "f1",
+            "name": "F1"
+        }]
+    }
+    """
+    Then we get OK response
+    When we patch "/vocabularies/bar"
+    """
+    {
+        "items": [{
+            "qcode": "b1",
+            "name": "B1",
+            "foo": "f1"
+        }]
+    }
+    """
+    Then we get OK response
