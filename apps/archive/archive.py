@@ -22,7 +22,7 @@ from .common import remove_unwanted, update_state, set_item_expiry, remove_media
     handle_existing_data, item_schema, validate_schedule, is_item_in_package, update_schedule_settings, \
     ITEM_OPERATION, ITEM_RESTORE, ITEM_CREATE, ITEM_UPDATE, ITEM_DUPLICATE, ITEM_DUPLICATED_FROM, \
     ITEM_DESCHEDULE, ARCHIVE as SOURCE, LAST_PRODUCTION_DESK, LAST_AUTHORING_DESK, ITEM_FETCH, \
-    convert_task_attributes_to_objectId, BROADCAST_GENRE, set_dateline, get_subject
+    convert_task_attributes_to_objectId, BROADCAST_GENRE, set_dateline, get_subject, transtype_metadata
 from superdesk.media.crop import CropService
 from flask import current_app as app, json
 from superdesk import get_resource_service
@@ -33,7 +33,7 @@ from eve.utils import parse_request, config, date_to_str, ParsedRequest
 from superdesk.services import BaseService
 from superdesk.users.services import current_user_has_privilege, is_admin
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, CONTENT_TYPE, ITEM_TYPE, EMBARGO, \
-    PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, SIGN_OFF, ASSOCIATIONS, MEDIA_TYPES, INGEST_ID, PROCESSED_FROM
+    PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, SIGN_OFF, ASSOCIATIONS, MEDIA_TYPES, INGEST_ID, PROCESSED_FROM, PUBLISH_STATES
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, RESIDREF
 from apps.common.components.utils import get_component
 from apps.item_autosave.components.item_autosave import ItemAutosave
@@ -49,6 +49,10 @@ from flask_babel import _
 
 EDITOR_KEY_PREFIX = 'editor_'
 logger = logging.getLogger(__name__)
+
+
+def format_subj_qcode(subj):
+    return ':'.join([code for code in [subj.get('scheme'), subj.get('qcode')] if code])
 
 
 def private_content_filter():
@@ -249,6 +253,7 @@ class ArchiveService(BaseService):
             self._add_desk_metadata(doc, {})
 
             convert_task_attributes_to_objectId(doc)
+            transtype_metadata(doc)
 
     def on_created(self, docs):
         packages = [doc for doc in docs if doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE]
@@ -500,7 +505,7 @@ class ArchiveService(BaseService):
         """
         new_doc = original_doc.copy()
 
-        self.remove_after_copy(new_doc, extra_fields)
+        self.remove_after_copy(new_doc, extra_fields, delete_keys=['marked_for_user'])
         on_duplicate_item(new_doc, original_doc, operation)
         resolve_document_version(new_doc, SOURCE, 'PATCH', new_doc)
 
@@ -511,6 +516,7 @@ class ArchiveService(BaseService):
             new_doc[ITEM_STATE] = state
 
         convert_task_attributes_to_objectId(new_doc)
+        transtype_metadata(new_doc)
         get_model(ItemModel).create([new_doc])
         self._duplicate_versions(original_doc['_id'], new_doc)
         self._duplicate_history(original_doc['_id'], new_doc)
@@ -548,7 +554,9 @@ class ArchiveService(BaseService):
         keys_to_delete.extend([config.ID_FIELD, 'guid', LINKED_IN_PACKAGES, EMBARGO, PUBLISH_SCHEDULE,
                                SCHEDULE_SETTINGS, 'lock_time', 'lock_action', 'lock_session', 'lock_user', SIGN_OFF,
                                'rewritten_by', 'rewrite_of', 'rewrite_sequence', 'highlights', 'marked_desks',
-                               '_type', 'event_id', 'assignment_id', PROCESSED_FROM])
+                               '_type', 'event_id', 'assignment_id', PROCESSED_FROM,
+                               'translations', 'translation_id', 'translated_from',
+                               ])
         if delete_keys:
             keys_to_delete.extend(delete_keys)
 
@@ -852,7 +860,7 @@ class ArchiveService(BaseService):
             raise SuperdeskApiError.badRequestError(_("Duplicate category codes are not allowed"))
 
         # Ensure that there are no duplicate subjects in the update
-        subject_qcodes = [q['qcode'] for q in updates.get('subject', []) or []]
+        subject_qcodes = [format_subj_qcode(q) for q in updates.get('subject', []) or []]
         if subject_qcodes and len(subject_qcodes) != len(set(subject_qcodes)):
             raise SuperdeskApiError.badRequestError(_("Duplicate subjects are not allowed"))
 
@@ -865,6 +873,7 @@ class ArchiveService(BaseService):
         """
 
         convert_task_attributes_to_objectId(updates)
+        transtype_metadata(updates, original)
 
         updates[ITEM_OPERATION] = ITEM_UPDATE
         updates.setdefault('original_creator', original.get('original_creator'))
@@ -949,44 +958,77 @@ class ArchiveService(BaseService):
 
         return False
 
-    def handle_mark_user_notifications(self, updates, original):
+    def handle_mark_user_notifications(self, updates, original, add_activity=True):
         """Notify user when item is marked or unmarked
 
         :param updates: updates to item that should be saved
         :param original: original item version before update
+        :param add_activity: flag to decide whether to add notification as activity or not
         """
         orig_marked_user = original.get('marked_for_user', None)
         new_marked_user = updates.get('marked_for_user', None)
+        by_user = get_user().get('display_name', get_user().get('username'))
+        user_service = get_resource_service('users')
+
         if new_marked_user:
-            user = get_resource_service('users').find_one(req=None, _id=new_marked_user)
-            marked_for_user = user.get('display_name', user.get('username'))
+            marked_user = user_service.find_one(req=None, _id=new_marked_user)
+            marked_for_user = marked_user.get('display_name', marked_user.get('username'))
 
         if orig_marked_user and new_marked_user is None:
             # sent when unmarking user from item
-            user_list = [{'_id': orig_marked_user}]
-            notify_and_add_activity('item:unmarked', 'Item unmarked.',
-                                    resource=self.datasource, item=original,
-                                    user_list=user_list)
-            # send separate notification for markForUser extension
-            push_notification('item:unmarked',
-                              item_id=original.get(config.ID_FIELD),
-                              user_list=user_list,
-                              extension='markForUser')
+            user_list = [user_service.find_one(req=None, _id=orig_marked_user)]
+            message = 'Item "{headline}" has been unmarked by {by_user}.'.format(
+                headline=original.get('headline', original.get('slugline', 'item')), by_user=by_user)
+
+            self._send_mark_user_notifications('item:unmarked', message, resource=self.datasource, item=original,
+                                               user_list=user_list, add_activity=add_activity)
         else:
             # sent when mark item for user or mark to another user
+            user_list = [marked_user]
             if new_marked_user and orig_marked_user and new_marked_user != orig_marked_user:
-                user_list = [{'_id': new_marked_user}, {'_id': orig_marked_user}]
-            else:
-                user_list = [{'_id': new_marked_user}]
-            notify_and_add_activity('item:marked', 'Item marked.',
-                                    resource=self.datasource, item=original,
-                                    user_list=user_list,
-                                    marked_for_user=marked_for_user)
-            # send separate notification for markForUser extension
-            push_notification('item:marked',
-                              item_id=original.get(config.ID_FIELD),
-                              user_list=user_list,
-                              extension='markForUser')
+                user_list.append(user_service.find_one(req=None, _id=orig_marked_user))
+
+            message = 'Item "{headline}" has been marked for {for_user} by {by_user}.'.format(
+                headline=original.get('headline', original.get('slugline', 'item')), for_user=marked_for_user,
+                by_user=by_user)
+
+            self._send_mark_user_notifications('item:marked', message, resource=self.datasource, item=original,
+                                               user_list=user_list,
+                                               add_activity=add_activity, marked_for_user=marked_for_user)
+
+    def _send_mark_user_notifications(self, activity_name, msg, resource=None, item=None, user_list=None,
+                                      add_activity=True, **data):
+        """Send notifications on mark or unmark user operation
+
+        :param activity_name: Name of the activity
+        :param msg: Notification message to be sent
+        :param resource: resource name generating this notification
+        :param item: marked or unmarked article, default None
+        :param user_list: users to be notified
+        :param add_activity: flag to decide whether to add notification as activity or not
+        :param data: kwargs
+        """
+
+        if item.get('type') == 'text':
+            link_id = item.get('guid', item.get('_id'))
+        else:
+            # since guid and _id do not match for the item of type picture, audio and video
+            # create link using _id instead of guid for media items
+            # and item_id for published media items as _id or guid does not match _id in archive for media items
+            link_id = item.get('item_id') if item.get('state') in PUBLISH_STATES else item.get('_id')
+
+        client_url = app.config.get('CLIENT_URL', '').rstrip('/')
+        link = '{}/#/workspace?item={}&action=view'.format(client_url, link_id)
+
+        if add_activity:
+            notify_and_add_activity(activity_name, msg,
+                                    resource=resource, item=item,
+                                    user_list=user_list, link=link, **data)
+        # send separate notification for markForUser extension
+        push_notification(activity_name,
+                          item_id=item.get(config.ID_FIELD),
+                          user_list=user_list,
+                          extension='markForUser')
 
 
 class AutoSaveResource(Resource):

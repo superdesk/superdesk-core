@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 import re
 from apps.content_filters.filter_condition.filter_condition_operator \
-    import FilterConditionOperatorsEnum, ComparisonOperator
+    import FilterConditionOperatorsEnum, ComparisonOperator, ExistsOperator
 
 
 class FilterConditionValue:
@@ -32,7 +32,7 @@ class FilterConditionValue:
         self.elastic_regex = self.elastic_mapper.get(operator.operator)
 
     def get_value(self, field, operator):
-        if isinstance(operator, ComparisonOperator):
+        if isinstance(operator, ComparisonOperator) or isinstance(operator, ExistsOperator):
             t = field.get_type()
             if t is bool:
                 return self.value.lower() in ("yes", "true", "t", "1")

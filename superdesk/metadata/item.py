@@ -82,6 +82,10 @@ metadata_schema = {
         'unique': True,
         'mapping': not_analyzed
     },
+    'uri': {
+        'type': 'string',
+        'mapping': not_analyzed,
+    },
     'unique_id': {
         'type': 'integer',
         'unique': True,
@@ -626,6 +630,11 @@ metadata_schema = {
         'mapping': not_analyzed,
     },
 
+    'translations': {
+        'type': 'list',
+        'mapping': not_analyzed,
+    },
+
     # references item id for items auto published using internal destinations
     PROCESSED_FROM: {'type': 'string', 'mapping': not_analyzed},
 
@@ -653,6 +662,20 @@ crop_schema = {
     'CropTop': {'type': 'integer'},
     'CropBottom': {'type': 'integer'}
 }
+
+
+def remove_metadata_for_publish(item):
+    """Remove metadata from item that should not be public.
+
+    :param item: Item containing the metadata
+    :return: item
+    """
+    from superdesk.attachments import is_attachment_public
+
+    if len(item.get('attachments', [])) > 0:
+        item['attachments'] = [attachment for attachment in item['attachments'] if is_attachment_public(attachment)]
+
+    return item
 
 
 class Priority(SuperdeskBaseEnum):

@@ -9,13 +9,15 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
+import unittest
+
 from unittest import mock
 from unittest.mock import MagicMock
 from superdesk.tests import TestCase
 from datetime import datetime, timedelta
 from copy import deepcopy
 
-from superdesk.io.commands.update_ingest import is_not_expired, process_iptc_codes
+from superdesk.io.commands.update_ingest import is_not_expired, process_iptc_codes, is_new_version
 
 
 class FakeSuperdesk():
@@ -99,7 +101,7 @@ class GetProviderRoutingSchemeTestCase(TestCase):
 class ItemExpiryTestCase(TestCase):
 
     def test_expiry_no_dateinfo(self):
-        self.assertFalse(is_not_expired({}, None))
+        self.assertTrue(is_not_expired({}, None))
 
     def test_expiry_overflow(self):
         item = {'versioncreated': datetime.now()}
@@ -121,3 +123,46 @@ class IPTCCodesTestCase(TestCase):
         with self.app.app_context():
             process_iptc_codes(item, {})
         self.assertEqual(item, expected)
+
+
+class UtilsTestCase(unittest.TestCase):
+    def test_is_new_version(self):
+        self.assertTrue(is_new_version({'version': 2}, {'version': 1}))
+        self.assertTrue(is_new_version({'versiocreated': datetime.now()},
+                                       {'versioncreated': datetime.now() - timedelta(days=1)}))
+        self.assertTrue(is_new_version({'version': '10'}, {'version': '2'}))
+
+        self.assertFalse(is_new_version({'version': 1}, {'version': 1}))
+        self.assertFalse(is_new_version({'version': '123'}, {'version': '123'}))
+        self.assertFalse(is_new_version({'versioncreated': datetime.now()},
+                                        {'versioncreated': datetime.now()}))
+
+    def test_is_new_version_content(self):
+        self.assertTrue(is_new_version({'headline': 'foo'}, {}))
+        self.assertTrue(is_new_version({'headline': 'foo'}, {'headline': 'bar'}))
+        self.assertTrue(is_new_version(
+            {'renditions': {'original': {'href': 'foo'}}},
+            {'renditions': {'original': {'href': 'bar'}}},
+        ))
+        self.assertTrue(is_new_version(
+            {'subject': [{'name': 'foo', 'qcode': 'foo'}]},
+            {'subject': [{'name': 'bar', 'qcode': 'bar'}]},
+        ))
+
+        self.assertFalse(is_new_version({}, {}))
+        self.assertFalse(is_new_version({'headline': 'foo'}, {'headline': 'foo', 'source': 'test'}))
+        self.assertFalse(is_new_version(
+            {'renditions': {'original': {'href': 'foo'}}},
+            {'renditions': {'original': {'href': 'foo'}}},
+        ))
+        self.assertFalse(is_new_version(
+            {'subject': [{'name': 'foo', 'qcode': 'foo'}]},
+            {'subject': [{'name': 'foo', 'qcode': 'foo'}]},
+        ))
+
+    def test_is_new_version_ignores_expiry(self):
+        yesterday = datetime.now() - timedelta(days=1)
+        self.assertFalse(is_new_version(
+            {'headline': 'foo', 'firstcreated': None, 'expiry': datetime.now()},
+            {'headline': 'foo', 'firstcreated': yesterday, 'expiry': yesterday},
+        ))

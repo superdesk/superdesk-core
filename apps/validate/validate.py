@@ -80,10 +80,11 @@ class SchemaValidator(Validator):
         pass
 
     def _validate_type_date(self, field, value):
-        try:
-            datetime.strptime(value or '', '%Y-%m-%dT%H:%M:%S+%f')
-        except ValueError:
-            self._error(field, DATE_FIELD)
+        if not isinstance(value, datetime):
+            try:
+                datetime.strptime(value or '', '%Y-%m-%dT%H:%M:%S+%f')
+            except ValueError:
+                self._error(field, DATE_FIELD)
 
     def _validate_type_picture(self, field, value):
         """Allow type picture in schema."""
@@ -112,8 +113,10 @@ class SchemaValidator(Validator):
         super()._validate_empty(empty, field, value)
         if field == "subject":
             # for subject, we have to ignore all data with scheme
-            # as they are used for custom values
-            filtered = [v for v in value if not v.get('scheme')]
+            # as they are used for custom values except "subject_custom" scheme as it's the scheme for subject cv
+            # so it must be present
+            filtered = [v for v in value if not v.get('scheme') or v.get('scheme') == 'subject_custom']
+
             if not filtered:
                 self._error(field, REQUIRED_FIELD)
 
@@ -192,43 +195,44 @@ class ValidateService(superdesk.Service):
             doc['errors'] = self._validate(test_doc, fields=fields, **kwargs)
         return [doc['errors'] for doc in docs]
 
+    def _get_profile_schema(self, schema, doc):
+        doc['validate'].setdefault('extra', {})  # make sure extra is there so it will validate its fields
+        extra_field_types = {'text': 'string', 'embed': 'dict', 'date': 'date', 'urls': 'list'}
+        extra_fields = superdesk.get_resource_service('vocabularies').get_extra_fields()
+        schema['extra'] = {'type': 'dict', 'schema': {}}
+        for extra_field in extra_fields:
+            if schema.get(extra_field['_id']) and \
+                    extra_field.get('field_type', None) in extra_field_types:
+                rules = schema.pop(extra_field['_id'])
+                rules['type'] = extra_field_types.get(extra_field['field_type'], 'string')
+                schema['extra']['schema'].update({extra_field['_id']: get_validator_schema(rules)})
+                self._populate_extra(doc['validate'], extra_field['_id'])
+        try:
+            # avoid errors when cv is removed and value is still there
+            schema['subject']['schema']['schema']['scheme'].pop('allowed', None)
+        except KeyError:
+            pass
+        return [{'schema': schema}]
+
     def _get_validators(self, doc):
         """Get validators.
 
         In case there is profile defined for item with respective content type it will
         use its schema for validations, otherwise it will fall back to action/item_type filter.
         """
-        extra_field_types = {'text': 'string', 'embed': 'dict', 'date': 'date', 'urls': 'list'}
         profile = doc['validate'].get('profile')
         if profile and (app.config['AUTO_PUBLISH_CONTENT_PROFILE'] or doc['act'] != 'auto_publish'):
             content_type = superdesk.get_resource_service('content_types').find_one(req=None, _id=profile)
             if content_type:
-                extra_fields = superdesk.get_resource_service('vocabularies').get_extra_fields()
-                schema = content_type.get('schema', {})
-                schema['extra'] = {'type': 'dict', 'schema': {}}
-                doc['validate'].setdefault('extra', {})  # make sure extra is there so it will validate its fields
-                for extra_field in extra_fields:
-                    if schema.get(extra_field['_id']) and \
-                            extra_field.get('field_type', None) in extra_field_types:
-                        rules = schema.pop(extra_field['_id'])
-                        rules['type'] = extra_field_types.get(extra_field['field_type'], 'string')
-                        schema['extra']['schema'].update({extra_field['_id']: get_validator_schema(rules)})
-                        self._populate_extra(doc['validate'], extra_field['_id'])
-                content_type['schema'] = schema
-                try:
-                    # avoid errors when cv is removed and value is still there
-                    schema['subject']['schema']['schema']['scheme'].pop('allowed', None)
-                except KeyError:
-                    pass
-                return [content_type]
+                return self._get_profile_schema(content_type.get('schema', {}), doc)
         lookup = {'act': doc['act'], 'type': doc[ITEM_TYPE]}
         if doc.get('embedded'):
             lookup['embedded'] = doc['embedded']
         else:
             lookup['$or'] = [{'embedded': {'$exists': False}}, {'embedded': False}]
         custom_schema = app.config.get('SCHEMA', {}).get(doc[ITEM_TYPE])
-        if custom_schema:
-            return [{'schema': custom_schema}]
+        if custom_schema:  # handle custom schema like profile schema
+            return self._get_profile_schema(custom_schema, doc)
         return superdesk.get_resource_service('validators').get(req=None, lookup=lookup)
 
     def _populate_extra(self, doc, schema):
@@ -342,6 +346,7 @@ class ValidateService(superdesk.Service):
                 subject.setdefault('scheme', None)
 
     def _validate(self, doc, fields=False, **kwargs):
+        item = deepcopy(doc['validate'])  # make a copy for signal before validation processing
         use_headline = kwargs and 'headline' in kwargs
         validators = self._get_validators(doc)
         for validator in validators:
@@ -395,7 +400,7 @@ class ValidateService(superdesk.Service):
                         response.append(message)
 
             # let custom code do additional validation
-            item_validate.send(self, item=doc['validate'], response=response, error_fields=v.errors)
+            item_validate.send(self, item=item, response=response, error_fields=v.errors)
 
             if fields:
                 return response, v.errors

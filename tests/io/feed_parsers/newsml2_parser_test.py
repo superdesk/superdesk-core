@@ -44,6 +44,7 @@ class ReutersTestCase(BaseNewMLTwoTestCase):
         self.assertTrue(self.item[0].get('body_html').startswith('<p>(Adds comments, detail)</p>'))
         self.assertNotIn('description_text', self.item[0])
         self.assertNotIn('archive_description', self.item[0])
+        self.assertEqual(self.item[0].get('word_count'), 348)
 
     def test_can_parse(self):
         self.assertTrue(NewsMLTwoFeedParser().can_parse(self.xml.getroot()))
@@ -55,6 +56,7 @@ class ResutersResultsTestCase(BaseNewMLTwoTestCase):
     def test_results(self):
         self.assertTrue(self.item[0].get('body_html').startswith(
             '<p>Jan 30 (Gracenote) - Results and standings from the Turkish championship matches on Monday <br/>'))
+        self.assertNotIn('word_count', self.item[0])
 
 
 class ANSATestCase(BaseNewMLTwoTestCase):

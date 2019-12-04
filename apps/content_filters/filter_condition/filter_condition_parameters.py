@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import json
+from flask_babel import _
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.utils import ListCursor
@@ -28,81 +29,105 @@ class FilterConditionParametersService(BaseService):
     def get(self, req, lookup):
         values = self._get_field_values()
         fields = [{'field': 'anpa_category',
+                   'label': _('ANPA Category'),
                    'operators': ['in', 'nin'],
                    'values': values.get('anpa_category', []),
                    'value_field': 'qcode'
                    },
                   {'field': 'urgency',
+                   'label': _('Urgency'),
                    'operators': ['in', 'nin', 'eq', 'ne', 'lt', 'lte', 'gt', 'gte'],
                    'values': values.get('urgency', []),
                    'value_field': 'qcode'
                    },
                   {'field': 'genre',
+                   'label': _('Genre'),
                    'operators': ['in', 'nin'],
                    'values': values.get('genre', []),
                    'value_field': 'qcode'
                    },
                   {'field': 'subject',
+                   'label': _('Subject'),
                    'operators': ['in', 'nin'],
                    'values': values.get('subject', []),
                    'value_field': 'qcode'
                    },
                   {'field': 'priority',
+                   'label': _('Priority'),
                    'operators': ['in', 'nin', 'eq', 'ne', 'lt', 'lte', 'gt', 'gte'],
                    'values': values.get('priority', []),
                    'value_field': 'qcode'
                    },
                   {'field': 'keywords',
+                   'label': _('Keywords'),
                    'operators': ['in', 'nin']
                    },
                   {'field': 'slugline',
+                   'label': _('Slugline'),
                    'operators': ['in', 'nin', 'eq', 'ne', 'like', 'notlike', 'startswith', 'endswith']
                    },
                   {'field': 'type',
+                   'label': _('Type'),
                    'operators': ['in', 'nin', 'eq', 'ne'],
                    'values': values.get('type', []),
                    'value_field': 'qcode'
                    },
                   {'field': 'source',
+                   'label': _('Source'),
                    'operators': ['in', 'nin', 'eq', 'ne', 'like', 'notlike', 'startswith', 'endswith']
                    },
                   {'field': 'headline',
+                   'label': _('Headline'),
                    'operators': ['in', 'nin', 'eq', 'ne', 'like', 'notlike', 'startswith', 'endswith']
                    },
                   {'field': 'ednote',
+                   'label': _('Ednote'),
                    'operators': ['in', 'nin', 'eq', 'ne', 'like', 'notlike', 'startswith', 'endswith']
                    },
                   {'field': 'body_html',
+                   'label': _('Body HTML'),
                    'operators': ['in', 'nin', 'like', 'notlike', 'startswith', 'endswith']
                    },
                   {'field': 'desk',
+                   'label': _('Desk'),
                    'operators': ['in', 'nin', 'eq', 'ne'],
                    'values': values['desk'],
                    'value_field': '_id'
                    },
                   {'field': 'stage',
+                   'label': _('Stage'),
                    'operators': ['in', 'nin', 'eq', 'ne'],
                    'values': values['stage'],
                    'value_field': '_id'
                    },
                   {'field': 'sms',
+                   'label': _('SMS'),
                    'operators': ['in', 'nin', 'eq', 'ne'],
                    'values': values['sms'],
                    'value_field': 'name'
                    },
                   {'field': 'place',
+                   'label': _('Place'),
                    'operators': ['match', 'in', 'nin'],
                    'values': values['place'],
                    'value_field': 'qcode'
                    },
                   {'field': 'ingest_provider',
+                   'label': _('Ingest provider'),
                    'operators': ['eq', 'ne'],
                    'values': values['ingest_provider'],
                    'value_field': '_id'
                    },
                   {'field': 'embargo',
+                   'label': _('Embargo'),
                    'operators': ['eq', 'ne'],
                    'values': values['embargo'],
+                   'value_field': 'name'
+                   },
+                  {'field': 'featuremedia',
+                   'label': _('Feature Media'),
+                   'operators': ['exists'],
+                   'values': values['featuremedia'],
                    'value_field': 'name'
                    }]
         fields.extend(self._get_vocabulary_fields(values))
@@ -157,6 +182,7 @@ class FilterConditionParametersService(BaseService):
         else:
             values['place'] = []
         values['ingest_provider'] = list(get_resource_service('ingest_providers').get(None, {}))
+        values['featuremedia'] = [{'qcode': 1, 'name': 'True'}, {'qcode': 0, 'name': 'False'}]
         return values
 
     def _get_stage_field_values(self, desks):

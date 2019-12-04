@@ -99,7 +99,7 @@ class DefaultSpellcheckerTestCase(TestCase):
         self.assertEqual(doc, {
             'language': 'en',
             'spellchecker': 'default',
-            'suggestions': [{'text': 'mistake'}],
+            'suggestions': [{'text': 'mistake'}, {'text': 'Mistake'}],
             'text': 'mitake'})
 
     @patch('superdesk.get_resource_service', MagicMock(side_effect=partial(mock_dictionaries, model=MODEL)))

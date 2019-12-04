@@ -18,9 +18,9 @@ from datetime import datetime
 from superdesk.errors import IngestApiError, ParserError
 from superdesk.io.registry import register_feeding_service, register_feeding_service_parser
 from superdesk.io.feeding_services.http_base_service import HTTPFeedingServiceBase
-from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, GUID_TAG
+from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
 from superdesk.utils import merge_dicts
-from superdesk.metadata.utils import generate_guid, generate_tag, generate_tag_from_url
+from superdesk.metadata.utils import generate_tag, generate_tag_from_url
 from superdesk.io.commands.update_ingest import LAST_ITEM_UPDATE
 
 from urllib.parse import quote as urlquote, urlsplit, urlunsplit
@@ -181,7 +181,7 @@ class RSSFeedingService(HTTPFeedingServiceBase):
                 pass
 
             item = self._create_item(entry, field_aliases, provider.get('source', None))
-            self.add_timestamps(item)
+            self.localize_timestamps(item)
 
             # If the RSS entry references any images, create picture items from
             # them and create a package referencing them and the entry itself.
@@ -322,6 +322,9 @@ class RSSFeedingService(HTTPFeedingServiceBase):
             'date': item.get('firstcreated', item.get('versioncreated'))
         }
 
+        if not item.get('versioncreated') and item.get('firstcreated'):
+            item['versioncreated'] = item['firstcreated']
+
         return item
 
     def _create_image_items(self, image_links, text_item):
@@ -339,7 +342,7 @@ class RSSFeedingService(HTTPFeedingServiceBase):
 
         for image_url in image_links:
             img_item = {
-                'guid': generate_guid(type=GUID_TAG),
+                'guid': generate_tag_from_url(image_url),
                 ITEM_TYPE: CONTENT_TYPE.PICTURE,
                 'firstcreated': text_item.get('firstcreated'),
                 'versioncreated': text_item.get('versioncreated'),
@@ -371,7 +374,7 @@ class RSSFeedingService(HTTPFeedingServiceBase):
         """
         package = {
             ITEM_TYPE: CONTENT_TYPE.COMPOSITE,
-            'guid': generate_guid(type=GUID_TAG),
+            'guid': '{}:pkg'.format(text_item['guid']),
             'firstcreated': text_item['firstcreated'],
             'versioncreated': text_item['versioncreated'],
             'headline': text_item.get('headline', ''),

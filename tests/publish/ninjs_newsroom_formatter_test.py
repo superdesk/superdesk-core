@@ -266,6 +266,7 @@ class NinjsFormatterTest(TestCase):
         processed = json.loads(doc)
         self.assertEqual(processed['guid'], 'foo')
         article['ingest_id'] = 'bar'
+        article['ingest_version'] = '7'
         _, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
         processed = json.loads(doc)
         self.assertEqual(processed['guid'], 'foo')
@@ -273,3 +274,4 @@ class NinjsFormatterTest(TestCase):
         _, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
         processed = json.loads(doc)
         self.assertEqual(processed['guid'], 'bar')
+        self.assertEqual(processed['version'], '7')

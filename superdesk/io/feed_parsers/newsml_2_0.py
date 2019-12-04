@@ -288,7 +288,7 @@ class NewsMLTwoFeedParser(XMLFeedParser):
             if content.tag == self.qname('inlineXML'):
                 try:
                     item['word_count'] = int(content.attrib['wordcount'])
-                except KeyError:
+                except (KeyError, ValueError):
                     pass
                 content = self.parse_inline_content(content, item=item)
                 item['body_html'] = content.get('content')

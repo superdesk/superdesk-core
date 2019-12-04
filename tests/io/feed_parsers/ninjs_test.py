@@ -42,6 +42,7 @@ class SimpleTestCase(NINJSTestCase):
         })
         self.assertNotIn("source", self.items[0])
         self.assertEqual(self.items[0]['original_source'], "AAP")
+        self.assertEqual('2017-08-24T04:38:34+00:00', self.items[0]['versioncreated'].isoformat())
 
 
 class AssociatedTestCase(NINJSTestCase):

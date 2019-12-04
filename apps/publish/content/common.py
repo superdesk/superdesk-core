@@ -39,8 +39,7 @@ from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
 from apps.archive.common import get_user, insert_into_versions, item_operations, \
     FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM, remove_unwanted
 from apps.archive.common import validate_schedule, ITEM_OPERATION, update_schedule_settings, \
-    convert_task_attributes_to_objectId, \
-    get_expiry, get_utc_schedule, get_expiry_date
+    convert_task_attributes_to_objectId, get_expiry, get_utc_schedule, get_expiry_date, transtype_metadata
 from apps.common.components.utils import get_component
 from apps.item_autosave.components.item_autosave import ItemAutosave
 from apps.legal_archive.commands import import_into_legal_archive
@@ -110,6 +109,7 @@ class BasePublishService(BaseService):
         self._validate(original, updates)
         self._set_updates(original, updates, updates.get(config.LAST_UPDATED, utcnow()))
         convert_task_attributes_to_objectId(updates)  # ???
+        transtype_metadata(updates, original)
         self._process_publish_updates(original, updates)
         self._mark_media_item_as_used(updates, original)
 
@@ -179,6 +179,11 @@ class BasePublishService(BaseService):
                               unique_name=original['unique_name'],
                               desk=str(original.get('task', {}).get('desk', '')),
                               user=str(user.get(config.ID_FIELD, '')))
+
+            if updates.get('previous_marked_user') and not updates.get('marked_for_user'):
+                # send notification so that marked for me list can be updated
+                get_resource_service('archive').handle_mark_user_notifications(updates, original, False)
+
         except SuperdeskApiError:
             raise
         except KeyError as e:
@@ -187,6 +192,7 @@ class BasePublishService(BaseService):
                 message=_("Key is missing on article to be published: {exception}").format(exception=str(e))
             )
         except Exception as e:
+            logger.exception(e)
             raise SuperdeskApiError.internalError(
                 message=_("Failed to publish the item: {id}").format(id=str(id)), exception=e)
 
@@ -238,6 +244,11 @@ class BasePublishService(BaseService):
             rewritten_by = get_resource_service(ARCHIVE).find_one(req=None, _id=updated.get('rewritten_by'))
             if rewritten_by and rewritten_by.get(ITEM_STATE) in PUBLISH_STATES:
                 raise SuperdeskApiError.badRequestError(_("Cannot publish the story after Update is published.!"))
+
+        if self.publish_type == ITEM_PUBLISH and updated.get('rewrite_of'):
+            rewrite_of = get_resource_service(ARCHIVE).find_one(req=None, _id=updated.get('rewrite_of'))
+            if rewrite_of and rewrite_of.get(ITEM_STATE) not in PUBLISH_STATES:
+                raise SuperdeskApiError.badRequestError(_("Can't publish update until original story is published.!"))
 
         publish_type = 'auto_publish' if updates.get('auto_publish') else self.publish_type
         validate_item = {'act': publish_type, 'type': original['type'], 'validate': updated}
@@ -587,18 +598,26 @@ class BasePublishService(BaseService):
                         raise SuperdeskApiError.badRequestError(
                             _('Associated item "{}" does not exist in the system'.format(associations_key)))
 
+                    if original_associated_item.get('state') in PUBLISH_STATES:
+                        # item was published already
+                        original[ASSOCIATIONS][associations_key].update({
+                            'state': original_associated_item['state'],
+                            'operation': original_associated_item.get('operation', self.publish_type),
+                        })
+                        continue
+
                     get_resource_service('archive_publish').patch(id=associated_item.pop(config.ID_FIELD),
                                                                   updates=associated_item)
                     associated_item['state'] = self.published_state
                     associated_item['operation'] = self.publish_type
                     updates[ASSOCIATIONS] = updates.get(ASSOCIATIONS, {})
                     updates[ASSOCIATIONS][associations_key] = associated_item
-                else:
+                elif associated_item.get('state') != self.published_state:
                     # Check if there are updates to associated item
                     association_updates = updates.get(ASSOCIATIONS, {}).get(associations_key)
 
                     if not association_updates:
-                        # there is no update for this item but still patching the associated item
+                        # there is no update for this item
                         associated_item.get('task', {}).pop('stage', None)
                         remove_unwanted(associated_item)
                         publish_service.patch(id=associated_item.pop(config.ID_FIELD), updates=associated_item)

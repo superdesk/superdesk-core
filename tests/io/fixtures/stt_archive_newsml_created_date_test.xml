@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<newsItem guid="urn:newsml:stt.fi:20130216:96690243" version="1" standardversion="2.12" conformance="power" xml:lang="fi-FI" xmlns:stt="http://www.stt-lehtikuva.fi/NewsML" standard="NewsML-G2" xsi:schemaLocation="http://iptc.org/std/nar/2006-10-01/ http://www.iptc.org/std/NewsML-G2/2.12/specification/NewsML-G2_2.12-spec-All-Power.xsd http://www.stt-lehtikuva.fi/NewsML http://www.stt-lehtikuva.fi/newsml/schema/STT-Lehtikuva_NewsML_G2.xsd" xmlns="http://iptc.org/std/nar/2006-10-01/" stt:formatversion="1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ><catalogRef href="http://www.iptc.org/std/catalog/catalog.IPTC-G2-Standards_19.xml"/>
+<catalogRef href="http://www.iptc.org/std/catalog/catalog.IPTC-G2-Standards_18.xml"/>
+<catalogRef href="http://www.stt-lehtikuva.fi/newsml/doc/stt-NewsCodesCatalog_1.xml"/>
+
+<itemMeta>
+
+<itemClass qcode="ninat:text"/>
+<provider literal="STT"/>
+<versionCreated/>
+<firstCreated/>
+<pubStatus qcode="stat:usable"/>
+</itemMeta>
+<contentMeta>
+<urgency>3</urgency>
+<contentCreated>2013-02-16T17:36:20</contentCreated>
+<altId type="sttidtype:textid"/>
+<located type="loctyp:City">
+<name/>
+</located>
+<subject type="cpnat:abstract" qcode="sttdepartment:16">
+<name>Urheilu</name>
+</subject>
+<subject type="cpnat:abstract" qcode="sttdone1:5" />
+<slugline/>
+<dateline/>
+<by/>
+<description role="drol:summary"/>
+<headline>Yleisurheilutuloksia/SM</headline><creditline>STT&#8211;</creditline>
+
+<genre qcode="sttgenre:13">
+<name>Tulokset</name>
+</genre>
+<genre qcode="sttversion:5">
+<name>Loppuversio</name>
+<related qcode="sttrel:actuallength" value="5155"/>
+</genre>
+</contentMeta>
+<contentSet>
+<inlineXML contenttype="xhtml/xml">
+<html>
+<body>
+<p>Sisäratojen SM-kilpailut, 1/2 kilpailupäivän tulokset:</p>
+<p>Miehet, 60 m: 1) Visa Hongisto ValkealKa 6,72 (kkk), 2) Eetu Rantala OP 6,83, 3) Ville Myllymäki KankaanpSL 6,86, 4) Markus Skyttä KouvU 6,88, 5) Petteri Monni JKU 6,89, 6) Joona-Ville Heinä HIFK 6,94, Lauri Kirkkola TuUL hylättiin.</p>
+<p>1. alkuerä: 1) Åstrand 6,85, 2) Heinä 6,98, 3) Cheela Changala TuUL 7,00, 4) Matias Linkoaho HKV 7,05, Hannu Ali-Huokuna VU &amp; Arttu Halmela HonkajSU hylättiin.</p>
+<p>2. alkuerä: 1) Hongisto 6,83, 2) Skyttä 6,93, 3) Myllymäki 6,93, 4) Petteri Monni JKU 6,94, 5) Ville Aarnivala TP 7,02, 6) Viljami Kaasalainen MiKV 7,07.  </p>
+<p>3. alkuerä: 1) Rantala 6,90, 2) Kirkkola 6,90, 3) Jussi Kanervo HIFK 6,96, 4) Sami Vartiainen PolvijVa 7,03, 5) Hannes Siitonen HKV 7,07, 6) Victor Jansson Jomala IK 7,14.</p>
+<p> 400 m: 1) Oskari Mörö EsboIF 49,13, 2) Antti Kokkonen VeitsilKV 49,98 (ae. 49,93), 3) Ville Lampinen KU-58 50,36 (ae. 49,92), 4) Alexis Troberg EsboIF 50,38 (ae. 50,11). </p>
+<p>1. alkuerä: 1) Lampinen 49,92, 2) Don-Zheni Ekoebve HIFK 50,42, 3) Lauri Hassi OrivPo 51,03, 4) Julius Kasule VU 51,49. </p>
+<p>2. alkuerä: 1) Simon Jansson JomalaIK 50,13, 2) Roope Saarinen EsboIF 50,39, 3) Jevgeni Alexandrov HIFK 51,74. </p>
+<p>3. alkuerä: 1) Kokkonen 49,93, 2) Troberg 50,11, Artem Lopatenko HIFK hylättiin.  </p>
+<p>4. alkuerä: 1) Mörö 49,50, 2) Erik Back HIFK 50,50, 3) Christoffer Wärn PedersFa 52,22.</p>
+<p>1&#8201;  500 m: 1) Panu Jantunen ParikkU 3.55,39, 2) Joonas Lehtinen TuUL 3.55,76, 3) Ossi Kekki LA 3.56,13, 4) Ville Borgmästars PedersFa 3.56,22, 5) Joonas Harjamäki VU 3.57,53, 6) Aki Nummela HKV 3.59,95.</p>
+<p>5&#8201;  000 m kävely: 1) Jarkko Kinnunen JalasjJa 19.56,83 (kkk &amp; ka-6), 2) Markus Kyrölä LempKi 21.30,89, 3) Timo Viljanen TuWe 21.40,02, Veli-Matti Partanen LUM hylättiin.</p>
+<p>Korkeus: 1) Jussi Viita TP 219, 2) Mauri Kaattari HimangU 216, 3) Osku Torro JKU 213, 4) Henri Vitikainen OrimJy 204, 5) Richard Östman IFVOM 204, 6) Samuli Eriksson TuUL 204, 7) Joonas Jokivartio OP 204, 8) Sami Itani JKU 201, 9) Lauri Stenroth JanJa 197, 10) Heikki Pärnä TuUL 197, 11) Samuli Sievi-Korte ViialVa 193, Jean Westman GamlakarlIF ilman tulosta (193).</p>
+<p>Kolmiloikka: 1) Kristian Pulli KaipVi 15,57 (kkk), 2) Ville Mylläri HeinävYU 15,48, 3) Mika Purmonen LUM 14,88, 4) Daniel Sjölind KronÅs 14,82, 5) Tomi Litendahl ViitasVi 14,69, 6) Emil Storlund IFVOM 14,00, 7) Samuli Pitkänen ÄänekU 13,27. SM-kilpailun ulkopuolella Godfrey Mokoena Etelä-Afrikka 15,68.</p>
+<p></p>
+<p>Naiset, 60 m: 1) Hanna-Maari Latvala JKU 7,34 (kkk), 2) Maria Räsänen KuopRe 7,45, 3) Minna Laukka JKU 7,55, 4) Milja Thureson TuTo 7,58, 5) Noora Hämäläinen JoKa 7,59, 6) Jonna Berghem HangIK 7,63, 7) Jenni Jokinen NakkVire 7,70, 8) Lotta Kemppinen HIFK 7,78.</p>
+<p>1. alkuerä: 1) Räsänen 7,47, 2) Hämäläinen 7,55, 3) Laukka 7,58, 4) Berghem 7,62, 5) Hanna Kuhmonen TuUL 7,83, 6) Ifeoma Chukwuma HKV 7,94. </p>
+<p>2. alkuerä: 1) Latvala 7,37, 2) Thureson 7,62, 3) Jokinen 7,64, 4) Kemppinen 7,73, 5) Mia Marttila HKV 7,89, 6) Sonja Nousiainen MiKV 7,92.</p>
+<p>400 m: 1) Ella Räsänen TP 52,99 (SE), 2) Anniina Laitinen HKV 55,99, 3) Eveliina Määttänen KUYU 57,55, 4) Sanna Aaltonen HIFK 57,63 </p>
+<p>1. alkuerä: 1) Aaltonen 56,56, 2) Jeanine Nygård JakobstDr 57,76, 3) Annika Harri HKV 58,05. </p>
+<p>2. alkuerä: 1) Laitinen 55,78, 2) Céline Fogde EsboIF 57,63, 3) Roosa Lahtinen TP 59,82. </p>
+<p>3. alkuerä: 1) Räsänen 54,59, 2) Emilija Manninen JKU 57,74, 3) Mette Paavolainen PedersFa 58,48. </p>
+<p>4. alkuerä: 1) Eveliina Määttänen KUYU 57,02, 2) Eliisa Räsänen TP 57,17, 3) Noora Toivo ToijVau 57,48, 4) Laura Kolehmainen HKV 58,08. </p>
+<p>1&#8201;  500 m: 1) Oona Kettunen KarhKa 4.28,19, 2) Minna Nummela HKV 4.29,32, 3) Minna Haka-Risku VammSV 4.30,98, 4) Sara Kuivisto PorvU 4.31,66, 5) Maria Murtorinne KuopRe 4.40,39, 6) Mira Tuominen ValkeakHa 4.40,97, 7) Venla Mäkäräinen KuopRe 4.45,28.</p>
+<p>3&#8201;  000 m kävely: 1) Anne Halkivaha TuWe 13.00,33 (kkk), 2) Henrika Parviainen EspTa 13.55,64, 3) Mikaela Löfbacka VasaIS 13.56,57, 4) Erika Parviainen EspTa 14.17,94, 5) Sini Jussila VihdVi 14.52,74, 6) Marianne Viitamaa VammSV 15.34,69.</p>
+<p>Seiväs: 1) Minna Nikkanen SomEsa 441 (kkk), 2) Erica Hjerpe Korsh5 385, 3) Aino Siitonen HKV 385, 4) Eeva Niemelä JKU 370, 5) Henriikka Könönen OP 355, 6) Katri Isomäki KauhajKa 355, 7) Julia Uutela TapanilErä 340, 8) Tessa Myllymäki JKU 340, 9) Rosanna Ojala TP 340, 10) Kaisa Ylinen VirtU 325.</p>
+<p> Pituus: 1) Elina Torro LUM 618 (kkk), 2) Jaana Sieviläinen JoKa 610, 3) Noora Pesola LA 597, 4) Kristiina Mäkelä OrimJy 595, 5) Miia Kurppa SalVil 589, 6) Henna Palosaari OP 589, 7) Sanna Nygård VasaIS 586, 8) Emmi Mäkinen JKU 585, 9) Merika Sumanen TP 571, 10) Emma Pullola VaasVa 570, 11) Elina Korjansalo TP 564, 12) Sofia Sadeharju HKV 563, 13) Elina Kostiainen VihdVi 559, 14) Juuli-Anna Taurén JKU 542, 15) Paula Kuronen MiKV 527.</p>
+<p>Kuula: 1) Katri Hirvonen JoKa 15,14 (kkk), 2) Niina Kelo KUYU 14,85, 3) Hennariikka Järvinen TuUL 14,74, 4) Taija Keskinen YlistarKV 13,49, 5) Katariina Valla NakkVire 13,30, 6) Hanne Kantanen VU 12,96, 7) Minna-Marjatta Liimatainen AlajAn 12,49, 8) Marja-Riikka Kiviniemi LohtVe 12,47, 9) Salli Kirvesmies MiKV 12,41, 10) Tara Tuominen UKK 12,39, 11) Maria Pulkkinen MerikarvIn 12,27, 12) Maarit Iso-Jaakkola PunkalKu 11,98. </p></body>
+</html>
+</inlineXML>
+</contentSet></newsItem>

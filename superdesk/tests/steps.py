@@ -57,10 +57,15 @@ from apps.dictionaries.resource import DICTIONARY_FILE
 from superdesk.filemeta import get_filemeta
 from apps import io
 from pathlib import Path
+# for auth server
+from authlib.jose import jwt
+from authlib.jose.errors import BadSignatureError
 
 external_url = 'http://thumbs.dreamstime.com/z/digital-nature-10485007.jpg'
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S%z"
 ANALYTICS_DATETIME_FORMAT = "%Y-%m-%d %H:00:00"
+# we need to set this variable to test auth server without HTTPS
+os.environ['AUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 
 def test_json(context, json_fields=[]):
@@ -128,7 +133,7 @@ def json_match(context_data, response_data, json_fields=[]):
             return False
         for key in context_data:
             if context_data[key] == "__none__":
-                assert response_data[key] is None
+                assert response_data.get(key) is None, '{} is not None ({})'.format(key, response_data[key])
                 continue
             if context_data[key] == "__no_value__":
                 test_key_is_not_present(key, response_data)
@@ -2563,3 +2568,65 @@ def step_impl_we_get_desk_members_count(context, count):
 @when('we register custom schema field "{name}"')
 def when_register_custom_schema_field(context, name):
     superdesk.register_item_schema_field(name, schema=json.loads(context.text), app=context.app)
+
+
+# Auth Server
+
+@given('authorized clients')
+def step_impl_given_authorized_client(context):
+    from superdesk.auth_server import clients
+    clients_data = json.loads(context.text)
+    with context.app.app_context():
+        for client_data in clients_data:
+            clients.RegisterClient().run(**client_data)
+
+
+@when('we do OAuth2 client authentication with id "{client_id}" and password "{password}"')
+def step_impl_when_oauth2_client_auth(context, client_id, password):
+    from superdesk.auth_server.oauth2 import TOKEN_ENDPOINT
+    encoded_user_pass = b64encode(
+        b'%s:%s' % (client_id.encode(), password.encode())).decode('ascii')
+    headers = [
+        ('Content-Type', 'multipart/form-data'),
+        ('Authorization', 'Basic {}'.format(encoded_user_pass)),
+    ]
+    headers = unique_headers(headers, context.headers)
+    context.response = context.client.post(
+        get_prefixed_url(context.app, TOKEN_ENDPOINT),
+        data={'grant_type': 'client_credentials'},
+        headers=headers)
+
+
+@then('we get a valid access token')
+def step_impl_then_we_get_access_token(context):
+    assert context.response.status_code == 200
+    resp = json.loads(context.response.data)
+    assert set(resp).issuperset({'expires_in', 'token_type', 'access_token'})
+    # we now validate JWT signature and payload
+
+    # we first try to decode with a bad secret, it must fail
+    try:
+        jwt.decode(resp['access_token'], 'BAD_SECRET')
+    except BadSignatureError:
+        pass
+    else:
+        raise Exception("jwt.decode should raise an error with wrong secret")
+
+    # and now we try with the right secret, it should work this time
+    claims = jwt.decode(
+        resp['access_token'],
+        context.app.config['AUTH_SERVER_SHARED_SECRET']
+    )
+
+    # we validate the payload
+    claims.validate()
+
+    # and check that we get expected keys
+    assert set(claims).issuperset({'client_id', 'iss', 'iat', 'exp', 'scope'})
+
+
+@then("we don't get an access token")
+def step_impl_then_we_dont_get_access_token(context):
+    resp = json.loads(context.response.data)
+    assert context.response.status_code == 401
+    assert resp == {"error": "invalid_client"}

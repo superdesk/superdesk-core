@@ -40,6 +40,9 @@ def init_app(app):
     service = SavedSearchItemsService(endpoint_name, backend=superdesk.get_backend())
     SavedSearchItemsResource(endpoint_name, app=app, service=service)
 
+    superdesk.privilege(name='use_global_saved_searches',
+                        label='Global searches',
+                        description='Use global saved searches.')
     superdesk.privilege(name='global_saved_searches',
                         label='Manage Global Saved Searches',
                         description='User can manage other users\' global saved searches')
@@ -152,7 +155,7 @@ def report():
 
             if do_update:
                 updates = {'subscribers': search['subscribers']}
-                saved_searches.update(search['_id'], updates, search)
+                saved_searches.system_update(search['_id'], updates, search)
     except Exception as e:
         logger.error("Can't report saved searches: {reason}".format(reason=e))
     finally:

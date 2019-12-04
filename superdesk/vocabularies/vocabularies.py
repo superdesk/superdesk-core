@@ -15,6 +15,7 @@ import json
 from flask import request, current_app as app
 from eve.utils import config
 from eve.methods.common import serialize_value
+from flask_babel import _
 
 from superdesk import privilege
 from superdesk.notification import push_notification
@@ -27,6 +28,8 @@ from superdesk.default_schema import DEFAULT_SCHEMA, DEFAULT_EDITOR
 from copy import deepcopy
 
 logger = logging.getLogger(__name__)
+
+KEYWORDS_CV = 'keywords'
 
 
 privilege(name="vocabularies", label="Vocabularies Management",
@@ -145,6 +148,10 @@ class VocabulariesResource(Resource):
             'type': 'string',
             'nullable': True,
         },
+        'custom_field_config': {
+            'type': 'dict',
+            'nullable': True,
+        },
     }
 
     soft_delete = True
@@ -168,6 +175,7 @@ class VocabulariesService(BaseService):
         else:
             update.setdefault('unique_field', 'qcode')
         unique_field = update.get('unique_field')
+        vocabs = {}
         if 'schema' in update and 'items' in update:
             for index, item in enumerate(update['items']):
                 for field, desc in update.get('schema', {}).items():
@@ -176,6 +184,35 @@ class VocabulariesService(BaseService):
                         msg = 'Required ' + field + ' in item ' + str(index)
                         payload = {'error': {'required_field': 1}, 'params': {'field': field, 'item': index}}
                         raise SuperdeskApiError.badRequestError(message=msg, payload=payload)
+
+                    elif desc.get('link_vocab') and desc.get('link_field'):
+                        if not vocabs.get(desc['link_vocab']):
+                            linked_vocab = self.find_one(req=None, _id=desc['link_vocab']) or {}
+
+                            vocabs[desc['link_vocab']] = [
+                                vocab.get(desc['link_field'])
+                                for vocab in linked_vocab.get('items') or []
+                            ]
+
+                        if item.get(field) and item[field] not in vocabs[desc['link_vocab']]:
+                            msg = '{} "{}={}" not found'.format(
+                                desc['link_vocab'],
+                                desc['link_field'],
+                                item[field]
+                            )
+                            payload = {
+                                'error': {
+                                    'required_field': 1,
+                                    'params': {
+                                        'field': field,
+                                        'item': index
+                                    }
+                                }
+                            }
+                            raise SuperdeskApiError.badRequestError(
+                                message=msg,
+                                payload=payload
+                            )
 
     def on_create(self, docs):
         for doc in docs:
@@ -357,3 +394,40 @@ class VocabulariesService(BaseService):
                 if field in new_item and language in values:
                     new_item[field] = values[language]
         return locale_vocabulary
+
+    def add_missing_keywords(self, keywords, language=None):
+        if not keywords:
+            return
+        cv = self.find_one(req=None, _id=KEYWORDS_CV)
+        if cv:
+            existing = {item['name'].lower() for item in cv.get('items', [])}
+            missing = [keyword for keyword in keywords if keyword.lower() not in existing]
+            if missing:
+                updates = {'items': cv.get('items', [])}
+                for keyword in missing:
+                    updates['items'].append({
+                        'name': keyword,
+                        'qcode': keyword,
+                        'is_active': True,
+                    })
+                self.on_update(updates, cv)
+                self.system_update(cv['_id'], updates, cv)
+                self.on_updated(updates, cv)
+        else:
+            items = [{
+                'name': keyword,
+                'qcode': keyword,
+                'is_active': True,
+            } for keyword in keywords]
+            cv = {
+                '_id': KEYWORDS_CV,
+                'items': items,
+                'type': 'manageable',
+                'display_name': _('Keywords'),
+                'unique_field': 'name',
+                'schema': {
+                    'name': {},
+                    'qcode': {},
+                },
+            }
+            self.post([cv])
