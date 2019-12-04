@@ -1,5 +1,19 @@
 # Superdesk Server Changelog
 
+## [1.31.6-rc1] Not released yet
+
+### Changed
+
+- [SDESK-4766] Add 'contact_type' to Contacts resource (#1727)
+- [SDESK-4649] Additional Filter Condition operators for place (#1651)
+
+### Fixed
+
+- fix(ap category mapping) Numbers in sluglines failed to parse and fix mapping (#1662)
+- [SDESK-4728] Prevent out-of-sequence publishing of Updates (#1681)
+- [SDESK-4814] fix the feed query, request all versions, allow point in time recovery (#1725)
+- [SDESK-4652] (fix): Redis client fails to connect using amqp scheme (#1652)
+
 ## [1.31.5] 2019-10-14
 
 ### Changed
