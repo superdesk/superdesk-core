@@ -244,12 +244,14 @@ class ArchiveSpikeService(BaseService):
         :param id_to_remove: id of translated item to be removed from the list of translations in original item
         :param article_id: id of original article to be updated
         """
+
         translations = article.get('translations')
-        translations.remove(id_to_remove)
-        updates = {'translations': translations}
-        if not translations:
-            updates.update({'translation_id': None})
-        service.system_update(article_id, updates, article)
+        if translations:
+            translations = [t for t in translations if t != id_to_remove]
+            updates = {'translations': translations}
+            if not translations:
+                updates.update({'translation_id': None})
+            service.system_update(article_id, updates, article)
 
 
 class ArchiveUnspikeService(BaseService):
