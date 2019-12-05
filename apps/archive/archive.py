@@ -154,6 +154,32 @@ def flush_renditions(updates, original):
                         updates[ASSOCIATIONS][key]['renditions'][old_rendition] = None
 
 
+def flush_previous_item_keys_from_associations(updates, original):
+    """Remove original association items keys from updated association item
+        if the association key is same and associated items _id is diffrent.
+
+    for ex:
+        1. Add an image to a articles body and save the article where let's say key is(association.edior_0)
+        2. Remove the associated image don't save artilce this time
+        3. And add a new media item wehere key is still (association.edior_0)
+        4. save the article and notice that new associated item contains all those keys from previous associated
+            items that were not present in this one.
+        Which is wrong, this function identifies those keys and sets them to None
+
+    :param dict updates: updates for the document
+    :param original: original is document
+    """
+    if not original.get(ASSOCIATIONS) or not updates.get(ASSOCIATIONS):
+        return
+
+    for key in [k for k in updates[ASSOCIATIONS] if k in original[ASSOCIATIONS]]:
+        if original[ASSOCIATIONS].get(key) and updates[ASSOCIATIONS].get(key) and (
+           updates[ASSOCIATIONS][key].get('_id') != original[ASSOCIATIONS][key].get('_id')):
+            # make sure associated item's "_id" are different in updates and original
+            for item_key in [k for k in original[ASSOCIATIONS][key] if k not in updates[ASSOCIATIONS][key]]:
+                updates[ASSOCIATIONS][key][item_key] = None
+
+
 class ArchiveVersionsResource(Resource):
     schema = item_schema()
     extra_response_fields = extra_response_fields
@@ -305,6 +331,7 @@ class ArchiveService(BaseService):
         self._add_desk_metadata(updates, original)
         self._handle_media_updates(updates, original, user)
         flush_renditions(updates, original)
+        flush_previous_item_keys_from_associations(updates, original)
 
         # send signal
         superdesk.item_update.send(self, updates=updates, original=original)
