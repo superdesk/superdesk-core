@@ -115,7 +115,6 @@ def push_template_notification(docs, event='template:update'):
         if doc.get('template_desks'):
             template_desks.update([str(template) for template in doc.get('template_desks')])
 
-    print(event, template_desks)
     push_notification(event, user=str(user.get(config.ID_FIELD, '')), desks=list(template_desks))
 
 
