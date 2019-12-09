@@ -249,7 +249,7 @@ class NINJSFormatter(Formatter):
             ninjs['authors'] = self._format_authors(article)
 
         if 'extra' in ninjs:
-            if article.get('flags', {}).get('change_types_tmp') == "1":
+            if article.get('flags', {}).get('change_types_tmp') == "2":
                 ninjs["extra"].update({"update_date": True})
 
         if (article.get('schedule_settings') or {}).get('utc_publish_schedule'):
