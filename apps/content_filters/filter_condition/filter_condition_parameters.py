@@ -9,6 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import json
+import copy
+import logging
 from flask_babel import _
 from superdesk.resource import Resource
 from superdesk.services import BaseService
@@ -16,7 +18,9 @@ from superdesk.utils import ListCursor
 from superdesk import get_resource_service, config, app
 from superdesk.io.subjectcodes import get_subjectcodeitems
 from eve.utils import ParsedRequest
-import copy
+
+
+logger = logging.getLogger(__name__)
 
 
 class FilterConditionParametersResource(Resource):
@@ -187,7 +191,13 @@ class FilterConditionParametersService(BaseService):
 
     def _get_stage_field_values(self, desks):
         stages = list(get_resource_service('stages').get(None, {}))
-        for stage in stages:
-            desk = next(filter(lambda d: d['_id'] == stage['desk'], desks))
-            stage['name'] = '{}: {}'.format(desk['name'], stage['name'])
-        return stages
+        for i, stage in enumerate(stages):
+            try:
+                desk = next(filter(lambda d: d['_id'] == stage['desk'], desks))
+            except StopIteration:
+                # if stage has no desk, remove that stage from a list
+                logger.warning('Desk not found for stage with id "{}".'.format(stage['_id']))
+                stages[i] = None
+                continue
+            stages[i]['name'] = '{}: {}'.format(desk['name'], stage['name'])
+        return tuple(i for i in stages if i)
