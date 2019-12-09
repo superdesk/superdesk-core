@@ -679,12 +679,12 @@ Feature: Rewrite content
         """
         {
           "_status": "ERR",
-          "_issues": {"validator exception": "400: Can't publish update until original story is published.!"}
+          "_issues": {"validator exception": "400: Can't publish update until previous story is published.!"}
         }
         """
 
     @auth
-    Scenario: Cannot create rewrite of a rewrite if the original rewrite is not published
+    Scenario: Can create rewrite of a rewrite
         Given the "validators"
         """
           [
@@ -741,11 +741,7 @@ Feature: Rewrite content
         """
         {"desk_id": "#desks._id#"}
         """
-        Then we get error 400
-        """
-        {"_status": "ERR",
-         "_message": "Rewrite is not published. Cannot rewrite the story again."}
-        """
+        Then we get OK response
 
     @auth
     @content_type

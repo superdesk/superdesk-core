@@ -113,10 +113,6 @@ class ArchiveRewriteService(Service):
         if not is_workflow_state_transition_valid('rewrite', original[ITEM_STATE]):
             raise InvalidStateTransitionError()
 
-        if original.get('rewrite_of') and not (original.get(ITEM_STATE) in PUBLISH_STATES):
-            raise SuperdeskApiError.badRequestError(
-                message=_("Rewrite is not published. Cannot rewrite the story again."))
-
         if update:
             # in case of associate as update
             if update.get('rewrite_of'):
