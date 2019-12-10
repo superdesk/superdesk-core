@@ -68,8 +68,8 @@ class ImageIPTCFeedParser(FileFeedParser):
         content_type = mimetypes.guess_type(image_path)[0]
         guid = utils.generate_guid(type=GUID_TAG)
         item = {'guid': guid,
+                'uri': guid,
                 config.VERSION: 1,
-                config.ID_FIELD: guid,
                 ITEM_TYPE: CONTENT_TYPE.PICTURE,
                 'mimetype': content_type,
                 'versioncreated': utcnow(),

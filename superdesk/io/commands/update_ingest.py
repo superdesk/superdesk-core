@@ -541,7 +541,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
         rend = item.get('renditions', {})
         if rend:
             baseImageRend = rend.get('baseImage') or next(iter(rend.values()))
-            if baseImageRend:
+            if baseImageRend and not baseImageRend.get('media'):  # if there is media should be processed already
                 href = feeding_service.prepare_href(baseImageRend['href'], rend.get('mimetype'))
                 update_renditions(item, href, old_item)
 
