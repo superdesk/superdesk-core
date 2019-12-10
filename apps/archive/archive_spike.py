@@ -169,14 +169,14 @@ class ArchiveSpikeService(BaseService):
             updates['translated_from'] = None
             updates['translation_id'] = None
 
-            id_to_remove = original.get('_id')
+            id_to_remove = original.get(config.ID_FIELD)
 
             # Remove the translated item from the list of translations in the original item
             # where orignal item can be in archive or in both archive and published resource as well
             translated_from = archive_service.find_one(req=None, _id=original.get('translated_from'))
-            translated_from_id = translated_from.get('_id')
+            translated_from_id = translated_from.get(config.ID_FIELD)
 
-            self._update_translations(archive_service, translated_from, id_to_remove, translated_from_id)
+            self._remove_translations(archive_service, translated_from, id_to_remove)
 
             if translated_from.get('state') in PUBLISH_STATES:
                 published_service = get_resource_service('published')
@@ -186,7 +186,7 @@ class ArchiveSpikeService(BaseService):
 
                 if published_items:
                     for item in published_items:
-                        self._update_translations(published_service, item, id_to_remove, ObjectId(item.get('_id')))
+                        self._remove_translations(published_service, item, id_to_remove)
 
         # remove any relation with linked items
         updates[ITEM_EVENT_ID] = generate_guid(type=GUID_TAG)
@@ -237,15 +237,19 @@ class ArchiveSpikeService(BaseService):
             # send notification so that marked for me list can be updated
             get_resource_service('archive').handle_mark_user_notifications(updates, original, False)
 
-    def _update_translations(self, service, article, id_to_remove, article_id):
+    def _remove_translations(self, service, article, id_to_remove):
         """Upadte translation info for the original article in archive or published resource.
         :param service: service for resource endpoint
         :param article: article to be updated
         :param id_to_remove: id of translated item to be removed from the list of translations in original item
-        :param article_id: id of original article to be updated
         """
 
         translations = article.get('translations')
+        article_id = article.get(config.ID_FIELD)
+
+        if ObjectId.is_valid(article_id) and not isinstance(article_id, ObjectId):
+            article_id = ObjectId(article_id)
+
         if translations:
             translations = [t for t in translations if t != id_to_remove]
             updates = {'translations': translations}
