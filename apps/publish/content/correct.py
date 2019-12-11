@@ -79,7 +79,6 @@ class CorrectPublishService(BasePublishService):
             super().set_state(original, updates)
 
     def on_update(self, updates, original):
-        get_resource_service('archive')._handle_media_updates(updates, original, get_user())
         CropService().validate_multiple_crops(updates, original)
         super().on_update(updates, original)
         updates[ITEM_OPERATION] = self.item_operation
@@ -90,7 +89,7 @@ class CorrectPublishService(BasePublishService):
         flush_renditions(updates, original)
 
     def update(self, id, updates, original):
-        CropService().create_multiple_crops(updates, original)
+        get_resource_service('archive')._handle_media_updates(updates, original, get_user())
         super().update(id, updates, original)
 
     def on_updated(self, updates, original):
