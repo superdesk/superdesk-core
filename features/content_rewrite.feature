@@ -1,3 +1,4 @@
+@wip
 Feature: Rewrite content
 
     @auth
@@ -679,12 +680,12 @@ Feature: Rewrite content
         """
         {
           "_status": "ERR",
-          "_issues": {"validator exception": "400: Can't publish update until previous story is published.!"}
+          "_issues": {"validator exception": "400: Can't publish update until original story is published.!"}
         }
         """
 
     @auth
-    Scenario: Can create rewrite of a rewrite
+    Scenario: Cannot create rewrite of a rewrite if the original rewrite is not published
         Given the "validators"
         """
           [
@@ -741,7 +742,11 @@ Feature: Rewrite content
         """
         {"desk_id": "#desks._id#"}
         """
-        Then we get OK response
+        Then we get error 400
+        """
+        {"_status": "ERR",
+         "_message": "Rewrite is not published. Cannot rewrite the story again."}
+        """
 
     @auth
     @content_type
@@ -2391,3 +2396,36 @@ Feature: Rewrite content
           }
       }
       """
+
+    @auth
+    Scenario: Can create multiple rewrites if enabled
+        Given config update
+        """
+        {"WORKFLOW_ALLOW_MULTIPLE_UPDATES": true}
+        """
+        And "desks"
+        """
+        [{"name": "Sports"}]
+        """
+        And "archive"
+        """
+        [{"guid": "123", "type": "text", "headline": "test", "_current_version": 1, "state": "fetched",
+          "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+          "subject":[{"qcode": "17004000", "name": "Statistics"}],
+          "body_html": "Test Document body"}]
+        """
+        When we rewrite "123"
+        """
+        {"desk_id": "#desks._id#"}
+        """
+        Then we get OK response
+        When we rewrite "#REWRITE_ID#"
+        """
+        {"desk_id": "#desks._id#"}
+        """
+        Then we get OK response
+        When we rewrite "#REWRITE_ID#"
+        """
+        {"desk_id": "#desks._id#"}
+        """
+        Then we get OK response
