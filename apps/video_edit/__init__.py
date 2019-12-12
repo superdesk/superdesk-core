@@ -45,10 +45,12 @@ class VideoEditService(superdesk.Service):
                         'video_editor_id': media_id,
                     })
             if renditions:
-                updates = self.patch(item_id, {
-                    'renditions': renditions,
-                    'media': media_id,
-                })
+                original_item = super().find_one(req=None, _id=item_id)
+                updates = self.system_update(
+                    id=item_id,
+                    updates={'renditions': renditions, 'media': media_id},
+                    original=original_item
+                )
                 item.update(updates)
             ids.append(item_id)
         return ids
