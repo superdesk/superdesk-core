@@ -409,6 +409,7 @@ CORE_APPS.extend([
     'apps.auth',
     'apps.archive',
     'apps.archive.item_comments',
+    'apps.archive.autocomplete',
     'apps.archive_history',
     'apps.stages',
     'apps.desks',
@@ -756,3 +757,24 @@ AUTH_SERVER_SHARED_SECRET = env('AUTH_SERVER_SHARED_SECRET', '')
 #: .. versionadded:: 2.0
 #:
 KEYWORDS_ADD_MISSING_ON_PUBLISH = False
+
+
+#: Enable archive autocomplete API
+#:
+#: .. versionadded:: 2.0
+#:
+#: It will return suggestions for field from archive api,
+#: only from published items for time defined via
+#: :data:`ARCHIVE_AUTOCOMPLETE_DAYS` and :data:`ARCHIVE_AUTOCOMPLETE_HOURS`.
+#:
+ARCHIVE_AUTOCOMPLETE = False
+
+#:
+#: .. versionadded:: 2.0
+#:
+ARCHIVE_AUTOCOMPLETE_DAYS = 0
+
+#:
+#: .. versionadded:: 2.0
+#:
+ARCHIVE_AUTOCOMPLETE_HOURS = 0
