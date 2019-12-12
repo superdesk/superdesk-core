@@ -1,5 +1,16 @@
 # Superdesk Server Changelog
 
+## [1.32.1] 2019-12-10
+
+### Added
+
+- Add data upgrade script for ContentType/CoverageProvider CVs.
+
+### Fixed
+
+- Fix binary image ingest missing IPTC metadata in output.
+- Add notifications for `content_template` changes.
+
 ## [1.32] 2019-12-03
 
 ### Added

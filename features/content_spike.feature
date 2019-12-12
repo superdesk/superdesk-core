@@ -359,3 +359,119 @@ Feature: Content Spiking
         """
         {"_id": "item-1", "state": "spiked", "sign_off": "abc", "lock_user": null}
         """
+
+    @auth
+    Scenario: Spike translated item
+        Given "archive"
+        """
+        [{"type":"text", "headline": "test1", "guid": "123", "original_creator": "abc", "state": "draft",  "language": "en-CA", "body_html": "$10"}]
+        """
+        And "desks"
+        """
+        [{"name": "Sports"}]
+        """
+
+        When we post to "/archive/translate"
+        """
+        {"guid": "123", "language": "en-AU"}
+        """
+        And we get "/archive/#archive._id#"
+        Then we get existing resource
+        """
+        {"translation_id": "123", "translations": ["#translate._id#"]}
+        """
+
+        When we get "/archive/#translate._id#"
+        Then we get existing resource
+        """
+        {"type":"text", "headline": "test1", "state": "draft", "sign_off": "abc", "language": "en-AU", "body_html": "$10 (CAD 20)", "translated_from": "123", "translation_id": "123"}
+        """
+
+        When we spike "#translate._id#"
+        Then we get OK response
+
+        When we get "/archive/#translate._id#"
+        Then we get existing resource
+        """
+        {"type":"text", "headline": "test1", "state": "spiked", "sign_off": "abc", "language": "en-AU", "body_html": "$10 (CAD 20)", "translated_from": "__none__", "translation_id": "__none__"}
+        """
+        When we get "/archive/#archive._id#"
+        Then we get existing resource
+        """
+        {"translation_id": "__none__", "translations": []}
+        """
+
+    @auth
+    Scenario: Spike translated item which is translated from a published item
+        Given "validators"
+        """
+        [{"_id": "publish_text", "act": "publish", "type": "text", "schema":{}},
+        {"_id": "kill_text", "act": "kill", "type": "text", "schema":{}}]
+        """
+        And "desks"
+        """
+        [{"name": "Sports"}]
+        """
+        And "archive"
+        """
+        [{  "type":"text", "headline": "test1", "guid": "123", "original_creator": "#CONTEXT_USER_ID#",
+            "state": "submitted", "source": "REUTERS", "subject":[{"qcode": "17004000", "name": "Statistics"}],
+            "body_html": "Test Document body",
+            "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}]
+        """
+
+        When we patch "/archive/123"
+        """
+        {"publish_schedule":"#DATE+1#"}
+        """
+
+        When we post to "/products" with success
+        """
+        {
+            "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+        }
+        """
+        And we post to "/subscribers" with success
+        """
+        {
+            "name":"Channel 3","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+            "products": ["#products._id#"],
+            "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+        }
+        """
+        And we publish "#archive._id#" with "publish" type and "published" state
+        Then we get OK response
+        When we post to "/archive/translate"
+        """
+        {"guid": "123", "language": "de"}
+        """
+
+        When we get "/archive/#translate._id#"
+        Then we get existing resource
+        """
+        {"type":"text", "headline": "test1", "state": "submitted", "sign_off": "abc", "language": "de", "source": "AAP", 
+        "subject":[{"qcode": "17004000", "name": "Statistics"}], "body_html": "Test Document body"}
+        """
+        When we get "/published"
+        Then we get list with 1 items
+        """
+        {"_items": [
+            {"translation_id": "123", "translations": ["#translate._id#"]}
+        ]}
+        """
+
+        When we spike "#translate._id#"
+        Then we get OK response
+
+        When we get "/archive/#translate._id#"
+        Then we get existing resource
+        """
+        {"state": "spiked", "translation_id": "__none__", "firstcreated": "__now__"}
+        """
+        When we get "/published"
+        Then we get list with 1 items
+        """
+        {"_items": [
+            {"translation_id": "__none__", "translations": []}
+        ]}
+        """
