@@ -142,7 +142,13 @@ Third-party apps must retrieve token using AuthServer_ and provide it with every
 
 .. _AuthServer: https://superdesk.readthedocs.io/en/latest/auth_server.html
 
+Example::
 
+  export PRODAPI=http://127.0.0.1:5500/prodapi/v1
+  export JWT_TOKEN=your.jwt.token
+  export FILTER=source='{"query":{"filtered":{"filter":{"terms":{"type":["text"]}}}}}'
+  curl -g -i $PRODAPI/items?$FILTER -H "Authorization: Bearer $JWT_TOKEN"
+  
 Authorization
 -------------
 
