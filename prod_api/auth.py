@@ -1,6 +1,6 @@
 from time import time
 from authlib.jose import jwt
-from authlib.jose.errors import BadSignatureError, ExpiredTokenError
+from authlib.jose.errors import BadSignatureError, ExpiredTokenError, DecodeError
 from flask import current_app as app
 from eve.auth import TokenAuth
 
@@ -33,7 +33,7 @@ class JWTAuth(TokenAuth):
                 key=app.config.get('AUTH_SERVER_SHARED_SECRET')
             )
             decoded_jwt.validate_exp(now=time(), leeway=0)
-        except (BadSignatureError, ExpiredTokenError):
+        except (BadSignatureError, ExpiredTokenError, DecodeError):
             return False
 
         # authorization
