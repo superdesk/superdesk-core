@@ -206,13 +206,13 @@ def test_scopes(issued_tokens, prodapi_app, prodapi_client):
                 }
             )
             resp_data = json.loads(resp.data.decode('utf-8'))
-            # we get a 401 response
-            assert resp.status_code == 401
+            # we get a 403 response
+            assert resp.status_code == 403
             assert resp_data == {
                 '_status': 'ERR',
                 '_error': {
-                    'code': 401,
-                    'message': 'Please provide proper credentials'
+                    'code': 403,
+                    'message': 'Invalid scope'
                 }
             }
             # we send a requests with 'all scopes' token
@@ -261,13 +261,13 @@ def test_scopes_partial(issued_tokens, prodapi_app):
             }
         )
         resp_data = json.loads(resp.data.decode('utf-8'))
-        # we get a 401 response
-        assert resp.status_code == 401
+        # we get a 403 response
+        assert resp.status_code == 403
         assert resp_data == {
             '_status': 'ERR',
             '_error': {
-                'code': 401,
-                'message': 'Please provide proper credentials'
+                'code': 403,
+                'message': 'Invalid scope'
             }
         }
 

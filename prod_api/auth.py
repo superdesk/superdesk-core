@@ -1,6 +1,7 @@
 from time import time
 from authlib.jose import jwt
 from authlib.jose.errors import BadSignatureError, ExpiredTokenError, DecodeError
+from flask import abort, make_response, jsonify
 from flask import current_app as app
 from eve.auth import TokenAuth
 
@@ -38,7 +39,18 @@ class JWTAuth(TokenAuth):
 
         # authorization
         resource_privileges = get_resource_privileges(resource).get(method, None)
-        if resource_privileges in decoded_jwt.get('scope', []):
-            return True
+        if resource_privileges not in decoded_jwt.get('scope', []):
+            abort(
+                make_response(
+                    jsonify({
+                        "_status": "ERR",
+                        "_error": {
+                            "code": 403,
+                            "message": "Invalid scope"
+                        }
+                    }),
+                    403
+                )
+            )
 
-        return False
+        return True
