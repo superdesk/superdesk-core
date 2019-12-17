@@ -207,7 +207,8 @@ class ValidateService(superdesk.Service):
 
     def _get_profile_schema(self, schema, doc):
         doc['validate'].setdefault('extra', {})  # make sure extra is there so it will validate its fields
-        extra_field_types = {'text': 'string', 'embed': 'dict', 'date': 'date', 'urls': 'list', 'custom': ['datetime', 'string']}
+        extra_field_types = {'text': 'string', 'embed': 'dict', 'date': 'date',
+                             'urls': 'list', 'custom': ['datetime', 'string']}
         extra_fields = superdesk.get_resource_service('vocabularies').get_extra_fields()
         schema['extra'] = {'type': 'dict', 'schema': {}}
         for extra_field in extra_fields:
