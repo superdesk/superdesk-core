@@ -23,10 +23,11 @@ from superdesk.signals import item_validate
 
 
 REQUIRED_FIELD = 'is a required field'
-MAX_LENGTH = "max length is {length}"
+MAX_LENGTH = 'max length is {length}'
 STRING_FIELD = 'require a string value'
 DATE_FIELD = 'require a date value'
 REQUIRED_ERROR = '{} is a required field'
+INVALID_CHAR = 'contains invalid characters'
 
 
 def check_json(doc, field, value):
@@ -148,6 +149,15 @@ class SchemaValidator(Validator):
     def _validate_company_codes(self, *args):
         """Ignore company codes."""
         pass
+
+    def _validate_validate_characters(self, validate, field, value):
+        """Validate if field contains only allowed characters."""
+        disallowed_characters = app.config.get('DISALLOWED_CHARACTERS')
+
+        if validate and disallowed_characters and value:
+            invalid_chars = [char for char in disallowed_characters if char in value]
+            if invalid_chars:
+                return self._error(field, INVALID_CHAR)
 
     def _validate_media_metadata(self, validate, associations_field, associations):
         if not validate:
