@@ -254,6 +254,9 @@ class ArchiveService(BaseService):
             convert_task_attributes_to_objectId(doc)
             transtype_metadata(doc)
 
+            # send signal
+            superdesk.item_create.send(self, item=doc)
+
     def on_created(self, docs):
         packages = [doc for doc in docs if doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE]
         if packages:
