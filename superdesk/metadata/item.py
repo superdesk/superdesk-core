@@ -588,9 +588,7 @@ metadata_schema = {
 
     'extra': {
         'type': 'dict',
-        'mapping': {
-            'type': 'object',
-        }
+        'mapping': not_enabled,
     },
 
     'attachments': {
