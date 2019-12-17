@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.32.3] 2019-12-17
+
+### Fixed
+
+- Fix rendition width/height sent as string in NINJS.
+
 ## [1.32.2] 2019-12-13
 
 ### Fixed
