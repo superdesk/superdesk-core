@@ -342,8 +342,8 @@ class NinjsFormatterTest(TestCase):
                     "renditions": {
                         "original": {
                             "href": "http://example.com",
-                            "width": 100,
-                            "height": 80,
+                            "width": "100",
+                            "height": "80",
                             "mimetype": "image/jpeg",
                             "CropLeft": 0,
                         }

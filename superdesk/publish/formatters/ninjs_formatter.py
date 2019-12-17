@@ -382,7 +382,14 @@ class NINJSFormatter(Formatter):
 
     def _format_rendition(self, rendition):
         """Format single rendition using fields whitelist."""
-        return {field: rendition[field] for field in self.rendition_properties if field in rendition}
+        formatted = {}
+        for field in self.rendition_properties:
+            if not rendition.get(field):
+                continue
+            formatted[field] = rendition[field]
+            if field in ('width', 'height'):
+                formatted[field] = int(rendition[field])
+        return formatted
 
     def _format_place(self, article):
         vocabularies_service = superdesk.get_resource_service('vocabularies')
