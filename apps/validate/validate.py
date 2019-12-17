@@ -96,6 +96,10 @@ class SchemaValidator(Validator):
         if value and not isinstance(value, str):
             self._error(field, STRING_FIELD)
 
+    def _validate_type_any(self, field, value):
+        """Allow type any, ex: for CV of type 'custom'."""
+        pass
+
     def _validate_mandatory_in_list(self, mandatory, field, value):
         """Validates if all elements from mandatory are presented in the list"""
         for key in mandatory:
@@ -208,7 +212,7 @@ class ValidateService(superdesk.Service):
     def _get_profile_schema(self, schema, doc):
         doc['validate'].setdefault('extra', {})  # make sure extra is there so it will validate its fields
         extra_field_types = {'text': 'string', 'embed': 'dict', 'date': 'date',
-                             'urls': 'list', 'custom': ['datetime', 'string']}
+                             'urls': 'list', 'custom': 'any'}
         extra_fields = superdesk.get_resource_service('vocabularies').get_extra_fields()
         schema['extra'] = {'type': 'dict', 'schema': {}}
         for extra_field in extra_fields:
