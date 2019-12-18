@@ -20,7 +20,7 @@ from superdesk.utc import utcnow
 from .archive import SOURCE as ARCHIVE
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, ITEM_TYPE,\
     CONTENT_TYPE, ASSOCIATIONS, MEDIA_TYPES, PUBLISH_STATES
-from superdesk.lock import lock, unlock, remove_locks
+from superdesk.lock import lock, unlock, remove_locks, touch
 from superdesk.notification import push_notification
 from superdesk import get_resource_service
 from bson.objectid import ObjectId
@@ -68,7 +68,7 @@ class RemoveExpiredContent(superdesk.Command):
         # both functions should be called, even the first one throw exception,
         # so they are wrapped with log_exeption
         self._remove_expired_publish_queue_items()
-        self._remove_expired_items(now)
+        self._remove_expired_items(now, lock_name)
         unlock(lock_name)
 
         push_notification('content:expired')
@@ -86,7 +86,7 @@ class RemoveExpiredContent(superdesk.Command):
             get_resource_service('publish_queue').delete({'_id': {'$lte': ObjectId.from_datetime(expire_time)}})
 
     @log_exeption
-    def _remove_expired_items(self, expiry_datetime):
+    def _remove_expired_items(self, expiry_datetime, lock_name):
         """Remove the expired items.
 
         :param datetime expiry_datetime: expiry datetime
@@ -104,6 +104,10 @@ class RemoveExpiredContent(superdesk.Command):
         for expired_items in archive_service.get_expired_items(expiry_datetime):
             if len(expired_items) == 0:
                 logger.info('{} No items found to expire.'.format(self.log_msg))
+                return
+
+            if not touch(lock_name, expire=300):
+                logger.warning('{} lost lock while removing expited items.'.format(self.log_msg))
                 return
 
             # delete spiked items

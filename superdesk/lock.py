@@ -3,7 +3,7 @@ import os
 import re
 import socket
 
-from mongolock import MongoLock
+from mongolock import MongoLock, MongoLockException
 from werkzeug.local import LocalProxy
 from flask import current_app as app
 from superdesk.logging import logger
@@ -83,3 +83,17 @@ def remove_locks():
     result = _lock.collection.delete_many({'$or': [{'_id': re.compile('^item_move'), 'locked': False},
                                           {'_id': re.compile('^item_lock'), 'locked': False}]})
     logger.info('unused item locks deleted count={}'.format(result.deleted_count))
+
+
+def touch(task, host=None, expire=1):
+    """Touch lock on given task.
+
+    It will extend expiry so task can run longer if needed.
+    """
+    if not host:
+        host = get_host()
+    try:
+        _lock.touch(task, host, expire)
+        return True
+    except MongoLockException:
+        return False
