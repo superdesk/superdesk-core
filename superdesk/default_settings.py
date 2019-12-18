@@ -625,6 +625,12 @@ FTP_TIMEOUT = 300
 #: default amount of files which can processed during one iteration of ftp ingest
 FTP_INGEST_FILES_LIST_LIMIT = 100
 
+#: after how many minutes consider content to be too old for ingestion
+#:
+#: .. versionadded:: 1.32.2
+#:
+FILE_INGEST_OLD_CONTENT_MINUTES = 10
+
 #: default timeout for email connections
 EMAIL_TIMEOUT = 10
 

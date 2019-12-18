@@ -1,5 +1,17 @@
 # Superdesk Server Changelog
 
+## [1.32.2] 2019-12-13
+
+### Fixed
+
+- Fix error when parsing empty urgency in Newml G2 parser.
+- Check if user is a member of destination desk when moving content.
+
+### Changed
+
+- Make file ingest repeat timeout configurable.
+- Refactor Picture IPTC parser to simplify extending it in subclass.
+
 ## [1.32.1] 2019-12-10
 
 ### Added
