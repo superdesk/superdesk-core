@@ -795,3 +795,15 @@ ARCHIVE_AUTOCOMPLETE_DAYS = 0
 #: .. versionadded:: 2.0
 #:
 ARCHIVE_AUTOCOMPLETE_HOURS = 0
+
+
+#: Tansa client config
+#:
+#: .. versionadded:: 2.0
+#:
+TANSA_APP_ID = env('TANSA_APP_ID')
+TANSA_USER_ID = env('TANSA_USER_ID')
+TANSA_PROFILE_ID = env('TANSA_PROFILE_ID')
+TANSA_LICENSE_KEY = env('TANSA_LICENSE_KEY')
+TANSA_CLIENT_BASE_URL = env('TANSA_CLIENT_BASE_URL', 'https://d02.tansa.com/tansaclient/')
+TANSA_PROFILES = {}
