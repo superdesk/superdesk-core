@@ -764,6 +764,17 @@ AUTH_SERVER_SHARED_SECRET = env('AUTH_SERVER_SHARED_SECRET', '')
 #:
 KEYWORDS_ADD_MISSING_ON_PUBLISH = False
 
+#: Allow creating multiple updates in production
+#:
+#: By default there can be only 1 update in progress
+#: for a story, when enable there is no limit and multiple
+#: updates can be created. It will still validate on publish
+#: if the previous ones are published and not let publishing
+#: out of sequence.
+#:
+#: .. versionadded:: 2.0
+#:
+WORKFLOW_ALLOW_MULTIPLE_UPDATES = False
 
 #: Enable archive autocomplete API
 #:

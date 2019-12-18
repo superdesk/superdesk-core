@@ -629,7 +629,10 @@ Default: ``None``
 When configured it will enable ``/places_autocomplete`` service and client
 will use it for place field searching.
 
+
 .. autodata:: KEYWORDS_ADD_MISSING_ON_PUBLISH
+
+.. autodata:: WORKFLOW_ALLOW_MULTIPLE_UPDATES
 
 .. autodata:: ARCHIVE_AUTOCOMPLETE
 .. autodata:: ARCHIVE_AUTOCOMPLETE_DAYS
