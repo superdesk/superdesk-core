@@ -29,6 +29,7 @@ from superdesk.default_settings import (  # noqa
     AMAZON_CONTAINER_NAME,
     AMAZON_S3_SUBFOLDER,
     AMAZON_OBJECT_ACL,
+    strtobool
 )
 
 SECRET_KEY = env('PRODAPI_SECRET_KEY', '')
@@ -54,3 +55,9 @@ ELASTIC_DATE_FORMAT = '%Y-%m-%d'
 
 # response in json
 XML = False
+
+# authorisation server
+AUTH_SERVER_SHARED_SECRET = env('AUTH_SERVER_SHARED_SECRET', '')
+
+# authentication
+PRODAPI_AUTH_ENABLED = strtobool(env('PRODAPI_AUTH_ENABLED', 'true'))

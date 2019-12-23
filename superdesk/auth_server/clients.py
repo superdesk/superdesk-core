@@ -90,27 +90,13 @@ class RegisterClient(superdesk.Command, CommonClient):
     ]
 
     def run(self, client_id, password, scope, name):
-        if not name.strip():
-            self.parser.error("please enter a valid name")
-
+        self.validate_name(name)
         scope = self.validate_scope(scope)
 
         if client_id is None:
             client_id = ObjectId()
         else:
-            try:
-                client_id = ObjectId(client_id)
-            except InvalidId as e:
-                self.parser.error("the given client id is not valid: {msg}".format(msg=e))
-
-        clients_service = superdesk.get_resource_service('auth_server_clients')
-
-        try:
-            next(clients_service.find({'_id': client_id}))
-        except StopIteration:
-            pass
-        else:
-            self.parser.error("a client with this id already exists!")
+            client_id = self.validate_client_id(client_id)
 
         if not password or not password.strip():
             password = gen_password()
@@ -122,9 +108,49 @@ class RegisterClient(superdesk.Command, CommonClient):
             'scope': list(scope),
         }
 
-        clients_service.post([client_data])
+        superdesk.get_resource_service('auth_server_clients').post([client_data])
         print("Client {name!r} has been registered with id '{client_id}' and password {password!r}".format(
             name=name, client_id=client_id, password=password))
+
+    def validate_client_id(self, client_id):
+        """
+        Validate client id string and return client id ObjectId
+        :param client_id: client id
+        :type client_id: str
+        :return: client id
+        :rtype: ObjectId
+        """
+
+        try:
+            client_id = ObjectId(client_id)
+        except InvalidId as e:
+            self.parser.error("the given client id is not valid: {msg}".format(msg=e))
+
+        try:
+            next(superdesk.get_resource_service('auth_server_clients').find({'_id': client_id}))
+        except StopIteration:
+            pass
+        else:
+            self.parser.error("a client with this id already exists!")
+
+        return client_id
+
+    def validate_name(self, name):
+        """
+        Validate name
+        :param name: client name
+        :type name: str
+        """
+
+        if not name.strip():
+            self.parser.error("please enter a valid name")
+
+        try:
+            next(superdesk.get_resource_service('auth_server_clients').find({'name': name}))
+        except StopIteration:
+            pass
+        else:
+            self.parser.error("a client with this name already exists!")
 
 
 class UpdateClient(superdesk.Command, CommonClient):
