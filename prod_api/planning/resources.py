@@ -10,6 +10,7 @@
 
 from superdesk.resource import Resource
 from superdesk.metadata.utils import item_url
+from superdesk.auth_server.scopes import Scope
 
 
 class PlanningResource(Resource):
@@ -25,6 +26,9 @@ class PlanningResource(Resource):
             'fields_meta': 0
         },
     }
+    privileges = {
+        'GET': Scope.PLANNING_READ.name
+    }
 
 
 class EventsResource(Resource):
@@ -35,10 +39,13 @@ class EventsResource(Resource):
     datasource = {
         'source': 'events',
         'search_backend': 'elastic',
-        'default_sort': [('dates.start', 1)],
+        'default_sort': [('_updated', -1)],
         'projection': {
             'fields_meta': 0
         },
+    }
+    privileges = {
+        'GET': Scope.EVENTS_READ.name
     }
 
 
@@ -54,4 +61,7 @@ class AssignmentsResource(Resource):
         'projection': {
             'fields_meta': 0
         },
+    }
+    privileges = {
+        'GET': Scope.ASSIGNMENTS_READ.name
     }

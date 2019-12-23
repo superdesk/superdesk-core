@@ -14,6 +14,7 @@ import shutil
 from datetime import timedelta, datetime
 
 from lxml import etree
+from flask import current_app as app
 from superdesk.errors import IngestFileError, ParserError, ProviderError
 from superdesk.io.registry import register_feeding_service
 from superdesk.io.feed_parsers import XMLFeedParser
@@ -23,6 +24,8 @@ from superdesk.utc import utc, utcnow
 from superdesk.utils import get_sorted_files, FileSortAttributes
 
 logger = logging.getLogger(__name__)
+
+OLD_CONTENT_MINUTES = 'FILE_INGEST_OLD_CONTENT_MINUTES'
 
 
 class FileFeedingService(FeedingService):
@@ -93,7 +96,7 @@ class FileFeedingService(FeedingService):
 
                         self.move_file(self.path, filename, provider=provider, success=not failed)
                     else:
-                        self.move_file(self.path, filename, provider=provider, success=True)
+                        self.move_file(self.path, filename, provider=provider, success=False)
             except Exception as ex:
                 if last_updated and self.is_old_content(last_updated):
                     self.move_file(self.path, filename, provider=provider, success=False)
@@ -155,7 +158,7 @@ class FileFeedingService(FeedingService):
         if not provider_last_updated:
             provider_last_updated = utcnow() - timedelta(days=7)
 
-        return provider_last_updated - timedelta(minutes=10) < last_updated
+        return provider_last_updated - timedelta(minutes=app.config[OLD_CONTENT_MINUTES]) < last_updated
 
     def is_old_content(self, last_updated):
         """Test if file is old so it wouldn't probably work in is_latest_content next time.
@@ -164,7 +167,7 @@ class FileFeedingService(FeedingService):
 
         :param last_updated: file last updated datetime
         """
-        return last_updated < utcnow() - timedelta(minutes=10)
+        return last_updated < utcnow() - timedelta(minutes=app.config[OLD_CONTENT_MINUTES])
 
     def get_last_updated(self, file_path):
         """Get last updated time for file.

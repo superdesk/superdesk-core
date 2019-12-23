@@ -1,3 +1,4 @@
+@wip
 Feature: Rewrite content
 
     @auth
@@ -2395,3 +2396,36 @@ Feature: Rewrite content
           }
       }
       """
+
+    @auth
+    Scenario: Can create multiple rewrites if enabled
+        Given config update
+        """
+        {"WORKFLOW_ALLOW_MULTIPLE_UPDATES": true}
+        """
+        And "desks"
+        """
+        [{"name": "Sports"}]
+        """
+        And "archive"
+        """
+        [{"guid": "123", "type": "text", "headline": "test", "_current_version": 1, "state": "fetched",
+          "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+          "subject":[{"qcode": "17004000", "name": "Statistics"}],
+          "body_html": "Test Document body"}]
+        """
+        When we rewrite "123"
+        """
+        {"desk_id": "#desks._id#"}
+        """
+        Then we get OK response
+        When we rewrite "#REWRITE_ID#"
+        """
+        {"desk_id": "#desks._id#"}
+        """
+        Then we get OK response
+        When we rewrite "#REWRITE_ID#"
+        """
+        {"desk_id": "#desks._id#"}
+        """
+        Then we get OK response

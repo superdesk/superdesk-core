@@ -66,7 +66,7 @@ class ProdApiService(superdesk.Service):
 
         def _process(item):
             for _k, v in item.get('renditions', {}).items():
-                if 'media' in v:
+                if v and 'media' in v:
                     media = v.pop('media')
                     old_href = v.get('href')
                     new_href = app.media.url_for_media(media, v.get('mimetype'))

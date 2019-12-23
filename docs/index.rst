@@ -53,6 +53,7 @@ works and can be developed further.
     content-types
     contentapi
     auth_server
+    production_api
     extending
     authentication
     cli

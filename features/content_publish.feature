@@ -3180,6 +3180,17 @@ Feature: Content Publishing
         """
         [{"name": "Sports", "members":[{"user":"#CONTEXT_USER_ID#"}]}]
         """
+      And "vocabularies"
+      """
+      [{
+        "_id": "crop_sizes",
+        "unique_field": "name",
+        "items": [
+          {"is_active": true, "name": "600x800", "width": 800, "height": 600},
+          {"is_active": true, "name": "1200x720", "width": 1280, "height": 720}
+        ]
+      }]
+      """
       And "archive"
         """
         [
@@ -3544,7 +3555,7 @@ Feature: Content Publishing
                             "media": "600x800_new",
                             "mimetype": "image/jpeg"
                         },
-                        "1280x720": null
+                        "1280x720": "__none__"
                     }
                 }
             }

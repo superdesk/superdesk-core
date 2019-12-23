@@ -23,10 +23,11 @@ from superdesk.signals import item_validate
 
 
 REQUIRED_FIELD = 'is a required field'
-MAX_LENGTH = "max length is {length}"
+MAX_LENGTH = 'max length is {length}'
 STRING_FIELD = 'require a string value'
 DATE_FIELD = 'require a date value'
 REQUIRED_ERROR = '{} is a required field'
+INVALID_CHAR = 'contains invalid characters'
 
 
 def check_json(doc, field, value):
@@ -95,6 +96,10 @@ class SchemaValidator(Validator):
         if value and not isinstance(value, str):
             self._error(field, STRING_FIELD)
 
+    def _validate_type_any(self, field, value):
+        """Allow type any, ex: for CV of type 'custom'."""
+        pass
+
     def _validate_mandatory_in_list(self, mandatory, field, value):
         """Validates if all elements from mandatory are presented in the list"""
         for key in mandatory:
@@ -149,6 +154,15 @@ class SchemaValidator(Validator):
         """Ignore company codes."""
         pass
 
+    def _validate_validate_characters(self, validate, field, value):
+        """Validate if field contains only allowed characters."""
+        disallowed_characters = app.config.get('DISALLOWED_CHARACTERS')
+
+        if validate and disallowed_characters and value:
+            invalid_chars = [char for char in disallowed_characters if char in value]
+            if invalid_chars:
+                return self._error(field, INVALID_CHAR)
+
     def _validate_media_metadata(self, validate, associations_field, associations):
         if not validate:
             return
@@ -197,7 +211,8 @@ class ValidateService(superdesk.Service):
 
     def _get_profile_schema(self, schema, doc):
         doc['validate'].setdefault('extra', {})  # make sure extra is there so it will validate its fields
-        extra_field_types = {'text': 'string', 'embed': 'dict', 'date': 'date', 'urls': 'list'}
+        extra_field_types = {'text': 'string', 'embed': 'dict', 'date': 'date',
+                             'urls': 'list', 'custom': 'any'}
         extra_fields = superdesk.get_resource_service('vocabularies').get_extra_fields()
         schema['extra'] = {'type': 'dict', 'schema': {}}
         for extra_field in extra_fields:

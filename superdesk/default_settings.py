@@ -409,6 +409,7 @@ CORE_APPS.extend([
     'apps.auth',
     'apps.archive',
     'apps.archive.item_comments',
+    'apps.archive.autocomplete',
     'apps.archive_history',
     'apps.stages',
     'apps.desks',
@@ -624,6 +625,12 @@ FTP_TIMEOUT = 300
 #: default amount of files which can processed during one iteration of ftp ingest
 FTP_INGEST_FILES_LIST_LIMIT = 100
 
+#: after how many minutes consider content to be too old for ingestion
+#:
+#: .. versionadded:: 1.32.2
+#:
+FILE_INGEST_OLD_CONTENT_MINUTES = 10
+
 #: default timeout for email connections
 EMAIL_TIMEOUT = 10
 
@@ -756,3 +763,47 @@ AUTH_SERVER_SHARED_SECRET = env('AUTH_SERVER_SHARED_SECRET', '')
 #: .. versionadded:: 2.0
 #:
 KEYWORDS_ADD_MISSING_ON_PUBLISH = False
+
+#: Allow creating multiple updates in production
+#:
+#: By default there can be only 1 update in progress
+#: for a story, when enable there is no limit and multiple
+#: updates can be created. It will still validate on publish
+#: if the previous ones are published and not let publishing
+#: out of sequence.
+#:
+#: .. versionadded:: 2.0
+#:
+WORKFLOW_ALLOW_MULTIPLE_UPDATES = False
+
+#: Enable archive autocomplete API
+#:
+#: .. versionadded:: 2.0
+#:
+#: It will return suggestions for field from archive api,
+#: only from published items for time defined via
+#: :data:`ARCHIVE_AUTOCOMPLETE_DAYS` and :data:`ARCHIVE_AUTOCOMPLETE_HOURS`.
+#:
+ARCHIVE_AUTOCOMPLETE = False
+
+#:
+#: .. versionadded:: 2.0
+#:
+ARCHIVE_AUTOCOMPLETE_DAYS = 0
+
+#:
+#: .. versionadded:: 2.0
+#:
+ARCHIVE_AUTOCOMPLETE_HOURS = 0
+
+
+#: Tansa client config
+#:
+#: .. versionadded:: 2.0
+#:
+TANSA_APP_ID = env('TANSA_APP_ID')
+TANSA_USER_ID = env('TANSA_USER_ID')
+TANSA_PROFILE_ID = env('TANSA_PROFILE_ID')
+TANSA_LICENSE_KEY = env('TANSA_LICENSE_KEY')
+TANSA_CLIENT_BASE_URL = env('TANSA_CLIENT_BASE_URL', 'https://d02.tansa.com/tansaclient/')
+TANSA_PROFILES = {}
