@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.32.4] 2019-12-23
+
+### Added
+
+- Add `item:create` signal.
+
 ## [1.32.3] 2019-12-17
 
 ### Fixed
