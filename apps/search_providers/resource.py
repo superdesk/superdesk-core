@@ -22,6 +22,7 @@ class SearchProviderResource(Resource):
         },
         'source': required_string,
         'name': {'type': 'string'},
+        'url': {'type': 'string'},
         'is_closed': {
             'type': 'boolean',
             'default': False
