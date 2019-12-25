@@ -62,7 +62,7 @@ class VideoEditService(superdesk.Service):
 
         video_id = res['media']
         if req.args.get('action') == 'timeline':
-            response = self.video_editor.create_timeline_thumbnails(video_id, req.args.get('amount', 40))
+            response = self.video_editor.create_timeline_thumbnails(video_id, req.args.get('amount', 60))
             return {
                 config.ID_FIELD: video_id,
                 **response
@@ -91,63 +91,79 @@ class VideoEditService(superdesk.Service):
 
 
 class VideoEditResource(superdesk.Resource):
-    item_methods = ['GET', 'PUT', 'PATCH']
+    item_methods = ['GET', 'PUT']
     resource_methods = ['POST']
     privileges = {
         'POST': ARCHIVE,
         'PUT': ARCHIVE,
-        'PATCH': ARCHIVE,
     }
     item_url = item_url
     schema = {
         'file': {'type': 'file'},
-        'item': {'type': 'dict', 'required': False, 'empty': True},
-        'edit': {'type': 'dict',
-                 'required': False,
-                 'empty': False,
-                 'schema': {
-                     'trim': {
-                         'required': False,
-                         'regex': '^\\d+\\.?\\d*,\\d+\\.?\\d*$',
-                     },
-                     'rotate': {
-                         'type': 'integer',
-                         'required': False,
-                         'allowed': [-270, -180, -90, 90, 180, 270]
-                     },
-                     'scale': {
-                         'type': 'integer',
-                         'required': False
-                     },
-                     'crop': {
-                         'required': False,
-                         'regex': '^\\d+,\\d+,\\d+,\\d+$'
-                     }
-                 }
-                 },
-        'capture': {'type': 'dict',
+        'item': {
+            'type': 'dict',
+            'required': False,
+            'empty': True,
+            'schema': {
+                config.ID_FIELD: {
+                    'type': 'string',
+                    'required': True,
+                },
+                'media': {
+                    'type': 'string',
+                    'required': True,
+                },
+                'renditions': {'type': 'dict', 'required': False, 'empty': True}
+            }
+        },
+        'edit': {
+            'type': 'dict',
+            'required': False,
+            'empty': False,
+            'schema': {
+                'trim': {
                     'required': False,
-                    'empty': False,
-                    'schema': {
-                        'position': {
-                            'required': False,
-                            'type': 'float',
-                        },
-                        'rotate': {
-                            'type': 'integer',
-                            'required': False,
-                            'allowed': [-270, -180, -90, 90, 180, 270]
-                        },
-                        'scale': {
-                            'type': 'integer',
-                            'required': False
-                        },
-                        'crop': {
-                            'required': False,
-                            'regex': '^\\d+,\\d+,\\d+,\\d+$'
-                        }
-                    }
-                    },
+                    'regex': '^\\d+\\.?\\d*,\\d+\\.?\\d*$',
+                },
+                'rotate': {
+                    'type': 'integer',
+                    'required': False,
+                    'allowed': [-270, -180, -90, 90, 180, 270]
+                },
+                'scale': {
+                    'type': 'integer',
+                    'required': False
+                },
+                'crop': {
+                    'required': False,
+                    'regex': '^\\d+,\\d+,\\d+,\\d+$'
+                }
+            }
+        },
+        'capture': {
+            'type': 'dict',
+            'required': False,
+            'empty': False,
+            'schema': {
+                'position': {
+                    'required': False,
+                    'type': 'float',
+                },
+                'rotate': {
+                    'type': 'integer',
+                    'required': False,
+                    'allowed': [-270, -180, -90, 90, 180, 270]
+                },
+                'scale': {
+                    'type': 'integer',
+                    'required': False
+                },
+                'crop': {
+                    'required': False,
+                    'regex': '^\\d+,\\d+,\\d+,\\d+$'
+                }
+            }
+        },
     }
 
 
