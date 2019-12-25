@@ -1,6 +1,5 @@
 import logging
-import socket
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin
 
 import requests
 from bson import json_util
@@ -63,13 +62,13 @@ class VideoEditorWrapper():
         json = json_util.loads(resp.text)
         if resp.status_code not in status:
             if resp.status_code == 400:
-                raise SuperdeskApiError.badRequestError(message=json_util.dumps(json))
+                raise SuperdeskApiError.badRequestError(message=json)
             if resp.status_code == 409:
-                raise SuperdeskApiError.conflictError(message=json_util.dumps(json))
+                raise SuperdeskApiError.conflictError(message=json)
             if resp.status_code == 404:
-                raise SuperdeskApiError.notFoundError(message=json_util.dumps(json))
+                raise SuperdeskApiError.notFoundError(message=json)
             if resp.status_code == 500:
-                raise SuperdeskApiError.internalError(message=json_util.dumps(json))
+                raise SuperdeskApiError.internalError(message=json)
         return json
 
     def _get(self, project_id):
