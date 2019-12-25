@@ -1,6 +1,7 @@
 import superdesk
 from apps.archive.common import ARCHIVE
 from superdesk import config
+from superdesk.errors import SuperdeskApiError
 from superdesk.media.video_editor import VideoEditorWrapper
 from superdesk.metadata.utils import item_url
 
@@ -16,16 +17,18 @@ class VideoEditService(superdesk.Service):
         ids = []
         for doc in docs:
             item = doc.get('item')
-            item_id = item.get(config.ID_FIELD)
-            media_id = item['media']
-            renditions = item.get('renditions', {})
+            item_id = item[config.ID_FIELD]
+            renditions = item['renditions']
+            video_id = renditions['original'].get('video_editor_id')
+            if not video_id:
+                raise SuperdeskApiError.badRequestError(message='Missing video_editor_id')
+
             # push task capture preview thumbnail to video server
             if 'capture' in doc:
-                # Remove empty value in updates to avoid cerberus return invalid input error
                 capture = doc.pop('capture')
                 if capture:
                     project = self.video_editor.capture_preview_thumbnail(
-                        media_id, position=capture.get('position'),
+                        video_id, position=capture.get('position'),
                         crop=capture.get('crop'),
                         rotate=capture.get('rotate')
                     )
@@ -37,21 +40,21 @@ class VideoEditService(superdesk.Service):
             if 'edit' in doc:
                 edit = doc.pop('edit')
                 if edit:
-                    project = self.video_editor.edit(media_id, edit)
-                    media_id = project.get('_id')
+                    project = self.video_editor.edit(video_id, edit)
                     renditions.setdefault('original', {}).update({
                         'href': project['url'],
+                        'mimetype': project.get('mime_type', 'video/mp4'),
                         'version': project['version'] + 1,
-                        'video_editor_id': media_id,
+                        'video_editor_id': project.get('_id'),
                     })
-            if renditions:
-                original_item = super().find_one(req=None, _id=item_id)
-                updates = self.system_update(
-                    id=item_id,
-                    updates={'renditions': renditions, 'media': media_id},
-                    original=original_item
-                )
-                item.update(updates)
+
+            original_item = super().find_one(req=None, _id=item_id)
+            updates = self.system_update(
+                id=item_id,
+                updates={'renditions': renditions},
+                original=original_item
+            )
+            item.update(updates)
             ids.append(item_id)
         return ids
 
@@ -109,11 +112,14 @@ class VideoEditResource(superdesk.Resource):
                     'type': 'string',
                     'required': True,
                 },
-                'media': {
-                    'type': 'string',
+                'renditions': {
+                    'type': 'dict',
                     'required': True,
-                },
-                'renditions': {'type': 'dict', 'required': False, 'empty': True}
+                    'allow_unknown': True,
+                    'schema': {
+                        'original': {'type': 'dict', 'required': True, 'empty': False}
+                    }
+                }
             }
         },
         'edit': {

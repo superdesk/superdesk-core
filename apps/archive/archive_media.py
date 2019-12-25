@@ -48,7 +48,7 @@ class ArchiveMediaService():
                 # upload media to video server
                 res, renditions, metadata = self.upload_file_to_video_server(doc)
                 # get thumbnails for timeline bar
-                self.video_editor.create_timeline_thumbnails(doc.get('media'), 40)
+                self.video_editor.create_timeline_thumbnails(doc.get('media'), 60)
             else:
                 file, content_type, metadata = self.get_file_from_document(doc)
                 inserted = [doc['media']]

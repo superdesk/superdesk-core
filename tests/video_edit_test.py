@@ -8,17 +8,18 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import copy
 from io import BytesIO
 from unittest.mock import MagicMock
 
+import magic
 import requests_mock
 from werkzeug.datastructures import FileStorage
 
 import superdesk
 from superdesk import config
+from superdesk.errors import SuperdeskApiError
 from superdesk.tests import TestCase
-import magic
-import copy
 
 
 class Req(dict):
@@ -51,8 +52,7 @@ class VideoEditTestCase(TestCase):
         with requests_mock.mock() as mock:
             doc = {'media': FileStorage(BytesIO(b'abcdef'), 'video.mp4')}
             mock.post('http://localhost/projects/', json=self.project_data)
-            mock.get("http://localhost/projects/video_id/thumbnails?type=timeline&amount=40",
-                     json={"processing": True})
+            mock.get("http://localhost/projects/video_id/thumbnails?type=timeline&amount=60", json={"processing": True})
             archive_service = superdesk.get_resource_service('archive')
             magic.from_buffer = MagicMock()
             magic.from_buffer.return_value = 'video/mp4'
@@ -68,13 +68,28 @@ class VideoEditTestCase(TestCase):
         self.assertEqual(self.item["renditions"], {'original': {'href': 'video_url',
                                                                 'mimetype': 'video/mp4',
                                                                 'version': 1,
-                                                                'video_editor_id':
-                                                                'video_id'}})
+                                                                'video_editor_id': 'video_id'}})
+
+    def test_missing_video_id(self):
+        doc = {
+            'item': {
+                config.ID_FIELD: '123',
+                'renditions': {
+                    'original': {}
+                }
+            }
+        }
+        with self.assertRaises(SuperdeskApiError) as ex:
+            self.video_edit.create([doc])
+        self.assertEqual(ex.exception.message, 'Missing video_editor_id')
 
     def test_edit_video(self):
         project_data = copy.deepcopy(self.project_data)
         doc = {
-            "item": self.item,
+            "item": {
+                config.ID_FIELD: self.item[config.ID_FIELD],
+                'renditions': self.item['renditions'],
+            },
             "edit": {
                 "crop": "0,0,200,500",
                 "rotate": -90,
@@ -87,15 +102,24 @@ class VideoEditTestCase(TestCase):
             mock.post('http://localhost/projects/video_id/duplicate', json=project_data)
             mock.put('http://localhost/projects/video_id', json={"processing": True})
             item = self.video_edit.find_one(req=None, _id=self.video_edit.create([doc])[0])
-            self.assertEqual(item["renditions"], {'original': {'href': 'video_url',
-                                                               'mimetype': 'video/mp4',
-                                                               'version': 3,
-                                                               'video_editor_id':
-                                                               'video_id'}})
+            self.assertEqual(
+                item["renditions"],
+                {
+                    'original': {
+                        'href': 'video_url',
+                        'mimetype': 'video/mp4',
+                        'version': 3,
+                        'video_editor_id': 'video_id'
+                    }
+                }
+            )
 
     def test_capture_thumbnail(self):
         doc = {
-            "item": self.item,
+            "item": {
+                config.ID_FIELD: self.item[config.ID_FIELD],
+                'renditions': self.item['renditions'],
+            },
             "capture": {
                 "crop": "0,0,200,500",
                 "rotate": -90,
@@ -142,7 +166,7 @@ class VideoEditTestCase(TestCase):
     def test_capture_timeline(self):
         with requests_mock.mock() as mock:
             mock.get(
-                'http://localhost/projects/video_id/thumbnails?type=timeline&amount=40',
+                'http://localhost/projects/video_id/thumbnails?type=timeline&amount=60',
                 json={'processing': True},
                 status_code=202,
             )
