@@ -245,6 +245,7 @@ Feature: Validate
     {"errors": ["HEADLINE is a required field"]}
     """
 
+  @wip
   @auth
   Scenario: Validate multiple required custom fields
     Given "vocabularies"
@@ -272,7 +273,7 @@ Feature: Validate
     """
     Then we get existing resource
     """
-    {"errors": ["Text 1 is a required field", "MEDIA1 is a required field",
+    {"errors": ["Text 1 is a required field", "MEDIA 1 is a required field",
         "Embed 1 is a required field", "Date 1 is a required field"
     ]}
     """
