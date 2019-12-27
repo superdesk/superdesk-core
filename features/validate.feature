@@ -245,7 +245,6 @@ Feature: Validate
     {"errors": ["HEADLINE is a required field"]}
     """
 
-  @wip
   @auth
   Scenario: Validate multiple required custom fields
     Given "vocabularies"
