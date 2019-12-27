@@ -396,7 +396,8 @@ class ValidateService(superdesk.Service):
                             messages.append('{} {}'.format(display_name, error_list[e][field]))
                 elif error_list[e] == 'required field' or type(error_list[e]) is dict or \
                         type(error_list[e]) is list:
-                    messages.append(REQUIRED_ERROR.format(e.upper()))
+                        display_name = self._get_vocabulary_display_name(e)
+                        messages.append(REQUIRED_ERROR.format(display_name.upper()))
                 elif 'min length is 1' == error_list[e] or 'null value not allowed' in error_list[e]:
                     messages.append(REQUIRED_ERROR.format(e.upper()))
                 elif 'min length is' in error_list[e]:
