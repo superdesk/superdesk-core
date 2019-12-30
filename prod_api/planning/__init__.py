@@ -9,8 +9,12 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import superdesk
-from .services import PlanningService, EventsService, AssignmentsService, EventsHistoryService
-from .resources import PlanningResource, EventsResource, AssignmentsResource, EventsHistoryResource
+from .services import (
+    PlanningService, EventsService, AssignmentsService, EventsHistoryService, EventsFilesService
+)
+from .resources import (
+    PlanningResource, EventsResource, AssignmentsResource, EventsHistoryResource, EventsFilesResource
+)
 
 
 def init_app(app):
@@ -30,3 +34,6 @@ def init_app(app):
 
     events_history_service = EventsHistoryService(datasource='events_history', backend=superdesk.get_backend())
     EventsHistoryResource(endpoint_name='events_history', app=app, service=events_history_service)
+
+    events_files_service = EventsFilesService(datasource='events_files', backend=superdesk.get_backend())
+    EventsFilesResource(endpoint_name='events_files', app=app, service=events_files_service)

@@ -53,3 +53,7 @@ class EventsHistoryService(ProdApiService):
             'update._created',
             'update._id',
         } | ProdApiService.excluded_fields
+
+
+class EventsFilesService(ProdApiService):
+    pass
