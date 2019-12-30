@@ -22,31 +22,31 @@ class VideoEditService(superdesk.Service):
             video_id = renditions['original'].get('video_editor_id')
             if not video_id:
                 raise SuperdeskApiError.badRequestError(message='Missing video_editor_id')
+            if 'capture' not in doc and 'edit' not in doc:
+                raise SuperdeskApiError.badRequestError(message='Must include either capture or edit param')
 
             # push task capture preview thumbnail to video server
             if 'capture' in doc:
                 capture = doc.pop('capture')
-                if capture:
-                    project = self.video_editor.capture_preview_thumbnail(
-                        video_id, position=capture.get('position'),
-                        crop=capture.get('crop'),
-                        rotate=capture.get('rotate')
-                    )
-                    renditions.setdefault('thumbnail', {}).update({
-                        'href': project['thumbnails']['preview'].get('url'),
-                        'mimetype': project['thumbnails']['preview'].get('mime_type', 'image/png'),
-                    })
+                project = self.video_editor.capture_preview_thumbnail(
+                    video_id, position=capture.get('position'),
+                    crop=capture.get('crop'),
+                    rotate=capture.get('rotate')
+                )
+                renditions.setdefault('thumbnail', {}).update({
+                    'href': project['thumbnails']['preview'].get('url'),
+                    'mimetype': project['thumbnails']['preview'].get('mime_type', 'image/png'),
+                })
             # push task edit video to video server
             if 'edit' in doc:
                 edit = doc.pop('edit')
-                if edit:
-                    project = self.video_editor.edit(video_id, edit)
-                    renditions.setdefault('original', {}).update({
-                        'href': project['url'],
-                        'mimetype': project.get('mime_type', 'video/mp4'),
-                        'version': project['version'] + 1,
-                        'video_editor_id': project.get('_id'),
-                    })
+                project = self.video_editor.edit(video_id, edit)
+                renditions.setdefault('original', {}).update({
+                    'href': project['url'],
+                    'mimetype': project.get('mime_type', 'video/mp4'),
+                    'version': project['version'] + 1,
+                    'video_editor_id': project.get('_id'),
+                })
 
             original_item = super().find_one(req=None, _id=item_id)
             updates = self.system_update(
@@ -63,7 +63,7 @@ class VideoEditService(superdesk.Service):
         if req is None:
             return res
 
-        video_id = res['media']
+        video_id = res['renditions']['original']['video_editor_id']
         if req.args.get('action') == 'timeline':
             response = self.video_editor.create_timeline_thumbnails(video_id, req.args.get('amount', 60))
             return {

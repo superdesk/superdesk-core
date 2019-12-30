@@ -83,6 +83,19 @@ class VideoEditTestCase(TestCase):
             self.video_edit.create([doc])
         self.assertEqual(ex.exception.message, 'Missing video_editor_id')
 
+    def test_missing_action(self):
+        doc = {
+            'item': {
+                config.ID_FIELD: '123',
+                'renditions': {
+                    'original': {'video_editor_id': 'video_id'}
+                }
+            }
+        }
+        with self.assertRaises(SuperdeskApiError) as ex:
+            self.video_edit.create([doc])
+        self.assertEqual(ex.exception.message, 'Must include either capture or edit param')
+
     def test_edit_video(self):
         project_data = copy.deepcopy(self.project_data)
         doc = {
