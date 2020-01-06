@@ -281,6 +281,9 @@ class ArchiveService(BaseService):
             else:
                 app.on_archive_item_updated({'task': doc.get('task')}, doc, ITEM_CREATE)
 
+            # used by client to detect item type
+            doc.setdefault('_type', 'archive')
+
         get_resource_service('content_types').set_used(profiles)
         push_content_notification(docs)
 

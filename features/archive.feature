@@ -257,8 +257,9 @@ Feature: News Items Archive
         Then we get new resource
         """
         {
-        	"_id": "__any_value__", "guid": "__any_value__", "type": "text",
-        	"original_creator": "__any_value__", "word_count": 1, "operation": "create", "sign_off": "abc"
+            "_id": "__any_value__", "guid": "__any_value__", "type": "text",
+            "original_creator": "__any_value__", "word_count": 1, "operation": "create", "sign_off": "abc",
+            "_type": "archive"
         }
         """
 
