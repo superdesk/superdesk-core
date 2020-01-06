@@ -194,7 +194,6 @@ class IngestProviderService(BaseService):
                 self._set_provider_status(doc, doc.get('last_closed', {}).get('message', ''))
             elif content_expiry < 0:
                 doc['content_expiry'] = None
-            self._test_config(doc)
 
     def on_created(self, docs):
         for doc in docs:
@@ -218,8 +217,6 @@ class IngestProviderService(BaseService):
             updates['content_expiry'] = content_expiry
         if 'is_closed' in updates and original.get('is_closed', False) != updates.get('is_closed'):
             self._set_provider_status(updates, updates.get('last_closed', {}).get('message', ''))
-        if 'config' in updates:
-            self._test_config(updates, original)
 
     def on_updated(self, updates, original):
         do_notification = updates.get('notifications', {})\
@@ -275,16 +272,6 @@ class IngestProviderService(BaseService):
             'key': 'ingest_providers_{_id}'.format(_id=doc[config.ID_FIELD])
         })
         logger.info("Deleted Ingest Channel. Data:{}".format(doc))
-
-    def _test_config(self, updates, original=None):
-        provider = original.copy() if original else {}
-        provider.update(updates)
-
-        try:
-            service = get_feeding_service(provider['feeding_service'])
-        except KeyError:
-            return
-        service.config_test(provider)
 
 
 superdesk.workflow_state(CONTENT_STATE.INGESTED)

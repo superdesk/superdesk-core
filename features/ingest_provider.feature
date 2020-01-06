@@ -50,7 +50,7 @@ Feature: Ingest Provider
         """
         {"feeding_service": "rss", "config": {"url": "http://localhost:1234"}}
         """
-        Then we get error 400
+        Then we get OK response
 
         When we post to "ingest_providers"
         """
@@ -58,7 +58,7 @@ Feature: Ingest Provider
             "url": "http://localhost:1234"
         }}
         """
-        Then we get error 400
+        Then we get OK response
 
     @auth
     Scenario: Update ingest_provider aliases
