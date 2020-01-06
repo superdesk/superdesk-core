@@ -377,6 +377,7 @@ else:
     CORE_APPS.append('superdesk.users')
     CORE_APPS.append('apps.auth.db')
     CORE_APPS.append('apps.auth.xmpp')
+    CORE_APPS.append('apps.auth.oidc')
 
 
 CORE_APPS.extend([
@@ -807,3 +808,15 @@ TANSA_PROFILE_ID = env('TANSA_PROFILE_ID')
 TANSA_LICENSE_KEY = env('TANSA_LICENSE_KEY')
 TANSA_CLIENT_BASE_URL = env('TANSA_CLIENT_BASE_URL', 'https://d02.tansa.com/tansaclient/')
 TANSA_PROFILES = {}
+
+#: OIDC config
+#:
+OIDC_ENABLE = strtobool(env('OIDC_ENABLE', 'false'))
+OIDC_ISSUER = env('OIDC_ISSUER', 'http://localhost:8080/auth/realms/SUPERDESK_REALM')
+OIDC_SERVER_CLIENT = env('OIDC_SERVER_CLIENT')
+OIDC_SERVER_CLIENT_SECRET = env('OIDC_SERVER_CLIENT_SECRET')
+OIDC_WEB_CLIENT = env('OIDC_WEB_CLIENT')
+
+OIDC_USER_INFO_ENABLED = strtobool(env('OIDC_USER_INFO_ENABLED', 'true'))
+OIDC_INTROSPECTION_AUTH_METHOD = env('OIDC_INTROSPECTION_AUTH_METHOD', 'client_secret_post')
+OIDC_BROWSER_REDIRECT_URI = env('OIDC_BROWSER_REDIRECT_URI', 'http://localhost:9000')
