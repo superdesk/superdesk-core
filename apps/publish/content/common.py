@@ -578,7 +578,7 @@ class BasePublishService(BaseService):
         for associations_key, associated_item in associations.items():
             if (type(associated_item) == dict
                     and associated_item.get(config.ID_FIELD)
-                    and associated_item.get('_fetchable')):
+                    and associated_item.get('_fetchable', True)):
 
                 if not config.PUBLISH_ASSOCIATED_ITEMS or not publish_service:
                     # Not allowed to publish
