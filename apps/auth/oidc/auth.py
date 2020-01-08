@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from flask import current_app, g, request
+from flask import g, request
 from flask_oidc_ex import OpenIDConnect
 
 import superdesk
@@ -16,7 +16,6 @@ from apps.auth.errors import CredentialsAuthError
 from apps.auth.service import AuthService
 from superdesk import get_resource_service
 from superdesk.resource import Resource
-from superdesk.utils import get_hash, get_random_string
 
 
 class OIDCAuthResource(Resource):
@@ -50,21 +49,23 @@ class OIDCAuthService(AuthService):
 
         auth_service = get_resource_service('auth_users')
         users_service = get_resource_service('users')
-        user = auth_service.find_one(req=None, username=g.oidc_token_info.get('username'))
+        user = auth_service.find_one(req=None, username=g.oidc_token_info.get('username')) or {}
         role = get_resource_service('roles').find_one(req=None, name=g.oidc_token_info.get('role'))
         sync_data = {
+            **user,
             'username': g.oidc_token_info.get('username'),
             'email': g.oidc_token_info.get('email'),
             'first_name': g.oidc_token_info.get('given_name'),
             'last_name': g.oidc_token_info.get('family_name'),
             'display_name': g.oidc_token_info.get('name'),
-            'user_type': g.oidc_token_info.get('user_type'),
-            'role': role.get('_id') if role else None,
-            'needs_activation': False,
         }
         if not user:
-            sync_data['password'] = get_hash(
-                get_random_string(), current_app.config.get('BCRYPT_GENSALT_WORK_FACTOR', 12))
+            sync_data.update({
+                'password': '',
+                'user_type': 'user',
+                'role': role.get('_id') if role else None,
+                'needs_activation': False,
+            })
             user_id = users_service.post([sync_data])[0]
             user = auth_service.find_one(req=None, _id=user_id)
         else:
