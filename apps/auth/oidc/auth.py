@@ -50,7 +50,6 @@ class OIDCAuthService(AuthService):
         auth_service = get_resource_service('auth_users')
         users_service = get_resource_service('users')
         user = auth_service.find_one(req=None, username=g.oidc_token_info.get('username')) or {}
-        role = get_resource_service('roles').find_one(req=None, name=g.oidc_token_info.get('role'))
         sync_data = {
             **user,
             'username': g.oidc_token_info.get('username'),
@@ -60,10 +59,18 @@ class OIDCAuthService(AuthService):
             'display_name': g.oidc_token_info.get('name'),
         }
         if not user:
+            user_role = None
+            client_id = g.oidc_token_info.get('client_id', '')
+            keycloak_roles = g.oidc_token_info.get('resource_access', {}).get(client_id, {}).get('roles', [])
+            for role_name in keycloak_roles:
+                role = get_resource_service('roles').find_one(req=None, name=role_name)
+                if role:
+                    user_role = role.get('_id')
+                    break
             sync_data.update({
                 'password': '',
                 'user_type': 'user',
-                'role': role.get('_id') if role else None,
+                'role': user_role,
                 'needs_activation': False,
             })
             user_id = users_service.post([sync_data])[0]
