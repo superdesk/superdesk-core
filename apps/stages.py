@@ -254,10 +254,10 @@ class StagesService(BaseService):
                                 {'rules.actions.publish.stage': str(stage_id)}]}
         return superdesk.get_resource_service('routing_schemes').get(req=None, lookup=query_filter)
 
-    def get_stages_by_visibility(self, is_visible=False, user_desk_ids=[]):
-        """Returns a list of stages for a user.
-
-        """
+    def get_stages_by_visibility(self, is_visible=False, user_desk_ids=None):
+        """Returns a list of stages for a user."""
+        if user_desk_ids is None:
+            user_desk_ids = []
         if is_visible:
             lookup = {'$or': [{'is_visible': True}]}
             if user_desk_ids:

@@ -469,7 +469,7 @@ class BasePublishService(BaseService):
         else:
             return [], []
 
-    def _validate_associated_items(self, original_item, validation_errors=[]):
+    def _validate_associated_items(self, original_item, validation_errors=None):
         """Validates associated items.
 
         This function will ensure that the unpublished content validates and none of
@@ -479,6 +479,10 @@ class BasePublishService(BaseService):
         :param package:
         :param validation_errors: validation errors are appended if there are any.
         """
+
+        if validation_errors is None:
+            validation_errors = []
+
         items = [value for value in (original_item.get(ASSOCIATIONS) or {}).values()]
         if original_item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and \
                 self.publish_type == ITEM_PUBLISH:
@@ -560,10 +564,14 @@ class BasePublishService(BaseService):
                     keep_existing = not app.settings.get('COPY_METADATA_FROM_PARENT') and not is_db_item_bigger_ver
                     update_item_data(item, updates, keys, keep_existing=keep_existing)
 
-    def _publish_associated_items(self, original, updates={}):
+    def _publish_associated_items(self, original, updates=None):
         """If there any updates to associated item and if setting:PUBLISH_ASSOCIATED_ITEMS is true
         then publish the associated item
         """
+
+        if updates is None:
+            updates = {}
+
         if not publish_services.get(self.publish_type):
             # publish type not supported
             return

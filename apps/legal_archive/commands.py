@@ -358,13 +358,16 @@ class LegalArchiveImport:
 
         logger.info('Processed queue item: {}'.format(log_msg))
 
-    def get_publish_queue_items(self, page_size, expired_items=[]):
+    def get_publish_queue_items(self, page_size, expired_items=None):
         """Get publish queue items that are not moved to legal
 
         :param int page_size: batch size
         :param list expired_items:
         :return list: publish queue items
         """
+        if expired_items is None:
+            expired_items = []
+
         query = {
             'moved_to_legal': False
         }
