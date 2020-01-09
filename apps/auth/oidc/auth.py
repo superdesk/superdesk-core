@@ -47,14 +47,12 @@ class OIDCAuthService(AuthService):
         if not is_valid:
             raise CredentialsAuthError(credentials)
 
-        auth_service = get_resource_service('auth_users')
         users_service = get_resource_service('users')
         username = g.oidc_token_info.get('username')
-        user = auth_service.find_one(req=None, username=username)
-        user_info = users_service.find_one(req=None, username=username) or {}
+        user = users_service.find_one(req=None, username=username) or {}
         sync_data = {
-            **user_info,
-            'username': g.oidc_token_info.get('username'),
+            **user,
+            'username': username,
             'email': g.oidc_token_info.get('email'),
             'first_name': g.oidc_token_info.get('given_name'),
             'last_name': g.oidc_token_info.get('family_name'),
@@ -75,9 +73,8 @@ class OIDCAuthService(AuthService):
                 'role': user_role,
                 'needs_activation': False,
             })
-            user_id = users_service.post([sync_data])[0]
-            user = auth_service.find_one(req=None, _id=user_id)
+            users_service.post([sync_data])
         else:
             users_service.put(user.get('_id'), sync_data)
 
-        return user
+        return sync_data
