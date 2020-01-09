@@ -342,10 +342,12 @@ class ContentTemplatesService(BaseService):
             raise SuperdeskApiError.badRequestError(_('Kill templates must be public'))
         doc['is_public'] = True
 
-    def _validate_template_desks(self, updates, original={}):
+    def _validate_template_desks(self, updates, original=None):
         """
         Validate template desks value
         """
+        if original is None:
+            original = {}
         template_type = updates.get('template_type', original.get('template_type'))
         if template_type != TemplateType.CREATE.value and \
                 type(updates.get('template_desks')) == list and \

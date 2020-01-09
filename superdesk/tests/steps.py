@@ -68,7 +68,9 @@ ANALYTICS_DATETIME_FORMAT = "%Y-%m-%d %H:00:00"
 os.environ['AUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 
-def test_json(context, json_fields=[]):
+def test_json(context, json_fields=None):
+    if json_fields is None:
+        json_fields = []
     try:
         response_data = json.loads(context.response.get_data())
     except Exception:
@@ -127,7 +129,9 @@ def assert_is_now(val, key):
     assert val + timedelta(seconds=2) > now, '%s should be %s, it is %s' % (key, now, val)
 
 
-def json_match(context_data, response_data, json_fields=[]):
+def json_match(context_data, response_data, json_fields=None):
+    if json_fields is None:
+        json_fields = []
     if isinstance(context_data, dict):
         if (not isinstance(response_data, dict)):
             return False
@@ -989,7 +993,9 @@ def when_upload_patch_dictionary(context):
     assert_ok(context.response)
 
 
-def upload_file(context, dest, filename, file_field, extra_data=None, method='post', user_headers=[]):
+def upload_file(context, dest, filename, file_field, extra_data=None, method='post', user_headers=None):
+    if user_headers is None:
+        user_headers = []
     with open(get_fixture_path(context, filename), 'rb') as f:
         data = {file_field: f}
         if extra_data:
