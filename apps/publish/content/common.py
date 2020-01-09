@@ -675,7 +675,7 @@ def get_crop(rendition):
     return {field: rendition[field] for field in fields if field in rendition}
 
 
-def update_item_data(item, data, keys=DEFAULT_SCHEMA.keys(), keep_existing=False):
+def update_item_data(item, data, keys=None, keep_existing=False):
     """Update main item data, so only keys from default schema.
 
     :param dict item: item to update
@@ -683,6 +683,9 @@ def update_item_data(item, data, keys=DEFAULT_SCHEMA.keys(), keep_existing=False
     :param list keys: keys of item to update
     :param bool keep_existing: if True, will only set non existing values
     """
+    if keys is None:
+        keys = DEFAULT_SCHEMA.keys()
+
     for key in keys:
         if data.get(key):
             if keep_existing:
