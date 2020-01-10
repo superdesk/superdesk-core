@@ -52,6 +52,7 @@ works and can be developed further.
     schema
     content-types
     contentapi
+    editor
     auth_server
     production_api
     extending

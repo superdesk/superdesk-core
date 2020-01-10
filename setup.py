@@ -51,7 +51,7 @@ install_requires = [
     'python-dateutil<2.8',
     'unidecode==0.04.21',
     'authlib>0.12,<0.13',
-
+    'draftjs-exporter[lxml]<2.2',
 ]
 
 package_data = {
