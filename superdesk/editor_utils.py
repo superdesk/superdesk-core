@@ -123,6 +123,39 @@ class Block:
     def text(self):
         return self.data.get('text')
 
+    @property
+    def key(self):
+        return self.data.get('key')
+
+    def replace_text(self, old, new):
+        if not self.text:
+            return
+        if not old:
+            raise ValueError("old is empty")
+        start = 0
+        while True:
+            try:
+                index = self.text.index(old, start)
+                start = index + len(old)
+                self.data['text'] = new.join([self.text[:index], self.text[start:]])
+                if self.data.get('inlineStyleRanges'):
+                    ranges = []
+                    for range_ in self.data['inlineStyleRanges']:
+                        range_end = range_['offset'] + range_['length']
+                        if range_['offset'] > start:
+                            # move ranges starting after replaced text
+                            range_['offset'] += len(new) - len(old)
+                            ranges.append(range_)
+                        elif range_end <= index:
+                            # keep ranges before replaced text
+                            ranges.append(range_)
+                        else:
+                            # remove ranges overlapping with replaced text
+                            continue
+                    self.data['inlineStyleRanges'] = ranges
+            except ValueError:
+                break
+
     def __str__(self):
         return self.text
 
@@ -413,17 +446,25 @@ class Editor3Content(EditorContent):
     def html(self):
         return self.html_exporter.render()
 
+    @property
+    def text(self):
+        return '\n'.join([block.text for block in self.blocks])
+
     def get_next_entity_key(self):
         """Return a non existing key for entityMap"""
         return max((int(k) for k in self.content_state['entityMap'].keys()), default=-1) + 1
 
-    def update_item(self):
-        self.item[self.field] = self.html
+    def update_item(self, text=False):
+        self.item[self.field] = self.text if text else self.html
 
     def create_block(self, block_type, *args, **kwargs):
         cls_name = "{}Block".format(block_type.capitalize())
         cls = globals()[cls_name]
         return cls(self, *args, **kwargs)
+
+    def set_blocks(self, blocks):
+        self.content_state['blocks'] = [getattr(block, 'data', block) for block in blocks]
+        self.blocks = BlockSequence(self)
 
     def prepend(self, block_type, *args, **kwargs):
         """Shortcut to prepend a block from its type"""

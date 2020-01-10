@@ -1598,3 +1598,76 @@ class Editor3TestCase(TestCase):
             'rom the Old English hēah-hlāw, meaning "high mounds".</p>'
         )
         self.assertEqual(item['body_html'], expected)
+
+    def test_replace_text(self):
+        draftjs_data = {
+            "blocks": [
+                {
+                    "key": "foo",
+                    "text": "first line text",
+                    "type": "unstyled",
+                    "depth": 0,
+                    "inlineStyleRanges": [
+                        {'offset': 6, 'length': 4, 'style': 'ITALIC'},
+                    ],
+                    "entityRanges": [],
+                },
+                {
+                    "key": "bar",
+                    "text": "second line",
+                    "type": "unstyled",
+                    "depth": 0,
+                    "inlineStyleRanges": [],
+                    "entityRanges": [],
+                }
+            ],
+            "entityMap": {},
+        }
+        item = self.build_item(draftjs_data, 'headline')
+        body_editor = Editor3Content(item, 'headline')
+        body_editor.update_item(True)
+        self.assertEqual("first line text\nsecond line", item['headline'])
+
+        body_editor.blocks[0].replace_text('first', 'initial')
+        body_editor.update_item(True)
+        self.assertEqual("initial line text\nsecond line", item['headline'])
+
+        body_editor.update_item()
+        self.assertEqual("<p>initial <i>line</i> text</p><p>second line</p>", item['headline'])
+
+        body_editor.blocks[0].replace_text('text', 'foo')
+        body_editor.update_item()
+        self.assertEqual("<p>initial <i>line</i> foo</p><p>second line</p>", item['headline'])
+
+        body_editor.blocks[0].replace_text('lin', 'bar')
+        body_editor.update_item()
+        self.assertEqual("<p>initial bare foo</p><p>second line</p>", item['headline'])
+
+    def test_set_blocks(self):
+        draftjs_data = {
+            "blocks": [
+                {
+                    "key": "foo",
+                    "text": "first line",
+                    "type": "unstyled",
+                    "depth": 0,
+                    "inlineStyleRanges": [],
+                    "entityRanges": [],
+                },
+                {
+                    "key": "bar",
+                    "text": "second line",
+                    "type": "unstyled",
+                    "depth": 0,
+                    "inlineStyleRanges": [],
+                    "entityRanges": [],
+                }
+            ],
+            "entityMap": {},
+        }
+
+        item = self.build_item(draftjs_data)
+        body_editor = Editor3Content(item)
+        body_editor.set_blocks([block for block in body_editor.blocks if block.key == 'bar'])
+        self.assertEqual(1, len(body_editor.blocks))
+        self.assertEqual('bar', body_editor.blocks[0].key)
