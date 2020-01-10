@@ -1,5 +1,6 @@
 flake8
 flake8-docstrings
+flake8-bugbear
 nose
 nose-exclude
 pep8

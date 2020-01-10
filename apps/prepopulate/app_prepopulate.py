@@ -53,7 +53,10 @@ def get_default_user():
     return user
 
 
-def prepopulate_data(file_name, default_user=get_default_user(), directory=None):
+def prepopulate_data(file_name, default_user=None, directory=None):
+    if default_user is None:
+        default_user = get_default_user()
+
     if not directory:
         directory = os.path.abspath(os.path.dirname(__file__))
     placeholders = {'NOW()': date_to_str(utcnow())}
