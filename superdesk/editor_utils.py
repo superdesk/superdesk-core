@@ -197,6 +197,13 @@ class EmbedBlock(Block):
         self.entities.append(entity)
 
 
+class UnstyledBlock(Block):
+    def __init__(self, editor, text=None):
+        super().__init__(editor)
+        if text:
+            self.data.update({"text": text})
+
+
 class BlockSequence(MutableSequence):
 
     def __init__(self, editor):
@@ -469,8 +476,13 @@ class Editor3Content(EditorContent):
         return cls(self, *args, **kwargs)
 
     def set_blocks(self, blocks):
+        data = self.blocks[0].data.get('data')  # store internal data from first block
         self.content_state['blocks'] = [getattr(block, 'data', block) for block in blocks]
         self.blocks = BlockSequence(self)
+        if not len(self.blocks):
+            self.prepend('Unstyled')
+        if not self.blocks[0].data.get('data'):
+            self.blocks[0].data['data'] = data
 
     def prepend(self, block_type, *args, **kwargs):
         """Shortcut to prepend a block from its type"""

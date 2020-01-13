@@ -1680,6 +1680,7 @@ class Editor3TestCase(unittest.TestCase):
                     "depth": 0,
                     "inlineStyleRanges": [],
                     "entityRanges": [],
+                    "data": {"MULTIPLE_HIGHLIGHTS": {}},
                 },
                 {
                     "key": "bar",
@@ -1700,3 +1701,8 @@ class Editor3TestCase(unittest.TestCase):
         )
         self.assertEqual(1, len(body_editor.blocks))
         self.assertEqual("bar", body_editor.blocks[0].key)
+        self.assertIn("MULTIPLE_HIGHLIGHTS", body_editor.blocks[0].data.get('data'))
+
+        body_editor.set_blocks([])
+        self.assertEqual(1, len(body_editor.blocks))
+        self.assertIn("MULTIPLE_HIGHLIGHTS", body_editor.blocks[0].data.get('data'))
