@@ -255,6 +255,9 @@ class ArchiveService(BaseService):
             convert_task_attributes_to_objectId(doc)
             transtype_metadata(doc)
 
+            # send signal
+            superdesk.item_create.send(self, item=doc)
+
     def on_created(self, docs):
         packages = [doc for doc in docs if doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE]
         if packages:
@@ -278,6 +281,9 @@ class ArchiveService(BaseService):
                 app.on_archive_item_updated({'task': doc.get('task')}, doc, ITEM_FETCH)
             else:
                 app.on_archive_item_updated({'task': doc.get('task')}, doc, ITEM_CREATE)
+
+            # used by client to detect item type
+            doc.setdefault('_type', 'archive')
 
         get_resource_service('content_types').set_used(profiles)
         push_content_notification(docs)

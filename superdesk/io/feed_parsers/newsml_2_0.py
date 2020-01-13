@@ -149,7 +149,7 @@ class NewsMLTwoFeedParser(XMLFeedParser):
                 elemTree = meta
 
             elem = elemTree.find(self.qname(key))
-            if elem is not None:
+            if elem is not None and elem.text:
                 if dest == 'urgency':
                     item[dest] = int(elem.text)
                 else:

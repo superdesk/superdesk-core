@@ -41,3 +41,19 @@ class AssignmentsService(ProdApiService):
             'lock_user',
             'lock_time',
         } | ProdApiService.excluded_fields
+
+
+class EventsHistoryService(ProdApiService):
+    excluded_fields = \
+        {
+            'update._etag',
+            'update._links',
+            'update._status',
+            'update._updated',
+            'update._created',
+            'update._id',
+        } | ProdApiService.excluded_fields
+
+
+class EventsFilesService(ProdApiService):
+    pass

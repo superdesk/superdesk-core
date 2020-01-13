@@ -180,7 +180,9 @@ class DictionaryService(BaseService):
             doc['content'] = fetch_dict(doc)
         return doc
 
-    def _validate_dictionary(self, updates, original={}):
+    def _validate_dictionary(self, updates, original=None):
+        if original is None:
+            original = {}
         dict_type = updates.get('type', original.get('type', DictionaryType.DICTIONARY.value))
         if dict_type == DictionaryType.ABBREVIATIONS.value and not updates.get('user', original.get('user')):
             raise SuperdeskApiError.badRequestError(message=_('User is required for the abbreviations dictionary.'),

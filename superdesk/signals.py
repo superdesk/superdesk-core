@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 __all__ = [
+    'item_create',
     'item_publish',
     'item_published',
     'item_update',
@@ -19,6 +20,14 @@ __all__ = [
 import blinker
 
 signals = blinker.Namespace()
+
+#: Sent before item is created.
+#:
+#: .. versionadded:: 2.0
+#:
+#: :param sender: ArchiveService
+#: :param item: item being created
+item_create = signals.signal('item:create')
 
 #: Sent before item is published.
 #:

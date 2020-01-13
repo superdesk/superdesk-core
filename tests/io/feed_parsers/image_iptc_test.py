@@ -31,6 +31,7 @@ class ImageIPTCTestCase(BaseImageIPTCTestCase):
 
     def test_content(self):
         item = self.item
+        self.assertNotIn('_id', item)
         self.assertEqual(item['headline'], 'The Headline (ref2017.1)')
         self.assertEqual(item['byline'], 'Creator1 (ref2017.1)')
         self.assertEqual(item['slugline'], 'The Title (ref2017.1)')

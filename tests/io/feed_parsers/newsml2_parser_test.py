@@ -105,3 +105,4 @@ class ANSACultureParser(BaseNewMLTwoTestCase):
 
     def test_content_parsing(self):
         self.assertIn('(ANSA) - ROMA, 1 LUG - TEST FROM XAWES', self.item[0]['body_html'])
+        self.assertNotIn('urgency', self.item[0])

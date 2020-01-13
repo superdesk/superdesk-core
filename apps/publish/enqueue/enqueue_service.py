@@ -268,7 +268,10 @@ class EnqueueService:
             logger.exception('Failed to queue item to API for item: {} for action {}'.
                              format(doc[config.ID_FIELD], self.publish_type))
 
-    def _push_formatter_notification(self, doc, no_formatters=[]):
+    def _push_formatter_notification(self, doc, no_formatters=None):
+        if no_formatters is None:
+            no_formatters = []
+
         if len(no_formatters) > 0:
             user = get_user()
             push_notification('item:publish:wrong:format',
@@ -350,7 +353,9 @@ class EnqueueService:
                 associations[s.get(config.ID_FIELD)].append(item.get(config.ID_FIELD))
         return associations
 
-    def _resend_to_subscribers(self, doc, subscribers, subscriber_codes, associations={}):
+    def _resend_to_subscribers(self, doc, subscribers, subscriber_codes, associations=None):
+        if associations is None:
+            associations = {}
         formatter_messages, queued = self.queue_transmission(doc, subscribers, subscriber_codes, associations)
         self._push_formatter_notification(doc, formatter_messages)
         if not queued:
@@ -411,7 +416,7 @@ class EnqueueService:
             destinations.append({'name': 'content api', 'delivery_type': 'content_api', 'format': 'ninjs'})
         return destinations
 
-    def queue_transmission(self, doc, subscribers, subscriber_codes={}, associations={}):
+    def queue_transmission(self, doc, subscribers, subscriber_codes=None, associations=None):
         """Method formats and then queues the article for transmission to the passed subscribers.
 
         ::Important Note:: Format Type across Subscribers can repeat. But we can't have formatted item generated once
@@ -422,6 +427,12 @@ class EnqueueService:
         :param list subscribers: List of subscriber dict.
         :return : (list, bool) tuple of list of missing formatters and boolean flag. True if queued else False
         """
+
+        if associations is None:
+            associations = {}
+        if subscriber_codes is None:
+            subscriber_codes = {}
+
         try:
             queued = False
             no_formatters = []
