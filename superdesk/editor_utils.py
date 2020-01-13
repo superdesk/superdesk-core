@@ -27,6 +27,9 @@ ANNOTATION = 'ANNOTATION'
 MEDIA = 'MEDIA'
 TABLE = 'TABLE'
 
+ENTITY_RANGES = 'entityRanges'
+INLINE_STYLE_RANGES = 'inlineStyleRanges'
+
 
 class Entity:
     """Abstraction of a DraftJS entity"""
@@ -138,21 +141,24 @@ class Block:
                 index = self.text.index(old, start)
                 start = index + len(old)
                 self.data['text'] = new.join([self.text[:index], self.text[start:]])
-                if self.data.get('inlineStyleRanges'):
-                    ranges = []
-                    for range_ in self.data['inlineStyleRanges']:
-                        range_end = range_['offset'] + range_['length']
-                        if range_['offset'] > start:
-                            # move ranges starting after replaced text
-                            range_['offset'] += len(new) - len(old)
-                            ranges.append(range_)
-                        elif range_end <= index:
-                            # keep ranges before replaced text
-                            ranges.append(range_)
-                        else:
-                            # remove ranges overlapping with replaced text
-                            continue
-                    self.data['inlineStyleRanges'] = ranges
+                for range_field in (ENTITY_RANGES, INLINE_STYLE_RANGES):
+                    if self.data.get(range_field):
+                        ranges = []
+                        for range_ in self.data[range_field]:
+                            range_end = range_['offset'] + range_['length']
+                            if range_['offset'] > start:
+                                # move ranges starting after replaced text
+                                range_['offset'] += len(new) - len(old)
+                                ranges.append(range_)
+                            elif range_end <= index:
+                                # keep ranges before replaced text
+                                ranges.append(range_)
+                            else:
+                                # remove ranges overlapping with replaced text
+                                if range_field == ENTITY_RANGES:
+                                    self.entities.pop(range_["key"])
+                                continue
+                        self.data[range_field] = ranges
             except ValueError:
                 break
 

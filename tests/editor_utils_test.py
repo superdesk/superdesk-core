@@ -9,13 +9,14 @@
 
 """Unit tests for editor utils"""
 
-import uuid
 import json
-from superdesk.tests import TestCase
+import uuid
+import unittest
+
 from superdesk.editor_utils import Editor3Content
 
 
-class Editor3TestCase(TestCase):
+class Editor3TestCase(unittest.TestCase):
 
     def build_item(self, draftjs_data, field='body_html'):
         return {
@@ -1618,30 +1619,56 @@ class Editor3TestCase(TestCase):
                     "type": "unstyled",
                     "depth": 0,
                     "inlineStyleRanges": [],
-                    "entityRanges": [],
-                }
+                    "entityRanges": [{"offset": 7, "length": 4, "key": 0}],
+                },
             ],
-            "entityMap": {},
+            "entityMap": {
+                "0": {
+                    "type": "LINK",
+                    "mutability": "MUTABLE",
+                    "data": {"link": {"href": "http://example.com"}},
+                }
+            },
         }
-        item = self.build_item(draftjs_data, 'headline')
-        body_editor = Editor3Content(item, 'headline')
+        item = self.build_item(draftjs_data, "headline")
+        body_editor = Editor3Content(item, "headline")
         body_editor.update_item(True)
-        self.assertEqual("first line text\nsecond line", item['headline'])
+        self.assertEqual("first line text\nsecond line", item["headline"])
 
-        body_editor.blocks[0].replace_text('first', 'initial')
+        body_editor.blocks[0].replace_text("first", "initial")
         body_editor.update_item(True)
-        self.assertEqual("initial line text\nsecond line", item['headline'])
+        self.assertEqual("initial line text\nsecond line", item["headline"])
 
         body_editor.update_item()
-        self.assertEqual("<p>initial <i>line</i> text</p><p>second line</p>", item['headline'])
+        self.assertEqual(
+            '<p>initial <i>line</i> text</p><p>second <a href="http://example.com">line</a></p>',
+            item["headline"],
+        )
 
-        body_editor.blocks[0].replace_text('text', 'foo')
+        body_editor.blocks[0].replace_text("text", "foo")
         body_editor.update_item()
-        self.assertEqual("<p>initial <i>line</i> foo</p><p>second line</p>", item['headline'])
+        self.assertEqual(
+            '<p>initial <i>line</i> foo</p><p>second <a href="http://example.com">line</a></p>',
+            item["headline"],
+        )
 
-        body_editor.blocks[0].replace_text('lin', 'bar')
+        body_editor.blocks[0].replace_text("lin", "bar")
         body_editor.update_item()
-        self.assertEqual("<p>initial bare foo</p><p>second line</p>", item['headline'])
+        self.assertEqual(
+            '<p>initial bare foo</p><p>second <a href="http://example.com">line</a></p>',
+            item["headline"],
+        )
+
+        body_editor.blocks[1].replace_text("second", "last")
+        body_editor.update_item()
+        self.assertEqual(
+            '<p>initial bare foo</p><p>last <a href="http://example.com">line</a></p>',
+            item["headline"],
+        )
+
+        body_editor.blocks[1].replace_text("lin", "foo")
+        body_editor.update_item()
+        self.assertEqual("<p>initial bare foo</p><p>last fooe</p>", item["headline"])
 
     def test_set_blocks(self):
         draftjs_data = {
@@ -1661,13 +1688,15 @@ class Editor3TestCase(TestCase):
                     "depth": 0,
                     "inlineStyleRanges": [],
                     "entityRanges": [],
-                }
+                },
             ],
             "entityMap": {},
         }
 
         item = self.build_item(draftjs_data)
         body_editor = Editor3Content(item)
-        body_editor.set_blocks([block for block in body_editor.blocks if block.key == 'bar'])
+        body_editor.set_blocks(
+            [block for block in body_editor.blocks if block.key == "bar"]
+        )
         self.assertEqual(1, len(body_editor.blocks))
-        self.assertEqual('bar', body_editor.blocks[0].key)
+        self.assertEqual("bar", body_editor.blocks[0].key)
