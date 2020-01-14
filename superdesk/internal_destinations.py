@@ -14,7 +14,7 @@ from superdesk import register_resource, get_resource_service, privilege
 from superdesk.services import Service
 from superdesk.resource import Resource
 from superdesk.errors import StopDuplication
-from superdesk.signals import item_published
+from superdesk.signals import item_published, item_routed
 from superdesk.metadata.item import PUBLISH_SCHEDULE, SCHEDULE_SETTINGS
 
 
@@ -82,7 +82,9 @@ def handle_item_published(sender, item, **extra):
                 continue
 
         extra_fields = [PUBLISH_SCHEDULE, SCHEDULE_SETTINGS]
-        archive_service.duplicate_content(new_item, state='routed', extra_fields=extra_fields)
+        next_id = archive_service.duplicate_content(new_item, state='routed', extra_fields=extra_fields)
+        next_item = archive_service.find_one(req=None, _id=next_id)
+        item_routed.send(sender, item=next_item)
 
 
 def init_app(app):
