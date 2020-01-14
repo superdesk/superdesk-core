@@ -89,7 +89,14 @@ BANDWIDTH_SAVER = False
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%S+0000'
 ELASTIC_DATE_FORMAT = '%Y-%m-%d'
 ELASTIC_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
+
 PAGINATION_LIMIT = 200
+
+#: keep default in sync with limit - so when client does not use pagination return all
+#:
+#: .. versionadded:: 1.33
+#:
+PAGINATION_DEFAULT = PAGINATION_LIMIT
 
 LOG_CONFIG_FILE = env('LOG_CONFIG_FILE', 'logging_config.yml')
 LOG_SERVER_ADDRESS = env('LOG_SERVER_ADDRESS', 'localhost')
