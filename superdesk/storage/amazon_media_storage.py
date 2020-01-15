@@ -74,6 +74,7 @@ class AmazonMediaStorage(MediaStorage):
             aws_secret_access_key=self.app.config['AMAZON_SECRET_ACCESS_KEY'],
             region_name=self.app.config.get('AMAZON_REGION'),
             config=Config(signature_version='s3v4'),
+            endpoint_url=self.app.config['AMAZON_ENDPOINT_URL'] or None,
         )
         self.user_metadata_header = 'x-amz-meta-'
 
