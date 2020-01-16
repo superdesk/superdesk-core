@@ -582,7 +582,7 @@ class BasePublishService(BaseService):
             # there's nothing to update
             return
 
-        associations = original.get(ASSOCIATIONS) or {}
+        associations = updates.get(ASSOCIATIONS) or {}
         for associations_key, associated_item in associations.items():
             if (type(associated_item) == dict
                     and associated_item.get(config.ID_FIELD)
