@@ -178,8 +178,7 @@ class AmazonMediaStorage(MediaStorage):
                 all_keys.extend(objects)
         except Exception as ex:
             logger.exception(ex)
-        finally:
-            return all_keys
+        return all_keys
 
     def _get_all_keys_in_batches(self):
         """Return the list of all keys from the bucket in batches."""

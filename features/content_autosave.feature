@@ -15,13 +15,13 @@ Feature: Content Autosave
 
         Then we get existing resource
             """
-            {"_id": "item-1", "guid": "item-1", "headline": "test2"}
+            {"_id": "item-1", "_type": "archive", "guid": "item-1", "headline": "test2"}
             """
 
         When we get "/archive_autosave/item-1"
         Then we get existing resource
             """
-            {"_id": "item-1", "headline": "test2"}
+            {"_id": "item-1", "headline": "test2", "_type": "archive"}
             """
 
     @auth
