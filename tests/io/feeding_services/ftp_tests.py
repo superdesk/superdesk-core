@@ -89,6 +89,15 @@ class FakeFTP(mock.MagicMock):
         pass
 
 
+class FakeFTPRecentFiles(FakeFTP):
+
+    files = [
+        ftp_file('old_file.xml', '20170517164756'),
+        # we need a file ingested now, before INGEST_OLD_CONTENT_MINUTES is expired
+        ftp_file('recent_file.xml', datetime.datetime.today().strftime('%Y%m%d%H%M%S')),
+    ]
+
+
 class FakeFeedParser(mock.MagicMock):
 
     def __init__(self, **kwargs):
@@ -227,6 +236,24 @@ class FTPTestCase(TestCase):
         ingest_items(service.update(provider, {}))
         mock_ftp = ftp_connect.return_value.__enter__.return_value
         mock_ftp.rename.assert_not_called()
+
+    @mock.patch.object(ftp, 'ftp_connect', new_callable=FakeFTPRecentFiles)
+    @mock.patch.object(ftp.FTPFeedingService, 'get_feed_parser', FakeFeedParser())
+    @mock.patch('builtins.open', mock.mock_open())
+    def test_move_backstop(self, ftp_connect):
+        """Check that failing file is not moved if it's more recent thant INGEST_OLD_CONTENT_MINUTES"""
+        provider = copy.deepcopy(PROVIDER)
+        service = ftp.FTPFeedingService()
+        ingest_items(service.update(provider, {}))
+        mock_ftp = ftp_connect.return_value.__enter__.return_value
+
+        # recent_file must not have been ingested
+        self.assertEqual(mock_ftp.rename.call_count, len(FakeFTPRecentFiles.files) - 1)
+        for i, call in enumerate(mock_ftp.rename.call_args_list):
+            self.assertNotEqual(
+                call[0][0],
+                'recent_file.xml',
+            )
 
     @mock.patch.object(ftp, 'ftp_connect', new_callable=FakeFTP)
     @mock.patch.object(ftp.FTPFeedingService, 'get_feed_parser', FailingFakeFeedParser())

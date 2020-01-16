@@ -645,7 +645,7 @@ FTP_INGEST_FILES_LIST_LIMIT = 100
 #:
 #: .. versionadded:: 1.32.2
 #:
-FILE_INGEST_OLD_CONTENT_MINUTES = 10
+INGEST_OLD_CONTENT_MINUTES = 10
 
 #: default timeout for email connections
 EMAIL_TIMEOUT = 10
