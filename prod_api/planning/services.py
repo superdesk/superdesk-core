@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from flask import current_app as app
 from ..service import ProdApiService
 
 
@@ -56,4 +57,25 @@ class EventsHistoryService(ProdApiService):
 
 
 class EventsFilesService(ProdApiService):
-    pass
+
+    def on_fetched(self, result):
+        super().on_fetched(result)
+        self._join_fs_files(result)
+
+    def _join_fs_files(self, result):
+        db_fs_files = app.data.mongo.pymongo().db['fs.files']
+
+        fs_files = {
+            i['_id']: i for i in tuple(
+                db_fs_files.find(
+                    {
+                        '_id': {
+                            '$in': tuple(i['media'] for i in result.get('_items', []))
+                        }
+                    }
+                )
+            )
+        }
+
+        for item in result.get('_items', []):
+            item['file'] = fs_files.get(item['media'], {})
