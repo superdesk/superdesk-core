@@ -594,6 +594,12 @@ class BasePublishService(BaseService):
                     original[ASSOCIATIONS][associations_key]['operation'] = self.publish_type
                     continue
 
+                # Do not publish removed association items on correction.
+                if (updates.get(ASSOCIATIONS, None)
+                        and associations_key in updates[ASSOCIATIONS]
+                        and updates[ASSOCIATIONS][associations_key] is None):
+                    continue
+
                 if associated_item.get('state') not in PUBLISH_STATES:
                     # This associated item has not been published before
                     associated_item.get('task', {}).pop('stage', None)
