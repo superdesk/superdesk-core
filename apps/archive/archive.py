@@ -1060,6 +1060,10 @@ class ArchiveSaveService(BaseService):
             raise SuperdeskApiError.badRequestError(_("Request for Auto-save must have _id"))
         return [docs[0]['_id']]
 
+    def on_fetched_item(self, item):
+        item['_type'] = 'archive'
+        return item
+
 
 superdesk.workflow_state('in_progress')
 superdesk.workflow_action(
