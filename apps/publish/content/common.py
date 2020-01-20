@@ -582,7 +582,7 @@ class BasePublishService(BaseService):
             # there's nothing to update
             return
 
-        associations = updates.get(ASSOCIATIONS) or {}
+        associations = original.get(ASSOCIATIONS) or {}
         for associations_key, associated_item in associations.items():
             if (type(associated_item) == dict
                     and associated_item.get(config.ID_FIELD)
@@ -592,6 +592,12 @@ class BasePublishService(BaseService):
                     # Not allowed to publish
                     original[ASSOCIATIONS][associations_key]['state'] = self.published_state
                     original[ASSOCIATIONS][associations_key]['operation'] = self.publish_type
+                    continue
+
+                # Do not publish removed association items on correction.
+                if (updates.get(ASSOCIATIONS, None)
+                        and associations_key in updates[ASSOCIATIONS]
+                        and updates[ASSOCIATIONS][associations_key] is None):
                     continue
 
                 if associated_item.get('state') not in PUBLISH_STATES:
