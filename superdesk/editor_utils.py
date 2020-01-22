@@ -12,12 +12,15 @@
 import re
 import logging
 import uuid
+import json
+
 from textwrap import dedent
 from collections.abc import MutableSequence
 from draftjs_exporter.html import HTML
-from draftjs_exporter.constants import ENTITY_TYPES, INLINE_STYLES
-from draftjs_exporter.defaults import STYLE_MAP
+from draftjs_exporter.constants import ENTITY_TYPES, INLINE_STYLES, BLOCK_TYPES
+from draftjs_exporter.defaults import STYLE_MAP, BLOCK_MAP
 from draftjs_exporter.dom import DOM
+from .etree import parse_html
 
 
 logger = logging.getLogger(__name__)
@@ -29,6 +32,17 @@ TABLE = 'TABLE'
 
 ENTITY_RANGES = 'entityRanges'
 INLINE_STYLE_RANGES = 'inlineStyleRanges'
+
+TAG_STYLE_MAP = {
+    'i': INLINE_STYLES.ITALIC,
+    'em': INLINE_STYLES.ITALIC,
+    'b': INLINE_STYLES.BOLD,
+    'strong': INLINE_STYLES.BOLD,
+}
+
+TAG_ENTITY_MAP = {
+    'a': ENTITY_TYPES.LINK,
+}
 
 
 class Entity:
@@ -100,11 +114,11 @@ class EntitySequence(MutableSequence):
 class Block:
     """Abstraction of DraftJS block"""
 
-    def __init__(self, editor, data=None):
+    def __init__(self, editor, data=None, text=None):
         if data is None:
             data = {
                 "key": str(uuid.uuid4()),
-                "text": "",
+                "text": text or "",
                 "type": "unstyled",
                 "depth": 0,
                 "inlineStyleRanges": [],
@@ -276,6 +290,8 @@ class DraftJSHTMLExporter:
 
     def render(self):
         blocks = self.content_state['blocks']
+        if not blocks:
+            return ''
         if blocks and blocks[0]['text'].strip() == '' or blocks[-1]['text'].strip() == '':
             # first and last block may be empty due to client constraints, in this case
             # we must discard them during rendering
@@ -438,7 +454,7 @@ class Editor3Content(EditorContent):
     editor_version = 3
     HTML_EXPORTER = DraftJSHTMLExporter
 
-    def __init__(self, item, field='body_html'):
+    def __init__(self, item, field='body_html', html=True):
         """
         :param item: item containing Draft.js ContentState
         :param field: field to manage, can be "body_html", "headline", etc.
@@ -447,13 +463,96 @@ class Editor3Content(EditorContent):
         self.field = field
         data = item.get('fields_meta', {}).get(field, {})
         if not data:
-            self.content_state = {}
+            self._create_state_from_html(item.get(field), html)
         else:
             # if the field exist, draftjsState must exist too
             self.content_state = data['draftjsState'][0]
         self.blocks = BlockSequence(self)
-
         self.html_exporter = DraftJSHTMLExporter(self)
+
+    def _create_state_from_html(self, value=None, html=True):
+        self.content_state = {
+            'blocks': [],
+            'entityMap': {},
+        }
+
+        if not value:
+            return
+
+        def create_entity(offset, length):
+            entity = {
+                'key': len(self.content_state['entityMap'].keys()),
+                'offset': offset,
+                'length': length,
+            }
+            return entity
+
+        if html:
+            root = parse_html(value, 'html')
+            embed = None
+            for elem in root:
+                try:
+                    block_type = next((key for key, val in BLOCK_MAP.items() if val == elem.tag))
+                    embed = None
+                except StopIteration:
+                    if elem.tag == 'figure' and embed:
+                        if self.item.get('associations') and self.item['associations'].get(embed):
+                            block = self.create_block('atomic', text=" ").data
+                            entity = create_entity(0, 1)
+                            block['inlineStyleRanges'] = []
+                            block['entityRanges'] = [entity]
+                            self.content_state['blocks'].append(block)
+                            self.content_state['entityMap'][str(entity['key'])] = {
+                                'type': 'MEDIA',
+                                'mutability': 'MUTABLE',
+                                'data': {'media': self.item['associations'][embed]},
+                            }
+                        embed = None
+                    else:
+                        embed = None
+                        if str(elem).startswith('<!-- EMBED START'):
+                            m = re.search(r'{id: "(.*)"}', elem.text)
+                            embed = m.group(1)
+                        continue
+                block_text = elem.text or ""
+                inline_style_ranges = []
+                entity_ranges = []
+                for child in elem:
+                    child_text = "".join(child.itertext())
+
+                    if child.tag in TAG_STYLE_MAP:
+                        inline_style_ranges.append({
+                            'offset': len(block_text),
+                            'length': len(child_text),
+                            'style': TAG_STYLE_MAP[child.tag],
+                        })
+
+                    if child.tag in TAG_ENTITY_MAP:
+                        if not child_text:
+                            child_text = " "  # must be non-empty
+                        entity = create_entity(len(block_text), len(child_text))
+                        entity_ranges.append(entity)
+                        self.content_state['entityMap'][str(entity['key'])] = {
+                            'type': TAG_ENTITY_MAP[child.tag],
+                            'mutability': 'MUTABLE',
+                            'data': {'link': {'href': child.attrib.get('href')}},
+                        }
+
+                    block_text += child_text
+
+                    if child.tail:
+                        block_text += child.tail
+
+                if elem.tail:
+                    block_text += elem.tail
+
+                block = self.create_block(block_type, text=block_text).data
+                block['inlineStyleRanges'] = inline_style_ranges
+                block['entityRanges'] = entity_ranges
+                self.content_state['blocks'].append(block)
+        else:
+            for line in value.split('\n'):
+                self.content_state['blocks'].append(self.create_block(BLOCK_TYPES.UNSTYLED, text=line).data)
 
     @property
     def html(self):
@@ -472,8 +571,13 @@ class Editor3Content(EditorContent):
 
     def create_block(self, block_type, *args, **kwargs):
         cls_name = "{}Block".format(block_type.capitalize())
-        cls = globals()[cls_name]
-        return cls(self, *args, **kwargs)
+        if cls_name in globals():
+            cls = globals()[cls_name]
+            return cls(self, *args, **kwargs)
+        else:
+            block = Block(self, *args, **kwargs)
+            block.data['type'] = block_type
+            return block
 
     def set_blocks(self, blocks):
         data = self.blocks[0].data.get('data')  # store internal data from first block
@@ -501,20 +605,17 @@ class Editor3Content(EditorContent):
 
 
 def replace_text(item, field, old, new, html=True):
-    editor = Editor3Content(item, field)
+    editor = Editor3Content(item, field, html)
     for block in editor.blocks:
         block.replace_text(old, new)
     editor.update_item(html)
-    if not item.get(field):
-        return
-    item[field] = item[field].replace(old, new)
 
 
-def filter_blocks(item, field, filter):
-    editor = Editor3Content(item, field)
+def filter_blocks(item, field, filter, html=True):
+    editor = Editor3Content(item, field, html)
     blocks = []
     for block in editor.blocks:
         if filter(block):
             blocks.append(block)
     editor.set_blocks(blocks)
-    editor.update_item()
+    editor.update_item(html)

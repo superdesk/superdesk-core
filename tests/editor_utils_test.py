@@ -12,6 +12,7 @@
 import json
 import uuid
 import unittest
+import superdesk.editor_utils as editor_utils
 
 from superdesk.editor_utils import Editor3Content
 
@@ -1630,45 +1631,44 @@ class Editor3TestCase(unittest.TestCase):
                 }
             },
         }
-        item = self.build_item(draftjs_data, "headline")
-        body_editor = Editor3Content(item, "headline")
-        body_editor.update_item(True)
-        self.assertEqual("first line text\nsecond line", item["headline"])
+        item_editor2 = {"body_html": '<p>first <i>line</i> text</p><p>second <a href="http://example.com">line</a></p>'}
+        item_editor3 = self.build_item(draftjs_data, "body_html")
 
-        body_editor.blocks[0].replace_text("first", "initial")
-        body_editor.update_item(True)
-        self.assertEqual("initial line text\nsecond line", item["headline"])
-
+        body_editor = Editor3Content(item_editor3, "body_html")
         body_editor.update_item()
+        self.assertEqual(item_editor2["body_html"], item_editor3["body_html"])
+
+        editor_utils.replace_text(item_editor2, 'body_html', 'first', 'initial')
+        editor_utils.replace_text(item_editor3, 'body_html', 'first', 'initial')
         self.assertEqual(
             '<p>initial <i>line</i> text</p><p>second <a href="http://example.com">line</a></p>',
-            item["headline"],
+            item_editor2["body_html"],
         )
+        self.assertEqual(item_editor2["body_html"], item_editor3["body_html"])
 
-        body_editor.blocks[0].replace_text("text", "foo")
-        body_editor.update_item()
+        editor_utils.replace_text(item_editor2, 'body_html', "text", "foo")
+        editor_utils.replace_text(item_editor3, 'body_html', "text", "foo")
         self.assertEqual(
             '<p>initial <i>line</i> foo</p><p>second <a href="http://example.com">line</a></p>',
-            item["headline"],
+            item_editor2["body_html"],
         )
+        self.assertEqual(item_editor2["body_html"], item_editor3["body_html"])
 
-        body_editor.blocks[0].replace_text("lin", "bar")
-        body_editor.update_item()
+        editor_utils.replace_text(item_editor2, 'body_html', "lin", "bar")
+        editor_utils.replace_text(item_editor3, 'body_html', "lin", "bar")
         self.assertEqual(
-            '<p>initial bare foo</p><p>second <a href="http://example.com">line</a></p>',
-            item["headline"],
+            '<p>initial bare foo</p><p>second bare</p>',
+            item_editor2["body_html"],
         )
+        self.assertEqual(item_editor2["body_html"], item_editor3["body_html"])
 
-        body_editor.blocks[1].replace_text("second", "last")
-        body_editor.update_item()
+        editor_utils.replace_text(item_editor2, 'body_html', "second", "last")
+        editor_utils.replace_text(item_editor3, 'body_html', "second", "last")
         self.assertEqual(
-            '<p>initial bare foo</p><p>last <a href="http://example.com">line</a></p>',
-            item["headline"],
+            '<p>initial bare foo</p><p>last bare</p>',
+            item_editor2["body_html"],
         )
-
-        body_editor.blocks[1].replace_text("lin", "foo")
-        body_editor.update_item()
-        self.assertEqual("<p>initial bare foo</p><p>last fooe</p>", item["headline"])
+        self.assertEqual(item_editor2["body_html"], item_editor3["body_html"])
 
     def test_set_blocks(self):
         draftjs_data = {
@@ -1706,3 +1706,50 @@ class Editor3TestCase(unittest.TestCase):
         body_editor.set_blocks([])
         self.assertEqual(1, len(body_editor.blocks))
         self.assertIn("MULTIPLE_HIGHLIGHTS", body_editor.blocks[0].data.get('data'))
+
+    def test_replace_text_no_html(self):
+        item = {'headline': 'foo bar'}
+        editor_utils.replace_text(item, 'headline', 'bar', 'baz', html=False)
+        self.assertEqual('foo baz', item['headline'])
+
+    def test_replace_text_handles_blocks(self):
+        html = ''.join([
+            '<h1>H1 foo</h1>',
+            '<h2>H2 foo</h2>',
+            '<h3>H3 foo</h3>',
+            '<h4>H4 foo</h4>',
+            '<p>P foo</p>',
+            '<pre>PRE foo</pre>',
+            '<blockquote>BLOCKQUOTE foo</blockquote>',
+            '<!-- EMBED START Image {id: "editor_0"} -->\n',
+            '<figure><img alt="" src="http://example.com"></figure>\n'
+            '<!-- EMBED END Image {id: "editor_0"} -->',
+        ])
+
+        item = {'body_html': html, 'associations': {
+            'editor_0': {
+                'type': 'picture',
+                'renditions': {
+                    'original': {
+                        'href': 'http://example.com',
+                    },
+                },
+            },
+        }}
+
+        editor_utils.replace_text(item, 'body_html', ' foo', '')
+        self.assertEqual(html.replace(' foo', ''), item['body_html'])
+
+    def test_filter_blocks(self):
+        item = {
+            'body_html': ''.join([
+                '<p>first line</p>',
+                '<p>second line</p>',
+            ]),
+        }
+
+        def block_filter(block):
+            return 'second' in block.text
+
+        editor_utils.filter_blocks(item, 'body_html', block_filter)
+        self.assertEqual('<p>second line</p>', item['body_html'])
