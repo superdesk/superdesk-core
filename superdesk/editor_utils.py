@@ -467,8 +467,8 @@ class Editor3Content(EditorContent):
         """Return a non existing key for entityMap"""
         return max((int(k) for k in self.content_state['entityMap'].keys()), default=-1) + 1
 
-    def update_item(self, text=False):
-        self.item[self.field] = self.text if text else self.html
+    def update_item(self, html=True):
+        self.item[self.field] = self.html if html else self.text
 
     def create_block(self, block_type, *args, **kwargs):
         cls_name = "{}Block".format(block_type.capitalize())
@@ -498,3 +498,23 @@ class Editor3Content(EditorContent):
         else:
             index = 0
         self.blocks.insert(index, block)
+
+
+def replace_text(item, field, old, new, html=True):
+    editor = Editor3Content(item, field)
+    for block in editor.blocks:
+        block.replace_text(old, new)
+    editor.update_item(html)
+    if not item.get(field):
+        return
+    item[field] = item[field].replace(old, new)
+
+
+def filter_blocks(item, field, filter):
+    editor = Editor3Content(item, field)
+    blocks = []
+    for block in editor.blocks:
+        if filter(block):
+            blocks.append(block)
+    editor.set_blocks(blocks)
+    editor.update_item()
