@@ -133,7 +133,11 @@ class FilterConditionParametersService(BaseService):
                    'operators': ['exists'],
                    'values': values['featuremedia'],
                    'value_field': 'name'
-                   }]
+                   },
+                  {'field': 'anpa_take_key',
+                   'operators': ['in', 'nin', 'eq', 'ne', 'like', 'notlike', 'startswith', 'endswith']
+                   },
+                  ]
         fields.extend(self._get_vocabulary_fields(values))
         return ListCursor(fields)
 
