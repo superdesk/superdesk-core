@@ -162,7 +162,7 @@ Feature: Publish embedded items feature
         When we upload a file "bike.jpg" to "archive"
         And we patch "/archive/#archive._id#"
         """
-        {"task": {"desk": "#desks._id#"}}
+        {"task": {"desk": "#desks._id#"}, "headline": "test"}
         """
         And we patch "/archive/#archive._id#"
         """
@@ -172,16 +172,21 @@ Feature: Publish embedded items feature
 
         When we patch "archive/foo"
         """
-        {"headline": "foo",
-        "slugline": "bar",
-        "state": "in_progress",
-        "associations": {"embedded1":
-        {"_id": "#archive._id#",
-         "type": "picture",
-         "headline": "test",
-         "alt_text": "alt_text",
-         "description_text": "description_text",
-         "state": "in_progress"}}}
+        {
+            "headline": "foo",
+            "slugline": "bar",
+            "state": "in_progress",
+            "associations": {
+                "embedded1": {
+                    "_id": "#archive._id#",
+                    "type": "picture",
+                    "headline": "test",
+                    "alt_text": "alt_text",
+                    "description_text": "description_text",
+                    "state": "in_progress"
+                }
+            }
+        }
         """
         Then we get OK response
 
@@ -240,7 +245,7 @@ Feature: Publish embedded items feature
         When we upload a file "bike.jpg" to "archive"
         And we patch "/archive/#archive._id#"
         """
-        {"task": {"desk": "#desks._id#"}}
+        {"task": {"desk": "#desks._id#"}, "headline": "test"}
         """
         And we patch "/archive/#archive._id#"
         """
@@ -250,16 +255,21 @@ Feature: Publish embedded items feature
 
         When we patch "archive/foo"
         """
-        {"headline": "foo",
-        "slugline": "bar",
-        "state": "in_progress",
-        "associations": {"embedded1":
-        {"_id": "#archive._id#",
-         "type": "picture",
-         "headline": "test",
-         "alt_text": "alt_text",
-         "description_text": "description_text",
-         "state": "in_progress"}}}
+        {
+            "headline": "foo",
+            "slugline": "bar",
+            "state": "in_progress",
+            "associations": {
+                "embedded1": {
+                    "_id": "#archive._id#",
+                    "type": "picture",
+                    "headline": "test",
+                    "alt_text": "alt_text",
+                    "description_text": "description_text",
+                    "state": "in_progress"
+                }
+            }
+        }
         """
         Then we get OK response
 
@@ -347,7 +357,7 @@ Feature: Publish embedded items feature
         When we upload a file "bike.jpg" to "archive"
         And we patch "/archive/#archive._id#"
         """
-        {"task": {"desk": "#desks._id#"}}
+        {"task": {"desk": "#desks._id#"}, "headline": "test"}
         """
         And we patch "/archive/#archive._id#"
         """
@@ -357,16 +367,21 @@ Feature: Publish embedded items feature
 
         When we patch "archive/foo"
         """
-        {"headline": "foo",
-        "slugline": "bar",
-        "state": "in_progress",
-        "associations": {"embedded1":
-        {"_id": "#archive._id#",
-         "type": "picture",
-         "headline": "test",
-         "alt_text": "alt_text",
-         "description_text": "description_text",
-         "state": "in_progress"}}}
+        {
+            "headline": "foo",
+            "slugline": "bar",
+            "state": "in_progress",
+            "associations": {
+                "embedded1": {
+                    "_id": "#archive._id#",
+                    "type": "picture",
+                    "headline": "test",
+                    "alt_text": "alt_text",
+                    "description_text": "description_text",
+                    "state": "in_progress"
+                }
+            }
+        }
         """
         Then we get OK response
 

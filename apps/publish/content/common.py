@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import json
 import logging
 import superdesk
 import superdesk.signals as signals
@@ -16,6 +17,7 @@ from copy import copy
 from copy import deepcopy
 from functools import partial
 from flask import current_app as app
+from eve.utils import ParsedRequest
 
 from superdesk import get_resource_service
 from apps.content import push_content_notification
@@ -489,8 +491,18 @@ class BasePublishService(BaseService):
             items.extend(self.package_service.get_residrefs(original_item))
 
         for item in items:
-            if type(item) == dict:
+            if type(item) == dict and item.get(config.ID_FIELD):
                 doc = item
+                # enhance doc with lock_session
+                req = ParsedRequest()
+                req.args = {}
+                req.projection = json.dumps({'lock_session': 1})
+                try:
+                    doc.update({
+                        'lock_session': super().find_one(req=req, _id=item[config.ID_FIELD])['lock_session']
+                    })
+                except (TypeError, KeyError):
+                    pass
             elif item:
                 doc = super().find_one(req=None, _id=item)
             else:
@@ -522,8 +534,19 @@ class BasePublishService(BaseService):
                     validation_errors.extend(pre_errors)
 
             # check the locks on the items
-            if doc.get('lock_session', None) and original_item['lock_session'] != doc['lock_session']:
-                validation_errors.extend(['{}: packaged item cannot be locked'.format(doc['headline'])])
+            if doc.get('lock_session'):
+                if original_item['lock_session'] != doc['lock_session']:
+                    validation_errors.extend([
+                        '{}: packaged item is locked by another user'.format(
+                            doc.get('headline', doc['_id'])
+                        )
+                    ])
+                elif original_item['lock_session'] == doc['lock_session']:
+                    validation_errors.extend([
+                        '{}: packaged item is locked by you. Unlock it and try again'.format(
+                            doc.get('headline', doc['_id'])
+                        )
+                    ])
 
     def _import_into_legal_archive(self, doc):
         """Import into legal archive async
