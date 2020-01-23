@@ -1712,7 +1712,7 @@ class Editor3TestCase(unittest.TestCase):
         editor_utils.replace_text(item, 'headline', 'bar', 'baz', html=False)
         self.assertEqual('foo baz', item['headline'])
 
-    def test_replace_text_handles_blocks(self):
+    def test_replace_what_you_had_is_what_you_get(self):
         html = ''.join([
             '<h1>H1 foo</h1>',
             '<h2>H2 foo</h2>',
@@ -1735,6 +1735,13 @@ class Editor3TestCase(unittest.TestCase):
             '<thead><tr><th><p>head</p></th></tr></thead>',
             '<tbody><tr><td><p>TD</p></td></tr></tbody>',
             '</table>',
+            '<p><a href="http://p.com" target="_blank">P</a> foo</p>',
+            '<div class="embed-block">',
+            '<script>foo</script>',
+            '</div>',
+            '<div class="embed-block">',
+            '<iframe src="http://iframe.com">foo</iframe>',
+            '</div>',
         ])
 
         item = {'body_html': html, 'associations': {

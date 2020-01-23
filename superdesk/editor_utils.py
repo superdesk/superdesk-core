@@ -20,7 +20,7 @@ from draftjs_exporter.html import HTML
 from draftjs_exporter.constants import ENTITY_TYPES, INLINE_STYLES, BLOCK_TYPES
 from draftjs_exporter.defaults import STYLE_MAP, BLOCK_MAP
 from draftjs_exporter.dom import DOM
-from .etree import parse_html
+from .etree import parse_html, to_string
 
 
 logger = logging.getLogger(__name__)
@@ -381,6 +381,8 @@ class DraftJSHTMLExporter:
         # FIXME: Qumu hack is not handled yet
         div = DOM.create_element('div', {'class': 'embed-block'})
         embedded_html = DOM.parse_html(props['data']['html'])
+        if embedded_html.tag == 'html' and not props['data']['html'].startswith('<html'):
+            embedded_html = embedded_html[0][0]  # parse_html adds <html><head> around script tag
         DOM.append_child(div, embedded_html)
         description = props.get('description')
         if description:
@@ -504,11 +506,13 @@ class Editor3Content(EditorContent):
                 except StopIteration:
                     block_type = None
                     depth = 0
-                    if elem.tag == 'figure' and i > 0 and root[i - 1].text:
-                        m = re.search(r'<!-- EMBED START Image {id: "(.*)"}', str(root[i - 1]).strip())
-                        if m and self.item.get('associations') and self.item['associations'].get(m.group(1)):
+                    if elem.tag == 'figure':
+                        try:
+                            m = re.search(r'<!-- EMBED START (?:Image|Video) {id: "(.*)"}', str(root[i - 1]).strip())
                             media = self.item['associations'][m.group(1)]
                             create_atomic_block('MEDIA', {'media': media})
+                        except (KeyError, IndexError, AttributeError):
+                            create_atomic_block('EMBED', {'data': {'html': to_string(elem, method='html')}})
                         continue
                     elif elem.tag in ('ul', 'ol'):
                         pass
@@ -531,6 +535,17 @@ class Editor3Content(EditorContent):
                                 }
                         create_atomic_block('TABLE', {'data': data})
                         continue
+                    elif elem.tag == 'div':
+                        html = ''.join([to_string(child, method='html') for child in elem])
+                        if html.startswith('<html><head>'):
+                            html = re.sub(
+                                r'<\/head><\/html>',
+                                '',
+                                html.replace('<html><head>', '', 1),
+                            )
+                        print('html', html)
+                        create_atomic_block('EMBED', {'data': {'html': html}})
+                        continue
                     else:
                         logger.warning('ignore block %s', str(elem.tag))
                         continue
@@ -550,8 +565,11 @@ class Editor3Content(EditorContent):
                     if child.tag in TAG_ENTITY_MAP:
                         if not child_text:
                             child_text = " "  # must be non-empty
-                        entity_key = create_entity(TAG_ENTITY_MAP[child.tag],
-                                                   {'link': {'href': child.attrib.get('href')}})
+                        if child.tag == 'a':
+                            data = {'link': {'href': child.attrib.get('href'), 'target': child.attrib.get('target')}}
+                        else:
+                            data = {}
+                        entity_key = create_entity(TAG_ENTITY_MAP[child.tag], data)
                         entity_ranges.append({'offset': len(block_text), 'length': len(child_text), 'key': entity_key})
 
                     if child.tag == 'li':
