@@ -1745,7 +1745,6 @@ class Editor3TestCase(unittest.TestCase):
         }}
 
         editor_utils.replace_text(item, 'body_html', ' foo', '')
-        print('output', item['body_html'])
         self.assertEqual(html.replace(' foo', ''), item['body_html'])
 
     def test_filter_blocks(self):

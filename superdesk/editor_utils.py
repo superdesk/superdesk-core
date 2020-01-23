@@ -479,13 +479,14 @@ class Editor3Content(EditorContent):
         if not value:
             return
 
-        def create_entity(offset, length):
-            entity = {
-                'key': len(self.content_state['entityMap'].keys()),
-                'offset': offset,
-                'length': length,
+        def create_entity(type, data, mutability='MUTABLE'):
+            key = len(self.content_state['entityMap'].keys())
+            self.content_state['entityMap'][str(key)] = {
+                'type': type,
+                'mutability': mutability,
+                'data': data,
             }
-            return entity
+            return key
 
         if html:
             root = parse_html(value, 'html')
@@ -496,20 +497,15 @@ class Editor3Content(EditorContent):
                 except StopIteration:
                     block_type = None
                     depth = 0
-                    if elem.tag == 'figure' and i > 0 and root[i-1].text:
-                        m = re.search(r'<!-- EMBED START Image {id: "(.*)"}', str(root[i-1]).strip())
+                    if elem.tag == 'figure' and i > 0 and root[i - 1].text:
+                        m = re.search(r'<!-- EMBED START Image {id: "(.*)"}', str(root[i - 1]).strip())
                         if m and self.item.get('associations') and self.item['associations'].get(m.group(1)):
                             media = self.item['associations'][m.group(1)]
                             block = self.create_block('atomic', text=" ").data
-                            entity = create_entity(0, 1)
+                            entity_key = create_entity('MEDIA', {'media': media})
+                            block['entityRanges'] = [{'offset': 0, 'length': 1, 'key': entity_key}]
                             block['inlineStyleRanges'] = []
-                            block['entityRanges'] = [entity]
                             self.content_state['blocks'].append(block)
-                            self.content_state['entityMap'][str(entity['key'])] = {
-                                'type': 'MEDIA',
-                                'mutability': 'MUTABLE',
-                                'data': {'media': media},
-                            }
                     elif elem.tag in ('ul', 'ol'):
                         pass
                     elif elem.text and 'EMBED END' in elem.text:
@@ -533,16 +529,13 @@ class Editor3Content(EditorContent):
                     if child.tag in TAG_ENTITY_MAP:
                         if not child_text:
                             child_text = " "  # must be non-empty
-                        entity = create_entity(len(block_text), len(child_text))
-                        entity_ranges.append(entity)
-                        self.content_state['entityMap'][str(entity['key'])] = {
-                            'type': TAG_ENTITY_MAP[child.tag],
-                            'mutability': 'MUTABLE',
-                            'data': {'link': {'href': child.attrib.get('href')}},
-                        }
-                    
+                        entity_key = create_entity(TAG_ENTITY_MAP[child.tag],
+                                                   {'link': {'href': child.attrib.get('href')}})
+                        entity_ranges.append({'offset': len(block_text), 'length': len(child_text), 'key': entity_key})
+
                     if child.tag == 'li':
-                        child_type = BLOCK_TYPES.UNORDERED_LIST_ITEM if elem.tag == 'ul' else BLOCK_TYPES.ORDERED_LIST_ITEM
+                        child_type = BLOCK_TYPES.UNORDERED_LIST_ITEM if elem.tag == 'ul' \
+                            else BLOCK_TYPES.ORDERED_LIST_ITEM
                         block = self.create_block(child_type, text=child_text).data
                         block.update(depth=depth)
                         self.content_state['blocks'].append(block)
@@ -563,8 +556,6 @@ class Editor3Content(EditorContent):
         else:
             for line in value.split('\n'):
                 self.content_state['blocks'].append(self.create_block(BLOCK_TYPES.UNSTYLED, text=line).data)
-        
-        print('state', json.dumps(self.content_state['blocks'], indent=2))
 
     @property
     def html(self):
