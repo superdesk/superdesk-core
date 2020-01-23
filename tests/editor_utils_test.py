@@ -1730,7 +1730,11 @@ class Editor3TestCase(unittest.TestCase):
             '</ul>',
             '<ol>',
             '<li>LI OL foo</li>',
-            '</ol>'
+            '</ol>',
+            '<table>',  # only parsing tables so far, no text replace in it
+            '<thead><tr><th><p>head</p></th></tr></thead>',
+            '<tbody><tr><td><p>TD</p></td></tr></tbody>',
+            '</table>',
         ])
 
         item = {'body_html': html, 'associations': {
@@ -1745,6 +1749,7 @@ class Editor3TestCase(unittest.TestCase):
         }}
 
         editor_utils.replace_text(item, 'body_html', ' foo', '')
+        self.maxDiff = None
         self.assertEqual(html.replace(' foo', ''), item['body_html'])
 
     def test_filter_blocks(self):

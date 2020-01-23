@@ -488,6 +488,13 @@ class Editor3Content(EditorContent):
             }
             return key
 
+        def create_atomic_block(type, data):
+            block = self.create_block('atomic', text=" ").data
+            entity_key = create_entity(type, data)
+            block['entityRanges'] = [{'offset': 0, 'length': 1, 'key': entity_key}]
+            block['inlineStyleRanges'] = []
+            self.content_state['blocks'].append(block)
+
         if html:
             root = parse_html(value, 'html')
             for i, elem in enumerate(root):
@@ -501,17 +508,32 @@ class Editor3Content(EditorContent):
                         m = re.search(r'<!-- EMBED START Image {id: "(.*)"}', str(root[i - 1]).strip())
                         if m and self.item.get('associations') and self.item['associations'].get(m.group(1)):
                             media = self.item['associations'][m.group(1)]
-                            block = self.create_block('atomic', text=" ").data
-                            entity_key = create_entity('MEDIA', {'media': media})
-                            block['entityRanges'] = [{'offset': 0, 'length': 1, 'key': entity_key}]
-                            block['inlineStyleRanges'] = []
-                            self.content_state['blocks'].append(block)
+                            create_atomic_block('MEDIA', {'media': media})
+                        continue
                     elif elem.tag in ('ul', 'ol'):
                         pass
-                    elif elem.text and 'EMBED END' in elem.text:
+                    elif elem.text and '<!-- EMBED' in str(elem):
+                        continue
+                    elif elem.tag == 'table':
+                        data = {'numCols': 0, 'numRows': 0, 'withHeader': False, 'cells': {}}
+                        for row, tr in enumerate(elem.iter('tr')):
+                            data['numRows'] += 1
+                            data['cells'][row] = {}
+                            if row == 0 and len(tr):
+                                data['numCols'] = len(tr)
+                                data['withHeader'] = tr[0].tag == 'th'
+                            for col, td in enumerate(tr):
+                                data['cells'][row][col] = {
+                                    'blocks': [
+                                        self.create_block('unstyled', text="".join(td.itertext())).data,
+                                    ],
+                                    'entityMap': {},
+                                }
+                        print('data', json.dumps(data, indent=2))
+                        create_atomic_block('TABLE', {'data': data})
                         continue
                     else:
-                        logger.warning('ignore block %s', elem.tag)
+                        logger.warning('ignore block %s', str(elem.tag))
                         continue
                 block_text = elem.text or ""
                 inline_style_ranges = []
@@ -548,7 +570,7 @@ class Editor3Content(EditorContent):
                 if elem.tail:
                     block_text += elem.tail
 
-                if block_type:  # no block type for ul
+                if block_type:  # no block type for ul/ol
                     block = self.create_block(block_type, text=block_text).data
                     block['inlineStyleRanges'] = inline_style_ranges
                     block['entityRanges'] = entity_ranges
