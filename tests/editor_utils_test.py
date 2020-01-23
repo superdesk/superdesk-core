@@ -1724,6 +1724,13 @@ class Editor3TestCase(unittest.TestCase):
             '<!-- EMBED START Image {id: "editor_0"} -->\n',
             '<figure><img alt="" src="http://example.com"></figure>\n'
             '<!-- EMBED END Image {id: "editor_0"} -->',
+            '<ul>',
+            '<li>LI foo</li>',
+            '<li>LI2 foo</li>',
+            '</ul>',
+            '<ol>',
+            '<li>LI OL foo</li>',
+            '</ol>'
         ])
 
         item = {'body_html': html, 'associations': {
@@ -1738,6 +1745,7 @@ class Editor3TestCase(unittest.TestCase):
         }}
 
         editor_utils.replace_text(item, 'body_html', ' foo', '')
+        print('output', item['body_html'])
         self.assertEqual(html.replace(' foo', ''), item['body_html'])
 
     def test_filter_blocks(self):

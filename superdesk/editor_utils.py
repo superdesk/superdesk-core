@@ -489,14 +489,17 @@ class Editor3Content(EditorContent):
 
         if html:
             root = parse_html(value, 'html')
-            embed = None
-            for elem in root:
+            for i, elem in enumerate(root):
                 try:
                     block_type = next((key for key, val in BLOCK_MAP.items() if val == elem.tag))
-                    embed = None
+                    depth = 0
                 except StopIteration:
-                    if elem.tag == 'figure' and embed:
-                        if self.item.get('associations') and self.item['associations'].get(embed):
+                    block_type = None
+                    depth = 0
+                    if elem.tag == 'figure' and i > 0 and root[i-1].text:
+                        m = re.search(r'<!-- EMBED START Image {id: "(.*)"}', str(root[i-1]).strip())
+                        if m and self.item.get('associations') and self.item['associations'].get(m.group(1)):
+                            media = self.item['associations'][m.group(1)]
                             block = self.create_block('atomic', text=" ").data
                             entity = create_entity(0, 1)
                             block['inlineStyleRanges'] = []
@@ -505,14 +508,14 @@ class Editor3Content(EditorContent):
                             self.content_state['entityMap'][str(entity['key'])] = {
                                 'type': 'MEDIA',
                                 'mutability': 'MUTABLE',
-                                'data': {'media': self.item['associations'][embed]},
+                                'data': {'media': media},
                             }
-                        embed = None
+                    elif elem.tag in ('ul', 'ol'):
+                        pass
+                    elif elem.text and 'EMBED END' in elem.text:
+                        continue
                     else:
-                        embed = None
-                        if str(elem).startswith('<!-- EMBED START'):
-                            m = re.search(r'{id: "(.*)"}', elem.text)
-                            embed = m.group(1)
+                        logger.warning('ignore block %s', elem.tag)
                         continue
                 block_text = elem.text or ""
                 inline_style_ranges = []
@@ -537,6 +540,12 @@ class Editor3Content(EditorContent):
                             'mutability': 'MUTABLE',
                             'data': {'link': {'href': child.attrib.get('href')}},
                         }
+                    
+                    if child.tag == 'li':
+                        child_type = BLOCK_TYPES.UNORDERED_LIST_ITEM if elem.tag == 'ul' else BLOCK_TYPES.ORDERED_LIST_ITEM
+                        block = self.create_block(child_type, text=child_text).data
+                        block.update(depth=depth)
+                        self.content_state['blocks'].append(block)
 
                     block_text += child_text
 
@@ -546,13 +555,16 @@ class Editor3Content(EditorContent):
                 if elem.tail:
                     block_text += elem.tail
 
-                block = self.create_block(block_type, text=block_text).data
-                block['inlineStyleRanges'] = inline_style_ranges
-                block['entityRanges'] = entity_ranges
-                self.content_state['blocks'].append(block)
+                if block_type:  # no block type for ul
+                    block = self.create_block(block_type, text=block_text).data
+                    block['inlineStyleRanges'] = inline_style_ranges
+                    block['entityRanges'] = entity_ranges
+                    self.content_state['blocks'].append(block)
         else:
             for line in value.split('\n'):
                 self.content_state['blocks'].append(self.create_block(BLOCK_TYPES.UNSTYLED, text=line).data)
+        
+        print('state', json.dumps(self.content_state['blocks'], indent=2))
 
     @property
     def html(self):
