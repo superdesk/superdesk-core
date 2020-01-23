@@ -348,7 +348,7 @@ class DraftJSHTMLExporter:
         # so we find the key in entityMap with a corresponding value
         embed_key = next(
             k for k, v in self.content_state['entityMap'].items()
-            if v['data']['media'] == props['media'])
+            if v['data'].get('media') == props['media'])
 
         # <dummy_tag> is needed for the comments, because a root node is necessary
         # it will be removed during rendering.
@@ -529,7 +529,6 @@ class Editor3Content(EditorContent):
                                     ],
                                     'entityMap': {},
                                 }
-                        print('data', json.dumps(data, indent=2))
                         create_atomic_block('TABLE', {'data': data})
                         continue
                     else:
