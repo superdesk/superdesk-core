@@ -1732,8 +1732,8 @@ class Editor3TestCase(unittest.TestCase):
             '<li>LI OL foo</li>',
             '</ol>',
             '<table>',  # only parsing tables so far, no text replace in it
-            '<thead><tr><th><p>head</p></th></tr></thead>',
-            '<tbody><tr><td><p>TD</p></td></tr></tbody>',
+            '<thead><tr><th><p>th foo</p></th></tr></thead>',
+            '<tbody><tr><td><p>td foo</p></td></tr></tbody>',
             '</table>',
             '<p><a href="http://p.com" target="_blank">P</a> foo</p>',
             '<div class="embed-block">',
@@ -1757,6 +1757,11 @@ class Editor3TestCase(unittest.TestCase):
 
         editor_utils.replace_text(item, 'body_html', ' foo', '')
         self.maxDiff = None
+        self.assertEqual(html.replace(' foo', ''), item['body_html'])
+
+        # test we keep draftjs state for next time
+        item['body_html'] = 'foo'
+        editor_utils.replace_text(item, 'body_html', ' foo', '')
         self.assertEqual(html.replace(' foo', ''), item['body_html'])
 
     def test_filter_blocks(self):

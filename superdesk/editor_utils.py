@@ -30,6 +30,7 @@ ANNOTATION = 'ANNOTATION'
 MEDIA = 'MEDIA'
 TABLE = 'TABLE'
 
+ENTITY_MAP = 'entityMap'
 ENTITY_RANGES = 'entityRanges'
 INLINE_STYLE_RANGES = 'inlineStyleRanges'
 
@@ -143,38 +144,6 @@ class Block:
     @property
     def key(self):
         return self.data.get('key')
-
-    def replace_text(self, old, new):
-        if not self.text:
-            return
-        if not old:
-            raise ValueError("old is empty")
-        start = 0
-        while True:
-            try:
-                index = self.text.index(old, start)
-                start = index + len(old)
-                self.data['text'] = new.join([self.text[:index], self.text[start:]])
-                for range_field in (ENTITY_RANGES, INLINE_STYLE_RANGES):
-                    if self.data.get(range_field):
-                        ranges = []
-                        for range_ in self.data[range_field]:
-                            range_end = range_['offset'] + range_['length']
-                            if range_['offset'] > start:
-                                # move ranges starting after replaced text
-                                range_['offset'] += len(new) - len(old)
-                                ranges.append(range_)
-                            elif range_end <= index:
-                                # keep ranges before replaced text
-                                ranges.append(range_)
-                            else:
-                                # remove ranges overlapping with replaced text
-                                if range_field == ENTITY_RANGES:
-                                    self.entities.pop(range_["key"])
-                                continue
-                        self.data[range_field] = ranges
-            except ValueError:
-                break
 
     def __str__(self):
         return self.text
@@ -463,7 +432,7 @@ class Editor3Content(EditorContent):
         """
         self.item = item
         self.field = field
-        data = item.get('fields_meta', {}).get(field, {})
+        data = item.setdefault('fields_meta', {}).get(field, {})
         if not data:
             self._create_state_from_html(item.get(field), html)
         else:
@@ -471,6 +440,7 @@ class Editor3Content(EditorContent):
             self.content_state = data['draftjsState'][0]
         self.blocks = BlockSequence(self)
         self.html_exporter = DraftJSHTMLExporter(self)
+        self.format_html = html
 
     def _create_state_from_html(self, value=None, html=True):
         self.content_state = {
@@ -480,6 +450,8 @@ class Editor3Content(EditorContent):
 
         if not value:
             return
+        else:  # store for next time
+            self.item['fields_meta'][self.field] = {'draftjsState': [self.content_state]}
 
         def create_entity(type, data, mutability='MUTABLE'):
             key = len(self.content_state['entityMap'].keys())
@@ -543,7 +515,6 @@ class Editor3Content(EditorContent):
                                 '',
                                 html.replace('<html><head>', '', 1),
                             )
-                        print('html', html)
                         create_atomic_block('EMBED', {'data': {'html': html}})
                         continue
                     else:
@@ -608,8 +579,8 @@ class Editor3Content(EditorContent):
         """Return a non existing key for entityMap"""
         return max((int(k) for k in self.content_state['entityMap'].keys()), default=-1) + 1
 
-    def update_item(self, html=True):
-        self.item[self.field] = self.html if html else self.text
+    def update_item(self):
+        self.item[self.field] = self.html if self.format_html else self.text
 
     def create_block(self, block_type, *args, **kwargs):
         cls_name = "{}Block".format(block_type.capitalize())
@@ -646,18 +617,68 @@ class Editor3Content(EditorContent):
         self.blocks.insert(index, block)
 
 
+def _replace_text(content_state, old, new):
+    if not old:
+        return
+    for block in content_state['blocks']:
+        if block.get('type') == 'atomic':
+            entity = content_state[ENTITY_MAP][str(block[ENTITY_RANGES][0]['key'])]
+            if entity['type'] == 'TABLE':
+                cells = entity['data']['data']['cells']
+                for row in cells.values():
+                    for cell in row.values():
+                        _replace_text(cell, old, new)
+            continue
+        if not block.get('text'):
+            continue
+        start = 0
+        while True:
+            try:
+                index = block['text'].index(old, start)
+                start = index + len(old)
+                block['text'] = new.join([block['text'][:index], block['text'][start:]])
+                for range_field in (ENTITY_RANGES, INLINE_STYLE_RANGES):
+                    if block.get(range_field):
+                        ranges = []
+                        for range_ in block[range_field]:
+                            range_end = range_['offset'] + range_['length']
+                            if range_['offset'] > start:
+                                # move ranges starting after replaced text
+                                range_['offset'] += len(new) - len(old)
+                                ranges.append(range_)
+                            elif range_end <= index:
+                                # keep ranges before replaced text
+                                ranges.append(range_)
+                            else:
+                                # remove ranges overlapping with replaced text
+                                if range_field == ENTITY_RANGES:
+                                    content_state['entityMap'].pop(str(range_["key"]))
+                                continue
+                        block[range_field] = ranges
+            except ValueError:
+                break
+
+
 def replace_text(item, field, old, new, html=True):
+    """Replace all occurences of old replaced with new.
+
+    It won't replace it in atomic blocks and embeds,
+    only text blocks, headings, tables, ul/ol.
+    """
     editor = Editor3Content(item, field, html)
-    for block in editor.blocks:
-        block.replace_text(old, new)
-    editor.update_item(html)
+    _replace_text(editor.content_state, old, new)
+    editor.update_item()
 
 
 def filter_blocks(item, field, filter, html=True):
+    """Filter content blocks for field.
+
+    It will keep only blocks for which filter returns True.
+    """
     editor = Editor3Content(item, field, html)
     blocks = []
     for block in editor.blocks:
         if filter(block):
             blocks.append(block)
     editor.set_blocks(blocks)
-    editor.update_item(html)
+    editor.update_item()
