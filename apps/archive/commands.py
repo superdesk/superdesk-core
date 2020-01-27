@@ -60,7 +60,7 @@ class RemoveExpiredContent(superdesk.Command):
         logger.info('{} Starting to remove expired content at.'.format(self.log_msg))
         lock_name = get_lock_id('archive', 'remove_expired')
 
-        if not lock(lock_name, expire=610):
+        if not lock(lock_name, expire=1800):
             logger.info('{} Remove expired content task is already running.'.format(self.log_msg))
             return
 
@@ -91,6 +91,7 @@ class RemoveExpiredContent(superdesk.Command):
 
         :param datetime expiry_datetime: expiry datetime
         :param str log_msg: log message to be prefixed
+        :param str lock_name: lock name to touch
         """
         logger.info('{} Starting to remove published expired items.'.format(self.log_msg))
         archive_service = get_resource_service(ARCHIVE)
@@ -106,8 +107,8 @@ class RemoveExpiredContent(superdesk.Command):
                 logger.info('{} No items found to expire.'.format(self.log_msg))
                 return
 
-            if not touch(lock_name, expire=300):
-                logger.warning('{} lost lock while removing expited items.'.format(self.log_msg))
+            if not touch(lock_name, expire=10):
+                logger.warning('{} lost lock while removing expired items.'.format(self.log_msg))
                 return
 
             # delete spiked items
@@ -339,11 +340,8 @@ class RemoveExpiredContent(superdesk.Command):
                 logger.info('{} Found {} published items for item: {}'.format(self.log_msg,
                                                                               len(published_items), item_id))
                 if moved_to_archived:
-                    try:
                         archived_service.post(published_items)
                         logger.info('{} Moved item to text archive for item {}.'.format(self.log_msg, item_id))
-                    except Conflict:
-                        logger.info('{} Moved item already to text archive for item {}.'.format(self.log_msg, item_id))
                 else:
                     logger.info('{} Not Moving item to text archive for item {}.'.format(self.log_msg, item_id))
 
