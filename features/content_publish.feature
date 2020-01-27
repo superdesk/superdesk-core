@@ -3180,6 +3180,17 @@ Feature: Content Publishing
         """
         [{"name": "Sports", "members":[{"user":"#CONTEXT_USER_ID#"}]}]
         """
+      And "vocabularies"
+      """
+      [{
+        "_id": "crop_sizes",
+        "unique_field": "name",
+        "items": [
+          {"is_active": true, "name": "600x800", "width": 800, "height": 600},
+          {"is_active": true, "name": "1200x720", "width": 1280, "height": 720}
+        ]
+      }]
+      """
       And "archive"
         """
         [
@@ -3544,10 +3555,275 @@ Feature: Content Publishing
                             "media": "600x800_new",
                             "mimetype": "image/jpeg"
                         },
-                        "1280x720": null
+                        "1280x720": "__none__"
                     }
                 }
             }
         }
         """
 
+    @auth
+    Scenario: Removed association items should not get published on correction
+      Given config update
+      """
+      { "PUBLISH_ASSOCIATED_ITEMS": true}
+      """
+      And "validators"
+        """
+        [
+            {"_id": "publish_text", "act": "publish", "type": "text", "schema":{}},
+            {"_id": "correct_text", "act": "correct", "type": "text", "schema":{}},
+            {"_id": "publish_picture", "act": "publish", "type": "picture", "schema":{}},
+            {"_id": "correct_picture", "act": "correct", "type": "picture", "schema":{}}
+        ]
+        """
+      And "desks"
+        """
+        [{"name": "Sports", "members":[{"user":"#CONTEXT_USER_ID#"}]}]
+        """
+      And "vocabularies"
+      """
+      [{
+        "_id": "crop_sizes",
+        "unique_field": "name",
+        "items": [
+          {"is_active": true, "name": "600x800", "width": 800, "height": 600},
+          {"is_active": true, "name": "1200x720", "width": 1280, "height": 720}
+        ]
+      }]
+      """
+      And "archive"
+        """
+        [
+            {
+              "_id": "feature_media_id",
+              "guid": "feature_media_guid",
+              "type": "picture",
+              "headline": "Image",
+              "pubstatus": "usable",
+              "_current_version" : 1,
+              "flags": {
+                "marked_for_not_publication": false,
+                "marked_for_legal": false,
+                "marked_archived_only": false,
+                "marked_for_sms": false
+              },
+              "format": "HTML",
+              "original_creator": "5cda8c5cfe985e059b638ee8",
+              "unique_id": 65,
+              "unique_name": "#65",
+              "state": "in_progress",
+              "source": "Superdesk",
+              "renditions": {
+                "original": {
+                  "href": "http://localhost:5000/api/upload-raw/orig.jpg",
+                  "media": "orig",
+                  "mimetype": "image/jpeg",
+                  "width": 4032,
+                  "height": 3024,
+                  "poi": {
+                    "x": 3024,
+                    "y": 756
+                  }
+                },
+                "baseImage": {
+                  "href": "http://localhost:5000/api/upload-raw/baseImage.jpg",
+                  "media": "baseImage",
+                  "mimetype": "image/jpeg",
+                  "width": 1400,
+                  "height": 1050,
+                  "poi": {
+                    "x": 1050,
+                    "y": 262
+                  }
+                },
+                "thumbnail": {
+                  "href": "http://localhost:5000/api/upload-raw/thumbnail.jpg",
+                  "media": "thumbnail",
+                  "mimetype": "image/jpeg",
+                  "width": 160,
+                  "height": 120,
+                  "poi": {
+                    "x": 120,
+                    "y": 30
+                  }
+                },
+                "viewImage": {
+                  "href": "http://localhost:5000/api/upload-raw/viewImage.jpg",
+                  "media": "viewImage",
+                  "mimetype": "image/jpeg",
+                  "width": 640,
+                  "height": 480,
+                  "poi": {
+                    "x": 480,
+                    "y": 120
+                  }
+                },
+                "600x800": {
+                  "poi": {
+                    "x": 3012,
+                    "y": 759
+                  },
+                  "CropLeft": 12,
+                  "CropRight": 4032,
+                  "CropTop": -3,
+                  "CropBottom": 3024,
+                  "width": 800,
+                  "height": 600,
+                  "href": "http://localhost:5000/api/upload-raw/600x800.jpg",
+                  "media": "600x800",
+                  "mimetype": "image/jpeg"
+                },
+                "1280x720": {
+                  "poi": {
+                    "x": 3024,
+                    "y": 756
+                  },
+                  "CropLeft": 0,
+                  "CropRight": 4032,
+                  "CropTop": 0,
+                  "CropBottom": 2277,
+                  "width": 1280,
+                  "height": 720,
+                  "href": "http://localhost:5000/api/upload-raw/1280x720.jpg",
+                  "media": "1280x720",
+                  "mimetype": "image/jpeg"
+                }
+              },
+              "mimetype": "image/jpeg"
+            },
+            {
+                "_id": "item_id",
+                "guid": "item_guid",
+                "headline": "original item",
+                "state": "in_progress",
+                "associations": {
+                    "featuremedia": {
+                        "_id": "feature_media_id",
+                        "media": "5c13867efe985edfc9223480",
+                        "type": "picture",
+                        "headline": "picture headline",
+                        "alt_text": "alt_text",
+                        "description_text": "description_text",
+                        "format": "HTML",
+                        "renditions": {
+                            "original": {
+                                "href": "http://localhost:5000/api/upload-raw/orig.jpg",
+                                "media": "orig",
+                                "mimetype": "image/jpeg",
+                                "width": 4032,
+                                "height": 3024,
+                                "poi": {
+                                    "x": 3024,
+                                    "y": 756
+                                }
+                            },
+                            "baseImage": {
+                                "href": "http://localhost:5000/api/upload-raw/baseImage.jpg",
+                                "media": "baseImage",
+                                "mimetype": "image/jpeg",
+                                "width": 1400,
+                                "height": 1050,
+                                "poi": {
+                                    "x": 1050,
+                                    "y": 262
+                                }
+                            },
+                            "thumbnail": {
+                                "href": "http://localhost:5000/api/upload-raw/thumbnail.jpg",
+                                "media": "thumbnail",
+                                "mimetype": "image/jpeg",
+                                "width": 160,
+                                "height": 120,
+                                "poi": {
+                                    "x": 120,
+                                    "y": 30
+                                }
+                            },
+                            "viewImage": {
+                                "href": "http://localhost:5000/api/upload-raw/viewImage.jpg",
+                                "media": "viewImage",
+                                "mimetype": "image/jpeg",
+                                "width": 640,
+                                "height": 480,
+                                "poi": {
+                                    "x": 480,
+                                    "y": 120
+                                }
+                            },
+                            "600x800": {
+                                "poi": {
+                                    "x": 3012,
+                                    "y": 759
+                                },
+                                "CropLeft": 12,
+                                "CropRight": 4032,
+                                "CropTop": -3,
+                                "CropBottom": 3024,
+                                "width": 800,
+                                "height": 600,
+                                "href": "http://localhost:5000/api/upload-raw/600x800.jpg",
+                                "media": "600x800",
+                                "mimetype": "image/jpeg"
+                            },
+                            "1280x720": {
+                                "poi": {
+                                    "x": 3024,
+                                    "y": 756
+                                },
+                                "CropLeft": 0,
+                                "CropRight": 4032,
+                                "CropTop": 0,
+                                "CropBottom": 2277,
+                                "width": 1280,
+                                "height": 720,
+                                "href": "http://localhost:5000/api/upload-raw/1280x720.jpg",
+                                "media": "1280x720",
+                                "mimetype": "image/jpeg"
+                            }
+                        }
+                    }
+                }
+            }
+        ]
+        """
+      When we post to "/products" with success
+        """
+        {
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+        }
+        """
+      And we post to "/subscribers" with success
+        """
+        {
+        "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+        }
+        """
+      And we publish "#archive._id#" with "publish" type and "published" state
+      Then we get OK response
+      When we get "/published"
+      Then we get list with 2 items
+      When we publish "#archive._id#" with "correct" type and "corrected" state
+        """
+        {
+            "headline": "corrected item",
+            "associations": {
+                "featuremedia": null
+            }
+        }
+        """
+      Then we get OK response
+      And we get existing resource
+        """
+        {
+            "headline": "corrected item",
+            "state": "corrected",
+            "associations": {
+                "featuremedia": "__none__"
+            }
+        }
+        """
+      When we get "/published"
+      Then we get list with 3 items

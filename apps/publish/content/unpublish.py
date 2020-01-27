@@ -31,3 +31,7 @@ class UnpublishService(KillPublishService):
 
     def broadcast_kill_email(self, original, updates):
         pass
+
+    def _publish_associated_items(self, original, updates=None):
+        # associated items remain untouched during unpublish
+        pass

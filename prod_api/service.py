@@ -8,6 +8,8 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import operator
+from functools import reduce
 import superdesk
 from flask import current_app as app
 
@@ -17,6 +19,9 @@ class ProdApiService(superdesk.Service):
     Base service for production api services
     """
 
+    # specify fields to exclude from a response
+    # NOTE: it's possible to specify nested key as `update._links.self.title`
+    # in this case only item['update']['_links']['self']['title'] will be removed.
     excluded_fields = {
         '_etag',
         '_type',
@@ -57,6 +62,13 @@ class ProdApiService(superdesk.Service):
         Remove keys from an item
         """
         for key in self.excluded_fields:
+            keys = key.split('.')
+            if keys[:-1]:
+                # pop last key only from `item`
+                try:
+                    reduce(operator.getitem, keys[:-1], item).pop(keys[-1], None)
+                except KeyError:
+                    pass
             item.pop(key, None)
 
     def _process_item_renditions(self, doc):
@@ -66,7 +78,7 @@ class ProdApiService(superdesk.Service):
 
         def _process(item):
             for _k, v in item.get('renditions', {}).items():
-                if 'media' in v:
+                if v and 'media' in v:
                     media = v.pop('media')
                     old_href = v.get('href')
                     new_href = app.media.url_for_media(media, v.get('mimetype'))

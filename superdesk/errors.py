@@ -145,7 +145,9 @@ class SuperdeskApiError(SuperdeskError):
         return SuperdeskApiError(status_code=400, message=message, payload=payload, exception=exception)
 
     @classmethod
-    def unauthorizedError(cls, message=None, payload={'auth': 1}, exception=None):
+    def unauthorizedError(cls, message=None, payload=None, exception=None):
+        if payload is None:
+            payload = {'auth': 1}
         return SuperdeskApiError(status_code=401, message=message, payload=payload, exception=exception)
 
     @classmethod

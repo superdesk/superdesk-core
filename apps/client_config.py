@@ -34,5 +34,6 @@ def init_app(app):
         'publish_content_expiry_minutes': app.config.get('PUBLISHED_CONTENT_EXPIRY_MINUTES', 0),
         'high_priority_queue_enabled': app.config.get('HIGH_PRIORITY_QUEUE_ENABLED'),
         'default_language': app.config.get('DEFAULT_LANGUAGE'),
+        'workflow_allow_multiple_updates': app.config.get('WORKFLOW_ALLOW_MULTIPLE_UPDATES'),
         'disallowed_characters': app.config.get('DISALLOWED_CHARACTERS'),
     })

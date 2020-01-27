@@ -10,6 +10,7 @@
 
 from superdesk.resource import Resource
 from superdesk.metadata.utils import item_url
+from superdesk.auth_server.scopes import Scope
 
 
 class DesksResource(Resource):
@@ -27,4 +28,7 @@ class DesksResource(Resource):
             # https://github.com/pyeve/eve/blob/afd573d9254a9a23393f35760e9c515300909ccd/eve/io/base.py#L420
             'desk_metadata': 0
         },
+    }
+    privileges = {
+        'GET': Scope.DESKS_READ.name
     }

@@ -469,7 +469,7 @@ class BasePublishService(BaseService):
         else:
             return [], []
 
-    def _validate_associated_items(self, original_item, validation_errors=[]):
+    def _validate_associated_items(self, original_item, validation_errors=None):
         """Validates associated items.
 
         This function will ensure that the unpublished content validates and none of
@@ -479,6 +479,10 @@ class BasePublishService(BaseService):
         :param package:
         :param validation_errors: validation errors are appended if there are any.
         """
+
+        if validation_errors is None:
+            validation_errors = []
+
         items = [value for value in (original_item.get(ASSOCIATIONS) or {}).values()]
         if original_item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and \
                 self.publish_type == ITEM_PUBLISH:
@@ -560,10 +564,14 @@ class BasePublishService(BaseService):
                     keep_existing = not app.settings.get('COPY_METADATA_FROM_PARENT') and not is_db_item_bigger_ver
                     update_item_data(item, updates, keys, keep_existing=keep_existing)
 
-    def _publish_associated_items(self, original, updates={}):
+    def _publish_associated_items(self, original, updates=None):
         """If there any updates to associated item and if setting:PUBLISH_ASSOCIATED_ITEMS is true
         then publish the associated item
         """
+
+        if updates is None:
+            updates = {}
+
         if not publish_services.get(self.publish_type):
             # publish type not supported
             return
@@ -575,8 +583,16 @@ class BasePublishService(BaseService):
             return
 
         associations = original.get(ASSOCIATIONS) or {}
+        if updates and updates.get(ASSOCIATIONS):
+            associations.update(updates[ASSOCIATIONS])
+
         for associations_key, associated_item in associations.items():
-            if type(associated_item) == dict and associated_item.get(config.ID_FIELD):
+            if associated_item is None:
+                continue
+
+            if (type(associated_item) == dict
+                    and associated_item.get(config.ID_FIELD)
+                    and associated_item.get('_fetchable', True)):
 
                 if not config.PUBLISH_ASSOCIATED_ITEMS or not publish_service:
                     # Not allowed to publish
@@ -665,7 +681,7 @@ def get_crop(rendition):
     return {field: rendition[field] for field in fields if field in rendition}
 
 
-def update_item_data(item, data, keys=DEFAULT_SCHEMA.keys(), keep_existing=False):
+def update_item_data(item, data, keys=None, keep_existing=False):
     """Update main item data, so only keys from default schema.
 
     :param dict item: item to update
@@ -673,6 +689,9 @@ def update_item_data(item, data, keys=DEFAULT_SCHEMA.keys(), keep_existing=False
     :param list keys: keys of item to update
     :param bool keep_existing: if True, will only set non existing values
     """
+    if keys is None:
+        keys = DEFAULT_SCHEMA.keys()
+
     for key in keys:
         if data.get(key):
             if keep_existing:

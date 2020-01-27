@@ -89,7 +89,14 @@ BANDWIDTH_SAVER = False
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%S+0000'
 ELASTIC_DATE_FORMAT = '%Y-%m-%d'
 ELASTIC_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
+
 PAGINATION_LIMIT = 200
+
+#: keep default in sync with limit - so when client does not use pagination return all
+#:
+#: .. versionadded:: 1.33
+#:
+PAGINATION_DEFAULT = PAGINATION_LIMIT
 
 LOG_CONFIG_FILE = env('LOG_CONFIG_FILE', 'logging_config.yml')
 LOG_SERVER_ADDRESS = env('LOG_SERVER_ADDRESS', 'localhost')
@@ -473,6 +480,8 @@ AMAZON_CONTAINER_NAME = env('AMAZON_CONTAINER_NAME', '')
 AMAZON_S3_SUBFOLDER = env('AMAZON_S3_SUBFOLDER', '')
 #: adds ACL when putting to S3, can be set to ``public-read``, etc.
 AMAZON_OBJECT_ACL = env('AMAZON_OBJECT_ACL', '')
+#: amazon endpoint. This can be used with third-party s3-compatible servers
+AMAZON_ENDPOINT_URL = env('AMAZON_ENDPOINT_URL', '')
 
 RENDITIONS = {
     'picture': {
@@ -764,6 +773,17 @@ AUTH_SERVER_SHARED_SECRET = env('AUTH_SERVER_SHARED_SECRET', '')
 #:
 KEYWORDS_ADD_MISSING_ON_PUBLISH = False
 
+#: Allow creating multiple updates in production
+#:
+#: By default there can be only 1 update in progress
+#: for a story, when enable there is no limit and multiple
+#: updates can be created. It will still validate on publish
+#: if the previous ones are published and not let publishing
+#: out of sequence.
+#:
+#: .. versionadded:: 2.0
+#:
+WORKFLOW_ALLOW_MULTIPLE_UPDATES = False
 
 #: Enable archive autocomplete API
 #:
@@ -784,3 +804,15 @@ ARCHIVE_AUTOCOMPLETE_DAYS = 0
 #: .. versionadded:: 2.0
 #:
 ARCHIVE_AUTOCOMPLETE_HOURS = 0
+
+
+#: Tansa client config
+#:
+#: .. versionadded:: 2.0
+#:
+TANSA_APP_ID = env('TANSA_APP_ID')
+TANSA_USER_ID = env('TANSA_USER_ID')
+TANSA_PROFILE_ID = env('TANSA_PROFILE_ID')
+TANSA_LICENSE_KEY = env('TANSA_LICENSE_KEY')
+TANSA_CLIENT_BASE_URL = env('TANSA_CLIENT_BASE_URL', 'https://d02.tansa.com/tansaclient/')
+TANSA_PROFILES = {}

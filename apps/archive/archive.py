@@ -281,6 +281,9 @@ class ArchiveService(BaseService):
             else:
                 app.on_archive_item_updated({'task': doc.get('task')}, doc, ITEM_CREATE)
 
+            # used by client to detect item type
+            doc.setdefault('_type', 'archive')
+
         get_resource_service('content_types').set_used(profiles)
         push_content_notification(docs)
 
@@ -1056,6 +1059,10 @@ class ArchiveSaveService(BaseService):
         except KeyError:
             raise SuperdeskApiError.badRequestError(_("Request for Auto-save must have _id"))
         return [docs[0]['_id']]
+
+    def on_fetched_item(self, item):
+        item['_type'] = 'archive'
+        return item
 
 
 superdesk.workflow_state('in_progress')

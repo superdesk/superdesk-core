@@ -13,8 +13,8 @@ from superdesk.media.crop import CropService
 from superdesk.metadata.item import ITEM_STATE, EMBARGO, SCHEDULE_SETTINGS
 from superdesk.utc import utcnow
 from superdesk.text_utils import update_word_count
-from apps.archive.common import set_sign_off, ITEM_OPERATION
-from apps.archive.archive import update_associations, flush_renditions
+from apps.archive.common import set_sign_off, ITEM_OPERATION, get_user
+from apps.archive.archive import flush_renditions
 from .common import BasePublishService, BasePublishResource, ITEM_CORRECT
 from superdesk.emails import send_translation_changed
 from superdesk.activity import add_activity
@@ -79,7 +79,6 @@ class CorrectPublishService(BasePublishService):
             super().set_state(original, updates)
 
     def on_update(self, updates, original):
-        update_associations(updates)
         CropService().validate_multiple_crops(updates, original)
         super().on_update(updates, original)
         updates[ITEM_OPERATION] = self.item_operation
@@ -90,7 +89,7 @@ class CorrectPublishService(BasePublishService):
         flush_renditions(updates, original)
 
     def update(self, id, updates, original):
-        CropService().create_multiple_crops(updates, original)
+        get_resource_service('archive')._handle_media_updates(updates, original, get_user())
         super().update(id, updates, original)
 
     def on_updated(self, updates, original):

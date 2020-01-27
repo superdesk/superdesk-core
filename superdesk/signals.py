@@ -15,6 +15,7 @@ __all__ = [
     'item_update',
     'item_fetched',
     'item_moved',
+    'item_routed',
 ]
 
 import blinker
@@ -91,6 +92,16 @@ item_rewrite = signals.signal('item:rewrite')
 #: :param response: human readable list or errors
 #: :param error_fields: system readable errors info
 item_validate = signals.signal('item:validate')
+
+
+#: Sent when item is routed via internal destinations
+#:
+#: .. versionadded:: 1.33
+#:
+#: :param sender: PublishService
+#: :param item: new item created via routing
+#:
+item_routed = signals.signal('item:routed')
 
 
 def connect(signal, subscriber):

@@ -1,12 +1,13 @@
 Authentication Server
 =====================
 
-Superdesk provides an OAuth2 authentication server for the production API. The server is
+Superdesk provides an OAuth2 authentication server for the `production API`_. The server is
 using the `Client Credentials Grant`_ with JWT access token.
 
 The endpoint used in Superdesk is ``/api/auth_server/token``.
 
 .. _Client Credentials Grant: https://tools.ietf.org/html/rfc6749#section-4.4
+.. _production API: production_api.html
 
 Overview
 --------
@@ -94,15 +95,17 @@ To interact with the production API, clients need to be explicitly allowed to pe
 actions. This is done using the ``--scope`` argument when registering the client. The
 possible values are:
 
-=============  ======================================================
-permission     explanation
-=============  ======================================================
-ARCHIVE_READ   The client can read items from archive collection
-DESK_READ      The client can get desks metadata
-PLANNING_READ  The client can access planning, events and assignments
-CONTACT_READ   The client can get contacts metadata
-USERS_READ     The client can retrieve users
-=============  ======================================================
+================    ======================================================
+permission          explanation
+================    ======================================================
+ARCHIVE_READ        The client can read items from archive collection
+DESKS_READ          The client can get desks metadata
+PLANNING_READ       The client can retrieve planning items
+CONTACTS_READ       The client can get contacts metadata
+USERS_READ          The client can retrieve users
+ASSIGNMENTS_READ    The client can retrieve assignments
+EVENTS_READ         The client can retrieve events
+================    ======================================================
 
 Access token
 ------------
