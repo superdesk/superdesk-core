@@ -493,13 +493,13 @@ class BasePublishService(BaseService):
         for item in items:
             if type(item) == dict and item.get(config.ID_FIELD):
                 doc = item
-                # enhance doc with lock_session
+                # enhance doc with lock_user
                 req = ParsedRequest()
                 req.args = {}
-                req.projection = json.dumps({'lock_session': 1})
+                req.projection = json.dumps({'lock_user': 1})
                 try:
                     doc.update({
-                        'lock_session': super().find_one(req=req, _id=item[config.ID_FIELD])['lock_session']
+                        'lock_user': super().find_one(req=req, _id=item[config.ID_FIELD])['lock_user']
                     })
                 except (TypeError, KeyError):
                     pass
@@ -534,14 +534,14 @@ class BasePublishService(BaseService):
                     validation_errors.extend(pre_errors)
 
             # check the locks on the items
-            if doc.get('lock_session'):
-                if original_item['lock_session'] != doc['lock_session']:
+            if doc.get('lock_user'):
+                if original_item['lock_user'] != doc['lock_user']:
                     validation_errors.extend([
                         '{}: packaged item is locked by another user'.format(
                             doc.get('headline', doc['_id'])
                         )
                     ])
-                elif original_item['lock_session'] == doc['lock_session']:
+                elif original_item['lock_user'] == doc['lock_user']:
                     validation_errors.extend([
                         '{}: packaged item is locked by you. Unlock it and try again'.format(
                             doc.get('headline', doc['_id'])
