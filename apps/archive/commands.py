@@ -106,7 +106,7 @@ class RemoveExpiredContent(superdesk.Command):
                 logger.info('{} No items found to expire.'.format(self.log_msg))
                 return
 
-            if not touch(lock_name, expire=10):
+            if not touch(lock_name, expire=600):
                 logger.warning('{} lost lock while removing expired items.'.format(self.log_msg))
                 return
 
