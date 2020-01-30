@@ -378,6 +378,13 @@ LDAP_USER_ATTRIBUTES = json.loads(env('LDAP_USER_ATTRIBUTES',
                                       '"displayName": "display_name", "mail": "email", '
                                       '"ipPhone": "phone"}'))
 
+#: Enable the ability for the display name of the user to be overridden with Superdesk user attributes
+LDAP_SET_DISPLAY_NAME = strtobool(env('LDAP_SET_DISPLAY_NAME', 'False'))
+#: List of Superdesk user attributes passed to the format method
+LDAP_SET_DISPLAY_NAME_FIELDS = json.loads(env('LDAP_SET_DISPLAY_NAME_FIELDS', '["first_name", "last_name"]'))
+#: Format for the user display name
+LDAP_SET_DISPLAY_NAME_FORMAT = env('LDAP_SET_DISPLAY_NAME_FORMAT', '{} {}')
+
 if LDAP_SERVER:
     CORE_APPS.append('apps.ldap')
 else:

@@ -178,6 +178,11 @@ class ADAuthService(AuthService):
 
         user = superdesk.get_resource_service('users').find_one(req=None, **query)
 
+        if app.settings.get('LDAP_SET_DISPLAY_NAME', False) and 'display_name' in user_data \
+                and all(f in user_data for f in app.settings.get('LDAP_SET_DISPLAY_NAME_FIELDS', [])):
+            user_data['display_name'] = app.settings.get('LDAP_SET_DISPLAY_NAME_FORMAT', '').format(
+                *[user_data.get(f) for f in app.settings.get('LDAP_SET_DISPLAY_NAME_FIELDS', [])])
+
         if not user:
             add_default_values(user_data, profile_to_import,
                                user_type=None if 'user_type' not in user_data else user_data['user_type'])
