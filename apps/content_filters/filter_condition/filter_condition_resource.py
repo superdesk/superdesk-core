@@ -31,7 +31,8 @@ default_allowed_filters = ['anpa_category',
                            'place',
                            'ingest_provider',
                            'embargo',
-                           'featuremedia']
+                           'featuremedia',
+                           'anpa_take_key']
 
 
 class FilterConditionResource(Resource):
