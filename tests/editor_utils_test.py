@@ -1654,22 +1654,6 @@ class Editor3TestCase(unittest.TestCase):
         )
         self.assertEqual(item_editor2["body_html"], item_editor3["body_html"])
 
-        editor_utils.replace_text(item_editor2, 'body_html', "lin", "bar")
-        editor_utils.replace_text(item_editor3, 'body_html', "lin", "bar")
-        self.assertEqual(
-            '<p>initial bare foo</p><p>second bare</p>',
-            item_editor2["body_html"],
-        )
-        self.assertEqual(item_editor2["body_html"], item_editor3["body_html"])
-
-        editor_utils.replace_text(item_editor2, 'body_html', "second", "last")
-        editor_utils.replace_text(item_editor3, 'body_html', "second", "last")
-        self.assertEqual(
-            '<p>initial bare foo</p><p>last bare</p>',
-            item_editor2["body_html"],
-        )
-        self.assertEqual(item_editor2["body_html"], item_editor3["body_html"])
-
     def test_set_blocks(self):
         draftjs_data = {
             "blocks": [
@@ -1709,8 +1693,15 @@ class Editor3TestCase(unittest.TestCase):
 
     def test_replace_text_no_html(self):
         item = {'headline': 'foo bar'}
-        editor_utils.replace_text(item, 'headline', 'bar', 'baz', html=False)
+        editor_utils.replace_text(item, 'headline', 'bar', 'baz', is_html=False)
         self.assertEqual('foo baz', item['headline'])
+
+    def test_replace_text_inline_styles(self):
+        item = {
+            'body_html': '<h1>head</h1>\n<p>lorem <b>this is bold</b> and <b>bold</b> end</p>',
+        }
+        editor_utils.replace_text(item, 'body_html', 'bold', 'UL')
+        self.assertEqual('<h1>head</h1><p>lorem <b>this is UL</b> and <b>UL</b> end</p>', item['body_html'])
 
     def test_replace_what_you_had_is_what_you_get(self):
         html = ''.join([

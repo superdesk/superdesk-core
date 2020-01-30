@@ -30,6 +30,7 @@ ANNOTATION = 'ANNOTATION'
 MEDIA = 'MEDIA'
 TABLE = 'TABLE'
 
+EDITOR_STATE = 'draftjsState'
 ENTITY_MAP = 'entityMap'
 ENTITY_RANGES = 'entityRanges'
 INLINE_STYLE_RANGES = 'inlineStyleRanges'
@@ -44,6 +45,17 @@ TAG_STYLE_MAP = {
 TAG_ENTITY_MAP = {
     'a': ENTITY_TYPES.LINK,
 }
+
+
+def get_field_content_state(item, field):
+    try:
+        return item['fields_meta'][field][EDITOR_STATE][0]
+    except (KeyError, AttributeError):
+        return None
+
+
+def set_field_content_state(item, field, content_state):
+    item.setdefault('fields_meta', {}).update({field: {EDITOR_STATE: [content_state]}})
 
 
 class Entity:
@@ -222,10 +234,7 @@ class EditorContent:
     @staticmethod
     def create(item, field):
         """Factory for EditorContent"""
-        if 'fields_meta' in item:
-            return Editor3Content(item, field)
-        else:
-            raise NotImplementedError("This is not an editor 3 item, EditorContent doesn't manage this")
+        return Editor3Content(item, field)
 
 
 class DraftJSHTMLExporter:
@@ -425,24 +434,22 @@ class Editor3Content(EditorContent):
     editor_version = 3
     HTML_EXPORTER = DraftJSHTMLExporter
 
-    def __init__(self, item, field='body_html', html=True):
+    def __init__(self, item, field='body_html', is_html=True):
         """
         :param item: item containing Draft.js ContentState
         :param field: field to manage, can be "body_html", "headline", etc.
+        :param is_html: boolean to indicate if the field is html or text field
         """
         self.item = item
         self.field = field
-        data = item.setdefault('fields_meta', {}).get(field, {})
-        if not data:
-            self._create_state_from_html(item.get(field), html)
-        else:
-            # if the field exist, draftjsState must exist too
-            self.content_state = data['draftjsState'][0]
+        self.is_html = is_html
+        self.content_state = get_field_content_state(item, field)
+        if not self.content_state:
+            self._create_state_from_html(item.get(field))
         self.blocks = BlockSequence(self)
         self.html_exporter = DraftJSHTMLExporter(self)
-        self.format_html = html
 
-    def _create_state_from_html(self, value=None, html=True):
+    def _create_state_from_html(self, value=None):
         self.content_state = {
             'blocks': [],
             'entityMap': {},
@@ -450,26 +457,24 @@ class Editor3Content(EditorContent):
 
         if not value:
             return
-        else:  # store for next time
-            self.item['fields_meta'][self.field] = {'draftjsState': [self.content_state]}
 
-        def create_entity(type, data, mutability='MUTABLE'):
+        def create_entity(entity_type, data, mutability='MUTABLE'):
             key = len(self.content_state['entityMap'].keys())
             self.content_state['entityMap'][str(key)] = {
-                'type': type,
+                'type': entity_type,
                 'mutability': mutability,
                 'data': data,
             }
             return key
 
-        def create_atomic_block(type, data):
+        def create_atomic_block(entity_type, data):
             block = self.create_block('atomic', text=" ").data
-            entity_key = create_entity(type, data)
+            entity_key = create_entity(entity_type, data)
             block['entityRanges'] = [{'offset': 0, 'length': 1, 'key': entity_key}]
             block['inlineStyleRanges'] = []
             self.content_state['blocks'].append(block)
 
-        if html:
+        if self.is_html:
             root = parse_html(value, 'html')
             for i, elem in enumerate(root):
                 try:
@@ -487,7 +492,7 @@ class Editor3Content(EditorContent):
                             create_atomic_block('EMBED', {'data': {'html': to_string(elem, method='html')}})
                         continue
                     elif elem.tag in ('ul', 'ol'):
-                        pass
+                        pass  # generate block for each li
                     elif elem.text and '<!-- EMBED' in str(elem):
                         continue
                     elif elem.tag == 'table':
@@ -552,10 +557,10 @@ class Editor3Content(EditorContent):
 
                     block_text += child_text
 
-                    if child.tail:
+                    if child.tail and child.tail.strip():
                         block_text += child.tail
 
-                if elem.tail:
+                if elem.tail and elem.tail.strip():
                     block_text += elem.tail
 
                 if block_type:  # no block type for ul/ol
@@ -580,7 +585,8 @@ class Editor3Content(EditorContent):
         return max((int(k) for k in self.content_state['entityMap'].keys()), default=-1) + 1
 
     def update_item(self):
-        self.item[self.field] = self.html if self.format_html else self.text
+        self.item[self.field] = self.html if self.is_html else self.text
+        set_field_content_state(self.item, self.field, self.content_state)
 
     def create_block(self, block_type, *args, **kwargs):
         cls_name = "{}Block".format(block_type.capitalize())
@@ -631,23 +637,24 @@ def _replace_text(content_state, old, new):
             continue
         if not block.get('text'):
             continue
-        start = 0
+        end = 0
         while True:
             try:
-                index = block['text'].index(old, start)
-                start = index + len(old)
-                block['text'] = new.join([block['text'][:index], block['text'][start:]])
+                index = block['text'].index(old, end)
+                end = index + len(old)
+                block['text'] = new.join([block['text'][:index], block['text'][end:]])
                 for range_field in (ENTITY_RANGES, INLINE_STYLE_RANGES):
                     if block.get(range_field):
                         ranges = []
                         for range_ in block[range_field]:
                             range_end = range_['offset'] + range_['length']
-                            if range_['offset'] > start:
-                                # move ranges starting after replaced text
+                            if range_['offset'] > end:  # starting after replaced, move it
                                 range_['offset'] += len(new) - len(old)
                                 ranges.append(range_)
-                            elif range_end <= index:
-                                # keep ranges before replaced text
+                            elif range_end <= index:  # starting before replaced text, keep it
+                                ranges.append(range_)
+                            elif range_['offset'] <= index and range_end >= end:  # contain the text, fix length
+                                range_['length'] += len(new) - len(old)
                                 ranges.append(range_)
                             else:
                                 # remove ranges overlapping with replaced text
@@ -659,23 +666,23 @@ def _replace_text(content_state, old, new):
                 break
 
 
-def replace_text(item, field, old, new, html=True):
+def replace_text(item, field, old, new, is_html=True):
     """Replace all occurences of old replaced with new.
 
     It won't replace it in atomic blocks and embeds,
     only text blocks, headings, tables, ul/ol.
     """
-    editor = Editor3Content(item, field, html)
+    editor = Editor3Content(item, field, is_html)
     _replace_text(editor.content_state, old, new)
     editor.update_item()
 
 
-def filter_blocks(item, field, filter, html=True):
+def filter_blocks(item, field, filter, is_html=True):
     """Filter content blocks for field.
 
     It will keep only blocks for which filter returns True.
     """
-    editor = Editor3Content(item, field, html)
+    editor = Editor3Content(item, field, is_html)
     blocks = []
     for block in editor.blocks:
         if filter(block):
