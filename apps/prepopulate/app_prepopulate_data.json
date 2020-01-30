@@ -216,6 +216,13 @@
                     "order": 10,
                     "formatOptions": ["underline", "link", "bold"]
                 },
+                "media-gallery": {
+                    "enabled": true,
+                    "field_name": "Image gallery 33",
+                    "order": 12,
+                    "section": "content",
+                    "required": false
+                },
                 "body_html": {
                     "editor3": true,
                     "order": 14,
@@ -523,6 +530,39 @@
         },
         "resource": "vocabularies",
 		"id_name": "-id vocabularies priority-"
+    },
+
+    {
+        "data": {
+            "field_type": "media",
+            "items": [],
+            "type": "manageable",
+            "schema": {
+                "name": {},
+                "qcode": {},
+                "parent": {}
+            },
+            "service": {
+                "all": 1
+            },
+            "field_options": {
+                "allowed_workflows": {
+                    "in_progress": true,
+                    "published": true
+                },
+                "allowed_types": {
+                    "picture": true
+                },
+                "multiple_items": {
+                    "enabled": true,
+                    "max_items": 5
+                }
+            },
+            "_id": "media-gallery",
+            "display_name": "Image gallery 33"
+        },
+        "resource": "vocabularies",
+		"id_name": "-id related media field-"
     },
 
     {
