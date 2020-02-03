@@ -170,7 +170,7 @@ class SchemaValidator(Validator):
         if not media_metadata_schema:
             return
         for assoc_name, assoc_data in associations.items():
-            if assoc_data is None:
+            if assoc_data is None or assoc_data.get('type') == 'text':
                 continue
             for field, schema in media_metadata_schema.items():
                 if schema.get('required', False) and not assoc_data.get(field):

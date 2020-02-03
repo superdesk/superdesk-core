@@ -45,6 +45,7 @@ from apps.item_lock.models.item import ItemModel
 from apps.packages import PackageService
 from .archive_media import ArchiveMediaService
 from superdesk.utc import utcnow
+from superdesk.vocabularies import is_related_content
 from flask_babel import _
 
 EDITOR_KEY_PREFIX = 'editor_'
@@ -238,7 +239,7 @@ class ArchiveService(BaseService):
             update_associations(doc)
             for key, assoc in doc.get(ASSOCIATIONS, {}).items():
                 # don't set time stamp for related items
-                if not self._is_related_content(key):
+                if not is_related_content(key):
                     self._set_association_timestamps(assoc, doc)
                     remove_unwanted(assoc)
 
@@ -331,7 +332,7 @@ class ArchiveService(BaseService):
             if not (item_obj and config.ID_FIELD in item_obj):
                 continue
 
-            if self._is_related_content(item_name):
+            if is_related_content(item_name):
                 continue
 
             item_id = item_obj[config.ID_FIELD]
@@ -641,7 +642,7 @@ class ArchiveService(BaseService):
                 if association is None:
                     continue
                 # don't set time stamp for related items
-                if not self._is_related_content(key):
+                if not is_related_content(key):
                     self._set_association_timestamps(association, updates, new=False)
                     remove_unwanted(association)
 
@@ -952,16 +953,6 @@ class ArchiveService(BaseService):
         :param original: original item version before update
         """
         return get_resource_service('desks').apply_desk_metadata(updates, original)
-
-    def _is_related_content(self, item_name, related_content=None):
-        if related_content is None:
-            related_content = list(
-                get_resource_service('vocabularies').get(req=None, lookup={'field_type': 'related_content'}))
-
-        if related_content and item_name.split('--')[0] in [content['_id'] for content in related_content]:
-            return True
-
-        return False
 
     def handle_mark_user_notifications(self, updates, original, add_activity=True):
         """Notify user when item is marked or unmarked

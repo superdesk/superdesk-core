@@ -49,6 +49,7 @@ from apps.packages.package_service import PackageService
 from apps.publish.published_item import LAST_PUBLISHED_VERSION, PUBLISHED,\
     PUBLISHED_IN_PACKAGE
 from superdesk.media.crop import CropService
+from superdesk.vocabularies import is_related_content
 from flask_babel import _
 
 
@@ -169,6 +170,9 @@ class BasePublishService(BaseService):
 
                 if updates.get(ASSOCIATIONS):
                     self._refresh_associated_items(updated, skip_related=True)  # updates got lost with update
+
+                if updated.get(ASSOCIATIONS):
+                    self._fix_related_references(updated, updates)
 
                 signals.item_publish.send(self, item=updated)
                 self._update_archive(original, updates, should_insert_into_versions=auto_publish)
@@ -558,7 +562,6 @@ class BasePublishService(BaseService):
             kwargs = {
                 'item_id': doc.get(config.ID_FIELD)
             }
-
             # countdown=3 is for elasticsearch to be refreshed with archive and published changes
             import_into_legal_archive.apply_async(countdown=3, kwargs=kwargs)  # @UndefinedVariable
 
@@ -567,7 +570,7 @@ class BasePublishService(BaseService):
         item was associated will be carried on and used when validating those items.
         """
         associations = original.get(ASSOCIATIONS) or {}
-        for __, item in associations.items():
+        for name, item in associations.items():
             if type(item) == dict and item.get(config.ID_FIELD) and (not skip_related or len(item.keys()) > 2):
                 keys = [key for key in DEFAULT_SCHEMA.keys() if key not in PRESERVED_FIELDS]
 
@@ -586,6 +589,15 @@ class BasePublishService(BaseService):
                     # otherwise check the value is_db_item_bigger_ver
                     keep_existing = not app.settings.get('COPY_METADATA_FROM_PARENT') and not is_db_item_bigger_ver
                     update_item_data(item, updates, keys, keep_existing=keep_existing)
+
+    def _fix_related_references(self, updated, updates):
+        for key, item in updated[ASSOCIATIONS].items():
+            if item and is_related_content(key):
+                updated[ASSOCIATIONS][key] = {
+                    '_id': item['_id'],
+                    'type': item['type'],
+                }
+                updates.setdefault('associations', {})[key] = updated[ASSOCIATIONS][key]
 
     def _publish_associated_items(self, original, updates=None):
         """If there any updates to associated item and if setting:PUBLISH_ASSOCIATED_ITEMS is true
