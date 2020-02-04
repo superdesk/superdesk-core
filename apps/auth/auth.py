@@ -19,6 +19,7 @@ from superdesk.resource import Resource
 from superdesk.errors import SuperdeskApiError
 from superdesk import get_resource_service, get_resource_privileges, get_intrinsic_privileges
 from superdesk.utc import utcnow
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 
@@ -114,7 +115,7 @@ class SuperdeskTokenAuth(TokenAuth):
             return True
 
         # Step 3: Intrinsic Privileges
-        message = 'Insufficient privileges for the requested operation.'
+        message = _('Insufficient privileges for the requested operation.')
         intrinsic_privileges = get_intrinsic_privileges()
         if intrinsic_privileges.get(resource) and method in intrinsic_privileges[resource]:
             service = get_resource_service(resource)
