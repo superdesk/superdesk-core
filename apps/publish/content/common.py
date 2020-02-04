@@ -49,6 +49,7 @@ from apps.packages.package_service import PackageService
 from apps.publish.published_item import LAST_PUBLISHED_VERSION, PUBLISHED,\
     PUBLISHED_IN_PACKAGE
 from superdesk.media.crop import CropService
+from superdesk.default_settings import strtobool
 from flask_babel import _
 from flask import request, json
 
@@ -272,7 +273,8 @@ class BasePublishService(BaseService):
 
     def _raise_if_unpublished_related_items(self, original):
         archive_service = get_resource_service('archive')
-        publishing_warnings_confirmed = request.args.get('publishing_warnings_confirmed')
+        publishing_warnings_confirmed = strtobool(request.args.get('publishing_warnings_confirmed'))
+
         if (not config.PUBLISH_ASSOCIATED_ITEMS
                 and not publishing_warnings_confirmed
                 and original.get(ASSOCIATIONS)
@@ -280,12 +282,12 @@ class BasePublishService(BaseService):
             for key, associated_item in original.get(ASSOCIATIONS).items():
                 if associated_item and archive_service._is_related_content(key):
                     item = archive_service.find_one(req=None, _id=associated_item.get('_id'))
+
                     if item.get('state') not in PUBLISH_STATES:
                         error_msg = json.dumps({
-                            'id': 'publishing_warnings_confirmed',
-                            'message': _('There are unpublished related \
-                                        items that would not be sent out as \
-                                        related items. Do you want to publish the article anyway?')
+                            'warnings': [_('There are unpublished related ' +
+                                           'items that won\'t be sent out as ' +
+                                           'related items. Do you want to publish the article anyway?')]
                         })
                         raise ValidationError(error_msg)
 
