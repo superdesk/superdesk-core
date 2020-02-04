@@ -273,7 +273,7 @@ class BasePublishService(BaseService):
 
     def _raise_if_unpublished_related_items(self, original):
         archive_service = get_resource_service('archive')
-        publishing_warnings_confirmed = strtobool(request.args.get('publishing_warnings_confirmed'))
+        publishing_warnings_confirmed = strtobool(request.args.get('publishing_warnings_confirmed') or 'False')
 
         if (not config.PUBLISH_ASSOCIATED_ITEMS
                 and not publishing_warnings_confirmed
