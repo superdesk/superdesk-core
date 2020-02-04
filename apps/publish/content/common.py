@@ -272,13 +272,18 @@ class BasePublishService(BaseService):
             raise ValidationError(validation_errors)
 
     def _raise_if_unpublished_related_items(self, original):
+        if not request:
+            return
+
+        if (config.PUBLISH_ASSOCIATED_ITEMS
+                or not original.get(ASSOCIATIONS)
+                or self.publish_type not in [ITEM_PUBLISH, ITEM_CORRECT]):
+            return
+
         archive_service = get_resource_service('archive')
         publishing_warnings_confirmed = strtobool(request.args.get('publishing_warnings_confirmed') or 'False')
 
-        if (not config.PUBLISH_ASSOCIATED_ITEMS
-                and not publishing_warnings_confirmed
-                and original.get(ASSOCIATIONS)
-                and self.publish_type in [ITEM_PUBLISH, ITEM_CORRECT]):
+        if not publishing_warnings_confirmed:
             for key, associated_item in original.get(ASSOCIATIONS).items():
                 if associated_item and archive_service._is_related_content(key):
                     item = archive_service.find_one(req=None, _id=associated_item.get('_id'))
