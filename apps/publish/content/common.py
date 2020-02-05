@@ -50,7 +50,10 @@ from apps.publish.published_item import LAST_PUBLISHED_VERSION, PUBLISHED,\
     PUBLISHED_IN_PACKAGE
 from superdesk.media.crop import CropService
 from superdesk.vocabularies import is_related_content
+from superdesk.default_settings import strtobool
+
 from flask_babel import _
+from flask import request, json
 
 
 logger = logging.getLogger(__name__)
@@ -221,6 +224,7 @@ class BasePublishService(BaseService):
 
     def _validate(self, original, updates):
         self.raise_if_invalid_state_transition(original)
+        self._raise_if_unpublished_related_items(original)
 
         updated = original.copy()
         updated.update(updates)
@@ -271,6 +275,31 @@ class BasePublishService(BaseService):
 
         if len(validation_errors) > 0:
             raise ValidationError(validation_errors)
+
+    def _raise_if_unpublished_related_items(self, original):
+        if not request:
+            return
+
+        if (config.PUBLISH_ASSOCIATED_ITEMS
+                or not original.get(ASSOCIATIONS)
+                or self.publish_type not in [ITEM_PUBLISH, ITEM_CORRECT]):
+            return
+
+        archive_service = get_resource_service('archive')
+        publishing_warnings_confirmed = strtobool(request.args.get('publishing_warnings_confirmed') or 'False')
+
+        if not publishing_warnings_confirmed:
+            for key, associated_item in original.get(ASSOCIATIONS).items():
+                if associated_item and is_related_content(key):
+                    item = archive_service.find_one(req=None, _id=associated_item.get('_id'))
+
+                    if item.get('state') not in PUBLISH_STATES:
+                        error_msg = json.dumps({
+                            'warnings': [_('There are unpublished related ' +
+                                           'items that won\'t be sent out as ' +
+                                           'related items. Do you want to publish the article anyway?')]
+                        })
+                        raise ValidationError(error_msg)
 
     def _validate_package(self, package, updates, validation_errors):
         # make sure package is not scheduled or spiked
