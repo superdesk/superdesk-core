@@ -198,7 +198,7 @@ Feature: Publish embedded items feature
 
         When we patch "archive/#archive._id#"
         """
-        {"slugline": "bike"}
+        {"slugline": "bike", "pubstatus" : "usable"}
         """
         Then we get OK response
 
@@ -207,6 +207,8 @@ Feature: Publish embedded items feature
         {"headline": "foo", "associations": {
             "embedded1": {
                 "_id": "#archive._id#",
+                "slugline": "bike",
+                "pubstatus" : "usable",
                 "type": "picture",
                 "headline": "test",
                 "alt_text": "alt_text",
@@ -281,7 +283,7 @@ Feature: Publish embedded items feature
 
         When we patch "archive/#archive._id#"
         """
-        {"slugline": "bike"}
+        {"slugline": "bike", "pubstatus" : "usable"}
         """
         Then we get OK response
 
@@ -291,6 +293,8 @@ Feature: Publish embedded items feature
             "embedded1": {
                 "_id": "#archive._id#",
                 "type": "picture",
+                "slugline": "bike",
+                "pubstatus" : "usable",
                 "headline": "test",
                 "alt_text": "alt_text",
                 "description_text": "description_text",
@@ -375,6 +379,7 @@ Feature: Publish embedded items feature
                 "embedded1": {
                     "_id": "#archive._id#",
                     "type": "picture",
+                    "pubstatus" : "usable",
                     "headline": "test",
                     "alt_text": "alt_text",
                     "description_text": "description_text",
@@ -393,7 +398,7 @@ Feature: Publish embedded items feature
 
         When we patch "archive/#archive._id#"
         """
-        {"slugline": "bike"}
+        {"slugline": "bike", "pubstatus" : "usable"}
         """
         Then we get OK response
 
@@ -404,6 +409,8 @@ Feature: Publish embedded items feature
                 "_id": "#archive._id#",
                 "type": "picture",
                 "headline": "test",
+                "slugline": "bike",
+                "pubstatus" : "usable",
                 "alt_text": "alt_text",
                 "description_text": "description_text",
                 "state": "in_progress"}}}

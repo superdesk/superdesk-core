@@ -488,7 +488,7 @@ class BasePublishService(BaseService):
             updates = {}
 
         # merge associations
-        associations = original_item.get(ASSOCIATIONS, {})
+        associations = deepcopy(original_item.get(ASSOCIATIONS, {}))
         associations.update(updates.get(ASSOCIATIONS, {}))
 
         items = [value for value in associations.values()]
