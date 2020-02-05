@@ -42,6 +42,7 @@ from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, GUID_FIELD
 from superdesk.metadata.packages import RESIDREF, GROUP_ID, GROUPS, ROOT_GROUP, REFS
 from superdesk.utils import json_serialize_datetime_objectId
 from superdesk.media.renditions import get_renditions_spec
+from superdesk.vocabularies import is_related_content
 from apps.archive.common import get_utc_schedule
 from superdesk import text_utils
 from collections import OrderedDict
@@ -309,7 +310,7 @@ class NINJSFormatter(Formatter):
 
         for key, item in sorted_associations.items():
             if item:
-                if archive_service._is_related_content(key) and '_type' not in item:
+                if is_related_content(key) and '_type' not in item:
                     item = archive_service.find_one(req=None, _id=item['_id'])
                 item = self._transform_to_ninjs(item, subscriber, recursive=False)
                 associations[key] = item  # all items should stay in associations

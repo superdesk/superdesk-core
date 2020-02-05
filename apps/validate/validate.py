@@ -170,7 +170,7 @@ class SchemaValidator(Validator):
         if not media_metadata_schema:
             return
         for assoc_name, assoc_data in associations.items():
-            if assoc_data is None:
+            if assoc_data is None or assoc_data.get('type') == 'text':
                 continue
             for field, schema in media_metadata_schema.items():
                 if schema.get('required', False) and not assoc_data.get(field):
@@ -394,7 +394,7 @@ class ValidateService(superdesk.Service):
                             messages.append(REQUIRED_ERROR.format(display_name))
                         else:
                             messages.append('{} {}'.format(display_name, error_list[e][field]))
-                elif error_list[e] == 'required field' or type(error_list[e]) is dict or type(error_list[e]) is list:
+                elif 'required field' in error_list[e] or type(error_list[e]) is dict or type(error_list[e]) is list:
                     display_name = self._get_vocabulary_display_name(e)
                     messages.append(REQUIRED_ERROR.format(display_name.upper()))
                 elif 'min length is 1' == error_list[e] or 'null value not allowed' in error_list[e]:

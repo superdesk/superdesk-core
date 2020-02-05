@@ -11,6 +11,7 @@ from bson import ObjectId
 from bson.errors import InvalidId
 from superdesk import get_resource_service
 from superdesk.commands.data_updates import DataUpdate
+from superdesk.vocabularies import is_related_content
 
 
 class DataUpdate(DataUpdate):
@@ -26,7 +27,7 @@ class DataUpdate(DataUpdate):
                 update = False
                 associations = {}
                 for key, val in item['associations'].items():
-                    if val and archive_service._is_related_content(key, related) and len(val.keys()) > 2:
+                    if val and is_related_content(key, related) and len(val.keys()) > 2:
                         update = True
                         associations[key] = {
                             '_id': val['_id'],

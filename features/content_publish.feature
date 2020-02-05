@@ -2567,20 +2567,19 @@ Feature: Content Publishing
     Scenario: Publish associated items and move them to the output stage on main item publish
       Given "vocabularies"
       """
-      [{
-          "_id": "media1", "field_type": "media",
-          "display_name": "Media 1", "type": "manageable",
-          "service": {"all": 1}, "items": [],
-          "field_options": {"allowed_types": {"picture": true}},
-          "schema": {"parent": {}, "name": {}, "qcode": {}}
-      }]
+      [
+        {"_id": "media", "field_type": "media", "field_options": {"allowed_types": {"picture": true}}},
+        {"_id": "related", "field_type": "related_content"}
+      ]
       """
       And "content_types"
       """
       [{
           "_id": "profile1", "label": "Profile 1",
           "is_used": true, "enabled": true, "priority": 0, "editor": {},
-          "schema": {"media1": {"required": true, "nullable": false, "enabled": true, "type": "media"}}
+          "schema": {"media": {"required": true, "type": "media"}}
+      }, {
+        "_id": "profile2", "schema": {}
       }]
       """
       And "validators"
@@ -2611,13 +2610,16 @@ Feature: Content Publishing
       And we post to "archive" with success
       """
       [
-          {
+        {
+          "_id": "text", "guid": "text", "type": "text", "headline": "text", "state": "in_progress", "profile": "profile2"
+        },
+        {
                "guid": "234", "type": "picture", "slugline": "234", "headline": "234", "state": "in_progress",
             "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
-               "renditions": {}
+            "renditions": {}
         },
           {
-              "guid": "123", "type": "text", "headline": "test", "state": "in_progress",
+              "guid": "123", "type": "text", "headline": "test", "state": "in_progress", "profile": "profile1",
             "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
             "subject":[{"qcode": "17004000", "name": "Statistics"}], "body_html": "Test Document body",
             "associations": {
@@ -2632,9 +2634,13 @@ Feature: Content Publishing
                     "state": "in_progress",
                     "renditions": {},
                     "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}
+                },
+                "related--1": {
+                  "_id": "text",
+                  "type": "text"
                 }
             }
-           }
+          }
       ]
       """
       And we publish "123" with "publish" type and "published" state
@@ -2661,6 +2667,43 @@ Feature: Content Publishing
       }
       """
       And we get null stage
+      When we get "/published"
+      Then we get list with 3 items
+      """
+      {"_items": [{
+        "guid": "123",
+        "associations": {
+          "media--1": {
+            "_id": "234",
+            "type": "picture",
+            "state": "published"
+          },
+          "related--1": {
+            "_id": "text",
+            "type": "text",
+            "state": "__no_value__"
+          }
+        }
+      }]}
+      """
+      When we get "/archive/123"
+      Then we get existing resource
+      """
+      {
+        "associations": {
+          "media--1": {
+            "_id": "234",
+            "type": "picture",
+            "state": "published"
+          },
+          "related--1": {
+            "_id": "text",
+            "type": "text",
+            "state": "__no_value__"
+          }
+        }
+      }
+      """
 
     @auth
     Scenario: Correct associated items updates the fields
