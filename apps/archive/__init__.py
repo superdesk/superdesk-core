@@ -109,6 +109,9 @@ def init_app(app):
     superdesk.privilege(name='hold', label='Hold', description='Hold content')
     superdesk.privilege(name='restore', label='Restore', description='Restore content')
     superdesk.privilege(name='rewrite', label='Update', description='Create an update')
+    superdesk.privilege(name='mark_for_user',
+                        label='Mark items for users',
+                        description='User can mark or unmark items for other users')
 
     superdesk.intrinsic_privilege(ArchiveUnlockResource.endpoint_name, method=['POST'])
 
