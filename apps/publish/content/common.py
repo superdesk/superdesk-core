@@ -544,14 +544,16 @@ class BasePublishService(BaseService):
                 if doc.get('lock_user'):
                     if original_item['lock_user'] != doc['lock_user']:
                         validation_errors.extend([
-                            '{}: packaged item is locked by another user'.format(
-                                doc.get('headline', doc['_id'])
+                            '{}: {}'.format(
+                                doc.get('headline', doc['_id']),
+                                _('packaged item is locked by another user')
                             )
                         ])
                     elif original_item['lock_user'] == doc['lock_user']:
                         validation_errors.extend([
-                            '{}: packaged item is locked by you. Unlock it and try again'.format(
-                                doc.get('headline', doc['_id'])
+                            '{}: {}'.format(
+                                doc.get('headline', doc['_id']),
+                                _('packaged item is locked by you. Unlock it and try again')
                             )
                         ])
 
