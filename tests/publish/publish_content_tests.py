@@ -54,7 +54,7 @@ class TransmitItemTestCase(TestCase):
 
         orig_item = item_1.copy()  # item's original state in DB
         fake_get_service().find_one.return_value = orig_item
-        self.func_under_test(item_1['_id'])
+        self.assertIsNone(self.func_under_test(item_1['_id']))
         fake_get_service().system_update.assert_called_with('item_1', {'_updated': ANY, 'retry_attempt': 1,
                                                                        'state': 'retrying',
                                                                        'next_retry_attempt_at': ANY}, orig_item)
@@ -79,7 +79,7 @@ class TransmitItemTestCase(TestCase):
 
         orig_item = item_1.copy()  # item's original state in DB
         fake_get_service().find_one.return_value = orig_item
-        self.func_under_test(item_1['_id'])
+        self.assertIs(self.func_under_test(item_1['_id']))
 
         fake_get_service().system_update.assert_called_with('item_1', {'_updated': ANY, 'retry_attempt': 2,
                                                                        'state': 'retrying',
@@ -106,7 +106,7 @@ class TransmitItemTestCase(TestCase):
 
         orig_item = item_1.copy()  # item's original state in DB
         fake_get_service().find_one.return_value = orig_item
-        self.func_under_test(item_1['_id'])
+        self.assertIsNone(self.func_under_test(item_1['_id']))
         fake_get_service().system_update.assert_called_with('item_1', {'_updated': ANY, 'state': 'failed'}, orig_item)
 
     @mock.patch('superdesk.publish.publish_content.logger')
@@ -127,7 +127,7 @@ class TransmitItemTestCase(TestCase):
         }
 
         fake_get_service().find_one.return_value = item_1
-        self.func_under_test(item_1['_id'])
+        self.assertIsNone(self.func_under_test(item_1['_id']))
         fake_logger = mocks[1]
         expected_msg = 'Failed to set the state for failed publish queue item item_1.'
         fake_logger.error.assert_any_call(expected_msg)
@@ -151,7 +151,7 @@ class TransmitItemTestCase(TestCase):
                   'subscriber_id': subscriber['_id'], 'formatted_item': 'test'}
 
         self.app.data.insert('publish_queue', [item_1])
-        self.func_under_test(item_1['_id'])
+        self.assertIsNone(self.func_under_test(item_1['_id']))
         failed_item = self.app.data.find_one('publish_queue', req=None, _id=item_1['_id'])
         self.assertEqual(failed_item['state'], 'retrying')
         self.assertEqual(failed_item['retry_attempt'], 1)
@@ -183,7 +183,7 @@ class TransmitItemTestCase(TestCase):
         fake_transmitters_list = mocks[0]
         fake_transmitters_list.__getitem__.return_value = fake_transmitter
 
-        self.func_under_test(item_1['_id'])
+        self.assertTrue(self.func_under_test(item_1['_id']))
 
         fake_get_service().system_update.assert_called_with('item_1', {'_updated': ANY,
                                                                        'state': 'failed'}, orig_item)
@@ -214,7 +214,7 @@ class TransmitItemTestCase(TestCase):
         fake_transmitters_list = mocks[0]
         fake_transmitters_list.__getitem__.return_value = fake_transmitter
 
-        self.func_under_test(item_1['_id'])
+        self.assertNone(self.func_under_test(item_1['_id']))
 
         fake_get_service().system_update.assert_called_with('item_1', {'_updated': ANY, 'retry_attempt': 1,
                                                                        'state': 'retrying',
