@@ -2,8 +2,9 @@
 import os
 import re
 import socket
+import logging
 
-from mongolock import MongoLock
+from mongolock import MongoLock, MongoLockException
 from werkzeug.local import LocalProxy
 from flask import current_app as app
 from superdesk.logging import logger
@@ -13,6 +14,8 @@ _lock_resource_settings = {
     'internal_resource': True,
     'versioning': False,
 }
+
+logger = logging.getLogger(__name__)
 
 
 class SuperdeskMongoLock(MongoLock):
@@ -27,6 +30,18 @@ class SuperdeskMongoLock(MongoLock):
             return self.collection.delete_one({'_id': key, 'owner': owner})
         else:
             return super().release(key, owner)
+
+    def _try_get_lock(self, key, owner, expire):
+        """Log warning in case lock is gained after expiry.
+
+        This should not happen in general, locks should be released.
+        Consider increasing lock time.
+        """
+        lock_info = self.get_lock_info(key)
+        locked = super()._try_get_lock(key, owner, expire)
+        if locked and lock_info and lock_info['locked']:
+            logger.warning('Lock %s expired', key)
+        return locked
 
 
 def _get_lock():
@@ -83,3 +98,17 @@ def remove_locks():
     result = _lock.collection.delete_many({'$or': [{'_id': re.compile('^item_move'), 'locked': False},
                                           {'_id': re.compile('^item_lock'), 'locked': False}]})
     logger.info('unused item locks deleted count={}'.format(result.deleted_count))
+
+
+def touch(task, host=None, expire=1):
+    """Touch lock on given task.
+
+    It will extend expiry so task can run longer if needed.
+    """
+    if not host:
+        host = get_host()
+    try:
+        _lock.touch(task, host, expire)
+        return True
+    except MongoLockException:
+        return False
