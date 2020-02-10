@@ -268,7 +268,7 @@ class BasePublishService(BaseService):
                 raise SuperdeskValidationError(errors, fields)
 
         validation_errors = []
-        self._validate_associated_items(original, validation_errors)
+        self._validate_associated_items(original, updates, validation_errors)
 
         if original[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
             self._validate_package(original, updates, validation_errors)
@@ -504,12 +504,11 @@ class BasePublishService(BaseService):
         else:
             return [], []
 
-    def _validate_associated_items(self, original_item, validation_errors=None):
+    def _validate_associated_items(self, original_item, updates=None, validation_errors=None):
         """Validates associated items.
 
         This function will ensure that the unpublished content validates and none of
-        the content is locked by other than the publishing session, also do not allow
-        any killed or recalled or spiked content.
+        the content is locked, also do not allow any killed or recalled or spiked content.
 
         :param package:
         :param validation_errors: validation errors are appended if there are any.
@@ -518,7 +517,14 @@ class BasePublishService(BaseService):
         if validation_errors is None:
             validation_errors = []
 
-        items = [value for value in (original_item.get(ASSOCIATIONS) or {}).values()]
+        if updates is None:
+            updates = {}
+
+        # merge associations
+        associations = deepcopy(original_item.get(ASSOCIATIONS, {}))
+        associations.update(updates.get(ASSOCIATIONS, {}))
+
+        items = [value for value in associations.values()]
         if original_item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE and \
                 self.publish_type == ITEM_PUBLISH:
             items.extend(self.package_service.get_residrefs(original_item))
@@ -545,7 +551,7 @@ class BasePublishService(BaseService):
                 continue
 
             if original_item[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
-                self._validate_associated_items(doc, validation_errors)
+                self._validate_associated_items(doc, validation_errors=validation_errors)
 
             # make sure no items are killed or recalled or spiked or scheduled
             doc_item_state = doc.get(ITEM_STATE, CONTENT_STATE.PUBLISHED)
@@ -566,20 +572,23 @@ class BasePublishService(BaseService):
                     pre_errors = ['Associated item %s %s' % (doc.get('slugline', ''), error) for error in errors[0]]
                     validation_errors.extend(pre_errors)
 
-            # check the locks on the items
-            if doc.get('lock_user'):
-                if original_item['lock_user'] != doc['lock_user']:
-                    validation_errors.extend([
-                        '{}: packaged item is locked by another user'.format(
-                            doc.get('headline', doc['_id'])
-                        )
-                    ])
-                elif original_item['lock_user'] == doc['lock_user']:
-                    validation_errors.extend([
-                        '{}: packaged item is locked by you. Unlock it and try again'.format(
-                            doc.get('headline', doc['_id'])
-                        )
-                    ])
+            if config.PUBLISH_ASSOCIATED_ITEMS:
+                # check the locks on the items
+                if doc.get('lock_user'):
+                    if original_item['lock_user'] != doc['lock_user']:
+                        validation_errors.extend([
+                            '{}: {}'.format(
+                                doc.get('headline', doc['_id']),
+                                _('packaged item is locked by another user')
+                            )
+                        ])
+                    elif original_item['lock_user'] == doc['lock_user']:
+                        validation_errors.extend([
+                            '{}: {}'.format(
+                                doc.get('headline', doc['_id']),
+                                _('packaged item is locked by you. Unlock it and try again')
+                            )
+                        ])
 
     def _import_into_legal_archive(self, doc):
         """Import into legal archive async
