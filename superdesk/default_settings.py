@@ -222,6 +222,7 @@ CELERY_TASK_QUEUES = (
     Queue(celery_queue('default'), Exchange(celery_queue('default')), routing_key='default'),
     Queue(celery_queue('expiry'), Exchange(celery_queue('expiry'), type='topic'), routing_key='expiry.#'),
     Queue(celery_queue('legal'), Exchange(celery_queue('legal'), type='topic'), routing_key='legal.#'),
+    Queue(celery_queue('ingest'), Exchange(celery_queue('ingest'), type='topic'), routing_key='ingest.#'),
     Queue(celery_queue('publish'), Exchange(celery_queue('publish'), type='topic'), routing_key='publish.#'),
     Queue(
         HIGH_PRIORITY_QUEUE,
@@ -237,7 +238,11 @@ CELERY_TASK_ROUTES = {
     },
     'superdesk.io.gc_ingest': {
         'queue': celery_queue('expiry'),
-        'routing_key': 'expiry.ingest'
+        'routing_key': 'expiry.ingest',
+    },
+    'superdesk.io.*': {
+        'queue': celery_queue('ingest'),
+        'routing_key': 'ingest.ingest',
     },
     'superdesk.audit.gc_audit': {
         'queue': celery_queue('expiry'),
