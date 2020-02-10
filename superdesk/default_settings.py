@@ -716,6 +716,11 @@ GEONAMES_USERNAME = env('GEONAMES_USERNAME')
 GEONAMES_TOKEN = env('GEONAMES_TOKEN')
 GEONAMES_URL = env('GEONAMES_URL', 'http://api.geonames.org/')
 GEONAMES_FEATURE_CLASSES = ['P']
+#: Set how much metadata should be returned
+#:
+#: .. versionadded:: 1.33
+#:
+GEONAMES_SEARCH_STYLE = 'medium'
 
 # media required fields
 VALIDATOR_MEDIA_METADATA = {
