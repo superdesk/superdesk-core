@@ -52,6 +52,7 @@ install_requires = [
     'unidecode==0.04.21',
     'authlib>0.12,<0.13',
     'draftjs-exporter[lxml]<2.2',
+    'werkzeug<1.0',
 ]
 
 package_data = {
