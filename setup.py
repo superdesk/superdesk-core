@@ -51,6 +51,7 @@ install_requires = [
     'python-dateutil<2.8',
     'unidecode==0.04.21',
     'vine==1.3.0',
+    'werkzeug<1.0',
 ]
 
 package_data = {
