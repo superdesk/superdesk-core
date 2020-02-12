@@ -599,12 +599,15 @@ class Editor3Content(EditorContent):
             return block
 
     def set_blocks(self, blocks):
-        data = self.blocks[0].data.get('data')  # store internal data from first block
+        try:
+            data = self.blocks[0].data.get('data')  # store internal data from first block
+        except IndexError:
+            data = {}
         self.content_state['blocks'] = [getattr(block, 'data', block) for block in blocks]
         self.blocks = BlockSequence(self)
         if not len(self.blocks):
             self.prepend('Unstyled')
-        if not self.blocks[0].data.get('data'):
+        if not self.blocks[0].data.get('data') and data:
             self.blocks[0].data['data'] = data
 
     def prepend(self, block_type, *args, **kwargs):
