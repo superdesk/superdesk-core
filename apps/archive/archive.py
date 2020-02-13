@@ -1026,6 +1026,73 @@ class ArchiveService(BaseService):
                           user_list=user_list,
                           extension='markForUser')
 
+    def get_items_chain(self, item):
+        """
+        Get the whole items chain which includes all previous updates,
+        all translations and the original item.
+
+        Result list may contain:
+            - original item
+            - original item's translations
+            - update-1 item
+            - update-1 item's translations
+            - update-N item
+            - update-N item's translations
+            - `item`
+            - `item`'s translations
+        NOTE: The first item in the list is the original item
+
+        :param item: item can be an "initial", "rewrite", or "translation"
+        :type item: dict
+        :return: chain of items
+        :rtype: list
+        """
+
+        def get_item_translated_from(item):
+            while True:
+                try:
+                    item = self.find_one(req={}, _id=item['translated_from'])
+                except Exception:
+                    break
+            return item
+
+        item = get_item_translated_from(item)
+        # add item + translations
+        items_chain = [item]
+        items_chain += self.get_item_translations(item)
+
+        while True:
+            try:
+                item = self.find_one(req={}, _id=item['rewrite_of'])
+                # prepend translations + update
+                items_chain = self.get_item_translations(item) + items_chain
+                items_chain.insert(0, item)
+            except Exception:
+                break
+
+        return items_chain
+
+    def get_item_translations(self, item):
+        """
+        Get list of item's translations.
+        :param item: item
+        :type item: dict
+        :return: list of dicts
+        :rtype: list
+        """
+        translation_items = []
+
+        for translation_item_id in item.get('translations', []):
+            translation_item = self.find_one(
+                req={},
+                _id=translation_item_id
+            )
+            translation_items.append(translation_item)
+            # get a translation of a translation and so on
+            translation_items += self.get_item_translations(translation_item)
+
+        return translation_items
+
 
 class AutoSaveResource(Resource):
     endpoint_name = 'archive_autosave'
