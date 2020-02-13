@@ -1768,3 +1768,7 @@ class Editor3TestCase(unittest.TestCase):
 
         editor_utils.filter_blocks(item, 'body_html', block_filter)
         self.assertEqual('<p>second line</p>', item['body_html'])
+
+        item = {'body_html': ''}
+        editor_utils.filter_blocks(item, 'body_html', block_filter)
+        self.assertEqual('', item['body_html'])
