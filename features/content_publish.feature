@@ -834,7 +834,7 @@ Feature: Content Publishing
       When we patch "/archive/123"
       """
       {
-        "publish_schedule":"2020-02-13T22:46:19.000Z",
+        "publish_schedule":"2030-02-13T22:46:19.000Z",
         "schedule_settings": {"time_zone": "Australia/Sydney"}
       }
       """
@@ -858,22 +858,22 @@ Feature: Content Publishing
       {
         "_items":
           [
-            {"publish_schedule":  "2020-02-13T22:46:19+0000",
-             "schedule_settings":  {"utc_publish_schedule": "2020-02-13T11:46:19+0000"}
+            {"publish_schedule":  "2030-02-13T22:46:19+0000",
+             "schedule_settings":  {"utc_publish_schedule": "2030-02-13T11:46:19+0000"}
             }
           ]
       }
       """
       When we patch "/archive/123"
       """
-      {"publish_schedule":  "2020-03-13T22:46:19+0000"}
+      {"publish_schedule":  "2030-03-13T22:46:19+0000"}
       """
       Then we get response code 200
       When we get "/archive/123"
       Then we get existing resource
       """
-      {"publish_schedule":  "2020-03-13T22:46:19+0000",
-       "schedule_settings":  {"utc_publish_schedule": "2020-03-13T11:46:19+0000"}
+      {"publish_schedule":  "2030-03-13T22:46:19+0000",
+       "schedule_settings":  {"utc_publish_schedule": "2030-03-13T11:46:19+0000"}
       }
       """
       When we patch "/archive/123"
@@ -884,8 +884,8 @@ Feature: Content Publishing
       When we get "/archive/123"
       Then we get existing resource
       """
-      {"publish_schedule":  "2020-03-13T22:46:19+0000",
-       "schedule_settings":  {"utc_publish_schedule": "2020-03-13T22:46:19+0000"}
+      {"publish_schedule":  "2030-03-13T22:46:19+0000",
+       "schedule_settings":  {"utc_publish_schedule": "2030-03-13T22:46:19+0000"}
       }
       """
       When we patch "/archive/123"
