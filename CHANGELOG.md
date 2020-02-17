@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.32.5] 2020-02-17
+
+### Fixed
+
+- Fix werkzeug package version.
+
 ## [1.32.4] 2019-12-23
 
 ### Added
