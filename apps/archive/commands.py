@@ -25,6 +25,7 @@ from superdesk.notification import push_notification
 from superdesk import get_resource_service
 from bson.objectid import ObjectId
 from datetime import timedelta
+from werkzeug.exceptions import Conflict
 
 logger = logging.getLogger(__name__)
 
@@ -339,8 +340,11 @@ class RemoveExpiredContent(superdesk.Command):
                 logger.info('{} Found {} published items for item: {}'.format(self.log_msg,
                                                                               len(published_items), item_id))
                 if moved_to_archived:
-                    archived_service.post(published_items)
-                    logger.info('{} Moved item to text archive for item {}.'.format(self.log_msg, item_id))
+                    try:
+                        archived_service.post(published_items)
+                        logger.info('{} Moved item to text archive for item {}.'.format(self.log_msg, item_id))
+                    except Conflict:
+                        logger.warning('%s Item is already in text archive. item=%s', self.log_msg, item_id)
                 else:
                     logger.info('{} Not Moving item to text archive for item {}.'.format(self.log_msg, item_id))
 
