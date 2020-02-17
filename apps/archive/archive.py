@@ -1049,11 +1049,16 @@ class ArchiveService(BaseService):
         """
 
         def get_item_translated_from(item):
-            while True:
+            _item = item
+            for _i in range(50):
                 try:
                     item = self.find_one(req={}, _id=item['translated_from'])
                 except Exception:
                     break
+            else:
+                logger.error(
+                    'Failed to retrive an initial item from which item {} was translated from'.format(_item.get('_id'))
+                )
             return item
 
         item = get_item_translated_from(item)
@@ -1061,7 +1066,7 @@ class ArchiveService(BaseService):
         items_chain = [item]
         items_chain += self.get_item_translations(item)
 
-        while True:
+        for _i in range(50):
             try:
                 item = self.find_one(req={}, _id=item['rewrite_of'])
                 # prepend translations + update
@@ -1069,7 +1074,10 @@ class ArchiveService(BaseService):
                 items_chain.insert(0, item)
             except Exception:
                 break
-
+        else:
+            logger.error(
+                'Failed to retrieve the whole items chain for item {}'.format(item.get('_id'))
+            )
         return items_chain
 
     def get_item_translations(self, item):
