@@ -292,6 +292,7 @@ class BasePublishService(BaseService):
             for key, associated_item in original.get(ASSOCIATIONS).items():
                 if associated_item and is_related_content(key):
                     item = archive_service.find_one(req=None, _id=associated_item.get('_id'))
+                    item = item if item else associated_item
 
                     if item.get('state') not in PUBLISH_STATES:
                         error_msg = json.dumps({
