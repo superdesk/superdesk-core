@@ -21,9 +21,8 @@ import unidecode
 import boto3
 from botocore.client import Config
 from eve.io.media import MediaStorage
-from mimetypes import guess_extension
 
-from superdesk.media.media_operations import download_file_from_url
+from superdesk.media.media_operations import download_file_from_url, guess_media_extension
 from superdesk.utc import query_datetime
 
 logger = logging.getLogger(__name__)
@@ -51,17 +50,6 @@ class AmazonObjectWrapper(BytesIO):
         self.upload_date = s3_object['LastModified']
         self.md5 = s3_object['ETag'][1:-1]
         self._id = name
-
-
-def _guess_extension(content_type):
-    ext = str(guess_extension(content_type))
-    if ext in ['.jpe', '.jpeg']:
-        return '.jpg'
-    if 'mp3' in content_type or 'audio/mpeg' in content_type:
-        return '.mp3'
-    if 'flac' in content_type:
-        return '.flac'
-    return ext if ext != 'None' else ''
 
 
 class AmazonMediaStorage(MediaStorage):
@@ -125,7 +113,7 @@ class AmazonMediaStorage(MediaStorage):
 
         extension = ''
         if not file_extension:
-            extension = str(_guess_extension(content_type)) if content_type else ''
+            extension = str(guess_media_extension(content_type)) if content_type else ''
 
         if version is True:
             # automatic version is set on 15mins granularity.

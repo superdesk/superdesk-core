@@ -6,7 +6,7 @@ from unittest.mock import patch, Mock
 from superdesk.utc import utcnow
 from superdesk.tests import TestCase
 from superdesk.storage import AmazonMediaStorage
-from superdesk.storage.amazon_media_storage import _guess_extension
+from superdesk.media.media_operations import guess_media_extension
 
 
 class AmazonMediaStorageTestCase(TestCase):
@@ -129,17 +129,17 @@ class AmazonMediaStorageTestCase(TestCase):
         self.assertEqual(self.amazon.client.list_objects.call_args_list, call_arg_list)
 
     def test_guess_extension(self):
-        self.assertEqual('.jpg', _guess_extension('image/jpeg'))
-        self.assertEqual('.png', _guess_extension('image/png'))
+        self.assertEqual('.jpg', guess_media_extension('image/jpeg'))
+        self.assertEqual('.png', guess_media_extension('image/png'))
 
-        self.assertEqual('.mp3', _guess_extension('audio/mp3'))
-        self.assertEqual('.mp3', _guess_extension('audio/mpeg'))
-        self.assertEqual('.flac', _guess_extension('audio/flac'))
+        self.assertEqual('.mp3', guess_media_extension('audio/mp3'))
+        self.assertEqual('.mp3', guess_media_extension('audio/mpeg'))
+        self.assertEqual('.flac', guess_media_extension('audio/flac'))
 
-        self.assertEqual('.mp4', _guess_extension('video/mp4'))
+        self.assertEqual('.mp4', guess_media_extension('video/mp4'))
 
         # leave empty when there is no extension
-        self.assertEqual('', _guess_extension('audio/foo'))
+        self.assertEqual('', guess_media_extension('audio/foo'))
 
     def test_media_url_none_utf8(self):
         filename = '[DIARY NOTE] – Victory In The Pacific Day Commemoration - Thursday (1)'
