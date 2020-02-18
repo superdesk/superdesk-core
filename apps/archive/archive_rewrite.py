@@ -110,7 +110,8 @@ class ArchiveRewriteService(Service):
         if original.get('rewritten_by'):
             raise SuperdeskApiError.badRequestError(message=_('Article has been rewritten before !'))
 
-        if not is_workflow_state_transition_valid('rewrite', original[ITEM_STATE]):
+        if (not is_workflow_state_transition_valid('rewrite', original[ITEM_STATE])
+                and not config.ALLOW_UPDATING_SCHEDULED_ITEMS):
             raise InvalidStateTransitionError()
 
         if (
