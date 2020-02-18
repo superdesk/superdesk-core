@@ -1,8 +1,7 @@
-
 import flask
-import unittest
 import unittest.mock
-from . import push_content_notification
+
+from apps.content import push_content_notification
 
 
 class PushContentNotificationTestCase(unittest.TestCase):

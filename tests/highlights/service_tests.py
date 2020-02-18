@@ -11,6 +11,7 @@
 from unittest import mock
 from unittest.mock import MagicMock
 
+from apps.highlights import init_app
 from superdesk.tests import TestCase
 
 
@@ -19,11 +20,7 @@ class MarkedForHighlightsServiceTest(TestCase):
 
     def setUpForChildren(self):
         super().setUpForChildren()
-
-        from apps.highlights import init_app
-        # with self.app.app_context():
         init_app(self.app)
-
         try:
             from apps.highlights.service import MarkedForHighlightsService
         except ImportError:

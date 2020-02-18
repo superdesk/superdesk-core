@@ -10,17 +10,17 @@
 import json
 import re
 import os
-
-from eve.utils import ParsedRequest
-from superdesk.utc import utcnow
 from datetime import timedelta
 
+from eve.utils import ParsedRequest
+
+from superdesk.utc import utcnow
+from superdesk import get_resource_service
+from superdesk.tests import TestCase
 from apps.content_filters.filter_condition.filter_condition_service import FilterConditionService
 from apps.content_filters.filter_condition.filter_condition import FilterCondition
 from apps.content_filters.filter_condition.filter_condition_operator import FilterConditionOperator
 from apps.prepopulate.app_populate import AppPopulateCommand
-from superdesk import get_resource_service
-from superdesk.tests import TestCase
 
 
 class FilterConditionTests(TestCase):

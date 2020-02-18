@@ -1,20 +1,11 @@
-# -*- coding: utf-8; -*-
-#
-# This file is part of Superdesk.
-#
-# Copyright 2013, 2014 Sourcefabric z.u. and contributors.
-#
-# For the full copyright and license information, please see the
-# AUTHORS and LICENSE files distributed with this source code, or
-# at https://www.sourcefabric.org/superdesk/license
-
 import os
 from unittest import mock
 
-import superdesk
+from superdesk import get_resource_service
 from superdesk.io.feeding_services import FTPFeedingService
 from superdesk.io.commands.update_ingest import ingest_items
-from .reuters_mock import setup_reuters_mock, teardown_reuters_mock
+
+from .mocks_reuters import setup_reuters_mock, teardown_reuters_mock
 
 
 def setup_providers(context):
@@ -27,13 +18,13 @@ def setup_providers(context):
                          {"old": "@", "new": ""},
                      ]}
 
-        result = superdesk.get_resource_service('rule_sets').post([rule_sets])
+        result = get_resource_service('rule_sets').post([rule_sets])
 
         app.config['REUTERS_USERNAME'] = 'no_username'
         app.config['REUTERS_PASSWORD'] = 'no_password'
         setup_reuters_mock(context)
 
-        path_to_fixtures = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'fixtures')
+        path_to_fixtures = os.path.join(os.path.abspath(os.path.dirname(__file__)), '../../tests/io/fixtures')
         providers = [
             {
                 'name': 'reuters',
@@ -123,7 +114,7 @@ def setup_providers(context):
         ]
 
         with mock.patch.object(FTPFeedingService, '_test', return_value=True):
-            result = superdesk.get_resource_service('ingest_providers').post(providers)
+            result = get_resource_service('ingest_providers').post(providers)
 
         context.providers['reuters'] = result[0]
         context.providers['aap'] = result[1]

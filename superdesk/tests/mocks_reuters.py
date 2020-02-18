@@ -23,7 +23,7 @@ def login_request(url, request):
 def item_request(url, request):
     try:
         params = parse_qs(url.query, keep_blank_values=True)
-        fixtures = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'fixtures')
+        fixtures = os.path.join(os.path.abspath(os.path.dirname(__file__)), '../../tests/io/fixtures')
         if 'channel' in params:
             file = os.path.join(fixtures, params['channel'][0])
         else:
@@ -38,7 +38,7 @@ def item_request(url, request):
 @urlmatch(scheme='http', netloc='content.reuters.com')
 def content_request(url, request):
     try:
-        fixtures = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'fixtures')
+        fixtures = os.path.join(os.path.abspath(os.path.dirname(__file__)), '../../tests/io/fixtures')
         file = os.path.join(fixtures, basename(url.path))
         with open(file, 'rb') as stored_response:
             content = stored_response.read()

@@ -20,7 +20,7 @@ from superdesk.io.feed_parsers.afp_newsml_1_2 import AFPNewsMLOneFeedParser
 class TestCase(unittest.TestCase):
     def setUp(self):
         dirname = os.path.dirname(os.path.realpath(__file__))
-        fixture = os.path.join(dirname, 'fixtures', 'afp.xml')
+        fixture = os.path.join(dirname, '../fixtures', 'afp.xml')
         provider = {'name': 'Test'}
         with open(fixture, 'rb') as f:
             self.item = AFPNewsMLOneFeedParser().parse(etree.fromstring(f.read()), provider)

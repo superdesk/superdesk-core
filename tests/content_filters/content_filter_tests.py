@@ -8,9 +8,10 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from eve.utils import ParsedRequest
-import json
 import os
+import json
+
+from eve.utils import ParsedRequest
 
 from apps.content_filters.content_filter.content_filter_service import ContentFilterService
 from apps.prepopulate.app_populate import AppPopulateCommand

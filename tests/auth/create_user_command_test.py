@@ -8,13 +8,13 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from .commands import CreateUserCommand
 from superdesk import get_resource_service
 from superdesk.tests import TestCase
 from superdesk.utc import utcnow
+from apps.auth.db.commands import CreateUserCommand
 
 
-class UsersTestCase(TestCase):
+class CreateUserCommandTestCase(TestCase):
 
     def test_create_user_command(self):
         if not self.app.config.get('LDAP_SERVER'):
