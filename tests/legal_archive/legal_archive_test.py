@@ -16,11 +16,11 @@ from datetime import timedelta
 from eve.versioning import resolve_document_version
 from eve.utils import ParsedRequest
 
-from .commands import LegalArchiveImport
 from apps.archive.common import insert_into_versions, ARCHIVE
 from superdesk import get_resource_service
 from superdesk.tests import TestCase
 from superdesk.utc import utcnow
+from apps.legal_archive.commands import LegalArchiveImport
 
 
 class LegalArchiveTestCase(TestCase):

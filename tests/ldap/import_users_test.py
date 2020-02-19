@@ -12,11 +12,11 @@ import os
 from unittest import mock
 from unittest.mock import MagicMock
 
-from .commands import ImportUserProfileFromADCommand
 from apps.auth.errors import CredentialsAuthError
 from superdesk.errors import SuperdeskApiError
 from superdesk.tests import TestCase
 from superdesk import get_resource_service
+from apps.ldap.commands import ImportUserProfileFromADCommand
 
 
 if os.environ.get('LDAP_SERVER', ''):

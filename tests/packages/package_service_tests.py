@@ -9,7 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk.tests import TestCase
-from .package_service import PackageService
+
+from apps.packages.package_service import PackageService
 
 
 class PackageServiceTestCase(TestCase):
