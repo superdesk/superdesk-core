@@ -227,8 +227,8 @@ class ArchiveRewriteService(Service):
             # send the document to the desk only if a new rewrite is created
             send_to(doc=rewrite, desk_id=(desk_id or original['task']['desk']), default_stage='working_stage')
 
-            # if we are rewriting a published item then copy the body_html
-            if original.get('state', '') in (CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED):
+            # if we are rewriting a published item then copy the
+            if original.get('state', '') in (CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED, CONTENT_STATE.SCHEDULED):
                 rewrite['body_html'] = original.get('body_html', '')
 
         rewrite[ITEM_STATE] = CONTENT_STATE.PROGRESS
