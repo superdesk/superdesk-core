@@ -175,6 +175,7 @@
                 "formats": [
                     {"name": "NINJS", "qcode": "ninjs"},
                     {"name": "NINJSv2", "qcode": "ninjs2"},
+                    {"name": "NINJS FTP", "qcode": "ftp ninjs"},
                     {"name": "NewsML G2", "qcode": "newsmlg2"},
                     {"name": "Email", "qcode": "email"},
                     {"name": "Newsroom NINJS", "qcode": "newsroom ninjs"},
@@ -184,6 +185,7 @@
                 "formats": [
                     {"name": "NINJS", "qcode": "ninjs"},
                     {"name": "NINJSv2", "qcode": "ninjs2"},
+                    {"name": "NINJS FTP", "qcode": "ftp ninjs"},
                     {"name": "NewsML G2", "qcode": "newsmlg2"},
                     {"name": "Email", "qcode": "email"},
                     {"name": "Newsroom NINJS", "qcode": "newsroom ninjs"},

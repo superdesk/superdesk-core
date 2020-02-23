@@ -385,7 +385,7 @@ class NINJSFormatter(Formatter):
         """Format single rendition using fields whitelist."""
         formatted = {}
         for field in self.rendition_properties:
-            if not rendition.get(field):
+            if field not in rendition:
                 continue
             formatted[field] = rendition[field]
             if field in ('width', 'height'):
