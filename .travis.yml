@@ -2,6 +2,8 @@ language: python
 
 python: 3.5
 
+dist: bionic
+
 services:
     - docker
 
@@ -10,7 +12,7 @@ cache: pip
 before_install:
     - |
       if [ "$SKIP_SERVER_INSTALL" != "true" ]; then
-        docker-compose up -d
+        docker-compose -f .travis-docker-compose.yml up -d
       fi
 
 jobs:
