@@ -8,12 +8,14 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import superdesk
+import superdesk.signals as signals
+
 from eve.utils import config
 from eve.versioning import resolve_document_version
 from flask import request, current_app as app
 from copy import deepcopy
 
-import superdesk
 from apps.tasks import send_to, apply_onstage_rule
 from apps.desks import DeskTypes
 from superdesk import get_resource_service
@@ -132,7 +134,10 @@ class MoveService(BaseService):
         convert_task_attributes_to_objectId(archived_doc)
         resolve_document_version(archived_doc, ARCHIVE, 'PATCH', original)
         del archived_doc[config.ID_FIELD]
+
+        signals.item_move.send(self, item=archived_doc, original=original)
         archive_service.update(original[config.ID_FIELD], archived_doc, original)
+
         insert_into_versions(id_=original[config.ID_FIELD])
         push_item_move_notification(original, archived_doc)
         app.on_archive_item_updated(archived_doc, original, ITEM_MOVE)
@@ -140,7 +145,7 @@ class MoveService(BaseService):
         # make sure `item._id` is there in signal
         moved_item = archived_doc.copy()
         moved_item[config.ID_FIELD] = original[config.ID_FIELD]
-        superdesk.item_moved.send(self, item=moved_item, original=original)
+        signals.item_moved.send(self, item=moved_item, original=original)
 
     def _validate(self, archived_doc, doc):
         """Validate that the item can be move.

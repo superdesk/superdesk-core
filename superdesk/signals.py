@@ -13,7 +13,9 @@ __all__ = [
     'item_publish',
     'item_published',
     'item_update',
+    'item_updated',
     'item_fetched',
+    'item_move',
     'item_moved',
     'item_routed',
 ]
@@ -51,6 +53,15 @@ item_published = signals.signal('item:published')
 #: :param original: original item version
 item_update = signals.signal('item:update')
 
+#: Sent after new version is saved.
+#:
+#: .. versionadded:: 1.33
+#:
+#: :param sender: ArchiveService
+#: :param item: updated item
+#: :param original: original item version
+item_updated = signals.signal('item:updated')
+
 #: Sent after item is fetched.
 #:
 #: .. versionadded:: 1.29
@@ -59,6 +70,15 @@ item_update = signals.signal('item:update')
 #: :param item: fetched item in production
 #: :param ingest_item: item in ingest
 item_fetched = signals.signal('item:fetched')
+
+#: Sent before item is moved to different desk/stage.
+#:
+#: .. versionadded:: 1.33
+#:
+#: :param sender: MoveService
+#: :param item: item after moving
+#: :param original: item before moving
+item_move = signals.signal('item:move')
 
 #: Sent after item is moved to different desk/stage.
 #:

@@ -12,8 +12,9 @@ import flask
 import logging
 import datetime
 import superdesk
-from copy import copy, deepcopy
+import superdesk.signals as signals
 
+from copy import copy, deepcopy
 from superdesk.resource import Resource
 from superdesk.metadata.utils import extra_response_fields, item_url, aggregations, \
     is_normal_package, get_elastic_highlight_query
@@ -313,9 +314,6 @@ class ArchiveService(BaseService):
         self._handle_media_updates(updates, original, user)
         flush_renditions(updates, original)
 
-        # send signal
-        superdesk.item_update.send(self, updates=updates, original=original)
-
     def _handle_media_updates(self, updates, original, user):
         update_associations(updates)
 
@@ -389,9 +387,6 @@ class ArchiveService(BaseService):
 
         if updates.get('profile'):
             get_resource_service('content_types').set_used([updates.get('profile')])
-
-        if 'marked_for_user' in updates:
-            self.handle_mark_user_notifications(updates, original)
 
         self.cropService.update_media_references(updates, original)
 
@@ -650,7 +645,17 @@ class ArchiveService(BaseService):
         if PUBLISH_SCHEDULE in updates and original[ITEM_STATE] == CONTENT_STATE.SCHEDULED:
             self.deschedule_item(updates, original)  # this is an deschedule action
 
-        return super().update(id, updates, original)
+        # send signal
+        signals.item_update.send(self, updates=updates, original=original)
+
+        res = super().update(id, updates, original)
+
+        updated = copy(original)
+        updated.update(updates)
+        signals.item_updated.send(self, item=updated, original=original)
+
+        if 'marked_for_user' in updates:
+            self.handle_mark_user_notifications(updates, original)
 
     def deschedule_item(self, updates, original):
         """Deschedule an item.
