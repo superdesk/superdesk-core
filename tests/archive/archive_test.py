@@ -15,6 +15,7 @@ from datetime import timedelta, datetime
 from unittest import mock
 
 import superdesk
+import superdesk.signals as signals
 from superdesk.errors import SuperdeskApiError
 from superdesk.tests import TestCase
 from superdesk.utc import utcnow
@@ -385,3 +386,28 @@ class ArchiveTestCase(TestCase):
         corrected = publish_service.find_one(None, _id='foo')
         self.assertEqual('corrected', corrected['body_html'])
         self.assertEqual(NOW, corrected['firstpublished'])
+
+    def test_update_signals(self):
+        def handler(sender, **kwargs):
+            pass
+
+        item_update_mock = mock.create_autospec(handler)
+        item_updated_mock = mock.create_autospec(handler)
+
+        signals.item_update.connect(item_update_mock)
+        signals.item_updated.connect(item_updated_mock)
+
+        archive_service = superdesk.get_resource_service('archive')
+        item = {'_id': 'foo'}
+        ids = archive_service.create([item])
+
+        updates = {'foo': 'bar'}
+        archive_service.update(ids[0], updates, item)
+
+        updated = item.copy()
+        updated.update(updates)
+        item_update_mock.assert_called_once_with(archive_service, updates=updates, original=item)
+        item_updated_mock.assert_called_once_with(archive_service, item=updated, original=item)
+
+        signals.item_update.disconnect(item_update_mock)
+        signals.item_updated.disconnect(item_updated_mock)
