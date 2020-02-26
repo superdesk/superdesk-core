@@ -32,6 +32,7 @@ class FilterConditionParametersResource(Resource):
 class FilterConditionParametersService(BaseService):
     def get(self, req, lookup):
         values = self._get_field_values()
+        agenda_values = self._get_planning_agendas()
         fields = [{'field': 'anpa_category',
                    'label': _('ANPA Category'),
                    'operators': ['in', 'nin'],
@@ -137,6 +138,12 @@ class FilterConditionParametersService(BaseService):
                   {'field': 'anpa_take_key',
                    'operators': ['in', 'nin', 'eq', 'ne', 'like', 'notlike', 'startswith', 'endswith']
                    },
+                  {'field': 'agendas',
+                   'label': _('Agendas'),
+                   'operators': ['in', 'nin'],
+                   'values': agenda_values,
+                   'value_field': '_id',
+                   },
                   ]
         fields.extend(self._get_vocabulary_fields(values))
         return ListCursor(fields)
@@ -205,3 +212,11 @@ class FilterConditionParametersService(BaseService):
                 continue
             stages[i]['name'] = '{}: {}'.format(desk['name'], stage['name'])
         return tuple(i for i in stages if i)
+
+    def _get_planning_agendas(self):
+        agendas = []
+        agenda_service = get_resource_service('agenda')
+        cursor = agenda_service.find({'is_enabled': True})
+        for document in cursor:
+            agendas.append(document)
+        return agendas

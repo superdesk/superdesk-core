@@ -49,6 +49,8 @@ class ContentFilterTestService(BaseService):
                 article_id = doc.get('article_id')
                 article = get_resource_service('archive').find_one(req=None, _id=article_id)
                 if not article:
+                    article = get_resource_service('planning').find_one(None, _id=article_id)
+                if not article:
                     article = get_resource_service('ingest').find_one(req=None, _id=article_id)
                     if not article:
                         raise SuperdeskApiError.badRequestError(_('Article not found!'))
