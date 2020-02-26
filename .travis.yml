@@ -22,4 +22,6 @@ jobs:
           name: "unit"
         - script: behave --format progress2 --logging-level=ERROR
           name: "behave"
+        - script: cd prod_api && time pytest
+          name: "prodapi-pytest"
 
