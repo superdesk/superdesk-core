@@ -631,7 +631,7 @@ class BasePublishService(BaseService):
 
     def _fix_related_references(self, updated, updates):
         for key, item in updated[ASSOCIATIONS].items():
-            if item and is_related_content(key):
+            if item and item.get('_fetchable', True) and is_related_content(key):
                 updated[ASSOCIATIONS][key] = {
                     '_id': item['_id'],
                     'type': item['type'],
