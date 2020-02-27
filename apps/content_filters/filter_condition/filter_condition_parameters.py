@@ -217,3 +217,4 @@ class FilterConditionParametersService(BaseService):
         if 'planning' in app.config.get('INSTALLED_APPS', []):
             agenda_service = get_resource_service('agenda')
             return list(agenda_service.find({'is_enabled': True}))
+        return []
