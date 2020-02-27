@@ -48,3 +48,15 @@ show how to add an embedded code at the top of the body::
        body_editor.prepend('embed', '<p class="some_class">some embedded HTML to
        prepend</p>')
        body_editor.update_item()
+
+Rendering customisation
+=======================
+
+Sometimes, you may want to modify the behavior of the renderer.
+
+embeds
+------
+
+Embeds can be modified before being rendered. For that, the ``EMBED_PRE_PROCESS`` setting
+can be used. It is an iterable linking to callable. Each callable will get the data dict
+where the ``html`` key contains the raw HTML, so it can modify it.
