@@ -214,9 +214,6 @@ class FilterConditionParametersService(BaseService):
         return tuple(i for i in stages if i)
 
     def _get_planning_agendas(self):
-        agendas = []
-        agenda_service = get_resource_service('agenda')
-        cursor = agenda_service.find({'is_enabled': True})
-        for document in cursor:
-            agendas.append(document)
-        return agendas
+        if 'planning' in app.config.get('INSTALLED_APPS', []):
+            agenda_service = get_resource_service('agenda')
+            return list(agenda_service.find({'is_enabled': True}))
