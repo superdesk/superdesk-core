@@ -42,7 +42,6 @@ def test_excluded_fields(prodapi_app_with_data, prodapi_app_with_data_client):
     """
 
     excluded_fields = {
-        '_id',
         'fields_meta',
         'unique_id',
         'family_id',
