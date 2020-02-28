@@ -36,6 +36,7 @@ class FilterConditionFieldsEnum(Enum):
     ingest_provider = 17
     embargo = 18
     featuremedia = 19
+    agendas = 20
 
 
 class FilterConditionField:

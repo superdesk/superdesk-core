@@ -138,6 +138,15 @@ class FilterConditionParametersService(BaseService):
                    'operators': ['in', 'nin', 'eq', 'ne', 'like', 'notlike', 'startswith', 'endswith']
                    },
                   ]
+
+        if 'planning' in app.config.get('INSTALLED_APPS', []):
+            fields.append({'field': 'agendas',
+                           'label': _('Agendas'),
+                           'operators': ['in', 'nin'],
+                           'values': list(get_resource_service('agenda').find({'is_enabled': True})),
+                           'value_field': '_id',
+                           })
+
         fields.extend(self._get_vocabulary_fields(values))
         return ListCursor(fields)
 
