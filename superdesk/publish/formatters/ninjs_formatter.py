@@ -45,7 +45,6 @@ from superdesk.media.renditions import get_renditions_spec
 from superdesk.vocabularies import is_related_content
 from apps.archive.common import get_utc_schedule
 from superdesk import text_utils
-from collections import OrderedDict
 
 logger = logging.getLogger(__name__)
 # this regex match the way custom media fields are put in associations (i.e. how the key
@@ -301,14 +300,14 @@ class NINJSFormatter(Formatter):
 
     def _format_related(self, article, subscriber):
         """Format all associated items for simple items (not packages)."""
-        associations = OrderedDict()
+        associations = {}
         extra_items = {}
         media = {}
         content_profile = None
         archive_service = superdesk.get_resource_service('archive')
-        sorted_associations = OrderedDict(sorted(article.get(ASSOCIATIONS).items() or {}))
+        sorted_associations = article.get(ASSOCIATIONS).items() or {}
 
-        for key, item in sorted_associations.items():
+        for key, item in sorted_associations:
             if item:
                 if is_related_content(key) and '_type' not in item:
                     item = archive_service.find_one(req=None, _id=item['_id'])
