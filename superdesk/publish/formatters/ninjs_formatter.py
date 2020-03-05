@@ -305,9 +305,8 @@ class NINJSFormatter(Formatter):
         media = {}
         content_profile = None
         archive_service = superdesk.get_resource_service('archive')
-        sorted_associations = article.get(ASSOCIATIONS).items() or {}
 
-        for key, item in sorted_associations:
+        for key, item in article.get(ASSOCIATIONS).items() or {}:
             if item:
                 if is_related_content(key) and '_type' not in item:
                     item = archive_service.find_one(req=None, _id=item['_id'])
