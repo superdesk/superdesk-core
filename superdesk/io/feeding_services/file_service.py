@@ -85,6 +85,9 @@ class FileFeedingService(FeedingService):
                     last_updated = self.get_last_updated(file_path)
 
                     if self.is_latest_content(last_updated, provider.get('last_updated')):
+                        if self.is_empty(file_path):
+                            logger.info('Ignoring empty file {}'.format(filename))
+                            continue
                         if isinstance(registered_parser, XMLFeedParser):
                             with open(file_path, 'rb') as f:
                                 xml = etree.parse(f)
@@ -156,6 +159,11 @@ class FileFeedingService(FeedingService):
             raise IngestFileError.fileMoveError(ex, provider)
         finally:
             os.remove(os.path.join(file_path, filename))
+
+    def is_empty(self, file_path):
+        """Test if given file is empty, return True if file does not exist
+        """
+        return not (os.path.isfile(file_path) and os.path.getsize(file_path) > 0)
 
     def get_last_updated(self, file_path):
         """Get last updated time for file.
