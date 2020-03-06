@@ -635,6 +635,7 @@ class BasePublishService(BaseService):
                 updated[ASSOCIATIONS][key] = {
                     '_id': item['_id'],
                     'type': item['type'],
+                    'order': item['order'],
                 }
                 updates.setdefault('associations', {})[key] = updated[ASSOCIATIONS][key]
 
