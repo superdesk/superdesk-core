@@ -2637,7 +2637,8 @@ Feature: Content Publishing
                 },
                 "related--1": {
                   "_id": "text",
-                  "type": "text"
+                  "type": "text",
+                  "order": "1"
                 }
             }
           }
