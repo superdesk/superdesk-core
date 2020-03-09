@@ -248,5 +248,6 @@ Rest of the settings are comes from Superdesk configuration_:
     AMAZON_CONTAINER_NAME,
     AMAZON_S3_SUBFOLDER,
     AMAZON_OBJECT_ACL,
+    AMAZON_ENDPOINT_URL
 
 .. _configuration: https://superdesk.readthedocs.io/en/latest/settings.html#configuration
