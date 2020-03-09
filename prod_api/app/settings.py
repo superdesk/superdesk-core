@@ -29,6 +29,7 @@ from superdesk.default_settings import (  # noqa
     AMAZON_CONTAINER_NAME,
     AMAZON_S3_SUBFOLDER,
     AMAZON_OBJECT_ACL,
+    AMAZON_ENDPOINT_URL,
     strtobool
 )
 
