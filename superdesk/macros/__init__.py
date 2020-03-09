@@ -9,6 +9,10 @@ import os
 import sys
 import imp
 import importlib
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 def load_macros(path, package_prefix='superdesk.macros'):
@@ -21,15 +25,15 @@ def load_macros(path, package_prefix='superdesk.macros'):
               if f.endswith('.py') and not f.endswith('_test.py') and not f.startswith('__')]
 
     for macro in macros:
+        module = '{}.{}'.format(package_prefix, macro)
         try:
-            module = '{}.{}'.format(package_prefix, macro)
             if module in sys.modules.keys():
                 m = sys.modules[module]
                 imp.reload(m)
             else:
                 importlib.import_module(module)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("Can't import macro {module}: {reason}".format(module=module, reason=e))
 
 
 macro_replacement_fields = {'body_html', 'body_text', 'abstract', 'headline', 'slugline', 'description_text'}
