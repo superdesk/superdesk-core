@@ -19,16 +19,14 @@ class DataUpdate(DataUpdate):
     resource = 'archive'
 
     def forwards(self, mongodb_collection, mongodb_database):
-        related = list(get_resource_service('vocabularies').get(req=None, lookup={'field_type': 'related_content'}))
-        archive_service = get_resource_service('archive')
         for resource in ('archive', 'published'):
             service = get_resource_service(resource)
-            for item in mongodb_database[resource].find({'associations': {'$gt': {}}}):
+            for item in mongodb_database[resource].find({'associations': {'$exists': 'true', '$ne': {}}}):
                 update = False
                 associations = {}
                 for key, val in item['associations'].items():
                     associations[key] = val
-                    if val and is_related_content(key, related) and val.get('order', None) is None:
+                    if val and is_related_content(key) and val.get('order', None) is None:
                         update = True
                         order = int(key.split('--')[1])
                         associations[key]['order'] = order
