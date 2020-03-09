@@ -225,6 +225,7 @@ class BasePublishService(BaseService):
     def _validate(self, original, updates):
         self.raise_if_invalid_state_transition(original)
         self._raise_if_unpublished_related_items(original)
+        self._raise_if_video_item_thumbnail_is_missing(original)
 
         updated = original.copy()
         updated.update(updates)
@@ -301,6 +302,20 @@ class BasePublishService(BaseService):
                                            'related items. Do you want to publish the article anyway?')]
                         })
                         raise ValidationError(error_msg)
+
+    def _raise_if_video_item_thumbnail_is_missing(self, original):
+        if (not original.get('profile')):
+            return
+
+        video_item_content_type = get_resource_service('content_types').find_one(req=None, label='VideoItem')
+
+        if (video_item_content_type and str(video_item_content_type.get('_id', '')) == original.get('profile', '')
+            and original.get('associations', {}).get('featuremedia', {}).get('type', '') == 'video'
+                and not original.get('associations', {})
+                .get('featuremedia', {}).get('renditions', {}).get('thumbnail', '')
+                and not original.get('associations', {}).get('VideoThumbnail', '')):
+            raise ValidationError(json.dumps(
+                _('The card cannot be published. The thumbnail image for video is missing.')))
 
     def _validate_package(self, package, updates, validation_errors):
         # make sure package is not scheduled or spiked
