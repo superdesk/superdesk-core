@@ -200,6 +200,8 @@ class ArchivePublishTestCase(TestCase):
                           'unique_name': '#8'},
                          {'_id': '9',
                           'urgency': 3,
+                          'last_version': 3,
+                          config.VERSION: 4,
                           'headline': 'creator',
                           'task': {'user': '1', 'desk': '123456789ABCDEF123456789'},
                           ITEM_STATE: CONTENT_STATE.FETCHED},

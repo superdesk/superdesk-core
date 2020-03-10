@@ -10,7 +10,6 @@
 
 import logging
 from flask import current_app as app, json
-from eve.defaults import resolve_default_values
 from eve.utils import ParsedRequest, config
 from eve.methods.common import resolve_document_etag
 
@@ -147,7 +146,7 @@ class BaseService():
         return res
 
     def put(self, id, document):
-        resolve_default_values(document, app.config['DOMAIN'][self.datasource]['defaults'])
+        self._resolve_defaults(document)
         original = self.find_one(req=None, _id=id)
         self.on_replace(document, original)
         resolve_document_etag(document, self.datasource)

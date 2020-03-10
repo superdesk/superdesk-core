@@ -476,7 +476,7 @@ class EnqueueService:
 
                         for publish_queue_item in formatted_docs:
                             publish_queue_item['item_id'] = doc['item_id']
-                            publish_queue_item['item_version'] = doc[config.VERSION]
+                            publish_queue_item['item_version'] = doc.get(config.VERSION, 1)
                             publish_queue_item['subscriber_id'] = subscriber[config.ID_FIELD]
                             publish_queue_item['codes'] = subscriber_codes.get(subscriber[config.ID_FIELD])
                             publish_queue_item['destination'] = destination
