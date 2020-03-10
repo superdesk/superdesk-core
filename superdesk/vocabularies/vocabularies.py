@@ -118,7 +118,8 @@ class VocabulariesResource(Resource):
             'nullable': True
         },
         'schema': {
-            'type': 'dict'
+            'type': 'dict',
+            'schema': {},
         },
         'field_type': {
             'type': 'string',
@@ -126,6 +127,7 @@ class VocabulariesResource(Resource):
         },
         'field_options': {
             'type': 'dict',
+            'schema': {},
         },
         'init_version': {
             'type': 'integer',
@@ -152,6 +154,7 @@ class VocabulariesResource(Resource):
         'custom_field_config': {
             'type': 'dict',
             'nullable': True,
+            'schema': {},
         },
     }
 

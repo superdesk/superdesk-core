@@ -59,7 +59,8 @@ class SuperdeskDataLayer(DataLayer):
     def find_all(self, resource, max_results=1000):
         req = ParsedRequest()
         req.max_results = max_results
-        return self._backend(resource).find(resource, req, None)
+        cursor, count = self._backend(resource).find(resource, req, None)
+        return cursor
 
     def find_one(self, resource, req, **lookup):
         item = superdesk.get_resource_service(resource).find_one(req=req, **lookup)

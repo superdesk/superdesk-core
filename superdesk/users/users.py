@@ -168,7 +168,11 @@ class UsersResource(Resource):
                 'type': 'string',
                 'required': False,
                 'nullable': True
-            }
+            },
+            'session_preferences': {
+                'type': 'dict',
+                'schema': {},
+            },
         }
 
         self.extra_response_fields = [

@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk import get_resource_service, config
-from eve.validation import ValidationError
+from superdesk.validation import ValidationError
 from apps.publish.content.common import ITEM_PUBLISH
 
 
