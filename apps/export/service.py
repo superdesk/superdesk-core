@@ -6,7 +6,7 @@ from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
 from superdesk.publish.formatters import get_all_formatters
 from superdesk.utils import get_random_string
-from eve.validation import ValidationError
+from superdesk.validation import ValidationError
 from io import BytesIO
 from zipfile import ZipFile
 from flask import current_app as app

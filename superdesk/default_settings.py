@@ -83,7 +83,6 @@ def local_to_utc_hour(hour):
 ABS_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../'))
 BEHAVE_TESTS_FIXTURES_PATH = ABS_PATH + '/features/steps/fixtures'
 
-XML = False
 IF_MATCH = True
 BANDWIDTH_SAVER = False
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%S+0000'

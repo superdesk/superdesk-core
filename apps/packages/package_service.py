@@ -14,7 +14,6 @@ from flask import current_app as app
 import superdesk
 from collections import Counter
 from eve.utils import config, ParsedRequest
-from eve.validation import ValidationError
 from superdesk.errors import SuperdeskApiError
 from superdesk import get_resource_service
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO
@@ -27,6 +26,7 @@ from superdesk.default_settings import VERSION
 from apps.templates.content_templates import render_content_template_by_id
 from flask_babel import _
 from superdesk.signals import signals
+from superdesk.validation import ValidationError
 
 logger = logging.getLogger(__name__)
 package_create_signal = signals.signal('package.create')  # @UndefinedVariable

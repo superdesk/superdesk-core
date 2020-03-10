@@ -11,11 +11,12 @@
 import logging
 
 from flask import current_app as app, json
-from eve.validation import ValidationError
 from eve.endpoints import send_response
-from superdesk.utils import save_error_data
 from werkzeug.exceptions import HTTPException
 from elasticsearch.exceptions import ConnectionTimeout  # noqa
+
+from superdesk.utils import save_error_data
+from superdesk.validation import ValidationError
 
 
 logger = logging.getLogger(__name__)

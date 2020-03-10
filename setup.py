@@ -14,14 +14,14 @@ from setuptools import setup, find_packages
 LONG_DESCRIPTION = "Superdesk Server Core"
 
 install_requires = [
-    'eve>=0.6,<=0.7.8',
+    'eve>=1.1,<1.2',
     'eve-elastic==2.5.0',
-    'flask>=0.10.1,<=0.12',
+    'flask>=1.1,<1.2',
     'flask-oauthlib>=0.9.3,<0.10',
     'flask-mail>=0.9,<0.10',
     'flask-script>=2.0.5,<3.0',
     'flask_pymongo>=0.5.2,<1.0',
-    'flask-babel==0.12.2',
+    'flask-babel>=1.0,<1.1',
     'pillow>=3.0,<=5.0',
     'arrow>=0.4,<=0.13',
     'asyncio>=3.4,<3.5',
@@ -52,7 +52,7 @@ install_requires = [
     'unidecode==0.04.21',
     'authlib>0.12,<0.13',
     'draftjs-exporter[lxml]<2.2',
-    'werkzeug<1.0',
+    'werkzeug>=1.0,<1.1',
 ]
 
 package_data = {

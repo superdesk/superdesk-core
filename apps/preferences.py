@@ -9,7 +9,6 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from flask import request
-from eve.validation import ValidationError
 from eve.utils import config
 from eve.methods.common import resolve_document_etag
 import logging
@@ -20,6 +19,7 @@ from superdesk.utc import utcnow
 from superdesk import get_backend
 from superdesk import get_resource_service
 from superdesk.workflow import get_privileged_actions
+from superdesk.validation import ValidationError
 from flask_babel import _
 
 _preferences_key = 'preferences'
