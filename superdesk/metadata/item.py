@@ -359,7 +359,7 @@ metadata_schema = {
         'type': 'dict',
         'nullable': True,
         'schema': {
-            'located': {'type': 'dict', 'nullable': True},
+            'located': {'type': 'dict', 'nullable': True, 'schema': {}},
             'date': {'type': 'datetime', 'nullable': True},
             'source': {'type': 'string'},
             'text': {'type': 'string', 'nullable': True}
@@ -385,10 +385,12 @@ metadata_schema = {
         },
     },
     'renditions': {
-        'type': 'dict'
+        'type': 'dict',
+        'schema': {},
     },
     'filemeta': {
-        'type': 'dict'
+        'type': 'dict',
+        'schema': {},
     },
     'filemeta_json': {
         'type': 'string'
@@ -401,6 +403,7 @@ metadata_schema = {
     },
     ASSOCIATIONS: {
         'type': 'dict',
+        'schema': {},
         'mapping': {
             'type': 'object',
             'dynamic': False,
@@ -495,7 +498,10 @@ metadata_schema = {
     },
 
     # Desk and Stage Details
-    'task': {'type': 'dict'},
+    'task': {
+        'type': 'dict',
+        'schema': {},
+    },
 
     # Task and Lock Details
     'task_id': {
@@ -569,6 +575,7 @@ metadata_schema = {
     # draft-js internal data
     'fields_meta': {
         'type': 'dict',
+        'schema': {},
         'nullable': True,
         'mapping': not_enabled,
     },
@@ -588,6 +595,7 @@ metadata_schema = {
 
     'extra': {
         'type': 'dict',
+        'schema': {},
         'mapping': not_enabled,
     },
 

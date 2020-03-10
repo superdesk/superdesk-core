@@ -34,16 +34,16 @@ class SuperdeskValidator(Validator):
     def _validate_index(self, definition, field, value):
         pass
 
-    def _validate_type_phone_number(self, field, value):
+    def _validate_type_phone_number(self, value):
         """Enables validation for `phone_number` schema attribute.
 
         :param field: field name.
         :param value: field value.
         """
-        if not re.match("^(?:(?:0?[1-9][0-9]{8})|(?:(?:\+|00)[1-9][0-9]{9,11}))$", value):
-            self._error(field, ERROR_PATTERN)
+        if re.match("^(?:(?:0?[1-9][0-9]{8})|(?:(?:\+|00)[1-9][0-9]{9,11}))$", value):
+            return True
 
-    def _validate_type_email(self, field, value):
+    def _validate_type_email(self, value):
         """Enables validation for `email` schema attribute.
 
         :param field: field name.
@@ -56,15 +56,15 @@ class SuperdeskValidator(Validator):
         # given that admins are usually create users, not users by themself,
         # probably just check for @ is enough
         # https://davidcel.is/posts/stop-validating-email-addresses-with-regex/
-        if not re.match('.+@.+', value, re.IGNORECASE):
-            self._error(field, ERROR_PATTERN)
+        if re.match('.+@.+', value, re.IGNORECASE):
+            return True
 
-    def _validate_type_file(self, field, value):
+    def _validate_type_file(self, value):
         """Enables validation for `file` schema attribute."""
-        if not isinstance(value, FileStorage):
-            self._error(field, ERROR_PATTERN)
+        if isinstance(value, FileStorage):
+            return True
 
-    def _validate_multiple_emails(self, multiple, field, value):
+    def _validate_multiple_emails(self, multiple, value):
         """
         Validates comma separated list of emails.
 
@@ -73,38 +73,35 @@ class SuperdeskValidator(Validator):
         """
         if multiple:
             emails = value.split(',')
-            for email in emails:
-                self._validate_type_email(field, email)
+            if all([self._validate_type_email(email) for email in emails]):
+                return True
 
-    def _validate_unique(self, unique, field, value):
+    def _validate_unique(self, unique, value):
         """Validate unique with custom error msg."""
-
         if not self.resource.endswith("autosave") and unique:
-            query = {field: value}
-            self._set_id_query(query)
-
-            cursor = superdesk.get_resource_service(self.resource).get_from_mongo(req=None, lookup=query)
-            if cursor.count():
-                self._error(field, ERROR_UNIQUE)
+            return True
+        query = {field: value}
+        self._set_id_query(query)
+        conflict = superdesk.get_resource_service(self.resource).find_one(req=None, **query)
+        if not conflict:
+            return True
 
     def _set_id_query(self, query):
-        if self._id:
+        if self.document_id:
             try:
-                query[config.ID_FIELD] = {'$ne': ObjectId(self._id)}
-            except Exception:
-                query[config.ID_FIELD] = {'$ne': self._id}
+                query[config.ID_FIELD] = {'$ne': ObjectId(self.document_id)}
+            except ValueError:
+                query[config.ID_FIELD] = {'$ne': self.document_id}
 
-    def _validate_iunique(self, unique, field, value):
+    def _validate_iunique(self, unique, value):
         """Validate uniqueness ignoring case.MONGODB USE ONLY"""
-
         if unique:
             pattern = '^{}$'.format(re.escape(value.strip()))
             query = {field: re.compile(pattern, re.IGNORECASE)}
             self._set_id_query(query)
-
             cursor = superdesk.get_resource_service(self.resource).get_from_mongo(req=None, lookup=query)
-            if cursor.count():
-                self._error(field, ERROR_UNIQUE)
+            if not cursor.count():
+                return True
 
     def _validate_iunique_per_parent(self, parent_field, field, value):
         """Validate uniqueness ignoring case.MONGODB USE ONLY"""

@@ -55,6 +55,7 @@ def get_mongo_uri(key, dbname):
 
 def update_config(conf):
     conf['ELASTICSEARCH_INDEX'] = 'sptest'
+    conf['MONGO_DBNAME'] = 'sptests'
     conf['MONGO_URI'] = get_mongo_uri('MONGO_URI', 'sptests')
     conf['LEGAL_ARCHIVE_DBNAME'] = 'sptests_legal_archive'
     conf['LEGAL_ARCHIVE_URI'] = get_mongo_uri('LEGAL_ARCHIVE_URI', 'sptests_legal_archive')

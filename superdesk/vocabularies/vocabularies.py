@@ -107,6 +107,7 @@ class VocabulariesResource(Resource):
         },
         'service': {
             'type': 'dict',
+            'schema': {},
         },
         'priority': {
             'type': 'integer'

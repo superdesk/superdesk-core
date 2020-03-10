@@ -22,24 +22,23 @@ MEDIA_MANDATORY = {k: k for k, v in VALIDATOR_MEDIA_METADATA.items() if v.get("r
 class ValidateMandatoryInListTest(TestCase):
 
     def test_fail_validate_mandatory_in_list_for_subject(self):
-        validator = SchemaValidator()
         mandatory = {'scheme': {'subject': 'custom_subject', 'category': 'category'}}
-        field = 'scheme'
         value = [{'name': 'DiDFødselsdag', 'qcode': 'DiDFødselsdag',
                   'scheme': 'category', 'service': {'d': 1, 'i': 1}}]
-        validator._validate_mandatory_in_list(mandatory, field, value)
-
-        self.assertEqual(validator._errors['subject'], 'is a required field')
+        doc = {'subject': value}
+        schema = {'subject': {'type': 'list', 'mandatory_in_list': mandatory}}
+        validator = SchemaValidator(schema)
+        self.assertFalse(validator.validate(doc))
+        self.assertEqual(validator.errors['subject'], 'is a required field')
 
     def test_fail_validate_mandatory_in_list_for_subject_and_category(self):
-        validator = SchemaValidator()
         mandatory = {'scheme': {'subject': 'custom_subject', 'category': 'category'}}
-        field = 'scheme'
-        value = []
-        validator._validate_mandatory_in_list(mandatory, field, value)
-
-        self.assertEqual(validator._errors['subject'], 'is a required field')
-        self.assertEqual(validator._errors['category'], 'is a required field')
+        doc = {'subject': []}
+        schema = {'subject': {'type': 'list', 'mandatory_in_list': mandatory}}
+        validator = SchemaValidator(schema)
+        self.assertFalse(validator.validate(doc))
+        self.assertEqual(validator.errors['subject'], 'is a required field')
+        self.assertEqual(validator.errors['category'], 'is a required field')
 
     def test_validate_mandatory_in_list(self):
         validator = SchemaValidator()
@@ -50,7 +49,7 @@ class ValidateMandatoryInListTest(TestCase):
                  {'name': 'arkeologi', 'qcode': '01001000', 'scheme': 'subject_custom', 'parent': '01000000'}]
         validator._validate_mandatory_in_list(mandatory, field, value)
 
-        self.assertEqual(validator._errors, {})
+        self.assertEqual(validator.errors, {})
 
     def test_sanitize_fields_not_in_schema(self):
         doc = {'body_html': 'test'}
@@ -60,14 +59,14 @@ class ValidateMandatoryInListTest(TestCase):
         self.assertEqual('test', doc['body_html'])
 
     def test_validate_date_with_success(self):
-        validator = SchemaValidator()
-        validator._validate_type_date('test1', '2017-11-22T22:11:33+0000')
-        self.assertEqual(validator._errors, {})
+        validator = SchemaValidator({'test': {'type': 'date'}})
+        print('mapping', validator.types_mapping)
+        self.assertTrue(validator.validate({'test': '2017-11-22T22:11:33+0000'}))
 
     def test_validate_date_with_error(self):
-        validator = SchemaValidator()
-        validator._validate_type_date('test1', '2017-11-33T22:11:33+0000')
-        self.assertEqual(validator._errors, {'test1': 'require a date value'})
+        validator = SchemaValidator({'test': {'type': 'date'}})
+        self.assertFalse(validator.validate({'test': '2017-11-33T22:11:33+0000'}))
+        self.assertEqual(validator.errors['test'], 'must be of date type')
 
     def test_validate_field_without_schema(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
@@ -153,7 +152,7 @@ class ValidateMandatoryInListTest(TestCase):
             {'act': 'test', 'type': 'test', 'validate': {'profile': 'foo', 'subject': None}}
         ])
 
-        self.assertEqual(errors, [['SUBJECT is a required field']])
+        self.assertEqual(errors, [['CATEGORY is a required field', 'SUBJECT is a required field']])
 
     def test_validate_field_required_feature_media(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {

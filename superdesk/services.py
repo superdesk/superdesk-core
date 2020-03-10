@@ -107,10 +107,28 @@ class BaseService():
     def find_and_modify(self, **kwargs):
         res = self.backend.find_and_modify(self.datasource, **kwargs)
         return res
+    
+    def _validator(self, skip_validation=False):
+        resource_def = app.config['DOMAIN'][self.datasource]
+        schema = resource_def['schema']
+        return (
+            None
+            if skip_validation
+            else app.validator(
+                schema, resource=self.datasource, allow_unknown=resource_def['allow_unknown']
+            )
+        )
+
+    def _resolve_defaults(self, doc):
+        validator = self._validator()
+        if validator:
+            normalized = validator.normalized(doc, always_return_document=True)
+            doc.update(normalized)
+        return doc
 
     def post(self, docs, **kwargs):
         for doc in docs:
-            resolve_default_values(doc, app.config['DOMAIN'][self.datasource]['defaults'])
+            self._resolve_defaults(doc)
         self.on_create(docs)
         ids = self.create(docs, **kwargs)
         self.on_created(docs)

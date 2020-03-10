@@ -64,41 +64,44 @@ def get_validator_schema(schema):
 
 
 class SchemaValidator(Validator):
-    def _validate_type_media(self, field, value):
-        """Allow type media in schema."""
-        pass
 
-    def _validate_type_related_content(self, field, value):
-        """Allow type related_content in schema."""
-        pass
+    types_mapping = {
+        k: v for k, v in Validator.types_mapping.items()
+        if k not in ('date', )
+    }
 
-    def _validate_type_embed(self, field, value):
-        """Allow type media in schema."""
-        pass
+    def _validate_type_media(self, value):
+        return True
 
-    def _validate_type_custom(self, field, value):
-        """Allow custom field type."""
-        pass
+    def _validate_type_related_content(self, value):
+        return True
 
-    def _validate_type_date(self, field, value):
-        if not isinstance(value, datetime):
-            try:
-                datetime.strptime(value or '', '%Y-%m-%dT%H:%M:%S+%f')
-            except ValueError:
-                self._error(field, DATE_FIELD)
+    def _validate_type_embed(self, value):
+        return True
 
-    def _validate_type_picture(self, field, value):
-        """Allow type picture in schema."""
-        pass
+    def _validate_type_custom(self, value):
+        return True
 
-    def _validate_type_text(self, field, value):
-        """Validate type text in schema."""
-        if value and not isinstance(value, str):
-            self._error(field, STRING_FIELD)
+    def _validate_type_picture(self, value):
+        return True
 
-    def _validate_type_any(self, field, value):
+    def _validate_type_any(self, value):
         """Allow type any, ex: for CV of type 'custom'."""
-        pass
+        return True
+
+    def _validate_type_text(self, value):
+        """Validate type text in schema."""
+        if value and isinstance(value, str):
+            return True
+
+    def _validate_type_date(self, value):
+        if isinstance(value, datetime):
+            return True
+        try:
+            datetime.strptime(value or '', '%Y-%m-%dT%H:%M:%S+%f')
+            return True
+        except ValueError:
+            pass
 
     def _validate_mandatory_in_list(self, mandatory, field, value):
         """Validates if all elements from mandatory are presented in the list"""
