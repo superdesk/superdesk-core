@@ -64,7 +64,7 @@ class SuperdeskValidator(Validator):
         if isinstance(value, FileStorage):
             return True
 
-    def _validate_multiple_emails(self, multiple, value):
+    def _validate_multiple_emails(self, multiple, field, value):
         """
         Validates comma separated list of emails.
 
@@ -73,18 +73,18 @@ class SuperdeskValidator(Validator):
         """
         if multiple:
             emails = value.split(',')
-            if all([self._validate_type_email(email) for email in emails]):
-                return True
+            if not all([self._validate_type_email(email) for email in emails]):
+                self._error(field, ERROR_PATTERN)
 
-    def _validate_unique(self, unique, value):
+    def _validate_unique(self, unique, field, value):
         """Validate unique with custom error msg."""
         if not self.resource.endswith("autosave") and unique:
             return True
         query = {field: value}
         self._set_id_query(query)
         conflict = superdesk.get_resource_service(self.resource).find_one(req=None, **query)
-        if not conflict:
-            return True
+        if conflict:
+            self._error(field, ERROR_UNIQUE)
 
     def _set_id_query(self, query):
         if self.document_id:
@@ -93,15 +93,15 @@ class SuperdeskValidator(Validator):
             except ValueError:
                 query[config.ID_FIELD] = {'$ne': self.document_id}
 
-    def _validate_iunique(self, unique, value):
+    def _validate_iunique(self, unique, field, value):
         """Validate uniqueness ignoring case.MONGODB USE ONLY"""
         if unique:
             pattern = '^{}$'.format(re.escape(value.strip()))
             query = {field: re.compile(pattern, re.IGNORECASE)}
             self._set_id_query(query)
             cursor = superdesk.get_resource_service(self.resource).get_from_mongo(req=None, lookup=query)
-            if not cursor.count():
-                return True
+            if cursor.count():
+                self._error(field, ERROR_UNIQUE)
 
     def _validate_iunique_per_parent(self, parent_field, field, value):
         """Validate uniqueness ignoring case.MONGODB USE ONLY"""
