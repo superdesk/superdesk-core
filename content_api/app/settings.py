@@ -45,7 +45,6 @@ server_url = urlparse(CONTENTAPI_URL)
 URL_PREFIX = env('CONTENTAPI_URL_PREFIX', server_url.path.strip('/')) or ''
 VERSION = '_current_version'
 
-XML = False
 PUBLIC_RESOURCES = []
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%S+0000'
 ELASTIC_DATE_FORMAT = '%Y-%m-%d'
