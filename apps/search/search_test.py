@@ -44,7 +44,7 @@ class SearchServiceTestCase(TestCase):
 
     def test_query_post_processing(self):
         with self.app.app_context():
-            docs = self.app.data.find('search', None, None)
+            docs = self.app.data.find('search', None, None)[0]
             self.assertEquals(4, docs.count())
 
             ingest_docs = [doc for doc in docs if doc['_type'] == 'ingest']
@@ -58,24 +58,24 @@ class SearchServiceTestCase(TestCase):
         with self.app.app_context():
             req = ParsedRequest()
             req.args = {'repo': 'ingest'}
-            docs = self.app.data.find('search', req, None)
+            docs = self.app.data.find('search', req, None)[0]
             self.assertEquals(1, docs.count())
             self.assertEquals('ingest', docs[0]['_type'])
 
     def test_it_filters_out_private_content(self):
         with self.app.app_context():
             self.app.data.insert('archive', [{'task': {'desk': None}}, {'task': {}}])
-            cursor = self.app.data.find('search', None, None)
+            cursor = self.app.data.find('search', None, None)[0]
             self.assertEquals(4, cursor.count())
 
     def test_it_includes_published_content(self):
         with self.app.app_context():
-            cursor = self.app.data.find('search', None, None)
+            cursor = self.app.data.find('search', None, None)[0]
             self.assertEquals(4, cursor.count())
 
     def test_it_excludes_published_content(self):
         with self.app.app_context():
             req = ParsedRequest()
             req.args = {'repo': 'archive'}
-            docs = self.app.data.find('search', req, None)
+            docs = self.app.data.find('search', req, None)[0]
             self.assertEquals(1, docs.count())
