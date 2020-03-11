@@ -10,6 +10,7 @@
 
 import os
 import json
+import tempfile
 from copy import copy
 from datetime import timedelta
 from unittest import mock
@@ -249,19 +250,22 @@ class ArchivePublishTestCase(TestCase):
         self.app.data.insert('subscribers', self.subscribers)
         self.app.data.insert(ARCHIVE, self.articles)
 
-        self.filename = os.path.join(os.path.abspath(os.path.dirname(__file__)), "validators.json")
-        self.json_data = [
-            {"_id": "kill_text", "act": "kill", "type": "text", "schema": {"headline": {"type": "string"}}},
-            {"_id": "publish_text", "act": "publish", "type": "text", "schema": {}},
-            {"_id": "correct_text", "act": "correct", "type": "text", "schema": {}},
-            {"_id": "publish_composite", "act": "publish", "type": "composite", "schema": {}},
-        ]
         self.article_versions = self._init_article_versions()
 
-        with open(self.filename, "w+") as file:
-            json.dump(self.json_data, file)
-        init_app(self.app)
-        AppPopulateCommand().run(self.filename)
+        with tempfile.TemporaryDirectory() as tmp:
+            json_data = [
+                {"_id": "kill_text", "act": "kill", "type": "text", "schema": {"headline": {"type": "string"}}},
+                {"_id": "publish_text", "act": "publish", "type": "text", "schema": {}},
+                {"_id": "correct_text", "act": "correct", "type": "text", "schema": {}},
+                {"_id": "publish_composite", "act": "publish", "type": "composite", "schema": {}},
+            ]
+
+            filename = os.path.join(tmp, 'validators.json')
+            with open(filename, 'w') as file:
+                json.dump(json_data, file)
+
+            init_app(self.app)
+            AppPopulateCommand().run(filename)
 
         self.app.media.url_for_media = MagicMock(return_value='url_for_media')
         self._put = self.app.media.put
@@ -269,8 +273,6 @@ class ArchivePublishTestCase(TestCase):
 
     def tearDown(self):
         self.app.media.put = self._put
-        if self.filename and os.path.exists(self.filename):
-            os.remove(self.filename)
 
     def _init_article_versions(self):
         resource_def = self.app.config['DOMAIN']['archive_versions']
@@ -640,7 +642,6 @@ class ArchivePublishTestCase(TestCase):
         self.assertTrue(BasePublishService().is_targeted(doc))
 
     def test_targeted_for_includes_digital_subscribers(self):
-        AppPopulateCommand().run(self.filename)
         updates = {'target_regions': [{'qcode': 'NSW', 'name': 'New South Wales', 'allow': True}]}
         doc_id = self.articles[5][config.ID_FIELD]
         get_resource_service(ARCHIVE).patch(id=doc_id, updates=updates)
@@ -662,7 +663,6 @@ class ArchivePublishTestCase(TestCase):
             request.args = {'source': json.dumps(query), 'aggregations': 0}
             return self.app.data.find(PUBLISHED, req=request, lookup=None)[0]
 
-        AppPopulateCommand().run(self.filename)
         get_resource_service(ARCHIVE).patch(id=self.articles[1][config.ID_FIELD],
                                             updates={'publish_schedule': None})
 

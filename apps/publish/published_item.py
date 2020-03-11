@@ -88,7 +88,10 @@ published_item_fields = {
     },
     PUBLISHED_IN_PACKAGE: {
         'type': 'string'
-    }
+    },
+    '_current_version': {  # must be set explicitly, there is no versioning
+        'type': 'integer',
+    },
 }
 
 
@@ -117,7 +120,7 @@ class PublishedItemResource(Resource):
         'elastic_filter_callback': get_content_filter,
         'projection': {
             'old_version': 0,
-            'last_version': 0
+            'last_version': 0,
         }
     }
 
