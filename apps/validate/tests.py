@@ -152,7 +152,8 @@ class ValidateMandatoryInListTest(TestCase):
             {'act': 'test', 'type': 'test', 'validate': {'profile': 'foo', 'subject': None}}
         ])
 
-        self.assertEqual(errors, [['CATEGORY is a required field', 'SUBJECT is a required field']])
+        self.assertIn('CATEGORY is a required field', errors[0])
+        self.assertIn('SUBJECT is a required field', errors[0])
 
     def test_validate_field_required_feature_media(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {

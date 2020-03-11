@@ -19,11 +19,11 @@ from eve.auth import auth_field_and_value
 from cerberus import errors
 
 
-ERROR_PATTERN = {'pattern': 1}
-ERROR_UNIQUE = {'unique': 1}
-ERROR_MINLENGTH = {'minlength': 1}
-ERROR_REQUIRED = {'required': 1}
-ERROR_JSON_LIST = {'json_list': 1}
+ERROR_PATTERN = 'pattern'
+ERROR_UNIQUE = 'unique'
+ERROR_MINLENGTH = 'minlength'
+ERROR_REQUIRED = 'required'
+ERROR_JSON_LIST = 'json_list'
 
 
 class SuperdeskValidator(Validator):
@@ -94,18 +94,19 @@ class SuperdeskValidator(Validator):
                 query[config.ID_FIELD] = {'$ne': self.document_id}
 
     def _validate_iunique(self, unique, field, value):
-        """Validate uniqueness ignoring case.MONGODB USE ONLY"""
+        """Validate uniqueness ignoring case. MONGODB USE ONLY"""
         if unique:
             pattern = '^{}$'.format(re.escape(value.strip()))
             query = {field: re.compile(pattern, re.IGNORECASE)}
             self._set_id_query(query)
             cursor = superdesk.get_resource_service(self.resource).get_from_mongo(req=None, lookup=query)
             if cursor.count():
+                print('field', field)
                 self._error(field, ERROR_UNIQUE)
 
     def _validate_iunique_per_parent(self, parent_field, field, value):
-        """Validate uniqueness ignoring case.MONGODB USE ONLY"""
-        original = self._original_document or {}
+        """Validate uniqueness ignoring case. MONGODB USE ONLY"""
+        original = self.persisted_document or {}
         update = self.document or {}
 
         parent_field_value = update.get(parent_field, original.get(parent_field))

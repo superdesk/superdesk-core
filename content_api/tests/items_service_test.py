@@ -949,7 +949,7 @@ class OnFetchedMethodTestCase(ItemsServiceTestCase):
             instance.on_fetched(result)
 
         self_link = result.get('_links', {}).get('self', {}).get('href')
-        self.assertEqual(self_link, 'items?start_date=1975-12-31%23foo')
+        self.assertEqual(self_link, 'items?start_date=1975-12-31')
 
     @mock.patch('content_api.items.service.g')
     def test_removes_associated_item_if_subscriber_is_not_entitled(self, fake_g):
