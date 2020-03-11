@@ -104,6 +104,6 @@ class ValidateMultipleEmailsTestCase(SuperdeskValidatorTest):
         value = 'abc@abc.com,test'
         try:
             self.assertFalse(self.validator.validate({field: value}, {field: {'multiple_emails': True}}))
-            self.assertDictEqual(self.validator.errors, {'field_name': 'pattern'})
+            self.assertDictEqual(self.validator.errors, {'field_name': {'pattern': 1}})
         except Exception as ex:
             self.fail("Error unexpectedly raised: {}".format(ex))

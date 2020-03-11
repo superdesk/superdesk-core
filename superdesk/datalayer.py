@@ -63,7 +63,7 @@ class SuperdeskDataLayer(DataLayer):
         cursor, count = self._backend(resource).find(resource, req, None)
         return cursor
 
-    def find_one(self, resource, req, **lookup):
+    def find_one(self, resource, req, check_auth_value=True, force_auth_field_projection=False, **lookup):
         item = superdesk.get_resource_service(resource).find_one(req=req, **lookup)
         if item is not None:
             item.setdefault('_type', self.datasource(resource)[0])

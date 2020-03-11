@@ -834,4 +834,5 @@ TANSA_LICENSE_KEY = env('TANSA_LICENSE_KEY')
 TANSA_CLIENT_BASE_URL = env('TANSA_CLIENT_BASE_URL', 'https://d02.tansa.com/tansaclient/')
 TANSA_PROFILES = {}
 
-VALIDATION_ERROR_AS_LIST = False
+# there is a custom validator, so no need for this
+VALIDATION_ERROR_AS_LIST = True

@@ -500,7 +500,11 @@ metadata_schema = {
     # Desk and Stage Details
     'task': {
         'type': 'dict',
-        'schema': {},
+        'schema': {
+            'user': {'type': 'string'},
+            'desk': {'type': 'string'},
+            'stage': {'type': 'string'},
+        },
     },
 
     # Task and Lock Details

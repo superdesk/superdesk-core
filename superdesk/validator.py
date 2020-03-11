@@ -12,11 +12,12 @@ import re
 import superdesk
 
 from bson import ObjectId
+from cerberus import errors
 from eve.io.mongo import Validator
 from eve.utils import config
-from werkzeug.datastructures import FileStorage
 from eve.auth import auth_field_and_value
-from cerberus import errors
+from eve.validation import SingleErrorAsStringErrorHandler
+from werkzeug.datastructures import FileStorage
 
 
 ERROR_PATTERN = 'pattern'
@@ -25,8 +26,29 @@ ERROR_MINLENGTH = 'minlength'
 ERROR_REQUIRED = 'required'
 ERROR_JSON_LIST = 'json_list'
 
+CLIENT_ERRORS = (
+    ERROR_UNIQUE,
+    ERROR_PATTERN,
+    ERROR_REQUIRED,
+    ERROR_MINLENGTH,
+    ERROR_JSON_LIST,
+)
+
+
+class SuperdeskErrorHandler(SingleErrorAsStringErrorHandler):
+    def _format_message(self, field, error):
+        if error.info and error.info[0] in CLIENT_ERRORS:
+            return {error.info[0]: [1]}  # value must be list, will be unpacked
+        return self.messages[error.code].format(
+            *error.info, constraint=error.constraint, field=field, value=error.value
+        )
+
 
 class SuperdeskValidator(Validator):
+
+    def __init__(self, *args, **kwargs):
+        kwargs['error_handler'] = SuperdeskErrorHandler
+        super(SuperdeskValidator, self).__init__(*args, **kwargs)
 
     def _validate_mapping(self, mapping, field, value):
         pass
@@ -77,7 +99,7 @@ class SuperdeskValidator(Validator):
                 self._error(field, ERROR_PATTERN)
 
     def _validate_unique(self, unique, field, value):
-        """Validate unique with custom error msg."""
+        """ {'type': 'boolean'} """
         if not self.resource.endswith("autosave") and unique:
             return True
         query = {field: value}
@@ -94,14 +116,13 @@ class SuperdeskValidator(Validator):
                 query[config.ID_FIELD] = {'$ne': self.document_id}
 
     def _validate_iunique(self, unique, field, value):
-        """Validate uniqueness ignoring case. MONGODB USE ONLY"""
+        """ {'type': 'boolean'} """
         if unique:
             pattern = '^{}$'.format(re.escape(value.strip()))
             query = {field: re.compile(pattern, re.IGNORECASE)}
             self._set_id_query(query)
             cursor = superdesk.get_resource_service(self.resource).get_from_mongo(req=None, lookup=query)
             if cursor.count():
-                print('field', field)
                 self._error(field, ERROR_UNIQUE)
 
     def _validate_iunique_per_parent(self, parent_field, field, value):
