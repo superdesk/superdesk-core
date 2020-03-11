@@ -55,8 +55,6 @@ class SuperdeskDataLayer(DataLayer):
 
     def find(self, resource, req, lookup, perform_count=None):
         cursor = superdesk.get_resource_service(resource).get(req=req, lookup=lookup)
-        if perform_count is None:
-            return cursor
         return cursor, cursor.count()
 
     def find_all(self, resource, max_results=1000):
