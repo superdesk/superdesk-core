@@ -47,8 +47,8 @@ class SuperdeskErrorHandler(SingleErrorAsStringErrorHandler):
 class SuperdeskValidator(Validator):
 
     def __init__(self, *args, **kwargs):
-        kwargs['error_handler'] = SuperdeskErrorHandler
         super(SuperdeskValidator, self).__init__(*args, **kwargs)
+        self.error_handler = SuperdeskErrorHandler()
 
     def _validate_mapping(self, mapping, field, value):
         pass
