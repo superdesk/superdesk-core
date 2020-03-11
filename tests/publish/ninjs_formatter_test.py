@@ -1011,10 +1011,12 @@ class NinjsFormatterTest(TestCase):
                 "custom_related_content--1": {
                     "type": "text",
                     "_id": "guid1",
+                    "order": 1,
                 },
                 "custom_related_content--2": {
                     "type": "picture",
                     "_id": "guid2",
+                    "order": 2,
                 },
             },
         }
@@ -1046,12 +1048,14 @@ class NinjsFormatterTest(TestCase):
                     "type": "text",
                     "language": "en",
                     "priority": 5,
+                    "order": 1,
                 },
                 "custom_related_content--2": {
                     "guid": "guid2",
                     "version": "1",
                     "type": "picture",
                     "priority": 5,
+                    "order": 2,
                 },
             },
             "extra_items": {
@@ -1064,12 +1068,14 @@ class NinjsFormatterTest(TestCase):
                             "type": "text",
                             "language": "en",
                             "priority": 5,
+                            "order": 1,
                         },
                         {
                             "guid": "guid2",
                             "version": "1",
                             "type": "picture",
                             "priority": 5,
+                            "order": 2,
                         }
                     ]
                 }
@@ -1341,6 +1347,8 @@ class NinjsFormatterTest(TestCase):
                     "media": "abc",
                     "type": "picture",
                     "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                    "order": 1,
+                    "_type": "archive",
                 },
                 "custom_related_content--3": {
                     "renditions": {
@@ -1355,6 +1363,8 @@ class NinjsFormatterTest(TestCase):
                     "media": "efg",
                     "type": "picture",
                     "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                    "order": 3,
+                    "_type": "archive",
                 },
                 "custom_related_content--2": {
                     "renditions": {
@@ -1369,6 +1379,24 @@ class NinjsFormatterTest(TestCase):
                     "media": "cde",
                     "type": "picture",
                     "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                    "order": 2,
+                    "_type": "archive",
+                },
+                "custom_related_content--21": {
+                    "renditions": {
+                        "original": {
+                            "href": "http://localhost:5000/api/upload-raw/4567.jpg",
+                            "media": "cde",
+                            "mimetype": "image/jpeg",
+                            "width": 550,
+                            "height": 331,
+                        }
+                    },
+                    "media": "cde",
+                    "type": "picture",
+                    "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                    "order": 21,
+                    "_type": "archive",
                 },
             },
         }
@@ -1389,6 +1417,7 @@ class NinjsFormatterTest(TestCase):
                     },
                     "type": "picture",
                     "version": "1",
+                    "order": 1,
                 },
                 "custom_related_content--2": {
                     "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
@@ -1404,6 +1433,7 @@ class NinjsFormatterTest(TestCase):
                     },
                     "type": "picture",
                     "version": "1",
+                    "order": 2,
                 },
                 "custom_related_content--3": {
                     "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
@@ -1419,6 +1449,23 @@ class NinjsFormatterTest(TestCase):
                     },
                     "type": "picture",
                     "version": "1",
+                    "order": 3,
+                },
+                "custom_related_content--21": {
+                    "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                    "priority": 5,
+                    "renditions": {
+                        "original": {
+                            "height": 331,
+                            "href": "http://localhost:5000/api/upload-raw/4567.jpg",
+                            "media": "cde",
+                            "mimetype": "image/jpeg",
+                            "width": 550,
+                        }
+                    },
+                    "type": "picture",
+                    "version": "1",
+                    "order": 21,
                 },
             },
             "extra_items": {
@@ -1439,6 +1486,7 @@ class NinjsFormatterTest(TestCase):
                             },
                             "type": "picture",
                             "version": "1",
+                            "order": 1,
                         },
                         {
                             "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
@@ -1454,6 +1502,7 @@ class NinjsFormatterTest(TestCase):
                             },
                             "type": "picture",
                             "version": "1",
+                            "order": 2,
                         },
                         {
                             "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
@@ -1469,6 +1518,23 @@ class NinjsFormatterTest(TestCase):
                             },
                             "type": "picture",
                             "version": "1",
+                            "order": 3,
+                        },
+                        {
+                            "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                            "priority": 5,
+                            "renditions": {
+                                "original": {
+                                    "height": 331,
+                                    "href": "http://localhost:5000/api/upload-raw/4567.jpg",
+                                    "media": "cde",
+                                    "mimetype": "image/jpeg",
+                                    "width": 550,
+                                }
+                            },
+                            "type": "picture",
+                            "version": "1",
+                            "order": 21,
                         },
                     ]
                 }
