@@ -27,6 +27,7 @@ install_requires = [
     'bcrypt>=3.1.1,<3.2',
     'blinker>=1.3,<1.5',
     'celery[redis]>=4.3.0,<4.4',
+    'cerberus>=1.3.2,<1.4',
     'redis>=3.2.0,<3.3',
     'kombu>=4.5,<4.6',
     'feedparser>=5.2,<5.3',
