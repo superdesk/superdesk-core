@@ -29,7 +29,7 @@ class ValidateMandatoryInListTest(TestCase):
         schema = {'subject': {'type': 'list', 'mandatory_in_list': mandatory}}
         validator = SchemaValidator(schema)
         self.assertFalse(validator.validate(doc))
-        self.assertEqual(validator.errors['subject'], 'is a required field')
+        self.assertIn('is a required field', validator.errors['subject'])
 
     def test_fail_validate_mandatory_in_list_for_subject_and_category(self):
         mandatory = {'scheme': {'subject': 'custom_subject', 'category': 'category'}}
@@ -37,8 +37,8 @@ class ValidateMandatoryInListTest(TestCase):
         schema = {'subject': {'type': 'list', 'mandatory_in_list': mandatory}}
         validator = SchemaValidator(schema)
         self.assertFalse(validator.validate(doc))
-        self.assertEqual(validator.errors['subject'], 'is a required field')
-        self.assertEqual(validator.errors['category'], 'is a required field')
+        self.assertIn('is a required field', validator.errors['subject'])
+        self.assertIn('is a required field', validator.errors['category'])
 
     def test_validate_mandatory_in_list(self):
         validator = SchemaValidator()
@@ -66,7 +66,7 @@ class ValidateMandatoryInListTest(TestCase):
     def test_validate_date_with_error(self):
         validator = SchemaValidator({'test': {'type': 'date'}})
         self.assertFalse(validator.validate({'test': '2017-11-33T22:11:33+0000'}))
-        self.assertEqual(validator.errors['test'], 'must be of date type')
+        self.assertIn('must be of date type', validator.errors['test'])
 
     def test_validate_field_without_schema(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
@@ -411,7 +411,7 @@ class ValidateMandatoryInListTest(TestCase):
                              },
             },
         ])
-        self.assertEqual(['SMS is too short'], errors[0])
+        self.assertIn('SMS is too short', errors[0])
 
     def test_validate_field_sms_not_enabled(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {

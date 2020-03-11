@@ -99,7 +99,9 @@ class SuperdeskValidator(Validator):
                 self._error(field, ERROR_PATTERN)
 
     def _validate_unique(self, unique, field, value):
-        """ {'type': 'boolean'} """
+        """
+        {'type': 'boolean'}
+        """
         if not self.resource.endswith("autosave") and unique:
             return True
         query = {field: value}
@@ -116,7 +118,9 @@ class SuperdeskValidator(Validator):
                 query[config.ID_FIELD] = {'$ne': self.document_id}
 
     def _validate_iunique(self, unique, field, value):
-        """ {'type': 'boolean'} """
+        """
+        {'type': 'boolean'}
+        """
         if unique:
             pattern = '^{}$'.format(re.escape(value.strip()))
             query = {field: re.compile(pattern, re.IGNORECASE)}
