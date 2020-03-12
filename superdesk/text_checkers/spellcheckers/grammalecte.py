@@ -35,6 +35,7 @@ OPT_CLI = "GRAMMALECTE_CLI"
 
 #: dictionary
 OPT_CONFIG = "GRAMMALECTE_CONFIG"
+OPT_CONFIG_IGNORE_RULES = "ignore_rules"
 
 # debug flag to activate spelling suggestion when doing a whole text check
 # this is resource consuming and getSuggestions should be used instead.
@@ -67,6 +68,10 @@ class Grammalecte(SpellcheckerBase):
     Grammelecte behaviour can be specified using GRAMMALECTE_CONFIG setting, which must be
     a dictionary mapping grammalecte option names to their boolean value.
     Check ``grammalecte-cli.py -lo`` to get option names.
+
+    In this dictionary, a special ``ignore_rules`` key can be set to a list of
+    rules ids to ignore.
+    Check ``grammalecte-cli.py -lr`` to get rules ids.
     """
 
     name = "grammalecte"
@@ -77,6 +82,7 @@ class Grammalecte(SpellcheckerBase):
         super().__init__(app)
 
         self._grammalecte_config = None
+        self._ignore_rules = None
 
         # we have two ways to use Grammalecte: CLI and server
         # we use CLI in priority because it handles suggestions for spelling.
@@ -121,13 +127,20 @@ class Grammalecte(SpellcheckerBase):
             if not isinstance(config, dict) or not isinstance(env_config, dict):
                 logger.warning("Invalid type for Grammalecte configuration, must be a dictionary")
                 self._grammalecte_config = {}
+                self._ignore_rules = []
                 return
             config.update(env_config)
+            ignore_rules = config.pop(OPT_CONFIG_IGNORE_RULES, [])
             if not all({isinstance(v, bool) for v in config.values()}):
                 logger.warning("Invalid values for Grammalecte configuration, boolean must be used")
                 self._grammalecte_config = {}
+                self._ignore_rules = []
                 return
+            if not isinstance(ignore_rules, (list, set)):
+                logger.warning('Invalid values for Grammalecte configuration, "ignore_rules" must be a list or a set')
+                ignore_rules = []
             self._grammalecte_config = config
+            self._ignore_rules = ignore_rules
 
         return self._grammalecte_config
 
@@ -156,6 +169,8 @@ class Grammalecte(SpellcheckerBase):
             for errors, error_type in ((grammar_errors, 'grammar'),
                                        (spelling_errors, 'spelling')):
                 for error in errors:
+                    if error.get('sRuleId') in self._ignore_rules:
+                        continue
                     start = start_p_index + error['nStart']
                     end = start_p_index + error['nEnd']
                     ercorr_data = {
