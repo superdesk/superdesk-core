@@ -49,9 +49,9 @@ class VocabulariesResource(Resource):
     schema = {
         '_id': {
             'type': 'string',
-            'required': True,
             'unique': True,
-            'regex': '^[a-zA-Z0-9-_]+$'
+            'required': True,
+            'regex': '^[a-zA-Z0-9-_]+$',
         },
         'display_name': {
             'type': 'string',
@@ -70,6 +70,7 @@ class VocabulariesResource(Resource):
             'required': False,
             'schema': {
                 'type': 'dict',
+                'schema': {},
             }
         },
         'popup_width': {
@@ -119,7 +120,6 @@ class VocabulariesResource(Resource):
         },
         'schema': {
             'type': 'dict',
-            'schema': {},
         },
         'field_type': {
             'type': 'string',
@@ -127,7 +127,6 @@ class VocabulariesResource(Resource):
         },
         'field_options': {
             'type': 'dict',
-            'schema': {},
         },
         'init_version': {
             'type': 'integer',

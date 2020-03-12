@@ -88,6 +88,8 @@ class SuperdeskValidator(Validator):
 
     def _validate_multiple_emails(self, multiple, field, value):
         """
+        {'type': 'boolean'}
+
         Validates comma separated list of emails.
 
         :param field: field name.
@@ -103,12 +105,11 @@ class SuperdeskValidator(Validator):
         {'type': 'boolean'}
         """
         if not self.resource.endswith("autosave") and unique:
-            return True
-        query = {field: value}
-        self._set_id_query(query)
-        conflict = superdesk.get_resource_service(self.resource).find_one(req=None, **query)
-        if conflict:
-            self._error(field, ERROR_UNIQUE)
+            query = {field: value}
+            self._set_id_query(query)
+            conflict = superdesk.get_resource_service(self.resource).find_one(req=None, **query)
+            if conflict:
+                self._error(field, ERROR_UNIQUE)
 
     def _set_id_query(self, query):
         if self.document_id:
