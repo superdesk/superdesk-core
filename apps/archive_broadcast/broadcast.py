@@ -45,7 +45,7 @@ class ArchiveBroadcastResource(Resource):
     schema = metadata_schema
     schema.update({
         'desk': Resource.rel('desks', embeddable=False, required=False, nullable=True),
-        '_document_id': {'type': 'string'},
+        '_id_document': {'type': 'string'},
         '_current_version': {'type': 'integer'},
     })
 

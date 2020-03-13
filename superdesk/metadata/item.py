@@ -694,3 +694,15 @@ class Priority(SuperdeskBaseEnum):
     Screen_Finance = 4
     Continuous_News = 5
     Ordinary = 6
+
+
+def get_schema(versioning=False):
+    schema = metadata_schema.copy()
+
+    if versioning:
+        schema.update({
+            '_id_document': {'type': 'string'},
+            '_current_version': {'type': 'integer'},
+        })
+
+    return schema
