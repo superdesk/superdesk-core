@@ -51,6 +51,9 @@ class LegalArchiveHistoryResource(LegalResource, ArchiveHistoryResource):
     endpoint_name = LEGAL_ARCHIVE_HISTORY_NAME
     resource_title = endpoint_name
     schema = get_schema()
+    schema.update({
+        'update': {'type': 'dict', 'schema': {}},
+    })
     datasource = {'source': LEGAL_ARCHIVE_HISTORY_NAME}
     mongo_indexes = {'item_id': ([('item_id', 1)], {'background': True})}
 

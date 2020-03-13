@@ -21,6 +21,7 @@ from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification
 from superdesk.users.services import current_user_has_privilege
+from superdesk.metadata.item import get_schema
 from apps.auth import get_user_id
 from flask_babel import _
 
@@ -70,7 +71,7 @@ class SavedSearchesResource(Resource):
         },
         'filter': {
             'type': 'dict',
-            'required': True
+            'required': True,
         },
         'user': Resource.rel('users', nullable=True),
         'is_global': {
@@ -319,7 +320,7 @@ class SavedSearchItemsResource(Resource):
     """
 
     endpoint_name = 'saved_search_items'
-    schema = SavedSearchesResource.schema
+    schema = get_schema()
 
     resource_title = endpoint_name
     url = 'saved_searches/<regex("[a-zA-Z0-9:\\-\\.]+"):saved_search_id>/items'

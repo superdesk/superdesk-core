@@ -223,7 +223,6 @@ class ValidateService(superdesk.Service):
         for doc in docs:
             test_doc = deepcopy(doc)
             doc['errors'] = self._validate(test_doc, fields=fields, **kwargs)
-            print('errors', doc['errors'])
         if fields:
             return [doc['errors'] for doc in docs]
         return [i for i in range(len(docs))]

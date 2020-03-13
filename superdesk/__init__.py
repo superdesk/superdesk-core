@@ -163,6 +163,7 @@ def register_item_schema_field(name, schema, app, copy_on_rewrite=True):
     """
     for resource in ['ingest', 'archive', 'published', 'archive_autosave']:
         app.config['DOMAIN'][resource]['schema'].update({name: schema})
+        app.config['DOMAIN'][resource]['datasource']['projection'].udpate({name: 1})
 
     app.config['DOMAIN']['content_templates_apply']['schema']['item']['schema'].update(
         {name: schema}

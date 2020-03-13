@@ -40,6 +40,8 @@ class SuperdeskErrorHandler(SingleErrorAsStringErrorHandler):
     def _format_message(self, field, error):
         if error.info and error.info[0] in CLIENT_ERRORS:
             return {error.info[0]: [1]}  # value must be list, will be unpacked
+        elif error.code == errors.REQUIRED_FIELD.code:
+            return {ERROR_REQUIRED: [1]}
         return self.messages[error.code].format(
             *error.info, constraint=error.constraint, field=field, value=error.value
         )
