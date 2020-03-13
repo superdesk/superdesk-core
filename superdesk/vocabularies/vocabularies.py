@@ -120,6 +120,7 @@ class VocabulariesResource(Resource):
         },
         'schema': {
             'type': 'dict',
+            'schema': {},
         },
         'field_type': {
             'type': 'string',
@@ -127,6 +128,7 @@ class VocabulariesResource(Resource):
         },
         'field_options': {
             'type': 'dict',
+            'schema': {},
         },
         'init_version': {
             'type': 'integer',
