@@ -59,10 +59,12 @@ class ContentTypesResource(superdesk.Resource):
         'schema': {
             'type': 'dict',
             'schema': {},
+            'allow_unknown': True,
         },
         'editor': {
             'type': 'dict',
             'schema': {},
+            'allow_unknown': True,
         },
         'widgets_config': {
             'type': 'list',

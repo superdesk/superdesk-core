@@ -97,6 +97,7 @@ class UsersResource(Resource):
             'user_info': {
                 'type': 'dict',
                 'schema': {},
+                'allow_unknown': True,
             },
             'picture_url': {
                 'type': 'string',
@@ -105,10 +106,15 @@ class UsersResource(Resource):
             'avatar': Resource.rel('upload', embeddable=True, nullable=True),
             'avatar_renditions': {'type': 'dict', 'schema': {}},
             'role': Resource.rel('roles', True),
-            'privileges': {'type': 'dict', 'schema': {}},
+            'privileges': {
+                'type': 'dict',
+                'schema': {},
+                'allow_unknown': True,
+            },
             'workspace': {
                 'type': 'dict',
                 'schema': {},
+                'allow_unknown': True,
             },
             'user_type': {
                 'type': 'string',

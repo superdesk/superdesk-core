@@ -12,6 +12,7 @@ import re
 import superdesk
 
 from bson import ObjectId
+from bson.errors import InvalidId
 from cerberus import errors
 from eve.io.mongo import Validator
 from eve.utils import config
@@ -115,7 +116,7 @@ class SuperdeskValidator(Validator):
         if self.document_id:
             try:
                 query[config.ID_FIELD] = {'$ne': ObjectId(self.document_id)}
-            except ValueError:
+            except InvalidId:
                 query[config.ID_FIELD] = {'$ne': self.document_id}
 
     def _validate_iunique(self, unique, field, value):

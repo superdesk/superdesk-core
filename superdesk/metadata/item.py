@@ -387,10 +387,12 @@ metadata_schema = {
     'renditions': {
         'type': 'dict',
         'schema': {},
+        'allow_unknown': True,
     },
     'filemeta': {
         'type': 'dict',
         'schema': {},
+        'allow_unknown': True,
     },
     'filemeta_json': {
         'type': 'string'
@@ -403,6 +405,7 @@ metadata_schema = {
     },
     ASSOCIATIONS: {
         'type': 'dict',
+        'allow_unknown': True,
         'schema': {},
         'mapping': {
             'type': 'object',
@@ -580,6 +583,7 @@ metadata_schema = {
     'fields_meta': {
         'type': 'dict',
         'schema': {},
+        'allow_unknown': True,
         'nullable': True,
         'mapping': not_enabled,
     },
@@ -601,6 +605,7 @@ metadata_schema = {
         'type': 'dict',
         'schema': {},
         'mapping': not_enabled,
+        'allow_unknown': True,
     },
 
     'attachments': {
