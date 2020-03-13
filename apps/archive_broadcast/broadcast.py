@@ -42,7 +42,7 @@ class ArchiveBroadcastResource(Resource):
     resource_title = endpoint_name
 
     url = 'archive/<{0}:item_id>/broadcast'.format(item_url)
-    schema = metadata_schema
+    schema = metadata_schema.copy()
     schema.update({
         'desk': Resource.rel('desks', embeddable=False, required=False, nullable=True),
         '_id_document': {'type': 'string'},

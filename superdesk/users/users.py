@@ -180,6 +180,12 @@ class UsersResource(Resource):
             'session_preferences': {
                 'type': 'dict',
                 'schema': {},
+                'allow_unknown': True,
+            },
+            'user_preferences': {
+                'type': 'dict',
+                'schema': {},
+                'allow_unknown': True,
             },
         }
 

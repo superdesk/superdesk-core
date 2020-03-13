@@ -15,7 +15,7 @@ from flask import request, current_app as app
 from apps.archive import ArchiveSpikeService
 from superdesk import get_resource_service, Service, config
 from superdesk.metadata.item import ITEM_STATE, EMBARGO, CONTENT_STATE, CONTENT_TYPE, \
-    ITEM_TYPE, PUBLISH_STATES, ASSOCIATIONS, GUID_TAG, PROCESSED_FROM
+    ITEM_TYPE, PUBLISH_STATES, ASSOCIATIONS, GUID_TAG, PROCESSED_FROM, metadata_schema
 from superdesk.resource import Resource, build_custom_hateoas
 from apps.archive.common import CUSTOM_HATEOAS, ITEM_CREATE, ARCHIVE, BROADCAST_GENRE, ITEM_REWRITE, \
     ITEM_UNLINK, ITEM_LINK, insert_into_versions
@@ -35,10 +35,11 @@ class ArchiveRewriteResource(Resource):
     endpoint_name = 'archive_rewrite'
     resource_title = endpoint_name
 
-    schema = {
+    schema = metadata_schema.copy()
+    schema.update({
         'desk_id': {'type': 'string', 'nullable': True},
         'update': {'type': 'dict', 'nullable': True}
-    }
+    })
 
     url = 'archive/<{0}:original_id>/rewrite'.format(item_url)
     resource_methods = ['POST', 'DELETE']

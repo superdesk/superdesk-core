@@ -75,11 +75,12 @@ class PreferencesResource(Resource):
         }
     }
     schema = {
-        _session_preferences_key: {'type': 'dict', 'required': True},
-        _user_preferences_key: {'type': 'dict', 'required': True},
-        _privileges_key: {'type': 'dict'},
-        _action_key: {'type': 'list'}
+        _session_preferences_key: {'type': 'dict', 'required': True, 'allow_unknown': True},
+        _user_preferences_key: {'type': 'dict', 'required': True, 'allow_unknown': True},
+        _privileges_key: {'type': 'dict', 'allow_unknown': True},
+        _action_key: {'type': 'list'},
     }
+    allow_unknown = True
     resource_methods = []
     item_methods = ['GET', 'PATCH']
 
