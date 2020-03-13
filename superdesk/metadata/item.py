@@ -359,7 +359,17 @@ metadata_schema = {
         'type': 'dict',
         'nullable': True,
         'schema': {
-            'located': {'type': 'dict', 'nullable': True, 'schema': {}},
+            'located': {'type': 'dict', 'nullable': True, 'schema': {
+                'state_code': {'type': 'string'},
+                'city': {'type': 'string'},
+                'tz': {'type': 'string'},
+                'country_code': {'type': 'string'},
+                'dateline': {'type': 'string'},
+                'alt_name': {'type': 'string'},
+                'state': {'type': 'string'},
+                'city_code': {'type': 'string'},
+                'country': {'type': 'string'},
+            }},
             'date': {'type': 'datetime', 'nullable': True},
             'source': {'type': 'string'},
             'text': {'type': 'string', 'nullable': True}
@@ -658,6 +668,8 @@ metadata_schema = {
             'rewrite_id': {'type': 'string'},
         },
     },
+
+    'operation': {'type': 'string'},
 }
 
 metadata_schema['lock_user']['versioned'] = False

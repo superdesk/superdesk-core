@@ -35,6 +35,7 @@ class LegalArchiveResource(LegalResource, ArchiveResource):
     resource_title = endpoint_name
     schema = get_schema()
     datasource = {'source': LEGAL_ARCHIVE_NAME}
+    versioning = True
 
 
 class LegalArchiveVersionsResource(LegalResource, ArchiveVersionsResource):
