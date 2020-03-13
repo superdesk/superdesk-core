@@ -504,6 +504,7 @@ metadata_schema = {
             'user': {'type': 'string'},
             'desk': {'type': 'string'},
             'stage': {'type': 'string'},
+            'status': {'type': 'string'},
         },
     },
 
@@ -642,7 +643,16 @@ metadata_schema = {
     'embargoed': {'type': 'datetime'},
     'embargoed_text': {'type': 'string', 'mapping': not_indexed},
 
-    'marked_for_user': Resource.rel('users', required=False, nullable=True)
+    'marked_for_user': Resource.rel('users', required=False, nullable=True),
+
+    'broadcast': {
+        'type': 'dict',
+        'schema': {
+            'status': {'type': 'string'},
+            'master_id': {'type': 'string'},
+            'rewrite_id': {'type': 'string'},
+        },
+    },
 }
 
 metadata_schema['lock_user']['versioned'] = False

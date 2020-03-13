@@ -194,7 +194,7 @@ class SuperdeskValidator(Validator):
 
         Otherwise it will check for unique within docs without any 'user' value.
         """
-        original = self._original_document or {}
+        original = self.persisted_document or {}
         update = self.document or {}
 
         is_public = update.get('is_public', original.get('is_public', None))
@@ -208,9 +208,9 @@ class SuperdeskValidator(Validator):
 
         query['template_name'] = re.compile('^{}$'.format(re.escape(template_name.strip())), re.IGNORECASE)
 
-        if self._id:
+        if self.document_id:
             id_field = config.DOMAIN[self.resource]['id_field']
-            query[id_field] = {'$ne': self._id}
+            query[id_field] = {'$ne': self.document_id}
 
         if superdesk.get_resource_service(self.resource).find_one(req=None, **query):
             self._error(field, "Template Name is not unique")
