@@ -80,8 +80,8 @@ class ValidateMandatoryInListTest(TestCase):
                 'type': 'test',
                 'validate': {'profile': 'foo', 'slugline': 'foo'},
             },
-        ])
-        self.assertEqual(['HEADLINE is a required field'], errors[0])
+        ], fields=True)
+        self.assertIn('HEADLINE is a required field', errors[0][0])
 
     def test_validate_required_empty_string(self):
         self.app.data.insert('content_types', [
@@ -91,9 +91,9 @@ class ValidateMandatoryInListTest(TestCase):
         service = ValidateService()
         errors = service.create([
             {'act': 'test', 'type': 'test', 'validate': {'profile': 'foo', 'headline': ''}}
-        ])
+        ], fields=True)
 
-        self.assertEqual(['HEADLINE empty values not allowed'], errors[0])
+        self.assertEqual(['HEADLINE empty values not allowed'], errors[0][0])
 
     def test_validate_required_empty_list(self):
         self.app.data.insert('content_types', [
@@ -103,9 +103,9 @@ class ValidateMandatoryInListTest(TestCase):
         service = ValidateService()
         errors = service.create([
             {'act': 'test', 'type': 'test', 'validate': {'profile': 'foo', 'subject': []}}
-        ])
+        ], fields=True)
 
-        self.assertEqual(errors, [['SUBJECT is a required field']])
+        self.assertEqual(['SUBJECT is a required field'], errors[0][0])
 
     def test_validate_required_subject_with_cv(self):
         """Test that subject required error is raised as expected when a custom vocabulary is used"""
@@ -117,9 +117,9 @@ class ValidateMandatoryInListTest(TestCase):
         errors = service.create([
             {'act': 'test', 'type': 'test', 'validate': {'profile': 'foo', 'subject': [
                 {'qcode': 'test', 'name': 'test', 'scheme': 'custom_cv'}]}}
-        ])
+        ], fields=True)
 
-        self.assertEqual(errors, [['SUBJECT is a required field']])
+        self.assertEqual(['SUBJECT is a required field'], errors[0][0])
 
     def test_validate_required_none_list(self):
         self.app.data.insert('content_types', [{
@@ -150,10 +150,10 @@ class ValidateMandatoryInListTest(TestCase):
         service = ValidateService()
         errors = service.create([
             {'act': 'test', 'type': 'test', 'validate': {'profile': 'foo', 'subject': None}}
-        ])
+        ], fields=True)
 
-        self.assertIn('CATEGORY is a required field', errors[0])
-        self.assertIn('SUBJECT is a required field', errors[0])
+        self.assertIn('CATEGORY is a required field', errors[0][0])
+        self.assertIn('SUBJECT is a required field', errors[0][0])
 
     def test_validate_field_required_feature_media(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
@@ -167,8 +167,8 @@ class ValidateMandatoryInListTest(TestCase):
                 'type': 'test',
                 'validate': {'profile': 'foo', 'slugline': 'foo'},
             },
-        ])
-        self.assertEqual(['FEATURE_MEDIA is a required field'], errors[0])
+        ], fields=True)
+        self.assertEqual(['FEATURE_MEDIA is a required field'], errors[0][0])
 
     def test_validate_field_required_media_description_empty(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
@@ -183,8 +183,8 @@ class ValidateMandatoryInListTest(TestCase):
                 'type': 'test',
                 'validate': {'profile': 'foo', 'slugline': 'foo', 'associations': {'featuremedia': {}}},
             }
-        ])
-        self.assertIn('MEDIA_DESCRIPTION is a required field', errors[0])
+        ], fields=True)
+        self.assertIn('MEDIA_DESCRIPTION is a required field', errors[0][0])
 
     def test_validate_field_required_media_description_null(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
@@ -199,9 +199,9 @@ class ValidateMandatoryInListTest(TestCase):
                 'type': 'test',
                 'validate': {'profile': 'foo', 'slugline': 'foo', 'associations': {'featuremedia': None}},
             },
-        ])
-        self.assertIn('FEATURE_MEDIA is a required field', errors[0])
-        self.assertIn('MEDIA_DESCRIPTION is a required field', errors[0])
+        ], fields=True)
+        self.assertIn('FEATURE_MEDIA is a required field', errors[0][0])
+        self.assertIn('MEDIA_DESCRIPTION is a required field', errors[0][0])
 
     def test_validate_field_required_media_description_required_false(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
@@ -216,9 +216,8 @@ class ValidateMandatoryInListTest(TestCase):
                 'type': 'test',
                 'validate': {'profile': 'foo', 'slugline': 'foo', 'associations': {'featuremedia': None}},
             },
-        ])
-
-        self.assertIn('FEATURE_MEDIA is a required field', errors[0])
+        ], fields=True)
+        self.assertIn('FEATURE_MEDIA is a required field', errors[0][0])
 
     def test_validate_field_required_media_description_required_false_null_true(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
@@ -233,9 +232,8 @@ class ValidateMandatoryInListTest(TestCase):
                 'type': 'test',
                 'validate': {'profile': 'foo', 'slugline': 'foo', 'associations': {'featuremedia': None}},
             },
-        ])
-
-        self.assertEqual([], errors[0])
+        ], fields=True)
+        self.assertEqual([], errors[0][0])
 
     def test_validate_field_feature_media_and_media_description(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
@@ -256,8 +254,8 @@ class ValidateMandatoryInListTest(TestCase):
                     'associations': {'featuremedia': feature_media}
                 },
             },
-        ])
-        self.assertEqual(errors, [[]])
+        ], fields=True)
+        self.assertEqual([], errors[0][0])
 
     def test_validate_custom_fields(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
@@ -340,8 +338,8 @@ class ValidateMandatoryInListTest(TestCase):
                     'associations': {}
                 },
             },
-        ])
-        self.assertEqual(errors[0], ['RELATED_CONTENT_FIELD is a required field'])
+        ], fields=True)
+        self.assertIn('RELATED_CONTENT_FIELD is a required field', errors[0][0])
 
     def test_validate_field_required_related_content(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
@@ -361,8 +359,8 @@ class ValidateMandatoryInListTest(TestCase):
                     }
                 },
             },
-        ])
-        self.assertEqual(errors[0], [])
+        ], fields=True)
+        self.assertEqual([], errors[0][0])
 
     def test_sanitize_text_fields(self):
         item = {
@@ -410,8 +408,8 @@ class ValidateMandatoryInListTest(TestCase):
                              'sms_message': 'short'
                              },
             },
-        ])
-        self.assertIn('SMS is too short', errors[0])
+        ], fields=True)
+        self.assertIn('SMS is too short', errors[0][0])
 
     def test_validate_field_sms_not_enabled(self):
         self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
@@ -433,8 +431,8 @@ class ValidateMandatoryInListTest(TestCase):
                              'sms_message': 'short'
                              },
             },
-        ])
-        self.assertEqual(errors, [[]])
+        ], fields=True)
+        self.assertEqual([], errors[0][0])
 
     def test_validate_process_media(self):
         media = {'headline': 'media 1'}
@@ -462,5 +460,5 @@ class ValidateMandatoryInListTest(TestCase):
                 'type': 'test',
                 'validate': {'profile': 'foo', 'slugline': '!foo@#'},
             },
-        ])
-        self.assertIn('SLUGLINE contains invalid characters', errors[0])
+        ], fields=True)
+        self.assertIn('SLUGLINE contains invalid characters', errors[0][0])

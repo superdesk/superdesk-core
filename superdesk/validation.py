@@ -1,6 +1,2 @@
 
-from cerberus import DocumentError
-
-
-class ValidationError(DocumentError):
-    pass
+from cerberus import DocumentError as ValidationError

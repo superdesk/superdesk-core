@@ -12,6 +12,7 @@ import re
 import superdesk
 
 from bson import ObjectId
+from bson.errors import InvalidId
 from cerberus import errors
 from eve.io.mongo import Validator
 from eve.utils import config
@@ -88,6 +89,8 @@ class SuperdeskValidator(Validator):
 
     def _validate_multiple_emails(self, multiple, field, value):
         """
+        {'type': 'boolean'}
+
         Validates comma separated list of emails.
 
         :param field: field name.
@@ -103,18 +106,17 @@ class SuperdeskValidator(Validator):
         {'type': 'boolean'}
         """
         if not self.resource.endswith("autosave") and unique:
-            return True
-        query = {field: value}
-        self._set_id_query(query)
-        conflict = superdesk.get_resource_service(self.resource).find_one(req=None, **query)
-        if conflict:
-            self._error(field, ERROR_UNIQUE)
+            query = {field: value}
+            self._set_id_query(query)
+            conflict = superdesk.get_resource_service(self.resource).find_one(req=None, **query)
+            if conflict:
+                self._error(field, ERROR_UNIQUE)
 
     def _set_id_query(self, query):
         if self.document_id:
             try:
                 query[config.ID_FIELD] = {'$ne': ObjectId(self.document_id)}
-            except ValueError:
+            except InvalidId:
                 query[config.ID_FIELD] = {'$ne': self.document_id}
 
     def _validate_iunique(self, unique, field, value):

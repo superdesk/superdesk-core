@@ -208,8 +208,9 @@ class ValidateResource(superdesk.Resource):
         'embedded': {'type': 'boolean', 'required': False},
         'validate': {
             'type': 'dict',
-            'required': True
-        }
+            'required': True,
+        },
+        'errors': {'type': 'list'},
     }
 
     resource_methods = ['POST']
@@ -222,7 +223,10 @@ class ValidateService(superdesk.Service):
         for doc in docs:
             test_doc = deepcopy(doc)
             doc['errors'] = self._validate(test_doc, fields=fields, **kwargs)
-        return [doc['errors'] for doc in docs]
+            print('errors', doc['errors'])
+        if fields:
+            return [doc['errors'] for doc in docs]
+        return [i for i in range(len(docs))]
 
     def _get_profile_schema(self, schema, doc):
         doc['validate'].setdefault('extra', {})  # make sure extra is there so it will validate its fields

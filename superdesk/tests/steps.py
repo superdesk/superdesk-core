@@ -68,6 +68,14 @@ ANALYTICS_DATETIME_FORMAT = "%Y-%m-%d %H:00:00"
 os.environ['AUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 
+def expect_status(response, code):
+    assert int(code) == response.status_code, 'exptected {expected}, got {code}, reason={reason}'.format(
+        code=response.status_code,
+        expected=code,
+        reason=response.get_data(),
+    )
+
+
 def test_json(context, json_fields=None):
     if json_fields is None:
         json_fields = []

@@ -21,6 +21,7 @@ class ValidatorsResource(superdesk.Resource):
             'type': 'dict',
             'required': False,
             'schema': {},
+            'allow_unknown': True,
         }
     }
 
