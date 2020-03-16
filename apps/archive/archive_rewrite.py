@@ -38,8 +38,13 @@ class ArchiveRewriteResource(Resource):
     schema = metadata_schema.copy()
     schema.update({
         'desk_id': {'type': 'string', 'nullable': True},
-        'update': {'type': 'dict', 'nullable': True}
+        'update': {'type': 'dict', 'nullable': True, 'allow_unknown': True},
     })
+
+    datasource = {
+        'source': 'archive',
+        'search_backend': 'elastic',
+    }
 
     url = 'archive/<{0}:original_id>/rewrite'.format(item_url)
     resource_methods = ['POST', 'DELETE']
@@ -47,6 +52,11 @@ class ArchiveRewriteResource(Resource):
 
 
 class ArchiveRewriteService(Service):
+    def get(self, req, lookup):
+        if lookup.get('original_id'):
+            return super().get(req, {'_id': lookup['original_id']})
+        return super().get(req, lookup)
+
     def create(self, docs, **kwargs):
         doc = docs[0] if len(docs) > 0 else {}
         original_id = request.view_args['original_id']
@@ -270,6 +280,7 @@ class ArchiveRewriteService(Service):
             return str(n) + {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, "th")
 
     def delete(self, lookup):
+        print("IN")
         target_id = request.view_args['original_id']
         archive_service = get_resource_service(ARCHIVE)
         target = archive_service.find_one(req=None, _id=target_id)

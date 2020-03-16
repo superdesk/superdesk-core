@@ -71,6 +71,8 @@ LAST_AUTHORING_DESK = 'last_authoring_desk'
 LAST_PRODUCTION_DESK = 'last_production_desk'
 DESK_HISTORY = 'desk_history'
 
+ITEM_EVENT_ID = 'event_id'
+
 metadata_schema = {
     config.ID_FIELD: {
         'type': 'string',
@@ -246,11 +248,27 @@ metadata_schema = {
     },
     'correction_sequence': {
         'type': 'integer',
+        'nullable': True,
         'mapping': not_analyzed
     },
     'rewrite_sequence': {
         'type': 'integer',
+        'nullable': True,
         'mapping': not_analyzed
+    },
+    'rewrite_of': {
+        'type': 'string',
+        'nullable': True,
+        'mapping': not_analyzed,
+    },
+    'rewritten_by': {
+        'type': 'string',
+        'nullable': True,
+        'mapping': not_analyzed,
+    },
+    'sequence': {
+        'type': 'integer',
+        'nullable': True,
     },
     'keywords': {
         'type': 'list',
@@ -271,7 +289,8 @@ metadata_schema = {
     },
     'profile': {
         'type': 'string',
-        'nullable': True
+        'nullable': True,
+        'mapping': not_analyzed,
     },
 
     # Related to state of an article
@@ -534,6 +553,7 @@ metadata_schema = {
         'versioned': False
     },
     'lock_session': Resource.rel('auth'),
+    'lock_action': {'type': 'string'},
 
     # Action when the story is locked: edit, correct, kill
     'lock_action': {
@@ -668,6 +688,8 @@ metadata_schema = {
             'rewrite_id': {'type': 'string', 'mapping': not_analyzed},
         },
     },
+
+    ITEM_EVENT_ID: {'type': 'string', 'mapping': not_analyzed},
 
     # system fields
     '_type': {'type': 'string'},

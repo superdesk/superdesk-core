@@ -1,4 +1,3 @@
-@wip
 Feature: User preferences
     @auth
     Scenario: List empty preferences
