@@ -111,8 +111,9 @@ server_url = urlparse(SERVER_URL)
 SERVER_DOMAIN = server_url.netloc or 'localhost'
 URL_PREFIX = env('URL_PREFIX', server_url.path.lstrip('/')) or ''
 
-VALIDATION_ERROR_STATUS = 400
 JSON_SORT_KEYS = False
+VALIDATION_ERROR_STATUS = 400
+VALIDATION_ERROR_AS_LIST = True
 
 CACHE_CONTROL = 'max-age=0, no-cache'
 

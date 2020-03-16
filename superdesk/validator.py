@@ -36,16 +36,7 @@ CLIENT_ERRORS = (
 )
 
 
-class SuperdeskErrorHandler(SingleErrorAsStringErrorHandler):
-    def _format_message(self, field, error):
-        if error.info and error.info[0] in CLIENT_ERRORS:
-            return {error.info[0]: [1]}  # value must be list, will be unpacked
-        elif error.code == errors.REQUIRED_FIELD.code:
-            return {ERROR_REQUIRED: [1]}
-        return self.messages[error.code].format(
-            *error.info, constraint=error.constraint, field=field, value=error.value
-        )
-
+class BaseErrorHandler(SingleErrorAsStringErrorHandler):
     def _unpack_single_element_lists(self, tree):
         for field in tree:
             error_list = tree[field]
@@ -58,15 +49,26 @@ class SuperdeskErrorHandler(SingleErrorAsStringErrorHandler):
                         if isinstance(err, dict):
                             errors.update(err)
                     tree[field] = errors
-            if len(tree[field]) == 1:
+            if len(tree[field]) == 1 and isinstance(tree[field], list):
                 tree[field] = tree[field][0]
+
+
+class SuperdeskErrorHandler(BaseErrorHandler):
+    def _format_message(self, field, error):
+        if error.info and error.info[0] in CLIENT_ERRORS:
+            return {error.info[0]: [1]}  # value must be list, will be unpacked
+        elif error.code == errors.REQUIRED_FIELD.code:
+            return {ERROR_REQUIRED: [1]}
+        return self.messages[error.code].format(
+            *error.info, constraint=error.constraint, field=field, value=error.value
+        )
 
 
 class SuperdeskValidator(Validator):
 
     def __init__(self, *args, **kwargs):
+        kwargs['error_handler'] = SuperdeskErrorHandler
         super(SuperdeskValidator, self).__init__(*args, **kwargs)
-        self.error_handler = SuperdeskErrorHandler()
 
     def _validate_mapping(self, mapping, field, value):
         pass

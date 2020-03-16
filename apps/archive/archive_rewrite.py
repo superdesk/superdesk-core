@@ -179,7 +179,7 @@ class ArchiveRewriteService(Service):
             rewrite['subject'] = [subject for subject in existing_item.get('subject', [])
                                   if subject.get('qcode') not in unique_subjects]
             rewrite['subject'].extend(subjects)
-            rewrite['flags'] = original['flags'] or {}
+            rewrite['flags'] = original.get('flags') or {}
 
             # preserve flags
             for key in rewrite.get('flags').keys():

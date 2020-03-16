@@ -1063,7 +1063,7 @@ def step_impl_then_get_new(context):
 def step_impl_then_get_error(context, code):
     expect_status(context.response, int(code))
     if context.text:
-        print('got', context.response.get_data())
+        print('got', context.response.get_data().decode("utf-8"))
         test_json(context)
 
 
@@ -2474,14 +2474,10 @@ def we_assert_content_api_item_is_not_published(context, item_id):
 def we_ensure_that_archived_schema_extra_fields_are_not_present(context):
     with context.app.test_request_context(context.app.config['URL_PREFIX']):
         eve_keys = set([config.ID_FIELD, config.LAST_UPDATED, config.DATE_CREATED, config.VERSION, config.ETAG])
-        archived_schema_keys = set(context.app.config['DOMAIN']['archived']['schema'].keys())
-        archived_schema_keys.union(eve_keys)
-        archive_schema_keys = set(context.app.config['DOMAIN']['archive']['schema'].keys())
-        archive_schema_keys.union(eve_keys)
-        assert '_current_version' in archive_schema_keys, 'where is the version? %s' % (config.VERSION, )
+        archived_schema_keys = set(context.app.config['DOMAIN']['archived']['schema'].keys()).union(eve_keys)
+        archive_schema_keys = set(context.app.config['DOMAIN']['archive']['schema'].keys()).union(eve_keys)
         extra_fields = [key for key in archived_schema_keys if key not in archive_schema_keys]
         duplicate_item = json.loads(context.response.get_data())
-        assert '_current_version' not in extra_fields, 'IT IS THERE!!!'
         for field in extra_fields:
             assert field not in duplicate_item, 'Field {} found the duplicate item'.format(field)
 

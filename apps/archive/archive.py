@@ -34,8 +34,9 @@ from eve.utils import parse_request, config, date_to_str, ParsedRequest
 from superdesk.services import BaseService
 from superdesk.users.services import current_user_has_privilege, is_admin
 from superdesk.metadata.item import (ITEM_STATE, CONTENT_STATE, CONTENT_TYPE, ITEM_TYPE, EMBARGO,
-    PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, SIGN_OFF, ASSOCIATIONS, MEDIA_TYPES, INGEST_ID, PROCESSED_FROM, PUBLISH_STATES,
-    get_schema)
+                                     PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, SIGN_OFF, ASSOCIATIONS,
+                                     MEDIA_TYPES, INGEST_ID, PROCESSED_FROM, PUBLISH_STATES,
+                                     get_schema)
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, RESIDREF
 from apps.common.components.utils import get_component
 from apps.item_autosave.components.item_autosave import ItemAutosave

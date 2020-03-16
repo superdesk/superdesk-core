@@ -553,7 +553,6 @@ metadata_schema = {
         'versioned': False
     },
     'lock_session': Resource.rel('auth'),
-    'lock_action': {'type': 'string'},
 
     # Action when the story is locked: edit, correct, kill
     'lock_action': {
@@ -590,7 +589,13 @@ metadata_schema = {
                 'type': 'boolean',
                 'default': False
             }
-        }
+        },
+        'default': {
+            'marked_for_not_publication': False,
+            'marked_for_legal': False,
+            'marked_archived_only': False,
+            'marked_for_sms': False,
+        },
     },
 
     'sms_message': {
@@ -695,6 +700,7 @@ metadata_schema = {
     '_type': {'type': 'string'},
     'used': {'type': 'boolean'},
     'operation': {'type': 'string'},
+    'es_highlight': {'type': 'dict', 'allow_unknown': True, 'readonly': True},
 }
 
 metadata_schema['lock_user']['versioned'] = False

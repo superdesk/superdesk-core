@@ -20,6 +20,7 @@ from superdesk.text_utils import get_text
 from superdesk import get_resource_service
 from _collections_abc import MutableMapping
 from superdesk.signals import item_validate
+from superdesk.validator import BaseErrorHandler
 
 
 REQUIRED_FIELD = 'is a required field'
@@ -64,6 +65,10 @@ def get_validator_schema(schema):
 
 
 class SchemaValidator(Validator):
+
+    def __init__(self, *args, **kwargs):
+        kwargs['error_handler'] = BaseErrorHandler
+        super(SchemaValidator, self).__init__(*args, **kwargs)
 
     types_mapping = {
         k: v for k, v in Validator.types_mapping.items()
