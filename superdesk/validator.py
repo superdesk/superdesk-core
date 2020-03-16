@@ -46,6 +46,21 @@ class SuperdeskErrorHandler(SingleErrorAsStringErrorHandler):
             *error.info, constraint=error.constraint, field=field, value=error.value
         )
 
+    def _unpack_single_element_lists(self, tree):
+        for field in tree:
+            error_list = tree[field]
+            if len(error_list) > 0 and isinstance(tree[field][-1], dict):
+                self._unpack_single_element_lists(tree[field][-1])
+                # if there are sub field errors only return these for now
+                if len(error_list) and any([isinstance(err, dict) for err in error_list]):
+                    errors = {}
+                    for err in error_list:
+                        if isinstance(err, dict):
+                            errors.update(err)
+                    tree[field] = errors
+            if len(tree[field]) == 1:
+                tree[field] = tree[field][0]
+
 
 class SuperdeskValidator(Validator):
 
