@@ -514,10 +514,10 @@ metadata_schema = {
     'task': {
         'type': 'dict',
         'schema': {
-            'user': {'type': 'string'},
-            'desk': {'type': 'string'},
-            'stage': {'type': 'string'},
-            'status': {'type': 'string'},
+            'user': {'type': 'string', 'mapping': not_analyzed},
+            'desk': {'type': 'string', 'mapping': not_analyzed},
+            'stage': {'type': 'string', 'mapping': not_analyzed},
+            'status': {'type': 'string', 'mapping': not_analyzed},
         },
     },
 
@@ -663,12 +663,15 @@ metadata_schema = {
     'broadcast': {
         'type': 'dict',
         'schema': {
-            'status': {'type': 'string'},
-            'master_id': {'type': 'string'},
-            'rewrite_id': {'type': 'string'},
+            'status': {'type': 'string', 'mapping': not_analyzed},
+            'master_id': {'type': 'string', 'mapping': not_analyzed},
+            'rewrite_id': {'type': 'string', 'mapping': not_analyzed},
         },
     },
 
+    # system fields
+    '_type': {'type': 'string'},
+    'used': {'type': 'boolean'},
     'operation': {'type': 'string'},
 }
 

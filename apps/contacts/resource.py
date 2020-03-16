@@ -166,6 +166,7 @@ class OrganisationSearchResource(Resource):
         'search_backend': 'elastic'
     }
 
+    schema = ContactsResource.schema
     resource_methods = ['GET']
     item_methods = ['GET']
     url = 'contacts/organisations'

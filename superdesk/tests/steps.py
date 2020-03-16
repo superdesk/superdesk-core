@@ -2474,8 +2474,10 @@ def we_ensure_that_archived_schema_extra_fields_are_not_present(context):
         archived_schema_keys.union(eve_keys)
         archive_schema_keys = set(context.app.config['DOMAIN']['archive']['schema'].keys())
         archive_schema_keys.union(eve_keys)
+        assert '_current_version' in archive_schema_keys, 'where is the version? %s' % (config.VERSION, )
         extra_fields = [key for key in archived_schema_keys if key not in archive_schema_keys]
         duplicate_item = json.loads(context.response.get_data())
+        assert '_current_version' not in extra_fields, 'IT IS THERE!!!'
         for field in extra_fields:
             assert field not in duplicate_item, 'Field {} found the duplicate item'.format(field)
 

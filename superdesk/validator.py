@@ -236,7 +236,7 @@ class SuperdeskValidator(Validator):
         # custom validation
         if isinstance(value, list) or isinstance(value, dict):
             if len(value) == 0 and not empty:
-                self._error(field, errors.ERROR_EMPTY_NOT_ALLOWED)
+                self._error(field, errors.EMPTY_NOT_ALLOWED)
 
     def _validate_unique_list(self, unique_list, field, value):
         """Validate if list contains only unique items."""
