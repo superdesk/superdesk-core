@@ -1,5 +1,59 @@
 # Superdesk Server Changelog
 
+## [1.33] 2020-03-17
+
+### Fixed
+
+- Handle missing macro for internal destination.
+- Fix block content filter when field is empty.
+- Fix babel get locale selector.
+- Fix error when moving item to archived and item is there already.
+- Don't publish locked associated items during correction.
+- Empty error message on insufficient privileges to create a template.
+- Fix related item refs on correction.
+- It is possible to publish related items locked by a user.
+- Removed associated item gets corrected on story correction.
+- Don't publish/unpublish items not fetchable from provider.
+- Custom CV field validation displays id instead of name.
+- POI of associated images is not updated in NINJS output on correction.
+- Make sure `guid` matches `_id` for items fetched from search provider.
+- Fix `item.extra` elastic mapping.
+- Fix backend validation for required custom fields.
+- Fix manage subscription on save error.
+- Fix internal markup language visible in activity stream.
+- Reset list of translations when duplicating/spiking an item.
+- Remove marked for user on publishing/spiking/killing.
+
+### Changed
+
+- Stop transmitting to subscriber on first error.
+- Use `ingest` celery queue for ingest.
+- Make geonames search style param configurable.
+- Don't move file on failed FTP ingestion on first attempt.
+- Set default pagination to match max limit.
+- Allow user to skip ingest config test if needed.
+- Handle tansa configuration on server.
+- Allow creating update before publishing previous one.
+- Make privileges names more descriptive.
+
+### Added
+
+- Add support to download media files.
+- Add config to allow updates of scheduled items.
+- Add method to get whole items chain.
+- Add `mark_for_user` privilege.
+- Allow `display_name` to be formatted on ldap authentication.
+- Add preview config for content profile editor fields.
+- Add config for custom S3 endpoint.
+- Add signal when item is routed via internal destination.
+- Add helpers for manipulating draftjs state.
+- Production API.
+- Allow special character validation in fields.
+- Implement slugline autocomplete.
+- Save new keywords when publishing an item.
+- Unpublishing an item is now possible in package editor.
+- Send email notification when item is marked for user.
+
 ## [1.32.2] 2019-12-13
 
 ### Fixed
