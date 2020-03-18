@@ -658,6 +658,7 @@ class BasePublishService(BaseService):
             return
 
         associations = original.get(ASSOCIATIONS) or {}
+
         if updates and updates.get(ASSOCIATIONS):
             associations.update(updates[ASSOCIATIONS])
 
@@ -679,6 +680,18 @@ class BasePublishService(BaseService):
                     associated_item['operation'] = self.publish_type
                     updates[ASSOCIATIONS] = updates.get(ASSOCIATIONS, {})
                     updates[ASSOCIATIONS][associations_key] = associated_item
+                    continue
+
+                if associated_item.get('state') == CONTENT_STATE.UNPUBLISHED:
+                    # get the original associated item from archive
+                    orig_associated_item = get_resource_service('archive') \
+                        .find_one(req=None, _id=associated_item[config.ID_FIELD])
+
+                    orig_associated_item['state'] = self.published_state
+                    orig_associated_item['operation'] = self.publish_type
+
+                    get_resource_service('archive_publish').patch(id=orig_associated_item.pop(config.ID_FIELD),
+                                                                  updates=orig_associated_item)
                     continue
 
                 if associated_item.get('state') not in PUBLISH_STATES:
