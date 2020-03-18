@@ -716,6 +716,10 @@ class BasePublishService(BaseService):
                         })
                         continue
 
+                    # update _updated, otherwise it's stored as string.
+                    # fixes SDESK-5043
+                    associated_item['_updated'] = utcnow()
+
                     get_resource_service('archive_publish').patch(id=associated_item.pop(config.ID_FIELD),
                                                                   updates=associated_item)
                     associated_item['state'] = self.published_state
