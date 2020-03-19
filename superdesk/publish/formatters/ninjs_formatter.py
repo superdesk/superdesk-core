@@ -429,7 +429,10 @@ class NINJSFormatter(Formatter):
                 place = {}
                 for key in item.keys():
                     if item.get(key):
-                        place[key] = item.get(key)
+                        if key == 'qcode':
+                            place['code'] = item.get(key)
+                        else:
+                            place[key] = item.get(key)
                 places.append(place)
         return places
 
