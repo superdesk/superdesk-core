@@ -426,13 +426,22 @@ class NINJSFormatter(Formatter):
             if item.get('scheme') == 'geonames':
                 places.append(self._format_geonames(item))
             else:
-                place = {}
-                for key in item.keys():
-                    if item.get(key):
-                        if key == 'qcode':
-                            place['code'] = item.get(key)
-                        else:
-                            place[key] = item.get(key)
+                if config.NINJS_PLACE_EXTENDED:
+                    place = {}
+                    for key in item.keys():
+                        if item.get(key):
+                            if key == 'qcode':
+                                place['code'] = item.get(key)
+                            elif key == 'name':
+                                if (get_label(item) is not None):
+                                    place['name'] = get_label(item)
+                                else:
+                                    place['name'] = item.get(key)
+                            else:
+                                place[key] = item.get(key)
+                else:
+                    place = {'name': get_label(item),
+                             'code': item.get('qcode')}
                 places.append(place)
         return places
 
