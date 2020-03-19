@@ -161,7 +161,7 @@ class FileFeedingService(FeedingService):
             os.remove(os.path.join(file_path, filename))
 
     def is_empty(self, file_path):
-        """Test if given file is empty, return True if file does not exist
+        """Test if given file path is empty, return True if a file is empty
         """
         return not (os.path.isfile(file_path) and os.path.getsize(file_path) > 0)
 
