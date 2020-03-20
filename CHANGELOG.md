@@ -2,6 +2,8 @@
 
 ## [1.33] 2020-03-17
 
+Listing some changes below, for full list go to [github](https://github.com/superdesk/superdesk-core/milestone/79?closed=1).
+
 ### Fixed
 
 - Handle missing macro for internal destination.
