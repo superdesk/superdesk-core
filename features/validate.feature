@@ -393,3 +393,60 @@ Feature: Validate
     """
     {"errors": "__empty__"}
     """
+
+    @auth
+    Scenario: Validate subject using custom vocabulary for it
+    Given "content_types"
+    """
+    [{"_id": "test", "schema": {
+      "subject": {
+        "type": "list",
+        "nullable": false,
+        "required": true,
+        "type": "list"
+      }
+    }}]
+    """
+    And "vocabularies"
+    """
+    [
+      {"_id": "custom_subject_field", "schema_field": "subject"},
+      {"_id": "other_field"}
+    ]
+    """
+
+    When we post to "/validate"
+    """
+    {
+      "act": "publish", "type": "text",
+      "validate": {
+        "profile": "test",
+        "subject": [
+          {"name": "foo", "qcode": "foo", "scheme": "custom_subject_field"}
+        ]
+      }
+    }
+    """
+
+    Then we get existing resource
+    """
+    {"errors": "__empty__"}
+    """
+
+    When we post to "/validate"
+    """
+    {
+      "act": "publish", "type": "text",
+      "validate": {
+        "profile": "test",
+        "subject": [
+          {"name": "foo", "qcode": "foo", "scheme": "other field"}
+        ]
+      }
+    }
+    """
+
+    Then we get existing resource
+    """
+    {"errors": ["SUBJECT is a required field"]}
+    """

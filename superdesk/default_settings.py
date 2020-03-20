@@ -417,6 +417,7 @@ CORE_APPS.extend([
     'superdesk.io.subjectcodes',
     'superdesk.io.format_document_for_preview',
     'superdesk.io.iptc',
+    'superdesk.io.mediatopics',
     'superdesk.text_checkers.spellcheckers',
     'apps.io',
     'apps.io.feeding_services',
@@ -833,3 +834,6 @@ TANSA_PROFILE_ID = env('TANSA_PROFILE_ID')
 TANSA_LICENSE_KEY = env('TANSA_LICENSE_KEY')
 TANSA_CLIENT_BASE_URL = env('TANSA_CLIENT_BASE_URL', 'https://d02.tansa.com/tansaclient/')
 TANSA_PROFILES = {}
+
+# Enable ninjs to send all the fields for place in output.
+NINJS_PLACE_EXTENDED = False

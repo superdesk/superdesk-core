@@ -129,6 +129,7 @@ DEFAULT_EDITOR = {
     'abstract': {
         'order': 17,
         'formatOptions': ['bold', 'italic', 'underline', 'link'],
+        'editor3': True,
         'enabled': True
     },
     'byline': {'order': 18, 'enabled': True},
@@ -137,6 +138,7 @@ DEFAULT_EDITOR = {
         'order': 20,
         'formatOptions': ['h2', 'bold', 'italic', 'underline', 'quote', 'link', 'embed', 'media'],
         'cleanPastedHTML': False,
+        'editor3': True,
         'enabled': True
     },
     'footer': {'order': 21, 'enabled': False},

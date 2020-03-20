@@ -12,7 +12,7 @@ import json
 from eve.utils import ParsedRequest
 from flask_babel import _
 
-from superdesk import get_resource_service
+from superdesk import get_resource_service, app
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
@@ -50,6 +50,8 @@ class ContentFilterTestService(BaseService):
             if 'article_id' in doc:
                 article_id = doc.get('article_id')
                 article = get_resource_service('archive').find_one(req=None, _id=article_id)
+                if not article and 'planning' in app.config.get('INSTALLED_APPS', []):
+                    article = get_resource_service('planning').find_one(None, _id=article_id)
                 if not article:
                     article = get_resource_service('ingest').find_one(req=None, _id=article_id)
                     if not article:

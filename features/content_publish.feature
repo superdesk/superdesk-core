@@ -2637,7 +2637,8 @@ Feature: Content Publishing
                 },
                 "related--1": {
                   "_id": "text",
-                  "type": "text"
+                  "type": "text",
+                  "order": "1"
                 }
             }
           }
@@ -3870,3 +3871,160 @@ Feature: Content Publishing
         """
       When we get "/published"
       Then we get list with 3 items
+
+    @auth
+    Scenario: Do not fix-related-references for not _fetchable associations
+      Given "vocabularies"
+      """
+      [
+        {"_id": "media", "field_type": "media", "field_options": {"allowed_types": {"picture": true}}},
+        {"_id": "belga_related_articles", "field_type": "related_content"}
+      ]
+      """
+      And "content_types"
+      """
+      [{
+          "_id": "profile1", "label": "Profile 1",
+          "is_used": true, "enabled": true, "priority": 0, "editor": {},
+          "schema": {}
+      }]
+      """
+      And "validators"
+      """
+      [
+          {"_id": "publish_text", "act": "publish", "type": "text", "schema":{}}
+      ]
+      """
+      And "desks"
+      """
+      [{"name": "Sports"}]
+      """
+      When we post to "/products" with success
+      """
+      {
+          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+      }
+      """
+      And we post to "/subscribers" with success
+      """
+      {
+        "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+      }
+      """
+      And we post to "archive" with success
+      """
+      [
+          {
+            "guid": "123",
+            "type": "text",
+            "headline": "test",
+            "state": "in_progress",
+            "profile": "profile1",
+            "subject":[{"qcode": "17004000", "name": "Statistics"}], "body_html": "Test Document body",
+            "associations": {
+              "belga_related_articles--1" : {
+                  "_id" : "urn:belga.be:360archive:FAKEID",
+                  "guid" : "urn:belga.be:360archive:FAKEID",
+                  "_fetchable" : false,
+                  "extra" : {
+                      "bcoverage" : "urn:belga.be:360archive:FAKEID"
+                  },
+                  "type" : "text",
+                  "mimetype" : "application/vnd.belga.360archive",
+                  "pubstatus" : "usable",
+                  "headline" : "Postkantoren blijven vrijdag gesloten",
+                  "versioncreated" : "2020-02-26T15:42:05+0000",
+                  "firstcreated" : "2020-02-26T15:42:05+0000",
+                  "creditline" : "BELGA",
+                  "source" : "BELGA",
+                  "language" : "nl",
+                  "abstract" : "Bpost hanteert nu vrijdag 28 februari een aangepaste dienstregeling",
+                  "body_html" : "Bpost hanteert dit jaar vijf dagen met een aangepaste dienstverlening.",
+                  "_type" : "externalsource",
+                  "fetch_endpoint" : "search_providers_proxy",
+                  "ingest_provider" : "5da8572a9e7cb98d13ce1d7b",
+                  "selected" : false,
+                  "state" : "published",
+                  "operation" : "publish"
+              }
+            }
+          }
+      ]
+      """
+      And we publish "123" with "publish" type and "published" state
+      Then we get OK response
+      And we get existing resource
+      """
+      {
+          "profile": "profile1",
+          "type": "text",
+          "operation": "publish",
+          "state": "published",
+          "urgency": 3,
+          "language": "en",
+          "guid": "123",
+          "_id": "123",
+          "source": "AAP",
+          "headline": "test",
+          "associations": {
+              "belga_related_articles--1": {
+                  "versioncreated": "2020-02-26T15:42:05+0000",
+                  "body_html": "Bpost hanteert dit jaar vijf dagen met een aangepaste dienstverlening.",
+                  "abstract": "Bpost hanteert nu vrijdag 28 februari een aangepaste dienstregeling",
+                  "ingest_provider": "5da8572a9e7cb98d13ce1d7b",
+                  "operation": "publish",
+                  "state": "published",
+                  "_fetchable": false,
+                  "extra": {
+                      "bcoverage": "urn:belga.be:360archive:FAKEID"
+                  },
+                  "selected": false,
+                  "language": "nl",
+                  "guid": "urn:belga.be:360archive:FAKEID",
+                  "_id": "urn:belga.be:360archive:FAKEID",
+                  "source": "BELGA",
+                  "headline": "Postkantoren blijven vrijdag gesloten",
+                  "creditline": "BELGA",
+                  "firstcreated": "2020-02-26T15:42:05+0000",
+                  "mimetype": "application/vnd.belga.360archive",
+                  "pubstatus": "usable",
+                  "fetch_endpoint": "search_providers_proxy",
+                  "type": "text"
+              }
+          }
+      }
+      """
+      When we get "/archive/123"
+      Then we get existing resource
+      """
+        {
+            "associations": {
+                "belga_related_articles--1": {
+                    "versioncreated": "2020-02-26T15:42:05+0000",
+                    "body_html": "Bpost hanteert dit jaar vijf dagen met een aangepaste dienstverlening.",
+                    "abstract": "Bpost hanteert nu vrijdag 28 februari een aangepaste dienstregeling",
+                    "ingest_provider": "5da8572a9e7cb98d13ce1d7b",
+                    "operation": "publish",
+                    "state": "published",
+                    "_fetchable": false,
+                    "extra": {
+                        "bcoverage": "urn:belga.be:360archive:FAKEID"
+                    },
+                    "selected": false,
+                    "language": "nl",
+                    "guid": "urn:belga.be:360archive:FAKEID",
+                    "_id": "urn:belga.be:360archive:FAKEID",
+                    "source": "BELGA",
+                    "headline": "Postkantoren blijven vrijdag gesloten",
+                    "creditline": "BELGA",
+                    "firstcreated": "2020-02-26T15:42:05+0000",
+                    "mimetype": "application/vnd.belga.360archive",
+                    "pubstatus": "usable",
+                    "fetch_endpoint": "search_providers_proxy",
+                    "type": "text"
+                }
+            }
+        }
+        """

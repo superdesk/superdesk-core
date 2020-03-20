@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
-from flask import current_app as app
+from flask import current_app as app, json
 from eve.defaults import resolve_default_values
 from eve.utils import ParsedRequest, config
 from eve.methods.common import resolve_document_etag
@@ -97,9 +97,11 @@ class BaseService():
             req = ParsedRequest()
         return self.backend.get(self.datasource, req=req, lookup=lookup)
 
-    def get_from_mongo(self, req, lookup):
+    def get_from_mongo(self, req, lookup, projection=None):
         if req is None:
             req = ParsedRequest()
+        if not req.projection and projection:
+            req.projection = json.dumps(projection)
         return self.backend.get_from_mongo(self.datasource, req=req, lookup=lookup)
 
     def find_and_modify(self, **kwargs):

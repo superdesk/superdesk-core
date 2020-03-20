@@ -27,6 +27,7 @@ from .image import get_meta
 from .video import get_meta as video_meta
 from superdesk.errors import SuperdeskApiError
 from flask import current_app as app
+from mimetypes import guess_extension
 
 logger = logging.getLogger(__name__)
 
@@ -233,3 +234,14 @@ def set_opacity(image, opacity=1):
     alpha = image.split()[3]
     alpha = ImageEnhance.Brightness(alpha).enhance(opacity)
     image.putalpha(alpha)
+
+
+def guess_media_extension(content_type):
+    ext = str(guess_extension(content_type))
+    if ext in ['.jpe', '.jpeg']:
+        return '.jpg'
+    if 'mp3' in content_type or 'audio/mpeg' in content_type:
+        return '.mp3'
+    if 'flac' in content_type:
+        return '.flac'
+    return ext if ext != 'None' else ''

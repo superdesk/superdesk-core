@@ -11,13 +11,18 @@
 
 import json
 import uuid
-import unittest
+from superdesk.tests import TestCase
 import superdesk.editor_utils as editor_utils
 
 from superdesk.editor_utils import Editor3Content
 
 
-class Editor3TestCase(unittest.TestCase):
+class Editor3TestCase(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        if "EMBED_PRE_PROCESS" in self.app.config:
+            del self.app.config["EMBED_PRE_PROCESS"]
 
     def build_item(self, draftjs_data, field='body_html'):
         return {
@@ -1598,6 +1603,37 @@ class Editor3TestCase(unittest.TestCase):
         expected = (
             '<div class="embed-block"><p class="some_class">some embedded HTML</p></div><p>The name of Highlaws comes f'
             'rom the Old English hēah-hlāw, meaning "high mounds".</p>'
+        )
+        self.assertEqual(item['body_html'], expected)
+
+    def _modify_embed_content(self, data):
+        data['html'] = data['html'].replace('some embedded HTML', 'some modified embed')
+
+    def test_embed_pre_process(self):
+        """An embed can be pre-processed with a callback"""
+        self.app.config['EMBED_PRE_PROCESS'] = [self._modify_embed_content]
+        draftjs_data = {
+            "blocks": [
+                {
+                    "key": "fcbn3",
+                    "text": 'The name of Highlaws comes from the Old English hēah-hlāw, meaning "high mounds".',
+                    "type": "unstyled",
+                    "depth": 0,
+                    "inlineStyleRanges": [],
+                    "entityRanges": [],
+                    "data": {"MULTIPLE_HIGHLIGHTS": {}},
+                }
+            ],
+            "entityMap": {},
+        }
+        item = self.build_item(draftjs_data)
+        body_editor = Editor3Content(item)
+        embed_html = '<p class="some_class">some embedded HTML</p>'
+        body_editor.prepend('embed', embed_html)
+        body_editor.update_item()
+        expected = (
+            '<div class="embed-block"><p class="some_class">some modified embed</p></div><p>The name of Highlaws comes '
+            'from the Old English hēah-hlāw, meaning "high mounds".</p>'
         )
         self.assertEqual(item['body_html'], expected)
 

@@ -12,10 +12,11 @@
 import re
 import logging
 import uuid
-import json
-
 from textwrap import dedent
 from collections.abc import MutableSequence
+
+from flask import current_app as app
+
 from draftjs_exporter.html import HTML
 from draftjs_exporter.constants import ENTITY_TYPES, INLINE_STYLES, BLOCK_TYPES
 from draftjs_exporter.defaults import STYLE_MAP, BLOCK_MAP
@@ -356,16 +357,20 @@ class DraftJSHTMLExporter:
         return DOM.create_element('a', attribs, props['children'])
 
     def render_embed(self, props):
-        # FIXME: Qumu hack is not handled yet
-        div = DOM.create_element('div', {'class': 'embed-block'})
-        embedded_html = DOM.parse_html(props['data']['html'])
-        if embedded_html.tag == 'html' and not props['data']['html'].startswith('<html'):
-            embedded_html = embedded_html[0][0]  # parse_html adds <html><head> around script tag
-        DOM.append_child(div, embedded_html)
+        embed_pre_process = app.config.get('EMBED_PRE_PROCESS')
+        if embed_pre_process:
+            for callback in embed_pre_process:
+                callback(props['data'])
+        # we use superdesk.etree.parse_html instead of DOM.parse_html as the later modify the content
+        # and we use directly the wrapping <div> returned with "content='html'". This works because
+        # we use the lxml engine with DraftJSExporter.
+        div = parse_html(props['data']['html'], content='html')
+        div.set('class', 'embed-block')
         description = props.get('description')
         if description:
             p = DOM.create_element('p', {'class': 'embed-block__description'}, description)
             DOM.append_child(div, p)
+
         return div
 
     def render_table(self, props):

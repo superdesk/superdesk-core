@@ -14,6 +14,7 @@ from lxml.etree import ParseError  # noqa
 from lxml import html
 from superdesk import config
 
+
 # from https://developer.mozilla.org/en-US/docs/Web/HTML/Block-level_elements
 BLOCK_ELEMENTS = (
     "address",
@@ -114,8 +115,13 @@ def parse_html(html, content='xml', lf_on_block=False, space_on_elements=False):
         if root is None:
             root = etree.Element('div')
         else:
-            root = root.find('body')
-            root.tag = 'div'
+            div = etree.Element('div')
+            # we unwrap elements in <head> and <body>
+            # <script> can be used in embed, and the parser will move them to <head>
+            # so we need both <head> and <body>
+            for elt in root:
+                div.extend(elt)
+            root = div
     else:
         raise ValueError('invalid content: {}'.format(content))
     if lf_on_block:
