@@ -836,4 +836,4 @@ TANSA_CLIENT_BASE_URL = env('TANSA_CLIENT_BASE_URL', 'https://d02.tansa.com/tans
 TANSA_PROFILES = {}
 
 # Enable ninjs to send all the fields for place in output.
-NINJS_PLACE_EXTENDED = True
+NINJS_PLACE_EXTENDED = False
