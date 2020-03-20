@@ -17,7 +17,7 @@ from superdesk.publish.transmitters.file_output import FilePublishService
 from superdesk.errors import PublishFileError
 
 
-class FileOutputTest(TestCase):
+class FilePublishServiceTest(TestCase):
     def setUp(self):
         self.fixtures = os.path.join(os.path.abspath(os.path.dirname(__file__)))
         self.subscribers = [{"_id": "1", "name": "Test", "media_type": "media",

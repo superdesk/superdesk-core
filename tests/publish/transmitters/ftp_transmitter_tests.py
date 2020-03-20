@@ -32,7 +32,7 @@ def mockGet(self, _id, resource=None):
     return b'binary'
 
 
-class FTPPublishTestCase(TestCase):
+class FTPPublishServiceTestCase(TestCase):
     def setUp(self):
         init_app(self.app)
 

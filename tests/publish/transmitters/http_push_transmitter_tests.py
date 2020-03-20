@@ -26,7 +26,12 @@ from superdesk.errors import PublishHTTPPushServerError, PublishHTTPPushClientEr
 
 
 def get_fixture(fixture):
-    filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), '%s.json' % fixture)
+    filename = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        '../',
+        'fixtures',
+        '%s.json' % fixture
+    )
     with open(filename, 'r') as file:
         return json.load(file)
 
@@ -56,7 +61,7 @@ class TestMedia(io.BytesIO):
     mimetype = 'text/plain'
 
 
-class HTTPPushPublishTestCase(unittest.TestCase):
+class HTTPPushServiceTestCase(unittest.TestCase):
 
     def setUp(self):
         if 'HTTP_PUSH_RESOURCE_URL' not in os.environ:

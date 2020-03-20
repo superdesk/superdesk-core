@@ -8,17 +8,18 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from superdesk.tests import TestCase
+import json
 from unittest import mock
+from datetime import timedelta
+
+from superdesk.tests import TestCase
 from superdesk.publish.formatters.ninjs_ftp_formatter import FTPNinjsFormatter
 from superdesk.publish import init_app
 from superdesk.utc import utcnow
-from datetime import timedelta
-import json
 
 
 @mock.patch('superdesk.publish.subscribers.SubscribersService.generate_sequence_number', lambda self, subscriber: 1)
-class NitfFormatterTest(TestCase):
+class FTPNinjsFormatterTest(TestCase):
     def setUp(self):
         self.formatter = FTPNinjsFormatter()
         init_app(self.app)

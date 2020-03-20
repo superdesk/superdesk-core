@@ -8,12 +8,12 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import mimetypes
+import os
+from unittest.mock import Mock
+
 from superdesk.publish.transmitters.email import EmailPublishService
 from superdesk.tests import TestCase
 from superdesk.publish import init_app
-import os
-from unittest.mock import Mock, call
 
 
 class MockMediaFS:
@@ -33,7 +33,7 @@ class MockMediaFS:
 
     def _read(self):
         dirname = os.path.dirname(os.path.realpath(__file__))
-        fixture = os.path.normpath(os.path.join(dirname, '../media/fixtures', 'IPTC-PhotometadataRef-Std2017.1.jpg'))
+        fixture = os.path.normpath(os.path.join(dirname, '../fixtures', 'IPTC-PhotometadataRef-Std2017.1.jpg'))
         with open(fixture, 'rb') as f:
             return f.read()
 

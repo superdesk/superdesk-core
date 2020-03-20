@@ -7,15 +7,14 @@
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
+import datetime
 from unittest import mock
+from lxml import etree
 
 from superdesk.utc import utcnow
-
 from superdesk.tests import TestCase
-from superdesk.publish.formatters.newsml_1_2_formatter import NewsML12Formatter
-from lxml import etree
-import datetime
 from superdesk.publish import init_app
+from superdesk.publish.formatters.newsml_1_2_formatter import NewsML12Formatter
 
 
 @mock.patch('superdesk.publish.subscribers.SubscribersService.generate_sequence_number', lambda self, subscriber: 1)

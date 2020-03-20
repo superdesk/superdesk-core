@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import json
-
+from bson import ObjectId
 from unittest import mock
 from datetime import timedelta
 
@@ -17,7 +17,6 @@ from superdesk.utc import utcnow
 from superdesk.tests import TestCase
 from superdesk.publish.formatters.ninjs_formatter import NINJSFormatter, NINJS2Formatter
 from superdesk.publish import init_app
-from bson import ObjectId
 
 
 @mock.patch("superdesk.publish.subscribers.SubscribersService.generate_sequence_number", lambda self, subscriber: 1)

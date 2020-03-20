@@ -8,12 +8,13 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from superdesk.tests import TestCase
-from .enqueue.enqueue_service import EnqueueService
-from apps.packages.package_service import PackageService
 from unittest import mock
-from apps.archive.archive import ArchiveService
+
+from superdesk.tests import TestCase
 from content_api.publish.service import PublishService
+from apps.publish.enqueue.enqueue_service import EnqueueService
+from apps.packages.package_service import PackageService
+from apps.archive.archive import ArchiveService
 
 
 def _fake_extend_subscriber_items(self,

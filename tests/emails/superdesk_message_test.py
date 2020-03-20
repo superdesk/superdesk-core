@@ -1,10 +1,10 @@
+import unittest
 
 import flask
-import unittest
 import flask_mail
-
 from email.parser import Parser
 from email.header import decode_header
+
 from superdesk.emails import SuperdeskMessage
 
 

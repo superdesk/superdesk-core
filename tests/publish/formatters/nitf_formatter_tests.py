@@ -7,14 +7,14 @@
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
+from lxml import etree
+from unittest import mock
+from textwrap import dedent
 
 from superdesk.tests import TestCase
-from unittest import mock
 from superdesk.publish.formatters.nitf_formatter import NITFFormatter
 from superdesk.publish.formatters import Formatter
 from superdesk.publish import init_app
-from lxml import etree
-from textwrap import dedent
 
 
 @mock.patch('superdesk.publish.subscribers.SubscribersService.generate_sequence_number', lambda self, subscriber: 1)

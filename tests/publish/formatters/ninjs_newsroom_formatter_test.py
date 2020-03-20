@@ -23,7 +23,7 @@ import planning.planning as planning_planning
 
 
 @mock.patch('superdesk.publish.subscribers.SubscribersService.generate_sequence_number', lambda self, subscriber: 1)
-class NinjsFormatterTest(TestCase):
+class NewsroomNinjsFormatterTest(TestCase):
     def setUp(self):
         self.formatter = NewsroomNinjsFormatter()
         init_app(self.app)
