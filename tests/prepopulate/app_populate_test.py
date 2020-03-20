@@ -14,7 +14,7 @@ import json
 from superdesk.tests import TestCase
 from superdesk import get_resource_service
 
-from .app_populate import AppPopulateCommand
+from apps.prepopulate.app_populate import AppPopulateCommand
 
 
 class AppPopulateValidatorsTest(TestCase):

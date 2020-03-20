@@ -13,7 +13,7 @@ from apps.preferences import PreferencesService
 from superdesk.tests import TestCase
 
 
-class Preference_Tests(TestCase):
+class PreferenceTests(TestCase):
     """Unit Test Class related to Preference routines.
 
     :param TestCase: test case to use

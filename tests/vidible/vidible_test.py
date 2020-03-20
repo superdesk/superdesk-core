@@ -1,8 +1,7 @@
-
 import unittest
 import requests_mock
 
-from .vidible import get_vidible_metadata
+from apps.vidible.vidible import get_vidible_metadata
 
 
 VIDIBLE_TEXT = """

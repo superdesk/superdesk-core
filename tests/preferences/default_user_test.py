@@ -1,8 +1,6 @@
-
-
 import unittest
 
-from .preferences import enhance_document_with_default_prefs
+from apps.preferences import enhance_document_with_default_prefs
 
 
 class DefaultUserPrefsTestCase(unittest.TestCase):

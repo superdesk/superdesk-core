@@ -1,7 +1,7 @@
 
 import unittest
 
-from .spellcheck import norvig_suggest
+from apps.spellcheck.spellcheck import norvig_suggest
 
 
 class SpellcheckTestCase(unittest.TestCase):
