@@ -10,8 +10,9 @@
 
 
 import unittest
-from superdesk.macros.take_key_validator import validate
 from nose.tools import assert_raises
+
+from superdesk.macros.take_key_validator import validate
 
 
 class TakeKeyValidatorTestCase(unittest.TestCase):

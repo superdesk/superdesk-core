@@ -10,8 +10,8 @@
 
 from nose.tools import assert_raises
 
-from .validate_for_publish import validate_for_publish, ValidationError
 from superdesk.tests import TestCase
+from superdesk.macros.validate_for_publish import validate_for_publish, ValidationError
 
 
 class ValidateForPublishTests(TestCase):

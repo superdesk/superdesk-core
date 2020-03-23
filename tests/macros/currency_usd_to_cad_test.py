@@ -1,7 +1,8 @@
 
 import unittest
 from decimal import Decimal
-from .currency_usd_to_cad import usd_to_cad
+
+from superdesk.macros.currency_usd_to_cad import usd_to_cad
 
 
 class CurrencyTestCase(unittest.TestCase):

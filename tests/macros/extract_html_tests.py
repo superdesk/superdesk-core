@@ -8,8 +8,9 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from .extract_html import extract_html_macro
 import unittest
+
+from superdesk.macros.extract_html import extract_html_macro
 
 
 class ExtractHtmlTestCase(unittest.TestCase):
