@@ -3,7 +3,7 @@ from superdesk.tests import TestCase
 from superdesk.vocabularies.commands import get_vocabularies, is_changed, update_item
 
 
-class UpdateArchiveVocabulariesTestCase(TestCase):
+class VocabulariesUpdateArchiveTestCase(TestCase):
     fields = ['subject', 'genre', 'place', 'anpa_category']
     vocabularies_list = [
         {
