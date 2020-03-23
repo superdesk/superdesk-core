@@ -125,4 +125,3 @@ class TemplatesTestCase(TestCase):
                                now=current_now
                                )
         self.assertEqual(delta.days, 1)
-

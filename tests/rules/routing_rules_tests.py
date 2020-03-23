@@ -138,8 +138,6 @@ class ValidateScheduleMethodTestCase(RoutingRuleSchemeServiceTest):
         {'Foo/Bar', 'Foo/Baz', 'Here/There'}
     )
     def test_raises_error_on_unknown_time_zone(self):
-
-
         self.schedule['time_zone'] = 'Invalid/Zone'
 
         with self.assertRaises(SuperdeskApiError) as context:
