@@ -8,12 +8,13 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 import logging
+from datetime import timedelta
 
 from superdesk.tests import TestCase
-from .remove_expired_items import RemoveExpiredItems
 from superdesk import get_resource_service
-from datetime import timedelta
 from superdesk.utc import utcnow
+
+from ..commands.remove_expired_items import RemoveExpiredItems
 
 logger = logging.getLogger(__name__)
 
