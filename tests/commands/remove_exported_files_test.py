@@ -5,7 +5,7 @@ from superdesk.tests import TestCase
 from superdesk.utc import utcnow
 from superdesk.utc import query_datetime
 
-from .remove_exported_files import RemoveExportedFiles
+from superdesk.commands.remove_exported_files import RemoveExportedFiles
 
 
 class MockMediaFS:
