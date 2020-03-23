@@ -1,8 +1,9 @@
 
 import unittest
 from datetime import datetime
-from .subjectcodes import SubjectIndex
-from .iptc import init_app
+
+from superdesk.io.subjectcodes import SubjectIndex
+from superdesk.io.iptc import init_app
 
 
 class SubjectcodeTestCase(unittest.TestCase):

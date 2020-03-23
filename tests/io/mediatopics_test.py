@@ -9,8 +9,9 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import unittest
-from .mediatopics import MediaTopicsIndex
-from .iptc import subject_codes
+
+from superdesk.io.mediatopics import MediaTopicsIndex
+from superdesk.io.iptc import subject_codes
 
 
 class MediaTopicsTestCase(unittest.TestCase):
