@@ -59,6 +59,10 @@ def register_search_provider(name, fetch_endpoint=None, provider_class=None, lab
 class SearchProviderAllowedResource(Resource):
     resource_methods = ['GET']
     item_methods = []
+    schema = {
+        'label': {'type': 'string'},
+        'search_provider': {'type': 'string'},
+    }
 
 
 class SearchProviderAllowedService(Service):
