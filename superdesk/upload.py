@@ -95,7 +95,8 @@ class UploadResource(Resource):
         'CropBottom': {'type': 'integer'},
         'URL': {'type': 'string'},
         'mimetype': {'type': 'string'},
-        'filemeta': {'type': 'dict'}
+        'filemeta': {'type': 'dict'},
+        'filemeta_json': {'type': 'string'},
     }
     extra_response_fields = ['renditions']
     datasource = {
@@ -107,6 +108,7 @@ class UploadResource(Resource):
             '_etag': 1,
             'media': 1,
             'renditions': 1,
+            'filemeta_json': 1,
         }
     }
     item_methods = ['GET', 'DELETE']
