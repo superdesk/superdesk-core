@@ -37,7 +37,7 @@ class RolesResource(Resource):
             'type': 'string'
         },
         'privileges': {
-            'type': 'dict'
+            'type': 'dict',
         },
         'is_default': {
             'type': 'boolean'

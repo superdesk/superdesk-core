@@ -60,6 +60,8 @@ def enhance_document_with_default_prefs(doc):
         if default:
             sync_field('label', v, default)
             sync_field('category', v, default)
+
+
     doc[_user_preferences_key] = available
 
 
@@ -71,7 +73,11 @@ class PreferencesResource(Resource):
             _user_preferences_key: 1,
             _privileges_key: 1,
             _action_key: 1,
-            '_etag': 1
+            '_etag': 1,
+
+            'role': 1,
+            'user_type': 1,
+            'privileges': 1,
         }
     }
     schema = {
@@ -79,6 +85,11 @@ class PreferencesResource(Resource):
         _user_preferences_key: {'type': 'dict', 'required': True, 'allow_unknown': True},
         _privileges_key: {'type': 'dict', 'allow_unknown': True},
         _action_key: {'type': 'list'},
+
+        # we need these to get user/role info
+        'role': {'type': 'string'},
+        'user_type': {'type': 'string'},
+        'privileges': {'type': 'dict'},
     }
     allow_unknown = True
     resource_methods = []
