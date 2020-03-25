@@ -38,6 +38,8 @@ class RolesResource(Resource):
         },
         'privileges': {
             'type': 'dict',
+            'schema': {},
+            'allow_unknown': True,
         },
         'is_default': {
             'type': 'boolean'

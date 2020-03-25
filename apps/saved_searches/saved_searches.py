@@ -71,7 +71,9 @@ class SavedSearchesResource(Resource):
         },
         'filter': {
             'type': 'dict',
+            'schema': {},
             'required': True,
+            'allow_unknown': True,
         },
         'user': Resource.rel('users', nullable=True),
         'is_global': {
