@@ -568,7 +568,7 @@ class BasePublishService(BaseService):
                 validate_item = {'act': self.publish_type, 'type': doc[ITEM_TYPE], 'validate': doc}
                 if type(item) == dict:
                     validate_item['embedded'] = True
-                errors = get_resource_service('validate').post([validate_item], headline=True)
+                errors = get_resource_service('validate').post([validate_item], headline=True, fields=True)[0]
                 if errors[0]:
                     pre_errors = ['Associated item %s %s' % (doc.get('slugline', ''), error) for error in errors[0]]
                     validation_errors.extend(pre_errors)

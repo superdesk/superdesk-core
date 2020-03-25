@@ -134,7 +134,13 @@ class IngestProviderResource(Resource):
                     'on_close': {'type': 'boolean', 'default': True},
                     'on_open': {'type': 'boolean', 'default': True},
                     'on_error': {'type': 'boolean', 'default': True}
-                }
+                },
+                'default': {
+                    'on_update': True,
+                    'on_close': True,
+                    'on_open': True,
+                    'on_error': True,
+                },
             },
             'last_closed': {
                 'type': 'dict',
