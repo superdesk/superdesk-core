@@ -61,7 +61,6 @@ def enhance_document_with_default_prefs(doc):
             sync_field('label', v, default)
             sync_field('category', v, default)
 
-
     doc[_user_preferences_key] = available
 
 
