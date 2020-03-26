@@ -28,7 +28,7 @@ Feature: Publish embedded items feature
             "schema": {
                 "type": {
                     "type": "string",
-                    "required": "true",
+                    "required": true,
                     "allowed": ["picture"]
                 },
                 "pubstatus": {
@@ -66,7 +66,7 @@ Feature: Publish embedded items feature
             "schema": {
                 "type": {
                     "type": "string",
-                    "required": "true",
+                    "required": true,
                     "allowed": ["picture"]
                 },
                 "pubstatus": {
