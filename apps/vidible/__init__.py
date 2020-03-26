@@ -11,8 +11,8 @@
 
 import logging
 
-from .vidible import bp
 import superdesk
+from .vidible import bp
 
 logger = logging.getLogger(__name__)
 

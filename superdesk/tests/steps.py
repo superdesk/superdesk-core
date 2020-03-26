@@ -55,7 +55,6 @@ from superdesk.utc import utcnow, get_expiry_date
 from superdesk.tests import get_prefixed_url, set_placeholder
 from apps.dictionaries.resource import DICTIONARY_FILE
 from superdesk.filemeta import get_filemeta
-from apps import io
 from pathlib import Path
 # for auth server
 from authlib.jose import jwt
@@ -627,7 +626,6 @@ def fetch_from_provider(context, provider_name, guid, routing_scheme=None, desk_
     provider_service = get_feeding_service(provider['feeding_service'])
 
     if provider.get('name', '').lower() in ('aap', 'dpa', 'ninjs', 'email', 'ftp_ninjs', 'stt'):
-        file_path = get_provider_file_path(provider, guid)
         if provider.get('name', '').lower() == 'ftp_ninjs':
             file_path = os.path.join(provider.get('config', {}).get('path_fixtures', ''), guid)
         else:
@@ -1022,7 +1020,7 @@ def step_impl_when_upload_from_url(context):
     data = {'URL': external_url}
     headers = [('Content-Type', 'multipart/form-data')]
     headers = unique_headers(headers, context.headers)
-    fixture_path = Path(io.__file__).parent / "fixtures"
+    fixture_path = Path(superdesk.__file__).parent.parent / "tests" / "io" / "fixtures"
 
     with responses.RequestsMock() as rsps:
         apply_mock_file(rsps, "upload_from_url_mock.json", fixture_path=fixture_path)
@@ -1038,7 +1036,7 @@ def step_impl_when_upload_from_url_with_crop(context):
             'CropRight': '333'}
     headers = [('Content-Type', 'multipart/form-data')]
     headers = unique_headers(headers, context.headers)
-    fixture_path = Path(io.__file__).parent / "fixtures"
+    fixture_path = Path(superdesk.__file__).parent.parent / "tests" / "io" / "fixtures"
 
     with responses.RequestsMock() as rsps:
         apply_mock_file(rsps, "upload_from_url_mock.json", fixture_path=fixture_path)

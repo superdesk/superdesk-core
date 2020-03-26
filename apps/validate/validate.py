@@ -128,11 +128,7 @@ class SchemaValidator(Validator):
             # for subject, we have to ignore all data with scheme
             # as they are used for custom values except "subject_custom" scheme as it's the scheme for subject cv
             # so it must be present
-            subject_schemas = set([
-                None,
-                '',
-                'subject_custom',
-            ])
+            subject_schemas = {None, '', 'subject_custom'}
 
             # plus any cv with schema_field subject
             cvs = get_resource_service('vocabularies').get_from_mongo(

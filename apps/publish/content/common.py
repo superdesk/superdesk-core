@@ -635,6 +635,7 @@ class BasePublishService(BaseService):
                 updated[ASSOCIATIONS][key] = {
                     '_id': item['_id'],
                     'type': item['type'],
+                    'order': item.get('order', 1),
                 }
                 updates.setdefault('associations', {})[key] = updated[ASSOCIATIONS][key]
 
@@ -657,6 +658,7 @@ class BasePublishService(BaseService):
             return
 
         associations = original.get(ASSOCIATIONS) or {}
+
         if updates and updates.get(ASSOCIATIONS):
             associations.update(updates[ASSOCIATIONS])
 
@@ -680,6 +682,18 @@ class BasePublishService(BaseService):
                     updates[ASSOCIATIONS][associations_key] = associated_item
                     continue
 
+                if associated_item.get('state') == CONTENT_STATE.UNPUBLISHED:
+                    # get the original associated item from archive
+                    orig_associated_item = get_resource_service('archive') \
+                        .find_one(req=None, _id=associated_item[config.ID_FIELD])
+
+                    orig_associated_item['state'] = self.published_state
+                    orig_associated_item['operation'] = self.publish_type
+
+                    get_resource_service('archive_publish').patch(id=orig_associated_item.pop(config.ID_FIELD),
+                                                                  updates=orig_associated_item)
+                    continue
+
                 if associated_item.get('state') not in PUBLISH_STATES:
                     # This associated item has not been published before
                     associated_item.get('task', {}).pop('stage', None)
@@ -701,6 +715,10 @@ class BasePublishService(BaseService):
                             'operation': original_associated_item.get('operation', self.publish_type),
                         })
                         continue
+
+                    # update _updated, otherwise it's stored as string.
+                    # fixes SDESK-5043
+                    associated_item['_updated'] = utcnow()
 
                     get_resource_service('archive_publish').patch(id=associated_item.pop(config.ID_FIELD),
                                                                   updates=associated_item)
