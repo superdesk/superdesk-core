@@ -178,6 +178,11 @@ Superdesk commands
 
 .. autoclass:: apps.auth.db.commands.CreateUserCommand()
 
+``users:import``
+^^^^^^^^^^^^^^^^
+
+.. autoclass:: apps.auth.db.commands.ImportUsersCommand()
+
 ``users:copyfromad``
 ^^^^^^^^^^^^^^^^^^^^
 
