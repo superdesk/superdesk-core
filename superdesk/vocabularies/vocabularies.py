@@ -121,6 +121,7 @@ class VocabulariesResource(Resource):
         'schema': {
             'type': 'dict',
             'schema': {},
+            'allow_unknown': True,
         },
         'field_type': {
             'type': 'string',

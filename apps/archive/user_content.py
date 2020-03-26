@@ -38,11 +38,18 @@ class UserContentResource(Resource):
 
 class UserContentService(BaseService):
 
-    def get(self, req, lookup):
-        docs = super().get(req, lookup)
-        for doc in docs:
-            build_custom_hateoas(CUSTOM_HATEOAS, doc)
-        return docs
+    def on_fetched(self, docs):
+        """
+        Overriding this to handle existing data in Mongo & Elastic
+        """
+        self.enhance_items(docs['_items'])
+
+    def on_fetched_item(self, doc):
+        self.enhance_items([doc])
+
+    def enhance_items(self, items):
+        for item in items:
+            build_custom_hateoas(CUSTOM_HATEOAS, item)
 
 
 superdesk.workflow_state('draft')
