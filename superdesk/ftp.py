@@ -25,8 +25,8 @@ def ftp_connect(config):
             ftp.login(config.get('username'), config.get('password'))
         except ftplib.error_perm as e:
             raise IngestFtpError.ftpAuthError(exception=e)
-    if config.get('path'):
-        path = config.get('path')
+    path = config.get('path')
+    if path:
         if not path.startswith('/') or not path.startswith('./'):
             config['path'] = '/' + path
         ftp.cwd(config.get('path', '').lstrip('/'))
