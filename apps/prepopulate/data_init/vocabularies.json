@@ -1,21 +1,5 @@
 [
     {
-        "_id": "categories",
-        "display_name": "Categories",
-        "type": "manageable",
-        "selection_type": "multi selection",
-        "unique_field": "qcode",
-        "items": [
-            {"is_active": true, "name": "FIXME1", "qcode": "f1", "subject": "", "translations": {"name": {"fr": "FIXME1-fr", "es": "FIXME1-es"}}},
-            {"is_active": true, "name": "FIXME2", "qcode": "f2", "subject": "", "translations": {"name": {"fr": "FIXME2-fr", "es": "FIXME2-es"}}}
-        ],
-        "schema": {
-            "name": {"translate": true},
-            "qcode": {},
-            "subject": {}
-        }
-    },
-    {
         "_id": "default_categories",
         "display_name": "Default Categories",
         "type": "manageable",
