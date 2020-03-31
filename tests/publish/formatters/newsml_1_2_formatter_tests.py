@@ -24,13 +24,13 @@ class Newsml12FormatterTest(TestCase):
         'guid': 'urn:localhost.abc',
         'source': 'AAP',
         'anpa_category': [{'qcode': 'a', 'name': 'Australian General News'}],
-        'headline': 'This is a test headline',
+        'headline': 'This is a test headline - для теста!',
         'byline': 'joe',
         'slugline': 'slugline',
         'subject': [{'qcode': '02011001'}, {'qcode': '02011002'}],
         'anpa_take_key': 'take_key',
         'unique_id': '1',
-        'body_html': '<p>The story body&nbsp;more to the story</p>',
+        'body_html': '<p>The story body&nbsp;more to the story - больше историй</p>',
         'type': 'text',
         'word_count': '1',
         'priority': 1,
@@ -69,7 +69,7 @@ class Newsml12FormatterTest(TestCase):
         'guid': 'urn:localhost.123',
         'source': 'AAP',
         'anpa_category': [{'qcode': 'a', 'name': 'Australian General News'}],
-        'headline': 'This is a test headline',
+        'headline': 'This is a test headline - для теста!',
         'byline': 'joe',
         'slugline': 'slugline',
         'subject': [{'qcode': '02011001'}, {'qcode': '02011002'}],
@@ -720,7 +720,7 @@ class Newsml12FormatterTest(TestCase):
         self.assertEqual(self.newsml.find('NewsComponent/NewsComponent/Role').
                          get('FormalName'), 'Main')
         self.assertEqual(self.newsml.find('NewsComponent/NewsComponent/NewsLines/HeadLine').
-                         text, 'This is a test headline')
+                         text, 'This is a test headline - для теста!')
         self.assertEqual(self.newsml.find('NewsComponent/NewsComponent/NewsLines/ByLine').
                          text, 'joe')
         self.assertEqual(self.newsml.find('NewsComponent/NewsComponent/NewsLines/DateLine').
@@ -742,7 +742,7 @@ class Newsml12FormatterTest(TestCase):
                 'NewsComponent/NewsComponent/NewsComponent/ContentItem/DataContent')[0].text, 'sample abstract')
         self.assertEqual(self.newsml.findall(
             'NewsComponent/NewsComponent/NewsComponent/ContentItem/DataContent/nitf/body/body.content/p')[0].text,
-            'The story body\xa0more to the story')
+            'The story body\xa0more to the story - больше историй')
         self.assertEqual(
             self.newsml.findall(
                 'NewsComponent/NewsComponent/NewsComponent/ContentItem/DataContent/nitf/body/body.content/p')[1].text,
