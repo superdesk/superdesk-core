@@ -197,6 +197,11 @@ class FTPFeedingService(FeedingService):
         _, ext = os.path.splitext(filename)
         return ext.lower() in allowed_ext
 
+    def _is_empty(self, file_path):
+        """Test if given file path is empty, return True if a file is empty
+        """
+        return not (os.path.isfile(file_path) and os.path.getsize(file_path) > 0)
+
     def _list_files(self, ftp, provider):
         self._timer.start('ftp_list')
         try:
@@ -296,6 +301,11 @@ class FTPFeedingService(FeedingService):
                     # filter by extension
                     if not self._is_allowed(filename, allowed_ext):
                         logger.info('ignoring file {filename} because of file extension'.format(filename=filename))
+                        continue
+
+                    file_path = os.path.join(config.get('dest_path', '/'), filename)
+                    if self._is_empty(file_path):
+                        logger.info('ignoring empty file {filename}'.format(filename=filename))
                         continue
 
                     # filter by modify datetime

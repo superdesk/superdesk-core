@@ -548,8 +548,10 @@ def run_update_ingest_ftp(*args):
         ftp_list_files_mock.return_value = (('ninjs1.json', '20181111123456'),
                                             ('ninjs2.json', '20181111123456'),
                                             ('ninjs3.json', '20181111123456'))
-        with mock.patch.object(ftp.FTPFeedingService, '_retrieve_and_parse') as retrieve_and_parse_mock:
+        with mock.patch.object(ftp.FTPFeedingService, '_retrieve_and_parse') as retrieve_and_parse_mock, \
+                mock.patch.object(ftp.FTPFeedingService, '_is_empty') as empty_file_mock:
             retrieve_and_parse_mock.side_effect = retrieve_and_parse_side_effect
+            empty_file_mock.return_value = False
             # run command
             update_ingest.UpdateIngest().run()
 
