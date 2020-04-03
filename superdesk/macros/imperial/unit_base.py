@@ -9,8 +9,9 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import re
-from . import macro_replacement_fields
+
 from decimal import Decimal
+from superdesk.macros import macro_replacement_fields
 
 
 def format_converted(converted_value, precision):

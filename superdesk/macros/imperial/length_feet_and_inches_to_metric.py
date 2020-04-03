@@ -9,7 +9,6 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import re
-from . import macro_replacement_fields
 from . import unit_base
 from decimal import Decimal
 
@@ -84,7 +83,7 @@ def do_conversion(item, converter, formatter, search_param):
             diff.setdefault(match_item.strip(), formatter(match_item.strip(), to_value, symbol))
             return diff[match_item]
 
-    for field in macro_replacement_fields:
+    for field in unit_base.macro_replacement_fields:
         if item.get(field, None):
             re.sub(search_param, convert, item[field])
 

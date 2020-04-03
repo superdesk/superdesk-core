@@ -8,11 +8,13 @@ Use `superdesk.macro_register.macros.register` for registration.
 import os
 import sys
 import imp
-import importlib
 import logging
+import importlib
 
 
 logger = logging.getLogger(__name__)
+
+macro_replacement_fields = {'body_html', 'body_text', 'abstract', 'headline', 'slugline', 'description_text'}
 
 
 def load_macros(path, package_prefix='superdesk.macros'):
@@ -36,6 +38,5 @@ def load_macros(path, package_prefix='superdesk.macros'):
             logger.warning("Can't import macro {module}: {reason}".format(module=module, reason=e))
 
 
-macro_replacement_fields = {'body_html', 'body_text', 'abstract', 'headline', 'slugline', 'description_text'}
-macros_folder = os.path.realpath(os.path.dirname(__file__))
-load_macros(macros_folder)
+def init_app(app):
+    load_macros(os.path.dirname(__file__), __name__)
