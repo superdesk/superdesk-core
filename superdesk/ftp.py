@@ -25,10 +25,7 @@ def ftp_connect(config):
             ftp.login(config.get('username'), config.get('password'))
         except ftplib.error_perm as e:
             raise IngestFtpError.ftpAuthError(exception=e)
-    path = config.get('path')
-    if path:
-        if not path.startswith('/') or not path.startswith('./'):
-            config['path'] = '/' + path
+    if config.get('path'):
         ftp.cwd(config.get('path', '').lstrip('/'))
     if config.get('passive') is False:  # only set this when not active, it's passive by default
         ftp.set_pasv(False)

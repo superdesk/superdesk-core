@@ -169,7 +169,13 @@ class FTPFeedingService(FeedingService):
             # catching all_errors is a bit overkill,
             # but ftplib doesn't really have precise error
             # for missing directory
-            ftp.mkd(path)
+            if path.startswith('./'):
+                ftp.cwd('/')
+                ftp.mkd(path)
+            elif not path.startswith('/'):
+                ftp.mkd('/' + path)
+            else:
+                ftp.mkd(path)
         finally:
             ftp.cwd(base_path)
 
