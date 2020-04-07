@@ -89,7 +89,14 @@ BANDWIDTH_SAVER = False
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%S+0000'
 ELASTIC_DATE_FORMAT = '%Y-%m-%d'
 ELASTIC_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
+
 PAGINATION_LIMIT = 200
+
+#: keep default in sync with limit - so when client does not use pagination return all
+#:
+#: .. versionadded:: 1.33
+#:
+PAGINATION_DEFAULT = PAGINATION_LIMIT
 
 LOG_CONFIG_FILE = env('LOG_CONFIG_FILE', 'logging_config.yml')
 LOG_SERVER_ADDRESS = env('LOG_SERVER_ADDRESS', 'localhost')
@@ -215,6 +222,7 @@ CELERY_TASK_QUEUES = (
     Queue(celery_queue('default'), Exchange(celery_queue('default')), routing_key='default'),
     Queue(celery_queue('expiry'), Exchange(celery_queue('expiry'), type='topic'), routing_key='expiry.#'),
     Queue(celery_queue('legal'), Exchange(celery_queue('legal'), type='topic'), routing_key='legal.#'),
+    Queue(celery_queue('ingest'), Exchange(celery_queue('ingest'), type='topic'), routing_key='ingest.#'),
     Queue(celery_queue('publish'), Exchange(celery_queue('publish'), type='topic'), routing_key='publish.#'),
     Queue(
         HIGH_PRIORITY_QUEUE,
@@ -230,7 +238,11 @@ CELERY_TASK_ROUTES = {
     },
     'superdesk.io.gc_ingest': {
         'queue': celery_queue('expiry'),
-        'routing_key': 'expiry.ingest'
+        'routing_key': 'expiry.ingest',
+    },
+    'superdesk.io.*': {
+        'queue': celery_queue('ingest'),
+        'routing_key': 'ingest.ingest',
     },
     'superdesk.audit.gc_audit': {
         'queue': celery_queue('expiry'),
@@ -371,6 +383,13 @@ LDAP_USER_ATTRIBUTES = json.loads(env('LDAP_USER_ATTRIBUTES',
                                       '"displayName": "display_name", "mail": "email", '
                                       '"ipPhone": "phone"}'))
 
+#: Enable the ability for the display name of the user to be overridden with Superdesk user attributes
+LDAP_SET_DISPLAY_NAME = strtobool(env('LDAP_SET_DISPLAY_NAME', 'False'))
+#: List of Superdesk user attributes passed to the format method
+LDAP_SET_DISPLAY_NAME_FIELDS = json.loads(env('LDAP_SET_DISPLAY_NAME_FIELDS', '["first_name", "last_name"]'))
+#: Format for the user display name
+LDAP_SET_DISPLAY_NAME_FORMAT = env('LDAP_SET_DISPLAY_NAME_FORMAT', '{} {}')
+
 if LDAP_SERVER:
     CORE_APPS.append('apps.ldap')
 else:
@@ -398,6 +417,7 @@ CORE_APPS.extend([
     'superdesk.io.subjectcodes',
     'superdesk.io.format_document_for_preview',
     'superdesk.io.iptc',
+    'superdesk.io.mediatopics',
     'superdesk.text_checkers.spellcheckers',
     'apps.io',
     'apps.io.feeding_services',
@@ -473,6 +493,8 @@ AMAZON_CONTAINER_NAME = env('AMAZON_CONTAINER_NAME', '')
 AMAZON_S3_SUBFOLDER = env('AMAZON_S3_SUBFOLDER', '')
 #: adds ACL when putting to S3, can be set to ``public-read``, etc.
 AMAZON_OBJECT_ACL = env('AMAZON_OBJECT_ACL', '')
+#: amazon endpoint. This can be used with third-party s3-compatible servers
+AMAZON_ENDPOINT_URL = env('AMAZON_ENDPOINT_URL', '')
 
 RENDITIONS = {
     'picture': {
@@ -629,7 +651,7 @@ FTP_INGEST_FILES_LIST_LIMIT = 100
 #:
 #: .. versionadded:: 1.32.2
 #:
-FILE_INGEST_OLD_CONTENT_MINUTES = 10
+INGEST_OLD_CONTENT_MINUTES = 10
 
 #: default timeout for email connections
 EMAIL_TIMEOUT = 10
@@ -700,6 +722,11 @@ GEONAMES_USERNAME = env('GEONAMES_USERNAME')
 GEONAMES_TOKEN = env('GEONAMES_TOKEN')
 GEONAMES_URL = env('GEONAMES_URL', 'http://api.geonames.org/')
 GEONAMES_FEATURE_CLASSES = ['P']
+#: Set how much metadata should be returned
+#:
+#: .. versionadded:: 1.33
+#:
+GEONAMES_SEARCH_STYLE = 'medium'
 
 # media required fields
 VALIDATOR_MEDIA_METADATA = {
@@ -807,3 +834,6 @@ TANSA_PROFILE_ID = env('TANSA_PROFILE_ID')
 TANSA_LICENSE_KEY = env('TANSA_LICENSE_KEY')
 TANSA_CLIENT_BASE_URL = env('TANSA_CLIENT_BASE_URL', 'https://d02.tansa.com/tansaclient/')
 TANSA_PROFILES = {}
+
+# Enable ninjs to send all the fields for place in output.
+NINJS_PLACE_EXTENDED = False

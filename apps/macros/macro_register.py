@@ -38,6 +38,11 @@ def load_module(module):
             importlib.import_module(module)
         except ImportError:
             return
+
+    m = sys.modules[module]
+    if getattr(m, 'init_app', None):
+        m.init_app(current_app)
+
     register_macros()
 
 

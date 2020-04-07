@@ -25,6 +25,7 @@ class ItemAutosave(BaseComponent):
         return 'archive_autosave'
 
     def autosave(self, item_id, updates, user, etag):
+        updates.setdefault('_type', 'archive')
         item_model = get_model(ItemModel)
         item = item_model.find_one({'_id': item_id})
         if item is None:

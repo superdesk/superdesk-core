@@ -30,6 +30,7 @@ class NITFFormatter(Formatter):
     """
 
     XML_ROOT = '<?xml version="1.0"?>'
+    ENCODING = 'UTF-8'
 
     _message_attrib = {'version': "-//IPTC//DTD NITF 3.6//EN"}
 
@@ -147,7 +148,11 @@ class NITFFormatter(Formatter):
             pub_seq_num = superdesk.get_resource_service('subscribers').generate_sequence_number(subscriber)
 
             nitf = self.get_nitf(article, subscriber, pub_seq_num)
-            return [(pub_seq_num, self.XML_ROOT + etree.tostring(nitf, pretty_print=True).decode('utf-8'))]
+            return [(pub_seq_num, self.XML_ROOT + etree.tostring(
+                nitf,
+                pretty_print=True,
+                encoding=self.ENCODING
+            ).decode(self.ENCODING))]
         except Exception as ex:
             raise FormatterError.nitfFormatterError(ex, subscriber)
 

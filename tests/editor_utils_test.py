@@ -9,13 +9,20 @@
 
 """Unit tests for editor utils"""
 
-import uuid
 import json
+import uuid
 from superdesk.tests import TestCase
+import superdesk.editor_utils as editor_utils
+
 from superdesk.editor_utils import Editor3Content
 
 
 class Editor3TestCase(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        if "EMBED_PRE_PROCESS" in self.app.config:
+            del self.app.config["EMBED_PRE_PROCESS"]
 
     def build_item(self, draftjs_data, field='body_html'):
         return {
@@ -1598,3 +1605,206 @@ class Editor3TestCase(TestCase):
             'rom the Old English hēah-hlāw, meaning "high mounds".</p>'
         )
         self.assertEqual(item['body_html'], expected)
+
+    def _modify_embed_content(self, data):
+        data['html'] = data['html'].replace('some embedded HTML', 'some modified embed')
+
+    def test_embed_pre_process(self):
+        """An embed can be pre-processed with a callback"""
+        self.app.config['EMBED_PRE_PROCESS'] = [self._modify_embed_content]
+        draftjs_data = {
+            "blocks": [
+                {
+                    "key": "fcbn3",
+                    "text": 'The name of Highlaws comes from the Old English hēah-hlāw, meaning "high mounds".',
+                    "type": "unstyled",
+                    "depth": 0,
+                    "inlineStyleRanges": [],
+                    "entityRanges": [],
+                    "data": {"MULTIPLE_HIGHLIGHTS": {}},
+                }
+            ],
+            "entityMap": {},
+        }
+        item = self.build_item(draftjs_data)
+        body_editor = Editor3Content(item)
+        embed_html = '<p class="some_class">some embedded HTML</p>'
+        body_editor.prepend('embed', embed_html)
+        body_editor.update_item()
+        expected = (
+            '<div class="embed-block"><p class="some_class">some modified embed</p></div><p>The name of Highlaws comes '
+            'from the Old English hēah-hlāw, meaning "high mounds".</p>'
+        )
+        self.assertEqual(item['body_html'], expected)
+
+    def test_replace_text(self):
+        draftjs_data = {
+            "blocks": [
+                {
+                    "key": "foo",
+                    "text": "first line text",
+                    "type": "unstyled",
+                    "depth": 0,
+                    "inlineStyleRanges": [
+                        {'offset': 6, 'length': 4, 'style': 'ITALIC'},
+                    ],
+                    "entityRanges": [],
+                },
+                {
+                    "key": "bar",
+                    "text": "second line",
+                    "type": "unstyled",
+                    "depth": 0,
+                    "inlineStyleRanges": [],
+                    "entityRanges": [{"offset": 7, "length": 4, "key": 0}],
+                },
+            ],
+            "entityMap": {
+                "0": {
+                    "type": "LINK",
+                    "mutability": "MUTABLE",
+                    "data": {"link": {"href": "http://example.com"}},
+                }
+            },
+        }
+        item_editor2 = {"body_html": '<p>first <i>line</i> text</p><p>second <a href="http://example.com">line</a></p>'}
+        item_editor3 = self.build_item(draftjs_data, "body_html")
+
+        body_editor = Editor3Content(item_editor3, "body_html")
+        body_editor.update_item()
+        self.assertEqual(item_editor2["body_html"], item_editor3["body_html"])
+
+        editor_utils.replace_text(item_editor2, 'body_html', 'first', 'initial')
+        editor_utils.replace_text(item_editor3, 'body_html', 'first', 'initial')
+        self.assertEqual(
+            '<p>initial <i>line</i> text</p><p>second <a href="http://example.com">line</a></p>',
+            item_editor2["body_html"],
+        )
+        self.assertEqual(item_editor2["body_html"], item_editor3["body_html"])
+
+        editor_utils.replace_text(item_editor2, 'body_html', "text", "foo")
+        editor_utils.replace_text(item_editor3, 'body_html', "text", "foo")
+        self.assertEqual(
+            '<p>initial <i>line</i> foo</p><p>second <a href="http://example.com">line</a></p>',
+            item_editor2["body_html"],
+        )
+        self.assertEqual(item_editor2["body_html"], item_editor3["body_html"])
+
+    def test_set_blocks(self):
+        draftjs_data = {
+            "blocks": [
+                {
+                    "key": "foo",
+                    "text": "first line",
+                    "type": "unstyled",
+                    "depth": 0,
+                    "inlineStyleRanges": [],
+                    "entityRanges": [],
+                    "data": {"MULTIPLE_HIGHLIGHTS": {}},
+                },
+                {
+                    "key": "bar",
+                    "text": "second line",
+                    "type": "unstyled",
+                    "depth": 0,
+                    "inlineStyleRanges": [],
+                    "entityRanges": [],
+                },
+            ],
+            "entityMap": {},
+        }
+
+        item = self.build_item(draftjs_data)
+        body_editor = Editor3Content(item)
+        body_editor.set_blocks(
+            [block for block in body_editor.blocks if block.key == "bar"]
+        )
+        self.assertEqual(1, len(body_editor.blocks))
+        self.assertEqual("bar", body_editor.blocks[0].key)
+        self.assertIn("MULTIPLE_HIGHLIGHTS", body_editor.blocks[0].data.get('data'))
+
+        body_editor.set_blocks([])
+        self.assertEqual(1, len(body_editor.blocks))
+        self.assertIn("MULTIPLE_HIGHLIGHTS", body_editor.blocks[0].data.get('data'))
+
+    def test_replace_text_no_html(self):
+        item = {'headline': 'foo bar'}
+        editor_utils.replace_text(item, 'headline', 'bar', 'baz', is_html=False)
+        self.assertEqual('foo baz', item['headline'])
+
+    def test_replace_text_inline_styles(self):
+        item = {
+            'body_html': '<h1>head</h1>\n<p>lorem <b>this is bold</b> and <b>bold</b> end</p>',
+        }
+        editor_utils.replace_text(item, 'body_html', 'bold', 'UL')
+        self.assertEqual('<h1>head</h1><p>lorem <b>this is UL</b> and <b>UL</b> end</p>', item['body_html'])
+
+    def test_replace_what_you_had_is_what_you_get(self):
+        html = ''.join([
+            '<h1>H1 foo</h1>',
+            '<h2>H2 foo</h2>',
+            '<h3>H3 foo</h3>',
+            '<h4>H4 foo</h4>',
+            '<p>P foo</p>',
+            '<pre>PRE foo</pre>',
+            '<blockquote>BLOCKQUOTE foo</blockquote>',
+            '<!-- EMBED START Image {id: "editor_0"} -->\n',
+            '<figure><img alt="" src="http://example.com"></figure>\n'
+            '<!-- EMBED END Image {id: "editor_0"} -->',
+            '<ul>',
+            '<li>LI foo</li>',
+            '<li>LI2 foo</li>',
+            '</ul>',
+            '<ol>',
+            '<li>LI OL foo</li>',
+            '</ol>',
+            '<table>',  # only parsing tables so far, no text replace in it
+            '<thead><tr><th><p>th foo</p></th></tr></thead>',
+            '<tbody><tr><td><p>td foo</p></td></tr></tbody>',
+            '</table>',
+            '<p><a href="http://p.com" target="_blank">P</a> foo</p>',
+            '<div class="embed-block">',
+            '<script>foo</script>',
+            '</div>',
+            '<div class="embed-block">',
+            '<iframe src="http://iframe.com">foo</iframe>',
+            '</div>',
+        ])
+
+        item = {'body_html': html, 'associations': {
+            'editor_0': {
+                'type': 'picture',
+                'renditions': {
+                    'original': {
+                        'href': 'http://example.com',
+                    },
+                },
+            },
+        }}
+
+        editor_utils.replace_text(item, 'body_html', ' foo', '')
+        self.maxDiff = None
+        self.assertEqual(html.replace(' foo', ''), item['body_html'])
+
+        # test we keep draftjs state for next time
+        item['body_html'] = 'foo'
+        editor_utils.replace_text(item, 'body_html', ' foo', '')
+        self.assertEqual(html.replace(' foo', ''), item['body_html'])
+
+    def test_filter_blocks(self):
+        item = {
+            'body_html': ''.join([
+                '<p>first line</p>',
+                '<p>second line</p>',
+            ]),
+        }
+
+        def block_filter(block):
+            return 'second' in block.text
+
+        editor_utils.filter_blocks(item, 'body_html', block_filter)
+        self.assertEqual('<p>second line</p>', item['body_html'])
+
+        item = {'body_html': ''}
+        editor_utils.filter_blocks(item, 'body_html', block_filter)
+        self.assertEqual('', item['body_html'])

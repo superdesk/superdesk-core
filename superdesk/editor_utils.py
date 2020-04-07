@@ -14,10 +14,14 @@ import logging
 import uuid
 from textwrap import dedent
 from collections.abc import MutableSequence
+
+from flask import current_app as app
+
 from draftjs_exporter.html import HTML
-from draftjs_exporter.constants import ENTITY_TYPES, INLINE_STYLES
-from draftjs_exporter.defaults import STYLE_MAP
+from draftjs_exporter.constants import ENTITY_TYPES, INLINE_STYLES, BLOCK_TYPES
+from draftjs_exporter.defaults import STYLE_MAP, BLOCK_MAP
 from draftjs_exporter.dom import DOM
+from .etree import parse_html, to_string
 
 
 logger = logging.getLogger(__name__)
@@ -26,6 +30,33 @@ DUMMY_RE = re.compile(r"</?dummy_tag>")
 ANNOTATION = 'ANNOTATION'
 MEDIA = 'MEDIA'
 TABLE = 'TABLE'
+
+EDITOR_STATE = 'draftjsState'
+ENTITY_MAP = 'entityMap'
+ENTITY_RANGES = 'entityRanges'
+INLINE_STYLE_RANGES = 'inlineStyleRanges'
+
+TAG_STYLE_MAP = {
+    'i': INLINE_STYLES.ITALIC,
+    'em': INLINE_STYLES.ITALIC,
+    'b': INLINE_STYLES.BOLD,
+    'strong': INLINE_STYLES.BOLD,
+}
+
+TAG_ENTITY_MAP = {
+    'a': ENTITY_TYPES.LINK,
+}
+
+
+def get_field_content_state(item, field):
+    try:
+        return item['fields_meta'][field][EDITOR_STATE][0]
+    except (KeyError, AttributeError):
+        return None
+
+
+def set_field_content_state(item, field, content_state):
+    item.setdefault('fields_meta', {}).update({field: {EDITOR_STATE: [content_state]}})
 
 
 class Entity:
@@ -97,11 +128,11 @@ class EntitySequence(MutableSequence):
 class Block:
     """Abstraction of DraftJS block"""
 
-    def __init__(self, editor, data=None):
+    def __init__(self, editor, data=None, text=None):
         if data is None:
             data = {
                 "key": str(uuid.uuid4()),
-                "text": "",
+                "text": text or "",
                 "type": "unstyled",
                 "depth": 0,
                 "inlineStyleRanges": [],
@@ -122,6 +153,10 @@ class Block:
     @property
     def text(self):
         return self.data.get('text')
+
+    @property
+    def key(self):
+        return self.data.get('key')
 
     def __str__(self):
         return self.text
@@ -156,6 +191,13 @@ class EmbedBlock(Block):
             data=entity_data,
         )
         self.entities.append(entity)
+
+
+class UnstyledBlock(Block):
+    def __init__(self, editor, text=None):
+        super().__init__(editor)
+        if text:
+            self.data.update({"text": text})
 
 
 class BlockSequence(MutableSequence):
@@ -193,10 +235,7 @@ class EditorContent:
     @staticmethod
     def create(item, field):
         """Factory for EditorContent"""
-        if 'fields_meta' in item:
-            return Editor3Content(item, field)
-        else:
-            raise NotImplementedError("This is not an editor 3 item, EditorContent doesn't manage this")
+        return Editor3Content(item, field)
 
 
 class DraftJSHTMLExporter:
@@ -230,6 +269,8 @@ class DraftJSHTMLExporter:
 
     def render(self):
         blocks = self.content_state['blocks']
+        if not blocks:
+            return ''
         if blocks and blocks[0]['text'].strip() == '' or blocks[-1]['text'].strip() == '':
             # first and last block may be empty due to client constraints, in this case
             # we must discard them during rendering
@@ -286,7 +327,7 @@ class DraftJSHTMLExporter:
         # so we find the key in entityMap with a corresponding value
         embed_key = next(
             k for k, v in self.content_state['entityMap'].items()
-            if v['data']['media'] == props['media'])
+            if v['data'].get('media') == props['media'])
 
         # <dummy_tag> is needed for the comments, because a root node is necessary
         # it will be removed during rendering.
@@ -316,14 +357,20 @@ class DraftJSHTMLExporter:
         return DOM.create_element('a', attribs, props['children'])
 
     def render_embed(self, props):
-        # FIXME: Qumu hack is not handled yet
-        div = DOM.create_element('div', {'class': 'embed-block'})
-        embedded_html = DOM.parse_html(props['data']['html'])
-        DOM.append_child(div, embedded_html)
+        embed_pre_process = app.config.get('EMBED_PRE_PROCESS')
+        if embed_pre_process:
+            for callback in embed_pre_process:
+                callback(props['data'])
+        # we use superdesk.etree.parse_html instead of DOM.parse_html as the later modify the content
+        # and we use directly the wrapping <div> returned with "content='html'". This works because
+        # we use the lxml engine with DraftJSExporter.
+        div = parse_html(props['data']['html'], content='html')
+        div.set('class', 'embed-block')
         description = props.get('description')
         if description:
             p = DOM.create_element('p', {'class': 'embed-block__description'}, description)
             DOM.append_child(div, p)
+
         return div
 
     def render_table(self, props):
@@ -392,38 +439,181 @@ class Editor3Content(EditorContent):
     editor_version = 3
     HTML_EXPORTER = DraftJSHTMLExporter
 
-    def __init__(self, item, field='body_html'):
+    def __init__(self, item, field='body_html', is_html=True):
         """
         :param item: item containing Draft.js ContentState
         :param field: field to manage, can be "body_html", "headline", etc.
+        :param is_html: boolean to indicate if the field is html or text field
         """
         self.item = item
         self.field = field
-        data = item.get('fields_meta', {}).get(field, {})
-        if not data:
-            self.content_state = {}
-        else:
-            # if the field exist, draftjsState must exist too
-            self.content_state = data['draftjsState'][0]
+        self.is_html = is_html
+        self.content_state = get_field_content_state(item, field)
+        if not self.content_state:
+            self._create_state_from_html(item.get(field))
         self.blocks = BlockSequence(self)
-
         self.html_exporter = DraftJSHTMLExporter(self)
+
+    def _create_state_from_html(self, value=None):
+        self.content_state = {
+            'blocks': [],
+            'entityMap': {},
+        }
+
+        if not value:
+            return
+
+        def create_entity(entity_type, data, mutability='MUTABLE'):
+            key = len(self.content_state['entityMap'].keys())
+            self.content_state['entityMap'][str(key)] = {
+                'type': entity_type,
+                'mutability': mutability,
+                'data': data,
+            }
+            return key
+
+        def create_atomic_block(entity_type, data):
+            block = self.create_block('atomic', text=" ").data
+            entity_key = create_entity(entity_type, data)
+            block['entityRanges'] = [{'offset': 0, 'length': 1, 'key': entity_key}]
+            block['inlineStyleRanges'] = []
+            self.content_state['blocks'].append(block)
+
+        if self.is_html:
+            root = parse_html(value, 'html')
+            for i, elem in enumerate(root):
+                try:
+                    block_type = next((key for key, val in BLOCK_MAP.items() if val == elem.tag))
+                    depth = 0
+                except StopIteration:
+                    block_type = None
+                    depth = 0
+                    if elem.tag == 'figure':
+                        try:
+                            m = re.search(r'<!-- EMBED START (?:Image|Video) {id: "(.*)"}', str(root[i - 1]).strip())
+                            media = self.item['associations'][m.group(1)]
+                            create_atomic_block('MEDIA', {'media': media})
+                        except (KeyError, IndexError, AttributeError):
+                            create_atomic_block('EMBED', {'data': {'html': to_string(elem, method='html')}})
+                        continue
+                    elif elem.tag in ('ul', 'ol'):
+                        pass  # generate block for each li
+                    elif elem.text and '<!-- EMBED' in str(elem):
+                        continue
+                    elif elem.tag == 'table':
+                        data = {'numCols': 0, 'numRows': 0, 'withHeader': False, 'cells': {}}
+                        for row, tr in enumerate(elem.iter('tr')):
+                            data['numRows'] += 1
+                            data['cells'][row] = {}
+                            if row == 0 and len(tr):
+                                data['numCols'] = len(tr)
+                                data['withHeader'] = tr[0].tag == 'th'
+                            for col, td in enumerate(tr):
+                                data['cells'][row][col] = {
+                                    'blocks': [
+                                        self.create_block('unstyled', text="".join(td.itertext())).data,
+                                    ],
+                                    'entityMap': {},
+                                }
+                        create_atomic_block('TABLE', {'data': data})
+                        continue
+                    elif elem.tag == 'div':
+                        html = ''.join([to_string(child, method='html') for child in elem])
+                        if html.startswith('<html><head>'):
+                            html = re.sub(
+                                r'<\/head><\/html>',
+                                '',
+                                html.replace('<html><head>', '', 1),
+                            )
+                        create_atomic_block('EMBED', {'data': {'html': html}})
+                        continue
+                    else:
+                        logger.warning('ignore block %s', str(elem.tag))
+                        continue
+                block_text = elem.text or ""
+                inline_style_ranges = []
+                entity_ranges = []
+                for child in elem:
+                    child_text = "".join(child.itertext())
+
+                    if child.tag in TAG_STYLE_MAP:
+                        inline_style_ranges.append({
+                            'offset': len(block_text),
+                            'length': len(child_text),
+                            'style': TAG_STYLE_MAP[child.tag],
+                        })
+
+                    if child.tag in TAG_ENTITY_MAP:
+                        if not child_text:
+                            child_text = " "  # must be non-empty
+                        if child.tag == 'a':
+                            data = {'link': {'href': child.attrib.get('href'), 'target': child.attrib.get('target')}}
+                        else:
+                            data = {}
+                        entity_key = create_entity(TAG_ENTITY_MAP[child.tag], data)
+                        entity_ranges.append({'offset': len(block_text), 'length': len(child_text), 'key': entity_key})
+
+                    if child.tag == 'li':
+                        child_type = BLOCK_TYPES.UNORDERED_LIST_ITEM if elem.tag == 'ul' \
+                            else BLOCK_TYPES.ORDERED_LIST_ITEM
+                        block = self.create_block(child_type, text=child_text).data
+                        block.update(depth=depth)
+                        self.content_state['blocks'].append(block)
+
+                    block_text += child_text
+
+                    if child.tail and child.tail.strip():
+                        block_text += child.tail
+
+                if elem.tail and elem.tail.strip():
+                    block_text += elem.tail
+
+                if block_type:  # no block type for ul/ol
+                    block = self.create_block(block_type, text=block_text).data
+                    block['inlineStyleRanges'] = inline_style_ranges
+                    block['entityRanges'] = entity_ranges
+                    self.content_state['blocks'].append(block)
+        else:
+            for line in value.split('\n'):
+                self.content_state['blocks'].append(self.create_block(BLOCK_TYPES.UNSTYLED, text=line).data)
 
     @property
     def html(self):
         return self.html_exporter.render()
+
+    @property
+    def text(self):
+        return '\n'.join([block.text for block in self.blocks])
 
     def get_next_entity_key(self):
         """Return a non existing key for entityMap"""
         return max((int(k) for k in self.content_state['entityMap'].keys()), default=-1) + 1
 
     def update_item(self):
-        self.item[self.field] = self.html
+        self.item[self.field] = self.html if self.is_html else self.text
+        set_field_content_state(self.item, self.field, self.content_state)
 
     def create_block(self, block_type, *args, **kwargs):
         cls_name = "{}Block".format(block_type.capitalize())
-        cls = globals()[cls_name]
-        return cls(self, *args, **kwargs)
+        if cls_name in globals():
+            cls = globals()[cls_name]
+            return cls(self, *args, **kwargs)
+        else:
+            block = Block(self, *args, **kwargs)
+            block.data['type'] = block_type
+            return block
+
+    def set_blocks(self, blocks):
+        try:
+            data = self.blocks[0].data.get('data')  # store internal data from first block
+        except IndexError:
+            data = {}
+        self.content_state['blocks'] = [getattr(block, 'data', block) for block in blocks]
+        self.blocks = BlockSequence(self)
+        if not len(self.blocks):
+            self.prepend('Unstyled')
+        if not self.blocks[0].data.get('data') and data:
+            self.blocks[0].data['data'] = data
 
     def prepend(self, block_type, *args, **kwargs):
         """Shortcut to prepend a block from its type"""
@@ -439,3 +629,71 @@ class Editor3Content(EditorContent):
         else:
             index = 0
         self.blocks.insert(index, block)
+
+
+def _replace_text(content_state, old, new):
+    if not old:
+        return
+    for block in content_state['blocks']:
+        if block.get('type') == 'atomic':
+            entity = content_state[ENTITY_MAP][str(block[ENTITY_RANGES][0]['key'])]
+            if entity['type'] == 'TABLE':
+                cells = entity['data']['data']['cells']
+                for row in cells.values():
+                    for cell in row.values():
+                        _replace_text(cell, old, new)
+            continue
+        if not block.get('text'):
+            continue
+        end = 0
+        while True:
+            try:
+                index = block['text'].index(old, end)
+                end = index + len(old)
+                block['text'] = new.join([block['text'][:index], block['text'][end:]])
+                for range_field in (ENTITY_RANGES, INLINE_STYLE_RANGES):
+                    if block.get(range_field):
+                        ranges = []
+                        for range_ in block[range_field]:
+                            range_end = range_['offset'] + range_['length']
+                            if range_['offset'] > end:  # starting after replaced, move it
+                                range_['offset'] += len(new) - len(old)
+                                ranges.append(range_)
+                            elif range_end <= index:  # starting before replaced text, keep it
+                                ranges.append(range_)
+                            elif range_['offset'] <= index and range_end >= end:  # contain the text, fix length
+                                range_['length'] += len(new) - len(old)
+                                ranges.append(range_)
+                            else:
+                                # remove ranges overlapping with replaced text
+                                if range_field == ENTITY_RANGES:
+                                    content_state['entityMap'].pop(str(range_["key"]))
+                                continue
+                        block[range_field] = ranges
+            except ValueError:
+                break
+
+
+def replace_text(item, field, old, new, is_html=True):
+    """Replace all occurences of old replaced with new.
+
+    It won't replace it in atomic blocks and embeds,
+    only text blocks, headings, tables, ul/ol.
+    """
+    editor = Editor3Content(item, field, is_html)
+    _replace_text(editor.content_state, old, new)
+    editor.update_item()
+
+
+def filter_blocks(item, field, filter, is_html=True):
+    """Filter content blocks for field.
+
+    It will keep only blocks for which filter returns True.
+    """
+    editor = Editor3Content(item, field, is_html)
+    blocks = []
+    for block in editor.blocks:
+        if filter(block):
+            blocks.append(block)
+    editor.set_blocks(blocks)
+    editor.update_item()

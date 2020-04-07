@@ -168,12 +168,12 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
         user_language = user.get('language', app.config.get('DEFAULT_LANGUAGE', 'en'))
         try:
             # Attempt to load the local using Babel.parse_local
-            parse_locale(user_language)
+            parse_locale(user_language.replace('-', '_'))
         except ValueError:
             # If Babel fails to recognise the locale, then use the default language
             user_language = app.config.get('DEFAULT_LANGUAGE', 'en')
 
-        return user_language
+        return user_language.replace('-', '_')
 
     set_error_handlers(app)
 

@@ -12,8 +12,9 @@ import flask
 import logging
 import datetime
 import superdesk
-from copy import copy, deepcopy
+import superdesk.signals as signals
 
+from copy import copy, deepcopy
 from superdesk.resource import Resource
 from superdesk.metadata.utils import extra_response_fields, item_url, aggregations, \
     is_normal_package, get_elastic_highlight_query
@@ -45,6 +46,7 @@ from apps.item_lock.models.item import ItemModel
 from apps.packages import PackageService
 from .archive_media import ArchiveMediaService
 from superdesk.utc import utcnow
+from superdesk.vocabularies import is_related_content
 from flask_babel import _
 
 EDITOR_KEY_PREFIX = 'editor_'
@@ -155,6 +157,43 @@ def flush_renditions(updates, original):
                         updates[ASSOCIATIONS][key]['renditions'][old_rendition] = None
 
 
+def flush_previous_item_keys_from_associations(updates, original):
+    """Remove original association items keys from updated association item
+        if the association key is same and associated items _id is diffrent.
+    for ex:
+        1. Add an image to a articles body and save the article where let's say key is(association.edior_0)
+        2. Remove the associated image don't save artilce this time
+        3. And add a new media item wehere key is still (association.edior_0)
+        4. save the article and notice that new associated item contains all those keys from previous associated
+            items that were not present in this one.
+        Which is wrong, this function identifies those keys and sets them to None
+    :param dict updates: updates for the document
+    :param original: original is document
+    """
+    if not original.get(ASSOCIATIONS) or not updates.get(ASSOCIATIONS):
+        return
+
+    for key in [k for k in updates[ASSOCIATIONS] if k in original[ASSOCIATIONS]]:
+        if original[ASSOCIATIONS].get(key) and updates[ASSOCIATIONS].get(key) and (
+           updates[ASSOCIATIONS][key].get('_id') != original[ASSOCIATIONS][key].get('_id')):
+            # make sure associated item's "_id" are different in updates and original
+            for item_key in original[ASSOCIATIONS][key]:
+                present_in_updates = True
+                if item_key not in updates[ASSOCIATIONS][key]:
+                    present_in_updates = False
+                    updates[ASSOCIATIONS][key][item_key] = None
+
+                # handle the nested dict inside associations key
+                if isinstance(original[ASSOCIATIONS][key][item_key], dict):
+                    if not present_in_updates:
+                        updates[ASSOCIATIONS][key][item_key] = {}
+                    # handles situation like ex: original['associations']['foo']['extra'] = {'foo': 1}
+                    # and updates['associations']['foo']['extra'] = {'bar': 1}
+                    # output will be updates['associations']['foo']['extra'] = {'bar': 1, 'foo': None}
+                    for k in original[ASSOCIATIONS][key][item_key]:
+                        updates[ASSOCIATIONS][key][item_key][k] = None
+
+
 class ArchiveVersionsResource(Resource):
     schema = item_schema()
     extra_response_fields = extra_response_fields
@@ -239,7 +278,7 @@ class ArchiveService(BaseService):
             update_associations(doc)
             for key, assoc in doc.get(ASSOCIATIONS, {}).items():
                 # don't set time stamp for related items
-                if not self._is_related_content(key):
+                if not is_related_content(key):
                     self._set_association_timestamps(assoc, doc)
                     remove_unwanted(assoc)
 
@@ -312,9 +351,7 @@ class ArchiveService(BaseService):
         self._add_desk_metadata(updates, original)
         self._handle_media_updates(updates, original, user)
         flush_renditions(updates, original)
-
-        # send signal
-        superdesk.item_update.send(self, updates=updates, original=original)
+        flush_previous_item_keys_from_associations(updates, original)
 
     def _handle_media_updates(self, updates, original, user):
         update_associations(updates)
@@ -332,7 +369,7 @@ class ArchiveService(BaseService):
             if not (item_obj and config.ID_FIELD in item_obj):
                 continue
 
-            if self._is_related_content(item_name):
+            if is_related_content(item_name):
                 continue
 
             item_id = item_obj[config.ID_FIELD]
@@ -389,9 +426,6 @@ class ArchiveService(BaseService):
 
         if updates.get('profile'):
             get_resource_service('content_types').set_used([updates.get('profile')])
-
-        if 'marked_for_user' in updates:
-            self.handle_mark_user_notifications(updates, original)
 
         self.cropService.update_media_references(updates, original)
 
@@ -642,7 +676,7 @@ class ArchiveService(BaseService):
                 if association is None:
                     continue
                 # don't set time stamp for related items
-                if not self._is_related_content(key):
+                if not is_related_content(key):
                     self._set_association_timestamps(association, updates, new=False)
                     remove_unwanted(association)
 
@@ -650,7 +684,17 @@ class ArchiveService(BaseService):
         if PUBLISH_SCHEDULE in updates and original[ITEM_STATE] == CONTENT_STATE.SCHEDULED:
             self.deschedule_item(updates, original)  # this is an deschedule action
 
-        return super().update(id, updates, original)
+        # send signal
+        signals.item_update.send(self, updates=updates, original=original)
+
+        res = super().update(id, updates, original)
+
+        updated = copy(original)
+        updated.update(updates)
+        signals.item_updated.send(self, item=updated, original=original)
+
+        if 'marked_for_user' in updates:
+            self.handle_mark_user_notifications(updates, original)
 
     def deschedule_item(self, updates, original):
         """Deschedule an item.
@@ -954,16 +998,6 @@ class ArchiveService(BaseService):
         """
         return get_resource_service('desks').apply_desk_metadata(updates, original)
 
-    def _is_related_content(self, item_name, related_content=None):
-        if related_content is None:
-            related_content = list(
-                get_resource_service('vocabularies').get(req=None, lookup={'field_type': 'related_content'}))
-
-        if related_content and item_name.split('--')[0] in [content['_id'] for content in related_content]:
-            return True
-
-        return False
-
     def handle_mark_user_notifications(self, updates, original, add_activity=True):
         """Notify user when item is marked or unmarked
 
@@ -1036,6 +1070,81 @@ class ArchiveService(BaseService):
                           user_list=user_list,
                           extension='markForUser')
 
+    def get_items_chain(self, item):
+        """
+        Get the whole items chain which includes all previous updates,
+        all translations and the original item.
+
+        Result list may contain:
+            - original item
+            - original item's translations
+            - update-1 item
+            - update-1 item's translations
+            - update-N item
+            - update-N item's translations
+            - `item`
+            - `item`'s translations
+        NOTE: The first item in the list is the original item
+
+        :param item: item can be an "initial", "rewrite", or "translation"
+        :type item: dict
+        :return: chain of items
+        :rtype: list
+        """
+
+        def get_item_translated_from(item):
+            _item = item
+            for _i in range(50):
+                try:
+                    item = self.find_one(req={}, _id=item['translated_from'])
+                except Exception:
+                    break
+            else:
+                logger.error(
+                    'Failed to retrive an initial item from which item {} was translated from'.format(_item.get('_id'))
+                )
+            return item
+
+        item = get_item_translated_from(item)
+        # add item + translations
+        items_chain = [item]
+        items_chain += self.get_item_translations(item)
+
+        for _i in range(50):
+            try:
+                item = self.find_one(req={}, _id=item['rewrite_of'])
+                # prepend translations + update
+                items_chain = self.get_item_translations(item) + items_chain
+                items_chain.insert(0, item)
+            except Exception:
+                break
+        else:
+            logger.error(
+                'Failed to retrieve the whole items chain for item {}'.format(item.get('_id'))
+            )
+        return items_chain
+
+    def get_item_translations(self, item):
+        """
+        Get list of item's translations.
+        :param item: item
+        :type item: dict
+        :return: list of dicts
+        :rtype: list
+        """
+        translation_items = []
+
+        for translation_item_id in item.get('translations', []):
+            translation_item = self.find_one(
+                req={},
+                _id=translation_item_id
+            )
+            translation_items.append(translation_item)
+            # get a translation of a translation and so on
+            translation_items += self.get_item_translations(translation_item)
+
+        return translation_items
+
 
 class AutoSaveResource(Resource):
     endpoint_name = 'archive_autosave'
@@ -1060,6 +1169,10 @@ class ArchiveSaveService(BaseService):
         except KeyError:
             raise SuperdeskApiError.badRequestError(_("Request for Auto-save must have _id"))
         return [docs[0]['_id']]
+
+    def on_fetched_item(self, item):
+        item['_type'] = 'archive'
+        return item
 
 
 superdesk.workflow_state('in_progress')

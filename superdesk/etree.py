@@ -14,6 +14,7 @@ from lxml.etree import ParseError  # noqa
 from lxml import html
 from superdesk import config
 
+
 # from https://developer.mozilla.org/en-US/docs/Web/HTML/Block-level_elements
 BLOCK_ELEMENTS = (
     "address",
@@ -86,7 +87,7 @@ def fix_html_void_elements(element):
     return element
 
 
-def parse_html(html, content='xml', lf_on_block=False, space_on_elements=False):
+def parse_html(html, content='xml', lf_on_block=False, space_on_elements=False, space=' '):
     """Parse element and return etreeElement
 
     <div> element is added around the HTML
@@ -96,6 +97,7 @@ def parse_html(html, content='xml', lf_on_block=False, space_on_elements=False):
     :param bool lf_on_block: if True, add a line feed on block elements' tail
     :param bool space_on_elements: if True, add a space on each element's tail
         mainly used to count words with non HTML markup
+    :param str space: space string which is used when `space_on_elements` is enabled
     :return etree.Element: parsed element
     """
     if not isinstance(html, str):
@@ -114,8 +116,13 @@ def parse_html(html, content='xml', lf_on_block=False, space_on_elements=False):
         if root is None:
             root = etree.Element('div')
         else:
-            root = root.find('body')
-            root.tag = 'div'
+            div = etree.Element('div')
+            # we unwrap elements in <head> and <body>
+            # <script> can be used in embed, and the parser will move them to <head>
+            # so we need both <head> and <body>
+            for elt in root:
+                div.extend(elt)
+            root = div
     else:
         raise ValueError('invalid content: {}'.format(content))
     if lf_on_block:
@@ -128,7 +135,7 @@ def parse_html(html, content='xml', lf_on_block=False, space_on_elements=False):
                 elem.tail = '\n' + (elem.tail or '')
     if space_on_elements:
         for elem in root.iterfind('.//'):
-            elem.tail = (elem.tail or '') + ' '
+            elem.tail = (elem.tail or '') + space
     return root
 
 

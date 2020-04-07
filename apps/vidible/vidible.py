@@ -8,12 +8,14 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from eve.render import send_response
-from flask import Blueprint
-from superdesk.utc import utcnow
-import requests
 import re
 import json
+import requests
+
+from eve.render import send_response
+from flask import Blueprint
+
+from superdesk.utc import utcnow
 
 
 bp = Blueprint('vidible', __name__)

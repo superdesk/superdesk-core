@@ -618,6 +618,12 @@ Example::
     OVERRIDE_EDNOTE_FOR_CORRECTIONS = True
     OVERRIDE_EDNOTE_TEMPLATE = 'Story "{slugline}" corrected on {date}'
 
+``ALLOW_UPDATING_SCHEDULED_ITEMS``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``None``
+
+Set to True to allow updating the schedule items.
 
 ``GEONAMES_USERNAME``
 ^^^^^^^^^^^^^^^^^^^^^

@@ -253,7 +253,8 @@ Feature: Validate
         {"_id": "text1", "field_type": "text", "display_name": "Text 1"},
         {"_id": "media1", "field_type": "media", "display_name": "Media 1"},
         {"_id": "embed1", "field_type": "embed", "display_name": "Embed 1"},
-        {"_id": "date1", "field_type": "date", "display_name": "Date 1"}
+        {"_id": "date1", "field_type": "date", "display_name": "Date 1"},
+        {"_id": "vocabulary1", "field_type": null, "display_name": "Vocabulary 1"}
     ]
     """
     And "content_types"
@@ -262,18 +263,22 @@ Feature: Validate
       "text1": {"required": true},
       "media1": {"required": true},
       "embed1": {"required": true},
-      "date1": {"required": true}
+      "date1": {"required": true},
+      "subject": {
+        "mandatory_in_list": {"scheme": {"vocabulary1": "vocabulary1"}},
+        "type": "list"
+      }
     }}]
     """
 
     When we post to "/validate"
     """
-    {"act": "publish", "type": "text", "validate": {"profile": "foo"}}
+    {"act": "publish", "type": "text", "validate": {"profile": "foo", "subject": []}}
     """
     Then we get existing resource
     """
     {"errors": ["Text 1 is a required field", "MEDIA 1 is a required field",
-        "Embed 1 is a required field", "Date 1 is a required field"
+        "Embed 1 is a required field", "Date 1 is a required field", "VOCABULARY 1 is a required field"
     ]}
     """
 
@@ -387,4 +392,61 @@ Feature: Validate
     Then we get existing resource
     """
     {"errors": "__empty__"}
+    """
+
+    @auth
+    Scenario: Validate subject using custom vocabulary for it
+    Given "content_types"
+    """
+    [{"_id": "test", "schema": {
+      "subject": {
+        "type": "list",
+        "nullable": false,
+        "required": true,
+        "type": "list"
+      }
+    }}]
+    """
+    And "vocabularies"
+    """
+    [
+      {"_id": "custom_subject_field", "schema_field": "subject"},
+      {"_id": "other_field"}
+    ]
+    """
+
+    When we post to "/validate"
+    """
+    {
+      "act": "publish", "type": "text",
+      "validate": {
+        "profile": "test",
+        "subject": [
+          {"name": "foo", "qcode": "foo", "scheme": "custom_subject_field"}
+        ]
+      }
+    }
+    """
+
+    Then we get existing resource
+    """
+    {"errors": "__empty__"}
+    """
+
+    When we post to "/validate"
+    """
+    {
+      "act": "publish", "type": "text",
+      "validate": {
+        "profile": "test",
+        "subject": [
+          {"name": "foo", "qcode": "foo", "scheme": "other field"}
+        ]
+      }
+    }
+    """
+
+    Then we get existing resource
+    """
+    {"errors": ["SUBJECT is a required field"]}
     """

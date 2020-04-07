@@ -8,10 +8,11 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from datetime import timedelta
+from unittest.mock import patch, ANY
 from superdesk.tests import TestCase
 from superdesk import get_backend
 from superdesk.utc import utcnow
-from datetime import timedelta
 
 
 class BackendTestCase(TestCase):
@@ -55,3 +56,48 @@ class BackendTestCase(TestCase):
             date1 = doc_old[self.app.config['DATE_CREATED']]
             date2 = doc_new[self.app.config['DATE_CREATED']]
             self.assertEqual(date1, date2)
+
+    @patch('superdesk.eve_backend.push_notification')
+    def test_update_resource_push_notification(self, push_notification_mock):
+        backend = get_backend()
+        backend.create('archive', [{'_id': 'some-id'}])
+        with self.app.app_context():
+            backend.update('archive', 'some-id', {
+                'foo': 1,
+                'new': {'baz': 1},
+                'same': {'x': 'y'},
+                'different': {
+                    'same': 1,
+                    'foo': 1,
+                    'bar': {
+                        'baz': 1,
+                    },
+                },
+            }, {
+                'baz': 0,
+                'same': {'x': 'y'},
+                'different': {
+                    'same': 1,
+                    'foo': 2,
+                    'bar': {
+                        'baz': 2,
+                    },
+                    'missing': 1,
+                },
+            })
+        push_notification_mock.assert_called_once_with(
+            'resource:updated',
+            resource='archive',
+            _id='some-id',
+            fields=ANY,
+        )
+
+        self.assertEqual(push_notification_mock.call_args[1].get('fields'), {
+            'foo': 1,
+            'new': 1,
+            'new.baz': 1,
+            'different': 1,
+            'different.foo': 1,
+            'different.bar': 1,
+            'different.missing': 1,
+        })

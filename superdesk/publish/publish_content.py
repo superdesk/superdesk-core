@@ -18,7 +18,7 @@ from flask import current_app as app
 from superdesk import get_resource_service
 from superdesk.celery_task_utils import get_lock_id
 from superdesk.errors import PublishHTTPPushClientError
-from superdesk.lock import lock, unlock
+from superdesk.lock import lock, unlock, is_locked
 from superdesk.celery_app import celery
 from superdesk.utc import utcnow
 from superdesk.profiling import ProfileManager
@@ -43,16 +43,15 @@ class PublishContent(superdesk.Command):
     """
 
     def run(self, provider_type=None):
-        publish.apply_async(expires=10)
+        publish()
 
 
-@celery.task(soft_time_limit=1800)
 def publish():
     """Fetch items from publish queue as per the configuration, call the transmit function."""
     with ProfileManager('publish:transmit'):
         lock_name = get_lock_id("Transmit", "Articles")
         if not lock(lock_name, expire=1810):
-            logger.info('Task: {} is already running.'.format(lock_name))
+            logger.info('Task: %s is already running.', lock_name)
             return
 
         try:
@@ -60,14 +59,19 @@ def publish():
                 for retries in [False, True]:  # first publish pending, retries after
                     subs = get_queue_subscribers(priority=priority, retries=retries)
                     for sub in subs:
+                        sub_lock_name = get_lock_id('Subscriber', 'Transmit', sub)
+                        if is_locked(sub_lock_name):
+                            logger.info('Task: %s is already running.', sub_lock_name)
+                            continue
                         transmit_subscriber_items.apply_async(
                             (str(sub), ),
                             {'retries': retries, 'priority': priority},
                             queue=_get_queue(priority),
                         )
         except Exception:
-            logger.exception('Task: {} failed.'.format(lock_name))
+            logger.exception('Task: %s failed.', lock_name)
         finally:
+            logger.debug('unlock %s', lock_name)
             unlock(lock_name)
 
 
@@ -109,12 +113,13 @@ def _get_queue(priority=None):
         return app.config['HIGH_PRIORITY_QUEUE']
 
 
-@celery.task(soft_time_limit=600)
+@celery.task(soft_time_limit=600, expires=10)
 def transmit_subscriber_items(subscriber, retries=False, priority=None):
     lock_name = get_lock_id('Subscriber', 'Transmit', subscriber)
     is_async = get_resource_service('subscribers').is_async(subscriber)
 
     if not lock(lock_name, expire=610):
+        logger.info('Task: {} is already running.'.format(lock_name))
         return
 
     try:
@@ -129,16 +134,20 @@ def transmit_subscriber_items(subscriber, retries=False, priority=None):
                     queue=_get_queue(priority),
                 )
             else:
-                transmit_item.apply(args=args, kwargs=kwargs, throw=True)
+                if not transmit_item(*args, **kwargs):
+                    logger.debug('got error transmitting item %s', args[0])
+                    break
     finally:
+        logger.debug('unlock %s', lock_name)
         unlock(lock_name)
 
 
 @celery.task(soft_time_limit=300)
 def transmit_item(queue_item_id, is_async=False):
     publish_queue_service = get_resource_service(PUBLISH_QUEUE)
-    lock_name = get_lock_id('Transmit', str(queue_item_id))
+    lock_name = get_lock_id('Transmit', queue_item_id)
     if is_async and not lock(lock_name, expire=310):
+        logger.info('lock {}'.format(lock_name))
         return
     try:
         # check the status of the queue item
@@ -164,6 +173,7 @@ def transmit_item(queue_item_id, is_async=False):
             raise
         transmitter.transmit(queue_item)
         logger.info('Transmitted queue item {}'.format(log_msg))
+        return True
     except Exception as e:
         logger.exception('Failed to transmit queue item {}'.format(log_msg))
 
@@ -186,10 +196,15 @@ def transmit_item(queue_item_id, is_async=False):
             publish_queue_service.system_update(orig_item.get(config.ID_FIELD), updates, orig_item)
         except Exception:
             logger.error('Failed to set the state for failed publish queue item {}.'.format(queue_item['_id']))
-        if isinstance(e, SoftTimeLimitExceeded):
-            raise
+
+        # raise to stop transmitting items and free worker, in case there is some error
+        # it's probably network related so trying more items now will probably only block
+        # for longer time
+        logger.debug('got err, stop task %s', lock_name)
+        raise
     finally:
         if is_async:
+            logger.debug('unlock %s', lock_name)
             unlock(lock_name, remove=True)
 
 
