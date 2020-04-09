@@ -1,6 +1,6 @@
 # Superdesk Server Changelog
 
-## [1.33] 2020-03-17
+## [1.33] 2020-04-09
 
 Listing some changes below, for full list go to [github](https://github.com/superdesk/superdesk-core/milestone/79?closed=1).
 
