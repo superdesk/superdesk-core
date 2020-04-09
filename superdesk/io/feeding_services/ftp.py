@@ -121,8 +121,13 @@ class FTPFeedingService(FeedingService):
             else:
                 raise IngestFtpError.ftpError(ex, provider)
 
-    def _move(self, ftp, src, dest):
+    def _move(self, ftp, src, dest, file_modify, failed):
         """Move distant file
+
+        file won't be moved if it is failed and last modification was made
+        recently enough (i.e. before config's INGEST_OLD_CONTENT_MINUTES is
+        expired). In other words, if a file fails, it will be tried again until
+        INGEST_OLD_CONTENT_MINUTES delay expires.
 
         :param ftp: FTP instance to use
         :type ftp: ftplib.FTP
@@ -130,7 +135,16 @@ class FTPFeedingService(FeedingService):
         :type src: str
         :param dest: dest path of the file to move
         :type dest: str
+        :param file_modify: date of last file modification
+        :type file_modify: datetime
+        :param failed: True if something when wrong during ingestion
+        :type failed: bool
         """
+        if failed and not self.is_old_content(file_modify):
+            logger.warning(
+                "{src!r} ingestion failed, but we are in the backstop delay, it will be "
+                "tried again next time".format(src=src))
+            return
         try:
             ftp.rename(src, dest)
         except ftplib.all_errors as e:
@@ -182,6 +196,11 @@ class FTPFeedingService(FeedingService):
         """Test if given file is allowed to be ingested."""
         _, ext = os.path.splitext(filename)
         return ext.lower() in allowed_ext
+
+    def _is_empty(self, file_path):
+        """Test if given file path is empty, return True if a file is empty
+        """
+        return not (os.path.isfile(file_path) and os.path.getsize(file_path) > 0)
 
     def _list_files(self, ftp, provider):
         self._timer.start('ftp_list')
@@ -270,7 +289,6 @@ class FTPFeedingService(FeedingService):
                 self._log_msg("Connected to FTP server. Exec time: {:.4f} secs.".format(
                     self._timer.stop('ftp_connect')
                 ))
-                items = []
                 files_to_process = []
                 files = self._sort_files(self._list_files(ftp, provider))
 
@@ -283,6 +301,11 @@ class FTPFeedingService(FeedingService):
                     # filter by extension
                     if not self._is_allowed(filename, allowed_ext):
                         logger.info('ignoring file {filename} because of file extension'.format(filename=filename))
+                        continue
+
+                    file_path = os.path.join(config.get('dest_path', '/'), filename)
+                    if self._is_empty(file_path):
+                        logger.info('ignoring empty file {filename}'.format(filename=filename))
                         continue
 
                     # filter by modify datetime
@@ -320,13 +343,17 @@ class FTPFeedingService(FeedingService):
 
                         if do_move:
                             move_dest_file_path = os.path.join(move_path if not failed else move_path_error, filename)
-                            self._move(ftp, filename, move_dest_file_path)
+                            self._move(
+                                ftp, filename, move_dest_file_path, file_modify,
+                                failed=failed)
                     except Exception as e:
                         logger.error("Error while parsing {filename}: {msg}".format(filename=filename, msg=e))
 
                         if do_move:
                             move_dest_file_path_error = os.path.join(move_path_error, filename)
-                            self._move(ftp, filename, move_dest_file_path_error)
+                            self._move(
+                                ftp, filename, move_dest_file_path_error, file_modify,
+                                failed=True)
 
                 self._log_msg(
                     "Processing finished. Exec time: {:.4f} secs.".format(self._timer.stop('start_processing'))

@@ -39,6 +39,7 @@ EDITOR_ATTRIBUTES = (
     'imageTitle',
     'sourceField',
     'section',
+    'preview',
 )
 
 

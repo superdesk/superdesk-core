@@ -133,7 +133,20 @@ class FilterConditionParametersService(BaseService):
                    'operators': ['exists'],
                    'values': values['featuremedia'],
                    'value_field': 'name'
-                   }]
+                   },
+                  {'field': 'anpa_take_key',
+                   'operators': ['in', 'nin', 'eq', 'ne', 'like', 'notlike', 'startswith', 'endswith']
+                   },
+                  ]
+
+        if 'planning' in app.config.get('INSTALLED_APPS', []):
+            fields.append({'field': 'agendas',
+                           'label': _('Agendas'),
+                           'operators': ['in', 'nin'],
+                           'values': list(get_resource_service('agenda').find({'is_enabled': True})),
+                           'value_field': '_id',
+                           })
+
         fields.extend(self._get_vocabulary_fields(values))
         return ListCursor(fields)
 
@@ -158,7 +171,8 @@ class FilterConditionParametersService(BaseService):
     def _get_field_values(self):
         values = {}
         vocabularies_resource = get_resource_service('vocabularies')
-        values['anpa_category'] = vocabularies_resource.find_one(req=None, _id='categories')['items']
+        categories_cv = vocabularies_resource.find_one(req=None, _id='categories')
+        values['anpa_category'] = categories_cv.get('items') if categories_cv else []
         req = ParsedRequest()
         req.where = json.dumps({'$or': [{"schema_field": "genre"}, {"_id": "genre"}]})
         genre = vocabularies_resource.get(req=req, lookup=None)

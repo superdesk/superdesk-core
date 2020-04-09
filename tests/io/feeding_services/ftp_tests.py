@@ -89,6 +89,15 @@ class FakeFTP(mock.MagicMock):
         pass
 
 
+class FakeFTPRecentFiles(FakeFTP):
+
+    files = [
+        ftp_file('old_file.xml', '20170517164756'),
+        # we need a file ingested now, before INGEST_OLD_CONTENT_MINUTES is expired
+        ftp_file('recent_file.xml', datetime.datetime.today().strftime('%Y%m%d%H%M%S')),
+    ]
+
+
 class FakeFeedParser(mock.MagicMock):
 
     def __init__(self, **kwargs):
@@ -161,6 +170,7 @@ class FTPTestCase(TestCase):
         """
         provider = copy.deepcopy(PROVIDER)
         service = ftp.FTPFeedingService()
+        service._is_empty = mock.MagicMock(return_value=False)
         ingest_items(service.update(provider, {}))
 
         mock_ftp = ftp_connect.return_value.__enter__.return_value
@@ -184,6 +194,7 @@ class FTPTestCase(TestCase):
         provider = copy.deepcopy(PROVIDER)
         provider['config']['ftp_move_path'] = ""
         service = ftp.FTPFeedingService()
+        service._is_empty = mock.MagicMock(return_value=False)
         ingest_items(service.update(provider, {}))
         mock_ftp = ftp_connect.return_value.__enter__.return_value
 
@@ -203,6 +214,7 @@ class FTPTestCase(TestCase):
         provider = copy.deepcopy(PROVIDER)
         provider['config']['ftp_move_path'] = ""
         service = ftp.FTPFeedingService()
+        service._is_empty = mock.MagicMock(return_value=False)
         ingest_items(service.update(provider, {}), False)
         mock_ftp = ftp_connect.return_value.__enter__.return_value
 
@@ -228,6 +240,25 @@ class FTPTestCase(TestCase):
         mock_ftp = ftp_connect.return_value.__enter__.return_value
         mock_ftp.rename.assert_not_called()
 
+    @mock.patch.object(ftp, 'ftp_connect', new_callable=FakeFTPRecentFiles)
+    @mock.patch.object(ftp.FTPFeedingService, 'get_feed_parser', FakeFeedParser())
+    @mock.patch('builtins.open', mock.mock_open())
+    def test_move_backstop(self, ftp_connect):
+        """Check that failing file is not moved if it's more recent thant INGEST_OLD_CONTENT_MINUTES"""
+        provider = copy.deepcopy(PROVIDER)
+        service = ftp.FTPFeedingService()
+        service._is_empty = mock.MagicMock(return_value=False)
+        ingest_items(service.update(provider, {}))
+        mock_ftp = ftp_connect.return_value.__enter__.return_value
+
+        # recent_file must not have been ingested
+        self.assertEqual(mock_ftp.rename.call_count, len(FakeFTPRecentFiles.files) - 1)
+        for i, call in enumerate(mock_ftp.rename.call_args_list):
+            self.assertNotEqual(
+                call[0][0],
+                'recent_file.xml',
+            )
+
     @mock.patch.object(ftp, 'ftp_connect', new_callable=FakeFTP)
     @mock.patch.object(ftp.FTPFeedingService, 'get_feed_parser', FailingFakeFeedParser())
     @mock.patch('builtins.open', mock.mock_open())
@@ -238,6 +269,7 @@ class FTPTestCase(TestCase):
         """
         provider = copy.deepcopy(PROVIDER)
         service = ftp.FTPFeedingService()
+        service._is_empty = mock.MagicMock(return_value=False)
         ingest_items(service.update(provider, {}))
         mock_ftp = ftp_connect.return_value.__enter__.return_value
 
@@ -259,6 +291,7 @@ class FTPTestCase(TestCase):
         provider = copy.deepcopy(PROVIDER)
         provider['config']['move_path_error'] = ""
         service = ftp.FTPFeedingService()
+        service._is_empty = mock.MagicMock(return_value=False)
         ingest_items(service.update(provider, {}))
         mock_ftp = ftp_connect.return_value.__enter__.return_value
 
@@ -295,6 +328,7 @@ class FTPTestCase(TestCase):
         provider = copy.deepcopy(PROVIDER)
         provider['config']['move'] = False
         service = ftp.FTPFeedingService()
+        service._is_empty = mock.MagicMock(return_value=False)
         mock_ftp = ftp_connect.return_value.__enter__.return_value
 
         ingest_items(service.update(provider, update))
@@ -361,6 +395,7 @@ class FTPTestCase(TestCase):
         retrieve_and_parse, ftp_connect = mocks
         provider = copy.deepcopy(PROVIDER)
         service = ftp.FTPFeedingService()
+        service._is_empty = mock.MagicMock(return_value=False)
         mock_ftp = ftp_connect.return_value.__enter__.return_value
 
         ingest_items(service.update(provider, update))

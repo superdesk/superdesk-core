@@ -37,7 +37,7 @@ def register_transmitter(transmitter_type, transmitter, errors):
     transmitter_errors[transmitter_type] = dict(errors)
 
 
-@celery.task()
+@celery.task(soft_time_limit=1800, expires=10)
 def transmit():
     """Transmit items from ``publish_queue`` collection."""
     PublishContent().run()

@@ -1,0 +1,21 @@
+[
+    {
+        "username": "toto",
+        "email": "toto@example.net",
+        "password": "toto",
+        "role": "Writer"
+    },
+    {
+        "username": "titi",
+        "email": "titi@example.net",
+        "role": "Admin"
+    },
+    {
+        "username": "invalid_no_email"
+    },
+    {
+        "username": "invalid_unknown_role",
+        "email": "invalid@example.net",
+        "role": "invalid"
+    }
+]

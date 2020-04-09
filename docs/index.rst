@@ -52,6 +52,7 @@ works and can be developed further.
     schema
     content-types
     contentapi
+    editor
     auth_server
     production_api
     extending
@@ -59,6 +60,7 @@ works and can be developed further.
     cli
     signals
     testing
+    notifications
 
 Additional topics
 -----------------

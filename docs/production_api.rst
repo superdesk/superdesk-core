@@ -111,6 +111,24 @@ Production API **v1** provides next endpoints:
     | path: **/prodapi/v1/events/<guid>**
     | allowed methods: GET
 
+- event files list
+    | path: **/prodapi/v1/events_files**
+    | search backend: mongo
+    | allowed methods: GET
+
+- event files details
+    | path: **/prodapi/v1/events_files/<_id>**
+    | allowed methods: GET
+
+- events history list
+    | path: **/prodapi/v1/events_history**
+    | search backend: mongo
+    | allowed methods: GET
+
+- events history details
+    | path: **/prodapi/v1/events_history/<_id>**
+    | allowed methods: GET
+
 - users list
     | path: **/prodapi/v1/users**
     | search backend: mongo
@@ -230,5 +248,6 @@ Rest of the settings are comes from Superdesk configuration_:
     AMAZON_CONTAINER_NAME,
     AMAZON_S3_SUBFOLDER,
     AMAZON_OBJECT_ACL,
+    AMAZON_ENDPOINT_URL
 
 .. _configuration: https://superdesk.readthedocs.io/en/latest/settings.html#configuration

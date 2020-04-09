@@ -22,6 +22,35 @@ from superdesk.logging import logger, item_msg
 from eve.methods.common import resolve_document_etag
 from elasticsearch.exceptions import RequestError, NotFoundError
 from superdesk.errors import SuperdeskApiError
+from superdesk.notification import push_notification
+
+
+SYSTEM_KEYS = set([
+    '_etag',
+    '_updated',
+    '_created',
+])
+
+
+def get_key(key, parent=None):
+    return '.'.join(filter(None, [parent, key]))
+
+
+def get_diff_keys(updates, original=None, parent=None):
+    if original is None:
+        original = {}
+    if original and parent:
+        keys = set([
+            get_key(key, parent) for key in set(original.keys()) - set(updates.keys())
+        ])
+    else:
+        keys = set()
+    for key, val in updates.items():
+        if key not in original or original[key] != val:
+            keys.add(get_key(key, parent))
+            if not parent and val and isinstance(val, dict):
+                keys.update(get_diff_keys(val, original.get(key), key).keys())
+    return {key: 1 for key in keys if key not in SYSTEM_KEYS}
 
 
 class EveBackend():
@@ -201,6 +230,8 @@ class EveBackend():
 
         try:
             backend.update(endpoint_name, id, updates, original)
+            push_notification('resource:updated', _id=str(id),
+                              resource=endpoint_name, fields=get_diff_keys(updates, original))
         except eve.io.base.DataLayer.OriginalChangedError:
             if not backend.find_one(endpoint_name, req=None, _id=id) and search_backend:
                 # item is in elastic, not in mongo - not good

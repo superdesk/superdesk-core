@@ -36,4 +36,5 @@ def init_app(app):
         'default_language': app.config.get('DEFAULT_LANGUAGE'),
         'workflow_allow_multiple_updates': app.config.get('WORKFLOW_ALLOW_MULTIPLE_UPDATES'),
         'disallowed_characters': app.config.get('DISALLOWED_CHARACTERS'),
+        'allow_updating_scheduled_items': app.config.get('ALLOW_UPDATING_SCHEDULED_ITEMS'),
     })

@@ -36,7 +36,7 @@ def get_text_word_count(text):
     return sum(1 for word in WORD_PATTERN.finditer(text))
 
 
-def get_text(markup, content='xml', lf_on_block=False, space_on_elements=False):
+def get_text(markup, content='xml', lf_on_block=False, space_on_elements=False, space=' '):
     """Get plain text version of (X)HTML or other XML element
 
     if the markup can't be parsed, it will be returned unchanged
@@ -45,6 +45,7 @@ def get_text(markup, content='xml', lf_on_block=False, space_on_elements=False):
     :param bool lf_on_block: if True, add a line feed on block elements' tail
     :param bool space_on_elements: if True, add a space on each element's tail
         mainly used to count words with non HTML markup
+    :param str space: space string which is used when `space_on_elements` is enabled
     :return str: plain text version of markup
     """
     try:
@@ -52,7 +53,9 @@ def get_text(markup, content='xml', lf_on_block=False, space_on_elements=False):
             markup,
             content=content,
             lf_on_block=lf_on_block,
-            space_on_elements=space_on_elements)
+            space_on_elements=space_on_elements,
+            space=space
+        )
         text = etree.tostring(root, encoding='unicode', method='text')
         return text
     except etree.ParseError:

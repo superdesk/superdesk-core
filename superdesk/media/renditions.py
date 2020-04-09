@@ -18,10 +18,12 @@ from .media_operations import process_file_from_stream
 from .media_operations import crop_image
 from .media_operations import download_file_from_url
 from .media_operations import process_file
+from .media_operations import guess_media_extension
 from .image import fix_orientation
 from eve.utils import config
 from superdesk import get_resource_service
 from superdesk.filemeta import set_filemeta
+import os
 
 
 logger = logging.getLogger(__name__)
@@ -372,3 +374,14 @@ def transfer_renditions(renditions):
         file_guid = app.media.put(content, filename, content_type, metadata)
         rend['href'] = app.media.url_for_media(file_guid, content_type)
         rend['media'] = file_guid
+
+
+def get_rendition_file_name(rendition):
+    """
+    Return a file name for the rendition no matter what storage mechanism used by superdesk
+    :param rendition:
+    :return:
+    """
+    ext = os.path.splitext(rendition.get('media'))[-1]
+    return rendition.get('media').replace('/', '-') + (
+        guess_media_extension(rendition.get('mimetype', '')) if not ext else '')

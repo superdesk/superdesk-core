@@ -20,7 +20,7 @@ from superdesk.utc import utcnow
 from .archive import SOURCE as ARCHIVE
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, ITEM_TYPE,\
     CONTENT_TYPE, ASSOCIATIONS, MEDIA_TYPES, PUBLISH_STATES
-from superdesk.lock import lock, unlock, remove_locks
+from superdesk.lock import lock, unlock, remove_locks, touch
 from superdesk.notification import push_notification
 from superdesk import get_resource_service
 from bson.objectid import ObjectId
@@ -59,7 +59,7 @@ class RemoveExpiredContent(superdesk.Command):
         logger.info('{} Starting to remove expired content at.'.format(self.log_msg))
         lock_name = get_lock_id('archive', 'remove_expired')
 
-        if not lock(lock_name, expire=610):
+        if not lock(lock_name, expire=1800):
             logger.info('{} Remove expired content task is already running.'.format(self.log_msg))
             return
 
@@ -67,7 +67,7 @@ class RemoveExpiredContent(superdesk.Command):
         # both functions should be called, even the first one throw exception,
         # so they are wrapped with log_exeption
         self._remove_expired_publish_queue_items()
-        self._remove_expired_items(now)
+        self._remove_expired_items(now, lock_name)
         unlock(lock_name)
 
         push_notification('content:expired')
@@ -85,11 +85,12 @@ class RemoveExpiredContent(superdesk.Command):
             get_resource_service('publish_queue').delete({'_id': {'$lte': ObjectId.from_datetime(expire_time)}})
 
     @log_exeption
-    def _remove_expired_items(self, expiry_datetime):
+    def _remove_expired_items(self, expiry_datetime, lock_name):
         """Remove the expired items.
 
         :param datetime expiry_datetime: expiry datetime
         :param str log_msg: log message to be prefixed
+        :param str lock_name: lock name to touch
         """
         logger.info('{} Starting to remove published expired items.'.format(self.log_msg))
         archive_service = get_resource_service(ARCHIVE)
@@ -103,6 +104,10 @@ class RemoveExpiredContent(superdesk.Command):
         for expired_items in archive_service.get_expired_items(expiry_datetime):
             if len(expired_items) == 0:
                 logger.info('{} No items found to expire.'.format(self.log_msg))
+                return
+
+            if not touch(lock_name, expire=600):
+                logger.warning('{} lost lock while removing expired items.'.format(self.log_msg))
                 return
 
             # delete spiked items
@@ -182,7 +187,7 @@ class RemoveExpiredContent(superdesk.Command):
 
             # move to archived collection
             logger.info('{} Archiving items.'.format(self.log_msg))
-            for item_id, item in items_to_be_archived.items():
+            for _item_id, item in items_to_be_archived.items():
                 self._move_to_archived(item, filter_conditions)
 
             for item_id, item in killed_items.items():
@@ -199,7 +204,7 @@ class RemoveExpiredContent(superdesk.Command):
                 logger.info('{} Deleting articles.: {}'.format(self.log_msg, items_to_remove))
                 archive_service.delete_by_article_ids(list(items_to_remove))
 
-            for item_id, item in items_having_issues.items():
+            for _item_id, item in items_having_issues.items():
                 msg = log_msg_format.format(**item)
                 try:
                     archive_service.system_update(item.get(config.ID_FIELD), {'expiry_status': 'invalid'}, item)
@@ -284,7 +289,7 @@ class RemoveExpiredContent(superdesk.Command):
         :return list: list of associated item ids
         """
         ids = []
-        for key, associated_item in (item.get(ASSOCIATIONS) or {}).items():
+        for _key, associated_item in (item.get(ASSOCIATIONS) or {}).items():
             if associated_item:
                 ids.append(associated_item.get(config.ID_FIELD))
         return ids

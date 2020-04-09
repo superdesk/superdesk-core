@@ -8,17 +8,21 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import logging
+
 from copy import deepcopy
 from apps.tasks import send_to
 from superdesk import register_resource, get_resource_service, privilege
 from superdesk.services import Service
 from superdesk.resource import Resource
 from superdesk.errors import StopDuplication
-from superdesk.signals import item_published
+from superdesk.signals import item_published, item_routed
 from superdesk.metadata.item import PUBLISH_SCHEDULE, SCHEDULE_SETTINGS
 
 
 NAME = 'internal_destinations'
+
+logger = logging.getLogger(__name__)
 
 
 class InternalDestinationsResource(Resource):
@@ -72,17 +76,22 @@ def handle_item_published(sender, item, **extra):
 
         if dest.get('macro'):
             macro = macros_service.get_macro_by_name(dest['macro'])
-            try:
-                macro['callback'](
-                    new_item,
-                    dest_desk_id=dest.get('desk'),
-                    dest_stage_id=dest.get('stage'),
-                )
-            except StopDuplication:
-                continue
+            if not macro:
+                logger.warning('macro %s not found for internal destination %s', dest['macro'], dest['name'])
+            else:
+                try:
+                    macro['callback'](
+                        new_item,
+                        dest_desk_id=dest.get('desk'),
+                        dest_stage_id=dest.get('stage'),
+                    )
+                except StopDuplication:
+                    continue
 
         extra_fields = [PUBLISH_SCHEDULE, SCHEDULE_SETTINGS]
-        archive_service.duplicate_content(new_item, state='routed', extra_fields=extra_fields)
+        next_id = archive_service.duplicate_content(new_item, state='routed', extra_fields=extra_fields)
+        next_item = archive_service.find_one(req=None, _id=next_id)
+        item_routed.send(sender, item=next_item)
 
 
 def init_app(app):

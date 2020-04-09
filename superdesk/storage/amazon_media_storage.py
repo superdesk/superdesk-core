@@ -21,9 +21,8 @@ import unidecode
 import boto3
 from botocore.client import Config
 from eve.io.media import MediaStorage
-from mimetypes import guess_extension
 
-from superdesk.media.media_operations import download_file_from_url
+from superdesk.media.media_operations import download_file_from_url, guess_media_extension
 from superdesk.utc import query_datetime
 
 logger = logging.getLogger(__name__)
@@ -53,17 +52,6 @@ class AmazonObjectWrapper(BytesIO):
         self._id = name
 
 
-def _guess_extension(content_type):
-    ext = str(guess_extension(content_type))
-    if ext in ['.jpe', '.jpeg']:
-        return '.jpg'
-    if 'mp3' in content_type or 'audio/mpeg' in content_type:
-        return '.mp3'
-    if 'flac' in content_type:
-        return '.flac'
-    return ext if ext != 'None' else ''
-
-
 class AmazonMediaStorage(MediaStorage):
 
     def __init__(self, app=None):
@@ -74,6 +62,7 @@ class AmazonMediaStorage(MediaStorage):
             aws_secret_access_key=self.app.config['AMAZON_SECRET_ACCESS_KEY'],
             region_name=self.app.config.get('AMAZON_REGION'),
             config=Config(signature_version='s3v4'),
+            endpoint_url=self.app.config['AMAZON_ENDPOINT_URL'] or None,
         )
         self.user_metadata_header = 'x-amz-meta-'
 
@@ -124,7 +113,7 @@ class AmazonMediaStorage(MediaStorage):
 
         extension = ''
         if not file_extension:
-            extension = str(_guess_extension(content_type)) if content_type else ''
+            extension = str(guess_media_extension(content_type)) if content_type else ''
 
         if version is True:
             # automatic version is set on 15mins granularity.
@@ -177,8 +166,7 @@ class AmazonMediaStorage(MediaStorage):
                 all_keys.extend(objects)
         except Exception as ex:
             logger.exception(ex)
-        finally:
-            return all_keys
+        return all_keys
 
     def _get_all_keys_in_batches(self):
         """Return the list of all keys from the bucket in batches."""

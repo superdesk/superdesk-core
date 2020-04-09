@@ -17,7 +17,7 @@ from eve.utils import config
 from eve.methods.common import serialize_value
 from flask_babel import _
 
-from superdesk import privilege
+from superdesk import privilege, get_resource_service
 from superdesk.notification import push_notification
 from superdesk.resource import Resource
 from superdesk.services import BaseService
@@ -431,3 +431,14 @@ class VocabulariesService(BaseService):
                 },
             }
             self.post([cv])
+
+
+def is_related_content(item_name, related_content=None):
+    if related_content is None:
+        related_content = list(
+            get_resource_service('vocabularies').get(req=None, lookup={'field_type': 'related_content'}))
+
+    if related_content and item_name.split('--')[0] in [content['_id'] for content in related_content]:
+        return True
+
+    return False
