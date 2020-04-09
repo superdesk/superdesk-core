@@ -84,14 +84,16 @@ Enqueueing is done via:
 
 There it finds all subscribers that should receive the item and if any it will format the item and queue transmission.
 
-Output Formats
---------------
+Output Formatters
+-----------------
 
 .. module:: superdesk.publish.formatters
 
 .. autoclass:: NINJSFormatter
 
 Superdesk NINJS Schema in :download:`JSON <superdesk-ninjs-schema.json>`.
+
+.. autoclass:: NINJS2Formatter
 
 .. autoclass:: NITFFormatter
 

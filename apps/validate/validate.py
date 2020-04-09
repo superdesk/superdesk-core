@@ -23,10 +23,11 @@ from superdesk.signals import item_validate
 
 
 REQUIRED_FIELD = 'is a required field'
-MAX_LENGTH = "max length is {length}"
+MAX_LENGTH = 'max length is {length}'
 STRING_FIELD = 'require a string value'
 DATE_FIELD = 'require a date value'
 REQUIRED_ERROR = '{} is a required field'
+INVALID_CHAR = 'contains invalid characters'
 
 
 def check_json(doc, field, value):
@@ -95,6 +96,10 @@ class SchemaValidator(Validator):
         if value and not isinstance(value, str):
             self._error(field, STRING_FIELD)
 
+    def _validate_type_any(self, field, value):
+        """Allow type any, ex: for CV of type 'custom'."""
+        pass
+
     def _validate_mandatory_in_list(self, mandatory, field, value):
         """Validates if all elements from mandatory are presented in the list"""
         for key in mandatory:
@@ -115,7 +120,19 @@ class SchemaValidator(Validator):
             # for subject, we have to ignore all data with scheme
             # as they are used for custom values except "subject_custom" scheme as it's the scheme for subject cv
             # so it must be present
-            filtered = [v for v in value if not v.get('scheme') or v.get('scheme') == 'subject_custom']
+            subject_schemas = set([
+                None,
+                '',
+                'subject_custom',
+            ])
+
+            # plus any cv with schema_field subject
+            cvs = get_resource_service('vocabularies').get_from_mongo(
+                req=None, lookup={'schema_field': field}, projection={'_id': 1})
+            for cv in cvs:
+                subject_schemas.add(cv['_id'])
+
+            filtered = [v for v in value if v.get('scheme') in subject_schemas]
 
             if not filtered:
                 self._error(field, REQUIRED_FIELD)
@@ -149,6 +166,15 @@ class SchemaValidator(Validator):
         """Ignore company codes."""
         pass
 
+    def _validate_validate_characters(self, validate, field, value):
+        """Validate if field contains only allowed characters."""
+        disallowed_characters = app.config.get('DISALLOWED_CHARACTERS')
+
+        if validate and disallowed_characters and value:
+            invalid_chars = [char for char in disallowed_characters if char in value]
+            if invalid_chars:
+                return self._error(field, INVALID_CHAR)
+
     def _validate_media_metadata(self, validate, associations_field, associations):
         if not validate:
             return
@@ -156,7 +182,7 @@ class SchemaValidator(Validator):
         if not media_metadata_schema:
             return
         for assoc_name, assoc_data in associations.items():
-            if assoc_data is None:
+            if assoc_data is None or assoc_data.get('type') == 'text':
                 continue
             for field, schema in media_metadata_schema.items():
                 if schema.get('required', False) and not assoc_data.get(field):
@@ -197,7 +223,8 @@ class ValidateService(superdesk.Service):
 
     def _get_profile_schema(self, schema, doc):
         doc['validate'].setdefault('extra', {})  # make sure extra is there so it will validate its fields
-        extra_field_types = {'text': 'string', 'embed': 'dict', 'date': 'date', 'urls': 'list'}
+        extra_field_types = {'text': 'string', 'embed': 'dict', 'date': 'date',
+                             'urls': 'list', 'custom': 'any'}
         extra_fields = superdesk.get_resource_service('vocabularies').get_extra_fields()
         schema['extra'] = {'type': 'dict', 'schema': {}}
         for extra_field in extra_fields:
@@ -379,9 +406,9 @@ class ValidateService(superdesk.Service):
                             messages.append(REQUIRED_ERROR.format(display_name))
                         else:
                             messages.append('{} {}'.format(display_name, error_list[e][field]))
-                elif error_list[e] == 'required field' or type(error_list[e]) is dict or \
-                        type(error_list[e]) is list:
-                    messages.append(REQUIRED_ERROR.format(e.upper()))
+                elif 'required field' in error_list[e] or type(error_list[e]) is dict or type(error_list[e]) is list:
+                    display_name = self._get_vocabulary_display_name(e)
+                    messages.append(REQUIRED_ERROR.format(display_name.upper()))
                 elif 'min length is 1' == error_list[e] or 'null value not allowed' in error_list[e]:
                     messages.append(REQUIRED_ERROR.format(e.upper()))
                 elif 'min length is' in error_list[e]:

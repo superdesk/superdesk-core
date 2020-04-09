@@ -16,7 +16,7 @@ from flask import current_app as app
 import superdesk
 from superdesk import get_resource_service, config
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
-from superdesk.metadata.item import ITEM_STATE, CONTENT_TYPE, ITEM_TYPE, GUID_FIELD, GUID_TAG
+from superdesk.metadata.item import ITEM_STATE, CONTENT_TYPE, ITEM_TYPE, GUID_FIELD, GUID_TAG, PUBLISH_STATES
 from superdesk.notification import push_notification
 from superdesk.services import BaseService
 from superdesk.metadata.utils import item_url, generate_guid
@@ -29,6 +29,7 @@ from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE
 from superdesk.utc import get_expiry_date
 from apps.item_lock.components.item_lock import push_unlock_notification
 from flask_babel import _
+from bson.objectid import ObjectId
 
 logger = logging.getLogger(__name__)
 
@@ -138,8 +139,9 @@ class ArchiveSpikeService(BaseService):
         if not is_workflow_state_transition_valid(ITEM_SPIKE, original_state):
             raise InvalidStateTransitionError()
 
+        archive_service = get_resource_service(ARCHIVE)
         user = get_user(required=True)
-        item = get_resource_service(ARCHIVE).find_one(req=None, _id=id)
+        item = archive_service.find_one(req=None, _id=id)
         task = item.get('task', {})
 
         updates[EXPIRY] = self._get_spike_expiry(desk_id=task.get('desk'), stage_id=task.get('stage'))
@@ -157,6 +159,35 @@ class ArchiveSpikeService(BaseService):
         if original.get('rewrite_sequence'):
             updates['rewrite_sequence'] = None
 
+        if original.get('marked_for_user'):
+            # remove marked_for_user on spike and keep it as previous_marked_user for history
+            updates['previous_marked_user'] = original['marked_for_user']
+            updates['marked_for_user'] = None
+
+        if original.get('translation_id') and original.get('translated_from'):
+            # remove translations info from the translated item on spike
+            updates['translated_from'] = None
+            updates['translation_id'] = None
+
+            id_to_remove = original.get(config.ID_FIELD)
+
+            # Remove the translated item from the list of translations in the original item
+            # where orignal item can be in archive or in both archive and published resource as well
+            translated_from = archive_service.find_one(req=None, _id=original.get('translated_from'))
+            translated_from_id = translated_from.get(config.ID_FIELD)
+
+            self._remove_translations(archive_service, translated_from, id_to_remove)
+
+            if translated_from.get('state') in PUBLISH_STATES:
+                published_service = get_resource_service('published')
+                published_items = list(
+                    published_service.get_from_mongo(req=None, lookup={'item_id': translated_from_id})
+                )
+
+                if published_items:
+                    for item in published_items:
+                        self._remove_translations(published_service, item, id_to_remove)
+
         # remove any relation with linked items
         updates[ITEM_EVENT_ID] = generate_guid(type=GUID_TAG)
 
@@ -171,7 +202,7 @@ class ArchiveSpikeService(BaseService):
             package_service = PackageService()
             items = package_service.get_item_refs(original)
             for item in items:
-                package_item = get_resource_service(ARCHIVE).find_one(req=None, _id=item[GUID_FIELD])
+                package_item = archive_service.find_one(req=None, _id=item[GUID_FIELD])
                 if package_item:
                     linked_in_packages = [linked for linked in package_item.get(LINKED_IN_PACKAGES, [])
                                           if linked.get(PACKAGE) != original.get(config.ID_FIELD)]
@@ -196,10 +227,35 @@ class ArchiveSpikeService(BaseService):
 
     def on_updated(self, updates, original):
         get_resource_service('archive_broadcast').spike_item(original)
+
         if original.get('lock_user'):
             user = get_user()
             auth = get_auth()
             push_unlock_notification(original, user['_id'], auth['_id'])
+
+        if updates.get('previous_marked_user') and not updates.get('marked_for_user'):
+            # send notification so that marked for me list can be updated
+            get_resource_service('archive').handle_mark_user_notifications(updates, original, False)
+
+    def _remove_translations(self, service, article, id_to_remove):
+        """Upadte translation info for the original article in archive or published resource.
+        :param service: service for resource endpoint
+        :param article: article to be updated
+        :param id_to_remove: id of translated item to be removed from the list of translations in original item
+        """
+
+        translations = article.get('translations')
+        article_id = article.get(config.ID_FIELD)
+
+        if ObjectId.is_valid(article_id) and not isinstance(article_id, ObjectId):
+            article_id = ObjectId(article_id)
+
+        if translations:
+            translations = [t for t in translations if t != id_to_remove]
+            updates = {'translations': translations}
+            if not translations:
+                updates.update({'translation_id': None})
+            service.system_update(article_id, updates, article)
 
 
 class ArchiveUnspikeService(BaseService):

@@ -100,7 +100,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # If true, the current module name will be prepended to all description
 # unit titles (such as .. function::).
 #
-# add_module_names = True
+add_module_names = False
 
 # If true, sectionauthor and moduleauthor directives will be shown in the
 # output. They are ignored by default.
@@ -357,3 +357,5 @@ texinfo_documents = [
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #
 # texinfo_no_detailmenu = False
+
+

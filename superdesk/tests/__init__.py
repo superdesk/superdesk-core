@@ -95,10 +95,13 @@ def update_config(conf):
     conf['MONGO_MAX_POOL_SIZE'] = 1
     conf['ARCHIVED_MAX_POOL_SIZE'] = 1
     conf['LEGAL_ARCHIVE_MAX_POOL_SIZE'] = 1
-    conf['PUBLISH_ASSOCIATED_ITEMS'] = True
 
     # misc
     conf['GEONAMES_USERNAME'] = 'superdesk_dev'
+    conf['PUBLISH_ASSOCIATED_ITEMS'] = True
+
+    # auth server
+    conf['AUTH_SERVER_SHARED_SECRET'] = 'some secret'
     return conf
 
 

@@ -157,6 +157,10 @@ class IngestProviderResource(Resource):
                     'type': 'boolean'
                 }
             },
+            'skip_config_test': {
+                'type': 'boolean',
+                'nullable': True,
+            },
         }
 
         self.item_methods = ['GET', 'PATCH', 'DELETE']
@@ -279,6 +283,9 @@ class IngestProviderService(BaseService):
     def _test_config(self, updates, original=None):
         provider = original.copy() if original else {}
         provider.update(updates)
+
+        if provider.get('skip_config_test'):
+            return
 
         try:
             service = get_feeding_service(provider['feeding_service'])

@@ -29,7 +29,7 @@ You can create new commands extending :class:`superdesk.Command` and registering
 
         def run(self, name):
             print('hello {}'.format(name))
-    
+
 
     superdesk.command('hello:word', MyCommand())
 
@@ -178,6 +178,11 @@ Superdesk commands
 
 .. autoclass:: apps.auth.db.commands.CreateUserCommand()
 
+``users:import``
+^^^^^^^^^^^^^^^^
+
+.. autoclass:: apps.auth.db.commands.ImportUsersCommand()
+
 ``users:copyfromad``
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -208,3 +213,23 @@ Superdesk commands
 ^^^^^^^^^^^^^^
 
 .. autoclass:: superdesk.io.importers.ImportCommand()
+
+``auth_server:register_client``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: superdesk.auth_server.clients.RegisterClient()
+
+``auth_server:update_client``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: superdesk.auth_server.clients.UpdateClient()
+
+``auth_server:unregister_client``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: superdesk.auth_server.clients.UnregisterClient()
+
+``auth_server:list_clients``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: superdesk.auth_server.clients.ListClients()

@@ -91,7 +91,8 @@ class TranslateService(BaseService):
         if task:
             item['task'] = task
 
-        _id = archive_service.duplicate_item(item, operation='translate')
+        extra_fields = ['translation_id', 'translated_from']
+        _id = archive_service.duplicate_item(item, extra_fields=extra_fields, operation='translate')
 
         item.setdefault('translations', []).append(_id)
 

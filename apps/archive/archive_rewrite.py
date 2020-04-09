@@ -110,10 +110,15 @@ class ArchiveRewriteService(Service):
         if original.get('rewritten_by'):
             raise SuperdeskApiError.badRequestError(message=_('Article has been rewritten before !'))
 
-        if not is_workflow_state_transition_valid('rewrite', original[ITEM_STATE]):
+        if (not is_workflow_state_transition_valid('rewrite', original[ITEM_STATE])
+                and not config.ALLOW_UPDATING_SCHEDULED_ITEMS):
             raise InvalidStateTransitionError()
 
-        if original.get('rewrite_of') and not (original.get(ITEM_STATE) in PUBLISH_STATES):
+        if (
+            original.get('rewrite_of')
+            and not (original.get(ITEM_STATE) in PUBLISH_STATES)
+            and not app.config['WORKFLOW_ALLOW_MULTIPLE_UPDATES']
+        ):
             raise SuperdeskApiError.badRequestError(
                 message=_("Rewrite is not published. Cannot rewrite the story again."))
 
@@ -223,7 +228,7 @@ class ArchiveRewriteService(Service):
             send_to(doc=rewrite, desk_id=(desk_id or original['task']['desk']), default_stage='working_stage')
 
             # if we are rewriting a published item then copy the body_html
-            if original.get('state', '') in (CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED):
+            if original.get('state', '') in (CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED, CONTENT_STATE.SCHEDULED):
                 rewrite['body_html'] = original.get('body_html', '')
 
         rewrite[ITEM_STATE] = CONTENT_STATE.PROGRESS

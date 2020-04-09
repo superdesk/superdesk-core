@@ -26,6 +26,9 @@ Core Signals
 .. autodata:: item_update
     :annotation:
 
+.. autodata:: item_updated
+    :annotation:
+
 .. autodata:: item_publish
     :annotation:
 
@@ -33,6 +36,9 @@ Core Signals
     :annotation:
 
 .. autodata:: item_fetched
+    :annotation:
+
+.. autodata:: item_move
     :annotation:
 
 .. autodata:: item_moved

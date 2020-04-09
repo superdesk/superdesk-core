@@ -28,7 +28,7 @@ from superdesk.metadata.item import metadata_schema, ITEM_STATE, CONTENT_STATE, 
     LINKED_IN_PACKAGES, BYLINE, SIGN_OFF, EMBARGO, ITEM_TYPE, CONTENT_TYPE, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, \
     ASSOCIATIONS, LAST_AUTHORING_DESK, LAST_PRODUCTION_DESK
 from superdesk.workflow import set_default_state, is_workflow_state_transition_valid
-from superdesk.metadata.item import GUID_NEWSML, GUID_FIELD, GUID_TAG, not_analyzed
+from superdesk.metadata.item import GUID_NEWSML, GUID_FIELD, GUID_TAG, not_analyzed, FAMILY_ID, INGEST_ID
 from superdesk.metadata.utils import generate_guid
 from superdesk.errors import SuperdeskApiError, IdentifierGenerationError
 from superdesk.logging import logger
@@ -451,6 +451,38 @@ def remove_unwanted(doc):
                 del doc[attr]
 
 
+def fetch_item(doc, desk_id, stage_id, state=None, target=None):
+    dest_doc = dict(doc)
+
+    if target:
+        # set target subscriber info
+        dest_doc.update(target)
+
+    new_id = generate_guid(type=GUID_TAG)
+    if doc.get('guid'):
+        dest_doc.setdefault('uri', doc[GUID_FIELD])
+
+    dest_doc[config.ID_FIELD] = new_id
+    dest_doc[GUID_FIELD] = new_id
+    generate_unique_id_and_name(dest_doc)
+
+    # avoid circular import
+    from apps.tasks import send_to
+
+    dest_doc[config.VERSION] = 1
+    dest_doc['versioncreated'] = utcnow()
+    send_to(doc=dest_doc, desk_id=desk_id, stage_id=stage_id)
+    dest_doc[ITEM_STATE] = state or CONTENT_STATE.FETCHED
+
+    dest_doc[FAMILY_ID] = doc[config.ID_FIELD]
+    dest_doc[INGEST_ID] = doc[config.ID_FIELD]
+    dest_doc[ITEM_OPERATION] = ITEM_FETCH
+
+    remove_unwanted(dest_doc)
+    set_original_creator(dest_doc)
+    return dest_doc
+
+
 def remove_media_files(doc):
     """Removes the media files of the given doc.
 
@@ -863,9 +895,11 @@ def get_subject(doc1, doc2=None):
     :param dict doc1:
     :param dict doc2:
     """
-    for key in ('headline', 'subject', 'slugline'):
+    for key in ('headline', 'slugline', 'subject'):
         value = doc1.get(key)
         if not value and doc2:
             value = doc2.get(key)
+        if value and key == 'subject':
+            value = [v.get('name') for v in value if 'name' in v][0]
         if value:
             return value

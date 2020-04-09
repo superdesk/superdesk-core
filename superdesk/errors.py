@@ -145,7 +145,9 @@ class SuperdeskApiError(SuperdeskError):
         return SuperdeskApiError(status_code=400, message=message, payload=payload, exception=exception)
 
     @classmethod
-    def unauthorizedError(cls, message=None, payload={'auth': 1}, exception=None):
+    def unauthorizedError(cls, message=None, payload=None, exception=None):
+        if payload is None:
+            payload = {'auth': 1}
         return SuperdeskApiError(status_code=401, message=message, payload=payload, exception=exception)
 
     @classmethod
@@ -733,20 +735,26 @@ class SuperdeskValidationError(HTTPException):
         Exception.__init__(self)
         self.errors = errors
         self.fields = fields
-        self.response = send_response(
-            None, (
-                {
-                    app.config['STATUS']: app.config['STATUS_ERR'],
-                    app.config['ISSUES']: {
-                        'validator exception': str([self.errors]),  # BC
-                        'fields': self.fields,
+        try:
+            self.response = send_response(
+                None, (
+                    {
+                        app.config['STATUS']: app.config['STATUS_ERR'],
+                        app.config['ISSUES']: {
+                            'validator exception': str([self.errors]),  # BC
+                            'fields': self.fields,
+                        },
                     },
-                },
-                None,
-                None,
-                400,
+                    None,
+                    None,
+                    400,
+                )
             )
-        )
+        except RuntimeError as e:
+            # the exception is run outside of request context
+            # it may be the case with CLI commands
+            # we log the error to not loose the initial error
+            logger.warning(e)
 
     def __str__(self):
         return 'Validation Error: {}'.format(str(self.errors))

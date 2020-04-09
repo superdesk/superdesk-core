@@ -50,6 +50,8 @@ install_requires = [
     'croniter<0.4',
     'python-dateutil<2.8',
     'unidecode==0.04.21',
+    'authlib>0.12,<0.13',
+    'draftjs-exporter[lxml]<2.2',
     'werkzeug<1.0',
 ]
 
@@ -73,7 +75,7 @@ package_data = {
 
 setup(
     name='Superdesk-Core',
-    version='1.32.5',
+    version='1.33',
     description='Superdesk Core library',
     long_description=LONG_DESCRIPTION,
     author='petr jasek',

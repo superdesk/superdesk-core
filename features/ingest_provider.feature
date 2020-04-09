@@ -60,6 +60,15 @@ Feature: Ingest Provider
         """
         Then we get error 400
 
+        When we post to "ingest_providers"
+        """
+        {"name": "foo", "source": "foo", "feeding_service": "rss", "is_closed": false, "config": {
+            "url": "http://localhost:1234"
+        }, "skip_config_test": true}
+        """
+        Then we get OK response
+
+
     @auth
     Scenario: Update ingest_provider aliases
         Given "ingest_providers"

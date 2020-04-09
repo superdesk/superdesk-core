@@ -257,8 +257,9 @@ Feature: News Items Archive
         Then we get new resource
         """
         {
-        	"_id": "__any_value__", "guid": "__any_value__", "type": "text",
-        	"original_creator": "__any_value__", "word_count": 1, "operation": "create", "sign_off": "abc"
+            "_id": "__any_value__", "guid": "__any_value__", "type": "text",
+            "original_creator": "__any_value__", "word_count": 1, "operation": "create", "sign_off": "abc",
+            "_type": "archive"
         }
         """
 
@@ -1114,4 +1115,30 @@ Feature: News Items Archive
         Then we get existing resource
         """
         {"associations": {"foo--1": {"headline": "flower", "byline": "foo", "description_text": "flower desc"}}}
+        """
+
+    @auth
+    Scenario: Don't store replaced association items metadata into newly added association item
+        Given "archive"
+        """
+        [{"_id": "item-1", "guid": "item-1", "type": "text", "headline": "test", "state": "in_progress", "_type": "archive"
+        }]
+        """
+        When we patch given
+        """
+        {"associations": {"foo--1": {"headline": "flower", "_id": "123", "byline": "foo", "description_text": "flower desc", "_type": "archive", "credit_line": "to myself", "alt_text": "flower", "extra": {"foo": 1}}}}
+        """
+        When we get "/archive/item-1"
+        Then we get existing resource
+        """
+        {"associations": {"foo--1": {"headline": "flower", "_id": "123", "byline": "foo", "description_text": "flower desc", "credit_line": "to myself", "alt_text": "flower", "extra": {"foo": 1}}}}
+        """
+        When we patch latest
+        """
+        {"associations": {"foo--1": {"headline": "rose", "_id": "125", "description_text": "rose desc", "_type": "externalsource", "extra": {"bar": 1}}}}
+        """
+        When we get "/archive/item-1"
+        Then we get existing resource
+        """
+        {"associations": {"foo--1": {"headline": "rose", "description_text": "rose desc", "byline": "__none__", "credit_line": "__none__", "alt_text": "__none__", "extra": {"foo": "__none__", "bar": 1}}}}
         """

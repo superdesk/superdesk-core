@@ -135,10 +135,13 @@ def send_activity_emails(activity, recipients):
 
     admins = app.config['ADMINS']
     app_name = app.config['APPLICATION_NAME']
+    link = activity.get('data', {}).get('link', None)
+
     notification = render_template_string(activity.get('message'), **activity.get('data'))
-    text_body = render_template("notification.txt", notification=notification, app_name=app_name)
-    html_body = render_template("notification.html", notification=notification, app_name=app_name)
+    text_body = render_template("notification.txt", notification=notification, app_name=app_name, link=link)
+    html_body = render_template("notification.html", notification=notification, app_name=app_name, link=link)
     subject = render_template("notification_subject.txt", notification=notification)
+
     send_email.delay(subject=subject, sender=admins[0], recipients=recipients,
                      text_body=text_body, html_body=html_body)
     email_timestamps.update({'_id': message_id}, {'_id': message_id, '_created': now}, upsert=True)

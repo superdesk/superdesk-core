@@ -15,8 +15,9 @@ import json
 from flask import request, current_app as app
 from eve.utils import config
 from eve.methods.common import serialize_value
+from flask_babel import _
 
-from superdesk import privilege
+from superdesk import privilege, get_resource_service
 from superdesk.notification import push_notification
 from superdesk.resource import Resource
 from superdesk.services import BaseService
@@ -27,6 +28,8 @@ from superdesk.default_schema import DEFAULT_SCHEMA, DEFAULT_EDITOR
 from copy import deepcopy
 
 logger = logging.getLogger(__name__)
+
+KEYWORDS_CV = 'keywords'
 
 
 privilege(name="vocabularies", label="Vocabularies Management",
@@ -143,6 +146,10 @@ class VocabulariesResource(Resource):
         },
         'custom_field_type': {
             'type': 'string',
+            'nullable': True,
+        },
+        'custom_field_config': {
+            'type': 'dict',
             'nullable': True,
         },
     }
@@ -387,3 +394,51 @@ class VocabulariesService(BaseService):
                 if field in new_item and language in values:
                     new_item[field] = values[language]
         return locale_vocabulary
+
+    def add_missing_keywords(self, keywords, language=None):
+        if not keywords:
+            return
+        cv = self.find_one(req=None, _id=KEYWORDS_CV)
+        if cv:
+            existing = {item['name'].lower() for item in cv.get('items', [])}
+            missing = [keyword for keyword in keywords if keyword.lower() not in existing]
+            if missing:
+                updates = {'items': cv.get('items', [])}
+                for keyword in missing:
+                    updates['items'].append({
+                        'name': keyword,
+                        'qcode': keyword,
+                        'is_active': True,
+                    })
+                self.on_update(updates, cv)
+                self.system_update(cv['_id'], updates, cv)
+                self.on_updated(updates, cv)
+        else:
+            items = [{
+                'name': keyword,
+                'qcode': keyword,
+                'is_active': True,
+            } for keyword in keywords]
+            cv = {
+                '_id': KEYWORDS_CV,
+                'items': items,
+                'type': 'manageable',
+                'display_name': _('Keywords'),
+                'unique_field': 'name',
+                'schema': {
+                    'name': {},
+                    'qcode': {},
+                },
+            }
+            self.post([cv])
+
+
+def is_related_content(item_name, related_content=None):
+    if related_content is None:
+        related_content = list(
+            get_resource_service('vocabularies').get(req=None, lookup={'field_type': 'related_content'}))
+
+    if related_content and item_name.split('--')[0] in [content['_id'] for content in related_content]:
+        return True
+
+    return False

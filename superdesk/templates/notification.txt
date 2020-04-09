@@ -2,4 +2,7 @@
 
 {% block content %}
 {{ notification }}
+{% if link %}
+    Please use this link {{link}} to view the item.
+{% endif %}
 {% endblock %}

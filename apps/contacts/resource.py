@@ -44,7 +44,8 @@ class ContactsResource(Resource):
         },
         'last_name': {
             'type': 'string',
-            'required': False
+            'required': False,
+            'mapping': {'type': 'string'}
         },
         'honorific': {
             'type': 'string',

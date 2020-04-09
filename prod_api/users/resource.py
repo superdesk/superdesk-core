@@ -1,5 +1,6 @@
 from superdesk.resource import Resource
 from superdesk.metadata.utils import item_url
+from superdesk.auth_server.scopes import Scope
 
 
 class UsersResource(Resource):
@@ -13,4 +14,7 @@ class UsersResource(Resource):
         'projection': {
             'user_preferences': 0
         },
+    }
+    privileges = {
+        'GET': Scope.USERS_READ.name
     }

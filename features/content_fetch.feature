@@ -619,7 +619,7 @@ Feature: Fetch Items from Ingest
         """
         Then we get new resource
         """
-        {"profile": "foo"}
+        {"profile": "bar"}
         """
 
         When we post to "/ingest/ingest2/fetch"

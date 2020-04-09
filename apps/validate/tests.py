@@ -449,3 +449,18 @@ class ValidateMandatoryInListTest(TestCase):
         ValidateService()._process_media(item, validation_schema)
         self.assertIn('media1', item)
         self.assertEqual(media, item['media1'])
+
+    def test_validate_validate_characters(self):
+        self.app.config['DISALLOWED_CHARACTERS'] = ['!', '@', '#']
+        self.app.data.insert('content_types', [{'_id': 'foo', 'schema': {
+            'slugline': {'validate_characters': True, 'type': 'string'}
+        }}])
+        service = ValidateService()
+        errors = service.create([
+            {
+                'act': 'test',
+                'type': 'test',
+                'validate': {'profile': 'foo', 'slugline': '!foo@#'},
+            },
+        ])
+        self.assertIn('SLUGLINE contains invalid characters', errors[0])

@@ -42,6 +42,7 @@ from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, GUID_FIELD
 from superdesk.metadata.packages import RESIDREF, GROUP_ID, GROUPS, ROOT_GROUP, REFS
 from superdesk.utils import json_serialize_datetime_objectId
 from superdesk.media.renditions import get_renditions_spec
+from superdesk.vocabularies import is_related_content
 from apps.archive.common import get_utc_schedule
 from superdesk import text_utils
 from collections import OrderedDict
@@ -305,12 +306,21 @@ class NINJSFormatter(Formatter):
         media = {}
         content_profile = None
         archive_service = superdesk.get_resource_service('archive')
-        sorted_associations = OrderedDict(sorted(article.get(ASSOCIATIONS).items() or {}))
 
-        for key, item in sorted_associations.items():
+        article_associations = OrderedDict(
+            sorted(
+                article.get(ASSOCIATIONS, {}).items(),
+                key=lambda itm: (itm[1] or {}).get('order', 1)
+            )
+        )
+
+        for key, item in article_associations.items():
             if item:
-                if archive_service._is_related_content(key) and '_type' not in item:
-                    item = archive_service.find_one(req=None, _id=item['_id'])
+                if is_related_content(key) and '_type' not in item:
+                    orig_item = archive_service.find_one(req=None, _id=item['_id'])
+                    orig_item['order'] = item.get('order', 1)
+                    item = orig_item.copy()
+
                 item = self._transform_to_ninjs(item, subscriber, recursive=False)
                 associations[key] = item  # all items should stay in associations
                 match = MEDIA_FIELD_RE.match(key)
@@ -338,12 +348,15 @@ class NINJSFormatter(Formatter):
             # we have custom media fields, we now order them
             # and add them to "extra_items"
             for field_id, data in media.items():
-                if extra_items[field_id]["type"] == "media":
-                    items_to_sort = [d[1] for d in sorted(data)]
-                    extra_items[field_id]["items"] = sorted(items_to_sort, key=lambda item: item.get('order', 0))
-                else:
-                    extra_items[field_id]["items"] = [d[1] for d in sorted(data)]
+                default_order = 1
+                items_to_sort = [d[1] for d in sorted(data)]
 
+                if extra_items[field_id]["type"] == "media":
+                    # for media items default order is 0 and for related-content default order is 1
+                    default_order = 0
+
+                extra_items[field_id]["items"] = sorted(items_to_sort,
+                                                        key=lambda item: item.get('order', default_order))
         return associations, extra_items
 
     def _get_genre(self, article):
@@ -413,7 +426,23 @@ class NINJSFormatter(Formatter):
             if item.get('scheme') == 'geonames':
                 places.append(self._format_geonames(item))
             else:
-                places.append({'name': get_label(item), 'code': item.get('qcode')})
+                if config.NINJS_PLACE_EXTENDED:
+                    place = {}
+                    for key in item.keys():
+                        if item.get(key):
+                            if key == 'qcode':
+                                place['code'] = item.get(key)
+                            elif key == 'name':
+                                if (get_label(item) is not None):
+                                    place['name'] = get_label(item)
+                                else:
+                                    place['name'] = item.get(key)
+                            else:
+                                place[key] = item.get(key)
+                else:
+                    place = {'name': get_label(item),
+                             'code': item.get('qcode')}
+                places.append(place)
         return places
 
     def _format_geonames(self, place):
@@ -507,3 +536,33 @@ class NINJSFormatter(Formatter):
             return formatted_doc.replace('\'\'', '\'')
         else:
             raise Exception()
+
+
+class NINJS2Formatter(NINJSFormatter):
+    """NINJS formatter v2
+
+    .. versionadded:: 2.0
+
+    Extending :py:class:`NINJSFormatter` to avoid breaking changes.
+
+    *Changes*:
+
+    - user ``correction_sequence`` for ``version`` field, so it's 1, 2, 3, ... in the output
+    - add ``rewrite_sequence`` field
+    - add ``rewrite_of`` field
+
+    """
+
+    direct_copy_properties = NINJSFormatter.direct_copy_properties + (
+        'rewrite_sequence',
+        'rewrite_of',
+    )
+
+    def __init__(self):
+        super().__init__()
+        self.format_type = 'ninjs2'
+
+    def _transform_to_ninjs(self, article, subscriber, recursive=True):
+        ninjs = super()._transform_to_ninjs(article, subscriber, recursive)
+        ninjs['version'] = str(article.get('correction_sequence', 1))
+        return ninjs

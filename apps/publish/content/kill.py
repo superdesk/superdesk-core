@@ -28,8 +28,18 @@ from apps.archive.common import ITEM_OPERATION, ARCHIVE, insert_into_versions, g
 from itertools import chain
 from apps.publish.published_item import PUBLISHED, LAST_PUBLISHED_VERSION
 from flask_babel import _
+from enum import Enum
+from bson.objectid import ObjectId
+from apps.content import push_content_notification
 
 logger = logging.getLogger(__name__)
+# what to do when the item is in a package
+PACKAGE_WORKFLOW = Enum('PACKAGE_WORKFLOW', (
+    # raise an exception, the VALIDATE_ERROR_MESSAGE will be used
+    'RAISE',
+    # ignore, the action can be done on items in a package
+    'IGNORE',
+))
 
 
 class KillPublishResource(BasePublishResource):
@@ -41,6 +51,7 @@ class KillPublishService(BasePublishService):
     publish_type = 'kill'
     published_state = 'killed'
     item_operation = ITEM_KILL
+    package_workflow = PACKAGE_WORKFLOW.RAISE
     VALIDATE_ERROR_MESSAGE = _(
         'This item is in a package. It needs to be removed before the item can be killed'
     )
@@ -49,20 +60,25 @@ class KillPublishService(BasePublishService):
         super().__init__(datasource=datasource, backend=backend)
 
     def on_update(self, updates, original):
-        # check if we are trying to kill and item that is contained in package
+        # check if we are trying to kill an item that is contained in package
         # and the package itself is not killed.
 
         packages = self.package_service.get_packages(original[config.ID_FIELD])
-        if packages and packages.count() > 0:
-            for package in packages:
-                if package[ITEM_STATE] not in {CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED, CONTENT_STATE.UNPUBLISHED}:
-                    raise SuperdeskApiError.badRequestError(message=self.VALIDATE_ERROR_MESSAGE)
+        if self.package_workflow == PACKAGE_WORKFLOW.RAISE:
+            if packages and packages.count() > 0:
+                for package in packages:
+                    if package[ITEM_STATE] not in {
+                            CONTENT_STATE.KILLED, CONTENT_STATE.RECALLED, CONTENT_STATE.UNPUBLISHED}:
+                        raise SuperdeskApiError.badRequestError(message=self.VALIDATE_ERROR_MESSAGE)
+        elif self.package_workflow not in PACKAGE_WORKFLOW:
+            raise ValueError("Invalid package workflow")
 
         updates['pubstatus'] = PUB_STATUS.CANCELED
         updates['versioncreated'] = utcnow()
 
         super().on_update(updates, original)
         updates[ITEM_OPERATION] = self.item_operation
+        self._remove_marked_user(original)
         get_resource_service('archive_broadcast').spike_item(original)
 
     def update(self, id, updates, original):
@@ -118,8 +134,10 @@ class KillPublishService(BasePublishService):
         """
         # apply the kill template
         original_copy = deepcopy(original)
+
         updates_data = self.apply_kill_template(original_copy)
         updates_data['body_html'] = updates.get('body_html', '')
+
         # resolve the document version
         resolve_document_version(document=updates_data, resource=ARCHIVE, method='PATCH', latest_doc=original)
         # kill the item
@@ -171,3 +189,28 @@ class KillPublishService(BasePublishService):
             updates.update(kill_header)
         except Exception:
             logger.exception('Failed to apply kill header template to item {}.'.format(item))
+
+    def _remove_marked_user(self, item):
+        """Remove the marked_for_user from all the published items having same 'item_id' as item being killed."""
+        item_id = item.get('_id')
+        if not item_id:
+            return
+
+        updates = {'marked_for_user': None}
+        published_service = get_resource_service(PUBLISHED)
+
+        published_items = list(published_service.get_from_mongo(req=None, lookup={'item_id': item_id}))
+        if not published_items:
+            return
+
+        for item in published_items:
+            if item and item.get('marked_for_user'):
+                updated = item.copy()
+                updated.update(updates)
+
+                published_service.system_update(
+                    ObjectId(item.get('_id')), updates, item
+                )
+                # send notifications so that list can be updated in the client
+                get_resource_service('archive').handle_mark_user_notifications(updates, item, False)
+                push_content_notification([updated, item])

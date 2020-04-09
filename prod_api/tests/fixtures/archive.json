@@ -1,0 +1,1038 @@
+[
+    {
+        "_id": "urn:newsml:localhost:5000:2019-07-24T16:04:06.163986:1a9710cf-58ed-4fe8-a16d-5178db7bcdb4",
+        "type": "text",
+        "version": 1,
+        "flags": {
+            "marked_for_not_publication": false,
+            "marked_for_legal": false,
+            "marked_archived_only": false,
+            "marked_for_sms": false
+        },
+        "profile": "belga_text",
+        "pubstatus": "usable",
+        "format": "HTML",
+        "original_creator": "5d385f31fe985ec67a0ca583",
+        "guid": "urn:newsml:localhost:5000:2019-07-24T16:04:06.163986:1a9710cf-58ed-4fe8-a16d-5178db7bcdb4",
+        "unique_id": 1,
+        "unique_name": "#1",
+        "family_id": "urn:newsml:localhost:5000:2019-07-24T16:04:06.163986:1a9710cf-58ed-4fe8-a16d-5178db7bcdb4",
+        "event_id": "tag:localhost:5000:2019:8de1211c-3d99-4410-a67f-b9d57bd17a36",
+        "state": "published",
+        "source": "BELGA DEV",
+        "priority": 6,
+        "urgency": 3,
+        "genre": [
+            {
+                "qcode": "Article",
+                "name": "Article (news)"
+            }
+        ],
+        "place": [],
+        "sign_off": "ADM",
+        "language": "nl",
+        "operation": "publish",
+        "schedule_settings": {
+            "utc_embargo": null,
+            "time_zone": null,
+            "utc_publish_schedule": null
+        },
+        "lock_action": null,
+        "lock_session": null,
+        "lock_time": null,
+        "lock_user": null,
+        "annotations": [],
+        "associations": {},
+        "authors": [
+            {
+                "_id": [
+                    "5d385f31fe985ec67a0ca583",
+                    "AUTHOR"
+                ],
+                "role": "AUTHOR",
+                "name": "AUTHOR",
+                "parent": "5d385f31fe985ec67a0ca583",
+                "sub_label": "admin",
+                "scheme": null
+            }
+        ],
+        "body_html": "\u003cp\u003eVivamus magna justo, lacinia eget consectetur sed, convallis at tellus.Vivamus magna justo, lacinia eget consectetur sed, convallis at tellus.Vivamus magna justo, lacinia eget consectetur sed, convallis at tellus.Vivamus magna justo, lacinia eget consectetur sed, convallis at tellus.\u003c/p\u003e",
+        "byline": "Dev byline",
+        "ednote": "some notes",
+        "extra": {
+            "country": "CZ",
+            "city": "Prague",
+            "belga-url": [
+                {
+                    "url": "https://dev.org",
+                    "description": ""
+                }
+            ]
+        },
+        "headline": "Dev one",
+        "keywords": [
+            "dev",
+            "one",
+            "test"
+        ],
+        "slugline": "one-slug",
+        "subject": [
+            {
+                "name": "default",
+                "qcode": "default",
+                "scheme": "distribution"
+            },
+            {
+                "name": "ANALYSIS",
+                "qcode": "ANALYSIS",
+                "scheme": "genre"
+            },
+            {
+                "name": "A1",
+                "qcode": "A1",
+                "scheme": "label"
+            },
+            {
+                "name": "BIN",
+                "qcode": "BIN",
+                "scheme": "news_services"
+            },
+            {
+                "name": "AUDIO_SPEECH",
+                "qcode": "AUDIO_SPEECH",
+                "scheme": "news_products"
+            },
+            {
+                "name": "ADVISORY",
+                "qcode": "ADVISORY",
+                "scheme": "news_item_types"
+            }
+        ],
+        "word_count": 40,
+        "force_unlock": true,
+        "publish_schedule": null,
+        "rewritten_by": "urn:newsml:localhost:5000:2019-07-24T16:24:15.612469:37d94b89-50c7-43b7-ab56-3327ea4579b4",
+        "task": {
+            "desk": "5d3860bbfe985ec40943b60e"
+        }
+    },
+    {
+        "_id": "urn:newsml:localhost:5000:2019-07-24T16:24:15.612469:37d94b89-50c7-43b7-ab56-3327ea4579b4",
+        "family_id": "urn:newsml:localhost:5000:2019-07-24T16:04:06.163986:1a9710cf-58ed-4fe8-a16d-5178db7bcdb4",
+        "event_id": "tag:localhost:5000:2019:8de1211c-3d99-4410-a67f-b9d57bd17a36",
+        "flags": {
+            "marked_for_not_publication": false,
+            "marked_for_legal": false,
+            "marked_archived_only": false,
+            "marked_for_sms": false
+        },
+        "language": "nl",
+        "extra": {
+            "country": "CZ",
+            "city": "Prague",
+            "belga-url": [
+                {
+                    "url": "https://dev.org",
+                    "description": ""
+                }
+            ]
+        },
+        "source": "BELGA DEV",
+        "authors": [
+            {
+                "_id": [
+                    "5d385f31fe985ec67a0ca583",
+                    "AUTHOR"
+                ],
+                "role": "AUTHOR",
+                "name": "AUTHOR",
+                "parent": "5d385f31fe985ec67a0ca583",
+                "sub_label": "admin",
+                "scheme": null
+            }
+        ],
+        "body_html": "\u003cp\u003eVivamus magna justo, lacinia eget consectetur sed, convallis at tellus.Vivamus magna justo, lacinia eget consectetur sed, convallis at tellus.Vivamus magna justo, lacinia eget consectetur sed, convallis at tellus.Vivamus magna justo, lacinia eget consectetur sed, convallis at tellus.\u003c/p\u003e",
+        "byline": "Dev byline",
+        "headline": "Dev one",
+        "sign_off": "ADM",
+        "slugline": "one-slug",
+        "urgency": 3,
+        "subject": [
+            {
+                "name": "default",
+                "qcode": "default",
+                "scheme": "distribution"
+            },
+            {
+                "name": "ANALYSIS",
+                "qcode": "ANALYSIS",
+                "scheme": "genre"
+            },
+            {
+                "name": "A1",
+                "qcode": "A1",
+                "scheme": "label"
+            },
+            {
+                "name": "BIN",
+                "qcode": "BIN",
+                "scheme": "news_services"
+            },
+            {
+                "name": "AUDIO_SPEECH",
+                "qcode": "AUDIO_SPEECH",
+                "scheme": "news_products"
+            },
+            {
+                "name": "ADVISORY",
+                "qcode": "ADVISORY",
+                "scheme": "news_item_types"
+            }
+        ],
+        "ednote": "some notes",
+        "keywords": [
+            "dev",
+            "one",
+            "test"
+        ],
+        "profile": "belga_text",
+        "rewrite_of": "urn:newsml:localhost:5000:2019-07-24T16:04:06.163986:1a9710cf-58ed-4fe8-a16d-5178db7bcdb4",
+        "rewrite_sequence": 1,
+        "state": "published",
+        "anpa_take_key": "update",
+        "associations": {},
+        "type": "text",
+        "pubstatus": "usable",
+        "format": "HTML",
+        "original_creator": "5d385f31fe985ec67a0ca583",
+        "guid": "urn:newsml:localhost:5000:2019-07-24T16:24:15.612469:37d94b89-50c7-43b7-ab56-3327ea4579b4",
+        "unique_id": 2,
+        "unique_name": "#2",
+        "priority": 6,
+        "genre": [
+            {
+                "qcode": "Article",
+                "name": "Article (news)"
+            }
+        ],
+        "place": [],
+        "operation": "publish",
+        "word_count": 40,
+        "schedule_settings": {
+            "utc_embargo": null,
+            "time_zone": null,
+            "utc_publish_schedule": null
+        },
+        "lock_action": null,
+        "lock_session": null,
+        "lock_time": null,
+        "lock_user": null,
+        "publish_schedule": null,
+        "target_subscribers": [
+            {
+                "_id": "5d386880fe985ec40943b62c",
+                "name": "BelgaNewsML1.2 Local file",
+                "scheme": null
+            }
+        ],
+        "force_unlock": true,
+        "task": {
+            "desk": "5d3860bbfe985ec40943b60e"
+        }
+    },
+    {
+        "_id": "tag:localhost:5000:2019:1dbebe89-e808-43f5-a27c-91545dac896f",
+        "subject": [
+            {
+                "name": "SDA-ATS News Service",
+                "qcode": "SDA-ATS News Service",
+                "scheme": "news_services"
+            },
+            {
+                "name": "Basisdienst F",
+                "qcode": "Basisdienst F",
+                "scheme": "news_products"
+            },
+            {
+                "name": "News",
+                "qcode": "News",
+                "scheme": "news_item_types"
+            },
+            {
+                "name": "Current",
+                "qcode": "Current",
+                "scheme": "genre"
+            },
+            {
+                "qcode": "04001000",
+                "name": "agriculture",
+                "scheme": "iptc_subject_codes"
+            },
+            {
+                "qcode": "04007000",
+                "name": "consumer goods",
+                "scheme": "iptc_subject_codes"
+            },
+            {
+                "qcode": "08000000",
+                "name": "human interest",
+                "scheme": "iptc_subject_codes"
+            },
+            {
+                "qcode": "04000000",
+                "name": "economy, business and finance",
+                "scheme": "iptc_subject_codes"
+            }
+        ],
+        "priority": 4,
+        "version": "1",
+        "guid": "tag:localhost:5000:2019:1dbebe89-e808-43f5-a27c-91545dac896f",
+        "pubstatus": "usable",
+        "urgency": "4",
+        "dateline": {
+            "text": "Landquart GR"
+        },
+        "headline": "Un taureau entre dans un magasin ï¿œ Landquart (GR)",
+        "language": "FR",
+        "extra": {
+            "how_present": "",
+            "country": "CH",
+            "country_area": "KGR"
+        },
+        "format": "NITF",
+        "body_html": "\n                  \u003cp lede=\"true\"\u003eUn taureau ï¿œgï¿œ d'un an est entrï¿œ dans un magasin Denner lundi ï¿œ Landquart (GR). L'animal, qui s'ï¿œtait ï¿œchappï¿œ de son enclos peu aprï¿œs 11h00, est ressorti par l'autre cï¿œtï¿œ du bï¿œtiment. Il n'y a pas eu de blessï¿œ.\u003c/p\u003e\n                  \u003cp\u003eL'animal est entrï¿œ dans le magasin et en est sorti rapidement, a indiquï¿œ Anita Senti, porte-parole de la police cantonale des Grisons. Elle confirme une information du site en ligne de 20Minuten.\u003c/p\u003e\n                  \u003cp\u003eLe jeune taureau s'est ensuite dirigï¿œ vers Maienfeld (GR). Avec l'aide du propriï¿œtaire de l'animal, deux patrouilles de police ont rï¿œussi ï¿œ le diriger vers un champ peu avant midi. Il a ensuite ï¿œtï¿œ transportï¿œ dans son enclos.\u003c/p\u003e\n                \n              ",
+        "type": "text",
+        "family_id": "urn:newsml:localhost:5000:2019-08-09T15:31:33.051697:34a199f1-4d38-43f7-9b70-579c228c366c",
+        "ingest_provider": "5d4d7547fe985e8fb78c5bf1",
+        "source": "AST",
+        "state": "fetched",
+        "ingest_provider_sequence": "1",
+        "flags": {
+            "marked_for_not_publication": false,
+            "marked_for_legal": false,
+            "marked_archived_only": false,
+            "marked_for_sms": false
+        },
+        "word_count": 141,
+        "original_creator": "5d385f31fe985ec67a0ca583",
+        "unique_id": 3,
+        "unique_name": "#3",
+        "genre": [
+            {
+                "qcode": "Article",
+                "name": "Article (news)"
+            }
+        ],
+        "ingest_id": null,
+        "ingest_version": "1",
+        "operation": "fetch",
+        "profile": "belga_text",
+        "event_id": "tag:localhost:5000:2019:65171437-3625-46b6-9a3a-3309e621cd2f",
+        "sign_off": "ADM",
+        "version_creator": "5d385f31fe985ec67a0ca583",
+        "schedule_settings": {
+            "utc_embargo": null,
+            "time_zone": null
+        },
+        "lock_action": null,
+        "lock_session": null,
+        "lock_time": null,
+        "lock_user": null,
+        "force_unlock": true,
+        "used": true,
+        "task": {
+            "desk": "7777777775ec40943b60e"
+        }
+    },
+    {
+        "_id": "tag:localhost:5000:2019:bdb18c59-5048-462d-8836-a39975d050ba",
+        "guid": "tag:localhost:5000:2019:bdb18c59-5048-462d-8836-a39975d050ba",
+        "version": "3",
+        "type": "text",
+        "pubstatus": "usable",
+        "ednote": "\n          ",
+        "urgency": 4,
+        "headline": "Mehr als 200 Migranten in der Ägäis aufgegriffen",
+        "slugline": "",
+        "language": "de",
+        "subject": [
+            {
+                "qcode": "11017000",
+                "name": "Migration",
+                "scheme": "iptc_subject_code"
+            },
+            {
+                "qcode": "11011000",
+                "name": "Flüchtling, Asyl",
+                "scheme": "iptc_subject_code"
+            },
+            {
+                "qcode": "11000000",
+                "name": "politics"
+            }
+        ],
+        "authors": [
+            {
+                "uri": null,
+                "name": "tsafos"
+            },
+            {
+                "_id": [
+                    "5d385f31fe985ec67a0ca583",
+                    "AUTHOR"
+                ],
+                "role": "AUTHOR",
+                "name": "AUTHOR",
+                "parent": "5d385f31fe985ec67a0ca583",
+                "sub_label": "OlegF PshenichniyF"
+            }
+        ],
+        "dateline": {
+            "text": "Athen (dpa) - "
+        },
+        "usageterms": "Nutzung nur nach schriftlicher Vereinbarung mit dpa",
+        "renditions": {},
+        "word_count": 152,
+        "body_html": "\u003cp\u003eAthen (dpa) - Ungeachtet der EU-Vereinbarung mit der Türkei kommen weiterhin Migranten über die Ägäis in die Europäische Union. Zwischen Samstag- und Montagmorgen setzten nach Angaben der griechischen Küstenwache 234 Migranten aus der Türkei nach Griechenland über.\u003c/p\u003e\u003cp\u003eVor den Inseln Lesbos und Agathonisi wurden 118 Migranten von der Küstenwache und den Besatzungen von Schiffen der europäischen Grenzschutzagentur (Frontex) aufgegriffen. Vor der nordgriechischen Hafenstadt Alexandroupolis entdeckte die Küstenwache am Wochenende weitere 116 Migranten. Die Registrierlager (sogenannte Hotspots) auf den Inseln Lesbos, Chios, Samos, Leros und Kos sind überfüllt.\u003c/p\u003e\u003cp\u003eDer im März 2016 geschlossenen Flüchtlingspakt EU-Türkei sieht vor, dass die EU alle Migranten, die illegal über die Türkei auf die griechischen Inseln kommen, zurückschicken kann. Im Gegenzug nehmen EU-Staaten der Türkei schutzbedürftige Flüchtlinge aus Syrien ab und finanzieren Hilfen für in der Türkei lebende Flüchtlinge. Auf dem Höhepunkt der Flüchtlingskrise 2015 hatte es Tage gegeben, an denen 7000 Migranten über die Türkei griechische Inseln erreichten.\u003c/p\u003e",
+        "family_id": "urn:newsml:localhost:5000:2019-08-09T15:56:38.789041:cbc98676-b805-41cb-a235-b0612cc97034",
+        "ingest_provider": "5d4d7b8efe985e8fb78c5c01",
+        "source": "DPA",
+        "state": "in_progress",
+        "ingest_provider_sequence": "1",
+        "flags": {
+            "marked_for_not_publication": false,
+            "marked_for_legal": false,
+            "marked_archived_only": false,
+            "marked_for_sms": false
+        },
+        "format": "HTML",
+        "priority": 6,
+        "original_creator": "5d385f31fe985ec67a0ca583",
+        "unique_id": 4,
+        "unique_name": "#4",
+        "genre": [
+            {
+                "qcode": "Article",
+                "name": "Article (news)"
+            }
+        ],
+        "ingest_id": "urn:newsml:dpa.com:20090101:190603-99-492251",
+        "ingest_version": "3",
+        "operation": "update",
+        "profile": "belga_text",
+        "event_id": "tag:localhost:5000:2019:c48ac342-0f53-4bd2-8531-2cdbb7fdfe59",
+        "sign_off": "ADM",
+        "version_creator": "5d385f31fe985ec67a0ca583",
+        "schedule_settings": {
+            "utc_embargo": null,
+            "time_zone": null
+        },
+        "lock_action": null,
+        "lock_session": null,
+        "lock_time": null,
+        "lock_user": null,
+        "force_unlock": true,
+        "used": true
+    },
+    {
+        "_id": "urn:newsml:localhost:5000:2019-08-13T15:35:13.648458:bcca5f01-fa1b-4442-b0c4-3f3620ac1708",
+        "type": "text",
+        "version": 1,
+        "flags": {
+            "marked_for_not_publication": false,
+            "marked_for_legal": false,
+            "marked_archived_only": false,
+            "marked_for_sms": false
+        },
+        "profile": "belga_text",
+        "pubstatus": "usable",
+        "format": "HTML",
+        "original_creator": "5d385f31fe985ec67a0ca583",
+        "guid": "urn:newsml:localhost:5000:2019-08-13T15:35:13.648458:bcca5f01-fa1b-4442-b0c4-3f3620ac1708",
+        "unique_id": 5,
+        "unique_name": "#5",
+        "family_id": "urn:newsml:localhost:5000:2019-08-13T15:35:13.648458:bcca5f01-fa1b-4442-b0c4-3f3620ac1708",
+        "event_id": "tag:localhost:5000:2019:44b12954-6336-4587-a401-8c4ef4a0fa60",
+        "state": "published",
+        "source": "BELGA DEV",
+        "priority": 6,
+        "urgency": 4,
+        "genre": [
+            {
+                "qcode": "Article",
+                "name": "Article (news)"
+            }
+        ],
+        "place": [],
+        "sign_off": "ADM",
+        "language": "en",
+        "operation": "publish",
+        "schedule_settings": {
+            "utc_embargo": null,
+            "time_zone": null,
+            "utc_publish_schedule": null
+        },
+        "_etag": "5bff7a04243e9735fb25c079bed847b29dd4712d",
+        "lock_action": null,
+        "lock_session": null,
+        "lock_time": null,
+        "lock_user": null,
+        "annotations": [],
+        "associations": {},
+        "authors": [
+            {
+                "_id": [
+                    "5d385f31fe985ec67a0ca583",
+                    "AUTHOR"
+                ],
+                "role": "AUTHOR",
+                "name": "AUTHOR",
+                "parent": "5d385f31fe985ec67a0ca583",
+                "sub_label": "admin",
+                "scheme": null
+            },
+            {
+                "_id": [
+                    "5d385f31fe985ec67a0ca583",
+                    "CORRESPONDENT"
+                ],
+                "role": "CORRESPONDENT",
+                "name": "CORRESPONDENT",
+                "parent": "5d385f31fe985ec67a0ca583",
+                "sub_label": "admin",
+                "scheme": null
+            }
+        ],
+        "body_html": "\u003cp\u003eGDPR body is here\u003c/p\u003e",
+        "byline": "By Oleg Pshenichniy",
+        "ednote": "This an editorial note",
+        "extra": {
+            "country": "CZ",
+            "city": "Prague",
+            "belga-url": [
+                {
+                    "url": "https://example.com",
+                    "description": "this is url one"
+                },
+                {
+                    "url": "https://example1.com",
+                    "description": ""
+                }
+            ]
+        },
+        "headline": "GDPR Headline",
+        "keywords": [
+            "gdpr",
+            "internat",
+            "security"
+        ],
+        "slugline": "GDPR SLUG",
+        "subject": [
+            {
+                "name": "default",
+                "qcode": "default",
+                "scheme": "distribution"
+            },
+            {
+                "name": "ANALYSIS",
+                "qcode": "ANALYSIS",
+                "scheme": "genre"
+            },
+            {
+                "name": "BACKGROUND",
+                "qcode": "BACKGROUND",
+                "scheme": "genre"
+            },
+            {
+                "name": "CURRENT",
+                "qcode": "CURRENT",
+                "scheme": "genre"
+            },
+            {
+                "name": "A1",
+                "qcode": "A1",
+                "scheme": "label"
+            },
+            {
+                "name": "EXT",
+                "qcode": "EXT",
+                "scheme": "news_services"
+            },
+            {
+                "name": "CARS",
+                "qcode": "CARS",
+                "scheme": "news_products"
+            },
+            {
+                "name": "NEWS",
+                "qcode": "NEWS",
+                "scheme": "news_item_types"
+            }
+        ],
+        "word_count": 4,
+        "publish_schedule": null,
+        "target_subscribers": [
+            {
+                "_id": "5d386880fe985ec40943b62c",
+                "name": "BelgaNewsML1.2 Local file",
+                "scheme": null
+            }
+        ],
+        "force_unlock": true,
+        "rewritten_by": "urn:newsml:localhost:5000:2019-08-14T11:52:24.530340:9b0fecfe-0ff8-4567-a62e-b54bc986e757"
+    },
+    {
+        "_id": "urn:newsml:localhost:5000:2019-08-14T11:52:24.530340:9b0fecfe-0ff8-4567-a62e-b54bc986e757",
+        "family_id": "urn:newsml:localhost:5000:2019-08-13T15:35:13.648458:bcca5f01-fa1b-4442-b0c4-3f3620ac1708",
+        "event_id": "tag:localhost:5000:2019:44b12954-6336-4587-a401-8c4ef4a0fa60",
+        "flags": {
+            "marked_for_not_publication": false,
+            "marked_for_legal": false,
+            "marked_archived_only": false,
+            "marked_for_sms": false
+        },
+        "language": "en",
+        "extra": {
+            "country": "CZ",
+            "city": "Prague",
+            "belga-url": [
+                {
+                    "url": "https://example.com",
+                    "description": "this is url one"
+                },
+                {
+                    "url": "https://example1.com",
+                    "description": ""
+                }
+            ]
+        },
+        "source": "BELGA DEV",
+        "authors": [
+            {
+                "_id": [
+                    "5d385f31fe985ec67a0ca583",
+                    "AUTHOR"
+                ],
+                "role": "AUTHOR",
+                "name": "AUTHOR",
+                "parent": "5d385f31fe985ec67a0ca583",
+                "sub_label": "admin",
+                "scheme": null
+            },
+            {
+                "_id": [
+                    "5d385f31fe985ec67a0ca583",
+                    "CORRESPONDENT"
+                ],
+                "role": "CORRESPONDENT",
+                "name": "CORRESPONDENT",
+                "parent": "5d385f31fe985ec67a0ca583",
+                "sub_label": "admin",
+                "scheme": null
+            }
+        ],
+        "body_html": "\u003cp\u003eGDPR body is here\u003c/p\u003e",
+        "byline": "By Oleg Pshenichniy",
+        "headline": "GDPR Headline",
+        "sign_off": "ADM",
+        "slugline": "GDPR SLUG",
+        "urgency": 4,
+        "subject": [
+            {
+                "name": "default",
+                "qcode": "default",
+                "scheme": "distribution"
+            },
+            {
+                "name": "ANALYSIS",
+                "qcode": "ANALYSIS",
+                "scheme": "genre"
+            },
+            {
+                "name": "BACKGROUND",
+                "qcode": "BACKGROUND",
+                "scheme": "genre"
+            },
+            {
+                "name": "CURRENT",
+                "qcode": "CURRENT",
+                "scheme": "genre"
+            },
+            {
+                "name": "A1",
+                "qcode": "A1",
+                "scheme": "label"
+            },
+            {
+                "name": "EXT",
+                "qcode": "EXT",
+                "scheme": "news_services"
+            },
+            {
+                "name": "CARS",
+                "qcode": "CARS",
+                "scheme": "news_products"
+            },
+            {
+                "name": "NEWS",
+                "qcode": "NEWS",
+                "scheme": "news_item_types"
+            }
+        ],
+        "ednote": "This an editorial note",
+        "keywords": [
+            "gdpr",
+            "internat",
+            "security"
+        ],
+        "profile": "belga_text",
+        "target_subscribers": [
+            {
+                "_id": "5d386880fe985ec40943b62c",
+                "name": "BelgaNewsML1.2 Local file",
+                "scheme": null
+            }
+        ],
+        "rewrite_of": "urn:newsml:localhost:5000:2019-08-13T15:35:13.648458:bcca5f01-fa1b-4442-b0c4-3f3620ac1708",
+        "rewrite_sequence": 1,
+        "state": "published",
+        "anpa_take_key": "update",
+        "associations": {},
+        "type": "text",
+        "pubstatus": "usable",
+        "format": "HTML",
+        "original_creator": "5d385f31fe985ec67a0ca583",
+        "guid": "urn:newsml:localhost:5000:2019-08-14T11:52:24.530340:9b0fecfe-0ff8-4567-a62e-b54bc986e757",
+        "unique_id": 7,
+        "unique_name": "#7",
+        "priority": 6,
+        "genre": [
+            {
+                "qcode": "Article",
+                "name": "Article (news)"
+            }
+        ],
+        "place": [],
+        "operation": "publish",
+        "word_count": 4,
+        "schedule_settings": {
+            "utc_embargo": null,
+            "time_zone": null,
+            "utc_publish_schedule": null
+        },
+        "lock_action": null,
+        "lock_session": null,
+        "lock_time": null,
+        "lock_user": null,
+        "publish_schedule": null,
+        "force_unlock": true,
+        "rewritten_by": "urn:newsml:localhost:5000:2019-08-14T15:02:48.032188:d1be79f4-1d08-464a-90ac-90542dde4e90"
+    },
+    {
+        "_id": "urn:newsml:localhost:5000:2019-08-14T15:02:48.032188:d1be79f4-1d08-464a-90ac-90542dde4e90",
+        "family_id": "urn:newsml:localhost:5000:2019-08-13T15:35:13.648458:bcca5f01-fa1b-4442-b0c4-3f3620ac1708",
+        "event_id": "tag:localhost:5000:2019:44b12954-6336-4587-a401-8c4ef4a0fa60",
+        "flags": {
+            "marked_for_not_publication": false,
+            "marked_for_legal": false,
+            "marked_archived_only": false,
+            "marked_for_sms": false
+        },
+        "language": "en",
+        "extra": {
+            "country": "CZ",
+            "city": "Prague",
+            "belga-url": [
+                {
+                    "url": "https://example.com",
+                    "description": "this is url one"
+                },
+                {
+                    "url": "https://example1.com",
+                    "description": ""
+                }
+            ]
+        },
+        "source": "BELGA DEV",
+        "authors": [
+            {
+                "_id": [
+                    "5d385f31fe985ec67a0ca583",
+                    "AUTHOR"
+                ],
+                "role": "AUTHOR",
+                "name": "AUTHOR",
+                "parent": "5d385f31fe985ec67a0ca583",
+                "sub_label": "Oleg Pshenichniy",
+                "scheme": null
+            },
+            {
+                "_id": [
+                    "5d385f31fe985ec67a0ca583",
+                    "EDITOR"
+                ],
+                "role": "EDITOR",
+                "name": "EDITOR",
+                "parent": "5d385f31fe985ec67a0ca583",
+                "sub_label": "Oleg Pshenichniy",
+                "scheme": null
+            },
+            {
+                "_id": [
+                    "5d385f31fe985ec67a0ca583",
+                    "CORRESPONDENT"
+                ],
+                "role": "CORRESPONDENT",
+                "name": "CORRESPONDENT",
+                "parent": "5d385f31fe985ec67a0ca583",
+                "sub_label": "Oleg Pshenichniy",
+                "scheme": null
+            }
+        ],
+        "body_html": "\u003cp\u003eGDPR body is here\u003c/p\u003e\n\u003cp\u003eand here is an image\u003c/p\u003e\n\u003cp\u003e\u003cbr\u003e\u003c/p\u003e\n\u003c!-- EMBED START Image {id: \"editor_0\"} --\u003e\n\u003cfigure\u003e\n    \u003cimg src=\"http://localhost:5000/api/upload-raw/5d553c333031e2855a2e5662.jpg\" alt=\"\" /\u003e\n    \u003cfigcaption\u003esome desc\u003c/figcaption\u003e\n\u003c/figure\u003e\n\u003c!-- EMBED END Image {id: \"editor_0\"} --\u003e\n\u003cp\u003e\u0026nbsp;\u003c/p\u003e",
+        "byline": "Oleh",
+        "headline": "GDPR Headline",
+        "sign_off": "ADM",
+        "slugline": "GDPR SLUG",
+        "urgency": 4,
+        "subject": [
+            {
+                "name": "default",
+                "qcode": "default",
+                "scheme": "distribution"
+            },
+            {
+                "name": "ANALYSIS",
+                "qcode": "ANALYSIS",
+                "scheme": "genre"
+            },
+            {
+                "name": "BACKGROUND",
+                "qcode": "BACKGROUND",
+                "scheme": "genre"
+            },
+            {
+                "name": "CURRENT",
+                "qcode": "CURRENT",
+                "scheme": "genre"
+            },
+            {
+                "name": "A1",
+                "qcode": "A1",
+                "scheme": "label"
+            },
+            {
+                "name": "NEWS",
+                "qcode": "NEWS",
+                "scheme": "news_item_types"
+            },
+            {
+                "name": "BRF",
+                "qcode": "BRF",
+                "scheme": "news_services"
+            },
+            {
+                "name": "BIZAR",
+                "qcode": "BIZAR",
+                "scheme": "news_products"
+            }
+        ],
+        "ednote": "This an editorial note",
+        "keywords": [
+            "gdpr",
+            "internat",
+            "security"
+        ],
+        "profile": "belga_text",
+        "target_subscribers": [
+            {
+                "_id": "5d386880fe985ec40943b62c",
+                "name": "BelgaNewsML1.2 Local file",
+                "scheme": null
+            }
+        ],
+        "rewrite_of": "urn:newsml:localhost:5000:2019-08-14T11:52:24.530340:9b0fecfe-0ff8-4567-a62e-b54bc986e757",
+        "rewrite_sequence": 2,
+        "state": "published",
+        "anpa_take_key": "2nd update",
+        "associations": {
+            "belga_related_articles--1": {
+                "_id": "tag:localhost:5000:2019:bdb18c59-5048-462d-8836-a39975d050ba",
+                "type": "text"
+            },
+            "belga_related_articles--2": {
+                "_id": "tag:localhost:5000:2019:1dbebe89-e808-43f5-a27c-91545dac896f",
+                "type": "text"
+            },
+            "belga_related_images--1": {
+                "_id": "urn:newsml:localhost:5000:2019-08-14T16:50:26.614569:67a6bb37-5c41-4620-bb86-e2017de6e15d",
+                "type": "picture"
+            },
+            "editor_0": {
+                "_id": "urn:newsml:localhost:5000:2019-08-15T13:04:19.702285:d201d16e-1011-4d4c-a262-fed9942a64db",
+                "media": "5d553c333031e2855a2e5662",
+                "_updated": "2019-08-15T12:23:04+0000",
+                "type": "picture",
+                "pubstatus": "usable",
+                "flags": {
+                    "marked_for_not_publication": false,
+                    "marked_for_legal": false,
+                    "marked_archived_only": false,
+                    "marked_for_sms": false
+                },
+                "format": "HTML",
+                "_current_version": 3,
+                "firstcreated": "2019-08-15T11:04:19+0000",
+                "versioncreated": "2019-08-15T12:22:48+0000",
+                "original_creator": "5d385f31fe985ec67a0ca583",
+                "guid": "tag:localhost:5000:2019:bb1f22ac-d33a-4b31-8ed6-2c7889373c78",
+                "unique_id": 15,
+                "unique_name": "#15",
+                "family_id": "urn:newsml:localhost:5000:2019-08-15T13:04:19.702285:d201d16e-1011-4d4c-a262-fed9942a64db",
+                "event_id": "tag:localhost:5000:2019:c0f49372-63d0-4e64-8a11-7df27296a859",
+                "state": "in_progress",
+                "source": "Superdesk",
+                "priority": 6,
+                "urgency": 3,
+                "genre": [
+                    {
+                        "qcode": "Article",
+                        "name": "Article (news)"
+                    }
+                ],
+                "place": [],
+                "sign_off": "ADM",
+                "language": "nl",
+                "operation": "update",
+                "version_creator": "5d385f31fe985ec67a0ca583",
+                "schedule_settings": {
+                    "utc_embargo": null,
+                    "time_zone": null,
+                    "utc_publish_schedule": null
+                },
+                "renditions": {
+                    "original": {
+                        "href": "http://localhost:5000/api/upload-raw/5d553c333031e2855a2e5662.jpg",
+                        "media": "5d553c333031e2855a2e5662",
+                        "mimetype": "image/jpeg",
+                        "width": 1920,
+                        "height": 1280,
+                        "poi": {
+                            "x": 960,
+                            "y": 640
+                        }
+                    },
+                    "baseImage": {
+                        "href": "http://localhost:5000/api/upload-raw/5d553c343031e2855a2e5664.jpg",
+                        "media": "5d553c343031e2855a2e5664",
+                        "mimetype": "image/jpeg",
+                        "width": 1400,
+                        "height": 933,
+                        "poi": {
+                            "x": 700,
+                            "y": 466
+                        }
+                    },
+                    "thumbnail": {
+                        "href": "http://localhost:5000/api/upload-raw/5d553c343031e2855a2e5666.jpg",
+                        "media": "5d553c343031e2855a2e5666",
+                        "mimetype": "image/jpeg",
+                        "width": 180,
+                        "height": 120,
+                        "poi": {
+                            "x": 90,
+                            "y": 60
+                        }
+                    },
+                    "viewImage": {
+                        "href": "http://localhost:5000/api/upload-raw/5d553c343031e2855a2e5668.jpg",
+                        "media": "5d553c343031e2855a2e5668",
+                        "mimetype": "image/jpeg",
+                        "width": 640,
+                        "height": 426,
+                        "poi": {
+                            "x": 320,
+                            "y": 213
+                        }
+                    }
+                },
+                "mimetype": "image/jpeg",
+                "filemeta_json": "{\"length\": 170263}",
+                "_etag": "bd1b7c9df929cc8aa9fcdea7cdd6feabd12710cc",
+                "byline": "BIENVENIDO VELASCO",
+                "description_text": "some desc",
+                "expiry": "2046-12-30T12:22:48+0000",
+                "headline": "response",
+                "task": {
+                    "desk": "5d3860bbfe985ec40943b60e",
+                    "stage": "5d3860bbfe985ec40943b60c",
+                    "user": "5d385f31fe985ec67a0ca583"
+                },
+                "version": 2,
+                "used": true,
+                "extra": {
+                    "belga-keywords": "one two three",
+                    "city": "Prague",
+                    "country": "CZ"
+                },
+                "subject": [
+                    {
+                        "name": "Belga",
+                        "qcode": "Belga",
+                        "scheme": "credit"
+                    }
+                ],
+                "_links": {
+                    "parent": {
+                        "title": "home",
+                        "href": "/"
+                    },
+                    "self": {
+                        "title": "Archive",
+                        "href": "archive/urn:newsml:localhost:5000:2019-08-15T13:04:19.702285:d201d16e-1011-4d4c-a262-fed9942a64db"
+                    },
+                    "collection": {
+                        "title": "archive",
+                        "href": "archive"
+                    }
+                },
+                "_latest_version": 3,
+                "poi": {
+                    "x": 0.5,
+                    "y": 0.5
+                }
+            }
+        },
+        "type": "text",
+        "pubstatus": "usable",
+        "format": "HTML",
+        "original_creator": "5d385f31fe985ec67a0ca583",
+        "guid": "urn:newsml:localhost:5000:2019-08-14T15:02:48.032188:d1be79f4-1d08-464a-90ac-90542dde4e90",
+        "unique_id": 9,
+        "unique_name": "#9",
+        "priority": 6,
+        "genre": [
+            {
+                "qcode": "Article",
+                "name": "Article (news)"
+            }
+        ],
+        "place": [],
+        "operation": "publish",
+        "word_count": 11,
+        "schedule_settings": {
+            "utc_embargo": null,
+            "time_zone": null,
+            "utc_publish_schedule": null
+        },
+        "lock_action": null,
+        "lock_session": null,
+        "lock_time": null,
+        "lock_user": null,
+        "version": 2,
+        "force_unlock": true,
+        "annotations": [],
+        "publish_schedule": null,
+        "rewritten_by": "urn:newsml:localhost:5000:2019-08-19T11:27:16.314265:672006c3-ab37-4703-9141-c922aad52c51"
+    }
+]

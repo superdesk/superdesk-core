@@ -36,7 +36,7 @@ JINJA_FILTERS = dict()
 app_components = dict()
 app_models = dict()
 resources = dict()
-eve_backend = EveBackend()
+_eve_backend = EveBackend()
 default_user_preferences = dict()
 default_session_preferences = dict()
 logger = logging_lib.getLogger(__name__)
@@ -100,7 +100,7 @@ def blueprint(blueprint, app, **kwargs):
 
 def get_backend():
     """Returns the available backend, this will be changed in a factory if needed."""
-    return eve_backend
+    return _eve_backend
 
 
 def get_resource_service(resource_name):

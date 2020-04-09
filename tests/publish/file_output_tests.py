@@ -90,5 +90,5 @@ class FileOutputTest(TestCase):
             try:
                 service._transmit(item, self.subscribers)
             except PublishFileError as ex:
-                self.assertEqual(ex.message, 'File publish error')
+                self.assertEqual(str(ex), 'PublishFileError Error 13000 - File publish error')
                 self.assertEqual(ex.code, 13000)
