@@ -6,7 +6,7 @@ from flask import url_for
 
 from superdesk.auth_server.scopes import Scope
 
-from ..conftest import get_test_prodapi_app, teardown_app
+from ..conftest import get_test_prodapi_app
 
 
 RESOURCES = (
@@ -82,10 +82,6 @@ def test_authenticated(superdesk_app, superdesk_client, auth_server_registered_c
     assert resp_data['token_type'] == 'Bearer'
     assert 'access_token' in resp_data
 
-    # we drop a superdesk flask app and client to avoid conflict between flask apps
-    teardown_app(superdesk_app)
-    del superdesk_client
-
     # we create a prodapi flask app and client
     prodapi_app = get_test_prodapi_app()
     prodapi_client = prodapi_app.test_client()
@@ -102,8 +98,8 @@ def test_authenticated(superdesk_app, superdesk_client, auth_server_registered_c
                 }
             )
 
-    # we get a 200 response
-    assert resp.status_code == 200
+            # we get a 200 response
+            assert resp.status_code == 200
 
 
 @pytest.mark.parametrize('auth_server_registered_clients', [(('ARCHIVE_READ',),)], indirect=True)
@@ -139,10 +135,6 @@ def test_bad_shared_key(superdesk_app, superdesk_client, auth_server_registered_
     # we get an access token
     resp_data = json.loads(resp.data.decode('utf-8'))
     token = resp_data['access_token']
-
-    # we drop a superdesk flask app and client to avoid conflict between flask apps
-    teardown_app(superdesk_app)
-    del superdesk_client
 
     # we create a prodapi flask app and client
     prodapi_app = get_test_prodapi_app()
@@ -309,10 +301,6 @@ def test_token_expired(superdesk_app, superdesk_client, auth_server_registered_c
     assert resp.status_code == 200
     resp_data = json.loads(resp.data.decode('utf-8'))
     token = resp_data['access_token']
-
-    # we drop a superdesk flask app and client to avoid conflict between flask apps
-    teardown_app(superdesk_app)
-    del superdesk_client
 
     # wait until token expire
     time.sleep(expiration_delay + 1)
