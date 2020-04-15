@@ -35,6 +35,10 @@ DEFAULT_SUCCESS_PATH = "_PROCESSED"
 DEFAULT_FAILURE_PATH = "_ERROR"
 
 
+class EmptyFile(Exception):
+    """Raised when a file is empty thus ignored"""
+
+
 class FTPFeedingService(FeedingService):
     """
     Feeding Service class which can read article(s) which exist in a file system and accessible using FTP.
@@ -264,6 +268,10 @@ class FTPFeedingService(FeedingService):
                 raise Exception('Exception retrieving file from FTP server ({filename})'.format(
                                 filename=filename))
 
+        if self._is_empty(local_file_path):
+            logger.info('ignoring empty file {filename}'.format(filename=filename))
+            raise EmptyFile(local_file_path)
+
         if isinstance(registered_parser, XMLFeedParser):
             xml = etree.parse(local_file_path).getroot()
             parser = self.get_feed_parser(provider, xml)
@@ -309,11 +317,6 @@ class FTPFeedingService(FeedingService):
                         logger.info('ignoring file {filename} because of file extension'.format(filename=filename))
                         continue
 
-                    file_path = os.path.join(config.get('dest_path', '/'), filename)
-                    if self._is_empty(file_path):
-                        logger.info('ignoring empty file {filename}'.format(filename=filename))
-                        continue
-
                     # filter by modify datetime
                     file_modify = datetime.strptime(modify, self.DATE_FORMAT).replace(tzinfo=utc)
                     if last_processed_file_modify:
@@ -352,6 +355,8 @@ class FTPFeedingService(FeedingService):
                             self._move(
                                 ftp, filename, move_dest_file_path, file_modify,
                                 failed=failed)
+                    except EmptyFile:
+                        continue
                     except Exception as e:
                         logger.error("Error while parsing {filename}: {msg}".format(filename=filename, msg=e))
 
