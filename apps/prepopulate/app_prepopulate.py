@@ -162,15 +162,18 @@ class PrepopulateService(BaseService):
     def _create(self, docs):
         for doc in docs:
             if doc.get('remove_first'):
-                clean_dbs(superdesk.app, force=True)
+                clean_dbs(app, force=True)
+
+            app.data.init_elastic(app)
 
             user = get_resource_service('users').find_one(username=get_default_user()['username'], req=None)
             if not user:
                 get_resource_service('users').post([get_default_user()])
+
             prepopulate_data(doc.get('profile') + '.json', get_default_user())
 
     def create(self, docs, **kwargs):
-        use_snapshot(superdesk.app, 'prepopulate')(self._create)(docs)
+        self._create(docs)
         if app.config.get('SUPERDESK_TESTING'):
             for provider in ['paimg', 'aapmm']:
                 if provider not in allowed_search_providers:
