@@ -37,7 +37,7 @@ class APMediaFeedParser(FeedParser):
 
     label = 'AP Media API'
 
-    direct_copy_properties = ('version', 'type', ITEM_URGENCY, 'uri', 'language', 'pubstatus', 'ednote', 'headline',
+    direct_copy_properties = ('type', ITEM_URGENCY, 'uri', 'language', 'pubstatus', 'ednote', 'headline',
                               'slugline', 'copyrightnotice')
 
     # Mapping the received urgensy field to a priority value
