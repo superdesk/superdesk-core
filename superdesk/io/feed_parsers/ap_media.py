@@ -155,6 +155,9 @@ class APMediaFeedParser(FeedParser):
             if in_item.get(copy_property) is not None:
                 item[copy_property] = in_item[copy_property]
 
+        if in_item.get('version'):
+            item['version'] = in_item['version']
+
         if in_item.get('versioncreated'):
             item['versioncreated'] = self.datetime(in_item.get('versioncreated'))
 
