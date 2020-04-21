@@ -571,7 +571,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
                             rendition,
                             ingested[0]['renditions'][rendition])
                 else:  # there is no such item in the system - ingest it
-                    if has_system_renditions(assoc):  # all set, just download
+                    if assoc.get('renditions') and has_system_renditions(assoc):  # all set, just download
                         logger.info('new assoc %s', assoc['headline'])
                         transfer_renditions(assoc['renditions'])
                     status, ids = ingest_item(assoc, provider, feeding_service, rule_set)
@@ -645,7 +645,7 @@ def is_new_version(item, old_item):
 
 def has_system_renditions(item):
     return all((
-        rend in item.get('renditions')
+        rend in item['renditions']
         for rend in ('viewImage', 'baseImage', 'thumbnail')
     ))
 
