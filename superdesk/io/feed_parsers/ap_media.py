@@ -37,7 +37,7 @@ class APMediaFeedParser(FeedParser):
 
     label = 'AP Media API'
 
-    direct_copy_properties = ('version', 'type', ITEM_URGENCY, 'uri', 'language', 'pubstatus', 'ednote', 'headline',
+    direct_copy_properties = ('type', ITEM_URGENCY, 'uri', 'language', 'pubstatus', 'ednote', 'headline',
                               'slugline', 'copyrightnotice')
 
     # Mapping the received urgensy field to a priority value
@@ -154,6 +154,9 @@ class APMediaFeedParser(FeedParser):
         for copy_property in self.direct_copy_properties:
             if in_item.get(copy_property) is not None:
                 item[copy_property] = in_item[copy_property]
+
+        if in_item.get('version'):
+            item['version'] = in_item['version']
 
         if in_item.get('versioncreated'):
             item['versioncreated'] = self.datetime(in_item.get('versioncreated'))
