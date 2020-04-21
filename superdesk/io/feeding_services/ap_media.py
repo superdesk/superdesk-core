@@ -191,7 +191,8 @@ class APMediaFeedingService(HTTPFeedingServiceBase):
         return [parsed_items]
 
     def api_get(self, url, provider):
-        resp = self.get_url(url=url, params={'apikey': provider['config']['apikey']}, verify=False, allow_redirects=True)
+        resp = self.get_url(url=url, params={'apikey': provider['config']['apikey']},
+                            verify=False, allow_redirects=True)
         resp.raise_for_status()
         return resp
 
