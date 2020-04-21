@@ -24,6 +24,7 @@ from eve.io.media import MediaStorage
 
 from superdesk.media.media_operations import download_file_from_url, guess_media_extension
 from superdesk.utc import query_datetime
+from .mimetype_mixin import MimetypeMixin
 
 logger = logging.getLogger(__name__)
 MAX_KEYS = 1000
@@ -52,7 +53,7 @@ class AmazonObjectWrapper(BytesIO):
         self._id = name
 
 
-class AmazonMediaStorage(MediaStorage):
+class AmazonMediaStorage(MediaStorage, MimetypeMixin):
 
     def __init__(self, app=None):
         super().__init__(app)
@@ -217,6 +218,12 @@ class AmazonMediaStorage(MediaStorage):
         # XXX: we don't use metadata here as Amazon S3 as a limit of 2048 bytes (keys + values)
         #      and they are anyway stored in MongoDB (and still part of the file). See issue SD-4231
         logger.debug('Going to save file file=%s media=%s ' % (filename, _id))
+
+        # try to determine mimetype on the server
+        determined_content_type = self._get_mimetype(content, filename)
+        if determined_content_type:
+            content_type = determined_content_type
+
         if not _id:
             _id = self.media_id(filename, content_type=content_type, version=version)
 

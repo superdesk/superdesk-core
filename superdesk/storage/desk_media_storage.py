@@ -16,6 +16,8 @@ import gridfs
 import os.path
 from eve.io.mongo.media import GridFSMediaStorage
 
+from .mimetype_mixin import MimetypeMixin
+
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +29,7 @@ def format_id(_id):
         return _id
 
 
-class SuperdeskGridFSMediaStorage(GridFSMediaStorage):
+class SuperdeskGridFSMediaStorage(GridFSMediaStorage, MimetypeMixin):
     def get(self, _id, resource=None):
         logger.debug('Getting media file with id= %s' % _id)
         _id = format_id(_id)
@@ -75,6 +77,11 @@ class SuperdeskGridFSMediaStorage(GridFSMediaStorage):
         :param str folder: Folder that the file will be stored in
         :return str: The ID that was generated for this object
         """
+        # try to determine mimetype on the server
+        determined_content_type = self._get_mimetype(content, filename)
+        if determined_content_type:
+            content_type = determined_content_type
+
         if '_id' in kwargs:
             kwargs['_id'] = format_id(kwargs['_id'])
 
