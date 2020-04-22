@@ -80,7 +80,7 @@ class AmazonMediaStorageTestCase(TestCase):
         data = b'test data'
         folder = 's3test'
         filename = 'abc123.zip'
-        content_type = 'text/plain'
+        content_type = 'application/zip'
         self.amazon.client.put_object = Mock()
         self.amazon.media_id = Mock(return_value=filename)
         self.amazon._check_exists = Mock(return_value=False)
