@@ -31,6 +31,7 @@ class MimetypeMixin:
             try:
                 # we expect types with `io.BufferedIOBase` interface
                 bytes_buffer = stream.read()
+                stream.seek(0)
             except AttributeError:
                 msg = 'Not expected format for incoming binary stream: {}'.format(stream_type)
                 logger.warning(msg)
