@@ -358,7 +358,10 @@ class ValidateService(superdesk.Service):
         return {field: get_validator_schema(schema) for field, schema in validator['schema'].items() if schema}
 
     def _get_vocabulary_display_name(self, vocabulary_id):
-        vocabulary = get_resource_service('vocabularies').find_one(req=None, _id=vocabulary_id)
+        if vocabulary_id == 'anpa_category':
+            vocabulary = get_resource_service('vocabularies').find_one(req=None, _id='categories')
+        else:
+            vocabulary = get_resource_service('vocabularies').find_one(req=None, _id=vocabulary_id)
         if vocabulary and 'display_name' in vocabulary:
             return vocabulary['display_name']
         return vocabulary_id
