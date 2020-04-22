@@ -16,7 +16,7 @@ class MimetypeMixin:
         Return mimetype of the `content` and as a fallback using `filename`
 
         :param content: binary stream
-        :type stream: `io.BufferedIOBase` | `io.BytesIO` | `werkzeug.datastructures.FileStorage`
+        :type stream: `io.BytesIO` | `io.BufferedReader` | `io.BufferedIOBase` | `werkzeug.datastructures.FileStorage`
         :param filename: filename
         :type filename: str
         """
@@ -28,17 +28,26 @@ class MimetypeMixin:
             if type(content) is datastructures.FileStorage:
                 stream = content.stream
             stream_type = type(stream)
-            if stream_type is io.BufferedIOBase:
-                bytes_buffer = stream.read(size=None)
-            elif stream_type is io.BytesIO:
-                bytes_buffer = stream.getvalue()
-            else:
+            try:
+                # we expect types with `io.BufferedIOBase` interface
+                bytes_buffer = stream.read()
+            except AttributeError:
                 msg = 'Not expected format for incoming binary stream: {}'.format(stream_type)
                 logger.warning(msg)
                 raise Exception(msg)
+            # detect mimetype using wrapper around libmagic
             content_type = magic.Magic(mime=True).from_buffer(bytes_buffer)
-        except Exception:
+
+            # if 'application/octet-stream' is returned it means that libmagic was not able to
+            # detect mimetype precisely and as a fallback 'application/octet-stream' was returned.
+            # in this case we should try to detect a mimetype by filename
+            if content_type == 'application/octet-stream':
+                msg = 'libmagic was not able to detect mimetype precisely'
+                raise Exception(msg)
+        except Exception as e:
+            logger.warning(e)
             if filename:
+                # detect mimetype using filename extension
                 guessed_content_type = mimetypes.MimeTypes().guess_type(filename)[0]
                 if guessed_content_type:
                     content_type = guessed_content_type
