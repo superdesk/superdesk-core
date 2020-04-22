@@ -14,6 +14,10 @@ before_install:
       if [ "$SKIP_SERVER_INSTALL" != "true" ]; then
         docker-compose -f .travis-docker-compose.yml up -d
       fi
+    - wget http://launchpadlibrarian.net/433926958/libmagic-mgc_5.37-3_amd64.deb
+    - wget http://launchpadlibrarian.net/433926961/libmagic1_5.37-3_amd64.deb
+    - sudo dpkg -i libmagic-mgc_5.37-3_amd64.deb
+    - sudo dpkg -i libmagic1_5.37-3_amd64.deb
 
 jobs:
     include:
