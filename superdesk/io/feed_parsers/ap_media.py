@@ -81,6 +81,12 @@ class APMediaFeedParser(FeedParser):
                        # Rugby league
                        'RGL-': '15048000'}
 
+    RELATED_FIELD = None
+
+    RENDITIONS_MAPPING = {
+        'baseImage': 'main',
+    }
+
     def __init__(self):
         super().__init__()
 
@@ -194,9 +200,8 @@ class APMediaFeedParser(FeedParser):
             item['usageterms'] = ', '.join([n for n in in_item.get('usageterms', [])])
 
         if in_item.get('type') == 'picture':
-            if in_item.get('renditions', {}).get('main'):
-                item['renditions'] = {
-                    'baseImage': {'href': in_item.get('renditions', {}).get('main', {}).get('href')}}
+            if in_item.get('renditions'):
+                self._parse_renditions(in_item['renditions'], item, provider)
 
             if in_item.get('description_caption'):
                 item['description_text'] = in_item.get('description_caption')
@@ -231,7 +236,31 @@ class APMediaFeedParser(FeedParser):
                 # item['body_html'] = sd_etree.clean_html_str(nitf_item.get('body_html'))
                 item['body_html'] = nitf_item.get('body_html').replace('<block id="Main">', '').replace('</block>', '')
 
+        if s_json.get('associations'):
+            self._parse_associations(s_json['associations'], item, provider)
+
         return item
+
+    def _parse_associations(self, associations, item, provider=None):
+        related_id = getattr(self, 'RELATED_ID', app.config.get('INGEST_AP_RELATED_ID'))
+        if related_id:
+            item['associations'] = {}
+            for key, raw in associations.items():
+                item['associations']['{}--{}'.format(related_id, key)] = self.parse(raw, provider)
+
+    def _parse_renditions(self, renditions, item, provider=None):
+        try:
+            item['renditions'] = {}
+            for dest, src in self.RENDITIONS_MAPPING.items():
+                rend = renditions[src]
+                item['renditions'][dest] = {
+                    'href': rend['href'],
+                    'mimetype': rend['mimetype'],
+                    'width': rend['width'],
+                    'height': rend['height'],
+                }
+        except KeyError:
+            pass
 
 
 register_feed_parser(APMediaFeedParser.NAME, APMediaFeedParser())
