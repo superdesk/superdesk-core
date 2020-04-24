@@ -220,9 +220,7 @@ class AmazonMediaStorage(MediaStorage, MimetypeMixin):
         logger.debug('Going to save file file=%s media=%s ' % (filename, _id))
 
         # try to determine mimetype on the server
-        determined_content_type = self._get_mimetype(content, filename)
-        if determined_content_type:
-            content_type = determined_content_type
+        content_type = self._get_mimetype(content, filename, content_type)
 
         if not _id:
             _id = self.media_id(filename, content_type=content_type, version=version)

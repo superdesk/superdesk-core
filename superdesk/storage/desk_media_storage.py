@@ -77,10 +77,9 @@ class SuperdeskGridFSMediaStorage(GridFSMediaStorage, MimetypeMixin):
         :param str folder: Folder that the file will be stored in
         :return str: The ID that was generated for this object
         """
+
         # try to determine mimetype on the server
-        determined_content_type = self._get_mimetype(content, filename)
-        if determined_content_type:
-            content_type = determined_content_type
+        content_type = self._get_mimetype(content, filename, content_type)
 
         if '_id' in kwargs:
             kwargs['_id'] = format_id(kwargs['_id'])
