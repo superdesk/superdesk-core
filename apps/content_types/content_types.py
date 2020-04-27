@@ -30,6 +30,7 @@ EDITOR_ATTRIBUTES = (
     'order',
     'sdWidth',
     'required',
+    'readonly',
     'hideDate',
     'showCrops',
     'formatOptions',
