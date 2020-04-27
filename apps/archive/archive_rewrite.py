@@ -280,7 +280,6 @@ class ArchiveRewriteService(Service):
             return str(n) + {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, "th")
 
     def delete(self, lookup):
-        print("IN")
         target_id = request.view_args['original_id']
         archive_service = get_resource_service(ARCHIVE)
         target = archive_service.find_one(req=None, _id=target_id)
