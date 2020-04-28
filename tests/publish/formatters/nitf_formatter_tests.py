@@ -47,7 +47,7 @@ class NitfFormatterTest(TestCase):
     def test_formatter(self):
         article = {
             'headline': 'test headline',
-            'body_html': '<p>test body</p>',
+            'body_html': '<p>test body</p><p>привет</p>',
             'type': 'text',
             'priority': '1',
             '_id': 'urn:localhost.abc',
@@ -57,7 +57,8 @@ class NitfFormatterTest(TestCase):
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
         nitf_xml = etree.fromstring(doc)
         self.assertEqual(nitf_xml.find('head/title').text, article['headline'])
-        self.assertEqual(nitf_xml.find('body/body.content/p').text, 'test body')
+        self.assertEqual(nitf_xml.findall('body/body.content/p')[0].text, 'test body')
+        self.assertEqual(nitf_xml.findall('body/body.content/p')[1].text, 'привет')
         self.assertEqual(nitf_xml.find('head/docdata/urgency').get('ed-urg'), '2')
 
     def test_html2nitf(self):
@@ -79,7 +80,7 @@ class NitfFormatterTest(TestCase):
                     and
                     <a bad_attribute="to_remove">attributes</a>
                     are
-                    <h6>removed</h6>
+                    <h6>удаленный</h6>
                 </p>
             </div>
             """))
@@ -100,7 +101,7 @@ class NitfFormatterTest(TestCase):
                     and
                     <a>attributes</a>
                     are
-                    <hl2>removed</hl2>
+                    <hl2>удаленный</hl2>
                 </p>
             </div>""").replace('\n', '').replace(' ', '')
         self.assertEqual(etree.tostring(nitf, encoding='unicode').replace('\n', '').replace(' ', ''), expected)
@@ -109,7 +110,7 @@ class NitfFormatterTest(TestCase):
         """Check that <br/> is kept if it is a child of and enrichedText parent element"""
         html = etree.fromstring(dedent("""\
             <div>
-                <br/>the previous tag should be removed (but not the text)
+                <br/>the previous tag should be удаленный (but not the text)
                     <p>
                         the following tag <br/> should still be here
                         and the next one <br/> too
@@ -121,7 +122,7 @@ class NitfFormatterTest(TestCase):
 
         expected = dedent("""\
             <div>
-                the previous tag should be removed (but not the text)
+                the previous tag should be удаленный (but not the text)
                     <p>
                         the following tag <br/> should still be here
                         and the next one <br/> too
@@ -448,7 +449,7 @@ class NitfFormatterTest(TestCase):
             'anpa_take_key': 'take_key',
             'unique_id': '1',
             'type': 'text',
-            'body_html': '<p>Tommi Mäkinen crashes a Škoda in Äppelbo</p>',
+            'body_html': '<p>Томми Mäkinen crashes a Škoda in Äppelbo</p>',
             'word_count': '1',
             'priority': 1,
             "linked_in_packages": [
@@ -460,4 +461,4 @@ class NitfFormatterTest(TestCase):
         }
         seq, doc = self.formatter.format(article, {'name': 'Test Subscriber'})[0]
         nitf_xml = etree.fromstring(doc)
-        self.assertEqual(nitf_xml.find('body/body.content/p').text, 'Tommi Mäkinen crashes a Škoda in Äppelbo')
+        self.assertEqual(nitf_xml.find('body/body.content/p').text, 'Томми Mäkinen crashes a Škoda in Äppelbo')

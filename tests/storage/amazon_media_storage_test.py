@@ -1,3 +1,4 @@
+import os
 import time
 
 from datetime import timedelta
@@ -80,7 +81,7 @@ class AmazonMediaStorageTestCase(TestCase):
         data = b'test data'
         folder = 's3test'
         filename = 'abc123.zip'
-        content_type = 'text/plain'
+        content_type = 'application/zip'
         self.amazon.client.put_object = Mock()
         self.amazon.media_id = Mock(return_value=filename)
         self.amazon._check_exists = Mock(return_value=False)
@@ -204,3 +205,128 @@ class AmazonMediaStorageTestCase(TestCase):
             'Key': 'DIARY NOTE - Victory In The Pacific Day Commemoration - Thursday (1).pdf'
         }
         self.amazon.client.get_object.assert_called_once_with(**kwargs)
+
+    def test_mimetype_detect(self):
+        # keep default mimetype
+        content = b'bytes are here'
+        filename = 'extensionless'
+        content_type = 'text/css'
+        folder = 'f1'
+        self.amazon.client.put_object = Mock()
+        self.amazon._check_exists = Mock(return_value=False)
+        self.amazon.media_id = Mock(return_value=filename)
+        self.amazon.put(content, filename, content_type, folder=folder)
+        self.amazon.client.put_object.assert_called_once_with(
+            **{
+                'Key': '{}/{}'.format(folder, filename),
+                'Body': content,
+                'Bucket': 'acname',
+                'ContentType': content_type
+            }
+        )
+
+        # get mimetype from the filename
+        content = b'bytes are here'
+        filename = 'styles.css'
+        content_type = 'application/pdf'
+        folder = 'f1'
+        self.amazon.client.put_object = Mock()
+        self.amazon._check_exists = Mock(return_value=False)
+        self.amazon.media_id = Mock(return_value=filename)
+        self.amazon.put(content, filename, content_type, folder=folder)
+        self.amazon.client.put_object.assert_called_once_with(
+            **{
+                'Key': '{}/{}'.format(folder, filename),
+                'Body': b'bytes are here',
+                'Bucket': 'acname',
+                'ContentType': 'text/css'
+            }
+        )
+
+        content = b'bytes are here'
+        filename = 'styles.JpG'
+        content_type = 'application/pdf'
+        folder = 'f1'
+        self.amazon.client.put_object = Mock()
+        self.amazon._check_exists = Mock(return_value=False)
+        self.amazon.media_id = Mock(return_value=filename)
+        self.amazon.put(content, filename, content_type, folder=folder)
+        self.amazon.client.put_object.assert_called_once_with(
+            **{
+                'Key': '{}/{}'.format(folder, filename),
+                'Body': b'bytes are here',
+                'Bucket': 'acname',
+                'ContentType': 'image/jpeg'
+            }
+        )
+
+        # get mimetype from the file
+        fixtures_path = os.path.join(os.path.dirname(__file__), 'fixtures')
+
+        with open(os.path.join(fixtures_path, "file_example-jpg.jpg"), 'rb') as content:
+            filename = 'extensionless'
+            content_type = 'dummy/text'
+            folder = 'f1'
+            self.amazon.client.put_object = Mock()
+            self.amazon._check_exists = Mock(return_value=False)
+            self.amazon.media_id = Mock(return_value=filename)
+            self.amazon.put(content, filename, content_type, folder=folder)
+            self.amazon.client.put_object.assert_called_once_with(
+                **{
+                    'Key': '{}/{}'.format(folder, filename),
+                    'Body': content,
+                    'Bucket': 'acname',
+                    'ContentType': 'image/jpeg'
+                }
+            )
+
+            with open(os.path.join(fixtures_path, "file_example-xls.xls"), 'rb') as content:
+                filename = 'extensionless'
+                content_type = 'dummy/text'
+                folder = 'f1'
+                self.amazon.client.put_object = Mock()
+                self.amazon._check_exists = Mock(return_value=False)
+                self.amazon.media_id = Mock(return_value=filename)
+                self.amazon.put(content, filename, content_type, folder=folder)
+                self.amazon.client.put_object.assert_called_once_with(
+                    **{
+                        'Key': '{}/{}'.format(folder, filename),
+                        'Body': content,
+                        'Bucket': 'acname',
+                        'ContentType': 'application/vnd.ms-excel'
+                    }
+                )
+
+            with open(os.path.join(fixtures_path, "file_example-xlsx.xlsx"), 'rb') as content:
+                filename = 'extensionless'
+                content_type = 'dummy/text'
+                folder = 'f1'
+                self.amazon.client.put_object = Mock()
+                self.amazon._check_exists = Mock(return_value=False)
+                self.amazon.media_id = Mock(return_value=filename)
+                self.amazon.put(content, filename, content_type, folder=folder)
+                self.amazon.client.put_object.assert_called_once_with(
+                    **{
+                        'Key': '{}/{}'.format(folder, filename),
+                        'Body': content,
+                        'Bucket': 'acname',
+                        'ContentType': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                    }
+                )
+
+            with open(os.path.join(fixtures_path, "file_example-docx.docx"), 'rb') as content:
+                filename = 'extensionless'
+                content_type = 'dummy/text'
+                folder = 'f1'
+                self.amazon.client.put_object = Mock()
+                self.amazon._check_exists = Mock(return_value=False)
+                self.amazon.media_id = Mock(return_value=filename)
+                self.amazon.put(content, filename, content_type, folder=folder)
+                self.amazon.client.put_object.assert_called_once_with(
+                    **{
+                        'Key': '{}/{}'.format(folder, filename),
+                        'Body': content,
+                        'Bucket': 'acname',
+                        'ContentType': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                    }
+                )

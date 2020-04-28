@@ -85,6 +85,10 @@ def init_app(app):
     superdesk.blueprint(bp, app)
     app.upload_url = upload_url
 
+    # Using intrinsic privilege so that any user can update their profile Avatar
+    # This still restricts this endpoint to logged in users only
+    superdesk.intrinsic_privilege(resource_name='upload', method=['POST'])
+
 
 class UploadResource(Resource):
     schema = {
@@ -113,7 +117,7 @@ class UploadResource(Resource):
     }
     item_methods = ['GET', 'DELETE']
     resource_methods = ['GET', 'POST']
-    privileges = {'POST': 'archive', 'DELETE': 'archive'}
+    privileges = {'DELETE': 'archive'}
 
 
 class UploadService(BaseService):

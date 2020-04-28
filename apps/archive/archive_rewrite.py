@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
-from apps.auth import get_user
+from apps.auth import get_user, get_user_id
 from eve.versioning import resolve_document_version
 from flask import request, current_app as app
 from apps.archive import ArchiveSpikeService
@@ -236,7 +236,8 @@ class ArchiveRewriteService(Service):
 
         if not existing_item:
             # send the document to the desk only if a new rewrite is created
-            send_to(doc=rewrite, desk_id=(desk_id or original['task']['desk']), default_stage='working_stage')
+            send_to(doc=rewrite, desk_id=(desk_id or original['task']['desk']),
+                    default_stage='working_stage', user_id=get_user_id())
 
             # if we are rewriting a published item then copy the body_html
             if original.get('state', '') in (CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED, CONTENT_STATE.SCHEDULED):

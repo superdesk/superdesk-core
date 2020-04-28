@@ -11,6 +11,12 @@
 
 from .ninjs_formatter import NINJSFormatter
 from superdesk.media.renditions import get_rendition_file_name
+from lxml import html as lxml_html
+from superdesk.etree import to_string
+import logging
+import re
+
+logger = logging.getLogger(__name__)
 
 
 class FTPNinjsFormatter(NINJSFormatter):
@@ -18,6 +24,14 @@ class FTPNinjsFormatter(NINJSFormatter):
         super().__init__()
         self.format_type = 'ftp ninjs'
         self.internal_renditions = []
+
+    def _get_source_ref(self, marker, ninjs):
+        try:
+            return ninjs.get('associations').get(marker).get('renditions').get('original').get('href')
+        except Exception:
+            logger.warning(
+                'href not found for the original in FTP NINJS formatter, ensure the formatter has it enabled')
+            return None
 
     def _transform_to_ninjs(self, article, subscriber, recursive=True):
         """
@@ -45,4 +59,27 @@ class FTPNinjsFormatter(NINJSFormatter):
                     rendition['href'] = '/' + path.lstrip('/') + (
                         '/' if not path.endswith('/') else '') + get_rendition_file_name(rendition)
 
+        if article.get('type', '') == 'text':
+            # Find any embeded image references in the body_html and re-wire the img src reference and insert an id
+            html_updated = False
+            root_elem = lxml_html.fromstring(ninjs.get('body_html'))
+            # Scan any comments for embed markers
+            comments = root_elem.xpath('//comment()')
+            for comment in comments:
+                if 'EMBED START Image' in comment.text:
+                    regex = r"<!-- EMBED START Image {id: \"editor_([0:9]+)"
+                    m = re.search(regex, ninjs.get('body_html', ''))
+                    # Assumes the sibling of the Embed Image comment is the figure tag containing the image
+                    figureElem = comment.getnext()
+                    if figureElem is not None and figureElem.tag == 'figure':
+                        imgElem = figureElem.find('./img')
+                        if imgElem is not None and m and m.group(1):
+                            embed_id = 'editor_' + m.group(1)
+                            imgElem.attrib['id'] = embed_id
+                            src = self._get_source_ref(embed_id, ninjs)
+                            if src:
+                                imgElem.attrib['src'] = src
+                            html_updated = True
+            if html_updated:
+                ninjs['body_html'] = to_string(root_elem, method='html')
         return ninjs

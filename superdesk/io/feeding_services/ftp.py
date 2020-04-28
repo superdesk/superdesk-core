@@ -35,6 +35,10 @@ DEFAULT_SUCCESS_PATH = "_PROCESSED"
 DEFAULT_FAILURE_PATH = "_ERROR"
 
 
+class EmptyFile(Exception):
+    """Raised when a file is empty thus ignored"""
+
+
 class FTPFeedingService(FeedingService):
     """
     Feeding Service class which can read article(s) which exist in a file system and accessible using FTP.
@@ -169,7 +173,13 @@ class FTPFeedingService(FeedingService):
             # catching all_errors is a bit overkill,
             # but ftplib doesn't really have precise error
             # for missing directory
-            ftp.mkd(path)
+            if path.startswith('./'):
+                ftp.cwd('/')
+                ftp.mkd(path)
+            elif not path.startswith('/'):
+                ftp.mkd('/' + path)
+            else:
+                ftp.mkd(path)
         finally:
             ftp.cwd(base_path)
 
@@ -196,6 +206,11 @@ class FTPFeedingService(FeedingService):
         """Test if given file is allowed to be ingested."""
         _, ext = os.path.splitext(filename)
         return ext.lower() in allowed_ext
+
+    def _is_empty(self, file_path):
+        """Test if given file path is empty, return True if a file is empty
+        """
+        return not (os.path.isfile(file_path) and os.path.getsize(file_path) > 0)
 
     def _list_files(self, ftp, provider):
         self._timer.start('ftp_list')
@@ -252,6 +267,10 @@ class FTPFeedingService(FeedingService):
                 os.remove(local_file_path)
                 raise Exception('Exception retrieving file from FTP server ({filename})'.format(
                                 filename=filename))
+
+        if self._is_empty(local_file_path):
+            logger.info('ignoring empty file {filename}'.format(filename=filename))
+            raise EmptyFile(local_file_path)
 
         if isinstance(registered_parser, XMLFeedParser):
             xml = etree.parse(local_file_path).getroot()
@@ -336,6 +355,8 @@ class FTPFeedingService(FeedingService):
                             self._move(
                                 ftp, filename, move_dest_file_path, file_modify,
                                 failed=failed)
+                    except EmptyFile:
+                        continue
                     except Exception as e:
                         logger.error("Error while parsing {filename}: {msg}".format(filename=filename, msg=e))
 

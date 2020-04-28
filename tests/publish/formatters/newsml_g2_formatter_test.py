@@ -37,7 +37,7 @@ class NewsMLG2FormatterTest(TestCase):
             }
         ],
         'source': 'AAP',
-        'headline': 'This is a test headline',
+        'headline': 'This is a test headline - для теста!',
         'byline': 'joe',
         'slugline': 'slugline',
         'subject': [{'qcode': '02011001', 'name': 'international court or tribunal'},
@@ -683,7 +683,7 @@ class NewsMLG2FormatterTest(TestCase):
         self.assertEqual(xml.find(
             '{http://iptc.org/std/nar/2006-10-01/}itemSet/{http://iptc.org/std/nar/2006-10-01/}newsItem/' +
             '{http://iptc.org/std/nar/2006-10-01/}contentMeta/{http://iptc.org/std/nar/2006-10-01/}headline').text,
-            'This is a test headline')
+            'This is a test headline - для теста!')
         self.assertEqual(xml.find(
             '{http://iptc.org/std/nar/2006-10-01/}itemSet/{http://iptc.org/std/nar/2006-10-01/}newsItem/' +
             '{http://iptc.org/std/nar/2006-10-01/}contentMeta/{http://iptc.org/std/nar/2006-10-01/}urgency').text,

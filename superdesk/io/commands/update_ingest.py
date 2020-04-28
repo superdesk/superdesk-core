@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
+import bson
 import logging
 from datetime import timedelta, timezone, datetime
 
@@ -516,6 +517,13 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
         item['ingest_provider'] = str(provider[superdesk.config.ID_FIELD])
         item.setdefault('source', provider.get('source', ''))
         item.setdefault('uri', item[GUID_FIELD])  # keep it as original guid
+
+        if item.get('profile'):
+            try:
+                item['profile'] = bson.ObjectId(item['profile'])
+            except bson.errors.InvalidId:
+                pass
+
         set_default_state(item, CONTENT_STATE.INGESTED)
         item['expiry'] = get_expiry_date(provider.get('content_expiry') or app.config['INGEST_EXPIRY_MINUTES'],
                                          item.get('versioncreated'))
@@ -548,8 +556,6 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
         # if the item has associated media
         for key, assoc in item.get('associations', {}).items():
             set_default_state(assoc, CONTENT_STATE.INGESTED)
-            if assoc.get('renditions'):
-                transfer_renditions(assoc['renditions'])
             # wire up the id of the associated feature media to the ingested one
             guid = assoc.get('guid')
             if guid:
@@ -557,11 +563,17 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
                 ingested = ingest_service.get_from_mongo(req=None, lookup=lookup)
                 if ingested.count() >= 1:
                     assoc['_id'] = ingested[0]['_id']
+                    if is_new_version(assoc, ingested[0]) and assoc.get('renditions'):  # new version
+                        logger.info('new version %s', assoc['headline'])
+                        transfer_renditions(assoc['renditions'])
                     for rendition in ingested[0].get('renditions', {}):  # add missing renditions
                         assoc['renditions'].setdefault(
                             rendition,
                             ingested[0]['renditions'][rendition])
                 else:  # there is no such item in the system - ingest it
+                    if assoc.get('renditions') and has_system_renditions(assoc):  # all set, just download
+                        logger.info('new assoc %s', assoc['headline'])
+                        transfer_renditions(assoc['renditions'])
                     status, ids = ingest_item(assoc, provider, feeding_service, rule_set)
                     if status:
                         assoc['_id'] = ids[0]
@@ -629,6 +641,13 @@ def is_new_version(item, old_item):
         if not old_item.get(field) or item[field] != old_item[field]:
             return True
     return False
+
+
+def has_system_renditions(item):
+    return all((
+        rend in item['renditions']
+        for rend in ('viewImage', 'baseImage', 'thumbnail')
+    ))
 
 
 superdesk.command('ingest:update', UpdateIngest())
