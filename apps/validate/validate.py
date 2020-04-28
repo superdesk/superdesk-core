@@ -109,20 +109,26 @@ class SchemaValidator(Validator):
             pass
 
     def _validate_mandatory_in_list(self, mandatory, field, value):
-        """Validates if all elements from mandatory are presented in the list"""
+        """
+        {'type': 'dict'}
+        """
         for key in mandatory:
             for key_field in mandatory[key]:
                 if not check_json(value, key, mandatory[key][key_field]):
                     self._error(key_field, REQUIRED_FIELD)
 
     def _validate_mandatory_in_dictionary(self, mandatory, field, value):
-        """Validates if all elements from mandatory are presented in the dictionary"""
+        """
+        {'type': 'list'}
+        """
         for key in mandatory:
             if not value.get(key):
                 self._error(key, REQUIRED_FIELD)
 
     def _validate_empty(self, empty, field, value):
-        """Original validates only strings, adding a list check."""
+        """
+        {'type': 'boolean'}
+        """
         super()._validate_empty(empty, field, value)
         if field == "subject":
             # for subject, we have to ignore all data with scheme
@@ -147,31 +153,45 @@ class SchemaValidator(Validator):
             self._error(field, REQUIRED_FIELD)
 
     def _validate_enabled(self, *args):
-        """Ignore ``enabled`` in the schema."""
+        """
+        {'type': 'boolean'}
+        """
         pass
 
     def _validate_place(self, *args):
-        """Ignore place."""
+        """
+        {'type': 'list'}
+        """
         pass
 
     def _validate_genre(self, *args):
-        """Ignore genre."""
+        """
+        {'type': 'list'}
+        """
         pass
 
     def _validate_anpa_category(self, *args):
-        """Ignore anpa category."""
+        """
+        {'type': 'list'}
+        """
         pass
 
     def _validate_subject(self, *args):
-        """Ignore subject."""
+        """
+        {'type': 'list'}
+        """
         pass
 
     def _validate_company_codes(self, *args):
-        """Ignore company codes."""
+        """
+        {'type': 'list'}
+        """
         pass
 
     def _validate_validate_characters(self, validate, field, value):
-        """Validate if field contains only allowed characters."""
+        """
+        {'type': 'boolean'}
+        """
         disallowed_characters = app.config.get('DISALLOWED_CHARACTERS')
 
         if validate and disallowed_characters and value:
@@ -180,6 +200,9 @@ class SchemaValidator(Validator):
                 return self._error(field, INVALID_CHAR)
 
     def _validate_media_metadata(self, validate, associations_field, associations):
+        """
+        {'type': 'dict'}
+        """
         if not validate:
             return
         media_metadata_schema = app.config.get('VALIDATOR_MEDIA_METADATA')

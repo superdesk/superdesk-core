@@ -71,9 +71,15 @@ class SuperdeskValidator(Validator):
         super(SuperdeskValidator, self).__init__(*args, **kwargs)
 
     def _validate_mapping(self, mapping, field, value):
+        """
+        {'type': 'dict'}
+        """
         pass
 
     def _validate_index(self, definition, field, value):
+        """
+        {'type': 'string'}
+        """
         pass
 
     def _validate_type_phone_number(self, value):
@@ -109,11 +115,6 @@ class SuperdeskValidator(Validator):
     def _validate_multiple_emails(self, multiple, field, value):
         """
         {'type': 'boolean'}
-
-        Validates comma separated list of emails.
-
-        :param field: field name.
-        :param value: field value.
         """
         if multiple:
             emails = value.split(',')
@@ -151,7 +152,9 @@ class SuperdeskValidator(Validator):
                 self._error(field, ERROR_UNIQUE)
 
     def _validate_iunique_per_parent(self, parent_field, field, value):
-        """Validate uniqueness ignoring case. MONGODB USE ONLY"""
+        """
+        {'type': 'string'}
+        """
         original = self.persisted_document or {}
         update = self.document or {}
 
@@ -170,12 +173,17 @@ class SuperdeskValidator(Validator):
                 self._error(field, ERROR_UNIQUE)
 
     def _validate_minlength(self, min_length, field, value):
-        """Validate minlength with custom error msg."""
+        """
+        {'type': 'integer'}
+        """
         if isinstance(value, (type(''), list)):
             if len(value) < min_length:
                 self._error(field, ERROR_MINLENGTH)
 
     def _validate_required_fields(self, document):
+        """
+        {'type': 'list'}
+        """
         required = list(field for field, definition in self.schema.items()
                         if definition.get('required') is True)
         missing = set(required) - set(key for key in document.keys()
@@ -190,12 +198,8 @@ class SuperdeskValidator(Validator):
             self._error(field, ERROR_JSON_LIST)
 
     def _validate_unique_to_user(self, unique, field, value):
-        """Check that value is unique globally or to current user.
-
-        In case 'user' is set within document it will check for unique within
-        docs with same 'user' value.
-
-        Otherwise it will check for unique within docs without any 'user' value.
+        """
+        {'type': 'boolean'}
         """
         doc = getattr(self, 'document', getattr(self, 'original_document', {}))
 
@@ -208,12 +212,8 @@ class SuperdeskValidator(Validator):
         self._is_value_unique(unique, field, value, query)
 
     def _validate_unique_template(self, unique, field, value):
-        """Check that value is unique globally or to current user.
-
-        In case 'is_public' is false within document it will check for unique within
-        docs with same 'user' value.
-
-        Otherwise it will check for unique within docs without any 'user' value.
+        """
+        {'type': 'boolean'}
         """
         original = self.persisted_document or {}
         update = self.document or {}
@@ -237,16 +237,16 @@ class SuperdeskValidator(Validator):
             self._error(field, "Template Name is not unique")
 
     def _validate_twitter(self, twitter, field, value):
-        """Validator for twitter id e.g `@johnsmith`
-
-        :param field: field name.
-        :param value: field value.
+        """
+        {'type': 'boolean'}
         """
         if twitter and value and not re.match('^@[A-Za-z0-9_]{1,15}$', value, re.IGNORECASE):
             self._error(field, ERROR_PATTERN)
 
     def _validate_empty(self, empty, field, value):
-        """Validator for empty list, dict or str"""
+        """
+        {'type': 'boolean'}
+        """
         # let the standard validation happen
         super()._validate_empty(empty, field, value)
 
@@ -256,7 +256,9 @@ class SuperdeskValidator(Validator):
                 self._error(field, errors.EMPTY_NOT_ALLOWED)
 
     def _validate_unique_list(self, unique_list, field, value):
-        """Validate if list contains only unique items."""
+        """
+        {'type': 'boolean'}
+        """
 
         if unique_list and isinstance(value, list):
             if len(set(value)) != len(value):
