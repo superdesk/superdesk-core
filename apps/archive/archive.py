@@ -1075,10 +1075,26 @@ class ArchiveService(BaseService):
             try:
                 item = self.find_one(req={}, _id=item['rewrite_of'])
                 # prepend translations + update
-                items_chain = self.get_item_translations(item) + items_chain
-                items_chain.insert(0, item)
+                items_chain = [item, *self.get_item_translations(item), *items_chain]
             except Exception:
-                break
+                # `item` is not an update, but it can be a translation
+                if 'translated_from' in item:
+                    translation_item = item
+                    item = get_item_translated_from(item)
+                    # add item + translations
+                    items_chain = [
+                        item,
+                        *[
+                            i for i in self.get_item_translations(item)
+                            # `translation_item` was already added into `items_chain` on a previous iteration
+                            if i['_id'] != translation_item['_id']
+                        ],
+                        *items_chain
+                    ]
+                else:
+                    # `item` is not a translation and not an update, it means that it's an initial
+                    break
+
         else:
             logger.error(
                 'Failed to retrieve the whole items chain for item {}'.format(item.get('_id'))
