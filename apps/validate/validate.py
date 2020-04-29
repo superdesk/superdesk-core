@@ -166,7 +166,7 @@ class SchemaValidator(Validator):
 
     def _validate_genre(self, *args):
         """
-        {'type': 'list'}
+        {'type': 'dict'}
         """
         pass
 
@@ -201,7 +201,7 @@ class SchemaValidator(Validator):
 
     def _validate_media_metadata(self, validate, associations_field, associations):
         """
-        {'type': 'dict'}
+        {'type': 'boolean'}
         """
         if not validate:
             return
