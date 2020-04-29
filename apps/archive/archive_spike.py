@@ -16,7 +16,8 @@ from flask import current_app as app
 import superdesk
 from superdesk import get_resource_service, config
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
-from superdesk.metadata.item import ITEM_STATE, CONTENT_TYPE, ITEM_TYPE, GUID_FIELD, GUID_TAG, PUBLISH_STATES
+from superdesk.metadata.item import ITEM_STATE, CONTENT_TYPE, ITEM_TYPE, GUID_FIELD, \
+    GUID_TAG, PUBLISH_STATES, CONTENT_STATE
 from superdesk.notification import push_notification
 from superdesk.services import BaseService
 from superdesk.metadata.utils import item_url, generate_guid
@@ -163,6 +164,17 @@ class ArchiveSpikeService(BaseService):
             # remove marked_for_user on spike and keep it as previous_marked_user for history
             updates['previous_marked_user'] = original['marked_for_user']
             updates['marked_for_user'] = None
+
+        published_service = get_resource_service('published')
+        published_items = list(
+            published_service.get_from_mongo(req=None, lookup={'guid': original.get('guid')})
+        )
+
+        for item in published_items:
+            if item:
+                item['state'] = CONTENT_STATE.SPIKED
+                item['operation'] = ITEM_SPIKE
+                published_service.patch(id=item.pop(config.ID_FIELD), updates=item)
 
         if original.get('translation_id') and original.get('translated_from'):
             # remove translations info from the translated item on spike
