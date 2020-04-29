@@ -185,10 +185,10 @@ Feature: Search Feature
         When we post to "/archive"
             """
             [{"guid": "item1", "state": "in_progress", "task": {"desk": "#desks._id#",
-            "stage": "#desks.incoming_stage#", "user": "#users._id#",
+            "stage": "#desks.incoming_stage#", "user": "#users._id#"},
             "subject":[{"qcode": "17004000", "name": "Statistics"}],
             "slugline": "test",
-            "body_html": "Test Document body"}}]
+            "body_html": "Test Document body"}]
             """
         Then we get response code 201
         When we get "/search"

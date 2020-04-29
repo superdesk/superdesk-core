@@ -21,7 +21,7 @@ from superdesk.metadata.packages import GROUPS
 from superdesk.resource import Resource, build_custom_hateoas
 from superdesk.services import BaseService
 from superdesk.metadata.utils import item_url
-from superdesk.metadata.item import CONTENT_TYPE, CONTENT_STATE, ITEM_TYPE, ITEM_STATE, PUBLISH_STATES
+from superdesk.metadata.item import CONTENT_TYPE, CONTENT_STATE, ITEM_TYPE, ITEM_STATE, PUBLISH_STATES, metadata_schema
 from superdesk import get_resource_service, config
 from superdesk.errors import SuperdeskApiError
 from apps.archive.archive import SOURCE
@@ -42,9 +42,13 @@ class ArchiveBroadcastResource(Resource):
     resource_title = endpoint_name
 
     url = 'archive/<{0}:item_id>/broadcast'.format(item_url)
-    schema = {
-        'desk': Resource.rel('desks', embeddable=False, required=False, nullable=True)
-    }
+    schema = metadata_schema.copy()
+    schema.update({
+        'desk': Resource.rel('desks', embeddable=False, required=False, nullable=True),
+        '_id_document': {'type': 'string'},
+        '_current_version': {'type': 'integer'},
+    })
+
     resource_methods = ['POST']
     item_methods = []
     privileges = {'POST': ARCHIVE_BROADCAST_NAME}

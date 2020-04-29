@@ -11,11 +11,12 @@
 import logging
 
 from flask import current_app as app, json
-from eve.validation import ValidationError
+from cerberus import DocumentError
 from eve.endpoints import send_response
-from superdesk.utils import save_error_data
 from werkzeug.exceptions import HTTPException
 from elasticsearch.exceptions import ConnectionTimeout  # noqa
+
+from superdesk.utils import save_error_data
 
 
 logger = logging.getLogger(__name__)
@@ -70,7 +71,7 @@ def notifications_enabled():
     return app.config.get('ERROR_NOTIFICATIONS', True)
 
 
-class SuperdeskError(ValidationError):
+class SuperdeskError(DocumentError):
     _codes = {}
     system_exception = None
 

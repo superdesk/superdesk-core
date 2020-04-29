@@ -67,6 +67,9 @@ class ConceptItemsResource(Resource):
         },
         'created_by': Resource.rel('users', embeddable=False, readonly=True),
         'updated_by': Resource.rel('users', embeddable=False, readonly=True),
+
+        # system fields
+        '_type': {'type': 'string'},
     }
     privileges = {
         'POST': CONCEPT_ITEMS_PRIVELEGE,

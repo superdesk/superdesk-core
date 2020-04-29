@@ -393,6 +393,10 @@ class SluglineDesksResource(Resource):
                                              ]}}
     resource_methods = ['GET']
     item_methods = []
+    schema = {
+        'place': {'type': 'string'},
+        'items': {'type': 'list'},
+    }
 
 
 class SluglineDeskService(BaseService):

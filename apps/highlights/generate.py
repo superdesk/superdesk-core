@@ -1,5 +1,5 @@
 import superdesk
-from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, CONTENT_STATE, ITEM_STATE
+from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, CONTENT_STATE, ITEM_STATE, get_schema
 from flask import render_template, render_template_string
 from superdesk.errors import SuperdeskApiError
 from eve.utils import config
@@ -107,8 +107,13 @@ class GenerateHighlightsResource(superdesk.Resource):
         'export': {
             'type': 'boolean',
             'default': False,
-        }
+        },
+        'type': {
+            'type': 'string',
+            'readonly': True,
+        },
     }
+    schema.update(get_schema(versioning=True))
 
     resource_methods = ['POST']
     item_methods = []
