@@ -181,7 +181,7 @@ class PublishedItemService(BaseService):
         """
         Item should be one of the PUBLISH_STATES. If not raise error.
         """
-        if doc.get(ITEM_STATE) not in PUBLISH_STATES and doc.get(ITEM_STATE) == 'unpublished':
+        if doc.get(ITEM_STATE) not in PUBLISH_STATES and doc.get(ITEM_STATE) != 'spiked':
             raise SuperdeskApiError.badRequestError(
                 _('Invalid state ({state}) for the Published item.').format(state=doc.get(ITEM_STATE)))
 
