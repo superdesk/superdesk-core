@@ -15,7 +15,7 @@ from superdesk.metadata.utils import item_url
 class SessionsResource(Resource):
     schema = {
         'user': Resource.rel('users', True),
-        'session_preferences': {'type': 'dict'},
+        'session_preferences': {'type': 'dict'}
     }
     datasource = {
         'source': 'auth',

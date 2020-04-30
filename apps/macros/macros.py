@@ -100,16 +100,4 @@ class MacrosResource(superdesk.Resource):
             'type': 'dict',
             'readonly': True,
         },
-        'name': {
-            'type': 'string',
-            'readonly': True,
-        },
-        'label': {
-            'type': 'string',
-            'readonly': True,
-        },
-        'description': {
-            'type': 'string',
-            'readonly': True,
-        },
     }

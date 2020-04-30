@@ -43,7 +43,7 @@ class ValidateIuniqueMethodTestCase(SuperdeskValidatorTest):
         value = 'foo(bar++^$$^'  # an invalid regex pattern
 
         try:
-            self.validator.validate({field: value}, {field: {'iunique': True}})
+            self.validator._validate_iunique(True, field, value)
         except Exception as ex:
             self.fail("Error unexpectedly raised: {}".format(ex))
 
@@ -65,7 +65,8 @@ class ValidateIuniquePerParentMethodTestCase(SuperdeskValidatorTest):
         value = 'foo(bar++^$$^'  # an invalid regex pattern
 
         try:
-            self.validator.validate({field: value}, {field: {'iunique_per_parent': parent_field}})
+            self.validator._validate_iunique_per_parent(
+                parent_field, field, value)
         except Exception as ex:
             self.fail("Error unexpectedly raised: {}".format(ex))
 
@@ -85,7 +86,8 @@ class ValidateMultipleEmailsTestCase(SuperdeskValidatorTest):
         value = 'abc@abc.com'
 
         try:
-            self.assertTrue(self.validator.validate({field: value}, {field: {'multiple_emails': True}}))
+            self.validator._validate_multiple_emails(True, field, value)
+            self.assertEqual(len(self.validator.errors), 0)
         except Exception as ex:
             self.fail("Error unexpectedly raised: {}".format(ex))
 
@@ -103,7 +105,7 @@ class ValidateMultipleEmailsTestCase(SuperdeskValidatorTest):
         field = 'field_name'
         value = 'abc@abc.com,test'
         try:
-            self.assertFalse(self.validator.validate({field: value}, {field: {'multiple_emails': True}}))
+            self.validator._validate_multiple_emails(True, field, value)
             self.assertDictEqual(self.validator.errors, {'field_name': {'pattern': 1}})
         except Exception as ex:
             self.fail("Error unexpectedly raised: {}".format(ex))

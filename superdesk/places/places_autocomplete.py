@@ -9,27 +9,6 @@ class PlacesAutocompleteResource(superdesk.Resource):
 
     resource_methods = ['GET']
     item_methods = []
-    schema = {
-        'scheme': {'type': 'string'},
-        'code': {'type': 'string'},
-        'name': {'type': 'string'},
-        'state': {'type': 'string'},
-        'region': {'type': 'string'},
-        'country': {'type': 'string'},
-        'state_code': {'type': 'string'},
-        'region_code': {'type': 'string'},
-        'country_code': {'type': 'string'},
-        'continent_code': {'type': 'string'},
-        'feature_class': {'type': 'string'},
-        'location': {
-            'type': 'dict',
-            'schema': {
-                'lat': {'type': 'float'},
-                'lon': {'type': 'float'},
-            },
-        },
-        'tz': {'type': 'string'},
-    }
 
 
 class PlacesAutocompleteService(superdesk.Service):

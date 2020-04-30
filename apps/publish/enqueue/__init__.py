@@ -121,7 +121,7 @@ class EnqueueContent(superdesk.Command):
                 item_updates = {'versioncreated': versioncreated, ITEM_STATE: CONTENT_STATE.PUBLISHED}
                 resolve_document_version(document=item_updates, resource=ARCHIVE,
                                          method='PATCH',
-                                         latest_doc={config.VERSION: published_item.get(config.VERSION, 1)})
+                                         latest_doc={config.VERSION: published_item[config.VERSION]})
 
                 # update the archive collection
                 archive_item = archive_service.find_one(req=None, _id=published_item['item_id'])

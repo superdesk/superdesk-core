@@ -40,9 +40,9 @@ class SpellcheckerRegisterer(abc.ABCMeta):
         instance = super().__call__(*args, **kwargs)
         name = instance.name
         if name in registered_spellcheckers:
-            # we log a warning but don't raise an exception because the issue
+            # we log an error but don't raise an exception because the issue
             # may happen with tests
-            logger.warning('"{name}" spellchecker is already registered'.format(name=name))
+            logger.error('"{name}" spellchecker is already registered'.format(name=name))
             return registered_spellcheckers[name]
 
         instance.capacities = SpellcheckerCapacities(instance.capacities)

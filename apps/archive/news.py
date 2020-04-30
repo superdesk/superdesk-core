@@ -26,7 +26,8 @@ class NewsResource(ArchiveResource):
 
 class NewsService(ArchiveService):
 
-    def enhance_items(self, items):
-        super().enhance_items(items)
-        for item in items:
-            build_custom_hateoas(CUSTOM_HATEOAS, item)
+    def get(self, req, lookup):
+        docs = super().get(req, lookup)
+        for doc in docs:
+            build_custom_hateoas(CUSTOM_HATEOAS, doc)
+        return docs

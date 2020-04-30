@@ -10,7 +10,7 @@
 from superdesk.commands.data_updates import DataUpdate
 from superdesk import get_resource_service
 from eve.utils import config, app
-from superdesk.factory.app import create_index
+from eve.io.mongo.mongo import create_index
 from superdesk.audit.commands import PurgeAudit
 
 

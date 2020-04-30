@@ -9,15 +9,15 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk import get_resource_service, config
-from superdesk.validation import ValidationError
+from eve.validation import ValidationError
 from apps.publish.content.common import ITEM_PUBLISH
 
 
 def validate_for_publish(item, **kwargs):
     doc = get_resource_service('archive').find_one(req=None, _id=item[config.ID_FIELD])
     validate_item = {'act': ITEM_PUBLISH, 'type': doc['type'], 'validate': doc}
-    validation_errors = get_resource_service('validate').create([validate_item], fields=True)
-    if validation_errors[0][0]:
+    validation_errors = get_resource_service('validate').post([validate_item])
+    if validation_errors[0]:
         raise ValidationError(validation_errors)
     return item
 

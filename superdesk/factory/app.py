@@ -18,8 +18,7 @@ import superdesk
 
 from flask_mail import Mail
 from eve.auth import TokenAuth
-from eve.io.mongo import MongoJSONEncoder
-from eve.io.mongo.mongo import _create_index as create_index
+from eve.io.mongo import MongoJSONEncoder, create_index
 from eve.render import send_response
 from flask_babel import Babel
 from flask import g

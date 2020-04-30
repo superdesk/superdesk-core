@@ -71,7 +71,7 @@ Feature: User Resource
         """
         Then we get error 400
         """
-        {"_status": "ERR", "_issues": {"email": "must be of email type"}}
+        {"_status": "ERR", "_issues": {"email": {"pattern": 1}}}
         """
 
     @auth

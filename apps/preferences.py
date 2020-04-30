@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from flask import request
+from eve.validation import ValidationError
 from eve.utils import config
 from eve.methods.common import resolve_document_etag
 import logging
@@ -19,7 +20,6 @@ from superdesk.utc import utcnow
 from superdesk import get_backend
 from superdesk import get_resource_service
 from superdesk.workflow import get_privileged_actions
-from superdesk.validation import ValidationError
 from flask_babel import _
 
 _preferences_key = 'preferences'
@@ -60,7 +60,6 @@ def enhance_document_with_default_prefs(doc):
         if default:
             sync_field('label', v, default)
             sync_field('category', v, default)
-
     doc[_user_preferences_key] = available
 
 
@@ -72,25 +71,15 @@ class PreferencesResource(Resource):
             _user_preferences_key: 1,
             _privileges_key: 1,
             _action_key: 1,
-            '_etag': 1,
-
-            'role': 1,
-            'user_type': 1,
-            'privileges': 1,
+            '_etag': 1
         }
     }
     schema = {
-        _session_preferences_key: {'type': 'dict', 'required': True, 'allow_unknown': True},
-        _user_preferences_key: {'type': 'dict', 'required': True, 'allow_unknown': True},
-        _privileges_key: {'type': 'dict', 'allow_unknown': True},
-        _action_key: {'type': 'list'},
-
-        # we need these to get user/role info
-        'role': {'type': 'string'},
-        'user_type': {'type': 'string'},
-        'privileges': {'type': 'dict'},
+        _session_preferences_key: {'type': 'dict', 'required': True},
+        _user_preferences_key: {'type': 'dict', 'required': True},
+        _privileges_key: {'type': 'dict'},
+        _action_key: {'type': 'list'}
     }
-    allow_unknown = True
     resource_methods = []
     item_methods = ['GET', 'PATCH']
 

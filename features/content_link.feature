@@ -1,5 +1,6 @@
 Feature: Link content
 
+
     @auth @test
     Scenario: Unlink an update of an unpublished story
         Given "desks"

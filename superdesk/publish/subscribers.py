@@ -122,15 +122,6 @@ class SubscribersResource(Resource):
             'type': 'boolean',
             'nullable': True,
         },
-        'filter_conditions': {
-            'type': 'list',
-        },
-        'content_filters': {
-            'type': 'list',
-        },
-        'selected_subscribers': {
-            'type': 'list',
-        },
     }
 
     item_methods = ['GET', 'PATCH', 'PUT']

@@ -37,9 +37,7 @@ class RolesResource(Resource):
             'type': 'string'
         },
         'privileges': {
-            'type': 'dict',
-            'schema': {},
-            'allow_unknown': True,
+            'type': 'dict'
         },
         'is_default': {
             'type': 'boolean'
