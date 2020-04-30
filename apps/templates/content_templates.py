@@ -389,6 +389,7 @@ class ContentTemplatesApplyResource(Resource):
             'required': True,
             'schema': item_schema()
         },
+        '_links': {'type': 'dict'},
     }
 
     # in response there can be anything..

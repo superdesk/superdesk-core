@@ -47,6 +47,7 @@ class ArchiveBroadcastResource(Resource):
         'desk': Resource.rel('desks', embeddable=False, required=False, nullable=True),
         '_id_document': {'type': 'string'},
         '_current_version': {'type': 'integer'},
+        '_links': {'type': 'dict'},
     })
 
     resource_methods = ['POST']

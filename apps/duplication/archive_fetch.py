@@ -43,7 +43,8 @@ class FetchResource(Resource):
     schema.update({
         'desk': Resource.rel('desks', False, required=True),
         'stage': Resource.rel('stages', False, nullable=True),
-        'macro': {'type': 'string'}
+        'macro': {'type': 'string'},
+        '_links': {'type': 'dict'},
     })
 
     url = 'ingest/<{0}:id>/fetch'.format(item_url)

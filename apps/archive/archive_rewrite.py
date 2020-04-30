@@ -39,6 +39,7 @@ class ArchiveRewriteResource(Resource):
     schema.update({
         'desk_id': {'type': 'string', 'nullable': True},
         'update': {'type': 'dict', 'nullable': True, 'allow_unknown': True},
+        '_links': {'type': 'dict'},
     })
 
     datasource = {
