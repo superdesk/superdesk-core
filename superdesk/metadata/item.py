@@ -696,6 +696,18 @@ metadata_schema = {
 
     ITEM_EVENT_ID: {'type': 'string', 'mapping': not_analyzed},
 
+    # schedules
+    EMBARGO: {'type': 'datetime', 'nullable': True},
+    PUBLISH_SCHEDULE: {'type': 'datetime', 'nullable': True},
+    SCHEDULE_SETTINGS: {
+        'type': 'dict',
+        'schema': {
+            'time_zone': {'type': 'string', 'nullable': True, 'mapping': not_analyzed},
+            'utc_embargo': {'type': 'datetime', 'nullable': True},
+            'utc_publish_schedule': {'type': 'datetime', 'nullable': True},
+        },
+    },
+
     # system fields
     '_type': {'type': 'string'},
     'used': {'type': 'boolean'},

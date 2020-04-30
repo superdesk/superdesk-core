@@ -11,6 +11,7 @@
 import os
 import json
 import flask
+import logging
 import superdesk
 import werkzeug.exceptions
 
@@ -27,6 +28,9 @@ from eve.versioning import insert_versioning_documents
 from bson.objectid import ObjectId
 from apps.search_providers import allowed_search_providers,\
     register_search_provider
+
+
+logger = logging.getLogger(__name__)
 
 
 def apply_placeholders(placeholders, text):
@@ -92,8 +96,9 @@ def prepopulate_data(file_name, default_user=None, directory=None):
                     ids = service.post([data])
                 except werkzeug.exceptions.Conflict:
                     ids = [data['_id']]  # data with given id is there already
-                except superdesk.errors.SuperdeskApiError:
-                    continue  # an error raised by validation - can't guess why, so ignore
+                except superdesk.errors.SuperdeskApiError as e:
+                    logger.exception(e)
+                    continue  # an error raised by validation
                 if not ids:
                     raise Exception()
                 if id_name:
@@ -170,7 +175,7 @@ class PrepopulateService(BaseService):
             prepopulate_data(doc.get('profile') + '.json', get_default_user())
 
     def create(self, docs, **kwargs):
-        use_snapshot(superdesk.app, 'prepopulate')(self._create)(docs)
+        self._create(docs)
         if app.config.get('SUPERDESK_TESTING'):
             for provider in ['paimg', 'aapmm']:
                 if provider not in allowed_search_providers:

@@ -33,6 +33,7 @@ class ArchiveLockResource(Resource):
     resource_methods = ['GET', 'POST']
     resource_title = endpoint_name
     privileges = {'POST': 'archive'}
+    hateoas = False
 
 
 class ArchiveLockService(BaseService):
@@ -46,6 +47,7 @@ class ArchiveLockService(BaseService):
         return _update_returned_document(docs[0], item)
 
 
+
 class ArchiveUnlockResource(Resource):
     endpoint_name = 'archive_unlock'
     url = 'archive/<{0}:item_id>/unlock'.format(item_url)
@@ -53,6 +55,7 @@ class ArchiveUnlockResource(Resource):
     datasource = {'source': 'archive'}
     resource_methods = ['GET', 'POST']
     resource_title = endpoint_name
+    hateoas = False
 
 
 class ArchiveUnlockService(BaseService):
