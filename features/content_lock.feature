@@ -1,6 +1,5 @@
 Feature: Content Locking
 
-    @wip
     @auth @notification
     Scenario: Lock item and edit
         Given "archive"
@@ -14,7 +13,7 @@ Feature: Content Locking
         Then we get new resource
         """
         {"_id": "item-1", "guid": "item-1", "headline": "test", "lock_user": "#CONTEXT_USER_ID#",
-         "links": {"self": {"href": "/archive/item-1/lock"}}
+         "_links": {"self": {"href": "/archive/item-1"}}
         }
         """
         And item "item-1" is assigned
@@ -102,7 +101,9 @@ Feature: Content Locking
         """
         Then we get new resource
         """
-        {"_id": "item-1", "guid": "item-1", "headline": "test", "lock_user": null}
+        {"_id": "item-1", "guid": "item-1", "headline": "test", "lock_user": null,
+         "_links": {"self": {"href": "/archive/item-1"}}
+        }
         """
         And we get notifications
         """
