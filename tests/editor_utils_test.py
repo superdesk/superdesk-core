@@ -33,6 +33,9 @@ class Editor3TestCase(TestCase):
             },
         }
 
+    def update_item_field(self, item, draftjs_data, field):
+        item['fields_meta'][field] = {'draftjsState': [draftjs_data]}
+
     def blocks_with_text(self, data_list):
         draftjs_data = {
             "blocks": [],
@@ -1808,3 +1811,40 @@ class Editor3TestCase(TestCase):
         item = {'body_html': ''}
         editor_utils.filter_blocks(item, 'body_html', block_filter)
         self.assertEqual('', item['body_html'])
+
+    def test_get_content_state_fields(self):
+        """Fields with content states are detected correctly"""
+
+        draftjs_data_headline = {
+            "blocks": [
+                {
+                    "key": "fcbn3",
+                    "text": 'headline test',
+                    "type": "unstyled",
+                    "depth": 0,
+                    "inlineStyleRanges": [],
+                    "entityRanges": [],
+                    "data": {"MULTIPLE_HIGHLIGHTS": {}},
+                }
+            ],
+            "entityMap": {},
+        }
+        draftjs_data_body_html = {
+            "blocks": [
+                {
+                    "key": "fcbn3",
+                    "text": 'body_html test',
+                    "type": "unstyled",
+                    "depth": 0,
+                    "inlineStyleRanges": [],
+                    "entityRanges": [],
+                    "data": {"MULTIPLE_HIGHLIGHTS": {}},
+                }
+            ],
+            "entityMap": {},
+        }
+
+        item = self.build_item(draftjs_data_headline, field='headline')
+        self.update_item_field(item, draftjs_data_body_html, 'body_html')
+        found_fields = set(editor_utils.get_content_state_fields(item))
+        self.assertEqual(found_fields, {'headline', 'body_html'})

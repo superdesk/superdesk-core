@@ -13,6 +13,7 @@ import logging
 import datetime
 import superdesk
 import superdesk.signals as signals
+from superdesk import editor_utils
 
 from copy import copy, deepcopy
 from superdesk.resource import Resource
@@ -231,6 +232,7 @@ class ArchiveService(BaseService):
             if doc.get('body_footer') and is_normal_package(doc):
                 raise SuperdeskApiError.badRequestError(_("Package doesn't support Public Service Announcements"))
 
+            editor_utils.generate_fields(doc)
             self._test_readonly_stage(doc)
 
             doc['version_creator'] = doc['original_creator']
@@ -308,6 +310,7 @@ class ArchiveService(BaseService):
         """
         user = get_user()
 
+        editor_utils.generate_fields(updates)
         if ITEM_TYPE in updates:
             del updates[ITEM_TYPE]
 
@@ -1147,6 +1150,9 @@ class ArchiveSaveService(BaseService):
     def create(self, docs, **kwargs):
         if not docs:
             raise SuperdeskApiError.notFoundError('Content is missing')
+
+        for doc in docs:
+            editor_utils.generate_fields(doc)
 
         req = parse_request(self.datasource)
         try:
