@@ -20,7 +20,6 @@ from superdesk.text_utils import get_text
 from superdesk import get_resource_service
 from _collections_abc import MutableMapping
 from superdesk.signals import item_validate
-from superdesk.validator import BaseErrorHandler
 
 
 REQUIRED_FIELD = 'is a required field'
@@ -65,70 +64,57 @@ def get_validator_schema(schema):
 
 
 class SchemaValidator(Validator):
+    def _validate_type_media(self, field, value):
+        """Allow type media in schema."""
+        pass
 
-    def __init__(self, *args, **kwargs):
-        kwargs['error_handler'] = BaseErrorHandler
-        super(SchemaValidator, self).__init__(*args, **kwargs)
+    def _validate_type_related_content(self, field, value):
+        """Allow type related_content in schema."""
+        pass
 
-    types_mapping = {
-        k: v for k, v in Validator.types_mapping.items()
-        if k not in ('date', )
-    }
+    def _validate_type_embed(self, field, value):
+        """Allow type media in schema."""
+        pass
 
-    def _validate_type_media(self, value):
-        return True
+    def _validate_type_custom(self, field, value):
+        """Allow custom field type."""
+        pass
 
-    def _validate_type_related_content(self, value):
-        return True
+    def _validate_type_date(self, field, value):
+        if not isinstance(value, datetime):
+            try:
+                datetime.strptime(value or '', '%Y-%m-%dT%H:%M:%S+%f')
+            except ValueError:
+                self._error(field, DATE_FIELD)
 
-    def _validate_type_embed(self, value):
-        return True
+    def _validate_type_picture(self, field, value):
+        """Allow type picture in schema."""
+        pass
 
-    def _validate_type_custom(self, value):
-        return True
-
-    def _validate_type_picture(self, value):
-        return True
-
-    def _validate_type_any(self, value):
-        """Allow type any, ex: for CV of type 'custom'."""
-        return True
-
-    def _validate_type_text(self, value):
+    def _validate_type_text(self, field, value):
         """Validate type text in schema."""
-        if value and isinstance(value, str):
-            return True
+        if value and not isinstance(value, str):
+            self._error(field, STRING_FIELD)
 
-    def _validate_type_date(self, value):
-        if isinstance(value, datetime):
-            return True
-        try:
-            datetime.strptime(value or '', '%Y-%m-%dT%H:%M:%S+%f')
-            return True
-        except ValueError:
-            pass
+    def _validate_type_any(self, field, value):
+        """Allow type any, ex: for CV of type 'custom'."""
+        pass
 
     def _validate_mandatory_in_list(self, mandatory, field, value):
-        """
-        {'type': 'dict'}
-        """
+        """Validates if all elements from mandatory are presented in the list"""
         for key in mandatory:
             for key_field in mandatory[key]:
                 if not check_json(value, key, mandatory[key][key_field]):
                     self._error(key_field, REQUIRED_FIELD)
 
     def _validate_mandatory_in_dictionary(self, mandatory, field, value):
-        """
-        {'type': 'list'}
-        """
+        """Validates if all elements from mandatory are presented in the dictionary"""
         for key in mandatory:
             if not value.get(key):
                 self._error(key, REQUIRED_FIELD)
 
     def _validate_empty(self, empty, field, value):
-        """
-        {'type': 'boolean'}
-        """
+        """Original validates only strings, adding a list check."""
         super()._validate_empty(empty, field, value)
         if field == "subject":
             # for subject, we have to ignore all data with scheme
@@ -153,45 +139,31 @@ class SchemaValidator(Validator):
             self._error(field, REQUIRED_FIELD)
 
     def _validate_enabled(self, *args):
-        """
-        {'type': 'boolean'}
-        """
+        """Ignore ``enabled`` in the schema."""
         pass
 
     def _validate_place(self, *args):
-        """
-        {'type': 'list'}
-        """
+        """Ignore place."""
         pass
 
     def _validate_genre(self, *args):
-        """
-        {'type': 'dict'}
-        """
+        """Ignore genre."""
         pass
 
     def _validate_anpa_category(self, *args):
-        """
-        {'type': 'list'}
-        """
+        """Ignore anpa category."""
         pass
 
     def _validate_subject(self, *args):
-        """
-        {'type': 'list'}
-        """
+        """Ignore subject."""
         pass
 
     def _validate_company_codes(self, *args):
-        """
-        {'type': 'list'}
-        """
+        """Ignore company codes."""
         pass
 
     def _validate_validate_characters(self, validate, field, value):
-        """
-        {'type': 'boolean'}
-        """
+        """Validate if field contains only allowed characters."""
         disallowed_characters = app.config.get('DISALLOWED_CHARACTERS')
 
         if validate and disallowed_characters and value:
@@ -200,9 +172,6 @@ class SchemaValidator(Validator):
                 return self._error(field, INVALID_CHAR)
 
     def _validate_media_metadata(self, validate, associations_field, associations):
-        """
-        {'type': 'boolean'}
-        """
         if not validate:
             return
         media_metadata_schema = app.config.get('VALIDATOR_MEDIA_METADATA')
@@ -232,9 +201,8 @@ class ValidateResource(superdesk.Resource):
         'embedded': {'type': 'boolean', 'required': False},
         'validate': {
             'type': 'dict',
-            'required': True,
-        },
-        'errors': {'type': 'list'},
+            'required': True
+        }
     }
 
     resource_methods = ['POST']
@@ -247,9 +215,7 @@ class ValidateService(superdesk.Service):
         for doc in docs:
             test_doc = deepcopy(doc)
             doc['errors'] = self._validate(test_doc, fields=fields, **kwargs)
-        if fields:
-            return [doc['errors'] for doc in docs]
-        return [i for i in range(len(docs))]
+        return [doc['errors'] for doc in docs]
 
     def _get_profile_schema(self, schema, doc):
         doc['validate'].setdefault('extra', {})  # make sure extra is there so it will validate its fields

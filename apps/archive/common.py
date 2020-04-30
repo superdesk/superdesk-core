@@ -26,7 +26,7 @@ from superdesk.utc import utcnow, get_expiry_date, local_to_utc, get_date
 from superdesk import get_resource_service
 from superdesk.metadata.item import metadata_schema, ITEM_STATE, CONTENT_STATE, \
     LINKED_IN_PACKAGES, BYLINE, SIGN_OFF, EMBARGO, ITEM_TYPE, CONTENT_TYPE, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, \
-    ASSOCIATIONS, LAST_AUTHORING_DESK, LAST_PRODUCTION_DESK, ITEM_EVENT_ID
+    ASSOCIATIONS, LAST_AUTHORING_DESK, LAST_PRODUCTION_DESK
 from superdesk.workflow import set_default_state, is_workflow_state_transition_valid
 from superdesk.metadata.item import GUID_NEWSML, GUID_FIELD, GUID_TAG, not_analyzed, FAMILY_ID, INGEST_ID
 from superdesk.metadata.utils import generate_guid
@@ -56,6 +56,7 @@ ITEM_UNMARK = 'unmark'
 ITEM_RESEND = 'resend'
 ITEM_EXPORT_HIGHLIGHT = 'export_highlight'
 ITEM_CREATE_HIGHLIGHT = 'create_highlight'
+ITEM_EVENT_ID = 'event_id'
 item_operations = [ITEM_CREATE, ITEM_FETCH, ITEM_UPDATE, ITEM_RESTORE,
                    ITEM_DUPLICATE, ITEM_DUPLICATED_FROM, ITEM_DESCHEDULE,
                    ITEM_REWRITE, ITEM_LINK, ITEM_UNLINK, ITEM_MARK, ITEM_UNMARK, ITEM_RESEND,

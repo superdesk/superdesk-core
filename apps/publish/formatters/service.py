@@ -16,7 +16,7 @@ from superdesk.services import BaseService
 from superdesk.errors import SuperdeskApiError
 from superdesk.publish.formatters import get_all_formatters
 from superdesk.utils import ListCursor
-from superdesk.validation import ValidationError
+from eve.validation import ValidationError
 from apps.publish.content.common import ITEM_PUBLISH
 from apps.content_types import apply_schema
 from flask_babel import _

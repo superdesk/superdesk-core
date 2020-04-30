@@ -32,9 +32,9 @@ from superdesk.publish import SUBSCRIBER_TYPES
 from superdesk.services import BaseService
 from superdesk.utc import utcnow
 from superdesk.workflow import is_workflow_state_transition_valid
-from superdesk.validation import ValidationError
 
 from eve.utils import config
+from eve.validation import ValidationError
 from eve.versioning import resolve_document_version
 
 from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE
@@ -568,7 +568,7 @@ class BasePublishService(BaseService):
                 validate_item = {'act': self.publish_type, 'type': doc[ITEM_TYPE], 'validate': doc}
                 if type(item) == dict:
                     validate_item['embedded'] = True
-                errors = get_resource_service('validate').post([validate_item], headline=True, fields=True)[0]
+                errors = get_resource_service('validate').post([validate_item], headline=True)
                 if errors[0]:
                     pre_errors = ['Associated item %s %s' % (doc.get('slugline', ''), error) for error in errors[0]]
                     validation_errors.extend(pre_errors)

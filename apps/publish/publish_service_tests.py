@@ -43,20 +43,20 @@ class PublishServiceTests(TestCase):
 
     def test_close_subscriber_doesnt_close(self):
         with self.app.app_context():
-            subscriber = self.app.data.find_one('subscribers', None)
+            subscriber = self.app.data.find('subscribers', None, None)[0]
             self.assertTrue(subscriber.get('is_active'))
 
             PublishService().close_transmitter(subscriber, PublishQueueError.unknown_format_error())
-            subscriber = self.app.data.find_one('subscribers', None)
+            subscriber = self.app.data.find('subscribers', None, None)[0]
             self.assertTrue(subscriber.get('is_active'))
 
     def test_close_subscriber_does_close(self):
         with self.app.app_context():
-            subscriber = self.app.data.find_one('subscribers', None)
+            subscriber = self.app.data.find('subscribers', None, None)[0]
             self.assertTrue(subscriber.get('is_active'))
 
             PublishService().close_transmitter(subscriber, PublishQueueError.bad_schedule_error())
-            subscriber = self.app.data.find_one('subscribers', None)
+            subscriber = self.app.data.find('subscribers', None, None)[0]
             self.assertFalse(subscriber.get('is_active'))
 
     def test_transmit_closes_subscriber(self):
@@ -64,7 +64,7 @@ class PublishServiceTests(TestCase):
             raise PublishQueueError.bad_schedule_error()
 
         with self.app.app_context():
-            subscriber = self.app.data.find_one('subscribers', None)
+            subscriber = self.app.data.find('subscribers', None, None)[0]
 
             publish_service = PublishService()
             publish_service._transmit = mock_transmit
@@ -72,6 +72,6 @@ class PublishServiceTests(TestCase):
             with assert_raises(PublishQueueError):
                 publish_service.transmit(self.queue_items[0])
 
-            subscriber = self.app.data.find_one('subscribers', None)
+            subscriber = self.app.data.find('subscribers', None, None)[0]
             self.assertFalse(subscriber.get('is_active'))
             self.assertIsNotNone(subscriber.get('last_closed'))

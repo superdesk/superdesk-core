@@ -19,11 +19,6 @@ class AllowedValuesResource(superdesk.Resource):
 
     resource_methods = ['GET']
     item_methods = []
-    schema = {
-        'items': {
-            'type': 'list',
-        },
-    }
 
 
 class AllowedValuesService(superdesk.Service):

@@ -146,7 +146,7 @@ prepopulate_schema = {
         'type': 'boolean',
         'required': False,
         'default': True
-    },
+    }
 }
 
 

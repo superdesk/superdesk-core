@@ -849,7 +849,7 @@ Feature: Kill a content item in the (dusty) archive
     """
     {"_id": "234", "type": "composite", "_current_version": 7, "state": "killed", "pubstatus": "canceled", "operation": "kill"}
     """
-    When we get "/legal_archive/234?version=all"
+    When we get "/legal_archive/234#?version=all"
     Then we get list with 7 items
     When we get "/legal_archive/456"
     Then we get existing resource

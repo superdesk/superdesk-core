@@ -930,6 +930,8 @@ Feature: Archive Broadcast
     }
     """
 
+
+
   @auth @vocabulary
   Scenario: Spike the re-write and it should remove the reference from broadcast
     Given "desks"
@@ -1047,7 +1049,7 @@ Feature: Archive Broadcast
 
 
 
-  @auth @vocabulary
+  @auth @vocabulary @wip
   Scenario: If Master Story is kill then kill published broadcast content and spike unpublished broadcast content.
     Given "desks"
       """

@@ -10,7 +10,6 @@
 
 import os
 import json
-import tempfile
 from copy import copy
 from datetime import timedelta
 from unittest import mock
@@ -201,8 +200,6 @@ class ArchivePublishTestCase(TestCase):
                           'unique_name': '#8'},
                          {'_id': '9',
                           'urgency': 3,
-                          'last_version': 3,
-                          config.VERSION: 4,
                           'headline': 'creator',
                           'task': {'user': '1', 'desk': '123456789ABCDEF123456789'},
                           ITEM_STATE: CONTENT_STATE.FETCHED},
@@ -250,22 +247,19 @@ class ArchivePublishTestCase(TestCase):
         self.app.data.insert('subscribers', self.subscribers)
         self.app.data.insert(ARCHIVE, self.articles)
 
+        self.filename = os.path.join(os.path.abspath(os.path.dirname(__file__)), "validators.json")
+        self.json_data = [
+            {"_id": "kill_text", "act": "kill", "type": "text", "schema": {"headline": {"type": "string"}}},
+            {"_id": "publish_text", "act": "publish", "type": "text", "schema": {}},
+            {"_id": "correct_text", "act": "correct", "type": "text", "schema": {}},
+            {"_id": "publish_composite", "act": "publish", "type": "composite", "schema": {}},
+        ]
         self.article_versions = self._init_article_versions()
 
-        with tempfile.TemporaryDirectory() as tmp:
-            json_data = [
-                {"_id": "kill_text", "act": "kill", "type": "text", "schema": {"headline": {"type": "string"}}},
-                {"_id": "publish_text", "act": "publish", "type": "text", "schema": {}},
-                {"_id": "correct_text", "act": "correct", "type": "text", "schema": {}},
-                {"_id": "publish_composite", "act": "publish", "type": "composite", "schema": {}},
-            ]
-
-            filename = os.path.join(tmp, 'validators.json')
-            with open(filename, 'w') as file:
-                json.dump(json_data, file)
-
-            init_app(self.app)
-            AppPopulateCommand().run(filename)
+        with open(self.filename, "w+") as file:
+            json.dump(self.json_data, file)
+        init_app(self.app)
+        AppPopulateCommand().run(self.filename)
 
         self.app.media.url_for_media = MagicMock(return_value='url_for_media')
         self._put = self.app.media.put
@@ -273,6 +267,8 @@ class ArchivePublishTestCase(TestCase):
 
     def tearDown(self):
         self.app.media.put = self._put
+        if self.filename and os.path.exists(self.filename):
+            os.remove(self.filename)
 
     def _init_article_versions(self):
         resource_def = self.app.config['DOMAIN']['archive_versions']
@@ -345,7 +341,7 @@ class ArchivePublishTestCase(TestCase):
                  'unique_name': '#8'}]
 
     def _is_publish_queue_empty(self):
-        queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)[0]
+        queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(0, queue_items.count())
 
     def _add_content_filters(self, product, is_global=False):
@@ -434,7 +430,7 @@ class ArchivePublishTestCase(TestCase):
         get_resource_service(ARCHIVE).patch(id=doc['_id'], updates=updates)
         get_resource_service(ARCHIVE_PUBLISH).patch(id=doc['_id'], updates=updates)
         enqueue_published()
-        queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)[0]
+        queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(0, queue_items.count())
 
     def test_queue_transmission_for_item_scheduled_elapsed(self):
@@ -451,7 +447,7 @@ class ArchivePublishTestCase(TestCase):
         }
         get_resource_service(ARCHIVE).patch(id=doc['_id'], updates=updates)
         get_resource_service(ARCHIVE_PUBLISH).patch(id=doc['_id'], updates=updates)
-        queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)[0]
+        queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(0, queue_items.count())
         schedule_in_past = utcnow() + timedelta(minutes=-10)
         get_resource_service(PUBLISHED).update_published_items(doc['_id'], 'schedule_settings',
@@ -459,7 +455,7 @@ class ArchivePublishTestCase(TestCase):
         get_resource_service(PUBLISHED).update_published_items(doc['_id'], 'publish_schedule', schedule_in_past)
 
         enqueue_published()
-        queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)[0]
+        queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(1, queue_items.count())
 
     def test_queue_transmission_for_digital_channels(self):
@@ -473,7 +469,7 @@ class ArchivePublishTestCase(TestCase):
             service.get_subscribers(doc, SUBSCRIBER_TYPES.DIGITAL)
         service.queue_transmission(doc, subscribers, subscriber_codes)
 
-        queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)[0]
+        queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(1, queue_items.count())
         expected_subscribers = ['5']
         for item in queue_items:
@@ -489,7 +485,7 @@ class ArchivePublishTestCase(TestCase):
         subscribers, subscriber_codes, associations = \
             service.get_subscribers(doc, SUBSCRIBER_TYPES.WIRE)
         service.queue_transmission(doc, subscribers, subscriber_codes)
-        queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)[0]
+        queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
 
         self.assertEqual(1, queue_items.count())
         expected_subscribers = ['5']
@@ -532,7 +528,7 @@ class ArchivePublishTestCase(TestCase):
         subscribers, subscriber_codes, associations = \
             service.get_subscribers(doc, SUBSCRIBER_TYPES.DIGITAL)
         no_formatters, queued = get_enqueue_service('publish').queue_transmission(doc, subscribers, subscriber_codes)
-        queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)[0]
+        queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(1, queue_items.count())
         self.assertEqual(0, len(no_formatters))
         self.assertTrue(queued)
@@ -540,7 +536,7 @@ class ArchivePublishTestCase(TestCase):
         subscribers, subscriber_codes, associations = \
             service.get_subscribers(doc, SUBSCRIBER_TYPES.WIRE)
         no_formatters, queued = get_enqueue_service('publish').queue_transmission(doc, subscribers)
-        queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)[0]
+        queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(2, queue_items.count())
         self.assertEqual(0, len(no_formatters))
         self.assertTrue(queued)
@@ -555,12 +551,12 @@ class ArchivePublishTestCase(TestCase):
         archive_publish.patch(id=doc['_id'], updates={ITEM_STATE: CONTENT_STATE.PUBLISHED})
 
         enqueue_published()
-        queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)[0]
+        queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(6, queue_items.count())
 
         # this will delete queue transmission for the wire article
         publish_queue.PublishQueueService(PUBLISH_QUEUE, get_backend()).delete_by_article_id(doc['_id'])
-        queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)[0]
+        queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(0, queue_items.count())
 
     def test_conform_target_regions(self):
@@ -642,13 +638,14 @@ class ArchivePublishTestCase(TestCase):
         self.assertTrue(BasePublishService().is_targeted(doc))
 
     def test_targeted_for_includes_digital_subscribers(self):
+        AppPopulateCommand().run(self.filename)
         updates = {'target_regions': [{'qcode': 'NSW', 'name': 'New South Wales', 'allow': True}]}
         doc_id = self.articles[5][config.ID_FIELD]
         get_resource_service(ARCHIVE).patch(id=doc_id, updates=updates)
 
         get_resource_service(ARCHIVE_PUBLISH).patch(id=doc_id, updates={ITEM_STATE: CONTENT_STATE.PUBLISHED})
         enqueue_published()
-        queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)[0]
+        queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(6, queue_items.count())
         expected_subscribers = ['1', '2', '3', '4', '5']
         for item in queue_items:
@@ -661,8 +658,9 @@ class ArchivePublishTestCase(TestCase):
             ]}}}}
             request = ParsedRequest()
             request.args = {'source': json.dumps(query), 'aggregations': 0}
-            return self.app.data.find(PUBLISHED, req=request, lookup=None)[0]
+            return self.app.data.find(PUBLISHED, req=request, lookup=None)
 
+        AppPopulateCommand().run(self.filename)
         get_resource_service(ARCHIVE).patch(id=self.articles[1][config.ID_FIELD],
                                             updates={'publish_schedule': None})
 
@@ -672,11 +670,11 @@ class ArchivePublishTestCase(TestCase):
 
         enqueue_published()
 
-        queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)[0]
+        queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(1, queue_items.count())
         request = ParsedRequest()
         request.args = {'aggregations': 0}
-        published_items = self.app.data.find(PUBLISHED, request, None)[0]
+        published_items = self.app.data.find(PUBLISHED, request, None)
         self.assertEqual(1, published_items.count())
         published_doc = next((item for item in published_items
                               if item.get('item_id') == doc[config.ID_FIELD]), None)
@@ -687,9 +685,9 @@ class ArchivePublishTestCase(TestCase):
 
         enqueue_published()
 
-        queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)[0]
+        queue_items = self.app.data.find(PUBLISH_QUEUE, None, None)
         self.assertEqual(2, queue_items.count())
-        published_items = self.app.data.find(PUBLISHED, request, None)[0]
+        published_items = self.app.data.find(PUBLISHED, request, None)
         self.assertEqual(2, published_items.count())
         last_published = get_publish_items(published_doc['item_id'], True)
         self.assertEqual(1, last_published.count())
@@ -837,5 +835,5 @@ class TimeoutTest(TestCase):
     def test_soft_timeout_gets_re_queued(self, mock):
         self.app.data.insert('published', self.published_items)
         enqueue_published()
-        published = self.app.data.find(PUBLISHED, None, None)[0]
+        published = self.app.data.find(PUBLISHED, None, None)
         self.assertTrue(published[0].get('queue_state'), 'pending')

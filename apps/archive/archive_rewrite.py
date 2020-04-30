@@ -15,7 +15,7 @@ from flask import request, current_app as app
 from apps.archive import ArchiveSpikeService
 from superdesk import get_resource_service, Service, config
 from superdesk.metadata.item import ITEM_STATE, EMBARGO, CONTENT_STATE, CONTENT_TYPE, \
-    ITEM_TYPE, PUBLISH_STATES, ASSOCIATIONS, GUID_TAG, PROCESSED_FROM, metadata_schema
+    ITEM_TYPE, PUBLISH_STATES, ASSOCIATIONS, GUID_TAG, PROCESSED_FROM
 from superdesk.resource import Resource, build_custom_hateoas
 from apps.archive.common import CUSTOM_HATEOAS, ITEM_CREATE, ARCHIVE, BROADCAST_GENRE, ITEM_REWRITE, \
     ITEM_UNLINK, ITEM_LINK, insert_into_versions
@@ -35,15 +35,9 @@ class ArchiveRewriteResource(Resource):
     endpoint_name = 'archive_rewrite'
     resource_title = endpoint_name
 
-    schema = metadata_schema.copy()
-    schema.update({
+    schema = {
         'desk_id': {'type': 'string', 'nullable': True},
-        'update': {'type': 'dict', 'nullable': True, 'allow_unknown': True},
-    })
-
-    datasource = {
-        'source': 'archive',
-        'search_backend': 'elastic',
+        'update': {'type': 'dict', 'nullable': True}
     }
 
     url = 'archive/<{0}:original_id>/rewrite'.format(item_url)
@@ -52,11 +46,6 @@ class ArchiveRewriteResource(Resource):
 
 
 class ArchiveRewriteService(Service):
-    def get(self, req, lookup):
-        if lookup.get('original_id'):
-            return super().get(req, {'_id': lookup['original_id']})
-        return super().get(req, lookup)
-
     def create(self, docs, **kwargs):
         doc = docs[0] if len(docs) > 0 else {}
         original_id = request.view_args['original_id']
@@ -179,7 +168,7 @@ class ArchiveRewriteService(Service):
             rewrite['subject'] = [subject for subject in existing_item.get('subject', [])
                                   if subject.get('qcode') not in unique_subjects]
             rewrite['subject'].extend(subjects)
-            rewrite['flags'] = original.get('flags') or {}
+            rewrite['flags'] = original['flags'] or {}
 
             # preserve flags
             for key in rewrite.get('flags').keys():

@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+from eve.defaults import resolve_default_values
 import superdesk
 from superdesk import config
 from flask import current_app as app
@@ -291,7 +292,7 @@ class StagesService(BaseService):
         """
 
         stage = {'name': 'Working Stage', 'working_stage': True, 'desk_order': 1, 'content_expiry': None}
-        self._resolve_defaults(stage)
+        resolve_default_values(stage, app.config['DOMAIN'][self.datasource]['defaults'])
         return self.create([stage])
 
     def create_incoming_stage(self):
@@ -300,5 +301,5 @@ class StagesService(BaseService):
         :return: identifier of Incoming Stage
         """
         stage = {'name': 'Incoming Stage', 'default_incoming': True, 'desk_order': 2, 'content_expiry': None}
-        self._resolve_defaults(stage)
+        resolve_default_values(stage, app.config['DOMAIN'][self.datasource]['defaults'])
         return self.create([stage])

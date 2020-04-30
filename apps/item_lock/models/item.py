@@ -8,7 +8,6 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from superdesk.metadata.item import get_schema
 from apps.common.models.base_model import Validator, BaseModel
 
 
@@ -19,7 +18,7 @@ class ItemValidator(Validator):
 
 class ItemModel(BaseModel):
     def __init__(self, data_layer):
-        BaseModel.__init__(self, 'archive', data_layer, get_schema(versioning=True), ItemValidator())
+        BaseModel.__init__(self, 'archive', data_layer, {}, ItemValidator())
 
     @classmethod
     def name(cls):

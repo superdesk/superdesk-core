@@ -167,12 +167,6 @@ class ContentTemplatesResource(Resource):
 
         'user': Resource.rel('users'),
         'is_public': {'type': 'boolean', 'unique_template': True, 'default': False},
-
-        'item': {
-            'type': 'dict',
-            'schema': {},
-            'allow_unknown': True,
-        },
     }
 
     additional_lookup = {
@@ -388,11 +382,8 @@ class ContentTemplatesApplyResource(Resource):
             'type': 'dict',
             'required': True,
             'schema': item_schema()
-        },
+        }
     }
-
-    # in response there can be anything..
-    schema.update(get_schema())
 
     resource_methods = ['POST']
     item_methods = []

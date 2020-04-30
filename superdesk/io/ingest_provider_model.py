@@ -89,14 +89,10 @@ class IngestProviderResource(Resource):
                 'default': app.config['INGEST_EXPIRY_MINUTES']
             },
             'config': {
-                'type': 'dict',
-                'schema': {},
-                'allow_unknown': True,
+                'type': 'dict'
             },
             'private': {
-                'type': 'dict',
-                'schema': {},
-                'allow_unknown': True,
+                'type': 'dict'
             },
             'ingested_count': {
                 'type': 'integer'
@@ -105,9 +101,7 @@ class IngestProviderResource(Resource):
                 'type': 'integer'
             },
             'tokens': {
-                'type': 'dict',
-                'schema': {},
-                'allow_unknown': True,
+                'type': 'dict'
             },
             'is_closed': {
                 'type': 'boolean',
@@ -140,13 +134,7 @@ class IngestProviderResource(Resource):
                     'on_close': {'type': 'boolean', 'default': True},
                     'on_open': {'type': 'boolean', 'default': True},
                     'on_error': {'type': 'boolean', 'default': True}
-                },
-                'default': {
-                    'on_update': True,
-                    'on_close': True,
-                    'on_open': True,
-                    'on_error': True,
-                },
+                }
             },
             'last_closed': {
                 'type': 'dict',

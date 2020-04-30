@@ -110,7 +110,7 @@ class EveBackend():
         else:
             logger.warn('there is no search backend for %s' % endpoint_name)
 
-    def get(self, endpoint_name, req, lookup, **kwargs):
+    def get(self, endpoint_name, req, lookup):
         """Get list of items.
 
         :param endpoint_name: resource name
@@ -118,23 +118,11 @@ class EveBackend():
         :param lookup: additional filter
         """
         backend = self._lookup_backend(endpoint_name, fallback=True)
-        is_mongo = self._backend(endpoint_name) == backend
-
-        if is_mongo:
-            cursor, count = backend.find(endpoint_name, req, lookup)
-        else:
-            cursor = backend.find(endpoint_name, req, lookup)
-            count = cursor.count()
-
-        if req.if_modified_since and count:
+        cursor = backend.find(endpoint_name, req, lookup)
+        if req.if_modified_since and cursor.count():
             # fetch all items, not just updated
             req.if_modified_since = None
-            if is_mongo:
-                cursor, count = backend.find(endpoint_name, req, lookup)
-            else:
-                cursor = backend.find(endpoint_name, req, lookup)
-                count = cursor.count()
-
+            return backend.find(endpoint_name, req, lookup)
         self._cursor_hook(cursor=cursor, req=req)
         return cursor
 
@@ -149,7 +137,7 @@ class EveBackend():
         """
         req.if_modified_since = None
         backend = self._backend(endpoint_name)
-        cursor, _ = backend.find(endpoint_name, req, lookup)
+        cursor = backend.find(endpoint_name, req, lookup)
         self._cursor_hook(cursor=cursor, req=req)
         return cursor
 

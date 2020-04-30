@@ -107,10 +107,10 @@ class AppInitializeWithDataCommandTestCase(TestCase):
             f.flush()
 
         self._run(['vocabularies'])
-        self.assertEqual(self.app.data.find('vocabularies', req=None, lookup={})[0].count(), 1)
+        self.assertEqual(self.app.data.find('vocabularies', req=None, lookup={}).count(), 1)
 
         self._run(['validators'])
-        self.assertGreater(self.app.data.find('validators', req=None, lookup={})[0].count(), 0)
+        self.assertGreater(self.app.data.find('validators', req=None, lookup={}).count(), 0)
 
         self.app.config.pop('INIT_DATA_PATH', None)
         shutil.rmtree(init_dir)

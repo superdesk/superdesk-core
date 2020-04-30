@@ -24,8 +24,7 @@ class ContentFilterTestResource(Resource):
         'filter_id': {'type': 'string'},
         'article_id': {'type': 'string'},
         'return_matching': {'type': 'boolean'},
-        'filter': {'type': 'dict'},
-        'match_results': {'type': 'list'},
+        'filter': {'type': 'dict'}
     }
     url = 'content_filters/test'
     resource_methods = ['POST']

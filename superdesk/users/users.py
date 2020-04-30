@@ -95,26 +95,18 @@ class UsersResource(Resource):
                 'nullable': True
             },
             'user_info': {
-                'type': 'dict',
-                'schema': {},
-                'allow_unknown': True,
+                'type': 'dict'
             },
             'picture_url': {
                 'type': 'string',
                 'nullable': True
             },
             'avatar': Resource.rel('upload', embeddable=True, nullable=True),
-            'avatar_renditions': {'type': 'dict', 'schema': {}},
+            'avatar_renditions': {'type': 'dict'},
             'role': Resource.rel('roles', True),
-            'privileges': {
-                'type': 'dict',
-                'schema': {},
-                'allow_unknown': True,
-            },
+            'privileges': {'type': 'dict'},
             'workspace': {
-                'type': 'dict',
-                'schema': {},
-                'allow_unknown': True,
+                'type': 'dict'
             },
             'user_type': {
                 'type': 'string',
@@ -176,17 +168,7 @@ class UsersResource(Resource):
                 'type': 'string',
                 'required': False,
                 'nullable': True
-            },
-            'session_preferences': {
-                'type': 'dict',
-                'schema': {},
-                'allow_unknown': True,
-            },
-            'user_preferences': {
-                'type': 'dict',
-                'schema': {},
-                'allow_unknown': True,
-            },
+            }
         }
 
         self.extra_response_fields = [
