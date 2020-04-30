@@ -109,6 +109,9 @@ class VocabulariesResource(Resource):
         'service': {
             'type': 'dict',
             'schema': {},
+            'allow_unknown': True,
+            'keysrules': {'type': 'string'},
+            'valuesrules': {'type': 'integer'},
         },
         'priority': {
             'type': 'integer'
@@ -130,6 +133,7 @@ class VocabulariesResource(Resource):
         'field_options': {
             'type': 'dict',
             'schema': {},
+            'allow_unknown': True,
         },
         'init_version': {
             'type': 'integer',
