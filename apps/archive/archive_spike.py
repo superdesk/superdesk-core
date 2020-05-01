@@ -166,9 +166,7 @@ class ArchiveSpikeService(BaseService):
             updates['marked_for_user'] = None
 
         published_service = get_resource_service('published')
-        published_items = list(
-            published_service.get_from_mongo(req=None, lookup={'guid': original.get('guid')})
-        )
+        published_items = published_service.find({'guid': original.get('guid'), 'state': 'unpublished'})
 
         for item in published_items:
             if item:

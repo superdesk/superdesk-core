@@ -156,8 +156,7 @@ class MoveService(BaseService):
         current_stage_of_item = archived_doc.get('task', {}).get('stage')
         if current_stage_of_item and str(current_stage_of_item) == str(doc.get('task', {}).get('stage')):
             raise SuperdeskApiError.preconditionFailedError(message=_('Move is not allowed within the same stage.'))
-        if not is_workflow_state_transition_valid('submit_to_desk', archived_doc[ITEM_STATE]) \
-                and archived_doc[ITEM_STATE] != 'unpublished':
+        if not is_workflow_state_transition_valid('submit_to_desk', archived_doc[ITEM_STATE]):
             raise InvalidStateTransitionError()
 
     def set_change_in_desk_type(self, updated, original):
@@ -186,6 +185,6 @@ class MoveService(BaseService):
 
 superdesk.workflow_action(
     name='submit_to_desk',
-    include_states=['draft', 'fetched', 'routed', 'submitted', 'in_progress', 'published', 'scheduled'],
+    include_states=['draft', 'fetched', 'routed', 'submitted', 'in_progress', 'published', 'scheduled', 'unpublished'],
     privileges=['archive']
 )
