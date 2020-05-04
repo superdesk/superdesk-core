@@ -431,6 +431,13 @@ class ArchiveService(BaseService):
     def replace(self, id, document, original):
         return self.restore_version(id, document, original) or super().replace(id, document, original)
 
+    def get(self, req, lookup):
+        if req is None and lookup is not None and '$or' in lookup:
+            # embedded resource generates mongo query which doesn't work with elastic
+            # so it needs to be fixed here
+            return super().get(req, lookup['$or'][0])
+        return super().get(req, lookup)
+
     def find_one(self, req, **lookup):
         item = super().find_one(req, **lookup)
 
