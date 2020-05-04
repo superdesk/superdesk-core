@@ -244,8 +244,11 @@ class ValidateService(superdesk.Service):
         use its schema for validations, otherwise it will fall back to action/item_type filter.
         """
         profile = doc['validate'].get('profile')
-        if profile and (app.config['AUTO_PUBLISH_CONTENT_PROFILE'] or doc['act'] != 'auto_publish'):
+        item_type = doc['validate'].get('type') or doc.get('type')
+        if (profile or item_type) and (app.config['AUTO_PUBLISH_CONTENT_PROFILE'] or doc['act'] != 'auto_publish'):
             content_type = superdesk.get_resource_service('content_types').find_one(req=None, _id=profile)
+            if not content_type and item_type:
+                content_type = superdesk.get_resource_service('content_types').find_one(req=None, item_type=item_type)
             if content_type:
                 return self._get_profile_schema(content_type.get('schema', {}), doc)
         lookup = {'act': doc['act'], 'type': doc[ITEM_TYPE]}
