@@ -12,6 +12,7 @@
 from bson import ObjectId
 from pytz import timezone
 from datetime import timedelta, datetime
+from copy import deepcopy
 from unittest import mock
 
 import superdesk
@@ -411,3 +412,41 @@ class ArchiveTestCase(TestCase):
 
         signals.item_update.disconnect(item_update_mock)
         signals.item_updated.disconnect(item_updated_mock)
+
+    def test_duplicate_signals(self):
+        def handler(sender, item, original, operation):
+            pass
+
+        duplicate_handler_mock = mock.create_autospec(handler)
+        duplicated_handler_mock = mock.create_autospec(handler)
+
+        signals.item_duplicate.connect(duplicate_handler_mock)
+        signals.item_duplicated.connect(duplicated_handler_mock)
+
+        archive_service = superdesk.get_resource_service('archive')
+        original_item = {
+            '_id': 'original',
+            'headline': 'original item',
+            'language': 'en',
+        }
+        archive_service.create([original_item])
+        original_item = archive_service.find_one(None, _id='original')
+        item = deepcopy(original_item)
+        item['language'] = 'fr'
+        translate_guid = archive_service.duplicate_item(item, operation='translate')
+
+        # `assert_called_once_with` is not used due to a lot of metadata is generated during duplication
+        assert duplicate_handler_mock.call_count == 1  # use `assert_called_once` for python>=3.6
+        assert duplicate_handler_mock.call_args[0][0] is archive_service
+        assert duplicate_handler_mock.call_args[1]['item']['guid'] == translate_guid
+        assert duplicate_handler_mock.call_args[1]['original']['_id'] == original_item['_id']
+        assert duplicate_handler_mock.call_args[1]['operation'] == 'translate'
+
+        assert duplicated_handler_mock.call_count == 1
+        assert duplicated_handler_mock.call_args[0][0] is archive_service
+        assert duplicated_handler_mock.call_args[1]['item']['guid'] == translate_guid
+        assert duplicated_handler_mock.call_args[1]['original']['_id'] == original_item['_id']
+        assert duplicated_handler_mock.call_args[1]['operation'] == 'translate'
+
+        signals.item_duplicate.disconnect(duplicate_handler_mock)
+        signals.item_duplicated.disconnect(duplicated_handler_mock)
