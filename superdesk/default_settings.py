@@ -802,6 +802,12 @@ KEYWORDS_ADD_MISSING_ON_PUBLISH = False
 #:
 WORKFLOW_ALLOW_MULTIPLE_UPDATES = False
 
+#: Allow users who are not members on a desk to duplicate its content
+#:
+#: .. versionadded:: 1.34
+#:
+WORKFLOW_ALLOW_DUPLICATE_TO_NON_MEMBERS = False
+
 #: Enable archive autocomplete API
 #:
 #: .. versionadded:: 2.0
