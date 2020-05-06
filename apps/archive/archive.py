@@ -519,6 +519,7 @@ class ArchiveService(BaseService):
 
         convert_task_attributes_to_objectId(new_doc)
         transtype_metadata(new_doc)
+        signals.item_duplicate.send(self, item=new_doc, original=original_doc, operation=operation)
         get_model(ItemModel).create([new_doc])
         self._duplicate_versions(original_doc['_id'], new_doc)
         self._duplicate_history(original_doc['_id'], new_doc)
@@ -537,6 +538,8 @@ class ArchiveService(BaseService):
                 new_doc,
                 operation or ITEM_DUPLICATED_FROM
             )
+
+        signals.item_duplicated.send(self, item=new_doc, original=original_doc, operation=operation)
 
         return new_doc['guid']
 
