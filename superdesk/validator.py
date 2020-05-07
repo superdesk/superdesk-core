@@ -17,6 +17,8 @@ from cerberus import errors
 from eve.io.mongo import Validator
 from eve.utils import config
 from eve.auth import auth_field_and_value
+from flask import current_app as app
+from flask_babel import _
 from eve.validation import SingleErrorAsStringErrorHandler
 from werkzeug.datastructures import FileStorage
 
@@ -44,11 +46,11 @@ class BaseErrorHandler(SingleErrorAsStringErrorHandler):
                 self._unpack_single_element_lists(tree[field][-1])
                 # if there are sub field errors only return these for now
                 if len(error_list) and any([isinstance(err, dict) for err in error_list]):
-                    errors = {}
+                    _errors = {}
                     for err in error_list:
                         if isinstance(err, dict):
-                            errors.update(err)
-                    tree[field] = errors
+                            _errors.update(err)
+                    tree[field] = _errors
             if len(tree[field]) == 1 and isinstance(tree[field], list):
                 tree[field] = tree[field][0]
 
@@ -263,3 +265,8 @@ class SuperdeskValidator(Validator):
         if unique_list and isinstance(value, list):
             if len(set(value)) != len(value):
                 self._error(field, "Must contain unique items only.")
+
+    def _validate_content_type_single_item_type(self, checked, field, value):
+        if checked and value not in {'text', None}:
+            if app.data.find_one('content_types', req=None, item_type=value) is not None:
+                self._error(field, _("Only 1 instance is allowed."))
