@@ -88,8 +88,9 @@ BANDWIDTH_SAVER = False
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%S+0000'
 ELASTIC_DATE_FORMAT = '%Y-%m-%d'
 ELASTIC_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
-
 PAGINATION_LIMIT = 200
+
+MERGE_NESTED_DOCUMENTS = False
 
 #: keep default in sync with limit - so when client does not use pagination return all
 #:
