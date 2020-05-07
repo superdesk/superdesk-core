@@ -19,7 +19,9 @@ class ValidatorsResource(superdesk.Resource):
         'embedded': {'type': 'boolean', 'required': False},
         'schema': {
             'type': 'dict',
-            'required': False
+            'required': False,
+            'schema': {},
+            'allow_unknown': True,
         }
     }
 

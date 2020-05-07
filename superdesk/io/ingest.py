@@ -12,7 +12,6 @@ from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.metadata.item import metadata_schema
 from superdesk.metadata.utils import extra_response_fields, item_url, aggregations, get_elastic_highlight_query
-from eve.defaults import resolve_default_values
 from eve.methods.common import resolve_document_etag
 from superdesk import get_resource_service
 from eve.utils import config
@@ -45,7 +44,7 @@ class IngestService(BaseService):
 
     def post_in_mongo(self, docs, **kwargs):
         for doc in docs:
-            resolve_default_values(doc, app.config['DOMAIN'][self.datasource]['defaults'])
+            self._resolve_defaults(doc)
         self.on_create(docs)
         resolve_document_etag(docs, self.datasource)
         ids = self.backend.create_in_mongo(self.datasource, docs, **kwargs)

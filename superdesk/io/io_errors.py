@@ -60,5 +60,13 @@ class IOErrorsResource(superdesk.Resource):
         },
         'io_type': {
             'type': 'string'
-        }
+        },
+        'all_errors': {
+            'type': 'list',
+            'readonly': True,
+        },
+        'source_errors': {
+            'type': 'list',
+            'readonly': True,
+        },
     }

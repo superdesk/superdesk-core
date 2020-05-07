@@ -51,6 +51,7 @@ class SpellcheckResource(superdesk.Resource):
     schema = {
         'word': {'type': 'string', 'required': True},
         'language_id': {'type': 'string', 'required': True},
+        'corrections': {'type': 'list'},
     }
 
     # you should be able to make edits

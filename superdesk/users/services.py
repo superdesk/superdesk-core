@@ -277,9 +277,9 @@ class UsersService(BaseService):
         """
         Overriding the method to prevent from hard delete
         """
-
         user = super().find_one(req=None, _id=str(lookup['_id']))
-        return super().update(id=lookup['_id'], updates={'is_enabled': False, 'is_active': False}, original=user)
+        return super().update(id=ObjectId(lookup['_id']),
+                              updates={'is_enabled': False, 'is_active': False}, original=user)
 
     def __clear_locked_items(self, user_id):
         archive_service = get_resource_service('archive')

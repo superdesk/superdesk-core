@@ -73,14 +73,14 @@ Feature: Products
       "name":"prod-1", "codes":"abc,xyz"
     }
     """
-    Then we get error 400
+    Then we get new resource
     """
-    {"_status": "ERR", "_issues": {"product_type": {"required": 1}}}
+    {"product_type": "both"}
     """
     When we post to "/products"
     """
     {
-      "name":"prod-1", "codes":"abc,xyz", "product_type": "both"
+      "name":"prod-2", "codes":"abc,xyz", "product_type": "api"
     }
     """
     Then we get OK response
@@ -90,7 +90,7 @@ Feature: Products
     """
     Then we get error 400
     """
-    {"_status": "ERR", "_issues": {"product_type": ["null value not allowed", "must be of string type"]}}
+    {"_status": "ERR", "_issues": {"product_type": "null value not allowed"}}
     """
 
   @auth

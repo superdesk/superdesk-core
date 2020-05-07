@@ -19,6 +19,9 @@ class FormattersResource(Resource):
     item_methods = []
     resource_title = endpoint_name
     schema = {
+        'name': {
+            'type': 'string',
+        },
         'article_id': {
             'type': 'string',
             'required': True

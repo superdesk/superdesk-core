@@ -13,6 +13,7 @@ from apps.archive_history import ArchiveHistoryResource
 
 from superdesk.publish.publish_queue import PublishQueueResource
 from superdesk.resource import Resource
+from superdesk.metadata.item import get_schema
 
 
 LEGAL_ARCHIVE_NAME = 'legal_archive'
@@ -26,19 +27,21 @@ class LegalResource(Resource):
     item_methods = ['GET']
     privileges = {'GET': LEGAL_ARCHIVE_NAME}
     mongo_prefix = 'LEGAL_ARCHIVE'
+    schema = get_schema()
 
 
 class LegalArchiveResource(LegalResource, ArchiveResource):
     endpoint_name = LEGAL_ARCHIVE_NAME
     resource_title = endpoint_name
-
+    schema = get_schema()
     datasource = {'source': LEGAL_ARCHIVE_NAME}
+    versioning = True
 
 
 class LegalArchiveVersionsResource(LegalResource, ArchiveVersionsResource):
     endpoint_name = LEGAL_ARCHIVE_VERSIONS_NAME
     resource_title = endpoint_name
-
+    schema = get_schema(versioning=True)
     datasource = {'source': LEGAL_ARCHIVE_VERSIONS_NAME,
                   'projection': {'old_version': 0, 'last_version': 0}
                   }
@@ -47,7 +50,10 @@ class LegalArchiveVersionsResource(LegalResource, ArchiveVersionsResource):
 class LegalArchiveHistoryResource(LegalResource, ArchiveHistoryResource):
     endpoint_name = LEGAL_ARCHIVE_HISTORY_NAME
     resource_title = endpoint_name
-
+    schema = get_schema()
+    schema.update({
+        'update': {'type': 'dict', 'schema': {}},
+    })
     datasource = {'source': LEGAL_ARCHIVE_HISTORY_NAME}
     mongo_indexes = {'item_id': ([('item_id', 1)], {'background': True})}
 

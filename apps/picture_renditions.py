@@ -38,7 +38,12 @@ class PictureRenditionsResource(superdesk.Resource):
     privileges = {'POST': 'archive'}
     schema = {
         'item': {'type': 'dict', 'required': True},
-        'no_custom_crops': {'type': 'boolean'}
+        'no_custom_crops': {'type': 'boolean'},
+        'renditions': {
+            'type': 'dict',
+            'schema': {},
+            'allow_unknown': True,
+        },
     }
 
 
