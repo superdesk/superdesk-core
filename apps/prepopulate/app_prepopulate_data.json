@@ -426,7 +426,7 @@
 		        },
 		        "type" : {
 		            "type" : "string",
-		            "required" : "true",
+		            "required" : true,
 		            "allowed" : [
 		                "text"
 		            ]
@@ -472,7 +472,7 @@
 		        },
 		        "type" : {
 		            "type" : "string",
-		            "required" : "true",
+		            "required" : true,
 		            "allowed" : [
 		                "text"
 		            ]
@@ -512,7 +512,7 @@
                 },
                 "type" : {
                     "type" : "string",
-                    "required" : "true",
+                    "required" : true,
                     "allowed" : [
                         "text"
                     ]

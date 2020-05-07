@@ -1,4 +1,3 @@
-@wip
 Feature: Rewrite content
 
     @auth

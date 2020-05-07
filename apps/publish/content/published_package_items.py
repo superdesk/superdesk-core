@@ -17,7 +17,7 @@ from superdesk.resource import Resource
 from apps.packages.package_service import PackageService, create_root_group,\
     get_item_ref
 from eve.utils import config
-from eve.validation import ValidationError
+from superdesk.validation import ValidationError
 from superdesk.errors import SuperdeskApiError
 from superdesk.services import BaseService
 from superdesk.metadata.packages import GROUPS, GROUP_ID, REFS, RESIDREF,\

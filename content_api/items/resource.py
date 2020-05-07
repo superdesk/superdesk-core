@@ -23,6 +23,7 @@ code_mapping = {
 schema = {
     '_id': metadata_schema['_id'],
     'associations': metadata_schema['associations'],
+    'anpa_category': metadata_schema['anpa_category'],
     'body_html': {'type': 'string'},
     'body_text': {'type': 'string'},
     'byline': {'type': 'string'},

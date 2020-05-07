@@ -8,7 +8,7 @@ from apps.auth import is_current_user_admin
 class ConfigResource(superdesk.Resource):
     schema = {
         '_id': {'type': 'string', 'required': True},
-        'val': {'type': 'dict'},
+        'val': {'type': 'dict', 'schema': {}, 'allow_unknown': True},
     }
 
     item_url = 'regex("[\w.:_-]+")'

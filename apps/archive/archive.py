@@ -33,8 +33,10 @@ from superdesk.activity import add_activity, notify_and_add_activity, ACTIVITY_C
 from eve.utils import parse_request, config, date_to_str, ParsedRequest
 from superdesk.services import BaseService
 from superdesk.users.services import current_user_has_privilege, is_admin
-from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, CONTENT_TYPE, ITEM_TYPE, EMBARGO, \
-    PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, SIGN_OFF, ASSOCIATIONS, MEDIA_TYPES, INGEST_ID, PROCESSED_FROM, PUBLISH_STATES
+from superdesk.metadata.item import (ITEM_STATE, CONTENT_STATE, CONTENT_TYPE, ITEM_TYPE, EMBARGO,
+                                     PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, SIGN_OFF, ASSOCIATIONS,
+                                     MEDIA_TYPES, INGEST_ID, PROCESSED_FROM, PUBLISH_STATES,
+                                     get_schema)
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, RESIDREF
 from apps.common.components.utils import get_component
 from apps.item_autosave.components.item_autosave import ItemAutosave
@@ -430,6 +432,13 @@ class ArchiveService(BaseService):
     def replace(self, id, document, original):
         return self.restore_version(id, document, original) or super().replace(id, document, original)
 
+    def get(self, req, lookup):
+        if req is None and lookup is not None and '$or' in lookup:
+            # embedded resource generates mongo query which doesn't work with elastic
+            # so it needs to be fixed here
+            return super().get(req, lookup['$or'][0])
+        return super().get(req, lookup)
+
     def find_one(self, req, **lookup):
         item = super().find_one(req, **lookup)
 
@@ -519,6 +528,7 @@ class ArchiveService(BaseService):
 
         convert_task_attributes_to_objectId(new_doc)
         transtype_metadata(new_doc)
+        signals.item_duplicate.send(self, item=new_doc, original=original_doc, operation=operation)
         get_model(ItemModel).create([new_doc])
         self._duplicate_versions(original_doc['_id'], new_doc)
         self._duplicate_history(original_doc['_id'], new_doc)
@@ -537,6 +547,8 @@ class ArchiveService(BaseService):
                 new_doc,
                 operation or ITEM_DUPLICATED_FROM
             )
+
+        signals.item_duplicated.send(self, item=new_doc, original=original_doc, operation=operation)
 
         return new_doc['guid']
 
@@ -1127,7 +1139,7 @@ class ArchiveService(BaseService):
 class AutoSaveResource(Resource):
     endpoint_name = 'archive_autosave'
     item_url = item_url
-    schema = item_schema({'_id': {'type': 'string', 'unique': True}})
+    schema = get_schema(versioning=True)
     resource_methods = ['POST']
     item_methods = ['GET', 'PUT', 'PATCH', 'DELETE']
     resource_title = endpoint_name

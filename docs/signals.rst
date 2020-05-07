@@ -49,3 +49,9 @@ Core Signals
 
 .. autodata:: item_validate
     :annotation:
+
+.. autodata:: item_duplicate
+    :annotation:
+
+.. autodata:: item_duplicated
+    :annotation:

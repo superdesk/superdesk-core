@@ -71,6 +71,8 @@ LAST_AUTHORING_DESK = 'last_authoring_desk'
 LAST_PRODUCTION_DESK = 'last_production_desk'
 DESK_HISTORY = 'desk_history'
 
+ITEM_EVENT_ID = 'event_id'
+
 metadata_schema = {
     config.ID_FIELD: {
         'type': 'string',
@@ -246,11 +248,27 @@ metadata_schema = {
     },
     'correction_sequence': {
         'type': 'integer',
+        'nullable': True,
         'mapping': not_analyzed
     },
     'rewrite_sequence': {
         'type': 'integer',
+        'nullable': True,
         'mapping': not_analyzed
+    },
+    'rewrite_of': {
+        'type': 'string',
+        'nullable': True,
+        'mapping': not_analyzed,
+    },
+    'rewritten_by': {
+        'type': 'string',
+        'nullable': True,
+        'mapping': not_analyzed,
+    },
+    'sequence': {
+        'type': 'integer',
+        'nullable': True,
     },
     'keywords': {
         'type': 'list',
@@ -271,7 +289,8 @@ metadata_schema = {
     },
     'profile': {
         'type': 'string',
-        'nullable': True
+        'nullable': True,
+        'mapping': not_analyzed,
     },
 
     # Related to state of an article
@@ -359,7 +378,17 @@ metadata_schema = {
         'type': 'dict',
         'nullable': True,
         'schema': {
-            'located': {'type': 'dict', 'nullable': True},
+            'located': {'type': 'dict', 'nullable': True, 'schema': {
+                'state_code': {'type': 'string'},
+                'city': {'type': 'string'},
+                'tz': {'type': 'string'},
+                'country_code': {'type': 'string'},
+                'dateline': {'type': 'string'},
+                'alt_name': {'type': 'string'},
+                'state': {'type': 'string'},
+                'city_code': {'type': 'string'},
+                'country': {'type': 'string'},
+            }},
             'date': {'type': 'datetime', 'nullable': True},
             'source': {'type': 'string'},
             'text': {'type': 'string', 'nullable': True}
@@ -385,10 +414,14 @@ metadata_schema = {
         },
     },
     'renditions': {
-        'type': 'dict'
+        'type': 'dict',
+        'schema': {},
+        'allow_unknown': True,
     },
     'filemeta': {
-        'type': 'dict'
+        'type': 'dict',
+        'schema': {},
+        'allow_unknown': True,
     },
     'filemeta_json': {
         'type': 'string'
@@ -401,6 +434,8 @@ metadata_schema = {
     },
     ASSOCIATIONS: {
         'type': 'dict',
+        'allow_unknown': True,
+        'schema': {},
         'mapping': {
             'type': 'object',
             'dynamic': False,
@@ -495,7 +530,15 @@ metadata_schema = {
     },
 
     # Desk and Stage Details
-    'task': {'type': 'dict'},
+    'task': {
+        'type': 'dict',
+        'schema': {
+            'user': {'type': 'string', 'mapping': not_analyzed},
+            'desk': {'type': 'string', 'mapping': not_analyzed},
+            'stage': {'type': 'string', 'mapping': not_analyzed},
+            'status': {'type': 'string', 'mapping': not_analyzed},
+        },
+    },
 
     # Task and Lock Details
     'task_id': {
@@ -546,7 +589,13 @@ metadata_schema = {
                 'type': 'boolean',
                 'default': False
             }
-        }
+        },
+        'default': {
+            'marked_for_not_publication': False,
+            'marked_for_legal': False,
+            'marked_archived_only': False,
+            'marked_for_sms': False,
+        },
     },
 
     'sms_message': {
@@ -569,6 +618,8 @@ metadata_schema = {
     # draft-js internal data
     'fields_meta': {
         'type': 'dict',
+        'schema': {},
+        'allow_unknown': True,
         'nullable': True,
         'mapping': not_enabled,
     },
@@ -588,7 +639,9 @@ metadata_schema = {
 
     'extra': {
         'type': 'dict',
+        'schema': {},
         'mapping': not_enabled,
+        'allow_unknown': True,
     },
 
     'attachments': {
@@ -630,7 +683,36 @@ metadata_schema = {
     'embargoed': {'type': 'datetime'},
     'embargoed_text': {'type': 'string', 'mapping': not_indexed},
 
-    'marked_for_user': Resource.rel('users', required=False, nullable=True)
+    'marked_for_user': Resource.rel('users', required=False, nullable=True),
+
+    'broadcast': {
+        'type': 'dict',
+        'schema': {
+            'status': {'type': 'string', 'mapping': not_analyzed},
+            'master_id': {'type': 'string', 'mapping': not_analyzed},
+            'rewrite_id': {'type': 'string', 'mapping': not_analyzed},
+        },
+    },
+
+    ITEM_EVENT_ID: {'type': 'string', 'mapping': not_analyzed},
+
+    # schedules
+    EMBARGO: {'type': 'datetime', 'nullable': True},
+    PUBLISH_SCHEDULE: {'type': 'datetime', 'nullable': True},
+    SCHEDULE_SETTINGS: {
+        'type': 'dict',
+        'schema': {
+            'time_zone': {'type': 'string', 'nullable': True, 'mapping': not_analyzed},
+            'utc_embargo': {'type': 'datetime', 'nullable': True},
+            'utc_publish_schedule': {'type': 'datetime', 'nullable': True},
+        },
+    },
+
+    # system fields
+    '_type': {'type': 'string'},
+    'used': {'type': 'boolean'},
+    'operation': {'type': 'string'},
+    'es_highlight': {'type': 'dict', 'allow_unknown': True, 'readonly': True},
 }
 
 metadata_schema['lock_user']['versioned'] = False
@@ -667,3 +749,15 @@ class Priority(SuperdeskBaseEnum):
     Screen_Finance = 4
     Continuous_News = 5
     Ordinary = 6
+
+
+def get_schema(versioning=False):
+    schema = metadata_schema.copy()
+
+    if versioning:
+        schema.update({
+            '_id_document': {'type': 'string'},
+            '_current_version': {'type': 'integer'},
+        })
+
+    return schema
