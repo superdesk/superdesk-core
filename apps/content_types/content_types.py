@@ -478,6 +478,7 @@ def init_subject_schema(schema, default, mandatory, allowed, fields_map):
         is_readonly = schema['subject'].get('readonly', False)
     except (KeyError, TypeError):
         is_required = DEFAULT_SCHEMA['subject'].get('required', False)
+        is_readonly = DEFAULT_SCHEMA['subject'].get('readonly', False)
     schema[subject] = deepcopy(DEFAULT_SCHEMA['subject'])
     schema[subject]['default'] = default
     schema[subject]['mandatory_in_list']['scheme'] = mandatory

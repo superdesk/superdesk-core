@@ -1265,7 +1265,7 @@ Feature: Content Profile
                     },
                     "type": "list",
                     "required": true,
-                    "mandatory_in_list": {"scheme": {"category": "category"}}
+                    "mandatory_in_list": {"scheme": {"category": {"required": true}}}
                 }
             },
             "editor": {
