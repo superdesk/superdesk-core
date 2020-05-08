@@ -475,7 +475,7 @@ def init_subject_schema(schema, default, mandatory, allowed, fields_map):
     subject = get_subject_name(fields_map)
     try:
         is_required = schema['subject']['required']
-        is_readonly = schema['subject'].get('readonly', None)
+        is_readonly = schema['subject'].get('readonly', False)
     except (KeyError, TypeError):
         is_required = DEFAULT_SCHEMA['subject'].get('required', False)
     schema[subject] = deepcopy(DEFAULT_SCHEMA['subject'])
