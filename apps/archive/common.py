@@ -907,7 +907,7 @@ def get_subject(doc1, doc2=None):
 # Support for Cerberus 1.1
 # https://github.com/pyeve/eve/commit/2d49d2cbbed1f63e8923394c3440bb224f07c028#diff-f2ca88dfb75b2bba118053de1fc307c2
 def resolve_default_values(document, defaults):
-    """ Add any defined default value for missing document fields.
+    """Add any defined default value for missing document fields.
 
     :param document: the document being posted or replaced
     :param defaults: tree with the default values
