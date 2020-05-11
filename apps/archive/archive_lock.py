@@ -10,6 +10,7 @@
 
 from flask import request
 from superdesk.resource import Resource, build_custom_hateoas
+from superdesk.metadata.item import get_schema
 from superdesk.metadata.utils import item_url
 from .common import get_user, get_auth, CUSTOM_HATEOAS
 from superdesk.services import BaseService
@@ -27,7 +28,10 @@ def _update_returned_document(doc, item):
 class ArchiveLockResource(Resource):
     endpoint_name = 'archive_lock'
     url = 'archive/<{0}:item_id>/lock'.format(item_url)
-    schema = {'lock_action': {'type': 'string'}}
+    schema = get_schema(versioning=True)
+    schema.update({
+        '_links': {'type': 'dict'},
+    })
     datasource = {'source': 'archive'}
     resource_methods = ['GET', 'POST']
     resource_title = endpoint_name
@@ -48,7 +52,7 @@ class ArchiveLockService(BaseService):
 class ArchiveUnlockResource(Resource):
     endpoint_name = 'archive_unlock'
     url = 'archive/<{0}:item_id>/unlock'.format(item_url)
-    schema = {'lock_user': {'type': 'string'}}
+    schema = ArchiveLockResource.schema
     datasource = {'source': 'archive'}
     resource_methods = ['GET', 'POST']
     resource_title = endpoint_name

@@ -31,7 +31,6 @@ Feature: Create renditions
     And we fetch a file "#rendition.16-9.href#"
     And we get OK response
 
-
     @auth
     @vocabulary
     Scenario: Only system crops are generated
@@ -58,5 +57,3 @@ Feature: Create renditions
       Then we get rendition "viewImage" with mimetype "image/jpeg"
       And we fetch a file "#rendition.viewImage.href#"
       And we get OK response
-      And we fetch a file "#rendition.16-9.href#"
-      Then we get error 404

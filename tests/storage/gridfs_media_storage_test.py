@@ -1,4 +1,4 @@
-
+import os
 import io
 import eve
 import bson
@@ -107,3 +107,113 @@ class GridFSMediaStorageTestCase(unittest.TestCase):
         gridfs.find = Mock(return_value=[])
         self.media._fs['MONGO'] = gridfs
         return gridfs
+
+    def test_mimetype_detect(self):
+        # keep default mimetype
+        gridfs = self._mock_gridfs()
+        _id = bson.ObjectId()
+        content = b'bytes are here'
+        filename = 'extensionless'
+        content_type = 'text/css'
+        with self.app.app_context():
+            self.media.put(content, filename, content_type, _id=str(_id))
+        kwargs = {
+            'content_type': content_type,
+            'filename': filename,
+            'metadata': None,
+            '_id': _id,
+        }
+        gridfs.put.assert_called_once_with(content, **kwargs)
+
+        # get mimetype from the filename
+        gridfs = self._mock_gridfs()
+        _id = bson.ObjectId()
+        content = b'bytes are here'
+        filename = 'styles.css'
+        content_type = 'application/pdf'
+        with self.app.app_context():
+            self.media.put(content, filename, content_type, _id=str(_id))
+        kwargs = {
+            'content_type': 'text/css',
+            'filename': filename,
+            'metadata': None,
+            '_id': _id,
+        }
+        gridfs.put.assert_called_once_with(content, **kwargs)
+
+        gridfs = self._mock_gridfs()
+        _id = bson.ObjectId()
+        content = b'bytes are here'
+        filename = 'styles.JpG'
+        content_type = 'application/pdf'
+        with self.app.app_context():
+            self.media.put(content, filename, content_type, _id=str(_id))
+        kwargs = {
+            'content_type': 'image/jpeg',
+            'filename': filename,
+            'metadata': None,
+            '_id': _id,
+        }
+        gridfs.put.assert_called_once_with(content, **kwargs)
+
+        # get mimetype from the file
+        fixtures_path = os.path.join(os.path.dirname(__file__), 'fixtures')
+        with open(os.path.join(fixtures_path, "file_example-jpg.jpg"), 'rb') as content:
+            gridfs = self._mock_gridfs()
+            _id = bson.ObjectId()
+            filename = 'extensionless'
+            content_type = 'dummy/text'
+            with self.app.app_context():
+                self.media.put(content, filename, content_type, _id=str(_id))
+            kwargs = {
+                'content_type': 'image/jpeg',
+                'filename': filename,
+                'metadata': None,
+                '_id': _id,
+            }
+            gridfs.put.assert_called_once_with(content, **kwargs)
+
+        with open(os.path.join(fixtures_path, "file_example-xls.xls"), 'rb') as content:
+            gridfs = self._mock_gridfs()
+            _id = bson.ObjectId()
+            filename = 'extensionless'
+            content_type = 'dummy/text'
+            with self.app.app_context():
+                self.media.put(content, filename, content_type, _id=str(_id))
+            kwargs = {
+                'content_type': 'application/vnd.ms-excel',
+                'filename': filename,
+                'metadata': None,
+                '_id': _id,
+            }
+            gridfs.put.assert_called_once_with(content, **kwargs)
+
+        with open(os.path.join(fixtures_path, "file_example-xlsx.xlsx"), 'rb') as content:
+            gridfs = self._mock_gridfs()
+            _id = bson.ObjectId()
+            filename = 'extensionless'
+            content_type = 'dummy/text'
+            with self.app.app_context():
+                self.media.put(content, filename, content_type, _id=str(_id))
+            kwargs = {
+                'content_type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'filename': filename,
+                'metadata': None,
+                '_id': _id,
+            }
+            gridfs.put.assert_called_once_with(content, **kwargs)
+
+        with open(os.path.join(fixtures_path, "file_example-docx.docx"), 'rb') as content:
+            gridfs = self._mock_gridfs()
+            _id = bson.ObjectId()
+            filename = 'extensionless'
+            content_type = 'dummy/text'
+            with self.app.app_context():
+                self.media.put(content, filename, content_type, _id=str(_id))
+            kwargs = {
+                'content_type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'filename': filename,
+                'metadata': None,
+                '_id': _id,
+            }
+            gridfs.put.assert_called_once_with(content, **kwargs)

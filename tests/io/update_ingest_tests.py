@@ -221,7 +221,7 @@ class UpdateIngestTest(TestCase):
 
         req = ParsedRequest()
         self.assertEqual(1, self.app.data.elastic.find('ingest', req, {}).count())
-        self.assertEqual(1, self.app.data.mongo.find('ingest', req, {}).count())
+        self.assertEqual(1, self.app.data.mongo.find('ingest', req, {})[1])
 
     def test_removing_expired_items_from_elastic_only(self):
         now = utcnow()

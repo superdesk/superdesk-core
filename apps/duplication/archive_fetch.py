@@ -30,7 +30,7 @@ from superdesk.utc import utcnow
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk import get_resource_service
 from superdesk.metadata.packages import RESIDREF, REFS, GROUPS
-from superdesk.metadata.item import MEDIA_TYPES, ASSOCIATIONS
+from superdesk.metadata.item import MEDIA_TYPES, ASSOCIATIONS, get_schema
 
 custom_hateoas = {'self': {'title': 'Archive', 'href': '/archive/{_id}'}}
 
@@ -39,11 +39,13 @@ class FetchResource(Resource):
     endpoint_name = 'fetch'
     resource_title = endpoint_name
 
-    schema = {
+    schema = get_schema(True)
+    schema.update({
         'desk': Resource.rel('desks', False, required=True),
         'stage': Resource.rel('stages', False, nullable=True),
-        'macro': {'type': 'string'}
-    }
+        'macro': {'type': 'string'},
+        '_links': {'type': 'dict'},
+    })
 
     url = 'ingest/<{0}:id>/fetch'.format(item_url)
 

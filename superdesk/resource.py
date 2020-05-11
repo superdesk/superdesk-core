@@ -74,6 +74,7 @@ class Resource():
     elastic_prefix = None
     query_objectid_as_string = None
     soft_delete = None
+    hateoas = None
 
     def __init__(self, endpoint_name, app, service, endpoint_schema=None):
         self.endpoint_name = endpoint_name
@@ -122,6 +123,8 @@ class Resource():
                 endpoint_schema.update({'query_objectid_as_string': self.query_objectid_as_string})
             if self.soft_delete:
                 endpoint_schema.update({'soft_delete': self.soft_delete})
+            if self.hateoas is not None:
+                endpoint_schema.update({'hateoas': self.hateoas})
             if self.mongo_indexes:
                 # used in app:initialize_data
                 endpoint_schema['mongo_indexes__init'] = self.mongo_indexes

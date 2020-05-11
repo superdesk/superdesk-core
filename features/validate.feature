@@ -450,3 +450,33 @@ Feature: Validate
     """
     {"errors": ["SUBJECT is a required field"]}
     """
+
+  @auth
+    Scenario: Validate picture using content profile
+    Given "content_types"
+    """
+    [{"_id": "test", "item_type": "picture", "schema": {
+      "headline": {
+        "type": "string",
+        "nullable": true,
+        "required": true
+      }
+    }}]
+    """
+
+    When we post to "/validate"
+    """
+    {
+      "act": "publish",
+      "type": "picture",
+      "validate": {
+        "type": "picture",
+        "slugline": "foo"
+      }
+    }
+    """
+
+    Then we get existing resource
+    """
+    {"errors": ["HEADLINE is a required field"]}
+    """

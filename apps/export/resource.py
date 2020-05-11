@@ -20,6 +20,14 @@ class ExportResource(Resource):
         'validate': {
             'type': 'boolean',
             'required': False
-        }
+        },
+        'failures': {
+            'type': 'integer',
+            'readonly': True,
+        },
+        'url': {
+            'type': 'string',
+            'nullable': True,
+        },
     }
     privileges = {'POST': 'archive'}

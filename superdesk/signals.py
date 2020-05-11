@@ -18,6 +18,8 @@ __all__ = [
     'item_move',
     'item_moved',
     'item_routed',
+    'item_duplicate',
+    'item_duplicated',
 ]
 
 import blinker
@@ -122,6 +124,28 @@ item_validate = signals.signal('item:validate')
 #: :param item: new item created via routing
 #:
 item_routed = signals.signal('item:routed')
+
+
+#: Sent before item is duplicated
+#:
+#: .. versionadded:: 2.0
+#:
+#: :param sender: ArchiveService
+#: :param item: duplicated item to be saved
+#: :param original: original item
+#: :param operation: operation
+item_duplicate = signals.signal('item:duplicate')
+
+
+#: Sent after item is duplicated
+#:
+#: .. versionadded:: 2.0
+#:
+#: :param sender: ArchiveService
+#: :param item: duplicated item
+#: :param original: original item
+#: :param operation: operation
+item_duplicated = signals.signal('item:duplicated')
 
 
 def connect(signal, subscriber):

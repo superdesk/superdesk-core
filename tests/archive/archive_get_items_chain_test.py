@@ -168,6 +168,46 @@ class ArchiveGetItemsChainTestCase(TestCase):
             'slugline': 'skoda scala',
             'byline': 'BELGA',
         },
+        {
+            '_id': 'update-2-translation-fr-nl-update',
+            'guid': 'update-2-translation-fr-nl-update',
+            'headline': 'Update 2 Translation FR NL update',
+            "rewrite_of": "update-2-translation-fr-nl",
+            'language': 'nl',
+            'type': 'text',
+            'version': 1,
+            'profile': 'text',
+            'pubstatus': 'usable',
+            'format': 'HTML',
+            'firstcreated': datetime.datetime(2019, 4, 3, 12, 41, 53),
+            'versioncreated': datetime.datetime(2019, 4, 3, 12, 45, 14),
+            'original_creator': '5d385f31fe985ec67a0ca583',
+            'state': 'published',
+            'source': 'Belga',
+            'version_creator': '5d385f31fe985ec67a0ca583',
+            'slugline': 'skoda scala',
+            'byline': 'BELGA',
+        },
+        {
+            '_id': 'update-2-translation-fr-nl-update-2',
+            'guid': 'update-2-translation-fr-nl-update-2',
+            'headline': 'Update 2 Translation FR NL update',
+            "rewrite_of": "update-2-translation-fr-nl-update",
+            'language': 'nl',
+            'type': 'text',
+            'version': 1,
+            'profile': 'text',
+            'pubstatus': 'usable',
+            'format': 'HTML',
+            'firstcreated': datetime.datetime(2019, 4, 3, 12, 41, 53),
+            'versioncreated': datetime.datetime(2019, 4, 3, 12, 45, 14),
+            'original_creator': '5d385f31fe985ec67a0ca583',
+            'state': 'published',
+            'source': 'Belga',
+            'version_creator': '5d385f31fe985ec67a0ca583',
+            'slugline': 'skoda scala',
+            'byline': 'BELGA',
+        },
     ]
 
     def setUp(self):
@@ -226,4 +266,22 @@ class ArchiveGetItemsChainTestCase(TestCase):
             [i['_id'] for i in items],
             ['original', 'original-translation-fr', 'original-translation-nl',
              'update-1', 'update-2', 'update-2-translation-fr', 'update-2-translation-fr-nl']
+        )
+
+        update_2_translation_fr_nl_update = self.archive[7]
+        items = archive_service.get_items_chain(update_2_translation_fr_nl_update)
+        self.assertListEqual(
+            [i['_id'] for i in items],
+            ['original', 'original-translation-fr', 'original-translation-nl',
+             'update-1', 'update-2', 'update-2-translation-fr', 'update-2-translation-fr-nl',
+             'update-2-translation-fr-nl-update']
+        )
+
+        update_2_translation_fr_nl_update_2 = self.archive[8]
+        items = archive_service.get_items_chain(update_2_translation_fr_nl_update_2)
+        self.assertListEqual(
+            [i['_id'] for i in items],
+            ['original', 'original-translation-fr', 'original-translation-nl',
+             'update-1', 'update-2', 'update-2-translation-fr', 'update-2-translation-fr-nl',
+             'update-2-translation-fr-nl-update', 'update-2-translation-fr-nl-update-2']
         )

@@ -19,6 +19,9 @@ SETTING_HOURS = 'ARCHIVE_AUTOCOMPLETE_HOURS'
 class AutocompleteResource(superdesk.Resource):
     item_methods = []
     resource_methods = ['GET']
+    schema = {
+        'value': {'type': 'string'},
+    }
 
 
 class AutocompleteService(superdesk.Service):

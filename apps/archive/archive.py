@@ -33,8 +33,10 @@ from superdesk.activity import add_activity, notify_and_add_activity, ACTIVITY_C
 from eve.utils import parse_request, config, date_to_str, ParsedRequest
 from superdesk.services import BaseService
 from superdesk.users.services import current_user_has_privilege, is_admin
-from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, CONTENT_TYPE, ITEM_TYPE, EMBARGO, \
-    PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, SIGN_OFF, ASSOCIATIONS, MEDIA_TYPES, INGEST_ID, PROCESSED_FROM, PUBLISH_STATES
+from superdesk.metadata.item import (ITEM_STATE, CONTENT_STATE, CONTENT_TYPE, ITEM_TYPE, EMBARGO,
+                                     PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, SIGN_OFF, ASSOCIATIONS,
+                                     MEDIA_TYPES, INGEST_ID, PROCESSED_FROM, PUBLISH_STATES,
+                                     get_schema)
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, RESIDREF
 from apps.common.components.utils import get_component
 from apps.item_autosave.components.item_autosave import ItemAutosave
@@ -157,43 +159,6 @@ def flush_renditions(updates, original):
                         updates[ASSOCIATIONS][key]['renditions'][old_rendition] = None
 
 
-def flush_previous_item_keys_from_associations(updates, original):
-    """Remove original association items keys from updated association item
-        if the association key is same and associated items _id is diffrent.
-    for ex:
-        1. Add an image to a articles body and save the article where let's say key is(association.edior_0)
-        2. Remove the associated image don't save artilce this time
-        3. And add a new media item wehere key is still (association.edior_0)
-        4. save the article and notice that new associated item contains all those keys from previous associated
-            items that were not present in this one.
-        Which is wrong, this function identifies those keys and sets them to None
-    :param dict updates: updates for the document
-    :param original: original is document
-    """
-    if not original.get(ASSOCIATIONS) or not updates.get(ASSOCIATIONS):
-        return
-
-    for key in [k for k in updates[ASSOCIATIONS] if k in original[ASSOCIATIONS]]:
-        if original[ASSOCIATIONS].get(key) and updates[ASSOCIATIONS].get(key) and (
-           updates[ASSOCIATIONS][key].get('_id') != original[ASSOCIATIONS][key].get('_id')):
-            # make sure associated item's "_id" are different in updates and original
-            for item_key in original[ASSOCIATIONS][key]:
-                present_in_updates = True
-                if item_key not in updates[ASSOCIATIONS][key]:
-                    present_in_updates = False
-                    updates[ASSOCIATIONS][key][item_key] = None
-
-                # handle the nested dict inside associations key
-                if isinstance(original[ASSOCIATIONS][key][item_key], dict):
-                    if not present_in_updates:
-                        updates[ASSOCIATIONS][key][item_key] = {}
-                    # handles situation like ex: original['associations']['foo']['extra'] = {'foo': 1}
-                    # and updates['associations']['foo']['extra'] = {'bar': 1}
-                    # output will be updates['associations']['foo']['extra'] = {'bar': 1, 'foo': None}
-                    for k in original[ASSOCIATIONS][key][item_key]:
-                        updates[ASSOCIATIONS][key][item_key][k] = None
-
-
 class ArchiveVersionsResource(Resource):
     schema = item_schema()
     extra_response_fields = extra_response_fields
@@ -223,7 +188,8 @@ class ArchiveResource(Resource):
         },
         'default_sort': [('_updated', -1)],
         'elastic_filter': {'bool': {
-            'must': {'terms': {'state': ['fetched', 'routed', 'draft', 'in_progress', 'spiked', 'submitted']}},
+            'must': {'terms': {'state': ['fetched', 'routed', 'draft', 'in_progress',
+                                         'spiked', 'submitted', 'unpublished']}},
             'must_not': {'term': {'version': 0}}
         }},
         'elastic_filter_callback': private_content_filter
@@ -351,7 +317,6 @@ class ArchiveService(BaseService):
         self._add_desk_metadata(updates, original)
         self._handle_media_updates(updates, original, user)
         flush_renditions(updates, original)
-        flush_previous_item_keys_from_associations(updates, original)
 
     def _handle_media_updates(self, updates, original, user):
         update_associations(updates)
@@ -468,6 +433,13 @@ class ArchiveService(BaseService):
     def replace(self, id, document, original):
         return self.restore_version(id, document, original) or super().replace(id, document, original)
 
+    def get(self, req, lookup):
+        if req is None and lookup is not None and '$or' in lookup:
+            # embedded resource generates mongo query which doesn't work with elastic
+            # so it needs to be fixed here
+            return super().get(req, lookup['$or'][0])
+        return super().get(req, lookup)
+
     def find_one(self, req, **lookup):
         item = super().find_one(req, **lookup)
 
@@ -557,6 +529,7 @@ class ArchiveService(BaseService):
 
         convert_task_attributes_to_objectId(new_doc)
         transtype_metadata(new_doc)
+        signals.item_duplicate.send(self, item=new_doc, original=original_doc, operation=operation)
         get_model(ItemModel).create([new_doc])
         self._duplicate_versions(original_doc['_id'], new_doc)
         self._duplicate_history(original_doc['_id'], new_doc)
@@ -575,6 +548,8 @@ class ArchiveService(BaseService):
                 new_doc,
                 operation or ITEM_DUPLICATED_FROM
             )
+
+        signals.item_duplicated.send(self, item=new_doc, original=original_doc, operation=operation)
 
         return new_doc['guid']
 
@@ -1114,10 +1089,26 @@ class ArchiveService(BaseService):
             try:
                 item = self.find_one(req={}, _id=item['rewrite_of'])
                 # prepend translations + update
-                items_chain = self.get_item_translations(item) + items_chain
-                items_chain.insert(0, item)
+                items_chain = [item, *self.get_item_translations(item), *items_chain]
             except Exception:
-                break
+                # `item` is not an update, but it can be a translation
+                if 'translated_from' in item:
+                    translation_item = item
+                    item = get_item_translated_from(item)
+                    # add item + translations
+                    items_chain = [
+                        item,
+                        *[
+                            i for i in self.get_item_translations(item)
+                            # `translation_item` was already added into `items_chain` on a previous iteration
+                            if i['_id'] != translation_item['_id']
+                        ],
+                        *items_chain
+                    ]
+                else:
+                    # `item` is not a translation and not an update, it means that it's an initial
+                    break
+
         else:
             logger.error(
                 'Failed to retrieve the whole items chain for item {}'.format(item.get('_id'))
@@ -1149,7 +1140,7 @@ class ArchiveService(BaseService):
 class AutoSaveResource(Resource):
     endpoint_name = 'archive_autosave'
     item_url = item_url
-    schema = item_schema({'_id': {'type': 'string', 'unique': True}})
+    schema = get_schema(versioning=True)
     resource_methods = ['POST']
     item_methods = ['GET', 'PUT', 'PATCH', 'DELETE']
     resource_title = endpoint_name

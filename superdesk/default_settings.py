@@ -83,7 +83,6 @@ def local_to_utc_hour(hour):
 ABS_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../'))
 BEHAVE_TESTS_FIXTURES_PATH = ABS_PATH + '/features/steps/fixtures'
 
-XML = False
 IF_MATCH = True
 BANDWIDTH_SAVER = False
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%S+0000'
@@ -112,8 +111,9 @@ server_url = urlparse(SERVER_URL)
 SERVER_DOMAIN = server_url.netloc or 'localhost'
 URL_PREFIX = env('URL_PREFIX', server_url.path.lstrip('/')) or ''
 
-VALIDATION_ERROR_STATUS = 400
 JSON_SORT_KEYS = False
+VALIDATION_ERROR_STATUS = 400
+VALIDATION_ERROR_AS_LIST = True
 
 CACHE_CONTROL = 'max-age=0, no-cache'
 
@@ -802,6 +802,12 @@ KEYWORDS_ADD_MISSING_ON_PUBLISH = False
 #: .. versionadded:: 2.0
 #:
 WORKFLOW_ALLOW_MULTIPLE_UPDATES = False
+
+#: Allow users who are not members on a desk to duplicate its content
+#:
+#: .. versionadded:: 1.34
+#:
+WORKFLOW_ALLOW_DUPLICATE_TO_NON_MEMBERS = False
 
 #: Enable archive autocomplete API
 #:

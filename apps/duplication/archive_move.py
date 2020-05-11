@@ -185,6 +185,6 @@ class MoveService(BaseService):
 
 superdesk.workflow_action(
     name='submit_to_desk',
-    include_states=['draft', 'fetched', 'routed', 'submitted', 'in_progress', 'published', 'scheduled'],
+    include_states=['draft', 'fetched', 'routed', 'submitted', 'in_progress', 'published', 'scheduled', 'unpublished'],
     privileges=['archive']
 )

@@ -6,7 +6,7 @@ from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
 from superdesk.publish.formatters import get_all_formatters
 from superdesk.utils import get_random_string
-from eve.validation import ValidationError
+from superdesk.validation import ValidationError
 from io import BytesIO
 from zipfile import ZipFile
 from flask import current_app as app
@@ -67,7 +67,7 @@ class ExportService(BaseService):
         """Validates the given story for publish action"""
         validate_item = {'act': 'publish', 'type': doc['type'], 'validate': doc}
         validation_errors = get_resource_service('validate').post([validate_item])
-        if validation_errors[0]:
+        if validation_errors[0][0]:
             raise ValidationError(validation_errors)
 
     def _validate_and_get_formatter(self, doc):

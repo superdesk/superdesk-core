@@ -61,7 +61,7 @@ class APMediaFeedingService(HTTPFeedingServiceBase):
         {
             'id': 'recoverytime', 'type': 'text', 'label': 'Number of hours to recover', 'default_value': '',
             'placeholder': 'Specifying a number will restart the feed from that number of hours in the past'
-        }
+        },
     ]
 
     HTTP_AUTH = False
@@ -150,12 +150,9 @@ class APMediaFeedingService(HTTPFeedingServiceBase):
         for item in response.get('data', {}).get('items', []):
             try:
                 # Get the item meta data
-                r = self.get_url(url=item.get('item', {}).get('uri'),
-                                 params={'apikey': provider.get('config', {}).get('apikey')}, verify=False,
-                                 allow_redirects=True)
                 logger.info('Get AP meta data for "{}" uri: {}'.format(item.get('item', {}).get('headline'),
                                                                        item.get('item', {}).get('uri')))
-                r.raise_for_status()
+                r = self.api_get(item.get('item', {}).get('uri'), provider)
                 complete_item = json.loads(r.text)
 
                 # Get the nitf rendition of the item
@@ -163,15 +160,21 @@ class APMediaFeedingService(HTTPFeedingServiceBase):
                     'href')
                 if nitf_ref:
                     logger.info('Get AP nitf : {}'.format(nitf_ref))
-                    r = self.get_url(url=nitf_ref, params={'apikey': provider.get('config', {}).get('apikey')},
-                                     verify=False, allow_redirects=True)
-                    r.raise_for_status()
+                    r = self.api_get(nitf_ref, provider)
                     root_elt = etree.fromstring(r.content)
                     nitf_item = nitf.NITFFeedParser().parse(root_elt)
                     complete_item['nitf'] = nitf_item
                 else:
                     if item.get('item', {}).get('type') == 'text':
                         logger.warning('No NITF for story {}'.format(item.get('item', {}).get('uri')))
+
+                associations = complete_item['data']['item'].get('associations')
+                if associations:
+                    complete_item['associations'] = {}
+                    for key, assoc in associations.items():
+                        logger.info('Get AP association "%s"', assoc.get("headline"))
+                        related_json = self.api_get(assoc['uri'], provider).json()
+                        complete_item['associations'][key] = related_json
 
                 parsed_items.append(parser.parse(complete_item, provider))
 
@@ -186,6 +189,12 @@ class APMediaFeedingService(HTTPFeedingServiceBase):
         update['config'] = upd_provider
 
         return [parsed_items]
+
+    def api_get(self, url, provider):
+        resp = self.get_url(url=url, params={'apikey': provider['config']['apikey']},
+                            verify=False, allow_redirects=True)
+        resp.raise_for_status()
+        return resp
 
 
 register_feeding_service(APMediaFeedingService)
