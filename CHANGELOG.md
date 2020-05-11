@@ -1,5 +1,14 @@
 # Superdesk Server Changelog
 
+## [1.33.1] 2020-05-11
+
+### Fixed
+
+- Fix spiking of unpublished items.
+- Fix rewrite action membership check when user has no move privilege.
+- Display field names instead of IDs on validation error.
+- Allow any logged in user to upload files.
+
 ## [1.33] 2020-04-09
 
 Listing some changes below, for full list go to [github](https://github.com/superdesk/superdesk-core/milestone/79?closed=1).
