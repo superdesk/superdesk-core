@@ -711,12 +711,12 @@ metadata_schema = {
     },
 
     # system fields
-    '_type': {'type': 'string'},
+    '_type': {'type': 'string', 'mapping': None},
     'used': {'type': 'boolean'},
     'operation': {'type': 'string'},
     'es_highlight': {'type': 'dict', 'allow_unknown': True, 'readonly': True},
 }
-    
+
 metadata_schema['lock_user']['versioned'] = False
 metadata_schema['lock_session']['versioned'] = False
 
