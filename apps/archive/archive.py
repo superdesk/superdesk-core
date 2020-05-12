@@ -123,6 +123,28 @@ def update_associations(doc):
     doc[ASSOCIATIONS].update(mediaList)
 
 
+def update_refs(updates, original):
+    assoc = original.get('associations') or {}
+    assoc.update(updates.get('associations') or {})
+    refs = []
+    for key, val in assoc.items():
+        if not val:
+            continue
+        if val.get('_id') and not val.get('guid'):
+            # for related items we only store the _id, fetch other metadata
+            item = superdesk.get_resource_service('archive').find_one(req=None, _id=val['_id']) or {}
+        else:
+            item = {}
+        refs.append({
+            'key': key,
+            '_id': val.get('_id'),
+            'uri': val.get('uri') or item.get('uri'),
+            'guid': val.get('guid') or item.get('guid'),
+            'type': val.get('type') or item.get('type'),
+        })
+    updates['refs'] = refs
+
+
 def flush_renditions(updates, original):
     """Removes incorrect custom renditions from `updates`.
 
@@ -316,6 +338,7 @@ class ArchiveService(BaseService):
         self._add_desk_metadata(updates, original)
         self._handle_media_updates(updates, original, user)
         flush_renditions(updates, original)
+        update_refs(updates, original)
 
     def _handle_media_updates(self, updates, original, user):
         update_associations(updates)

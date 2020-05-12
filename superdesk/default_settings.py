@@ -359,6 +359,7 @@ CORE_APPS = [
     'superdesk.auth',
     'superdesk.attachments',
     'superdesk.auth_server',
+    'apps.links',
 ]
 
 #: Specify what modules should be enabled
@@ -844,3 +845,9 @@ TANSA_PROFILES = {}
 
 # Enable ninjs to send all the fields for place in output.
 NINJS_PLACE_EXTENDED = False
+
+#: Define for how many days it shoudl return links for
+#:
+#: .. versionadded:: 1.34
+#:
+LINKS_MAX_DAYS = 0
