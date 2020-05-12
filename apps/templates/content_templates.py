@@ -186,6 +186,8 @@ class ContentTemplatesResource(Resource):
                   'PATCH': CONTENT_TEMPLATE_PRIVILEGE,
                   'DELETE': CONTENT_TEMPLATE_PRIVILEGE}
 
+    merge_nested_documents = True
+
 
 class ContentTemplatesService(BaseService):
 

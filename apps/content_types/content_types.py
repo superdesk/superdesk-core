@@ -108,6 +108,8 @@ class ContentTypesResource(superdesk.Resource):
         'default_sort': [('priority', -1)],
     }
 
+    merge_nested_documents = True
+
 
 class ContentTypesService(superdesk.Service):
     def _set_updated_by(self, doc):
