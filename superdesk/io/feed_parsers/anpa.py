@@ -78,15 +78,15 @@ class ANPAFeedParser(FileFeedParser):
                 if item.get(FORMAT) == FORMATS.PRESERVED:
                     # ANPA defines a number of special characters e.g. TLI (Tab Line Inicator) Hex x08 and
                     # TTS Space Band Hex x10 These will be replaced, there will likely be others
-                    body_lines = [l.strip('^').replace('\b', '%08').replace('\x10', '%10') for l in text if
-                                  l.startswith(('\t', '^', '\b'))]
+                    body_lines = [ch.strip('^').replace('\b', '%08').replace('\x10', '%10') for ch in text if
+                                  ch.startswith(('\t', '^', '\b'))]
                     item['body_html'] = '<pre>' + '\n'.join(body_lines) + '</pre>'
                 else:
-                    body_lines = [l.strip() for l in text if l.startswith(('\t'))]
+                    body_lines = [ch.strip() for ch in text if ch.startswith(('\t'))]
                     item['body_html'] = '<p>' + '</p><p>'.join(body_lines) + '</p>'
 
                 # content metadata
-                header_lines = [l.strip('^<= ') for l in text if l.startswith('^')]
+                header_lines = [ch.strip('^<= ') for ch in text if ch.startswith('^')]
                 if len(header_lines) > 1:
                     item['headline'] = header_lines[1].rstrip('\r\n^<= ')
                 if len(header_lines) > 3:
