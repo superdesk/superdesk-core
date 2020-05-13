@@ -23,21 +23,19 @@ class DataUpdate(DataUpdate):
             original_schema = deepcopy(content_type['schema'])
             for field, description in content_type['schema'].items():
                 if description and description.get('mandatory_in_list'):
-                    mandatory_in_list = description.get('mandatory_in_list')
-                    if mandatory_in_list['scheme'] is not None:
-                        custom_fields = mandatory_in_list.get('scheme')
-                        if custom_fields is not None:
-                            for custom_field, custom_value in custom_fields.items():
-                                if custom_field == custom_value:
-                                    custom_fields[custom_field] = {
-                                        'required': True,
-                                        'readonly': False,
-                                    }
-                                else:
-                                    custom_fields[custom_field] = {
-                                        'required': False,
-                                        'readonly': False,
-                                    }
+                    custom_fields = description.get('mandatory_in_list').get('scheme')
+                    if custom_fields is not None:
+                        for custom_field, custom_value in custom_fields.items():
+                            if custom_field == custom_value:
+                                custom_fields[custom_field] = {
+                                    'required': True,
+                                    'readonly': False,
+                                }
+                            else:
+                                custom_fields[custom_field] = {
+                                    'required': False,
+                                    'readonly': False,
+                                }
 
             if original_schema != content_type['schema']:
                 print('update schema in content type', content_type['label'])
