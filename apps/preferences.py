@@ -93,6 +93,7 @@ class PreferencesResource(Resource):
     allow_unknown = True
     resource_methods = []
     item_methods = ['GET', 'PATCH']
+    merge_nested_documents = True
 
     superdesk.register_default_user_preference('feature:preview', {
         'type': 'bool',

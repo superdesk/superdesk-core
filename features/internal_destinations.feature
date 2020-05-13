@@ -732,7 +732,6 @@ Feature: Internal Destinations
             "pubstatus": "usable",
             "schedule_settings": {
                 "time_zone": "Europe/London",
-                "utc_embargo": null,
                 "utc_publish_schedule": "2099-05-19T10:15:00+0000"
             }
             }]

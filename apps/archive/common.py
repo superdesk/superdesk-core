@@ -16,7 +16,6 @@ from datetime import datetime
 from dateutil.parser import parse as date_parse
 from flask import current_app as app
 from eve.versioning import insert_versioning_documents
-from eve.defaults import resolve_default_values
 from pytz import timezone
 from copy import deepcopy
 
@@ -902,3 +901,44 @@ def get_subject(doc1, doc2=None):
             value = [v.get('name') for v in value if 'name' in v][0]
         if value:
             return value
+
+
+# Copied from eve, as this method was removed in the following commit
+# Support for Cerberus 1.1
+# https://github.com/pyeve/eve/commit/2d49d2cbbed1f63e8923394c3440bb224f07c028#diff-f2ca88dfb75b2bba118053de1fc307c2
+def resolve_default_values(document, defaults):
+    """Add any defined default value for missing document fields.
+
+    :param document: the document being posted or replaced
+    :param defaults: tree with the default values
+    :type defaults: dict
+
+    .. versionchanged:: 0.5
+       Fix #417. A default value of [] for a list causes an IndexError.
+
+    .. versionadded:: 0.2
+    """
+    todo = [(defaults, document)]
+    while len(todo) > 0:
+        defaults, document = todo.pop()
+        if isinstance(defaults, list) and len(defaults):
+            todo.extend((defaults[0], item) for item in document)
+            continue
+        for name, value in defaults.items():
+            if isinstance(value, dict):
+                # default dicts overwrite simple values
+                existing = document.setdefault(name, {})
+                if not isinstance(existing, dict):
+                    document[name] = {}
+                todo.append((value, document[name]))
+            if isinstance(value, list) and len(value):
+                existing = document.get(name)
+                if not existing:
+                    document.setdefault(name, value)
+                    continue
+                if all(isinstance(item, (dict, list)) for item in existing):
+                    todo.extend((value[0], item) for item in existing)
+                else:
+                    document.setdefault(name, existing)
+            else:
+                document.setdefault(name, value)

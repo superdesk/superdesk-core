@@ -413,7 +413,7 @@ class NINJSFormatter(Formatter):
 
         def get_label(item):
             if locator_map:
-                locators = [l for l in locator_map.get('items', []) if l['qcode'] == item.get('qcode')]
+                locators = [loc for loc in locator_map.get('items', []) if loc['qcode'] == item.get('qcode')]
                 if locators and len(locators) == 1:
                     return locators[0].get('state') or \
                         locators[0].get('country') or \

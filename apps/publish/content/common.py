@@ -95,6 +95,7 @@ class BasePublishResource(ArchiveResource):
         self.item_methods = ['PATCH']
 
         self.privileges = {'PATCH': publish_type}
+
         super().__init__(endpoint_name, app=app, service=service)
 
 
