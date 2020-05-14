@@ -646,4 +646,4 @@ Other
 .. autodata:: ARCHIVE_AUTOCOMPLETE_DAYS
 .. autodata:: ARCHIVE_AUTOCOMPLETE_HOURS
 
-.. autodata:: LINKS_MAX_DAYS
+.. autodata:: LINKS_MAX_HOURS

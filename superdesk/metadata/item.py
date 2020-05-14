@@ -733,9 +733,13 @@ metadata_schema = {
         },
     },
 
+    # usage tracking
+    'used': {'type': 'boolean'},
+    'used_count': {'type': 'integer'},
+    'used_updated': {'type': 'datetime'},
+
     # system fields
     '_type': {'type': 'string'},
-    'used': {'type': 'boolean'},
     'operation': {'type': 'string'},
     'es_highlight': {'type': 'dict', 'allow_unknown': True, 'readonly': True},
 }

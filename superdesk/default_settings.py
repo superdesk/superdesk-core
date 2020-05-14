@@ -846,8 +846,10 @@ TANSA_PROFILES = {}
 # Enable ninjs to send all the fields for place in output.
 NINJS_PLACE_EXTENDED = False
 
-#: Define for how many days it shoudl return links for
+#: Define for how many hours in the past it shoudl return links for.
+#:
+#: Set to `0` to disable time limit.
 #:
 #: .. versionadded:: 1.34
 #:
-LINKS_MAX_DAYS = 0
+LINKS_MAX_HOURS = 0

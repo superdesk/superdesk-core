@@ -23,14 +23,14 @@ def elastic_filter():
         },
     }
 
-    LINKS_DAYS = app.config.get('LINKS_MAX_DAYS')
-    if LINKS_DAYS:
+    LINKS_HOURS = app.config.get('LINKS_MAX_HOURS')
+    if LINKS_HOURS:
         query['bool'].update({
             'minimum_should_match': 1,
             'must': {
                 'range': {
                     'versioncreated': {
-                        'gte': 'now-{}d/d'.format(int(LINKS_DAYS)),
+                        'gte': 'now-{}h'.format(int(LINKS_HOURS)),
                     },
                 },
             },
