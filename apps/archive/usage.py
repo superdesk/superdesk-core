@@ -38,7 +38,7 @@ def update_refs(updates, original):
     if 'associations' not in updates:
         return
     refs = []
-    assoc = original.get('associations') or {}
+    assoc = original['associations'].copy() if original.get('associations') else {}
     assoc.update(updates['associations'] or {})
     for key, val in assoc.items():
         if not val:

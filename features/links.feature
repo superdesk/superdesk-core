@@ -1,4 +1,3 @@
-@wip
 Feature: Track usage of an item
 
     @auth
