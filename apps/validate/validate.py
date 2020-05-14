@@ -33,8 +33,9 @@ INVALID_CHAR = 'contains invalid characters'
 
 def check_json(doc, field, value):
     if isinstance(doc, dict):
-        if field in doc and doc[field] == value:
+        if field in doc and value['required'] and doc[field]:
             return True
+        return False
         for key in doc:
             if check_json(doc[key], field, value):
                 return True
@@ -114,7 +115,13 @@ class SchemaValidator(Validator):
         """
         for key in mandatory:
             for key_field in mandatory[key]:
-                if not check_json(value, key, mandatory[key][key_field]):
+                if mandatory[key][key_field]['required'] and len(value) > 0:
+                    if any(value_field['scheme'] == key_field for value_field in value):
+                        if not check_json(value, key, mandatory[key][key_field]):
+                            self._error(key_field, REQUIRED_FIELD)
+                    else:
+                        self._error(key_field, REQUIRED_FIELD)
+                else:
                     self._error(key_field, REQUIRED_FIELD)
 
     def _validate_mandatory_in_dictionary(self, mandatory, field, value):
