@@ -2132,7 +2132,7 @@ Feature: Content Publishing
                     "slugline": {"type": "string", "required": true, "maxlength": 64, "minlength": 1},
                     "subject": {
                       "type": "list",
-                      "mandatory_in_list": {"scheme": {"subject": "subject_custom", "category": "category"}},
+                      "mandatory_in_list": {"scheme": {"subject": {"required": "true"}, "category": {"required": "true"}}},
                       "schema": {
                          "type": "dict",
                          "schema": {
@@ -2165,7 +2165,7 @@ Feature: Content Publishing
       """
       [{"guid": "123", "type": "text", "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
         "subject": [{"name": "DiDFødselsdag", "qcode": "DiDFødselsdag", "scheme": "category", "service": {"d": 1, "i": 1}},
-                    {"name": "arkeologi", "qcode": "01001000", "scheme": "subject_custom", "parent": "01000000"}],
+                    {"name": "arkeologi", "qcode": "01001000", "scheme": "subject", "parent": "01000000"}],
         "slugline": "test", "state": "fetched", "profile": "Standard"}]
       """
       Then we get OK response
@@ -2254,7 +2254,7 @@ Feature: Content Publishing
                     "slugline": {"type": "string", "required": true, "maxlength": 64, "minlength": 1},
                     "subject": {
                       "type": "list",
-                      "mandatory_in_list": {"scheme": {"subject": "subject_custom", "category": "category"}},
+                      "mandatory_in_list": {"scheme": {"subject": {"required": "true"}, "category": {"required": "true"}}},
                       "schema": {
                          "type": "dict",
                          "schema": {
@@ -2519,7 +2519,7 @@ Feature: Content Publishing
                     },
                     "type": "dict"
                 },
-                "mandatory_in_list": {"scheme": {"subject": "vocabulary1"}},
+                "mandatory_in_list": {"scheme": {"subject": {"required": "true"}}},
                 "default": [],
                 "nullable": false,
                 "required": true,
@@ -2533,7 +2533,7 @@ Feature: Content Publishing
       """
       [{
           "type": "text", "profile": "#content_types._id#", "state": "in_progress",
-          "subject": [{"scheme": "vocabulary1", "name": "Option 1", "qcode": "o1"}],
+          "subject": [{"scheme": "subject", "name": "Option 1", "qcode": "o1"}],
           "extra": {"custom_field_1": "some text"}
       }]
       """
