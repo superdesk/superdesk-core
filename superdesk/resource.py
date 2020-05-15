@@ -125,6 +125,12 @@ class Resource():
                 # used in app:initialize_data
                 endpoint_schema['mongo_indexes__init'] = self.mongo_indexes
 
+            if app.config.get('SCHEMA_UPDATE', {}).get(self.endpoint_name):
+                schema_updates = app.config['SCHEMA_UPDATE'][self.endpoint_name]
+                log.warning('Updating {} schema with custom data for fields: {}'.format(
+                    self.endpoint_name.upper(), ', '.join(schema_updates.keys())))
+                self.schema.update(schema_updates)
+
         self.endpoint_schema = endpoint_schema
 
         on_fetched_resource = getattr(app, 'on_fetched_resource_%s' % self.endpoint_name)

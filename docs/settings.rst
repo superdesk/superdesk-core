@@ -643,3 +643,33 @@ will use it for place field searching.
 .. autodata:: ARCHIVE_AUTOCOMPLETE
 .. autodata:: ARCHIVE_AUTOCOMPLETE_DAYS
 .. autodata:: ARCHIVE_AUTOCOMPLETE_HOURS
+
+.. _settings.extending:
+
+Extend Superdesk
+-----------------
+
+Additional settings which are allowed to change some Superdesk defaults
+
+``SCHEMA_UPDATE``
+
+Default: ``None``
+
+Allows to update a default schema.
+
+Example::
+
+    SCHEMA_UPDATE = {
+        'archive': {
+            'extra': {
+                'type': 'dict',
+                'schema': {},
+                'mapping': {
+                    'type': 'object',
+                    'enabled': True
+                },
+                'allow_unknown': True,
+            }
+        }
+    }
+
