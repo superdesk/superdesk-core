@@ -265,7 +265,7 @@ Feature: Validate
       "embed1": {"required": true},
       "date1": {"required": true},
       "subject": {
-        "mandatory_in_list": {"scheme": {"vocabulary1": "vocabulary1"}},
+        "mandatory_in_list": {"scheme": {"vocabulary1": {"required": true}}},
         "type": "list"
       }
     }}]

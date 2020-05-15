@@ -2194,7 +2194,7 @@ Feature: Content Publishing
                     "slugline": {"type": "string", "required": true, "maxlength": 64, "minlength": 1},
                     "subject": {
                       "type": "list",
-                      "mandatory_in_list": {"scheme": {"subject": "subject_custom", "category": "category"}},
+                      "mandatory_in_list": {"scheme": {"subject_custom": {"required": "true"}, "category": {"required": "true"}}},
                       "schema": {
                          "type": "dict",
                          "schema": {
