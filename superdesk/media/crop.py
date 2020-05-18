@@ -246,7 +246,10 @@ class CropService():
         if 'original' in updates.get('renditions', {}):
             original_image = updates['renditions']['original']
         else:
-            original_image = original['renditions']['original']
+            try:
+                original_image = original['renditions']['original']
+            except KeyError:
+                return
 
         for key in [k for k in update_renditions if update_renditions[k]]:
             if not self.get_crop_by_name(key):

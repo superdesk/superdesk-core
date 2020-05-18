@@ -42,6 +42,7 @@ from apps.archive.common import get_user, insert_into_versions, item_operations,
     FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM, remove_unwanted
 from apps.archive.common import validate_schedule, ITEM_OPERATION, update_schedule_settings, \
     convert_task_attributes_to_objectId, get_expiry, get_utc_schedule, get_expiry_date, transtype_metadata
+from apps.archive.usage import track_usage, update_refs
 from apps.common.components.utils import get_component
 from apps.item_autosave.components.item_autosave import ItemAutosave
 from apps.legal_archive.commands import import_into_legal_archive
@@ -118,6 +119,7 @@ class BasePublishService(BaseService):
         transtype_metadata(updates, original)
         self._process_publish_updates(original, updates)
         self._mark_media_item_as_used(updates, original)
+        update_refs(updates, original)
 
     def on_updated(self, updates, original):
         original = super().find_one(req=None, _id=original[config.ID_FIELD])
@@ -749,29 +751,17 @@ class BasePublishService(BaseService):
             return
 
         for item_name, item_obj in updates.get(ASSOCIATIONS).items():
-            if not (item_obj and config.ID_FIELD in item_obj):
+            if not item_obj or config.ID_FIELD not in item_obj:
                 continue
-
             item_id = item_obj[config.ID_FIELD]
-            media_item = {}
+            media_item = self.find_one(req=None, _id=item_id)
             if app.settings.get('COPY_METADATA_FROM_PARENT') and item_obj.get(ITEM_TYPE) in MEDIA_TYPES:
                 stored_item = (original.get(ASSOCIATIONS) or {}).get(item_name) or item_obj
             else:
-                media_item = stored_item = self.find_one(req=None, _id=item_id)
+                stored_item = media_item
                 if not stored_item:
                     continue
-
-            # If the media item is not marked as 'used', mark it as used
-            if original.get(ITEM_TYPE) == CONTENT_TYPE.TEXT and \
-                    (item_obj is not stored_item or not stored_item.get('used')):
-                archive_service = get_resource_service('archive')
-                if media_item is not stored_item:
-                    media_item = archive_service.find_one(req=None, _id=item_id)
-
-                if media_item and not media_item.get('used'):
-                    archive_service.system_update(media_item['_id'], {'used': True}, media_item)
-
-                stored_item['used'] = True
+            track_usage(media_item, stored_item, item_obj, item_name, original)
 
 
 def get_crop(rendition):
