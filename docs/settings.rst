@@ -635,6 +635,8 @@ Default: ``None``
 When configured it will enable ``/places_autocomplete`` service and client
 will use it for place field searching.
 
+Other
+-----
 
 .. autodata:: KEYWORDS_ADD_MISSING_ON_PUBLISH
 
@@ -643,6 +645,8 @@ will use it for place field searching.
 .. autodata:: ARCHIVE_AUTOCOMPLETE
 .. autodata:: ARCHIVE_AUTOCOMPLETE_DAYS
 .. autodata:: ARCHIVE_AUTOCOMPLETE_HOURS
+
+.. autodata:: LINKS_MAX_HOURS
 
 .. _settings.extending:
 
@@ -672,4 +676,3 @@ Example::
             }
         }
     }
-

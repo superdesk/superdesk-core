@@ -452,6 +452,31 @@ metadata_schema = {
             }
         }
     },
+
+    # track references to other objects,
+    # based on associations but allows queries
+    'refs': {
+        'type': 'list',
+        'readonly': True,
+        'schema': {
+            '_id': {'type': 'string'},
+            'key': {'type': 'string'},
+            'uri': {'type': 'string'},
+            'guid': {'type': 'string'},
+            'type': {'type': 'string'},
+        },
+        'mapping': {
+            'type': 'object',
+            'properties': {
+                '_id': not_analyzed,
+                'key': not_analyzed,
+                'uri': not_analyzed,
+                'guid': not_analyzed,
+                'type': not_analyzed,
+            },
+        },
+    },
+
     'alt_text': {
         'type': 'string',
         'nullable': True
@@ -708,9 +733,13 @@ metadata_schema = {
         },
     },
 
+    # usage tracking
+    'used': {'type': 'boolean'},
+    'used_count': {'type': 'integer'},
+    'used_updated': {'type': 'datetime'},
+
     # system fields
     '_type': {'type': 'string'},
-    'used': {'type': 'boolean'},
     'operation': {'type': 'string'},
     'es_highlight': {'type': 'dict', 'allow_unknown': True, 'readonly': True},
 }
