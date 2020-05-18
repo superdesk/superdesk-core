@@ -57,6 +57,11 @@ def set_error_handlers(app):
     def server_forbidden_handler(error):
         return send_response(None, ({'code': 403, 'error': error.response}, None, None, 403))
 
+    @app.errorhandler(AssertionError)
+    def assert_error_handler(error):
+        print('error', error)
+        return send_response(None, ({'code': 400, 'error': str(error) if str(error) else 'assert'}, None, None, 400))
+
     @app.errorhandler(500)
     def server_error_handler(error):
         """Log server errors."""

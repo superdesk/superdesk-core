@@ -11,7 +11,7 @@ Feature: Track usage of an item
         ]
         """
 
-        When we get "links?guid=one"
+        When we get "links?where={"guid":"one"}"
         Then we get list with 0 items
 
         When we patch "/archive/one"
@@ -20,7 +20,7 @@ Feature: Track usage of an item
         """
         Then we get OK response
 
-        When we get "links?guid=two"
+        When we get "links?where={"guid": "two"}"
         Then we get list with 1 items
         """
         {"_items": [
@@ -40,7 +40,7 @@ Feature: Track usage of an item
         """
         Then we get OK response
 
-        When we get "links?guid=guid3"
+        When we get "links?where={"guid": "guid3"}"
         Then we get list with 1 items
         """
         {"_items": [
@@ -54,7 +54,7 @@ Feature: Track usage of an item
         """
         Then we get OK response
 
-        When we get "links?uri=externaluri&guid=fetchedid"
+        When we get "links?where={"uri":"externaluri", "guid": "fetchedid"}"
         Then we get list with 1 items
         """
         {"_items": [
@@ -66,7 +66,7 @@ Feature: Track usage of an item
         """
         {"headline": "foo"}
         """
-        And we get "links?guid=three"
+        And we get "links?where={"guid": "three"}"
         Then we get list with 1 items
         """
         {"_items": [

@@ -1,7 +1,7 @@
 
 import superdesk
 
-from flask import request, current_app as app
+from flask import request, current_app as app, json
 from superdesk.resource import build_custom_hateoas
 
 from apps.archive.archive import ArchiveResource, ArchiveService
@@ -9,9 +9,12 @@ from apps.archive.common import CUSTOM_HATEOAS
 
 
 def elastic_filter():
-    guid = request.args.get('guid')
-    uri = request.args.get('uri') or guid
-    assert guid
+    where = request.args.get('where')
+    assert where, 'where not set'
+
+    params = json.loads(where)
+    guid = params['guid']
+    uri = params.get('uri') or guid
 
     query = {
         'bool': {
@@ -53,11 +56,16 @@ class LinksResource(ArchiveResource):
 
 
 class LinksService(ArchiveService):
+
     def enhance_items(self, items):
         super().enhance_items(items)
         for item in items:
             build_custom_hateoas(CUSTOM_HATEOAS, item)
 
+    def get(self, req, lookup):
+        req.where = None  # it's handled in the elastic_filter
+        return super().get(req, lookup)
+
 
 def init_app(_app):
-    superdesk.register_resource('links', LinksResource, _app=_app)
+    superdesk.register_resource('links', LinksResource, LinksService, _app=_app)
