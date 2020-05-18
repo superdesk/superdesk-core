@@ -128,7 +128,8 @@ class ValidateMandatoryInListTest(TestCase):
                 'subject': {
                     'type': 'list',
                     'required': True,
-                    'mandatory_in_list': {'scheme': {'custom_subject': {"required": True}, 'category': {"required": True}}},
+                    'mandatory_in_list': {'scheme': {'custom_subject': {"required": True},
+                                                     'category': {"required": True}}},
                     'schema': {
                         'type': 'dict',
                         'schema': {
