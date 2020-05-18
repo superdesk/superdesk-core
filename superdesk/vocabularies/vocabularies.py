@@ -141,6 +141,10 @@ class VocabulariesResource(Resource):
         'preffered_items': {
             'type': 'boolean',
         },
+        'disable_entire_category_selection': {
+            'type': 'boolean',
+            'default': False
+        },
         'date_shortcuts': {
             'type': 'list',
             'nullable': True,
