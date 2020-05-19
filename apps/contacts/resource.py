@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from superdesk.resource import Resource, text_with_keyword
+from superdesk.resource import Resource, text_with_keyword, not_analyzed
 
 CONTACTS_PRIVILEDGE = 'contacts'
 VIEW_CONTACTS = 'view_contacts'
@@ -37,16 +37,17 @@ class ContactsResource(Resource):
         'organisation': {
             'type': 'string',
             'required': False,
-            'mapping': text_with_keyword,
+            'mapping': not_analyzed,
         },
         'first_name': {
             'type': 'string',
             'required': False,
+            'mapping': not_analyzed,
         },
         'last_name': {
             'type': 'string',
             'required': False,
-            'mapping': text_with_keyword,
+            'mapping': not_analyzed,
         },
         'honorific': {
             'type': 'string',
