@@ -42,6 +42,7 @@ class ContactsResource(Resource):
         'first_name': {
             'type': 'string',
             'required': False,
+            'mapping': text_with_keyword,
         },
         'last_name': {
             'type': 'string',
