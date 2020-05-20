@@ -655,7 +655,7 @@ metadata_schema = {
     'embargoed': {'type': 'datetime'},
     'embargoed_text': {'type': 'string', 'mapping': not_indexed},
 
-    'marked_for_user': Resource.rel('users', required=False, nullable=True)
+    'marked_for_user': Resource.rel('users', required=False, nullable=True),
 
     # usage tracking
     'used': {'type': 'boolean'},
