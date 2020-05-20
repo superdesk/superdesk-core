@@ -423,13 +423,6 @@ metadata_schema = {
     'refs': {
         'type': 'list',
         'readonly': True,
-        'schema': {
-            '_id': {'type': 'string'},
-            'key': {'type': 'string'},
-            'uri': {'type': 'string'},
-            'guid': {'type': 'string'},
-            'type': {'type': 'string'},
-        },
         'mapping': {
             'type': 'object',
             'properties': {
