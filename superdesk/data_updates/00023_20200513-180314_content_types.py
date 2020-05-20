@@ -26,11 +26,19 @@ class DataUpdate(DataUpdate):
                     custom_fields = description.get('mandatory_in_list').get('scheme')
                     if custom_fields is not None:
                         for custom_field, custom_value in custom_fields.items():
+                            # old notation
                             if custom_field == custom_value:
                                 custom_fields[custom_field] = {
                                     'required': True,
                                     'readonly': False,
                                 }
+                            # new notation
+                            elif type(custom_value) is dict:
+                                custom_fields[custom_field] = {
+                                    'required': custom_value.get('required', False),
+                                    'readonly': custom_value.get('readonly', False),
+                                }
+                            # default
                             else:
                                 custom_fields[custom_field] = {
                                     'required': False,
