@@ -2,4 +2,9 @@ from ..service import ProdApiService
 
 
 class UsersService(ProdApiService):
-    pass
+    excluded_fields = \
+        {
+            'user_preferences',
+            'session_preferences',
+            'password',
+        } | ProdApiService.excluded_fields
