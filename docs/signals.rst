@@ -55,3 +55,7 @@ Core Signals
 
 .. autodata:: item_duplicated
     :annotation:
+
+.. autodata:: archived_item_removed
+    :annotation:
+

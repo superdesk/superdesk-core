@@ -554,6 +554,12 @@ SESSION_EXPIRY_MINUTES = int(env('SESSION_EXPIRY_MINUTES', 240))
 #: The number of minutes before content items are purged
 CONTENT_EXPIRY_MINUTES = int(env('CONTENT_EXPIRY_MINUTES', 0))
 
+#: The number of minutes before content items are purged from archived
+#:
+#: .. versionadded:: 1.34
+#:
+ARCHIVED_EXPIRY_MINUTES = int(env('ARCHIVED_EXPIRY_MINUTES', 0))
+
 #: The number of minutes before ingest items are purged
 INGEST_EXPIRY_MINUTES = int(env('INGEST_EXPIRY_MINUTES', 2 * 24 * 60))
 
