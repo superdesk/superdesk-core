@@ -42,7 +42,10 @@ class ArchivePublishService(BasePublishService):
 
     def on_update(self, updates, original):
         if not original.get('firstpublished'):
-            updates.setdefault('firstpublished', utcnow())
+            if updates.get('publish_schedule'):
+                updates['firstpublished'] = updates['publish_schedule']
+            else:
+                updates['firstpublished'] = utcnow()
 
         if original.get('marked_for_user'):
             # remove marked_for_user on publish and keep it as previous_marked_user for history
