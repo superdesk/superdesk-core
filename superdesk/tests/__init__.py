@@ -55,6 +55,7 @@ def get_mongo_uri(key, dbname):
 
 def update_config(conf):
     conf['ELASTICSEARCH_INDEX'] = 'sptest'
+    conf['MONGO_DBNAME'] = 'sptests'
     conf['MONGO_URI'] = get_mongo_uri('MONGO_URI', 'sptests')
     conf['LEGAL_ARCHIVE_DBNAME'] = 'sptests_legal_archive'
     conf['LEGAL_ARCHIVE_URI'] = get_mongo_uri('LEGAL_ARCHIVE_URI', 'sptests_legal_archive')
@@ -87,6 +88,7 @@ def update_config(conf):
     conf['MACROS_MODULE'] = 'superdesk.macros'
     conf['DEFAULT_TIMEZONE'] = 'Europe/Prague'
     conf['LEGAL_ARCHIVE'] = True
+    conf['INSTALLED_APPS'].append('planning')
 
     # limit mongodb connections
     conf['MONGO_CONNECT'] = False
@@ -95,10 +97,10 @@ def update_config(conf):
     conf['MONGO_MAX_POOL_SIZE'] = 1
     conf['ARCHIVED_MAX_POOL_SIZE'] = 1
     conf['LEGAL_ARCHIVE_MAX_POOL_SIZE'] = 1
-    conf['PUBLISH_ASSOCIATED_ITEMS'] = True
 
     # misc
     conf['GEONAMES_USERNAME'] = 'superdesk_dev'
+    conf['PUBLISH_ASSOCIATED_ITEMS'] = True
 
     # auth server
     conf['AUTH_SERVER_SHARED_SECRET'] = 'some secret'

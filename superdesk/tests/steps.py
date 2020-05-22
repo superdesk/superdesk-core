@@ -55,7 +55,6 @@ from superdesk.utc import utcnow, get_expiry_date
 from superdesk.tests import get_prefixed_url, set_placeholder
 from apps.dictionaries.resource import DICTIONARY_FILE
 from superdesk.filemeta import get_filemeta
-from apps import io
 from pathlib import Path
 # for auth server
 from authlib.jose import jwt
@@ -68,7 +67,17 @@ ANALYTICS_DATETIME_FORMAT = "%Y-%m-%d %H:00:00"
 os.environ['AUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 
-def test_json(context, json_fields=[]):
+def expect_status(response, code):
+    assert int(code) == response.status_code, 'exptected {expected}, got {code}, reason={reason}'.format(
+        code=response.status_code,
+        expected=code,
+        reason=response.get_data().decode('utf-8'),
+    )
+
+
+def test_json(context, json_fields=None):
+    if json_fields is None:
+        json_fields = []
     try:
         response_data = json.loads(context.response.get_data())
     except Exception:
@@ -127,7 +136,9 @@ def assert_is_now(val, key):
     assert val + timedelta(seconds=2) > now, '%s should be %s, it is %s' % (key, now, val)
 
 
-def json_match(context_data, response_data, json_fields=[]):
+def json_match(context_data, response_data, json_fields=None):
+    if json_fields is None:
+        json_fields = []
     if isinstance(context_data, dict):
         if (not isinstance(response_data, dict)):
             return False
@@ -545,8 +556,10 @@ def run_update_ingest_ftp(*args):
         ftp_list_files_mock.return_value = (('ninjs1.json', '20181111123456'),
                                             ('ninjs2.json', '20181111123456'),
                                             ('ninjs3.json', '20181111123456'))
-        with mock.patch.object(ftp.FTPFeedingService, '_retrieve_and_parse') as retrieve_and_parse_mock:
+        with mock.patch.object(ftp.FTPFeedingService, '_retrieve_and_parse') as retrieve_and_parse_mock, \
+                mock.patch.object(ftp.FTPFeedingService, '_is_empty') as empty_file_mock:
             retrieve_and_parse_mock.side_effect = retrieve_and_parse_side_effect
+            empty_file_mock.return_value = False
             # run command
             update_ingest.UpdateIngest().run()
 
@@ -615,7 +628,6 @@ def fetch_from_provider(context, provider_name, guid, routing_scheme=None, desk_
     provider_service = get_feeding_service(provider['feeding_service'])
 
     if provider.get('name', '').lower() in ('aap', 'dpa', 'ninjs', 'email', 'ftp_ninjs', 'stt'):
-        file_path = get_provider_file_path(provider, guid)
         if provider.get('name', '').lower() == 'ftp_ninjs':
             file_path = os.path.join(provider.get('config', {}).get('path_fixtures', ''), guid)
         else:
@@ -989,7 +1001,9 @@ def when_upload_patch_dictionary(context):
     assert_ok(context.response)
 
 
-def upload_file(context, dest, filename, file_field, extra_data=None, method='post', user_headers=[]):
+def upload_file(context, dest, filename, file_field, extra_data=None, method='post', user_headers=None):
+    if user_headers is None:
+        user_headers = []
     with open(get_fixture_path(context, filename), 'rb') as f:
         data = {file_field: f}
         if extra_data:
@@ -1008,7 +1022,7 @@ def step_impl_when_upload_from_url(context):
     data = {'URL': external_url}
     headers = [('Content-Type', 'multipart/form-data')]
     headers = unique_headers(headers, context.headers)
-    fixture_path = Path(io.__file__).parent / "fixtures"
+    fixture_path = Path(superdesk.__file__).parent.parent / "tests" / "io" / "fixtures"
 
     with responses.RequestsMock() as rsps:
         apply_mock_file(rsps, "upload_from_url_mock.json", fixture_path=fixture_path)
@@ -1024,7 +1038,7 @@ def step_impl_when_upload_from_url_with_crop(context):
             'CropRight': '333'}
     headers = [('Content-Type', 'multipart/form-data')]
     headers = unique_headers(headers, context.headers)
-    fixture_path = Path(io.__file__).parent / "fixtures"
+    fixture_path = Path(superdesk.__file__).parent.parent / "tests" / "io" / "fixtures"
 
     with responses.RequestsMock() as rsps:
         apply_mock_file(rsps, "upload_from_url_mock.json", fixture_path=fixture_path)
@@ -1049,6 +1063,7 @@ def step_impl_then_get_new(context):
 def step_impl_then_get_error(context, code):
     expect_status(context.response, int(code))
     if context.text:
+        print('got', context.response.get_data().decode("utf-8"))
         test_json(context)
 
 
@@ -1454,6 +1469,7 @@ def step_impl_we_fetch_data_uri(context):
 @then('we fetch a file "{url}"')
 def step_impl_we_cannot_fetch_file(context, url):
     url = apply_placeholders(context, url)
+    assert '#' not in url, 'missing placeholders for url %s %s' % (url, getattr(context, 'placeholders', {}))
     headers = [('Accept', 'application/json')]
     headers = unique_headers(headers, context.headers)
     context.response = context.client.get(get_prefixed_url(context.app, url), headers=headers)
@@ -1979,7 +1995,7 @@ def then_field_is_populated(context, field_name):
 @then('we get "{field_name}" not populated')
 def then_field_is_not_populated(context, field_name):
     resp = parse_json_response(context.response)
-    assert resp[field_name] is None, 'item is not populated'
+    assert resp.get(field_name) is None, '%s should be none, but it is %s in %s' % (field_name, resp[field_name], resp)
 
 
 @then('the field "{field_name}" value is not "{field_value}"')
@@ -2017,7 +2033,9 @@ def step_impl_when_rewrite(context, item_id):
     if context.response.status_code == 400:
         return
 
+    expect_status(context.response, 201)
     resp = parse_json_response(context.response)
+
     set_placeholder(context, 'REWRITE_OF', _id)
     set_placeholder(context, 'REWRITE_ID', resp['_id'])
 
@@ -2456,10 +2474,8 @@ def we_assert_content_api_item_is_not_published(context, item_id):
 def we_ensure_that_archived_schema_extra_fields_are_not_present(context):
     with context.app.test_request_context(context.app.config['URL_PREFIX']):
         eve_keys = set([config.ID_FIELD, config.LAST_UPDATED, config.DATE_CREATED, config.VERSION, config.ETAG])
-        archived_schema_keys = set(context.app.config['DOMAIN']['archived']['schema'].keys())
-        archived_schema_keys.union(eve_keys)
-        archive_schema_keys = set(context.app.config['DOMAIN']['archive']['schema'].keys())
-        archive_schema_keys.union(eve_keys)
+        archived_schema_keys = set(context.app.config['DOMAIN']['archived']['schema'].keys()).union(eve_keys)
+        archive_schema_keys = set(context.app.config['DOMAIN']['archive']['schema'].keys()).union(eve_keys)
         extra_fields = [key for key in archived_schema_keys if key not in archive_schema_keys]
         duplicate_item = json.loads(context.response.get_data())
         for field in extra_fields:

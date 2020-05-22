@@ -10,6 +10,7 @@
 
 from superdesk.resource import Resource
 from superdesk.metadata.utils import item_url
+from superdesk.auth_server.scopes import Scope
 
 
 class PlanningResource(Resource):
@@ -17,13 +18,14 @@ class PlanningResource(Resource):
     item_url = item_url
     item_methods = ['GET']
     resource_methods = ['GET']
+    allow_unknown = True
     datasource = {
         'source': 'planning',
         'search_backend': 'elastic',
-        'default_sort': [('_updated', -1)],
-        'projection': {
-            'fields_meta': 0
-        },
+        'default_sort': [('_updated', -1)]
+    }
+    privileges = {
+        'GET': Scope.PLANNING_READ.name
     }
 
 
@@ -32,13 +34,14 @@ class EventsResource(Resource):
     item_url = item_url
     item_methods = ['GET']
     resource_methods = ['GET']
+    allow_unknown = True
     datasource = {
         'source': 'events',
         'search_backend': 'elastic',
-        'default_sort': [('dates.start', 1)],
-        'projection': {
-            'fields_meta': 0
-        },
+        'default_sort': [('_updated', -1)]
+    }
+    privileges = {
+        'GET': Scope.EVENTS_READ.name
     }
 
 
@@ -47,11 +50,42 @@ class AssignmentsResource(Resource):
     item_url = item_url
     item_methods = ['GET']
     resource_methods = ['GET']
+    allow_unknown = True
     datasource = {
         'source': 'assignments',
         'search_backend': 'elastic',
-        'default_sort': [('_updated', -1)],
-        'projection': {
-            'fields_meta': 0
-        },
+        'default_sort': [('_updated', -1)]
+    }
+    privileges = {
+        'GET': Scope.ASSIGNMENTS_READ.name
+    }
+
+
+class EventsHistoryResource(Resource):
+    url = 'events_history'
+    item_url = item_url
+    item_methods = ['GET']
+    resource_methods = ['GET']
+    allow_unknown = True
+    datasource = {
+        'source': 'events_history',
+        'default_sort': [('_updated', -1)]
+    }
+    privileges = {
+        'GET': Scope.EVENTS_READ.name
+    }
+
+
+class EventsFilesResource(Resource):
+    url = 'events_files'
+    item_url = item_url
+    item_methods = ['GET']
+    resource_methods = ['GET']
+    allow_unknown = True
+    datasource = {
+        'source': 'events_files',
+        'default_sort': [('_updated', -1)]
+    }
+    privileges = {
+        'GET': Scope.EVENTS_READ.name
     }

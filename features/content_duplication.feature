@@ -51,8 +51,7 @@ Feature: Duplication of Content
        "task": {"desk": "#desks._id#", "stage": "#desks.working_stage#", "user": "#CONTEXT_USER_ID#"},
        "original_id": "123",
        "firstcreated": "__now__",
-       "versioncreated": "__now__",
-       "firstpublished": null
+       "versioncreated": "__now__"
       }
       """
       Then there is no "last_production_desk" in task

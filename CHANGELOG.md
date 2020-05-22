@@ -1,5 +1,158 @@
 # Superdesk Server Changelog
 
+## [1.33] 2020-04-09
+
+Listing some changes below, for full list go to [github](https://github.com/superdesk/superdesk-core/milestone/79?closed=1).
+
+### Fixed
+
+- Handle missing macro for internal destination.
+- Fix block content filter when field is empty.
+- Fix babel get locale selector.
+- Fix error when moving item to archived and item is there already.
+- Don't publish locked associated items during correction.
+- Empty error message on insufficient privileges to create a template.
+- Fix related item refs on correction.
+- It is possible to publish related items locked by a user.
+- Removed associated item gets corrected on story correction.
+- Don't publish/unpublish items not fetchable from provider.
+- Custom CV field validation displays id instead of name.
+- POI of associated images is not updated in NINJS output on correction.
+- Make sure `guid` matches `_id` for items fetched from search provider.
+- Fix `item.extra` elastic mapping.
+- Fix backend validation for required custom fields.
+- Fix manage subscription on save error.
+- Fix internal markup language visible in activity stream.
+- Reset list of translations when duplicating/spiking an item.
+- Remove marked for user on publishing/spiking/killing.
+
+### Changed
+
+- Stop transmitting to subscriber on first error.
+- Use `ingest` celery queue for ingest.
+- Make geonames search style param configurable.
+- Don't move file on failed FTP ingestion on first attempt.
+- Set default pagination to match max limit.
+- Allow user to skip ingest config test if needed.
+- Handle tansa configuration on server.
+- Allow creating update before publishing previous one.
+- Make privileges names more descriptive.
+
+### Added
+
+- Add support to download media files.
+- Add config to allow updates of scheduled items.
+- Add method to get whole items chain.
+- Add `mark_for_user` privilege.
+- Allow `display_name` to be formatted on ldap authentication.
+- Add preview config for content profile editor fields.
+- Add config for custom S3 endpoint.
+- Add signal when item is routed via internal destination.
+- Add helpers for manipulating draftjs state.
+- Production API.
+- Allow special character validation in fields.
+- Implement slugline autocomplete.
+- Save new keywords when publishing an item.
+- Unpublishing an item is now possible in package editor.
+- Send email notification when item is marked for user.
+
+## [1.32.5] 2020-02-17
+
+### Fixed
+
+- Fix werkzeug package version.
+
+## [1.32.4] 2019-12-23
+
+### Added
+
+- Add `item:create` signal.
+
+## [1.32.3] 2019-12-17
+
+### Fixed
+
+- Fix rendition width/height sent as string in NINJS.
+
+## [1.32.2] 2019-12-13
+
+### Fixed
+
+- Fix error when parsing empty urgency in Newml G2 parser.
+- Check if user is a member of destination desk when moving content.
+
+### Changed
+
+- Make file ingest repeat timeout configurable.
+- Refactor Picture IPTC parser to simplify extending it in subclass.
+
+## [1.32.1] 2019-12-10
+
+### Added
+
+- Add data upgrade script for ContentType/CoverageProvider CVs.
+
+### Fixed
+
+- Fix binary image ingest missing IPTC metadata in output.
+- Add notifications for `content_template` changes.
+
+## [1.32] 2019-12-03
+
+### Added
+
+- Add `content_type` to *Contacts* resource.
+- Add `schema_field` to *Terms of Use* cv.
+- Support internal attachments.
+- Allow ingested item to reference item ingested previously.
+- Add news resource for production content.
+- Support internal attachments.
+- Add filter condition for featuremedia presence.
+- Add production API.
+- Keep list of translations on original item.
+- Implement mark for user action backend.
+- Additional filter condition operators for place.
+- Support Leuven University Dutch spellchecker.
+- Support Grammalecte spellchecker.
+
+### Changed
+
+- Use `contentUpdated` field to populate `versionCreated` in STT parser.
+- Generate custom renditions on image upload.
+- Add `task` param to stage incoming macro call.
+
+### Fixed
+
+- Fix date parsing in IPTC picture parser.
+- Use original item for validate signal.
+- Ingested and auto published updates are not reflected in Newshub.
+- Fix data type for custom date fields.
+- Check also `ctime` when detecting if file is too old for ingest.
+- Avoid duplicate items ingested via rss.
+- Set tzinfo on dates when ingesting ninjs.
+- Subject is required error when subject is there.
+- Fix routing of ingested items on every ingest update.
+- Auto-publish associated items only if those are not published yet.
+- Prevent out-of-sequence publishing of Updates.
+- Update user etag on role privileges change to force reload on client.
+- Fix validation error when same qcode is used with different scheme.
+- AP ingest stops on parsing error.
+- Use custom error message for unpublish validation.
+- Fix AP category parser mapping.
+- Fix validation for custom types.
+
+## [1.31.5] 2019-10-14
+
+### Changed
+
+- Add config to generate custom renditions by default.
+
+## [1.31.4] 2019-10-03
+
+### Fixed
+
+- Use custom error message for unpublish validation error.
+
 ## [1.31.3] 2019-09-06
 
 ### Fixed

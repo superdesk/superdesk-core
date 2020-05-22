@@ -1,0 +1,41 @@
+[
+    {
+        "_id": "5d3860bbfe985ec40943b60e",
+        "desk_metadata": {},
+        "content_expiry": 14398560,
+        "name": "DEV",
+        "source": "Belga",
+        "desk_type": "production",
+        "default_content_template": "5d385f17fe985ec5e1a78b49",
+        "default_content_profile": "belga_text",
+        "preserve_published_content": false,
+        "working_stage": "5d3860bbfe985ec40943b60c",
+        "incoming_stage": "5d3860bbfe985ec40943b60d",
+        "members": [
+            {
+                "user": "5d6e86f0e3a44a95b9d48f23"
+            },
+            {
+                "user": "5d385f31fe985ec67a0ca583"
+            }
+        ]
+    },
+    {
+        "_id": "5d76113ab3af37dea3a2eb9e",
+        "content_expiry": -1,
+        "name": "PROD",
+        "source": "AAP",
+        "desk_type": "production",
+        "monitoring_default_view": "list",
+        "preserve_published_content": false,
+        "working_stage": "5d76113ab3af37dea3a2eb9c",
+        "incoming_stage": "5d76113ab3af37dea3a2eb9d",
+        "members": [
+            {
+                "user": "5d385f31fe985ec67a0ca583"
+            }
+        ],
+        "default_content_profile": "belga_text",
+        "default_content_template": "5d385f17fe985ec5e1a78b49"
+    }
+]

@@ -26,7 +26,7 @@ from .privilege import privilege, intrinsic_privilege, get_intrinsic_privileges 
 from .workflow import *  # noqa
 from .signals import *  # noqa
 
-__version__ = '1.31.3'
+__version__ = '1.32.4'
 
 API_NAME = 'Superdesk API'
 SCHEMA_VERSION = 0
@@ -36,7 +36,7 @@ JINJA_FILTERS = dict()
 app_components = dict()
 app_models = dict()
 resources = dict()
-eve_backend = EveBackend()
+_eve_backend = EveBackend()
 default_user_preferences = dict()
 default_session_preferences = dict()
 logger = logging_lib.getLogger(__name__)
@@ -100,7 +100,7 @@ def blueprint(blueprint, app, **kwargs):
 
 def get_backend():
     """Returns the available backend, this will be changed in a factory if needed."""
-    return eve_backend
+    return _eve_backend
 
 
 def get_resource_service(resource_name):
@@ -163,6 +163,7 @@ def register_item_schema_field(name, schema, app, copy_on_rewrite=True):
     """
     for resource in ['ingest', 'archive', 'published', 'archive_autosave']:
         app.config['DOMAIN'][resource]['schema'].update({name: schema})
+        app.config['DOMAIN'][resource]['datasource']['projection'].update({name: 1})
 
     app.config['DOMAIN']['content_templates_apply']['schema']['item']['schema'].update(
         {name: schema}

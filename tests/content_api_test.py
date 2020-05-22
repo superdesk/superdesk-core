@@ -576,6 +576,41 @@ class ContentAPITestCase(TestCase):
             response = c.get(attachments[0]['href'], headers=self._auth_headers(subscriber))
             self.assertEqual(200, response.status_code, attachments[0]['href'])
 
+    def test_publish_item_with_internal_attachments(self):
+        media = io.BytesIO(b'content')
+        data = {'media': (media, 'media.txt')}
+        internal_attachment = {'title': 'Test Internal', 'description': 'test', 'internal': True}
+        public_attachment = {'title': 'Test', 'description': 'test', 'internal': False}
+        with self.app.test_request_context('attachments', method='POST', data=data):
+            internal_attachment['media'] = request.files['media']
+            public_attachment['media'] = request.files['media']
+            store_media_files(internal_attachment, 'attachments')
+            store_media_files(public_attachment, 'attachments')
+            superdesk.get_resource_service('attachments').post([internal_attachment, public_attachment])
+        self.assertIn('_id', internal_attachment)
+        self.assertIn('_id', public_attachment)
+        self.assertIsInstance(internal_attachment['media'], ObjectId)
+        self.assertIsInstance(public_attachment['media'], ObjectId)
+
+        item = {
+            'guid': 'foo-internal',
+            'type': 'text',
+            'attachments': [{'attachment': internal_attachment['_id']}, {'attachment': public_attachment['_id']}],
+            'body_html': '<p>Foo Bar</p>'
+        }
+
+        subscriber = {'_id': 'sub'}
+        self.content_api.publish(item, [subscriber])
+        with self.capi.test_client() as c:
+            response = c.get('items/foo-internal', headers=self._auth_headers(subscriber))
+            data = json.loads(response.data)
+
+        self.assertIn('attachments', data)
+        attachments = data['attachments']
+        # there should be only one attachment (public one)
+        self.assertEqual(1, len(attachments))
+        self.assertEqual(str(public_attachment['_id']), attachments[0]['id'])
+
     def test_items_default_sorting(self):
         subscriber = {'_id': 'sub1'}
         headers = self._auth_headers(subscriber)

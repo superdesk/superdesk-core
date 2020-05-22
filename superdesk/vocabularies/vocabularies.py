@@ -17,7 +17,7 @@ from eve.utils import config
 from eve.methods.common import serialize_value
 from flask_babel import _
 
-from superdesk import privilege
+from superdesk import privilege, get_resource_service
 from superdesk.notification import push_notification
 from superdesk.resource import Resource
 from superdesk.services import BaseService
@@ -49,9 +49,9 @@ class VocabulariesResource(Resource):
     schema = {
         '_id': {
             'type': 'string',
-            'required': True,
             'unique': True,
-            'regex': '^[a-zA-Z0-9-_]+$'
+            'required': True,
+            'regex': '^[a-zA-Z0-9-_]+$',
         },
         'display_name': {
             'type': 'string',
@@ -70,6 +70,7 @@ class VocabulariesResource(Resource):
             'required': False,
             'schema': {
                 'type': 'dict',
+                'schema': {},
             }
         },
         'popup_width': {
@@ -107,6 +108,10 @@ class VocabulariesResource(Resource):
         },
         'service': {
             'type': 'dict',
+            'schema': {},
+            'allow_unknown': True,
+            'keysrules': {'type': 'string'},
+            'valuesrules': {'type': 'integer'},
         },
         'priority': {
             'type': 'integer'
@@ -117,7 +122,9 @@ class VocabulariesResource(Resource):
             'nullable': True
         },
         'schema': {
-            'type': 'dict'
+            'type': 'dict',
+            'schema': {},
+            'allow_unknown': True,
         },
         'field_type': {
             'type': 'string',
@@ -125,12 +132,18 @@ class VocabulariesResource(Resource):
         },
         'field_options': {
             'type': 'dict',
+            'schema': {},
+            'allow_unknown': True,
         },
         'init_version': {
             'type': 'integer',
         },
         'preffered_items': {
             'type': 'boolean',
+        },
+        'disable_entire_category_selection': {
+            'type': 'boolean',
+            'default': False
         },
         'date_shortcuts': {
             'type': 'list',
@@ -147,6 +160,11 @@ class VocabulariesResource(Resource):
         'custom_field_type': {
             'type': 'string',
             'nullable': True,
+        },
+        'custom_field_config': {
+            'type': 'dict',
+            'nullable': True,
+            'schema': {},
         },
     }
 
@@ -171,6 +189,7 @@ class VocabulariesService(BaseService):
         else:
             update.setdefault('unique_field', 'qcode')
         unique_field = update.get('unique_field')
+        vocabs = {}
         if 'schema' in update and 'items' in update:
             for index, item in enumerate(update['items']):
                 for field, desc in update.get('schema', {}).items():
@@ -179,6 +198,35 @@ class VocabulariesService(BaseService):
                         msg = 'Required ' + field + ' in item ' + str(index)
                         payload = {'error': {'required_field': 1}, 'params': {'field': field, 'item': index}}
                         raise SuperdeskApiError.badRequestError(message=msg, payload=payload)
+
+                    elif desc.get('link_vocab') and desc.get('link_field'):
+                        if not vocabs.get(desc['link_vocab']):
+                            linked_vocab = self.find_one(req=None, _id=desc['link_vocab']) or {}
+
+                            vocabs[desc['link_vocab']] = [
+                                vocab.get(desc['link_field'])
+                                for vocab in linked_vocab.get('items') or []
+                            ]
+
+                        if item.get(field) and item[field] not in vocabs[desc['link_vocab']]:
+                            msg = '{} "{}={}" not found'.format(
+                                desc['link_vocab'],
+                                desc['link_field'],
+                                item[field]
+                            )
+                            payload = {
+                                'error': {
+                                    'required_field': 1,
+                                    'params': {
+                                        'field': field,
+                                        'item': index
+                                    }
+                                }
+                            }
+                            raise SuperdeskApiError.badRequestError(
+                                message=msg,
+                                payload=payload
+                            )
 
     def on_create(self, docs):
         for doc in docs:
@@ -397,3 +445,14 @@ class VocabulariesService(BaseService):
                 },
             }
             self.post([cv])
+
+
+def is_related_content(item_name, related_content=None):
+    if related_content is None:
+        related_content = list(
+            get_resource_service('vocabularies').get(req=None, lookup={'field_type': 'related_content'}))
+
+    if related_content and item_name.split('--')[0] in [content['_id'] for content in related_content]:
+        return True
+
+    return False

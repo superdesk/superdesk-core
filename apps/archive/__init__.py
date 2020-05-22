@@ -32,6 +32,8 @@ from apps.common.models.utils import register_model
 from apps.item_lock.models.item import ItemModel
 from apps.common.models.io.eve_proxy import EveProxy
 from .archive_rewrite import ArchiveRewriteResource, ArchiveRewriteService
+from .news import NewsResource, NewsService
+from flask_babel import _
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +84,10 @@ def init_app(app):
     service = ArchiveRelatedService(endpoint_name, backend=superdesk.get_backend())
     ArchiveRelatedResource(endpoint_name, app=app, service=service)
 
+    endpoint_name = 'news'
+    service = NewsService(endpoint_name, backend=superdesk.get_backend())
+    NewsResource(endpoint_name, app=app, service=service)
+
     from apps.item_autosave.components.item_autosave import ItemAutosave
     from apps.item_autosave.models.item_autosave import ItemAutosaveModel
     register_component(ItemLock(app))
@@ -91,23 +97,28 @@ def init_app(app):
 
     superdesk.privilege(
         name='monitoring_view',
-        label='Monitoring view',
-        description='Access to Monitoring view in left toolbar'
+        label=_('Monitoring view'),
+        description=_('Access to Monitoring view in left toolbar')
     )
-    superdesk.privilege(name='archive', label='Create content', description='Create and save content')
-    superdesk.privilege(name='ingest', label='Ingest', description='Access to ingest sources management')
-    superdesk.privilege(name='spike', label='Spike', description='Spike/delete items')
-    superdesk.privilege(name='spike_read', label='Spike view', description='View spiked content')
-    superdesk.privilege(name='unspike', label='Unspike', description='Unspike/undelete content')
-    superdesk.privilege(name='unlock', label='Unlock content', description='Unlock locked content by another user')
-    superdesk.privilege(name='metadata_uniquename', label='Edit Unique Name', description='Edit unique name')
-    superdesk.privilege(name='hold', label='Hold', description='Hold content')
-    superdesk.privilege(name='restore', label='Restore', description='Restore content')
-    superdesk.privilege(name='rewrite', label='Update', description='Create an update')
+    superdesk.privilege(name='archive', label=_('Create content'), description=_('Create and save content'))
+    superdesk.privilege(name='ingest', label=_('Ingest'), description=_('Access to ingest sources management'))
+    superdesk.privilege(name='spike', label=_('Spike'), description=_('Spike/delete items'))
+    superdesk.privilege(name='spike_read', label=_('Spike view'), description=_('View spiked content'))
+    superdesk.privilege(name='unspike', label=_('Unspike'), description=_('Unspike/undelete content'))
+    superdesk.privilege(name='metadata_uniquename', label=_('Edit Unique Name'), description=_('Edit unique name'))
+    superdesk.privilege(name='hold', label=_('Hold'), description=_('Hold content'))
+    superdesk.privilege(name='restore', label=_('Restore'), description=_('Restore content'))
+    superdesk.privilege(name='rewrite', label=_('Update'), description=_('Create an update'))
+    superdesk.privilege(name='unlock',
+                        label=_('Unlock content'),
+                        description=_('Unlock locked content by another user'))
+    superdesk.privilege(name='mark_for_user',
+                        label=_('Mark items for users'),
+                        description=_('User can mark or unmark items for other users'))
 
     superdesk.intrinsic_privilege(ArchiveUnlockResource.endpoint_name, method=['POST'])
 
 
-@celery.task(soft_time_limit=600)
+@celery.task(soft_time_limit=1800)
 def content_expiry():
     RemoveExpiredContent().run()

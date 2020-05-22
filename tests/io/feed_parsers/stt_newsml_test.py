@@ -263,8 +263,8 @@ class STTArchiveTestCase(BaseSTTNewsMLTestCase):
     def test_timestamps(self):
         item = self.item[0]
         self.assertEqual('2013-02-16T15:36:20+00:00', item['firstcreated'].isoformat())
-        self.assertEqual('2013-02-16T16:36:20+00:00', item['versioncreated'].isoformat())
-        self.assertEqual('2013-02-16T16:36:20+00:00', item['firstpublished'].isoformat())
+        self.assertEqual('2013-02-22T16:36:20+00:00', item['versioncreated'].isoformat())
+        self.assertEqual('2013-02-22T16:36:20+00:00', item['firstpublished'].isoformat())
 
         self.assertIn({'qcode': '5', 'scheme': 'sttdone1', 'name': ''}, item['subject'])
 
@@ -275,6 +275,18 @@ class STTArchiveTestCase(BaseSTTNewsMLTestCase):
     def test_source(self):
         item = self.item[0]
         self.assertEqual('STT', item['source'])
+
+
+class STTArchiveCreatedDateTestCase(BaseSTTNewsMLTestCase):
+    """Tests versionCreated date has the value of contentCreated when there is no contentUpdated date"""
+
+    filename = 'stt_archive_newsml_created_date_test.xml'
+
+    def test_timestamps(self):
+        item = self.item[0]
+        self.assertEqual('2013-02-16T15:36:20+00:00', item['firstcreated'].isoformat())
+        self.assertEqual('2013-02-16T15:36:20+00:00', item['versioncreated'].isoformat())
+        self.assertEqual('2013-02-16T15:36:20+00:00', item['firstpublished'].isoformat())
 
 
 class STTEndashTestCase(BaseSTTNewsMLTestCase):

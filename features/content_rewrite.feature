@@ -562,7 +562,68 @@ Feature: Rewrite content
       """
 
     @auth
-    Scenario: Fail to publish original story after rewrite is published
+    Scenario: Can publish rewrite after original is published
+        Given the "validators"
+        """
+          [
+          {
+              "schema": {},
+              "type": "text",
+              "act": "publish",
+              "_id": "publish_text"
+          },
+          {
+              "_id": "publish_composite",
+              "act": "publish",
+              "type": "composite",
+              "schema": {}
+          }
+          ]
+        """
+        And "desks"
+        """
+        [{"name": "Sports"}]
+        """
+        And "archive"
+        """
+        [{"guid": "123", "type": "text", "headline": "test", "_current_version": 1, "state": "fetched",
+          "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+          "subject":[{"qcode": "17004000", "name": "Statistics"}],
+          "body_html": "Test Document body"}]
+        """
+        When we post to "/products" with success
+        """
+        {
+          "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+        }
+        """
+        And we post to "/subscribers" with success
+        """
+        {
+          "name":"Channel 3","media_type":"media", "subscriber_type": "digital", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+          "products": ["#products._id#"],
+          "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}]
+        }
+        """
+        When we rewrite "123"
+        """
+        {"desk_id": "#desks._id#"}
+        """
+        And we patch "archive/#REWRITE_ID#"
+        """
+        {"abstract": "test", "body_html": "Test Document body", "headline": "RETAKE", "slugline": "RETAKE"}
+        """
+        When we publish "123" with "publish" type and "published" state
+        Then we get OK response
+        When we publish "#REWRITE_ID#" with "publish" type and "published" state
+        When we get "/published"
+        Then we get existing resource
+        """
+        {"_items" : [{"_id": "#REWRITE_ID#", "anpa_take_key": "update"}]}
+        """
+
+    @auth
+    Scenario: Fail to publish rewrite when original story is not yet published
         Given the "validators"
         """
           [
@@ -614,16 +675,12 @@ Feature: Rewrite content
         {"abstract": "test", "body_html": "Test Document body", "headline": "RETAKE", "slugline": "RETAKE"}
         """
         When we publish "#REWRITE_ID#" with "publish" type and "published" state
-        When we get "/published"
-        Then we get existing resource
-        """
-        {"_items" : [{"_id": "#REWRITE_ID#", "anpa_take_key": "update"}]}
-        """
-        When we publish "123" with "publish" type and "published" state
         Then we get error 400
         """
-        {"_status": "ERR",
-         "_issues": {"validator exception": "400: Cannot publish the story after Update is published.!"}}
+        {
+          "_status": "ERR",
+          "_issues": {"validator exception": "400: Can't publish update until original story is published.!"}
+        }
         """
 
     @auth
@@ -2338,3 +2395,36 @@ Feature: Rewrite content
           }
       }
       """
+
+    @auth
+    Scenario: Can create multiple rewrites if enabled
+        Given config update
+        """
+        {"WORKFLOW_ALLOW_MULTIPLE_UPDATES": true}
+        """
+        And "desks"
+        """
+        [{"name": "Sports"}]
+        """
+        And "archive"
+        """
+        [{"guid": "123", "type": "text", "headline": "test", "_current_version": 1, "state": "fetched",
+          "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+          "subject":[{"qcode": "17004000", "name": "Statistics"}],
+          "body_html": "Test Document body"}]
+        """
+        When we rewrite "123"
+        """
+        {"desk_id": "#desks._id#"}
+        """
+        Then we get OK response
+        When we rewrite "#REWRITE_ID#"
+        """
+        {"desk_id": "#desks._id#"}
+        """
+        Then we get OK response
+        When we rewrite "#REWRITE_ID#"
+        """
+        {"desk_id": "#desks._id#"}
+        """
+        Then we get OK response

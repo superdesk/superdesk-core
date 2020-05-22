@@ -17,7 +17,7 @@ from superdesk.utc import utcnow
 from superdesk.services import BaseService
 from superdesk.publish.formatters.ninjs_newsroom_formatter import NewsroomNinjsFormatter
 from superdesk import get_resource_service
-from superdesk.metadata.item import ASSOCIATIONS
+from superdesk.metadata.item import ASSOCIATIONS, remove_metadata_for_publish
 from apps.publish.enqueue.enqueue_service import EnqueueService
 
 logger = logging.getLogger('superdesk')
@@ -32,7 +32,7 @@ class PublishService(BaseService):
     formatter = NewsroomNinjsFormatter()
     subscriber = {'config': {}}
 
-    def publish(self, item, subscribers=[]):
+    def publish(self, item, subscribers=None):
         """Publish an item to content api.
 
         This must be enabled via ``PUBLISH_TO_CONTENT_API`` setting.
@@ -40,8 +40,12 @@ class PublishService(BaseService):
         :param item: item to publish
         """
 
+        if subscribers is None:
+            subscribers = []
+
         if not self._filter_item(item):
             item = EnqueueService.filter_document(item)
+            item = remove_metadata_for_publish(item)
             doc = self.formatter._transform_to_ninjs(item, self.subscriber)
             now = utcnow()
             doc.setdefault('firstcreated', now)

@@ -31,6 +31,7 @@ from superdesk.celery_task_utils import get_lock_id
 from croniter import croniter
 from datetime import datetime
 from flask_babel import _
+from superdesk.notification import push_notification
 
 CONTENT_TEMPLATE_RESOURCE = 'content_templates'
 CONTENT_TEMPLATE_PRIVILEGE = CONTENT_TEMPLATE_RESOURCE
@@ -106,6 +107,17 @@ def get_next_run(schedule, now_utc=None):
     return next_run
 
 
+def push_template_notification(docs, event='template:update'):
+    user = get_user()
+    template_desks = set()
+
+    for doc in docs:
+        if doc.get('template_desks'):
+            template_desks.update([str(template) for template in doc.get('template_desks')])
+
+    push_notification(event, user=str(user.get(config.ID_FIELD, '')), desks=list(template_desks))
+
+
 class ContentTemplatesResource(Resource):
     schema = {
         'data': {
@@ -155,6 +167,12 @@ class ContentTemplatesResource(Resource):
 
         'user': Resource.rel('users'),
         'is_public': {'type': 'boolean', 'unique_template': True, 'default': False},
+
+        'item': {
+            'type': 'dict',
+            'schema': {},
+            'allow_unknown': True,
+        },
     }
 
     additional_lookup = {
@@ -167,6 +185,8 @@ class ContentTemplatesResource(Resource):
     privileges = {'POST': CONTENT_TEMPLATE_PRIVILEGE,
                   'PATCH': CONTENT_TEMPLATE_PRIVILEGE,
                   'DELETE': CONTENT_TEMPLATE_PRIVILEGE}
+
+    merge_nested_documents = True
 
 
 class ContentTemplatesService(BaseService):
@@ -188,6 +208,9 @@ class ContentTemplatesService(BaseService):
                 doc.setdefault('user', get_user()[config.ID_FIELD])
             self._validate_template_desks(doc)
 
+    def on_created(self, docs):
+        push_template_notification(docs)
+
     def on_update(self, updates, original):
         if updates.get('template_type') and updates.get('template_type') != original.get('template_type') and \
            updates.get('template_type') == TemplateType.KILL.value:
@@ -208,6 +231,9 @@ class ContentTemplatesService(BaseService):
             profile = get_resource_service('content_types').find_one(req=None, _id=profile_id)
             data, _ = self._reset_fields(original_template, profile)
             updates['data'] = data
+
+    def on_updated(self, updates, original):
+        push_template_notification([updates, original])
 
     def on_fetched(self, docs):
         self.enhance_items(docs[config.ITEMS])
@@ -231,6 +257,9 @@ class ContentTemplatesService(BaseService):
     def on_delete(self, doc):
         if doc.get('template_type') == TemplateType.KILL.value:
             raise SuperdeskApiError.badRequestError(_('Kill templates can not be deleted.'))
+
+    def on_deleted(self, doc):
+        push_template_notification([doc])
 
     def get_scheduled_templates(self, now):
         """Get the template by schedule
@@ -321,10 +350,12 @@ class ContentTemplatesService(BaseService):
             raise SuperdeskApiError.badRequestError(_('Kill templates must be public'))
         doc['is_public'] = True
 
-    def _validate_template_desks(self, updates, original={}):
+    def _validate_template_desks(self, updates, original=None):
         """
         Validate template desks value
         """
+        if original is None:
+            original = {}
         template_type = updates.get('template_type', original.get('template_type'))
         if template_type != TemplateType.CREATE.value and \
                 type(updates.get('template_desks')) == list and \
@@ -359,8 +390,12 @@ class ContentTemplatesApplyResource(Resource):
             'type': 'dict',
             'required': True,
             'schema': item_schema()
-        }
+        },
+        '_links': {'type': 'dict'},
     }
+
+    # in response there can be anything..
+    schema.update(get_schema())
 
     resource_methods = ['POST']
     item_methods = []

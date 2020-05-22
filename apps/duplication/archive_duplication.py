@@ -14,7 +14,7 @@ from flask import request
 
 import superdesk
 from apps.archive.archive import SOURCE as ARCHIVE
-from apps.auth import get_user
+from apps.auth import get_user, get_user_id
 from apps.content import push_content_notification
 from apps.tasks import send_to
 from superdesk import get_resource_service
@@ -87,7 +87,8 @@ class DuplicateService(BaseService):
             archived_doc['versioncreated'] = archived_doc['firstcreated'] = utcnow()
             archived_doc['firstpublished'] = None
 
-            send_to(doc=archived_doc, desk_id=doc.get('desk'), stage_id=doc.get('stage'), default_stage='working_stage')
+            send_to(doc=archived_doc, desk_id=doc.get('desk'), stage_id=doc.get('stage'),
+                    default_stage='working_stage', user_id=get_user_id())
             new_guid = archive_service.duplicate_content(archived_doc)
             guid_of_duplicated_items.append(new_guid)
 

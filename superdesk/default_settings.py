@@ -83,13 +83,20 @@ def local_to_utc_hour(hour):
 ABS_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../'))
 BEHAVE_TESTS_FIXTURES_PATH = ABS_PATH + '/features/steps/fixtures'
 
-XML = False
 IF_MATCH = True
 BANDWIDTH_SAVER = False
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%S+0000'
 ELASTIC_DATE_FORMAT = '%Y-%m-%d'
 ELASTIC_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
 PAGINATION_LIMIT = 200
+
+MERGE_NESTED_DOCUMENTS = False
+
+#: keep default in sync with limit - so when client does not use pagination return all
+#:
+#: .. versionadded:: 1.33
+#:
+PAGINATION_DEFAULT = PAGINATION_LIMIT
 
 LOG_CONFIG_FILE = env('LOG_CONFIG_FILE', 'logging_config.yml')
 LOG_SERVER_ADDRESS = env('LOG_SERVER_ADDRESS', 'localhost')
@@ -105,8 +112,9 @@ server_url = urlparse(SERVER_URL)
 SERVER_DOMAIN = server_url.netloc or 'localhost'
 URL_PREFIX = env('URL_PREFIX', server_url.path.lstrip('/')) or ''
 
-VALIDATION_ERROR_STATUS = 400
 JSON_SORT_KEYS = False
+VALIDATION_ERROR_STATUS = 400
+VALIDATION_ERROR_AS_LIST = True
 
 CACHE_CONTROL = 'max-age=0, no-cache'
 
@@ -215,6 +223,7 @@ CELERY_TASK_QUEUES = (
     Queue(celery_queue('default'), Exchange(celery_queue('default')), routing_key='default'),
     Queue(celery_queue('expiry'), Exchange(celery_queue('expiry'), type='topic'), routing_key='expiry.#'),
     Queue(celery_queue('legal'), Exchange(celery_queue('legal'), type='topic'), routing_key='legal.#'),
+    Queue(celery_queue('ingest'), Exchange(celery_queue('ingest'), type='topic'), routing_key='ingest.#'),
     Queue(celery_queue('publish'), Exchange(celery_queue('publish'), type='topic'), routing_key='publish.#'),
     Queue(
         HIGH_PRIORITY_QUEUE,
@@ -230,7 +239,11 @@ CELERY_TASK_ROUTES = {
     },
     'superdesk.io.gc_ingest': {
         'queue': celery_queue('expiry'),
-        'routing_key': 'expiry.ingest'
+        'routing_key': 'expiry.ingest',
+    },
+    'superdesk.io.*': {
+        'queue': celery_queue('ingest'),
+        'routing_key': 'ingest.ingest',
     },
     'superdesk.audit.gc_audit': {
         'queue': celery_queue('expiry'),
@@ -318,7 +331,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'saved_searches:report': {
         'task': 'apps.saved_searches.report',
-        'schedule': timedelta(minutes=1)
+        'schedule': crontab(minute=0),
     },
 }
 
@@ -347,6 +360,7 @@ CORE_APPS = [
     'superdesk.auth',
     'superdesk.attachments',
     'superdesk.auth_server',
+    'apps.links',
 ]
 
 #: Specify what modules should be enabled
@@ -371,6 +385,13 @@ LDAP_USER_ATTRIBUTES = json.loads(env('LDAP_USER_ATTRIBUTES',
                                       '{"givenName": "first_name", "sn": "last_name", '
                                       '"displayName": "display_name", "mail": "email", '
                                       '"ipPhone": "phone"}'))
+
+#: Enable the ability for the display name of the user to be overridden with Superdesk user attributes
+LDAP_SET_DISPLAY_NAME = strtobool(env('LDAP_SET_DISPLAY_NAME', 'False'))
+#: List of Superdesk user attributes passed to the format method
+LDAP_SET_DISPLAY_NAME_FIELDS = json.loads(env('LDAP_SET_DISPLAY_NAME_FIELDS', '["first_name", "last_name"]'))
+#: Format for the user display name
+LDAP_SET_DISPLAY_NAME_FORMAT = env('LDAP_SET_DISPLAY_NAME_FORMAT', '{} {}')
 
 if LDAP_SERVER:
     CORE_APPS.append('apps.ldap')
@@ -399,6 +420,7 @@ CORE_APPS.extend([
     'superdesk.io.subjectcodes',
     'superdesk.io.format_document_for_preview',
     'superdesk.io.iptc',
+    'superdesk.io.mediatopics',
     'superdesk.text_checkers.spellcheckers',
     'apps.io',
     'apps.io.feeding_services',
@@ -410,6 +432,7 @@ CORE_APPS.extend([
     'apps.auth',
     'apps.archive',
     'apps.archive.item_comments',
+    'apps.archive.autocomplete',
     'apps.archive_history',
     'apps.stages',
     'apps.desks',
@@ -473,6 +496,8 @@ AMAZON_CONTAINER_NAME = env('AMAZON_CONTAINER_NAME', '')
 AMAZON_S3_SUBFOLDER = env('AMAZON_S3_SUBFOLDER', '')
 #: adds ACL when putting to S3, can be set to ``public-read``, etc.
 AMAZON_OBJECT_ACL = env('AMAZON_OBJECT_ACL', '')
+#: amazon endpoint. This can be used with third-party s3-compatible servers
+AMAZON_ENDPOINT_URL = env('AMAZON_ENDPOINT_URL', '')
 
 RENDITIONS = {
     'picture': {
@@ -625,6 +650,12 @@ FTP_TIMEOUT = 300
 #: default amount of files which can processed during one iteration of ftp ingest
 FTP_INGEST_FILES_LIST_LIMIT = 100
 
+#: after how many minutes consider content to be too old for ingestion
+#:
+#: .. versionadded:: 1.32.2
+#:
+INGEST_OLD_CONTENT_MINUTES = 10
+
 #: default timeout for email connections
 EMAIL_TIMEOUT = 10
 
@@ -677,7 +708,11 @@ HTML_TAGS_WHITELIST = ('h1', 'h2', 'h3', 'h4', 'h6', 'blockquote', 'pre', 'figur
 # Japanese reading speed
 JAPANESE_CHARACTERS_PER_MINUTE = 600
 
+#: publish associated items automatically
 PUBLISH_ASSOCIATED_ITEMS = False
+
+#: raise error when published item is not queued to any subscriber
+PUBLISH_NOT_QUEUED_ERROR = True
 
 # Use content profile for validation when auto-publishing
 AUTO_PUBLISH_CONTENT_PROFILE = True
@@ -690,6 +725,11 @@ GEONAMES_USERNAME = env('GEONAMES_USERNAME')
 GEONAMES_TOKEN = env('GEONAMES_TOKEN')
 GEONAMES_URL = env('GEONAMES_URL', 'http://api.geonames.org/')
 GEONAMES_FEATURE_CLASSES = ['P']
+#: Set how much metadata should be returned
+#:
+#: .. versionadded:: 1.33
+#:
+GEONAMES_SEARCH_STYLE = 'medium'
 
 # media required fields
 VALIDATOR_MEDIA_METADATA = {
@@ -753,3 +793,64 @@ AUTH_SERVER_SHARED_SECRET = env('AUTH_SERVER_SHARED_SECRET', '')
 #: .. versionadded:: 2.0
 #:
 KEYWORDS_ADD_MISSING_ON_PUBLISH = False
+
+#: Allow creating multiple updates in production
+#:
+#: By default there can be only 1 update in progress
+#: for a story, when enable there is no limit and multiple
+#: updates can be created. It will still validate on publish
+#: if the previous ones are published and not let publishing
+#: out of sequence.
+#:
+#: .. versionadded:: 2.0
+#:
+WORKFLOW_ALLOW_MULTIPLE_UPDATES = False
+
+#: Allow users who are not members on a desk to duplicate its content
+#:
+#: .. versionadded:: 1.34
+#:
+WORKFLOW_ALLOW_DUPLICATE_TO_NON_MEMBERS = False
+
+#: Enable archive autocomplete API
+#:
+#: .. versionadded:: 2.0
+#:
+#: It will return suggestions for field from archive api,
+#: only from published items for time defined via
+#: :data:`ARCHIVE_AUTOCOMPLETE_DAYS` and :data:`ARCHIVE_AUTOCOMPLETE_HOURS`.
+#:
+ARCHIVE_AUTOCOMPLETE = False
+
+#:
+#: .. versionadded:: 2.0
+#:
+ARCHIVE_AUTOCOMPLETE_DAYS = 0
+
+#:
+#: .. versionadded:: 2.0
+#:
+ARCHIVE_AUTOCOMPLETE_HOURS = 0
+
+
+#: Tansa client config
+#:
+#: .. versionadded:: 2.0
+#:
+TANSA_APP_ID = env('TANSA_APP_ID')
+TANSA_USER_ID = env('TANSA_USER_ID')
+TANSA_PROFILE_ID = env('TANSA_PROFILE_ID')
+TANSA_LICENSE_KEY = env('TANSA_LICENSE_KEY')
+TANSA_CLIENT_BASE_URL = env('TANSA_CLIENT_BASE_URL', 'https://d02.tansa.com/tansaclient/')
+TANSA_PROFILES = {}
+
+# Enable ninjs to send all the fields for place in output.
+NINJS_PLACE_EXTENDED = False
+
+#: Define for how many hours in the past it shoudl return links for.
+#:
+#: Set to `0` to disable time limit.
+#:
+#: .. versionadded:: 1.34
+#:
+LINKS_MAX_HOURS = 0

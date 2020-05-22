@@ -19,6 +19,7 @@ from superdesk.publish import register_transmitter
 from superdesk.errors import PublishHTTPPushError, PublishHTTPPushServerError, PublishHTTPPushClientError
 from superdesk.publish.publish_queue import PUBLISHED_IN_PACKAGE
 from superdesk.publish.publish_service import PublishService
+from superdesk.metadata.item import remove_metadata_for_publish
 
 errors = [PublishHTTPPushError.httpPushError().get_error_description()]
 logger = logging.getLogger(__name__)

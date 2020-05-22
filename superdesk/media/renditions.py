@@ -18,10 +18,12 @@ from .media_operations import process_file_from_stream
 from .media_operations import crop_image
 from .media_operations import download_file_from_url
 from .media_operations import process_file
+from .media_operations import guess_media_extension
 from .image import fix_orientation
 from eve.utils import config
 from superdesk import get_resource_service
 from superdesk.filemeta import set_filemeta
+import os
 
 
 logger = logging.getLogger(__name__)
@@ -241,7 +243,7 @@ def to_int(x):
         return x
 
 
-def _resize_image(content, size, format='png', keepProportions=True):
+def _resize_image(content, size, format=None, keepProportions=True):
     """Resize the image given as a binary stream
 
     @param content: stream
@@ -258,6 +260,8 @@ def _resize_image(content, size, format='png', keepProportions=True):
     """
     assert isinstance(size, tuple)
     img = Image.open(content)
+    if not format:
+        format = img.format
     width, height = img.size
     new_width, new_height = [to_int(x) for x in size]
     if keepProportions:
@@ -365,10 +369,29 @@ def transfer_renditions(renditions):
     :param renditions:
     :return: Updated renditions
     """
+    if not renditions:
+        return
     for rend in iter(renditions.values()):
+        if rend.get('media'):
+            local = app.media.get(rend['media'])
+            if local:
+                rend['href'] = app.media.url_for_media(rend['media'], local.content_type)
+                return
+
         content, filename, content_type = download_file_from_url(rend.get('href'))
         file_type, ext = content_type.split('/')
         metadata = process_file(content, file_type)
         file_guid = app.media.put(content, filename, content_type, metadata)
         rend['href'] = app.media.url_for_media(file_guid, content_type)
         rend['media'] = file_guid
+
+
+def get_rendition_file_name(rendition):
+    """
+    Return a file name for the rendition no matter what storage mechanism used by superdesk
+    :param rendition:
+    :return:
+    """
+    ext = os.path.splitext(rendition.get('media'))[-1]
+    return rendition.get('media').replace('/', '-') + (
+        guess_media_extension(rendition.get('mimetype', '')) if not ext else '')

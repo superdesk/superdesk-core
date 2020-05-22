@@ -9,11 +9,11 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+import warnings
 from abc import ABCMeta, abstractmethod
-from datetime import datetime
-
+from datetime import timedelta, datetime
 from pytz import utc
-
+from flask import current_app as app
 import superdesk
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError, SuperdeskIngestError
@@ -22,6 +22,8 @@ from superdesk.utc import utcnow
 from superdesk.utils import Timer
 
 logger = logging.getLogger(__name__)
+
+OLD_CONTENT_MINUTES = 'INGEST_OLD_CONTENT_MINUTES'
 
 
 class FeedingService(metaclass=ABCMeta):
@@ -194,15 +196,33 @@ class FeedingService(metaclass=ABCMeta):
                                                                    updates, provider)
 
     def add_timestamps(self, item):
-        """
-        Adds firstcreated and versioncreated timestamps to item
+        warnings.warn('deprecated, use localize_timestamps', DeprecationWarning)
+        self.localize_timestamps(item)
 
-        :param item: object which can be saved to ingest collection
-        :type item: dict
+    def localize_timestamps(self, item):
+        """Make sure timestamps are in UTC."""
+        for timestamp in ('firstcreated', 'versioncreated'):
+            if item.get(timestamp):
+                item[timestamp] = utc.localize(item[timestamp])
+
+    def is_latest_content(self, last_updated, provider_last_updated=None):
+        """
+        Parse file only if it's not older than provider last update -10m
         """
 
-        item['firstcreated'] = utc.localize(item['firstcreated']) if item.get('firstcreated') else utcnow()
-        item['versioncreated'] = utc.localize(item['versioncreated']) if item.get('versioncreated') else utcnow()
+        if not provider_last_updated:
+            provider_last_updated = utcnow() - timedelta(days=7)
+
+        return provider_last_updated - timedelta(minutes=app.config[OLD_CONTENT_MINUTES]) < last_updated
+
+    def is_old_content(self, last_updated):
+        """Test if file is old so it wouldn't probably work in is_latest_content next time.
+
+        Such files can be moved to `_ERROR` folder, it wouldn't be ingested anymore.
+
+        :param last_updated: file last updated datetime
+        """
+        return last_updated < utcnow() - timedelta(minutes=app.config[OLD_CONTENT_MINUTES])
 
     def log_item_error(self, err, item, provider):
         """TODO: put item into provider error basket."""

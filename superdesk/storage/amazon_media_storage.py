@@ -21,10 +21,10 @@ import unidecode
 import boto3
 from botocore.client import Config
 from eve.io.media import MediaStorage
-from mimetypes import guess_extension
 
-from superdesk.media.media_operations import download_file_from_url
+from superdesk.media.media_operations import download_file_from_url, guess_media_extension
 from superdesk.utc import query_datetime
+from .mimetype_mixin import MimetypeMixin
 
 logger = logging.getLogger(__name__)
 MAX_KEYS = 1000
@@ -53,18 +53,7 @@ class AmazonObjectWrapper(BytesIO):
         self._id = name
 
 
-def _guess_extension(content_type):
-    ext = str(guess_extension(content_type))
-    if ext in ['.jpe', '.jpeg']:
-        return '.jpg'
-    if 'mp3' in content_type or 'audio/mpeg' in content_type:
-        return '.mp3'
-    if 'flac' in content_type:
-        return '.flac'
-    return ext if ext != 'None' else ''
-
-
-class AmazonMediaStorage(MediaStorage):
+class AmazonMediaStorage(MediaStorage, MimetypeMixin):
 
     def __init__(self, app=None):
         super().__init__(app)
@@ -74,6 +63,7 @@ class AmazonMediaStorage(MediaStorage):
             aws_secret_access_key=self.app.config['AMAZON_SECRET_ACCESS_KEY'],
             region_name=self.app.config.get('AMAZON_REGION'),
             config=Config(signature_version='s3v4'),
+            endpoint_url=self.app.config['AMAZON_ENDPOINT_URL'] or None,
         )
         self.user_metadata_header = 'x-amz-meta-'
 
@@ -124,7 +114,7 @@ class AmazonMediaStorage(MediaStorage):
 
         extension = ''
         if not file_extension:
-            extension = str(_guess_extension(content_type)) if content_type else ''
+            extension = str(guess_media_extension(content_type)) if content_type else ''
 
         if version is True:
             # automatic version is set on 15mins granularity.
@@ -177,8 +167,7 @@ class AmazonMediaStorage(MediaStorage):
                 all_keys.extend(objects)
         except Exception as ex:
             logger.exception(ex)
-        finally:
-            return all_keys
+        return all_keys
 
     def _get_all_keys_in_batches(self):
         """Return the list of all keys from the bucket in batches."""
@@ -229,6 +218,10 @@ class AmazonMediaStorage(MediaStorage):
         # XXX: we don't use metadata here as Amazon S3 as a limit of 2048 bytes (keys + values)
         #      and they are anyway stored in MongoDB (and still part of the file). See issue SD-4231
         logger.debug('Going to save file file=%s media=%s ' % (filename, _id))
+
+        # try to determine mimetype on the server
+        content_type = self._get_mimetype(content, filename, content_type)
+
         if not _id:
             _id = self.media_id(filename, content_type=content_type, version=version)
 

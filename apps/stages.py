@@ -9,7 +9,6 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
-from eve.defaults import resolve_default_values
 import superdesk
 from superdesk import config
 from flask import current_app as app
@@ -254,10 +253,10 @@ class StagesService(BaseService):
                                 {'rules.actions.publish.stage': str(stage_id)}]}
         return superdesk.get_resource_service('routing_schemes').get(req=None, lookup=query_filter)
 
-    def get_stages_by_visibility(self, is_visible=False, user_desk_ids=[]):
-        """Returns a list of stages for a user.
-
-        """
+    def get_stages_by_visibility(self, is_visible=False, user_desk_ids=None):
+        """Returns a list of stages for a user."""
+        if user_desk_ids is None:
+            user_desk_ids = []
         if is_visible:
             lookup = {'$or': [{'is_visible': True}]}
             if user_desk_ids:
@@ -292,7 +291,7 @@ class StagesService(BaseService):
         """
 
         stage = {'name': 'Working Stage', 'working_stage': True, 'desk_order': 1, 'content_expiry': None}
-        resolve_default_values(stage, app.config['DOMAIN'][self.datasource]['defaults'])
+        self._resolve_defaults(stage)
         return self.create([stage])
 
     def create_incoming_stage(self):
@@ -301,5 +300,5 @@ class StagesService(BaseService):
         :return: identifier of Incoming Stage
         """
         stage = {'name': 'Incoming Stage', 'default_incoming': True, 'desk_order': 2, 'content_expiry': None}
-        resolve_default_values(stage, app.config['DOMAIN'][self.datasource]['defaults'])
+        self._resolve_defaults(stage)
         return self.create([stage])

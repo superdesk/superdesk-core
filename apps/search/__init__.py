@@ -15,10 +15,11 @@ from copy import deepcopy
 import superdesk
 
 from superdesk import get_resource_service
-from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE
+from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE, get_schema
 from superdesk.metadata.utils import aggregations as common_aggregations, item_url, get_elastic_highlight_query
 from apps.archive.archive import SOURCE as ARCHIVE
 from superdesk.resource import build_custom_hateoas
+from apps.publish.published_item import published_item_fields
 from superdesk import es_utils
 
 
@@ -251,6 +252,8 @@ class SearchResource(superdesk.Resource):
     resource_methods = ['GET']
     item_methods = ['GET']
     item_url = item_url
+    schema = get_schema(versioning=True)
+    schema.update(published_item_fields)
 
 
 def init_app(app):

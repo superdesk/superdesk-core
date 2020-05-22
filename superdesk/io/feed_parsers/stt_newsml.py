@@ -53,8 +53,7 @@ class STTNewsMLFeedParser(NewsMLTwoFeedParser):
             if not item.get('headline'):
                 item['headline'] = text_utils.get_text(item.get('body_html', '') or '', 'html')[:100]
 
-            # populate published for newsroom archive
-            item.setdefault('firstpublished', item.get('versioncreated'))
+            self.parse_version_dates(xml, item)
 
             # abstract
             try:
@@ -186,6 +185,28 @@ class STTNewsMLFeedParser(NewsMLTwoFeedParser):
         creditline = meta.find(self.qname('creditline'))
         if creditline is not None:
             item['source'] = creditline.text.replace('–', '-').rstrip('-')  # replace endash with dash
+
+    def parse_version_dates(self, tree, item):
+        """
+        Uses contentModified field if exists to set versioncreated for item
+        If not it uses to versioncreated
+        https://dev.sourcefabric.org/browse/STTNHUB-84
+        """
+
+        meta = tree.find(self.qname('contentMeta'))
+
+        content_updated = meta.find(self.qname('contentModified'))
+        if content_updated is not None and content_updated.text:
+            item['versioncreated'] = self.datetime(content_updated.text)
+
+        content_created = meta.find(self.qname('contentCreated'))
+        if content_created is not None and content_created.text and not item.get('versioncreated'):
+            item['versioncreated'] = self.datetime(content_created.text)
+
+        if not item.get('versioncreated'):
+            raise Exception('contentModified and contentCreated fields are empty in ingest file')
+
+        item.setdefault('firstpublished', item.get('versioncreated'))
 
 
 register_feed_parser(STTNewsMLFeedParser.NAME, STTNewsMLFeedParser())

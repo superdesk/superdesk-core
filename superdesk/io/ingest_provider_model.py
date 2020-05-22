@@ -89,10 +89,14 @@ class IngestProviderResource(Resource):
                 'default': app.config['INGEST_EXPIRY_MINUTES']
             },
             'config': {
-                'type': 'dict'
+                'type': 'dict',
+                'schema': {},
+                'allow_unknown': True,
             },
             'private': {
-                'type': 'dict'
+                'type': 'dict',
+                'schema': {},
+                'allow_unknown': True,
             },
             'ingested_count': {
                 'type': 'integer'
@@ -101,7 +105,9 @@ class IngestProviderResource(Resource):
                 'type': 'integer'
             },
             'tokens': {
-                'type': 'dict'
+                'type': 'dict',
+                'schema': {},
+                'allow_unknown': True,
             },
             'is_closed': {
                 'type': 'boolean',
@@ -134,7 +140,13 @@ class IngestProviderResource(Resource):
                     'on_close': {'type': 'boolean', 'default': True},
                     'on_open': {'type': 'boolean', 'default': True},
                     'on_error': {'type': 'boolean', 'default': True}
-                }
+                },
+                'default': {
+                    'on_update': True,
+                    'on_close': True,
+                    'on_open': True,
+                    'on_error': True,
+                },
             },
             'last_closed': {
                 'type': 'dict',
@@ -156,6 +168,10 @@ class IngestProviderResource(Resource):
                 'valueschema': {
                     'type': 'boolean'
                 }
+            },
+            'skip_config_test': {
+                'type': 'boolean',
+                'nullable': True,
             },
         }
 
@@ -279,6 +295,9 @@ class IngestProviderService(BaseService):
     def _test_config(self, updates, original=None):
         provider = original.copy() if original else {}
         provider.update(updates)
+
+        if provider.get('skip_config_test'):
+            return
 
         try:
             service = get_feeding_service(provider['feeding_service'])

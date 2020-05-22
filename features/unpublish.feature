@@ -213,3 +213,200 @@ Feature: Unpublish content
       Then we get OK response
       When we publish "tag:localhost:2015:515b895a-b336-48b2-a506-5ffaf561b916" with "unpublish" type and "unpublished" state
       Then we get OK response
+
+    @auth
+    Scenario: Unpublish an item with associations
+      Given "desks"
+      """
+      [{"name": "Sports", "members":[{"user":"#CONTEXT_USER_ID#"}]}]
+      """
+      And "archive"
+      """
+      [
+        {
+            "_id": "123",
+            "guid": "123",
+            "headline": "test",
+            "_current_version": 0,
+            "state": "fetched",
+            "task": {
+                "desk": "#desks._id#",
+                "stage": "#desks.incoming_stage#",
+                "user": "#CONTEXT_USER_ID#"
+            },
+            "subject": [
+                {
+                    "qcode": "17004000",
+                    "name": "Statistics"
+                }
+            ],
+            "slugline": "test",
+            "type": "text",
+            "body_html": "<p>Test Document body</p>\n<p>with a \"quote\"</p>",
+            "associations": {
+                "featuremedia": {
+                    "_id": "d7c9bd89-ece1-400b-bccb-14eb49c8013f",
+                    "guid": "d7c9bd89-ece1-400b-bccb-14eb49c8013f",
+                    "_current_version": 1,
+                    "type": "picture",
+                    "source": "EPA",
+                    "credit": "EPA",
+                    "byline": "EPA",
+                    "copyrightnotice": "EPA",
+                    "headline": "Video headline",
+                    "description_text": "Video description text",
+                    "firstcreated": "2020-01-08T09:52:09+0000",
+                    "versioncreated": "2020-01-08T12:15:05+0000",
+                    "mimetype": "image/jpeg",
+                    "pubstatus": "usable",
+                    "state": "fetched",
+                    "format": "HTML",
+                    "sign_off": "ADM",
+                    "language": "nl",
+                    "used": true,
+                    "renditions": {
+                        "original": {
+                            "href": "http://localhost:5000/api/upload-raw/5e15c7c7220b7b99ee329a64.jpg",
+                            "media": "5e15c7c7220b7b99ee329a64",
+                            "mimetype": "image/jpeg",
+                            "width": 6336,
+                            "height": 4275
+                        },
+                        "baseImage": {
+                            "href": "http://localhost:5000/api/upload-raw/5e15c7c9220b7b99ee329a7d.jpg",
+                            "media": "5e15c7c9220b7b99ee329a7d",
+                            "mimetype": "image/jpeg",
+                            "width": 1400,
+                            "height": 944
+                        },
+                        "thumbnail": {
+                            "href": "http://localhost:5000/api/upload-raw/5e15c7c9220b7b99ee329a7f.jpg",
+                            "media": "5e15c7c9220b7b99ee329a7f",
+                            "mimetype": "image/jpeg",
+                            "width": 177,
+                            "height": 120
+                        },
+                        "viewImage": {
+                            "href": "http://localhost:5000/api/upload-raw/5e15c7c9220b7b99ee329a81.jpg",
+                            "media": "5e15c7c9220b7b99ee329a81",
+                            "mimetype": "image/jpeg",
+                            "width": 640,
+                            "height": 431
+                        }
+                    }
+                },
+                "related--1": {
+                    "_id": "456",
+                    "type": "text"
+                }
+            }
+        },
+        {
+            "_id": "456",
+            "guid": "456",
+            "_current_version": 0,
+            "headline": "test two",
+            "state": "fetched",
+            "task": {
+                "desk": "#desks._id#",
+                "stage": "#desks.incoming_stage#",
+                "user": "#CONTEXT_USER_ID#"
+            },
+            "subject": [
+                {
+                    "qcode": "17004000",
+                    "name": "Statistics"
+                }
+            ],
+            "slugline": "test two",
+            "type": "text",
+            "body_html": "<p>Second Test Document.</p>"
+        },
+        {
+          "_id": "d7c9bd89-ece1-400b-bccb-14eb49c8013f",
+          "guid": "d7c9bd89-ece1-400b-bccb-14eb49c8013f",
+          "_current_version": 1,
+          "type": "picture",
+          "source": "EPA",
+          "credit": "EPA",
+          "byline": "EPA",
+          "copyrightnotice": "EPA",
+          "headline": "Video headline",
+          "description_text": "Video description text",
+          "firstcreated": "2020-01-08T09:52:09+0000",
+          "versioncreated": "2020-01-08T12:15:05+0000",
+          "mimetype": "image/jpeg",
+          "pubstatus": "usable",
+          "state": "fetched",
+          "format": "HTML",
+          "sign_off": "ADM",
+          "language": "nl",
+          "used": true,
+          "renditions": {
+              "original": {
+                  "href": "http://localhost:5000/api/upload-raw/5e15c7c7220b7b99ee329a64.jpg",
+                  "media": "5e15c7c7220b7b99ee329a64",
+                  "mimetype": "image/jpeg",
+                  "width": 6336,
+                  "height": 4275
+              },
+              "baseImage": {
+                  "href": "http://localhost:5000/api/upload-raw/5e15c7c9220b7b99ee329a7d.jpg",
+                  "media": "5e15c7c9220b7b99ee329a7d",
+                  "mimetype": "image/jpeg",
+                  "width": 1400,
+                  "height": 944
+              },
+              "thumbnail": {
+                  "href": "http://localhost:5000/api/upload-raw/5e15c7c9220b7b99ee329a7f.jpg",
+                  "media": "5e15c7c9220b7b99ee329a7f",
+                  "mimetype": "image/jpeg",
+                  "width": 177,
+                  "height": 120
+              },
+              "viewImage": {
+                  "href": "http://localhost:5000/api/upload-raw/5e15c7c9220b7b99ee329a81.jpg",
+                  "media": "5e15c7c9220b7b99ee329a81",
+                  "mimetype": "image/jpeg",
+                  "width": 640,
+                  "height": 431
+              }
+          }
+        }
+      ]
+      """
+      When we get "/archive/"
+      When we post to "/products" with success
+      """
+      {
+        "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+      }
+      """
+      And we post to "/subscribers" with success
+      """
+      {
+        "name":"Channel 3","media_type":"media", "subscriber_type": "wire", "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
+        "products": ["#products._id#"],
+        "destinations":[{"name":"Test","format": "nitf", "delivery_type":"email","config":{"recipients":"test@test.com"}}],
+        "api_products": ["#products._id#"]
+      }
+      """
+      And we publish "123" with "publish" type and "published" state
+      Then we get OK response
+
+      When we publish "123" with "unpublish" type and "unpublished" state
+      Then we get OK response
+
+      When we get "/archive/123/"
+      Then we get OK response
+      And we get existing resource
+      """
+      {"state": "unpublished", "pubstatus": "canceled"}
+      """
+
+      When we get "/archive/d7c9bd89-ece1-400b-bccb-14eb49c8013f/"
+      Then we get OK response
+      And we get existing resource
+      """
+      {"state": "published", "pubstatus": "usable"}
+      """

@@ -33,7 +33,7 @@
         <signal qcode="red-address:TEST"></signal>
       </itemMeta>
       <contentMeta>
-        <urgency>5</urgency>
+        <urgency></urgency>
         <contentCreated>2019-07-01T08:21:00+00:00</contentCreated>
         <contentModified>2019-07-01T08:22:28+00:00</contentModified>
         <located qcode="geo:3169070" type="cptype:statprov">

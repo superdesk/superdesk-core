@@ -12,38 +12,88 @@ import re
 import superdesk
 
 from bson import ObjectId
+from bson.errors import InvalidId
+from cerberus import errors
 from eve.io.mongo import Validator
 from eve.utils import config
-from werkzeug.datastructures import FileStorage
 from eve.auth import auth_field_and_value
-from cerberus import errors
+from flask import current_app as app
+from flask_babel import _
+from eve.validation import SingleErrorAsStringErrorHandler
+from werkzeug.datastructures import FileStorage
 
 
-ERROR_PATTERN = {'pattern': 1}
-ERROR_UNIQUE = {'unique': 1}
-ERROR_MINLENGTH = {'minlength': 1}
-ERROR_REQUIRED = {'required': 1}
-ERROR_JSON_LIST = {'json_list': 1}
+ERROR_PATTERN = 'pattern'
+ERROR_UNIQUE = 'unique'
+ERROR_MINLENGTH = 'minlength'
+ERROR_REQUIRED = 'required'
+ERROR_JSON_LIST = 'json_list'
+
+CLIENT_ERRORS = (
+    ERROR_UNIQUE,
+    ERROR_PATTERN,
+    ERROR_REQUIRED,
+    ERROR_MINLENGTH,
+    ERROR_JSON_LIST,
+)
+
+
+class BaseErrorHandler(SingleErrorAsStringErrorHandler):
+    def _unpack_single_element_lists(self, tree):
+        for field in tree:
+            error_list = tree[field]
+            if len(error_list) > 0 and isinstance(tree[field][-1], dict):
+                self._unpack_single_element_lists(tree[field][-1])
+                # if there are sub field errors only return these for now
+                if len(error_list) and any([isinstance(err, dict) for err in error_list]):
+                    _errors = {}
+                    for err in error_list:
+                        if isinstance(err, dict):
+                            _errors.update(err)
+                    tree[field] = _errors
+            if len(tree[field]) == 1 and isinstance(tree[field], list):
+                tree[field] = tree[field][0]
+
+
+class SuperdeskErrorHandler(BaseErrorHandler):
+    def _format_message(self, field, error):
+        if error.info and error.info[0] in CLIENT_ERRORS:
+            return {error.info[0]: [1]}  # value must be list, will be unpacked
+        elif error.code == errors.REQUIRED_FIELD.code:
+            return {ERROR_REQUIRED: [1]}
+        return self.messages[error.code].format(
+            *error.info, constraint=error.constraint, field=field, value=error.value
+        )
 
 
 class SuperdeskValidator(Validator):
 
+    def __init__(self, *args, **kwargs):
+        kwargs['error_handler'] = SuperdeskErrorHandler
+        super(SuperdeskValidator, self).__init__(*args, **kwargs)
+
     def _validate_mapping(self, mapping, field, value):
+        """
+        {'type': 'dict'}
+        """
         pass
 
     def _validate_index(self, definition, field, value):
+        """
+        {'type': 'string'}
+        """
         pass
 
-    def _validate_type_phone_number(self, field, value):
+    def _validate_type_phone_number(self, value):
         """Enables validation for `phone_number` schema attribute.
 
         :param field: field name.
         :param value: field value.
         """
-        if not re.match("^(?:(?:0?[1-9][0-9]{8})|(?:(?:\+|00)[1-9][0-9]{9,11}))$", value):
-            self._error(field, ERROR_PATTERN)
+        if re.match("^(?:(?:0?[1-9][0-9]{8})|(?:(?:\+|00)[1-9][0-9]{9,11}))$", value):
+            return True
 
-    def _validate_type_email(self, field, value):
+    def _validate_type_email(self, value):
         """Enables validation for `email` schema attribute.
 
         :param field: field name.
@@ -56,59 +106,58 @@ class SuperdeskValidator(Validator):
         # given that admins are usually create users, not users by themself,
         # probably just check for @ is enough
         # https://davidcel.is/posts/stop-validating-email-addresses-with-regex/
-        if not re.match('.+@.+', value, re.IGNORECASE):
-            self._error(field, ERROR_PATTERN)
+        if re.match('.+@.+', value, re.IGNORECASE):
+            return True
 
-    def _validate_type_file(self, field, value):
+    def _validate_type_file(self, value):
         """Enables validation for `file` schema attribute."""
-        if not isinstance(value, FileStorage):
-            self._error(field, ERROR_PATTERN)
+        if isinstance(value, FileStorage):
+            return True
 
     def _validate_multiple_emails(self, multiple, field, value):
         """
-        Validates comma separated list of emails.
-
-        :param field: field name.
-        :param value: field value.
+        {'type': 'boolean'}
         """
         if multiple:
             emails = value.split(',')
-            for email in emails:
-                self._validate_type_email(field, email)
+            if not all([self._validate_type_email(email) for email in emails]):
+                self._error(field, ERROR_PATTERN)
 
     def _validate_unique(self, unique, field, value):
-        """Validate unique with custom error msg."""
-
+        """
+        {'type': 'boolean'}
+        """
         if not self.resource.endswith("autosave") and unique:
             query = {field: value}
             self._set_id_query(query)
-
-            cursor = superdesk.get_resource_service(self.resource).get_from_mongo(req=None, lookup=query)
-            if cursor.count():
+            conflict = superdesk.get_resource_service(self.resource).find_one(req=None, **query)
+            if conflict:
                 self._error(field, ERROR_UNIQUE)
 
     def _set_id_query(self, query):
-        if self._id:
+        if self.document_id:
             try:
-                query[config.ID_FIELD] = {'$ne': ObjectId(self._id)}
-            except Exception:
-                query[config.ID_FIELD] = {'$ne': self._id}
+                query[config.ID_FIELD] = {'$ne': ObjectId(self.document_id)}
+            except InvalidId:
+                query[config.ID_FIELD] = {'$ne': self.document_id}
 
     def _validate_iunique(self, unique, field, value):
-        """Validate uniqueness ignoring case.MONGODB USE ONLY"""
-
+        """
+        {'type': 'boolean'}
+        """
         if unique:
             pattern = '^{}$'.format(re.escape(value.strip()))
             query = {field: re.compile(pattern, re.IGNORECASE)}
             self._set_id_query(query)
-
             cursor = superdesk.get_resource_service(self.resource).get_from_mongo(req=None, lookup=query)
             if cursor.count():
                 self._error(field, ERROR_UNIQUE)
 
     def _validate_iunique_per_parent(self, parent_field, field, value):
-        """Validate uniqueness ignoring case.MONGODB USE ONLY"""
-        original = self._original_document or {}
+        """
+        {'type': 'string'}
+        """
+        original = self.persisted_document or {}
         update = self.document or {}
 
         parent_field_value = update.get(parent_field, original.get(parent_field))
@@ -126,12 +175,17 @@ class SuperdeskValidator(Validator):
                 self._error(field, ERROR_UNIQUE)
 
     def _validate_minlength(self, min_length, field, value):
-        """Validate minlength with custom error msg."""
+        """
+        {'type': 'integer'}
+        """
         if isinstance(value, (type(''), list)):
             if len(value) < min_length:
                 self._error(field, ERROR_MINLENGTH)
 
     def _validate_required_fields(self, document):
+        """
+        {'type': 'list'}
+        """
         required = list(field for field, definition in self.schema.items()
                         if definition.get('required') is True)
         missing = set(required) - set(key for key in document.keys()
@@ -146,12 +200,8 @@ class SuperdeskValidator(Validator):
             self._error(field, ERROR_JSON_LIST)
 
     def _validate_unique_to_user(self, unique, field, value):
-        """Check that value is unique globally or to current user.
-
-        In case 'user' is set within document it will check for unique within
-        docs with same 'user' value.
-
-        Otherwise it will check for unique within docs without any 'user' value.
+        """
+        {'type': 'boolean'}
         """
         doc = getattr(self, 'document', getattr(self, 'original_document', {}))
 
@@ -164,14 +214,10 @@ class SuperdeskValidator(Validator):
         self._is_value_unique(unique, field, value, query)
 
     def _validate_unique_template(self, unique, field, value):
-        """Check that value is unique globally or to current user.
-
-        In case 'is_public' is false within document it will check for unique within
-        docs with same 'user' value.
-
-        Otherwise it will check for unique within docs without any 'user' value.
         """
-        original = self._original_document or {}
+        {'type': 'boolean'}
+        """
+        original = self.persisted_document or {}
         update = self.document or {}
 
         is_public = update.get('is_public', original.get('is_public', None))
@@ -185,35 +231,45 @@ class SuperdeskValidator(Validator):
 
         query['template_name'] = re.compile('^{}$'.format(re.escape(template_name.strip())), re.IGNORECASE)
 
-        if self._id:
+        if self.document_id:
             id_field = config.DOMAIN[self.resource]['id_field']
-            query[id_field] = {'$ne': self._id}
+            query[id_field] = {'$ne': self.document_id}
 
         if superdesk.get_resource_service(self.resource).find_one(req=None, **query):
             self._error(field, "Template Name is not unique")
 
     def _validate_twitter(self, twitter, field, value):
-        """Validator for twitter id e.g `@johnsmith`
-
-        :param field: field name.
-        :param value: field value.
+        """
+        {'type': 'boolean'}
         """
         if twitter and value and not re.match('^@[A-Za-z0-9_]{1,15}$', value, re.IGNORECASE):
             self._error(field, ERROR_PATTERN)
 
     def _validate_empty(self, empty, field, value):
-        """Validator for empty list, dict or str"""
+        """
+        {'type': 'boolean'}
+        """
         # let the standard validation happen
         super()._validate_empty(empty, field, value)
 
         # custom validation
         if isinstance(value, list) or isinstance(value, dict):
             if len(value) == 0 and not empty:
-                self._error(field, errors.ERROR_EMPTY_NOT_ALLOWED)
+                self._error(field, errors.EMPTY_NOT_ALLOWED)
 
     def _validate_unique_list(self, unique_list, field, value):
-        """Validate if list contains only unique items."""
+        """
+        {'type': 'boolean'}
+        """
 
         if unique_list and isinstance(value, list):
             if len(set(value)) != len(value):
                 self._error(field, "Must contain unique items only.")
+
+    def _validate_content_type_single_item_type(self, checked, field, value):
+        """
+        {'type': 'boolean'}
+        """
+        if checked and value not in {'text', None}:
+            if app.data.find_one('content_types', req=None, item_type=value) is not None:
+                self._error(field, _("Only 1 instance is allowed."))

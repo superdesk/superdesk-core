@@ -697,9 +697,7 @@ class CreateItemMethodTestCase(RssIngestServiceTest):
 class CreateImageItemsMethodTestCase(RssIngestServiceTest):
     """Tests for the _create_image_items() method."""
 
-    @mock.patch('superdesk.io.feeding_services.rss.generate_guid')
-    @mock.patch('superdesk.io.feeding_services.rss.GUID_TAG', 'guid_type_tag')
-    def test_creates_image_items_from_given_urls(self, fake_generate_guid):
+    def test_creates_image_items_from_given_urls(self):
         links = [
             'http://foo.bar/image_1.jpg',
             'http://baz.ban/image_2.jpg',
@@ -708,18 +706,12 @@ class CreateImageItemsMethodTestCase(RssIngestServiceTest):
             'firstcreated': datetime(2015, 1, 27, 15, 56, 59),
             'versioncreated': datetime(2015, 3, 19, 17, 20, 45)
         }
-        fake_generate_guid.side_effect = ('image:guid:1', 'image:guid:2')
 
         result = self.instance._create_image_items(links, text_item)
 
-        self.assertEqual(
-            fake_generate_guid.mock_calls,
-            [call(type='guid_type_tag')] * 2
-        )
-
         expected_result = [
             {
-                'guid': 'image:guid:1',
+                'guid': 'tag:foo.bar:image_1.jpg',
                 'type': 'picture',
                 'firstcreated': datetime(2015, 1, 27, 15, 56, 59),
                 'versioncreated': datetime(2015, 3, 19, 17, 20, 45),
@@ -729,7 +721,7 @@ class CreateImageItemsMethodTestCase(RssIngestServiceTest):
                     }
                 }
             }, {
-                'guid': 'image:guid:2',
+                'guid': 'tag:baz.ban:image_2.jpg',
                 'type': 'picture',
                 'firstcreated': datetime(2015, 1, 27, 15, 56, 59),
                 'versioncreated': datetime(2015, 3, 19, 17, 20, 45),
@@ -740,17 +732,14 @@ class CreateImageItemsMethodTestCase(RssIngestServiceTest):
                 }
             }
         ]
+        self.maxDiff = None
         self.assertCountEqual(result, expected_result)
 
 
 class CreatePackageMethodTestCase(RssIngestServiceTest):
     """Tests for the _create_package() method."""
 
-    @mock.patch('superdesk.io.feeding_services.rss.generate_guid')
-    @mock.patch('superdesk.io.feeding_services.rss.GUID_TAG', 'guid_type_tag')
-    def test_creates_package_from_given_text_and_image_items(
-        self, fake_generate_guid
-    ):
+    def test_creates_package_from_given_text_and_image_items(self):
         text_item = {
             'guid': 'main_text',
             'firstcreated': datetime(2015, 1, 27, 16, 0, 0),
@@ -760,18 +749,14 @@ class CreatePackageMethodTestCase(RssIngestServiceTest):
         img_item_1 = {'guid': 'image_1'}
         img_item_2 = {'guid': 'image_2'}
 
-        fake_generate_guid.return_value = 'package:guid:abcd123'
-
         package = self.instance._create_package(
             text_item,
             [img_item_1, img_item_2]
         )
 
-        fake_generate_guid.assert_called_with(type='guid_type_tag')
-
         expected = {
             'type': 'composite',
-            'guid': 'package:guid:abcd123',
+            'guid': 'main_text:pkg',
             'firstcreated': datetime(2015, 1, 27, 16, 0, 0),
             'versioncreated': datetime(2015, 1, 27, 16, 0, 0),
             'headline': 'Headline of the text item',

@@ -43,6 +43,7 @@ class NewsML12Formatter(Formatter):
         CONTENT_TYPE.PREFORMATTED: 'Text',
         CONTENT_TYPE.TEXT: 'Text'
     }
+    ENCODING = 'UTF-8'
 
     def format(self, article, subscriber, codes=None):
         """
@@ -70,7 +71,7 @@ class NewsML12Formatter(Formatter):
             self._format_news_management(article, news_item)
             self._format_news_component(article, news_item)
 
-            return [(pub_seq_num, self.XML_ROOT + etree.tostring(newsml).decode('utf-8'))]
+            return [(pub_seq_num, self.XML_ROOT + etree.tostring(newsml, encoding=self.ENCODING).decode(self.ENCODING))]
         except Exception as ex:
             raise FormatterError.newml12FormatterError(ex, subscriber)
 

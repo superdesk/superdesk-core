@@ -11,15 +11,15 @@
 import logging
 import os
 import shutil
-from datetime import timedelta, datetime
-
+from datetime import datetime
 from lxml import etree
+from flask import current_app as app
 from superdesk.errors import IngestFileError, ParserError, ProviderError
 from superdesk.io.registry import register_feeding_service
 from superdesk.io.feed_parsers import XMLFeedParser
-from superdesk.io.feeding_services import FeedingService
+from superdesk.io.feeding_services import FeedingService, OLD_CONTENT_MINUTES
 from superdesk.notification import push_notification
-from superdesk.utc import utc, utcnow
+from superdesk.utc import utc
 from superdesk.utils import get_sorted_files, FileSortAttributes
 
 logger = logging.getLogger(__name__)
@@ -58,6 +58,16 @@ class FileFeedingService(FeedingService):
             raise IngestFileError.isNotDirError()
 
     def _update(self, provider, update):
+        # check if deprecated FILE_INGEST_OLD_CONTENT_MINUTES setting is still used
+        if "FILE_INGEST_OLD_CONTENT_MINUTES" in app.config:
+            deprecated_cont_min = app.config["FILE_INGEST_OLD_CONTENT_MINUTES"]
+            cont_min = app.config[OLD_CONTENT_MINUTES]
+            if deprecated_cont_min != cont_min:
+                logger.warning(
+                    "'FILE_INGEST_OLD_CONTENT_MINUTES' is deprecated, please update settings.py to use {new_name!r}"
+                    .format(new_name=OLD_CONTENT_MINUTES))
+                app.config[OLD_CONTENT_MINUTES] = deprecated_cont_min
+
         self.provider = provider
         self.path = provider.get('config', {}).get('path', None)
 
@@ -72,10 +82,12 @@ class FileFeedingService(FeedingService):
                 last_updated = None
                 file_path = os.path.join(self.path, filename)
                 if os.path.isfile(file_path):
-                    stat = os.lstat(file_path)
-                    last_updated = datetime.fromtimestamp(stat.st_mtime, tz=utc)
+                    last_updated = self.get_last_updated(file_path)
 
                     if self.is_latest_content(last_updated, provider.get('last_updated')):
+                        if self.is_empty(file_path):
+                            logger.info('Ignoring empty file {}'.format(filename))
+                            continue
                         if isinstance(registered_parser, XMLFeedParser):
                             with open(file_path, 'rb') as f:
                                 xml = etree.parse(f)
@@ -94,7 +106,7 @@ class FileFeedingService(FeedingService):
 
                         self.move_file(self.path, filename, provider=provider, success=not failed)
                     else:
-                        self.move_file(self.path, filename, provider=provider, success=True)
+                        self.move_file(self.path, filename, provider=provider, success=False)
             except Exception as ex:
                 if last_updated and self.is_old_content(last_updated):
                     self.move_file(self.path, filename, provider=provider, success=False)
@@ -148,24 +160,21 @@ class FileFeedingService(FeedingService):
         finally:
             os.remove(os.path.join(file_path, filename))
 
-    def is_latest_content(self, last_updated, provider_last_updated=None):
+    def is_empty(self, file_path):
+        """Test if given file path is empty, return True if a file is empty
         """
-        Parse file only if it's not older than provider last update -10m
+        return not (os.path.isfile(file_path) and os.path.getsize(file_path) > 0)
+
+    def get_last_updated(self, file_path):
+        """Get last updated time for file.
+
+        Using both mtime and ctime timestamps not to miss
+        old files being copied around and recent files after
+        changes done in place.
         """
-
-        if not provider_last_updated:
-            provider_last_updated = utcnow() - timedelta(days=7)
-
-        return provider_last_updated - timedelta(minutes=10) < last_updated
-
-    def is_old_content(self, last_updated):
-        """Test if file is old so it wouldn't probably work in is_latest_content next time.
-
-        Such files can be moved to `_ERROR` folder, it wouldn't be ingested anymore.
-
-        :param last_updated: file last updated datetime
-        """
-        return last_updated < utcnow() - timedelta(minutes=10)
+        stat = os.lstat(file_path)
+        timestamp = max(stat.st_mtime, stat.st_ctime)
+        return datetime.fromtimestamp(timestamp, tz=utc)
 
 
 register_feeding_service(FileFeedingService)

@@ -8,18 +8,20 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from eve.utils import config
+import superdesk
+
+from copy import deepcopy
 from flask import request
+from flask_babel import _
+from eve.utils import config
 
 from apps.tasks import send_to
-import superdesk
 from apps.archive.archive import SOURCE as ARCHIVE
 from apps.content import push_item_move_notification
 from superdesk.metadata.utils import item_url
-from apps.archive.common import generate_unique_id_and_name, remove_unwanted, \
-    set_original_creator, insert_into_versions, ITEM_OPERATION, ITEM_FETCH
+from apps.archive.common import insert_into_versions, fetch_item
 from superdesk.metadata.utils import generate_guid
-from superdesk.metadata.item import GUID_TAG, INGEST_ID, INGEST_VERSION, FAMILY_ID, ITEM_STATE, \
+from superdesk.metadata.item import INGEST_ID, INGEST_VERSION, FAMILY_ID, ITEM_STATE, \
     CONTENT_STATE, GUID_FIELD
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from superdesk.resource import Resource, build_custom_hateoas
@@ -28,9 +30,7 @@ from superdesk.utc import utcnow
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk import get_resource_service
 from superdesk.metadata.packages import RESIDREF, REFS, GROUPS
-from superdesk.metadata.item import MEDIA_TYPES, ASSOCIATIONS
-from flask_babel import _
-from copy import deepcopy
+from superdesk.metadata.item import MEDIA_TYPES, ASSOCIATIONS, get_schema
 
 custom_hateoas = {'self': {'title': 'Archive', 'href': '/archive/{_id}'}}
 
@@ -39,11 +39,13 @@ class FetchResource(Resource):
     endpoint_name = 'fetch'
     resource_title = endpoint_name
 
-    schema = {
+    schema = get_schema(True)
+    schema.update({
         'desk': Resource.rel('desks', False, required=True),
         'stage': Resource.rel('stages', False, nullable=True),
-        'macro': {'type': 'string'}
-    }
+        'macro': {'type': 'string'},
+        '_links': {'type': 'dict'},
+    })
 
     url = 'ingest/<{0}:id>/fetch'.format(item_url)
 
@@ -78,33 +80,22 @@ class FetchService(BaseService):
                 raise InvalidStateTransitionError()
 
             if doc.get('macro'):  # there is a macro so transform it
-                ingest_doc = get_resource_service('macros').execute_macro(ingest_doc, doc.get('macro'))
+                ingest_doc = get_resource_service('macros').execute_macro(
+                    ingest_doc,
+                    doc.get('macro'),
+                    dest_desk_id=desk_id,
+                    dest_stage_id=stage_id,
+                )
 
-            archived = utcnow()
-            ingest_service.patch(id_of_item_to_be_fetched, {'archived': archived})
+            dest_doc = fetch_item(ingest_doc, desk_id, stage_id, state=doc.get(ITEM_STATE), target=doc.get('target'))
 
-            dest_doc = dict(ingest_doc)
+            id_of_fetched_items.append(dest_doc[config.ID_FIELD])
+            ingest_service.patch(id_of_item_to_be_fetched, {'archived': dest_doc['versioncreated']})
 
-            if doc.get('target'):
-                dest_doc.update(doc.get('target'))
-
-            new_id = generate_guid(type=GUID_TAG)
-            id_of_fetched_items.append(new_id)
-            dest_doc[config.ID_FIELD] = new_id
-            dest_doc[GUID_FIELD] = new_id
-            generate_unique_id_and_name(dest_doc)
-
-            dest_doc[config.VERSION] = 1
-            dest_doc['versioncreated'] = archived
-            send_to(doc=dest_doc, desk_id=desk_id, stage_id=stage_id)
-            dest_doc[ITEM_STATE] = doc.get(ITEM_STATE, CONTENT_STATE.FETCHED)
             dest_doc[FAMILY_ID] = ingest_doc[config.ID_FIELD]
             dest_doc[INGEST_ID] = self.__strip_version_from_guid(ingest_doc[GUID_FIELD], ingest_doc.get('version'))
             dest_doc[INGEST_VERSION] = ingest_doc.get('version')
-            dest_doc[ITEM_OPERATION] = ITEM_FETCH
 
-            remove_unwanted(dest_doc)
-            set_original_creator(dest_doc)
             self.__fetch_items_in_package(dest_doc, desk_id, stage_id,
                                           doc.get(ITEM_STATE, CONTENT_STATE.FETCHED))
 
@@ -112,7 +103,7 @@ class FetchService(BaseService):
 
             desk = get_resource_service('desks').find_one(req=None, _id=desk_id)
             if desk and desk.get('default_content_profile'):
-                dest_doc['profile'] = desk['default_content_profile']
+                dest_doc.setdefault('profile', desk['default_content_profile'])
 
             if dest_doc.get('type', 'text') in MEDIA_TYPES:
                 dest_doc['profile'] = None
@@ -147,12 +138,13 @@ class FetchService(BaseService):
         Fetches the associated items of a given document
         """
         for key, item in (doc.get(ASSOCIATIONS) or {}).items():
-            new_item = deepcopy(item)
-            new_item['desk'] = desk
-            new_item['stage'] = stage
-            new_item['state'] = state
-            new_ids = self.fetch([new_item], id=None, notify=False)
-            item[config.ID_FIELD] = new_ids[0]
+            if item is not None and item.get('state') == 'ingested':
+                new_item = deepcopy(item)
+                new_item['desk'] = desk
+                new_item['stage'] = stage
+                new_item['state'] = state
+                new_ids = self.fetch([new_item], id=None, notify=False)
+                item[config.ID_FIELD] = new_ids[0]
 
     def __fetch_items_in_package(self, dest_doc, desk, stage, state):
         # Note: macro and target information is not user for package publishing.

@@ -10,6 +10,7 @@
 
 from superdesk.resource import Resource
 from superdesk.metadata.utils import item_url
+from superdesk.auth_server.scopes import Scope
 
 
 class ContactsResource(Resource):
@@ -24,4 +25,7 @@ class ContactsResource(Resource):
         'projection': {
             'fields_meta': 0
         },
+    }
+    privileges = {
+        'GET': Scope.CONTACTS_READ.name
     }

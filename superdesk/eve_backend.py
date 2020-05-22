@@ -22,6 +22,35 @@ from superdesk.logging import logger, item_msg
 from eve.methods.common import resolve_document_etag
 from elasticsearch.exceptions import RequestError, NotFoundError
 from superdesk.errors import SuperdeskApiError
+from superdesk.notification import push_notification
+
+
+SYSTEM_KEYS = set([
+    '_etag',
+    '_updated',
+    '_created',
+])
+
+
+def get_key(key, parent=None):
+    return '.'.join(filter(None, [parent, key]))
+
+
+def get_diff_keys(updates, original=None, parent=None):
+    if original is None:
+        original = {}
+    if original and parent:
+        keys = set([
+            get_key(key, parent) for key in set(original.keys()) - set(updates.keys())
+        ])
+    else:
+        keys = set()
+    for key, val in updates.items():
+        if key not in original or original[key] != val:
+            keys.add(get_key(key, parent))
+            if not parent and val and isinstance(val, dict):
+                keys.update(get_diff_keys(val, original.get(key), key).keys())
+    return {key: 1 for key in keys if key not in SYSTEM_KEYS}
 
 
 class EveBackend():
@@ -81,7 +110,7 @@ class EveBackend():
         else:
             logger.warn('there is no search backend for %s' % endpoint_name)
 
-    def get(self, endpoint_name, req, lookup):
+    def get(self, endpoint_name, req, lookup, **kwargs):
         """Get list of items.
 
         :param endpoint_name: resource name
@@ -89,11 +118,23 @@ class EveBackend():
         :param lookup: additional filter
         """
         backend = self._lookup_backend(endpoint_name, fallback=True)
-        cursor = backend.find(endpoint_name, req, lookup)
-        if req.if_modified_since and cursor.count():
+        is_mongo = self._backend(endpoint_name) == backend
+
+        if is_mongo:
+            cursor, count = backend.find(endpoint_name, req, lookup)
+        else:
+            cursor = backend.find(endpoint_name, req, lookup)
+            count = cursor.count()
+
+        if req.if_modified_since and count:
             # fetch all items, not just updated
             req.if_modified_since = None
-            return backend.find(endpoint_name, req, lookup)
+            if is_mongo:
+                cursor, count = backend.find(endpoint_name, req, lookup)
+            else:
+                cursor = backend.find(endpoint_name, req, lookup)
+                count = cursor.count()
+
         self._cursor_hook(cursor=cursor, req=req)
         return cursor
 
@@ -108,7 +149,7 @@ class EveBackend():
         """
         req.if_modified_since = None
         backend = self._backend(endpoint_name)
-        cursor = backend.find(endpoint_name, req, lookup)
+        cursor, _ = backend.find(endpoint_name, req, lookup)
         self._cursor_hook(cursor=cursor, req=req)
         return cursor
 
@@ -201,6 +242,8 @@ class EveBackend():
 
         try:
             backend.update(endpoint_name, id, updates, original)
+            push_notification('resource:updated', _id=str(id),
+                              resource=endpoint_name, fields=get_diff_keys(updates, original))
         except eve.io.base.DataLayer.OriginalChangedError:
             if not backend.find_one(endpoint_name, req=None, _id=id) and search_backend:
                 # item is in elastic, not in mongo - not good

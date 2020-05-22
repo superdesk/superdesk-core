@@ -6,7 +6,7 @@
 
 <itemClass qcode="ninat:text"/>
 <provider literal="STT"/>
-<versionCreated>2017-12-19T11:16:43+02:00</versionCreated>
+<versionCreated>2017-10-18T11:16:43+02:00</versionCreated>
 <firstCreated>2017-12-19T10:33:04+02:00</firstCreated>
 <pubStatus qcode="stat:usable"/>
 <edNote role="sttnote:private">complemented throughout</edNote>
@@ -17,7 +17,7 @@
 <contentMeta>
 <urgency>3</urgency>
 <contentCreated>2017-12-19T10:33:04+02:00</contentCreated>
-<contentModified>2017-12-19T11:16:43+02:00</contentModified>
+<contentModified>2017-12-25T11:16:43+02:00</contentModified>
 <altId type="sttidtype:textid">114791381</altId>
 <located type="loctyp:City">
 <name>Helsinki</name>

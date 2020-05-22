@@ -36,10 +36,13 @@ def get_privilege_list():
     return [v for v in _privileges.values()]
 
 
-def intrinsic_privilege(resource_name, method=[]):
+def intrinsic_privilege(resource_name, method=None):
     """
     Registers intrinsic privileges.
     """
+
+    if method is None:
+        method = []
 
     _intrinsic_privileges[resource_name] = method
 

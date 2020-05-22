@@ -12,7 +12,8 @@ Feature: Client Config
                 "japanese_characters_per_minute": 600,
                 "schema": {},
                 "editor": {},
-                "publish_content_expiry_minutes": 0
+                "publish_content_expiry_minutes": 0,
+                "workflow_allow_multiple_updates": false
             }
         }
         """

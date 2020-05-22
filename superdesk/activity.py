@@ -46,7 +46,7 @@ class ActivityResource(Resource):
     schema = {
         'name': {'type': 'string'},
         'message': {'type': 'string'},
-        'data': {'type': 'dict'},
+        'data': {'type': 'dict', 'schema': {}, 'allow_unknown': True},
         'recipients': {
             'type': 'list',
             'schema': {

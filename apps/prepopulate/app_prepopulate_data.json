@@ -216,6 +216,13 @@
                     "order": 10,
                     "formatOptions": ["underline", "link", "bold"]
                 },
+                "media-gallery": {
+                    "enabled": true,
+                    "field_name": "Image gallery 33",
+                    "order": 12,
+                    "section": "content",
+                    "required": false
+                },
                 "body_html": {
                     "editor3": true,
                     "order": 14,
@@ -230,6 +237,52 @@
 
     {
         "data": {
+            "label": "testing",
+            "enabled": true,
+            "schema": {
+                "slugline": {},
+                "subject": {
+                    "schema":{},
+                    "mandatory_in_list": {
+                        "scheme": {}
+                    },
+                    "type": "list"
+                },
+                "headline": {},
+                "body_html": {}
+            },
+            "editor": {
+                "slugline": {
+                    "required": true,
+                    "order": 4
+                },
+                "subject": {
+                    "order": 6,
+                    "default": [],
+                    "schema": {},
+                    "mandatory_in_list": {
+                        "scheme": {}
+                    }
+                },
+                "headline": {
+                    "editor3": true,
+                    "order": 10,
+                    "formatOptions": ["underline", "link", "bold"]
+                },
+                "body_html": {
+                    "editor3": true,
+                    "order": 14,
+                    "formatOptions": ["h2", "bold", "italic", "link", "comments", "annotation", "table"]
+                }
+            }
+        },
+        "resource": "content_types",
+        "username": "admin",
+        "id_name": "-id profile testing-"
+    },
+
+    {
+        "data": {
             "is_public": true,
             "template_name": "editor3 template",
             "content_type": "create",
@@ -240,6 +293,21 @@
         "resource": "content_templates",
         "username": "admin",
         "id_name": "-id template editor3-"
+    },
+
+    {
+        "data": {
+            "is_public": true,
+            "template_name": "testing",
+            "content_type": "create",
+            "template_desks": ["-id desk Politic Desks-", "-id desk Sports Desks-"],
+            "data": {
+                "profile": "-id profile testing-"
+            }
+        },
+        "resource": "content_templates",
+        "username": "admin",
+        "id_name": "-id template testing-"
     },
 
     {
@@ -358,7 +426,7 @@
 		        },
 		        "type" : {
 		            "type" : "string",
-		            "required" : "true",
+		            "required" : true,
 		            "allowed" : [
 		                "text"
 		            ]
@@ -404,7 +472,7 @@
 		        },
 		        "type" : {
 		            "type" : "string",
-		            "required" : "true",
+		            "required" : true,
 		            "allowed" : [
 		                "text"
 		            ]
@@ -444,7 +512,7 @@
                 },
                 "type" : {
                     "type" : "string",
-                    "required" : "true",
+                    "required" : true,
                     "allowed" : [
                         "text"
                     ]
@@ -523,6 +591,39 @@
         },
         "resource": "vocabularies",
 		"id_name": "-id vocabularies priority-"
+    },
+
+    {
+        "data": {
+            "field_type": "media",
+            "items": [],
+            "type": "manageable",
+            "schema": {
+                "name": {},
+                "qcode": {},
+                "parent": {}
+            },
+            "service": {
+                "all": 1
+            },
+            "field_options": {
+                "allowed_workflows": {
+                    "in_progress": true,
+                    "published": true
+                },
+                "allowed_types": {
+                    "picture": true
+                },
+                "multiple_items": {
+                    "enabled": true,
+                    "max_items": 5
+                }
+            },
+            "_id": "media-gallery",
+            "display_name": "Image gallery 33"
+        },
+        "resource": "vocabularies",
+		"id_name": "-id related media field-"
     },
 
     {

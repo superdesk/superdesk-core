@@ -28,7 +28,7 @@ Feature: Publish embedded items feature
             "schema": {
                 "type": {
                     "type": "string",
-                    "required": "true",
+                    "required": true,
                     "allowed": ["picture"]
                 },
                 "pubstatus": {
@@ -66,7 +66,7 @@ Feature: Publish embedded items feature
             "schema": {
                 "type": {
                     "type": "string",
-                    "required": "true",
+                    "required": true,
                     "allowed": ["picture"]
                 },
                 "pubstatus": {
@@ -162,7 +162,7 @@ Feature: Publish embedded items feature
         When we upload a file "bike.jpg" to "archive"
         And we patch "/archive/#archive._id#"
         """
-        {"task": {"desk": "#desks._id#"}}
+        {"task": {"desk": "#desks._id#"}, "headline": "test"}
         """
         And we patch "/archive/#archive._id#"
         """
@@ -172,16 +172,21 @@ Feature: Publish embedded items feature
 
         When we patch "archive/foo"
         """
-        {"headline": "foo",
-        "slugline": "bar",
-        "state": "in_progress",
-        "associations": {"embedded1":
-        {"_id": "#archive._id#",
-         "type": "picture",
-         "headline": "test",
-         "alt_text": "alt_text",
-         "description_text": "description_text",
-         "state": "in_progress"}}}
+        {
+            "headline": "foo",
+            "slugline": "bar",
+            "state": "in_progress",
+            "associations": {
+                "embedded1": {
+                    "_id": "#archive._id#",
+                    "type": "picture",
+                    "headline": "test",
+                    "alt_text": "alt_text",
+                    "description_text": "description_text",
+                    "state": "in_progress"
+                }
+            }
+        }
         """
         Then we get OK response
 
@@ -193,7 +198,7 @@ Feature: Publish embedded items feature
 
         When we patch "archive/#archive._id#"
         """
-        {"slugline": "bike"}
+        {"slugline": "bike", "pubstatus" : "usable"}
         """
         Then we get OK response
 
@@ -202,6 +207,8 @@ Feature: Publish embedded items feature
         {"headline": "foo", "associations": {
             "embedded1": {
                 "_id": "#archive._id#",
+                "slugline": "bike",
+                "pubstatus" : "usable",
                 "type": "picture",
                 "headline": "test",
                 "alt_text": "alt_text",
@@ -240,7 +247,7 @@ Feature: Publish embedded items feature
         When we upload a file "bike.jpg" to "archive"
         And we patch "/archive/#archive._id#"
         """
-        {"task": {"desk": "#desks._id#"}}
+        {"task": {"desk": "#desks._id#"}, "headline": "test"}
         """
         And we patch "/archive/#archive._id#"
         """
@@ -250,16 +257,21 @@ Feature: Publish embedded items feature
 
         When we patch "archive/foo"
         """
-        {"headline": "foo",
-        "slugline": "bar",
-        "state": "in_progress",
-        "associations": {"embedded1":
-        {"_id": "#archive._id#",
-         "type": "picture",
-         "headline": "test",
-         "alt_text": "alt_text",
-         "description_text": "description_text",
-         "state": "in_progress"}}}
+        {
+            "headline": "foo",
+            "slugline": "bar",
+            "state": "in_progress",
+            "associations": {
+                "embedded1": {
+                    "_id": "#archive._id#",
+                    "type": "picture",
+                    "headline": "test",
+                    "alt_text": "alt_text",
+                    "description_text": "description_text",
+                    "state": "in_progress"
+                }
+            }
+        }
         """
         Then we get OK response
 
@@ -271,7 +283,7 @@ Feature: Publish embedded items feature
 
         When we patch "archive/#archive._id#"
         """
-        {"slugline": "bike"}
+        {"slugline": "bike", "pubstatus" : "usable"}
         """
         Then we get OK response
 
@@ -281,6 +293,8 @@ Feature: Publish embedded items feature
             "embedded1": {
                 "_id": "#archive._id#",
                 "type": "picture",
+                "slugline": "bike",
+                "pubstatus" : "usable",
                 "headline": "test",
                 "alt_text": "alt_text",
                 "description_text": "description_text",
@@ -328,6 +342,14 @@ Feature: Publish embedded items feature
         Then we assert content api item "foo" with associated item "embedded1" is published to "58f6115b88ea94d000369a31"
         Then we assert content api item "foo" with associated item "embedded1" is not published to "58f6110d88ea94d000369a2f"
 
+        When we publish "foo" with "correct" type and "corrected" state
+        """
+        {"headline": "foo corrected v2"}
+        """
+        Then we get OK response
+        When we get "published"
+        Then we get list with 6 items
+
     @auth
     @vocabulary
     Scenario: Publish embedded picture together with text item and resend to another subscriber
@@ -339,7 +361,7 @@ Feature: Publish embedded items feature
         When we upload a file "bike.jpg" to "archive"
         And we patch "/archive/#archive._id#"
         """
-        {"task": {"desk": "#desks._id#"}}
+        {"task": {"desk": "#desks._id#"}, "headline": "test"}
         """
         And we patch "/archive/#archive._id#"
         """
@@ -349,16 +371,22 @@ Feature: Publish embedded items feature
 
         When we patch "archive/foo"
         """
-        {"headline": "foo",
-        "slugline": "bar",
-        "state": "in_progress",
-        "associations": {"embedded1":
-        {"_id": "#archive._id#",
-         "type": "picture",
-         "headline": "test",
-         "alt_text": "alt_text",
-         "description_text": "description_text",
-         "state": "in_progress"}}}
+        {
+            "headline": "foo",
+            "slugline": "bar",
+            "state": "in_progress",
+            "associations": {
+                "embedded1": {
+                    "_id": "#archive._id#",
+                    "type": "picture",
+                    "pubstatus" : "usable",
+                    "headline": "test",
+                    "alt_text": "alt_text",
+                    "description_text": "description_text",
+                    "state": "in_progress"
+                }
+            }
+        }
         """
         Then we get OK response
 
@@ -370,7 +398,7 @@ Feature: Publish embedded items feature
 
         When we patch "archive/#archive._id#"
         """
-        {"slugline": "bike"}
+        {"slugline": "bike", "pubstatus" : "usable"}
         """
         Then we get OK response
 
@@ -381,6 +409,8 @@ Feature: Publish embedded items feature
                 "_id": "#archive._id#",
                 "type": "picture",
                 "headline": "test",
+                "slugline": "bike",
+                "pubstatus" : "usable",
                 "alt_text": "alt_text",
                 "description_text": "description_text",
                 "state": "in_progress"}}}

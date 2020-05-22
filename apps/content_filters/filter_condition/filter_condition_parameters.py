@@ -9,6 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import json
+import copy
+import logging
 from flask_babel import _
 from superdesk.resource import Resource
 from superdesk.services import BaseService
@@ -16,13 +18,22 @@ from superdesk.utils import ListCursor
 from superdesk import get_resource_service, config, app
 from superdesk.io.subjectcodes import get_subjectcodeitems
 from eve.utils import ParsedRequest
-import copy
+
+
+logger = logging.getLogger(__name__)
 
 
 class FilterConditionParametersResource(Resource):
     url = "filter_conditions/parameters"
     resource_methods = ['GET']
     item_methods = []
+    schema = {
+        'field': {'type': 'string'},
+        'label': {'type': 'string'},
+        'operators': {'type': 'list'},
+        'values': {'type': 'list'},
+        'value_field': {'type': 'string'},
+    }
 
 
 class FilterConditionParametersService(BaseService):
@@ -129,7 +140,20 @@ class FilterConditionParametersService(BaseService):
                    'operators': ['exists'],
                    'values': values['featuremedia'],
                    'value_field': 'name'
-                   }]
+                   },
+                  {'field': 'anpa_take_key',
+                   'operators': ['in', 'nin', 'eq', 'ne', 'like', 'notlike', 'startswith', 'endswith']
+                   },
+                  ]
+
+        if 'planning' in app.config.get('INSTALLED_APPS', []):
+            fields.append({'field': 'agendas',
+                           'label': _('Agendas'),
+                           'operators': ['in', 'nin'],
+                           'values': list(get_resource_service('agenda').find({'is_enabled': True})),
+                           'value_field': '_id',
+                           })
+
         fields.extend(self._get_vocabulary_fields(values))
         return ListCursor(fields)
 
@@ -154,7 +178,8 @@ class FilterConditionParametersService(BaseService):
     def _get_field_values(self):
         values = {}
         vocabularies_resource = get_resource_service('vocabularies')
-        values['anpa_category'] = vocabularies_resource.find_one(req=None, _id='categories')['items']
+        categories_cv = vocabularies_resource.find_one(req=None, _id='categories')
+        values['anpa_category'] = categories_cv.get('items') if categories_cv else []
         req = ParsedRequest()
         req.where = json.dumps({'$or': [{"schema_field": "genre"}, {"_id": "genre"}]})
         genre = vocabularies_resource.get(req=req, lookup=None)
@@ -187,7 +212,13 @@ class FilterConditionParametersService(BaseService):
 
     def _get_stage_field_values(self, desks):
         stages = list(get_resource_service('stages').get(None, {}))
-        for stage in stages:
-            desk = next(filter(lambda d: d['_id'] == stage['desk'], desks))
-            stage['name'] = '{}: {}'.format(desk['name'], stage['name'])
-        return stages
+        for i, stage in enumerate(stages):
+            try:
+                desk = next(filter(lambda d: d['_id'] == stage['desk'], desks))
+            except StopIteration:
+                # if stage has no desk, remove that stage from a list
+                logger.warning('Desk not found for stage with id "{}".'.format(stage['_id']))
+                stages[i] = None
+                continue
+            stages[i]['name'] = '{}: {}'.format(desk['name'], stage['name'])
+        return tuple(i for i in stages if i)

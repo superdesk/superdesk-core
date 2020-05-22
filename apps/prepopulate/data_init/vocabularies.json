@@ -175,6 +175,7 @@
                 "formats": [
                     {"name": "NINJS", "qcode": "ninjs"},
                     {"name": "NINJSv2", "qcode": "ninjs2"},
+                    {"name": "NINJS FTP", "qcode": "ftp ninjs"},
                     {"name": "NewsML G2", "qcode": "newsmlg2"},
                     {"name": "Email", "qcode": "email"},
                     {"name": "Newsroom NINJS", "qcode": "newsroom ninjs"},
@@ -184,6 +185,7 @@
                 "formats": [
                     {"name": "NINJS", "qcode": "ninjs"},
                     {"name": "NINJSv2", "qcode": "ninjs2"},
+                    {"name": "NINJS FTP", "qcode": "ftp ninjs"},
                     {"name": "NewsML G2", "qcode": "newsmlg2"},
                     {"name": "Email", "qcode": "email"},
                     {"name": "Newsroom NINJS", "qcode": "newsroom ninjs"},
@@ -194,7 +196,8 @@
                     {"name": "NITF", "qcode": "nitf"},
                     {"name": "Email", "qcode": "email"}
                 ]}
-        ]
+        ],
+        "init_version": 2
     },
     {
         "_id": "crop_sizes",
@@ -341,6 +344,7 @@
     {
         "_id": "usageterms",
         "display_name": "Terms of use",
+        "schema_field": "usageterms",
         "type": "manageable",
         "unique_field": "qcode",
         "selection_type": "single selection",

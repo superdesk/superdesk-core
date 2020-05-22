@@ -14,10 +14,12 @@ from enum import Enum
 
 Scope = Enum('Scope', [
     'ARCHIVE_READ',
-    'DESK_READ',
+    'DESKS_READ',
     'PLANNING_READ',
-    'CONTACT_READ',
+    'CONTACTS_READ',
     'USERS_READ',
+    'ASSIGNMENTS_READ',
+    'EVENTS_READ'
 ])
 
 

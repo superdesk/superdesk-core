@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
+import bson
 import logging
 from datetime import timedelta, timezone, datetime
 
@@ -86,6 +87,8 @@ def is_not_expired(item, delta):
             return expiry > utcnow()
         else:
             return expiry > datetime.now()
+    if not item.get('versioncreated'):  # can't say really
+        return True
     return False
 
 
@@ -513,6 +516,14 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
 
         item['ingest_provider'] = str(provider[superdesk.config.ID_FIELD])
         item.setdefault('source', provider.get('source', ''))
+        item.setdefault('uri', item[GUID_FIELD])  # keep it as original guid
+
+        if item.get('profile'):
+            try:
+                item['profile'] = bson.ObjectId(item['profile'])
+            except bson.errors.InvalidId:
+                pass
+
         set_default_state(item, CONTENT_STATE.INGESTED)
         item['expiry'] = get_expiry_date(provider.get('content_expiry') or app.config['INGEST_EXPIRY_MINUTES'],
                                          item.get('versioncreated'))
@@ -538,15 +549,13 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
         rend = item.get('renditions', {})
         if rend:
             baseImageRend = rend.get('baseImage') or next(iter(rend.values()))
-            if baseImageRend:
+            if baseImageRend and not baseImageRend.get('media'):  # if there is media should be processed already
                 href = feeding_service.prepare_href(baseImageRend['href'], rend.get('mimetype'))
                 update_renditions(item, href, old_item)
 
         # if the item has associated media
         for key, assoc in item.get('associations', {}).items():
             set_default_state(assoc, CONTENT_STATE.INGESTED)
-            if assoc.get('renditions'):
-                transfer_renditions(assoc['renditions'])
             # wire up the id of the associated feature media to the ingested one
             guid = assoc.get('guid')
             if guid:
@@ -554,24 +563,32 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
                 ingested = ingest_service.get_from_mongo(req=None, lookup=lookup)
                 if ingested.count() >= 1:
                     assoc['_id'] = ingested[0]['_id']
+                    if is_new_version(assoc, ingested[0]) and assoc.get('renditions'):  # new version
+                        logger.info('new version %s', assoc['headline'])
+                        transfer_renditions(assoc['renditions'])
                     for rendition in ingested[0].get('renditions', {}):  # add missing renditions
                         assoc['renditions'].setdefault(
                             rendition,
                             ingested[0]['renditions'][rendition])
                 else:  # there is no such item in the system - ingest it
+                    if assoc.get('renditions') and has_system_renditions(assoc):  # all set, just download
+                        logger.info('new assoc %s', assoc['headline'])
+                        transfer_renditions(assoc['renditions'])
                     status, ids = ingest_item(assoc, provider, feeding_service, rule_set)
                     if status:
                         assoc['_id'] = ids[0]
                         items_ids.extend(ids)
+            elif assoc.get('residRef'):
+                item['associations'][key] = resolve_ref(assoc)
 
         new_version = True
         if old_item:
+            new_version = is_new_version(item, old_item)
             updates = deepcopy(item)
             ingest_service.patch_in_mongo(old_item[superdesk.config.ID_FIELD], updates, old_item)
             item.update(old_item)
             item.update(updates)
             items_ids.append(item['_id'])
-            new_version = is_new_version(item, old_item)
         else:
             if item.get('ingest_provider_sequence') is None:
                 ingest_service.set_ingest_provider_sequence(item, provider)
@@ -592,6 +609,18 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
     return True, items_ids
 
 
+def resolve_ref(assoc):
+    """Resolve reference to existing item."""
+    uri = assoc.pop('residRef')
+    item = superdesk.get_resource_service('archive').find_one(req=None, uri=uri)
+    return item
+
+
+NEW_VERSION_IGNORE_FIELS = (
+    'expiry',
+)
+
+
 def is_new_version(item, old_item):
     # explicit version info
     for field in ('version', 'versioncreated'):
@@ -599,12 +628,26 @@ def is_new_version(item, old_item):
             try:
                 return int(item[field], 10) > int(old_item[field], 10)
             except (ValueError, TypeError):
-                return item[field] > old_item[field]
+                try:
+                    return item[field] > old_item[field]
+                except TypeError as ex:
+                    logger.exception(ex)
+                    # can't compare the values, assuming these are different
+                    return True
     # no version info, check content
     for field in item:
+        if field in NEW_VERSION_IGNORE_FIELS or item[field] is None:
+            continue
         if not old_item.get(field) or item[field] != old_item[field]:
             return True
     return False
+
+
+def has_system_renditions(item):
+    return all((
+        rend in item['renditions']
+        for rend in ('viewImage', 'baseImage', 'thumbnail')
+    ))
 
 
 superdesk.command('ingest:update', UpdateIngest())

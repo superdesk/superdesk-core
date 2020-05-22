@@ -12,8 +12,9 @@ import flask
 import logging
 import datetime
 import superdesk
-from copy import copy, deepcopy
+import superdesk.signals as signals
 
+from copy import copy, deepcopy
 from superdesk.resource import Resource
 from superdesk.metadata.utils import extra_response_fields, item_url, aggregations, \
     is_normal_package, get_elastic_highlight_query
@@ -32,8 +33,10 @@ from superdesk.activity import add_activity, notify_and_add_activity, ACTIVITY_C
 from eve.utils import parse_request, config, date_to_str, ParsedRequest
 from superdesk.services import BaseService
 from superdesk.users.services import current_user_has_privilege, is_admin
-from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, CONTENT_TYPE, ITEM_TYPE, EMBARGO, \
-    PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, SIGN_OFF, ASSOCIATIONS, MEDIA_TYPES, INGEST_ID, PROCESSED_FROM, PUBLISH_STATES
+from superdesk.metadata.item import (ITEM_STATE, CONTENT_STATE, CONTENT_TYPE, ITEM_TYPE, EMBARGO,
+                                     PUBLISH_SCHEDULE, SCHEDULE_SETTINGS, SIGN_OFF, ASSOCIATIONS,
+                                     MEDIA_TYPES, INGEST_ID, PROCESSED_FROM, PUBLISH_STATES,
+                                     get_schema)
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, RESIDREF
 from apps.common.components.utils import get_component
 from apps.item_autosave.components.item_autosave import ItemAutosave
@@ -44,7 +47,9 @@ from apps.common.models.utils import get_model
 from apps.item_lock.models.item import ItemModel
 from apps.packages import PackageService
 from .archive_media import ArchiveMediaService
+from .usage import track_usage, update_refs
 from superdesk.utc import utcnow
+from superdesk.vocabularies import is_related_content
 from flask_babel import _
 
 EDITOR_KEY_PREFIX = 'editor_'
@@ -183,7 +188,8 @@ class ArchiveResource(Resource):
         },
         'default_sort': [('_updated', -1)],
         'elastic_filter': {'bool': {
-            'must': {'terms': {'state': ['fetched', 'routed', 'draft', 'in_progress', 'spiked', 'submitted']}},
+            'must': {'terms': {'state': ['fetched', 'routed', 'draft', 'in_progress',
+                                         'spiked', 'submitted', 'unpublished']}},
             'must_not': {'term': {'version': 0}}
         }},
         'elastic_filter_callback': private_content_filter
@@ -238,7 +244,7 @@ class ArchiveService(BaseService):
             update_associations(doc)
             for key, assoc in doc.get(ASSOCIATIONS, {}).items():
                 # don't set time stamp for related items
-                if not self._is_related_content(key):
+                if not is_related_content(key):
                     self._set_association_timestamps(assoc, doc)
                     remove_unwanted(assoc)
 
@@ -253,6 +259,9 @@ class ArchiveService(BaseService):
 
             convert_task_attributes_to_objectId(doc)
             transtype_metadata(doc)
+
+            # send signal
+            superdesk.item_create.send(self, item=doc)
 
     def on_created(self, docs):
         packages = [doc for doc in docs if doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE]
@@ -277,6 +286,9 @@ class ArchiveService(BaseService):
                 app.on_archive_item_updated({'task': doc.get('task')}, doc, ITEM_FETCH)
             else:
                 app.on_archive_item_updated({'task': doc.get('task')}, doc, ITEM_CREATE)
+
+            # used by client to detect item type
+            doc.setdefault('_type', 'archive')
 
         get_resource_service('content_types').set_used(profiles)
         push_content_notification(docs)
@@ -305,9 +317,7 @@ class ArchiveService(BaseService):
         self._add_desk_metadata(updates, original)
         self._handle_media_updates(updates, original, user)
         flush_renditions(updates, original)
-
-        # send signal
-        superdesk.item_update.send(self, updates=updates, original=original)
+        update_refs(updates, original)
 
     def _handle_media_updates(self, updates, original, user):
         update_associations(updates)
@@ -325,15 +335,15 @@ class ArchiveService(BaseService):
             if not (item_obj and config.ID_FIELD in item_obj):
                 continue
 
-            if self._is_related_content(item_name):
+            if is_related_content(item_name):
                 continue
 
             item_id = item_obj[config.ID_FIELD]
-            media_item = {}
+            media_item = self.find_one(req=None, _id=item_id)
             if app.settings.get('COPY_METADATA_FROM_PARENT') and item_obj.get(ITEM_TYPE) in MEDIA_TYPES:
                 stored_item = (original.get(ASSOCIATIONS) or {}).get(item_name) or item_obj
             else:
-                media_item = stored_item = self.find_one(req=None, _id=item_id)
+                stored_item = media_item
                 if not stored_item:
                     continue
 
@@ -343,17 +353,7 @@ class ArchiveService(BaseService):
                 if body and item_obj.get('description_text', None):
                     body = update_image_caption(body, item_name, item_obj['description_text'])
 
-            # If the media item is not marked as 'used', mark it as used
-            if original.get(ITEM_TYPE) == CONTENT_TYPE.TEXT and \
-                    (item_obj is not stored_item or not stored_item.get('used')):
-                if media_item is not stored_item:
-                    media_item = self.find_one(req=None, _id=item_id)
-
-                if media_item and not media_item.get('used'):
-                    self.system_update(media_item['_id'], {'used': True}, media_item)
-
-                stored_item['used'] = True
-
+            track_usage(media_item, stored_item, item_obj, item_name, original)
             self._set_association_timestamps(item_obj, updates, new=False)
             stored_item.update(item_obj)
 
@@ -382,9 +382,6 @@ class ArchiveService(BaseService):
 
         if updates.get('profile'):
             get_resource_service('content_types').set_used([updates.get('profile')])
-
-        if 'marked_for_user' in updates:
-            self.handle_mark_user_notifications(updates, original)
 
         self.cropService.update_media_references(updates, original)
 
@@ -426,6 +423,13 @@ class ArchiveService(BaseService):
 
     def replace(self, id, document, original):
         return self.restore_version(id, document, original) or super().replace(id, document, original)
+
+    def get(self, req, lookup):
+        if req is None and lookup is not None and '$or' in lookup:
+            # embedded resource generates mongo query which doesn't work with elastic
+            # so it needs to be fixed here
+            return super().get(req, lookup['$or'][0])
+        return super().get(req, lookup)
 
     def find_one(self, req, **lookup):
         item = super().find_one(req, **lookup)
@@ -516,6 +520,7 @@ class ArchiveService(BaseService):
 
         convert_task_attributes_to_objectId(new_doc)
         transtype_metadata(new_doc)
+        signals.item_duplicate.send(self, item=new_doc, original=original_doc, operation=operation)
         get_model(ItemModel).create([new_doc])
         self._duplicate_versions(original_doc['_id'], new_doc)
         self._duplicate_history(original_doc['_id'], new_doc)
@@ -534,6 +539,8 @@ class ArchiveService(BaseService):
                 new_doc,
                 operation or ITEM_DUPLICATED_FROM
             )
+
+        signals.item_duplicated.send(self, item=new_doc, original=original_doc, operation=operation)
 
         return new_doc['guid']
 
@@ -554,7 +561,7 @@ class ArchiveService(BaseService):
                                SCHEDULE_SETTINGS, 'lock_time', 'lock_action', 'lock_session', 'lock_user', SIGN_OFF,
                                'rewritten_by', 'rewrite_of', 'rewrite_sequence', 'highlights', 'marked_desks',
                                '_type', 'event_id', 'assignment_id', PROCESSED_FROM,
-                               'translations', 'translation_id', 'translated_from',
+                               'translations', 'translation_id', 'translated_from', 'firstpublished'
                                ])
         if delete_keys:
             keys_to_delete.extend(delete_keys)
@@ -635,7 +642,7 @@ class ArchiveService(BaseService):
                 if association is None:
                     continue
                 # don't set time stamp for related items
-                if not self._is_related_content(key):
+                if not is_related_content(key):
                     self._set_association_timestamps(association, updates, new=False)
                     remove_unwanted(association)
 
@@ -643,7 +650,17 @@ class ArchiveService(BaseService):
         if PUBLISH_SCHEDULE in updates and original[ITEM_STATE] == CONTENT_STATE.SCHEDULED:
             self.deschedule_item(updates, original)  # this is an deschedule action
 
-        return super().update(id, updates, original)
+        # send signal
+        signals.item_update.send(self, updates=updates, original=original)
+
+        res = super().update(id, updates, original)
+
+        updated = copy(original)
+        updated.update(updates)
+        signals.item_updated.send(self, item=updated, original=original)
+
+        if 'marked_for_user' in updates:
+            self.handle_mark_user_notifications(updates, original)
 
     def deschedule_item(self, updates, original):
         """Deschedule an item.
@@ -947,16 +964,6 @@ class ArchiveService(BaseService):
         """
         return get_resource_service('desks').apply_desk_metadata(updates, original)
 
-    def _is_related_content(self, item_name, related_content=None):
-        if related_content is None:
-            related_content = list(
-                get_resource_service('vocabularies').get(req=None, lookup={'field_type': 'related_content'}))
-
-        if related_content and item_name.split('--')[0] in [content['_id'] for content in related_content]:
-            return True
-
-        return False
-
     def handle_mark_user_notifications(self, updates, original, add_activity=True):
         """Notify user when item is marked or unmarked
 
@@ -1029,11 +1036,102 @@ class ArchiveService(BaseService):
                           user_list=user_list,
                           extension='markForUser')
 
+    def get_items_chain(self, item):
+        """
+        Get the whole items chain which includes all previous updates,
+        all translations and the original item.
+
+        Result list may contain:
+            - original item
+            - original item's translations
+            - update-1 item
+            - update-1 item's translations
+            - update-N item
+            - update-N item's translations
+            - `item`
+            - `item`'s translations
+        NOTE: The first item in the list is the original item
+
+        :param item: item can be an "initial", "rewrite", or "translation"
+        :type item: dict
+        :return: chain of items
+        :rtype: list
+        """
+
+        def get_item_translated_from(item):
+            _item = item
+            for _i in range(50):
+                try:
+                    item = self.find_one(req={}, _id=item['translated_from'])
+                except Exception:
+                    break
+            else:
+                logger.error(
+                    'Failed to retrive an initial item from which item {} was translated from'.format(_item.get('_id'))
+                )
+            return item
+
+        item = get_item_translated_from(item)
+        # add item + translations
+        items_chain = [item]
+        items_chain += self.get_item_translations(item)
+
+        for _i in range(50):
+            try:
+                item = self.find_one(req={}, _id=item['rewrite_of'])
+                # prepend translations + update
+                items_chain = [item, *self.get_item_translations(item), *items_chain]
+            except Exception:
+                # `item` is not an update, but it can be a translation
+                if 'translated_from' in item:
+                    translation_item = item
+                    item = get_item_translated_from(item)
+                    # add item + translations
+                    items_chain = [
+                        item,
+                        *[
+                            i for i in self.get_item_translations(item)
+                            # `translation_item` was already added into `items_chain` on a previous iteration
+                            if i['_id'] != translation_item['_id']
+                        ],
+                        *items_chain
+                    ]
+                else:
+                    # `item` is not a translation and not an update, it means that it's an initial
+                    break
+
+        else:
+            logger.error(
+                'Failed to retrieve the whole items chain for item {}'.format(item.get('_id'))
+            )
+        return items_chain
+
+    def get_item_translations(self, item):
+        """
+        Get list of item's translations.
+        :param item: item
+        :type item: dict
+        :return: list of dicts
+        :rtype: list
+        """
+        translation_items = []
+
+        for translation_item_id in item.get('translations', []):
+            translation_item = self.find_one(
+                req={},
+                _id=translation_item_id
+            )
+            translation_items.append(translation_item)
+            # get a translation of a translation and so on
+            translation_items += self.get_item_translations(translation_item)
+
+        return translation_items
+
 
 class AutoSaveResource(Resource):
     endpoint_name = 'archive_autosave'
     item_url = item_url
-    schema = item_schema({'_id': {'type': 'string', 'unique': True}})
+    schema = get_schema(versioning=True)
     resource_methods = ['POST']
     item_methods = ['GET', 'PUT', 'PATCH', 'DELETE']
     resource_title = endpoint_name
@@ -1053,6 +1151,10 @@ class ArchiveSaveService(BaseService):
         except KeyError:
             raise SuperdeskApiError.badRequestError(_("Request for Auto-save must have _id"))
         return [docs[0]['_id']]
+
+    def on_fetched_item(self, item):
+        item['_type'] = 'archive'
+        return item
 
 
 superdesk.workflow_state('in_progress')

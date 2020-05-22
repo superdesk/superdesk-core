@@ -34,6 +34,7 @@ import superdesk
 import logging
 import re
 
+from flask import current_app as app
 from eve.utils import config
 from superdesk.publish.formatters import Formatter
 from superdesk.errors import FormatterError
@@ -41,6 +42,7 @@ from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, GUID_FIELD
 from superdesk.metadata.packages import RESIDREF, GROUP_ID, GROUPS, ROOT_GROUP, REFS
 from superdesk.utils import json_serialize_datetime_objectId
 from superdesk.media.renditions import get_renditions_spec
+from superdesk.vocabularies import is_related_content
 from apps.archive.common import get_utc_schedule
 from superdesk import text_utils
 from collections import OrderedDict
@@ -304,12 +306,21 @@ class NINJSFormatter(Formatter):
         media = {}
         content_profile = None
         archive_service = superdesk.get_resource_service('archive')
-        sorted_associations = OrderedDict(sorted(article.get(ASSOCIATIONS).items() or {}))
 
-        for key, item in sorted_associations.items():
+        article_associations = OrderedDict(
+            sorted(
+                article.get(ASSOCIATIONS, {}).items(),
+                key=lambda itm: (itm[1] or {}).get('order', 1)
+            )
+        )
+
+        for key, item in article_associations.items():
             if item:
-                if archive_service._is_related_content(key) and '_type' not in item:
-                    item = archive_service.find_one(req=None, _id=item['_id'])
+                if is_related_content(key) and '_type' not in item:
+                    orig_item = archive_service.find_one(req=None, _id=item['_id'])
+                    orig_item['order'] = item.get('order', 1)
+                    item = orig_item.copy()
+
                 item = self._transform_to_ninjs(item, subscriber, recursive=False)
                 associations[key] = item  # all items should stay in associations
                 match = MEDIA_FIELD_RE.match(key)
@@ -337,12 +348,15 @@ class NINJSFormatter(Formatter):
             # we have custom media fields, we now order them
             # and add them to "extra_items"
             for field_id, data in media.items():
-                if extra_items[field_id]["type"] == "media":
-                    items_to_sort = [d[1] for d in sorted(data)]
-                    extra_items[field_id]["items"] = sorted(items_to_sort, key=lambda item: item.get('order', 0))
-                else:
-                    extra_items[field_id]["items"] = [d[1] for d in sorted(data)]
+                default_order = 1
+                items_to_sort = [d[1] for d in sorted(data)]
 
+                if extra_items[field_id]["type"] == "media":
+                    # for media items default order is 0 and for related-content default order is 1
+                    default_order = 0
+
+                extra_items[field_id]["items"] = sorted(items_to_sort,
+                                                        key=lambda item: item.get('order', default_order))
         return associations, extra_items
 
     def _get_genre(self, article):
@@ -381,7 +395,14 @@ class NINJSFormatter(Formatter):
 
     def _format_rendition(self, rendition):
         """Format single rendition using fields whitelist."""
-        return {field: rendition[field] for field in self.rendition_properties if field in rendition}
+        formatted = {}
+        for field in self.rendition_properties:
+            if field not in rendition:
+                continue
+            formatted[field] = rendition[field]
+            if field in ('width', 'height'):
+                formatted[field] = int(rendition[field])
+        return formatted
 
     def _format_place(self, article):
         vocabularies_service = superdesk.get_resource_service('vocabularies')
@@ -392,7 +413,7 @@ class NINJSFormatter(Formatter):
 
         def get_label(item):
             if locator_map:
-                locators = [l for l in locator_map.get('items', []) if l['qcode'] == item.get('qcode')]
+                locators = [loc for loc in locator_map.get('items', []) if loc['qcode'] == item.get('qcode')]
                 if locators and len(locators) == 1:
                     return locators[0].get('state') or \
                         locators[0].get('country') or \
@@ -405,7 +426,23 @@ class NINJSFormatter(Formatter):
             if item.get('scheme') == 'geonames':
                 places.append(self._format_geonames(item))
             else:
-                places.append({'name': get_label(item), 'code': item.get('qcode')})
+                if config.NINJS_PLACE_EXTENDED:
+                    place = {}
+                    for key in item.keys():
+                        if item.get(key):
+                            if key == 'qcode':
+                                place['code'] = item.get(key)
+                            elif key == 'name':
+                                if (get_label(item) is not None):
+                                    place['name'] = get_label(item)
+                                else:
+                                    place['name'] = item.get(key)
+                            else:
+                                place[key] = item.get(key)
+                else:
+                    place = {'name': get_label(item),
+                             'code': item.get('qcode')}
+                places.append(place)
         return places
 
     def _format_geonames(self, place):
@@ -426,16 +463,17 @@ class NINJSFormatter(Formatter):
         attachments_service = superdesk.get_resource_service('attachments')
         for attachment_ref in article['attachments']:
             attachment = attachments_service.find_one(req=None, _id=attachment_ref['attachment'])
-            output.append({
-                'id': str(attachment['_id']),
-                'title': attachment['title'],
-                'description': attachment['description'],
-                'filename': attachment['filename'],
-                'mimetype': attachment['mimetype'],
-                'length': attachment.get('length'),
-                'media': str(attachment['media']),
-                'href': '/assets/{}'.format(str(attachment['media'])),
-            })
+            if superdesk.attachments.is_attachment_public(attachment): # don't save internal attachments
+                output.append({
+                    'id': str(attachment['_id']),
+                    'title': attachment['title'],
+                    'description': attachment['description'],
+                    'filename': attachment['filename'],
+                    'mimetype': attachment['mimetype'],
+                    'length': attachment.get('length'),
+                    'media': str(attachment['media']),
+                    'href': '/assets/{}'.format(str(attachment['media'])),
+                })
         return output
 
     def _format_authors(self, article):

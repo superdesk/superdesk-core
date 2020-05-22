@@ -14,11 +14,9 @@ import superdesk
 
 from lxml import etree
 from lxml.etree import SubElement
-
-from superdesk import etree as sd_etree
-from superdesk import text_utils
 from flask import current_app as app
 
+from superdesk import text_utils
 from superdesk.publish.formatters import Formatter
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, FORMATS, FORMAT
 from superdesk.utc import utcnow
@@ -52,7 +50,8 @@ def _get_cv_qcode(item):
 class NewsMLG2Formatter(Formatter):
     """NewsML G2 Formatter"""
 
-    XML_ROOT = '<?xml version="1.0" encoding="UTF-8"?>'
+    ENCODING = 'UTF-8'
+    XML_ROOT = '<?xml version="1.0" encoding="{}"?>'.format(ENCODING)
 
     _message_nsmap = {None: 'http://iptc.org/std/nar/2006-10-01/', 'x': 'http://www.w3.org/1999/xhtml',
                       'xsi': 'http://www.w3.org/2001/XMLSchema-instance'}
@@ -93,7 +92,11 @@ class NewsMLG2Formatter(Formatter):
                 self._format_content(article, newsItem, nitf)
 
             sd_etree.fix_html_void_elements(news_message)
-            return [(pub_seq_num, self.XML_ROOT + etree.tostring(news_message, pretty_print=True).decode('utf-8'))]
+            return [(pub_seq_num, self.XML_ROOT + etree.tostring(
+                news_message,
+                pretty_print=True,
+                encoding=self.ENCODING
+            ).decode(self.ENCODING))]
         except Exception as ex:
             raise FormatterError.newmsmlG2FormatterError(ex, subscriber)
 

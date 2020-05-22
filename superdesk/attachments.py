@@ -19,6 +19,7 @@ class AttachmentsResource(superdesk.Resource):
         'title': {'type': 'string'},
         'description': {'type': 'string'},
         'user': superdesk.Resource.rel('users'),
+        'internal': {'type': 'boolean', 'default': False},
     }
 
     item_methods = ['GET', 'PATCH']
@@ -38,6 +39,18 @@ class AttachmentsService(superdesk.Service):
 
     def on_deleted(self, doc):
         current_app.media.delete(doc['media'], RESOURCE)
+
+
+def is_attachment_public(attachment):
+    """Retuns true if attachment is public. False if it's internal.
+
+    :param attachment: Attachment object or id inside attachment attribute
+    :return: boolean
+    """
+    if attachment.get('attachment'): # retrieve object reference
+        attachment = superdesk.get_resource_service('attachments').find_one(req=None, _id=attachment['attachment'])
+
+    return not attachment.get('internal')
 
 
 def init_app(app):

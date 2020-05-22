@@ -18,7 +18,8 @@ import superdesk
 
 from flask_mail import Mail
 from eve.auth import TokenAuth
-from eve.io.mongo import MongoJSONEncoder, create_index
+from eve.io.mongo import MongoJSONEncoder
+from eve.io.mongo.mongo import _create_index as create_index
 from eve.render import send_response
 from flask_babel import Babel
 from flask import g
@@ -55,6 +56,11 @@ def set_error_handlers(app):
     @app.errorhandler(403)
     def server_forbidden_handler(error):
         return send_response(None, ({'code': 403, 'error': error.response}, None, None, 403))
+
+    @app.errorhandler(AssertionError)
+    def assert_error_handler(error):
+        print('error', error)
+        return send_response(None, ({'code': 400, 'error': str(error) if str(error) else 'assert'}, None, None, 400))
 
     @app.errorhandler(500)
     def server_error_handler(error):
@@ -150,6 +156,11 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
     app.sentry = SuperdeskSentry(app)
 
     app.config.setdefault('BABEL_TRANSLATION_DIRECTORIES', os.path.join(SUPERDESK_PATH, 'translations'))
+
+    # set babel attributes to avoid eve eventslot handling
+    app.babel_tzinfo = None
+    app.babel_locale = None
+    app.babel_translations = None
     babel = Babel(app, configure_jinja=False)
 
     @babel.localeselector
@@ -158,12 +169,12 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
         user_language = user.get('language', app.config.get('DEFAULT_LANGUAGE', 'en'))
         try:
             # Attempt to load the local using Babel.parse_local
-            parse_locale(user_language)
+            parse_locale(user_language.replace('-', '_'))
         except ValueError:
             # If Babel fails to recognise the locale, then use the default language
             user_language = app.config.get('DEFAULT_LANGUAGE', 'en')
 
-        return user_language
+        return user_language.replace('-', '_')
 
     set_error_handlers(app)
 

@@ -1,0 +1,120 @@
+[
+    {
+        "_id": "5d77a8724c3b49675964b095",
+        "event_id": "urn:newsml:localhost:5000:2019-09-10T15:43:13.722490:5dcea683-fb9b-42ca-a77f-ce1216aef8b1",
+        "user_id": "5d385f31fe985ec67a0ca583",
+        "operation": "create",
+        "update": {
+            "type": "event",
+            "occur_status": {
+                "qcode": "eocstat:eos5",
+                "name": "Planned, occurs certainly",
+                "label": "Planned, occurs certainly"
+            },
+            "dates": {
+                "start": "2019-09-18T22:00:00.000Z",
+                "end": "2019-09-19T21:59:59.999Z",
+                "tz": "Europe/Prague"
+            },
+            "calendars": [
+                {
+                    "is_active": true,
+                    "name": "Sport",
+                    "qcode": "sport"
+                }
+            ],
+            "state": "draft",
+            "place": [],
+            "completed": false,
+            "slugline": "Citroen 100 let",
+            "name": "Citroen 100 let",
+            "definition_short": "Citroen 100 let",
+            "location": [
+                {
+                    "name": "This is location name",
+                    "qcode": "urn:newsml:localhost:5000:2019-08-22T15:50:04.614928:c42c88e2-1e07-455c-93c3-20192448e43e",
+                    "address": {
+                        "line": [
+                            "Salvatorska"
+                        ],
+                        "locality": "Prague",
+                        "area": "",
+                        "country": "CZ"
+                    }
+                }
+            ],
+            "_updated": "2019-09-10T13:43:13.000Z",
+            "_created": "2019-09-10T13:43:13.000Z",
+            "guid": "urn:newsml:localhost:5000:2019-09-10T15:43:13.722490:5dcea683-fb9b-42ca-a77f-ce1216aef8b1",
+            "original_creator": "5d385f31fe985ec67a0ca583",
+            "firstcreated": "2019-09-10T13:43:13.000Z",
+            "versioncreated": "2019-09-10T13:43:13.000Z",
+            "_planning_schedule": [
+                {
+                    "scheduled": "2019-09-18T22:00:00.000Z"
+                }
+            ],
+            "_etag": "0bcd1108bbc83cb554cd566e3957140689ef1aa9",
+            "_id": "urn:newsml:localhost:5000:2019-09-10T15:43:13.722490:5dcea683-fb9b-42ca-a77f-ce1216aef8b1",
+            "_links": {
+                "self": {
+                    "title": "Event",
+                    "href": "events/urn:newsml:localhost:5000:2019-09-10T15:43:13.722490:5dcea683-fb9b-42ca-a77f-ce1216aef8b1"
+                }
+            },
+            "_status": "OK"
+        }
+    },
+    {
+        "_id": "5d77b1aa4c3b49675964b0f9",
+        "event_id": "urn:newsml:localhost:5000:2019-09-10T16:22:34.066960:6b2d9c79-08b9-456f-b890-9b2154ee997a",
+        "user_id": "5d385f31fe985ec67a0ca583",
+        "operation": "create",
+        "update": {
+            "type": "event",
+            "occur_status": {
+                "qcode": "eocstat:eos5",
+                "name": "Planned, occurs certainly",
+                "label": "Planned, occurs certainly"
+            },
+            "dates": {
+                "start": "2019-09-09T22:00:00.000Z",
+                "end": "2019-09-10T21:59:59.999Z",
+                "tz": "Europe/Prague"
+            },
+            "calendars": [
+                {
+                    "is_active": true,
+                    "name": "Business",
+                    "qcode": "business"
+                }
+            ],
+            "state": "draft",
+            "place": [],
+            "completed": false,
+            "slugline": "EVENT A",
+            "name": "EVENT A",
+            "definition_short": "EVENT A",
+            "_updated": "2019-09-10T14:22:34.000Z",
+            "_created": "2019-09-10T14:22:34.000Z",
+            "guid": "urn:newsml:localhost:5000:2019-09-10T16:22:34.066960:6b2d9c79-08b9-456f-b890-9b2154ee997a",
+            "original_creator": "5d385f31fe985ec67a0ca583",
+            "firstcreated": "2019-09-10T14:22:34.000Z",
+            "versioncreated": "2019-09-10T14:22:34.000Z",
+            "_planning_schedule": [
+                {
+                    "scheduled": "2019-09-09T22:00:00.000Z"
+                }
+            ],
+            "_etag": "e3f6983851744d25227ae9bcba1998b734aa60ae",
+            "_id": "urn:newsml:localhost:5000:2019-09-10T16:22:34.066960:6b2d9c79-08b9-456f-b890-9b2154ee997a",
+            "_links": {
+                "self": {
+                    "title": "Event",
+                    "href": "events/urn:newsml:localhost:5000:2019-09-10T16:22:34.066960:6b2d9c79-08b9-456f-b890-9b2154ee997a"
+                }
+            },
+            "_status": "OK"
+        }
+    }
+]

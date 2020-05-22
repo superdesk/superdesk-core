@@ -44,7 +44,8 @@ class ContactsResource(Resource):
         },
         'last_name': {
             'type': 'string',
-            'required': False
+            'required': False,
+            'mapping': {'type': 'string'}
         },
         'honorific': {
             'type': 'string',
@@ -137,6 +138,11 @@ class ContactsResource(Resource):
         'notes': {
             'type': 'string',
             'required': False
+        },
+        'contact_type': {
+            'type': 'string',
+            'required': False,
+            'nullable': True,
         }
     }
 
@@ -160,6 +166,7 @@ class OrganisationSearchResource(Resource):
         'search_backend': 'elastic'
     }
 
+    schema = ContactsResource.schema
     resource_methods = ['GET']
     item_methods = ['GET']
     url = 'contacts/organisations'

@@ -10,22 +10,17 @@
 
 
 import logging
-
-from eve.utils import config
-from flask import json
-
 import superdesk
-from superdesk import get_resource_service
-from superdesk.errors import SuperdeskApiError, ProviderError
-from superdesk.metadata.item import GUID_TAG, FAMILY_ID, INGEST_ID, ITEM_STATE, CONTENT_STATE
-from superdesk.metadata.utils import generate_guid
-from superdesk.resource import Resource
-from superdesk.utc import utcnow
-from apps.archive.common import generate_unique_id_and_name, ITEM_OPERATION, ARCHIVE, \
-    insert_into_versions, remove_unwanted, set_original_creator
-from apps.duplication.archive_fetch import ITEM_FETCH
-from apps.tasks import send_to
+
+from flask import json
 from flask_babel import _
+from eve.utils import config
+
+from superdesk import get_resource_service
+from superdesk.utc import utcnow
+from superdesk.errors import SuperdeskApiError, ProviderError
+from superdesk.resource import Resource
+from apps.archive.common import ARCHIVE, insert_into_versions, fetch_item
 
 logger = logging.getLogger(__name__)
 
@@ -69,23 +64,11 @@ class SearchIngestService(superdesk.Service):
             except FileNotFoundError as ex:
                 raise ProviderError.externalProviderError(ex, provider)
 
-            dest_doc = dict(archived_doc)
-            new_id = generate_guid(type=GUID_TAG)
-            new_guids.append(new_id)
-            dest_doc['_id'] = new_id
-            generate_unique_id_and_name(dest_doc)
+            dest_doc = fetch_item(archived_doc, doc.get('desk'), doc.get('stage'), state=doc.get('state'))
+            new_guids.append(dest_doc['guid'])
 
             if provider:
                 dest_doc['ingest_provider'] = str(provider[superdesk.config.ID_FIELD])
-
-            dest_doc[config.VERSION] = 1
-            send_to(doc=dest_doc, update=None, desk_id=doc.get('desk'), stage_id=doc.get('stage'))
-            dest_doc[ITEM_STATE] = doc.get(ITEM_STATE, CONTENT_STATE.FETCHED)
-            dest_doc[INGEST_ID] = archived_doc['_id']
-            dest_doc[FAMILY_ID] = archived_doc['_id']
-            dest_doc[ITEM_OPERATION] = ITEM_FETCH
-            remove_unwanted(dest_doc)
-            set_original_creator(dest_doc)
 
             superdesk.get_resource_service(ARCHIVE).post([dest_doc])
             insert_into_versions(dest_doc.get('_id'))

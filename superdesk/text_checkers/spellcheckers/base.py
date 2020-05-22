@@ -40,9 +40,9 @@ class SpellcheckerRegisterer(abc.ABCMeta):
         instance = super().__call__(*args, **kwargs)
         name = instance.name
         if name in registered_spellcheckers:
-            # we log an error but don't raise an exception because the issue
+            # we log a warning but don't raise an exception because the issue
             # may happen with tests
-            logger.error('"{name}" spellchecker is already registered'.format(name=name))
+            logger.warning('"{name}" spellchecker is already registered'.format(name=name))
             return registered_spellcheckers[name]
 
         instance.capacities = SpellcheckerCapacities(instance.capacities)
@@ -61,6 +61,9 @@ class SpellcheckerBase(metaclass=SpellcheckerRegisterer):
     inherit from this class in your module.
     "label" attribute can be used, if it is not present the name will be used as label
     """
+
+    CHECK_TIMEOUT = (3, 5)
+    SUGGEST_TIMEOUT = (3, 10)
 
     #: what this spellchecker can do (spelling, grammar)
     capacities = "spelling"

@@ -618,6 +618,12 @@ Example::
     OVERRIDE_EDNOTE_FOR_CORRECTIONS = True
     OVERRIDE_EDNOTE_TEMPLATE = 'Story "{slugline}" corrected on {date}'
 
+``ALLOW_UPDATING_SCHEDULED_ITEMS``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``None``
+
+Set to True to allow updating the schedule items.
 
 ``GEONAMES_USERNAME``
 ^^^^^^^^^^^^^^^^^^^^^
@@ -629,4 +635,44 @@ Default: ``None``
 When configured it will enable ``/places_autocomplete`` service and client
 will use it for place field searching.
 
+Other
+-----
+
 .. autodata:: KEYWORDS_ADD_MISSING_ON_PUBLISH
+
+.. autodata:: WORKFLOW_ALLOW_MULTIPLE_UPDATES
+
+.. autodata:: ARCHIVE_AUTOCOMPLETE
+.. autodata:: ARCHIVE_AUTOCOMPLETE_DAYS
+.. autodata:: ARCHIVE_AUTOCOMPLETE_HOURS
+
+.. autodata:: LINKS_MAX_HOURS
+
+.. _settings.extending:
+
+Extend Superdesk
+-----------------
+
+Additional settings which are allowed to change some Superdesk defaults
+
+``SCHEMA_UPDATE``
+
+Default: ``None``
+
+Allows to update a default schema.
+
+Example::
+
+    SCHEMA_UPDATE = {
+        'archive': {
+            'extra': {
+                'type': 'dict',
+                'schema': {},
+                'mapping': {
+                    'type': 'object',
+                    'enabled': True
+                },
+                'allow_unknown': True,
+            }
+        }
+    }

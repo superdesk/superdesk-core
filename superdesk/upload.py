@@ -10,19 +10,22 @@
 
 """Upload module"""
 import logging
-import superdesk
+
 from eve.utils import config
-from superdesk.errors import SuperdeskApiError
 from werkzeug.wsgi import wrap_file
-from .resource import Resource
-from .services import BaseService
 from flask import request, current_app as app, redirect
+
+import superdesk
+from superdesk.errors import SuperdeskApiError
 from superdesk.media.renditions import generate_renditions, delete_file_on_error
+from superdesk.default_settings import strtobool
 from superdesk.media.media_operations import (
     download_file_from_url, download_file_from_encoded_str,
     process_file_from_stream, crop_image, decode_metadata,
 )
 from superdesk.filemeta import set_filemeta
+from .resource import Resource
+from .services import BaseService
 
 
 bp = superdesk.Blueprint('upload_raw', __name__)
@@ -56,8 +59,13 @@ def get_upload_as_data_uri(media_id):
         response.cache_control.s_max_age = cache_for
         response.cache_control.public = True
         response.make_conditional(request)
-        response.headers['Content-Disposition'] = 'inline'
+
+        if strtobool(request.args.get('download', 'False')):
+            response.headers['Content-Disposition'] = 'attachment'
+        else:
+            response.headers['Content-Disposition'] = 'inline'
         return response
+
     raise SuperdeskApiError.notFoundError('File not found on media storage.')
 
 
@@ -77,6 +85,10 @@ def init_app(app):
     superdesk.blueprint(bp, app)
     app.upload_url = upload_url
 
+    # Using intrinsic privilege so that any user can update their profile Avatar
+    # This still restricts this endpoint to logged in users only
+    superdesk.intrinsic_privilege(resource_name='upload', method=['POST'])
+
 
 class UploadResource(Resource):
     schema = {
@@ -87,7 +99,8 @@ class UploadResource(Resource):
         'CropBottom': {'type': 'integer'},
         'URL': {'type': 'string'},
         'mimetype': {'type': 'string'},
-        'filemeta': {'type': 'dict'}
+        'filemeta': {'type': 'dict'},
+        'filemeta_json': {'type': 'string'},
     }
     extra_response_fields = ['renditions']
     datasource = {
@@ -99,11 +112,12 @@ class UploadResource(Resource):
             '_etag': 1,
             'media': 1,
             'renditions': 1,
+            'filemeta_json': 1,
         }
     }
     item_methods = ['GET', 'DELETE']
     resource_methods = ['GET', 'POST']
-    privileges = {'POST': 'archive', 'DELETE': 'archive'}
+    privileges = {'DELETE': 'archive'}
 
 
 class UploadService(BaseService):

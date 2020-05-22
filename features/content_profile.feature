@@ -1265,7 +1265,7 @@ Feature: Content Profile
                     },
                     "type": "list",
                     "required": true,
-                    "mandatory_in_list": {"scheme": {"category": "category"}}
+                    "mandatory_in_list": {"scheme": {"category": {"required": true}}}
                 }
             },
             "editor": {
@@ -1817,4 +1817,20 @@ Feature: Content Profile
         Then we get existing resource
         """
         {"schema": {"subject": {"required": false}}}
+        """
+
+    @auth
+    Scenario: Only 1 profile can be added for non text item types
+        When we post to "content_types"
+        """
+        {"_id": "foo", "item_type": "picture"}
+        """
+        Then we get new resource
+        When we post to "content_types"
+        """
+        {"_id": "bar", "item_type": "picture"}
+        """
+        Then we get error 400
+        """
+        {"_status": "ERR", "_issues": {"item_type": "Only 1 instance is allowed."}}
         """

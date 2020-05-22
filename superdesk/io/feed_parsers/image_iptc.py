@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import arrow
 from superdesk.io.feed_parsers import FileFeedParser
 from superdesk.io.registry import register_feed_parser
 from superdesk.errors import ParserError
@@ -18,26 +19,16 @@ from superdesk.metadata.item import GUID_TAG, ITEM_TYPE, CONTENT_TYPE
 from superdesk.metadata import utils
 from superdesk.media.renditions import generate_renditions, get_renditions_spec
 from superdesk.upload import url_for_media
+from superdesk.utc import utcnow
 from superdesk import filemeta
 from flask import current_app as app
 from eve.utils import config
 from datetime import datetime
-import dateutil.parser
 import mimetypes
 import logging
 import os.path
 
 logger = logging.getLogger(__name__)
-
-IPTC_MAPPING = {
-    TAG.HEADLINE: 'headline',
-    TAG.BY_LINE: 'byline',
-    TAG.OBJECT_NAME: 'slugline',
-    TAG.CAPTION_ABSTRACT: 'description_text',
-    TAG.KEYWORDS: 'keywords',
-    TAG.SPECIAL_INSTRUCTIONS: 'ednote',
-    TAG.COPYRIGHT_NOTICE: 'copyrightnotice',
-    TAG.ORIGINAL_TRANSMISSION_REFERENCE: 'assignment_id'}
 
 
 class ImageIPTCFeedParser(FileFeedParser):
@@ -48,6 +39,19 @@ class ImageIPTCFeedParser(FileFeedParser):
     NAME = 'image_iptc'
     label = "Image (IPTC metadata)"
     ALLOWED_EXT = mimetypes.guess_all_extensions('image/jpeg')
+
+    DATETIME_FORMAT = '%Y%m%dT%H%M%S%z'
+
+    IPTC_MAPPING = {
+        TAG.HEADLINE: 'headline',
+        TAG.BY_LINE: 'byline',
+        TAG.OBJECT_NAME: 'slugline',
+        TAG.CAPTION_ABSTRACT: 'description_text',
+        TAG.KEYWORDS: 'keywords',
+        TAG.SPECIAL_INSTRUCTIONS: 'ednote',
+        TAG.COPYRIGHT_NOTICE: 'copyrightnotice',
+        TAG.ORIGINAL_TRANSMISSION_REFERENCE: 'assignment_id',
+    }
 
     def can_parse(self, image_path):
         if not isinstance(image_path, str):
@@ -66,11 +70,11 @@ class ImageIPTCFeedParser(FileFeedParser):
         content_type = mimetypes.guess_type(image_path)[0]
         guid = utils.generate_guid(type=GUID_TAG)
         item = {'guid': guid,
+                'uri': guid,
                 config.VERSION: 1,
-                config.ID_FIELD: guid,
                 ITEM_TYPE: CONTENT_TYPE.PICTURE,
                 'mimetype': content_type,
-                'versioncreated': datetime.now()
+                'versioncreated': utcnow(),
                 }
         with open(image_path, 'rb') as f:
             _, content_type, file_metadata = process_file_from_stream(f, content_type=content_type)
@@ -78,32 +82,37 @@ class ImageIPTCFeedParser(FileFeedParser):
             file_id = app.media.put(f, filename=filename, content_type=content_type, metadata=file_metadata)
             filemeta.set_filemeta(item, file_metadata)
             f.seek(0)
+
             metadata = get_meta_iptc(f)
             f.seek(0)
+            self.parse_meta(item, metadata)
+
             rendition_spec = get_renditions_spec(no_custom_crops=True)
             renditions = generate_renditions(f, file_id, [file_id], 'image',
                                              content_type, rendition_spec, url_for_media)
             item['renditions'] = renditions
+        return item
 
+    def parse_date_time(self, date, time):
+        if not date or not time:
+            return
+
+        datetime_string = '{}T{}'.format(date, time)
         try:
-            date_created, time_created = metadata[TAG.DATE_CREATED], metadata[TAG.TIME_CREATED]
-        except KeyError:
-            pass
-        else:
-            # we format proper ISO 8601 date so we can parse it with dateutil
-            datetime_created = '{}-{}-{}T{}:{}:{}{}{}:{}'.format(date_created[0:4],
-                                                                 date_created[4:6],
-                                                                 date_created[6:8],
-                                                                 time_created[0:2],
-                                                                 time_created[2:4],
-                                                                 time_created[4:6],
-                                                                 time_created[6],
-                                                                 time_created[7:9],
-                                                                 time_created[9:])
-            item['firstcreated'] = dateutil.parser.parse(datetime_created)
+            return datetime.strptime(datetime_string, self.DATETIME_FORMAT)
+        except ValueError:
+            try:
+                arrow.get(datetime_string).datetime
+            except ValueError:
+                return
+
+    def parse_meta(self, item, metadata):
+        datetime_created = self.parse_date_time(metadata.get(TAG.DATE_CREATED), metadata.get(TAG.TIME_CREATED))
+        if datetime_created:
+            item['firstcreated'] = datetime_created
 
         # now we map IPTC metadata to superdesk metadata
-        for source_key, dest_key in IPTC_MAPPING.items():
+        for source_key, dest_key in self.IPTC_MAPPING.items():
             try:
                 item[dest_key] = metadata[source_key]
             except KeyError:

@@ -1,3 +1,4 @@
+import os
 import time
 
 from datetime import timedelta
@@ -6,7 +7,7 @@ from unittest.mock import patch, Mock
 from superdesk.utc import utcnow
 from superdesk.tests import TestCase
 from superdesk.storage import AmazonMediaStorage
-from superdesk.storage.amazon_media_storage import _guess_extension
+from superdesk.media.media_operations import guess_media_extension
 
 
 class AmazonMediaStorageTestCase(TestCase):
@@ -80,7 +81,7 @@ class AmazonMediaStorageTestCase(TestCase):
         data = b'test data'
         folder = 's3test'
         filename = 'abc123.zip'
-        content_type = 'text/plain'
+        content_type = 'application/zip'
         self.amazon.client.put_object = Mock()
         self.amazon.media_id = Mock(return_value=filename)
         self.amazon._check_exists = Mock(return_value=False)
@@ -129,17 +130,17 @@ class AmazonMediaStorageTestCase(TestCase):
         self.assertEqual(self.amazon.client.list_objects.call_args_list, call_arg_list)
 
     def test_guess_extension(self):
-        self.assertEqual('.jpg', _guess_extension('image/jpeg'))
-        self.assertEqual('.png', _guess_extension('image/png'))
+        self.assertEqual('.jpg', guess_media_extension('image/jpeg'))
+        self.assertEqual('.png', guess_media_extension('image/png'))
 
-        self.assertEqual('.mp3', _guess_extension('audio/mp3'))
-        self.assertEqual('.mp3', _guess_extension('audio/mpeg'))
-        self.assertEqual('.flac', _guess_extension('audio/flac'))
+        self.assertEqual('.mp3', guess_media_extension('audio/mp3'))
+        self.assertEqual('.mp3', guess_media_extension('audio/mpeg'))
+        self.assertEqual('.flac', guess_media_extension('audio/flac'))
 
-        self.assertEqual('.mp4', _guess_extension('video/mp4'))
+        self.assertEqual('.mp4', guess_media_extension('video/mp4'))
 
         # leave empty when there is no extension
-        self.assertEqual('', _guess_extension('audio/foo'))
+        self.assertEqual('', guess_media_extension('audio/foo'))
 
     def test_media_url_none_utf8(self):
         filename = '[DIARY NOTE] – Victory In The Pacific Day Commemoration - Thursday (1)'
@@ -204,3 +205,128 @@ class AmazonMediaStorageTestCase(TestCase):
             'Key': 'DIARY NOTE - Victory In The Pacific Day Commemoration - Thursday (1).pdf'
         }
         self.amazon.client.get_object.assert_called_once_with(**kwargs)
+
+    def test_mimetype_detect(self):
+        # keep default mimetype
+        content = b'bytes are here'
+        filename = 'extensionless'
+        content_type = 'text/css'
+        folder = 'f1'
+        self.amazon.client.put_object = Mock()
+        self.amazon._check_exists = Mock(return_value=False)
+        self.amazon.media_id = Mock(return_value=filename)
+        self.amazon.put(content, filename, content_type, folder=folder)
+        self.amazon.client.put_object.assert_called_once_with(
+            **{
+                'Key': '{}/{}'.format(folder, filename),
+                'Body': content,
+                'Bucket': 'acname',
+                'ContentType': content_type
+            }
+        )
+
+        # get mimetype from the filename
+        content = b'bytes are here'
+        filename = 'styles.css'
+        content_type = 'application/pdf'
+        folder = 'f1'
+        self.amazon.client.put_object = Mock()
+        self.amazon._check_exists = Mock(return_value=False)
+        self.amazon.media_id = Mock(return_value=filename)
+        self.amazon.put(content, filename, content_type, folder=folder)
+        self.amazon.client.put_object.assert_called_once_with(
+            **{
+                'Key': '{}/{}'.format(folder, filename),
+                'Body': b'bytes are here',
+                'Bucket': 'acname',
+                'ContentType': 'text/css'
+            }
+        )
+
+        content = b'bytes are here'
+        filename = 'styles.JpG'
+        content_type = 'application/pdf'
+        folder = 'f1'
+        self.amazon.client.put_object = Mock()
+        self.amazon._check_exists = Mock(return_value=False)
+        self.amazon.media_id = Mock(return_value=filename)
+        self.amazon.put(content, filename, content_type, folder=folder)
+        self.amazon.client.put_object.assert_called_once_with(
+            **{
+                'Key': '{}/{}'.format(folder, filename),
+                'Body': b'bytes are here',
+                'Bucket': 'acname',
+                'ContentType': 'image/jpeg'
+            }
+        )
+
+        # get mimetype from the file
+        fixtures_path = os.path.join(os.path.dirname(__file__), 'fixtures')
+
+        with open(os.path.join(fixtures_path, "file_example-jpg.jpg"), 'rb') as content:
+            filename = 'extensionless'
+            content_type = 'dummy/text'
+            folder = 'f1'
+            self.amazon.client.put_object = Mock()
+            self.amazon._check_exists = Mock(return_value=False)
+            self.amazon.media_id = Mock(return_value=filename)
+            self.amazon.put(content, filename, content_type, folder=folder)
+            self.amazon.client.put_object.assert_called_once_with(
+                **{
+                    'Key': '{}/{}'.format(folder, filename),
+                    'Body': content,
+                    'Bucket': 'acname',
+                    'ContentType': 'image/jpeg'
+                }
+            )
+
+            with open(os.path.join(fixtures_path, "file_example-xls.xls"), 'rb') as content:
+                filename = 'extensionless'
+                content_type = 'dummy/text'
+                folder = 'f1'
+                self.amazon.client.put_object = Mock()
+                self.amazon._check_exists = Mock(return_value=False)
+                self.amazon.media_id = Mock(return_value=filename)
+                self.amazon.put(content, filename, content_type, folder=folder)
+                self.amazon.client.put_object.assert_called_once_with(
+                    **{
+                        'Key': '{}/{}'.format(folder, filename),
+                        'Body': content,
+                        'Bucket': 'acname',
+                        'ContentType': 'application/vnd.ms-excel'
+                    }
+                )
+
+            with open(os.path.join(fixtures_path, "file_example-xlsx.xlsx"), 'rb') as content:
+                filename = 'extensionless'
+                content_type = 'dummy/text'
+                folder = 'f1'
+                self.amazon.client.put_object = Mock()
+                self.amazon._check_exists = Mock(return_value=False)
+                self.amazon.media_id = Mock(return_value=filename)
+                self.amazon.put(content, filename, content_type, folder=folder)
+                self.amazon.client.put_object.assert_called_once_with(
+                    **{
+                        'Key': '{}/{}'.format(folder, filename),
+                        'Body': content,
+                        'Bucket': 'acname',
+                        'ContentType': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                    }
+                )
+
+            with open(os.path.join(fixtures_path, "file_example-docx.docx"), 'rb') as content:
+                filename = 'extensionless'
+                content_type = 'dummy/text'
+                folder = 'f1'
+                self.amazon.client.put_object = Mock()
+                self.amazon._check_exists = Mock(return_value=False)
+                self.amazon.media_id = Mock(return_value=filename)
+                self.amazon.put(content, filename, content_type, folder=folder)
+                self.amazon.client.put_object.assert_called_once_with(
+                    **{
+                        'Key': '{}/{}'.format(folder, filename),
+                        'Body': content,
+                        'Bucket': 'acname',
+                        'ContentType': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                    }
+                )

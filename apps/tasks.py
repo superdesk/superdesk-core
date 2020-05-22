@@ -160,6 +160,7 @@ class TaskResource(Resource):
 
     item_url = item_url
     schema = {
+        'expiry': {'type': 'string'},
         'slugline': metadata_schema['slugline'],
         'description_text': metadata_schema['description_text'],
         'type': metadata_schema['type'],
