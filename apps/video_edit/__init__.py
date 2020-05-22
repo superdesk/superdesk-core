@@ -100,6 +100,14 @@ class VideoEditResource(superdesk.Resource):
         'POST': ARCHIVE,
         'PUT': ARCHIVE,
     }
+    datasource = {
+        'projection': {
+            'processing': 1,
+            'thumbnails': 1,
+            'project': 1,
+            'renditions': 1,
+        }
+    }
     item_url = item_url
     schema = {
         'file': {'type': 'file'},
