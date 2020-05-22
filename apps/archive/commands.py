@@ -28,6 +28,7 @@ from superdesk import get_resource_service
 from bson.objectid import ObjectId
 from datetime import timedelta
 from werkzeug.exceptions import Conflict
+from .common import remove_media_files
 
 logger = logging.getLogger(__name__)
 
@@ -245,6 +246,8 @@ class RemoveExpiredContent(superdesk.Command):
                 logger.error('%s Item was not removed from archived item=%s', self.log_msg, item['item_id'])
                 continue
             signals.archived_item_removed.send(archived_service, item=item)
+            if not app.config.get('LEGAL_ARCHIVE') and not archived_service.find_one(req=None, item_id=item['item_id']):
+                remove_media_files(item)
 
     def _can_remove_item(self, item, processed_item=None, preserve_published_desks=None):
         """Recursively checks if the item can be removed.
