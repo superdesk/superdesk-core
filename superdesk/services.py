@@ -80,6 +80,9 @@ class BaseService():
         res = self.backend.delete_ids_from_mongo(self.datasource, ids)
         return res
 
+    def delete_docs(self, docs):
+        return self.backend.delete_docs(self.datasource, docs)
+
     def find_one(self, req, **lookup):
         res = self.backend.find_one(self.datasource, req=req, **lookup)
         return res

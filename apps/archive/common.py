@@ -489,7 +489,6 @@ def remove_media_files(doc):
     :param dict doc: document for which the media are being deleted
     :return boolean: True if files are deleted else false.
     """
-    logger.info('Removing Media Files...')
     references = None
 
     if doc.get('renditions'):
@@ -498,6 +497,9 @@ def remove_media_files(doc):
     if not references:
         references = [assoc.get('renditions') for assoc in (doc.get(ASSOCIATIONS) or {}).values()
                       if assoc and assoc.get('renditions')]
+
+    if references:
+        logger.info('Removing media files for %s', doc.get('guid'))
 
     for renditions in references:
         for rendition in renditions.values():
