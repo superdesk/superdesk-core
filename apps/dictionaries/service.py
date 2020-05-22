@@ -245,6 +245,24 @@ class DictionaryService(BaseService):
             except (KeyError, JSONDecodeError, RuntimeError):
                 # request.data is not set during tests, so we ignore those errors
                 pass
+
+        # check if dictonary is personal or not.
+        if (original.get('user')
+                and updates.get('language_id', False)
+                and not updates.get('language_id', False) == original.get('language_id', False)
+                and self.find_one(req=None,
+                                  name=str(original.get('user')) + ':' + updates.get('language_id'),
+                                  language_id=updates.get('language_id', None),
+                                  type=original.get('type', None))):
+            raise SuperdeskApiError.badRequestError(message=_('The dictionary already exists'),
+                                                    payload={'name': 'duplicate'})
+        elif (not original.get('user') and updates.get('name', False)
+                and not updates.get('name', False) == original.get('name', False)
+                and self.find_one(req=None,
+                                  name=updates.get('name', None))):
+            raise SuperdeskApiError.badRequestError(message=_('The dictionary already exists'),
+                                                    payload={'name': 'duplicate'})
+
         # parse json list
         if updates.get('content_list'):
             updates['content'] = json.loads(updates.pop('content_list'))
