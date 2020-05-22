@@ -1,9 +1,14 @@
+from flask_babel import _
+
 import superdesk
 from apps.archive.common import ARCHIVE
 from superdesk import config
 from superdesk.errors import SuperdeskApiError
 from superdesk.media.video_editor import VideoEditorWrapper
 from superdesk.metadata.utils import item_url
+
+
+TIMELINE_THUMBNAILS_AMOUNT = 60
 
 
 class VideoEditService(superdesk.Service):
@@ -21,9 +26,9 @@ class VideoEditService(superdesk.Service):
             renditions = item['renditions']
             video_id = renditions['original'].get('video_editor_id')
             if not video_id:
-                raise SuperdeskApiError.badRequestError(message='Missing video_editor_id')
+                raise SuperdeskApiError.badRequestError(message=_('"video_editor_id" is required'))
             if 'capture' not in doc and 'edit' not in doc:
-                raise SuperdeskApiError.badRequestError(message='Must include either capture or edit param')
+                raise SuperdeskApiError.badRequestError(message=_('"capture" or "edit" is required'))
 
             # push task capture preview thumbnail to video server
             if 'capture' in doc:
@@ -65,7 +70,10 @@ class VideoEditService(superdesk.Service):
 
         video_id = res['renditions']['original']['video_editor_id']
         if req.args.get('action') == 'timeline':
-            response = self.video_editor.create_timeline_thumbnails(video_id, req.args.get('amount', 60))
+            response = self.video_editor.create_timeline_thumbnails(
+                video_id,
+                req.args.get('amount', TIMELINE_THUMBNAILS_AMOUNT)
+            )
             return {
                 config.ID_FIELD: video_id,
                 **response

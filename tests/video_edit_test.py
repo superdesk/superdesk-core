@@ -47,7 +47,7 @@ class VideoEditTestCase(TestCase):
 
     def setUp(self):
         self.video_edit = superdesk.get_resource_service('video_edit')
-        self.app.config['VIDEO_SERVER_ENABLE'] = 'true'
+        self.app.config['VIDEO_SERVER_ENABLED'] = 'true'
         self.app.config['VIDEO_SERVER_URL'] = 'http://localhost'
         with requests_mock.mock() as mock:
             doc = {'media': FileStorage(BytesIO(b'abcdef'), 'video.mp4')}
@@ -81,7 +81,7 @@ class VideoEditTestCase(TestCase):
         }
         with self.assertRaises(SuperdeskApiError) as ex:
             self.video_edit.create([doc])
-        self.assertEqual(ex.exception.message, 'Missing video_editor_id')
+        self.assertEqual(ex.exception.message, '"video_editor_id" is required')
 
     def test_missing_action(self):
         doc = {
@@ -94,7 +94,7 @@ class VideoEditTestCase(TestCase):
         }
         with self.assertRaises(SuperdeskApiError) as ex:
             self.video_edit.create([doc])
-        self.assertEqual(ex.exception.message, 'Must include either capture or edit param')
+        self.assertEqual(ex.exception.message, '"capture" or "edit" is required')
 
     def test_edit_video(self):
         project_data = copy.deepcopy(self.project_data)

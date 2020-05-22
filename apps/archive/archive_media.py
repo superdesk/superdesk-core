@@ -22,7 +22,6 @@ from .common import update_dates_for, generate_guid, GUID_TAG, set_original_crea
 from superdesk.activity import add_activity
 from superdesk.filemeta import set_filemeta
 from superdesk.timer import timer
-from superdesk.errors import SuperdeskApiError
 from superdesk.media.video_editor import VideoEditorWrapper
 import magic
 
@@ -44,7 +43,7 @@ class ArchiveMediaService():
             content_type = magic.from_buffer(doc['media'].read(1024), mime=True)
             doc['media'].seek(0)
             file_type = content_type.split('/')[0]
-            if file_type == 'video' and app.config.get("VIDEO_SERVER_ENABLE"):
+            if file_type == 'video' and app.config.get("VIDEO_SERVER_ENABLED"):
                 # upload media to video server
                 res, renditions, metadata = self.upload_file_to_video_server(doc)
                 # get thumbnails for timeline bar
