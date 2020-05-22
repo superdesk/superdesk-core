@@ -63,6 +63,13 @@ Default: ``0``
 
 By default content will not expire.
 
+``ARCHIVED_EXPIRY_MINUTES``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. versionadded:: 1.34
+
+Default: ``0``
+
 ``PUBLISHED_CONTENT_EXPIRY_MINUTES``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

@@ -49,3 +49,7 @@ Core Signals
 
 .. autodata:: item_validate
     :annotation:
+
+.. autodata:: archived_item_removed
+    :annotation:
+

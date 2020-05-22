@@ -82,7 +82,7 @@ class EveBackend():
                     logger.error(item_msg('failed to add item into elastic error={}'.format(str(e)), item))
         return item
 
-    def find(self, endpoint_name, where, max_results=0):
+    def find(self, endpoint_name, where, max_results=0, sort=None):
         """Find items for given endpoint using mongo query in python dict object.
 
         It handles request creation here so no need to do this in service.
@@ -94,6 +94,8 @@ class EveBackend():
         req = ParsedRequest()
         req.where = MongoJSONEncoder().encode(where)
         req.max_results = max_results
+        if sort is not None:
+            req.sort = sort
         return self.get_from_mongo(endpoint_name, req, None)
 
     def search(self, endpoint_name, source):
@@ -319,11 +321,18 @@ class EveBackend():
 
         :param endpoint_name: Name of the endpoint
         :param lookup: User mongo query syntax. example 1. ``{'_id':123}``, 2. ``{'item_id': {'$in': [123, 234]}}``
-        :returns: Returns the mongo remove command response. {'n': 12, 'ok': 1}
+        :returns: Returns list of ids which were removed.
         """
+        docs = list(self.get_from_mongo(endpoint_name, lookup=lookup, req=ParsedRequest()))
+        removed_ids = self.delete_docs(endpoint_name, docs)
+        if len(docs) and not len(removed_ids):
+            logger.warn("No documents for %s resource were deleted using lookup %s", endpoint_name, lookup)
+        return removed_ids
+
+    def delete_docs(self, endpoint_name, docs):
+        """Delete using list of documents."""
         backend = self._backend(endpoint_name)
         search_backend = self._lookup_backend(endpoint_name)
-        docs = list(self.get_from_mongo(endpoint_name, lookup=lookup, req=ParsedRequest()))
         ids = [doc[config.ID_FIELD] for doc in docs]
         removed_ids = ids
         logger.info("total documents to be removed {}".format(len(ids)))
@@ -339,10 +348,12 @@ class EveBackend():
                     removed_ids.append(doc[config.ID_FIELD])
                 except Exception:
                     logger.exception('item can not be removed from elastic _id=%s' % (doc[config.ID_FIELD], ))
-        backend.remove(endpoint_name, {config.ID_FIELD: {'$in': removed_ids}})
-        logger.info("Removed {} documents from {}.".format(len(ids), endpoint_name))
-        if not ids:
-            logger.warn("No documents for {} resource were deleted using lookup {}".format(endpoint_name, lookup))
+        if len(removed_ids):
+            backend.remove(endpoint_name, {config.ID_FIELD: {'$in': removed_ids}})
+            logger.info("Removed %d documents from %s.", len(removed_ids), endpoint_name)
+        else:
+            logger.warn("No documents for %s resource were deleted.", endpoint_name)
+        return removed_ids
 
     def delete_ids_from_mongo(self, endpoint_name, ids):
         """Delete the passed ids from mongo without searching or checking
