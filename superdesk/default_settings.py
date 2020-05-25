@@ -346,6 +346,7 @@ CORE_APPS = [
     'superdesk.allowed_values',
     'apps.picture_crop',
     'apps.picture_renditions',
+    'apps.video_edit',
     'content_api.publish',
     'content_api.items',
     'content_api.tokens',
@@ -782,7 +783,7 @@ KILL_TEMPLATE_NULL_FIELDS = ['byline', 'place']
 
 #: Video editor server
 VIDEO_SERVER_URL = env('VIDEO_SERVER_URL', 'http://localhost:5050')
-VIDEO_SERVER_ENABLE = strtobool(env('VIDEO_SERVER_ENABLE', 'false'))
+VIDEO_SERVER_ENABLED = strtobool(env('VIDEO_SERVER_ENABLED', 'false'))
 
 #: Whether to generate custom crops on image upload by default or not, if false means generate else don't generate
 NO_CUSTOM_CROPS = strtobool(env('NO_CUSTOM_CROPS', 'false'))
