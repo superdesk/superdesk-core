@@ -156,7 +156,7 @@ class DictionaryService(BaseService):
                 pass
 
         for doc in docs:
-            if self.is_valid_dictonary(doc):
+            if self.is_duplicate_dictionary(doc):
                 raise SuperdeskApiError.badRequestError(message=_('The dictionary already exists'),
                                                         payload={'name': 'duplicate'})
 
@@ -194,7 +194,7 @@ class DictionaryService(BaseService):
         if lang and lang.find('-') > 0:
             return lang.split('-')[0]
 
-    def is_valid_dictonary(self, doc):
+    def is_duplicate_dictionary(self, doc):
         return self.find_one(req=None, name=doc['name'],
                              language_id=doc['language_id'],
                              type=doc.get('type', DictionaryType.DICTIONARY.value))
@@ -263,7 +263,7 @@ class DictionaryService(BaseService):
             }
 
         if (user and language_id and language_id != original.get('language_id')
-                and self.is_valid_dictonary(personal_dictionary)):
+                and self.is_duplicate_dictionary(personal_dictionary)):
             raise SuperdeskApiError.badRequestError(message=_('The dictionary already exists'),
                                                     payload={'name': 'duplicate'})
         elif (name and name != original.get('name') and self.find_one(req=None, name=name)):
