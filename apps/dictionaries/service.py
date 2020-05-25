@@ -156,11 +156,10 @@ class DictionaryService(BaseService):
                 pass
 
         for doc in docs:
-            if self.find_one(req=None, name=doc['name'],
-                             language_id=doc['language_id'],
-                             type=doc.get('type', DictionaryType.DICTIONARY.value)):
+            if self.is_valid_dictonary(doc):
                 raise SuperdeskApiError.badRequestError(message=_('The dictionary already exists'),
                                                         payload={'name': 'duplicate'})
+
             self.__set_default(doc)
             self._validate_dictionary(doc)
 
@@ -194,6 +193,11 @@ class DictionaryService(BaseService):
     def get_base_language(self, lang):
         if lang and lang.find('-') > 0:
             return lang.split('-')[0]
+
+    def is_valid_dictonary(self, doc):
+        return self.find_one(req=None, name=doc['name'],
+                             language_id=doc['language_id'],
+                             type=doc.get('type', DictionaryType.DICTIONARY.value))
 
     def get_dictionaries(self, lang):
         """Returns all the active dictionaries.
@@ -246,20 +250,23 @@ class DictionaryService(BaseService):
                 # request.data is not set during tests, so we ignore those errors
                 pass
 
-        # check if dictonary is personal or not.
-        if (original.get('user')
-                and updates.get('language_id', False)
-                and not updates.get('language_id', False) == original.get('language_id', False)
-                and self.find_one(req=None,
-                                  name=str(original.get('user')) + ':' + updates.get('language_id'),
-                                  language_id=updates.get('language_id', None),
-                                  type=original.get('type', None))):
+        user = original.get('user')
+        name = updates.get('name')
+        language_id = updates.get('language_id')
+
+        # if user is present it means dictonary is personal/abbrevations.
+        if user and language_id:
+            personal_dictionary = {
+                'name': str(user) + ':' + language_id,
+                'language_id': language_id,
+                'type': original.get('type'),
+            }
+
+        if (user and language_id and language_id != original.get('language_id')
+                and self.is_valid_dictonary(personal_dictionary)):
             raise SuperdeskApiError.badRequestError(message=_('The dictionary already exists'),
                                                     payload={'name': 'duplicate'})
-        elif (not original.get('user') and updates.get('name', False)
-                and not updates.get('name', False) == original.get('name', False)
-                and self.find_one(req=None,
-                                  name=updates.get('name', None))):
+        elif (name and name != original.get('name') and self.find_one(req=None, name=name)):
             raise SuperdeskApiError.badRequestError(message=_('The dictionary already exists'),
                                                     payload={'name': 'duplicate'})
 
