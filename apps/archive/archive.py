@@ -336,9 +336,6 @@ class ArchiveService(BaseService):
             if not (item_obj and config.ID_FIELD in item_obj):
                 continue
 
-            if is_related_content(item_name):
-                continue
-
             item_id = item_obj[config.ID_FIELD]
             media_item = self.find_one(req=None, _id=item_id)
             if app.settings.get('COPY_METADATA_FROM_PARENT') and item_obj.get(ITEM_TYPE) in MEDIA_TYPES:
@@ -348,13 +345,17 @@ class ArchiveService(BaseService):
                 if not stored_item:
                     continue
 
+            track_usage(media_item, stored_item, item_obj, item_name, original)
+
+            if is_related_content(item_name):
+                continue
+
             self._validate_updates(stored_item, item_obj, user)
             if stored_item[ITEM_TYPE] == CONTENT_TYPE.PICTURE:  # create crops
                 CropService().create_multiple_crops(item_obj, stored_item)
                 if body and item_obj.get('description_text', None):
                     body = update_image_caption(body, item_name, item_obj['description_text'])
 
-            track_usage(media_item, stored_item, item_obj, item_name, original)
             self._set_association_timestamps(item_obj, updates, new=False)
             stored_item.update(item_obj)
 

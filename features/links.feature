@@ -10,6 +10,12 @@ Feature: Track usage of an item
             {"_id": "three", "guid": "guid3", "type": "video", "version": 1}
         ]
         """
+        And "vocabularies"
+        """
+        [
+            {"_id": "related", "field_type": "related_content"}
+        ]
+        """
 
         When we get "links?where={"guid":"one"}"
         Then we get list with 0 items
@@ -46,6 +52,12 @@ Feature: Track usage of an item
         {"_items": [
             {"_id": "one", "type": "text", "versioncreated": "__now__"}
         ]}
+        """
+
+        When we get "/archive/three"
+        Then we get existing resource
+        """
+        {"used": true, "used_updated": "__now__"}
         """
 
         When we patch "/archive/one"
