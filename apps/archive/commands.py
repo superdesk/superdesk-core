@@ -298,7 +298,12 @@ class RemoveExpiredContent(superdesk.Command):
 
         # If the item is associated with a planning assignment and not published then preserve it
         if item.get('assignment_id') and item.get(ITEM_STATE) not in PUBLISH_STATES:
-            is_expired = False
+            try:
+                assignment = superdesk.get_resource_service('assignments').find_one(req=None, _id=item['assignment_id'])
+                if assignment is not None:
+                    is_expired = False
+            except KeyError:  # planning is not enabled
+                pass
 
         if is_expired:
             # now check recursively for all references
