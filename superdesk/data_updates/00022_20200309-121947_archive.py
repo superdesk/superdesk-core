@@ -21,15 +21,18 @@ class DataUpdate(DataUpdate):
     def forwards(self, mongodb_collection, mongodb_database):
         for resource in ('archive', 'published'):
             service = get_resource_service(resource)
-            for item in mongodb_database[resource].find({'associations': {'$exists': 'true', '$ne': {}}}):
+            for item in mongodb_database[resource].find({'associations': {'$exists': 'true', '$nin': [{}, None]}}):
                 update = False
                 associations = {}
-                for key, val in item['associations'].items():
-                    associations[key] = val
-                    if val and is_related_content(key) and val.get('order', None) is None:
-                        update = True
-                        order = int(key.split('--')[1])
-                        associations[key]['order'] = order
+                try:
+                    for key, val in item['associations'].items():
+                        associations[key] = val
+                        if val and is_related_content(key) and val.get('order', None) is None:
+                            update = True
+                            order = int(key.split('--')[1])
+                            associations[key]['order'] = order
+                except AttributeError:
+                    pass
                 if update:
                     try:
                         _id = ObjectId(item['_id'])
