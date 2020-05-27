@@ -163,9 +163,7 @@ class KillPublishService(BasePublishService):
         try:
             if item.get('_type') == 'archive':
                 # attempt to find the published item as this will have an accurate time of publication
-                published_items = get_resource_service(PUBLISHED).get_last_published_version(item.get(config.ID_FIELD))
-                published_item = [p for p in published_items if p.get(LAST_PUBLISHED_VERSION)][0] \
-                    if published_items.count() > 0 else None
+                published_item = get_resource_service(PUBLISHED).get_last_published_version(item.get(config.ID_FIELD))
                 versioncreated = published_item.get('versioncreated') if published_item else \
                     item.get('versioncreated', item.get(config.LAST_UPDATED))
             else:
