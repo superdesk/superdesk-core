@@ -75,6 +75,7 @@ class Resource():
     query_objectid_as_string = None
     soft_delete = None
     hateoas = None
+    merge_nested_documents = None
 
     def __init__(self, endpoint_name, app, service, endpoint_schema=None):
         self.endpoint_name = endpoint_name
@@ -125,9 +126,17 @@ class Resource():
                 endpoint_schema.update({'soft_delete': self.soft_delete})
             if self.hateoas is not None:
                 endpoint_schema.update({'hateoas': self.hateoas})
+            if self.merge_nested_documents is not None:
+                endpoint_schema.update({'merge_nested_documents': self.merge_nested_documents})
             if self.mongo_indexes:
                 # used in app:initialize_data
                 endpoint_schema['mongo_indexes__init'] = self.mongo_indexes
+
+            if app.config.get('SCHEMA_UPDATE', {}).get(self.endpoint_name):
+                schema_updates = app.config['SCHEMA_UPDATE'][self.endpoint_name]
+                log.warning('Updating {} schema with custom data for fields: {}'.format(
+                    self.endpoint_name.upper(), ', '.join(schema_updates.keys())))
+                self.schema.update(schema_updates)
 
         self.endpoint_schema = endpoint_schema
 

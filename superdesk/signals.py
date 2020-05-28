@@ -8,6 +8,8 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import blinker
+
 __all__ = [
     'item_create',
     'item_publish',
@@ -17,12 +19,13 @@ __all__ = [
     'item_fetched',
     'item_move',
     'item_moved',
+    'item_rewrite',
+    'item_validate',
     'item_routed',
     'item_duplicate',
     'item_duplicated',
+    'archived_item_removed',
 ]
-
-import blinker
 
 signals = blinker.Namespace()
 
@@ -146,6 +149,15 @@ item_duplicate = signals.signal('item:duplicate')
 #: :param original: original item
 #: :param operation: operation
 item_duplicated = signals.signal('item:duplicated')
+
+
+#: Sent then item is removed from archived
+#:
+#: ..versionadded:: 1.34
+#:
+#: :param sender: archived service
+#: :param item: item being removed from archived
+archived_item_removed = signals.signal('archived:removed')
 
 
 def connect(signal, subscriber):

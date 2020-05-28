@@ -88,8 +88,9 @@ BANDWIDTH_SAVER = False
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%S+0000'
 ELASTIC_DATE_FORMAT = '%Y-%m-%d'
 ELASTIC_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
-
 PAGINATION_LIMIT = 200
+
+MERGE_NESTED_DOCUMENTS = False
 
 #: keep default in sync with limit - so when client does not use pagination return all
 #:
@@ -345,6 +346,7 @@ CORE_APPS = [
     'superdesk.allowed_values',
     'apps.picture_crop',
     'apps.picture_renditions',
+    'apps.video_edit',
     'content_api.publish',
     'content_api.items',
     'content_api.tokens',
@@ -358,6 +360,7 @@ CORE_APPS = [
     'superdesk.auth',
     'superdesk.attachments',
     'superdesk.auth_server',
+    'apps.links',
 ]
 
 #: Specify what modules should be enabled
@@ -551,6 +554,12 @@ SESSION_EXPIRY_MINUTES = int(env('SESSION_EXPIRY_MINUTES', 240))
 
 #: The number of minutes before content items are purged
 CONTENT_EXPIRY_MINUTES = int(env('CONTENT_EXPIRY_MINUTES', 0))
+
+#: The number of minutes before content items are purged from archived
+#:
+#: .. versionadded:: 1.34
+#:
+ARCHIVED_EXPIRY_MINUTES = int(env('ARCHIVED_EXPIRY_MINUTES', 0))
 
 #: The number of minutes before ingest items are purged
 INGEST_EXPIRY_MINUTES = int(env('INGEST_EXPIRY_MINUTES', 2 * 24 * 60))
@@ -774,7 +783,7 @@ KILL_TEMPLATE_NULL_FIELDS = ['byline', 'place']
 
 #: Video editor server
 VIDEO_SERVER_URL = env('VIDEO_SERVER_URL', 'http://localhost:5050')
-VIDEO_SERVER_ENABLE = strtobool(env('VIDEO_SERVER_ENABLE', 'false'))
+VIDEO_SERVER_ENABLED = strtobool(env('VIDEO_SERVER_ENABLED', 'false'))
 
 #: Whether to generate custom crops on image upload by default or not, if false means generate else don't generate
 NO_CUSTOM_CROPS = strtobool(env('NO_CUSTOM_CROPS', 'false'))
@@ -843,3 +852,11 @@ TANSA_PROFILES = {}
 
 # Enable ninjs to send all the fields for place in output.
 NINJS_PLACE_EXTENDED = False
+
+#: Define for how many hours in the past it shoudl return links for.
+#:
+#: Set to `0` to disable time limit.
+#:
+#: .. versionadded:: 1.34
+#:
+LINKS_MAX_HOURS = 0

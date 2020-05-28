@@ -8,12 +8,10 @@ class UsersResource(Resource):
     item_url = item_url
     item_methods = ['GET']
     resource_methods = ['GET']
+    allow_unknown = True
     datasource = {
         'source': 'users',
-        'default_sort': [('username', 1)],
-        'projection': {
-            'user_preferences': 0
-        },
+        'default_sort': [('username', 1)]
     }
     privileges = {
         'GET': Scope.USERS_READ.name

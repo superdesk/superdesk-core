@@ -294,7 +294,9 @@ class PublishedItemService(BaseService):
 
             request = ParsedRequest()
             request.args = {'source': json.dumps(query), 'repo': 'published'}
-            return get_resource_service('search').get(req=request, lookup=None)
+            items = list(self.get(req=request, lookup=None))
+            if items:
+                return items[0]
         except Exception:
             return None
 

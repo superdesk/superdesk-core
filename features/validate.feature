@@ -265,7 +265,7 @@ Feature: Validate
       "embed1": {"required": true},
       "date1": {"required": true},
       "subject": {
-        "mandatory_in_list": {"scheme": {"vocabulary1": "vocabulary1"}},
+        "mandatory_in_list": {"scheme": {"vocabulary1": {"required": true}}},
         "type": "list"
       }
     }}]
@@ -315,7 +315,7 @@ Feature: Validate
     """
     [{"_id": "test", "schema": {
       "subject": {
-        "mandatory_in_list": {"scheme": {"01": "01", "destination": null}},
+        "mandatory_in_list": {"scheme": {"01": {"required": "true"}, "destination": null}},
         "type": "list",
         "nullable": true,
         "required": false,
@@ -355,7 +355,7 @@ Feature: Validate
     """
     [{"_id": "test", "schema": {
       "subject": {
-        "mandatory_in_list": {"scheme": {"01": "01", "destination": null}},
+        "mandatory_in_list": {"scheme": {"01": {"required": "true"}, "destination": null}},
         "type": "list",
         "nullable": false,
         "required": true,

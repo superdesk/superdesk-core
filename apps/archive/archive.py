@@ -47,6 +47,7 @@ from apps.common.models.utils import get_model
 from apps.item_lock.models.item import ItemModel
 from apps.packages import PackageService
 from .archive_media import ArchiveMediaService
+from .usage import track_usage, update_refs
 from superdesk.utc import utcnow
 from superdesk.vocabularies import is_related_content
 from flask_babel import _
@@ -317,6 +318,7 @@ class ArchiveService(BaseService):
         self._add_desk_metadata(updates, original)
         self._handle_media_updates(updates, original, user)
         flush_renditions(updates, original)
+        update_refs(updates, original)
 
     def _handle_media_updates(self, updates, original, user):
         update_associations(updates)
@@ -334,34 +336,25 @@ class ArchiveService(BaseService):
             if not (item_obj and config.ID_FIELD in item_obj):
                 continue
 
-            if is_related_content(item_name):
-                continue
-
             item_id = item_obj[config.ID_FIELD]
-            media_item = {}
+            media_item = self.find_one(req=None, _id=item_id)
             if app.settings.get('COPY_METADATA_FROM_PARENT') and item_obj.get(ITEM_TYPE) in MEDIA_TYPES:
                 stored_item = (original.get(ASSOCIATIONS) or {}).get(item_name) or item_obj
             else:
-                media_item = stored_item = self.find_one(req=None, _id=item_id)
+                stored_item = media_item
                 if not stored_item:
                     continue
+
+            track_usage(media_item, stored_item, item_obj, item_name, original)
+
+            if is_related_content(item_name):
+                continue
 
             self._validate_updates(stored_item, item_obj, user)
             if stored_item[ITEM_TYPE] == CONTENT_TYPE.PICTURE:  # create crops
                 CropService().create_multiple_crops(item_obj, stored_item)
                 if body and item_obj.get('description_text', None):
                     body = update_image_caption(body, item_name, item_obj['description_text'])
-
-            # If the media item is not marked as 'used', mark it as used
-            if original.get(ITEM_TYPE) == CONTENT_TYPE.TEXT and \
-                    (item_obj is not stored_item or not stored_item.get('used')):
-                if media_item is not stored_item:
-                    media_item = self.find_one(req=None, _id=item_id)
-
-                if media_item and not media_item.get('used'):
-                    self.system_update(media_item['_id'], {'used': True}, media_item)
-
-                stored_item['used'] = True
 
             self._set_association_timestamps(item_obj, updates, new=False)
             stored_item.update(item_obj)
@@ -570,7 +563,7 @@ class ArchiveService(BaseService):
                                SCHEDULE_SETTINGS, 'lock_time', 'lock_action', 'lock_session', 'lock_user', SIGN_OFF,
                                'rewritten_by', 'rewrite_of', 'rewrite_sequence', 'highlights', 'marked_desks',
                                '_type', 'event_id', 'assignment_id', PROCESSED_FROM,
-                               'translations', 'translation_id', 'translated_from',
+                               'translations', 'translation_id', 'translated_from', 'firstpublished'
                                ])
         if delete_keys:
             keys_to_delete.extend(delete_keys)

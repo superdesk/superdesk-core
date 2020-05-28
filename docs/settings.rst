@@ -63,6 +63,13 @@ Default: ``0``
 
 By default content will not expire.
 
+``ARCHIVED_EXPIRY_MINUTES``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. versionadded:: 1.34
+
+Default: ``0``
+
 ``PUBLISHED_CONTENT_EXPIRY_MINUTES``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -635,6 +642,8 @@ Default: ``None``
 When configured it will enable ``/places_autocomplete`` service and client
 will use it for place field searching.
 
+Other
+-----
 
 .. autodata:: KEYWORDS_ADD_MISSING_ON_PUBLISH
 
@@ -643,3 +652,34 @@ will use it for place field searching.
 .. autodata:: ARCHIVE_AUTOCOMPLETE
 .. autodata:: ARCHIVE_AUTOCOMPLETE_DAYS
 .. autodata:: ARCHIVE_AUTOCOMPLETE_HOURS
+
+.. autodata:: LINKS_MAX_HOURS
+
+.. _settings.extending:
+
+Extend Superdesk
+-----------------
+
+Additional settings which are allowed to change some Superdesk defaults
+
+``SCHEMA_UPDATE``
+
+Default: ``None``
+
+Allows to update a default schema.
+
+Example::
+
+    SCHEMA_UPDATE = {
+        'archive': {
+            'extra': {
+                'type': 'dict',
+                'schema': {},
+                'mapping': {
+                    'type': 'object',
+                    'enabled': True
+                },
+                'allow_unknown': True,
+            }
+        }
+    }
