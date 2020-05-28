@@ -122,6 +122,7 @@ def get_feed_parser(parser_name):
 class FeedParserAllowedResource(Resource):
     resource_methods = ['GET']
     item_methods = []
+    allow_unknown = True
 
 
 class FeedParserAllowedService(Service):
