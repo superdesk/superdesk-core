@@ -66,8 +66,11 @@ def init_saml_auth(req):
 
 def prepare_flask_request(request):
     url_data = urlparse(request.url)
+    scheme = request.scheme
+    if app.config.get('SUPERDESK_URL'):
+        scheme = urlparse(app.config['SUPERDESK_URL']).scheme or request.scheme
     return {
-        'https': 'on' if request.scheme == 'https' else 'off',
+        'https': 'on' if scheme == 'https' else 'off',
         'http_host': request.host,
         'server_port': url_data.port,
         'script_name': request.path,

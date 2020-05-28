@@ -38,7 +38,7 @@ class OAuthService(AuthService):
     def authenticate(self, document):
         if not document.get('email'):
             return
-        return superdesk.get_resource_service('auth_users').find_one(req=None, email=document.get('email'))
+        return superdesk.get_resource_service('auth_users').find_one(req=None, email=document['email'].lower())
 
 
 def auth_user(email):
