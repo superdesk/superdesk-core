@@ -26,9 +26,9 @@ class DatalayerTestCase(TestCase):
         _id = ObjectId()
         encoder = SuperdeskJSONEncoder()
         text = encoder.dumps({'_id': _id, 'name': 'foo', 'group': None})
-        self.assertIn('"name": "foo"', text)
-        self.assertIn('"group": null', text)
-        self.assertIn('"_id": "%s"' % (_id, ), text)
+        self.assertIn('"name":"foo"', text)
+        self.assertIn('"group":null', text)
+        self.assertIn('"_id":"%s"' % (_id, ), text)
 
     def test_find_with_mongo_query(self):
         service = superdesk.get_resource_service('activity')

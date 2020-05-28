@@ -27,46 +27,28 @@ class RebuildElasticIndex(superdesk.Command):
     ::
 
         $ python manage.py app:rebuild_elastic_index
-        $ python manage.py app:rebuild_elastic_index --index=contentapi
-        $ python manage.py app:rebuild_elastic_index --index=superdesk
+        $ python manage.py app:rebuild_elastic_index --resource=items
+        $ python manage.py app:rebuild_elastic_index --resource=archive
 
     """
 
     option_list = [
-        superdesk.Option('--index', '-i', dest='index_name')
+        superdesk.Option('--resource', '-r', dest='resource_name')
     ]
 
-    def run(self, index_name=None):
+    def run(self, resource_name=None):
         # if no index name is passed then use the configured one
-        indexes = list(current_app.data.elastic._get_indexes().keys())
-        if index_name and index_name in indexes:
-            indexes = [index_name]
-        elif index_name:
-            raise Exception("Index {} is not configured".format(index_name))
-        for index_name in indexes:
+        resources = list(current_app.data.elastic._get_elastic_resources().keys())
+        if resource_name and resource_name in resources:
+            resources = [resource_name]
+        elif resource_name:
+            raise ValueError("Resource {} is not configured".format(resource_name))
+        for resource in resources:
             try:
-                print('Starting index rebuilding for index: {}'.format(index_name))
-                es = get_es(superdesk.app.config['ELASTICSEARCH_URL'])
-                clone_name = index_name + '-' + get_random_string()
-                print('Creating index: ', clone_name)
-                superdesk.app.data.elastic.create_index(clone_name, superdesk.app.config['ELASTICSEARCH_SETTINGS'])
-                real_name = superdesk.app.data.elastic.get_index_by_alias(clone_name)
-                print('Putting mapping for index: ', clone_name)
-                superdesk.app.data.elastic.put_mapping(superdesk.app, clone_name)
-                print('Starting index rebuilding.')
-                reindex(es, index_name, clone_name)
-                print('Finished index rebuilding.')
-                print('Deleting index: ', index_name)
-                get_indices(es).delete(index_name)
-                print('Creating alias: ', index_name)
-                get_indices(es).put_alias(index=real_name, name=index_name)
-                print('Alias created.')
-                print('Deleting clone name alias')
-                get_indices(es).delete_alias(name=clone_name, index=real_name)
-                print('Deleted clone name alias')
+                current_app.data.elastic.reindex(resource)
             except elasticsearch.exceptions.NotFoundError as nfe:
                 print(nfe)
-            print('Index {0} rebuilt successfully.'.format(index_name))
+            print('Index {} rebuilt successfully.'.format(resource_name))
 
 
 superdesk.command('app:rebuild_elastic_index', RebuildElasticIndex())

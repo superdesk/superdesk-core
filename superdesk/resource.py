@@ -16,9 +16,16 @@ from eve.utils import config
 
 log = logging.getLogger(__name__)
 
+# elastic mapping helpers
 not_indexed = {'type': 'string', 'index': 'no'}  # noqa
 not_analyzed = {'type': 'string', 'index': 'not_analyzed'}
 not_enabled = {'type': 'object', 'enabled': False}  # noqa
+text_with_keyword = {
+    'type': 'text',
+    'fields': {
+        'keyword': {'type': 'keyword'},
+    },
+}
 
 
 def build_custom_hateoas(hateoas, doc, **values):
@@ -215,7 +222,8 @@ class Resource():
             'required': required,
             'nullable': nullable,
             'readonly': readonly,
-            'data_relation': {'resource': resource, 'field': '_id', 'embeddable': embeddable}
+            'data_relation': {'resource': resource, 'field': '_id', 'embeddable': embeddable},
+            'mapping': {'type': 'keyword'},
         }
 
     @staticmethod

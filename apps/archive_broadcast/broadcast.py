@@ -136,13 +136,11 @@ class ArchiveBroadcastService(BaseService):
         """
         query = {
             'query': {
-                'filtered': {
-                    'filter': {
-                        'bool': {
-                            'must': {'term': {'genre.name': BROADCAST_GENRE}},
-                            'should': {'terms': {'broadcast.master_id': ids}}
-                        }
-                    }
+                'bool': {
+                    'filter': [
+                        {'term': {'genre.name': BROADCAST_GENRE}},
+                        {'terms': {'broadcast.master_id': ids}},
+                    ],
                 }
             }
         }
@@ -243,13 +241,11 @@ class ArchiveBroadcastService(BaseService):
 
         query = {
             'query': {
-                'filtered': {
-                    'filter': {
-                        'and': [
-                            {'term': {'genre.name': BROADCAST_GENRE}},
-                            {'term': {'broadcast.rewrite_id': item.get(config.ID_FIELD)}}
-                        ]
-                    }
+                'bool': {
+                    'filter': [
+                        {'term': {'genre.name': BROADCAST_GENRE}},
+                        {'term': {'broadcast.rewrite_id': item.get(config.ID_FIELD)}},
+                    ]
                 }
             }
         }

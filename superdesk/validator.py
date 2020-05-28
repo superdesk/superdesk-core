@@ -74,7 +74,7 @@ class SuperdeskValidator(Validator):
 
     def _validate_mapping(self, mapping, field, value):
         """
-        {'type': 'dict'}
+        {'type': 'dict', 'nullable': True}
         """
         pass
 

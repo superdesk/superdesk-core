@@ -98,11 +98,8 @@ def publish_report(user_id, search_data):
     """Create report for a search and send it by email"""
     search_filter = json.loads(search_data['filter'])
     query = es_utils.filter2query(search_filter, user_id=user_id)
-    repos = es_utils.filter2repos(search_filter)
-    types = es_utils.get_doc_types(repos)
-    found = superdesk.app.data.elastic.es.search(
-        body=query, index=es_utils.get_index(types), doc_type=types)
-    docs = es_utils.get_docs(found)
+    repos = es_utils.filter2repos(search_filter) or es_utils.REPOS.copy()
+    docs = list(superdesk.app.data.elastic.search(query, repos))
     send_report_email(user_id, search_data, docs)
 
 

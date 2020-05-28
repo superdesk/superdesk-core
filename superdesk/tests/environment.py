@@ -10,6 +10,7 @@
 
 import os
 from flask import json
+from copy import deepcopy
 
 from apps.prepopulate.app_populate import AppPopulateCommand
 from apps.prepopulate.app_initialize import AppInitializeWithDataCommand
@@ -100,7 +101,7 @@ def before_feature(context, feature):
         # superdesk-aap don't use "setup_before_all" already
         config = getattr(setup_before_scenario, 'config', None)
         app_factory = getattr(setup_before_scenario, 'app_factory', None)
-    config = config or {}
+    config = deepcopy(config or {})
     app_factory = app_factory or get_app
 
     # set the MAX_TRANSMIT_RETRY_ATTEMPT to zero so that transmit does not retry

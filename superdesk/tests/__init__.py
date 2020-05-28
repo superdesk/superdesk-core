@@ -8,11 +8,13 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import os
 import functools
 import logging
-import os
 import socket
 import unittest
+
+from copy import deepcopy
 from base64 import b64encode
 from unittest.mock import patch
 
@@ -109,10 +111,7 @@ def update_config(conf):
 
 def drop_elastic(app):
     with app.app_context():
-        es = app.data.elastic.es
-        indexes = [app.config['ELASTICSEARCH_INDEX']] + list(app.config['ELASTICSEARCH_INDEXES'].values())
-        for index in indexes:
-            es.indices.delete(index, ignore=[404])
+        app.data.elastic.drop_index()
 
 
 def foreach_mongo(fn):
@@ -140,10 +139,21 @@ def foreach_mongo(fn):
     return inner
 
 
-@foreach_mongo
-def drop_mongo(app, dbconn, dbname):
-    dbconn.drop_database(dbname)
-    dbconn.close()
+def drop_mongo(app):
+    pairs = (
+        ('MONGO', 'MONGO_DBNAME'),
+        ('ARCHIVED', 'ARCHIVED_DBNAME'),
+        ('LEGAL_ARCHIVE', 'LEGAL_ARCHIVE_DBNAME'),
+        ('CONTENTAPI_MONGO', 'CONTENTAPI_MONGO_DBNAME')
+    )
+    with app.app_context():
+        for prefix, name in pairs:
+            if not app.config.get(name):
+                continue
+            dbname = app.config[name]
+            dbconn = app.data.mongo.pymongo(prefix=prefix).cx
+            dbconn.drop_database(dbname)
+            dbconn.close()
 
 
 def setup_config(config):
@@ -152,6 +162,7 @@ def setup_config(config):
     app_config.from_object('superdesk.default_settings')
 
     update_config(app_config)
+
     app_config.update(config or {}, **{
         'APP_ABSPATH': app_abspath,
         'DEBUG': True,
@@ -165,11 +176,14 @@ def setup_config(config):
     logging.getLogger('superdesk').setLevel(logging.ERROR)
     logging.getLogger('elasticsearch').setLevel(logging.ERROR)
     logging.getLogger('superdesk.errors').setLevel(logging.CRITICAL)
-    return app_config
+
+    return {
+        key: deepcopy(val) for key, val in app_config.items()
+    }
 
 
 def clean_dbs(app, force=False):
-    clean_es(app, force)
+    _clean_es(app)
     drop_mongo(app)
 
 
@@ -193,11 +207,8 @@ def retry(exc, count=1):
 
 
 def _clean_es(app):
-    indices = '%s*' % app.config['ELASTICSEARCH_INDEX']
-    es = app.data.elastic.es
-    es.indices.delete(indices, ignore=[404])
     with app.app_context():
-        app.data.init_elastic(app)
+        app.data.elastic.drop_index()
 
 
 @retry(socket.timeout, 2)
@@ -302,7 +313,9 @@ def setup(context=None, config=None, app_factory=get_app, reset=False):
         if not hasattr(context, 'BEHAVE'):
             app.test_request_context().push()
 
-    clean_dbs(app, force=bool(config))
+    with app.app_context():
+        clean_dbs(app, force=bool(config))
+        app.data.elastic.init_index()
 
 
 def setup_auth_user(context, user=None):

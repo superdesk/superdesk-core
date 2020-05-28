@@ -49,7 +49,7 @@ class SuperdeskDataLayer(DataLayer):
         with app.app_context():
             if lock('elastic', expire=10):
                 try:
-                    self.elastic.init_index(app)
+                    self.elastic.init_index()
                 finally:
                     unlock('elastic')
 

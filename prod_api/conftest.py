@@ -13,7 +13,7 @@ from prod_api.app import get_app as get_prodapi_api
 
 
 MONGO_DB = 'prodapi_tests'
-ELASTICSEARCH_INDEX = 'prodapi_tests'
+ELASTICSEARCH_INDEX = MONGO_DB
 AUTH_SERVER_SHARED_SECRET = '2kZOf0VI9T70vU9uMlKLyc5GlabxVgl6'
 
 
@@ -41,6 +41,10 @@ def get_test_prodapi_app(extra_config=None):
     if extra_config:
         test_config.update(extra_config)
     prodapi_app = get_prodapi_api(test_config)
+
+    # put elastic mapping
+    with prodapi_app.app_context():
+        prodapi_app.data.elastic.init_index()
 
     return prodapi_app
 

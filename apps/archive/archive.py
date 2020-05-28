@@ -84,6 +84,7 @@ def private_content_filter():
 
         if stages:
             private_filter['must_not'] = [{'terms': {'task.stage': stages}}]
+            private_filter['minimum_should_match'] = 1
 
         return {'bool': private_filter}
 

@@ -211,7 +211,7 @@ metadata_schema = {
         'type': 'string',
         'allowed': content_type,
         'default': 'text',
-        'mapping': not_analyzed
+        'mapping': not_analyzed,
     },
     'package_type': {  # deprecated
         'type': 'string',
@@ -233,11 +233,13 @@ metadata_schema = {
         'type': 'string',
         'mapping': {
             'type': 'string',
+            'fielddata': True,
             'fields': {
                 'phrase': {
                     'type': 'string',
                     'analyzer': 'phrase_prefix_analyzer',
-                    'search_analyzer': 'phrase_prefix_analyzer'
+                    'search_analyzer': 'phrase_prefix_analyzer',
+                    'fielddata': True,
                 }
             }
         }
@@ -739,7 +741,7 @@ metadata_schema = {
     'used_updated': {'type': 'datetime'},
 
     # system fields
-    '_type': {'type': 'string'},
+    '_type': {'type': 'string', 'mapping': None},
     'operation': {'type': 'string'},
     'es_highlight': {'type': 'dict', 'allow_unknown': True, 'readonly': True},
 }

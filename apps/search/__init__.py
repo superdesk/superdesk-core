@@ -75,7 +75,8 @@ class SearchService(superdesk.Service):
                             }
                         }
                     ],
-                    'must_not': {'term': {'version': 0}}
+                    'must_not': {'term': {'version': 0}},
+                    'minimum_should_match': 1,
                 }
             }
         ]
@@ -197,13 +198,7 @@ class SearchService(superdesk.Service):
         if fields:
             params['_source'] = fields
 
-        hits = self.elastic.es.search(
-            body=query,
-            index=es_utils.get_index(types),
-            doc_type=types,
-            params=params
-        )
-        docs = self._get_docs(hits)
+        docs = self.elastic.search(query, types, params)
 
         for resource in types:
             response = {app.config['ITEMS']: [doc for doc in docs if doc['_type'] == resource]}
@@ -223,10 +218,13 @@ class SearchService(superdesk.Service):
 
     def find_one(self, req, **lookup):
         """Find item by id in all collections."""
-        hits = self.elastic.es.mget({'ids': [lookup[app.config['ID_FIELD']]]}, es_utils.get_index())
-        hits['hits'] = {'hits': hits.pop('docs', [])}
-        docs = self._get_docs(hits)
-        return docs.first()
+        _id = lookup['_id']
+        for resource in self._get_types(req):
+            id_field = 'item_id' if resource == 'published' else '_id'
+            resource_lookup = {id_field: _id}
+            item = get_resource_service(resource).find_one(req=req, **resource_lookup)
+            if item:
+                return item
 
     def on_fetched(self, doc):
         """

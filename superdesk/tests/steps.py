@@ -247,6 +247,18 @@ def get_it(context):
     return get_self_href(res, context), res.get('_etag')
 
 
+def get_response_readable(data):
+    try:
+        return json.dumps(json.loads(data), indent=2)
+    except (ValueError, TypeError):
+        pass
+    try:
+        return data.decode("utf-8")
+    except ValueError:
+        pass
+    return data
+
+
 def if_match(context, etag):
     headers = []
     if etag:
@@ -1200,6 +1212,7 @@ def step_impl_then_get_nofield_in_path(context, path):
 @then('we get existing resource')
 def step_impl_then_get_existing(context):
     assert_200(context.response)
+    print('got', get_response_readable(context.response.data))
     test_json(context)
 
 
@@ -1216,7 +1229,8 @@ def step_impl_then_get_ok(context):
 
 @then('we get response code {code}')
 def step_impl_then_get_code(context, code):
-    expect_status(context.response, int(code))
+    assert context.response.status_code == int(code), \
+        'we got code={} data={}'.format(context.response.status_code, get_response_readable(context.response.data))
 
 
 @then('we get updated response')
@@ -1895,6 +1909,11 @@ def step_get_activation_email(context):
 @then('we set elastic limit')
 def step_set_limit(context):
     context.app.settings['MAX_SEARCH_DEPTH'] = 1
+
+
+@when('we reset elastic limit')
+def step_set_limit(context):
+    context.app.settings['MAX_SEARCH_DEPTH'] = -1
 
 
 @then('we get emails')

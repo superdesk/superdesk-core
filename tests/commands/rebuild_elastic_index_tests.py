@@ -18,14 +18,19 @@ from time import sleep
 
 class RebuildIndexTestCase(TestCase):
 
-    def setUp(self):
+    def test_retrieve_items_after_index_rebuilt(self):
+        RESOURCE = 'ingest'
+        elastic = self.app.data.elastic
+        alias = elastic._resource_index(RESOURCE)
+        alias_info = elastic.elastic(RESOURCE).indices.get_alias(name=alias)
+
         data = [{'headline': 'test {}'.format(i), 'slugline': 'rebuild {}'.format(i),
                  'type': 'text' if (i % 2 == 0) else 'picture'} for i in range(11, 21)]
-        get_resource_service('ingest').post(data)
+        get_resource_service(RESOURCE).post(data)
         RebuildElasticIndex().run()
-        sleep(1)  # sleep so Elastic has time to refresh the indexes
+        alias_info_new = elastic.elastic(RESOURCE).indices.get_alias(name=alias)
+        self.assertNotEqual(alias_info, alias_info_new)
 
-    def test_retrieve_items_after_index_rebuilt(self):
         req = ParsedRequest()
         req.args = {}
         req.max_results = 25
