@@ -683,3 +683,20 @@ Example::
             }
         }
     }
+
+Video server settings
+--------------------
+
+``VIDEO_SERVER_URL``
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``http://localhost:5050``
+
+Video server API url.
+
+``VIDEO_SERVER_ENABLED``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``False``
+
+Enable video server.
