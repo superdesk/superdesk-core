@@ -200,7 +200,10 @@ class ArchiveResource(Resource):
     item_methods = ['GET', 'PATCH', 'PUT']
     versioning = True
     privileges = {'POST': SOURCE, 'PATCH': SOURCE, 'PUT': SOURCE}
-    mongo_indexes = {'processed_from_1': ([(PROCESSED_FROM, 1)], {'background': True})}
+    mongo_indexes = {
+        'processed_from_1': ([(PROCESSED_FROM, 1)], {'background': True}),
+        'unique_id_1': ([('unique_id', 1)], {'background': True}),
+    }
 
 
 class ArchiveService(BaseService):
