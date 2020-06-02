@@ -77,6 +77,10 @@ class ArchivedResource(Resource):
         'field': 'archived_id'
     }
 
+    mongo_indexes = {
+        'item_id_1': ([('item_id', 1)], {'background': True}),
+    }
+
 
 class ArchivedService(BaseService):
 
