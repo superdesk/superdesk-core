@@ -9,12 +9,14 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
+import logging
+import superdesk
+
 from copy import copy
 
 from eve.utils import ParsedRequest
 from eve.versioning import resolve_document_version
 
-import superdesk
 from superdesk.users.services import current_user_has_privilege
 from superdesk.resource import Resource
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
@@ -38,6 +40,8 @@ item_operations.append(ITEM_SEND)
 MACRO_INCOMING = 'incoming'
 MACRO_OUTGOING = 'outgoing'
 MACRO_ONSTAGE = 'onstage'
+
+logger = logging.getLogger(__name__)
 
 
 def init_app(app):
@@ -123,6 +127,9 @@ def apply_stage_rule(doc, update, stage, rule_type, desk=None, task=None):
         try:
             original_doc = dict(doc)
             macro = get_resource_service('macros').get_macro_by_name(stage.get(macro_type))
+            if not macro:
+                logger.warning('macro %s is missing', stage.get(macro_type))
+                return
             macro['callback'](doc, desk=desk, stage=stage, task=task)
             if update:
                 modified = compare_dictionaries(original_doc, doc)
