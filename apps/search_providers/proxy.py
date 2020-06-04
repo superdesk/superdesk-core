@@ -21,6 +21,7 @@ class SearchProviderProxyResource(superdesk.Resource):
         'stage': superdesk.Resource.rel('stages', False, nullable=True),
         'fetch_endpoint': {'type': 'string', 'readonly': True},
         'search_provider': {'type': 'string', 'readonly': True},
+        '_fetchable': {'type': 'boolean', 'readonly': True},
     }
     schema.update(get_schema())
 
