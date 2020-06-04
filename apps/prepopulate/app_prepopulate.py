@@ -171,11 +171,16 @@ class PrepopulateService(BaseService):
 
             app.data.init_elastic(app)
 
+            get_resource_service('users').stop_updating_stage_visibility()
+
             user = get_resource_service('users').find_one(username=get_default_user()['username'], req=None)
             if not user:
                 get_resource_service('users').post([get_default_user()])
 
             prepopulate_data(doc.get('profile') + '.json', get_default_user())
+
+            get_resource_service('users').start_updating_stage_visibility()
+            get_resource_service('users').update_stage_visibility_for_users()
 
     def create(self, docs, **kwargs):
         self._create(docs)
