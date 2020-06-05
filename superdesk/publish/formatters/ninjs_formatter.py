@@ -322,6 +322,14 @@ class NINJSFormatter(Formatter):
                     item = orig_item.copy()
 
                 item = self._transform_to_ninjs(item, subscriber, recursive=False)
+
+                # Keep original POI and get rid of all other POI.
+                renditions = item.get('renditions')
+                if renditions:
+                    for rendition in list(renditions):
+                        if rendition != 'original' and renditions[rendition].get('poi'):
+                            renditions[rendition].pop('poi', None)
+
                 associations[key] = item  # all items should stay in associations
                 match = MEDIA_FIELD_RE.match(key)
                 if match:
