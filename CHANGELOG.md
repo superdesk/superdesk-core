@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.33.2] 2020-06-08
+
+### Fixed
+
+- Fix failing update script.
+
 ## [1.33.1] 2020-05-11
 
 ### Fixed
