@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from superdesk import get_resource_service
+from superdesk import get_resource_service, editor_utils
 from superdesk.media.crop import CropService
 from superdesk.metadata.item import ITEM_STATE, EMBARGO, SCHEDULE_SETTINGS
 from superdesk.utc import utcnow
@@ -89,6 +89,7 @@ class CorrectPublishService(BasePublishService):
         flush_renditions(updates, original)
 
     def update(self, id, updates, original):
+        editor_utils.generate_fields(updates)
         get_resource_service('archive')._handle_media_updates(updates, original, get_user())
         super().update(id, updates, original)
 

@@ -20,6 +20,7 @@ from pytz import timezone
 from copy import deepcopy
 
 import superdesk
+from superdesk import editor_utils
 from superdesk.users.services import get_sign_off
 from superdesk.utc import utcnow, get_expiry_date, local_to_utc, get_date
 from superdesk import get_resource_service
@@ -180,6 +181,7 @@ def on_create_item(docs, repo_type=ARCHIVE):
     """Make sure item has basic fields populated."""
 
     for doc in docs:
+        editor_utils.generate_fields(doc)
         update_dates_for(doc)
         set_original_creator(doc)
 

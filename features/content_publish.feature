@@ -4028,3 +4028,65 @@ Feature: Content Publishing
             }
         }
         """
+
+    @auth
+    Scenario: body_html is generated from draftJS state on correction
+        Given "archive"
+        """
+        [{"_id": "test_editor_gen_1", "guid": "test_editor_gen_1", "headline": "test", "state": "fetched"}]
+        """
+        When we publish "#archive._id#" with "publish" type and "published" state
+        Then we get OK response
+
+        When we publish "#archive._id#" with "correct" type and "corrected" state
+        """
+        {
+            "fields_meta": {
+                "body_html": {
+                    "draftjsState": [{
+                        "blocks": [
+                            {
+                                "key": "fcbn3",
+                                "text": "The name of Highlaws comes from the Old English hēah-hlāw, meaning \"high mounds\".",
+                                "type": "unstyled",
+                                "depth": 0,
+                                "inlineStyleRanges": [],
+                                "entityRanges": [],
+                                "data": {"MULTIPLE_HIGHLIGHTS": {}}
+                            }
+                        ],
+                        "entityMap": {}
+                    }]
+                }
+            }
+        }
+        """
+        Then we get OK response
+        And we get existing resource
+        """
+        {
+            "_id": "test_editor_gen_1",
+            "guid": "test_editor_gen_1",
+            "headline": "test",
+            "state": "corrected",
+            "body_html": "<p>The name of Highlaws comes from the Old English hēah-hlāw, meaning \"high mounds\".</p>",
+            "fields_meta": {
+                "body_html": {
+                    "draftjsState": [{
+                        "blocks": [
+                            {
+                                "key": "fcbn3",
+                                "text": "The name of Highlaws comes from the Old English hēah-hlāw, meaning \"high mounds\".",
+                                "type": "unstyled",
+                                "depth": 0,
+                                "inlineStyleRanges": [],
+                                "entityRanges": [],
+                                "data": {"MULTIPLE_HIGHLIGHTS": {}}
+                            }
+                        ],
+                        "entityMap": {}
+                    }]
+                }
+            }
+        }
+        """
