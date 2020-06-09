@@ -132,6 +132,8 @@ def get_sign_off(user):
 
 class UsersService(BaseService):
 
+    _updating_stage_visibility = True
+
     def __is_invalid_operation(self, user, updates, method):
         """Checks if the requested 'PATCH' or 'DELETE' operation is Invalid.
 
@@ -391,6 +393,8 @@ class UsersService(BaseService):
         return user
 
     def update_stage_visibility_for_users(self):
+        if not self._updating_stage_visibility:
+            return
         logger.info('Updating Stage Visibility Started')
         users = list(get_resource_service('users').get(req=None, lookup=None))
         for user in users:
@@ -399,6 +403,8 @@ class UsersService(BaseService):
         logger.info('Updating Stage Visibility Completed')
 
     def update_stage_visibility_for_user(self, user):
+        if not self._updating_stage_visibility:
+            return
         try:
             logger.info('Updating Stage Visibility for user {}.'.format(user.get(config.ID_FIELD)))
             stages = self.get_invisible_stages_ids(user.get(config.ID_FIELD))
@@ -408,6 +414,14 @@ class UsersService(BaseService):
         except Exception:
             logger.exception('Failed to update the stage visibility '
                              'for user: {}'.format(user.get(config.ID_FIELD)))
+
+    def stop_updating_stage_visibility(self):
+        if not app.config.get('SUPERDESK_TESTING'):
+            raise RuntimeError('Only allowed during testing')
+        self._updating_stage_visibility = False
+
+    def start_updating_stage_visibility(self):
+        self._updating_stage_visibility = True
 
 
 class DBUsersService(UsersService):
