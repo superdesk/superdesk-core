@@ -327,7 +327,7 @@ class NINJSFormatter(Formatter):
                 renditions = item.get('renditions')
                 if renditions:
                     for rendition in renditions.keys():
-                        if rendition != 'original' and renditions.get(rendition) and renditions[rendition].get('poi'):
+                        if rendition != 'original' and renditions.get(rendition, {}).get('poi'):
                             renditions[rendition].pop('poi', None)
 
                 associations[key] = item  # all items should stay in associations
