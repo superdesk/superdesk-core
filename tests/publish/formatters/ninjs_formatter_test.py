@@ -967,6 +967,128 @@ class NinjsFormatterTest(TestCase):
         ninjs = json.loads(doc)
         self.assertEqual(ninjs, expected)
 
+    # Keep only the original POI and remove all other POI.
+    def test_picture_poi(self):
+        self.app.data.insert(
+            "vocabularies",
+            [
+                {
+                    "_id": "crop_sizes",
+                    "items": [
+                        {"is_active": True, "name": "FIXME", "width": 10000, "height": 10000},
+                    ],
+                }
+            ],
+        )
+        self.app.data.insert(
+            "content_types",
+            [
+                {
+                    "_id": ObjectId("5ba11fec0d6f1301ac3cbd13"),
+                    "label": "custom media field multi",
+                    "editor": {
+                        "slugline": {"order": 2, "sdWidth": "full"},
+                        "headline": {"order": 3, "formatOptions": []},
+                        "feature_media": {"order": 1},
+                    },
+                    "schema": {
+                        "headline": {"type": "string", "required": False, "maxlength": 64, "nullable": True},
+                        "slugline": {"type": "string", "required": False, "maxlength": 24, "nullable": True},
+                        "feature_media": {
+                            "type": "media",
+                            "required": False,
+                            "enabled": True,
+                            "nullable": True,
+                        },
+                    },
+                }
+            ],
+        )
+        article = {
+            "_id": "5ba1224e0d6f13056bd82d50",
+            "type": "text",
+            "version": 1,
+            "profile": "5ba11fec0d6f1301ac3cbd13",
+            "format": "HTML",
+            "template": "5ba11fec0d6f1301ac3cbd15",
+            "headline": "custom media field multi",
+            "slugline": "test custom media2",
+            "guid": "123",
+            "associations": {
+                "featuremedia": {
+                    "renditions": {
+                        "original": {
+                            "href": "http://localhost:5000/api/upload-raw/123.jpg",
+                            "media": "abc",
+                            "mimetype": "image/jpeg",
+                            "width": 550,
+                            "height": 331,
+                            "poi": {
+                                "x": 500,
+                                "y": 300,
+                            },
+                        },
+                        "FIXME": {
+                            "href": "http://localhost:5000/api/upload-raw/234.jpg",
+                            "media": "bcd",
+                            "mimetype": "image/jpeg",
+                            "width": 500,
+                            "height": 300,
+                            "poi": {
+                                "x": 400,
+                                "y": 200,
+                            },
+                        },
+                    },
+                    "media": "abc",
+                    "type": "picture",
+                    "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                },
+            },
+        }
+
+        expected = {
+            "associations": {
+                "featuremedia": {
+                    "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
+                    "priority": 5,
+                    "renditions": {
+                        "original": {
+                            "height": 331,
+                            "href": "http://localhost:5000/api/upload-raw/123.jpg",
+                            "media": "abc",
+                            "mimetype": "image/jpeg",
+                            "width": 550,
+                            "poi": {
+                                "x": 500,
+                                "y": 300,
+                            },
+                        },
+                        "FIXME": {
+                            "height": 300,
+                            "href": "http://localhost:5000/api/upload-raw/234.jpg",
+                            "media": "bcd",
+                            "mimetype": "image/jpeg",
+                            "width": 500,
+                        },
+                    },
+                    "type": "picture",
+                    "version": "1",
+                },
+            },
+            "guid": "123",
+            "headline": "custom media field multi",
+            "priority": 5,
+            "profile": "custommediafieldmulti",
+            "slugline": "test custom media2",
+            "type": "text",
+            "version": "1",
+        }
+
+        seq, doc = self.formatter.format(article, {"name": "Test Subscriber"})[0]
+        ninjs = json.loads(doc)
+        self.assertEqual(ninjs, expected)
+
     def test_custom_related_items(self):
         self.app.data.insert(
             "content_types",
