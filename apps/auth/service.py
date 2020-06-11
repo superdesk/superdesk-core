@@ -78,7 +78,7 @@ class UserSessionClearService(BaseService):
         If there are any orphan session_preferences exist they get deleted as well
         """
         users_service = get_resource_service('users')
-        user_id = request.view_args['user_id']
+        user_id = request.view_args['user']
         user = users_service.find_one(req=None, _id=user_id)
         sessions = get_resource_service('auth').get(req=None, lookup={'user': user_id})
 
