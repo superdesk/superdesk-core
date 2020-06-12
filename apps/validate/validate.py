@@ -376,11 +376,12 @@ class ValidateService(superdesk.Service):
         :param schema:
         :return:
         """
+
         if doc.get('flags', {}).get('marked_for_sms', False):
             doc['sms'] = doc.get('sms_message', '')
         else:
             # remove it from the valiadation it is not required
-            schema.pop('sms', None)
+            schema.pop('sms', None) if schema.get('sms') else schema.pop('sms_message', None)
 
     def _process_media_metadata(self, doc, schema):
         """Request media validation if associations is present
