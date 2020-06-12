@@ -24,6 +24,7 @@ from superdesk.privilege import get_privilege_list
 from superdesk.errors import SuperdeskApiError
 from superdesk.users.errors import UserInactiveError, UserNotRegisteredException
 from superdesk.notification import push_notification
+from superdesk.validation import ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -490,3 +491,29 @@ class DBUsersService(UsersService):
 
         super().on_deleted(doc)
         get_resource_service('reset_user_password').remove_all_tokens_for_email(doc.get('email'))
+
+    def _process_external_data(self, _data, update=False):
+        data = _data.copy()
+        if data.get('role'):
+            role_name = data.pop('role')
+            role = get_resource_service('roles').find_one(req=None, name=role_name)
+            if role:
+                data['role'] = role['_id']
+        data['needs_activation'] = False
+        if update:
+            data.pop('email')
+        validator = self._validator()
+        if not validator.validate(data, update=update):
+            raise ValidationError(validator.errors)
+        return validator.normalized(data)  # will populate default metadata
+
+    def create_external_user(self, data):
+        docs = [self._process_external_data(data)]
+        self.on_create(docs)
+        self.create(docs)
+        return docs[0]
+
+    def update_external_user(self, _id, data):
+        orig = self.find_one(req=None, _id=ObjectId(_id))
+        updates = self._process_external_data(data, update=True)
+        self.system_update(ObjectId(_id), updates, orig)
