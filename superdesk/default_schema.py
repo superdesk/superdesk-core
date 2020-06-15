@@ -1,5 +1,7 @@
 import superdesk.schema as schema
 
+from copy import deepcopy
+
 
 class DefaultSchema(schema.Schema):
     """Default schema."""
@@ -36,7 +38,7 @@ class DefaultSchema(schema.Schema):
 
     #: subject
     subject = schema.ListField(
-        required=True,
+        required=False,
         mandatory_in_list={"scheme": {}},
         schema={
             "type": "dict",
@@ -69,7 +71,7 @@ class DefaultSchema(schema.Schema):
     )
 
     #: headline
-    headline = schema.StringField(maxlength=64)
+    headline = schema.StringField(maxlength=64, required=True)
 
     #: sms version of an item
     sms = schema.StringField()
@@ -105,8 +107,16 @@ class DefaultSchema(schema.Schema):
     #: .. versionadded:: 1.29
     attachments = schema.ListField()
 
+    relatedItems = {}
+
 
 DEFAULT_SCHEMA = dict(DefaultSchema)
+
+DEFAULT_MEDIA_SCHEMA = deepcopy(DEFAULT_SCHEMA)
+DEFAULT_MEDIA_SCHEMA.pop("body_html")
+DEFAULT_MEDIA_SCHEMA.pop("body_footer")
+DEFAULT_MEDIA_SCHEMA["subject"]["required"] = False
+DEFAULT_MEDIA_SCHEMA["headline"]["required"] = False
 
 
 DEFAULT_EDITOR = {
@@ -147,4 +157,26 @@ DEFAULT_EDITOR = {
     "feature_media": {"enabled": True},
     "media_description": {"enabled": True},
     "attachments": {"enabled": False},
+}
+
+DEFAULT_MEDIA_EDITOR = deepcopy(DEFAULT_EDITOR)
+DEFAULT_MEDIA_EDITOR.pop("body_html")
+DEFAULT_MEDIA_EDITOR.pop("body_footer")
+
+DEFAULT_SCHEMA_MAP = {
+    "text": DEFAULT_SCHEMA,
+    "audio": DEFAULT_MEDIA_SCHEMA,
+    "video": DEFAULT_MEDIA_SCHEMA,
+    "picture": DEFAULT_MEDIA_SCHEMA,
+    "graphic": DEFAULT_MEDIA_SCHEMA,
+    "composite": DEFAULT_MEDIA_SCHEMA,
+}
+
+DEFAULT_EDITOR_MAP = {
+    "text": DEFAULT_EDITOR,
+    "audio": DEFAULT_MEDIA_EDITOR,
+    "video": DEFAULT_MEDIA_EDITOR,
+    "picture": DEFAULT_MEDIA_EDITOR,
+    "graphic": DEFAULT_MEDIA_EDITOR,
+    "composite": DEFAULT_MEDIA_EDITOR,
 }

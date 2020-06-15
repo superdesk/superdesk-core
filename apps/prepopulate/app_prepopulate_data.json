@@ -1,9 +1,10 @@
-[
-    {
-    	"data": {
+[{
+        "data": {
             "name": "Editor",
             "privileges": {
-                "ingest": {"read": 1},
+                "ingest": {
+                    "read": 1
+                },
                 "publisher_dashboard": 1,
                 "planning_assignments_view": 1,
                 "monitoring_view": 1,
@@ -13,15 +14,17 @@
                 "dashboard": 1
             }
         },
-    	"resource": "roles",
-    	"id_name": "-id Editor role-"
+        "resource": "roles",
+        "id_name": "-id Editor role-"
     },
 
     {
-    	"data": {
+        "data": {
             "name": "Writer",
             "privileges": {
-                "ingest": {"read": 1},
+                "ingest": {
+                    "read": 1
+                },
                 "publisher_dashboard": 1,
                 "planning_assignments_view": 1,
                 "monitoring_view": 1,
@@ -31,15 +34,17 @@
                 "dashboard": 1
             }
         },
-    	"resource": "roles",
-    	"id_name": "-id Writer role-"
+        "resource": "roles",
+        "id_name": "-id Writer role-"
     },
 
     {
-    	"data": {
+        "data": {
             "name": "Superadmin",
             "privileges": {
-                "ingest": {"read": 1},
+                "ingest": {
+                    "read": 1
+                },
                 "publisher_dashboard": 1,
                 "planning_assignments_view": 1,
                 "monitoring_view": 1,
@@ -49,15 +54,17 @@
                 "dashboard": 1
             }
         },
-    	"resource": "roles",
-    	"id_name": "-id Superadmin role-"
+        "resource": "roles",
+        "id_name": "-id Superadmin role-"
     },
 
     {
-    	"data": {
+        "data": {
             "name": "admin",
             "privileges": {
-                "ingest": {"read": 1},
+                "ingest": {
+                    "read": 1
+                },
                 "publisher_dashboard": 1,
                 "planning_assignments_view": 1,
                 "monitoring_view": 1,
@@ -67,8 +74,8 @@
                 "dashboard": 1
             }
         },
-    	"resource": "roles",
-    	"id_name": "-id admin role-"
+        "resource": "roles",
+        "id_name": "-id admin role-"
     },
 
     {
@@ -82,17 +89,17 @@
             "username": "admin",
             "role": "-id Editor role-",
             "user_preferences": {
-                "feature:preview" : {
-                    "label" : "Enable Feature Preview",
-                    "category" : "feature",
-                    "default" : false,
-                    "type" : "bool",
-                    "enabled" : true
+                "feature:preview": {
+                    "label": "Enable Feature Preview",
+                    "category": "feature",
+                    "default": false,
+                    "type": "bool",
+                    "enabled": true
                 },
-                "spellchecker:status" : {
+                "spellchecker:status": {
                     "default": true,
-                    "type" : "bool",
-                    "enabled" : true
+                    "type": "bool",
+                    "enabled": true
                 }
             }
         },
@@ -111,10 +118,10 @@
             "username": "admin4",
             "role": "-id Editor role-",
             "user_preferences": {
-                "spellchecker:status" : {
+                "spellchecker:status": {
                     "default": true,
-                    "type" : "bool",
-                    "enabled" : true
+                    "type": "bool",
+                    "enabled": true
                 }
             }
         },
@@ -133,10 +140,10 @@
             "username": "admin3",
             "role": "-id Writer role-",
             "user_preferences": {
-                "spellchecker:status" : {
+                "spellchecker:status": {
                     "default": true,
-                    "type" : "bool",
-                    "enabled" : true
+                    "type": "bool",
+                    "enabled": true
                 }
             }
         },
@@ -155,10 +162,10 @@
             "username": "admin2",
             "role": "-id Writer role-",
             "user_preferences": {
-                "spellchecker:status" : {
+                "spellchecker:status": {
                     "default": true,
-                    "type" : "bool",
-                    "enabled" : true
+                    "type": "bool",
+                    "enabled": true
                 }
             }
         },
@@ -177,10 +184,10 @@
             "username": "admin1",
             "role": "-id Superadmin role-",
             "user_preferences": {
-                "spellchecker:status" : {
+                "spellchecker:status": {
                     "default": true,
-                    "type" : "bool",
-                    "enabled" : true
+                    "type": "bool",
+                    "enabled": true
                 }
             }
         },
@@ -189,14 +196,36 @@
     },
 
     {
-        "data": {"members": [{"user": "-id user admin-"}, {"user": "-id user admin1-"}, {"user": "-id user admin2-"}, {"user": "-id user admin3-"}], "name": "Sports Desk", "desk_type": "authoring"},
+        "data": {
+            "members": [{
+                "user": "-id user admin-"
+            }, {
+                "user": "-id user admin1-"
+            }, {
+                "user": "-id user admin2-"
+            }, {
+                "user": "-id user admin3-"
+            }],
+            "name": "Sports Desk",
+            "desk_type": "authoring"
+        },
         "resource": "desks",
         "username": "admin",
         "id_name": "-id desk Sports Desks-"
     },
 
     {
-        "data": {"members": [{"user": "-id user admin-"}, {"user": "-id user admin4-"}, {"user": "-id user admin1-"}], "name": "Politic Desk", "desk_type": "production"},
+        "data": {
+            "members": [{
+                "user": "-id user admin-"
+            }, {
+                "user": "-id user admin4-"
+            }, {
+                "user": "-id user admin1-"
+            }],
+            "name": "Politic Desk",
+            "desk_type": "production"
+        },
         "resource": "desks",
         "username": "admin",
         "id_name": "-id desk Politic Desks-"
@@ -242,7 +271,7 @@
             "schema": {
                 "slugline": {},
                 "subject": {
-                    "schema":{},
+                    "schema": {},
                     "mandatory_in_list": {
                         "scheme": {}
                     },
@@ -283,6 +312,656 @@
 
     {
         "data": {
+            "_id": "text",
+            "item_type": "text",
+            "label": "Text",
+            "schema": {
+                "abstract": {
+                    "type": "string",
+                    "required": false,
+                    "maxlength": 160,
+                    "nullable": true
+                },
+                "anpa_category": {
+                    "type": "list",
+                    "required": false,
+                    "nullable": true
+                },
+                "anpa_take_key": {
+                    "type": "string",
+                    "required": false,
+                    "nullable": true
+                },
+                "attachments": {
+                    "type": "list",
+                    "required": false
+                },
+                "authors": {
+                    "type": "list",
+                    "required": false,
+                    "schema": {
+                        "type": "dict",
+                        "schema": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "parent": {
+                                "type": "string"
+                            },
+                            "role": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "nullable": true
+                },
+                "byline": {
+                    "type": "string",
+                    "required": false,
+                    "nullable": true
+                },
+                "company_codes": {
+                    "type": "list",
+                    "required": false,
+                    "nullable": true
+                },
+                "dateline": {
+                    "type": "dict",
+                    "required": false,
+                    "nullable": true
+                },
+                "ednote": {
+                    "type": "string",
+                    "required": false,
+                    "nullable": true
+                },
+                "feature_media": {
+                    "type": "media",
+                    "required": false
+                },
+                "footer": {
+                    "type": "string",
+                    "required": false,
+                    "nullable": true
+                },
+                "genre": {
+                    "type": "list",
+                    "required": false,
+                    "nullable": true
+                },
+                "headline": {
+                    "type": "string",
+                    "required": true,
+                    "maxlength": 64,
+                    "nullable": false
+                },
+                "keywords": {
+                    "type": "list",
+                    "required": false,
+                    "nullable": true
+                },
+                "language": {
+                    "type": "string",
+                    "required": false,
+                    "nullable": true
+                },
+                "media_description": {
+                    "type": "string",
+                    "required": false
+                },
+                "place": {
+                    "type": "list",
+                    "required": false,
+                    "nullable": true
+                },
+                "priority": {
+                    "type": "integer",
+                    "required": false,
+                    "nullable": true
+                },
+                "sign_off": {
+                    "type": "string",
+                    "required": false,
+                    "nullable": true
+                },
+                "slugline": {
+                    "type": "string",
+                    "required": true,
+                    "maxlength": 24,
+                    "nullable": false
+                },
+                "sms": {
+                    "type": "string",
+                    "required": false,
+                    "nullable": true
+                },
+                "subject": {
+                    "type": "list",
+                    "required": false,
+                    "mandatory_in_list": {
+                        "scheme": {
+
+                        }
+                    },
+                    "schema": {
+
+                    },
+                    "nullable": false
+                },
+                "urgency": {
+                    "type": "integer",
+                    "required": false,
+                    "nullable": true
+                },
+                "usageterms": {
+                    "type": "string",
+                    "required": false,
+                    "nullable": true
+                },
+                "body_html": {
+                    "type": "string",
+                    "required": true,
+                    "nullable": true
+                },
+                "body_footer": {
+                    "type": "string",
+                    "required": false,
+                    "nullable": true
+                }
+            },
+            "editor": {
+                "slugline": {
+                    "order": 1,
+                    "sdWidth": "full"
+                },
+                "keywords": {
+                    "order": 2,
+                    "sdWidth": "full"
+                },
+                "language": {
+                    "order": 3,
+                    "sdWidth": "half"
+                },
+                "usageterms": {
+                    "order": 4,
+                    "sdWidth": "full"
+                },
+                "genre": {
+                    "order": 5,
+                    "sdWidth": "half"
+                },
+                "anpa_take_key": {
+                    "order": 6,
+                    "sdWidth": "half"
+                },
+                "place": {
+                    "order": 7,
+                    "sdWidth": "half"
+                },
+                "priority": {
+                    "order": 8,
+                    "sdWidth": "quarter"
+                },
+                "urgency": {
+                    "order": 9,
+                    "sdWidth": "quarter"
+                },
+                "anpa_category": {
+                    "order": 10,
+                    "sdWidth": "full"
+                },
+                "subject": {
+                    "order": 11,
+                    "sdWidth": "full"
+                },
+                "company_codes": {
+                    "order": 12,
+                    "sdWidth": "full"
+                },
+                "ednote": {
+                    "order": 13,
+                    "sdWidth": "full"
+                },
+                "authors": {
+                    "order": 14,
+                    "sdWidth": "full"
+                },
+                "headline": {
+                    "order": 15,
+                    "formatOptions": []
+                },
+                "sms": {
+                    "order": 16
+                },
+                "abstract": {
+                    "order": 17,
+                    "formatOptions": [
+                        "bold",
+                        "italic",
+                        "underline",
+                        "link"
+                    ],
+                    "editor3": false
+                },
+                "byline": {
+                    "order": 18
+                },
+                "dateline": {
+                    "order": 19
+                },
+                "footer": {
+                    "order": 21
+                },
+                "sign_off": {
+                    "order": 23
+                },
+                "feature_media": {
+
+                },
+                "media_description": {
+
+                },
+                "attachments": {
+
+                },
+                "body_html": {
+                    "order": 20,
+                    "formatOptions": ["h2", "bold", "italic", "underline", "quote", "link", "embed", "media"],
+                    "cleanPastedHTML": false,
+                    "editor3": false,
+                    "enabled": true
+                },
+                "body_footer": {
+                    "order": 21,
+                    "cleanPastedHTML": true,
+                    "editor3": false,
+                    "enabled": true
+                }
+            },
+            "enabled": true,
+            "is_used": true
+        },
+        "resource": "content_types",
+        "username": "admin"
+    },
+
+    {
+        "data": {
+            "_id": "picture",
+            "item_type": "picture",
+            "label": "Picture",
+            "schema": {
+                "abstract": {
+                    "type": "string",
+                    "required": false,
+                    "minlength": null,
+                    "maxlength": 160
+                },
+                "anpa_category": {
+                    "type": "list",
+                    "required": false,
+                    "mandatory_in_list": null,
+                    "schema": null
+                },
+                "anpa_take_key": {
+                    "type": "string",
+                    "required": false,
+                    "minlength": null,
+                    "maxlength": null
+                },
+                "attachments": {
+                    "type": "list",
+                    "required": false,
+                    "mandatory_in_list": null,
+                    "schema": null
+                },
+                "authors": {
+                    "type": "list",
+                    "required": false,
+                    "mandatory_in_list": null,
+                    "schema": {
+                        "type": "dict",
+                        "schema": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "parent": {
+                                "type": "string"
+                            },
+                            "role": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "footer": {
+                    "order": 21,
+                    "enabled": false
+                },
+                "sign_off": {
+                    "order": 23,
+                    "enabled": true
+                },
+                "feature_media": {
+                    "enabled": true
+                },
+                "media_description": {
+                    "enabled": true
+                }
+            },
+            "enabled": true,
+            "is_used": true
+        },
+        "resource": "content_types"
+    },
+
+    {
+        "data": {
+            "_id": "composite",
+            "item_type": "composite",
+            "label": "Package",
+            "schema": {
+                "abstract": {
+                    "type": "string",
+                    "required": false,
+                    "minlength": null,
+                    "maxlength": 160
+                },
+                "anpa_category": {
+                    "type": "list",
+                    "required": false,
+                    "mandatory_in_list": null,
+                    "schema": null
+                },
+                "anpa_take_key": {
+                    "type": "string",
+                    "required": false,
+                    "minlength": null,
+                    "maxlength": null
+                },
+                "attachments": {
+                    "type": "list",
+                    "required": false,
+                    "mandatory_in_list": null,
+                    "schema": null
+                },
+                "authors": {
+                    "type": "list",
+                    "required": false,
+                    "mandatory_in_list": null,
+                    "schema": {
+                        "type": "dict",
+                        "schema": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "parent": {
+                                "type": "string"
+                            },
+                            "role": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "byline": {
+                    "type": "string",
+                    "required": false,
+                    "minlength": null,
+                    "maxlength": null
+                },
+                "company_codes": {
+                    "type": "list",
+                    "required": false,
+                    "mandatory_in_list": null,
+                    "schema": null
+                },
+                "dateline": {
+                    "type": "dict",
+                    "required": false
+                },
+                "ednote": {
+                    "type": "string",
+                    "required": false,
+                    "minlength": null,
+                    "maxlength": null
+                },
+                "feature_media": {
+                    "type": "media",
+                    "required": false
+                },
+                "footer": {
+                    "type": "string",
+                    "required": false,
+                    "minlength": null,
+                    "maxlength": null
+                },
+                "genre": {
+                    "type": "list",
+                    "required": false,
+                    "mandatory_in_list": null,
+                    "schema": null
+                },
+                "headline": {
+                    "type": "string",
+                    "required": true,
+                    "minlength": null,
+                    "maxlength": 64
+                },
+                "keywords": {
+                    "type": "list",
+                    "required": false,
+                    "mandatory_in_list": null,
+                    "schema": null
+                },
+                "language": {
+                    "type": "string",
+                    "required": false,
+                    "minlength": null,
+                    "maxlength": null
+                },
+                "media_description": {
+                    "type": "string",
+                    "required": false,
+                    "minlength": null,
+                    "maxlength": null
+                },
+                "place": {
+                    "type": "list",
+                    "required": false,
+                    "mandatory_in_list": null,
+                    "schema": null
+                },
+                "priority": {
+                    "type": "integer",
+                    "required": false
+                },
+                "sign_off": {
+                    "type": "string",
+                    "required": false,
+                    "minlength": null,
+                    "maxlength": null
+                },
+                "slugline": {
+                    "type": "string",
+                    "required": true,
+                    "minlength": null,
+                    "maxlength": 24
+                },
+                "sms": {
+                    "type": "string",
+                    "required": false,
+                    "minlength": null,
+                    "maxlength": null
+                },
+                "subject": {
+                    "type": "list",
+                    "required": false,
+                    "mandatory_in_list": {
+                        "scheme": {
+
+                        }
+                    },
+                    "schema": {
+                        "type": "dict",
+                        "schema": {
+                            "name": {
+
+                            },
+                            "qcode": {
+
+                            },
+                            "scheme": {
+                                "type": "string",
+                                "required": true,
+                                "nullable": true,
+                                "allowed": []
+                            },
+                            "service": {
+                                "nullable": true
+                            },
+                            "parent": {
+                                "nullable": true
+                            }
+                        }
+                    }
+                },
+                "urgency": {
+                    "type": "integer",
+                    "required": false
+                },
+                "usageterms": {
+                    "type": "string",
+                    "required": false,
+                    "minlength": null,
+                    "maxlength": null
+                }
+            },
+            "editor": {
+                "slugline": {
+                    "order": 1,
+                    "sdWidth": "full",
+                    "enabled": true
+                },
+                "keywords": {
+                    "order": 2,
+                    "sdWidth": "full",
+                    "enabled": false
+                },
+                "language": {
+                    "order": 3,
+                    "sdWidth": "half",
+                    "enabled": false
+                },
+                "usageterms": {
+                    "order": 4,
+                    "sdWidth": "full",
+                    "enabled": false
+                },
+                "genre": {
+                    "order": 5,
+                    "sdWidth": "half",
+                    "enabled": true
+                },
+                "anpa_take_key": {
+                    "order": 6,
+                    "sdWidth": "half",
+                    "enabled": false
+                },
+                "place": {
+                    "order": 7,
+                    "sdWidth": "half",
+                    "enabled": true
+                },
+                "priority": {
+                    "order": 8,
+                    "sdWidth": "quarter",
+                    "enabled": true
+                },
+                "urgency": {
+                    "order": 9,
+                    "sdWidth": "quarter",
+                    "enabled": true
+                },
+                "anpa_category": {
+                    "order": 10,
+                    "sdWidth": "full",
+                    "enabled": true
+                },
+                "subject": {
+                    "order": 11,
+                    "sdWidth": "full",
+                    "enabled": true
+                },
+                "company_codes": {
+                    "order": 12,
+                    "sdWidth": "full",
+                    "enabled": false
+                },
+                "ednote": {
+                    "order": 13,
+                    "sdWidth": "full",
+                    "enabled": true
+                },
+                "authors": {
+                    "order": 14,
+                    "sdWidth": "full",
+                    "enabled": true
+                },
+                "headline": {
+                    "order": 15,
+                    "formatOptions": [],
+                    "enabled": true
+                },
+                "sms": {
+                    "order": 16,
+                    "enabled": false
+                },
+                "abstract": {
+                    "order": 17,
+                    "formatOptions": [
+                        "bold",
+                        "italic",
+                        "underline",
+                        "link"
+                    ],
+                    "editor3": true,
+                    "enabled": true
+                },
+                "byline": {
+                    "order": 18,
+                    "enabled": true
+                },
+                "dateline": {
+                    "order": 19,
+                    "enabled": true
+                },
+                "footer": {
+                    "order": 21,
+                    "enabled": false
+                },
+                "sign_off": {
+                    "order": 23,
+                    "enabled": true
+                },
+                "feature_media": {
+                    "enabled": true
+                },
+                "media_description": {
+                    "enabled": true
+                },
+                "attachments": {
+                    "enabled": false
+                }
+            },
+            "enabled": true,
+            "is_used": true
+        },
+        "resource": "content_types"
+    },
+
+    {
+        "data": {
             "is_public": true,
             "template_name": "editor3 template",
             "content_type": "create",
@@ -312,7 +991,9 @@
 
     {
         "data": {
-            "members": [{"user": "-id user admin-"}],
+            "members": [{
+                "user": "-id user admin-"
+            }],
             "name": "XEditor3 Desk",
             "desk_type": "production",
             "default_content_template": "-id template editor3-"
@@ -323,207 +1004,207 @@
     },
 
     {
-        "data":   {
-		    "default_incoming" : false,
-		    "desk" : "-id desk Sports Desks-",
-		    "is_visible" : true,
-		    "task_status" : "todo",
-		    "content_expiry" : 43200,
-		    "name" : "one",
-		    "desk_order" : 3
-		},
+        "data": {
+            "default_incoming": false,
+            "desk": "-id desk Sports Desks-",
+            "is_visible": true,
+            "task_status": "todo",
+            "content_expiry": 43200,
+            "name": "one",
+            "desk_order": 3
+        },
         "resource": "stages",
         "username": "admin",
         "id_name": "-id stage one Sports Desks-"
     },
 
     {
-        "data":   {
-		    "default_incoming" : false,
-		    "desk" : "-id desk Sports Desks-",
-		    "is_visible" : true,
-		    "task_status" : "in_progress",
-		    "content_expiry" : 43200,
-		    "name" : "two",
-		    "desk_order" : 4
-		},
+        "data": {
+            "default_incoming": false,
+            "desk": "-id desk Sports Desks-",
+            "is_visible": true,
+            "task_status": "in_progress",
+            "content_expiry": 43200,
+            "name": "two",
+            "desk_order": 4
+        },
         "resource": "stages",
         "username": "admin",
         "id_name": "-id stage two Sports Desks-"
     },
 
     {
-        "data":   {
-		    "default_incoming" : false,
-		    "desk" : "-id desk Sports Desks-",
-		    "is_visible" : true,
-		    "task_status" : "done",
-		    "content_expiry" : 43200,
-		    "name" : "three",
-		    "desk_order" : 5
-		},
+        "data": {
+            "default_incoming": false,
+            "desk": "-id desk Sports Desks-",
+            "is_visible": true,
+            "task_status": "done",
+            "content_expiry": 43200,
+            "name": "three",
+            "desk_order": 5
+        },
         "resource": "stages",
         "username": "admin",
         "id_name": "-id stage three Sports Desks-"
     },
 
     {
-        "data":   {
-		    "default_incoming" : false,
-		    "desk" : "-id desk Politic Desks-",
-		    "is_visible" : true,
-		    "task_status" : "todo",
-		    "content_expiry" : 43200,
-		    "name" : "one",
-		    "desk_order" : 3
-		},
+        "data": {
+            "default_incoming": false,
+            "desk": "-id desk Politic Desks-",
+            "is_visible": true,
+            "task_status": "todo",
+            "content_expiry": 43200,
+            "name": "one",
+            "desk_order": 3
+        },
         "resource": "stages",
         "username": "admin",
         "id_name": "-id stage one Politic Desks-"
     },
 
     {
-        "data":   {
-		    "default_incoming" : false,
-		    "desk" : "-id desk Politic Desks-",
-		    "is_visible" : true,
-		    "task_status" : "in_progress",
-		    "content_expiry" : 43200,
-		    "name" : "two",
-		    "desk_order" : 4
-		},
+        "data": {
+            "default_incoming": false,
+            "desk": "-id desk Politic Desks-",
+            "is_visible": true,
+            "task_status": "in_progress",
+            "content_expiry": 43200,
+            "name": "two",
+            "desk_order": 4
+        },
         "resource": "stages",
         "username": "admin",
         "id_name": "-id stage two Politic Desks-"
     },
 
     {
-        "data":   {
-		    "default_incoming" : false,
-		    "desk" : "-id desk Politic Desks-",
-		    "is_visible" : true,
-		    "task_status" : "done",
-		    "content_expiry" : 43200,
-		    "name" : "three",
-		    "desk_order" : 5
-		},
+        "data": {
+            "default_incoming": false,
+            "desk": "-id desk Politic Desks-",
+            "is_visible": true,
+            "task_status": "done",
+            "content_expiry": 43200,
+            "name": "three",
+            "desk_order": 5
+        },
         "resource": "stages",
         "username": "admin",
         "id_name": "-id stage three Politic Desks-"
     },
 
     {
-    	"data": {
-		    "_id" : "publish",
-	        "act": "publish",
-        	"type": "text",
-		    "schema" : {
-		        "headline" : {
-		            "type" : "string",
-		            "required" : true,
-		            "minlength" : 1,
-		            "maxlength" : 55
-		        },
-		        "type" : {
-		            "type" : "string",
-		            "required" : true,
-		            "allowed" : [
-		                "text"
-		            ]
-		        },
-		        "pubstatus" : {
-		            "type": "string",
-		            "required" : true,
-		            "allowed": ["usable"]
-		        },
-		        "subject" : {
-		            "type" : "list",
-		            "required" : true,
-		            "minlength" : 1
-		        },
-		        "urgency" : {
-		            "type" : "integer",
-		            "required": true,
-		            "allowed": [1, 2, 3, 4, 5]
-		        },
+        "data": {
+            "_id": "publish",
+            "act": "publish",
+            "type": "text",
+            "schema": {
+                "headline": {
+                    "type": "string",
+                    "required": true,
+                    "minlength": 1,
+                    "maxlength": 55
+                },
+                "type": {
+                    "type": "string",
+                    "required": true,
+                    "allowed": [
+                        "text"
+                    ]
+                },
+                "pubstatus": {
+                    "type": "string",
+                    "required": true,
+                    "allowed": ["usable"]
+                },
+                "subject": {
+                    "type": "list",
+                    "required": true,
+                    "minlength": 1
+                },
+                "urgency": {
+                    "type": "integer",
+                    "required": true,
+                    "allowed": [1, 2, 3, 4, 5]
+                },
                 "body_html": {
                     "type": "string",
                     "required": true,
                     "nullable": false,
                     "empty": false
                 }
-		    }
-		},
-		"resource": "validators",
-		"id_name": "-id validator publish-"
-	},
-
-    {
-    	"data": {
-		    "_id" : "correct_text",
-	        "act": "correct",
-        	"type": "text",
-		    "schema" : {
-		        "headline" : {
-		            "type" : "string",
-		            "required" : true,
-		            "minlength" : 1,
-		            "maxlength" : 55
-		        },
-		        "type" : {
-		            "type" : "string",
-		            "required" : true,
-		            "allowed" : [
-		                "text"
-		            ]
-		        },
-		        "pubstatus" : {
-		            "type": "string",
-		            "required" : true,
-		            "allowed": ["usable"]
-		        },
-		        "subject" : {
-		            "type" : "list",
-		            "required" : true,
-		            "minlength" : 1
-		        },
-		        "urgency" : {
-		            "type" : "integer",
-		            "required": true,
-		            "allowed": [1, 2, 3, 4, 5]
-		        }
-		    }
-		},
-		"resource": "validators",
-		"id_name": "-id validator correct-"
-	},
+            }
+        },
+        "resource": "validators",
+        "id_name": "-id validator publish-"
+    },
 
     {
         "data": {
-            "_id" : "kill_text",
-            "act": "kill",
+            "_id": "correct_text",
+            "act": "correct",
             "type": "text",
-            "schema" : {
-                "headline" : {
-                    "type" : "string",
-                    "required" : true,
-                    "minlength" : 1,
-                    "maxlength" : 55
+            "schema": {
+                "headline": {
+                    "type": "string",
+                    "required": true,
+                    "minlength": 1,
+                    "maxlength": 55
                 },
-                "type" : {
-                    "type" : "string",
-                    "required" : true,
-                    "allowed" : [
+                "type": {
+                    "type": "string",
+                    "required": true,
+                    "allowed": [
                         "text"
                     ]
                 },
-                "subject" : {
-                    "type" : "list",
-                    "required" : true,
-                    "minlength" : 1
+                "pubstatus": {
+                    "type": "string",
+                    "required": true,
+                    "allowed": ["usable"]
                 },
-                "urgency" : {
-                    "type" : "integer",
+                "subject": {
+                    "type": "list",
+                    "required": true,
+                    "minlength": 1
+                },
+                "urgency": {
+                    "type": "integer",
+                    "required": true,
+                    "allowed": [1, 2, 3, 4, 5]
+                }
+            }
+        },
+        "resource": "validators",
+        "id_name": "-id validator correct-"
+    },
+
+    {
+        "data": {
+            "_id": "kill_text",
+            "act": "kill",
+            "type": "text",
+            "schema": {
+                "headline": {
+                    "type": "string",
+                    "required": true,
+                    "minlength": 1,
+                    "maxlength": 55
+                },
+                "type": {
+                    "type": "string",
+                    "required": true,
+                    "allowed": [
+                        "text"
+                    ]
+                },
+                "subject": {
+                    "type": "list",
+                    "required": true,
+                    "minlength": 1
+                },
+                "urgency": {
+                    "type": "integer",
                     "required": true,
                     "allowed": [1, 2, 3, 4, 5]
                 }
@@ -538,20 +1219,73 @@
             "_id": "subscriber_types",
             "display_name": "Subscriber Types",
             "type": "unmanageable",
-            "items": [
-                {"is_active": true, "name": "Digital/Internet", "qcode": "digital",
-                    "formats": [{"name": "NINJS", "qcode": "ninjs"}, {"name": "AAP NewsML 1.2", "qcode": "newsml12"}, {"name": "NewsML G2", "qcode": "newsmlg2"},
-                                {"name": "AAP Bulletin Builder", "qcode": "AAP BULLETIN BUILDER"}]},
-                {"is_active": true, "name": "Wire/Paper", "qcode": "wire",
-                    "formats": [{"name": "AAP ANPA", "qcode": "AAP ANPA"}, {"name": "NITF", "qcode": "nitf"}, {"name": "AAP IPNEWS", "qcode": "AAP IPNEWS"},
-                                {"name": "AAP SMS", "qcode": "AAP SMS"}]},
-                {"is_active": true, "name": "Broadcast", "qcode": "broadcast",
-                    "formats": [{"name": "AAP ANPA", "qcode": "AAP ANPA"}, {"name": "NITF", "qcode": "nitf"}, {"name": "AAP IPNEWS", "qcode": "AAP IPNEWS"},
-                                {"name": "AAP SMS", "qcode": "AAP SMS"}, {"name": "AAP NEWSCENTRE", "qcode": "AAP NEWSCENTRE"}]}
+            "items": [{
+                    "is_active": true,
+                    "name": "Digital/Internet",
+                    "qcode": "digital",
+                    "formats": [{
+                            "name": "NINJS",
+                            "qcode": "ninjs"
+                        }, {
+                            "name": "AAP NewsML 1.2",
+                            "qcode": "newsml12"
+                        }, {
+                            "name": "NewsML G2",
+                            "qcode": "newsmlg2"
+                        },
+                        {
+                            "name": "AAP Bulletin Builder",
+                            "qcode": "AAP BULLETIN BUILDER"
+                        }
+                    ]
+                },
+                {
+                    "is_active": true,
+                    "name": "Wire/Paper",
+                    "qcode": "wire",
+                    "formats": [{
+                            "name": "AAP ANPA",
+                            "qcode": "AAP ANPA"
+                        }, {
+                            "name": "NITF",
+                            "qcode": "nitf"
+                        }, {
+                            "name": "AAP IPNEWS",
+                            "qcode": "AAP IPNEWS"
+                        },
+                        {
+                            "name": "AAP SMS",
+                            "qcode": "AAP SMS"
+                        }
+                    ]
+                },
+                {
+                    "is_active": true,
+                    "name": "Broadcast",
+                    "qcode": "broadcast",
+                    "formats": [{
+                            "name": "AAP ANPA",
+                            "qcode": "AAP ANPA"
+                        }, {
+                            "name": "NITF",
+                            "qcode": "nitf"
+                        }, {
+                            "name": "AAP IPNEWS",
+                            "qcode": "AAP IPNEWS"
+                        },
+                        {
+                            "name": "AAP SMS",
+                            "qcode": "AAP SMS"
+                        }, {
+                            "name": "AAP NEWSCENTRE",
+                            "qcode": "AAP NEWSCENTRE"
+                        }
+                    ]
+                }
             ]
         },
-		"resource": "vocabularies",
-		"id_name": "-id vocabularies subscriber_types-"
+        "resource": "vocabularies",
+        "id_name": "-id vocabularies subscriber_types-"
     },
 
     {
@@ -561,16 +1295,35 @@
             "type": "manageable",
             "unique_field": "qcode",
             "selection_type": "multi selection",
-            "items": [
-                {"is_active": true, "name": "1", "qcode": 1},
-                {"is_active": true, "name": "2", "qcode": 2},
-                {"is_active": true, "name": "3", "qcode": 3},
-                {"is_active": true, "name": "4", "qcode": 4},
-                {"is_active": true, "name": "5", "qcode": 5}
+            "items": [{
+                    "is_active": true,
+                    "name": "1",
+                    "qcode": 1
+                },
+                {
+                    "is_active": true,
+                    "name": "2",
+                    "qcode": 2
+                },
+                {
+                    "is_active": true,
+                    "name": "3",
+                    "qcode": 3
+                },
+                {
+                    "is_active": true,
+                    "name": "4",
+                    "qcode": 4
+                },
+                {
+                    "is_active": true,
+                    "name": "5",
+                    "qcode": 5
+                }
             ]
         },
         "resource": "vocabularies",
-		"id_name": "-id vocabularies urgency-"
+        "id_name": "-id vocabularies urgency-"
     },
 
     {
@@ -579,20 +1332,55 @@
             "display_name": "Priority",
             "type": "manageable",
             "selection_type": "multi selection",
-            "items": [
-                {"is_active": true, "name": "1", "qcode": 1},
-                {"is_active": true, "name": "2", "qcode": 2},
-                {"is_active": true, "name": "3", "qcode": 3},
-                {"is_active": true, "name": "4", "qcode": 4},
-                {"is_active": true, "name": "5", "qcode": 5},
-                {"is_active": true, "name": "6", "qcode": 6},
-                {"is_active": false, "name": "7", "qcode": 7},
-                {"is_active": false, "name": "8", "qcode": 8},
-                {"is_active": false, "name": "9", "qcode": 9}
+            "items": [{
+                    "is_active": true,
+                    "name": "1",
+                    "qcode": 1
+                },
+                {
+                    "is_active": true,
+                    "name": "2",
+                    "qcode": 2
+                },
+                {
+                    "is_active": true,
+                    "name": "3",
+                    "qcode": 3
+                },
+                {
+                    "is_active": true,
+                    "name": "4",
+                    "qcode": 4
+                },
+                {
+                    "is_active": true,
+                    "name": "5",
+                    "qcode": 5
+                },
+                {
+                    "is_active": true,
+                    "name": "6",
+                    "qcode": 6
+                },
+                {
+                    "is_active": false,
+                    "name": "7",
+                    "qcode": 7
+                },
+                {
+                    "is_active": false,
+                    "name": "8",
+                    "qcode": 8
+                },
+                {
+                    "is_active": false,
+                    "name": "9",
+                    "qcode": 9
+                }
             ]
         },
         "resource": "vocabularies",
-		"id_name": "-id vocabularies priority-"
+        "id_name": "-id vocabularies priority-"
     },
 
     {
@@ -625,7 +1413,7 @@
             "display_name": "Image gallery 33"
         },
         "resource": "vocabularies",
-		"id_name": "-id related media field-"
+        "id_name": "-id related media field-"
     },
 
     {
@@ -634,18 +1422,45 @@
             "display_name": "Article Type",
             "type": "unmanageable",
             "selection_type": "multi selection",
-            "items": [
-                {"is_active": true, "name": "text", "qcode": "text"},
-                {"is_active": true, "name": "preformatted", "qcode": "preformatted"},
-                {"is_active": true, "name": "audio", "qcode": "audio"},
-                {"is_active": true, "name": "video", "qcode": "video"},
-                {"is_active": true, "name": "picture", "qcode": "picture"},
-                {"is_active": true, "name": "graphic", "qcode": "graphic"},
-                {"is_active": true, "name": "composite", "qcode": "composite"}
+            "items": [{
+                    "is_active": true,
+                    "name": "text",
+                    "qcode": "text"
+                },
+                {
+                    "is_active": true,
+                    "name": "preformatted",
+                    "qcode": "preformatted"
+                },
+                {
+                    "is_active": true,
+                    "name": "audio",
+                    "qcode": "audio"
+                },
+                {
+                    "is_active": true,
+                    "name": "video",
+                    "qcode": "video"
+                },
+                {
+                    "is_active": true,
+                    "name": "picture",
+                    "qcode": "picture"
+                },
+                {
+                    "is_active": true,
+                    "name": "graphic",
+                    "qcode": "graphic"
+                },
+                {
+                    "is_active": true,
+                    "name": "composite",
+                    "qcode": "composite"
+                }
             ]
         },
         "resource": "vocabularies",
-		"id_name": "-id vocabularies priority-"
+        "id_name": "-id vocabularies priority-"
     },
 
     {
@@ -654,35 +1469,220 @@
             "display_name": "Locators",
             "type": "unmanageable",
             "selection_type": "multi selection",
-            "items": [
-                {"is_active": true, "name": "ACT", "qcode": "ACT", "state": "Australian Capital Territory", "country": "Australia", "world_region": "Oceania", "group": "Australia"},
-                {"is_active": true, "name": "ADV", "qcode": "ADV", "group": ""},
-                {"is_active": true, "name": "AFR", "qcode": "AFR", "state": "", "country": "", "world_region": "Africa", "group": "Rest Of World"},
-                {"is_active": true, "name": "ASIA", "qcode": "ASIA", "state": "", "country": "", "world_region": "Asia", "group": "Rest Of World"},
-                {"is_active": true, "name": "CAN", "qcode": "CAN", "state": "", "country": "Canada", "world_region": "North America", "group": "Rest Of World"},
-                {"is_active": true, "name": "CHN", "qcode": "CHN", "state": "", "country": "China", "world_region": "Asia", "group": "Rest Of World"},
-                {"is_active": true, "name": "CIS", "qcode": "CIS", "state": "", "country": "", "world_region": "Commonwealth of Independent States", "group": "Rest Of World"},
-                {"is_active": true, "name": "EUR", "qcode": "EUR", "state": "", "country": "", "world_region": "Europe", "group": "Rest Of World"},
-                {"is_active": true, "name": "FED", "qcode": "FED", "state": "", "country": "Australia", "world_region": "Oceania", "group": "Australia"},
-                {"is_active": true, "name": "IRE", "qcode": "IRE", "state": "", "country": "Ireland", "world_region": "Europe", "group": "Rest Of World"},
-                {"is_active": true, "name": "JPN", "qcode": "JPN", "state": "", "country": "Japan", "world_region": "Asia", "group": "Rest Of World"},
-                {"is_active": true, "name": "MID", "qcode": "MID", "state": "", "country": "", "world_region": "Middle East", "group": "Rest Of World"},
-                {"is_active": true, "name": "NSW", "qcode": "NSW", "state": "New South Wales", "country": "Australia", "world_region": "Oceania", "group": "Australia"},
-                {"is_active": true, "name": "NT", "qcode": "NT", "state": "Northern Territory", "country": "Australia", "world_region": "Oceania", "group": "Australia"},
-                {"is_active": true, "name": "NZ", "qcode": "NZ", "state": "", "country": "New Zealand", "world_region": "Oceania", "group": "Rest Of World"},
-                {"is_active": true, "name": "PAC", "qcode": "PAC", "state": "", "country": "", "world_region": "Pacific Island Nations", "group": "Rest Of World"},
-                {"is_active": true, "name": "QLD", "qcode": "QLD", "state": "Queensland", "country": "Australia", "world_region": "Oceania", "group": "Australia"},
-                {"is_active": true, "name": "SA", "qcode": "SA", "state": "South Australia", "country": "Australia", "world_region": "Oceania", "group": "Australia"},
-                {"is_active": true, "name": "SAM", "qcode": "SAM", "group": "Rest Of World"},
-                {"is_active": true, "name": "TAS", "qcode": "TAS", "state": "Tasmania", "country": "Australia", "world_region": "Oceania", "group": "Australia"},
-                {"is_active": true, "name": "UK", "qcode": "UK", "state": "", "country": "", "world_region": "Europe", "group": "Rest Of World"},
-                {"is_active": true, "name": "US", "qcode": "US", "state": "", "country": "United States Of America", "world_region": "North America", "group": "Rest Of World"},
-                {"is_active": true, "name": "VIC", "qcode": "VIC", "state": "Victoria", "country": "Australia", "world_region": "Oceania", "group": "Australia"},
-                {"is_active": true, "name": "WA", "qcode": "WA", "state": "Western Australia", "country": "Australia", "world_region": "Oceania", "group": "Australia"}
+            "items": [{
+                    "is_active": true,
+                    "name": "ACT",
+                    "qcode": "ACT",
+                    "state": "Australian Capital Territory",
+                    "country": "Australia",
+                    "world_region": "Oceania",
+                    "group": "Australia"
+                },
+                {
+                    "is_active": true,
+                    "name": "ADV",
+                    "qcode": "ADV",
+                    "group": ""
+                },
+                {
+                    "is_active": true,
+                    "name": "AFR",
+                    "qcode": "AFR",
+                    "state": "",
+                    "country": "",
+                    "world_region": "Africa",
+                    "group": "Rest Of World"
+                },
+                {
+                    "is_active": true,
+                    "name": "ASIA",
+                    "qcode": "ASIA",
+                    "state": "",
+                    "country": "",
+                    "world_region": "Asia",
+                    "group": "Rest Of World"
+                },
+                {
+                    "is_active": true,
+                    "name": "CAN",
+                    "qcode": "CAN",
+                    "state": "",
+                    "country": "Canada",
+                    "world_region": "North America",
+                    "group": "Rest Of World"
+                },
+                {
+                    "is_active": true,
+                    "name": "CHN",
+                    "qcode": "CHN",
+                    "state": "",
+                    "country": "China",
+                    "world_region": "Asia",
+                    "group": "Rest Of World"
+                },
+                {
+                    "is_active": true,
+                    "name": "CIS",
+                    "qcode": "CIS",
+                    "state": "",
+                    "country": "",
+                    "world_region": "Commonwealth of Independent States",
+                    "group": "Rest Of World"
+                },
+                {
+                    "is_active": true,
+                    "name": "EUR",
+                    "qcode": "EUR",
+                    "state": "",
+                    "country": "",
+                    "world_region": "Europe",
+                    "group": "Rest Of World"
+                },
+                {
+                    "is_active": true,
+                    "name": "FED",
+                    "qcode": "FED",
+                    "state": "",
+                    "country": "Australia",
+                    "world_region": "Oceania",
+                    "group": "Australia"
+                },
+                {
+                    "is_active": true,
+                    "name": "IRE",
+                    "qcode": "IRE",
+                    "state": "",
+                    "country": "Ireland",
+                    "world_region": "Europe",
+                    "group": "Rest Of World"
+                },
+                {
+                    "is_active": true,
+                    "name": "JPN",
+                    "qcode": "JPN",
+                    "state": "",
+                    "country": "Japan",
+                    "world_region": "Asia",
+                    "group": "Rest Of World"
+                },
+                {
+                    "is_active": true,
+                    "name": "MID",
+                    "qcode": "MID",
+                    "state": "",
+                    "country": "",
+                    "world_region": "Middle East",
+                    "group": "Rest Of World"
+                },
+                {
+                    "is_active": true,
+                    "name": "NSW",
+                    "qcode": "NSW",
+                    "state": "New South Wales",
+                    "country": "Australia",
+                    "world_region": "Oceania",
+                    "group": "Australia"
+                },
+                {
+                    "is_active": true,
+                    "name": "NT",
+                    "qcode": "NT",
+                    "state": "Northern Territory",
+                    "country": "Australia",
+                    "world_region": "Oceania",
+                    "group": "Australia"
+                },
+                {
+                    "is_active": true,
+                    "name": "NZ",
+                    "qcode": "NZ",
+                    "state": "",
+                    "country": "New Zealand",
+                    "world_region": "Oceania",
+                    "group": "Rest Of World"
+                },
+                {
+                    "is_active": true,
+                    "name": "PAC",
+                    "qcode": "PAC",
+                    "state": "",
+                    "country": "",
+                    "world_region": "Pacific Island Nations",
+                    "group": "Rest Of World"
+                },
+                {
+                    "is_active": true,
+                    "name": "QLD",
+                    "qcode": "QLD",
+                    "state": "Queensland",
+                    "country": "Australia",
+                    "world_region": "Oceania",
+                    "group": "Australia"
+                },
+                {
+                    "is_active": true,
+                    "name": "SA",
+                    "qcode": "SA",
+                    "state": "South Australia",
+                    "country": "Australia",
+                    "world_region": "Oceania",
+                    "group": "Australia"
+                },
+                {
+                    "is_active": true,
+                    "name": "SAM",
+                    "qcode": "SAM",
+                    "group": "Rest Of World"
+                },
+                {
+                    "is_active": true,
+                    "name": "TAS",
+                    "qcode": "TAS",
+                    "state": "Tasmania",
+                    "country": "Australia",
+                    "world_region": "Oceania",
+                    "group": "Australia"
+                },
+                {
+                    "is_active": true,
+                    "name": "UK",
+                    "qcode": "UK",
+                    "state": "",
+                    "country": "",
+                    "world_region": "Europe",
+                    "group": "Rest Of World"
+                },
+                {
+                    "is_active": true,
+                    "name": "US",
+                    "qcode": "US",
+                    "state": "",
+                    "country": "United States Of America",
+                    "world_region": "North America",
+                    "group": "Rest Of World"
+                },
+                {
+                    "is_active": true,
+                    "name": "VIC",
+                    "qcode": "VIC",
+                    "state": "Victoria",
+                    "country": "Australia",
+                    "world_region": "Oceania",
+                    "group": "Australia"
+                },
+                {
+                    "is_active": true,
+                    "name": "WA",
+                    "qcode": "WA",
+                    "state": "Western Australia",
+                    "country": "Australia",
+                    "world_region": "Oceania",
+                    "group": "Australia"
+                }
             ]
         },
         "resource": "vocabularies",
-		"id_name": "-id vocabularies priority-"
+        "id_name": "-id vocabularies priority-"
     },
 
     {
@@ -691,54 +1691,71 @@
             "display_name": "Package Story Labels",
             "type": "manageable",
             "unique_field": "qcode",
-            "items": [
-                {"is_active": true, "name": "Featured", "qcode": "story-label:featured"},
-                {"is_active": true, "name": "Top Story", "qcode": "story-label:top-story"},
-                {"is_active": true, "name": "Side Story", "qcode": "story-label:side-story"}
+            "items": [{
+                    "is_active": true,
+                    "name": "Featured",
+                    "qcode": "story-label:featured"
+                },
+                {
+                    "is_active": true,
+                    "name": "Top Story",
+                    "qcode": "story-label:top-story"
+                },
+                {
+                    "is_active": true,
+                    "name": "Side Story",
+                    "qcode": "story-label:side-story"
+                }
             ]
         },
         "resource": "vocabularies",
-		"id_name": "-id vocabularies priority-"
+        "id_name": "-id vocabularies priority-"
     },
 
     {
-        "resource":"ingest_providers",
+        "resource": "ingest_providers",
         "username": "admin",
         "id_name": "-id Ingest Provider-",
         "data": {
-          "name": "aap",
-          "feeding_service": "file",
-          "feed_parser": "nitf",
-          "config": {"path": "/"},
-          "source": "aap",
-          "allow_remove_ingested" : true,
-          "is_closed": true
+            "name": "aap",
+            "feeding_service": "file",
+            "feed_parser": "nitf",
+            "config": {
+                "path": "/"
+            },
+            "source": "aap",
+            "allow_remove_ingested": true,
+            "is_closed": true
         }
     },
     {
-        "resource":"ingest_providers",
+        "resource": "ingest_providers",
         "username": "admin",
         "data": {
-          "name": "afp",
-          "feeding_service": "afp_file",
-          "feed_parser": "newsml12",
-          "config": {"path": "/"},
-          "source": "afp",
-          "allow_remove_ingested" : true,
-          "is_closed": true
+            "name": "afp",
+            "feeding_service": "afp_file",
+            "feed_parser": "newsml12",
+            "config": {
+                "path": "/"
+            },
+            "source": "afp",
+            "allow_remove_ingested": true,
+            "is_closed": true
         }
     },
     {
-        "resource":"ingest_providers",
+        "resource": "ingest_providers",
         "username": "admin",
         "data": {
-          "name": "stt",
-          "feeding_service": "file",
-          "feed_parser": "stt_newsml",
-          "config": {"path": "/"},
-          "source": "stt",
-          "allow_remove_ingested" : true,
-          "is_closed": true
+            "name": "stt",
+            "feeding_service": "file",
+            "feed_parser": "stt_newsml",
+            "config": {
+                "path": "/"
+            },
+            "source": "stt",
+            "allow_remove_ingested": true,
+            "is_closed": true
         }
     },
 
@@ -746,47 +1763,102 @@
     {
         "data": {
             "_id": "desk_types",
-            "items": [
-                {"is_active": true, "name": "authoring", "qcode": "authoring"},
-                {"is_active": true, "name": "production", "qcode": "production"}
+            "items": [{
+                    "is_active": true,
+                    "name": "authoring",
+                    "qcode": "authoring"
+                },
+                {
+                    "is_active": true,
+                    "name": "production",
+                    "qcode": "production"
+                }
             ]
         },
-		"resource": "vocabularies",
-		"id_name": "-id vocabularies desk_types-"
+        "resource": "vocabularies",
+        "id_name": "-id vocabularies desk_types-"
     },
 
     {
         "data": {
             "_id": "crop_sizes",
             "unique_field": "name",
-            "items": [
-                {"is_active": true, "name": "4-3", "width": 800, "height": 600},
-                {"is_active": true, "name": "16-9", "width": 1280, "height": 720}
+            "items": [{
+                    "is_active": true,
+                    "name": "4-3",
+                    "width": 800,
+                    "height": 600
+                },
+                {
+                    "is_active": true,
+                    "name": "16-9",
+                    "width": 1280,
+                    "height": 720
+                }
             ]
         },
-		"resource": "vocabularies",
-		"id_name": "-id vocabularies crop_sizes-"
+        "resource": "vocabularies",
+        "id_name": "-id vocabularies crop_sizes-"
     },
 
     {
         "data": {
             "_id": "genre",
             "selection_type": "multi selection",
-            "items": [
-                {"is_active": true, "name": "Article (news)", "qcode": "Article"},
-                {"is_active": true, "name": "Sidebar", "qcode": "Sidebar"},
-                {"is_active": true, "name": "Factbox", "qcode": "Factbox"},
-                {"is_active": true, "name": "Feature", "qcode": "Feature"},
-                {"is_active": true, "name": "Newsfeature", "qcode": "Newsfeature"},
-                {"is_active": true, "name": "Backgrounder", "qcode": "Backgrounder"},
-                {"is_active": true, "name": "Opinion", "qcode": "Opinion"},
-                {"is_active": true, "name": "View (incl parly sketch)", "qcode": "View"},
-                {"is_active": true, "name": "Modular", "qcode": "Modular"},
-                {"is_active": true, "name": "Broadcast Script", "qcode": "Broadcast Script"}
+            "items": [{
+                    "is_active": true,
+                    "name": "Article (news)",
+                    "qcode": "Article"
+                },
+                {
+                    "is_active": true,
+                    "name": "Sidebar",
+                    "qcode": "Sidebar"
+                },
+                {
+                    "is_active": true,
+                    "name": "Factbox",
+                    "qcode": "Factbox"
+                },
+                {
+                    "is_active": true,
+                    "name": "Feature",
+                    "qcode": "Feature"
+                },
+                {
+                    "is_active": true,
+                    "name": "Newsfeature",
+                    "qcode": "Newsfeature"
+                },
+                {
+                    "is_active": true,
+                    "name": "Backgrounder",
+                    "qcode": "Backgrounder"
+                },
+                {
+                    "is_active": true,
+                    "name": "Opinion",
+                    "qcode": "Opinion"
+                },
+                {
+                    "is_active": true,
+                    "name": "View (incl parly sketch)",
+                    "qcode": "View"
+                },
+                {
+                    "is_active": true,
+                    "name": "Modular",
+                    "qcode": "Modular"
+                },
+                {
+                    "is_active": true,
+                    "name": "Broadcast Script",
+                    "qcode": "Broadcast Script"
+                }
             ]
         },
-		"resource": "vocabularies",
-		"id_name": "-id vocabularies genre-"
+        "resource": "vocabularies",
+        "id_name": "-id vocabularies genre-"
     },
 
     {
@@ -796,33 +1868,145 @@
             "type": "manageable",
             "selection_type": "multi selection",
             "unique_field": "qcode",
-            "items": [
-                {"is_active": true, "name": "Australian General News", "qcode": "a"},
-                {"is_active": true, "name": "Australian Weather", "qcode": "b", "subject": "17000000"},
-                {"is_active": true, "name": "General Features", "qcode": "c"},
-                {"is_active": false, "name": "Reserved (obsolete/unused)", "qcode": "d"},
-                {"is_active": true, "name": "Entertainment", "qcode": "e", "subject": "01000000"},
-                {"is_active": true, "name": "Finance", "qcode": "f", "subject": "04000000"},
-                {"is_active": false, "name": "SportSet", "qcode": "g"},
-                {"is_active": true, "name": "FormGuide", "qcode": "h"},
-                {"is_active": true, "name": "International News", "qcode": "i"},
-                {"is_active": false, "name": "Reserved (obsolete/unused)", "qcode": "k"},
-                {"is_active": true, "name": "Press Release Service", "qcode": "j"},
-                {"is_active": true, "name": "Lotteries", "qcode": "l"},
-                {"is_active": true, "name": "Line Check Messages", "qcode": "m"},
-                {"is_active": false, "name": "Reserved", "qcode": "n"},
-                {"is_active": true, "name": "State Parliaments", "qcode": "o", "subject": "11000000"},
-                {"is_active": true, "name": "Federal Parliament", "qcode": "p", "subject": "11000000"},
-                {"is_active": true, "name": "Stockset", "qcode": "q", "subject": "04000000"},
-                {"is_active": true, "name": "Racing (Turf)", "qcode": "r", "subject": "15000000"},
-                {"is_active": true, "name": "Overseas Sport", "qcode": "s", "subject": "15000000"},
-                {"is_active": true, "name": "Domestic Sport", "qcode": "t", "subject": "15000000"},
-                {"is_active": false, "name": "Reserved (Obsolete/unused)", "qcode": "u"},
-                {"is_active": true, "name": "Advisories", "qcode": "v"},
-                {"is_active": false, "name": "Reserved (Obsolete/unused)", "qcode": "w"},
-                {"is_active": true, "name": "Special Events (olympics/ Aus elections)", "qcode": "x"},
-                {"is_active": false, "name": "Special Events (obsolete/unused)", "qcode": "y"},
-                {"is_active": false, "name": "Supplementary Traffic", "qcode": "z"}
+            "items": [{
+                    "is_active": true,
+                    "name": "Australian General News",
+                    "qcode": "a"
+                },
+                {
+                    "is_active": true,
+                    "name": "Australian Weather",
+                    "qcode": "b",
+                    "subject": "17000000"
+                },
+                {
+                    "is_active": true,
+                    "name": "General Features",
+                    "qcode": "c"
+                },
+                {
+                    "is_active": false,
+                    "name": "Reserved (obsolete/unused)",
+                    "qcode": "d"
+                },
+                {
+                    "is_active": true,
+                    "name": "Entertainment",
+                    "qcode": "e",
+                    "subject": "01000000"
+                },
+                {
+                    "is_active": true,
+                    "name": "Finance",
+                    "qcode": "f",
+                    "subject": "04000000"
+                },
+                {
+                    "is_active": false,
+                    "name": "SportSet",
+                    "qcode": "g"
+                },
+                {
+                    "is_active": true,
+                    "name": "FormGuide",
+                    "qcode": "h"
+                },
+                {
+                    "is_active": true,
+                    "name": "International News",
+                    "qcode": "i"
+                },
+                {
+                    "is_active": false,
+                    "name": "Reserved (obsolete/unused)",
+                    "qcode": "k"
+                },
+                {
+                    "is_active": true,
+                    "name": "Press Release Service",
+                    "qcode": "j"
+                },
+                {
+                    "is_active": true,
+                    "name": "Lotteries",
+                    "qcode": "l"
+                },
+                {
+                    "is_active": true,
+                    "name": "Line Check Messages",
+                    "qcode": "m"
+                },
+                {
+                    "is_active": false,
+                    "name": "Reserved",
+                    "qcode": "n"
+                },
+                {
+                    "is_active": true,
+                    "name": "State Parliaments",
+                    "qcode": "o",
+                    "subject": "11000000"
+                },
+                {
+                    "is_active": true,
+                    "name": "Federal Parliament",
+                    "qcode": "p",
+                    "subject": "11000000"
+                },
+                {
+                    "is_active": true,
+                    "name": "Stockset",
+                    "qcode": "q",
+                    "subject": "04000000"
+                },
+                {
+                    "is_active": true,
+                    "name": "Racing (Turf)",
+                    "qcode": "r",
+                    "subject": "15000000"
+                },
+                {
+                    "is_active": true,
+                    "name": "Overseas Sport",
+                    "qcode": "s",
+                    "subject": "15000000"
+                },
+                {
+                    "is_active": true,
+                    "name": "Domestic Sport",
+                    "qcode": "t",
+                    "subject": "15000000"
+                },
+                {
+                    "is_active": false,
+                    "name": "Reserved (Obsolete/unused)",
+                    "qcode": "u"
+                },
+                {
+                    "is_active": true,
+                    "name": "Advisories",
+                    "qcode": "v"
+                },
+                {
+                    "is_active": false,
+                    "name": "Reserved (Obsolete/unused)",
+                    "qcode": "w"
+                },
+                {
+                    "is_active": true,
+                    "name": "Special Events (olympics/ Aus elections)",
+                    "qcode": "x"
+                },
+                {
+                    "is_active": false,
+                    "name": "Special Events (obsolete/unused)",
+                    "qcode": "y"
+                },
+                {
+                    "is_active": false,
+                    "name": "Supplementary Traffic",
+                    "qcode": "z"
+                }
             ]
         },
         "resource": "vocabularies",
@@ -836,14 +2020,34 @@
             "type": "manageable",
             "selection_type": "multi selection",
             "unique_field": "qcode",
-            "items" : [
-                {"qcode" : "a", "is_active" : true},
-                {"qcode" : "e", "is_active" : true},
-                {"qcode" : "f", "is_active" : true},
-                {"qcode" : "i", "is_active" : true},
-                {"qcode" : "s", "is_active" : true},
-                {"qcode" : "t", "is_active" : true},
-                {"qcode" : "v", "is_active" : true}
+            "items": [{
+                    "qcode": "a",
+                    "is_active": true
+                },
+                {
+                    "qcode": "e",
+                    "is_active": true
+                },
+                {
+                    "qcode": "f",
+                    "is_active": true
+                },
+                {
+                    "qcode": "i",
+                    "is_active": true
+                },
+                {
+                    "qcode": "s",
+                    "is_active": true
+                },
+                {
+                    "qcode": "t",
+                    "is_active": true
+                },
+                {
+                    "qcode": "v",
+                    "is_active": true
+                }
             ]
         },
         "resource": "vocabularies",
@@ -856,10 +2060,21 @@
             "display_name": "Product Types",
             "unique_field": "qcode",
             "type": "unmanageable",
-            "items": [
-                {"is_active": true, "name": "API", "qcode": "api"},
-                {"is_active": true, "name": "Direct", "qcode": "direct"},
-                {"is_active": true, "name": "Both", "qcode": "both"}
+            "items": [{
+                    "is_active": true,
+                    "name": "API",
+                    "qcode": "api"
+                },
+                {
+                    "is_active": true,
+                    "name": "Direct",
+                    "qcode": "direct"
+                },
+                {
+                    "is_active": true,
+                    "name": "Both",
+                    "qcode": "both"
+                }
             ]
         },
         "resource": "vocabularies",
@@ -871,10 +2086,21 @@
             "_id": "footers",
             "display_name": "Public Service Announcements",
             "type": "manageable",
-            "items": [
-                {"is_active": true, "name": "Suicide", "value": "Readers seeking support and information about suicide prevention can contact Lifeline on 13 11 14.<br>Suicide Call Back Service 1300 659 467<br>MensLine Australia 1300 78 99 78<br>Multicultural Mental Health Australia www.mmha.org.au<br>Local Aboriginal Medical Service available from www.vibe.com.au"},
-                {"is_active": true, "name": "Children", "value": "Kids Helpline 1800 55 1800 (for young people aged 5 to 25)"},
-                {"is_active": true, "name": "Domestic Violence", "value": "National domestic violence helpline: 1800 737 732  or 1800RESPECT. In an emergency call triple-zero."}
+            "items": [{
+                    "is_active": true,
+                    "name": "Suicide",
+                    "value": "Readers seeking support and information about suicide prevention can contact Lifeline on 13 11 14.<br>Suicide Call Back Service 1300 659 467<br>MensLine Australia 1300 78 99 78<br>Multicultural Mental Health Australia www.mmha.org.au<br>Local Aboriginal Medical Service available from www.vibe.com.au"
+                },
+                {
+                    "is_active": true,
+                    "name": "Children",
+                    "value": "Kids Helpline 1800 55 1800 (for young people aged 5 to 25)"
+                },
+                {
+                    "is_active": true,
+                    "name": "Domestic Violence",
+                    "value": "National domestic violence helpline: 1800 737 732  or 1800RESPECT. In an emergency call triple-zero."
+                }
             ]
         },
         "resource": "vocabularies",
@@ -882,57 +2108,80 @@
     },
 
     {
-    	"data": {
-            "name" : "all",
+        "data": {
+            "name": "all",
             "_id": "570e04e23c5e9f89fe95366e",
             "product_type": "both"
-    	},
-    	"resource": "products",
-    	"username": "admin",
-    	"id_name": "-id product everything-"
+        },
+        "resource": "products",
+        "username": "admin",
+        "id_name": "-id product everything-"
     },
 
     {
-    	"data": {"_id" : "5c9bd4f5149f117d0e47afe4", "is_active" : false, "name" : "alpha", "desk" : "-id desk Sports Desks-"},
-    	"resource": "internal_destinations",
-    	"id_name": "-id internal_destinations alpha-"
-    },
-
-    {
-    	"data": {"_id" : "5c9bd4f5149f117d0e47afe5", "is_active" : false, "name" : "bravo", "desk" : "-id desk Politic Desks-"},
-    	"resource": "internal_destinations",
-    	"id_name": "-id internal_destinations bravo-"
-    },
-
-    {
-    	"data": {"_id" : "5c9bd4f5149f117d0e47afe6", "is_active" : false, "name" : "charlie", "desk" : "-id desk Sports Desks-"},
-    	"resource": "internal_destinations",
-    	"id_name": "-id internal_destinations charlie-"
-    },
-
-    {
-    	"data": {
-    		"name" : "Public API",
-    		"subscriber_type": "digital",
-            "email": "public_api@test.com",
-    		"is_active" : true,
-            "products": ["-id product everything-"],
-            "sequence_num_settings":{"min" : 1, "max" : 10},
-    		"destinations" : [{
-    			"delivery_type" : "http_push",
-    			"format": "ninjs",
-    			"name" : "HTTP Push",
-    			"config": { "resource_url": "http://localhost:5050/publish", "assets_url": "http://localhost:5050/assets", "packaged": "true" }
-    		}]
-    	},
-    	"resource": "subscribers",
-    	"username": "admin",
-    	"id_name": "-id subscriber Public API-"
-    },
-
-	{
         "data": {
-            "template_name": "custom_highlight", "template_type": "highlights",
+            "_id": "5c9bd4f5149f117d0e47afe4",
+            "is_active": false,
+            "name": "alpha",
+            "desk": "-id desk Sports Desks-"
+        },
+        "resource": "internal_destinations",
+        "id_name": "-id internal_destinations alpha-"
+    },
+
+    {
+        "data": {
+            "_id": "5c9bd4f5149f117d0e47afe5",
+            "is_active": false,
+            "name": "bravo",
+            "desk": "-id desk Politic Desks-"
+        },
+        "resource": "internal_destinations",
+        "id_name": "-id internal_destinations bravo-"
+    },
+
+    {
+        "data": {
+            "_id": "5c9bd4f5149f117d0e47afe6",
+            "is_active": false,
+            "name": "charlie",
+            "desk": "-id desk Sports Desks-"
+        },
+        "resource": "internal_destinations",
+        "id_name": "-id internal_destinations charlie-"
+    },
+
+    {
+        "data": {
+            "name": "Public API",
+            "subscriber_type": "digital",
+            "email": "public_api@test.com",
+            "is_active": true,
+            "products": ["-id product everything-"],
+            "sequence_num_settings": {
+                "min": 1,
+                "max": 10
+            },
+            "destinations": [{
+                "delivery_type": "http_push",
+                "format": "ninjs",
+                "name": "HTTP Push",
+                "config": {
+                    "resource_url": "http://localhost:5050/publish",
+                    "assets_url": "http://localhost:5050/assets",
+                    "packaged": "true"
+                }
+            }]
+        },
+        "resource": "subscribers",
+        "username": "admin",
+        "id_name": "-id subscriber Public API-"
+    },
+
+    {
+        "data": {
+            "template_name": "custom_highlight",
+            "template_type": "highlights",
             "data": {
                 "body_html": "<b>custom highlight template</b>\n{% for item in items %} <h2>{{ item.headline }}</h2> {{ item.body_html }} <p></p> {% endfor %}"
             }
@@ -941,9 +2190,10 @@
         "id_name": "-id content template-"
     },
 
-	{
+    {
         "data": {
-            "template_name": "kill", "template_type": "kill",
+            "template_name": "kill",
+            "template_type": "kill",
             "data": {
                 "body_html": "This is kill template. Slugged {{item.slugline}}.",
                 "abstract": "This item is removed.",
@@ -955,9 +2205,10 @@
         "id_name": "-id content template-"
     },
 
-	{
+    {
         "data": {
-            "template_name": "takedown", "template_type": "kill",
+            "template_name": "takedown",
+            "template_type": "kill",
             "data": {
                 "body_html": "This is takedown template. Slugged {{item.slugline}}.",
                 "abstract": "This item is removed.",
@@ -970,27 +2221,44 @@
     },
 
     {
-    	"data": {"name": "Highlight one", "desks": ["-id desk Sports Desks-"], "groups": ["main"], "template": "-id content template-"},
-    	"resource": "highlights",
-    	"id_name": "-id highlight one-"
+        "data": {
+            "name": "Highlight one",
+            "desks": ["-id desk Sports Desks-"],
+            "groups": ["main"],
+            "template": "-id content template-"
+        },
+        "resource": "highlights",
+        "id_name": "-id highlight one-"
     },
 
     {
-    	"data": {"name": "Highlight two", "desks": ["-id desk Sports Desks-", "-id desk Politic Desks-"], "groups": ["one", "two"]},
-    	"resource": "highlights",
-    	"id_name": "-id highlight two-"
+        "data": {
+            "name": "Highlight two",
+            "desks": ["-id desk Sports Desks-", "-id desk Politic Desks-"],
+            "groups": ["one", "two"]
+        },
+        "resource": "highlights",
+        "id_name": "-id highlight two-"
     },
 
     {
-    	"data": {"name": "Highlight three", "desks": ["-id desk Politic Desks-"], "groups": ["main"]},
-    	"resource": "highlights",
-    	"id_name": "-id highlight three-"
+        "data": {
+            "name": "Highlight three",
+            "desks": ["-id desk Politic Desks-"],
+            "groups": ["main"]
+        },
+        "resource": "highlights",
+        "id_name": "-id highlight three-"
     },
 
     {
-    	"data": {"name": "Highlight four", "desks": ["-id desk Politic Desks-"], "groups": ["main"]},
-    	"resource": "highlights",
-    	"id_name": "-id highlight four-"
+        "data": {
+            "name": "Highlight four",
+            "desks": ["-id desk Politic Desks-"],
+            "groups": ["main"]
+        },
+        "resource": "highlights",
+        "id_name": "-id highlight four-"
     },
 
     {
@@ -1001,12 +2269,15 @@
             "type": "text",
             "guid": "item1",
             "versioncreated": "2015-01-07T10:10:10+0000",
-            "_current_version" : 1,
+            "_current_version": 1,
             "state": "in_progress",
             "unique_name": "item1",
             "unique_id": 1,
             "original_creator": "-id user admin-",
-            "anpa_category": [{"qcode": "A", "name": "General News"}]
+            "anpa_category": [{
+                "qcode": "A",
+                "name": "General News"
+            }]
         }
     },
 
@@ -1018,10 +2289,13 @@
             "type": "text",
             "guid": "item2",
             "versioncreated": "2015-01-06T10:10:10+0000",
-            "_current_version" : 1,
+            "_current_version": 1,
             "state": "in_progress",
             "original_creator": "-id user admin-",
-            "anpa_category": [{"qcode": "A", "name": "General News"}]
+            "anpa_category": [{
+                "qcode": "A",
+                "name": "General News"
+            }]
         }
     },
 
@@ -1035,16 +2309,19 @@
             "guid": "item3",
             "priority": 3,
             "versioncreated": "2015-01-01T10:50:10+0000",
-            "_current_version" : 1,
+            "_current_version": 1,
             "state": "in_progress",
             "original_creator": "-id user admin-",
-            "anpa_category": [{"qcode": "A", "name": "General News"}],
-            "task" : {
-		        "desk" : "-id desk Sports Desks-",
-		        "user" : "-id user admin-",
-		        "status": "todo",
-		        "stage": "-id stage one Sports Desks-"
-		    }
+            "anpa_category": [{
+                "qcode": "A",
+                "name": "General News"
+            }],
+            "task": {
+                "desk": "-id desk Sports Desks-",
+                "user": "-id user admin-",
+                "status": "todo",
+                "stage": "-id stage one Sports Desks-"
+            }
         }
     },
 
@@ -1057,16 +2334,19 @@
             "type": "text",
             "guid": "item4",
             "versioncreated": "2015-01-01T10:40:10+0000",
-            "_current_version" : 1,
+            "_current_version": 1,
             "state": "in_progress",
             "original_creator": "-id user admin-",
-            "anpa_category": [{"qcode": "A", "name": "General News"}],
-            "task" : {
-		        "desk" : "-id desk Sports Desks-",
-		        "user" : "-id user admin1-",
-		        "status": "done",
-		        "stage": "-id stage three Sports Desks-"
-		    }
+            "anpa_category": [{
+                "qcode": "A",
+                "name": "General News"
+            }],
+            "task": {
+                "desk": "-id desk Sports Desks-",
+                "user": "-id user admin1-",
+                "status": "done",
+                "stage": "-id stage three Sports Desks-"
+            }
         }
     },
 
@@ -1076,28 +2356,41 @@
         "data": {
             "headline": "item5",
             "slugline": "item5 slugline one/two",
-            "body_html" : "<p>item5 text</p>",
+            "body_html": "<p>item5 text</p>",
             "type": "text",
             "guid": "item5",
-            "genre": [{"is_active":true, "name":"Sidebar", "qcode":"Sidebar"}],
+            "genre": [{
+                "is_active": true,
+                "name": "Sidebar",
+                "qcode": "Sidebar"
+            }],
             "version": 1,
             "versioncreated": "2015-01-05T10:10:10+0000",
-            "_current_version" : 0,
+            "_current_version": 0,
             "original_creator": "-id user admin-",
             "byline": "Billy The Fish",
             "state": "in_progress",
             "pubstatus": "usable",
             "urgency": 1,
             "operation": "create",
-            "subject": [{"name": "university", "parent": "05000000", "qcode": "05007000"}],
-            "anpa_category": [{"qcode": "A", "name": "General News"}],
-            "task" : {
-		        "desk" : "-id desk Politic Desks-",
-		        "user" : "-id user admin1-",
-		        "status": "todo",
-		        "stage": "-id stage one Politic Desks-"
-		    },
-		    "linked_in_packages": [{"package": "package2"}]
+            "subject": [{
+                "name": "university",
+                "parent": "05000000",
+                "qcode": "05007000"
+            }],
+            "anpa_category": [{
+                "qcode": "A",
+                "name": "General News"
+            }],
+            "task": {
+                "desk": "-id desk Politic Desks-",
+                "user": "-id user admin1-",
+                "status": "todo",
+                "stage": "-id stage one Politic Desks-"
+            },
+            "linked_in_packages": [{
+                "package": "package2"
+            }]
         }
     },
 
@@ -1107,26 +2400,35 @@
         "data": {
             "headline": "item9",
             "slugline": "item9 slugline",
-            "body_html" : "<p>item9 text</p>",
+            "body_html": "<p>item9 text</p>",
             "type": "text",
             "guid": "item9",
             "version": 1,
             "versioncreated": "2015-01-04T10:10:10+0000",
-            "_current_version" : 0,
+            "_current_version": 0,
             "original_creator": "-id user admin-",
             "state": "in_progress",
             "pubstatus": "usable",
             "urgency": 1,
             "operation": "create",
-            "subject": [{"name": "university", "parent": "05000000", "qcode": "05007000"}],
-            "anpa_category": [{"qcode": "A", "name": "General News"}],
-            "task" : {
-		        "desk" : "-id desk Politic Desks-",
-		        "user" : "-id user admin1-",
-		        "status": "todo",
-		        "stage": "-id stage one Politic Desks-"
-		    },
-		    "linked_in_packages": [{"package": "package2"}]
+            "subject": [{
+                "name": "university",
+                "parent": "05000000",
+                "qcode": "05007000"
+            }],
+            "anpa_category": [{
+                "qcode": "A",
+                "name": "General News"
+            }],
+            "task": {
+                "desk": "-id desk Politic Desks-",
+                "user": "-id user admin1-",
+                "status": "todo",
+                "stage": "-id stage one Politic Desks-"
+            },
+            "linked_in_packages": [{
+                "package": "package2"
+            }]
         }
     },
 
@@ -1136,41 +2438,48 @@
         "data": {
             "headline": "item7",
             "slugline": "item7 slugline",
-            "body_html" : "<p>item7 text</p>",
+            "body_html": "<p>item7 text</p>",
             "type": "text",
             "guid": "item7",
             "version": 1,
             "versioncreated": "2015-01-03T10:10:10+0000",
-            "_current_version" : 0,
+            "_current_version": 0,
             "original_creator": "-id user admin-",
             "state": "in_progress",
             "pubstatus": "usable",
             "urgency": 1,
             "operation": "create",
-            "subject": [{"name": "university", "parent": "05000000", "qcode": "05007000"}],
-            "anpa_category": [{"qcode": "A", "name": "General News"}],
-            "task" : {
-		        "desk" : "-id desk Politic Desks-",
-		        "user" : "-id user admin1-",
-		        "status": "todo",
-		        "stage": "-id stage one Politic Desks-"
-		    },
-		    "dateline" : {
-		        "located" : {
-		            "city" : "Sydney",
-		            "alt_name" : "",
-		            "state_code" : "NSW",
-		            "dateline" : "city",
-		            "tz" : "Australia/Sydney",
-		            "state" : "New South Wales",
-		            "city_code" : "Sydney",
-		            "country" : "Australia",
-		            "country_code" : "AU"
-		        },
-		        "date" : "2015-01-03T10:10:10+0000",
-		        "source" : "SAP",
-		        "text" : "SYDNEY, Jan 03 SAP -"
-		    }
+            "subject": [{
+                "name": "university",
+                "parent": "05000000",
+                "qcode": "05007000"
+            }],
+            "anpa_category": [{
+                "qcode": "A",
+                "name": "General News"
+            }],
+            "task": {
+                "desk": "-id desk Politic Desks-",
+                "user": "-id user admin1-",
+                "status": "todo",
+                "stage": "-id stage one Politic Desks-"
+            },
+            "dateline": {
+                "located": {
+                    "city": "Sydney",
+                    "alt_name": "",
+                    "state_code": "NSW",
+                    "dateline": "city",
+                    "tz": "Australia/Sydney",
+                    "state": "New South Wales",
+                    "city_code": "Sydney",
+                    "country": "Australia",
+                    "country_code": "AU"
+                },
+                "date": "2015-01-03T10:10:10+0000",
+                "source": "SAP",
+                "text": "SYDNEY, Jan 03 SAP -"
+            }
         }
     },
 
@@ -1180,25 +2489,32 @@
         "data": {
             "headline": "item8",
             "slugline": "item8 slugline",
-            "body_html" : "<p>item8 text</p>",
+            "body_html": "<p>item8 text</p>",
             "type": "text",
             "guid": "item8",
             "version": 1,
             "versioncreated": "2015-01-02T10:10:10+0000",
-            "_current_version" : 0,
+            "_current_version": 0,
             "original_creator": "-id user admin-",
             "state": "in_progress",
             "pubstatus": "usable",
             "urgency": 3,
             "operation": "create",
-            "subject": [{"name": "university", "parent": "05000000", "qcode": "05007000"}],
-            "anpa_category": [{"qcode": "A", "name": "General News"}],
-            "task" : {
-		        "desk" : "-id desk Politic Desks-",
-		        "user" : "-id user admin1-",
-		        "status": "todo",
-		        "stage": "-id stage one Politic Desks-"
-		    }
+            "subject": [{
+                "name": "university",
+                "parent": "05000000",
+                "qcode": "05007000"
+            }],
+            "anpa_category": [{
+                "qcode": "A",
+                "name": "General News"
+            }],
+            "task": {
+                "desk": "-id desk Politic Desks-",
+                "user": "-id user admin1-",
+                "status": "todo",
+                "stage": "-id stage one Politic Desks-"
+            }
         }
     },
 
@@ -1208,26 +2524,35 @@
         "data": {
             "headline": "item6",
             "slugline": "item6 slugline",
-            "body_html" : "<p>item6 text</p>",
+            "body_html": "<p>item6 text</p>",
             "type": "text",
             "guid": "item6",
             "version": 1,
             "versioncreated": "2015-01-01T10:30:10+0000",
-            "_current_version" : 0,
+            "_current_version": 0,
             "original_creator": "-id user admin-",
             "state": "in_progress",
             "pubstatus": "usable",
             "urgency": 1,
             "operation": "fetch",
-            "subject": [{"name": "university", "parent": "05000000", "qcode": "05007000"}],
-            "anpa_category": [{"qcode": "A", "name": "General News"}],
-            "task" : {
-		        "desk" : "-id desk Politic Desks-",
-		        "user" : "-id user admin2-",
-		        "status": "in_progress",
-		        "stage": "-id stage two Politic Desks-"
-		    },
-		    "linked_in_packages": [{"package": "package1"}]
+            "subject": [{
+                "name": "university",
+                "parent": "05000000",
+                "qcode": "05007000"
+            }],
+            "anpa_category": [{
+                "qcode": "A",
+                "name": "General News"
+            }],
+            "task": {
+                "desk": "-id desk Politic Desks-",
+                "user": "-id user admin2-",
+                "status": "in_progress",
+                "stage": "-id stage two Politic Desks-"
+            },
+            "linked_in_packages": [{
+                "package": "package1"
+            }]
         }
     },
     {
@@ -1241,45 +2566,45 @@
         }
     },
     {
-    	"resource": "archive",
-    	"username": "admin",
-    	"data": {
-		    "slugline": "PACKAGE1 SLUGLINE",
-    		"headline": "package1",
-    		"type": "composite",
-    		"guid": "package1",
-		    "firstcreated": "NOW()",
+        "resource": "archive",
+        "username": "admin",
+        "data": {
+            "slugline": "PACKAGE1 SLUGLINE",
+            "headline": "package1",
+            "type": "composite",
+            "guid": "package1",
+            "firstcreated": "NOW()",
             "versioncreated": "2015-01-01T10:05:10+0000",
-            "_current_version" : 1,
+            "_current_version": 1,
             "original_creator": "-id user admin-",
             "state": "in_progress",
             "unique_id": 2,
             "unique_name": "package1",
-            "task" : {
-                "desk" : "-id desk Politic Desks-",
-                "user" : "-id user admin2-",
+            "task": {
+                "desk": "-id desk Politic Desks-",
+                "user": "-id user admin2-",
                 "status": "in_progress",
                 "stage": "-id stage two Politic Desks-"
             },
-		    "groups": [{
-		            "id": "root",
-		            "refs": [{"idRef": "main"}]
-		        },
-		        {
-		            "id": "main",
-		            "refs": [
-		                {
-		                    "guid": "item6",
-		                    "headline": "item6",
-		                    "location": "archive",
-		                    "residRef": "item6",
-		                    "slugline": "item6 slugline",
-		                    "type": "text"
-		                }
-		            ]
-		        }
-		    ]
-    	}
+            "groups": [{
+                    "id": "root",
+                    "refs": [{
+                        "idRef": "main"
+                    }]
+                },
+                {
+                    "id": "main",
+                    "refs": [{
+                        "guid": "item6",
+                        "headline": "item6",
+                        "location": "archive",
+                        "residRef": "item6",
+                        "slugline": "item6 slugline",
+                        "type": "text"
+                    }]
+                }
+            ]
+        }
     },
     {
         "resource": "archive",
@@ -1288,60 +2613,67 @@
             "guid": "package2",
             "unique_id": 2,
             "unique_name": "package2",
-		    "firstcreated": "NOW()",
+            "firstcreated": "NOW()",
             "original_creator": "-id user admin-",
             "versioncreated": "NOW()",
-		    "version_creator": "-id user admin-",
-            "_current_version" : 1,
-		    "urgency": 2,
-		    "priority": 1,
-		    "version": 1,
-		    "state": "in_progress",
+            "version_creator": "-id user admin-",
+            "_current_version": 1,
+            "urgency": 2,
+            "priority": 1,
+            "version": 1,
+            "state": "in_progress",
             "type": "composite",
-		    "slugline": "PACKAGE2 SLUGLINE",
+            "slugline": "PACKAGE2 SLUGLINE",
             "headline": "package2",
-		    "operation": "create",
-		    "pubstatus": "usable",
-		    "subject": [{"name": "archaeology", "parent": "01000000", "qcode": "01001000"}],
-		    "language": "en",
-            "anpa_category": [{"qcode": "A", "name": "General News"}],
-            "task" : {
-                "desk" : "-id desk Politic Desks-",
-                "user" : "-id user admin2-",
+            "operation": "create",
+            "pubstatus": "usable",
+            "subject": [{
+                "name": "archaeology",
+                "parent": "01000000",
+                "qcode": "01001000"
+            }],
+            "language": "en",
+            "anpa_category": [{
+                "qcode": "A",
+                "name": "General News"
+            }],
+            "task": {
+                "desk": "-id desk Politic Desks-",
+                "user": "-id user admin2-",
                 "status": "in_progress",
                 "stage": "-id stage two Politic Desks-"
             },
-		    "groups": [{
-		            "id": "root",
-		            "refs": [{"idRef": "main"}, {"idRef": "story"}]
-		        },
-		        {
-		            "id": "main",
-		            "refs": [
-		                {
-		                    "guid": "item5",
-		                    "headline": "item5",
-		                    "location": "archive",
-		                    "residRef": "item5",
-		                    "slugline": "item5 slugline",
-		                    "type": "text"
-		                }
-		            ]
-		        },
-		        {
-		            "id": "story",
-		            "refs": [
-		                {
-		                    "guid": "item9",
-		                    "headline": "item9",
-		                    "location": "archive",
-		                    "residRef": "item9",
-		                    "slugline": "item9 slugline",
-		                    "type": "text"
-		                }
-		            ]
-		        }
-		    ]
+            "groups": [{
+                    "id": "root",
+                    "refs": [{
+                        "idRef": "main"
+                    }, {
+                        "idRef": "story"
+                    }]
+                },
+                {
+                    "id": "main",
+                    "refs": [{
+                        "guid": "item5",
+                        "headline": "item5",
+                        "location": "archive",
+                        "residRef": "item5",
+                        "slugline": "item5 slugline",
+                        "type": "text"
+                    }]
+                },
+                {
+                    "id": "story",
+                    "refs": [{
+                        "guid": "item9",
+                        "headline": "item9",
+                        "location": "archive",
+                        "residRef": "item9",
+                        "slugline": "item9 slugline",
+                        "type": "text"
+                    }]
+                }
+            ]
         }
     },
     {
@@ -1353,15 +2685,23 @@
             "type": "composite",
             "guid": "package3",
             "versioncreated": "NOW()",
-            "_current_version" : 1,
+            "_current_version": 1,
             "state": "in_progress",
             "original_creator": "-id user admin-",
             "unique_id": 2,
             "unique_name": "package3",
-            "groups": [{"id": "root", "refs": [{"idRef": "main"}]}, {"id": "main", "refs": []}],
-             "task" : {
-                "desk" : "-id desk Politic Desks-",
-                "user" : "-id user admin2-",
+            "groups": [{
+                "id": "root",
+                "refs": [{
+                    "idRef": "main"
+                }]
+            }, {
+                "id": "main",
+                "refs": []
+            }],
+            "task": {
+                "desk": "-id desk Politic Desks-",
+                "user": "-id user admin2-",
                 "status": "in_progress",
                 "stage": "-id stage two Politic Desks-"
             }
@@ -1378,14 +2718,14 @@
             "operation": "publish",
             "guid": "item1-in-legal-archive",
             "versioncreated": "2013-01-30T10:10:10+0000",
-            "_current_version" : 2,
+            "_current_version": 2,
             "original_creator": "admin",
-            "task" : {
-		        "desk" : "Sports Desk",
-		        "user" : "administrator",
-		        "status": "done",
-		        "stage": "one"
-		    }
+            "task": {
+                "desk": "Sports Desk",
+                "user": "administrator",
+                "status": "done",
+                "stage": "one"
+            }
         }
     },
     {
@@ -1399,14 +2739,14 @@
             "operation": "kill",
             "guid": "item2-in-legal-archive",
             "versioncreated": "2013-01-20T10:10:10+0000",
-            "_current_version" : 3,
+            "_current_version": 3,
             "original_creator": "admin",
-            "task" : {
-		        "desk" : "Sports Desk",
-		        "user" : "administrator",
-		        "status": "done",
-		        "stage": "one"
-		    }
+            "task": {
+                "desk": "Sports Desk",
+                "user": "administrator",
+                "status": "done",
+                "stage": "one"
+            }
         }
     },
     {
@@ -1420,14 +2760,14 @@
             "operation": "publish",
             "guid": "item3-in-legal-archive",
             "versioncreated": "2013-01-10T10:10:10+0000",
-            "_current_version" : 2,
+            "_current_version": 2,
             "original_creator": "admin",
-            "task" : {
-		        "desk" : "Sports Desk",
-		        "user" : "administrator",
-		        "status": "todo",
-		        "stage": "one"
-		    }
+            "task": {
+                "desk": "Sports Desk",
+                "user": "administrator",
+                "status": "todo",
+                "stage": "one"
+            }
         }
     },
     {
@@ -1441,22 +2781,49 @@
             "operation": "publish",
             "guid": "package1-in-legal-archive",
             "versioncreated": "2013-01-01T10:10:10+0000",
-            "_current_version" : 2,
+            "_current_version": 2,
             "original_creator": "admin",
-            "groups": [{"refs" : [{"idRef" : "main"}], "id" : "root", "role" : "grpRole:NEP"},
-                       {"refs" : [{"renditions" : {}, "type" : "text", "slugline" : "item1 slugline", "headline" : "item1 in legal archive",
-                                   "guid" : "item1-in-legal-archive", "residRef" : "item1-in-legal-archive",
-                                   "itemClass" : "icls:text", "_current_version" : 2, "location" : "legal_archive"},
-	   		                      {"renditions" : {}, "type" : "text", "slugline" : "item3 slugline", "headline" : "item3 in legal archive",
-                                   "guid" : "item3-in-legal-archive", "residRef" : "item3-in-legal-archive",
-                                   "itemClass" : "icls:text",  "_current_version" : 2, "location" : "legal_archive"
-                                  }], "id" : "main", "role" : "grpRole:main"}],
-            "task" : {
-		        "desk" : "Sports Desk",
-		        "user" : "administrator",
-		        "status": "todo",
-		        "stage": "one"
-		    }
+            "groups": [{
+                    "refs": [{
+                        "idRef": "main"
+                    }],
+                    "id": "root",
+                    "role": "grpRole:NEP"
+                },
+                {
+                    "refs": [{
+                            "renditions": {},
+                            "type": "text",
+                            "slugline": "item1 slugline",
+                            "headline": "item1 in legal archive",
+                            "guid": "item1-in-legal-archive",
+                            "residRef": "item1-in-legal-archive",
+                            "itemClass": "icls:text",
+                            "_current_version": 2,
+                            "location": "legal_archive"
+                        },
+                        {
+                            "renditions": {},
+                            "type": "text",
+                            "slugline": "item3 slugline",
+                            "headline": "item3 in legal archive",
+                            "guid": "item3-in-legal-archive",
+                            "residRef": "item3-in-legal-archive",
+                            "itemClass": "icls:text",
+                            "_current_version": 2,
+                            "location": "legal_archive"
+                        }
+                    ],
+                    "id": "main",
+                    "role": "grpRole:main"
+                }
+            ],
+            "task": {
+                "desk": "Sports Desk",
+                "user": "administrator",
+                "status": "todo",
+                "stage": "one"
+            }
         }
     },
 
@@ -1472,11 +2839,11 @@
             "guid": "item1-in-archived",
             "item_id": "item1-in-archived",
             "versioncreated": "2014-01-03T10:10:10+0000",
-            "_current_version" : 2,
+            "_current_version": 2,
             "original_creator": "admin",
-            "task" : {
-                "desk" : "-id desk Sports Desks-",
-                "user" : "-id user admin-",
+            "task": {
+                "desk": "-id desk Sports Desks-",
+                "user": "-id user admin-",
                 "status": "done",
                 "stage": "-id stage one Sports Desks-"
             }
@@ -1494,11 +2861,11 @@
             "guid": "item3-in-archived",
             "item_id": "item3-in-archived",
             "versioncreated": "2014-01-02T10:10:10+0000",
-            "_current_version" : 2,
+            "_current_version": 2,
             "original_creator": "admin",
-            "task" : {
-                "desk" : "-id desk Sports Desks-",
-                "user" : "-id user admin-",
+            "task": {
+                "desk": "-id desk Sports Desks-",
+                "user": "-id user admin-",
                 "status": "done",
                 "stage": "-id stage one Sports Desks-"
             }
@@ -1516,30 +2883,61 @@
             "guid": "package1-in-archived",
             "item_id": "package1-in-archived",
             "versioncreated": "2014-01-01T10:10:10+0000",
-            "_current_version" : 2,
+            "_current_version": 2,
             "original_creator": "admin",
-            "groups": [{"refs" : [{"idRef" : "main"}], "id" : "root", "role" : "grpRole:NEP"},
-                       {"refs" : [{"renditions" : {}, "type" : "text", "slugline" : "item1 slugline", "headline" : "item1 in archived",
-                                   "guid" : "item1-in-archived", "residRef" : "item1-in-archived",
-                                   "itemClass" : "icls:text", "_current_version" : 2, "location" : "archived"},
-	   		                      {"renditions" : {}, "type" : "text", "slugline" : "item3 slugline", "headline" : "item3 in archived",
-                                   "guid" : "item3-in-archived", "residRef" : "item3-in-archived",
-                                   "itemClass" : "icls:text",  "_current_version" : 2, "location" : "archived"}],
-                                   "id" : "main", "role" : "grpRole:main"}],
-            "task" : {
-                "desk" : "-id desk Sports Desks-",
-                "user" : "-id user admin-",
+            "groups": [{
+                    "refs": [{
+                        "idRef": "main"
+                    }],
+                    "id": "root",
+                    "role": "grpRole:NEP"
+                },
+                {
+                    "refs": [{
+                            "renditions": {},
+                            "type": "text",
+                            "slugline": "item1 slugline",
+                            "headline": "item1 in archived",
+                            "guid": "item1-in-archived",
+                            "residRef": "item1-in-archived",
+                            "itemClass": "icls:text",
+                            "_current_version": 2,
+                            "location": "archived"
+                        },
+                        {
+                            "renditions": {},
+                            "type": "text",
+                            "slugline": "item3 slugline",
+                            "headline": "item3 in archived",
+                            "guid": "item3-in-archived",
+                            "residRef": "item3-in-archived",
+                            "itemClass": "icls:text",
+                            "_current_version": 2,
+                            "location": "archived"
+                        }
+                    ],
+                    "id": "main",
+                    "role": "grpRole:main"
+                }
+            ],
+            "task": {
+                "desk": "-id desk Sports Desks-",
+                "user": "-id user admin-",
                 "status": "done",
                 "stage": "-id stage one Sports Desks-"
             }
         }
     },
     {
-        "resource":"dictionaries",
+        "resource": "dictionaries",
         "data": {
-			"name": "Test 1",
-			"language_id": "en",
-			"content": {"alpha": 1, "beta": 1, "gama": 1}
+            "name": "Test 1",
+            "language_id": "en",
+            "content": {
+                "alpha": 1,
+                "beta": 1,
+                "gama": 1
+            }
         }
     },
     {
@@ -1548,7 +2946,7 @@
         "data": {
             "filter": {
                 "query": {
-                    "repo" : "archive",
+                    "repo": "archive",
                     "q": "headline:(item*)"
                 }
             },
@@ -1562,7 +2960,7 @@
         "data": {
             "filter": {
                 "query": {
-                    "repo" : "archive",
+                    "repo": "archive",
                     "q": "headline:(item3)"
                 }
             },
@@ -1616,7 +3014,7 @@
         "data": {
             "filter": {
                 "query": {
-                    "repo" : "archive",
+                    "repo": "archive",
                     "q": "headline:(item*)"
                 }
             },
@@ -1672,7 +3070,9 @@
         "resource": "config",
         "data": {
             "_id": "phone_home",
-            "val": {"done": 1}
+            "val": {
+                "done": 1
+            }
         }
     }
 ]

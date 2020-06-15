@@ -293,7 +293,8 @@ Feature: Unpublish content
                             "width": 640,
                             "height": 431
                         }
-                    }
+                    },
+                    "alt_text": "alt"
                 },
                 "related--1": {
                     "_id": "456",

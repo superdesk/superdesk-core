@@ -432,7 +432,7 @@ Feature: Cropping the Image Articles
       """
       When we post to "/archive" with success
       """
-      [{"guid": "123", "type": "text", "headline": "test", "state": "fetched", "slugline": "slugline",
+      [{"guid": "123", "type": "text", "state": "fetched", "slugline": "slugline",
         "headline": "headline",
         "anpa_category" : [{"qcode" : "e", "name" : "Entertainment"}],
         "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
@@ -458,7 +458,7 @@ Feature: Cropping the Image Articles
       Then we get OK response
       And we get existing resource
       """
-      {"_current_version": 1, "state": "fetched", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
+      {"_current_version": 1, "state": "fetched", "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
       """
       When upload a file "bike.jpg" to "archive" with "bike"
       And we post to "/archive/bike/move"
@@ -478,7 +478,8 @@ Feature: Cropping the Image Articles
           "featuremedia": {
             "_id": "bike",
             "type": "picture",
-            "poi": {"x": 0.2, "y": 0.3}
+            "poi": {"x": 0.2, "y": 0.3},
+            "headline": "foo"
           }
         }
       }
@@ -495,8 +496,10 @@ Feature: Cropping the Image Articles
       "associations": {
           "featuremedia": {
             "_id": "bike_2",
-            "type": "picture",
-            "poi": {"x": 0.3, "y": 0.4}
+            "poi": {"x": 0.3, "y": 0.4},
+            "alt_text": "bike",
+            "headline": "bike",
+            "description_text": "bike"
           }
         }}
       """

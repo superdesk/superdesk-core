@@ -12,7 +12,7 @@ import superdesk
 
 from copy import deepcopy
 from datetime import datetime
-from flask import current_app as app
+from flask import current_app as app, json
 from eve.io.mongo import Validator
 from superdesk.metadata.item import ITEM_TYPE
 from superdesk.logging import logger
@@ -22,6 +22,7 @@ from _collections_abc import MutableMapping  # typing: ignore
 from superdesk.signals import item_validate
 from superdesk.validator import BaseErrorHandler
 from flask_babel import lazy_gettext, _
+from superdesk.default_schema import DEFAULT_SCHEMA_MAP
 
 
 REQUIRED_FIELD = "is a required field"
@@ -285,11 +286,11 @@ class SchemaValidator(Validator):
         """
         if not validate:
             return
-        media_metadata_schema = app.config.get("VALIDATOR_MEDIA_METADATA")
-        if not media_metadata_schema:
-            return
         for assoc_name, assoc_data in associations.items():
             if assoc_data is None or assoc_data.get("type") == "text":
+                continue
+            media_metadata_schema = superdesk.get_resource_service("content_types").get_schema(assoc_data)
+            if not media_metadata_schema:
                 continue
             for field, schema in media_metadata_schema.items():
                 if schema.get("required", False) and not assoc_data.get(field):
@@ -357,23 +358,37 @@ class ValidateService(superdesk.Service):
         In case there is profile defined for item with respective content type it will
         use its schema for validations, otherwise it will fall back to action/item_type filter.
         """
-        profile = doc["validate"].get("profile")
         item_type = doc["validate"].get("type") or doc.get("type")
-        if (profile or item_type) and (app.config["AUTO_PUBLISH_CONTENT_PROFILE"] or doc["act"] != "auto_publish"):
-            content_type = superdesk.get_resource_service("content_types").find_one(req=None, _id=profile)
-            if not content_type and item_type:
-                content_type = superdesk.get_resource_service("content_types").find_one(req=None, item_type=item_type)
+        profile_id = doc["validate"].get("profile") or item_type
+
+        # use content profile if exists
+        if profile_id and (app.config["AUTO_PUBLISH_CONTENT_PROFILE"] or doc["act"] != "auto_publish"):
+            content_type = superdesk.get_resource_service("content_types").find_one(req=None, _id=profile_id)
             if content_type:
                 return self._get_profile_schema(content_type.get("schema", {}), doc)
+
+        # use custom schema like profile schema
+        custom_schema = app.config.get("SCHEMA", {}).get(doc[ITEM_TYPE])
+        if custom_schema:
+            return self._get_profile_schema(custom_schema, doc)
+
+        # no profile or schema, use validators
         lookup = {"act": doc["act"], "type": doc[ITEM_TYPE]}
         if doc.get("embedded"):
             lookup["embedded"] = doc["embedded"]
         else:
             lookup["$or"] = [{"embedded": {"$exists": False}}, {"embedded": False}]
-        custom_schema = app.config.get("SCHEMA", {}).get(doc[ITEM_TYPE])
-        if custom_schema:  # handle custom schema like profile schema
-            return self._get_profile_schema(custom_schema, doc)
-        return superdesk.get_resource_service("validators").get(req=None, lookup=lookup)
+        validators = list(superdesk.get_resource_service("validators").get(req=None, lookup=lookup))
+        if validators:
+            return validators
+
+        # last resort - default schema
+        default_schema = DEFAULT_SCHEMA_MAP.get(item_type)
+        if default_schema:
+            return self._get_profile_schema(default_schema, doc)
+
+        # no rules for validation
+        return []
 
     def _populate_extra(self, doc, schema):
         """Populates the extra field in the document with fields stored in subject. Used
