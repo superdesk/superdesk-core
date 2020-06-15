@@ -259,6 +259,8 @@ class ArchiveService(BaseService):
 
             if doc.get('media'):
                 self.mediaService.on_create([doc])
+                if doc.get('type'):
+                    doc.setdefault('profile', doc['type'])
 
             # let client create version 0 docs
             if doc.get('version') == 0:

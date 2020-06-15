@@ -3,6 +3,7 @@ import superdesk
 
 from flask import current_app as app
 from superdesk.utils import ListCursor
+from superdesk.default_schema import DEFAULT_SCHEMA, DEFAULT_EDITOR
 
 
 class ClientConfigResource(superdesk.Resource):
@@ -25,6 +26,8 @@ def init_app(app):
     app.client_config.update({
         'schema': app.config.get('SCHEMA'),
         'editor': app.config.get('EDITOR'),
+        'default_editor': DEFAULT_EDITOR,
+        'default_schema': DEFAULT_SCHEMA,
         'feedback_url': app.config.get('FEEDBACK_URL'),
         'override_ednote_for_corrections': app.config.get('OVERRIDE_EDNOTE_FOR_CORRECTIONS', True),
         'override_ednote_template': app.config.get('OVERRIDE_EDNOTE_TEMPLATE'),

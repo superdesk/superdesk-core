@@ -630,6 +630,9 @@ def handle_existing_data(doc, pub_status_value='usable', doc_type='archive'):
         if doc_type == 'archive' and not is_flag_in_item(doc, 'marked_for_not_publication'):
             set_flag(doc, 'marked_for_not_publication', False)
 
+        if doc.get('type') and doc.get('type') != 'text':
+            doc.setdefault('profile')
+
 
 def set_flag(doc, flag_name, flag_value):
     flags = doc.get('flags', {})

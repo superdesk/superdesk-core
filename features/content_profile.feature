@@ -275,7 +275,7 @@ Feature: Content Profile
                 },
                 "headline": {
                     "type": "string",
-                    "required": false,
+                    "required": true,
                     "maxlength": 64
                 },
                 "media_description": {},
@@ -412,7 +412,7 @@ Feature: Content Profile
                 "media_description": {},
                 "headline": {
                     "maxlength": 64,
-                    "required": false,
+                    "required": true,
                     "type": "string"
                 },
                 "place": {
@@ -737,7 +737,7 @@ Feature: Content Profile
                 "headline": {
                     "type": "string",
                     "maxlength": 64,
-                    "required": false
+                    "required": true
                 },
                 "sms": {
                     "type": "string",
@@ -1137,7 +1137,7 @@ Feature: Content Profile
                 "headline": {
                     "type": "string",
                     "maxlength": 64,
-                    "required": false
+                    "required": true
                 },
                 "subject_custom": {
                     "type": "list",
@@ -1456,7 +1456,7 @@ Feature: Content Profile
                     "maxlength": null
                 },
                 "slugline" : {
-                    "required" : true,
+                    "required" : false,
                     "maxlength" : 24,
                     "type" : "string"
                 },

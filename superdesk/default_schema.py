@@ -69,7 +69,7 @@ class DefaultSchema(schema.Schema):
     })
 
     #: headline
-    headline = schema.StringField(maxlength=64)
+    headline = schema.StringField(maxlength=64, required=True)
 
     #: sms version of an item
     sms = schema.StringField()
@@ -104,6 +104,8 @@ class DefaultSchema(schema.Schema):
     #: item attachments
     #: .. versionadded:: 1.29
     attachments = schema.ListField()
+
+    relatedItems = {}
 
 
 DEFAULT_SCHEMA = dict(DefaultSchema)
