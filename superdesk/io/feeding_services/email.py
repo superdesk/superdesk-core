@@ -12,6 +12,7 @@ import socket
 import imaplib
 
 from flask import current_app as app
+from flask_babel import lazy_gettext as l_
 from superdesk.errors import IngestEmailError
 from superdesk.io.registry import register_feeding_service, register_feeding_service_parser
 from superdesk.io.feeding_services import FeedingService
@@ -32,59 +33,64 @@ class EmailFeedingService(FeedingService):
 
     fields = [
         {
-            'id': 'server', 'type': 'text', 'label': 'Email Server',
+            'id': 'server', 'type': 'text', 'label': l_('Email Server'),
             'placeholder': 'Email Server', 'required': True,
             'errors': {6003: 'Server not found.', 6002: 'Unexpected server response'}
         },
         {
-            'id': 'port', 'type': 'text', 'label': 'Email Server Port',
+            'id': 'port', 'type': 'text', 'label': l_('Email Server Port'),
             'placeholder': 'Email Server Port', 'required': True,
             'default': '993'
         },
         {
-            'id': 'user', 'type': 'text', 'label': 'User',
+            'id': 'user', 'type': 'text', 'label': l_('User'),
             'placeholder': 'User', 'required': True
         },
         {
-            'id': 'password', 'type': 'password', 'label': 'Password',
+            'id': 'password', 'type': 'password', 'label': l_('Password'),
             'placeholder': 'Password', 'required': True,
             'errors': {6000: 'Authentication error.'}
         },
         {
-            'id': 'mailbox', 'type': 'text', 'label': 'Mailbox',
+            'id': 'mailbox', 'type': 'text', 'label': l_('Mailbox'),
             'placeholder': 'Mailbox', 'required': True,
             'errors': {6004: 'Authentication error.'}
         },
         {
-            'id': 'formatted', 'type': 'boolean', 'label': 'Formatted Email Parser',
+            'id': 'formatted', 'type': 'boolean', 'label': l_('Formatted Email Parser'),
             'required': True
         },
         {
-            'id': 'filter', 'type': 'text', 'label': 'Filter',
-            'placeholder': 'Filter', 'required': True
+            'id': 'filter', 'type': 'text', 'label': l_('Filter'),
+            'placeholder': 'Filter', 'required': False
         }
     ]
 
     def _test(self, provider):
         self._update(provider, update=None, test=True)
 
-    def _update(self, provider, update, test=False):
-        config = provider.get('config', {})
+    def authenticate(self, provider: dict, config: dict) -> imaplib.IMAP4_SSL:
         server = config.get('server', '')
         port = int(config.get('port', 993))
+        try:
+            socket.setdefaulttimeout(app.config.get('EMAIL_TIMEOUT', 10))
+            imap = imaplib.IMAP4_SSL(host=server, port=port)
+        except (socket.gaierror, OSError) as e:
+            raise IngestEmailError.emailHostError(exception=e, provider=provider)
+
+        try:
+            imap.login(config.get('user', None), config.get('password', None))
+        except imaplib.IMAP4.error:
+            raise IngestEmailError.emailLoginError(imaplib.IMAP4.error, provider)
+
+        return imap
+
+    def _update(self, provider, update, test=False):
+        config = provider.get('config', {})
         new_items = []
 
         try:
-            try:
-                socket.setdefaulttimeout(app.config.get('EMAIL_TIMEOUT', 10))
-                imap = imaplib.IMAP4_SSL(host=server, port=port)
-            except (socket.gaierror, OSError) as e:
-                raise IngestEmailError.emailHostError(exception=e, provider=provider)
-
-            try:
-                imap.login(config.get('user', None), config.get('password', None))
-            except imaplib.IMAP4.error:
-                raise IngestEmailError.emailLoginError(imaplib.IMAP4.error, provider)
+            imap = self.authenticate(provider, config)
 
             try:
                 rv, data = imap.select(config.get('mailbox', None), readonly=False)
