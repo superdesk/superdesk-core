@@ -36,7 +36,7 @@ import logging
 
 from urllib.parse import urlparse
 
-from flask import current_app as app, request, redirect, make_response, session, jsonify
+from flask import current_app as app, request, redirect, make_response, session, jsonify, json
 from superdesk.auth import auth_user
 
 try:
@@ -84,12 +84,13 @@ def prepare_flask_request(request):
 
 
 USERDATA_MAPPING = {
+    'displayname': 'display_name',
     'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name': 'username',
     'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname': 'first_name',
     'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname': 'last_name',
     'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress': 'email',
-    'displayname': 'display_name',
-    'department': 'role',
+    "http://schemas.xmlsoap.org/claims/Group": 'desk',
+    "http://schemas.microsoft.com/ws/2008/06/identity/claims/role": 'role',
 }
 
 

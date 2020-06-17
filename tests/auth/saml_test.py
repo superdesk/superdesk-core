@@ -19,6 +19,7 @@ SAML_DATA = {
     "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname": ["Bar"],
     "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress": ["foo.bar@example.com"],
     "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name": ["foo"],
+    "http://schemas.microsoft.com/ws/2008/06/identity/claims/role": ["editor"],
     "displayname": ["Bar, Foo"],
     "country": ["CA"],
     "city": ["Toronto"],
@@ -26,20 +27,40 @@ SAML_DATA = {
 }
 
 
+ERROR = '{"error": 404}'
+
+
 class SamlAuthTestCase(tests.TestCase):
 
     @patch('superdesk.auth.saml.init_saml_auth')
     def test_create_missing_user(self, init_mock):
+        with self.app.app_context():
+            self.app.data.insert('desks', [{'name': 'Sports'}, {'name': 'Finance'}])
+            self.app.data.insert('roles', [{'name': 'Editor'}, {'name': 'Admin'}])
+
         with self.app.test_client() as c:
             flask.session[saml.SESSION_NAME_ID] = 'foo.bar@example.com'
             flask.session[saml.SESSION_USERDATA_KEY] = SAML_DATA
 
             resp = saml.index()
-            self.assertIn('404', resp)
+            self.assertIn(ERROR, resp)
 
-            with patch.dict(self.app.config, {'USER_EXTERNAL_AUTO_CREATE': True}):
+            with patch.dict(self.app.config, {
+                'USER_EXTERNAL_CREATE': True,
+                'USER_EXTERNAL_DESK': 'sports',
+            }):
                 resp = saml.index()
-            self.assertNotIn('404', resp)
+            self.assertNotIn(ERROR, resp)
+
+            user = self.app.data.find_one('users', req=None, email='foo.bar@example.com')
+
+            self.assertIsNotNone(user.get('role'))
+            role = self.app.data.find_one('roles', req=None, _id=user['role'])
+            self.assertEqual('Editor', role['name'])
+
+            self.assertIsNotNone(user.get('desk'))
+            desk = self.app.data.find_one('desks', req=None, _id=user['desk'])
+            self.assertIn({'user': user['_id']}, desk.get('members'))
 
     @patch('superdesk.auth.saml.init_saml_auth')
     def test_create_missing_user_missing_userdata(self, init_mock):
@@ -50,9 +71,9 @@ class SamlAuthTestCase(tests.TestCase):
             flask.session[saml.SESSION_USERDATA_KEY].update({
                 "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name": [],
             })
-            with patch.dict(self.app.config, {'USER_EXTERNAL_AUTO_CREATE': True}):
+            with patch.dict(self.app.config, {'USER_EXTERNAL_CREATE': True}):
                 resp = saml.index()
-            self.assertIn('404', resp)
+            self.assertIn(ERROR, resp)
 
     @patch('superdesk.auth.saml.init_saml_auth')
     def test_handle_saml_name_id_not_email(self, init_mock):
@@ -60,9 +81,9 @@ class SamlAuthTestCase(tests.TestCase):
             # with missing data it can't work
             flask.session[saml.SESSION_NAME_ID] = 'something_weird_like_guid'
             flask.session[saml.SESSION_USERDATA_KEY] = SAML_DATA.copy()
-            with patch.dict(self.app.config, {'USER_EXTERNAL_AUTO_CREATE': True}):
+            with patch.dict(self.app.config, {'USER_EXTERNAL_CREATE': True}):
                 resp = saml.index()
-            self.assertNotIn('404', resp)
+            self.assertNotIn(ERROR, resp)
 
     @patch('superdesk.auth.saml.init_saml_auth')
     def test_update_user_data_when_it_changes(self, init_mock):
@@ -70,7 +91,7 @@ class SamlAuthTestCase(tests.TestCase):
             # with missing data it can't work
             flask.session[saml.SESSION_NAME_ID] = 'nameId'
             flask.session[saml.SESSION_USERDATA_KEY] = SAML_DATA.copy()
-            with patch.dict(self.app.config, {'USER_EXTERNAL_AUTO_CREATE': True}):
+            with patch.dict(self.app.config, {'USER_EXTERNAL_CREATE': True}):
                 resp = saml.index()
 
             flask.session[saml.SESSION_USERDATA_KEY].update({
@@ -81,7 +102,7 @@ class SamlAuthTestCase(tests.TestCase):
                 "displayname": ["Doe, John"],
             })
 
-            with patch.dict(self.app.config, {'USER_EXTERNAL_AUTO_CREATE': True}):
+            with patch.dict(self.app.config, {'USER_EXTERNAL_CREATE': True}):
                 resp = saml.index()
 
         user = self.app.data.find_one('users', req=None, email='foo.bar@example.com')

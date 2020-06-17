@@ -866,4 +866,10 @@ LINKS_MAX_HOURS = 0
 #: when using external authentication service
 #:
 #: .. versionadded:: 2.0
-USER_EXTERNAL_AUTO_CREATE = False
+USER_EXTERNAL_CREATE = False
+
+#: Desk to which external users will be assigned automatically.
+#:
+#: .. versionadded:: 2.0
+#:
+USER_EXTERNAL_DESK = None

@@ -69,7 +69,7 @@ def auth_user(email, userdata=None):
             superdesk.get_resource_service('users').update_external_user(data[0]['user'], userdata)
         return render_template(TEMPLATE, data=data[0])
     except ValueError:
-        if not app.config['USER_EXTERNAL_AUTO_CREATE'] or not userdata:
+        if not app.config['USER_EXTERNAL_CREATE'] or not userdata:
             return render_template(TEMPLATE, data={'error': 404})
 
     # create new user using userdata

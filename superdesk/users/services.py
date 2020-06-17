@@ -25,6 +25,7 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.users.errors import UserInactiveError, UserNotRegisteredException
 from superdesk.notification import push_notification
 from superdesk.validation import ValidationError
+from superdesk.utils import ignorecase_query
 
 logger = logging.getLogger(__name__)
 
@@ -496,12 +497,18 @@ class DBUsersService(UsersService):
         data = _data.copy()
         if data.get('role'):
             role_name = data.pop('role')
-            role = get_resource_service('roles').find_one(req=None, name=role_name)
+            role = get_resource_service('roles').find_one(req=None, name=ignorecase_query(role_name))
             if role:
                 data['role'] = role['_id']
+        if data.get('desk') or app.config.get('USER_EXTERNAL_DESK'):
+            desk_name = data.pop('desk', None) or app.config.get('USER_EXTERNAL_DESK')
+            desk = get_resource_service('desks').find_one(req=None, name=ignorecase_query(desk_name))
+            if desk:
+                data['desk'] = desk['_id']
         data['needs_activation'] = False
         if update:
             data.pop('email')
+            data.pop('username')
         validator = self._validator()
         if not validator.validate(data, update=update):
             raise ValidationError(validator.errors)
@@ -511,6 +518,9 @@ class DBUsersService(UsersService):
         docs = [self._process_external_data(data)]
         self.on_create(docs)
         self.create(docs)
+        for user in docs:
+            if user.get('desk'):
+                get_resource_service('desks').add_member(user['desk'], user['_id'])
         return docs[0]
 
     def update_external_user(self, _id, data):
