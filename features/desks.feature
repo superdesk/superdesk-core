@@ -410,3 +410,66 @@ Feature: Desks
         """
         {"slugline": "x", "headline": "sports", "anpa_category": [{"qcode": "sport"}]}
         """
+
+    @auth
+    @notification
+    Scenario: Retrieve number of items with desk stages overview
+        Given we have "desks" with "SPORTS_DESK_ID" and success
+        """
+        [{"name": "Sports", "desk_type": "authoring"}]
+        """
+        And we have "desks" with "POLITICS_DESK_ID" and success
+        """
+        [{"name": "Politics", "desk_type": "authoring"}]
+        """
+        Given "archive"
+         """
+         [
+         {"_id":"1","slugline": "slugline1", "state": "draft",
+         "task": {"desk": "#SPORTS_DESK_ID#", "stage": "#desks.working_stage#"}, "headline": "one", "family_id": 1},
+         {"_id":"2","slugline": "slugline2", "state": "draft",
+         "task": {"desk": "#SPORTS_DESK_ID#", "stage": "#desks.working_stage#"}, "place": null, "headline": "two",
+         "family_id": 2},
+         {"_id":"3","slugline": "slugline3", "last_published_version": "True", "state": "published",
+         "task": {"desk": "#SPORTS_DESK_ID#", "stage": "#desks.incoming_stage#"}, "place": null, "headline": "three",
+         "family_id": 2},
+         {"_id":"4","slugline": "slugline4", "last_published_version": "True", "state": "published",
+         "task": {"desk": "#POLITICS_DESK_ID#", "stage": "#desks.incoming_stage#"}, "place": null, "headline": "four",
+         "family_id": 2},
+         {"_id":"5","slugline": "slugline5", "state": "draft",
+         "task": {"desk": "#POLITICS_DESK_ID#", "stage": "#desks.incoming_stage#"}, "place": null, "headline": "five",
+         "family_id": 2}
+         ]
+         """
+        When we get "/desks/#SPORTS_DESK_ID#/stages_overview"
+        Then we get existing resource
+        """
+            {
+                "_items": [
+                    {
+                        "stage": "#desks.incoming_stage#",
+                        "count": 1
+                    },
+                    {
+                        "stage": "#desks.working_stage#",
+                        "count": 2
+                    }
+                ]
+            }
+        """
+        When we get "/desks/all/stages_overview"
+        Then we get existing resource
+        """
+            {
+                "_items": [
+                    {
+                        "stage": "#desks.incoming_stage#",
+                        "count": 3
+                    },
+                    {
+                        "stage": "#desks.working_stage#",
+                        "count": 2
+                    }
+                ]
+            }
+        """
