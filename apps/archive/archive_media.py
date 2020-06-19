@@ -23,7 +23,6 @@ from superdesk.activity import add_activity
 from superdesk.filemeta import set_filemeta
 from superdesk.timer import timer
 from superdesk.media.video_editor import VideoEditorWrapper
-import magic
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +39,7 @@ class ArchiveMediaService():
             if 'media' not in doc or doc['media'] is None:
                 abort(400, description="No media found")
             # check content type of video by python-magic
-            content_type = magic.from_buffer(doc['media'].read(1024), mime=True)
+            content_type = app.media._get_mimetype(doc['media'])
             doc['media'].seek(0)
             file_type = content_type.split('/')[0]
             if file_type == 'video' and app.config.get("VIDEO_SERVER_ENABLED"):
