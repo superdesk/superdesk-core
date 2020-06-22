@@ -296,20 +296,21 @@ class DraftJSHTMLExporter:
                 del blocks[0]
             if blocks and blocks[-1]['text'].strip() == '' and not blocks[-1]['entityRanges']:
                 del blocks[-1]
-            html = self.exporter.render(content_state)
         else:
-            try:
-                html = self.exporter.render(self.content_state)
-            except KeyError as e:
-                if e.args == ('text',):
-                    # "text" may be missing in some case (e.g. comments), and the exporter
-                    # doesn't support it. To avoid a crash, we render again after
-                    # filtering out all block elements without "text".
-                    content_state = self.content_state.copy()
-                    content_state['blocks'] = [b for b in content_state['blocks'] if 'text' in b]
-                    html = self.exporter.render(content_state)
-                else:
-                    raise e
+            content_state = self.content_state
+
+        try:
+            html = self.exporter.render(content_state)
+        except KeyError as e:
+            if e.args == ('text',):
+                # "text" may be missing in some case (e.g. comments), and the exporter
+                # doesn't support it. To avoid a crash, we render again after
+                # filtering out all block elements without "text".
+                content_state = self.content_state.copy()
+                content_state['blocks'] = [b for b in content_state['blocks'] if 'text' in b]
+                html = self.exporter.render(content_state)
+            else:
+                raise e
         # see render_media for details
         return DUMMY_RE.sub('', html)
 
