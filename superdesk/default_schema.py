@@ -1,6 +1,8 @@
 
 import superdesk.schema as schema
 
+from copy import deepcopy
+
 
 class DefaultSchema(schema.Schema):
     """Default schema."""
@@ -110,6 +112,12 @@ class DefaultSchema(schema.Schema):
 
 DEFAULT_SCHEMA = dict(DefaultSchema)
 
+DEFAULT_MEDIA_SCHEMA = deepcopy(DEFAULT_SCHEMA)
+DEFAULT_MEDIA_SCHEMA['headline']['required'] = False
+DEFAULT_MEDIA_SCHEMA['subject']['required'] = False
+DEFAULT_MEDIA_SCHEMA.pop('body_html')
+DEFAULT_MEDIA_SCHEMA.pop('body_footer')
+
 
 DEFAULT_EDITOR = {
     'slugline': {'order': 1, 'sdWidth': 'full', 'enabled': True},
@@ -150,3 +158,7 @@ DEFAULT_EDITOR = {
     'media_description': {'enabled': True},
     'attachments': {'enabled': False},
 }
+
+DEFAULT_MEDIA_EDITOR = deepcopy(DEFAULT_EDITOR)
+DEFAULT_MEDIA_EDITOR.pop('body_html')
+DEFAULT_MEDIA_EDITOR.pop('body_footer')

@@ -3,11 +3,12 @@ import re
 import bson
 import superdesk
 
-from eve.utils import config
 from copy import deepcopy
+from flask import current_app as app
+from eve.utils import config
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
-from superdesk.default_schema import DEFAULT_SCHEMA, DEFAULT_EDITOR
+from superdesk.default_schema import DEFAULT_SCHEMA, DEFAULT_EDITOR, DEFAULT_MEDIA_SCHEMA, DEFAULT_MEDIA_EDITOR
 from apps.auth import get_user_id
 from apps.desks import remove_profile_from_desks
 from eve.utils import ParsedRequest
@@ -195,11 +196,14 @@ class ContentTypesService(superdesk.Service):
                 superdesk.get_resource_service('content_templates').patch(template.get('_id'), {'data': data})
 
     def find_one(self, req, **lookup):
+        is_edit = req and 'edit' in req.args
         doc = super().find_one(req, **lookup)
-        if doc and req and 'edit' in req.args:
+        if doc and is_edit:
             prepare_for_edit_content_type(doc)
         if doc:
             clean_doc(doc)
+        if not doc and not is_edit and lookup.get('_id') in ('text', 'picture', 'audio', 'video', 'composite'):
+            return get_default_profile(lookup['_id'])
         return doc
 
     def set_used(self, profile_ids):
@@ -573,3 +577,30 @@ def remove_profile_from_templates(item):
     for template in templates:
         template.get('data', {}).pop('profile', None)
         superdesk.get_resource_service('content_templates').patch(template[config.ID_FIELD], template)
+
+
+def get_default_profile(item_type):
+    # generate new types based on core conf
+    try:
+        schema = app.config['SCHEMA'][item_type]
+    except KeyError:
+        if item_type == 'text':
+            schema = DEFAULT_SCHEMA
+        else:
+            schema = DEFAULT_MEDIA_SCHEMA
+    try:
+        editor = app.config['EDITOR'][item_type]
+    except KeyError:
+        if item_type == 'text':
+            editor = DEFAULT_EDITOR
+        else:
+            editor = DEFAULT_MEDIA_EDITOR
+    return {
+        '_id': item_type,
+        'label': item_type,
+        'item_type': item_type,
+        'schema': schema,
+        'editor': editor,
+        'enabled': True,
+        'is_used': True,
+    }

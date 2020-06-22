@@ -12,13 +12,7 @@ import superdesk
 from flask import current_app as app
 from werkzeug.exceptions import Conflict
 from superdesk.commands.data_updates import DataUpdate
-from superdesk.default_schema import DEFAULT_SCHEMA, DEFAULT_EDITOR
-
-
-def filter_body_fields(config):
-    return {
-        key: val for key, val in config.items() if not key.startswith('body_')
-    }
+from apps.content_types.content_types import get_default_profile
 
 
 class DataUpdate(DataUpdate):
@@ -31,31 +25,9 @@ class DataUpdate(DataUpdate):
             'updated existing profiles',
             mongodb_collection.update_many({'item_type': None}, {'$set': {'item_type': 'text'}}).modified_count,
         )
-        default_schema = filter_body_fields(DEFAULT_SCHEMA)
-        default_editor = filter_body_fields(DEFAULT_EDITOR)
         # generate new types based on core conf
         for item_type in ('text', 'audio', 'video', 'picture', 'composite'):
-            try:
-                schema = app.config['SCHEMA'][item_type]
-            except KeyError:
-                schema = DEFAULT_SCHEMA.copy()
-                if item_type != 'text':
-                    schema = filter_body_fields(schema)
-            try:
-                editor = app.config['EDITOR'][item_type]
-            except KeyError:
-                editor = DEFAULT_EDITOR.copy()
-                if item_type != 'text':
-                    editor = filter_body_fields(editor)
-            profile = {
-                '_id': item_type,
-                'label': item_type,
-                'item_type': item_type,
-                'schema': schema,
-                'editor': editor,
-                'enabled': True,
-                'is_used': True,
-            }
+            profile = get_default_profile(item_type)
 
             try:
                 print('creating content profile for', item_type)
