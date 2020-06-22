@@ -255,6 +255,16 @@ class DesksService(BaseService):
             raise SuperdeskApiError.preconditionFailedError(
                 message=_('Cannot delete desk as it has article(s) or referenced by versions of the article(s).'))
 
+    def add_member(self, desk_id, user_id):
+        desk = self.find_one(req=None, _id=desk_id)
+        if not desk:
+            raise ValueError('desk "{}" not found'.format(desk_id))
+        members = desk.get('members', [])
+        members.append({'user': user_id})
+        updates = {'members': members}
+        self.on_update(updates, desk)
+        self.system_update(desk['_id'], updates, desk)
+
     def delete(self, lookup):
         """
         Overriding to delete stages before deleting a desk

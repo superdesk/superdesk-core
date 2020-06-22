@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import os
+import re
 import sys
 import time
 import bcrypt
@@ -309,3 +310,8 @@ class Timer():
 
     def stop_all(self):
         self._stopwatches = {}
+
+
+def ignorecase_query(word):
+    """Case insensitive mongo query."""
+    return re.compile('^{}$'.format(re.escape(word)), re.IGNORECASE)

@@ -36,7 +36,7 @@ import logging
 
 from urllib.parse import urlparse
 
-from flask import current_app as app, request, redirect, make_response, session, jsonify
+from flask import current_app as app, request, redirect, make_response, session, jsonify, json
 from superdesk.auth import auth_user
 
 try:
@@ -45,6 +45,10 @@ try:
 except ImportError:
     imported = False
 
+
+SESSION_NAME_ID = 'samlNameId'
+SESSION_SESSION_ID = 'samlSessionIndex'
+SESSION_USERDATA_KEY = 'samlUserdata'
 
 bp = superdesk.Blueprint('saml', __name__)
 logger = logging.getLogger(__name__)
@@ -79,6 +83,27 @@ def prepare_flask_request(request):
     }
 
 
+USERDATA_MAPPING = {
+    'displayname': 'display_name',
+    'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name': 'username',
+    'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname': 'first_name',
+    'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname': 'last_name',
+    'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress': 'email',
+    "http://schemas.xmlsoap.org/claims/Group": 'desk',
+    "http://schemas.microsoft.com/ws/2008/06/identity/claims/role": 'role',
+}
+
+
+def get_userdata(saml_data):
+    userdata = {}
+    for src, dest in USERDATA_MAPPING.items():
+        try:
+            userdata[dest] = saml_data[src][0]
+        except (KeyError, IndexError):
+            continue
+    return userdata
+
+
 @bp.route('/login/saml', methods=['GET', 'POST'])
 def index():
     req = prepare_flask_request(request)
@@ -88,18 +113,18 @@ def index():
     if 'slo' in request.args:
         name_id = None
         session_index = None
-        if 'samlNameId' in session:
-            name_id = session['samlNameId']
-        if 'samlSessionIndex' in session:
-            session_index = session['samlSessionIndex']
+        if SESSION_NAME_ID in session:
+            name_id = session[SESSION_NAME_ID]
+        if SESSION_SESSION_ID in session:
+            session_index = session[SESSION_SESSION_ID]
         return redirect(auth.logout(name_id=name_id, session_index=session_index))
     elif 'acs' in request.args or request.form:
         auth.process_response()
         errors = auth.get_errors()
         if len(errors) == 0:
-            session['samlUserdata'] = auth.get_attributes()
-            session['samlNameId'] = auth.get_nameid()
-            session['samlSessionIndex'] = auth.get_session_index()
+            session[SESSION_NAME_ID] = auth.get_nameid()
+            session[SESSION_SESSION_ID] = auth.get_session_index()
+            session[SESSION_USERDATA_KEY] = auth.get_attributes()
         else:
             logger.error('SAML %s reason=%s', errors, auth.get_last_error_reason())
             return jsonify({
@@ -116,8 +141,8 @@ def index():
             if url is not None:
                 return redirect(url)
 
-    if session.get('samlNameId'):
-        return auth_user(session['samlNameId'])
+    if session.get(SESSION_NAME_ID):
+        return auth_user(session[SESSION_NAME_ID], get_userdata(session[SESSION_USERDATA_KEY]))
 
     return redirect(auth.login())
 

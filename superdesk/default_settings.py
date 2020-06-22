@@ -860,3 +860,16 @@ NINJS_PLACE_EXTENDED = False
 #: .. versionadded:: 1.34
 #:
 LINKS_MAX_HOURS = 0
+
+#: Set if missing users can be created automatically
+#:
+#: when using external authentication service
+#:
+#: .. versionadded:: 2.0
+USER_EXTERNAL_CREATE = False
+
+#: Desk to which external users will be assigned automatically.
+#:
+#: .. versionadded:: 2.0
+#:
+USER_EXTERNAL_DESK = None
