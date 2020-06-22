@@ -12,7 +12,7 @@ import re
 import hashlib
 from dateutil import parser
 
-from superdesk.errors import IngestTwitterError
+from superdesk.errors import IngestTwitterError, IngestApiError
 from superdesk.io.registry import register_feeding_service
 from superdesk.io.feeding_services import FeedingService
 from superdesk.metadata.utils import generate_guid
@@ -43,11 +43,11 @@ class TwitterFeedingService(FeedingService):
         },
         {
             'id': 'access_token_key', 'type': 'text', 'label': 'Twitter Access Token Key',
-            'placeholder': 'Twitter access_token_key', 'required': True
+            'placeholder': 'Twitter access_token_key', 'required': False
         },
         {
             'id': 'access_token_secret', 'type': 'password', 'label': 'Twitter Access Token Secret',
-            'placeholder': 'Twitter access_token_secret', 'required': True
+            'placeholder': 'Twitter access_token_secret', 'required': False
         },
         {
             'id': 'screen_names', 'type': 'text', 'label': 'Twitter Screen Names',
@@ -57,8 +57,8 @@ class TwitterFeedingService(FeedingService):
     ]
 
     ERRORS = [IngestTwitterError.TwitterLoginError().get_error_description(),
-              IngestTwitterError.TwitterNoScreenNamesError().
-              get_error_description()]
+              IngestTwitterError.TwitterNoScreenNamesError().get_error_description(),
+              IngestTwitterError.TwitterRateLimitError().get_error_description()]
 
     def _test(self, provider):
         self._update(provider, update=None, test=True)
@@ -67,8 +67,6 @@ class TwitterFeedingService(FeedingService):
         config = provider.get('config', {})
         consumer_key = config.get('consumer_key', '')
         consumer_secret = config.get('consumer_secret', '')
-        access_token_key = config.get('access_token_key', '')
-        access_token_secret = config.get('access_token_secret', '')
         screen_names = config.get('screen_names', '')
         status_count = 100
         # how many statuses to get, 200 should be max
@@ -76,8 +74,7 @@ class TwitterFeedingService(FeedingService):
         new_items = []
         api = twitter.Api(consumer_key=consumer_key,
                           consumer_secret=consumer_secret,
-                          access_token_key=access_token_key,
-                          access_token_secret=access_token_secret)
+                          application_only_auth=True)
         try:
             screen_names = screen_names.split(',')
         except Exception as ex:
@@ -103,6 +100,11 @@ class TwitterFeedingService(FeedingService):
                 elif exc.message[0].get('code') == 32:
                     # invalid credentials
                     raise IngestTwitterError.TwitterLoginError(exc, provider)
+                elif exc.message[0].get('code') == 88:
+                    # rate limit exceeded
+                    raise IngestTwitterError.TwitterRateLimitError(exc, provider)
+                else:
+                    raise IngestApiError.apiGeneralError(exc, provider)
 
             for status in statuses:
                 d = parser.parse(status.created_at)
