@@ -154,7 +154,9 @@ class ImportLegalArchiveCommandTestCase(TestCase):
         LegalArchiveImport.upsert_into_legal_archive = MagicMock()
 
         for item in self.archive_items:
-            archive_publish.patch(item['_id'], {'headline': 'publishing', 'abstract': 'publishing'})
+            archive_publish.patch(item['_id'], {'headline': 'publishing', 'abstract': 'publishing', 'subject': [
+                {'name': 'test', 'qcode': 'test'},
+            ]})
 
         for item in self.archive_items:
             legal_item = legal_archive.find_one(req=None, _id=item['_id'])
