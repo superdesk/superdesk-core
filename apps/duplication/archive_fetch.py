@@ -102,11 +102,10 @@ class FetchService(BaseService):
             self.__fetch_associated_items(dest_doc, desk_id, stage_id, doc.get(ITEM_STATE, CONTENT_STATE.FETCHED))
 
             desk = get_resource_service('desks').find_one(req=None, _id=desk_id)
-            if desk and desk.get('default_content_profile'):
+            if desk and desk.get('default_content_profile') and dest_doc.get('type') == 'text':
+                if dest_doc.get('profile') and dest_doc['profile'] == 'text':
+                    dest_doc.pop('profile')  # ignore default profile
                 dest_doc.setdefault('profile', desk['default_content_profile'])
-
-            if dest_doc.get('type', 'text') in MEDIA_TYPES:
-                dest_doc['profile'] = None
 
             get_resource_service(ARCHIVE).post([dest_doc])
             insert_into_versions(doc=dest_doc)

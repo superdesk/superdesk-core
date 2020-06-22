@@ -154,7 +154,7 @@ class ArchiveRewriteService(Service):
                     any(genre.get('value', '').lower() == BROADCAST_GENRE.lower() for genre in update.get('genre')):
                 raise SuperdeskApiError.badRequestError(_("Broadcast cannot be a update story !"))
 
-            if original.get('profile') and original.get('profile') != update.get('profile'):
+            if original.get('profile') and update.get('profile') and original.get('profile') != update.get('profile'):
                 raise SuperdeskApiError.badRequestError(_("Rewrite item content profile does "
                                                         "not match with Original item."))
 

@@ -282,24 +282,34 @@ class ValidateService(superdesk.Service):
         In case there is profile defined for item with respective content type it will
         use its schema for validations, otherwise it will fall back to action/item_type filter.
         """
-        profile = doc['validate'].get('profile')
-        item_type = doc['validate'].get('type') or doc.get('type')
-        if (profile or item_type) and (app.config['AUTO_PUBLISH_CONTENT_PROFILE'] or doc['act'] != 'auto_publish'):
-            content_type = superdesk.get_resource_service('content_types').find_one(req=None, _id=profile)
-            if not content_type and item_type:
-                content_type = superdesk.get_resource_service('content_types').find_one(req=None, item_type=item_type)
-            if content_type:
-                return self._get_profile_schema(content_type.get('schema', {}), doc)
+
         lookup = {'act': doc['act'], 'type': doc[ITEM_TYPE]}
         if doc.get('embedded'):
             lookup['embedded'] = doc['embedded']
         else:
             lookup['$or'] = [{'embedded': {'$exists': False}}, {'embedded': False}]
+        validators = list(superdesk.get_resource_service('validators').get(req=None, lookup=lookup))
+
+        if doc.get('act') == 'auto_publish':
+            print('validators', validators, app.config.get('AUTO_PUBLISH_CONTENT_PROFILE'))
+
+        # there are validators in place
+        if validators and (not app.config.get('AUTO_PUBLISH_CONTENT_PROFILE') or doc['act'] != 'auto_publish'):
+            return validators
+
+        profile = doc['validate'].get('profile')
+        item_type = doc['validate'].get('type') or doc['type']
+        if (profile or item_type) and (app.config['AUTO_PUBLISH_CONTENT_PROFILE'] or doc['act'] != 'auto_publish'):
+            content_type = superdesk.get_resource_service('content_types').find_one(req=None, _id=profile or item_type)
+            if content_type:
+                return self._get_profile_schema(content_type.get('schema', {}), doc)
         custom_schema = app.config.get('SCHEMA', {}).get(doc[ITEM_TYPE])
         if custom_schema:  # handle custom schema like profile schema
             return self._get_profile_schema(custom_schema, doc)
-        return superdesk.get_resource_service('validators').get(req=None, lookup=lookup)
 
+        # no profile
+        return validators
+        
     def _populate_extra(self, doc, schema):
         """Populates the extra field in the document with fields stored in subject. Used
         for user defined vocabularies.

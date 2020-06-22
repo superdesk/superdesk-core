@@ -166,6 +166,13 @@ ARCHIVE_SCHEMA_FIELDS = {
 FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM = ['anpa_category', 'subject', 'slugline', 'urgency',
                                       'priority', 'footer', 'abstract', 'genre']
 
+DEFAULT_PROFILES = set([
+    'text',
+    'picture',
+    'audio',
+    'video',
+    'composite',
+])
 
 def get_default_source():
     return app.config.get('DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES')
@@ -204,7 +211,10 @@ def on_create_item(docs, repo_type=ARCHIVE):
             # set the source for the article
             set_default_source(doc)
 
-        if 'profile' not in doc and app.config.get('DEFAULT_CONTENT_TYPE', None):
+        ignore_profiles = DEFAULT_PROFILES.copy()
+        ignore_profiles.add(None)
+
+        if doc.get('profile') in ignore_profiles and doc.get('type') == 'text' and app.config.get('DEFAULT_CONTENT_TYPE', None):
             doc['profile'] = app.config.get('DEFAULT_CONTENT_TYPE', None)
 
         copy_metadata_from_profile(doc)

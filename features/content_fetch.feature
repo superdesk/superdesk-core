@@ -628,7 +628,7 @@ Feature: Fetch Items from Ingest
         """
         Then we get new resource
         """
-        {"profile": null}
+        {"profile": "picture"}
         """
 
     @auth
