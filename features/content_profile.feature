@@ -252,7 +252,7 @@ Feature: Content Profile
                 "subject": {
                     "type": "list",
                     "schema": {},
-                    "required": true,
+                    "required": false,
                     "mandatory_in_list": {
                         "scheme": {}
                     }
@@ -402,7 +402,7 @@ Feature: Content Profile
                     },
                     "type": "list",
                     "schema": {},
-                    "required": true
+                    "required": false
                 },
                 "abstract": {
                     "maxlength": 160,
@@ -662,7 +662,7 @@ Feature: Content Profile
                         "scheme": {}
                     },
                     "type": "list",
-                    "required": true,
+                    "required": false,
                     "schema": {}
                 },
                 "ednote": {
@@ -1145,7 +1145,7 @@ Feature: Content Profile
                         "scheme": {}
                     },
                     "schema": {},
-                    "required": true
+                    "required": false
                 },
                 "abstract": {
                     "type": "string",

@@ -18,7 +18,7 @@ from superdesk.metadata.item import ITEM_STATE, EMBARGO, CONTENT_STATE, CONTENT_
     ITEM_TYPE, PUBLISH_STATES, ASSOCIATIONS, GUID_TAG, PROCESSED_FROM, metadata_schema
 from superdesk.resource import Resource, build_custom_hateoas
 from apps.archive.common import CUSTOM_HATEOAS, ITEM_CREATE, ARCHIVE, BROADCAST_GENRE, ITEM_REWRITE, \
-    ITEM_UNLINK, ITEM_LINK, insert_into_versions, has_default_profile
+    ITEM_UNLINK, ITEM_LINK, insert_into_versions
 from superdesk.metadata.utils import item_url, generate_guid
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
@@ -198,7 +198,7 @@ class ArchiveRewriteService(Service):
             # ingest provider and source to be retained for new item
             fields.extend(['ingest_provider', 'source'])
 
-            if original.get('profile') and not has_default_profile(original):
+            if original.get('profile'):
                 content_type = get_resource_service('content_types').find_one(req=None, _id=original['profile'])
                 extended_fields = list(content_type['schema'].keys())
                 # extra fields needed.
@@ -213,7 +213,8 @@ class ArchiveRewriteService(Service):
                 ]
 
             fields.extend(extended_fields)
-
+            if 'body_html' in fields:   # body is handled later
+                fields.remove('body_html')
 
         for field in fields:
             if original.get(field):

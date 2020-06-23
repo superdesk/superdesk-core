@@ -371,6 +371,7 @@ class ArchiveTestCase(TestCase):
         publish_service = superdesk.get_resource_service('archive_publish')
         item = {'_id': 'foo',
                 'guid': 'foo',
+                'headline': 'foo',
                 'unique_name': 'foo',
                 'type': 'text',
                 'state': CONTENT_STATE.SUBMITTED,

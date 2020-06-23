@@ -165,7 +165,7 @@ Feature: Validate
       """
     Then we get existing resource
     """
-    {"errors": ["HEADLINE is a required field", "SUBJECT is a required field"]}
+    {"errors": ["HEADLINE is a required field"]}
     """
 
   @auth

@@ -962,7 +962,3 @@ def resolve_default_values(document, defaults):
                     document.setdefault(name, existing)
             else:
                 document.setdefault(name, value)
-
-
-def has_default_profile(item):
-    return item.get('profile') == item['type']
