@@ -34,6 +34,8 @@ class ODBCPublishService(PublishService):
     :param string stored_procedure:
     """
 
+    NAME = 'ODBC'
+
     def _transmit(self, queue_item, subscriber):
         """
         Transmit the given formatted item to the configured ODBC output.

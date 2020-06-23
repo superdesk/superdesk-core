@@ -73,6 +73,8 @@ class HTTPPushService(PublishService):
     for both json and multipart POST requests.
     """
 
+    NAME = 'HTTP Push'
+
     headers = {"Content-type": "application/json", "Accept": "application/json"}
     hash_header = 'x-superdesk-signature'
 
