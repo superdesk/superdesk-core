@@ -94,6 +94,9 @@ class TwitterFeedingService(FeedingService):
                     statuses = api.GetUserTimeline(screen_name=screen_name,
                                                    count=status_count)
             except twitter.error.TwitterError as exc:
+                # in some case python twitter error will return dict
+                if type(exc.message) == dict:
+                    raise IngestApiError.apiGeneralError(exc, provider)
                 if exc.message[0].get('code') == 34:
                     # that page does not exist
                     continue
