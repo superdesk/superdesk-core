@@ -38,7 +38,7 @@ class DefaultSchema(schema.Schema):
     anpa_category = schema.ListField()
 
     #: subject
-    subject = schema.ListField(required=True, mandatory_in_list={'scheme': {}}, schema={
+    subject = schema.ListField(required=False, mandatory_in_list={'scheme': {}}, schema={
         'type': 'dict',
         'schema': {
             'name': {},

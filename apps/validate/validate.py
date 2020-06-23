@@ -290,15 +290,16 @@ class ValidateService(superdesk.Service):
             lookup['$or'] = [{'embedded': {'$exists': False}}, {'embedded': False}]
         validators = list(superdesk.get_resource_service('validators').get(req=None, lookup=lookup))
 
-        if doc.get('act') == 'auto_publish':
-            print('validators', validators, app.config.get('AUTO_PUBLISH_CONTENT_PROFILE'))
-
         # there are validators in place
-        if validators and (not app.config.get('AUTO_PUBLISH_CONTENT_PROFILE') or doc['act'] != 'auto_publish'):
+        if validators and not (app.config.get('AUTO_PUBLISH_CONTENT_PROFILE') and doc['act'] == 'auto_publish'):
             return validators
 
         profile = doc['validate'].get('profile')
         item_type = doc['validate'].get('type') or doc['type']
+
+        if validators and profile == item_type:  # using default profile
+            return validators
+
         if (profile or item_type) and (app.config['AUTO_PUBLISH_CONTENT_PROFILE'] or doc['act'] != 'auto_publish'):
             content_type = superdesk.get_resource_service('content_types').find_one(req=None, _id=profile or item_type)
             if content_type:
@@ -309,7 +310,7 @@ class ValidateService(superdesk.Service):
 
         # no profile
         return validators
-        
+
     def _populate_extra(self, doc, schema):
         """Populates the extra field in the document with fields stored in subject. Used
         for user defined vocabularies.

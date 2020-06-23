@@ -154,7 +154,7 @@ Feature: Validate
     {"errors": "__empty__"}
     """
   @auth
-  Scenario: Missing validator
+  Scenario: Missing validator will use default profile
     Given the "validators"
       """
       [{"_id": "publish", "act": "publish", "type": "text", "schema":{}}]
@@ -165,7 +165,7 @@ Feature: Validate
       """
     Then we get existing resource
     """
-    {"errors": "__empty__"}
+    {"errors": ["HEADLINE is a required field", "SUBJECT is a required field"]}
     """
 
   @auth
@@ -455,7 +455,7 @@ Feature: Validate
     Scenario: Validate picture using content profile
     Given "content_types"
     """
-    [{"_id": "test", "item_type": "picture", "schema": {
+    [{"_id": "picture", "item_type": "picture", "schema": {
       "headline": {
         "type": "string",
         "nullable": true,

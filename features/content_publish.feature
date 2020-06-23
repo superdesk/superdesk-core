@@ -2926,6 +2926,7 @@ Feature: Content Publishing
       """
       [{"_id": "234", "guid": "234", "type": "picture", "slugline": "s234", "state": "in_progress",
         "headline": "some headline", "_current_version": 1,
+        "alt_text": "foo", "description_text": "bar",
         "renditions": {"original": {"mimetype": "audio/mp3", "media": "5ae35d0095cc644f859a94c2",
             "href": "http://localhost:5000/api/upload-raw/5ae35d0095cc644f859a94c2"
         }}},
@@ -2935,6 +2936,7 @@ Feature: Content Publishing
         "associations": {"media--1": {
             "_id": "234", "guid": "234", "type": "picture", "slugline": "s234", "state": "in_progress",
             "headline": "some headline", "_type": "archive", "_current_version": 1,
+            "alt_text": "foo", "description_text": "foo",
             "renditions": {"original": {"mimetype": "audio/mp3", "media": "5ae35d0095cc644f859a94c2",
                 "href": "http://localhost:5000/api/upload-raw/5ae35d0095cc644f859a94c2"
         }}}}}]

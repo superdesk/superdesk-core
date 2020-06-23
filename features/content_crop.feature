@@ -494,7 +494,10 @@ Feature: Cropping the Image Articles
       "associations": {
           "featuremedia": {
             "_id": "bike_2",
-            "poi": {"x": 0.3, "y": 0.4}
+            "poi": {"x": 0.3, "y": 0.4},
+            "alt_text": "bike",
+            "headline": "bike",
+            "description_text": "bike"
           }
         }}
       """

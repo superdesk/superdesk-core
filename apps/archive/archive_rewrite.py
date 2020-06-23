@@ -18,7 +18,7 @@ from superdesk.metadata.item import ITEM_STATE, EMBARGO, CONTENT_STATE, CONTENT_
     ITEM_TYPE, PUBLISH_STATES, ASSOCIATIONS, GUID_TAG, PROCESSED_FROM, metadata_schema
 from superdesk.resource import Resource, build_custom_hateoas
 from apps.archive.common import CUSTOM_HATEOAS, ITEM_CREATE, ARCHIVE, BROADCAST_GENRE, ITEM_REWRITE, \
-    ITEM_UNLINK, ITEM_LINK, insert_into_versions
+    ITEM_UNLINK, ITEM_LINK, insert_into_versions, has_default_profile
 from superdesk.metadata.utils import item_url, generate_guid
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
@@ -198,7 +198,7 @@ class ArchiveRewriteService(Service):
             # ingest provider and source to be retained for new item
             fields.extend(['ingest_provider', 'source'])
 
-            if original.get('profile'):
+            if original.get('profile') and not has_default_profile(original):
                 content_type = get_resource_service('content_types').find_one(req=None, _id=original['profile'])
                 extended_fields = list(content_type['schema'].keys())
                 # extra fields needed.
@@ -213,6 +213,7 @@ class ArchiveRewriteService(Service):
                 ]
 
             fields.extend(extended_fields)
+
 
         for field in fields:
             if original.get(field):
@@ -243,6 +244,7 @@ class ArchiveRewriteService(Service):
             # if we are rewriting a published item then copy the body_html
             if original.get('state', '') in (CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED, CONTENT_STATE.SCHEDULED):
                 rewrite['body_html'] = original.get('body_html', '')
+                print('THIS IS IT')
 
         rewrite[ITEM_STATE] = CONTENT_STATE.PROGRESS
         self._set_take_key(rewrite)
