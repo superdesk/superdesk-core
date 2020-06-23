@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import os
 import copy
 from io import BytesIO
 from unittest.mock import MagicMock
@@ -50,7 +51,12 @@ class VideoEditTestCase(TestCase):
         self.app.config['VIDEO_SERVER_ENABLED'] = 'true'
         self.app.config['VIDEO_SERVER_URL'] = 'http://localhost'
         with requests_mock.mock() as mock:
-            doc = {'media': FileStorage(BytesIO(b'abcdef'), 'video.mp4')}
+            dirname = os.path.dirname(os.path.realpath(__file__))
+            video_file_path = os.path.normpath(os.path.join(dirname, 'fixtures', 'envy_dog.mp4'))
+
+            with open(video_file_path, 'rb') as f:
+                doc = {'media': FileStorage(BytesIO(f.read()), 'video.mp4', content_type='video/mp4')}
+
             mock.post('http://localhost/projects/', json=self.project_data)
             mock.get("http://localhost/projects/video_id/thumbnails?type=timeline&amount=60", json={"processing": True})
             archive_service = superdesk.get_resource_service('archive')
