@@ -163,6 +163,12 @@ class SchemaValidator(Validator):
         """
         pass
 
+    def _validate_readonly(self, *args):
+        """
+        {'type': 'boolean'}
+        """
+        pass
+
     def _validate_place(self, *args):
         """
         {'type': 'list'}
