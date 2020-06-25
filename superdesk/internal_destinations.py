@@ -89,7 +89,7 @@ def handle_item_published(sender, item, **extra):
                     continue
 
         extra_fields = [PUBLISH_SCHEDULE, SCHEDULE_SETTINGS]
-        next_id = archive_service.duplicate_content(new_item, state='routed', extra_fields=extra_fields)
+        next_id = archive_service.duplicate_item(new_item, state='routed', extra_fields=extra_fields)
         next_item = archive_service.find_one(req=None, _id=next_id)
         item_routed.send(sender, item=next_item)
 
