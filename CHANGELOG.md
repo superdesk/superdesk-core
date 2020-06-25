@@ -1,5 +1,11 @@
 # Superdesk Server Changelog
 
+## [1.33.3] 2020-06-26
+
+### Fixed
+
+- Fix internal destination duplicating package content.
+
 ## [1.33.2] 2020-06-08
 
 ### Fixed
