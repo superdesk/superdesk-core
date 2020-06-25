@@ -12,7 +12,7 @@ import re
 import hashlib
 from dateutil import parser
 
-from superdesk.errors import IngestTwitterError, IngestApiError
+from superdesk.errors import IngestTwitterError
 from superdesk.io.registry import register_feeding_service
 from superdesk.io.feeding_services import FeedingService
 from superdesk.metadata.utils import generate_guid
@@ -42,14 +42,6 @@ class TwitterFeedingService(FeedingService):
             'placeholder': 'Twitter consumer_secret', 'required': True
         },
         {
-            'id': 'access_token_key', 'type': 'text', 'label': 'Twitter Access Token Key',
-            'placeholder': 'Twitter access_token_key', 'required': False
-        },
-        {
-            'id': 'access_token_secret', 'type': 'password', 'label': 'Twitter Access Token Secret',
-            'placeholder': 'Twitter access_token_secret', 'required': False
-        },
-        {
             'id': 'screen_names', 'type': 'text', 'label': 'Twitter Screen Names',
             'placeholder': 'Twitter screen_names', 'required': True,
             'errors': {6200: 'No Screen names specified'}
@@ -58,7 +50,8 @@ class TwitterFeedingService(FeedingService):
 
     ERRORS = [IngestTwitterError.TwitterLoginError().get_error_description(),
               IngestTwitterError.TwitterNoScreenNamesError().get_error_description(),
-              IngestTwitterError.TwitterRateLimitError().get_error_description()]
+              IngestTwitterError.TwitterRateLimitError().get_error_description(),
+              IngestTwitterError.TwitterAPIGeneralError().get_error_description()]
 
     def _test(self, provider):
         self._update(provider, update=None, test=True)
@@ -95,8 +88,8 @@ class TwitterFeedingService(FeedingService):
                                                    count=status_count)
             except twitter.error.TwitterError as exc:
                 # in some case python twitter error will return dict
-                if type(exc.message) == dict:
-                    raise IngestApiError.apiGeneralError(exc, provider)
+                if type(exc.args[0]) == dict:
+                    raise IngestTwitterError.TwitterAPIGeneralError(exc, provider)
                 if exc.message[0].get('code') == 34:
                     # that page does not exist
                     continue
@@ -107,7 +100,7 @@ class TwitterFeedingService(FeedingService):
                     # rate limit exceeded
                     raise IngestTwitterError.TwitterRateLimitError(exc, provider)
                 else:
-                    raise IngestApiError.apiGeneralError(exc, provider)
+                    raise IngestTwitterError.TwitterAPIGeneralError(exc, provider)
 
             for status in statuses:
                 d = parser.parse(status.created_at)
