@@ -112,4 +112,8 @@ class MacrosResource(superdesk.Resource):
             'type': 'string',
             'readonly': True,
         },
+        'action_type': {
+            'type': 'string',
+            'readonly': True,
+        },
     }
