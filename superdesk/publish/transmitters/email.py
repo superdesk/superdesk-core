@@ -34,6 +34,8 @@ class EmailPublishService(PublishService):
     :param recipients: email addresses separated by ``;``
     """
 
+    NAME = 'Email'
+
     def _transmit(self, queue_item, subscriber):
         config = queue_item.get('destination', {}).get('config', {})
 

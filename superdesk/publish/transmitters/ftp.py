@@ -39,6 +39,9 @@ class FTPPublishService(PublishService):
     :param passive: use passive mode (on by default)
     """
 
+    NAME = 'FTP'
+    CONFIG = {'passive': True}
+
     def config_from_url(self, url):
         """Parse given url into ftp config. Used for tests.
 
