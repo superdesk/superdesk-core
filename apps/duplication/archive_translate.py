@@ -54,7 +54,7 @@ class TranslateResource(Resource):
 
 class TranslateService(BaseService):
 
-    def _translate_item(self, guid, language, task=None, service=None, **kwargs):
+    def _translate_item(self, guid, language, task=None, service=None, state=None, **kwargs):
         if not service:
             service = ARCHIVE
         archive_service = get_resource_service(service)
@@ -92,7 +92,11 @@ class TranslateService(BaseService):
             item['task'] = task
 
         extra_fields = ['translation_id', 'translated_from']
-        _id = archive_service.duplicate_item(item, extra_fields=extra_fields, operation='translate')
+
+        if state:
+            _id = archive_service.duplicate_item(item, extra_fields=extra_fields, state=state, operation='translate')
+        else:
+            _id = archive_service.duplicate_item(item, extra_fields=extra_fields, operation='translate')
 
         item.setdefault('translations', []).append(_id)
 
