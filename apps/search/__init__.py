@@ -253,7 +253,7 @@ class SearchResource(superdesk.Resource):
     schema = get_schema(versioning=True)
     schema.update(published_item_fields)
     datasource = {
-        'projection': {field:1 for field in list(schema.keys()) + ['archive_item']}
+        'projection': {field: 1 for field in list(schema.keys()) + ['archive_item']}
     }
 
 
