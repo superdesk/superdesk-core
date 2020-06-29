@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 registered_transmitters = {}
 transmitter_errors = {}
+registered_transmitters_list = []
 
 subscriber_types = ['digital', 'wire', 'all']
 subscriber_media_types = ['media', 'non-media', 'both']
@@ -35,6 +36,11 @@ SUBSCRIBER_MEDIA_TYPES = namedtuple('SUBSCRIBER_MEDIA_TYPES', ['MEDIA', 'NONMEDI
 def register_transmitter(transmitter_type, transmitter, errors):
     registered_transmitters[transmitter_type] = transmitter
     transmitter_errors[transmitter_type] = dict(errors)
+    registered_transmitters_list.append({
+        'type': transmitter_type,
+        'name': transmitter.NAME or transmitter_type,
+        'config': getattr(transmitter, 'CONFIG', None),
+    })
 
 
 @celery.task(soft_time_limit=1800, expires=10)
@@ -69,3 +75,7 @@ def init_app(app):
         SubscriberTokenResource,
         SubscriberTokenService
     )
+
+    app.client_config.update({
+        'transmitter_types': registered_transmitters_list,
+    })

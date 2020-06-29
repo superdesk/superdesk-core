@@ -27,6 +27,8 @@ extensions = {
 class PublishServiceBase():
     """Base publish service class."""
 
+    NAME = None
+    CONFIG = None
     DEFAULT_EXT = "txt"
 
     def _transmit(self, queue_item, subscriber):
