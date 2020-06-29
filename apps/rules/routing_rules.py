@@ -231,14 +231,14 @@ class RoutingRuleSchemeService(BaseService):
                         stage_id = ingest_item['task']['stage']
                     else:
                         stage_id = desk['incoming_stage']
-                    self.__fetch(ingest_item, [{'desk': desk[config.ID_FIELD], 'stage': stage_id}])
+                    self.__fetch(ingest_item, [{'desk': desk[config.ID_FIELD], 'stage': stage_id}], rule)
                     fetch_actions = [f for f in rule.get('actions', {}).get('fetch', [])
                                      if f.get('desk') != ingest_item['task']['desk']]
                 else:
                     fetch_actions = rule.get('actions', {}).get('fetch', [])
 
-                self.__fetch(ingest_item, fetch_actions)
-                self.__publish(ingest_item, rule.get('actions', {}).get('publish', []))
+                self.__fetch(ingest_item, fetch_actions, rule)
+                self.__publish(ingest_item, rule.get('actions', {}).get('publish', []), rule)
                 if rule.get('actions', {}).get('exit', False):
                     logger.info('Exiting routing scheme. Item: %s . Routing Scheme: %s. '
                                 'Rule Name %s.' % (ingest_item.get('guid'), routing_scheme.get('name'),
@@ -422,7 +422,7 @@ class RoutingRuleSchemeService(BaseService):
 
         return scheduled_rules
 
-    def __fetch(self, ingest_item, destinations):
+    def __fetch(self, ingest_item, destinations, rule):
         """Fetch to item to the destinations
 
         :param item: item to be fetched
@@ -434,13 +434,20 @@ class RoutingRuleSchemeService(BaseService):
                 logger.info('Fetching item %s to desk %s' % (ingest_item.get('guid'), destination))
                 target = self.__getTarget(destination)
                 item_id = get_resource_service('fetch') \
-                    .fetch([{config.ID_FIELD: ingest_item[config.ID_FIELD],
-                             'desk': str(destination.get('desk')),
-                             'stage': str(destination.get('stage')),
-                             'state': CONTENT_STATE.ROUTED,
-                             'macro': destination.get('macro', None),
-                             'target': target}])[0]
-
+                    .fetch(
+                        [
+                            {
+                                config.ID_FIELD: ingest_item[config.ID_FIELD],
+                                'desk': str(destination.get('desk')),
+                                'stage': str(destination.get('stage')),
+                                'state': CONTENT_STATE.ROUTED,
+                                'macro': destination.get('macro', None),
+                                'target': target,
+                            },
+                        ],
+                        macro_kwargs={
+                            'rule': rule,
+                        })[0]
                 archive_items.append(item_id)
                 logger.info('Fetched item %s to desk %s' % (ingest_item.get('guid'), destination))
             except Exception:
@@ -463,13 +470,13 @@ class RoutingRuleSchemeService(BaseService):
 
         return target
 
-    def __publish(self, ingest_item, destinations):
+    def __publish(self, ingest_item, destinations, rule):
         """Fetches the item to the desk and then publishes the item.
 
         :param item: item to be published
         :param destinations: list of desk and stage
         """
-        items_to_publish = self.__fetch(ingest_item, destinations)
+        items_to_publish = self.__fetch(ingest_item, destinations, rule)
         for item in items_to_publish:
             try:
                 logger.info('Publishing item %s' % (ingest_item.get('guid')))

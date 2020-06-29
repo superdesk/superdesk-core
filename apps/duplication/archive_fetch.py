@@ -80,11 +80,13 @@ class FetchService(BaseService):
                 raise InvalidStateTransitionError()
 
             if doc.get('macro'):  # there is a macro so transform it
+                macro_kwargs = kwargs.get('macro_kwargs') or {}
                 ingest_doc = get_resource_service('macros').execute_macro(
                     ingest_doc,
                     doc.get('macro'),
                     dest_desk_id=desk_id,
                     dest_stage_id=stage_id,
+                    **macro_kwargs,
                 )
 
             dest_doc = fetch_item(ingest_doc, desk_id, stage_id, state=doc.get(ITEM_STATE), target=doc.get('target'))
