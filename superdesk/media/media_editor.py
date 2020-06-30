@@ -39,6 +39,10 @@ class MediaEditorResource(Resource):
             'type': 'dict',
             'required': True,
             'mapping': not_analyzed
+        },
+        'renditions': {
+            'type': 'dict',
+            'mapping': not_analyzed
         }
     }
     internal_resource = False
