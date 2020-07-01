@@ -29,20 +29,16 @@ class MediaEditorResource(Resource):
     schema = {
         'item_id': {
             'type': 'string',
-            'mapping': not_analyzed
         },
         'item': {
             'type': 'dict',
-            'mapping': not_analyzed
         },
         'edit': {
             'type': 'dict',
             'required': True,
-            'mapping': not_analyzed
         },
         'renditions': {
             'type': 'dict',
-            'mapping': not_analyzed
         }
     }
     internal_resource = False
