@@ -35,7 +35,6 @@ def check_json(doc, field, value):
     if isinstance(doc, dict):
         if field in doc and value['required'] and doc[field]:
             return True
-        return False
         for key in doc:
             if check_json(doc[key], field, value):
                 return True
